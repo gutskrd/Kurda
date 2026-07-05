@@ -1,0 +1,29 @@
+/* eslint-disable no-restricted-syntax -- the only module allowed to read process.env */
+import { z } from 'zod';
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  HOST: z.string().default('0.0.0.0'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  /** Injected by the deploy pipeline (KUR-008); "unknown" in local dev. */
+  GIT_SHA: z.string().default('unknown'),
+});
+
+export type AppConfig = Readonly<z.infer<typeof envSchema>>;
+
+/**
+ * Parses and validates environment variables. Throws with a message
+ * naming every invalid/missing variable so a misconfigured deploy
+ * fails at boot, not at first request.
+ */
+export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
+  const result = envSchema.safeParse(env);
+  if (!result.success) {
+    const problems = result.error.issues
+      .map((issue) => `  ${issue.path.join('.')}: ${issue.message}`)
+      .join('\n');
+    throw new Error(`Invalid environment configuration:\n${problems}`);
+  }
+  return Object.freeze(result.data);
+}
