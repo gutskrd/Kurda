@@ -11,4 +11,18 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
+  {
+    // Config must stay the single source of environment truth (KUR-002).
+    // api/src/config/env.ts opts out via a file-level eslint-disable.
+    files: ['api/src/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Read configuration via loadConfig() from config/env.ts, not process.env.',
+        },
+      ],
+    },
+  },
 );
