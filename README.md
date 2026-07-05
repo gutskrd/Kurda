@@ -38,7 +38,7 @@ npm run migrate:up --workspace api
 npm run db:seed --workspace api
 ```
 
-Without `DATABASE_URL` the API still boots; `/health` reports the db as `not_configured`. Migration conventions: [api/migrations/README.md](api/migrations/README.md).
+Without `DATABASE_URL` the API still boots; `/health` reports the db as `not_configured`. Migration conventions: [api/MIGRATIONS.md](api/migrations/README.md).
 
 ## CI
 
