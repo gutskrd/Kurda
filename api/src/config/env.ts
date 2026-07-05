@@ -8,6 +8,11 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   /** Injected by the deploy pipeline (KUR-008); "unknown" in local dev. */
   GIT_SHA: z.string().default('unknown'),
+  /** Optional until every environment has Postgres; /health reports not_configured when absent. */
+  DATABASE_URL: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection URL')
+    .optional(),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;

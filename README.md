@@ -27,6 +27,19 @@ Roadmap: [issues](https://github.com/mohamadkrd/Kurda/issues) · [milestones](ht
 
 Per-package commands: `npm run test --workspace shared` (same for `lint` / `typecheck`).
 
+### Database (optional for most work)
+
+The API uses PostgreSQL. Easiest local setup is Docker:
+
+```bash
+docker run -d --name kurda-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=kurda -p 5432:5432 postgres:16
+export DATABASE_URL=postgres://postgres:postgres@localhost:5432/kurda
+npm run migrate:up --workspace api
+npm run db:seed --workspace api
+```
+
+Without `DATABASE_URL` the API still boots; `/health` reports the db as `not_configured`. Migration conventions: [api/migrations/README.md](api/migrations/README.md).
+
 ## CI
 
 Every pull request runs lint, typecheck, and tests — only for the packages the PR touches (plus everything when root config changes). The `ci-ok` job is the single required status check; merges to `main` are blocked until it is green.

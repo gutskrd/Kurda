@@ -33,6 +33,15 @@ describe('loadConfig', () => {
     expect(message).toContain('LOG_LEVEL');
   });
 
+  it('accepts postgres:// and postgresql:// DATABASE_URL', () => {
+    expect(loadConfig({ DATABASE_URL: 'postgres://u:p@localhost:5432/db' }).DATABASE_URL).toBeDefined();
+    expect(loadConfig({ DATABASE_URL: 'postgresql://u:p@localhost:5432/db' }).DATABASE_URL).toBeDefined();
+  });
+
+  it('rejects a non-postgres DATABASE_URL and names the variable', () => {
+    expect(() => loadConfig({ DATABASE_URL: 'mysql://u:p@localhost/db' })).toThrow(/DATABASE_URL/);
+  });
+
   it('returns a frozen config object', () => {
     const config = loadConfig({});
     expect(Object.isFrozen(config)).toBe(true);
