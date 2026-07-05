@@ -4,6 +4,8 @@ import type pg from 'pg';
 import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
+import { setupErrorHandling } from './plugins/errors.js';
+import { setupValidation } from './plugins/validation.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -16,7 +18,12 @@ export function buildApp(config: AppConfig): FastifyInstance {
       // pretty logs are a dev nicety; structured JSON in prod (KUR-009 hardens this)
       transport: config.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
     },
+    // trust an upstream-provided request id (gateway/LB) or generate one
+    requestIdHeader: 'x-request-id',
   });
+
+  setupValidation(app);
+  setupErrorHandling(app, config);
 
   const health = new HealthRegistry();
   if (config.DATABASE_URL) {
