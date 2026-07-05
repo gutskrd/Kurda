@@ -15,6 +15,7 @@ export default tseslint.config(
     // Config must stay the single source of environment truth (KUR-002).
     // api/src/config/env.ts opts out via a file-level eslint-disable.
     files: ['api/src/**/*.ts'],
+    ignores: ['**/*.test.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',
