@@ -1,6 +1,8 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { readFileSync } from 'node:fs';
+import type pg from 'pg';
 import type { AppConfig } from './config/env.js';
+import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
 
 const pkg = JSON.parse(
@@ -17,7 +19,16 @@ export function buildApp(config: AppConfig): FastifyInstance {
   });
 
   const health = new HealthRegistry();
-  health.register('db', notConfigured('KUR-003 (#3)'));
+  if (config.DATABASE_URL) {
+    const pool = createPool(config);
+    app.decorate('db', pool);
+    health.register('db', dbHealthCheck(pool));
+    app.addHook('onClose', async () => {
+      await pool.end();
+    });
+  } else {
+    health.register('db', notConfigured('DATABASE_URL not set'));
+  }
   health.register('redis', notConfigured('KUR-006 (#6)'));
   app.decorate('health', health);
 
@@ -40,5 +51,6 @@ export function buildApp(config: AppConfig): FastifyInstance {
 declare module 'fastify' {
   interface FastifyInstance {
     health: HealthRegistry;
+    db: pg.Pool;
   }
 }
