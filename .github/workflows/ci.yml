@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # Root config changes affect every package, so each filter
+          # includes the shared toolchain files.
+          filters: |
+            shared: &root
+              - 'shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.base.json'
+              - 'eslint.config.mjs'
+              - '.github/workflows/ci.yml'
+            api:
+              - 'api/**'
+              - *root
+            admin:
+              - 'admin/**'
+              - *root
+            mobile:
+              - 'mobile/**'
+              - *root
+
+  check:
+    needs: changes
+    if: needs.changes.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+    name: check (${{ matrix.package }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint --workspace ${{ matrix.package }}
+      - run: npm run typecheck --workspace ${{ matrix.package }}
+      - run: npm run test --workspace ${{ matrix.package }}
+
+  # Single required status check for branch protection: green when every
+  # matrix job passed (or nothing needed checking).
+  ci-ok:
+    needs: [changes, check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify results
+        run: |
+          if [ "${{ needs.check.result }}" = "failure" ] || [ "${{ needs.check.result }}" = "cancelled" ]; then
+            echo "A package check failed."
+            exit 1
+          fi
+          echo "All checks passed."
