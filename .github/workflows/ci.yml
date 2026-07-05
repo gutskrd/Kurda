@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -64,7 +68,11 @@ jobs:
     steps:
       - name: Verify results
         run: |
-          if [ "${{ needs.check.result }}" = "failure" ] || [ "${{ needs.check.result }}" = "cancelled" ]; then
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "Change detection failed."
+            exit 1
+          fi
+          if [ "${{ needs.check.result }}" != "success" ] && [ "${{ needs.check.result }}" != "skipped" ]; then
             echo "A package check failed."
             exit 1
           fi
