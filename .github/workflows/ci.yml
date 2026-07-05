@@ -103,6 +103,9 @@ jobs:
       - run: npm run migrate:down --workspace api
       - run: npm run migrate:up --workspace api
       - run: npm run db:seed --workspace api
+      # integration tests (skipped without DATABASE_URL) run here against
+      # the freshly migrated schema
+      - run: npm run test --workspace api
 
   # Single required status check for branch protection: green when every
   # matrix job passed (or nothing needed checking).
