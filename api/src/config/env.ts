@@ -13,6 +13,11 @@ const envSchema = z.object({
     .string()
     .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection URL')
     .optional(),
+  /** Optional; without it caching is a no-op and /health reports not_configured. */
+  REDIS_URL: z
+    .string()
+    .regex(/^rediss?:\/\//, 'must be a redis:// or rediss:// connection URL')
+    .optional(),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;

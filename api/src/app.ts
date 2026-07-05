@@ -1,6 +1,9 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { readFileSync } from 'node:fs';
 import type pg from 'pg';
+import type { Redis } from 'ioredis';
+import { Cache } from './cache/cache.js';
+import { createRedis, redisHealthCheck } from './cache/redis.js';
 import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
@@ -36,7 +39,18 @@ export function buildApp(config: AppConfig): FastifyInstance {
   } else {
     health.register('db', notConfigured('DATABASE_URL not set'));
   }
-  health.register('redis', notConfigured('KUR-006 (#6)'));
+  if (config.REDIS_URL) {
+    const redis = createRedis(config);
+    app.decorate('redis', redis);
+    app.decorate('cache', new Cache(redis, app.log));
+    health.register('redis', redisHealthCheck(redis));
+    app.addHook('onClose', async () => {
+      redis.disconnect();
+    });
+  } else {
+    app.decorate('cache', new Cache(null, app.log));
+    health.register('redis', notConfigured('REDIS_URL not set'));
+  }
   app.decorate('health', health);
 
   app.get('/health', async (_req, reply) => {
@@ -59,5 +73,7 @@ declare module 'fastify' {
   interface FastifyInstance {
     health: HealthRegistry;
     db: pg.Pool;
+    redis: Redis;
+    cache: Cache;
   }
 }
