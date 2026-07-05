@@ -17,6 +17,7 @@
   "dependencies": {
     "@kurda/shared": "*",
     "fastify": "^5.10.0",
+    "ioredis": "^5.11.1",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.22.0",
     "zod": "^4.4.3"
