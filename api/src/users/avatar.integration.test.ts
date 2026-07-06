@@ -102,4 +102,35 @@ describe.skipIf(!DATABASE_URL)('avatar endpoints (integration)', () => {
     });
     expect(missing.statusCode).toBe(404);
   });
+
+  it('revalidates by ETag: matching If-None-Match gets 304 (KUR-079)', async () => {
+    const first = await app.inject({ method: 'GET', url: `/users/${userId}/avatar.svg` });
+    const etag = first.headers.etag as string;
+    expect(etag).toMatch(/^".+"$/);
+
+    const revalidated = await app.inject({
+      method: 'GET',
+      url: `/users/${userId}/avatar.svg`,
+      headers: { 'if-none-match': etag },
+    });
+    expect(revalidated.statusCode).toBe(304);
+    expect(revalidated.body).toBe('');
+  });
+
+  it('saving the avatar invalidates the cached composite (KUR-079)', async () => {
+    const before = await app.inject({ method: 'GET', url: `/users/${userId}/avatar.svg` });
+    const oldEtag = before.headers.etag as string;
+
+    const save = await putAvatar({ ...DEFAULT_AVATAR, background: 'bg-dest' });
+    expect(save.statusCode).toBe(200);
+
+    const after = await app.inject({
+      method: 'GET',
+      url: `/users/${userId}/avatar.svg`,
+      headers: { 'if-none-match': oldEtag },
+    });
+    expect(after.statusCode).toBe(200); // old etag no longer matches
+    expect(after.headers.etag).not.toBe(oldEtag);
+    expect(after.body).toContain('#7DBB6C'); // deşt green rendered
+  });
 });
