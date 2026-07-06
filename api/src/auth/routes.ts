@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
+import { OAuthService } from './oauth.js';
 import { AuthService } from './service.js';
 
 export const registerBodySchema = z.object({
@@ -34,6 +35,12 @@ export const resendVerificationBodySchema = z.object({
 export const resetPasswordBodySchema = z.object({
   token: z.string().min(20).max(200),
   password: z.string().min(8).max(128),
+});
+
+export const oauthBodySchema = z.object({
+  provider: z.enum(['google', 'apple']),
+  idToken: z.string().min(20).max(4_096),
+  deviceName: z.string().max(80).optional(),
 });
 
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): void {
@@ -140,6 +147,20 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       const body = req.body as z.infer<typeof resetPasswordBodySchema>;
       await service.resetPassword(body.token, body.password);
       return { reset: true };
+    },
+  );
+
+  const oauth = new OAuthService(config, app.db);
+  app.post(
+    '/auth/oauth',
+    {
+      schema: { body: oauthBodySchema },
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+    },
+    async (req, reply) => {
+      const body = req.body as z.infer<typeof oauthBodySchema>;
+      const result = await oauth.signIn(body.provider, body.idToken, body.deviceName);
+      return reply.code(result.created ? 201 : 200).send(result);
     },
   );
 }

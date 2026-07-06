@@ -30,6 +30,9 @@ const envSchema = z.object({
   CDN_BASE_URL: z.string().url().optional(),
   /** HMAC secret for access tokens. MUST be overridden in production. */
   JWT_SECRET: z.string().min(32).default('kurda-dev-secret-do-not-use-in-prod!!'),
+  /** Comma-separated OAuth audiences (iOS/Android/web client ids). */
+  GOOGLE_CLIENT_IDS: z.string().optional(),
+  APPLE_CLIENT_IDS: z.string().optional(),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
