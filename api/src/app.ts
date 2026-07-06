@@ -7,6 +7,7 @@ import { createRedis, redisHealthCheck } from './cache/redis.js';
 import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
+import { setupMetrics } from './observability/metrics.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupValidation } from './plugins/validation.js';
 
@@ -18,8 +19,20 @@ export function buildApp(config: AppConfig): FastifyInstance {
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
-      // pretty logs are a dev nicety; structured JSON in prod (KUR-009 hardens this)
+      // pretty logs are a dev nicety; structured JSON everywhere else
       transport: config.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
+      // PII never reaches log storage (KUR-009)
+      redact: {
+        paths: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          '*.password',
+          '*.passwordHash',
+          '*.token',
+          '*.email',
+        ],
+        censor: '[redacted]',
+      },
     },
     // trust an upstream-provided request id (gateway/LB) or generate one
     requestIdHeader: 'x-request-id',
@@ -27,6 +40,15 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
   setupValidation(app);
   setupErrorHandling(app, config);
+  setupMetrics(app);
+
+  // once auth (KUR-016) sets req.user, every log line for the request
+  // carries the userId
+  app.addHook('onRequest', async (req) => {
+    if (req.user?.id) {
+      req.log = req.log.child({ userId: req.user.id });
+    }
+  });
 
   const health = new HealthRegistry();
   if (config.DATABASE_URL) {
@@ -75,5 +97,9 @@ declare module 'fastify' {
     db: pg.Pool;
     redis: Redis;
     cache: Cache;
+  }
+  interface FastifyRequest {
+    /** Set by the auth middleware (KUR-016). */
+    user?: { id: string };
   }
 }
