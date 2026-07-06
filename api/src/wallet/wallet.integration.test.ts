@@ -38,7 +38,17 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
+    // user hard-delete cascades into the ledger, which requires the
+    // explicit transaction-scoped admin flag (see wallet migration)
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE id = $1`, [userId]);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
     await pool.end();
     await app.close();
   });
@@ -120,6 +130,20 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
     await expect(
       pool.query(`DELETE FROM wallet_ledger WHERE user_id = $1`, [userId]),
     ).rejects.toThrow(/append-only/);
+  });
+
+  it('UPDATE stays blocked even under the delete escape hatch', async () => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await expect(
+        client.query(`UPDATE wallet_ledger SET amount = 1 WHERE user_id = $1`, [userId]),
+      ).rejects.toThrow(/append-only/);
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
   });
 
   it('rejects zero/negative/fractional amounts at the service boundary', async () => {

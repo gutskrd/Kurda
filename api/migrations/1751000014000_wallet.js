@@ -27,7 +27,16 @@ export const up = (pgm) => {
     'wallet_ledger_immutable',
     [],
     { returns: 'trigger', language: 'plpgsql', replace: true },
-    `BEGIN RAISE EXCEPTION 'wallet_ledger is append-only'; END;`,
+    // UPDATE is never allowed. DELETE only under an explicit
+    // transaction-scoped flag (SET LOCAL kurda.ledger_admin = 'on') so
+    // account hard-deletion (users FK cascade) remains possible while
+    // casual rewrites stay impossible.
+    `BEGIN
+       IF TG_OP = 'DELETE' AND current_setting('kurda.ledger_admin', true) = 'on' THEN
+         RETURN OLD;
+       END IF;
+       RAISE EXCEPTION 'wallet_ledger is append-only';
+     END;`,
   );
   pgm.createTrigger('wallet_ledger', 'wallet_ledger_no_rewrite', {
     when: 'BEFORE',
