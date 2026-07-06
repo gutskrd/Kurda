@@ -31,6 +31,11 @@ export const resendVerificationBodySchema = z.object({
   email: z.email().max(254),
 });
 
+export const resetPasswordBodySchema = z.object({
+  token: z.string().min(20).max(200),
+  password: z.string().min(8).max(128),
+});
+
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): void {
   const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log });
 
@@ -107,6 +112,34 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       );
       // always 200 — never confirms whether the email has an account
       return { sent: true };
+    },
+  );
+
+  app.post(
+    '/auth/request-password-reset',
+    {
+      schema: { body: resendVerificationBodySchema },
+      config: { rateLimit: { max: 3, windowMs: 3_600_000, per: 'ip' as const } },
+    },
+    async (req) => {
+      await service.requestPasswordReset(
+        (req.body as z.infer<typeof resendVerificationBodySchema>).email,
+      );
+      // always 200 — no account enumeration
+      return { sent: true };
+    },
+  );
+
+  app.post(
+    '/auth/reset-password',
+    {
+      schema: { body: resetPasswordBodySchema },
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+    },
+    async (req) => {
+      const body = req.body as z.infer<typeof resetPasswordBodySchema>;
+      await service.resetPassword(body.token, body.password);
+      return { reset: true };
     },
   );
 }
