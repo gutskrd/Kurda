@@ -24,3 +24,4 @@ export { setupAuth, requireAuth, requireRoles, type AuthFailure } from './plugin
 export { createEmailToken, consumeEmailToken, EMAIL_TOKEN_TTL_HOURS, type EmailTokenPurpose } from './auth/email-tokens.js';
 export { OAuthService, verifyProviderToken, defaultJwksResolver, type OAuthProvider, type ProviderIdentity, type JwksResolver } from './auth/oauth.js';
 export { oauthBodySchema } from './auth/routes.js';
+export { registerUserRoutes, sanitizeBio, patchMeBodySchema, USERNAME_CHANGE_COOLDOWN_DAYS } from './users/routes.js';
