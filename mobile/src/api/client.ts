@@ -47,6 +47,9 @@ export class ApiClient {
   post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<ApiResult<T>> {
     return this.request('POST', path, { ...options, body });
   }
+  put<T>(path: string, body?: unknown, options?: RequestOptions): Promise<ApiResult<T>> {
+    return this.request('PUT', path, { ...options, body });
+  }
   patch<T>(path: string, body?: unknown, options?: RequestOptions): Promise<ApiResult<T>> {
     return this.request('PATCH', path, { ...options, body });
   }
