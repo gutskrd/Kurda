@@ -114,10 +114,23 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/kurda_test
       REDIS_URL: redis://localhost:6379
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: kurda-test
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Start MinIO (S3-compatible storage for media tests)
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio server /data
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:9000/minio/health/live && break
+            sleep 1
+          done
       - name: Migration files are immutable once merged
         if: github.event_name == 'pull_request'
         run: |

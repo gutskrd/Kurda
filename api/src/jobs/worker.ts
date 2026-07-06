@@ -1,20 +1,30 @@
 import { Worker } from 'bullmq';
 import type pino from 'pino';
 import type { AppConfig } from '../config/env.js';
+import { createPool } from '../db/pool.js';
+import { MediaService } from '../media/service.js';
+import { createStorage } from '../media/storage.js';
+import { makeCleanupOrphansJob } from './cleanup-orphans.js';
 import { sendEmailJob } from './email.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
 
-export function buildRegistry(): JobRegistry {
+export function buildRegistry(config?: AppConfig): JobRegistry {
   const registry = new JobRegistry();
   registry.register(sendEmailJob);
+  if (config?.DATABASE_URL) {
+    const storage = createStorage(config);
+    if (storage) {
+      registry.register(makeCleanupOrphansJob(new MediaService(createPool(config), storage)));
+    }
+  }
   return registry;
 }
 
 export function createWorker(
   config: AppConfig,
   log: pino.Logger,
-  registry: JobRegistry = buildRegistry(),
+  registry: JobRegistry = buildRegistry(config),
 ): Worker {
   const worker = new Worker(
     QUEUE_NAME,

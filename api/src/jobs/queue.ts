@@ -62,6 +62,14 @@ export class JobQueue {
     return job.id as string;
   }
 
+  /** Upserts a repeatable schedule for a job (stable id per job name). */
+  async scheduleEvery<T>(def: JobDefinition<T>, everyMs: number, payload: T): Promise<void> {
+    await this.queue.add(def.name, payload, {
+      repeat: { every: everyMs },
+      jobId: `repeat:${def.name}`,
+    });
+  }
+
   async close(): Promise<void> {
     await this.queue.close();
   }
