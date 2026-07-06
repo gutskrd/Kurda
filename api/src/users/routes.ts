@@ -81,6 +81,69 @@ export function registerUserRoutes(app: FastifyInstance): void {
     return { user: toMe(result.rows[0] as MeRow) };
   });
 
+  /** Active sessions = live refresh-token families (KUR-022). */
+  app.get('/me/sessions', { preHandler: requireAuth }, async (req) => {
+    const result = await app.db.query<{
+      family_id: string;
+      device_name: string | null;
+      started_at: Date;
+      last_seen_at: Date;
+    }>(
+      `SELECT family_id, max(device_name) AS device_name,
+              min(created_at) AS started_at, max(created_at) AS last_seen_at
+       FROM refresh_tokens
+       WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+       GROUP BY family_id
+       ORDER BY max(created_at) DESC`,
+      [req.user!.id],
+    );
+    return {
+      sessions: result.rows.map((row) => ({
+        id: row.family_id,
+        deviceName: row.device_name,
+        startedAt: new Date(row.started_at).toISOString(),
+        lastSeenAt: new Date(row.last_seen_at).toISOString(),
+        current: row.family_id === req.user!.familyId,
+      })),
+    };
+  });
+
+  app.delete(
+    '/me/sessions/:id',
+    {
+      schema: { params: z.object({ id: z.uuid() }) },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const result = await app.db.query(
+        `UPDATE refresh_tokens SET revoked_at = now()
+         WHERE family_id = $1 AND user_id = $2 AND revoked_at IS NULL`,
+        [id, req.user!.id],
+      );
+      if ((result.rowCount ?? 0) === 0) {
+        throw new AppError('SESSION_NOT_FOUND', 404, 'no active session with that id');
+      }
+      // when the caller revoked their own session, the client must drop
+      // its tokens now — the access token would otherwise live ≤15 min
+      return { revoked: true, current: id === req.user!.familyId };
+    },
+  );
+
+  /** Logout everywhere: kills refresh sessions AND live access tokens. */
+  app.delete('/me/sessions', { preHandler: requireAuth }, async (req) => {
+    await app.db.query(
+      `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
+      [req.user!.id],
+    );
+    // token_version bump invalidates every outstanding access token
+    // immediately, including the one making this request
+    await app.db.query(`UPDATE users SET token_version = token_version + 1 WHERE id = $1`, [
+      req.user!.id,
+    ]);
+    return { revoked: true, everywhere: true };
+  });
+
   app.patch(
     '/me',
     { schema: { body: patchMeBodySchema }, preHandler: requireAuth },

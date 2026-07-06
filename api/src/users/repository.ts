@@ -11,6 +11,8 @@ export interface UserRow {
   password_hash: string | null;
   locale: string;
   timezone: string;
+  token_version: number;
+  roles: string[];
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

@@ -47,7 +47,7 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       req.authFailure = 'account_disabled';
       return;
     }
-    req.user = { id: user.id, roles: user.roles };
+    req.user = { id: user.id, roles: user.roles, familyId: claims.fam };
   });
 }
 
