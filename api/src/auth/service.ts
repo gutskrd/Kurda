@@ -9,6 +9,9 @@ import {
   UsersRepository,
   type UserRow,
 } from '../users/repository.js';
+import { sendEmailJob } from '../jobs/email.js';
+import type { JobQueue } from '../jobs/queue.js';
+import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
 
 /** Verified against when the user doesn't exist, so login latency doesn't
@@ -68,14 +71,59 @@ export function toPublicUser(row: UserRow): PublicUser {
   };
 }
 
+export interface AuthServiceDeps {
+  jobs?: JobQueue;
+  log?: { warn: (obj: unknown, msg: string) => void };
+}
+
 export class AuthService {
   private readonly users: UsersRepository;
 
   constructor(
     private readonly config: AppConfig,
     private readonly pool: pg.Pool,
+    private readonly deps: AuthServiceDeps = {},
   ) {
     this.users = new UsersRepository(pool);
+  }
+
+  /** Best-effort: signup must never fail because email couldn't enqueue. */
+  private async sendVerificationEmail(user: { id: string; email: string; username: string }) {
+    try {
+      const token = await createEmailToken(this.pool, user.id, 'verify_email');
+      if (this.deps.jobs) {
+        await this.deps.jobs.enqueue(sendEmailJob, {
+          to: user.email,
+          template: 'verify-email',
+          vars: { token, username: user.username },
+        });
+      }
+    } catch (err) {
+      this.deps.log?.warn({ err, userId: user.id }, 'failed to enqueue verification email');
+    }
+  }
+
+  async verifyEmail(rawToken: string): Promise<void> {
+    const userId = await consumeEmailToken(this.pool, rawToken, 'verify_email');
+    if (!userId) {
+      throw new AppError('INVALID_TOKEN', 400, 'verification link is invalid or expired');
+    }
+    await this.pool.query(
+      `UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $1`,
+      [userId],
+    );
+  }
+
+  /** Always succeeds from the caller's perspective (no enumeration). */
+  async resendVerification(email: string): Promise<void> {
+    const user = await this.users.findByEmail(email);
+    if (!user) return;
+    const verified = await this.pool.query<{ email_verified_at: Date | null }>(
+      `SELECT email_verified_at FROM users WHERE id = $1`,
+      [user.id],
+    );
+    if (verified.rows[0]?.email_verified_at) return;
+    await this.sendVerificationEmail(user);
   }
 
   async register(input: RegisterInput): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
@@ -112,6 +160,7 @@ export class AuthService {
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
     });
+    await this.sendVerificationEmail(user);
     return { user: toPublicUser(user), tokens };
   }
 

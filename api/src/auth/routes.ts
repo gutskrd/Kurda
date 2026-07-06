@@ -23,8 +23,16 @@ export const refreshBodySchema = z.object({
   refreshToken: z.string().min(20).max(200),
 });
 
+export const verifyEmailBodySchema = z.object({
+  token: z.string().min(20).max(200),
+});
+
+export const resendVerificationBodySchema = z.object({
+  email: z.email().max(254),
+});
+
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): void {
-  const service = new AuthService(config, app.db);
+  const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log });
 
   app.post(
     '/auth/register',
@@ -71,6 +79,34 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         refreshToken: tokens.refreshToken,
         accessExpiresInSeconds: tokens.accessExpiresInSeconds,
       };
+    },
+  );
+
+  app.post(
+    '/auth/verify-email',
+    {
+      schema: { body: verifyEmailBodySchema },
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+    },
+    async (req) => {
+      await service.verifyEmail((req.body as z.infer<typeof verifyEmailBodySchema>).token);
+      return { verified: true };
+    },
+  );
+
+  app.post(
+    '/auth/resend-verification',
+    {
+      schema: { body: resendVerificationBodySchema },
+      // 3/hour: verification mail must not become a spam vector
+      config: { rateLimit: { max: 3, windowMs: 3_600_000, per: 'ip' as const } },
+    },
+    async (req) => {
+      await service.resendVerification(
+        (req.body as z.infer<typeof resendVerificationBodySchema>).email,
+      );
+      // always 200 — never confirms whether the email has an account
+      return { sent: true };
     },
   );
 }
