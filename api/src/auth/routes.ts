@@ -1,6 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppConfig } from '../config/env.js';
+import { AppError } from '../plugins/errors.js';
+import { verifyCaptcha } from './captcha.js';
+import { isDisposableEmail } from './disposable-domains.js';
 import { OAuthService } from './oauth.js';
 import { AuthService } from './service.js';
 
@@ -12,7 +15,14 @@ export const registerBodySchema = z.object({
   locale: z.enum(['en', 'ku', 'de', 'tr', 'ar']).optional(),
   timezone: z.string().max(50).optional(),
   deviceName: z.string().max(80).optional(),
+  captchaToken: z.string().max(3_000).optional(),
 });
+
+/** One generic rejection for every anti-bot check — never reveals
+ *  whether CAPTCHA, blocklist or anything else fired (KUR-025). */
+function signupRejected(): AppError {
+  return new AppError('SIGNUP_REJECTED', 400, 'registration could not be completed');
+}
 
 export const loginBodySchema = z.object({
   email: z.email().max(254),
@@ -30,6 +40,11 @@ export const verifyEmailBodySchema = z.object({
 
 export const resendVerificationBodySchema = z.object({
   email: z.email().max(254),
+});
+
+export const passwordResetRequestBodySchema = z.object({
+  email: z.email().max(254),
+  captchaToken: z.string().max(3_000).optional(),
 });
 
 export const resetPasswordBodySchema = z.object({
@@ -56,7 +71,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       },
     },
     async (req, reply) => {
-      const result = await service.register(req.body as z.infer<typeof registerBodySchema>);
+      const body = req.body as z.infer<typeof registerBodySchema>;
+      if (isDisposableEmail(body.email)) throw signupRejected();
+      if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw signupRejected();
+      const result = await service.register(body);
       return reply.code(201).send(result);
     },
   );
@@ -126,13 +144,16 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
   app.post(
     '/auth/request-password-reset',
     {
-      schema: { body: resendVerificationBodySchema },
+      schema: { body: passwordResetRequestBodySchema },
       config: { rateLimit: { max: 3, windowMs: 3_600_000, per: 'ip' as const } },
     },
     async (req) => {
-      await service.requestPasswordReset(
-        (req.body as z.infer<typeof resendVerificationBodySchema>).email,
-      );
+      const body = req.body as z.infer<typeof passwordResetRequestBodySchema>;
+      if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) {
+        // same body as success — a bot learns nothing here either
+        return { sent: true };
+      }
+      await service.requestPasswordReset(body.email);
       // always 200 — no account enumeration
       return { sent: true };
     },

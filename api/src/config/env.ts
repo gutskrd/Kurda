@@ -33,6 +33,10 @@ const envSchema = z.object({
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */
   GOOGLE_CLIENT_IDS: z.string().optional(),
   APPLE_CLIENT_IDS: z.string().optional(),
+  /** Cloudflare Turnstile; CAPTCHA disabled when unset (KUR-025). */
+  TURNSTILE_SECRET: z.string().optional(),
+  /** 'true' admits traffic when the CAPTCHA provider is down. */
+  CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;

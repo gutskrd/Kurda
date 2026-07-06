@@ -28,3 +28,5 @@ export { registerUserRoutes, sanitizeBio, patchMeBodySchema, USERNAME_CHANGE_COO
 export { LockoutService, lockDurationMinutes, LOCKOUT_THRESHOLD, FAILURE_WINDOW_MINUTES } from './auth/lockout.js';
 export { GdprService, DELETION_GRACE_DAYS } from './gdpr/service.js';
 export { makeAnonymizeJob, makeExportJob, ANONYMIZE_JOB_NAME, EXPORT_JOB_NAME } from './jobs/gdpr-jobs.js';
+export { verifyCaptcha } from './auth/captcha.js';
+export { isDisposableEmail } from './auth/disposable-domains.js';
