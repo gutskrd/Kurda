@@ -18,6 +18,11 @@ import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 import { registerAvatarRoutes } from './users/avatar-routes.js';
+import fastifyWebsocket from '@fastify/websocket';
+import { createQueueConnection } from './jobs/queue.js';
+import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
+import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
+import { MemoryKV, RedisKV } from './realtime/kv.js';
 import { registerUserRoutes } from './users/routes.js';
 import { registerWalletRoutes } from './wallet/routes.js';
 
@@ -25,7 +30,12 @@ const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 ) as { version: string };
 
-export function buildApp(config: AppConfig): FastifyInstance {
+export interface BuildAppOptions {
+  /** Test seam: shrink heartbeat windows etc. */
+  gateway?: GatewayOptions;
+}
+
+export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
@@ -108,6 +118,18 @@ export function buildApp(config: AppConfig): FastifyInstance {
     registerUserRoutes(app);
     registerAvatarRoutes(app);
     registerWalletRoutes(app);
+
+    // realtime gateway (KUR-049): multi-node with Redis, single-node without
+    const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
+    const bus = app.redis
+      ? new RedisRoomBus(app.redis, createQueueConnection(config))
+      : new LocalRoomBus();
+    const realtime = new RealtimeGateway(kv, bus, options.gateway);
+    app.decorate('realtime', realtime);
+    app.register(fastifyWebsocket);
+    app.register(async (scoped) => {
+      realtime.registerRoutes(scoped);
+    });
   }
 
   app.get('/health', async (_req, reply) => {
@@ -136,6 +158,8 @@ declare module 'fastify' {
     jobs?: JobQueue;
     /** Present when the S3_* env group is configured. */
     storage?: MediaStorage;
+    /** Present when DATABASE_URL is configured. */
+    realtime: RealtimeGateway;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
