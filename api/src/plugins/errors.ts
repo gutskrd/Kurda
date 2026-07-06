@@ -1,5 +1,6 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
 import type { AppConfig } from '../config/env.js';
+import { captureError } from '../observability/sentry.js';
 import { RequestValidationError } from './validation.js';
 
 /**
@@ -63,6 +64,7 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
     const status = err.statusCode && err.statusCode >= 400 && err.statusCode < 500 ? err.statusCode : 500;
     if (status === 500) {
       req.log.error(err);
+      captureError(err, { requestId: req.id, method: req.method, url: req.url });
       return reply.code(500).send({
         code: 'INTERNAL_ERROR',
         message: config.NODE_ENV === 'development' ? err.message : 'internal server error',

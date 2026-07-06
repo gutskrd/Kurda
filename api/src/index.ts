@@ -10,3 +10,5 @@ export { JobQueue, QUEUE_NAME, DEFAULT_JOB_OPTIONS, type EnqueueOptions } from '
 export { defineJob, JobRegistry, type JobDefinition, type JobContext } from './jobs/registry.js';
 export { sendEmailJob } from './jobs/email.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
+export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
+export { setupMetrics } from './observability/metrics.js';

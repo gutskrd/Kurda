@@ -1,5 +1,6 @@
 import { buildApp } from './app.js';
 import { loadConfig } from './config/env.js';
+import { initSentry } from './observability/sentry.js';
 
 async function main(): Promise<void> {
   let config;
@@ -12,6 +13,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  initSentry(config);
   const app = buildApp(config);
   try {
     await app.listen({ port: config.PORT, host: config.HOST });

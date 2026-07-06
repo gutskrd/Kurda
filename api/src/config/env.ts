@@ -18,6 +18,8 @@ const envSchema = z.object({
     .string()
     .regex(/^rediss?:\/\//, 'must be a redis:// or rediss:// connection URL')
     .optional(),
+  /** Optional; error tracking is disabled without it (KUR-009). */
+  SENTRY_DSN: z.string().url().optional(),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
