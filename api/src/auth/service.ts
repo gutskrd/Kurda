@@ -103,6 +103,65 @@ export class AuthService {
     }
   }
 
+  /** Always succeeds from the caller's perspective (no enumeration). */
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.users.findByEmail(email);
+    if (!user) return;
+    try {
+      if (!user.password_hash) {
+        // OAuth-only account (KUR-019): explain instead of a useless link
+        if (this.deps.jobs) {
+          await this.deps.jobs.enqueue(sendEmailJob, {
+            to: user.email,
+            template: 'oauth-no-password',
+            vars: { username: user.username },
+          });
+        }
+        return;
+      }
+      const token = await createEmailToken(this.pool, user.id, 'password_reset');
+      if (this.deps.jobs) {
+        await this.deps.jobs.enqueue(sendEmailJob, {
+          to: user.email,
+          template: 'password-reset',
+          vars: { token, username: user.username },
+        });
+      }
+    } catch (err) {
+      this.deps.log?.warn({ err, userId: user.id }, 'failed to enqueue password reset email');
+    }
+  }
+
+  async resetPassword(rawToken: string, newPassword: string): Promise<void> {
+    const userId = await consumeEmailToken(this.pool, rawToken, 'password_reset');
+    if (!userId) {
+      throw new AppError('INVALID_TOKEN', 400, 'reset link is invalid or expired');
+    }
+    const passwordHash = await hashPassword(newPassword);
+    // token_version bump invalidates every outstanding access token;
+    // revoking refresh tokens kills all sessions (KUR-016 semantics)
+    const updated = await this.pool.query<{ email: string; username: string }>(
+      `UPDATE users SET password_hash = $2, token_version = token_version + 1
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING email, username`,
+      [userId, passwordHash],
+    );
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
+      [userId],
+    );
+    const user = updated.rows[0];
+    if (user && this.deps.jobs) {
+      await this.deps.jobs
+        .enqueue(sendEmailJob, {
+          to: user.email,
+          template: 'password-changed',
+          vars: { username: user.username },
+        })
+        .catch(() => undefined);
+    }
+  }
+
   async verifyEmail(rawToken: string): Promise<void> {
     const userId = await consumeEmailToken(this.pool, rawToken, 'verify_email');
     if (!userId) {

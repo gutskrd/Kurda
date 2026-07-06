@@ -11,7 +11,13 @@ export const sendEmailJob = defineJob({
   name: 'send-email',
   schema: z.object({
     to: z.email(),
-    template: z.enum(['verify-email', 'password-reset', 'password-changed', 'deletion-notice']),
+    template: z.enum([
+      'verify-email',
+      'password-reset',
+      'password-changed',
+      'oauth-no-password',
+      'deletion-notice',
+    ]),
     vars: z.record(z.string(), z.string()).default({}),
   }),
   handler: async (payload, ctx) => {
