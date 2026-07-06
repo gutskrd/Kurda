@@ -2,9 +2,11 @@ import { Worker } from 'bullmq';
 import type pino from 'pino';
 import type { AppConfig } from '../config/env.js';
 import { createPool } from '../db/pool.js';
+import { GdprService } from '../gdpr/service.js';
 import { MediaService } from '../media/service.js';
 import { createStorage } from '../media/storage.js';
 import { makeCleanupOrphansJob } from './cleanup-orphans.js';
+import { makeAnonymizeJob, makeExportJob } from './gdpr-jobs.js';
 import { sendEmailJob } from './email.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
@@ -13,9 +15,15 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
   const registry = new JobRegistry();
   registry.register(sendEmailJob);
   if (config?.DATABASE_URL) {
+    const pool = createPool(config);
     const storage = createStorage(config);
     if (storage) {
-      registry.register(makeCleanupOrphansJob(new MediaService(createPool(config), storage)));
+      registry.register(makeCleanupOrphansJob(new MediaService(pool, storage)));
+    }
+    const gdpr = new GdprService(pool, { storage });
+    registry.register(makeAnonymizeJob(gdpr));
+    if (storage) {
+      registry.register(makeExportJob(gdpr));
     }
   }
   return registry;

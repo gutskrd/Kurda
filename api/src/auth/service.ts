@@ -270,6 +270,17 @@ export class AuthService {
 
     await this.lockouts.clear('account', user.id);
 
+    // a returning user keeps their account: logging in during the
+    // deletion grace period cancels the deletion (KUR-024)
+    const cancelled = await this.pool.query(
+      `UPDATE users SET deletion_requested_at = NULL
+       WHERE id = $1 AND deletion_requested_at IS NOT NULL`,
+      [user.id],
+    );
+    if ((cancelled.rowCount ?? 0) > 0) {
+      this.deps.log?.warn({ userId: user.id }, 'account deletion cancelled by login');
+    }
+
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
     });

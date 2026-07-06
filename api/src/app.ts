@@ -5,6 +5,7 @@ import type { Redis } from 'ioredis';
 import { registerAuthRoutes } from './auth/routes.js';
 import { Cache } from './cache/cache.js';
 import { JobQueue } from './jobs/queue.js';
+import { createStorage, type MediaStorage } from './media/storage.js';
 import { createRedis, redisHealthCheck } from './cache/redis.js';
 import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
@@ -92,6 +93,11 @@ export function buildApp(config: AppConfig): FastifyInstance {
   // down and the limiter then allows requests rather than blocking all
   setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
 
+  const storage = createStorage(config);
+  if (storage) {
+    app.decorate('storage', storage);
+  }
+
   // auth + user endpoints need the database
   if (config.DATABASE_URL) {
     registerAuthRoutes(app, config);
@@ -122,6 +128,8 @@ declare module 'fastify' {
     cache: Cache;
     /** Present when REDIS_URL is configured. */
     jobs?: JobQueue;
+    /** Present when the S3_* env group is configured. */
+    storage?: MediaStorage;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
