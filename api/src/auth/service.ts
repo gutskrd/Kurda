@@ -9,7 +9,16 @@ import {
   UsersRepository,
   type UserRow,
 } from '../users/repository.js';
-import { issueTokenPair, type IssuedTokens } from './tokens.js';
+import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
+
+/** Verified against when the user doesn't exist, so login latency doesn't
+ *  reveal account existence. */
+const DUMMY_HASH_PROMISE = argon2.hash('kurda-timing-equalizer', {
+  type: argon2.argon2id,
+  memoryCost: 19 * 1024,
+  timeCost: 2,
+  parallelism: 1,
+});
 
 /** Argon2id with OWASP-recommended parameters. */
 const ARGON2_OPTIONS: argon2.Options = {
@@ -104,5 +113,95 @@ export class AuthService {
       deviceName: input.deviceName,
     });
     return { user: toPublicUser(user), tokens };
+  }
+
+  async login(input: {
+    email: string;
+    password: string;
+    deviceName?: string;
+  }): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
+    const invalid = () => new AppError('INVALID_CREDENTIALS', 401, 'invalid email or password');
+
+    const user = await this.users.findByEmail(input.email);
+    if (!user || !user.password_hash) {
+      // burn the same argon2 cost as a real check (timing equalization)
+      await verifyPassword(await DUMMY_HASH_PROMISE, input.password);
+      throw invalid();
+    }
+    if (!(await verifyPassword(user.password_hash, input.password))) {
+      throw invalid();
+    }
+
+    const tokens = await issueTokenPair(this.config, this.pool, user, {
+      deviceName: input.deviceName,
+    });
+    return { user: toPublicUser(user), tokens };
+  }
+
+  /**
+   * Rotates a refresh token (KUR-015): the presented token is retired and
+   * a new one issued in the same family. Presenting an already-rotated or
+   * revoked token is treated as theft — the entire family is revoked.
+   */
+  async refresh(rawToken: string): Promise<IssuedTokens> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const found = await client.query<{
+        id: string;
+        user_id: string;
+        family_id: string;
+        device_name: string | null;
+        expires_at: Date;
+        revoked_at: Date | null;
+        replaced_by: string | null;
+      }>(`SELECT * FROM refresh_tokens WHERE token_hash = $1 FOR UPDATE`, [
+        hashRefreshToken(rawToken),
+      ]);
+
+      const row = found.rows[0];
+      if (!row) {
+        await client.query('ROLLBACK');
+        throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
+      }
+
+      if (row.revoked_at || row.replaced_by) {
+        // reuse of a rotated token — assume the family is compromised
+        await client.query(
+          `UPDATE refresh_tokens SET revoked_at = now()
+           WHERE family_id = $1 AND revoked_at IS NULL`,
+          [row.family_id],
+        );
+        await client.query('COMMIT');
+        throw new AppError('REFRESH_REUSED', 401, 'refresh token reuse detected; session revoked');
+      }
+
+      if (new Date(row.expires_at).getTime() < Date.now()) {
+        await client.query('ROLLBACK');
+        throw new AppError('REFRESH_EXPIRED', 401, 'refresh token expired');
+      }
+
+      const user = await this.users.findById(row.user_id);
+      if (!user) {
+        await client.query('ROLLBACK');
+        throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
+      }
+
+      const tokens = await issueTokenPair(this.config, client, user, {
+        familyId: row.family_id,
+        deviceName: row.device_name ?? undefined,
+      });
+      await client.query(
+        `UPDATE refresh_tokens SET revoked_at = now(), replaced_by = $2 WHERE id = $1`,
+        [row.id, tokens.refreshTokenId],
+      );
+      await client.query('COMMIT');
+      return tokens;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 }

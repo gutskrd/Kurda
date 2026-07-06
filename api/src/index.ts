@@ -19,3 +19,4 @@ export { MediaService, ORPHAN_AGE_HOURS } from './media/service.js';
 export { AuthService, hashPassword, verifyPassword, toPublicUser, type PublicUser, type RegisterInput } from './auth/service.js';
 export { issueAccessToken, verifyAccessToken, issueTokenPair, hashRefreshToken, ACCESS_TOKEN_TTL_SECONDS, type AccessTokenClaims, type IssuedTokens } from './auth/tokens.js';
 export { registerAuthRoutes, registerBodySchema } from './auth/routes.js';
+export { loginBodySchema, refreshBodySchema } from './auth/routes.js';

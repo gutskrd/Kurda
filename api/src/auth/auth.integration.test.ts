@@ -101,4 +101,95 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
     expect(last?.statusCode).toBe(429);
     expect(last?.json().code).toBe('RATE_LIMITED');
   });
+
+  describe('POST /auth/login', () => {
+    const login = (body: Record<string, unknown>, ip: string) =>
+      app.inject({ method: 'POST', url: '/auth/login', payload: body, remoteAddress: ip });
+
+    beforeAll(async () => {
+      await register(
+        { email: email('login'), username: uname('login'), password: 'a-strong-password' },
+        '10.2.0.1',
+      );
+    });
+
+    it('returns user + tokens on valid credentials', async () => {
+      const res = await login({ email: email('login'), password: 'a-strong-password' }, '10.2.0.2');
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.user.username).toBe(uname('login'));
+      const claims = await verifyAccessToken(config, body.tokens.accessToken);
+      expect(claims?.sub).toBe(body.user.id);
+    });
+
+    it('wrong password and unknown email return the identical error', async () => {
+      const wrongPw = await login({ email: email('login'), password: 'wrong-password' }, '10.2.0.3');
+      const noUser = await login(
+        { email: email('ghost'), password: 'a-strong-password' },
+        '10.2.0.4',
+      );
+      expect(wrongPw.statusCode).toBe(401);
+      expect(noUser.statusCode).toBe(401);
+      expect(wrongPw.json().code).toBe('INVALID_CREDENTIALS');
+      expect(noUser.json().code).toBe(wrongPw.json().code);
+      expect(noUser.json().message).toBe(wrongPw.json().message);
+    });
+
+    it('rate limits login attempts per IP (5/min)', async () => {
+      let last;
+      for (let i = 0; i < 6; i++) {
+        last = await login({ email: email('login'), password: 'wrong' }, '10.9.9.8');
+      }
+      expect(last?.statusCode).toBe(429);
+    });
+  });
+
+  describe('POST /auth/refresh (rotation)', () => {
+    const refresh = (refreshToken: string, ip: string) =>
+      app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken }, remoteAddress: ip });
+
+    async function freshTokens(name: string, ip: string) {
+      const res = await register(
+        { email: email(name), username: uname(name), password: 'a-strong-password' },
+        ip,
+      );
+      return res.json().tokens as { accessToken: string; refreshToken: string };
+    }
+
+    it('rotates: new pair works, and reusing the old token kills the family', async () => {
+      const t0 = await freshTokens('rot', '10.3.0.1');
+
+      const r1 = await refresh(t0.refreshToken, '10.3.0.2');
+      expect(r1.statusCode).toBe(200);
+      const t1 = r1.json();
+      expect(t1.refreshToken).not.toBe(t0.refreshToken);
+      expect(t1.refreshTokenId).toBeUndefined(); // internals not exposed
+      expect(await verifyAccessToken(config, t1.accessToken)).not.toBeNull();
+
+      // replaying the rotated token = theft signal
+      const replay = await refresh(t0.refreshToken, '10.3.0.3');
+      expect(replay.statusCode).toBe(401);
+      expect(replay.json().code).toBe('REFRESH_REUSED');
+
+      // the whole family is dead, including the newest token
+      const afterRevoke = await refresh(t1.refreshToken, '10.3.0.4');
+      expect(afterRevoke.statusCode).toBe(401);
+    });
+
+    it('rejects unknown and expired tokens', async () => {
+      const unknown = await refresh('a'.repeat(43), '10.3.0.5');
+      expect(unknown.statusCode).toBe(401);
+      expect(unknown.json().code).toBe('INVALID_REFRESH');
+
+      const t = await freshTokens('exp', '10.3.0.6');
+      await pool.query(
+        `UPDATE refresh_tokens SET expires_at = now() - interval '1 hour'
+         WHERE token_hash = encode(digest($1, 'sha256'), 'hex')`,
+        [t.refreshToken],
+      );
+      const expired = await refresh(t.refreshToken, '10.3.0.7');
+      expect(expired.statusCode).toBe(401);
+      expect(expired.json().code).toBe('REFRESH_EXPIRED');
+    });
+  });
 });
