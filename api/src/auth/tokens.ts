@@ -55,6 +55,9 @@ export interface IssuedTokens {
   accessToken: string;
   refreshToken: string;
   accessExpiresInSeconds: number;
+  /** refresh_tokens.id of the newly issued token (rotation bookkeeping). */
+  refreshTokenId: string;
+  familyId: string;
 }
 
 /**
@@ -64,21 +67,28 @@ export interface IssuedTokens {
  */
 export async function issueTokenPair(
   config: AppConfig,
-  pool: pg.Pool,
+  executor: Pick<pg.Pool, 'query'>,
   user: { id: string; tokenVersion?: number },
   opts: { familyId?: string; deviceName?: string } = {},
 ): Promise<IssuedTokens> {
   const raw = randomBytes(32).toString('base64url');
   const familyId = opts.familyId ?? randomUUID();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 3_600_000);
-  await pool.query(
+  const inserted = await executor.query<{ id: string }>(
     `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at)
-     VALUES ($1, $2, $3, $4, $5)`,
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id`,
     [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt],
   );
   const accessToken = await issueAccessToken(config, {
     sub: user.id,
     ver: user.tokenVersion ?? 0,
   });
-  return { accessToken, refreshToken: raw, accessExpiresInSeconds: ACCESS_TOKEN_TTL_SECONDS };
+  return {
+    accessToken,
+    refreshToken: raw,
+    accessExpiresInSeconds: ACCESS_TOKEN_TTL_SECONDS,
+    refreshTokenId: (inserted.rows[0] as { id: string }).id,
+    familyId,
+  };
 }
