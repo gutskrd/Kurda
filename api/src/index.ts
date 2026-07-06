@@ -30,3 +30,5 @@ export { GdprService, DELETION_GRACE_DAYS } from './gdpr/service.js';
 export { makeAnonymizeJob, makeExportJob, ANONYMIZE_JOB_NAME, EXPORT_JOB_NAME } from './jobs/gdpr-jobs.js';
 export { verifyCaptcha } from './auth/captcha.js';
 export { isDisposableEmail } from './auth/disposable-domains.js';
+export { CURRENT_POLICY_VERSION, DEFAULT_RESTRICTED_AGE_THRESHOLD, ageOn, isRestrictedAge } from './gdpr/consent.js';
+export { consentBodySchema } from './users/routes.js';

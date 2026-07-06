@@ -25,6 +25,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
         email: `${name}_${suffix}@it.kurda.app`,
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password',
+        acceptTerms: true,
       },
       remoteAddress: `10.13.0.${Math.floor(Math.random() * 200) + 1}`,
     });
