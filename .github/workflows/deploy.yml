@@ -34,7 +34,7 @@ jobs:
     if: github.event_name == 'push' || inputs.image_tag == ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -57,7 +57,7 @@ jobs:
     env:
       STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Resolve image tag
         id: tag
