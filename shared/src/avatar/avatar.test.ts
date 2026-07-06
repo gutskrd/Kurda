@@ -8,6 +8,7 @@ import {
   type AvatarConfig,
 } from './catalog.js';
 import { kurdishAvatarSvg } from './render.js';
+import { validateAnimatedFragment } from './animation.js';
 
 describe('avatar catalog', () => {
   it('has unique ids and Kurdish-first names everywhere', () => {
@@ -137,5 +138,51 @@ describe('kurdishAvatarSvg', () => {
     const small = kurdishAvatarSvg(DEFAULT_AVATAR, 64);
     expect(small).toContain('width="64"');
     expect(small).toContain('viewBox="0 0 200 200"');
+  });
+});
+
+describe('animated cosmetics (KUR-080)', () => {
+  const newroz = { ...DEFAULT_AVATAR, background: 'bg-newroz' };
+
+  it('static render is the default and carries no animation nodes', () => {
+    const svg = kurdishAvatarSvg(newroz);
+    expect(svg).not.toContain('<animate');
+  });
+
+  it('the animated Newroz fire passes every format rule', () => {
+    const animated = kurdishAvatarSvg(newroz, 200, { animate: true });
+    expect(animated).toContain('<animateTransform');
+    expect(validateAnimatedFragment(animated)).toEqual([]);
+  });
+
+  it('animation is additive: static shapes identical with the flag on', () => {
+    const staticSvg = kurdishAvatarSvg(newroz);
+    const animated = kurdishAvatarSvg(newroz, 200, { animate: true });
+    const stripped = animated
+      .replace(/<animate(Transform|Motion)?\b[^>]*\/>/g, '')
+      .replace(/<g transform-origin="100 196">/, '<g transform-origin="100 196">');
+    for (const shape of staticSvg.match(/<polygon[^>]+\/>/g) ?? []) {
+      expect(stripped).toContain(shape.slice(0, 60));
+    }
+  });
+
+  it('validator rejects rule violations', () => {
+    expect(
+      validateAnimatedFragment('<animate dur="9s" repeatCount="indefinite"/>'),
+    ).toContainEqual({ rule: 'bad_duration', dur: '9s' });
+    expect(validateAnimatedFragment('<circle r="4"/><animate dur="2s"/>')).toContainEqual({
+      rule: 'not_looping',
+      node: 1,
+    });
+    const many = '<rect/>' + '<animate dur="2s" repeatCount="indefinite"/>'.repeat(4);
+    expect(validateAnimatedFragment(many)).toContainEqual({ rule: 'too_many_nodes', count: 4 });
+    expect(validateAnimatedFragment('<animate dur="2s" repeatCount="indefinite"/>')).toContainEqual(
+      { rule: 'no_static_base' },
+    );
+  });
+
+  it('only catalog items marked animatable may animate (registry sanity)', () => {
+    const animatable = AVATAR_CATALOG.filter((i) => i.animatable);
+    expect(animatable.map((i) => i.id)).toEqual(['bg-newroz']);
   });
 });
