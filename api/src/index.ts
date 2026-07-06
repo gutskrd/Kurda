@@ -16,3 +16,6 @@ export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './rat
 export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
 export { MediaStorage, createStorage, mediaKey, ALLOWED_CONTENT_TYPES, MAX_UPLOAD_BYTES, IMMUTABLE_CACHE_CONTROL, type UploadTicket } from './media/storage.js';
 export { MediaService, ORPHAN_AGE_HOURS } from './media/service.js';
+export { AuthService, hashPassword, verifyPassword, toPublicUser, type PublicUser, type RegisterInput } from './auth/service.js';
+export { issueAccessToken, verifyAccessToken, issueTokenPair, hashRefreshToken, ACCESS_TOKEN_TTL_SECONDS, type AccessTokenClaims, type IssuedTokens } from './auth/tokens.js';
+export { registerAuthRoutes, registerBodySchema } from './auth/routes.js';

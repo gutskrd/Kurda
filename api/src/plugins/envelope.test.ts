@@ -111,7 +111,7 @@ describe('error envelope', () => {
   });
 
   it('hides internal error messages and stacks outside development', async () => {
-    const a = testApp({ NODE_ENV: 'production' });
+    const a = testApp({ NODE_ENV: 'production', JWT_SECRET: 'test-secret-with-enough-length-32ch' });
     a.get('/crash', async () => {
       throw new Error('secret db password is hunter2');
     });

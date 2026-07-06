@@ -28,6 +28,8 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
+  /** HMAC secret for access tokens. MUST be overridden in production. */
+  JWT_SECRET: z.string().min(32).default('kurda-dev-secret-do-not-use-in-prod!!'),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
@@ -39,6 +41,9 @@ export type AppConfig = Readonly<z.infer<typeof envSchema>>;
  */
 export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
   const result = envSchema.safeParse(env);
+  if (result.success && result.data.NODE_ENV === 'production' && !env.JWT_SECRET) {
+    throw new Error('Invalid environment configuration:\n  JWT_SECRET: required in production');
+  }
   if (!result.success) {
     const problems = result.error.issues
       .map((issue) => `  ${issue.path.join('.')}: ${issue.message}`)
