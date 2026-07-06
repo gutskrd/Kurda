@@ -1,0 +1,87 @@
+name: Deploy
+
+# Every merge to main builds and publishes an image to GHCR, then deploys
+# to staging if a staging host is configured (see repo secrets below).
+#
+# Rollback is one command — redeploy any previously published tag:
+#   gh workflow run deploy.yml -f image_tag=sha-<old-commit-sha>
+#
+# Required secrets for the staging deploy step (issue #8 tracks the
+# hosting decision; until they exist the deploy step reports and skips):
+#   STAGING_SSH_HOST  e.g. deploy@staging.kurda.app
+#   STAGING_SSH_KEY   private key authorized on the host
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Existing image tag to (re)deploy, e.g. sha-abc123 (rollback)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/mohamadkrd/kurda
+
+jobs:
+  build-push:
+    # skipped when redeploying an existing tag (rollback path)
+    if: github.event_name == 'push' || inputs.image_tag == ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+          tags: |
+            ghcr.io/mohamadkrd/kurda:sha-${{ github.sha }}
+            ghcr.io/mohamadkrd/kurda:latest
+
+  deploy-staging:
+    needs: [build-push]
+    if: always() && needs.build-push.result != 'failure' && needs.build-push.result != 'cancelled'
+    runs-on: ubuntu-latest
+    env:
+      STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            echo "tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=sha-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to staging (migrations first, abort on failure)
+        if: env.STAGING_SSH_HOST != ''
+        env:
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$STAGING_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh -i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new "$STAGING_SSH_HOST" \
+            "IMAGE=$IMAGE TAG=$TAG bash -s" < deploy/remote-deploy.sh
+
+      - name: Staging host not configured — skipping deploy
+        if: env.STAGING_SSH_HOST == ''
+        run: |
+          echo "Image published: $IMAGE:${{ steps.tag.outputs.tag }}"
+          echo "Set STAGING_SSH_HOST / STAGING_SSH_KEY secrets to enable auto-deploy (see issue #8)."

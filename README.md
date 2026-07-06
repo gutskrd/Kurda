@@ -40,6 +40,24 @@ npm run db:seed --workspace api
 
 Without `DATABASE_URL` the API still boots; `/health` reports the db as `not_configured`. Migration conventions: [api/MIGRATIONS.md](api/MIGRATIONS.md).
 
+## Running with Docker
+
+```bash
+docker compose up
+```
+
+Brings up Postgres 16, Redis 7, runs migrations (a failure aborts the stack), then starts the API on `:3000` and the worker.
+
+## Deploys
+
+Every merge to `main` publishes `ghcr.io/mohamadkrd/kurda:sha-<commit>` (+ `:latest`) via the [Deploy workflow](.github/workflows/deploy.yml), then deploys to staging **if** `STAGING_SSH_HOST`/`STAGING_SSH_KEY` secrets are set (hosting decision tracked in [#8](https://github.com/mohamadkrd/Kurda/issues/8)). Migrations run before switchover; a failure keeps the old version serving.
+
+**Rollback (one command):**
+
+```bash
+gh workflow run deploy.yml -f image_tag=sha-<previous-commit>
+```
+
 ## CI
 
 Every pull request runs lint, typecheck, and tests — only for the packages the PR touches (plus everything when root config changes). The `ci-ok` job is the single required status check; merges to `main` are blocked until it is green.
