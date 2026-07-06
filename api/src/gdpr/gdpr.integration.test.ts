@@ -1,5 +1,6 @@
 /** GDPR deletion + export flows (CI integration job; export needs MinIO). */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
@@ -110,7 +111,19 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
     const user = await makeUser('export');
     // loadConfig() from process.env so the CI job's S3_* vars are seen
-    const storage = createStorage(loadConfig());
+    const fullConfig = loadConfig();
+    // test files run in arbitrary order — ensure the bucket exists
+    const s3 = new S3Client({
+      region: fullConfig.S3_REGION,
+      endpoint: fullConfig.S3_ENDPOINT,
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: fullConfig.S3_ACCESS_KEY_ID as string,
+        secretAccessKey: fullConfig.S3_SECRET_ACCESS_KEY as string,
+      },
+    });
+    await s3.send(new CreateBucketCommand({ Bucket: fullConfig.S3_BUCKET })).catch(() => undefined);
+    const storage = createStorage(fullConfig);
     const service = new GdprService(pool, { storage });
 
     const exportId = await service.requestExport(user.id);
