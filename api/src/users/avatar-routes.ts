@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
@@ -90,27 +91,49 @@ export function registerAvatarRoutes(app: FastifyInstance): void {
         req.user!.id,
         JSON.stringify(config),
       ]);
+      // drop the cached composite so the next public fetch re-renders
+      await app.cache.del('avatar-svg', req.user!.id);
       return { config, svg: kurdishAvatarSvg(config) };
     },
   );
 
   /**
-   * Public SVG for leaderboards/games/chat. Response is cacheable; the
-   * Redis-cached composite + ETag pipeline lands with KUR-079 (#79).
+   * Public SVG for leaderboards/games/chat (KUR-079). The rendered
+   * composite is Redis-cached per user and revalidated by a strong ETag
+   * derived from the config, so list screens cost neither a DB hit nor
+   * a re-render. Saves invalidate; until then the previous composite
+   * keeps serving — never a broken image.
    */
   app.get(
     '/users/:id/avatar.svg',
     { schema: { params: z.object({ id: z.uuid() }) } },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const config = await loadAvatarConfig(app, id);
-      if (!config) {
-        throw new AppError('NOT_FOUND', 404, 'user not found');
+
+      let cached = await app.cache.get<{ etag: string; svg: string }>('avatar-svg', id);
+      if (!cached) {
+        const config = await loadAvatarConfig(app, id);
+        if (!config) {
+          throw new AppError('NOT_FOUND', 404, 'user not found');
+        }
+        cached = { etag: `"${avatarEtag(config)}"`, svg: kurdishAvatarSvg(config) };
+        await app.cache.set('avatar-svg', id, cached, 3_600);
       }
-      return reply
-        .type('image/svg+xml')
-        .header('cache-control', 'public, max-age=300')
-        .send(kurdishAvatarSvg(config));
+
+      reply
+        .header('etag', cached.etag)
+        .header('cache-control', 'public, max-age=300, stale-while-revalidate=3600');
+      if (req.headers['if-none-match'] === cached.etag) {
+        return reply.code(304).send();
+      }
+      return reply.type('image/svg+xml').send(cached.svg);
     },
   );
+}
+
+export function avatarEtag(config: AvatarConfig): string {
+  return createHash('sha1')
+    .update(JSON.stringify(config))
+    .digest('hex')
+    .slice(0, 16);
 }
