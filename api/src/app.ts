@@ -9,6 +9,7 @@ import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
 import { setupMetrics } from './observability/metrics.js';
+import { setupAuth } from './plugins/auth.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
@@ -45,14 +46,6 @@ export function buildApp(config: AppConfig): FastifyInstance {
   setupErrorHandling(app, config);
   setupMetrics(app);
 
-  // once auth (KUR-016) sets req.user, every log line for the request
-  // carries the userId
-  app.addHook('onRequest', async (req) => {
-    if (req.user?.id) {
-      req.log = req.log.child({ userId: req.user.id });
-    }
-  });
-
 
   const health = new HealthRegistry();
   if (config.DATABASE_URL) {
@@ -78,6 +71,17 @@ export function buildApp(config: AppConfig): FastifyInstance {
     health.register('redis', notConfigured('REDIS_URL not set'));
   }
   app.decorate('health', health);
+
+  // hook order matters: authenticate → userId logging → rate limiting
+  // (user-keyed limits need req.user set first)
+  if (config.DATABASE_URL) {
+    setupAuth(app, config);
+  }
+  app.addHook('onRequest', async (req) => {
+    if (req.user?.id) {
+      req.log = req.log.child({ userId: req.user.id });
+    }
+  });
 
   // shares the app redis connection; commands fail fast when Redis is
   // down and the limiter then allows requests rather than blocking all
@@ -112,7 +116,9 @@ declare module 'fastify' {
     cache: Cache;
   }
   interface FastifyRequest {
-    /** Set by the auth middleware (KUR-016). */
-    user?: { id: string };
+    /** Set by the auth middleware (KUR-016) for valid, active sessions. */
+    user?: { id: string; roles: string[] };
+    /** Why authentication failed, when a credential was presented. */
+    authFailure?: import('./plugins/auth.js').AuthFailure;
   }
 }
