@@ -24,6 +24,9 @@
         "backgroundColor": "#2D6A4F"
       },
       "edgeToEdgeEnabled": true
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
