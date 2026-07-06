@@ -14,3 +14,5 @@ export { initSentry, captureError, scrubEvent } from './observability/sentry.js'
 export { setupMetrics } from './observability/metrics.js';
 export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './ratelimit/plugin.js';
 export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
+export { MediaStorage, createStorage, mediaKey, ALLOWED_CONTENT_TYPES, MAX_UPLOAD_BYTES, IMMUTABLE_CACHE_CONTROL, type UploadTicket } from './media/storage.js';
+export { MediaService, ORPHAN_AGE_HOURS } from './media/service.js';

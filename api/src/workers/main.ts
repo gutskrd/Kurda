@@ -4,7 +4,12 @@
  */
 import pino from 'pino';
 import { loadConfig } from '../config/env.js';
+import { CLEANUP_INTERVAL_MS, makeCleanupOrphansJob } from '../jobs/cleanup-orphans.js';
+import { JobQueue } from '../jobs/queue.js';
 import { createWorker } from '../jobs/worker.js';
+import { createPool } from '../db/pool.js';
+import { MediaService } from '../media/service.js';
+import { createStorage } from '../media/storage.js';
 
 async function main(): Promise<void> {
   let config;
@@ -23,6 +28,18 @@ async function main(): Promise<void> {
   const log = pino({ level: config.LOG_LEVEL, name: 'kurda-worker' });
   const worker = createWorker(config, log);
   log.info('worker started');
+
+  // recurring maintenance schedules (worker owns them, not the API)
+  const storage = createStorage(config);
+  if (config.DATABASE_URL && storage) {
+    const queue = JobQueue.create(config);
+    await queue.scheduleEvery(
+      makeCleanupOrphansJob(new MediaService(createPool(config), storage)),
+      CLEANUP_INTERVAL_MS,
+      {},
+    );
+    log.info('scheduled orphan upload cleanup (every 6h)');
+  }
 
   const shutdown = async (signal: string): Promise<void> => {
     log.info({ signal }, 'shutting down worker (finishing in-flight jobs)');

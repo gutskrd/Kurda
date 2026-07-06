@@ -20,6 +20,14 @@ const envSchema = z.object({
     .optional(),
   /** Optional; error tracking is disabled without it (KUR-009). */
   SENTRY_DSN: z.string().url().optional(),
+  /** S3-compatible media storage (KUR-013): all-or-none group below. */
+  S3_ENDPOINT: z.string().url().optional(),
+  S3_REGION: z.string().default('auto'),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
+  CDN_BASE_URL: z.string().url().optional(),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
