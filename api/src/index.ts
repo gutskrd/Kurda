@@ -37,3 +37,6 @@ export { CosmeticsInventory, type CosmeticSource, type GrantResult } from './ava
 export { AchievementsService, ACHIEVEMENTS, achievementDef, type AchievementDef, type AwardResult } from './avatar/achievements.js';
 export { WalletService, InsufficientFundsError, type Currency, type WalletOperation, type OperationResult, type Balances } from './wallet/service.js';
 export { registerWalletRoutes } from './wallet/routes.js';
+export { RealtimeGateway, TICKET_TTL_SECONDS, CLOSE_CONNECTED_ELSEWHERE, CLOSE_BAD_TICKET, type GatewayOptions } from './realtime/gateway.js';
+export { RedisRoomBus, LocalRoomBus, type RoomBus, type RoomEvent } from './realtime/bus.js';
+export { RedisKV, MemoryKV, type RealtimeKV } from './realtime/kv.js';
