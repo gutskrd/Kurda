@@ -4,11 +4,27 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint src",
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "eslint App.tsx src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@kurda/shared": "*"
+    "@kurda/shared": "*",
+    "@react-navigation/bottom-tabs": "^7.18.7",
+    "@react-navigation/native": "^7.3.7",
+    "expo": "~57.0.2",
+    "expo-linking": "~57.0.1",
+    "expo-status-bar": "~57.0.0",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2"
+  },
+  "main": "index.ts",
+  "devDependencies": {
+    "@types/react": "~19.2.2"
   }
 }
