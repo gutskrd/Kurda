@@ -42,6 +42,13 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ DATABASE_URL: 'mysql://u:p@localhost/db' })).toThrow(/DATABASE_URL/);
   });
 
+  it('requires JWT_SECRET in production (no silent dev default)', () => {
+    expect(() => loadConfig({ NODE_ENV: 'production' })).toThrow(/JWT_SECRET/);
+    expect(
+      loadConfig({ NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(32) }).JWT_SECRET,
+    ).toBe('x'.repeat(32));
+  });
+
   it('returns a frozen config object', () => {
     const config = loadConfig({});
     expect(Object.isFrozen(config)).toBe(true);

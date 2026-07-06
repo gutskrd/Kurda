@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { readFileSync } from 'node:fs';
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
+import { registerAuthRoutes } from './auth/routes.js';
 import { Cache } from './cache/cache.js';
 import { createRedis, redisHealthCheck } from './cache/redis.js';
 import type { AppConfig } from './config/env.js';
@@ -81,6 +82,11 @@ export function buildApp(config: AppConfig): FastifyInstance {
   // shares the app redis connection; commands fail fast when Redis is
   // down and the limiter then allows requests rather than blocking all
   setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
+
+  // auth endpoints need the database
+  if (config.DATABASE_URL) {
+    registerAuthRoutes(app, config);
+  }
 
   app.get('/health', async (_req, reply) => {
     const result = await health.run();
