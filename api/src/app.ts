@@ -10,6 +10,8 @@ import { HealthRegistry, notConfigured } from './health/registry.js';
 import { setupMetrics } from './observability/metrics.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupValidation } from './plugins/validation.js';
+import { setupRateLimit } from './ratelimit/plugin.js';
+import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -50,6 +52,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
     }
   });
 
+
   const health = new HealthRegistry();
   if (config.DATABASE_URL) {
     const pool = createPool(config);
@@ -74,6 +77,10 @@ export function buildApp(config: AppConfig): FastifyInstance {
     health.register('redis', notConfigured('REDIS_URL not set'));
   }
   app.decorate('health', health);
+
+  // shares the app redis connection; commands fail fast when Redis is
+  // down and the limiter then allows requests rather than blocking all
+  setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
 
   app.get('/health', async (_req, reply) => {
     const result = await health.run();

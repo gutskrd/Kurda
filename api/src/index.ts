@@ -12,3 +12,5 @@ export { sendEmailJob } from './jobs/email.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
 export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
 export { setupMetrics } from './observability/metrics.js';
+export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './ratelimit/plugin.js';
+export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
