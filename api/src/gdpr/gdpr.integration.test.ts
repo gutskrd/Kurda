@@ -109,9 +109,8 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
 
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
     const user = await makeUser('export');
-    const storage = createStorage(
-      loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' }),
-    );
+    // loadConfig() from process.env so the CI job's S3_* vars are seen
+    const storage = createStorage(loadConfig());
     const service = new GdprService(pool, { storage });
 
     const exportId = await service.requestExport(user.id);
