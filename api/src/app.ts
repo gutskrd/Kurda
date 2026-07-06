@@ -4,6 +4,7 @@ import type pg from 'pg';
 import type { Redis } from 'ioredis';
 import { registerAuthRoutes } from './auth/routes.js';
 import { Cache } from './cache/cache.js';
+import { JobQueue } from './jobs/queue.js';
 import { createRedis, redisHealthCheck } from './cache/redis.js';
 import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
@@ -63,7 +64,10 @@ export function buildApp(config: AppConfig): FastifyInstance {
     app.decorate('redis', redis);
     app.decorate('cache', new Cache(redis, app.log));
     health.register('redis', redisHealthCheck(redis));
+    const jobs = JobQueue.create(config);
+    app.decorate('jobs', jobs);
     app.addHook('onClose', async () => {
+      await jobs.close();
       redis.disconnect();
     });
   } else {
@@ -114,6 +118,8 @@ declare module 'fastify' {
     db: pg.Pool;
     redis: Redis;
     cache: Cache;
+    /** Present when REDIS_URL is configured. */
+    jobs?: JobQueue;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
