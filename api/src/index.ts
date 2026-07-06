@@ -20,3 +20,4 @@ export { AuthService, hashPassword, verifyPassword, toPublicUser, type PublicUse
 export { issueAccessToken, verifyAccessToken, issueTokenPair, hashRefreshToken, ACCESS_TOKEN_TTL_SECONDS, type AccessTokenClaims, type IssuedTokens } from './auth/tokens.js';
 export { registerAuthRoutes, registerBodySchema } from './auth/routes.js';
 export { loginBodySchema, refreshBodySchema } from './auth/routes.js';
+export { setupAuth, requireAuth, requireRoles, type AuthFailure } from './plugins/auth.js';

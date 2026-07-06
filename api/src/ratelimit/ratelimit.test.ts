@@ -11,7 +11,7 @@ function limitedApp(): FastifyInstance {
   app = Fastify({ logger: false });
   app.addHook('onRequest', async (req) => {
     const user = req.headers['x-user'];
-    if (typeof user === 'string') req.user = { id: user };
+    if (typeof user === 'string') req.user = { id: user, roles: [] };
   });
   setupRateLimit(app, new MemoryRateLimitStore());
   const route = (url: string, rateLimit?: RateLimitOptions) =>
