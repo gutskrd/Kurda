@@ -35,3 +35,5 @@ export { consentBodySchema } from './users/routes.js';
 export { registerAvatarRoutes, avatarConfigSchema, loadAvatarConfig } from './users/avatar-routes.js';
 export { CosmeticsInventory, type CosmeticSource, type GrantResult } from './avatar/inventory.js';
 export { AchievementsService, ACHIEVEMENTS, achievementDef, type AchievementDef, type AwardResult } from './avatar/achievements.js';
+export { WalletService, InsufficientFundsError, type Currency, type WalletOperation, type OperationResult, type Balances } from './wallet/service.js';
+export { registerWalletRoutes } from './wallet/routes.js';

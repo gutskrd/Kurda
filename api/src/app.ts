@@ -19,6 +19,7 @@ import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 import { registerAvatarRoutes } from './users/avatar-routes.js';
 import { registerUserRoutes } from './users/routes.js';
+import { registerWalletRoutes } from './wallet/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -106,6 +107,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
     registerAvatarRoutes(app);
+    registerWalletRoutes(app);
   }
 
   app.get('/health', async (_req, reply) => {
