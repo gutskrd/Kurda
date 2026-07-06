@@ -12,6 +12,7 @@ import {
 import { sendEmailJob } from '../jobs/email.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
+import { LockoutService } from './lockout.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
 
 /** Verified against when the user doesn't exist, so login latency doesn't
@@ -78,6 +79,7 @@ export interface AuthServiceDeps {
 
 export class AuthService {
   private readonly users: UsersRepository;
+  private readonly lockouts: LockoutService;
 
   constructor(
     private readonly config: AppConfig,
@@ -85,6 +87,7 @@ export class AuthService {
     private readonly deps: AuthServiceDeps = {},
   ) {
     this.users = new UsersRepository(pool);
+    this.lockouts = new LockoutService(pool);
   }
 
   /** Best-effort: signup must never fail because email couldn't enqueue. */
@@ -227,18 +230,45 @@ export class AuthService {
     email: string;
     password: string;
     deviceName?: string;
+    ip?: string;
   }): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const invalid = () => new AppError('INVALID_CREDENTIALS', 401, 'invalid email or password');
+    const locked = (seconds: number) =>
+      new AppError('LOCKED', 429, 'too many failed attempts — try again later', {
+        retryAfterSec: seconds,
+      });
+
+    // progressive lockout checks come before any password work (KUR-023)
+    if (input.ip) {
+      const ipLock = await this.lockouts.lockedFor('ip', input.ip);
+      if (ipLock) throw locked(ipLock);
+    }
 
     const user = await this.users.findByEmail(input.email);
+    if (user) {
+      const accountLock = await this.lockouts.lockedFor('account', user.id);
+      if (accountLock) throw locked(accountLock);
+    }
+
     if (!user || !user.password_hash) {
       // burn the same argon2 cost as a real check (timing equalization)
       await verifyPassword(await DUMMY_HASH_PROMISE, input.password);
+      if (input.ip) await this.lockouts.recordFailure('ip', input.ip);
       throw invalid();
     }
     if (!(await verifyPassword(user.password_hash, input.password))) {
+      const accountLockSec = await this.lockouts.recordFailure('account', user.id);
+      const ipLockSec = input.ip ? await this.lockouts.recordFailure('ip', input.ip) : null;
+      this.deps.log?.warn(
+        { userId: user.id, ip: input.ip, accountLockSec, ipLockSec },
+        'failed login attempt',
+      );
+      const lockSec = accountLockSec ?? ipLockSec;
+      if (lockSec) throw locked(lockSec);
       throw invalid();
     }
+
+    await this.lockouts.clear('account', user.id);
 
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
