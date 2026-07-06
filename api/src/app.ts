@@ -125,7 +125,7 @@ declare module 'fastify' {
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
-    user?: { id: string; roles: string[] };
+    user?: { id: string; roles: string[]; familyId?: string };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;
   }

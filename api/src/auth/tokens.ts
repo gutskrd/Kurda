@@ -12,6 +12,8 @@ export interface AccessTokenClaims {
   sub: string;
   /** users.token_version — bumping it force-logs-out issued tokens (KUR-016). */
   ver: number;
+  /** refresh_tokens.family_id this access token belongs to (KUR-022). */
+  fam?: string;
 }
 
 function secretKey(config: AppConfig): Uint8Array {
@@ -22,7 +24,7 @@ export async function issueAccessToken(
   config: AppConfig,
   claims: AccessTokenClaims,
 ): Promise<string> {
-  return new SignJWT({ ver: claims.ver })
+  return new SignJWT({ ver: claims.ver, ...(claims.fam ? { fam: claims.fam } : {}) })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(claims.sub)
     .setIssuedAt()
@@ -41,7 +43,11 @@ export async function verifyAccessToken(
       clockTolerance: CLOCK_SKEW_SECONDS,
     });
     if (!payload.sub || typeof payload.ver !== 'number') return null;
-    return { sub: payload.sub, ver: payload.ver };
+    return {
+      sub: payload.sub,
+      ver: payload.ver,
+      ...(typeof payload.fam === 'string' ? { fam: payload.fam } : {}),
+    };
   } catch {
     return null;
   }
@@ -68,7 +74,7 @@ export interface IssuedTokens {
 export async function issueTokenPair(
   config: AppConfig,
   executor: Pick<pg.Pool, 'query'>,
-  user: { id: string; tokenVersion?: number },
+  user: { id: string; token_version?: number },
   opts: { familyId?: string; deviceName?: string } = {},
 ): Promise<IssuedTokens> {
   const raw = randomBytes(32).toString('base64url');
@@ -82,7 +88,10 @@ export async function issueTokenPair(
   );
   const accessToken = await issueAccessToken(config, {
     sub: user.id,
-    ver: user.tokenVersion ?? 0,
+    // MUST mirror users.token_version or the auth guard rejects the
+    // fresh token right after any forced-logout bump (password reset)
+    ver: user.token_version ?? 0,
+    fam: familyId,
   });
   return {
     accessToken,
