@@ -1,0 +1,50 @@
+# Template for /opt/kurda/compose.yml on the staging host.
+# Uses published images (no build); IMAGE/TAG come from remote-deploy.sh.
+
+services:
+  postgres:
+    image: postgres:16
+    env_file: /opt/kurda/.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: ${IMAGE}:${TAG}
+    env_file: /opt/kurda/.env
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: ${IMAGE}:${TAG}
+    command: npx tsx api/src/workers/main.ts
+    env_file: /opt/kurda/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

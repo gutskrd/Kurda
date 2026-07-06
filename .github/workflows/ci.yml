@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.filter.outputs.changes }}
+      docker: ${{ steps.dockerfilter.outputs.docker }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -38,6 +39,16 @@ jobs:
             mobile:
               - 'mobile/**'
               - *root
+      - uses: dorny/paths-filter@v3
+        id: dockerfilter
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+              - 'api/**'
+              - 'shared/**'
+              - 'package-lock.json'
 
   check:
     needs: changes
@@ -58,6 +69,19 @@ jobs:
       - run: npm run lint --workspace ${{ matrix.package }}
       - run: npm run typecheck --workspace ${{ matrix.package }}
       - run: npm run test --workspace ${{ matrix.package }}
+
+  # Proves the production image builds and the compose file is valid.
+  docker-build:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+      - run: docker compose config -q
 
   # Runs migrations against a throwaway Postgres and enforces migration
   # immutability. Only when api (or root config) changed.
@@ -120,7 +144,7 @@ jobs:
   # Single required status check for branch protection: green when every
   # matrix job passed (or nothing needed checking).
   ci-ok:
-    needs: [changes, check, migrations]
+    needs: [changes, check, migrations, docker-build]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -136,6 +160,10 @@ jobs:
           fi
           if [ "${{ needs.migrations.result }}" != "success" ] && [ "${{ needs.migrations.result }}" != "skipped" ]; then
             echo "Migration checks failed."
+            exit 1
+          fi
+          if [ "${{ needs.docker-build.result }}" != "success" ] && [ "${{ needs.docker-build.result }}" != "skipped" ]; then
+            echo "Docker build check failed."
             exit 1
           fi
           echo "All checks passed."
