@@ -17,6 +17,7 @@ import { setupSecurityHeaders } from './plugins/security-headers.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
+import { registerAvatarRoutes } from './users/avatar-routes.js';
 import { registerUserRoutes } from './users/routes.js';
 
 const pkg = JSON.parse(
@@ -104,6 +105,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   if (config.DATABASE_URL) {
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
+    registerAvatarRoutes(app);
   }
 
   app.get('/health', async (_req, reply) => {

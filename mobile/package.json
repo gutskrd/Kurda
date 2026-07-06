@@ -12,18 +12,22 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.3",
     "@kurda/shared": "*",
     "@react-navigation/bottom-tabs": "^7.18.7",
     "@react-navigation/native": "^7.3.7",
     "@react-navigation/native-stack": "^7.17.9",
-    "expo": "~57.0.2",
+    "expo": "^57.0.2",
     "expo-linking": "~57.0.1",
     "expo-secure-store": "~57.0.0",
     "expo-status-bar": "~57.0.0",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.0",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "4.25.2"
+    "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2"
   },
   "main": "index.ts",
   "devDependencies": {
