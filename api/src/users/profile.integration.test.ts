@@ -49,6 +49,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
         email: `me_${suffix}@it.kurda.app`,
         username: `me_${suffix}`.slice(0, 30),
         password: 'a-strong-password',
+        acceptTerms: true,
       },
       remoteAddress: '10.10.0.2',
     });

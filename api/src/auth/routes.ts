@@ -16,6 +16,10 @@ export const registerBodySchema = z.object({
   timezone: z.string().max(50).optional(),
   deviceName: z.string().max(80).optional(),
   captchaToken: z.string().max(3_000).optional(),
+  /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */
+  acceptTerms: z.literal(true),
+  /** Optional; under-threshold users get restricted_mode (KUR-109). */
+  birthDate: z.iso.date().optional(),
 });
 
 /** One generic rejection for every anti-bot check — never reveals

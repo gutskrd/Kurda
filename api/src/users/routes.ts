@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { normalizeKurdish } from '@kurda/shared';
+import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
@@ -38,6 +39,13 @@ const timezoneSchema = z
     { message: 'must be a valid IANA timezone (e.g. Europe/Berlin)' },
   );
 
+export const consentBodySchema = z
+  .object({
+    acceptPolicy: z.literal(true).optional(),
+    analytics: z.boolean().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, { message: 'no consent changes' });
+
 export const patchMeBodySchema = z
   .object({
     displayName: z.string().min(1).max(60).optional(),
@@ -59,6 +67,9 @@ interface MeRow {
   roles: string[];
   email_verified_at: Date | null;
   username_changed_at: Date | null;
+  consent_version: string | null;
+  analytics_consent: boolean;
+  restricted_mode: boolean;
   created_at: Date;
 }
 
@@ -73,6 +84,10 @@ function toMe(row: MeRow) {
     timezone: row.timezone,
     roles: row.roles,
     emailVerified: row.email_verified_at !== null,
+    consentVersion: row.consent_version,
+    needsReconsent: row.consent_version !== CURRENT_POLICY_VERSION,
+    analyticsConsent: row.analytics_consent,
+    restrictedMode: row.restricted_mode,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -129,6 +144,29 @@ export function registerUserRoutes(app: FastifyInstance): void {
       // when the caller revoked their own session, the client must drop
       // its tokens now — the access token would otherwise live ≤15 min
       return { revoked: true, current: id === req.user!.familyId };
+    },
+  );
+
+  /** Re-consent + analytics preference (KUR-109). */
+  app.post(
+    '/me/consent',
+    { schema: { body: consentBodySchema }, preHandler: requireAuth },
+    async (req) => {
+      const body = req.body as z.infer<typeof consentBodySchema>;
+      if (body.acceptPolicy) {
+        await app.db.query(
+          `UPDATE users SET consent_version = $2, consented_at = now() WHERE id = $1`,
+          [req.user!.id, CURRENT_POLICY_VERSION],
+        );
+      }
+      if (body.analytics !== undefined) {
+        await app.db.query(`UPDATE users SET analytics_consent = $2 WHERE id = $1`, [
+          req.user!.id,
+          body.analytics,
+        ]);
+      }
+      const row = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
+      return { user: toMe(row.rows[0] as MeRow) };
     },
   );
 

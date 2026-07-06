@@ -44,6 +44,7 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
         username: `sess_${suffix}`.slice(0, 30),
         password,
         deviceName: 'Kurda Phone',
+        acceptTerms: true,
       },
       remoteAddress: '10.11.0.2',
     });

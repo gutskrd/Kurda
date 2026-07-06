@@ -103,7 +103,12 @@ export function AuthProvider({
       return null;
     },
     register: async (input) => {
-      const res = await client.post<AuthPayload>('/auth/register', input);
+      // consent is versioned server-side (KUR-109); the register screen
+      // shows the ToS/privacy notice next to the submit button
+      const res = await client.post<AuthPayload>('/auth/register', {
+        ...input,
+        acceptTerms: true,
+      });
       if (!res.ok) return res.error.message;
       await applyAuth(res.data);
       return null;

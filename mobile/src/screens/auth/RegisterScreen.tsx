@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { colors, spacing, typography } from '../../theme/tokens';
 import { useAuth } from '../../auth/AuthContext';
 import {
   FIELD_ERROR_COPY,
@@ -70,7 +72,20 @@ export function RegisterScreen({ navigation }: Props) {
         testID="password"
       />
       <SubmitButton label="Hesab çêke" busy={busy} onPress={submit} />
+      <Text style={styles.terms}>
+        Bi çêkirina hesabê tu Mercên Bikaranînê û Siyaseta Nepenîtiyê qebûl dikî. — By creating
+        an account you accept the Terms of Use and Privacy Policy.
+      </Text>
       <LinkText label="Hesabê te heye? Têkeve — Have an account? Log in" onPress={() => navigation.navigate('Login')} />
     </AuthScreenShell>
   );
 }
+
+const styles = StyleSheet.create({
+  terms: {
+    marginTop: spacing.sm,
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+});

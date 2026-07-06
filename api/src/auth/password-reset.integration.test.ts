@@ -34,6 +34,7 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
         email: userEmail,
         username: `reset_${suffix}`.slice(0, 30),
         password: 'old-password-123',
+        acceptTerms: true,
       },
       remoteAddress: '10.7.0.1',
     });
