@@ -15,6 +15,7 @@ import { setupErrorHandling } from './plugins/errors.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
+import { registerUserRoutes } from './users/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -91,9 +92,10 @@ export function buildApp(config: AppConfig): FastifyInstance {
   // down and the limiter then allows requests rather than blocking all
   setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
 
-  // auth endpoints need the database
+  // auth + user endpoints need the database
   if (config.DATABASE_URL) {
     registerAuthRoutes(app, config);
+    registerUserRoutes(app);
   }
 
   app.get('/health', async (_req, reply) => {
