@@ -70,7 +70,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         rateLimit: { max: 5, windowMs: 60_000, per: 'ip' as const },
       },
     },
-    async (req) => service.login(req.body as z.infer<typeof loginBodySchema>),
+    async (req) =>
+      service.login({ ...(req.body as z.infer<typeof loginBodySchema>), ip: req.ip }),
   );
 
   app.post(

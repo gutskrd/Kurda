@@ -25,3 +25,4 @@ export { createEmailToken, consumeEmailToken, EMAIL_TOKEN_TTL_HOURS, type EmailT
 export { OAuthService, verifyProviderToken, defaultJwksResolver, type OAuthProvider, type ProviderIdentity, type JwksResolver } from './auth/oauth.js';
 export { oauthBodySchema } from './auth/routes.js';
 export { registerUserRoutes, sanitizeBio, patchMeBodySchema, USERNAME_CHANGE_COOLDOWN_DAYS } from './users/routes.js';
+export { LockoutService, lockDurationMinutes, LOCKOUT_THRESHOLD, FAILURE_WINDOW_MINUTES } from './auth/lockout.js';
