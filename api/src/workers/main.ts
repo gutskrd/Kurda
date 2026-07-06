@@ -5,6 +5,8 @@
 import pino from 'pino';
 import { loadConfig } from '../config/env.js';
 import { CLEANUP_INTERVAL_MS, makeCleanupOrphansJob } from '../jobs/cleanup-orphans.js';
+import { ANONYMIZE_INTERVAL_MS, makeAnonymizeJob } from '../jobs/gdpr-jobs.js';
+import { GdprService } from '../gdpr/service.js';
 import { JobQueue } from '../jobs/queue.js';
 import { createWorker } from '../jobs/worker.js';
 import { createPool } from '../db/pool.js';
@@ -31,14 +33,23 @@ async function main(): Promise<void> {
 
   // recurring maintenance schedules (worker owns them, not the API)
   const storage = createStorage(config);
-  if (config.DATABASE_URL && storage) {
+  if (config.DATABASE_URL) {
+    const pool = createPool(config);
     const queue = JobQueue.create(config);
+    if (storage) {
+      await queue.scheduleEvery(
+        makeCleanupOrphansJob(new MediaService(pool, storage)),
+        CLEANUP_INTERVAL_MS,
+        {},
+      );
+      log.info('scheduled orphan upload cleanup (every 6h)');
+    }
     await queue.scheduleEvery(
-      makeCleanupOrphansJob(new MediaService(createPool(config), storage)),
-      CLEANUP_INTERVAL_MS,
+      makeAnonymizeJob(new GdprService(pool, { storage })),
+      ANONYMIZE_INTERVAL_MS,
       {},
     );
-    log.info('scheduled orphan upload cleanup (every 6h)');
+    log.info('scheduled GDPR anonymization (every 12h)');
   }
 
   const shutdown = async (signal: string): Promise<void> => {

@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -14,6 +15,8 @@ export const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
   'image/webp': 'webp',
+  // GDPR data exports (KUR-024) — served via signed GET only, never CDN
+  'application/json': 'json',
 };
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -81,6 +84,13 @@ export class MediaStorage {
       publicUrl: this.publicUrl(key),
       expiresInSeconds: UPLOAD_URL_TTL_SECONDS,
     };
+  }
+
+  /** Short-lived signed GET for private objects (GDPR exports). */
+  async createDownloadUrl(key: string, expiresInSeconds = 900): Promise<string> {
+    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.bucket, Key: key }), {
+      expiresIn: expiresInSeconds,
+    });
   }
 
   /** Object metadata for verification/tooling; null when absent. */

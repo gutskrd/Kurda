@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { normalizeKurdish } from '@kurda/shared';
+import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
+import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth } from '../plugins/auth.js';
 import { canonicalUsername } from './username.js';
@@ -129,6 +131,34 @@ export function registerUserRoutes(app: FastifyInstance): void {
       return { revoked: true, current: id === req.user!.familyId };
     },
   );
+
+  const gdpr = new GdprService(app.db, { storage: app.storage, jobs: app.jobs, log: app.log });
+
+  /** GDPR: start the 14-day deletion grace period (KUR-024). */
+  app.delete('/me', { preHandler: requireAuth }, async (req) => {
+    await gdpr.requestDeletion(req.user!.id);
+    return { deletionScheduled: true, graceDays: DELETION_GRACE_DAYS };
+  });
+
+  /** GDPR: request a data export (fulfilled by the worker). */
+  app.post(
+    '/me/export',
+    {
+      config: { skipValidation: true }, // no body
+      preHandler: requireAuth,
+    },
+    async (req, reply) => {
+      const exportId = await gdpr.requestExport(req.user!.id);
+      if (app.jobs) {
+        await app.jobs.enqueue(makeExportJob(gdpr), { exportId }, { idempotencyKey: `export:${exportId}` });
+      }
+      return reply.code(202).send({ requested: true });
+    },
+  );
+
+  app.get('/me/export', { preHandler: requireAuth }, async (req) => {
+    return gdpr.exportStatus(req.user!.id);
+  });
 
   /** Logout everywhere: kills refresh sessions AND live access tokens. */
   app.delete('/me/sessions', { preHandler: requireAuth }, async (req) => {
