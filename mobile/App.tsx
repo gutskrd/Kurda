@@ -6,15 +6,19 @@ import * as Linking from 'expo-linking';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
+import type { RootStackParamList } from './src/navigation/rootStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
+import { AvatarEditorScreen } from './src/screens/AvatarEditorScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 import { TabScreen } from './src/screens/TabScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 const linking = {
   prefixes: [Linking.createURL('/'), 'kurda://'],
@@ -41,10 +45,23 @@ function SignedInTabs() {
             ),
           }}
         >
-          {() => <TabScreen tab={tab} />}
+          {() => (tab.name === 'Profile' ? <ProfileScreen /> : <TabScreen tab={tab} />)}
         </Tab.Screen>
       ))}
     </Tab.Navigator>
+  );
+}
+
+function SignedInRoot() {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="Tabs" component={SignedInTabs} />
+      <RootStack.Screen
+        name="AvatarEditor"
+        component={AvatarEditorScreen}
+        options={{ presentation: 'modal' }}
+      />
+    </RootStack.Navigator>
   );
 }
 
@@ -69,7 +86,7 @@ function Root() {
     );
   }
 
-  return <SignedInTabs />;
+  return <SignedInRoot />;
 }
 
 export default function App() {
