@@ -34,3 +34,4 @@ export { CURRENT_POLICY_VERSION, DEFAULT_RESTRICTED_AGE_THRESHOLD, ageOn, isRest
 export { consentBodySchema } from './users/routes.js';
 export { registerAvatarRoutes, avatarConfigSchema, loadAvatarConfig } from './users/avatar-routes.js';
 export { CosmeticsInventory, type CosmeticSource, type GrantResult } from './avatar/inventory.js';
+export { AchievementsService, ACHIEVEMENTS, achievementDef, type AchievementDef, type AwardResult } from './avatar/achievements.js';

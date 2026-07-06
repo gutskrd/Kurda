@@ -6,6 +6,7 @@ import {
   validateAvatarConfig,
   type AvatarConfig,
 } from '@kurda/shared';
+import { AchievementsService } from '../avatar/achievements.js';
 import { CosmeticsInventory } from '../avatar/inventory.js';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth } from '../plugins/auth.js';
@@ -45,6 +46,27 @@ export function registerAvatarRoutes(app: FastifyInstance): void {
   app.get('/me/cosmetics', { preHandler: requireAuth }, async (req) => {
     return { items: await inventory.listForUser(req.user!.id) };
   });
+
+  const achievements = new AchievementsService(app.db);
+
+  /** All achievements with earned state (profile display). */
+  app.get('/me/achievements', { preHandler: requireAuth }, async (req) => {
+    return { achievements: await achievements.listEarned(req.user!.id) };
+  });
+
+  /** Earned-but-unseen unlocks — the client shows a toast then acks. */
+  app.get('/me/achievements/unseen', { preHandler: requireAuth }, async (req) => {
+    return { unseen: await achievements.unseen(req.user!.id) };
+  });
+
+  app.post(
+    '/me/achievements/seen',
+    { config: { skipValidation: true }, preHandler: requireAuth },
+    async (req) => {
+      await achievements.markSeen(req.user!.id);
+      return { seen: true };
+    },
+  );
 
   app.put(
     '/me/avatar',
