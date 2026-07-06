@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Kurda",
+    "slug": "kurda",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "kurda",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2D6A4F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.kurda.mobile"
+    },
+    "android": {
+      "package": "app.kurda.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2D6A4F"
+      },
+      "edgeToEdgeEnabled": true
+    }
+  }
+}

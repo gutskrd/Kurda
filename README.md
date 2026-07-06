@@ -27,6 +27,12 @@ Roadmap: [issues](https://github.com/mohamadkrd/Kurda/issues) · [milestones](ht
 
 Per-package commands: `npm run test --workspace shared` (same for `lint` / `typecheck`).
 
+### Mobile app
+
+```bash
+npm run dev --workspace mobile   # Expo dev server; scan QR with Expo Go, or press a/i for emulator
+```
+
 ### Database (optional for most work)
 
 The API uses PostgreSQL. Easiest local setup is Docker:
