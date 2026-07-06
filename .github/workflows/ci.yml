@@ -70,6 +70,25 @@ jobs:
       - run: npm run typecheck --workspace ${{ matrix.package }}
       - run: npm run test --workspace ${{ matrix.package }}
 
+  # Dependency vulnerabilities (high+) and leaked secrets block merge.
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans full history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: npm audit (high severity blocks)
+        run: npm audit --audit-level=high
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # Proves the production image builds and the compose file is valid.
   docker-build:
     needs: changes
@@ -157,7 +176,7 @@ jobs:
   # Single required status check for branch protection: green when every
   # matrix job passed (or nothing needed checking).
   ci-ok:
-    needs: [changes, check, migrations, docker-build]
+    needs: [changes, check, migrations, docker-build, security]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -177,6 +196,10 @@ jobs:
           fi
           if [ "${{ needs.docker-build.result }}" != "success" ] && [ "${{ needs.docker-build.result }}" != "skipped" ]; then
             echo "Docker build check failed."
+            exit 1
+          fi
+          if [ "${{ needs.security.result }}" != "success" ]; then
+            echo "Security checks failed."
             exit 1
           fi
           echo "All checks passed."
