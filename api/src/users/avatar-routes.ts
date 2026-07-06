@@ -6,6 +6,7 @@ import {
   validateAvatarConfig,
   type AvatarConfig,
 } from '@kurda/shared';
+import { CosmeticsInventory } from '../avatar/inventory.js';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth } from '../plugins/auth.js';
 
@@ -18,24 +19,6 @@ export const avatarConfigSchema = z.object({
   background: z.string().max(40),
 });
 
-/**
- * Ownership set for premium cosmetics. Base items are implicitly owned;
- * the real inventory arrives with KUR-077 (#77) — until then only base
- * items are equippable, which is the correct restriction, not a gap.
- */
-async function ownedItemIds(app: FastifyInstance, userId: string): Promise<Set<string>> {
-  try {
-    const rows = await app.db.query<{ item_id: string }>(
-      `SELECT item_id FROM user_cosmetics WHERE user_id = $1 AND revoked_at IS NULL`,
-      [userId],
-    );
-    return new Set(rows.rows.map((r) => r.item_id));
-  } catch (err) {
-    // 42P01 undefined_table: inventory migration (#77) not applied yet
-    if ((err as { code?: string }).code === '42P01') return new Set();
-    throw err;
-  }
-}
 
 export async function loadAvatarConfig(
   app: FastifyInstance,
@@ -51,9 +34,16 @@ export async function loadAvatarConfig(
 }
 
 export function registerAvatarRoutes(app: FastifyInstance): void {
+  const inventory = new CosmeticsInventory(app.db);
+
   app.get('/me/avatar', { preHandler: requireAuth }, async (req) => {
     const config = (await loadAvatarConfig(app, req.user!.id)) as AvatarConfig;
     return { config, svg: kurdishAvatarSvg(config) };
+  });
+
+  /** Full catalog with ownership flags — what the editor (#76) renders. */
+  app.get('/me/cosmetics', { preHandler: requireAuth }, async (req) => {
+    return { items: await inventory.listForUser(req.user!.id) };
   });
 
   app.put(
@@ -61,7 +51,7 @@ export function registerAvatarRoutes(app: FastifyInstance): void {
     { schema: { body: avatarConfigSchema }, preHandler: requireAuth },
     async (req) => {
       const config = req.body as AvatarConfig;
-      const owned = await ownedItemIds(app, req.user!.id);
+      const owned = await inventory.ownedIds(req.user!.id);
       const errors = validateAvatarConfig(config, owned);
       if (errors.length > 0) {
         const notOwned = errors.filter((e) => e.kind === 'not_owned');

@@ -33,3 +33,4 @@ export { isDisposableEmail } from './auth/disposable-domains.js';
 export { CURRENT_POLICY_VERSION, DEFAULT_RESTRICTED_AGE_THRESHOLD, ageOn, isRestrictedAge } from './gdpr/consent.js';
 export { consentBodySchema } from './users/routes.js';
 export { registerAvatarRoutes, avatarConfigSchema, loadAvatarConfig } from './users/avatar-routes.js';
+export { CosmeticsInventory, type CosmeticSource, type GrantResult } from './avatar/inventory.js';
