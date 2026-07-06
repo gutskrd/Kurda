@@ -26,7 +26,7 @@ function resolve(slot: AvatarSlot, id: string): string {
   return item && item.slot === slot ? id : DEFAULT_AVATAR[slot];
 }
 
-function background(id: string): string {
+function background(id: string, animate = false): string {
   switch (id) {
     case 'bg-ciya':
       return (
@@ -45,14 +45,25 @@ function background(id: string): string {
       }
       return `<rect width="200" height="200" fill="#FFF3D6"/><circle cx="100" cy="100" r="58" fill="#FFC81F"/>${rays}`;
     }
-    case 'bg-newroz':
+    case 'bg-newroz': {
+      // PoC animatable item (KUR-080): flame flicker as additive SMIL —
+      // stripping the <animate*> nodes leaves the full static art
+      const flicker = animate
+        ? `<animateTransform attributeName="transform" type="scale" values="1 1;1.04 0.97;1 1" dur="1.6s" repeatCount="indefinite" additive="sum"/>`
+        : '';
+      const glow = animate
+        ? `<animate attributeName="opacity" values="1;0.75;1" dur="2.2s" repeatCount="indefinite"/>`
+        : '';
       return (
         `<rect width="200" height="200" fill="#1B2440"/>` +
         `<circle cx="160" cy="36" r="10" fill="#F5E9C9"/>` +
+        `<g transform-origin="100 196">${flicker}` +
         `<polygon points="100,196 62,196 82,150 74,150 100,108 126,150 118,150 138,196" fill="#E2532B"/>` +
         `<polygon points="100,192 78,192 92,158 88,158 100,132 112,158 108,158 122,192" fill="#F5A623"/>` +
-        `<polygon points="100,188 90,188 96,168 100,148 104,168 110,188" fill="#FFE08A"/>`
+        `<polygon points="100,188 90,188 96,168 100,148 104,168 110,188" fill="#FFE08A">${glow}</polygon>` +
+        `</g>`
       );
+    }
     case 'bg-dest':
       return (
         `<rect width="200" height="200" fill="#CDE6F5"/>` +
@@ -194,7 +205,17 @@ function face(): string {
   );
 }
 
-export function kurdishAvatarSvg(config: AvatarConfig, size = 200): string {
+export interface RenderOptions {
+  /**
+   * Emits additive SMIL animation on animatable items (KUR-080).
+   * Feature-flagged OFF by default: react-native-svg ignores SMIL and
+   * renders the static base, so enabling is always safe, but the flag
+   * stays until the mobile animation pipeline lands.
+   */
+  animate?: boolean;
+}
+
+export function kurdishAvatarSvg(config: AvatarConfig, size = 200, opts: RenderOptions = {}): string {
   const skinId = resolve('skinTone', config.skinTone);
   const styleId = resolve('hairStyle', config.hairStyle);
   const colorId = resolve('hairColor', config.hairColor);
@@ -207,7 +228,7 @@ export function kurdishAvatarSvg(config: AvatarConfig, size = 200): string {
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="${size}" height="${size}">` +
-    background(backgroundId) +
+    background(backgroundId, opts.animate === true) +
     hairBack(styleId, hairColor as string) +
     outfit(outfitId) +
     `<rect x="90" y="108" width="20" height="18" fill="${skin}"/>` + // neck
