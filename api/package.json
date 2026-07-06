@@ -16,14 +16,14 @@
     "worker": "tsx src/workers/main.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1079.0",
-    "@aws-sdk/s3-request-presigner": "^3.1079.0",
+    "@aws-sdk/client-s3": "^3.1080.0",
+    "@aws-sdk/s3-request-presigner": "^3.1080.0",
     "@kurda/shared": "*",
     "@sentry/node": "^10.63.0",
     "argon2": "^0.44.0",
     "bullmq": "^5.79.2",
     "fastify": "^5.10.0",
-    "ioredis": "^5.10.1",
+    "ioredis": "^5.11.1",
     "jose": "^6.2.3",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.22.0",
