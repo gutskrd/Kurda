@@ -36,13 +36,23 @@ interface AuthPayload {
 
 export function AuthProvider({
   children,
-  storage = createTokenStorage(),
-  baseUrl = process.env.EXPO_PUBLIC_API_URL ?? apiBaseUrl('development'),
+  storage: storageProp,
+  baseUrl: baseUrlProp,
 }: {
   children: ReactNode;
   storage?: TokenStorage;
   baseUrl?: string;
 }) {
+  // Stabilise storage and baseUrl for the lifetime of the provider.
+  // A plain default parameter (createTokenStorage()) runs on EVERY
+  // render, producing a new storage instance each time, which recreates
+  // the client and re-runs the restore effect in a loop — bouncing the
+  // user back to the login screen. useState initialisers run once.
+  const [storage] = useState<TokenStorage>(() => storageProp ?? createTokenStorage());
+  const [baseUrl] = useState<string>(
+    () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? apiBaseUrl('development'),
+  );
+
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
 
