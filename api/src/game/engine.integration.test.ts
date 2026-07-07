@@ -46,22 +46,32 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     events: WsMessage[];
   }
 
-  function gameEvents(player: Player, type: string): WsMessage[] {
+  function gameEvents(player: Player, type: string, match?: (e: WsMessage) => boolean): WsMessage[] {
     return player.events
       .filter((m) => m.type === 'event' && (m.event as WsMessage).type === type)
-      .map((m) => m.event as WsMessage);
+      .map((m) => m.event as WsMessage)
+      .filter((e) => (match ? match(e) : true));
   }
 
-  function waitForGameEvent(player: Player, type: string, ms = 10_000): Promise<WsMessage> {
-    const existing = gameEvents(player, type);
+  /** Predicate-based so replays/next-phase events can never be missed. */
+  function waitForGameEvent(
+    player: Player,
+    type: string,
+    match?: (e: WsMessage) => boolean,
+    ms = 10_000,
+  ): Promise<WsMessage> {
+    const existing = gameEvents(player, type, match);
     if (existing.length > 0) return Promise.resolve(existing[existing.length - 1] as WsMessage);
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error(`timed out waiting for ${type}`)), ms);
       player.ws.on('message', (raw) => {
         const msg = JSON.parse(raw.toString()) as WsMessage;
         if (msg.type === 'event' && (msg.event as WsMessage).type === type) {
-          clearTimeout(timer);
-          resolve(msg.event as WsMessage);
+          const event = msg.event as WsMessage;
+          if (!match || match(event)) {
+            clearTimeout(timer);
+            resolve(event);
+          }
         }
       });
     });
@@ -153,27 +163,24 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     // both ready → countdown starts before the lobby timer
     a.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
     b.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
-    await waitForGameEvent(a, 'countdown', 3_000);
+    await waitForGameEvent(a, 'countdown', undefined, 3_000);
 
     // play all questions: A answers option 0 instantly, B answers option 1
     for (let index = 0; index < 3; index++) {
-      const question = await waitForGameEvent(a, 'question');
+      const question = await waitForGameEvent(a, 'question', (e) => e.index === index);
       expect(question.correctIndex).toBeUndefined(); // never leaked pre-reveal
       expect((question.options as string[]).length).toBe(4);
       a.ws.send(JSON.stringify({ type: 'answer', room: roomId, index, choice: 0 }));
       b.ws.send(JSON.stringify({ type: 'answer', room: roomId, index, choice: 1 }));
-      const reveal = await waitForGameEvent(b, 'reveal');
+      const reveal = await waitForGameEvent(b, 'reveal', (e) => e.index === index);
       expect(reveal.correctIndex).toBeGreaterThanOrEqual(0);
-      // consume this question/reveal pair before the next loop iteration
-      a.events.length = 0;
-      b.events.length = 0;
     }
 
     const results = await waitForGameEvent(a, 'results');
     expect(results.provisional).toBe(true);
     const scores = results.scores as Array<{ userId: string; correct: number }>;
     expect(scores.map((s) => s.userId).sort()).toEqual([a.id, b.id].sort());
-  });
+  }, 20_000);
 
   it('a silent opponent never hangs the game — it completes with timeouts', async () => {
     const active = await makePlayer('act');
@@ -184,12 +191,11 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     // ghost never readies → lobby timeout (1.5s) starts the game anyway
 
     for (let index = 0; index < 3; index++) {
-      await waitForGameEvent(active, 'question', 8_000);
+      await waitForGameEvent(active, 'question', (e) => e.index === index, 8_000);
       active.ws.send(JSON.stringify({ type: 'answer', room: roomId, index, choice: 2 }));
-      await waitForGameEvent(active, 'reveal', 8_000);
-      active.events.length = 0;
+      await waitForGameEvent(active, 'reveal', (e) => e.index === index, 8_000);
     }
-    const results = await waitForGameEvent(active, 'results', 8_000);
+    const results = await waitForGameEvent(active, 'results', undefined, 8_000);
     const ghostScore = (results.scores as Array<{ userId: string; correct: number }>).find(
       (s) => s.userId === ghost.id,
     );
@@ -236,10 +242,10 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
 
     // wait for the first reveal (question timed out for both), then try
     // answering question 0 — must not appear in results
-    await waitForGameEvent(a, 'reveal', 8_000);
+    await waitForGameEvent(a, 'reveal', (e) => e.index === 0, 8_000);
     a.ws.send(JSON.stringify({ type: 'answer', room: roomId, index: 0, choice: 0 }));
 
-    const results = await waitForGameEvent(a, 'results', 12_000);
+    const results = await waitForGameEvent(a, 'results', undefined, 12_000);
     const mine = (results.scores as Array<{ userId: string; correct: number }>).find(
       (s) => s.userId === a.id,
     );
