@@ -31,6 +31,7 @@ Per-package commands: `npm run test --workspace shared` (same for `lint` / `type
 
 ```bash
 npm run dev --workspace mobile   # Expo dev server; scan QR with Expo Go, or press a/i for emulator
+npm run web --workspace mobile   # run the app in a browser at http://localhost:8081
 ```
 
 ### Database (optional for most work)
