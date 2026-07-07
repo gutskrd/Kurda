@@ -47,3 +47,4 @@ export { GameEngine, type EngineOptions, type GamePhase } from './game/engine.js
 export { selectQuestions, type GameQuestion } from './game/question-bank.js';
 export { registerGameRoutes } from './game/routes.js';
 export { type ClientMessageHandler } from './realtime/gateway.js';
+export { ContentRepository, type ExerciseType, type LessonStatus, type LessonRow } from './content/repository.js';
