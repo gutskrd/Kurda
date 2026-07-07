@@ -19,9 +19,10 @@ import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 import { registerAvatarRoutes } from './users/avatar-routes.js';
 import fastifyWebsocket from '@fastify/websocket';
+import { GameEngine, type EngineOptions } from './game/engine.js';
 import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
 import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.js';
-import { registerMatchmakingRoutes } from './game/routes.js';
+import { registerGameRoutes, registerMatchmakingRoutes } from './game/routes.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -38,6 +39,8 @@ export interface BuildAppOptions {
   gateway?: GatewayOptions;
   /** Test seam: shrink bands/timeouts. */
   matchmaking?: MatchmakingOptions;
+  /** Test seam: shrink phase timers. */
+  engine?: EngineOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -146,6 +149,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       matchmaking.sweepIntervalMs,
     );
     app.addHook('onClose', async () => clearInterval(sweeper));
+
+    // game sessions (KUR-051): the match-making node owns the session
+    const engine = new GameEngine(realtime, bus, options.engine);
+    app.decorate('gameEngine', engine);
+    matchmaking.onMatch((record) => engine.startSession(record));
+    registerGameRoutes(app, engine);
+    app.addHook('onClose', async () => engine.stopAll());
   }
 
   app.get('/health', async (_req, reply) => {
@@ -178,6 +188,8 @@ declare module 'fastify' {
     realtime: RealtimeGateway;
     /** Present when DATABASE_URL is configured. */
     matchmaking: MatchmakingService;
+    /** Present when DATABASE_URL is configured. */
+    gameEngine: GameEngine;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */

@@ -44,6 +44,7 @@ export class MatchmakingService {
   private readonly widenIntervalMs: number;
   private readonly timeoutMs: number;
   readonly sweepIntervalMs: number;
+  private readonly matchListeners: Array<(record: MatchRecord) => void> = [];
 
   constructor(
     private readonly pool: pg.Pool,
@@ -57,6 +58,11 @@ export class MatchmakingService {
     this.widenIntervalMs = opts.widenIntervalMs ?? 5_000;
     this.timeoutMs = opts.timeoutMs ?? 60_000;
     this.sweepIntervalMs = opts.sweepIntervalMs ?? 1_000;
+  }
+
+  /** The node that creates a match owns its game session (KUR-051). */
+  onMatch(listener: (record: MatchRecord) => void): void {
+    this.matchListeners.push(listener);
   }
 
   private async playerInfo(userId: string): Promise<{ id: string; username: string; rating: number }> {
@@ -147,6 +153,7 @@ export class MatchmakingService {
         opponent: other,
       });
     }
+    for (const listener of this.matchListeners) listener(record);
     return record;
   }
 }

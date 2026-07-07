@@ -31,6 +31,12 @@ const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ping') }),
 ]);
 
+/** Feature handlers for custom client message types (game answers, ...). */
+export type ClientMessageHandler = (
+  userId: string,
+  payload: Record<string, unknown>,
+) => void | Promise<void>;
+
 /**
  * Realtime gateway (KUR-049).
  *
@@ -49,6 +55,7 @@ const clientMessageSchema = z.discriminatedUnion('type', [
 export class RealtimeGateway {
   private readonly connections = new Map<string, Connection>();
   private readonly roomMembers = new Map<string, Set<Connection>>();
+  private readonly customHandlers = new Map<string, ClientMessageHandler>();
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
   private sweepTimer?: NodeJS.Timeout;
@@ -76,6 +83,14 @@ export class RealtimeGateway {
   /** Direct push to a single user's connection on whichever node. */
   async notifyUser(userId: string, event: RoomEvent): Promise<void> {
     await this.bus.publish(`user:${userId}`, event);
+  }
+
+  /** Registers a handler for a custom client message type ('answer', ...). */
+  onClientMessage(type: string, handler: ClientMessageHandler): void {
+    if (['join', 'leave', 'ping'].includes(type) || this.customHandlers.has(type)) {
+      throw new Error(`client message type already registered: ${type}`);
+    }
+    this.customHandlers.set(type, handler);
   }
 
   connectionCount(): number {
@@ -167,9 +182,23 @@ export class RealtimeGateway {
   }
 
   private async onMessage(conn: Connection, raw: string): Promise<void> {
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      this.send(conn, { type: 'error', code: 'BAD_MESSAGE' });
+      return;
+    }
+
+    const typeName = (json as { type?: unknown }).type;
+    if (typeof typeName === 'string' && this.customHandlers.has(typeName)) {
+      await this.customHandlers.get(typeName)!(conn.userId, json as Record<string, unknown>);
+      return;
+    }
+
     let parsed: z.infer<typeof clientMessageSchema>;
     try {
-      parsed = clientMessageSchema.parse(JSON.parse(raw));
+      parsed = clientMessageSchema.parse(json);
     } catch {
       this.send(conn, { type: 'error', code: 'BAD_MESSAGE' });
       return;
