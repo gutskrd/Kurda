@@ -19,6 +19,9 @@ import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 import { registerAvatarRoutes } from './users/avatar-routes.js';
 import fastifyWebsocket from '@fastify/websocket';
+import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
+import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.js';
+import { registerMatchmakingRoutes } from './game/routes.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -33,6 +36,8 @@ const pkg = JSON.parse(
 export interface BuildAppOptions {
   /** Test seam: shrink heartbeat windows etc. */
   gateway?: GatewayOptions;
+  /** Test seam: shrink bands/timeouts. */
+  matchmaking?: MatchmakingOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -130,6 +135,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.register(async (scoped) => {
       realtime.registerRoutes(scoped);
     });
+
+    // matchmaking (KUR-050): atomic queue + widening sweeper
+    const matchQueue = app.redis ? new RedisMatchQueue(app.redis) : new MemoryMatchQueue();
+    const matchmaking = new MatchmakingService(app.db, matchQueue, kv, realtime, options.matchmaking);
+    app.decorate('matchmaking', matchmaking);
+    registerMatchmakingRoutes(app, matchmaking);
+    const sweeper = setInterval(
+      () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
+      matchmaking.sweepIntervalMs,
+    );
+    app.addHook('onClose', async () => clearInterval(sweeper));
   }
 
   app.get('/health', async (_req, reply) => {
@@ -160,6 +176,8 @@ declare module 'fastify' {
     storage?: MediaStorage;
     /** Present when DATABASE_URL is configured. */
     realtime: RealtimeGateway;
+    /** Present when DATABASE_URL is configured. */
+    matchmaking: MatchmakingService;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
