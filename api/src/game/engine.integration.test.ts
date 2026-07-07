@@ -112,6 +112,21 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     return { id: res.json().user.id, token, ws, events };
   }
 
+  function waitForRaw(player: Player, type: string, ms = 5_000): Promise<WsMessage> {
+    const existing = player.events.find((m) => m.type === type);
+    if (existing) return Promise.resolve(existing);
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`timed out waiting for ${type}`)), ms);
+      player.ws.on('message', (raw) => {
+        const msg = JSON.parse(raw.toString()) as WsMessage;
+        if (msg.type === type) {
+          clearTimeout(timer);
+          resolve(msg);
+        }
+      });
+    });
+  }
+
   async function startMatch(a: Player, b: Player): Promise<string> {
     await app.inject({
       method: 'POST',
@@ -126,8 +141,11 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
       remoteAddress: '10.22.2.2',
     });
     const roomId = res.json().roomId as string;
+    // the initial 'lobby' broadcast may precede the joins — clients (and
+    // this test) recover state through the snapshot endpoint after joining
     for (const p of [a, b]) {
       p.ws.send(JSON.stringify({ type: 'join', room: roomId }));
+      await waitForRaw(p, 'joined');
     }
     return roomId;
   }
@@ -159,7 +177,16 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     const b = await makePlayer('gb');
     const roomId = await startMatch(a, b);
 
-    await waitForGameEvent(a, 'lobby');
+    // joined after the lobby broadcast — the snapshot carries the state
+    const lobbySnapshot = await app.inject({
+      method: 'GET',
+      url: `/games/${roomId}/state`,
+      headers: { authorization: `Bearer ${a.token}` },
+      remoteAddress: '10.22.2.9',
+    });
+    expect(lobbySnapshot.json().phase).toBe('lobby');
+    expect(lobbySnapshot.json().questionCount).toBe(3);
+
     // both ready → countdown starts before the lobby timer
     a.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
     b.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
