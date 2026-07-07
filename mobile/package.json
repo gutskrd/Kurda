@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "lint": "eslint App.tsx src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "web": "expo start --web --port 8081"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.3",

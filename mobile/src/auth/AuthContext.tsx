@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ApiClient } from '../api/client';
 import { apiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
-import { SecureTokenStorage } from './storage';
+import { createTokenStorage } from './storage';
 
 export interface SessionUser {
   id: string;
@@ -36,7 +36,7 @@ interface AuthPayload {
 
 export function AuthProvider({
   children,
-  storage = new SecureTokenStorage(),
+  storage = createTokenStorage(),
   baseUrl = process.env.EXPO_PUBLIC_API_URL ?? apiBaseUrl('development'),
 }: {
   children: ReactNode;
