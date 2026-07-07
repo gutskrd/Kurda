@@ -27,6 +27,7 @@ import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
+import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
 import { registerWalletRoutes } from './wallet/routes.js';
 
@@ -66,6 +67,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     requestIdHeader: 'x-request-id',
   });
 
+  setupCors(app, config);
   setupValidation(app);
   setupErrorHandling(app, config);
   setupSecurityHeaders(app);

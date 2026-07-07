@@ -27,16 +27,27 @@ Roadmap: [issues](https://github.com/mohamadkrd/Kurda/issues) · [milestones](ht
 
 Per-package commands: `npm run test --workspace shared` (same for `lint` / `typecheck`).
 
-### Mobile app
+### See the whole app running locally
+
+Three terminals — the web app talks to the API, the API talks to Postgres:
 
 ```bash
-npm run dev --workspace mobile   # Expo dev server; scan QR with Expo Go, or press a/i for emulator
-npm run web --workspace mobile   # run the app in a browser at http://localhost:8081
+# 1) local Postgres (no Docker needed — self-contained embedded Postgres on :5433)
+npm run dev:db --workspace api
+
+# 2) API on :3000 (first time, apply migrations against the running db)
+DATABASE_URL=postgres://postgres:postgres@localhost:5433/kurda npm run migrate:up --workspace api
+DATABASE_URL=postgres://postgres:postgres@localhost:5433/kurda \
+  JWT_SECRET=local-dev-secret-least-32-chars-long!! npm run dev --workspace api
+
+# 3) web app on http://localhost:8081
+npm run web --workspace mobile
 ```
 
-### Database (optional for most work)
+The web client calls `http://localhost:3000` by default (override with `EXPO_PUBLIC_API_URL`);
+the API allows the `localhost:8081` origin via CORS automatically in development.
 
-The API uses PostgreSQL. Easiest local setup is Docker:
+### Database with Docker (alternative)
 
 ```bash
 docker run -d --name kurda-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=kurda -p 5432:5432 postgres:16

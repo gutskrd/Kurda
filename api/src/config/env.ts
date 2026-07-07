@@ -37,6 +37,12 @@ const envSchema = z.object({
   TURNSTILE_SECRET: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
+  /**
+   * Comma-separated browser origins allowed to call the API (CORS).
+   * The web client (localhost:8081) needs this; native apps don't send
+   * Origin so they're unaffected. Empty = no cross-origin browser access.
+   */
+  CORS_ORIGINS: z.string().default(''),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
