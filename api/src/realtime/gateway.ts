@@ -73,6 +73,11 @@ export class RealtimeGateway {
     await this.bus.publish(roomId, event);
   }
 
+  /** Direct push to a single user's connection on whichever node. */
+  async notifyUser(userId: string, event: RoomEvent): Promise<void> {
+    await this.bus.publish(`user:${userId}`, event);
+  }
+
   connectionCount(): number {
     return this.connections.size;
   }
@@ -131,6 +136,8 @@ export class RealtimeGateway {
       lastPongAt: Date.now(),
     };
     this.connections.set(userId, conn);
+    // personal channel for server→user pushes (match found, invites, ...)
+    this.joinLocal(conn, `user:${userId}`);
 
     socket.on('pong', () => {
       conn.lastPongAt = Date.now();
@@ -227,9 +234,11 @@ export class RealtimeGateway {
   }
 
   private async persistResumeState(conn: Connection): Promise<void> {
+    // internal user channel is re-created on accept, not resumed
+    const rooms = [...conn.rooms].filter((room) => !room.startsWith('user:'));
     await this.kv.set(
       `rt:resume:${conn.resumeToken}`,
-      JSON.stringify({ userId: conn.userId, rooms: [...conn.rooms] }),
+      JSON.stringify({ userId: conn.userId, rooms }),
       RESUME_TTL_SECONDS,
     );
   }

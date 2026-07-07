@@ -40,3 +40,6 @@ export { registerWalletRoutes } from './wallet/routes.js';
 export { RealtimeGateway, TICKET_TTL_SECONDS, CLOSE_CONNECTED_ELSEWHERE, CLOSE_BAD_TICKET, type GatewayOptions } from './realtime/gateway.js';
 export { RedisRoomBus, LocalRoomBus, type RoomBus, type RoomEvent } from './realtime/bus.js';
 export { RedisKV, MemoryKV, type RealtimeKV } from './realtime/kv.js';
+export { MatchmakingService, type MatchmakingOptions, type MatchRecord, type EnqueueResult } from './game/matchmaking.js';
+export { RedisMatchQueue, MemoryMatchQueue, type MatchQueue, type QueueEntry } from './game/match-queue.js';
+export { registerMatchmakingRoutes } from './game/routes.js';
