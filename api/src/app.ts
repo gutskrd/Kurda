@@ -17,7 +17,7 @@ import { setupSecurityHeaders } from './plugins/security-headers.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
-import { registerAvatarRoutes } from './users/avatar-routes.js';
+import { registerAchievementRoutes } from './achievements/routes.js';
 import fastifyWebsocket from '@fastify/websocket';
 import { GameEngine, type EngineOptions } from './game/engine.js';
 import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
@@ -126,7 +126,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   if (config.DATABASE_URL) {
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
-    registerAvatarRoutes(app);
+    registerAchievementRoutes(app);
     registerWalletRoutes(app);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without

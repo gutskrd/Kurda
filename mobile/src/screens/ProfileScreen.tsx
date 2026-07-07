@@ -1,41 +1,25 @@
-import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AvatarConfig } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { KurdishAvatar } from '../avatar/KurdishAvatar';
-import type { RootStackParamList } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
+/** First letter of the display name / username, NFC-normalised. */
+function initial(name: string | null | undefined): string {
+  const s = (name ?? '?').normalize('NFC').trim();
+  return s ? s[0]!.toUpperCase() : '?';
+}
+
 export function ProfileScreen() {
-  const { user, client, logout } = useAuth();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [config, setConfig] = useState<AvatarConfig | null>(null);
+  const { user, logout } = useAuth();
 
-  // refetch whenever the tab regains focus (e.g. returning from the editor)
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      (async () => {
-        const res = await client.get<{ config: AvatarConfig }>('/me/avatar');
-        if (!cancelled && res.ok) setConfig(res.data.config);
-      })();
-      return () => {
-        cancelled = true;
-      };
-    }, [client]),
-  );
-
+  // Placeholder monogram until the profile-picture system (#177–#181)
+  // lands (photo upload + a proper initials fallback).
   return (
     <View style={styles.screen}>
-      <KurdishAvatar config={config} size={160} />
+      <View style={styles.monogram}>
+        <Text style={styles.monogramText}>{initial(user?.displayName ?? user?.username)}</Text>
+      </View>
       <Text style={styles.username}>{user?.username}</Text>
       {user?.displayName ? <Text style={styles.displayName}>{user.displayName}</Text> : null}
-
-      <Pressable style={styles.editButton} onPress={() => navigation.navigate('AvatarEditor')}>
-        <Text style={styles.editText}>Cilan biguherîne — Edit avatar</Text>
-      </Pressable>
 
       <Pressable style={styles.logout} onPress={logout}>
         <Text style={styles.logoutText}>Derkeve — Log out</Text>
@@ -53,20 +37,26 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.sm,
   },
+  monogram: {
+    width: 120,
+    height: 120,
+    borderRadius: radii.pill,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  monogramText: {
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    color: colors.textOnPrimary,
+  },
   username: {
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
     color: colors.textPrimary,
   },
   displayName: { fontSize: typography.sizes.md, color: colors.textSecondary },
-  editButton: {
-    marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
-  },
-  editText: { color: colors.textOnPrimary, fontWeight: typography.weights.medium },
   logout: { marginTop: spacing.xl },
   logoutText: { color: colors.danger, fontSize: typography.sizes.sm },
 });

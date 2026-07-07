@@ -1,9 +1,9 @@
 import type pg from 'pg';
-import { CosmeticsInventory } from './inventory.js';
 
 /**
- * Achievement definitions (KUR-078) with Kurdish-first naming, each
- * optionally granting a cosmetic. Trigger points call
+ * Achievement definitions with Kurdish-first naming. Standalone badges/
+ * milestones — no longer tied to cosmetics (the avatar system was
+ * removed in favour of profile pictures, #177–#181). Trigger points call
  * AchievementsService.award(userId, id) from their own systems:
  *  - streak-30       → streak system (KUR-031, #31)
  *  - first-perfect   → lesson grading (KUR-028/#28, KUR-030/#30)
@@ -16,47 +16,15 @@ export interface AchievementDef {
   id: string;
   nameKu: string;
   nameEn: string;
-  /** Cosmetic granted on earn (must be a premium catalog item). */
-  grantsCosmetic?: string;
 }
 
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
-  {
-    id: 'streak-30',
-    nameKu: 'Agirê 30 rojan',
-    nameEn: '30-day streak',
-    grantsCosmetic: 'bg-roj',
-  },
-  {
-    id: 'first-perfect',
-    nameKu: 'Dersa bêkêmasî',
-    nameEn: 'First perfect lesson',
-    grantsCosmetic: 'head-kum',
-  },
-  {
-    id: 'words-1000',
-    nameKu: '1000 peyv',
-    nameEn: '1000 words learned',
-    grantsCosmetic: 'head-kofi',
-  },
-  {
-    id: 'first-game-win',
-    nameKu: 'Serkeftina yekem',
-    nameEn: 'First game win',
-    grantsCosmetic: 'head-sasik',
-  },
-  {
-    id: 'tournament-win',
-    nameKu: 'Şampiyonê tûrnûvayê',
-    nameEn: 'Tournament champion',
-    grantsCosmetic: 'outfit-pesmerge',
-  },
-  {
-    id: 'newroz-2026',
-    nameKu: 'Newroza 2026',
-    nameEn: 'Newroz 2026 celebrant',
-    grantsCosmetic: 'outfit-newroz',
-  },
+  { id: 'streak-30', nameKu: 'Agirê 30 rojan', nameEn: '30-day streak' },
+  { id: 'first-perfect', nameKu: 'Dersa bêkêmasî', nameEn: 'First perfect lesson' },
+  { id: 'words-1000', nameKu: '1000 peyv', nameEn: '1000 words learned' },
+  { id: 'first-game-win', nameKu: 'Serkeftina yekem', nameEn: 'First game win' },
+  { id: 'tournament-win', nameKu: 'Şampiyonê tûrnûvayê', nameEn: 'Tournament champion' },
+  { id: 'newroz-2026', nameKu: 'Newroza 2026', nameEn: 'Newroz 2026 celebrant' },
 ] as const;
 
 export function achievementDef(id: string): AchievementDef | undefined {
@@ -67,20 +35,14 @@ export interface AwardResult {
   awarded: boolean;
   /** true when the user already had it (idempotent no-op). */
   alreadyEarned: boolean;
-  grantedCosmetic?: string;
 }
 
 export class AchievementsService {
-  private readonly inventory: CosmeticsInventory;
-
-  constructor(private readonly pool: pg.Pool) {
-    this.inventory = new CosmeticsInventory(pool);
-  }
+  constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Exactly-once award: the PK insert is the idempotency gate, so a
-   * data backfill re-triggering the same achievement can never grant
-   * twice (KUR-078 edge). Cosmetic grant follows only a fresh insert.
+   * Exactly-once award: the PK insert is the idempotency gate, so a data
+   * backfill re-triggering the same achievement can never award twice.
    */
   async award(userId: string, achievementId: string): Promise<AwardResult> {
     const def = achievementDef(achievementId);
@@ -92,16 +54,9 @@ export class AchievementsService {
        ON CONFLICT (user_id, achievement_id) DO NOTHING`,
       [userId, achievementId],
     );
-    if ((inserted.rowCount ?? 0) === 0) {
-      return { awarded: false, alreadyEarned: true };
-    }
-
-    let grantedCosmetic: string | undefined;
-    if (def.grantsCosmetic) {
-      await this.inventory.grant(userId, def.grantsCosmetic, 'achievement');
-      grantedCosmetic = def.grantsCosmetic;
-    }
-    return { awarded: true, alreadyEarned: false, grantedCosmetic };
+    return (inserted.rowCount ?? 0) === 0
+      ? { awarded: false, alreadyEarned: true }
+      : { awarded: true, alreadyEarned: false };
   }
 
   /** Earned-but-unseen achievements — powers the unlock toast. */
@@ -120,7 +75,6 @@ export class AchievementsService {
           id: def.id,
           nameKu: def.nameKu,
           nameEn: def.nameEn,
-          grantsCosmetic: def.grantsCosmetic ?? null,
           earnedAt: new Date(row.earned_at).toISOString(),
         };
       })
@@ -144,7 +98,6 @@ export class AchievementsService {
       id: def.id,
       nameKu: def.nameKu,
       nameEn: def.nameEn,
-      grantsCosmetic: def.grantsCosmetic ?? null,
       earnedAt: earned.has(def.id) ? new Date(earned.get(def.id) as Date).toISOString() : null,
     }));
   }
