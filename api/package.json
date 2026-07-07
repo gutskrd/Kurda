@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx src/server.ts",
     "start": "tsx src/server.ts",
     "lint": "eslint src scripts",
     "typecheck": "tsc --noEmit",
@@ -13,11 +13,13 @@
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create --migration-file-language js",
     "db:seed": "tsx scripts/seed.ts",
-    "worker": "tsx src/workers/main.ts"
+    "worker": "tsx src/workers/main.ts",
+    "dev:db": "node scripts/dev-db.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1079.0",
     "@aws-sdk/s3-request-presigner": "^3.1079.0",
+    "@fastify/cors": "^11.2.0",
     "@fastify/websocket": "^11.2.0",
     "@kurda/shared": "*",
     "@sentry/node": "^10.63.0",
@@ -36,6 +38,7 @@
   "devDependencies": {
     "@types/pg": "^8.20.0",
     "@types/ws": "^8.18.1",
+    "embedded-postgres": "^18.4.0-beta.17",
     "pino-pretty": "^13.1.3"
   }
 }
