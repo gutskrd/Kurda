@@ -89,6 +89,61 @@ export const answerSchemas = {
   }),
 } as const;
 
+// ---------- client-safe sanitization ----------
+
+import { createHash } from 'node:crypto';
+
+/** Deterministic shuffle by a seed, so a resumed session sees the same order. */
+function seededShuffle<T>(items: T[], seed: string): T[] {
+  return items
+    .map((value, i) => ({
+      value,
+      key: createHash('sha1').update(`${seed}:${i}`).digest('hex'),
+    }))
+    .sort((a, b) => (a.key < b.key ? -1 : 1))
+    .map((x) => x.value);
+}
+
+/**
+ * Strips the correct answer from a stored exercise before it goes to the
+ * client (KUR-028). The client never receives correctIndex / accepted /
+ * the pairing; match-pairs sides are shuffled independently per session.
+ */
+export function sanitizeExercise(
+  type: ExerciseType,
+  payload: unknown,
+  seed: string,
+): Record<string, unknown> {
+  const parsed = PAYLOAD_SCHEMAS[type]?.safeParse(payload);
+  if (!parsed || !parsed.success) throw new Error(`stored payload for ${type} is invalid`);
+
+  switch (type) {
+    case 'multiple_choice': {
+      // options stay in authored order — the answer is submitted as an
+      // index into this array, so it must match the stored order
+      const p = parsed.data as MultipleChoicePayload;
+      return { prompt: p.prompt, options: p.options };
+    }
+    case 'translate': {
+      const p = parsed.data as TranslatePayload;
+      return { prompt: p.prompt };
+    }
+    case 'match_pairs': {
+      const p = parsed.data as MatchPairsPayload;
+      return {
+        lefts: seededShuffle(
+          p.pairs.map((pair) => pair.left),
+          `${seed}:L`,
+        ),
+        rights: seededShuffle(
+          p.pairs.map((pair) => pair.right),
+          `${seed}:R`,
+        ),
+      };
+    }
+  }
+}
+
 // ---------- grading ----------
 
 /** 'correct' | 'typo' (right word, diacritic slip) | 'wrong'. */

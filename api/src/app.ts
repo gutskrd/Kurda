@@ -29,6 +29,7 @@ import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
 import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
+import { registerLessonRoutes } from './content/routes.js';
 import { registerWalletRoutes } from './wallet/routes.js';
 
 const pkg = JSON.parse(
@@ -128,6 +129,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserRoutes(app);
     registerAchievementRoutes(app);
     registerWalletRoutes(app);
+    registerLessonRoutes(app);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
