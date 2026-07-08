@@ -1,6 +1,6 @@
 /** Lesson-player contract — mirrors the server payloads (KUR-028/#28). */
 
-export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs';
+export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening';
 export type Verdict = 'correct' | 'typo' | 'wrong';
 
 /** An exercise as delivered to the client: answer keys stripped server-side. */
@@ -12,6 +12,8 @@ export interface Exercise {
   options?: string[];
   lefts?: string[];
   rights?: string[];
+  /** listening (KUR-035): CDN url of the clip to play */
+  audioUrl?: string;
 }
 
 export interface SessionView {

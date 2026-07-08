@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   InvalidExercisePayloadError,
   checkAnswer,
+  sanitizeExercise,
   validateExercisePayload,
 } from './exercises.js';
 
@@ -151,5 +152,31 @@ describe('checkAnswer — match_pairs', () => {
       matches: [{ left: 'sêv', right: 'apple' }],
     });
     expect(res.accepted).toBe(false);
+  });
+});
+
+describe('listening (KUR-035)', () => {
+  const payload = {
+    audioUrl: 'https://cdn.kurda.app/audio/sev.mp3',
+    prompt: 'Type what you hear',
+    accepted: ['sêv'],
+  };
+
+  it('validates a well-formed payload and rejects a missing audioUrl', () => {
+    expect(() => validateExercisePayload('listening', payload)).not.toThrow();
+    expect(() => validateExercisePayload('listening', { accepted: ['sêv'] })).toThrow();
+  });
+
+  it('sanitization exposes the audio + prompt but never the transcription', () => {
+    const safe = sanitizeExercise('listening', payload, 'seed');
+    expect(safe).toEqual({ audioUrl: payload.audioUrl, prompt: payload.prompt });
+    expect(JSON.stringify(safe)).not.toContain('accepted');
+    expect(JSON.stringify(safe)).not.toContain('sêv');
+  });
+
+  it('grades the transcription diacritic-tolerantly (like translate)', () => {
+    expect(checkAnswer('listening', payload, { text: 'sêv' })).toMatchObject({ verdict: 'correct', accepted: true });
+    expect(checkAnswer('listening', payload, { text: 'sev' })).toMatchObject({ verdict: 'typo', accepted: true, correction: 'sêv' });
+    expect(checkAnswer('listening', payload, { text: 'av' })).toMatchObject({ verdict: 'wrong', accepted: false });
   });
 });
