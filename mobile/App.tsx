@@ -36,7 +36,7 @@ function SignedInTabs() {
           key={tab.name}
           name={tab.name}
           options={{
-            title: tab.titleKu,
+            title: tab.title,
             tabBarIcon: ({ focused }) => (
               <Text style={{ opacity: focused ? 1 : 0.5 }}>{tab.emoji}</Text>
             ),
