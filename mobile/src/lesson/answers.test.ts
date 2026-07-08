@@ -31,7 +31,16 @@ describe('encodeAnswer', () => {
   it('encodes each type to the server wire shape', () => {
     expect(encodeAnswer({ type: 'multiple_choice', choice: 2 })).toEqual({ choice: 2 });
     expect(encodeAnswer({ type: 'translate', text: '  sêv ' })).toEqual({ text: 'sêv' });
+    expect(encodeAnswer({ type: 'listening', text: ' sêv' })).toEqual({ text: 'sêv' });
+    expect(encodeAnswer({ type: 'speaking', audioKey: 'speaking/abc.m4a' })).toEqual({ audioKey: 'speaking/abc.m4a' });
     const matches = [{ left: 'sêv', right: 'apple' }];
     expect(encodeAnswer({ type: 'match_pairs', matches })).toEqual({ matches });
+  });
+});
+
+describe('speaking draft', () => {
+  it('is incomplete until a recording is uploaded', () => {
+    expect(isDraftComplete({ type: 'speaking', audioKey: null }, 0)).toBe(false);
+    expect(isDraftComplete({ type: 'speaking', audioKey: 'speaking/x.m4a' }, 0)).toBe(true);
   });
 });

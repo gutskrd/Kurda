@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
+import { defaultScorer } from './speaking-scorer.js';
 
 /**
  * Exercise payload schemas + server-side answer checkers (KUR-027).
@@ -45,17 +46,26 @@ export const listeningPayloadSchema = z.object({
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
 });
 
+export const speakingPayloadSchema = z.object({
+  /** what the learner is asked to say aloud */
+  prompt: z.string().min(1).max(500),
+  /** the target phrase, passed to the pronunciation scorer (KUR-120) */
+  reference: z.string().min(1).max(300),
+});
+
 const PAYLOAD_SCHEMAS = {
   multiple_choice: multipleChoicePayloadSchema,
   translate: translatePayloadSchema,
   match_pairs: matchPairsPayloadSchema,
   listening: listeningPayloadSchema,
+  speaking: speakingPayloadSchema,
 } as const;
 
 export type MultipleChoicePayload = z.infer<typeof multipleChoicePayloadSchema>;
 export type TranslatePayload = z.infer<typeof translatePayloadSchema>;
 export type MatchPairsPayload = z.infer<typeof matchPairsPayloadSchema>;
 export type ListeningPayload = z.infer<typeof listeningPayloadSchema>;
+export type SpeakingPayload = z.infer<typeof speakingPayloadSchema>;
 
 export class InvalidExercisePayloadError extends Error {
   constructor(
@@ -100,6 +110,8 @@ export const answerSchemas = {
   }),
   /** listening is transcription — same shape as translate */
   listening: z.object({ text: z.string().max(500) }),
+  /** speaking submits the storage key of the uploaded recording */
+  speaking: z.object({ audioKey: z.string().min(1).max(300) }),
 } as const;
 
 // ---------- client-safe sanitization ----------
@@ -145,6 +157,11 @@ export function sanitizeExercise(
       // send the audio + hint, never the transcription
       const p = parsed.data as ListeningPayload;
       return { audioUrl: p.audioUrl, prompt: p.prompt };
+    }
+    case 'speaking': {
+      // send only the phrase to say; the reference stays server-side
+      const p = parsed.data as SpeakingPayload;
+      return { prompt: p.prompt };
     }
     case 'match_pairs': {
       const p = parsed.data as MatchPairsPayload;
@@ -213,6 +230,17 @@ function checkListening(payload: ListeningPayload, text: string): CheckResult {
   return gradeText(payload.accepted, text);
 }
 
+/**
+ * Speaking is graded by the pronunciation scorer (KUR-036), which is a stub
+ * that accepts any recording in v1 (real model: KUR-120). An empty audioKey
+ * is still wrong so a skipped/failed upload isn't silently a pass.
+ */
+function checkSpeaking(payload: SpeakingPayload, audioKey: string): CheckResult {
+  if (!audioKey) return { verdict: 'wrong', accepted: false };
+  const score = defaultScorer.score({ reference: payload.reference, audioKey });
+  return { verdict: score.pass ? 'correct' : 'wrong', accepted: score.pass };
+}
+
 function checkMatchPairs(
   payload: MatchPairsPayload,
   matches: Array<{ left: string; right: string }>,
@@ -253,6 +281,11 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
       return checkListening(
         validPayload.data as ListeningPayload,
         (parsedAnswer.data as { text: string }).text,
+      );
+    case 'speaking':
+      return checkSpeaking(
+        validPayload.data as SpeakingPayload,
+        (parsedAnswer.data as { audioKey: string }).audioKey,
       );
     case 'match_pairs':
       return checkMatchPairs(

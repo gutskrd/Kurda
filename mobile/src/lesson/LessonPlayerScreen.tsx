@@ -10,6 +10,7 @@ import { ListeningExercise } from './components/ListeningExercise';
 import { MatchPairsExercise } from './components/MatchPairsExercise';
 import { MultipleChoiceExercise } from './components/MultipleChoiceExercise';
 import { ProgressBar } from './components/ProgressBar';
+import { SpeakingExercise } from './components/SpeakingExercise';
 import { TranslateExercise } from './components/TranslateExercise';
 import { emptyMatch, type MatchState } from './match';
 import {
@@ -100,17 +101,34 @@ export function SessionPlayer({
   const [choice, setChoice] = useState<number | null>(null);
   const [text, setText] = useState('');
   const [match, setMatch] = useState<MatchState>(emptyMatch);
+  const [audioKey, setAudioKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [offline, setOffline] = useState(false);
   const [results, setResults] = useState<SessionResults | null>(null);
+  const [skipSpeaking, setSkipSpeaking] = useState(false);
 
   const ex = currentExercise(state);
+
+  // learner's course-wide "skip speaking" preference (KUR-036)
+  useEffect(() => {
+    void client.get<{ user: { skipSpeaking?: boolean } }>('/me').then((res) => {
+      if (res.ok) setSkipSpeaking(!!res.data.user.skipSpeaking);
+    });
+  }, [client]);
+
+  // auto-skip speaking exercises when the learner has opted out
+  useEffect(() => {
+    if (ex?.type === 'speaking' && skipSpeaking && state.status === 'answering') {
+      dispatch({ type: 'SKIP' });
+    }
+  }, [ex, skipSpeaking, state.status]);
 
   // reset the input whenever a new exercise comes on screen
   useEffect(() => {
     setChoice(null);
     setText('');
     setMatch(emptyMatch);
+    setAudioKey(null);
     setOffline(false);
   }, [state.index]);
 
@@ -123,10 +141,12 @@ export function SessionPlayer({
         return { type: 'translate' as const, text };
       case 'listening':
         return { type: 'listening' as const, text };
+      case 'speaking':
+        return { type: 'speaking' as const, audioKey };
       case 'match_pairs':
         return { type: 'match_pairs' as const, matches: match.matches };
     }
-  }, [ex, choice, text, match]);
+  }, [ex, choice, text, match, audioKey]);
 
   const canCheck = useMemo(() => {
     if (!ex || !draft) return false;
@@ -136,10 +156,18 @@ export function SessionPlayer({
       case 'translate':
       case 'listening':
         return draft.text.trim().length > 0;
+      case 'speaking':
+        return draft.audioKey !== null;
       case 'match_pairs':
         return draft.matches.length === (ex.lefts?.length ?? 0);
     }
   }, [ex, draft]);
+
+  const denySpeaking = useCallback(() => {
+    setSkipSpeaking(true);
+    void client.patch('/me', { skipSpeaking: true });
+    dispatch({ type: 'SKIP' });
+  }, [client]);
 
   // finish → complete the session and show results
   useEffect(() => {
@@ -235,6 +263,15 @@ export function SessionPlayer({
             exercise={ex}
             text={text}
             onChangeText={setText}
+            onSkip={() => dispatch({ type: 'SKIP' })}
+            disabled={state.status !== 'answering'}
+          />
+        ) : null}
+        {ex?.type === 'speaking' ? (
+          <SpeakingExercise
+            exercise={ex}
+            onSetAudioKey={setAudioKey}
+            onDenyPermission={denySpeaking}
             onSkip={() => dispatch({ type: 'SKIP' })}
             disabled={state.status !== 'answering'}
           />
