@@ -83,6 +83,24 @@ export {
 } from './goals/service.js';
 export { registerDailyGoalRoutes } from './goals/routes.js';
 export {
+  review,
+  nextEasiness,
+  dueAfter,
+  qualityFromVerdict,
+  INITIAL_SM2,
+  MIN_EASINESS,
+  DEFAULT_EASINESS,
+  type Sm2State,
+  type Quality,
+} from './review/sm2.js';
+export {
+  ReviewService,
+  REVIEW_QUEUE_LIMIT,
+  type ReviewItem,
+  type ReviewQueue,
+} from './review/service.js';
+export { registerReviewRoutes } from './review/routes.js';
+export {
   localDate,
   dayDiff,
   shiftDate,

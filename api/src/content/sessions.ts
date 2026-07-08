@@ -5,6 +5,8 @@ import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
+import { ReviewService } from '../review/service.js';
+import { qualityFromVerdict } from '../review/sm2.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -74,16 +76,19 @@ export class LessonSessionService {
   private readonly xp: XpService;
   private readonly streaks: StreakService;
   private readonly goals: DailyGoalService;
+  private readonly reviews: ReviewService;
 
   constructor(
     private readonly pool: pg.Pool,
     xp?: XpService,
     streaks?: StreakService,
     goals?: DailyGoalService,
+    reviews?: ReviewService,
   ) {
     this.xp = xp ?? new XpService(pool);
     this.streaks = streaks ?? new StreakService(pool);
     this.goals = goals ?? new DailyGoalService(pool);
+    this.reviews = reviews ?? new ReviewService(pool);
   }
 
   private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
@@ -221,6 +226,9 @@ export class LessonSessionService {
           [sessionId],
         );
       }
+      // Feed the answer into spaced repetition (KUR-033), keyed on the
+      // exercise until a lexeme model exists (KUR-043). First answer only.
+      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict), new Date(), client);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
