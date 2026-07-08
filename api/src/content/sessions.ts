@@ -2,8 +2,11 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { checkAnswer, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
+import { XpService, lessonCompletionXp } from '../xp/service.js';
 
 export const SESSION_TTL_HOURS = 24;
+/** XP-ledger source tag for lesson-completion awards. */
+export const LESSON_XP_SOURCE = 'lesson_complete';
 
 interface SessionRow {
   id: string;
@@ -64,7 +67,11 @@ export interface SessionResults {
  * once per (session, exercise).
  */
 export class LessonSessionService {
-  constructor(private readonly pool: pg.Pool) {}
+  private readonly xp: XpService;
+
+  constructor(private readonly pool: pg.Pool, xp?: XpService) {
+    this.xp = xp ?? new XpService(pool);
+  }
 
   private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
     const rows = await this.pool.query<ExerciseRow>(
@@ -217,15 +224,14 @@ export class LessonSessionService {
     };
   }
 
-  /** Finalizes a session and returns the results summary. Idempotent. */
+  /**
+   * Finalizes a session and returns the results summary. Idempotent:
+   * XP is awarded exactly once, on the transition to completed, keyed on
+   * the session id in the ledger. Re-calling returns the same summary but
+   * awards no further XP.
+   */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
     const session = await this.loadOwnedSession(sessionId, userId);
-    if (!session.completed_at) {
-      await this.pool.query(
-        `UPDATE lesson_sessions SET completed_at = now() WHERE id = $1 AND completed_at IS NULL`,
-        [sessionId],
-      );
-    }
     const answers = await this.pool.query<{ exercise_id: string; verdict: Verdict; accepted: boolean }>(
       `SELECT exercise_id, verdict, accepted FROM session_answers WHERE session_id = $1`,
       [sessionId],
@@ -234,12 +240,48 @@ export class LessonSessionService {
     const mistakes = answers.rows
       .filter((a) => !a.accepted)
       .map((a) => ({ exerciseId: a.exercise_id, verdict: a.verdict }));
+    const accuracy = session.total_count > 0 ? correct / session.total_count : 0;
+
+    let xpAwarded = 0;
+    if (!session.completed_at) {
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
+        // Claim the completion transition; only the winner awards XP.
+        const claimed = await client.query(
+          `UPDATE lesson_sessions SET completed_at = now()
+           WHERE id = $1 AND completed_at IS NULL RETURNING id`,
+          [sessionId],
+        );
+        if ((claimed.rowCount ?? 0) > 0) {
+          // Repeat = this learner already completed this lesson before.
+          const prior = await client.query<{ n: string }>(
+            `SELECT count(*)::text n FROM lesson_sessions
+             WHERE user_id = $1 AND lesson_id = $2 AND completed_at IS NOT NULL AND id <> $3`,
+            [userId, session.lesson_id, sessionId],
+          );
+          const isRepeat = Number(prior.rows[0]!.n) > 0;
+          const amount = lessonCompletionXp(accuracy, isRepeat);
+          xpAwarded = await this.xp.award(
+            { userId, source: LESSON_XP_SOURCE, amount, refId: sessionId },
+            client,
+          );
+        }
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
     return {
       correct,
       total: session.total_count,
-      accuracy: session.total_count > 0 ? correct / session.total_count : 0,
+      accuracy,
       mistakes,
-      xpAwarded: 0, // KUR-030 wires real XP here
+      xpAwarded,
     };
   }
 }

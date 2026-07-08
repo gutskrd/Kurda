@@ -59,5 +59,13 @@ export {
   type TranslatePayload,
   type MatchPairsPayload,
 } from './content/exercises.js';
-export { LessonSessionService, SESSION_TTL_HOURS, type SessionView, type AnswerResult, type SessionResults } from './content/sessions.js';
+export { LessonSessionService, SESSION_TTL_HOURS, LESSON_XP_SOURCE, type SessionView, type AnswerResult, type SessionResults } from './content/sessions.js';
 export { registerLessonRoutes } from './content/routes.js';
+export {
+  XpService,
+  lessonCompletionXp,
+  BASE_LESSON_XP,
+  ACCURACY_BONUS_XP,
+  REPEAT_XP_FACTOR,
+  type XpAward,
+} from './xp/service.js';

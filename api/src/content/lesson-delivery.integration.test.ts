@@ -70,7 +70,17 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
+    // hard-deleting the user cascades into the append-only xp_ledger, which
+    // only permits DELETE under the admin flag (see the xp migration).
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE id = $1`, [userId]);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
     await pool.query(
       `UPDATE lessons SET status = 'archived' WHERE skill_id IN (
          SELECT s.id FROM skills s JOIN units u ON u.id = s.unit_id WHERE u.course_id = $1)`,
@@ -142,15 +152,48 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(Object.keys(answered).sort()).toEqual([ex.mc, ex.tr, ex.mp].sort());
   });
 
-  it('completes with a results summary', async () => {
+  it('completes with a results summary and awards full XP', async () => {
     const res = await authed('POST', `/sessions/${sessionId}/complete`);
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ correct: 3, total: 3, accuracy: 1, xpAwarded: 0 });
+    // perfect first completion: BASE (10) + accuracy bonus (10) = 20
+    expect(res.json()).toMatchObject({ correct: 3, total: 3, accuracy: 1, xpAwarded: 20 });
+  });
+
+  it('re-completing awards no further XP (idempotent)', async () => {
+    const res = await authed('POST', `/sessions/${sessionId}/complete`);
+    expect(res.json()).toMatchObject({ xpAwarded: 0, correct: 3, total: 3 });
+  });
+
+  it('exposes the XP total on the profile', async () => {
+    const res = await authed('GET', `/me`);
+    expect(res.json().user.xp).toBe(20);
   });
 
   it('a new start after completing creates a fresh session', async () => {
     const res = await authed('GET', `/lessons/${lessonId}/session`);
     expect(res.json().sessionId).not.toBe(sessionId);
+  });
+
+  it('repeating a completed lesson pays decayed XP (anti-farm)', async () => {
+    const start = await authed('GET', `/lessons/${lessonId}/session`);
+    const sid = start.json().sessionId;
+    // answer everything correctly again
+    await authed('POST', `/sessions/${sid}/answers`, { exerciseId: ex.mc, answer: { choice: 0 } });
+    await authed('POST', `/sessions/${sid}/answers`, { exerciseId: ex.tr, answer: { text: 'sêv' } });
+    await authed('POST', `/sessions/${sid}/answers`, {
+      exerciseId: ex.mp,
+      answer: {
+        matches: [
+          { left: 'av', right: 'water' },
+          { left: 'sêv', right: 'apple' },
+        ],
+      },
+    });
+    const res = await authed('POST', `/sessions/${sid}/complete`);
+    // repeat of a perfect lesson: round(20 * 0.25) = 5
+    expect(res.json().xpAwarded).toBe(5);
+    const me = await authed('GET', `/me`);
+    expect(me.json().user.xp).toBe(25);
   });
 
   it('starting the same lesson twice resumes the same active session', async () => {
