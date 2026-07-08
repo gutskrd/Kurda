@@ -50,6 +50,7 @@ export { ContentRepository, type ExerciseType, type LessonStatus, type LessonRow
 export {
   checkAnswer,
   validateExercisePayload,
+  sanitizeExercise,
   answerSchemas,
   InvalidExercisePayloadError,
   type Verdict,
@@ -58,3 +59,5 @@ export {
   type TranslatePayload,
   type MatchPairsPayload,
 } from './content/exercises.js';
+export { LessonSessionService, SESSION_TTL_HOURS, type SessionView, type AnswerResult, type SessionResults } from './content/sessions.js';
+export { registerLessonRoutes } from './content/routes.js';
