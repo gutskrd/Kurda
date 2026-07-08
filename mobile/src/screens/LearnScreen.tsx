@@ -60,6 +60,10 @@ export function LearnScreen() {
         </View>
       ) : null}
 
+      <Pressable onPress={() => navigation.navigate('Practice')} style={styles.practice}>
+        <Text style={styles.practiceText}>⚡ Practice</Text>
+      </Pressable>
+
       <View style={styles.launcher}>
         <Text style={styles.launcherHint}>Open a lesson by id (lesson map coming soon).</Text>
         <TextInput
@@ -96,6 +100,14 @@ const styles = StyleSheet.create({
   title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, color: colors.primary },
   goalCard: { alignItems: 'center', gap: spacing.md, alignSelf: 'stretch' },
   goalHint: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  practice: {
+    alignSelf: 'stretch',
+    backgroundColor: colors.accent,
+    paddingVertical: spacing.md,
+    borderRadius: radii.md,
+    alignItems: 'center',
+  },
+  practiceText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textOnPrimary },
   launcher: { alignSelf: 'stretch', gap: spacing.sm },
   launcherHint: { fontSize: typography.sizes.sm, color: colors.textSecondary, textAlign: 'center' },
   input: {

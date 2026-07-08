@@ -101,6 +101,16 @@ export {
 } from './review/service.js';
 export { registerReviewRoutes } from './review/routes.js';
 export {
+  PracticeService,
+  PRACTICE_XP_FACTOR,
+  PRACTICE_XP_SOURCE,
+  type PracticeSession,
+  type EmptyPractice,
+  type PracticeResults,
+} from './practice/service.js';
+export { selectPracticeItems, PRACTICE_TARGET, PRACTICE_MIN } from './practice/practice-select.js';
+export { registerPracticeRoutes } from './practice/routes.js';
+export {
   localDate,
   dayDiff,
   shiftDate,

@@ -15,6 +15,7 @@ import { LearnScreen } from './src/screens/LearnScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { TabScreen } from './src/screens/TabScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
+import { PracticeScreen } from './src/practice/PracticeScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -27,6 +28,7 @@ const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       Tabs: { screens: linkingScreens() },
       Lesson: 'lesson/:lessonId',
+      Practice: 'practice',
     },
   },
 };
@@ -74,6 +76,9 @@ function SignedInRoot() {
         {({ route, navigation }) => (
           <LessonPlayerScreen lessonId={route.params.lessonId} onExit={() => navigation.goBack()} />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Practice" options={{ presentation: 'fullScreenModal' }}>
+        {({ navigation }) => <PracticeScreen navigation={navigation} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
     </RootStack.Navigator>
   );
