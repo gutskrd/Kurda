@@ -152,11 +152,13 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(Object.keys(answered).sort()).toEqual([ex.mc, ex.tr, ex.mp].sort());
   });
 
-  it('completes with a results summary and awards full XP', async () => {
+  it('completes with a results summary, awards full XP, and starts a streak', async () => {
     const res = await authed('POST', `/sessions/${sessionId}/complete`);
     expect(res.statusCode).toBe(200);
     // perfect first completion: BASE (10) + accuracy bonus (10) = 20
     expect(res.json()).toMatchObject({ correct: 3, total: 3, accuracy: 1, xpAwarded: 20 });
+    // first lesson finished today → streak of 1
+    expect(res.json().streak).toMatchObject({ current: 1, longest: 1, freezes: 0 });
   });
 
   it('re-completing awards no further XP (idempotent)', async () => {
@@ -164,9 +166,10 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(res.json()).toMatchObject({ xpAwarded: 0, correct: 3, total: 3 });
   });
 
-  it('exposes the XP total on the profile', async () => {
+  it('exposes the XP total and streak on the profile', async () => {
     const res = await authed('GET', `/me`);
     expect(res.json().user.xp).toBe(20);
+    expect(res.json().user.streak).toMatchObject({ current: 1, longest: 1 });
   });
 
   it('a new start after completing creates a fresh session', async () => {

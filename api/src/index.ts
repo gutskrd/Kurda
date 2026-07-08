@@ -24,7 +24,7 @@ export { setupAuth, requireAuth, requireRoles, type AuthFailure } from './plugin
 export { createEmailToken, consumeEmailToken, EMAIL_TOKEN_TTL_HOURS, type EmailTokenPurpose } from './auth/email-tokens.js';
 export { OAuthService, verifyProviderToken, defaultJwksResolver, type OAuthProvider, type ProviderIdentity, type JwksResolver } from './auth/oauth.js';
 export { oauthBodySchema } from './auth/routes.js';
-export { registerUserRoutes, sanitizeBio, patchMeBodySchema, USERNAME_CHANGE_COOLDOWN_DAYS } from './users/routes.js';
+export { registerUserRoutes, sanitizeBio, patchMeBodySchema, USERNAME_CHANGE_COOLDOWN_DAYS, TIMEZONE_CHANGE_COOLDOWN_DAYS } from './users/routes.js';
 export { LockoutService, lockDurationMinutes, LOCKOUT_THRESHOLD, FAILURE_WINDOW_MINUTES } from './auth/lockout.js';
 export { GdprService, DELETION_GRACE_DAYS } from './gdpr/service.js';
 export { makeAnonymizeJob, makeExportJob, ANONYMIZE_JOB_NAME, EXPORT_JOB_NAME } from './jobs/gdpr-jobs.js';
@@ -69,3 +69,14 @@ export {
   REPEAT_XP_FACTOR,
   type XpAward,
 } from './xp/service.js';
+export { StreakService, type StreakSummary } from './streaks/service.js';
+export {
+  localDate,
+  dayDiff,
+  shiftDate,
+  settle,
+  record,
+  grantFreeze,
+  MAX_FREEZES,
+  type StreakState,
+} from './streaks/streak-logic.js';
