@@ -1,4 +1,4 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -7,19 +7,28 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
+import type { RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
+import { LearnScreen } from './src/screens/LearnScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { TabScreen } from './src/screens/TabScreen';
+import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
-const linking = {
+const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [Linking.createURL('/'), 'kurda://'],
-  config: { screens: linkingScreens() },
+  config: {
+    screens: {
+      Tabs: { screens: linkingScreens() },
+      Lesson: 'lesson/:lessonId',
+    },
+  },
 };
 
 function SignedInTabs() {
@@ -42,10 +51,31 @@ function SignedInTabs() {
             ),
           }}
         >
-          {() => (tab.name === 'Profile' ? <ProfileScreen /> : <TabScreen tab={tab} />)}
+          {() =>
+            tab.name === 'Profile' ? (
+              <ProfileScreen />
+            ) : tab.name === 'Learn' ? (
+              <LearnScreen />
+            ) : (
+              <TabScreen tab={tab} />
+            )
+          }
         </Tab.Screen>
       ))}
     </Tab.Navigator>
+  );
+}
+
+function SignedInRoot() {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="Tabs" component={SignedInTabs} />
+      <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
+        {({ route, navigation }) => (
+          <LessonPlayerScreen lessonId={route.params.lessonId} onExit={() => navigation.goBack()} />
+        )}
+      </RootStack.Screen>
+    </RootStack.Navigator>
   );
 }
 
@@ -70,7 +100,7 @@ function Root() {
     );
   }
 
-  return <SignedInTabs />;
+  return <SignedInRoot />;
 }
 
 export default function App() {
