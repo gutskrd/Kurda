@@ -31,6 +31,7 @@ import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
 import { registerLessonRoutes } from './content/routes.js';
 import { registerWalletRoutes } from './wallet/routes.js';
+import { registerDailyGoalRoutes } from './goals/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -130,6 +131,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAchievementRoutes(app);
     registerWalletRoutes(app);
     registerLessonRoutes(app);
+    registerDailyGoalRoutes(app);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

@@ -4,6 +4,7 @@ import { checkAnswer, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
+import { DailyGoalService } from '../goals/service.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -72,10 +73,17 @@ export interface SessionResults {
 export class LessonSessionService {
   private readonly xp: XpService;
   private readonly streaks: StreakService;
+  private readonly goals: DailyGoalService;
 
-  constructor(private readonly pool: pg.Pool, xp?: XpService, streaks?: StreakService) {
+  constructor(
+    private readonly pool: pg.Pool,
+    xp?: XpService,
+    streaks?: StreakService,
+    goals?: DailyGoalService,
+  ) {
     this.xp = xp ?? new XpService(pool);
     this.streaks = streaks ?? new StreakService(pool);
+    this.goals = goals ?? new DailyGoalService(pool);
   }
 
   private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
@@ -280,6 +288,9 @@ export class LessonSessionService {
           );
           // Finishing a lesson meets the daily goal → count today's streak.
           streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          // Credit the daily goal if this XP crossed it (KUR-032). Runs in
+          // the same txn so it sees the award above; idempotent.
+          await this.goals.evaluate(client, userId, timeZone);
         }
         await client.query('COMMIT');
       } catch (err) {

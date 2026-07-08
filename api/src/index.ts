@@ -71,6 +71,18 @@ export {
 } from './xp/service.js';
 export { StreakService, type StreakSummary } from './streaks/service.js';
 export {
+  DailyGoalService,
+  goalProgress,
+  isGoalOption,
+  GOAL_OPTIONS,
+  DEFAULT_DAILY_GOAL,
+  DAILY_GOAL_ZER_REWARD,
+  GOAL_REWARDS_ENABLED,
+  type DailyGoalStatus,
+  type GoalOption,
+} from './goals/service.js';
+export { registerDailyGoalRoutes } from './goals/routes.js';
+export {
   localDate,
   dayDiff,
   shiftDate,
