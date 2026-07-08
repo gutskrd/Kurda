@@ -172,6 +172,12 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(res.json().user.streak).toMatchObject({ current: 1, longest: 1 });
   });
 
+  it('completing the lesson meets the default daily goal (KUR-032)', async () => {
+    // the perfect completion above awarded 20 XP == the default goal of 20
+    const res = await authed('GET', `/me/daily-goal`);
+    expect(res.json()).toMatchObject({ goal: 20, earnedXp: 20, completed: true });
+  });
+
   it('a new start after completing creates a fresh session', async () => {
     const res = await authed('GET', `/lessons/${lessonId}/session`);
     expect(res.json().sessionId).not.toBe(sessionId);
