@@ -25,6 +25,7 @@ export interface PlayerState {
 export type PlayerAction =
   | { type: 'ANSWERED'; result: AnswerResult }
   | { type: 'CONTINUE' }
+  | { type: 'SKIP' }
   | { type: 'FINISH' };
 
 /**
@@ -88,6 +89,16 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
         return { ...state, status: 'finished', feedback: null };
       }
       return { ...state, index: nextIndex, status: 'answering', feedback: null };
+    }
+    case 'SKIP': {
+      // defer the current exercise: advance without answering, no heart lost
+      // and it's not counted as a mistake (KUR-035 "can't listen now").
+      if (state.status !== 'answering') return state;
+      const nextIndex = state.index + 1;
+      if (nextIndex >= state.exercises.length) {
+        return { ...state, status: 'finished', feedback: null };
+      }
+      return { ...state, index: nextIndex };
     }
     case 'FINISH':
       return { ...state, status: 'finished', feedback: null };

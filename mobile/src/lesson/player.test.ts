@@ -134,6 +134,29 @@ describe('reduce', () => {
     expect(s.index).toBe(0); // did not advance
   });
 
+  it('SKIP defers the exercise: advances with no heart lost and no mistake', () => {
+    let s = start();
+    s = reduce(s, { type: 'SKIP' });
+    expect(s.index).toBe(1);
+    expect(s.hearts).toBe(STARTING_HEARTS);
+    expect(s.answeredCount).toBe(0); // not counted
+    expect(s.status).toBe('answering');
+  });
+
+  it('SKIP on the last exercise finishes the lesson', () => {
+    let s = start();
+    s = reduce(s, { type: 'SKIP' });
+    s = reduce(s, { type: 'SKIP' });
+    s = reduce(s, { type: 'SKIP' }); // skip the 3rd/last
+    expect(s.status).toBe('finished');
+  });
+
+  it('ignores SKIP while showing feedback', () => {
+    let s = start();
+    s = reduce(s, { type: 'ANSWERED', result: answer() });
+    expect(reduce(s, { type: 'SKIP' })).toBe(s);
+  });
+
   it('ignores answers while showing feedback', () => {
     let s = start();
     s = reduce(s, { type: 'ANSWERED', result: answer() });

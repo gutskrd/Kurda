@@ -1,7 +1,7 @@
 import type pg from 'pg';
 import { validateExercisePayload } from './exercises.js';
 
-export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs';
+export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening';
 export type LessonStatus = 'draft' | 'published' | 'archived';
 
 export interface LessonRow {

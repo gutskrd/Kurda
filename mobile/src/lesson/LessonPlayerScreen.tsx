@@ -6,6 +6,7 @@ import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { HeartsBar } from './components/HeartsBar';
 import { LessonResults } from './components/LessonResults';
+import { ListeningExercise } from './components/ListeningExercise';
 import { MatchPairsExercise } from './components/MatchPairsExercise';
 import { MultipleChoiceExercise } from './components/MultipleChoiceExercise';
 import { ProgressBar } from './components/ProgressBar';
@@ -120,6 +121,8 @@ export function SessionPlayer({
         return { type: 'multiple_choice' as const, choice };
       case 'translate':
         return { type: 'translate' as const, text };
+      case 'listening':
+        return { type: 'listening' as const, text };
       case 'match_pairs':
         return { type: 'match_pairs' as const, matches: match.matches };
     }
@@ -131,6 +134,7 @@ export function SessionPlayer({
       case 'multiple_choice':
         return draft.choice !== null;
       case 'translate':
+      case 'listening':
         return draft.text.trim().length > 0;
       case 'match_pairs':
         return draft.matches.length === (ex.lefts?.length ?? 0);
@@ -223,6 +227,15 @@ export function SessionPlayer({
             exercise={ex}
             text={text}
             onChangeText={setText}
+            disabled={state.status !== 'answering'}
+          />
+        ) : null}
+        {ex?.type === 'listening' ? (
+          <ListeningExercise
+            exercise={ex}
+            text={text}
+            onChangeText={setText}
+            onSkip={() => dispatch({ type: 'SKIP' })}
             disabled={state.status !== 'answering'}
           />
         ) : null}

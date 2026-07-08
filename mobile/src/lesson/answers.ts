@@ -8,6 +8,7 @@ import type { ExerciseType, MatchPair } from './types';
 export type DraftAnswer =
   | { type: 'multiple_choice'; choice: number | null }
   | { type: 'translate'; text: string }
+  | { type: 'listening'; text: string }
   | { type: 'match_pairs'; matches: MatchPair[] };
 
 export function emptyDraft(type: ExerciseType): DraftAnswer {
@@ -15,6 +16,8 @@ export function emptyDraft(type: ExerciseType): DraftAnswer {
     case 'multiple_choice':
       return { type, choice: null };
     case 'translate':
+      return { type, text: '' };
+    case 'listening':
       return { type, text: '' };
     case 'match_pairs':
       return { type, matches: [] };
@@ -27,6 +30,7 @@ export function isDraftComplete(draft: DraftAnswer, pairCount: number): boolean 
     case 'multiple_choice':
       return draft.choice !== null;
     case 'translate':
+    case 'listening':
       return draft.text.trim().length > 0;
     case 'match_pairs':
       return draft.matches.length === pairCount;
@@ -39,6 +43,7 @@ export function encodeAnswer(draft: DraftAnswer): unknown {
     case 'multiple_choice':
       return { choice: draft.choice };
     case 'translate':
+    case 'listening':
       return { text: draft.text.trim() };
     case 'match_pairs':
       return { matches: draft.matches };

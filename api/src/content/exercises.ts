@@ -36,15 +36,26 @@ export const matchPairsPayloadSchema = z.object({
     .max(8),
 });
 
+export const listeningPayloadSchema = z.object({
+  /** CDN URL of the audio clip to play (KUR-013). */
+  audioUrl: z.string().min(1).max(2000),
+  /** optional on-screen hint shown alongside the audio */
+  prompt: z.string().max(500).optional(),
+  /** accepted transcriptions; graded diacritic-tolerantly like translate */
+  accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
+});
+
 const PAYLOAD_SCHEMAS = {
   multiple_choice: multipleChoicePayloadSchema,
   translate: translatePayloadSchema,
   match_pairs: matchPairsPayloadSchema,
+  listening: listeningPayloadSchema,
 } as const;
 
 export type MultipleChoicePayload = z.infer<typeof multipleChoicePayloadSchema>;
 export type TranslatePayload = z.infer<typeof translatePayloadSchema>;
 export type MatchPairsPayload = z.infer<typeof matchPairsPayloadSchema>;
+export type ListeningPayload = z.infer<typeof listeningPayloadSchema>;
 
 export class InvalidExercisePayloadError extends Error {
   constructor(
@@ -87,6 +98,8 @@ export const answerSchemas = {
       .array(z.object({ left: z.string().max(120), right: z.string().max(120) }))
       .max(8),
   }),
+  /** listening is transcription — same shape as translate */
+  listening: z.object({ text: z.string().max(500) }),
 } as const;
 
 // ---------- client-safe sanitization ----------
@@ -127,6 +140,11 @@ export function sanitizeExercise(
     case 'translate': {
       const p = parsed.data as TranslatePayload;
       return { prompt: p.prompt };
+    }
+    case 'listening': {
+      // send the audio + hint, never the transcription
+      const p = parsed.data as ListeningPayload;
+      return { audioUrl: p.audioUrl, prompt: p.prompt };
     }
     case 'match_pairs': {
       const p = parsed.data as MatchPairsPayload;
@@ -172,18 +190,27 @@ function checkMultipleChoice(payload: MultipleChoicePayload, choice: number): Ch
  * diacritics (ê→e, ş→s, …) → accepted, but flagged as a 'typo' so the UI
  * can nudge ("almost — watch the ê"). Otherwise wrong.
  */
-function checkTranslate(payload: TranslatePayload, text: string): CheckResult {
+function gradeText(acceptedAnswers: string[], text: string): CheckResult {
   const answer = normalizeKurdish(text).toLowerCase();
-  const accepted = payload.accepted.map((a) => normalizeKurdish(a).toLowerCase());
+  const accepted = acceptedAnswers.map((a) => normalizeKurdish(a).toLowerCase());
   if (accepted.includes(answer)) {
     return { verdict: 'correct', accepted: true };
   }
   const foldedAnswer = foldDiacritics(answer);
   const foldedAccepted = accepted.map((a) => foldDiacritics(a));
   if (answer.length > 0 && foldedAccepted.includes(foldedAnswer)) {
-    return { verdict: 'typo', accepted: true, correction: payload.accepted[0] };
+    return { verdict: 'typo', accepted: true, correction: acceptedAnswers[0] };
   }
-  return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
+  return { verdict: 'wrong', accepted: false, correction: acceptedAnswers[0] };
+}
+
+function checkTranslate(payload: TranslatePayload, text: string): CheckResult {
+  return gradeText(payload.accepted, text);
+}
+
+/** Listening is graded on the transcription, same rules as translate. */
+function checkListening(payload: ListeningPayload, text: string): CheckResult {
+  return gradeText(payload.accepted, text);
 }
 
 function checkMatchPairs(
@@ -220,6 +247,11 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
     case 'translate':
       return checkTranslate(
         validPayload.data as TranslatePayload,
+        (parsedAnswer.data as { text: string }).text,
+      );
+    case 'listening':
+      return checkListening(
+        validPayload.data as ListeningPayload,
         (parsedAnswer.data as { text: string }).text,
       );
     case 'match_pairs':
