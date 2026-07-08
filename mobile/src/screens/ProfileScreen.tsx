@@ -22,7 +22,7 @@ export function ProfileScreen() {
       {user?.displayName ? <Text style={styles.displayName}>{user.displayName}</Text> : null}
 
       <Pressable style={styles.logout} onPress={logout}>
-        <Text style={styles.logoutText}>Derkeve</Text>
+        <Text style={styles.logoutText}>Log out</Text>
       </Pressable>
     </View>
   );

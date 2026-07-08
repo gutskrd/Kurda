@@ -10,7 +10,7 @@ export function TabScreen({ tab }: { tab: TabDef }) {
   return (
     <View style={styles.container}>
       <Text style={styles.emoji}>{tab.emoji}</Text>
-      <Text style={styles.titleKu}>{tab.titleKu}</Text>
+      <Text style={styles.title}>{tab.title}</Text>
     </View>
   );
 }
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: typography.sizes.xxl,
   },
-  titleKu: {
+  title: {
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
     color: colors.primary,
