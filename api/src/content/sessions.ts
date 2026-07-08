@@ -3,6 +3,7 @@ import { AppError } from '../plugins/errors.js';
 import { checkAnswer, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
+import { StreakService, type StreakSummary } from '../streaks/service.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -57,8 +58,10 @@ export interface SessionResults {
   total: number;
   accuracy: number;
   mistakes: Array<{ exerciseId: string; verdict: Verdict }>;
-  /** XP is awarded by KUR-030 (#30); 0 until then. */
+  /** XP awarded for this completion (0 on a repeat replay). */
   xpAwarded: number;
+  /** Streak after this completion counted toward today's goal (KUR-031). */
+  streak: StreakSummary;
 }
 
 /**
@@ -68,9 +71,11 @@ export interface SessionResults {
  */
 export class LessonSessionService {
   private readonly xp: XpService;
+  private readonly streaks: StreakService;
 
-  constructor(private readonly pool: pg.Pool, xp?: XpService) {
+  constructor(private readonly pool: pg.Pool, xp?: XpService, streaks?: StreakService) {
     this.xp = xp ?? new XpService(pool);
+    this.streaks = streaks ?? new StreakService(pool);
   }
 
   private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
@@ -242,12 +247,19 @@ export class LessonSessionService {
       .map((a) => ({ exerciseId: a.exercise_id, verdict: a.verdict }));
     const accuracy = session.total_count > 0 ? correct / session.total_count : 0;
 
+    const tz = await this.pool.query<{ timezone: string }>(
+      `SELECT timezone FROM users WHERE id = $1`,
+      [userId],
+    );
+    const timeZone = tz.rows[0]?.timezone ?? 'UTC';
+
     let xpAwarded = 0;
+    let streak: StreakSummary | null = null;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
         await client.query('BEGIN');
-        // Claim the completion transition; only the winner awards XP.
+        // Claim the completion transition; only the winner awards XP + streak.
         const claimed = await client.query(
           `UPDATE lesson_sessions SET completed_at = now()
            WHERE id = $1 AND completed_at IS NULL RETURNING id`,
@@ -266,6 +278,8 @@ export class LessonSessionService {
             { userId, source: LESSON_XP_SOURCE, amount, refId: sessionId },
             client,
           );
+          // Finishing a lesson meets the daily goal → count today's streak.
+          streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
         }
         await client.query('COMMIT');
       } catch (err) {
@@ -276,12 +290,16 @@ export class LessonSessionService {
       }
     }
 
+    // On a replay (already completed) report the current, settled streak.
+    if (streak === null) streak = await this.streaks.get(userId, timeZone);
+
     return {
       correct,
       total: session.total_count,
       accuracy,
       mistakes,
       xpAwarded,
+      streak,
     };
   }
 }

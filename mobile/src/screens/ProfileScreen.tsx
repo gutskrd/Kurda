@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { colors, radii, spacing, typography } from '../theme/tokens';
+import { StreakBadge } from '../streak/StreakBadge';
+import type { Streak } from '../streak/format';
 
 /** First letter of the display name / username, NFC-normalised. */
 function initial(name: string | null | undefined): string {
@@ -9,7 +12,20 @@ function initial(name: string | null | undefined): string {
 }
 
 export function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, client, logout } = useAuth();
+  const [streak, setStreak] = useState<Streak | null>(null);
+
+  // The streak lives on /me (settled server-side); the auth session user
+  // only carries identity, so fetch it here on mount.
+  useEffect(() => {
+    let active = true;
+    void client.get<{ user: { streak: Streak } }>('/me').then((res) => {
+      if (active && res.ok) setStreak(res.data.user.streak);
+    });
+    return () => {
+      active = false;
+    };
+  }, [client]);
 
   // Placeholder monogram until the profile-picture system (#177–#181)
   // lands (photo upload + a proper initials fallback).
@@ -20,6 +36,8 @@ export function ProfileScreen() {
       </View>
       <Text style={styles.username}>{user?.username}</Text>
       {user?.displayName ? <Text style={styles.displayName}>{user.displayName}</Text> : null}
+
+      {streak ? <StreakBadge streak={streak} /> : null}
 
       <Pressable style={styles.logout} onPress={logout}>
         <Text style={styles.logoutText}>Log out</Text>
