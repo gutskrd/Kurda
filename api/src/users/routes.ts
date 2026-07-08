@@ -70,6 +70,7 @@ interface MeRow {
   consent_version: string | null;
   analytics_consent: boolean;
   restricted_mode: boolean;
+  xp: number;
   created_at: Date;
 }
 
@@ -88,6 +89,7 @@ function toMe(row: MeRow) {
     needsReconsent: row.consent_version !== CURRENT_POLICY_VERSION,
     analyticsConsent: row.analytics_consent,
     restrictedMode: row.restricted_mode,
+    xp: row.xp,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
