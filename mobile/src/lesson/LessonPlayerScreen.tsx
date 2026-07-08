@@ -22,11 +22,23 @@ import {
 import { AnswerQueue } from './queue';
 import type { AnswerResult, SessionResults, SessionView } from './types';
 
+/** Endpoint paths for a playable session — lessons and practice differ only here. */
+export interface SessionPaths {
+  answers: (sessionId: string) => string;
+  complete: (sessionId: string) => string;
+}
+
+const LESSON_PATHS: SessionPaths = {
+  answers: (id) => `/sessions/${id}/answers`,
+  complete: (id) => `/sessions/${id}/complete`,
+};
+
 /**
  * The lesson player (KUR-029). Loads a session, drives the pure player
  * reducer, renders each exercise type, grades answers server-side, and
  * shows a completion summary. Answers submitted while offline are queued
- * and flushed on reconnect.
+ * and flushed on reconnect. The core is shared with practice mode (KUR-034)
+ * via SessionPlayer.
  */
 export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
   const { client } = useAuth();
@@ -63,10 +75,23 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
       </View>
     );
   }
-  return <ActiveLesson view={view} onExit={onExit} />;
+  return <SessionPlayer view={view} paths={LESSON_PATHS} onExit={onExit} />;
 }
 
-function ActiveLesson({ view, onExit }: { view: SessionView; onExit: () => void }) {
+/**
+ * The playable session core, shared by lessons and practice. Given an
+ * initial view and the endpoint paths, it drives the reducer, renders
+ * exercises, grades answers (with offline queueing), and shows results.
+ */
+export function SessionPlayer({
+  view,
+  paths,
+  onExit,
+}: {
+  view: SessionView;
+  paths: SessionPaths;
+  onExit: () => void;
+}) {
   const { client } = useAuth();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
@@ -115,16 +140,16 @@ function ActiveLesson({ view, onExit }: { view: SessionView; onExit: () => void 
   // finish → complete the session and show results
   useEffect(() => {
     if (state.status !== 'finished' || results) return;
-    void client.post<SessionResults>(`/sessions/${view.sessionId}/complete`).then((res) => {
+    void client.post<SessionResults>(paths.complete(view.sessionId)).then((res) => {
       if (res.ok) setResults(res.data);
     });
-  }, [state.status, results, client, view.sessionId]);
+  }, [state.status, results, client, view.sessionId, paths]);
 
   const check = useCallback(async () => {
     if (!ex || !draft || submitting) return;
     setSubmitting(true);
     const body = { exerciseId: ex.id, answer: encodeAnswer(draft) };
-    const res = await client.post<AnswerResult>(`/sessions/${view.sessionId}/answers`, body);
+    const res = await client.post<AnswerResult>(paths.answers(view.sessionId), body);
     setSubmitting(false);
     if (res.ok) {
       dispatch({ type: 'ANSWERED', result: res.data });
@@ -134,12 +159,12 @@ function ActiveLesson({ view, onExit }: { view: SessionView; onExit: () => void 
     } else {
       setOffline(true); // surface a retry for transient server errors too
     }
-  }, [ex, draft, submitting, client, view.sessionId, queue]);
+  }, [ex, draft, submitting, client, view.sessionId, queue, paths]);
 
   const retry = useCallback(async () => {
     setSubmitting(true);
     const sent = await queue.flush(async (pending) => {
-      const res = await client.post<AnswerResult>(`/sessions/${view.sessionId}/answers`, {
+      const res = await client.post<AnswerResult>(paths.answers(view.sessionId), {
         exerciseId: pending.exerciseId,
         answer: pending.answer,
       });
@@ -151,7 +176,7 @@ function ActiveLesson({ view, onExit }: { view: SessionView; onExit: () => void 
       setOffline(false);
       dispatch({ type: 'ANSWERED', result: last });
     }
-  }, [queue, client, view.sessionId]);
+  }, [queue, client, view.sessionId, paths]);
 
   if (state.status === 'finished' && results) {
     return (
