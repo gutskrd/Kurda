@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { validateExercisePayload } from './exercises.js';
 
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs';
 export type LessonStatus = 'draft' | 'published' | 'archived';
@@ -68,10 +69,12 @@ export class ContentRepository {
     type: ExerciseType,
     payload: Record<string, unknown>,
   ): Promise<string> {
+    // reject malformed exercises at authoring time (KUR-027)
+    const validated = validateExercisePayload(type, payload);
     const result = await this.pool.query<{ id: string }>(
       `INSERT INTO exercises (lesson_id, position, type, payload)
        VALUES ($1, $2, $3, $4) RETURNING id`,
-      [lessonId, position, type, JSON.stringify(payload)],
+      [lessonId, position, type, JSON.stringify(validated)],
     );
     return (result.rows[0] as { id: string }).id;
   }

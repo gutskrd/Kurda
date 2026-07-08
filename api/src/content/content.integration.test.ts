@@ -72,9 +72,9 @@ describe.skipIf(!DATABASE_URL)('content schema (integration)', () => {
         [lessonV1],
       ),
     ).rejects.toThrow(/immutable/);
-    await expect(repo.addExercise(lessonV1, 3, 'translate', { prompt: 'x' })).rejects.toThrow(
-      /immutable/,
-    );
+    await expect(
+      repo.addExercise(lessonV1, 3, 'translate', { prompt: 'x', accepted: ['y'] }),
+    ).rejects.toThrow(/immutable/);
   });
 
   it('editing means a new draft version; the old version survives untouched', async () => {
@@ -115,8 +115,16 @@ describe.skipIf(!DATABASE_URL)('content schema (integration)', () => {
 
   it('exercise types are constrained to the v1 set', async () => {
     const draft = await repo.createLesson(skillId, 9, 'Draft', 'Draft');
+    // rejected by payload validation (KUR-027) before hitting the DB
     await expect(
       repo.addExercise(draft, 1, 'speaking' as never, { prompt: 'x' }),
-    ).rejects.toThrow(/check constraint|violates/i);
+    ).rejects.toThrow(/unknown exercise type/i);
+  });
+
+  it('rejects a malformed payload for a valid type (KUR-027)', async () => {
+    const draft = await repo.createLesson(skillId, 10, 'Draft2', 'Draft2');
+    await expect(
+      repo.addExercise(draft, 1, 'multiple_choice', { prompt: 'x', options: ['a'], correctIndex: 3 }),
+    ).rejects.toThrow(/invalid multiple_choice payload/i);
   });
 });

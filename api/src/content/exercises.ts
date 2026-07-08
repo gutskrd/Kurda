@@ -1,0 +1,176 @@
+import { z } from 'zod';
+import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import type { ExerciseType } from './repository.js';
+
+/**
+ * Exercise payload schemas + server-side answer checkers (KUR-027).
+ *
+ * The client NEVER decides correctness. Authoring validates the payload
+ * against these schemas (KUR-026 authoring / KUR-041 import); grading
+ * runs `checkAnswer` on the server (lesson submission, KUR-028).
+ */
+
+// ---------- payload schemas (authoring-time) ----------
+
+export const multipleChoicePayloadSchema = z
+  .object({
+    prompt: z.string().min(1).max(500),
+    options: z.array(z.string().min(1).max(200)).min(2).max(6),
+    correctIndex: z.number().int().min(0),
+  })
+  .refine((p) => p.correctIndex < p.options.length, {
+    message: 'correctIndex must point at an option',
+    path: ['correctIndex'],
+  });
+
+export const translatePayloadSchema = z.object({
+  prompt: z.string().min(1).max(500),
+  /** All accepted answers; the first is the canonical/shown correction. */
+  accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
+});
+
+export const matchPairsPayloadSchema = z.object({
+  pairs: z
+    .array(z.object({ left: z.string().min(1).max(120), right: z.string().min(1).max(120) }))
+    .min(2)
+    .max(8),
+});
+
+const PAYLOAD_SCHEMAS = {
+  multiple_choice: multipleChoicePayloadSchema,
+  translate: translatePayloadSchema,
+  match_pairs: matchPairsPayloadSchema,
+} as const;
+
+export type MultipleChoicePayload = z.infer<typeof multipleChoicePayloadSchema>;
+export type TranslatePayload = z.infer<typeof translatePayloadSchema>;
+export type MatchPairsPayload = z.infer<typeof matchPairsPayloadSchema>;
+
+export class InvalidExercisePayloadError extends Error {
+  constructor(
+    public readonly type: ExerciseType,
+    public readonly issues: Array<{ path: string; message: string }>,
+    message?: string,
+  ) {
+    super(message ?? `invalid ${type} payload`);
+  }
+}
+
+/** Validates + returns the typed payload, or throws with per-field issues. */
+export function validateExercisePayload(type: ExerciseType, payload: unknown): unknown {
+  const schema = PAYLOAD_SCHEMAS[type];
+  if (!schema) {
+    throw new InvalidExercisePayloadError(
+      type,
+      [{ path: 'type', message: `unknown exercise type: ${type}` }],
+      `unknown exercise type: ${type}`,
+    );
+  }
+  const result = schema.safeParse(payload);
+  if (!result.success) {
+    throw new InvalidExercisePayloadError(
+      type,
+      result.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+    );
+  }
+  return result.data;
+}
+
+// ---------- answer schemas (submission-time) ----------
+
+export const answerSchemas = {
+  multiple_choice: z.object({ choice: z.number().int().min(0) }),
+  translate: z.object({ text: z.string().max(500) }),
+  /** left→right pairing the learner made, as the two texts of each pair. */
+  match_pairs: z.object({
+    matches: z
+      .array(z.object({ left: z.string().max(120), right: z.string().max(120) }))
+      .max(8),
+  }),
+} as const;
+
+// ---------- grading ----------
+
+/** 'correct' | 'typo' (right word, diacritic slip) | 'wrong'. */
+export type Verdict = 'correct' | 'typo' | 'wrong';
+
+export interface CheckResult {
+  verdict: Verdict;
+  /** true for correct AND typo (a typo still counts as right, with a nudge). */
+  accepted: boolean;
+  /** Canonical correct answer to show on reveal. */
+  correction?: string;
+}
+
+function checkMultipleChoice(payload: MultipleChoicePayload, choice: number): CheckResult {
+  const correct = choice === payload.correctIndex;
+  return {
+    verdict: correct ? 'correct' : 'wrong',
+    accepted: correct,
+    correction: correct ? undefined : payload.options[payload.correctIndex],
+  };
+}
+
+/**
+ * Diacritic-tolerant translation check. Exact (normalised) match against
+ * any accepted answer → correct. A match only after folding Kurdish
+ * diacritics (ê→e, ş→s, …) → accepted, but flagged as a 'typo' so the UI
+ * can nudge ("almost — watch the ê"). Otherwise wrong.
+ */
+function checkTranslate(payload: TranslatePayload, text: string): CheckResult {
+  const answer = normalizeKurdish(text).toLowerCase();
+  const accepted = payload.accepted.map((a) => normalizeKurdish(a).toLowerCase());
+  if (accepted.includes(answer)) {
+    return { verdict: 'correct', accepted: true };
+  }
+  const foldedAnswer = foldDiacritics(answer);
+  const foldedAccepted = accepted.map((a) => foldDiacritics(a));
+  if (answer.length > 0 && foldedAccepted.includes(foldedAnswer)) {
+    return { verdict: 'typo', accepted: true, correction: payload.accepted[0] };
+  }
+  return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
+}
+
+function checkMatchPairs(
+  payload: MatchPairsPayload,
+  matches: Array<{ left: string; right: string }>,
+): CheckResult {
+  const truth = new Map(
+    payload.pairs.map((p) => [normalizeKurdish(p.left), normalizeKurdish(p.right)]),
+  );
+  const allRight =
+    matches.length === payload.pairs.length &&
+    matches.every((m) => truth.get(normalizeKurdish(m.left)) === normalizeKurdish(m.right));
+  return { verdict: allRight ? 'correct' : 'wrong', accepted: allRight };
+}
+
+/**
+ * Grades one answer server-side. `payload` and `answer` are the raw
+ * stored/submitted JSON; both are validated here so a malformed answer
+ * is simply 'wrong', never a crash.
+ */
+export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknown): CheckResult {
+  const validPayload = PAYLOAD_SCHEMAS[type].safeParse(payload);
+  if (!validPayload.success) throw new Error(`stored payload for ${type} is invalid`);
+
+  const parsedAnswer = answerSchemas[type].safeParse(answer);
+  if (!parsedAnswer.success) return { verdict: 'wrong', accepted: false };
+
+  switch (type) {
+    case 'multiple_choice':
+      return checkMultipleChoice(
+        validPayload.data as MultipleChoicePayload,
+        (parsedAnswer.data as { choice: number }).choice,
+      );
+    case 'translate':
+      return checkTranslate(
+        validPayload.data as TranslatePayload,
+        (parsedAnswer.data as { text: string }).text,
+      );
+    case 'match_pairs':
+      return checkMatchPairs(
+        validPayload.data as MatchPairsPayload,
+        (parsedAnswer.data as { matches: Array<{ left: string; right: string }> }).matches,
+      );
+  }
+}

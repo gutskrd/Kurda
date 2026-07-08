@@ -47,3 +47,14 @@ export { selectQuestions, type GameQuestion } from './game/question-bank.js';
 export { registerGameRoutes } from './game/routes.js';
 export { type ClientMessageHandler } from './realtime/gateway.js';
 export { ContentRepository, type ExerciseType, type LessonStatus, type LessonRow } from './content/repository.js';
+export {
+  checkAnswer,
+  validateExercisePayload,
+  answerSchemas,
+  InvalidExercisePayloadError,
+  type Verdict,
+  type CheckResult as ExerciseCheckResult,
+  type MultipleChoicePayload,
+  type TranslatePayload,
+  type MatchPairsPayload,
+} from './content/exercises.js';
