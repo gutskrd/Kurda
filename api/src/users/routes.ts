@@ -56,6 +56,8 @@ export const patchMeBodySchema = z
     locale: z.enum(['en', 'ku', 'de', 'tr', 'ar']).optional(),
     timezone: timezoneSchema.optional(),
     username: z.string().min(3).max(30).optional(),
+    /** deny mic → speaking exercises skipped course-wide (KUR-036) */
+    skipSpeaking: z.boolean().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'no fields to update' });
 
@@ -74,6 +76,7 @@ interface MeRow {
   analytics_consent: boolean;
   restricted_mode: boolean;
   xp: number;
+  skip_speaking: boolean;
   created_at: Date;
 }
 
@@ -93,6 +96,7 @@ function toMe(row: MeRow) {
     analyticsConsent: row.analytics_consent,
     restrictedMode: row.restricted_mode,
     xp: row.xp,
+    skipSpeaking: row.skip_speaking,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -239,6 +243,7 @@ export function registerUserRoutes(app: FastifyInstance): void {
       if (body.displayName !== undefined) add('display_name', normalizeKurdish(body.displayName));
       if (body.bio !== undefined) add('bio', sanitizeBio(body.bio));
       if (body.locale !== undefined) add('locale', body.locale);
+      if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);
 
       if (body.timezone !== undefined) {
         const cur = await app.db.query<{ timezone: string; timezone_changed_at: Date | null }>(

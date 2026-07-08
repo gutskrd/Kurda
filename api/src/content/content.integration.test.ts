@@ -113,11 +113,11 @@ describe.skipIf(!DATABASE_URL)('content schema (integration)', () => {
     expect(archived.rows[0].status).toBe('archived');
   });
 
-  it('exercise types are constrained to the v1 set', async () => {
+  it('exercise types are constrained to the known set', async () => {
     const draft = await repo.createLesson(skillId, 9, 'Draft', 'Draft');
     // rejected by payload validation (KUR-027) before hitting the DB
     await expect(
-      repo.addExercise(draft, 1, 'speaking' as never, { prompt: 'x' }),
+      repo.addExercise(draft, 1, 'flashcard' as never, { prompt: 'x' }),
     ).rejects.toThrow(/unknown exercise type/i);
   });
 

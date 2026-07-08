@@ -9,6 +9,7 @@ export type DraftAnswer =
   | { type: 'multiple_choice'; choice: number | null }
   | { type: 'translate'; text: string }
   | { type: 'listening'; text: string }
+  | { type: 'speaking'; audioKey: string | null }
   | { type: 'match_pairs'; matches: MatchPair[] };
 
 export function emptyDraft(type: ExerciseType): DraftAnswer {
@@ -19,6 +20,8 @@ export function emptyDraft(type: ExerciseType): DraftAnswer {
       return { type, text: '' };
     case 'listening':
       return { type, text: '' };
+    case 'speaking':
+      return { type, audioKey: null };
     case 'match_pairs':
       return { type, matches: [] };
   }
@@ -32,6 +35,8 @@ export function isDraftComplete(draft: DraftAnswer, pairCount: number): boolean 
     case 'translate':
     case 'listening':
       return draft.text.trim().length > 0;
+    case 'speaking':
+      return draft.audioKey !== null;
     case 'match_pairs':
       return draft.matches.length === pairCount;
   }
@@ -45,6 +50,8 @@ export function encodeAnswer(draft: DraftAnswer): unknown {
     case 'translate':
     case 'listening':
       return { text: draft.text.trim() };
+    case 'speaking':
+      return { audioKey: draft.audioKey };
     case 'match_pairs':
       return { matches: draft.matches };
   }

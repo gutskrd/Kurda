@@ -180,3 +180,30 @@ describe('listening (KUR-035)', () => {
     expect(checkAnswer('listening', payload, { text: 'av' })).toMatchObject({ verdict: 'wrong', accepted: false });
   });
 });
+
+describe('speaking (KUR-036)', () => {
+  const payload = { prompt: 'Say: Ez baş im', reference: 'Ez baş im' };
+
+  it('validates a well-formed payload and rejects a missing reference', () => {
+    expect(() => validateExercisePayload('speaking', payload)).not.toThrow();
+    expect(() => validateExercisePayload('speaking', { prompt: 'Say it' })).toThrow();
+  });
+
+  it('sanitization exposes the prompt but never the reference', () => {
+    const safe = sanitizeExercise('speaking', payload, 'seed');
+    expect(safe).toEqual({ prompt: payload.prompt });
+    expect(JSON.stringify(safe)).not.toContain('reference');
+  });
+
+  it('the v1 stub scorer accepts any uploaded recording', () => {
+    expect(checkAnswer('speaking', payload, { audioKey: 'speaking/abc.m4a' })).toMatchObject({
+      verdict: 'correct',
+      accepted: true,
+    });
+  });
+
+  it('an empty audioKey is wrong, not a silent pass', () => {
+    // schema requires a non-empty key, so a blank submission is rejected → wrong
+    expect(checkAnswer('speaking', payload, { audioKey: '' })).toMatchObject({ accepted: false });
+  });
+});

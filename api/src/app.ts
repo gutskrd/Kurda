@@ -34,6 +34,7 @@ import { registerWalletRoutes } from './wallet/routes.js';
 import { registerDailyGoalRoutes } from './goals/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
+import { registerMediaRoutes } from './media/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -136,6 +137,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyGoalRoutes(app);
     registerReviewRoutes(app);
     registerPracticeRoutes(app);
+    registerMediaRoutes(app);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

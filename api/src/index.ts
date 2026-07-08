@@ -110,6 +110,13 @@ export {
 } from './practice/service.js';
 export { selectPracticeItems, PRACTICE_TARGET, PRACTICE_MIN } from './practice/practice-select.js';
 export { registerPracticeRoutes } from './practice/routes.js';
+export { registerMediaRoutes } from './media/routes.js';
+export {
+  type PronunciationScorer,
+  type PronunciationScore,
+  StubPronunciationScorer,
+  defaultScorer,
+} from './content/speaking-scorer.js';
 export {
   localDate,
   dayDiff,
