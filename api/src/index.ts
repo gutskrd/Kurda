@@ -162,6 +162,8 @@ export {
   type SearchHit,
   type MatchType,
 } from './dictionary/search-service.js';
+export { wordOfDayIndex } from './dictionary/word-of-day.js';
+export { WordOfDayService, type WordOfDay } from './dictionary/word-of-day-service.js';
 export { registerDictionaryRoutes } from './dictionary/routes.js';
 export {
   type PronunciationScorer,
