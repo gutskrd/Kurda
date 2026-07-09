@@ -40,6 +40,7 @@ export { RealtimeGateway, TICKET_TTL_SECONDS, CLOSE_CONNECTED_ELSEWHERE, CLOSE_B
 export { RedisRoomBus, LocalRoomBus, type RoomBus, type RoomEvent } from './realtime/bus.js';
 export { RedisKV, MemoryKV, type RealtimeKV } from './realtime/kv.js';
 export { MatchmakingService, type MatchmakingOptions, type MatchRecord, type EnqueueResult } from './game/matchmaking.js';
+export { MODE_CONFIG, formTeams, teamScoreboard, type GameMode, type ModeConfig, type TeamLine } from './game/modes.js';
 export { RedisMatchQueue, MemoryMatchQueue, type MatchQueue, type QueueEntry } from './game/match-queue.js';
 export { registerMatchmakingRoutes } from './game/routes.js';
 export { GameEngine, ANSWER_GRACE_MS, type EngineOptions, type GamePhase } from './game/engine.js';

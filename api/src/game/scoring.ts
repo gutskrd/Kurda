@@ -35,13 +35,19 @@ export interface ScoreLine {
   cumulativeMs: number;
 }
 
-export type RankedScore<T extends ScoreLine> = T & { rank: number };
+/** Anything with points + a time tiebreak can be ranked (players or teams). */
+export interface Rankable {
+  points: number;
+  cumulativeMs: number;
+}
+
+export type RankedScore<T extends Rankable> = T & { rank: number };
 
 /**
  * Rank score lines: most points first, ties broken by lower cumulative
  * answer time. Ranks are 1-based and dense within the sorted order.
  */
-export function rankScores<T extends ScoreLine>(lines: T[]): Array<RankedScore<T>> {
+export function rankScores<T extends Rankable>(lines: T[]): Array<RankedScore<T>> {
   const sorted = [...lines].sort((a, b) => b.points - a.points || a.cumulativeMs - b.cumulativeMs);
   return sorted.map((line, i) => ({ ...line, rank: i + 1 }));
 }
