@@ -207,3 +207,43 @@ describe('speaking (KUR-036)', () => {
     expect(checkAnswer('speaking', payload, { audioKey: '' })).toMatchObject({ accepted: false });
   });
 });
+
+describe('writing (KUR-037)', () => {
+  const payload = {
+    prompt: 'Translate: I am learning Kurdish',
+    accepted: ['Ez fêrî kurdî dibim'],
+  };
+
+  it('validates payload and sanitization hides the accepted answers', () => {
+    expect(() => validateExercisePayload('writing', payload)).not.toThrow();
+    const safe = sanitizeExercise('writing', payload, 'seed');
+    expect(safe).toEqual({ prompt: payload.prompt });
+    expect(JSON.stringify(safe)).not.toContain('Ez fêrî');
+  });
+
+  it('accepts despite case, punctuation and extra whitespace', () => {
+    expect(checkAnswer('writing', payload, { text: '  ez fêrî  kurdî dibim. ' })).toMatchObject({
+      verdict: 'correct',
+      accepted: true,
+    });
+  });
+
+  it('flags a diacritic slip as an accepted typo', () => {
+    expect(checkAnswer('writing', payload, { text: 'Ez feri kurdi dibim' })).toMatchObject({
+      verdict: 'typo',
+      accepted: true,
+      correction: 'Ez fêrî kurdî dibim',
+    });
+  });
+
+  it('gives no credit for pasting the prompt back', () => {
+    expect(checkAnswer('writing', payload, { text: 'Translate: I am learning Kurdish' })).toMatchObject({
+      verdict: 'wrong',
+      accepted: false,
+    });
+  });
+
+  it('marks a genuinely wrong answer wrong', () => {
+    expect(checkAnswer('writing', payload, { text: 'Ez nizanim' })).toMatchObject({ accepted: false });
+  });
+});

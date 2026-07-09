@@ -11,6 +11,7 @@ import { MatchPairsExercise } from './components/MatchPairsExercise';
 import { MultipleChoiceExercise } from './components/MultipleChoiceExercise';
 import { ProgressBar } from './components/ProgressBar';
 import { SpeakingExercise } from './components/SpeakingExercise';
+import { WritingExercise } from './components/WritingExercise';
 import { TranslateExercise } from './components/TranslateExercise';
 import { emptyMatch, type MatchState } from './match';
 import {
@@ -141,6 +142,8 @@ export function SessionPlayer({
         return { type: 'translate' as const, text };
       case 'listening':
         return { type: 'listening' as const, text };
+      case 'writing':
+        return { type: 'writing' as const, text };
       case 'speaking':
         return { type: 'speaking' as const, audioKey };
       case 'match_pairs':
@@ -155,6 +158,7 @@ export function SessionPlayer({
         return draft.choice !== null;
       case 'translate':
       case 'listening':
+      case 'writing':
         return draft.text.trim().length > 0;
       case 'speaking':
         return draft.audioKey !== null;
@@ -264,6 +268,14 @@ export function SessionPlayer({
             text={text}
             onChangeText={setText}
             onSkip={() => dispatch({ type: 'SKIP' })}
+            disabled={state.status !== 'answering'}
+          />
+        ) : null}
+        {ex?.type === 'writing' ? (
+          <WritingExercise
+            exercise={ex}
+            text={text}
+            onChangeText={setText}
             disabled={state.status !== 'answering'}
           />
         ) : null}

@@ -53,12 +53,19 @@ export const speakingPayloadSchema = z.object({
   reference: z.string().min(1).max(300),
 });
 
+export const writingPayloadSchema = z.object({
+  prompt: z.string().min(1).max(500),
+  /** accepted full-text answers; punctuation/case-insensitive, diacritic-tolerant */
+  accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
+});
+
 const PAYLOAD_SCHEMAS = {
   multiple_choice: multipleChoicePayloadSchema,
   translate: translatePayloadSchema,
   match_pairs: matchPairsPayloadSchema,
   listening: listeningPayloadSchema,
   speaking: speakingPayloadSchema,
+  writing: writingPayloadSchema,
 } as const;
 
 export type MultipleChoicePayload = z.infer<typeof multipleChoicePayloadSchema>;
@@ -66,6 +73,7 @@ export type TranslatePayload = z.infer<typeof translatePayloadSchema>;
 export type MatchPairsPayload = z.infer<typeof matchPairsPayloadSchema>;
 export type ListeningPayload = z.infer<typeof listeningPayloadSchema>;
 export type SpeakingPayload = z.infer<typeof speakingPayloadSchema>;
+export type WritingPayload = z.infer<typeof writingPayloadSchema>;
 
 export class InvalidExercisePayloadError extends Error {
   constructor(
@@ -112,6 +120,8 @@ export const answerSchemas = {
   listening: z.object({ text: z.string().max(500) }),
   /** speaking submits the storage key of the uploaded recording */
   speaking: z.object({ audioKey: z.string().min(1).max(300) }),
+  /** free-text writing */
+  writing: z.object({ text: z.string().max(1000) }),
 } as const;
 
 // ---------- client-safe sanitization ----------
@@ -161,6 +171,10 @@ export function sanitizeExercise(
     case 'speaking': {
       // send only the phrase to say; the reference stays server-side
       const p = parsed.data as SpeakingPayload;
+      return { prompt: p.prompt };
+    }
+    case 'writing': {
+      const p = parsed.data as WritingPayload;
       return { prompt: p.prompt };
     }
     case 'match_pairs': {
@@ -241,6 +255,36 @@ function checkSpeaking(payload: SpeakingPayload, audioKey: string): CheckResult 
   return { verdict: score.pass ? 'correct' : 'wrong', accepted: score.pass };
 }
 
+/** Normalize free text for comparison: NFC, lowercase, strip punctuation, collapse spaces. */
+function normalizeForWriting(text: string): string {
+  return normalizeKurdish(text)
+    .toLowerCase()
+    .replace(/[.,!?;:"'“”‘’()¡¿…—–\-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Free-text writing (KUR-037): punctuation/case-insensitive, diacritic-
+ * tolerant. Copying the prompt back earns no credit (verdict 'wrong'),
+ * checked before the accepted answers so it can't sneak a match.
+ */
+function checkWriting(payload: WritingPayload, text: string): CheckResult {
+  const answer = normalizeForWriting(text);
+  if (answer.length === 0) return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
+  if (answer === normalizeForWriting(payload.prompt)) {
+    // pasted the prompt — no credit
+    return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
+  }
+  const accepted = payload.accepted.map(normalizeForWriting);
+  if (accepted.includes(answer)) return { verdict: 'correct', accepted: true };
+  const foldedAccepted = accepted.map((a) => foldDiacritics(a));
+  if (foldedAccepted.includes(foldDiacritics(answer))) {
+    return { verdict: 'typo', accepted: true, correction: payload.accepted[0] };
+  }
+  return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
+}
+
 function checkMatchPairs(
   payload: MatchPairsPayload,
   matches: Array<{ left: string; right: string }>,
@@ -286,6 +330,11 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
       return checkSpeaking(
         validPayload.data as SpeakingPayload,
         (parsedAnswer.data as { audioKey: string }).audioKey,
+      );
+    case 'writing':
+      return checkWriting(
+        validPayload.data as WritingPayload,
+        (parsedAnswer.data as { text: string }).text,
       );
     case 'match_pairs':
       return checkMatchPairs(

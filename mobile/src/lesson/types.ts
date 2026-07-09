@@ -1,6 +1,12 @@
 /** Lesson-player contract — mirrors the server payloads (KUR-028/#28). */
 
-export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking';
+export type ExerciseType =
+  | 'multiple_choice'
+  | 'translate'
+  | 'match_pairs'
+  | 'listening'
+  | 'speaking'
+  | 'writing';
 export type Verdict = 'correct' | 'typo' | 'wrong';
 
 /** An exercise as delivered to the client: answer keys stripped server-side. */
