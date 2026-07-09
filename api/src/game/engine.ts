@@ -3,6 +3,7 @@ import type { RoomBus } from '../realtime/bus.js';
 import type { RealtimeGateway } from '../realtime/gateway.js';
 import type { MatchRecord } from './matchmaking.js';
 import { selectQuestions, type GameQuestion } from './question-bank.js';
+import { questionPoints, rankScores } from './scoring.js';
 
 export type GamePhase = 'lobby' | 'countdown' | 'question' | 'reveal' | 'results';
 
@@ -34,6 +35,10 @@ interface PlayerState {
   answers: Array<number | null>;
   /** SERVER receipt time per answer (feeds scoring, #52/#53) */
   answeredAtMs: Array<number | null>;
+  /** running speed-weighted score, computed server-side only (#53) */
+  points: number;
+  /** cumulative answer time across the game (tiebreak) */
+  cumulativeMs: number;
 }
 
 interface Session {
@@ -138,6 +143,8 @@ export class GameEngine {
             ready: false,
             answers: [],
             answeredAtMs: [],
+            points: 0,
+            cumulativeMs: 0,
           },
         ]),
       ),
@@ -241,11 +248,18 @@ export class GameEngine {
     session.phase = 'reveal';
     const index = session.questionIndex;
     const question = session.questions[index] as GameQuestion;
+    // score this question server-side, then tally the running scoreboard (#53)
     for (const player of session.players.values()) {
       if (player.answers[index] === undefined) {
         player.answers[index] = null; // timed out
         player.answeredAtMs[index] = null;
       }
+      const at = player.answeredAtMs[index];
+      const elapsed =
+        at == null ? this.questionMs : Math.min(this.questionMs, Math.max(0, at - session.questionOpenedAt));
+      const correct = player.answers[index] === question.correctIndex;
+      player.points += questionPoints({ correct, elapsedMs: elapsed, windowMs: this.questionMs });
+      player.cumulativeMs += elapsed;
     }
     void this.gateway.publish(session.roomId, {
       type: 'reveal',
@@ -255,6 +269,8 @@ export class GameEngine {
         [...session.players.values()].map((p) => [p.id, p.answers[index]]),
       ),
     });
+    // running scoreboard pushed after every reveal (#53)
+    void this.gateway.publish(session.roomId, { type: 'scoreboard', index, scores: this.scoreboard(session) });
     const isLast = index + 1 >= session.questions.length;
     session.timer = setTimeout(
       () => (isLast ? this.finish(session) : this.openQuestion(session, index + 1)),
@@ -262,19 +278,25 @@ export class GameEngine {
     );
   }
 
+  /** Ranked speed-weighted scoreboard, most points first (tie → faster). */
+  private scoreboard(session: Session): Array<Record<string, unknown>> {
+    const lines = [...session.players.values()].map((p) => ({
+      userId: p.id,
+      username: p.username,
+      points: p.points,
+      cumulativeMs: p.cumulativeMs,
+      correct: session.questions.filter((q, i) => p.answers[i] === q.correctIndex).length,
+    }));
+    return rankScores(lines);
+  }
+
   private finish(session: Session): void {
     session.phase = 'results';
-    const scores = [...session.players.values()].map((player) => ({
-      userId: player.id,
-      username: player.username,
-      correct: session.questions.filter((q, i) => player.answers[i] === q.correctIndex).length,
-    }));
     void this.gateway.publish(session.roomId, {
       type: 'results',
-      // point scoring (speed bonuses, ratings) is the scoring engine's
-      // job (#53); these are raw correct-counts
-      provisional: true,
-      scores,
+      // final, authoritative speed-weighted scores (#53)
+      provisional: false,
+      scores: this.scoreboard(session),
     });
     session.timer = setTimeout(() => this.sessions.delete(session.roomId), this.resultsTtlMs);
   }
@@ -310,13 +332,7 @@ export class GameEngine {
       };
     }
     if (session.phase === 'results') {
-      return {
-        ...base,
-        scores: [...session.players.values()].map((player) => ({
-          userId: player.id,
-          correct: session.questions.filter((q, i) => player.answers[i] === q.correctIndex).length,
-        })),
-      };
+      return { ...base, scores: this.scoreboard(session) };
     }
     return base;
   }
