@@ -112,6 +112,18 @@ export { selectPracticeItems, PRACTICE_TARGET, PRACTICE_MIN } from './practice/p
 export { registerPracticeRoutes } from './practice/routes.js';
 export { registerMediaRoutes } from './media/routes.js';
 export {
+  nextLevel,
+  isComplete,
+  placedLevel,
+  PLACEMENT_MAX_QUESTIONS,
+  PLACEMENT_START_LEVEL,
+  type PlacementStep,
+} from './placement/placement.js';
+export { skillStrength, MATURE_REPETITIONS, type ReviewStat } from './placement/skill-strength.js';
+export { PlacementService, type PlacementView, type PlacementAnswerResult } from './placement/service.js';
+export { SkillStrengthService, type SkillStrength } from './placement/strength-service.js';
+export { registerPlacementRoutes } from './placement/routes.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,
