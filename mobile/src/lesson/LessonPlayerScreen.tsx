@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { GrammarTips } from '../grammar/GrammarTips';
 import { colors, spacing, typography } from '../theme/tokens';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
@@ -107,6 +108,7 @@ export function SessionPlayer({
   const [offline, setOffline] = useState(false);
   const [results, setResults] = useState<SessionResults | null>(null);
   const [skipSpeaking, setSkipSpeaking] = useState(false);
+  const [showTips, setShowTips] = useState(false);
 
   const ex = currentExercise(state);
 
@@ -242,8 +244,19 @@ export function SessionPlayer({
         <View style={styles.progressWrap}>
           <ProgressBar value={progress(state)} />
         </View>
+        {view.grammarMd ? (
+          <Pressable onPress={() => setShowTips(true)} accessibilityLabel="Grammar tips" hitSlop={8}>
+            <Text style={styles.tips}>💡</Text>
+          </Pressable>
+        ) : null}
         <HeartsBar hearts={state.hearts} max={STARTING_HEARTS} />
       </View>
+
+      {view.grammarMd ? (
+        <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
+          <GrammarTips source={view.grammarMd} onClose={() => setShowTips(false)} />
+        </Modal>
+      ) : null}
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {ex?.type === 'multiple_choice' ? (
@@ -329,6 +342,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   quit: { fontSize: typography.sizes.lg, color: colors.textSecondary },
+  tips: { fontSize: typography.sizes.lg },
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   tallying: { color: colors.textSecondary, fontSize: typography.sizes.md },

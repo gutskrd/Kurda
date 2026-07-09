@@ -127,4 +127,12 @@ describe.skipIf(!DATABASE_URL)('content schema (integration)', () => {
       repo.addExercise(draft, 1, 'multiple_choice', { prompt: 'x', options: ['a'], correctIndex: 3 }),
     ).rejects.toThrow(/invalid multiple_choice payload/i);
   });
+
+  it('attaches and reads a markdown grammar note per skill (KUR-038)', async () => {
+    expect(await repo.grammarForSkill(skillId)).toBeNull();
+    await repo.setGrammarNote(skillId, '# Silav\n\nUse **silav** to greet.');
+    expect(await repo.grammarForSkill(skillId)).toContain('**silav**');
+    await repo.setGrammarNote(skillId, null);
+    expect(await repo.grammarForSkill(skillId)).toBeNull();
+  });
 });

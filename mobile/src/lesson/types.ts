@@ -29,6 +29,8 @@ export interface SessionView {
   completed: boolean;
   exercises: Exercise[];
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
+  /** markdown grammar note for this lesson's skill, if any (KUR-038) */
+  grammarMd?: string | null;
 }
 
 export interface AnswerResult {

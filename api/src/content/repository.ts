@@ -69,6 +69,19 @@ export class ContentRepository {
     return (result.rows[0] as { id: string }).id;
   }
 
+  /** Attach (or clear) a markdown grammar note on a skill (KUR-038). */
+  async setGrammarNote(skillId: string, grammarMd: string | null): Promise<void> {
+    await this.pool.query(`UPDATE skills SET grammar_md = $2 WHERE id = $1`, [skillId, grammarMd]);
+  }
+
+  async grammarForSkill(skillId: string): Promise<string | null> {
+    const res = await this.pool.query<{ grammar_md: string | null }>(
+      `SELECT grammar_md FROM skills WHERE id = $1`,
+      [skillId],
+    );
+    return res.rows[0]?.grammar_md ?? null;
+  }
+
   async addExercise(
     lessonId: string,
     position: number,
