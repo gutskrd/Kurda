@@ -33,4 +33,14 @@ export interface Entry {
   senses: Sense[];
   audio: Array<{ url: string; dialect: string }>;
   xrefs: Array<{ entryId: string; headword: string; relation: string }>;
+  /** whether the learner has bookmarked this entry (KUR-047) */
+  saved?: boolean;
+}
+
+export interface SavedWord {
+  entryId: string;
+  headword: string;
+  pos: string | null;
+  definitionEn: string | null;
+  savedAt: string;
 }
