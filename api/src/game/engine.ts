@@ -4,6 +4,7 @@ import type { RealtimeGateway } from '../realtime/gateway.js';
 import type { MatchRecord } from './matchmaking.js';
 import { selectQuestions, type GameQuestion } from './question-bank.js';
 import { questionPoints, rankScores } from './scoring.js';
+import { MODE_CONFIG, teamScoreboard, type GameMode } from './modes.js';
 
 export type GamePhase = 'lobby' | 'countdown' | 'question' | 'reveal' | 'results';
 
@@ -49,6 +50,9 @@ interface Session {
   questionIndex: number;
   questionOpenedAt: number;
   questionEndsAt: number;
+  /** game mode + teams (KUR-055); solo modes are one player per team */
+  mode: GameMode;
+  teams: string[][];
   timer?: NodeJS.Timeout;
 }
 
@@ -152,6 +156,8 @@ export class GameEngine {
       questionIndex: -1,
       questionOpenedAt: 0,
       questionEndsAt: 0,
+      mode: record.mode,
+      teams: record.teams.length > 0 ? record.teams : record.players.map((p) => [p.id]),
     };
     this.sessions.set(record.roomId, session);
 
@@ -269,8 +275,13 @@ export class GameEngine {
         [...session.players.values()].map((p) => [p.id, p.answers[index]]),
       ),
     });
-    // running scoreboard pushed after every reveal (#53)
-    void this.gateway.publish(session.roomId, { type: 'scoreboard', index, scores: this.scoreboard(session) });
+    // running scoreboard pushed after every reveal (#53); team totals too (#55)
+    void this.gateway.publish(session.roomId, {
+      type: 'scoreboard',
+      index,
+      scores: this.scoreboard(session),
+      teams: this.teamBoard(session),
+    });
     const isLast = index + 1 >= session.questions.length;
     session.timer = setTimeout(
       () => (isLast ? this.finish(session) : this.openQuestion(session, index + 1)),
@@ -278,25 +289,38 @@ export class GameEngine {
     );
   }
 
-  /** Ranked speed-weighted scoreboard, most points first (tie → faster). */
-  private scoreboard(session: Session): Array<Record<string, unknown>> {
-    const lines = [...session.players.values()].map((p) => ({
+  /** Ranked speed-weighted per-player scoreboard, most points first (tie → faster). */
+  private scoreboard(session: Session): unknown[] {
+    return rankScores(this.playerLines(session));
+  }
+
+  private playerLines(session: Session): Array<{
+    userId: string; username: string; points: number; cumulativeMs: number; correct: number;
+  }> {
+    return [...session.players.values()].map((p) => ({
       userId: p.id,
       username: p.username,
       points: p.points,
       cumulativeMs: p.cumulativeMs,
       correct: session.questions.filter((q, i) => p.answers[i] === q.correctIndex).length,
     }));
-    return rankScores(lines);
+  }
+
+  /** Ranked team totals for team modes (KUR-055); null for solo/FFA. */
+  private teamBoard(session: Session): unknown[] | null {
+    if (MODE_CONFIG[session.mode].teamSize <= 1) return null;
+    return teamScoreboard(this.playerLines(session), session.teams);
   }
 
   private finish(session: Session): void {
     session.phase = 'results';
     void this.gateway.publish(session.roomId, {
       type: 'results',
-      // final, authoritative speed-weighted scores (#53)
+      // final, authoritative speed-weighted scores (#53) + team totals (#55)
       provisional: false,
+      mode: session.mode,
       scores: this.scoreboard(session),
+      teams: this.teamBoard(session),
     });
     session.timer = setTimeout(() => this.sessions.delete(session.roomId), this.resultsTtlMs);
   }

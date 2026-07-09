@@ -3,6 +3,7 @@ import type pg from 'pg';
 import type { RealtimeGateway } from '../realtime/gateway.js';
 import type { RealtimeKV } from '../realtime/kv.js';
 import type { MatchQueue } from './match-queue.js';
+import { formTeams, type GameMode } from './modes.js';
 
 export interface MatchmakingOptions {
   /** Initial rating band. */
@@ -19,8 +20,10 @@ export interface MatchmakingOptions {
 
 export interface MatchRecord {
   roomId: string;
-  mode: '1v1';
+  mode: GameMode;
   players: Array<{ id: string; username: string; rating: number }>;
+  /** teams as lists of player ids; solo modes = one player per team (KUR-055) */
+  teams: string[][];
   createdAt: number;
 }
 
@@ -140,17 +143,43 @@ export class MatchmakingService {
       roomId: `match:${randomUUID()}`,
       mode: '1v1',
       players: [me, opponent],
+      teams: [[me.id], [opponent.id]],
       createdAt: Date.now(),
     };
+    return this.announceMatch(record);
+  }
+
+  /**
+   * Create a match directly from a known set of players (KUR-055): a party
+   * queuing as a duo, or a full team/FFA lobby. Teams are formed per mode.
+   */
+  async createDirectMatch(userIds: string[], mode: GameMode, teams?: string[][]): Promise<MatchRecord> {
+    const players = await Promise.all(userIds.map((id) => this.playerInfo(id)));
+    const record: MatchRecord = {
+      roomId: `match:${randomUUID()}`,
+      mode,
+      players,
+      teams: teams ?? formTeams(userIds, mode),
+      createdAt: Date.now(),
+    };
+    return this.announceMatch(record);
+  }
+
+  /** Persist the record, invite everyone, push match_found, notify listeners. */
+  private async announceMatch(record: MatchRecord): Promise<MatchRecord> {
     await this.kv.set(`mm:match:${record.roomId}`, JSON.stringify(record), MATCH_RECORD_TTL_SECONDS);
-    await this.gateway.invite(record.roomId, me.id);
-    await this.gateway.invite(record.roomId, opponent.id);
     for (const player of record.players) {
-      const other = record.players.find((p) => p.id !== player.id)!;
+      await this.gateway.invite(record.roomId, player.id);
+    }
+    for (const player of record.players) {
+      const others = record.players.filter((p) => p.id !== player.id);
       await this.gateway.notifyUser(player.id, {
         type: 'match_found',
         roomId: record.roomId,
-        opponent: other,
+        mode: record.mode,
+        // 1v1 back-compat: `opponent` is the single other player
+        opponent: others[0],
+        players: others,
       });
     }
     for (const listener of this.matchListeners) listener(record);

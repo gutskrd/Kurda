@@ -180,6 +180,44 @@ describe.skipIf(!DATABASE_URL)('matchmaking (integration)', () => {
     expect(again.json().cancelled).toBe(false);
   });
 
+  it('party start forms teams for a 2v2 roster (KUR-055)', async () => {
+    const roster = await Promise.all([
+      makePlayer('p1'), makePlayer('p2'), makePlayer('p3'), makePlayer('p4'),
+    ]);
+    const userIds = roster.map((p) => p.id);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/matchmaking/party',
+      headers: { authorization: `Bearer ${roster[0]!.token}` },
+      payload: { mode: '2v2', userIds },
+      remoteAddress: '10.21.3.1',
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().mode).toBe('2v2');
+    expect(res.json().roomId).toMatch(/^match:/);
+    expect(res.json().teams).toEqual([[userIds[0], userIds[1]], [userIds[2], userIds[3]]]);
+  });
+
+  it('party start rejects a caller outside the roster and a wrong-sized roster', async () => {
+    const [a, b, c] = await Promise.all([makePlayer('q1'), makePlayer('q2'), makePlayer('q3')]);
+    // caller not in the roster
+    const notIn = await app.inject({
+      method: 'POST', url: '/matchmaking/party',
+      headers: { authorization: `Bearer ${c!.token}` },
+      payload: { mode: '1v1', userIds: [a!.id, b!.id] },
+      remoteAddress: '10.21.3.2',
+    });
+    expect(notIn.statusCode).toBe(403);
+    // 2v2 needs 4 players
+    const wrongSize = await app.inject({
+      method: 'POST', url: '/matchmaking/party',
+      headers: { authorization: `Bearer ${a!.token}` },
+      payload: { mode: '2v2', userIds: [a!.id, b!.id] },
+      remoteAddress: '10.21.3.3',
+    });
+    expect(wrongSize.statusCode).toBe(409);
+  });
+
   it('waiting past the timeout notifies match_timeout and dequeues', async () => {
     const lonely = await makePlayer('lonely', 9000); // nobody near
     const ws = await connect(lonely);
