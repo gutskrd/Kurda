@@ -156,6 +156,14 @@ export {
 } from './dictionary/repository.js';
 export { boundedEditDistance, isWithinOneEdit, hasSearchableChars } from './dictionary/search.js';
 export {
+  validateLexicon,
+  importLexicon,
+  lexiconSchema,
+  type LexiconEntry,
+  type LexiconImportResult,
+  type ImportConflict,
+} from './dictionary/import.js';
+export {
   DictionarySearchService,
   SEARCH_CACHE_TTL_SECONDS,
   type SearchResult,

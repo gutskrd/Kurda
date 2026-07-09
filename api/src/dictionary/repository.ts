@@ -52,6 +52,24 @@ export class DictionaryRepository {
     return res.rows[0]!.id;
   }
 
+  /** Find an entry by its normalized headword + dialect, with its senses' POS/definitions. */
+  async findEntryByNormalized(
+    normalized: string,
+    dialect: string,
+  ): Promise<{ id: string; senses: Array<{ pos: PartOfSpeech; definitionEn: string; position: number }> } | null> {
+    const entry = await this.pool.query<{ id: string }>(
+      `SELECT id FROM dict_entries WHERE headword_normalized = $1 AND dialect = $2 LIMIT 1`,
+      [normalized, dialect],
+    );
+    const id = entry.rows[0]?.id;
+    if (!id) return null;
+    const senses = await this.pool.query<{ pos: PartOfSpeech; definition_en: string; position: number }>(
+      `SELECT pos, definition_en, position FROM dict_senses WHERE entry_id = $1 ORDER BY position ASC`,
+      [id],
+    );
+    return { id, senses: senses.rows.map((s) => ({ pos: s.pos, definitionEn: s.definition_en, position: s.position })) };
+  }
+
   async addSense(
     entryId: string,
     position: number,
