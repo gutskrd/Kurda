@@ -43,6 +43,14 @@ export { MatchmakingService, type MatchmakingOptions, type MatchRecord, type Enq
 export { RedisMatchQueue, MemoryMatchQueue, type MatchQueue, type QueueEntry } from './game/match-queue.js';
 export { registerMatchmakingRoutes } from './game/routes.js';
 export { GameEngine, ANSWER_GRACE_MS, type EngineOptions, type GamePhase } from './game/engine.js';
+export {
+  questionPoints,
+  rankScores,
+  POINTS_BASE,
+  SPEED_BONUS,
+  type QuestionScoreInput,
+  type ScoreLine,
+} from './game/scoring.js';
 export { selectQuestions, type GameQuestion } from './game/question-bank.js';
 export { registerGameRoutes } from './game/routes.js';
 export { type ClientMessageHandler } from './realtime/gateway.js';

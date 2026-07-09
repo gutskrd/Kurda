@@ -201,12 +201,20 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
       b.ws.send(JSON.stringify({ type: 'answer', room: roomId, index, choice: 1 }));
       const reveal = await waitForGameEvent(b, 'reveal', (e) => e.index === index);
       expect(reveal.correctIndex).toBeGreaterThanOrEqual(0);
+      // a running scoreboard is pushed after every reveal (#53)
+      const board = await waitForGameEvent(a, 'scoreboard', (e) => e.index === index);
+      const lines = board.scores as Array<{ userId: string; points: number; rank: number }>;
+      expect(lines).toHaveLength(2);
+      expect(lines[0]!.rank).toBe(1);
     }
 
     const results = await waitForGameEvent(a, 'results');
-    expect(results.provisional).toBe(true);
-    const scores = results.scores as Array<{ userId: string; correct: number }>;
+    expect(results.provisional).toBe(false); // final authoritative scores (#53)
+    const scores = results.scores as Array<{ userId: string; points: number; rank: number; correct: number }>;
     expect(scores.map((s) => s.userId).sort()).toEqual([a.id, b.id].sort());
+    // points are server-computed and ranked; #1 has the most points
+    expect(scores[0]!.rank).toBe(1);
+    expect(scores.every((s) => typeof s.points === 'number')).toBe(true);
   }, 20_000);
 
   it('a silent opponent never hangs the game — it completes with timeouts', async () => {
