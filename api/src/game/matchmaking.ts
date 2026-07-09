@@ -4,6 +4,7 @@ import type { RealtimeGateway } from '../realtime/gateway.js';
 import type { RealtimeKV } from '../realtime/kv.js';
 import type { MatchQueue } from './match-queue.js';
 import { formTeams, type GameMode } from './modes.js';
+import type { QuestionFilter } from './question-bank.js';
 
 export interface MatchmakingOptions {
   /** Initial rating band. */
@@ -24,6 +25,8 @@ export interface MatchRecord {
   players: Array<{ id: string; username: string; rating: number }>;
   /** teams as lists of player ids; solo modes = one player per team (KUR-055) */
   teams: string[][];
+  /** host-chosen question category/level for private rooms (KUR-056) */
+  questionFilter?: QuestionFilter;
   createdAt: number;
 }
 
@@ -153,13 +156,18 @@ export class MatchmakingService {
    * Create a match directly from a known set of players (KUR-055): a party
    * queuing as a duo, or a full team/FFA lobby. Teams are formed per mode.
    */
-  async createDirectMatch(userIds: string[], mode: GameMode, teams?: string[][]): Promise<MatchRecord> {
+  async createDirectMatch(
+    userIds: string[],
+    mode: GameMode,
+    opts: { teams?: string[][]; questionFilter?: QuestionFilter } = {},
+  ): Promise<MatchRecord> {
     const players = await Promise.all(userIds.map((id) => this.playerInfo(id)));
     const record: MatchRecord = {
       roomId: `match:${randomUUID()}`,
       mode,
       players,
-      teams: teams ?? formTeams(userIds, mode),
+      teams: opts.teams ?? formTeams(userIds, mode),
+      questionFilter: opts.questionFilter,
       createdAt: Date.now(),
     };
     return this.announceMatch(record);
