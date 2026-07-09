@@ -13,6 +13,7 @@
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create --migration-file-language js",
     "db:seed": "tsx scripts/seed.ts",
+    "content:import": "tsx scripts/import-content.ts",
     "worker": "tsx src/workers/main.ts",
     "dev:db": "node scripts/dev-db.mjs"
   },
