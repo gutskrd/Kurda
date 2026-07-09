@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { DictionaryRepository } from './repository.js';
 import { DictionarySearchService } from './search-service.js';
+import { WordOfDayService } from './word-of-day-service.js';
 
 const searchQuery = z.object({
   q: z.string().max(100),
@@ -13,6 +14,14 @@ const searchQuery = z.object({
 export function registerDictionaryRoutes(app: FastifyInstance): void {
   const search = new DictionarySearchService(app.db, app.cache);
   const repo = new DictionaryRepository(app.db);
+  const wotd = new WordOfDayService(app.db);
+
+  /** Deterministic word of the day for the learner's local day (KUR-046). */
+  app.get('/dictionary/word-of-day', { preHandler: requireAuth }, async (req) => {
+    const tz = await app.db.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [req.user!.id]);
+    const word = await wotd.today(tz.rows[0]?.timezone ?? 'UTC');
+    return { word };
+  });
 
   /** Bidirectional search with Kurdish normalization + fuzzy fallback. */
   app.get(

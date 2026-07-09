@@ -82,6 +82,15 @@ export class DictionaryRepository {
     ]);
   }
 
+  /** Add an entry to the word-of-the-day pool at a position (KUR-046). */
+  async addToWotdPool(entryId: string, position: number): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO dict_wotd_pool (entry_id, position) VALUES ($1, $2)
+       ON CONFLICT (entry_id) DO UPDATE SET position = EXCLUDED.position`,
+      [entryId, position],
+    );
+  }
+
   /** Link two entries (idempotent). Optionally add the inverse. */
   async addXref(fromEntryId: string, toEntryId: string, relation: XrefRelation): Promise<void> {
     await this.pool.query(
