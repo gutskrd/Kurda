@@ -133,6 +133,20 @@ export { PlacementService, type PlacementView, type PlacementAnswerResult } from
 export { SkillStrengthService, type SkillStrength } from './placement/strength-service.js';
 export { registerPlacementRoutes } from './placement/routes.js';
 export {
+  skillState,
+  isUnlocked,
+  GOLD_STRENGTH,
+  DECAY_STRENGTH,
+  type SkillState,
+} from './coursemap/node-state.js';
+export {
+  CourseMapService,
+  type CourseMap,
+  type SkillNode,
+  type CourseSummary,
+} from './coursemap/service.js';
+export { registerCourseMapRoutes } from './coursemap/routes.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,
