@@ -13,6 +13,8 @@ import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
 import { DictionaryScreen } from './src/screens/DictionaryScreen';
+import { PlayScreen } from './src/screens/PlayScreen';
+import { GameScreen } from './src/screens/GameScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { TabScreen } from './src/screens/TabScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
@@ -61,6 +63,8 @@ function SignedInTabs() {
               <LearnScreen />
             ) : tab.name === 'Dictionary' ? (
               <DictionaryScreen />
+            ) : tab.name === 'Play' ? (
+              <PlayScreen />
             ) : (
               <TabScreen tab={tab} />
             )
@@ -69,6 +73,11 @@ function SignedInTabs() {
       ))}
     </Tab.Navigator>
   );
+}
+
+function GameRoute({ roomId, onExit }: { roomId: string; onExit: () => void }) {
+  const { user } = useAuth();
+  return <GameScreen roomId={roomId} selfId={user?.id ?? ''} onExit={onExit} />;
 }
 
 function SignedInRoot() {
@@ -82,6 +91,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Practice" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <PracticeScreen navigation={navigation} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Game" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ route, navigation }) => <GameRoute roomId={route.params.roomId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
     </RootStack.Navigator>
   );

@@ -17,6 +17,8 @@ interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
   client: ApiClient;
+  /** API origin, used to derive the realtime WebSocket URL (KUR-054). */
+  baseUrl: string;
   login(email: string, password: string): Promise<string | null>;
   register(input: {
     email: string;
@@ -106,6 +108,7 @@ export function AuthProvider({
     status,
     user,
     client,
+    baseUrl,
     login: async (email, password) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
       if (!res.ok) return res.error.message;
