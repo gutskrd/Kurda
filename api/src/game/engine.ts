@@ -152,7 +152,7 @@ export class GameEngine {
           },
         ]),
       ),
-      questions: selectQuestions(record.roomId, this.questionsPerGame),
+      questions: selectQuestions(record.roomId, this.questionsPerGame, record.questionFilter),
       questionIndex: -1,
       questionOpenedAt: 0,
       questionEndsAt: 0,

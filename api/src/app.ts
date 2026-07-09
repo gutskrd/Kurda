@@ -22,7 +22,8 @@ import fastifyWebsocket from '@fastify/websocket';
 import { GameEngine, type EngineOptions } from './game/engine.js';
 import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
 import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.js';
-import { registerGameRoutes, registerMatchmakingRoutes } from './game/routes.js';
+import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoutes } from './game/routes.js';
+import { PrivateRoomService } from './game/private-room-service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -174,6 +175,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     matchmaking.onMatch((record) => engine.startSession(record));
     registerGameRoutes(app, engine);
     app.addHook('onClose', async () => engine.stopAll());
+
+    // private host-controlled rooms (KUR-056)
+    const privateRooms = new PrivateRoomService(kv, app.db, matchmaking);
+    registerPrivateRoomRoutes(app, privateRooms);
   }
 
   app.get('/health', async (_req, reply) => {

@@ -4,7 +4,9 @@ import { AppError } from '../plugins/errors.js';
 import { requireAuth } from '../plugins/auth.js';
 import type { GameEngine } from './engine.js';
 import type { MatchmakingService } from './matchmaking.js';
+import type { PrivateRoomService } from './private-room-service.js';
 import { MODE_CONFIG, type GameMode } from './modes.js';
+import { isValidCode, normalizeCode } from './private-room.js';
 
 const partyBody = z.object({
   mode: z.enum(['1v1', '2v2', 'ffa']),
@@ -80,6 +82,89 @@ export function registerGameRoutes(app: FastifyInstance, engine: GameEngine): vo
         throw new AppError('GAME_NOT_FOUND', 404, 'no active game for you with that id');
       }
       return snapshot;
+    },
+  );
+}
+
+const createRoomBody = z.object({
+  mode: z.enum(['1v1', '2v2', 'ffa']).optional(),
+  category: z.enum(['vocabulary', 'phrases']).optional(),
+  level: z.number().int().min(1).max(3).optional(),
+});
+
+const codeParam = z.object({ code: z.string().min(4).max(12) });
+
+/** Host-controlled private rooms joinable by 6-char code (KUR-056). */
+export function registerPrivateRoomRoutes(app: FastifyInstance, rooms: PrivateRoomService): void {
+  const requireCode = (raw: string): string => {
+    const code = normalizeCode(raw);
+    if (!isValidCode(code)) throw new AppError('BAD_CODE', 400, 'invalid room code');
+    return code;
+  };
+
+  /** Create a room → returns the join code. */
+  app.post(
+    '/rooms',
+    { schema: { body: createRoomBody }, preHandler: requireAuth },
+    async (req) => {
+      const body = req.body as z.infer<typeof createRoomBody>;
+      const room = await rooms.create(req.user!.id, body);
+      return { code: room.code, mode: room.mode, players: room.players };
+    },
+  );
+
+  /** Join a room by code (rate-limited against code-guessing). */
+  app.post(
+    '/rooms/:code/join',
+    {
+      schema: { params: codeParam },
+      config: { skipValidation: true, rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const code = requireCode((req.params as { code: string }).code);
+      const room = await rooms.join(code, req.user!.id);
+      return { code: room.code, mode: room.mode, players: room.players, started: room.started, roomId: room.roomId };
+    },
+  );
+
+  /** Room lobby state (players, host, whether it's started). */
+  app.get(
+    '/rooms/:code',
+    { schema: { params: codeParam }, preHandler: requireAuth },
+    async (req) => {
+      const code = requireCode((req.params as { code: string }).code);
+      const room = await rooms.get(code);
+      if (!room) throw new AppError('ROOM_NOT_FOUND', 404, 'room not found or expired');
+      return {
+        code: room.code,
+        hostId: room.hostId,
+        mode: room.mode,
+        players: room.players,
+        started: room.started,
+        roomId: room.roomId,
+      };
+    },
+  );
+
+  /** Host: start the game. */
+  app.post(
+    '/rooms/:code/start',
+    { schema: { params: codeParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    async (req) => {
+      const code = requireCode((req.params as { code: string }).code);
+      return rooms.start(code, req.user!.id);
+    },
+  );
+
+  /** Host heartbeat (resets the pre-start grace). */
+  app.post(
+    '/rooms/:code/touch',
+    { schema: { params: codeParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    async (req) => {
+      const code = requireCode((req.params as { code: string }).code);
+      await rooms.touch(code, req.user!.id);
+      return { ok: true };
     },
   );
 }

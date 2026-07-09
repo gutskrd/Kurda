@@ -52,7 +52,16 @@ export {
   type QuestionScoreInput,
   type ScoreLine,
 } from './game/scoring.js';
-export { selectQuestions, type GameQuestion } from './game/question-bank.js';
+export { selectQuestions, type GameQuestion, type QuestionFilter, type QuestionCategory } from './game/question-bank.js';
+export { generateJoinCode, normalizeCode, isValidCode, CODE_ALPHABET, CODE_LENGTH } from './game/private-room.js';
+export {
+  PrivateRoomService,
+  ROOM_TTL_SECONDS,
+  HOST_GRACE_MS,
+  MAX_PLAYERS,
+  type PrivateRoom,
+} from './game/private-room-service.js';
+export { registerPrivateRoomRoutes } from './game/routes.js';
 export { registerGameRoutes } from './game/routes.js';
 export { type ClientMessageHandler } from './realtime/gateway.js';
 export { ContentRepository, type ExerciseType, type LessonStatus, type LessonRow } from './content/repository.js';
