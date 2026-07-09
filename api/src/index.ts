@@ -42,7 +42,7 @@ export { RedisKV, MemoryKV, type RealtimeKV } from './realtime/kv.js';
 export { MatchmakingService, type MatchmakingOptions, type MatchRecord, type EnqueueResult } from './game/matchmaking.js';
 export { RedisMatchQueue, MemoryMatchQueue, type MatchQueue, type QueueEntry } from './game/match-queue.js';
 export { registerMatchmakingRoutes } from './game/routes.js';
-export { GameEngine, type EngineOptions, type GamePhase } from './game/engine.js';
+export { GameEngine, ANSWER_GRACE_MS, type EngineOptions, type GamePhase } from './game/engine.js';
 export { selectQuestions, type GameQuestion } from './game/question-bank.js';
 export { registerGameRoutes } from './game/routes.js';
 export { type ClientMessageHandler } from './realtime/gateway.js';

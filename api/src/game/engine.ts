@@ -6,12 +6,21 @@ import { selectQuestions, type GameQuestion } from './question-bank.js';
 
 export type GamePhase = 'lobby' | 'countdown' | 'question' | 'reveal' | 'results';
 
+/**
+ * Shared jitter grace (KUR-052): the server accepts answers up to this long
+ * after the (cosmetic) question deadline, applied identically to every player
+ * so a 50ms network hiccup never loses a fair answer.
+ */
+export const ANSWER_GRACE_MS = 300;
+
 export interface EngineOptions {
   lobbyMs?: number;
   countdownMs?: number;
   questionMs?: number;
   revealMs?: number;
   questionsPerGame?: number;
+  /** Server-side grace after the deadline; default ANSWER_GRACE_MS. */
+  answerGraceMs?: number;
   /** Finished sessions stay snapshot-able this long. */
   resultsTtlMs?: number;
 }
@@ -64,6 +73,7 @@ export class GameEngine {
   private readonly questionMs: number;
   private readonly revealMs: number;
   private readonly questionsPerGame: number;
+  private readonly answerGraceMs: number;
   private readonly resultsTtlMs: number;
 
   constructor(
@@ -76,6 +86,7 @@ export class GameEngine {
     this.questionMs = opts.questionMs ?? 10_000;
     this.revealMs = opts.revealMs ?? 3_000;
     this.questionsPerGame = opts.questionsPerGame ?? 5;
+    this.answerGraceMs = opts.answerGraceMs ?? ANSWER_GRACE_MS;
     this.resultsTtlMs = opts.resultsTtlMs ?? 60_000;
 
     // commands forwarded from other nodes
@@ -162,15 +173,22 @@ export class GameEngine {
       return;
     }
 
-    if (command.type === 'answer' && session.phase === 'question') {
+    if (command.type === 'answer') {
       const player = session.players.get(command.userId as string);
       const index = command.index as number;
-      if (!player || index !== session.questionIndex) return;
-      if (player.answers[index] !== undefined && player.answers[index] !== null) return;
+      if (!player || index !== session.questionIndex) return; // stale/unknown question
+      if (player.answers[index] !== undefined && player.answers[index] !== null) return; // already answered
       const receivedAtMs = (command.receivedAtMs as number) ?? Date.now();
-      // window enforcement is server-side; late answers are dropped
-      // (#52 adds the shared jitter grace on top of this line)
-      if (receivedAtMs > session.questionEndsAt) return;
+
+      // Window enforcement is server-side (the client timer is cosmetic). The
+      // shared jitter grace is added to the deadline identically for everyone;
+      // beyond it — or once the question has closed — the answer is rejected
+      // with a specific code rather than silently dropped (KUR-052).
+      const cutoff = session.questionEndsAt + this.answerGraceMs;
+      if (session.phase !== 'question' || receivedAtMs > cutoff) {
+        void this.gateway.notifyUser(player.id, { type: 'answer_rejected', index, code: 'ANSWER_TOO_LATE' });
+        return;
+      }
 
       player.answers[index] = command.choice as number;
       player.answeredAtMs[index] = receivedAtMs;
@@ -212,7 +230,9 @@ export class GameEngine {
       endsAt: session.questionEndsAt,
       // correctIndex deliberately absent until reveal
     });
-    session.timer = setTimeout(() => this.closeQuestion(session), this.questionMs);
+    // hold the question open through the shared grace so within-grace answers
+    // are still accepted while the phase is 'question' (KUR-052)
+    session.timer = setTimeout(() => this.closeQuestion(session), this.questionMs + this.answerGraceMs);
   }
 
   private closeQuestion(session: Session): void {
