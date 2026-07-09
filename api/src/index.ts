@@ -147,6 +147,14 @@ export {
 } from './coursemap/service.js';
 export { registerCourseMapRoutes } from './coursemap/routes.js';
 export {
+  DictionaryRepository,
+  normalizedHeadword,
+  type Entry,
+  type Sense,
+  type PartOfSpeech,
+  type XrefRelation,
+} from './dictionary/repository.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,
