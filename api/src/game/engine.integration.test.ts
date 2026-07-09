@@ -260,17 +260,21 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     expect(denied.statusCode).toBe(404);
   });
 
-  it('late answers are dropped server-side', async () => {
+  it('late answers are rejected server-side with a specific code (KUR-052)', async () => {
     const a = await makePlayer('la');
     const b = await makePlayer('lb');
     const roomId = await startMatch(a, b);
     a.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
     b.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
 
-    // wait for the first reveal (question timed out for both), then try
-    // answering question 0 — must not appear in results
+    // wait for the first reveal (question timed out for both, well past the
+    // shared grace), then answer question 0 late — it must be rejected, not
+    // silently dropped, and never appear in results
     await waitForGameEvent(a, 'reveal', (e) => e.index === 0, 8_000);
     a.ws.send(JSON.stringify({ type: 'answer', room: roomId, index: 0, choice: 0 }));
+
+    const rejected = await waitForGameEvent(a, 'answer_rejected', (e) => e.index === 0, 5_000);
+    expect(rejected.code).toBe('ANSWER_TOO_LATE');
 
     const results = await waitForGameEvent(a, 'results', undefined, 12_000);
     const mine = (results.scores as Array<{ userId: string; correct: number }>).find(
