@@ -69,6 +69,44 @@ export class ContentRepository {
     return (result.rows[0] as { id: string }).id;
   }
 
+  /**
+   * Create the next draft version at (skill, position) with NO exercises —
+   * used by import (KUR-041). First import makes v1; a re-import makes v2+
+   * as a fresh draft, leaving any published version untouched.
+   */
+  async createLessonVersion(skillId: string, position: number, titleKu: string, titleEn: string): Promise<string> {
+    const result = await this.pool.query<{ id: string }>(
+      `INSERT INTO lessons (skill_id, position, version, status, title_ku, title_en)
+       VALUES ($1, $2,
+               COALESCE((SELECT max(version) + 1 FROM lessons WHERE skill_id = $1 AND position = $2), 1),
+               'draft', $3, $4)
+       RETURNING id`,
+      [skillId, position, titleKu, titleEn],
+    );
+    return (result.rows[0] as { id: string }).id;
+  }
+
+  async findCourseBySlug(slug: string): Promise<string | null> {
+    const r = await this.pool.query<{ id: string }>(`SELECT id FROM courses WHERE slug = $1`, [slug]);
+    return r.rows[0]?.id ?? null;
+  }
+
+  async findUnit(courseId: string, position: number): Promise<string | null> {
+    const r = await this.pool.query<{ id: string }>(
+      `SELECT id FROM units WHERE course_id = $1 AND position = $2`,
+      [courseId, position],
+    );
+    return r.rows[0]?.id ?? null;
+  }
+
+  async findSkill(unitId: string, position: number): Promise<string | null> {
+    const r = await this.pool.query<{ id: string }>(
+      `SELECT id FROM skills WHERE unit_id = $1 AND position = $2`,
+      [unitId, position],
+    );
+    return r.rows[0]?.id ?? null;
+  }
+
   /** Attach (or clear) a markdown grammar note on a skill (KUR-038). */
   async setGrammarNote(skillId: string, grammarMd: string | null): Promise<void> {
     await this.pool.query(`UPDATE skills SET grammar_md = $2 WHERE id = $1`, [skillId, grammarMd]);

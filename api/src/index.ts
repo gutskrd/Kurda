@@ -48,6 +48,15 @@ export { registerGameRoutes } from './game/routes.js';
 export { type ClientMessageHandler } from './realtime/gateway.js';
 export { ContentRepository, type ExerciseType, type LessonStatus, type LessonRow } from './content/repository.js';
 export {
+  validateContent,
+  importCourse,
+  courseContentSchema,
+  type CourseContent,
+  type ImportResult,
+  type ImportSummary,
+  type ImportIssue,
+} from './content/import.js';
+export {
   checkAnswer,
   validateExercisePayload,
   sanitizeExercise,
