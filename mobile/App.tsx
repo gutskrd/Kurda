@@ -12,6 +12,7 @@ import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
+import { DictionaryScreen } from './src/screens/DictionaryScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { TabScreen } from './src/screens/TabScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
@@ -58,6 +59,8 @@ function SignedInTabs() {
               <ProfileScreen />
             ) : tab.name === 'Learn' ? (
               <LearnScreen />
+            ) : tab.name === 'Dictionary' ? (
+              <DictionaryScreen />
             ) : (
               <TabScreen tab={tab} />
             )
