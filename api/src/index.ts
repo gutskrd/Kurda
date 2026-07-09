@@ -154,6 +154,15 @@ export {
   type PartOfSpeech,
   type XrefRelation,
 } from './dictionary/repository.js';
+export { boundedEditDistance, isWithinOneEdit, hasSearchableChars } from './dictionary/search.js';
+export {
+  DictionarySearchService,
+  SEARCH_CACHE_TTL_SECONDS,
+  type SearchResult,
+  type SearchHit,
+  type MatchType,
+} from './dictionary/search-service.js';
+export { registerDictionaryRoutes } from './dictionary/routes.js';
 export {
   type PronunciationScorer,
   type PronunciationScore,

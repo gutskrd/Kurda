@@ -37,6 +37,7 @@ import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
+import { registerDictionaryRoutes } from './dictionary/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -142,6 +143,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerMediaRoutes(app);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
+    registerDictionaryRoutes(app);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
