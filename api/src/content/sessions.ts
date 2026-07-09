@@ -46,6 +46,8 @@ export interface SessionView {
   }>;
   /** exercises already answered in this session (resume) */
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
+  /** markdown grammar note for this lesson's skill, if any (KUR-038) */
+  grammarMd: string | null;
 }
 
 export interface AnswerResult {
@@ -101,11 +103,16 @@ export class LessonSessionService {
   }
 
   private async buildView(session: SessionRow): Promise<SessionView> {
-    const [exercises, answers] = await Promise.all([
+    const [exercises, answers, grammar] = await Promise.all([
       this.exercisesFor(session.lesson_id),
       this.pool.query<{ exercise_id: string; verdict: Verdict; accepted: boolean }>(
         `SELECT exercise_id, verdict, accepted FROM session_answers WHERE session_id = $1`,
         [session.id],
+      ),
+      // grammar note lives on the lesson's skill (KUR-038)
+      this.pool.query<{ grammar_md: string | null }>(
+        `SELECT s.grammar_md FROM lessons l JOIN skills s ON s.id = l.skill_id WHERE l.id = $1`,
+        [session.lesson_id],
       ),
     ]);
     const answered: SessionView['answered'] = {};
@@ -123,6 +130,7 @@ export class LessonSessionService {
         ...sanitizeExercise(ex.type, ex.payload, `${session.id}:${ex.id}`),
       })),
       answered,
+      grammarMd: grammar.rows[0]?.grammar_md ?? null,
     };
   }
 

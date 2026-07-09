@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { AppError } from '../plugins/errors.js';
+import { ContentRepository } from './repository.js';
 import { LessonSessionService } from './sessions.js';
 
 const answerBodySchema = z.object({
@@ -11,6 +13,19 @@ const answerBodySchema = z.object({
 
 export function registerLessonRoutes(app: FastifyInstance): void {
   const sessions = new LessonSessionService(app.db);
+  const content = new ContentRepository(app.db);
+
+  /** A skill's markdown grammar note for the "Tips" tab (KUR-038). */
+  app.get(
+    '/skills/:id/grammar',
+    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const grammarMd = await content.grammarForSkill(id);
+      if (grammarMd === null) throw new AppError('GRAMMAR_NOT_FOUND', 404, 'no grammar note for this skill');
+      return { skillId: id, grammarMd };
+    },
+  );
 
   /** Start (or resume) a session for a published lesson. */
   app.get(

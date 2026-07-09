@@ -211,6 +211,27 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(a.json().sessionId).toBe(b.json().sessionId);
   });
 
+  it('delivers the skill grammar note in the session + via the route (KUR-038)', async () => {
+    const skill = await pool.query<{ skill_id: string }>(
+      `SELECT skill_id FROM lessons WHERE id = $1`,
+      [lessonId],
+    );
+    const skillId = skill.rows[0]!.skill_id;
+    await pool.query(`UPDATE skills SET grammar_md = $2 WHERE id = $1`, [
+      skillId,
+      '# Sêv\n\nThe oblique of **sêv** is **sêvê**.',
+    ]);
+
+    // rebuilt view (even on resume) carries the note — no session state lost
+    const session = await authed('GET', `/lessons/${lessonId}/session`);
+    expect(session.json().grammarMd).toContain('**sêvê**');
+
+    const grammar = await authed('GET', `/skills/${skillId}/grammar`);
+    expect(grammar.statusCode).toBe(200);
+    expect(grammar.json()).toMatchObject({ skillId });
+    expect(grammar.json().grammarMd).toContain('oblique');
+  });
+
   it('rejects an unpublished lesson', async () => {
     const draft = await repo.createLesson(
       (await pool.query(`SELECT skill_id FROM lessons WHERE id = $1`, [lessonId])).rows[0].skill_id,
