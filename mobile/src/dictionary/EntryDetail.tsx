@@ -12,17 +12,28 @@ const COLLAPSE_AFTER = 8;
 export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () => void }) {
   const { client } = useAuth();
   const [entry, setEntry] = useState<Entry | null>(null);
+  const [saved, setSaved] = useState(false);
   const audio = useAudio(entry?.audio[0]?.url);
 
   useEffect(() => {
     let active = true;
     void client.get<Entry>(`/dictionary/entries/${entryId}`).then((res) => {
-      if (active && res.ok) setEntry(res.data);
+      if (active && res.ok) {
+        setEntry(res.data);
+        setSaved(!!res.data.saved);
+      }
     });
     return () => {
       active = false;
     };
   }, [client, entryId]);
+
+  const toggleSave = () => {
+    const next = !saved;
+    setSaved(next); // optimistic
+    if (next) void client.put(`/dictionary/entries/${entryId}/save`);
+    else void client.delete(`/dictionary/entries/${entryId}/save`);
+  };
 
   return (
     <View style={styles.screen}>
@@ -43,6 +54,14 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 <Text style={styles.audioIcon}>🔊</Text>
               </Pressable>
             ) : null}
+            <Pressable
+              onPress={toggleSave}
+              accessibilityLabel={saved ? 'Remove bookmark' : 'Bookmark word'}
+              accessibilityState={{ selected: saved }}
+              style={styles.audioBtn}
+            >
+              <Text style={styles.audioIcon}>{saved ? '★' : '☆'}</Text>
+            </Pressable>
           </View>
           <Text style={styles.dialect}>{entry.dialect}</Text>
 

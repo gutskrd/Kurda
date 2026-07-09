@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
-import type { SearchHit, SearchResult } from '../dictionary/types';
+import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
 /**
@@ -19,7 +19,16 @@ export function DictionaryScreen() {
   const [loading, setLoading] = useState(false);
   const [recents, setRecents] = useState<string[]>([]);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
+  const [saved, setSaved] = useState<SavedWord[]>([]);
   const debounced = useDebouncedValue(query, 250);
+
+  const loadSaved = useCallback(() => {
+    void client.get<{ words: SavedWord[] }>('/me/saved-words').then((res) => {
+      if (res.ok) setSaved(res.data.words);
+    });
+  }, [client]);
+
+  useEffect(loadSaved, [loadSaved]);
 
   useEffect(() => {
     const q = debounced.trim();
@@ -45,11 +54,25 @@ export function DictionaryScreen() {
   }, []);
 
   if (openEntry) {
-    return <EntryDetail entryId={openEntry} onBack={() => setOpenEntry(null)} />;
+    return (
+      <EntryDetail
+        entryId={openEntry}
+        onBack={() => {
+          setOpenEntry(null);
+          loadSaved(); // bookmark may have changed
+        }}
+      />
+    );
   }
 
+  const removeSaved = (entryId: string) => {
+    setSaved((s) => s.filter((w) => w.entryId !== entryId));
+    void client.delete(`/dictionary/entries/${entryId}/save`);
+  };
+
   const results = result?.results ?? [];
-  const showRecents = query.trim().length === 0 && recents.length > 0;
+  const isEmpty = query.trim().length === 0;
+  const showRecents = isEmpty && recents.length > 0;
 
   return (
     <View style={styles.screen}>
@@ -73,6 +96,25 @@ export function DictionaryScreen() {
             <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow}>
               <Text style={styles.recentText}>{r}</Text>
             </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      {isEmpty && saved.length > 0 ? (
+        <View style={styles.recents}>
+          <Text style={styles.recentsTitle}>★ Saved</Text>
+          {saved.map((w) => (
+            <View key={w.entryId} style={styles.savedRow}>
+              <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
+                <Text style={styles.recentText}>{w.headword}</Text>
+                <Text style={styles.hitDef} numberOfLines={1}>
+                  {w.definitionEn ?? ''}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={`Remove ${w.headword}`} hitSlop={8}>
+                <Text style={styles.remove}>✕</Text>
+              </Pressable>
+            </View>
           ))}
         </View>
       ) : null}
@@ -120,6 +162,9 @@ const styles = StyleSheet.create({
   recentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase' },
   recentRow: { paddingVertical: spacing.sm },
   recentText: { fontSize: typography.sizes.md, color: colors.primary },
+  savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
+  savedMain: { flex: 1 },
+  remove: { fontSize: typography.sizes.md, color: colors.textSecondary },
   empty: { color: colors.textSecondary, marginTop: spacing.lg },
   hit: { paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },

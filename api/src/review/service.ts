@@ -91,21 +91,39 @@ export class ReviewService {
   }
 
   /**
-   * Items due for review now, most overdue first, capped at `limit`. Also
-   * reports the total due so the UI can show "20+".
+   * Schedule a brand-new review item, due now. Idempotent: an existing item
+   * (e.g. a re-saved word) keeps its SM-2 history. Returns whether a new
+   * item was actually created.
+   */
+  async scheduleNew(userId: string, itemId: string, now: Date = new Date()): Promise<boolean> {
+    const res = await this.pool.query(
+      `INSERT INTO review_items (user_id, item_id, repetitions, interval_days, easiness, due_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_id, item_id) DO NOTHING`,
+      [userId, itemId, INITIAL_SM2.repetitions, INITIAL_SM2.interval, INITIAL_SM2.easiness, now],
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
+
+  /**
+   * Items due for review now, most overdue first, capped at `limit`. Dict
+   * items (item_id 'dict:<entryId>') only appear while their word is still
+   * saved — unsaving stops scheduling but keeps the SM-2 history (KUR-047).
    */
   async queue(userId: string, now: Date = new Date(), limit = REVIEW_QUEUE_LIMIT): Promise<ReviewQueue> {
+    const savedFilter = `AND (item_id NOT LIKE 'dict:%'
+       OR item_id IN (SELECT 'dict:' || entry_id FROM saved_words WHERE user_id = $1))`;
     const [due, count] = await Promise.all([
       this.pool.query<ItemRow>(
         `SELECT item_id, repetitions, interval_days, easiness, due_at
          FROM review_items
-         WHERE user_id = $1 AND due_at <= $2
+         WHERE user_id = $1 AND due_at <= $2 ${savedFilter}
          ORDER BY due_at ASC
          LIMIT $3`,
         [userId, now, limit],
       ),
       this.pool.query<{ n: string }>(
-        `SELECT count(*)::text n FROM review_items WHERE user_id = $1 AND due_at <= $2`,
+        `SELECT count(*)::text n FROM review_items WHERE user_id = $1 AND due_at <= $2 ${savedFilter}`,
         [userId, now],
       ),
     ]);

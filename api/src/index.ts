@@ -164,6 +164,13 @@ export {
 } from './dictionary/search-service.js';
 export { wordOfDayIndex } from './dictionary/word-of-day.js';
 export { WordOfDayService, type WordOfDay } from './dictionary/word-of-day-service.js';
+export {
+  SavedWordsService,
+  dictItemId,
+  NEW_WORDS_PER_DAY,
+  type SavedWord,
+  type SaveResult,
+} from './dictionary/saved-words-service.js';
 export { registerDictionaryRoutes } from './dictionary/routes.js';
 export {
   type PronunciationScorer,
