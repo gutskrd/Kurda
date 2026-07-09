@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Tabs: undefined;
   Lesson: { lessonId: string };
   Practice: undefined;
+  Game: { roomId: string };
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
