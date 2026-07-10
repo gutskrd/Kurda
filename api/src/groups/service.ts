@@ -30,6 +30,11 @@ export interface GroupMember {
 export class GroupService {
   constructor(private readonly pool: pg.Pool) {}
 
+  /** The user's role in the group, or null if not a member (KUR-085 authz). */
+  async memberRole(groupId: string, userId: string): Promise<Role | null> {
+    return this.roleOf(this.pool, groupId, userId);
+  }
+
   private async roleOf(executor: Pick<pg.Pool, 'query'>, groupId: string, userId: string): Promise<Role | null> {
     const r = await executor.query<{ role: string }>(
       `SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2`,
