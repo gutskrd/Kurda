@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { StreakBadge } from '../streak/StreakBadge';
 import type { Streak } from '../streak/format';
@@ -13,6 +15,7 @@ function initial(name: string | null | undefined): string {
 
 export function ProfileScreen() {
   const { user, client, logout } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
   const [streak, setStreak] = useState<Streak | null>(null);
 
   // The streak lives on /me (settled server-side); the auth session user
@@ -38,6 +41,10 @@ export function ProfileScreen() {
       {user?.displayName ? <Text style={styles.displayName}>{user.displayName}</Text> : null}
 
       {streak ? <StreakBadge streak={streak} /> : null}
+
+      <Pressable style={styles.shop} onPress={() => navigation.navigate('Shop')}>
+        <Text style={styles.shopText}>🛒 Shop</Text>
+      </Pressable>
 
       <Pressable style={styles.logout} onPress={logout}>
         <Text style={styles.logoutText}>Log out</Text>
@@ -75,6 +82,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   displayName: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  shop: { marginTop: spacing.lg, backgroundColor: colors.primary, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
+  shopText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   logout: { marginTop: spacing.xl },
   logoutText: { color: colors.danger, fontSize: typography.sizes.sm },
 });

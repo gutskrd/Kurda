@@ -114,6 +114,16 @@ describe.skipIf(!DATABASE_URL)('shop catalog (integration)', () => {
     expect(await catalogSkus()).not.toContain(commonSku);
   });
 
+  it('rejects a purchase whose displayed price no longer matches (KUR-070)', async () => {
+    const sku = `priced_${suffix}`;
+    await shop.createItem({ sku, name: 'Priced', category: 'powerup', currency: 'zer', price: 30, isUnique: false });
+    // the client thinks it costs 20, but it's 30 now → PRICE_CHANGED, no debit
+    await expect(shop.purchase(userId, sku, `pc-${suffix}`, new Date(), 20)).rejects.toThrow(/price changed/i);
+    // the correct price goes through
+    const ok = await shop.purchase(userId, sku, `pc2-${suffix}`, new Date(), 30);
+    expect(ok.purchased).toBe(true);
+  });
+
   it('a limited-time item disappears exactly at its window end', async () => {
     const windowEnd = new Date('2026-06-01T00:00:00Z');
     await shop.createItem({
