@@ -227,6 +227,14 @@ export {
   type PublicProfile,
 } from './social/service.js';
 export { registerSocialRoutes } from './social/routes.js';
+export {
+  ChatService,
+  MAX_MESSAGE_LEN,
+  type DmMessage,
+  type Conversation,
+  type Notifier,
+} from './chat/service.js';
+export { registerChatRoutes } from './chat/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
