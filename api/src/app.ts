@@ -56,6 +56,8 @@ import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
 import { LeagueService } from './leagues/service.js';
 import { registerLeagueRoutes } from './leagues/routes.js';
+import { LeaderboardService } from './leaderboards/service.js';
+import { registerLeaderboardRoutes } from './leaderboards/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -201,6 +203,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService);
+
+    // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
+    const leaderboards = new LeaderboardService(app.db, app.redis);
+    registerLeaderboardRoutes(app, leaderboards);
+    const boardRebuild = setInterval(() => {
+      void leaderboards.rebuild('rating').catch((err) => app.log.warn({ err }, 'rating board rebuild failed'));
+      void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
+    }, 5 * 60 * 1000);
+    app.addHook('onClose', async () => clearInterval(boardRebuild));
     registerMediaRoutes(app);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
