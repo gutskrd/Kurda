@@ -152,12 +152,13 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     // only player A checks in; B is a no-show
     await svc.checkIn(create.id, final.id, final.playerA!);
 
-    // nothing due yet
-    expect(await svc.sweepNoShows(new Date())).toBe(0);
-    // …but past the window, the present player advances and wins the cup
-    const later = new Date(Date.now() + 3 * 60 * 1000);
-    expect(await svc.sweepNoShows(later)).toBe(1);
+    // nothing due yet for this fresh match — the tournament stays running
+    // (sweep is global, so assert on THIS tournament, not the overall count)
+    await svc.sweepNoShows(new Date());
+    expect((await svc.bracket(create.id)).status).toBe('running');
 
+    // …but past the window, the present player advances and wins the cup
+    await svc.sweepNoShows(new Date(Date.now() + 3 * 60 * 1000));
     view = await svc.bracket(create.id);
     expect(view.status).toBe('completed');
     expect(view.winnerId).toBe(final.playerA);
