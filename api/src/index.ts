@@ -111,6 +111,13 @@ export {
   type BracketMatchView,
 } from './tournament/service.js';
 export { registerTournamentRoutes } from './tournament/routes.js';
+export {
+  ShopService,
+  type ShopItem,
+  type CreateItemInput,
+  type PurchaseResult,
+} from './shop/service.js';
+export { registerShopRoutes } from './shop/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
