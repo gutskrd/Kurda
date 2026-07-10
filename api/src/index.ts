@@ -219,6 +219,14 @@ export {
   type FriendSummary,
 } from './friends/service.js';
 export { registerFriendRoutes } from './friends/routes.js';
+export {
+  SocialService,
+  type Visibility,
+  type FriendStatus,
+  type SearchHit as UserSearchHit,
+  type PublicProfile,
+} from './social/service.js';
+export { registerSocialRoutes } from './social/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

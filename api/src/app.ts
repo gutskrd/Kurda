@@ -62,6 +62,8 @@ import { SeasonService } from './seasons/service.js';
 import { registerSeasonRoutes } from './seasons/routes.js';
 import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
+import { SocialService } from './social/service.js';
+import { registerSocialRoutes } from './social/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -185,6 +187,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // friend system (KUR-081): requests, blocks, expiry sweep
     const friends = new FriendService(app.db);
     registerFriendRoutes(app, friends);
+    registerSocialRoutes(app, new SocialService(app.db, friends));
     const requestExpiry = setInterval(
       () => void friends.expireOldRequests().catch((err) => app.log.warn({ err }, 'friend request expiry failed')),
       6 * 60 * 60 * 1000,

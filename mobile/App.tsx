@@ -21,6 +21,8 @@ import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
+import { SocialScreen } from './src/social/SocialScreen';
+import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -67,6 +69,8 @@ function SignedInTabs() {
               <DictionaryScreen />
             ) : tab.name === 'Play' ? (
               <PlayScreen />
+            ) : tab.name === 'Social' ? (
+              <SocialScreen />
             ) : (
               <TabScreen tab={tab} />
             )
@@ -129,6 +133,11 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <LeagueScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Profile" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
+        )}
       </RootStack.Screen>
     </RootStack.Navigator>
   );
