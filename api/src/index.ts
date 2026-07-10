@@ -72,6 +72,27 @@ export {
   REMATCH_TTL_SECONDS,
   type RematchStatus,
 } from './game/rematch-service.js';
+export {
+  expectedScore,
+  kFactor,
+  applyResults as applyEloResults,
+  DEFAULT_RATING,
+  PLACEMENT_GAMES,
+  K_PLACEMENT,
+  K_BASE,
+  K_FLOOR,
+  FORFEIT_DAMPING,
+  type RatingPlayer,
+  type RatingResult,
+} from './ranking/elo.js';
+export {
+  RatingService,
+  type GameOutcome,
+  type RatingApplication,
+  type AppliedRating,
+  type RatingSummary,
+} from './ranking/rating-service.js';
+export { registerRatingRoutes } from './ranking/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

@@ -27,6 +27,8 @@ export interface MatchRecord {
   teams: string[][];
   /** host-chosen question category/level for private rooms (KUR-056) */
   questionFilter?: QuestionFilter;
+  /** ranked games move ELO (KUR-061); private/party default to unranked */
+  ranked?: boolean;
   createdAt: number;
 }
 
@@ -147,6 +149,8 @@ export class MatchmakingService {
       mode: '1v1',
       players: [me, opponent],
       teams: [[me.id], [opponent.id]],
+      // queue matches are the ranked ladder (KUR-061)
+      ranked: true,
       createdAt: Date.now(),
     };
     return this.announceMatch(record);
@@ -159,7 +163,7 @@ export class MatchmakingService {
   async createDirectMatch(
     userIds: string[],
     mode: GameMode,
-    opts: { teams?: string[][]; questionFilter?: QuestionFilter } = {},
+    opts: { teams?: string[][]; questionFilter?: QuestionFilter; ranked?: boolean } = {},
   ): Promise<MatchRecord> {
     const players = await Promise.all(userIds.map((id) => this.playerInfo(id)));
     const record: MatchRecord = {
@@ -168,6 +172,8 @@ export class MatchmakingService {
       players,
       teams: opts.teams ?? formTeams(userIds, mode),
       questionFilter: opts.questionFilter,
+      // direct matches (party/private/rematch) are unranked unless asked
+      ranked: opts.ranked ?? false,
       createdAt: Date.now(),
     };
     return this.announceMatch(record);
