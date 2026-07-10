@@ -37,12 +37,21 @@ export interface AwardResult {
   alreadyEarned: boolean;
 }
 
+/** Grants Gems for a rule/refId; injected so achievements stay decoupled (KUR-068). */
+export interface GemGranter {
+  grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
+}
+
 export class AchievementsService {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(
+    private readonly pool: pg.Pool,
+    private readonly gems?: GemGranter,
+  ) {}
 
   /**
    * Exactly-once award: the PK insert is the idempotency gate, so a data
-   * backfill re-triggering the same achievement can never award twice.
+   * backfill re-triggering the same achievement can never award twice. A newly
+   * earned milestone also grants Gems (KUR-068), idempotent on the achievement.
    */
   async award(userId: string, achievementId: string): Promise<AwardResult> {
     const def = achievementDef(achievementId);
@@ -54,9 +63,11 @@ export class AchievementsService {
        ON CONFLICT (user_id, achievement_id) DO NOTHING`,
       [userId, achievementId],
     );
-    return (inserted.rowCount ?? 0) === 0
-      ? { awarded: false, alreadyEarned: true }
-      : { awarded: true, alreadyEarned: false };
+    if ((inserted.rowCount ?? 0) === 0) return { awarded: false, alreadyEarned: true };
+
+    // Gem grant is best-effort: a failure here must never undo the award.
+    if (this.gems) await this.gems.grant(userId, 'achievement_milestone', achievementId).catch(() => undefined);
+    return { awarded: true, alreadyEarned: false };
   }
 
   /** Earned-but-unseen achievements — powers the unlock toast. */
