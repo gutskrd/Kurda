@@ -58,6 +58,8 @@ import { LeagueService } from './leagues/service.js';
 import { registerLeagueRoutes } from './leagues/routes.js';
 import { LeaderboardService } from './leaderboards/service.js';
 import { registerLeaderboardRoutes } from './leaderboards/routes.js';
+import { SeasonService } from './seasons/service.js';
+import { registerSeasonRoutes } from './seasons/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -212,6 +214,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
     }, 5 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(boardRebuild));
+
+    // quarterly season reset + rewards (KUR-065)
+    const seasons = new SeasonService(app.db, new WalletService(app.db));
+    registerSeasonRoutes(app, seasons);
+    const seasonSweep = setInterval(
+      () => void seasons.endDueSeasons().catch((err) => app.log.warn({ err }, 'season settle failed')),
+      6 * 60 * 60 * 1000,
+    );
+    app.addHook('onClose', async () => clearInterval(seasonSweep));
     registerMediaRoutes(app);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);

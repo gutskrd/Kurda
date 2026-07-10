@@ -6,6 +6,7 @@ import {
   previousWeek,
   promote,
   resolveStandings,
+  TIERS,
   weekStart,
   type CohortMember,
   type Tier,
@@ -210,9 +211,15 @@ export class LeagueService {
       for (const s of standings) {
         const nextTier = s.outcome === 'promoted' ? promote(tier) : s.outcome === 'demoted' ? demote(tier) : tier;
         if (nextTier !== tier) {
+          // bump peak_tier only when the new tier is a season high (KUR-065)
           await client.query(
-            `UPDATE user_league SET tier = $2, updated_at = now() WHERE user_id = $1`,
-            [s.userId, nextTier],
+            `UPDATE user_league SET tier = $2, updated_at = now(),
+               peak_tier = CASE
+                 WHEN array_position($3::text[], peak_tier) IS NULL
+                   OR array_position($3::text[], $2) > array_position($3::text[], peak_tier)
+                 THEN $2 ELSE peak_tier END
+             WHERE user_id = $1`,
+            [s.userId, nextTier, TIERS as unknown as string[]],
           );
         }
       }
