@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { IapService } from './service.js';
 import { StubReceiptVerifier } from './verifier.js';
 import { WalletService } from '../wallet/service.js';
+import { FraudService } from '../fraud/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -26,7 +27,7 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     wallet = new WalletService(pool);
-    iap = new IapService(pool, wallet, new StubReceiptVerifier(), config);
+    iap = new IapService(pool, wallet, new StubReceiptVerifier(), config, new FraudService(pool, wallet));
 
     const res = await app.inject({
       method: 'POST',

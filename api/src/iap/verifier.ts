@@ -2,6 +2,8 @@ import type { AppConfig } from '../config/env.js';
 
 export type IapPlatform = 'apple' | 'google';
 export type IapEnvironment = 'sandbox' | 'production';
+/** Apple `inApp[].in_app_ownership_type`; 'purchased' unless family-shared. */
+export type OwnershipType = 'purchased' | 'family_shared';
 
 export interface VerifiedReceipt {
   valid: boolean;
@@ -9,6 +11,8 @@ export interface VerifiedReceipt {
   transactionId: string;
   productId: string;
   environment: IapEnvironment;
+  /** family-shared receipts are exempt from receipt-reuse fraud flags (KUR-073). */
+  ownershipType: OwnershipType;
 }
 
 /**
@@ -29,17 +33,23 @@ export interface ReceiptVerifier {
  */
 export class StubReceiptVerifier implements ReceiptVerifier {
   async verify(_platform: IapPlatform, token: string, productId: string): Promise<VerifiedReceipt> {
-    let parsed: { transactionId?: string; environment?: IapEnvironment; valid?: boolean };
+    let parsed: {
+      transactionId?: string;
+      environment?: IapEnvironment;
+      valid?: boolean;
+      ownershipType?: OwnershipType;
+    };
     try {
       parsed = JSON.parse(token) as typeof parsed;
     } catch {
-      return { valid: false, transactionId: '', productId, environment: 'sandbox' };
+      return { valid: false, transactionId: '', productId, environment: 'sandbox', ownershipType: 'purchased' };
     }
     return {
       valid: parsed.valid !== false && Boolean(parsed.transactionId),
       transactionId: parsed.transactionId ?? '',
       productId,
       environment: parsed.environment ?? 'sandbox',
+      ownershipType: parsed.ownershipType ?? 'purchased',
     };
   }
 }

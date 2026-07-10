@@ -2,12 +2,15 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
 import type { AppConfig } from '../config/env.js';
+import type { FraudService } from '../fraud/service.js';
 import type { IapPlatform, ReceiptVerifier } from './verifier.js';
 
 export interface RedeemResult {
   granted: boolean;
   /** true when this receipt was already processed (restore / retry). */
   duplicate: boolean;
+  /** true when fraud rules held the purchase for review (KUR-073). */
+  held: boolean;
   gems: number;
   balance: number;
 }
@@ -39,6 +42,7 @@ export class IapService {
     private readonly wallet: WalletService,
     private readonly verifier: ReceiptVerifier,
     private readonly config: AppConfig,
+    private readonly fraud: FraudService,
   ) {}
 
   /** Admin: upsert a gem pack (store product → Gem amount). */
@@ -75,6 +79,7 @@ export class IapService {
     const gems = pack.rows[0]?.gems;
     if (!gems) throw new AppError('UNKNOWN_PRODUCT', 400, 'no active pack for that product');
 
+    const familyShared = verified.ownershipType === 'family_shared';
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -88,19 +93,58 @@ export class IapService {
       );
 
       if ((inserted.rowCount ?? 0) === 0) {
-        // already seen — reconcile idempotently rather than double-granting
-        const existing = await client.query<{ status: string; gems: number }>(
-          `SELECT status, gems FROM iap_receipts WHERE platform = $1 AND transaction_id = $2`,
+        const existing = await client.query<{ user_id: string; status: string; gems: number }>(
+          `SELECT user_id, status, gems FROM iap_receipts WHERE platform = $1 AND transaction_id = $2`,
           [platform, verified.transactionId],
         );
+        const prior = existing.rows[0];
+        const otherAccount = prior != null && prior.user_id !== userId;
+
+        // a DIFFERENT account submitting this same transaction is receipt reuse
+        if (otherAccount && !familyShared) {
+          const { verdict, signals } = await this.fraud.assess(client, userId, {
+            receiptReusedAcrossAccounts: true,
+            familyShared,
+          });
+          await this.fraud.hold(client, {
+            userId,
+            receiptId: null,
+            flags: verdict.flags,
+            evidence: { ...signals, transactionId: verified.transactionId, reusedFrom: prior!.user_id },
+          });
+          await client.query('COMMIT');
+          return { granted: false, duplicate: true, held: true, gems, balance: (await this.wallet.balances(userId)).gems };
+        }
         await client.query('COMMIT');
-        const bal = await this.wallet.balances(userId);
+        // family-shared replay by another member: legitimate, but nothing is
+        // granted here (the original account owns it). Same-account retry/
+        // restore reconciles to whatever the receipt's real state is.
         return {
-          granted: existing.rows[0]?.status === 'granted',
+          granted: otherAccount ? false : prior?.status === 'granted',
           duplicate: true,
-          gems: existing.rows[0]?.gems ?? gems,
-          balance: bal.gems,
+          held: otherAccount ? false : prior?.status === 'held',
+          gems: prior?.gems ?? gems,
+          balance: (await this.wallet.balances(userId)).gems,
         };
+      }
+
+      // fresh transaction: run fraud rules (and honour an existing account hold)
+      const receiptId = inserted.rows[0]!.id;
+      const { verdict, signals } = await this.fraud.assess(client, userId, {
+        receiptReusedAcrossAccounts: false,
+        familyShared,
+      });
+      const alreadyHeld = await this.fraud.isHeld(client, userId);
+      if (verdict.hold || alreadyHeld) {
+        await client.query(`UPDATE iap_receipts SET status = 'held' WHERE id = $1`, [receiptId]);
+        await this.fraud.hold(client, {
+          userId,
+          receiptId,
+          flags: verdict.flags,
+          evidence: { ...signals, transactionId: verified.transactionId, priorHold: alreadyHeld },
+        });
+        await client.query('COMMIT');
+        return { granted: false, duplicate: false, held: true, gems, balance: (await this.wallet.balances(userId)).gems };
       }
 
       const credit = await this.wallet.creditWithin(client, {
@@ -111,7 +155,7 @@ export class IapService {
         idempotencyKey: `iap:${platform}:${verified.transactionId}`,
       });
       await client.query('COMMIT');
-      return { granted: true, duplicate: false, gems, balance: credit.balance };
+      return { granted: true, duplicate: false, held: false, gems, balance: credit.balance };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

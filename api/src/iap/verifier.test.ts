@@ -6,7 +6,13 @@ const v = new StubReceiptVerifier();
 describe('StubReceiptVerifier', () => {
   it('accepts a well-formed receipt and carries its fields through', async () => {
     const r = await v.verify('apple', JSON.stringify({ transactionId: 't1', environment: 'production' }), 'gems_100');
-    expect(r).toEqual({ valid: true, transactionId: 't1', productId: 'gems_100', environment: 'production' });
+    expect(r).toEqual({
+      valid: true,
+      transactionId: 't1',
+      productId: 'gems_100',
+      environment: 'production',
+      ownershipType: 'purchased',
+    });
   });
 
   it('defaults the environment to sandbox', async () => {
