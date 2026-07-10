@@ -217,6 +217,22 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
     expect(scores.every((s) => typeof s.points === 'number')).toBe(true);
   }, 20_000);
 
+  it('a mid-question disconnect auto-wrongs that question (KUR-057)', async () => {
+    const a = await makePlayer('da');
+    const b = await makePlayer('db');
+    const roomId = await startMatch(a, b);
+    a.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
+    b.ws.send(JSON.stringify({ type: 'ready', room: roomId }));
+
+    // during the first question, A drops its connection
+    await waitForGameEvent(b, 'question', (e) => e.index === 0, 8_000);
+    a.ws.close();
+
+    // B is told A left that question; A never scores for it
+    const left = await waitForGameEvent(b, 'player_left', (e) => e.index === 0, 8_000);
+    expect(left.userId).toBe(a.id);
+  }, 20_000);
+
   it('a silent opponent never hangs the game — it completes with timeouts', async () => {
     const active = await makePlayer('act');
     const ghost = await makePlayer('gho'); // joins, then never sends anything

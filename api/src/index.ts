@@ -43,7 +43,14 @@ export { MatchmakingService, type MatchmakingOptions, type MatchRecord, type Enq
 export { MODE_CONFIG, formTeams, teamScoreboard, type GameMode, type ModeConfig, type TeamLine } from './game/modes.js';
 export { RedisMatchQueue, MemoryMatchQueue, type MatchQueue, type QueueEntry } from './game/match-queue.js';
 export { registerMatchmakingRoutes } from './game/routes.js';
-export { GameEngine, ANSWER_GRACE_MS, type EngineOptions, type GamePhase } from './game/engine.js';
+export { GameEngine, ANSWER_GRACE_MS, type EngineOptions, type GamePhase, type GameMetrics } from './game/engine.js';
+export {
+  compensatedElapsed,
+  isRttAnomalous,
+  rttDistribution,
+  RTT_CAP_MS,
+  RTT_ANOMALY_MS,
+} from './game/latency.js';
 export {
   questionPoints,
   rankScores,

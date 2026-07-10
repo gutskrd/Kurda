@@ -5,6 +5,7 @@ import type { MatchRecord } from './matchmaking.js';
 import { selectQuestions, type GameQuestion } from './question-bank.js';
 import { questionPoints, rankScores } from './scoring.js';
 import { MODE_CONFIG, teamScoreboard, type GameMode } from './modes.js';
+import { compensatedElapsed, isRttAnomalous, rttDistribution } from './latency.js';
 
 export type GamePhase = 'lobby' | 'countdown' | 'question' | 'reveal' | 'results';
 
@@ -25,6 +26,16 @@ export interface EngineOptions {
   answerGraceMs?: number;
   /** Finished sessions stay snapshot-able this long. */
   resultsTtlMs?: number;
+  /** Per-game RTT metrics sink for tuning + anomaly flags (KUR-057/058). */
+  onGameMetrics?: (metrics: GameMetrics) => void;
+}
+
+export interface GameMetrics {
+  roomId: string;
+  mode: GameMode;
+  rtt: { min: number; median: number; p95: number; max: number; count: number };
+  /** userIds whose RTT looked implausible (sandbagging → KUR-058) */
+  anomalies: string[];
 }
 
 interface PlayerState {
@@ -40,6 +51,10 @@ interface PlayerState {
   points: number;
   /** cumulative answer time across the game (tiebreak) */
   cumulativeMs: number;
+  /** last server-measured RTT at answer time (latency compensation, #57) */
+  rttMs: number;
+  /** RTT samples seen this game (per-game metrics, #57) */
+  rttSamples: number[];
 }
 
 interface Session {
@@ -84,6 +99,7 @@ export class GameEngine {
   private readonly questionsPerGame: number;
   private readonly answerGraceMs: number;
   private readonly resultsTtlMs: number;
+  private readonly onGameMetrics?: (metrics: GameMetrics) => void;
 
   constructor(
     private readonly gateway: RealtimeGateway,
@@ -97,6 +113,7 @@ export class GameEngine {
     this.questionsPerGame = opts.questionsPerGame ?? 5;
     this.answerGraceMs = opts.answerGraceMs ?? ANSWER_GRACE_MS;
     this.resultsTtlMs = opts.resultsTtlMs ?? 60_000;
+    this.onGameMetrics = opts.onGameMetrics;
 
     // commands forwarded from other nodes
     bus.onEvent((roomId, event) => {
@@ -122,8 +139,26 @@ export class GameEngine {
         // receipt timestamp is taken on the receiving node, BEFORE any
         // bus hop, so forwarding latency never penalizes the player
         receivedAtMs: Date.now(),
+        // RTT measured server-side on the node holding the connection (#57);
+        // never client-supplied, so it can't be forged
+        rttMs: gateway.rttFor(userId) ?? 0,
       });
     });
+
+    // mid-question disconnect → auto-wrong for the open question (#57)
+    gateway.onDisconnect((userId) => this.handleDisconnect(userId));
+  }
+
+  private handleDisconnect(userId: string): void {
+    for (const session of this.sessions.values()) {
+      const player = session.players.get(userId);
+      if (!player || session.phase !== 'question') continue;
+      const index = session.questionIndex;
+      if (player.answers[index] !== undefined) continue; // already answered/locked
+      player.answers[index] = null; // auto-wrong, locked (resume on next, #57)
+      player.answeredAtMs[index] = null;
+      void this.gateway.publish(session.roomId, { type: 'player_left', userId, index });
+    }
   }
 
   private async forward(roomId: string, command: Record<string, unknown>): Promise<void> {
@@ -149,6 +184,8 @@ export class GameEngine {
             answeredAtMs: [],
             points: 0,
             cumulativeMs: 0,
+            rttMs: 0,
+            rttSamples: [],
           },
         ]),
       ),
@@ -190,19 +227,27 @@ export class GameEngine {
       const player = session.players.get(command.userId as string);
       const index = command.index as number;
       if (!player || index !== session.questionIndex) return; // stale/unknown question
-      if (player.answers[index] !== undefined && player.answers[index] !== null) return; // already answered
       const receivedAtMs = (command.receivedAtMs as number) ?? Date.now();
 
       // Window enforcement is server-side (the client timer is cosmetic). The
       // shared jitter grace is added to the deadline identically for everyone;
       // beyond it — or once the question has closed — the answer is rejected
-      // with a specific code rather than silently dropped (KUR-052).
+      // with a specific code rather than silently dropped (KUR-052). Checked
+      // before the lock so a closed-question answer is always rejected.
       const cutoff = session.questionEndsAt + this.answerGraceMs;
       if (session.phase !== 'question' || receivedAtMs > cutoff) {
         void this.gateway.notifyUser(player.id, { type: 'answer_rejected', index, code: 'ANSWER_TOO_LATE' });
         return;
       }
 
+      // in-window: once anything is recorded (a choice or a disconnect
+      // auto-wrong) the slot is locked — no re-answer (#57)
+      if (player.answers[index] !== undefined) return;
+
+      // capture server-measured RTT for latency compensation + metrics (#57)
+      const rtt = (command.rttMs as number) ?? 0;
+      player.rttMs = rtt;
+      if (rtt > 0) player.rttSamples.push(rtt);
       player.answers[index] = command.choice as number;
       player.answeredAtMs[index] = receivedAtMs;
       void this.gateway.publish(session.roomId, {
@@ -210,8 +255,9 @@ export class GameEngine {
         userId: player.id,
         index,
       });
+      // a disconnected (auto-wrong) player counts as done for early advance
       const everyoneAnswered = [...session.players.values()].every(
-        (p) => p.answers[index] !== undefined && p.answers[index] !== null,
+        (p) => p.answers[index] !== undefined,
       );
       if (everyoneAnswered) this.closeQuestion(session); // early advance
     }
@@ -261,8 +307,10 @@ export class GameEngine {
         player.answeredAtMs[index] = null;
       }
       const at = player.answeredAtMs[index];
-      const elapsed =
+      const raw =
         at == null ? this.questionMs : Math.min(this.questionMs, Math.max(0, at - session.questionOpenedAt));
+      // credit back a capped RTT/2 so latency doesn't cost the speed bonus (#57)
+      const elapsed = at == null ? raw : compensatedElapsed(raw, player.rttMs);
       const correct = player.answers[index] === question.correctIndex;
       player.points += questionPoints({ correct, elapsedMs: elapsed, windowMs: this.questionMs });
       player.cumulativeMs += elapsed;
@@ -322,6 +370,14 @@ export class GameEngine {
       scores: this.scoreboard(session),
       teams: this.teamBoard(session),
     });
+
+    // per-game RTT distribution + sandbagging flags for tuning (#57/#58)
+    if (this.onGameMetrics) {
+      const players = [...session.players.values()];
+      const samples = players.flatMap((p) => p.rttSamples);
+      const anomalies = players.filter((p) => isRttAnomalous(p.rttMs)).map((p) => p.id);
+      this.onGameMetrics({ roomId: session.roomId, mode: session.mode, rtt: rttDistribution(samples), anomalies });
+    }
     session.timer = setTimeout(() => this.sessions.delete(session.roomId), this.resultsTtlMs);
   }
 
