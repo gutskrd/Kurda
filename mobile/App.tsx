@@ -23,6 +23,8 @@ import { ShopScreen } from './src/shop/ShopScreen';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
+import { ChatScreen } from './src/chat/ChatScreen';
+import { ChatListScreen } from './src/chat/ChatListScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -138,6 +140,14 @@ function SignedInRoot() {
         {({ route, navigation }) => (
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Chat" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Chats" options={{ presentation: 'card' }}>
+        {({ navigation }) => <ChatListScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
     </RootStack.Navigator>
   );

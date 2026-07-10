@@ -64,6 +64,8 @@ import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
+import { ChatService } from './chat/service.js';
+import { registerChatRoutes } from './chat/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -253,6 +255,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.register(async (scoped) => {
       realtime.registerRoutes(scoped);
     });
+
+    // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
+    registerChatRoutes(
+      app,
+      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }),
+    );
 
     // matchmaking (KUR-050): atomic queue + widening sweeper
     const matchQueue = app.redis ? new RedisMatchQueue(app.redis) : new MemoryMatchQueue();

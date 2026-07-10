@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
@@ -22,6 +23,7 @@ interface Profile {
 /** Public profile with a friend action + block (KUR-082). */
 export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit: () => void }) {
   const { client } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -100,6 +102,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
         {profile.friendStatus !== 'self' ? (
           <View style={styles.actions}>
+            {profile.friendStatus === 'friends' ? (
+              <Pressable
+                onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
+                style={styles.primary}
+              >
+                <Text style={styles.primaryText}>Message</Text>
+              </Pressable>
+            ) : null}
             {label ? (
               <Pressable
                 onPress={() => isActionable(profile.friendStatus) && act(profile.friendStatus)}

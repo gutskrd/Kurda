@@ -77,7 +77,12 @@ export function SocialScreen() {
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Social</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Social</Text>
+        <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8}>
+          <Text style={styles.messages}>💬 Messages</Text>
+        </Pressable>
+      </View>
       <TextInput
         style={styles.input}
         placeholder="Search by username…"
@@ -139,7 +144,9 @@ export function SocialScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
-  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, color: colors.primary, marginBottom: spacing.md },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, color: colors.primary },
+  messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.primary },
   input: { backgroundColor: colors.surface, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.textPrimary, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', marginTop: spacing.md, marginBottom: spacing.xs },
