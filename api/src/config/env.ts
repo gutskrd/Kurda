@@ -35,6 +35,8 @@ const envSchema = z.object({
   APPLE_CLIENT_IDS: z.string().optional(),
   /** Cloudflare Turnstile; CAPTCHA disabled when unset (KUR-025). */
   TURNSTILE_SECRET: z.string().optional(),
+  /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
+  IAP_WEBHOOK_SECRET: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**

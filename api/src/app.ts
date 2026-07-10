@@ -32,6 +32,9 @@ import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { IapService } from './iap/service.js';
+import { registerIapRoutes } from './iap/routes.js';
+import { createReceiptVerifier } from './iap/verifier.js';
 import { WalletService } from './wallet/service.js';
 import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
@@ -148,6 +151,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAchievementRoutes(app);
     registerWalletRoutes(app);
     registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db)));
+    registerIapRoutes(
+      app,
+      new IapService(app.db, new WalletService(app.db), createReceiptVerifier(config), config),
+      config,
+    );
     registerLessonRoutes(app);
     registerDailyGoalRoutes(app);
     registerReviewRoutes(app);
