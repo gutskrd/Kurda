@@ -65,7 +65,7 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
   });
 
   it('rejects an unknown product and an invalid receipt', async () => {
-    await expect(iap.redeem(userId, 'apple', txn('x'), 'nope')).rejects.toThrow(/unknown product/i);
+    await expect(iap.redeem(userId, 'apple', txn('x'), 'nope')).rejects.toThrow(/no active pack/i);
     await expect(iap.redeem(userId, 'apple', 'garbage', product)).rejects.toThrow(/validation/i);
   });
 
