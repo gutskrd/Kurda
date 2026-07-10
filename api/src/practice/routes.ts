@@ -2,14 +2,15 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { PracticeService } from './service.js';
+import type { XpService } from '../xp/service.js';
 
 const answerBody = z.object({
   exerciseId: z.uuid(),
   answer: z.unknown(),
 });
 
-export function registerPracticeRoutes(app: FastifyInstance): void {
-  const practice = new PracticeService(app.db);
+export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService): void {
+  const practice = new PracticeService(app.db, { xp });
 
   /** One-tap: generate a review session (or an empty-state suggestion). */
   app.post(

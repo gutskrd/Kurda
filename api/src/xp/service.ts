@@ -28,7 +28,11 @@ export function lessonCompletionXp(accuracy: number, isRepeat: boolean): number 
 }
 
 export class XpService {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(
+    private readonly pool: pg.Pool,
+    /** Fires after a real (non-duplicate) award — e.g. weekly-league join (KUR-062). */
+    private readonly afterAward?: (userId: string) => void,
+  ) {}
 
   /**
    * Appends an XP-ledger row and bumps users.xp in one step. Idempotent
@@ -50,6 +54,8 @@ export class XpService {
       input.userId,
       input.amount,
     ]);
+    // best-effort side effect; never affects the awarded amount
+    this.afterAward?.(input.userId);
     return input.amount;
   }
 
