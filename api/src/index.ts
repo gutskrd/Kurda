@@ -132,6 +132,16 @@ export {
   type IapEnvironment,
 } from './iap/verifier.js';
 export { registerIapRoutes } from './iap/routes.js';
+export {
+  evaluate as evaluateFraud,
+  VELOCITY_MAX_PER_HOUR,
+  REFUND_ABUSE_THRESHOLD,
+  type FraudFlag,
+  type FraudSignals,
+  type FraudVerdict,
+} from './fraud/rules.js';
+export { FraudService, type FraudReview } from './fraud/service.js';
+export { registerFraudRoutes } from './fraud/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
