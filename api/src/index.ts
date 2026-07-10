@@ -212,6 +212,13 @@ export {
 } from './seasons/season-logic.js';
 export { SeasonService, type SeasonRecord } from './seasons/service.js';
 export { registerSeasonRoutes } from './seasons/routes.js';
+export { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS, type Pair } from './friends/pair.js';
+export {
+  FriendService,
+  type RequestOutcome,
+  type FriendSummary,
+} from './friends/service.js';
+export { registerFriendRoutes } from './friends/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
