@@ -118,6 +118,20 @@ export {
   type PurchaseResult,
 } from './shop/service.js';
 export { registerShopRoutes } from './shop/routes.js';
+export {
+  IapService,
+  type RedeemResult,
+  type GemPackInput,
+} from './iap/service.js';
+export {
+  StubReceiptVerifier,
+  createReceiptVerifier,
+  type ReceiptVerifier,
+  type VerifiedReceipt,
+  type IapPlatform,
+  type IapEnvironment,
+} from './iap/verifier.js';
+export { registerIapRoutes } from './iap/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

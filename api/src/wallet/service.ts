@@ -89,6 +89,16 @@ export class WalletService {
   }
 
   /**
+   * Credit inside a transaction the caller owns (KUR-072 IAP grant), so the
+   * gem grant and the receipt record commit together. Returns `duplicate: true`
+   * when the idempotency key was already processed.
+   */
+  async creditWithin(client: pg.PoolClient, op: WalletOperation): Promise<{ balance: number; duplicate: boolean }> {
+    assertValidAmount(op.amount);
+    return this.step(client, op, op.amount);
+  }
+
+  /**
    * The core lock → ledger → balance step, on a caller-provided client. Assumes
    * a transaction is already open; never commits or rolls back itself.
    */
