@@ -191,6 +191,16 @@ export {
 } from './leagues/league-logic.js';
 export { LeagueService, type LeagueView, type StandingRow } from './leagues/service.js';
 export { registerLeagueRoutes } from './leagues/routes.js';
+export {
+  rankForScore,
+  withRanks,
+  isBoardType,
+  type BoardType,
+  type ScoreRow,
+  type RankedEntry,
+} from './leaderboards/rank.js';
+export { LeaderboardService, type Board } from './leaderboards/service.js';
+export { registerLeaderboardRoutes } from './leaderboards/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
