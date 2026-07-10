@@ -142,6 +142,21 @@ export {
 } from './fraud/rules.js';
 export { FraudService, type FraudReview } from './fraud/service.js';
 export { registerFraudRoutes } from './fraud/routes.js';
+export {
+  faucetSink,
+  driftRatio,
+  isDrifting,
+  EXCLUDED_REASONS,
+  DRIFT_THRESHOLD,
+  type LedgerEntry,
+  type FaucetSink,
+} from './economy/metrics.js';
+export {
+  EconomyService,
+  type DailyPoint,
+  type DriftReport,
+} from './economy/service.js';
+export { registerEconomyRoutes } from './economy/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

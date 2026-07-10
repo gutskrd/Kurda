@@ -37,6 +37,8 @@ import { registerIapRoutes } from './iap/routes.js';
 import { createReceiptVerifier } from './iap/verifier.js';
 import { FraudService } from './fraud/service.js';
 import { registerFraudRoutes } from './fraud/routes.js';
+import { EconomyService } from './economy/service.js';
+import { registerEconomyRoutes } from './economy/routes.js';
 import { WalletService } from './wallet/service.js';
 import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
@@ -161,6 +163,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       new IapService(app.db, new WalletService(app.db), createReceiptVerifier(config), config, fraudService),
       config,
     );
+
+    // economy monitoring (KUR-074): roll the ledger into daily faucet/sink stats
+    const economy = new EconomyService(app.db);
+    registerEconomyRoutes(app, economy);
+    const rollupDay = () => {
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      void economy.aggregateDay(yesterday).catch((err) => app.log.warn({ err }, 'economy rollup failed'));
+      void economy.aggregateDay(now).catch((err) => app.log.warn({ err }, 'economy rollup failed'));
+    };
+    const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
+    app.addHook('onClose', async () => clearInterval(economyRollup));
     registerLessonRoutes(app);
     registerDailyGoalRoutes(app);
     registerReviewRoutes(app);
