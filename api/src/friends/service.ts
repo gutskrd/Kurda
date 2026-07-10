@@ -213,6 +213,23 @@ export class FriendService {
     return rows.rows.map((r) => ({ userId: r.id, username: r.username }));
   }
 
+  /** Relationship of `viewer` to `target` — powers friend buttons (KUR-082). */
+  async statusBetween(
+    viewer: string,
+    target: string,
+  ): Promise<'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked'> {
+    if (await this.areBlocked(viewer, target)) return 'blocked';
+    const { lo, hi } = canonicalPair(viewer, target);
+    const row = await this.pool.query<EdgeRow>(
+      `SELECT status, requested_by FROM friendships WHERE user_lo = $1 AND user_hi = $2`,
+      [lo, hi],
+    );
+    const edge = row.rows[0];
+    if (!edge) return 'none';
+    if (edge.status === 'accepted') return 'friends';
+    return edge.requested_by === viewer ? 'pending_out' : 'pending_in';
+  }
+
   /** Accepted friend ids — for the friends leaderboard (KUR-063 follow-on). */
   async friendIds(user: string): Promise<string[]> {
     const rows = await this.pool.query<{ id: string }>(

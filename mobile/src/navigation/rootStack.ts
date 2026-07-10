@@ -11,6 +11,7 @@ export type RootStackParamList = {
   Game: { roomId: string };
   Shop: undefined;
   League: undefined;
+  Profile: { userId: string };
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;

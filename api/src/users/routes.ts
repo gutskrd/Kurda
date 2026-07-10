@@ -77,6 +77,7 @@ interface MeRow {
   restricted_mode: boolean;
   xp: number;
   skip_speaking: boolean;
+  profile_visibility: string;
   created_at: Date;
 }
 
@@ -97,6 +98,7 @@ function toMe(row: MeRow) {
     restrictedMode: row.restricted_mode,
     xp: row.xp,
     skipSpeaking: row.skip_speaking,
+    profileVisibility: row.profile_visibility,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
