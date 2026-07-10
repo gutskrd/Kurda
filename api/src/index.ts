@@ -52,6 +52,17 @@ export {
   RTT_ANOMALY_MS,
 } from './game/latency.js';
 export {
+  evaluate as evaluateCheat,
+  FAST_MS,
+  IMPOSSIBLE_MS,
+  MIN_QUESTIONS_FOR_ACCURACY,
+  type PlayerStats,
+  type CheatFlag,
+  type CheatVerdict,
+} from './game/anti-cheat.js';
+export { AntiCheatService } from './game/anti-cheat-service.js';
+export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
+export {
   questionPoints,
   rankScores,
   POINTS_BASE,

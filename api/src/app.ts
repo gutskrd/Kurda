@@ -24,6 +24,7 @@ import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
 import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.js';
 import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoutes } from './game/routes.js';
 import { PrivateRoomService } from './game/private-room-service.js';
+import { AntiCheatService } from './game/anti-cheat-service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -169,10 +170,20 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(sweeper));
 
+    // anti-cheat pipeline (KUR-058): accumulate + flag server-measured behaviour
+    const antiCheat = new AntiCheatService(app.db);
+
     // game sessions (KUR-051): the match-making node owns the session
     const engine = new GameEngine(realtime, bus, {
       // per-game RTT metrics for tuning + anomaly flags (KUR-057/058)
       onGameMetrics: (m) => app.log.info({ event: 'game_rtt', ...m }, 'game rtt metrics'),
+      onGameEnd: (evidence) => {
+        for (const player of evidence.players) {
+          void antiCheat.recordGame(evidence.roomId, player).then((verdict) => {
+            if (verdict.shadow) app.log.warn({ event: 'cheat_shadow_flag', roomId: evidence.roomId, userId: player.userId, flags: verdict.flags }, 'shadow-flagged for review');
+          }).catch((err) => app.log.warn({ err }, 'anti-cheat record failed'));
+        }
+      },
       ...options.engine,
     });
     app.decorate('gameEngine', engine);

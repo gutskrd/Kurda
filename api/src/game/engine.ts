@@ -28,6 +28,21 @@ export interface EngineOptions {
   resultsTtlMs?: number;
   /** Per-game RTT metrics sink for tuning + anomaly flags (KUR-057/058). */
   onGameMetrics?: (metrics: GameMetrics) => void;
+  /** Per-game answer evidence sink for anti-cheat (KUR-058). */
+  onGameEnd?: (evidence: GameEndEvidence) => void;
+}
+
+export interface PlayerAnswerEvidence {
+  userId: string;
+  /** one per question the player actually answered */
+  answers: Array<{ index: number; elapsedMs: number; correct: boolean }>;
+  /** RTT samples that looked implausible (KUR-057) */
+  rttAnomalies: number;
+}
+
+export interface GameEndEvidence {
+  roomId: string;
+  players: PlayerAnswerEvidence[];
 }
 
 export interface GameMetrics {
@@ -55,6 +70,8 @@ interface PlayerState {
   rttMs: number;
   /** RTT samples seen this game (per-game metrics, #57) */
   rttSamples: number[];
+  /** raw server-measured elapsed per question (null = timeout/disconnect), for anti-cheat (#58) */
+  elapsedMs: Array<number | null>;
 }
 
 interface Session {
@@ -100,6 +117,7 @@ export class GameEngine {
   private readonly answerGraceMs: number;
   private readonly resultsTtlMs: number;
   private readonly onGameMetrics?: (metrics: GameMetrics) => void;
+  private readonly onGameEnd?: (evidence: GameEndEvidence) => void;
 
   constructor(
     private readonly gateway: RealtimeGateway,
@@ -114,6 +132,7 @@ export class GameEngine {
     this.answerGraceMs = opts.answerGraceMs ?? ANSWER_GRACE_MS;
     this.resultsTtlMs = opts.resultsTtlMs ?? 60_000;
     this.onGameMetrics = opts.onGameMetrics;
+    this.onGameEnd = opts.onGameEnd;
 
     // commands forwarded from other nodes
     bus.onEvent((roomId, event) => {
@@ -186,6 +205,7 @@ export class GameEngine {
             cumulativeMs: 0,
             rttMs: 0,
             rttSamples: [],
+            elapsedMs: [],
           },
         ]),
       ),
@@ -309,6 +329,8 @@ export class GameEngine {
       const at = player.answeredAtMs[index];
       const raw =
         at == null ? this.questionMs : Math.min(this.questionMs, Math.max(0, at - session.questionOpenedAt));
+      // raw timing (uncompensated) feeds anti-cheat; null = no answer (#58)
+      player.elapsedMs[index] = at == null ? null : raw;
       // credit back a capped RTT/2 so latency doesn't cost the speed bonus (#57)
       const elapsed = at == null ? raw : compensatedElapsed(raw, player.rttMs);
       const correct = player.answers[index] === question.correctIndex;
@@ -377,6 +399,20 @@ export class GameEngine {
       const samples = players.flatMap((p) => p.rttSamples);
       const anomalies = players.filter((p) => isRttAnomalous(p.rttMs)).map((p) => p.id);
       this.onGameMetrics({ roomId: session.roomId, mode: session.mode, rtt: rttDistribution(samples), anomalies });
+    }
+
+    // per-game answer evidence for anti-cheat (#58): server-measured only
+    if (this.onGameEnd) {
+      const players = [...session.players.values()].map((p) => ({
+        userId: p.id,
+        answers: session.questions.flatMap((q, i) => {
+          const elapsed = p.elapsedMs[i];
+          if (elapsed == null) return []; // no answer submitted → not evidence
+          return [{ index: i, elapsedMs: elapsed, correct: p.answers[i] === q.correctIndex }];
+        }),
+        rttAnomalies: p.rttSamples.filter((r) => isRttAnomalous(r)).length,
+      }));
+      this.onGameEnd({ roomId: session.roomId, players });
     }
     session.timer = setTimeout(() => this.sessions.delete(session.roomId), this.resultsTtlMs);
   }
