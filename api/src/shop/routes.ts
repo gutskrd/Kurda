@@ -21,6 +21,8 @@ const purchaseBody = z.object({
   sku: z.string().min(1).max(80),
   /** required so retries never double-charge (KUR-071) */
   idempotencyKey: z.string().min(8).max(120),
+  /** the price the client displayed; rejected if it changed (KUR-070) */
+  expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
 });
 
 /** Shop catalog + purchase + inventory (KUR-071). */
@@ -58,8 +60,8 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
       preHandler: requireAuth,
     },
     async (req) => {
-      const { sku, idempotencyKey } = req.body as z.infer<typeof purchaseBody>;
-      return shop.purchase(req.user!.id, sku, idempotencyKey);
+      const { sku, idempotencyKey, expectedPrice } = req.body as z.infer<typeof purchaseBody>;
+      return shop.purchase(req.user!.id, sku, idempotencyKey, new Date(), expectedPrice);
     },
   );
 

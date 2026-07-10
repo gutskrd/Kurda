@@ -210,6 +210,7 @@ export class ShopService {
     sku: string,
     idempotencyKey: string,
     now: Date = new Date(),
+    expectedPrice?: number,
   ): Promise<PurchaseResult> {
     const client = await this.pool.connect();
     try {
@@ -219,6 +220,11 @@ export class ShopService {
       const item = itemRes.rows[0];
       if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
       if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      // the price the client saw must still hold (catalog changed between view
+      // and buy → let the UI re-confirm rather than silently over/undercharge)
+      if (expectedPrice != null && item.price !== expectedPrice) {
+        throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
+      }
 
       // unique items: reject a second copy before any money moves
       if (item.is_unique) {
