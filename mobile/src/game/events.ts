@@ -6,6 +6,10 @@ export interface ScoreLine {
   points: number;
   rank: number;
   correct: number;
+  /** XP granted for this game (final results only, KUR-059). */
+  xp?: number;
+  /** Rating change placeholder until MMR lands (KUR-061); 0 for now. */
+  ratingDelta?: number;
 }
 
 export type GameEvent =

@@ -25,6 +25,8 @@ import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.
 import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoutes } from './game/routes.js';
 import { PrivateRoomService } from './game/private-room-service.js';
 import { AntiCheatService } from './game/anti-cheat-service.js';
+import { RematchService } from './game/rematch-service.js';
+import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -172,6 +174,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // anti-cheat pipeline (KUR-058): accumulate + flag server-measured behaviour
     const antiCheat = new AntiCheatService(app.db);
+    const gameXpService = new XpService(app.db);
 
     // game sessions (KUR-051): the match-making node owns the session
     const engine = new GameEngine(realtime, bus, {
@@ -184,11 +187,22 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
           }).catch((err) => app.log.warn({ err }, 'anti-cheat record failed'));
         }
       },
+      // post-game XP, idempotent per (game, player) (KUR-059)
+      onReward: (roomId, rewards) => {
+        for (const r of rewards) {
+          void gameXpService
+            .award({ userId: r.userId, source: 'game', amount: r.xp, refId: `${roomId}:${r.userId}` })
+            .catch((err) => app.log.warn({ err }, 'game xp award failed'));
+        }
+      },
       ...options.engine,
     });
     app.decorate('gameEngine', engine);
     matchmaking.onMatch((record) => engine.startSession(record));
-    registerGameRoutes(app, engine);
+
+    // rematch coordination (KUR-059): same roster, new room on unanimous accept
+    const rematch = new RematchService(kv, matchmaking);
+    registerGameRoutes(app, engine, rematch);
     app.addHook('onClose', async () => engine.stopAll());
 
     // private host-controlled rooms (KUR-056)

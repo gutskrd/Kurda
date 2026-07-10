@@ -75,9 +75,27 @@ function SignedInTabs() {
   );
 }
 
-function GameRoute({ roomId, onExit }: { roomId: string; onExit: () => void }) {
+function GameRoute({
+  roomId,
+  onExit,
+  onRematch,
+  onPractice,
+}: {
+  roomId: string;
+  onExit: () => void;
+  onRematch: (roomId: string) => void;
+  onPractice: () => void;
+}) {
   const { user } = useAuth();
-  return <GameScreen roomId={roomId} selfId={user?.id ?? ''} onExit={onExit} />;
+  return (
+    <GameScreen
+      roomId={roomId}
+      selfId={user?.id ?? ''}
+      onExit={onExit}
+      onRematch={onRematch}
+      onPractice={onPractice}
+    />
+  );
 }
 
 function SignedInRoot() {
@@ -93,7 +111,14 @@ function SignedInRoot() {
         {({ navigation }) => <PracticeScreen navigation={navigation} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Game" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ route, navigation }) => <GameRoute roomId={route.params.roomId} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => (
+          <GameRoute
+            roomId={route.params.roomId}
+            onExit={() => navigation.goBack()}
+            onRematch={(roomId) => navigation.replace('Game', { roomId })}
+            onPractice={() => navigation.replace('Practice')}
+          />
+        )}
       </RootStack.Screen>
     </RootStack.Navigator>
   );
