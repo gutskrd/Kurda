@@ -4,6 +4,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import type { IapService } from './service.js';
+import { SharedSecretWebhookVerifier } from './webhook-auth.js';
 
 const platform = z.enum(['apple', 'google']);
 
@@ -23,6 +24,10 @@ const packBody = z.object({
 
 /** In-app purchases (KUR-072): redeem, refund webhook, restore. */
 export function registerIapRoutes(app: FastifyInstance, iap: IapService, config: AppConfig): void {
+  // webhook auth: constant-time shared secret today; provider-signature
+  // verification plugs in here in production (KUR-112).
+  const webhookVerifier = new SharedSecretWebhookVerifier(config.IAP_WEBHOOK_SECRET);
+
   /** Admin: define a gem pack. */
   app.post(
     '/iap/packs',
@@ -69,10 +74,10 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
       if (!config.IAP_WEBHOOK_SECRET) {
         throw new AppError('WEBHOOK_DISABLED', 503, 'iap webhooks are not configured');
       }
-      if (req.headers['x-iap-secret'] !== config.IAP_WEBHOOK_SECRET) {
-        throw new AppError('UNAUTHORIZED', 401, 'bad webhook secret');
-      }
       const { platform: p } = req.params as { platform: 'apple' | 'google' };
+      if (!webhookVerifier.verify(p, req.headers)) {
+        throw new AppError('UNAUTHORIZED', 401, 'webhook authentication failed');
+      }
       const { transactionId } = req.body as { transactionId: string };
       return iap.refund(p, transactionId);
     },
