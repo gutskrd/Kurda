@@ -63,6 +63,8 @@ export class RematchService {
       const next = await this.matchmaking.createDirectMatch(players, record.mode, {
         teams: record.teams,
         questionFilter: record.questionFilter,
+        // a rematch of a ranked game is itself ranked (KUR-061)
+        ranked: record.ranked,
       });
       state.newRoomId = next.roomId;
     }

@@ -33,6 +33,17 @@ export interface EngineOptions {
   onGameEnd?: (evidence: GameEndEvidence) => void;
   /** Post-game XP rewards sink (KUR-059). */
   onReward?: (roomId: string, rewards: Array<{ userId: string; xp: number }>) => void;
+  /**
+   * Ranked-rating apply (KUR-061). Called on finish for ranked games with each
+   * player's finishing rank + forfeit; returns the applied delta per player so
+   * the results event can show the real rating change. Awaited before results
+   * publish, so it must be quick (a single short transaction).
+   */
+  onRating?: (input: {
+    roomId: string;
+    mode: GameMode;
+    outcomes: Array<{ userId: string; rank: number; forfeit: boolean }>;
+  }) => Promise<Array<{ userId: string; delta: number }>>;
 }
 
 export interface PlayerAnswerEvidence {
@@ -88,6 +99,8 @@ interface Session {
   /** game mode + teams (KUR-055); solo modes are one player per team */
   mode: GameMode;
   teams: string[][];
+  /** ranked games move ELO (KUR-061); private/party games don't */
+  ranked: boolean;
   timer?: NodeJS.Timeout;
 }
 
@@ -122,6 +135,7 @@ export class GameEngine {
   private readonly onGameMetrics?: (metrics: GameMetrics) => void;
   private readonly onGameEnd?: (evidence: GameEndEvidence) => void;
   private readonly onReward?: (roomId: string, rewards: Array<{ userId: string; xp: number }>) => void;
+  private readonly onRating?: EngineOptions['onRating'];
 
   constructor(
     private readonly gateway: RealtimeGateway,
@@ -138,6 +152,7 @@ export class GameEngine {
     this.onGameMetrics = opts.onGameMetrics;
     this.onGameEnd = opts.onGameEnd;
     this.onReward = opts.onReward;
+    this.onRating = opts.onRating;
 
     // commands forwarded from other nodes
     bus.onEvent((roomId, event) => {
@@ -220,6 +235,7 @@ export class GameEngine {
       questionEndsAt: 0,
       mode: record.mode,
       teams: record.teams.length > 0 ? record.teams : record.players.map((p) => [p.id]),
+      ranked: record.ranked ?? false,
     };
     this.sessions.set(record.roomId, session);
 
@@ -359,7 +375,7 @@ export class GameEngine {
     });
     const isLast = index + 1 >= session.questions.length;
     session.timer = setTimeout(
-      () => (isLast ? this.finish(session) : this.openQuestion(session, index + 1)),
+      () => (isLast ? void this.finish(session) : this.openQuestion(session, index + 1)),
       this.revealMs,
     );
   }
@@ -387,11 +403,38 @@ export class GameEngine {
     return teamScoreboard(this.playerLines(session), session.teams);
   }
 
-  private finish(session: Session): void {
+  /** A player who never answered a single question abandoned the game (#61). */
+  private isForfeit(player: PlayerState): boolean {
+    return !player.answers.some((a) => a != null);
+  }
+
+  private async finish(session: Session): Promise<void> {
     session.phase = 'results';
     // ranked final scores enriched with post-game rewards (#59)
     const ranked = rankScores(this.playerLines(session));
-    const scores = ranked.map((s) => ({ ...s, xp: gameXp(s.rank), ratingDelta: ratingDeltaPlaceholder() }));
+
+    // apply skill-rating changes before publishing so results carry the real
+    // delta (#61); non-ranked games (private/party) skip this and read 0
+    const deltas = new Map<string, number>();
+    if (session.ranked && this.onRating) {
+      const outcomes = ranked.map((s) => ({
+        userId: s.userId,
+        rank: s.rank,
+        forfeit: this.isForfeit(session.players.get(s.userId)!),
+      }));
+      try {
+        const applied = await this.onRating({ roomId: session.roomId, mode: session.mode, outcomes });
+        for (const a of applied) deltas.set(a.userId, a.delta);
+      } catch {
+        // a rating write failure must never block the game's results
+      }
+    }
+
+    const scores = ranked.map((s) => ({
+      ...s,
+      xp: gameXp(s.rank),
+      ratingDelta: deltas.get(s.userId) ?? ratingDeltaPlaceholder(),
+    }));
     void this.gateway.publish(session.roomId, {
       type: 'results',
       // final, authoritative speed-weighted scores (#53) + team totals (#55)

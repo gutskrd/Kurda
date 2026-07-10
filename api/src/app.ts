@@ -26,6 +26,8 @@ import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoute
 import { PrivateRoomService } from './game/private-room-service.js';
 import { AntiCheatService } from './game/anti-cheat-service.js';
 import { RematchService } from './game/rematch-service.js';
+import { RatingService } from './ranking/rating-service.js';
+import { registerRatingRoutes } from './ranking/routes.js';
 import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
@@ -175,6 +177,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // anti-cheat pipeline (KUR-058): accumulate + flag server-measured behaviour
     const antiCheat = new AntiCheatService(app.db);
     const gameXpService = new XpService(app.db);
+    // skill rating (KUR-061): applied atomically on ranked game finish
+    const ratingService = new RatingService(app.db);
 
     // game sessions (KUR-051): the match-making node owns the session
     const engine = new GameEngine(realtime, bus, {
@@ -195,6 +199,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
             .catch((err) => app.log.warn({ err }, 'game xp award failed'));
         }
       },
+      // ranked ELO applied atomically before results publish (KUR-061)
+      onRating: (input) => ratingService.apply(input),
       ...options.engine,
     });
     app.decorate('gameEngine', engine);
@@ -208,6 +214,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // private host-controlled rooms (KUR-056)
     const privateRooms = new PrivateRoomService(kv, app.db, matchmaking);
     registerPrivateRoomRoutes(app, privateRooms);
+
+    // skill-rating reads (KUR-061)
+    registerRatingRoutes(app, ratingService);
   }
 
   app.get('/health', async (_req, reply) => {
