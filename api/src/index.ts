@@ -235,6 +235,17 @@ export {
   type Notifier,
 } from './chat/service.js';
 export { registerChatRoutes } from './chat/routes.js';
+export {
+  ROLES,
+  MAX_GROUP_MEMBERS,
+  roleRank,
+  outranks,
+  canManage,
+  canSetRole,
+  type Role,
+} from './groups/roles.js';
+export { GroupService, type Group, type GroupMember } from './groups/service.js';
+export { registerGroupRoutes } from './groups/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
