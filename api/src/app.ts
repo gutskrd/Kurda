@@ -30,6 +30,8 @@ import { RatingService } from './ranking/rating-service.js';
 import { registerRatingRoutes } from './ranking/routes.js';
 import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
+import { ShopService } from './shop/service.js';
+import { registerShopRoutes } from './shop/routes.js';
 import { WalletService } from './wallet/service.js';
 import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
@@ -145,6 +147,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserRoutes(app);
     registerAchievementRoutes(app);
     registerWalletRoutes(app);
+    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db)));
     registerLessonRoutes(app);
     registerDailyGoalRoutes(app);
     registerReviewRoutes(app);
