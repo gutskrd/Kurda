@@ -23,6 +23,10 @@ interface Connection {
   rooms: Set<string>;
   resumeToken: string;
   lastPongAt: number;
+  /** when the last heartbeat ping was sent (for RTT, KUR-057) */
+  pingSentAt?: number;
+  /** last measured round-trip time in ms */
+  rttMs?: number;
 }
 
 const clientMessageSchema = z.discriminatedUnion('type', [
@@ -56,6 +60,7 @@ export class RealtimeGateway {
   private readonly connections = new Map<string, Connection>();
   private readonly roomMembers = new Map<string, Set<Connection>>();
   private readonly customHandlers = new Map<string, ClientMessageHandler>();
+  private readonly disconnectListeners: Array<(userId: string) => void> = [];
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
   private sweepTimer?: NodeJS.Timeout;
@@ -83,6 +88,16 @@ export class RealtimeGateway {
   /** Direct push to a single user's connection on whichever node. */
   async notifyUser(userId: string, event: RoomEvent): Promise<void> {
     await this.bus.publish(`user:${userId}`, event);
+  }
+
+  /** Last measured RTT (ms) for a user's live connection, or null (KUR-057). */
+  rttFor(userId: string): number | null {
+    return this.connections.get(userId)?.rttMs ?? null;
+  }
+
+  /** Fires when a user's live connection drops (game disconnect, KUR-057). */
+  onDisconnect(listener: (userId: string) => void): void {
+    this.disconnectListeners.push(listener);
   }
 
   /** Registers a handler for a custom client message type ('answer', ...). */
@@ -155,7 +170,10 @@ export class RealtimeGateway {
     this.joinLocal(conn, `user:${userId}`);
 
     socket.on('pong', () => {
-      conn.lastPongAt = Date.now();
+      const now = Date.now();
+      conn.lastPongAt = now;
+      // RTT from the heartbeat round-trip (KUR-057), measured server-side
+      if (conn.pingSentAt !== undefined) conn.rttMs = now - conn.pingSentAt;
     });
     socket.on('message', (raw) => void this.onMessage(conn, raw.toString()));
     socket.on('close', () => this.dropConnection(conn));
@@ -252,11 +270,16 @@ export class RealtimeGateway {
   }
 
   private dropConnection(conn: Connection): void {
-    if (this.connections.get(conn.userId) === conn) {
+    const wasLive = this.connections.get(conn.userId) === conn;
+    if (wasLive) {
       this.connections.delete(conn.userId);
     }
     for (const roomId of conn.rooms) {
       this.roomMembers.get(roomId)?.delete(conn);
+    }
+    // notify features (game auto-wrong on mid-question disconnect, KUR-057)
+    if (wasLive) {
+      for (const listener of this.disconnectListeners) listener(conn.userId);
     }
     // resume state stays in the KV for RESUME_TTL so a quick reconnect
     // (app backgrounded, network blip) lands back in its rooms
@@ -283,6 +306,7 @@ export class RealtimeGateway {
         continue;
       }
       try {
+        conn.pingSentAt = Date.now();
         conn.socket.ping();
       } catch {
         // terminated between iteration steps — drop next sweep

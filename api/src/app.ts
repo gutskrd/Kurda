@@ -170,7 +170,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.addHook('onClose', async () => clearInterval(sweeper));
 
     // game sessions (KUR-051): the match-making node owns the session
-    const engine = new GameEngine(realtime, bus, options.engine);
+    const engine = new GameEngine(realtime, bus, {
+      // per-game RTT metrics for tuning + anomaly flags (KUR-057/058)
+      onGameMetrics: (m) => app.log.info({ event: 'game_rtt', ...m }, 'game rtt metrics'),
+      ...options.engine,
+    });
     app.decorate('gameEngine', engine);
     matchmaking.onMatch((record) => engine.startSession(record));
     registerGameRoutes(app, engine);
