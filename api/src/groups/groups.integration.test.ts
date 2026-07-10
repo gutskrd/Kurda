@@ -43,7 +43,17 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
+    // the weekly-XP test inserts an xp_ledger row; the user cascade needs the
+    // append-only escape hatch to clear it
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
     await pool.end();
     await app.close();
   });
