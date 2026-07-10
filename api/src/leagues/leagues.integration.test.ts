@@ -32,9 +32,12 @@ describe.skipIf(!DATABASE_URL)('weekly leagues (integration)', () => {
         password: 'a-strong-password',
         acceptTerms: true,
       },
-      remoteAddress: '10.62.0.1',
+      // distinct IPs so 12 signups don't trip per-IP anti-bot limits
+      remoteAddress: `10.62.${i}.1`,
     });
-    return res.json().user.id as string;
+    const body = res.json();
+    if (!body.user) throw new Error(`register ${i} failed: ${res.statusCode} ${JSON.stringify(body)}`);
+    return body.user.id as string;
   };
 
   beforeAll(async () => {
