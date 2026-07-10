@@ -1,13 +1,30 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGameSocket } from '../game/useGameSocket';
+import { useRematch } from '../game/useRematch';
 import { opponentAnswered, selfResult } from '../game/reducer';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
-/** Full 1v1 match flow UI (KUR-054). */
-export function GameScreen({ roomId, selfId, onExit }: { roomId: string; selfId: string; onExit: () => void }) {
+interface GameScreenProps {
+  roomId: string;
+  selfId: string;
+  onExit: () => void;
+  /** Jump into a freshly-created rematch room (KUR-059). */
+  onRematch?: (roomId: string) => void;
+  /** Bridge to review the words you missed this game (KUR-059). */
+  onPractice?: () => void;
+}
+
+/** Full 1v1 match flow UI (KUR-054, results/rewards KUR-059). */
+export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: GameScreenProps) {
   const { state, answer, forfeit } = useGameSocket(roomId, selfId);
+  const rematch = useRematch(roomId);
   const [now, setNow] = useState(() => Date.now());
+
+  // navigate as soon as the rematch room is minted
+  useEffect(() => {
+    if (rematch.phase === 'ready' && rematch.status?.roomId) onRematch?.(rematch.status.roomId);
+  }, [rematch.phase, rematch.status?.roomId, onRematch]);
 
   // tick while a question is open, for the timer bar
   useEffect(() => {
@@ -46,17 +63,54 @@ export function GameScreen({ roomId, selfId, onExit }: { roomId: string; selfId:
   if (state.phase === 'results') {
     const me = selfResult(state);
     const won = me?.rank === 1;
+    const provisional = state.results?.provisional ?? false;
+    const xp = me?.xp ?? 0;
+    const ratingDelta = me?.ratingDelta ?? 0;
+    const waiting = rematch.phase === 'waiting';
+    const expired = rematch.phase === 'expired';
     return (
       <View style={styles.screen}>
         <Centered>
           <Text style={styles.emoji}>{won ? '🏆' : '🤝'}</Text>
           <Text style={styles.big}>{won ? 'You win!' : 'Good game'}</Text>
+
+          {!provisional && xp > 0 ? (
+            <View style={styles.rewardRow}>
+              <Text style={styles.xp}>+{xp} XP</Text>
+              {ratingDelta !== 0 ? (
+                <Text style={styles.rating}>{ratingDelta > 0 ? '+' : ''}{ratingDelta} rating</Text>
+              ) : null}
+            </View>
+          ) : null}
+
           {state.results?.scores.map((s) => (
             <Text key={s.userId} style={[styles.resultLine, s.userId === selfId && styles.resultSelf]}>
               #{s.rank} {s.username} — {s.points} pts ({s.correct} correct)
             </Text>
           ))}
-          <Pressable onPress={onExit} style={styles.primary}><Text style={styles.primaryText}>Done</Text></Pressable>
+
+          {onPractice ? (
+            <Pressable onPress={onPractice} style={styles.secondary}>
+              <Text style={styles.secondaryText}>Practice missed words</Text>
+            </Pressable>
+          ) : null}
+
+          {onRematch && !provisional ? (
+            waiting ? (
+              <View style={styles.rematchWait}>
+                <ActivityIndicator color={colors.primary} />
+                <Text style={styles.dim}>Waiting for opponent…</Text>
+              </View>
+            ) : expired ? (
+              <Text style={styles.dim}>Rematch offer expired</Text>
+            ) : (
+              <Pressable onPress={rematch.accept} style={styles.primary}>
+                <Text style={styles.primaryText}>Rematch</Text>
+              </Pressable>
+            )
+          ) : null}
+
+          <Pressable onPress={onExit} style={styles.done}><Text style={styles.doneText}>Done</Text></Pressable>
         </Centered>
       </View>
     );
@@ -149,6 +203,14 @@ const styles = StyleSheet.create({
   dim: { color: colors.textSecondary },
   resultLine: { fontSize: typography.sizes.md, color: colors.textSecondary },
   resultSelf: { color: colors.textPrimary, fontWeight: typography.weights.bold },
-  primary: { marginTop: spacing.lg, backgroundColor: colors.primary, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
+  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  xp: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.accent },
+  rating: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  rematchWait: { marginTop: spacing.lg, alignItems: 'center', gap: spacing.sm },
+  primary: { marginTop: spacing.lg, alignSelf: 'stretch', alignItems: 'center', backgroundColor: colors.primary, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
   primaryText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  secondary: { marginTop: spacing.md, alignSelf: 'stretch', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md, borderWidth: 2, borderColor: colors.primary },
+  secondaryText: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  done: { marginTop: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+  doneText: { color: colors.textSecondary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

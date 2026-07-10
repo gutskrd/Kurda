@@ -61,6 +61,17 @@ export {
   type CheatVerdict,
 } from './game/anti-cheat.js';
 export { AntiCheatService } from './game/anti-cheat-service.js';
+export {
+  gameXp,
+  ratingDeltaPlaceholder,
+  GAME_BASE_XP,
+  GAME_WIN_BONUS_XP,
+} from './game/game-rewards.js';
+export {
+  RematchService,
+  REMATCH_TTL_SECONDS,
+  type RematchStatus,
+} from './game/rematch-service.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

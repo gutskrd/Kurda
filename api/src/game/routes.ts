@@ -5,6 +5,7 @@ import { requireAuth } from '../plugins/auth.js';
 import type { GameEngine } from './engine.js';
 import type { MatchmakingService } from './matchmaking.js';
 import type { PrivateRoomService } from './private-room-service.js';
+import type { RematchService } from './rematch-service.js';
 import { MODE_CONFIG, type GameMode } from './modes.js';
 import { isValidCode, normalizeCode } from './private-room.js';
 
@@ -67,7 +68,23 @@ export function registerMatchmakingRoutes(
   );
 }
 
-export function registerGameRoutes(app: FastifyInstance, engine: GameEngine): void {
+export function registerGameRoutes(app: FastifyInstance, engine: GameEngine, rematch: RematchService): void {
+  const roomParam = z.object({ roomId: z.string().max(80) });
+
+  /** Accept a rematch; ready+roomId once every original player has (KUR-059). */
+  app.post(
+    '/games/:roomId/rematch',
+    { schema: { params: roomParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    async (req) => rematch.accept((req.params as { roomId: string }).roomId, req.user!.id),
+  );
+
+  /** Poll rematch state (the waiting player learns the new room here). */
+  app.get(
+    '/games/:roomId/rematch',
+    { schema: { params: roomParam }, preHandler: requireAuth },
+    async (req) => rematch.status((req.params as { roomId: string }).roomId, req.user!.id),
+  );
+
   /** Reconnect snapshot (KUR-051): resume lands here after rejoining. */
   app.get(
     '/games/:roomId/state',

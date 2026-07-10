@@ -6,6 +6,7 @@ import { selectQuestions, type GameQuestion } from './question-bank.js';
 import { questionPoints, rankScores } from './scoring.js';
 import { MODE_CONFIG, teamScoreboard, type GameMode } from './modes.js';
 import { compensatedElapsed, isRttAnomalous, rttDistribution } from './latency.js';
+import { gameXp, ratingDeltaPlaceholder } from './game-rewards.js';
 
 export type GamePhase = 'lobby' | 'countdown' | 'question' | 'reveal' | 'results';
 
@@ -30,6 +31,8 @@ export interface EngineOptions {
   onGameMetrics?: (metrics: GameMetrics) => void;
   /** Per-game answer evidence sink for anti-cheat (KUR-058). */
   onGameEnd?: (evidence: GameEndEvidence) => void;
+  /** Post-game XP rewards sink (KUR-059). */
+  onReward?: (roomId: string, rewards: Array<{ userId: string; xp: number }>) => void;
 }
 
 export interface PlayerAnswerEvidence {
@@ -118,6 +121,7 @@ export class GameEngine {
   private readonly resultsTtlMs: number;
   private readonly onGameMetrics?: (metrics: GameMetrics) => void;
   private readonly onGameEnd?: (evidence: GameEndEvidence) => void;
+  private readonly onReward?: (roomId: string, rewards: Array<{ userId: string; xp: number }>) => void;
 
   constructor(
     private readonly gateway: RealtimeGateway,
@@ -133,6 +137,7 @@ export class GameEngine {
     this.resultsTtlMs = opts.resultsTtlMs ?? 60_000;
     this.onGameMetrics = opts.onGameMetrics;
     this.onGameEnd = opts.onGameEnd;
+    this.onReward = opts.onReward;
 
     // commands forwarded from other nodes
     bus.onEvent((roomId, event) => {
@@ -384,14 +389,22 @@ export class GameEngine {
 
   private finish(session: Session): void {
     session.phase = 'results';
+    // ranked final scores enriched with post-game rewards (#59)
+    const ranked = rankScores(this.playerLines(session));
+    const scores = ranked.map((s) => ({ ...s, xp: gameXp(s.rank), ratingDelta: ratingDeltaPlaceholder() }));
     void this.gateway.publish(session.roomId, {
       type: 'results',
       // final, authoritative speed-weighted scores (#53) + team totals (#55)
       provisional: false,
       mode: session.mode,
-      scores: this.scoreboard(session),
+      scores,
       teams: this.teamBoard(session),
     });
+
+    // award XP for finishing the game, idempotent per (game, player) (#59)
+    if (this.onReward) {
+      this.onReward(session.roomId, scores.map((s) => ({ userId: s.userId, xp: s.xp })));
+    }
 
     // per-game RTT distribution + sandbagging flags for tuning (#57/#58)
     if (this.onGameMetrics) {
