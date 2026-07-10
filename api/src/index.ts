@@ -157,6 +157,17 @@ export {
   type DriftReport,
 } from './economy/service.js';
 export { registerEconomyRoutes } from './economy/routes.js';
+export {
+  CYCLE_REWARDS,
+  CYCLE_LENGTH,
+  rewardForDay,
+  nextCycleDay,
+  statusFor as dailyRewardStatus,
+  type DailyRewardState,
+  type DailyRewardStatus,
+} from './rewards/daily-cycle.js';
+export { DailyRewardService, type ClaimResult } from './rewards/service.js';
+export { registerDailyRewardRoutes } from './rewards/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

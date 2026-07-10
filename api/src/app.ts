@@ -50,6 +50,8 @@ import { registerUserRoutes } from './users/routes.js';
 import { registerLessonRoutes } from './content/routes.js';
 import { registerWalletRoutes } from './wallet/routes.js';
 import { registerDailyGoalRoutes } from './goals/routes.js';
+import { DailyRewardService } from './rewards/service.js';
+import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -177,6 +179,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.addHook('onClose', async () => clearInterval(economyRollup));
     registerLessonRoutes(app);
     registerDailyGoalRoutes(app);
+    registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app);
     registerMediaRoutes(app);
