@@ -175,6 +175,22 @@ export {
   type GrantResult,
 } from './gems/service.js';
 export { registerGemRoutes } from './gems/routes.js';
+export {
+  TIERS,
+  promote as promoteTier,
+  demote as demoteTier,
+  weekStart,
+  previousWeek,
+  resolveStandings,
+  COHORT_SIZE,
+  PROMOTE_COUNT,
+  DEMOTE_COUNT,
+  type Tier,
+  type CohortMember,
+  type Standing,
+} from './leagues/league-logic.js';
+export { LeagueService, type LeagueView, type StandingRow } from './leagues/service.js';
+export { registerLeagueRoutes } from './leagues/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

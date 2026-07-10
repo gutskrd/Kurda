@@ -54,6 +54,8 @@ import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
+import { LeagueService } from './leagues/service.js';
+import { registerLeagueRoutes } from './leagues/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -158,6 +160,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const gemService = new GemService(app.db, new WalletService(app.db));
     registerGemRoutes(app, gemService);
 
+    // weekly leagues (KUR-062): lazy cohort join on XP, Sunday-night settle
+    const leagues = new LeagueService(app.db, gemService);
+    registerLeagueRoutes(app, leagues);
+    // every XP gain lazily joins this week's cohort
+    const xpService = new XpService(app.db, (uid) => void leagues.onXp(uid).catch((err) => app.log.warn({ err }, 'league join failed')));
+    const leagueSettle = setInterval(
+      () => void leagues.settleDueWeeks().catch((err) => app.log.warn({ err }, 'league settle failed')),
+      60 * 60 * 1000,
+    );
+    app.addHook('onClose', async () => clearInterval(leagueSettle));
+
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
     registerAchievementRoutes(app, gemService);
@@ -183,11 +196,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     };
     const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(economyRollup));
-    registerLessonRoutes(app, gemService);
+    registerLessonRoutes(app, gemService, xpService);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
-    registerPracticeRoutes(app);
+    registerPracticeRoutes(app, xpService);
     registerMediaRoutes(app);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
@@ -218,7 +231,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // anti-cheat pipeline (KUR-058): accumulate + flag server-measured behaviour
     const antiCheat = new AntiCheatService(app.db);
-    const gameXpService = new XpService(app.db);
+    const gameXpService = xpService; // shared: game XP also joins the weekly league
     // skill rating (KUR-061): applied atomically on ranked game finish
     const ratingService = new RatingService(app.db);
 

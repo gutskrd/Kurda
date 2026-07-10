@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { ContentRepository } from './repository.js';
 import { LessonSessionService } from './sessions.js';
+import type { XpService } from '../xp/service.js';
 
 const answerBodySchema = z.object({
   exerciseId: z.uuid(),
@@ -16,8 +17,8 @@ interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
-export function registerLessonRoutes(app: FastifyInstance, gems?: GemGranter): void {
-  const sessions = new LessonSessionService(app.db);
+export function registerLessonRoutes(app: FastifyInstance, gems?: GemGranter, xp?: XpService): void {
+  const sessions = new LessonSessionService(app.db, xp);
   const content = new ContentRepository(app.db);
 
   /** A skill's markdown grammar note for the "Tips" tab (KUR-038). */
