@@ -66,6 +66,8 @@ import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
 import { ChatService } from './chat/service.js';
 import { registerChatRoutes } from './chat/routes.js';
+import { GroupService } from './groups/service.js';
+import { registerGroupRoutes } from './groups/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -190,6 +192,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const friends = new FriendService(app.db);
     registerFriendRoutes(app, friends);
     registerSocialRoutes(app, new SocialService(app.db, friends));
+
+    // groups / clubs (KUR-084): heal ownerless groups after account deletions
+    const groups = new GroupService(app.db);
+    registerGroupRoutes(app, groups);
+    const groupReconcile = setInterval(
+      () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
+      6 * 60 * 60 * 1000,
+    );
+    app.addHook('onClose', async () => clearInterval(groupReconcile));
     const requestExpiry = setInterval(
       () => void friends.expireOldRequests().catch((err) => app.log.warn({ err }, 'friend request expiry failed')),
       6 * 60 * 60 * 1000,
