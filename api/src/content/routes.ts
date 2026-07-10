@@ -11,7 +11,12 @@ const answerBodySchema = z.object({
   answer: z.unknown(),
 });
 
-export function registerLessonRoutes(app: FastifyInstance): void {
+/** Grants Gems for a rule/refId; injected so content stays decoupled (KUR-068). */
+interface GemGranter {
+  grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
+}
+
+export function registerLessonRoutes(app: FastifyInstance, gems?: GemGranter): void {
   const sessions = new LessonSessionService(app.db);
   const content = new ContentRepository(app.db);
 
@@ -63,6 +68,15 @@ export function registerLessonRoutes(app: FastifyInstance): void {
       config: { skipValidation: true },
       preHandler: requireAuth,
     },
-    async (req) => sessions.complete((req.params as { id: string }).id, req.user!.id),
+    async (req) => {
+      const sessionId = (req.params as { id: string }).id;
+      const results = await sessions.complete(sessionId, req.user!.id);
+      // perfect lesson → Gems (KUR-068); first completion only (xpAwarded > 0),
+      // idempotent per session. Best-effort: never fails the completion.
+      if (gems && results.accuracy === 1 && results.xpAwarded > 0) {
+        await gems.grant(req.user!.id, 'perfect_lesson', sessionId).catch(() => undefined);
+      }
+      return results;
+    },
   );
 }

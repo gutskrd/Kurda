@@ -168,6 +168,13 @@ export {
 } from './rewards/daily-cycle.js';
 export { DailyRewardService, type ClaimResult } from './rewards/service.js';
 export { registerDailyRewardRoutes } from './rewards/routes.js';
+export {
+  GemService,
+  DEFAULT_GLOBAL_DAILY_CAP,
+  type GemRule,
+  type GrantResult,
+} from './gems/service.js';
+export { registerGemRoutes } from './gems/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

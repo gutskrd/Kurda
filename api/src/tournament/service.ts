@@ -54,10 +54,16 @@ type Executor = Pick<pg.PoolClient, 'query'>;
  * slot. No-shows forfeit after two minutes; the champion is paid the configured
  * reward once, idempotently.
  */
+/** Grants Gems for a rule/refId; injected so tournaments stay decoupled (KUR-068). */
+export interface GemGranter {
+  grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
+}
+
 export class TournamentService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly wallet: WalletService,
+    private readonly gems?: GemGranter,
   ) {}
 
   async create(adminId: string, input: CreateTournamentInput): Promise<{ id: string }> {
@@ -346,6 +352,8 @@ export class TournamentService {
         idempotencyKey: `tourn:${tournamentId}:gems`,
       });
     }
+    // config-driven tournament-win Gem grant (KUR-068), idempotent per tournament
+    if (this.gems) await this.gems.grant(userId, 'tournament_win', tournamentId).catch(() => undefined);
   }
 
   /** A player confirms presence for their ready match (guards no-show sweep). */

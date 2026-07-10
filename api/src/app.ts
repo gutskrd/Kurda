@@ -52,6 +52,8 @@ import { registerWalletRoutes } from './wallet/routes.js';
 import { registerDailyGoalRoutes } from './goals/routes.js';
 import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
+import { GemService } from './gems/service.js';
+import { registerGemRoutes } from './gems/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -152,9 +154,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // auth + user endpoints need the database
   if (config.DATABASE_URL) {
+    // config-driven Gem grants (KUR-068): shared by achievements, lessons, tournaments
+    const gemService = new GemService(app.db, new WalletService(app.db));
+    registerGemRoutes(app, gemService);
+
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
-    registerAchievementRoutes(app);
+    registerAchievementRoutes(app, gemService);
     registerWalletRoutes(app);
     registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db)));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
@@ -177,7 +183,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     };
     const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(economyRollup));
-    registerLessonRoutes(app);
+    registerLessonRoutes(app, gemService);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
@@ -255,7 +261,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerRatingRoutes(app, ratingService);
 
     // tournaments (KUR-060): admin brackets + no-show forfeits
-    const tournaments = new TournamentService(app.db, new WalletService(app.db));
+    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService);
     registerTournamentRoutes(app, tournaments);
     const noShowSweeper = setInterval(
       () => void tournaments.sweepNoShows().catch((err) => app.log.warn({ err }, 'tournament sweep failed')),
