@@ -93,6 +93,24 @@ export {
   type RatingSummary,
 } from './ranking/rating-service.js';
 export { registerRatingRoutes } from './ranking/routes.js';
+export {
+  firstRoundMatches,
+  seedByRating,
+  seedOrder,
+  nextPowerOfTwo,
+  roundsForSize,
+  parentSlot,
+  type Seed,
+} from './tournament/bracket.js';
+export {
+  TournamentService,
+  NO_SHOW_MS,
+  MIN_CAPACITY,
+  MAX_CAPACITY,
+  type CreateTournamentInput,
+  type BracketMatchView,
+} from './tournament/service.js';
+export { registerTournamentRoutes } from './tournament/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

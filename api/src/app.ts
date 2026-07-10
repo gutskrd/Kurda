@@ -28,6 +28,9 @@ import { AntiCheatService } from './game/anti-cheat-service.js';
 import { RematchService } from './game/rematch-service.js';
 import { RatingService } from './ranking/rating-service.js';
 import { registerRatingRoutes } from './ranking/routes.js';
+import { TournamentService } from './tournament/service.js';
+import { registerTournamentRoutes } from './tournament/routes.js';
+import { WalletService } from './wallet/service.js';
 import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
@@ -217,6 +220,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // skill-rating reads (KUR-061)
     registerRatingRoutes(app, ratingService);
+
+    // tournaments (KUR-060): admin brackets + no-show forfeits
+    const tournaments = new TournamentService(app.db, new WalletService(app.db));
+    registerTournamentRoutes(app, tournaments);
+    const noShowSweeper = setInterval(
+      () => void tournaments.sweepNoShows().catch((err) => app.log.warn({ err }, 'tournament sweep failed')),
+      30_000,
+    );
+    app.addHook('onClose', async () => clearInterval(noShowSweeper));
   }
 
   app.get('/health', async (_req, reply) => {
