@@ -20,6 +20,7 @@ import { TabScreen } from './src/screens/TabScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
+import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -125,6 +126,9 @@ function SignedInRoot() {
         {({ navigation }) => (
           <ShopScreen onExit={() => navigation.goBack()} onEarnMore={() => navigation.navigate('Tabs')} />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
+        {({ navigation }) => <LeagueScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
     </RootStack.Navigator>
   );
