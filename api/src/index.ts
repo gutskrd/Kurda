@@ -201,6 +201,17 @@ export {
 } from './leaderboards/rank.js';
 export { LeaderboardService, type Board } from './leaderboards/service.js';
 export { registerLeaderboardRoutes } from './leaderboards/routes.js';
+export {
+  seasonKey,
+  seasonStart,
+  previousSeason,
+  softReset,
+  seasonRewardGems,
+  RATING_MEAN,
+  RESET_FACTOR,
+} from './seasons/season-logic.js';
+export { SeasonService, type SeasonRecord } from './seasons/service.js';
+export { registerSeasonRoutes } from './seasons/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
