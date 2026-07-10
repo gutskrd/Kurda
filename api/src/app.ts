@@ -162,7 +162,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserRoutes(app);
     registerAchievementRoutes(app, gemService);
     registerWalletRoutes(app);
-    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db)));
+    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
     const fraudService = new FraudService(app.db, new WalletService(app.db));
     registerFraudRoutes(app, fraudService);
