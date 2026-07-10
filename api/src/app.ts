@@ -70,6 +70,8 @@ import { GroupService } from './groups/service.js';
 import { registerGroupRoutes } from './groups/routes.js';
 import { GroupChatService } from './groups/chat-service.js';
 import { registerGroupChatRoutes } from './groups/chat-routes.js';
+import { ModerationService } from './moderation/service.js';
+import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -269,19 +271,25 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       realtime.registerRoutes(scoped);
     });
 
+    // chat moderation (KUR-086): profanity filter + reports + escalation mutes
+    const moderation = new ModerationService(app.db);
+    registerModerationRoutes(app, moderation);
+
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
     registerChatRoutes(
       app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }),
+      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
     );
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
     registerGroupChatRoutes(
       app,
-      new GroupChatService(app.db, groups, {
-        publish: (r, ev) => realtime.publish(r, ev as never),
-        invite: (r, uid, ttl) => realtime.invite(r, uid, ttl),
-      }),
+      new GroupChatService(
+        app.db,
+        groups,
+        { publish: (r, ev) => realtime.publish(r, ev as never), invite: (r, uid, ttl) => realtime.invite(r, uid, ttl) },
+        moderation,
+      ),
     );
 
     // matchmaking (KUR-050): atomic queue + widening sweeper

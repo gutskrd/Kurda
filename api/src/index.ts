@@ -254,6 +254,17 @@ export {
   type RoomHub,
 } from './groups/chat-service.js';
 export { registerGroupChatRoutes } from './groups/chat-routes.js';
+export { filterText, normalize, type FilterResult } from './moderation/filter.js';
+export {
+  ModerationService,
+  OFFENSE_1H,
+  OFFENSE_24H,
+  OFFENSE_PERM,
+  type MessageType,
+  type OffenseResult,
+  type ReportRow,
+} from './moderation/service.js';
+export { registerModerationRoutes } from './moderation/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
