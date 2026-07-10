@@ -246,6 +246,14 @@ export {
 } from './groups/roles.js';
 export { GroupService, type Group, type GroupMember } from './groups/service.js';
 export { registerGroupRoutes } from './groups/routes.js';
+export {
+  GroupChatService,
+  MAX_GROUP_MESSAGE_LEN,
+  type GroupMessage,
+  type MuteDuration,
+  type RoomHub,
+} from './groups/chat-service.js';
+export { registerGroupChatRoutes } from './groups/chat-routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,

@@ -68,6 +68,8 @@ import { ChatService } from './chat/service.js';
 import { registerChatRoutes } from './chat/routes.js';
 import { GroupService } from './groups/service.js';
 import { registerGroupRoutes } from './groups/routes.js';
+import { GroupChatService } from './groups/chat-service.js';
+import { registerGroupChatRoutes } from './groups/chat-routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -271,6 +273,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerChatRoutes(
       app,
       new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }),
+    );
+
+    // group chat (KUR-085): per-group room fan-out over the bus + moderation
+    registerGroupChatRoutes(
+      app,
+      new GroupChatService(app.db, groups, {
+        publish: (r, ev) => realtime.publish(r, ev as never),
+        invite: (r, uid, ttl) => realtime.invite(r, uid, ttl),
+      }),
     );
 
     // matchmaking (KUR-050): atomic queue + widening sweeper
