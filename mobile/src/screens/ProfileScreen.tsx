@@ -42,6 +42,9 @@ export function ProfileScreen() {
 
       {streak ? <StreakBadge streak={streak} /> : null}
 
+      <Pressable style={styles.shop} onPress={() => navigation.navigate('League')}>
+        <Text style={styles.shopText}>🏆 League</Text>
+      </Pressable>
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Shop')}>
         <Text style={styles.shopText}>🛒 Shop</Text>
       </Pressable>
