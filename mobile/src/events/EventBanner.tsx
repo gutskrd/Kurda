@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useEventTheme } from '../theme/EventThemeContext';
+import { useI18n } from '../i18n/I18nContext';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
 interface ActiveEvent {
@@ -20,6 +21,7 @@ export function EventBanner() {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { pack } = useEventTheme();
+  const { t } = useI18n();
   const [event, setEvent] = useState<ActiveEvent | null>(null);
 
   useFocusEffect(
@@ -44,7 +46,7 @@ export function EventBanner() {
       <Text style={styles.emoji}>{pack ? pack.emoji : '🎉'}</Text>
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>{event.name}</Text>
-        <Text style={styles.subtitle}>Quests &amp; rewards — tap to play</Text>
+        <Text style={styles.subtitle}>{t('events.bannerSubtitle')}</Text>
       </View>
       <Text style={styles.chevron}>›</Text>
     </Pressable>

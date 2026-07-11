@@ -6,6 +6,8 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useEventTheme } from '../theme/EventThemeContext';
+import { useI18n } from '../i18n/I18nContext';
+import { LOCALES, LOCALE_LABEL } from '../i18n/translations';
 import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 
@@ -21,6 +23,7 @@ export function ProfileScreen() {
   const [streak, setStreak] = useState<Streak | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('everyone');
   const { optedOut, setOptedOut } = useEventTheme();
+  const { t, locale, setLocale } = useI18n();
 
   // The streak + privacy live on /me (streak settled server-side); the auth
   // session user only carries identity, so fetch them here on mount.
@@ -55,10 +58,10 @@ export function ProfileScreen() {
       {streak ? <StreakBadge streak={streak} /> : null}
 
       <Pressable style={styles.shop} onPress={() => navigation.navigate('League')}>
-        <Text style={styles.shopText}>🏆 League</Text>
+        <Text style={styles.shopText}>🏆 {t('profile.league')}</Text>
       </Pressable>
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Shop')}>
-        <Text style={styles.shopText}>🛒 Shop</Text>
+        <Text style={styles.shopText}>🛒 {t('profile.shop')}</Text>
       </Pressable>
 
       <View style={styles.privacy}>
@@ -78,8 +81,25 @@ export function ProfileScreen() {
         </View>
       </View>
 
+      <View style={styles.privacy}>
+        <Text style={styles.privacyLabel}>{t('settings.language')}</Text>
+        <View style={styles.privacyOptions}>
+          {LOCALES.map((l) => (
+            <Pressable
+              key={l}
+              onPress={() => setLocale(l)}
+              style={[styles.privacyOption, locale === l && styles.privacyOptionActive]}
+            >
+              <Text style={[styles.privacyOptionText, locale === l && styles.privacyOptionTextActive]}>
+                {LOCALE_LABEL[l]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
       <View style={styles.settingRow}>
-        <Text style={styles.settingLabel}>Event themes</Text>
+        <Text style={styles.settingLabel}>{t('settings.eventThemes')}</Text>
         <Switch
           value={!optedOut}
           onValueChange={(on) => setOptedOut(!on)}
@@ -88,7 +108,7 @@ export function ProfileScreen() {
       </View>
 
       <Pressable style={styles.logout} onPress={logout}>
-        <Text style={styles.logoutText}>Log out</Text>
+        <Text style={styles.logoutText}>{t('profile.logout')}</Text>
       </Pressable>
     </View>
   );

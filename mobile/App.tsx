@@ -28,6 +28,7 @@ import { ChatListScreen } from './src/chat/ChatListScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
+import { I18nProvider } from './src/i18n/I18nContext';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -188,13 +189,15 @@ function Root() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <EventThemeProvider>
-        <NavigationContainer linking={linking}>
-          <StatusBar style="auto" />
-          <Root />
-        </NavigationContainer>
-      </EventThemeProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <EventThemeProvider>
+          <NavigationContainer linking={linking}>
+            <StatusBar style="auto" />
+            <Root />
+          </NavigationContainer>
+        </EventThemeProvider>
+      </AuthProvider>
+    </I18nProvider>
   );
 }
