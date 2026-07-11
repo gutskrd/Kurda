@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
+import { useEventTheme } from '../theme/EventThemeContext';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
 interface ActiveEvent {
@@ -18,6 +19,7 @@ interface ActiveEvent {
 export function EventBanner() {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
+  const { pack } = useEventTheme();
   const [event, setEvent] = useState<ActiveEvent | null>(null);
 
   useFocusEffect(
@@ -35,8 +37,11 @@ export function EventBanner() {
   if (!event) return null;
 
   return (
-    <Pressable onPress={() => navigation.navigate('EventQuests')} style={styles.banner}>
-      <Text style={styles.emoji}>🎉</Text>
+    <Pressable
+      onPress={() => navigation.navigate('EventQuests')}
+      style={[styles.banner, pack ? { backgroundColor: pack.bannerColors[0] } : null]}
+    >
+      <Text style={styles.emoji}>{pack ? pack.emoji : '🎉'}</Text>
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>{event.name}</Text>
         <Text style={styles.subtitle}>Quests &amp; rewards — tap to play</Text>

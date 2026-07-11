@@ -27,6 +27,7 @@ import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
+import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -188,10 +189,12 @@ function Root() {
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer linking={linking}>
-        <StatusBar style="auto" />
-        <Root />
-      </NavigationContainer>
+      <EventThemeProvider>
+        <NavigationContainer linking={linking}>
+          <StatusBar style="auto" />
+          <Root />
+        </NavigationContainer>
+      </EventThemeProvider>
     </AuthProvider>
   );
 }
