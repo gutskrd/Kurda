@@ -410,6 +410,19 @@ export {
 } from './dictionary/saved-words-service.js';
 export { registerDictionaryRoutes } from './dictionary/routes.js';
 export {
+  StubPushProvider,
+  createPushProvider,
+  type PushProvider,
+  type PushMessage,
+  type PushPlatform,
+  type PushSendResult,
+} from './push/provider.js';
+export { batchMessages, BATCH_LIMITS } from './push/batching.js';
+export { DeviceTokenService, type DeviceToken } from './push/tokens-service.js';
+export { PushService, type Notification, type DeliveryReport } from './push/service.js';
+export { registerPushRoutes } from './push/routes.js';
+export { makePushSendJob, PUSH_SEND_JOB_NAME, type PushSendPayload } from './jobs/push-jobs.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,

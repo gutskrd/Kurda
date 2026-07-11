@@ -25,6 +25,7 @@ import { SocialScreen } from './src/social/SocialScreen';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
+import { PushRegistration } from './src/push/PushRegistration';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -108,8 +109,10 @@ function GameRoute({
 
 function SignedInRoot() {
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      <RootStack.Screen name="Tabs" component={SignedInTabs} />
+    <>
+      <PushRegistration />
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Tabs" component={SignedInTabs} />
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
           <LessonPlayerScreen lessonId={route.params.lessonId} onExit={() => navigation.goBack()} />
@@ -149,7 +152,8 @@ function SignedInRoot() {
       <RootStack.Screen name="Chats" options={{ presentation: 'card' }}>
         {({ navigation }) => <ChatListScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-    </RootStack.Navigator>
+      </RootStack.Navigator>
+    </>
   );
 }
 

@@ -7,6 +7,10 @@ import { MediaService } from '../media/service.js';
 import { createStorage } from '../media/storage.js';
 import { makeCleanupOrphansJob } from './cleanup-orphans.js';
 import { makeAnonymizeJob, makeExportJob } from './gdpr-jobs.js';
+import { makePushSendJob } from './push-jobs.js';
+import { PushService } from '../push/service.js';
+import { DeviceTokenService } from '../push/tokens-service.js';
+import { createPushProvider } from '../push/provider.js';
 import { sendEmailJob } from './email.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
@@ -25,6 +29,9 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
     if (storage) {
       registry.register(makeExportJob(gdpr));
     }
+    // queued push fan-out (KUR-094)
+    const push = new PushService(new DeviceTokenService(pool), createPushProvider(config));
+    registry.register(makePushSendJob(push));
   }
   return registry;
 }
