@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Profile: { userId: string };
   Chat: { userId: string; username: string };
   Chats: undefined;
+  EventQuests: undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;

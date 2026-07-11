@@ -78,6 +78,8 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { EventService } from './events/service.js';
 import { registerEventRoutes } from './events/routes.js';
+import { QuestService, DbQuestMetrics } from './events/quest-service.js';
+import { registerQuestRoutes } from './events/quest-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -260,7 +262,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDictionaryRoutes(app);
 
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
-    registerEventRoutes(app, new EventService(app.db, app.cache));
+    const events = new EventService(app.db, app.cache);
+    registerEventRoutes(app, events);
+    // event quests + explicit reward claims (KUR-091): progress derived from the
+    // ledgers over the event window; claims pay Zêr/Gems with a 72h grace period
+    registerQuestRoutes(
+      app,
+      new QuestService(app.db, events, new WalletService(app.db), new DbQuestMetrics(app.db)),
+    );
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

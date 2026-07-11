@@ -441,3 +441,25 @@ export {
   type AnnualEventTemplate,
   type EventOccurrence,
 } from './events/recurrence.js';
+export {
+  parseQuest,
+  parseQuests,
+  evaluateQuest,
+  claimBlock,
+  claimDeadline,
+  QUEST_TYPES,
+  QUEST_GRACE_HOURS,
+  type QuestType,
+  type QuestDef,
+  type QuestProgress,
+  type QuestReward,
+} from './events/quest-logic.js';
+export {
+  QuestService,
+  DbQuestMetrics,
+  type QuestMetrics,
+  type EventQuestsView,
+  type QuestView,
+  type ClaimResult as QuestClaimResult,
+} from './events/quest-service.js';
+export { registerQuestRoutes } from './events/quest-routes.js';
