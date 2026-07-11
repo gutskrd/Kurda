@@ -8,6 +8,7 @@ import type { DailyGoalStatus, GoalOption } from '../goals/format';
 import { SkillNodeView } from '../coursemap/SkillNodeView';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
+import { EventBanner } from '../events/EventBanner';
 import { flattenMap, isLaunchable, stateHint, type MapRow } from '../coursemap/node';
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -79,6 +80,7 @@ export function LearnScreen() {
       <Pressable onPress={() => navigation.navigate('Practice')} style={styles.practice}>
         <Text style={styles.practiceText}>⚡ Practice</Text>
       </Pressable>
+      <EventBanner />
       <DailyRewardCard />
       <WordOfDayCard />
       {map ? <Text style={styles.courseTitle}>{map.course.title}</Text> : null}

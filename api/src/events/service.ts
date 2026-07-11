@@ -101,6 +101,12 @@ export class EventService {
     return (res.rowCount ?? 0) > 0;
   }
 
+  /** One definition by its stable key, or null. Used by quest claims (KUR-091). */
+  async byKey(key: string): Promise<EventDef | null> {
+    const res = await this.pool.query<EventRow>(`SELECT * FROM events WHERE key = $1`, [key]);
+    return res.rows[0] ? toDef(res.rows[0]) : null;
+  }
+
   /** All definitions (admin view), newest window first. */
   async list(): Promise<EventDef[]> {
     const res = await this.pool.query<EventRow>(`SELECT * FROM events ORDER BY starts_at DESC`);
