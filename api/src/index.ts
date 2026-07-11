@@ -435,3 +435,9 @@ export {
 } from './events/window.js';
 export { EventService, type UpsertEventInput } from './events/service.js';
 export { registerEventRoutes } from './events/routes.js';
+export {
+  occurrenceForYear,
+  upcomingOccurrences,
+  type AnnualEventTemplate,
+  type EventOccurrence,
+} from './events/recurrence.js';
