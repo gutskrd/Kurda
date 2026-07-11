@@ -423,6 +423,17 @@ export { PushService, type Notification, type DeliveryReport } from './push/serv
 export { registerPushRoutes } from './push/routes.js';
 export { makePushSendJob, PUSH_SEND_JOB_NAME, type PushSendPayload } from './jobs/push-jobs.js';
 export {
+  allows as notificationAllows,
+  defaultPrefs,
+  inQuietHours,
+  minuteOfDayInTz,
+  NOTIFICATION_CATEGORIES,
+  type NotificationCategory,
+  type NotificationPrefs,
+} from './notifications/prefs.js';
+export { NotificationPrefsService, type PrefsPatch } from './notifications/prefs-service.js';
+export { registerNotificationRoutes } from './notifications/routes.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,

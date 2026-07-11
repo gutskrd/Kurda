@@ -13,6 +13,7 @@ const tokenBody = z.object({ token: z.string().min(1).max(4096) });
 
 const testBody = z.object({
   userId: z.uuid().optional(),
+  category: z.enum(['streak', 'friends', 'games', 'events', 'marketing']).default('events'),
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(500),
 });
@@ -63,9 +64,9 @@ export function registerPushRoutes(
     '/admin/push/test',
     { schema: { body: testBody }, preHandler: requireRoles('admin') },
     async (req) => {
-      const { userId, title, body } = req.body as z.infer<typeof testBody>;
+      const { userId, category, title, body } = req.body as z.infer<typeof testBody>;
       const target = userId ?? req.user!.id;
-      const notification = { title, body };
+      const notification = { category, title, body };
       if (app.jobs) {
         await app.jobs.enqueue(makePushSendJob(push), { userId: target, notification });
         return { queued: true };

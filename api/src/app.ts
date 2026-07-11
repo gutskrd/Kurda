@@ -80,6 +80,8 @@ import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
 import { createPushProvider } from './push/provider.js';
 import { registerPushRoutes } from './push/routes.js';
+import { NotificationPrefsService } from './notifications/prefs-service.js';
+import { registerNotificationRoutes } from './notifications/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -261,9 +263,16 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
 
-    // push infrastructure (KUR-094): device token lifecycle + queued delivery
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
+    // gated by per-category preferences + quiet hours at delivery time (KUR-095)
     const deviceTokens = new DeviceTokenService(app.db);
-    registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
+    const notificationPrefs = new NotificationPrefsService(app.db);
+    registerNotificationRoutes(app, notificationPrefs);
+    registerPushRoutes(
+      app,
+      deviceTokens,
+      new PushService(deviceTokens, createPushProvider(config), notificationPrefs),
+    );
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

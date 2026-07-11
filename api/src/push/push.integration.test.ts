@@ -81,7 +81,7 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
 
     const provider = new StubPushProvider(new Set([bad]));
     const push = new PushService(tokens, provider);
-    const report = await push.deliver(userB, { title: 'Newroz', body: 'Bi xêr hatî!' });
+    const report = await push.deliver(userB, { category: 'events', title: 'Newroz', body: 'Bi xêr hatî!' });
 
     expect(report.sent).toBeGreaterThanOrEqual(1);
     expect(report.pruned).toBe(1);

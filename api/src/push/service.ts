@@ -1,8 +1,10 @@
 import { batchMessages } from './batching.js';
 import type { PushMessage, PushProvider } from './provider.js';
 import type { DeviceTokenService } from './tokens-service.js';
+import type { NotificationCategory } from '../notifications/prefs.js';
 
 export interface Notification {
+  category: NotificationCategory;
   title: string;
   body: string;
   data?: Record<string, string>;
@@ -11,6 +13,13 @@ export interface Notification {
 export interface DeliveryReport {
   sent: number;
   pruned: number;
+  /** True when preferences/quiet hours blocked delivery at send time. */
+  suppressed?: boolean;
+}
+
+/** Delivery-time preference gate (KUR-095). */
+export interface NotificationGate {
+  allows(userId: string, category: NotificationCategory, at?: Date): Promise<boolean>;
 }
 
 /**
@@ -24,10 +33,17 @@ export class PushService {
   constructor(
     private readonly tokens: DeviceTokenService,
     private readonly provider: PushProvider,
+    private readonly gate?: NotificationGate,
   ) {}
 
   /** Send to every device of `userId`; returns counts sent + pruned. */
   async deliver(userId: string, notification: Notification): Promise<DeliveryReport> {
+    // preferences + quiet hours are checked at delivery time (KUR-095), so a
+    // change is honored even for a send already queued when it was made.
+    if (this.gate && !(await this.gate.allows(userId, notification.category))) {
+      return { sent: 0, pruned: 0, suppressed: true };
+    }
+
     const devices = await this.tokens.forUser(userId);
     if (devices.length === 0) return { sent: 0, pruned: 0 };
 
