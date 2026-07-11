@@ -227,6 +227,9 @@ export {
   type PublicProfile,
 } from './social/service.js';
 export { registerSocialRoutes } from './social/routes.js';
+export { FEED_CAP, broadcasts, type ActivityType, type ActivityEvent } from './activity/feed.js';
+export { ActivityService, type FeedEntry } from './activity/service.js';
+export { registerActivityRoutes } from './activity/routes.js';
 export {
   ChatService,
   MAX_MESSAGE_LEN,

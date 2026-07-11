@@ -42,10 +42,16 @@ export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
+/** Publishes a friend-feed milestone; injected so achievements stay decoupled (KUR-087). */
+export interface ActivityPublisher {
+  publish(actorId: string, type: 'achievement', payload: Record<string, unknown>): Promise<unknown>;
+}
+
 export class AchievementsService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly gems?: GemGranter,
+    private readonly activity?: ActivityPublisher,
   ) {}
 
   /**
@@ -65,8 +71,9 @@ export class AchievementsService {
     );
     if ((inserted.rowCount ?? 0) === 0) return { awarded: false, alreadyEarned: true };
 
-    // Gem grant is best-effort: a failure here must never undo the award.
+    // Gem grant + feed event are best-effort: a failure must never undo the award.
     if (this.gems) await this.gems.grant(userId, 'achievement_milestone', achievementId).catch(() => undefined);
+    if (this.activity) await this.activity.publish(userId, 'achievement', { achievementId }).catch(() => undefined);
     return { awarded: true, alreadyEarned: false };
   }
 
