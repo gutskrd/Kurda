@@ -90,6 +90,8 @@ import { EventService } from './events/service.js';
 import { registerEventRoutes } from './events/routes.js';
 import { QuestService, DbQuestMetrics } from './events/quest-service.js';
 import { registerQuestRoutes } from './events/quest-routes.js';
+import { NotificationPrefsService } from './notifications/prefs-service.js';
+import { registerNotificationRoutes } from './notifications/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -277,9 +279,16 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099)
     registerAdminRoutes(app, new AdminTotpService(app.db));
-    // push infrastructure (KUR-094): device token lifecycle + queued delivery
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
+    // gated by per-category preferences + quiet hours at delivery time (KUR-095)
     const deviceTokens = new DeviceTokenService(app.db);
-    registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
+    const notificationPrefs = new NotificationPrefsService(app.db);
+    registerNotificationRoutes(app, notificationPrefs);
+    registerPushRoutes(
+      app,
+      deviceTokens,
+      new PushService(deviceTokens, createPushProvider(config), notificationPrefs),
+    );
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
     const events = new EventService(app.db, app.cache);
     registerEventRoutes(app, events);

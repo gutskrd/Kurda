@@ -29,6 +29,7 @@ import { PushRegistration } from './src/push/PushRegistration';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
+import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -157,6 +158,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="EventQuests" options={{ presentation: 'card' }}>
         {({ navigation }) => <EventQuestsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Notifications" options={{ presentation: 'card' }}>
+        {({ navigation }) => <NotificationsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
     </>
