@@ -4,6 +4,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { makePushSendJob } from '../jobs/push-jobs.js';
 import type { PushService } from './service.js';
 import type { DeviceTokenService } from './tokens-service.js';
+import type { InboxService } from '../notifications/inbox-service.js';
 
 const registerBody = z.object({
   platform: z.enum(['ios', 'android']),
@@ -28,6 +29,7 @@ export function registerPushRoutes(
   app: FastifyInstance,
   tokens: DeviceTokenService,
   push: PushService,
+  inbox?: InboxService,
 ): void {
   app.post(
     '/me/devices',
@@ -68,10 +70,12 @@ export function registerPushRoutes(
       const target = userId ?? req.user!.id;
       const notification = { category, title, body };
       if (app.jobs) {
+        // the worker's job handler records to the inbox (KUR-097) + delivers
         await app.jobs.enqueue(makePushSendJob(push), { userId: target, notification });
         return { queued: true };
       }
-      // no queue configured (single-node dev): deliver inline
+      // no queue configured (single-node dev): record + deliver inline
+      if (inbox) await inbox.record(target, notification);
       const report = await push.deliver(target, notification);
       return { queued: false, ...report };
     },
