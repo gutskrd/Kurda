@@ -12,6 +12,7 @@ import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
 import { createPushProvider } from '../push/provider.js';
 import { NotificationPrefsService } from '../notifications/prefs-service.js';
+import { InboxService } from '../notifications/inbox-service.js';
 import { sendEmailJob } from './email.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
@@ -36,7 +37,7 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
       createPushProvider(config),
       new NotificationPrefsService(pool),
     );
-    registry.register(makePushSendJob(push));
+    registry.register(makePushSendJob(push, new InboxService(pool)));
   }
   return registry;
 }

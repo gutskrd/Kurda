@@ -27,6 +27,7 @@ import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
+import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -155,6 +156,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Notifications" options={{ presentation: 'card' }}>
         {({ navigation }) => <NotificationsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="NotificationCenter" options={{ presentation: 'card' }}>
+        {({ navigation }) => <NotificationCenterScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
     </>

@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { StreakBadge } from '../streak/StreakBadge';
+import { NotificationBell } from '../notifications/NotificationBell';
 import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 
@@ -58,8 +59,9 @@ export function ProfileScreen() {
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Shop')}>
         <Text style={styles.shopText}>🛒 Shop</Text>
       </Pressable>
+      <NotificationBell />
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Notifications')}>
-        <Text style={styles.shopText}>🔔 Notifications</Text>
+        <Text style={styles.shopText}>⚙️ Notification settings</Text>
       </Pressable>
 
       <View style={styles.privacy}>

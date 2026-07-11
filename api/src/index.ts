@@ -444,6 +444,8 @@ export {
   type ReminderContext,
 } from './notifications/streak-reminder.js';
 export { StreakReminderService, type ReminderEnqueuer } from './notifications/streak-reminder-service.js';
+export { InboxService, INBOX_LIMIT, type InboxItem } from './notifications/inbox-service.js';
+export { registerInboxRoutes } from './notifications/inbox-routes.js';
 export {
   type PronunciationScorer,
   type PronunciationScore,
