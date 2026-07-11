@@ -92,6 +92,8 @@ import { QuestService, DbQuestMetrics } from './events/quest-service.js';
 import { registerQuestRoutes } from './events/quest-routes.js';
 import { NotificationPrefsService } from './notifications/prefs-service.js';
 import { registerNotificationRoutes } from './notifications/routes.js';
+import { StreakReminderService } from './notifications/streak-reminder-service.js';
+import { makePushSendJob } from './jobs/push-jobs.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -283,11 +285,20 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // gated by per-category preferences + quiet hours at delivery time (KUR-095)
     const deviceTokens = new DeviceTokenService(app.db);
     const notificationPrefs = new NotificationPrefsService(app.db);
+    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
     registerNotificationRoutes(app, notificationPrefs);
-    registerPushRoutes(
-      app,
-      deviceTokens,
-      new PushService(deviceTokens, createPushProvider(config), notificationPrefs),
+    registerPushRoutes(app, deviceTokens, pushService);
+
+    // personalized streak reminders (KUR-096): hourly, bucketed by local time
+    const streakReminders = new StreakReminderService(app.db, {
+      enqueue: async (userId, notification) => {
+        if (app.jobs) await app.jobs.enqueue(makePushSendJob(pushService), { userId, notification });
+        else await pushService.deliver(userId, notification);
+      },
+    });
+    const reminderSweep = setInterval(
+      () => void streakReminders.runHourly().catch((err) => app.log.warn({ err }, 'streak reminder run failed')),
+      60 * 60 * 1000,
     );
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
     const events = new EventService(app.db, app.cache);
@@ -298,6 +309,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       app,
       new QuestService(app.db, events, new WalletService(app.db), new DbQuestMetrics(app.db)),
     );
+    app.addHook('onClose', async () => clearInterval(reminderSweep));
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
