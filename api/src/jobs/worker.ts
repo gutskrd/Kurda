@@ -13,15 +13,18 @@ import { DeviceTokenService } from '../push/tokens-service.js';
 import { createPushProvider } from '../push/provider.js';
 import { NotificationPrefsService } from '../notifications/prefs-service.js';
 import { InboxService } from '../notifications/inbox-service.js';
-import { sendEmailJob } from './email.js';
+import { sendEmailJob, makeSendEmailJob } from './email.js';
+import { EmailService } from '../email/service.js';
+import { createEmailProvider } from '../email/provider.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
 
 export function buildRegistry(config?: AppConfig): JobRegistry {
   const registry = new JobRegistry();
-  registry.register(sendEmailJob);
   if (config?.DATABASE_URL) {
     const pool = createPool(config);
+    // real, suppression-aware email sender (KUR-098); stub only without a DB
+    registry.register(makeSendEmailJob(new EmailService(pool, createEmailProvider(config))));
     const storage = createStorage(config);
     if (storage) {
       registry.register(makeCleanupOrphansJob(new MediaService(pool, storage)));
@@ -38,6 +41,8 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
       new NotificationPrefsService(pool),
     );
     registry.register(makePushSendJob(push, new InboxService(pool)));
+  } else {
+    registry.register(sendEmailJob);
   }
   return registry;
 }

@@ -22,7 +22,18 @@ export {
   type JobClass,
   type BackpressurePolicy,
 } from './jobs/backpressure.js';
-export { sendEmailJob } from './jobs/email.js';
+export { sendEmailJob, makeSendEmailJob, SEND_EMAIL_JOB_NAME, type SendEmailPayload } from './jobs/email.js';
+export {
+  renderEmail,
+  EMAIL_TEMPLATES,
+  EMAIL_LOCALES,
+  type EmailTemplate,
+  type EmailLocale,
+  type RenderedEmail,
+} from './email/templates.js';
+export { StubEmailProvider, createEmailProvider, type EmailProvider, type EmailPayload } from './email/provider.js';
+export { EmailService, type SuppressionReason, type SendResult } from './email/service.js';
+export { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
 export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
 export { setupMetrics } from './observability/metrics.js';
