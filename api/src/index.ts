@@ -434,6 +434,17 @@ export {
 export { NotificationPrefsService, type PrefsPatch } from './notifications/prefs-service.js';
 export { registerNotificationRoutes } from './notifications/routes.js';
 export {
+  dueReminder,
+  preferredHour,
+  reminderMessage,
+  FALLBACK_HOUR,
+  LAST_CHANCE_HOUR,
+  LAST_CHANCE_MIN_STREAK,
+  type ReminderKind,
+  type ReminderContext,
+} from './notifications/streak-reminder.js';
+export { StreakReminderService, type ReminderEnqueuer } from './notifications/streak-reminder-service.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,
