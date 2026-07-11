@@ -425,3 +425,13 @@ export {
   MAX_FREEZES,
   type StreakState,
 } from './streaks/streak-logic.js';
+export {
+  isActive as isEventActive,
+  nextBoundary as nextEventBoundary,
+  activeEvents,
+  cacheTtlSeconds as eventCacheTtlSeconds,
+  MAX_CONCURRENT_RENDER,
+  type EventDef,
+} from './events/window.js';
+export { EventService, type UpsertEventInput } from './events/service.js';
+export { registerEventRoutes } from './events/routes.js';
