@@ -469,3 +469,6 @@ export {
 } from './admin/moderation.js';
 export { UserAdminService, type UserDetail, type UserSearchResult } from './admin/user-admin-service.js';
 export { registerUserAdminRoutes } from './admin/user-admin-routes.js';
+export { AuditService, type AuditEntry, type AuditRow, type AuditFilters } from './admin/audit-service.js';
+export { isAuditableAdminMutation, auditActionName } from './admin/audit-action.js';
+export { registerAuditLog } from './admin/audit-routes.js';
