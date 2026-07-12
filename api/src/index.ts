@@ -425,3 +425,13 @@ export {
   MAX_FREEZES,
   type StreakState,
 } from './streaks/streak-logic.js';
+export {
+  EVENT_SCHEMAS,
+  EVENT_TYPES,
+  isKnownEvent,
+  validateEvent,
+  type EventType,
+  type ValidationOutcome,
+} from './analytics/registry.js';
+export { AnalyticsService, type RawEvent, type IngestResult, type AnalyticsHooks } from './analytics/service.js';
+export { registerAnalyticsRoutes } from './analytics/routes.js';

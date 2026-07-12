@@ -76,6 +76,9 @@ import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
+import { Counter } from 'prom-client';
+import { AnalyticsService } from './analytics/service.js';
+import { registerAnalyticsRoutes } from './analytics/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -117,7 +120,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   setupValidation(app);
   setupErrorHandling(app, config);
   setupSecurityHeaders(app);
-  setupMetrics(app);
+  const metricsRegistry = setupMetrics(app);
 
 
   const health = new HealthRegistry();
@@ -256,6 +259,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
+
+    // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
+    const droppedEvents = new Counter({
+      name: 'analytics_events_dropped_total',
+      help: 'Analytics events rejected on ingest, by reason',
+      labelNames: ['reason'],
+      registers: [metricsRegistry],
+    });
+    registerAnalyticsRoutes(
+      app,
+      new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) }),
+    );
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
