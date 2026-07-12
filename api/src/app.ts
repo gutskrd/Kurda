@@ -102,6 +102,9 @@ import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
 import { AuditService } from './admin/audit-service.js';
 import { registerAuditLog } from './admin/audit-routes.js';
+import { Counter } from 'prom-client';
+import { AnalyticsService } from './analytics/service.js';
+import { registerAnalyticsRoutes } from './analytics/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -143,7 +146,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   setupValidation(app);
   setupErrorHandling(app, config);
   setupSecurityHeaders(app);
-  setupMetrics(app);
+  const metricsRegistry = setupMetrics(app);
 
 
   const health = new HealthRegistry();
@@ -331,6 +334,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
     registerAuditLog(app, new AuditService(app.db), adminTotp);
+    // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
+    const droppedEvents = new Counter({
+      name: 'analytics_events_dropped_total',
+      help: 'Analytics events rejected on ingest, by reason',
+      labelNames: ['reason'],
+      registers: [metricsRegistry],
+    });
+    registerAnalyticsRoutes(
+      app,
+      new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) }),
+    );
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

@@ -603,3 +603,13 @@ export { registerUserAdminRoutes } from './admin/user-admin-routes.js';
 export { AuditService, type AuditEntry, type AuditRow, type AuditFilters } from './admin/audit-service.js';
 export { isAuditableAdminMutation, auditActionName } from './admin/audit-action.js';
 export { registerAuditLog } from './admin/audit-routes.js';
+export {
+  EVENT_SCHEMAS,
+  EVENT_TYPES,
+  isKnownEvent,
+  validateEvent,
+  type EventType,
+  type ValidationOutcome,
+} from './analytics/registry.js';
+export { AnalyticsService, type RawEvent, type IngestResult, type AnalyticsHooks } from './analytics/service.js';
+export { registerAnalyticsRoutes } from './analytics/routes.js';
