@@ -79,6 +79,8 @@ import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
+import { DashboardService } from './analytics/dashboard-service.js';
+import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -271,6 +273,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       app,
       new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) }),
     );
+
+    // core dashboards (KUR-106): daily-refreshed DAU/retention/funnel rollups
+    const dashboards = new DashboardService(app.db);
+    registerDashboardRoutes(app, dashboards);
+    const dashboardRefresh = setInterval(
+      () => void dashboards.refreshDay().catch((err) => app.log.warn({ err }, 'dashboard refresh failed')),
+      24 * 60 * 60 * 1000,
+    );
+    app.addHook('onClose', async () => clearInterval(dashboardRefresh));
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

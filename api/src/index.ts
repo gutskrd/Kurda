@@ -435,3 +435,15 @@ export {
 } from './analytics/registry.js';
 export { AnalyticsService, type RawEvent, type IngestResult, type AnalyticsHooks } from './analytics/service.js';
 export { registerAnalyticsRoutes } from './analytics/routes.js';
+export {
+  retentionRate,
+  conversionRates,
+  windowStart,
+  daysBefore,
+  RETENTION_DAYS,
+  FUNNELS,
+  type FunnelStep,
+  type FunnelStepRate,
+} from './analytics/dashboards.js';
+export { DashboardService, type ActivityPoint, type RetentionPoint } from './analytics/dashboard-service.js';
+export { registerDashboardRoutes } from './analytics/dashboard-routes.js';
