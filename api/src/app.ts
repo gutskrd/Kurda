@@ -78,6 +78,8 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
+import { ContentAdminService } from './content/admin-service.js';
+import { registerContentAdminRoutes } from './content/admin-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -260,7 +262,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDictionaryRoutes(app);
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099)
-    registerAdminRoutes(app, new AdminTotpService(app.db));
+    const adminTotp = new AdminTotpService(app.db);
+    registerAdminRoutes(app, adminTotp);
+    // admin content management: draft→review→publish + optimistic locking (KUR-100)
+    registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
