@@ -80,6 +80,8 @@ import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
 import { ContentAdminService } from './content/admin-service.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
+import { UserAdminService } from './admin/user-admin-service.js';
+import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -266,6 +268,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAdminRoutes(app, adminTotp);
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp);
+    // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
