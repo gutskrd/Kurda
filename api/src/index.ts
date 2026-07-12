@@ -578,3 +578,13 @@ export {
   type ClaimResult as QuestClaimResult,
 } from './events/quest-service.js';
 export { registerQuestRoutes } from './events/quest-routes.js';
+export {
+  CONTENT_STATUSES,
+  allowedTransition,
+  canTransition,
+  isEditable,
+  type ContentStatus,
+  type Transition,
+} from './content/workflow.js';
+export { ContentAdminService, type LessonDetail, type ExerciseInput } from './content/admin-service.js';
+export { registerContentAdminRoutes } from './content/admin-routes.js';
