@@ -425,3 +425,13 @@ export {
   MAX_FREEZES,
   type StreakState,
 } from './streaks/streak-logic.js';
+export {
+  scoreAccount,
+  deviceSignal,
+  SIGNAL_WEIGHTS,
+  CHALLENGE_THRESHOLD,
+  FLAG_THRESHOLD,
+  type BotSignals,
+  type BotScore,
+  type BotTier,
+} from './antibot/scoring.js';
