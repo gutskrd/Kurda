@@ -5,7 +5,13 @@ export { UsersRepository, type UserRow, type CreateUserInput } from './users/rep
 export { canonicalUsername, USERNAME_PATTERN } from './users/username.js';
 export { AppError } from './plugins/errors.js';
 export { RequestValidationError, type ValidationIssue } from './plugins/validation.js';
-export { Cache, cacheKey, serialize, deserialize, type CacheClient } from './cache/cache.js';
+export { Cache, cacheKey, serialize, deserialize, type CacheClient, type CacheOptions } from './cache/cache.js';
+export {
+  applyJitter,
+  shouldEarlyRecompute,
+  DEFAULT_JITTER_RATIO,
+  DEFAULT_XFETCH_BETA,
+} from './cache/stampede.js';
 export { JobQueue, QUEUE_NAME, DEFAULT_JOB_OPTIONS, type EnqueueOptions } from './jobs/queue.js';
 export { defineJob, JobRegistry, type JobDefinition, type JobContext } from './jobs/registry.js';
 export { sendEmailJob } from './jobs/email.js';
