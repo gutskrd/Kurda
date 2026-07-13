@@ -81,6 +81,8 @@ import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
 import { DashboardService } from './analytics/dashboard-service.js';
 import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
+import { ExperimentService } from './experiments/service.js';
+import { registerExperimentRoutes } from './experiments/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -269,10 +271,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       labelNames: ['reason'],
       registers: [metricsRegistry],
     });
-    registerAnalyticsRoutes(
-      app,
-      new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) }),
-    );
+    const analytics = new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) });
+    registerAnalyticsRoutes(app, analytics);
 
     // core dashboards (KUR-106): daily-refreshed DAU/retention/funnel rollups
     const dashboards = new DashboardService(app.db);
@@ -282,6 +282,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       24 * 60 * 60 * 1000,
     );
     app.addHook('onClose', async () => clearInterval(dashboardRefresh));
+
+    // A/B experiments (KUR-107): deterministic bucketing + exposure logging
+    registerExperimentRoutes(app, new ExperimentService(app.db, analytics));
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();

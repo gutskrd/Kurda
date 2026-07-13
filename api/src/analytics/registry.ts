@@ -19,6 +19,7 @@ export const EVENT_SCHEMAS = {
   game_start: z.object({ roomId: z.string().min(1), mode: z.string().min(1).max(20) }),
   game_finish: z.object({ roomId: z.string().min(1), won: z.boolean() }),
   purchase: z.object({ sku: z.string().min(1).max(80), currency: z.string().max(10) }),
+  experiment_exposure: z.object({ experiment: z.string().min(1).max(64), variant: z.string().min(1).max(64) }),
 } as const;
 
 export type EventType = keyof typeof EVENT_SCHEMAS;
