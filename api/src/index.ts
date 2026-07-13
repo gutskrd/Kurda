@@ -8,6 +8,14 @@ export { RequestValidationError, type ValidationIssue } from './plugins/validati
 export { Cache, cacheKey, serialize, deserialize, type CacheClient } from './cache/cache.js';
 export { JobQueue, QUEUE_NAME, DEFAULT_JOB_OPTIONS, type EnqueueOptions } from './jobs/queue.js';
 export { defineJob, JobRegistry, type JobDefinition, type JobContext } from './jobs/registry.js';
+export {
+  classForJob,
+  priorityForJob,
+  shouldShed,
+  DEFAULT_BACKPRESSURE,
+  type JobClass,
+  type BackpressurePolicy,
+} from './jobs/backpressure.js';
 export { sendEmailJob } from './jobs/email.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
 export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
