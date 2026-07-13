@@ -645,3 +645,6 @@ export {
 } from './analytics/dashboards.js';
 export { DashboardService, type ActivityPoint, type RetentionPoint } from './analytics/dashboard-service.js';
 export { registerDashboardRoutes } from './analytics/dashboard-routes.js';
+export { assignVariant, bucketFraction, type Variant } from './experiments/bucketing.js';
+export { ExperimentService, type ExperimentDef, type UpsertExperimentInput } from './experiments/service.js';
+export { registerExperimentRoutes } from './experiments/routes.js';
