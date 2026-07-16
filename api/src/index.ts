@@ -169,6 +169,20 @@ export {
 export { DailyRewardService, type ClaimResult } from './rewards/service.js';
 export { registerDailyRewardRoutes } from './rewards/routes.js';
 export {
+  easeModifier,
+  adaptEasiness,
+  personalEasiness,
+  predictedRecall,
+  optimalInterval,
+  evaluateAdaptation,
+  MIN_REVIEWS_FOR_ADAPTATION,
+  TARGET_RECALL,
+  MAX_EASINESS,
+  type UserRecallStats,
+  type ScheduleSample,
+  type OfflineEvaluation,
+} from './review/adaptive.js';
+export {
   GemService,
   DEFAULT_GLOBAL_DAILY_CAP,
   type GemRule,
