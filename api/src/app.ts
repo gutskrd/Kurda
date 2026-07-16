@@ -14,6 +14,7 @@ import { setupMetrics } from './observability/metrics.js';
 import { setupAuth } from './plugins/auth.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupSecurityHeaders } from './plugins/security-headers.js';
+import { setupCachePolicy } from './plugins/cache-policy.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
@@ -151,6 +152,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   setupValidation(app);
   setupErrorHandling(app, config);
   setupSecurityHeaders(app);
+  setupCachePolicy(app);
   const metricsRegistry = setupMetrics(app);
 
 

@@ -41,6 +41,8 @@ export { createPool, createReplicaPool, dbHealthCheck, type Queryable } from './
 export { DbRouter, type PoolLike, type DbRouterOptions } from './db/router.js';
 export { WritePinTracker, shouldPinToPrimary, READ_AFTER_WRITE_WINDOW_MS } from './db/routing.js';
 export { isLoadTestUser, loadTestEmail, LOADTEST_EMAIL_DOMAIN } from './loadtest/marker.js';
+export { setupCachePolicy } from './plugins/cache-policy.js';
+export { cachePolicy, isEdgeCacheable, type CachePolicy } from './http/cache-policy.js';
 export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './ratelimit/plugin.js';
 export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
 export { MediaStorage, createStorage, mediaKey, ALLOWED_CONTENT_TYPES, MAX_UPLOAD_BYTES, IMMUTABLE_CACHE_CONTROL, type UploadTicket } from './media/storage.js';
