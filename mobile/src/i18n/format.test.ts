@@ -8,10 +8,12 @@ import {
 } from './format.js';
 
 describe('isRTL', () => {
-  it('is true only for Arabic', () => {
+  it('is true for the Arabic-script locales (Arabic + Soranî)', () => {
     expect(isRTL('ar')).toBe(true);
-    expect(isRTL('ku')).toBe(false);
+    expect(isRTL('ckb')).toBe(true); // Soranî — Arabic script
+    expect(isRTL('ku')).toBe(false); // Kurmancî — Latin script
     expect(isRTL('en')).toBe(false);
+    expect(isRTL('fr')).toBe(false);
   });
 });
 
