@@ -17,6 +17,9 @@ export interface MatchmakingOptions {
   timeoutMs?: number;
   /** Sweep cadence. */
   sweepIntervalMs?: number;
+  /** Redis queue key prefix (default 'kurda:mm:1v1'); set per test app to
+   *  isolate parallel integration tests sharing one Redis. */
+  queueKeyPrefix?: string;
 }
 
 export interface MatchRecord {
