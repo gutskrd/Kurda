@@ -80,6 +80,10 @@ import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
+import { DeviceTokenService } from './push/tokens-service.js';
+import { PushService } from './push/service.js';
+import { createPushProvider } from './push/provider.js';
+import { registerPushRoutes } from './push/routes.js';
 import { EventService } from './events/service.js';
 import { registerEventRoutes } from './events/routes.js';
 
@@ -267,6 +271,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
 
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery
+    const deviceTokens = new DeviceTokenService(app.db);
+    registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
     registerEventRoutes(app, new EventService(app.db, app.cache));
 
