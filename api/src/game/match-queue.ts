@@ -18,8 +18,9 @@ export interface MatchQueue {
   entries(): Promise<QueueEntry[]>;
 }
 
-const QUEUE_KEY = 'kurda:mm:1v1';
-const TIME_KEY = 'kurda:mm:1v1:t';
+/** Production queue key. Tests pass a unique prefix so parallel test apps
+ *  sharing one Redis never contaminate each other's queue. */
+const DEFAULT_QUEUE_KEY = 'kurda:mm:1v1';
 
 /** find closest candidate in band (excluding self) → pop both, or enqueue self */
 const MATCH_SCRIPT = `
@@ -47,14 +48,23 @@ return false
 `;
 
 export class RedisMatchQueue implements MatchQueue {
-  constructor(private readonly redis: Redis) {}
+  private readonly queueKey: string;
+  private readonly timeKey: string;
+
+  constructor(
+    private readonly redis: Redis,
+    keyPrefix: string = DEFAULT_QUEUE_KEY,
+  ) {
+    this.queueKey = keyPrefix;
+    this.timeKey = `${keyPrefix}:t`;
+  }
 
   async tryMatch(userId: string, rating: number, band: number, now: number): Promise<string | null> {
     const result = (await this.redis.eval(
       MATCH_SCRIPT,
       2,
-      QUEUE_KEY,
-      TIME_KEY,
+      this.queueKey,
+      this.timeKey,
       userId,
       rating,
       band,
@@ -64,15 +74,15 @@ export class RedisMatchQueue implements MatchQueue {
   }
 
   async remove(userId: string): Promise<boolean> {
-    const removed = await this.redis.zrem(QUEUE_KEY, userId);
-    await this.redis.zrem(TIME_KEY, userId);
+    const removed = await this.redis.zrem(this.queueKey, userId);
+    await this.redis.zrem(this.timeKey, userId);
     return removed > 0;
   }
 
   async entries(): Promise<QueueEntry[]> {
     const [members, times] = await Promise.all([
-      this.redis.zrange(QUEUE_KEY, 0, -1, 'WITHSCORES'),
-      this.redis.zrange(TIME_KEY, 0, -1, 'WITHSCORES'),
+      this.redis.zrange(this.queueKey, 0, -1, 'WITHSCORES'),
+      this.redis.zrange(this.timeKey, 0, -1, 'WITHSCORES'),
     ]);
     const enqueuedAt = new Map<string, number>();
     for (let i = 0; i < times.length; i += 2) {

@@ -92,6 +92,8 @@ describe.skipIf(!DATABASE_URL)('matchmaking (integration)', () => {
         widenIntervalMs: 300,
         timeoutMs: 3_000,
         sweepIntervalMs: 150,
+        // isolate this file's queue from other integration files sharing one Redis
+        queueKeyPrefix: `kurda:mm:it:matchmaking:${suffix}`,
       },
     });
     await app.listen({ port: 0, host: '127.0.0.1' });
