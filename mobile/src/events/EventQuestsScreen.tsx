@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { useI18n } from '../i18n/I18nContext';
+import { formatCountdown, remainingUntil } from '../i18n/format';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import {
   claimState,
@@ -21,8 +23,16 @@ interface ActiveEvent {
 /** Event quests progress + explicit claim buttons (KUR-091). */
 export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
+  const { t } = useI18n();
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // tick so the ends-in countdown stays live while the screen is open
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const load = useCallback(async () => {
     const active = await client.get<{ events: ActiveEvent[] }>('/events/active');
@@ -56,32 +66,38 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
     <View style={styles.screen}>
       <View style={styles.header}>
         <Pressable onPress={onExit} hitSlop={10}>
-          <Text style={styles.close}>‹ Back</Text>
+          <Text style={styles.close}>‹ {t('common.back')}</Text>
         </Pressable>
-        <Text style={styles.heading}>🎉 Events</Text>
+        <Text style={styles.heading}>🎉 {t('events.title')}</Text>
       </View>
 
       {events === null ? (
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
       ) : events.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.dim}>No events are running right now. Check back soon!</Text>
+          <Text style={styles.dim}>{t('events.none')}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
-          {events.map((event) => (
-            <View key={event.eventKey} style={styles.eventBlock}>
-              <Text style={styles.eventName}>{event.name}</Text>
-              {sortQuests(event.quests).map((q) => (
-                <QuestRow
-                  key={q.id}
-                  quest={q}
-                  busy={claiming === q.id}
-                  onClaim={() => claim(event.eventKey, q)}
-                />
-              ))}
-            </View>
-          ))}
+          {events.map((event) => {
+            const countdown = formatCountdown(remainingUntil(event.endsAt, now));
+            return (
+              <View key={event.eventKey} style={styles.eventBlock}>
+                <View style={styles.eventHeader}>
+                  <Text style={styles.eventName}>{event.name}</Text>
+                  {countdown ? <Text style={styles.countdown}>{t('events.endsIn', { time: countdown })}</Text> : null}
+                </View>
+                {sortQuests(event.quests).map((q) => (
+                  <QuestRow
+                    key={q.id}
+                    quest={q}
+                    busy={claiming === q.id}
+                    onClaim={() => claim(event.eventKey, q)}
+                  />
+                ))}
+              </View>
+            );
+          })}
         </ScrollView>
       )}
     </View>
@@ -89,6 +105,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
 }
 
 function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; onClaim: () => void }) {
+  const { t } = useI18n();
   const state = claimState(quest);
   const reward = rewardLabel(quest.reward);
   return (
@@ -105,17 +122,17 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
           {quest.current} / {quest.target}
         </Text>
         {state === 'claimed' ? (
-          <Text style={styles.claimed}>✓ Claimed</Text>
+          <Text style={styles.claimed}>✓ {t('events.claimed')}</Text>
         ) : state === 'claimable' ? (
           <Pressable onPress={onClaim} disabled={busy} style={styles.claimBtn}>
             {busy ? (
               <ActivityIndicator color={colors.textOnPrimary} />
             ) : (
-              <Text style={styles.claimText}>Claim</Text>
+              <Text style={styles.claimText}>{t('events.claim')}</Text>
             )}
           </Pressable>
         ) : (
-          <Text style={styles.locked}>In progress</Text>
+          <Text style={styles.locked}>{t('events.inProgress')}</Text>
         )}
       </View>
     </View>
@@ -131,7 +148,9 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   dim: { color: colors.textSecondary, textAlign: 'center', paddingHorizontal: spacing.lg },
   eventBlock: { gap: spacing.sm },
+  eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eventName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase' },
+  countdown: { fontSize: typography.sizes.sm, color: colors.textSecondary, fontWeight: typography.weights.bold },
   card: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   questTitle: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
