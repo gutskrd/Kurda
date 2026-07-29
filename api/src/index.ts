@@ -506,6 +506,7 @@ export {
 } from './admin/totp.js';
 export { AdminTotpService } from './admin/totp-service.js';
 export { registerAdminRoutes, requireAdmin } from './admin/routes.js';
+export {
   scoreAccount,
   deviceSignal,
   SIGNAL_WEIGHTS,
@@ -515,6 +516,7 @@ export { registerAdminRoutes, requireAdmin } from './admin/routes.js';
   type BotScore,
   type BotTier,
 } from './antibot/scoring.js';
+export {
   isActive as isEventActive,
   nextBoundary as nextEventBoundary,
   activeEvents,
