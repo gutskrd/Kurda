@@ -18,6 +18,9 @@ export { sendEmailJob } from './jobs/email.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
 export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
 export { setupMetrics } from './observability/metrics.js';
+export { createPool, createReplicaPool, dbHealthCheck, type Queryable } from './db/pool.js';
+export { DbRouter, type PoolLike, type DbRouterOptions } from './db/router.js';
+export { WritePinTracker, shouldPinToPrimary, READ_AFTER_WRITE_WINDOW_MS } from './db/routing.js';
 export { isLoadTestUser, loadTestEmail, LOADTEST_EMAIL_DOMAIN } from './loadtest/marker.js';
 export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './ratelimit/plugin.js';
 export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
@@ -278,6 +281,17 @@ export {
   type RoomHub,
 } from './groups/chat-service.js';
 export { registerGroupChatRoutes } from './groups/chat-routes.js';
+export { filterText, normalize, type FilterResult } from './moderation/filter.js';
+export {
+  ModerationService,
+  OFFENSE_1H,
+  OFFENSE_24H,
+  OFFENSE_PERM,
+  type MessageType,
+  type OffenseResult,
+  type ReportRow,
+} from './moderation/service.js';
+export { registerModerationRoutes } from './moderation/routes.js';
 export type { PlayerAnswerEvidence, GameEndEvidence } from './game/engine.js';
 export {
   questionPoints,
@@ -434,6 +448,19 @@ export {
 } from './dictionary/saved-words-service.js';
 export { registerDictionaryRoutes } from './dictionary/routes.js';
 export {
+  StubPushProvider,
+  createPushProvider,
+  type PushProvider,
+  type PushMessage,
+  type PushPlatform,
+  type PushSendResult,
+} from './push/provider.js';
+export { batchMessages, BATCH_LIMITS } from './push/batching.js';
+export { DeviceTokenService, type DeviceToken } from './push/tokens-service.js';
+export { PushService, type Notification, type DeliveryReport } from './push/service.js';
+export { registerPushRoutes } from './push/routes.js';
+export { makePushSendJob, PUSH_SEND_JOB_NAME, type PushSendPayload } from './jobs/push-jobs.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,
@@ -471,6 +498,15 @@ export {
 } from './admin/totp.js';
 export { AdminTotpService } from './admin/totp-service.js';
 export { registerAdminRoutes, requireAdmin } from './admin/routes.js';
+  scoreAccount,
+  deviceSignal,
+  SIGNAL_WEIGHTS,
+  CHALLENGE_THRESHOLD,
+  FLAG_THRESHOLD,
+  type BotSignals,
+  type BotScore,
+  type BotTier,
+} from './antibot/scoring.js';
   isActive as isEventActive,
   nextBoundary as nextEventBoundary,
   activeEvents,

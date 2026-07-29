@@ -72,6 +72,8 @@ import { GroupService } from './groups/service.js';
 import { registerGroupRoutes } from './groups/routes.js';
 import { GroupChatService } from './groups/chat-service.js';
 import { registerGroupChatRoutes } from './groups/chat-routes.js';
+import { ModerationService } from './moderation/service.js';
+import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
@@ -80,6 +82,10 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
+import { DeviceTokenService } from './push/tokens-service.js';
+import { PushService } from './push/service.js';
+import { createPushProvider } from './push/provider.js';
+import { registerPushRoutes } from './push/routes.js';
 import { EventService } from './events/service.js';
 import { registerEventRoutes } from './events/routes.js';
 
@@ -269,6 +275,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099)
     registerAdminRoutes(app, new AdminTotpService(app.db));
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery
+    const deviceTokens = new DeviceTokenService(app.db);
+    registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
     registerEventRoutes(app, new EventService(app.db, app.cache));
 
@@ -284,19 +293,25 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       realtime.registerRoutes(scoped);
     });
 
+    // chat moderation (KUR-086): profanity filter + reports + escalation mutes
+    const moderation = new ModerationService(app.db);
+    registerModerationRoutes(app, moderation);
+
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
     registerChatRoutes(
       app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }),
+      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
     );
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
     registerGroupChatRoutes(
       app,
-      new GroupChatService(app.db, groups, {
-        publish: (r, ev) => realtime.publish(r, ev as never),
-        invite: (r, uid, ttl) => realtime.invite(r, uid, ttl),
-      }),
+      new GroupChatService(
+        app.db,
+        groups,
+        { publish: (r, ev) => realtime.publish(r, ev as never), invite: (r, uid, ttl) => realtime.invite(r, uid, ttl) },
+        moderation,
+      ),
     );
 
     // matchmaking (KUR-050): atomic queue + widening sweeper
