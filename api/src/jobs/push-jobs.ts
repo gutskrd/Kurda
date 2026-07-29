@@ -7,6 +7,7 @@ export const PUSH_SEND_JOB_NAME = 'push-send';
 const payloadSchema = z.object({
   userId: z.uuid(),
   notification: z.object({
+    category: z.enum(['streak', 'friends', 'games', 'events', 'marketing']),
     title: z.string().min(1).max(120),
     body: z.string().min(1).max(500),
     data: z.record(z.string(), z.string()).optional(),

@@ -11,6 +11,7 @@ import { makePushSendJob } from './push-jobs.js';
 import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
 import { createPushProvider } from '../push/provider.js';
+import { NotificationPrefsService } from '../notifications/prefs-service.js';
 import { sendEmailJob } from './email.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
@@ -29,8 +30,12 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
     if (storage) {
       registry.register(makeExportJob(gdpr));
     }
-    // queued push fan-out (KUR-094)
-    const push = new PushService(new DeviceTokenService(pool), createPushProvider(config));
+    // queued push fan-out (KUR-094) gated by preferences at delivery time (KUR-095)
+    const push = new PushService(
+      new DeviceTokenService(pool),
+      createPushProvider(config),
+      new NotificationPrefsService(pool),
+    );
     registry.register(makePushSendJob(push));
   }
   return registry;
