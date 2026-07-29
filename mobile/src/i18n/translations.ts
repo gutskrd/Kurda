@@ -1,23 +1,29 @@
 /**
- * UI string catalogs (KUR-093) for the Kurdish diaspora: Kurdish (Kurmanji),
- * English, German, Turkish, Arabic. Strings live here, never hardcoded in
- * components — `t(key)` reads the active locale and falls back to English then
- * the key itself, so a missing translation degrades gracefully. Arabic is RTL.
+ * UI string catalogs (KUR-093 / KUR-184) for the Kurdish diaspora, in 8
+ * languages: English, German, French, Dutch, Kurmancî (Northern Kurdish),
+ * Soranî (Central Kurdish), Arabic, Turkish. Each language is shown in its own
+ * native name. Strings live here, never hardcoded in components — `t(key)` reads
+ * the active locale and falls back to English then the key itself, so a missing
+ * translation degrades gracefully. Arabic and Soranî (Arabic script) are RTL.
  */
 
-export const LOCALES = ['ku', 'en', 'de', 'tr', 'ar'] as const;
+export const LOCALES = ['en', 'de', 'fr', 'nl', 'ku', 'ckb', 'ar', 'tr'] as const;
 export type Locale = (typeof LOCALES)[number];
 
+/** Each language shown in its own native name (used by Settings + onboarding). */
 export const LOCALE_LABEL: Record<Locale, string> = {
-  ku: 'Kurdî',
   en: 'English',
   de: 'Deutsch',
-  tr: 'Türkçe',
+  fr: 'Français',
+  nl: 'Nederlands',
+  ku: 'Kurmancî',
+  ckb: 'Soranî',
   ar: 'العربية',
+  tr: 'Türkçe',
 };
 
-/** Locales that render right-to-left. */
-export const RTL_LOCALES: readonly Locale[] = ['ar'];
+/** Locales that render right-to-left (Arabic + Soranî, which uses Arabic script). */
+export const RTL_LOCALES: readonly Locale[] = ['ar', 'ckb'];
 
 export type TranslationKey =
   | 'common.back'
@@ -146,4 +152,68 @@ const ar: Catalog = {
   'profile.shop': 'المتجر',
 };
 
-export const TRANSLATIONS: Record<Locale, Catalog> = { en, ku, de, tr, ar };
+const fr: Catalog = {
+  'common.back': 'Retour',
+  'nav.learn': 'Apprendre',
+  'nav.play': 'Jouer',
+  'nav.dictionary': 'Dictionnaire',
+  'nav.social': 'Social',
+  'nav.profile': 'Profil',
+  'events.title': 'Événements',
+  'events.none': 'Aucun événement en cours pour le moment. Revenez bientôt !',
+  'events.bannerSubtitle': 'Quêtes et récompenses — touchez pour jouer',
+  'events.claim': 'Réclamer',
+  'events.claimed': 'Réclamé',
+  'events.inProgress': 'En cours',
+  'events.endsIn': 'Se termine dans {time}',
+  'settings.language': 'Langue',
+  'settings.eventThemes': 'Thèmes d’événement',
+  'profile.logout': 'Se déconnecter',
+  'profile.league': 'Ligue',
+  'profile.shop': 'Boutique',
+};
+
+const nl: Catalog = {
+  'common.back': 'Terug',
+  'nav.learn': 'Leren',
+  'nav.play': 'Spelen',
+  'nav.dictionary': 'Woordenboek',
+  'nav.social': 'Sociaal',
+  'nav.profile': 'Profiel',
+  'events.title': 'Evenementen',
+  'events.none': 'Er zijn nu geen evenementen. Kom later terug!',
+  'events.bannerSubtitle': 'Quests en beloningen — tik om te spelen',
+  'events.claim': 'Claimen',
+  'events.claimed': 'Geclaimd',
+  'events.inProgress': 'Bezig',
+  'events.endsIn': 'Eindigt over {time}',
+  'settings.language': 'Taal',
+  'settings.eventThemes': 'Evenementthema’s',
+  'profile.logout': 'Uitloggen',
+  'profile.league': 'Competitie',
+  'profile.shop': 'Winkel',
+};
+
+// Soranî (Central Kurdish) — Arabic script, right-to-left.
+const ckb: Catalog = {
+  'common.back': 'گەڕانەوە',
+  'nav.learn': 'فێربوون',
+  'nav.play': 'یاری',
+  'nav.dictionary': 'فەرهەنگ',
+  'nav.social': 'کۆمەڵایەتی',
+  'nav.profile': 'پرۆفایل',
+  'events.title': 'بۆنەکان',
+  'events.none': 'ئێستا هیچ بۆنەیەک نییە. دواتر بگەڕێوە!',
+  'events.bannerSubtitle': 'ئەرک و خەڵات — بۆ یاریکردن دەستی لێبدە',
+  'events.claim': 'وەرگرتن',
+  'events.claimed': 'وەرگیرا',
+  'events.inProgress': 'لە جێبەجێکردندایە',
+  'events.endsIn': 'لە {time} کۆتایی دێت',
+  'settings.language': 'زمان',
+  'settings.eventThemes': 'ڕووکارەکانی بۆنە',
+  'profile.logout': 'دەرچوون',
+  'profile.league': 'خول',
+  'profile.shop': 'فرۆشگا',
+};
+
+export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, fr, nl, ku, ckb, ar, tr };

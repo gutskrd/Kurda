@@ -21,4 +21,18 @@ describe('translation catalogs', () => {
   it('has a display label for every locale', () => {
     for (const locale of LOCALES) expect(LOCALE_LABEL[locale]).toBeTruthy();
   });
+
+  it('ships the 8 supported languages, each labelled in its own native name (KUR-184)', () => {
+    expect([...LOCALES].sort()).toEqual(['ar', 'ckb', 'de', 'en', 'fr', 'ku', 'nl', 'tr']);
+    expect(LOCALE_LABEL).toMatchObject({
+      en: 'English',
+      de: 'Deutsch',
+      fr: 'Français',
+      nl: 'Nederlands',
+      ku: 'Kurmancî',
+      ckb: 'Soranî',
+      ar: 'العربية',
+      tr: 'Türkçe',
+    });
+  });
 });
