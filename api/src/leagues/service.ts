@@ -17,6 +17,11 @@ export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
+/** Publishes a friend-feed milestone; injected so leagues stay decoupled (KUR-087). */
+export interface ActivityPublisher {
+  publish(actorId: string, type: 'league_promotion', payload: Record<string, unknown>): Promise<unknown>;
+}
+
 export interface StandingRow {
   userId: string;
   username: string;
@@ -44,6 +49,7 @@ export class LeagueService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly gems?: GemGranter,
+    private readonly activity?: ActivityPublisher,
   ) {}
 
   private async currentTier(client: Pick<pg.Pool, 'query'>, userId: string): Promise<Tier> {
@@ -231,13 +237,11 @@ export class LeagueService {
       client.release();
     }
 
-    // promotion Gems, after the tier writes commit (idempotent per week/user)
-    if (this.gems) {
-      for (const s of standings) {
-        if (s.outcome === 'promoted') {
-          await this.gems.grant(s.userId, 'league_promotion', `${weekKey}:${s.userId}`).catch(() => undefined);
-        }
-      }
+    // promotion Gems + feed events, after the tier writes commit
+    for (const s of standings) {
+      if (s.outcome !== 'promoted') continue;
+      if (this.gems) await this.gems.grant(s.userId, 'league_promotion', `${weekKey}:${s.userId}`).catch(() => undefined);
+      if (this.activity) await this.activity.publish(s.userId, 'league_promotion', { tier: promote(tier) }).catch(() => undefined);
     }
   }
 
