@@ -10,6 +10,21 @@ export function createPool(config: AppConfig): pg.Pool {
   });
 }
 
+/**
+ * Optional read-replica pool (KUR-114): reads route here, writes stay on the
+ * primary. Returns null when no replica is configured, so the router falls back
+ * to primary-only (safe default). Point this (and the primary) at PgBouncer so
+ * connection counts stay flat as API replicas scale.
+ */
+export function createReplicaPool(config: AppConfig): pg.Pool | null {
+  if (!config.DATABASE_REPLICA_URL) return null;
+  return new pg.Pool({
+    connectionString: config.DATABASE_REPLICA_URL,
+    max: 10,
+    connectionTimeoutMillis: 5_000,
+  });
+}
+
 /** Minimal query surface so the health check is testable without Postgres. */
 export interface Queryable {
   query(sql: string): Promise<unknown>;
