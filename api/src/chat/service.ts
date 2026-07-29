@@ -11,6 +11,13 @@ export interface Notifier {
   notifyUser(userId: string, event: Record<string, unknown>): Promise<void>;
 }
 
+/** Moderation hook: masks profanity, tracks offenses, enforces escalation mutes (KUR-086). */
+export interface ChatModeration {
+  isChatMuted(userId: string): Promise<boolean>;
+  filter(text: string): { masked: string; flagged: boolean };
+  recordOffense(userId: string): Promise<unknown>;
+}
+
 export interface DmMessage {
   id: string;
   senderId: string;
@@ -41,21 +48,30 @@ export class ChatService {
     private readonly pool: pg.Pool,
     private readonly friends: FriendService,
     private readonly notifier: Notifier,
+    private readonly moderation?: ChatModeration,
   ) {}
 
   async send(from: string, to: string, rawBody: string): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
-    const body = rawBody.trim();
-    if (!body || body.length > MAX_MESSAGE_LEN) {
+    const trimmed = rawBody.trim();
+    if (!trimmed || trimmed.length > MAX_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_MESSAGE_LEN} characters`);
+    }
+    // escalation mute (KUR-086) applies everywhere
+    if (this.moderation && (await this.moderation.isChatMuted(from))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
     // silent block: pretend it sent, but drop it (never reveal the block)
     if (await this.friends.areBlocked(from, to)) {
-      return { id: randomUUID(), senderId: from, body, createdAt: new Date().toISOString(), deliveredAt: null, readAt: null };
+      return { id: randomUUID(), senderId: from, body: trimmed, createdAt: new Date().toISOString(), deliveredAt: null, readAt: null };
     }
     if ((await this.friends.statusBetween(from, to)) !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
     }
+
+    // mask profanity on delivery; flagged messages feed repeat-offender escalation
+    const filtered = this.moderation ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
+    const body = filtered.masked;
 
     const { lo, hi } = canonicalPair(from, to);
     const row = await this.pool.query<{ id: string; created_at: Date }>(
@@ -63,6 +79,7 @@ export class ChatService {
        RETURNING id, created_at`,
       [lo, hi, from, body],
     );
+    if (filtered.flagged && this.moderation) void this.moderation.recordOffense(from).catch(() => undefined);
     const message: DmMessage = {
       id: row.rows[0]!.id,
       senderId: from,
