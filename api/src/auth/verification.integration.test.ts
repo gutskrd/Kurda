@@ -58,7 +58,7 @@ describe.skipIf(!DATABASE_URL)('email verification (integration)', () => {
   });
 
   it.skipIf(!REDIS_URL)('signup enqueued a verify-email job', async () => {
-    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'completed']);
+    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'prioritized', 'completed']);
     const match = jobs.find(
       (j) => j.name === 'send-email' && (j.data as { to?: string }).to === userEmail,
     );
