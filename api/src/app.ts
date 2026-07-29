@@ -80,6 +80,8 @@ import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
+import { AdminTotpService } from './admin/totp-service.js';
+import { registerAdminRoutes } from './admin/routes.js';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
 import { createPushProvider } from './push/provider.js';
@@ -271,6 +273,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
 
+    // admin RBAC + mandatory TOTP 2FA (KUR-099)
+    registerAdminRoutes(app, new AdminTotpService(app.db));
     // push infrastructure (KUR-094): device token lifecycle + queued delivery
     const deviceTokens = new DeviceTokenService(app.db);
     registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));

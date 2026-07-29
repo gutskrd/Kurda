@@ -477,6 +477,27 @@ export {
   type StreakState,
 } from './streaks/streak-logic.js';
 export {
+  ADMIN_ROLES,
+  CAPABILITIES,
+  isAdmin,
+  isAdminRole,
+  capabilitiesFor,
+  hasCapability,
+  type AdminRole,
+  type Capability,
+} from './admin/roles.js';
+export {
+  totpCode,
+  verifyTotp,
+  generateSecret,
+  otpauthUri,
+  base32Encode,
+  base32Decode,
+  TOTP_STEP_SECONDS,
+  TOTP_DIGITS,
+} from './admin/totp.js';
+export { AdminTotpService } from './admin/totp-service.js';
+export { registerAdminRoutes, requireAdmin } from './admin/routes.js';
   scoreAccount,
   deviceSignal,
   SIGNAL_WEIGHTS,
