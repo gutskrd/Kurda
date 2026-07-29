@@ -103,7 +103,18 @@ describe.skipIf(!DATABASE_URL)('matchmaking (integration)', () => {
 
   afterAll(async () => {
     for (const ws of sockets) ws.terminate();
-    await pool.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
+    // a matched game can auto-complete and write xp_ledger rows (KUR-059); the
+    // append-only trigger blocks the user cascade unless we admin-delete the
+    // ledger in the same transaction (mirrors the engine integration test).
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
     await pool.end();
     await app.close();
   });
