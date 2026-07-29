@@ -159,6 +159,8 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
         revealMs: 120,
         questionsPerGame: 3,
       },
+      // isolate this file's matchmaking queue from other integration files
+      matchmaking: { queueKeyPrefix: `kurda:mm:it:engine:${suffix}` },
     });
     await app.listen({ port: 0, host: '127.0.0.1' });
     wsUrl = `ws://127.0.0.1:${(app.server.address() as { port: number }).port}`;
