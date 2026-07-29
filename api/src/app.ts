@@ -64,6 +64,8 @@ import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
+import { ActivityService } from './activity/service.js';
+import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
 import { registerChatRoutes } from './chat/routes.js';
 import { GroupService } from './groups/service.js';
@@ -80,6 +82,8 @@ import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
 import { createPushProvider } from './push/provider.js';
 import { registerPushRoutes } from './push/routes.js';
+import { EventService } from './events/service.js';
+import { registerEventRoutes } from './events/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -178,8 +182,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const gemService = new GemService(app.db, new WalletService(app.db));
     registerGemRoutes(app, gemService);
 
+    // friend system (KUR-081) + activity feed (KUR-087): needed by producers below
+    const friends = new FriendService(app.db);
+    const activity = new ActivityService(app.db, friends, app.redis);
+
     // weekly leagues (KUR-062): lazy cohort join on XP, Sunday-night settle
-    const leagues = new LeagueService(app.db, gemService);
+    const leagues = new LeagueService(app.db, gemService, activity);
     registerLeagueRoutes(app, leagues);
     // every XP gain lazily joins this week's cohort
     const xpService = new XpService(app.db, (uid) => void leagues.onXp(uid).catch((err) => app.log.warn({ err }, 'league join failed')));
@@ -191,13 +199,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
-    registerAchievementRoutes(app, gemService);
+    registerAchievementRoutes(app, gemService, activity);
     registerWalletRoutes(app);
 
-    // friend system (KUR-081): requests, blocks, expiry sweep
-    const friends = new FriendService(app.db);
+    // friend + social + activity-feed routes
     registerFriendRoutes(app, friends);
     registerSocialRoutes(app, new SocialService(app.db, friends));
+    registerActivityRoutes(app, activity);
 
     // groups / clubs (KUR-084): heal ownerless groups after account deletions
     const groups = new GroupService(app.db);
@@ -264,6 +272,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // push infrastructure (KUR-094): device token lifecycle + queued delivery
     const deviceTokens = new DeviceTokenService(app.db);
     registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
+    // config-driven events (KUR-089): data-defined windows, boundary-cached feed
+    registerEventRoutes(app, new EventService(app.db, app.cache));
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
