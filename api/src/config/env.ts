@@ -13,6 +13,11 @@ const envSchema = z.object({
     .string()
     .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection URL')
     .optional(),
+  /** Optional read-replica pool (KUR-114); reads route here, writes stay on the primary. */
+  DATABASE_REPLICA_URL: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection URL')
+    .optional(),
   /** Optional; without it caching is a no-op and /health reports not_configured. */
   REDIS_URL: z
     .string()

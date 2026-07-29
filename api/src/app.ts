@@ -64,18 +64,28 @@ import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
+import { ActivityService } from './activity/service.js';
+import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
 import { registerChatRoutes } from './chat/routes.js';
 import { GroupService } from './groups/service.js';
 import { registerGroupRoutes } from './groups/routes.js';
 import { GroupChatService } from './groups/chat-service.js';
 import { registerGroupChatRoutes } from './groups/chat-routes.js';
+import { ModerationService } from './moderation/service.js';
+import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
+import { DeviceTokenService } from './push/tokens-service.js';
+import { PushService } from './push/service.js';
+import { createPushProvider } from './push/provider.js';
+import { registerPushRoutes } from './push/routes.js';
+import { EventService } from './events/service.js';
+import { registerEventRoutes } from './events/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -174,8 +184,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const gemService = new GemService(app.db, new WalletService(app.db));
     registerGemRoutes(app, gemService);
 
+    // friend system (KUR-081) + activity feed (KUR-087): needed by producers below
+    const friends = new FriendService(app.db);
+    const activity = new ActivityService(app.db, friends, app.redis);
+
     // weekly leagues (KUR-062): lazy cohort join on XP, Sunday-night settle
-    const leagues = new LeagueService(app.db, gemService);
+    const leagues = new LeagueService(app.db, gemService, activity);
     registerLeagueRoutes(app, leagues);
     // every XP gain lazily joins this week's cohort
     const xpService = new XpService(app.db, (uid) => void leagues.onXp(uid).catch((err) => app.log.warn({ err }, 'league join failed')));
@@ -187,13 +201,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     registerAuthRoutes(app, config);
     registerUserRoutes(app);
-    registerAchievementRoutes(app, gemService);
+    registerAchievementRoutes(app, gemService, activity);
     registerWalletRoutes(app);
 
-    // friend system (KUR-081): requests, blocks, expiry sweep
-    const friends = new FriendService(app.db);
+    // friend + social + activity-feed routes
     registerFriendRoutes(app, friends);
     registerSocialRoutes(app, new SocialService(app.db, friends));
+    registerActivityRoutes(app, activity);
 
     // groups / clubs (KUR-084): heal ownerless groups after account deletions
     const groups = new GroupService(app.db);
@@ -257,6 +271,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
 
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery
+    const deviceTokens = new DeviceTokenService(app.db);
+    registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
+    // config-driven events (KUR-089): data-defined windows, boundary-cached feed
+    registerEventRoutes(app, new EventService(app.db, app.cache));
+
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
     const bus = app.redis
@@ -269,19 +289,25 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       realtime.registerRoutes(scoped);
     });
 
+    // chat moderation (KUR-086): profanity filter + reports + escalation mutes
+    const moderation = new ModerationService(app.db);
+    registerModerationRoutes(app, moderation);
+
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
     registerChatRoutes(
       app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }),
+      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
     );
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
     registerGroupChatRoutes(
       app,
-      new GroupChatService(app.db, groups, {
-        publish: (r, ev) => realtime.publish(r, ev as never),
-        invite: (r, uid, ttl) => realtime.invite(r, uid, ttl),
-      }),
+      new GroupChatService(
+        app.db,
+        groups,
+        { publish: (r, ev) => realtime.publish(r, ev as never), invite: (r, uid, ttl) => realtime.invite(r, uid, ttl) },
+        moderation,
+      ),
     );
 
     // matchmaking (KUR-050): atomic queue + widening sweeper

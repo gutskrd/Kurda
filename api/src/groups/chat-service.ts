@@ -12,6 +12,13 @@ export interface RoomHub {
   invite(room: string, userId: string, ttlSeconds?: number): Promise<void>;
 }
 
+/** Moderation hook (KUR-086): mask, track offenses, enforce escalation mutes. */
+export interface ChatModeration {
+  isChatMuted(userId: string): Promise<boolean>;
+  filter(text: string): { masked: string; flagged: boolean };
+  recordOffense(userId: string): Promise<unknown>;
+}
+
 export interface GroupMessage {
   id: string;
   senderId: string;
@@ -36,6 +43,7 @@ export class GroupChatService {
     private readonly pool: pg.Pool,
     private readonly groups: GroupService,
     private readonly hub: RoomHub,
+    private readonly moderation?: ChatModeration,
   ) {}
 
   private async requireMember(groupId: string, userId: string): Promise<'owner' | 'moderator' | 'member'> {
@@ -56,10 +64,16 @@ export class GroupChatService {
   async send(userId: string, groupId: string, rawBody: string): Promise<GroupMessage> {
     await this.requireMember(groupId, userId);
     if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
-    const body = rawBody.trim();
-    if (!body || body.length > MAX_GROUP_MESSAGE_LEN) {
+    if (this.moderation && (await this.moderation.isChatMuted(userId))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
+    }
+    const trimmed = rawBody.trim();
+    if (!trimmed || trimmed.length > MAX_GROUP_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_GROUP_MESSAGE_LEN} characters`);
     }
+    // mask profanity on delivery; flagged messages escalate repeat offenders
+    const filtered = this.moderation ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
+    const body = filtered.masked;
     const row = await this.pool.query<{ id: string; created_at: Date; username: string }>(
       `WITH ins AS (
          INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, $3)
@@ -68,6 +82,7 @@ export class GroupChatService {
        SELECT ins.id, ins.created_at, u.username FROM ins JOIN users u ON u.id = ins.sender_id`,
       [groupId, userId, body],
     );
+    if (filtered.flagged && this.moderation) void this.moderation.recordOffense(userId).catch(() => undefined);
     const message: GroupMessage = {
       id: row.rows[0]!.id,
       senderId: userId,
