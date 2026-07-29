@@ -295,7 +295,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
 
     // matchmaking (KUR-050): atomic queue + widening sweeper
-    const matchQueue = app.redis ? new RedisMatchQueue(app.redis) : new MemoryMatchQueue();
+    const matchQueue = app.redis
+      ? new RedisMatchQueue(app.redis, options.matchmaking?.queueKeyPrefix)
+      : new MemoryMatchQueue();
     const matchmaking = new MatchmakingService(app.db, matchQueue, kv, realtime, options.matchmaking);
     app.decorate('matchmaking', matchmaking);
     registerMatchmakingRoutes(app, matchmaking);
