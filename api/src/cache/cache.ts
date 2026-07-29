@@ -1,4 +1,5 @@
 import type { FastifyBaseLogger } from 'fastify';
+import { applyJitter, DEFAULT_JITTER_RATIO } from './stampede.js';
 
 /** Minimal client surface the cache needs (satisfied by ioredis). */
 export interface CacheClient {
@@ -52,11 +53,27 @@ export function cacheKey(domain: string, id: string): string {
  * down or unset, reads behave as misses and writes are dropped — callers
  * never see a cache failure (KUR-006 graceful degradation).
  */
+export interface CacheOptions {
+  /** ±ratio TTL jitter to de-synchronize expiries (KUR-116). 0 disables. */
+  jitterRatio?: number;
+  /** Injectable RNG for deterministic jitter in tests. */
+  rng?: () => number;
+}
+
 export class Cache {
+  private readonly jitterRatio: number;
+  private readonly rng: () => number;
+  /** In-process single-flight: dedupes concurrent misses of the same key. */
+  private readonly inFlight = new Map<string, Promise<unknown>>();
+
   constructor(
     private readonly client: CacheClient | null,
     private readonly log?: FastifyBaseLogger,
-  ) {}
+    options: CacheOptions = {},
+  ) {
+    this.jitterRatio = options.jitterRatio ?? DEFAULT_JITTER_RATIO;
+    this.rng = options.rng ?? Math.random;
+  }
 
   async get<T>(domain: string, id: string): Promise<T | null> {
     if (!this.client) return null;
@@ -72,7 +89,9 @@ export class Cache {
   async set(domain: string, id: string, value: unknown, ttlSeconds: number): Promise<void> {
     if (!this.client) return;
     try {
-      await this.client.set(cacheKey(domain, id), serialize(value), 'EX', ttlSeconds);
+      // global TTL jitter so keys written together don't expire in lockstep
+      const ttl = applyJitter(ttlSeconds, this.jitterRatio, this.rng);
+      await this.client.set(cacheKey(domain, id), serialize(value), 'EX', ttl);
     } catch (err) {
       this.log?.warn({ err, domain, id }, 'cache set failed; value not cached');
     }
@@ -87,14 +106,32 @@ export class Cache {
     }
   }
 
-  /** Read-through helper: cached value or compute-and-cache. */
+  /**
+   * Read-through helper: cached value or compute-and-cache. Concurrent misses of
+   * the same key are collapsed into a single computation (in-process single-
+   * flight, KUR-116), so a hot key that expires can't unleash a thundering herd
+   * of identical origin calls from one node.
+   */
   async withCache<T>(domain: string, id: string, ttlSeconds: number, fn: () => Promise<T>): Promise<T> {
     const hit = await this.get<T>(domain, id);
     if (hit !== null) return hit;
-    const value = await fn();
-    if (value !== null && value !== undefined) {
-      await this.set(domain, id, value, ttlSeconds);
+
+    const key = cacheKey(domain, id);
+    const existing = this.inFlight.get(key);
+    if (existing) return existing as Promise<T>;
+
+    const promise = (async () => {
+      const value = await fn();
+      if (value !== null && value !== undefined) {
+        await this.set(domain, id, value, ttlSeconds);
+      }
+      return value;
+    })();
+    this.inFlight.set(key, promise);
+    try {
+      return await promise;
+    } finally {
+      this.inFlight.delete(key);
     }
-    return value;
   }
 }

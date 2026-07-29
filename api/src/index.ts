@@ -5,13 +5,20 @@ export { UsersRepository, type UserRow, type CreateUserInput } from './users/rep
 export { canonicalUsername, USERNAME_PATTERN } from './users/username.js';
 export { AppError } from './plugins/errors.js';
 export { RequestValidationError, type ValidationIssue } from './plugins/validation.js';
-export { Cache, cacheKey, serialize, deserialize, type CacheClient } from './cache/cache.js';
+export { Cache, cacheKey, serialize, deserialize, type CacheClient, type CacheOptions } from './cache/cache.js';
+export {
+  applyJitter,
+  shouldEarlyRecompute,
+  DEFAULT_JITTER_RATIO,
+  DEFAULT_XFETCH_BETA,
+} from './cache/stampede.js';
 export { JobQueue, QUEUE_NAME, DEFAULT_JOB_OPTIONS, type EnqueueOptions } from './jobs/queue.js';
 export { defineJob, JobRegistry, type JobDefinition, type JobContext } from './jobs/registry.js';
 export { sendEmailJob } from './jobs/email.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
 export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
 export { setupMetrics } from './observability/metrics.js';
+export { isLoadTestUser, loadTestEmail, LOADTEST_EMAIL_DOMAIN } from './loadtest/marker.js';
 export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './ratelimit/plugin.js';
 export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
 export { MediaStorage, createStorage, mediaKey, ALLOWED_CONTENT_TYPES, MAX_UPLOAD_BYTES, IMMUTABLE_CACHE_CONTROL, type UploadTicket } from './media/storage.js';
@@ -169,6 +176,20 @@ export {
 export { DailyRewardService, type ClaimResult } from './rewards/service.js';
 export { registerDailyRewardRoutes } from './rewards/routes.js';
 export {
+  easeModifier,
+  adaptEasiness,
+  personalEasiness,
+  predictedRecall,
+  optimalInterval,
+  evaluateAdaptation,
+  MIN_REVIEWS_FOR_ADAPTATION,
+  TARGET_RECALL,
+  MAX_EASINESS,
+  type UserRecallStats,
+  type ScheduleSample,
+  type OfflineEvaluation,
+} from './review/adaptive.js';
+export {
   GemService,
   DEFAULT_GLOBAL_DAILY_CAP,
   type GemRule,
@@ -227,6 +248,9 @@ export {
   type PublicProfile,
 } from './social/service.js';
 export { registerSocialRoutes } from './social/routes.js';
+export { FEED_CAP, broadcasts, type ActivityType, type ActivityEvent } from './activity/feed.js';
+export { ActivityService, type FeedEntry } from './activity/service.js';
+export { registerActivityRoutes } from './activity/routes.js';
 export {
   ChatService,
   MAX_MESSAGE_LEN,
@@ -447,3 +471,12 @@ export {
 } from './admin/totp.js';
 export { AdminTotpService } from './admin/totp-service.js';
 export { registerAdminRoutes, requireAdmin } from './admin/routes.js';
+  isActive as isEventActive,
+  nextBoundary as nextEventBoundary,
+  activeEvents,
+  cacheTtlSeconds as eventCacheTtlSeconds,
+  MAX_CONCURRENT_RENDER,
+  type EventDef,
+} from './events/window.js';
+export { EventService, type UpsertEventInput } from './events/service.js';
+export { registerEventRoutes } from './events/routes.js';

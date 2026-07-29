@@ -9,6 +9,10 @@ export function createRedis(config: AppConfig): Redis {
     enableOfflineQueue: false,
     maxRetriesPerRequest: 1,
     retryStrategy: (times) => Math.min(times * 200, 5_000),
+    // HA/failover (KUR-116): a Sentinel/managed primary switch surfaces as a
+    // READONLY error on the old primary — force a reconnect so ioredis
+    // re-resolves and follows the promoted node transparently.
+    reconnectOnError: (err) => (err.message.includes('READONLY') ? 2 : false),
   });
 }
 
