@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { StreakBadge } from '../streak/StreakBadge';
+import { useEventTheme } from '../theme/EventThemeContext';
 import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 
@@ -19,6 +20,7 @@ export function ProfileScreen() {
   const navigation = useNavigation<RootNavigation>();
   const [streak, setStreak] = useState<Streak | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('everyone');
+  const { optedOut, setOptedOut } = useEventTheme();
 
   // The streak + privacy live on /me (streak settled server-side); the auth
   // session user only carries identity, so fetch them here on mount.
@@ -76,6 +78,15 @@ export function ProfileScreen() {
         </View>
       </View>
 
+      <View style={styles.settingRow}>
+        <Text style={styles.settingLabel}>Event themes</Text>
+        <Switch
+          value={!optedOut}
+          onValueChange={(on) => setOptedOut(!on)}
+          trackColor={{ true: colors.primary, false: colors.border }}
+        />
+      </View>
+
       <Pressable style={styles.logout} onPress={logout}>
         <Text style={styles.logoutText}>Log out</Text>
       </Pressable>
@@ -121,6 +132,8 @@ const styles = StyleSheet.create({
   privacyOptionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   privacyOptionText: { fontSize: typography.sizes.sm, color: colors.textSecondary },
   privacyOptionTextActive: { color: colors.textOnPrimary, fontWeight: typography.weights.bold },
+  settingRow: { marginTop: spacing.xl, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  settingLabel: { fontSize: typography.sizes.sm, color: colors.textSecondary, fontWeight: typography.weights.bold },
   logout: { marginTop: spacing.xl },
   logoutText: { color: colors.danger, fontSize: typography.sizes.sm },
 });
