@@ -78,6 +78,8 @@ import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
+import { EventService } from './events/service.js';
+import { registerEventRoutes } from './events/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -262,6 +264,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
+
+    // config-driven events (KUR-089): data-defined windows, boundary-cached feed
+    registerEventRoutes(app, new EventService(app.db, app.cache));
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
