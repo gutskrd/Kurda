@@ -96,6 +96,8 @@ import { InboxService } from './notifications/inbox-service.js';
 import { registerInboxRoutes } from './notifications/inbox-routes.js';
 import { StreakReminderService } from './notifications/streak-reminder-service.js';
 import { makePushSendJob } from './jobs/push-jobs.js';
+import { ContentAdminService } from './content/admin-service.js';
+import { registerContentAdminRoutes } from './content/admin-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -282,7 +284,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDictionaryRoutes(app);
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099)
-    registerAdminRoutes(app, new AdminTotpService(app.db));
+    const adminTotp = new AdminTotpService(app.db);
+    registerAdminRoutes(app, adminTotp);
+    // admin content management: draft→review→publish + optimistic locking (KUR-100)
+    registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp);
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,
     // gated by per-category preferences + quiet hours at delivery time (KUR-095)
     const deviceTokens = new DeviceTokenService(app.db);

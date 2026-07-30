@@ -3,3 +3,4 @@
 // is bootstrapped in a follow-up — the nav/capability model lands here first.
 export const SERVICE = 'admin';
 export { NAV_SECTIONS, visibleNav, type NavSection, type Capability } from './rbac.js';
+export { toPreview, type PreviewModel, type ExerciseType } from './preview.js';
