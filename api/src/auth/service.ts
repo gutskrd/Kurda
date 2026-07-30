@@ -26,7 +26,7 @@ const DUMMY_HASH_PROMISE = argon2.hash('kurda-timing-equalizer', {
 });
 
 /** Argon2id with OWASP-recommended parameters. */
-const ARGON2_OPTIONS: argon2.Options = {
+const ARGON2_OPTIONS: argon2.HashOptions = {
   type: argon2.argon2id,
   memoryCost: 19 * 1024, // 19 MiB
   timeCost: 2,
