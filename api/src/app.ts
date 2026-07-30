@@ -107,6 +107,9 @@ import { registerAuditLog } from './admin/audit-routes.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
+import { EmailService } from './email/service.js';
+import { createEmailProvider } from './email/provider.js';
+import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -346,6 +349,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAnalyticsRoutes(
       app,
       new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) }),
+    );
+    // transactional email (KUR-098): bounce/complaint webhook feeds suppression;
+    // sends themselves run in the worker's send-email job
+    registerEmailWebhookRoutes(
+      app,
+      new EmailService(app.db, createEmailProvider(config)),
+      config.EMAIL_WEBHOOK_SECRET,
     );
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
