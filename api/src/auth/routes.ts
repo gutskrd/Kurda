@@ -6,6 +6,14 @@ import { verifyCaptcha } from './captcha.js';
 import { isDisposableEmail } from './disposable-domains.js';
 import { OAuthService } from './oauth.js';
 import { AuthService } from './service.js';
+import { RiskService } from '../risk/service.js';
+
+/** Optional client device fingerprint (#110), supplied as a header. */
+function deviceIdOf(headers: Record<string, unknown>): string | null {
+  const raw = headers['x-device-id'];
+  if (typeof raw === 'string' && raw.length > 0 && raw.length <= 200) return raw;
+  return null;
+}
 
 export const registerBodySchema = z.object({
   email: z.email().max(254),
@@ -64,6 +72,10 @@ export const oauthBodySchema = z.object({
 
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): void {
   const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log });
+  // Risk scoring (KUR-296): assesses signup/login, enforces per-device/IP caps,
+  // logs decisions for tuning + audit. IP reputation defaults to neutral until a
+  // provider is configured (graceful degradation).
+  const risk = new RiskService(app.db, { redis: app.redis });
 
   app.post(
     '/auth/register',
@@ -78,7 +90,21 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       const body = req.body as z.infer<typeof registerBodySchema>;
       if (isDisposableEmail(body.email)) throw signupRejected();
       if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw signupRejected();
+
+      // Risk decision: a per-device/IP cap breach hard-blocks (generic rejection
+      // so we never reveal which anti-abuse control fired, KUR-025). Lower bands
+      // proceed — CAPTCHA above is the baseline step-up.
+      const { assessment, decisionId } = await risk.assessSignup({
+        email: body.email,
+        ip: req.ip,
+        deviceId: deviceIdOf(req.headers),
+      });
+      if (assessment.hardBlock) throw signupRejected();
+
       const result = await service.register(body);
+      await risk.attachUser(decisionId, result.user.id).catch((err) => {
+        app.log.warn({ err }, 'failed to attach user to risk decision');
+      });
       return reply.code(201).send(result);
     },
   );
@@ -92,8 +118,23 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         rateLimit: { max: 5, windowMs: 60_000, per: 'ip' as const },
       },
     },
-    async (req) =>
-      service.login({ ...(req.body as z.infer<typeof loginBodySchema>), ip: req.ip }),
+    async (req) => {
+      const body = req.body as z.infer<typeof loginBodySchema>;
+      // Assess before authenticating so a high-risk attempt mints no session.
+      const { assessment, decisionId } = await risk.assessLogin({
+        email: body.email,
+        ip: req.ip,
+        deviceId: deviceIdOf(req.headers),
+      });
+      if (assessment.action === 'verify_or_block') {
+        throw new AppError('LOGIN_VERIFICATION_REQUIRED', 403, 'additional verification required');
+      }
+      const result = await service.login({ ...body, ip: req.ip });
+      await risk.attachUser(decisionId, result.user.id).catch((err) => {
+        app.log.warn({ err }, 'failed to attach user to risk decision');
+      });
+      return result;
+    },
   );
 
   app.post(
