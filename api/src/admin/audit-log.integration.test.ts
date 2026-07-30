@@ -22,6 +22,18 @@ describe.skipIf(!DATABASE_URL)('admin audit log (integration)', () => {
   const authed = (method: 'GET' | 'POST', url: string, payload?: unknown) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${adminToken}` }, payload: payload as object, remoteAddress: '10.104.9.9' });
 
+  // The audit write happens in an onResponse hook, which completes after inject
+  // resolves — so reads must wait for the row to land rather than assuming it's
+  // synchronous with the response.
+  async function eventually<T>(fn: () => Promise<T>, ok: (v: T) => boolean, tries = 40, delayMs = 25): Promise<T> {
+    let value = await fn();
+    for (let i = 0; i < tries && !ok(value); i++) {
+      await new Promise((r) => setTimeout(r, delayMs));
+      value = await fn();
+    }
+    return value;
+  }
+
   async function reg(name: string, ip: string) {
     const res = await app.inject({
       method: 'POST',
@@ -67,7 +79,10 @@ describe.skipIf(!DATABASE_URL)('admin audit log (integration)', () => {
     const res = await authed('POST', `/admin/users/${targetId}/warn`, { reason: 'being rude in chat' });
     expect(res.statusCode).toBe(200);
 
-    const entries = await audit.search({ adminId });
+    const entries = await eventually(
+      () => audit.search({ adminId }),
+      (es) => es.some((e) => e.action === 'POST /admin/users/:id/warn'),
+    );
     const warn = entries.find((e) => e.action === 'POST /admin/users/:id/warn');
     expect(warn).toBeDefined();
     expect(warn!.targetId).toBe(targetId);
