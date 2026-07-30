@@ -80,6 +80,7 @@ import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
+import { TrustService } from './trust/service.js';
 import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
@@ -242,7 +243,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // groups / clubs (KUR-084): heal ownerless groups after account deletions
     const groups = new GroupService(app.db);
-    registerGroupRoutes(app, groups);
+    // trust levels + velocity caps + spam auto-moderation (KUR-295)
+    const trust = new TrustService(app.db, { redis: app.redis });
+    registerGroupRoutes(app, groups, trust);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
       6 * 60 * 60 * 1000,
@@ -396,6 +399,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerChatRoutes(
       app,
       new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
+      trust,
     );
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
