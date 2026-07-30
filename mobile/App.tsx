@@ -31,6 +31,7 @@ import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
+import { ChallengeListener } from './src/challenge/ChallengeListener';
 import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
@@ -116,6 +117,7 @@ function SignedInRoot() {
   return (
     <>
       <PushRegistration />
+      <ChallengeListener />
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         <RootStack.Screen name="Tabs" component={SignedInTabs} />
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>

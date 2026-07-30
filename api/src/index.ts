@@ -91,6 +91,13 @@ export {
   type RematchStatus,
 } from './game/rematch-service.js';
 export {
+  ChallengeService,
+  CHALLENGE_TTL_SECONDS,
+  type ChallengeResult,
+  type ChallengeStatus,
+} from './game/challenge-service.js';
+export { registerChallengeRoutes } from './game/challenge-routes.js';
+export {
   expectedScore,
   kFactor,
   applyResults as applyEloResults,

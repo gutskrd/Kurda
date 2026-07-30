@@ -26,6 +26,8 @@ import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoute
 import { PrivateRoomService } from './game/private-room-service.js';
 import { AntiCheatService } from './game/anti-cheat-service.js';
 import { RematchService } from './game/rematch-service.js';
+import { ChallengeService } from './game/challenge-service.js';
+import { registerChallengeRoutes } from './game/challenge-routes.js';
 import { RatingService } from './ranking/rating-service.js';
 import { registerRatingRoutes } from './ranking/routes.js';
 import { TournamentService } from './tournament/service.js';
@@ -386,6 +388,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const matchmaking = new MatchmakingService(app.db, matchQueue, kv, realtime, options.matchmaking);
     app.decorate('matchmaking', matchmaking);
     registerMatchmakingRoutes(app, matchmaking);
+
+    // challenge a friend (KUR-088): direct unranked 1v1 invites over the KV + gateway
+    registerChallengeRoutes(
+      app,
+      new ChallengeService(kv, matchmaking, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, friends),
+    );
     const sweeper = setInterval(
       () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
       matchmaking.sweepIntervalMs,
