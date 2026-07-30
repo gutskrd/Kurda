@@ -103,12 +103,25 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         {profile.friendStatus !== 'self' ? (
           <View style={styles.actions}>
             {profile.friendStatus === 'friends' ? (
-              <Pressable
-                onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
-                style={styles.primary}
-              >
-                <Text style={styles.primaryText}>Message</Text>
-              </Pressable>
+              <>
+                <Pressable
+                  onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
+                  style={styles.primary}
+                >
+                  <Text style={styles.primaryText}>Message</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() =>
+                    void client.post('/challenges', { userId: profile.userId }).then((res) => {
+                      if (res.ok) Alert.alert('Challenge sent ⚔️', 'Waiting for them to accept…');
+                      else Alert.alert('Could not challenge', res.error.message);
+                    })
+                  }
+                  style={styles.secondary}
+                >
+                  <Text style={styles.secondaryText}>⚔️ Challenge to 1v1</Text>
+                </Pressable>
+              </>
             ) : null}
             {label ? (
               <Pressable
@@ -161,6 +174,8 @@ const styles = StyleSheet.create({
   primary: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
   primaryMuted: { backgroundColor: colors.border },
   primaryText: { color: colors.textOnPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
+  secondary: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', borderWidth: 2, borderColor: colors.accent },
+  secondaryText: { color: colors.accent, fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
   block: { paddingVertical: spacing.sm, alignItems: 'center' },
   blockText: { color: colors.danger, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   dim: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md },

@@ -14,6 +14,7 @@ import { setupMetrics } from './observability/metrics.js';
 import { setupAuth } from './plugins/auth.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupSecurityHeaders } from './plugins/security-headers.js';
+import { setupCachePolicy } from './plugins/cache-policy.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
@@ -26,6 +27,8 @@ import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoute
 import { PrivateRoomService } from './game/private-room-service.js';
 import { AntiCheatService } from './game/anti-cheat-service.js';
 import { RematchService } from './game/rematch-service.js';
+import { ChallengeService } from './game/challenge-service.js';
+import { registerChallengeRoutes } from './game/challenge-routes.js';
 import { RatingService } from './ranking/rating-service.js';
 import { registerRatingRoutes } from './ranking/routes.js';
 import { TournamentService } from './tournament/service.js';
@@ -88,6 +91,30 @@ import { createPushProvider } from './push/provider.js';
 import { registerPushRoutes } from './push/routes.js';
 import { EventService } from './events/service.js';
 import { registerEventRoutes } from './events/routes.js';
+import { QuestService, DbQuestMetrics } from './events/quest-service.js';
+import { registerQuestRoutes } from './events/quest-routes.js';
+import { NotificationPrefsService } from './notifications/prefs-service.js';
+import { registerNotificationRoutes } from './notifications/routes.js';
+import { InboxService } from './notifications/inbox-service.js';
+import { registerInboxRoutes } from './notifications/inbox-routes.js';
+import { StreakReminderService } from './notifications/streak-reminder-service.js';
+import { makePushSendJob } from './jobs/push-jobs.js';
+import { ContentAdminService } from './content/admin-service.js';
+import { registerContentAdminRoutes } from './content/admin-routes.js';
+import { UserAdminService } from './admin/user-admin-service.js';
+import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
+import { AuditService } from './admin/audit-service.js';
+import { registerAuditLog } from './admin/audit-routes.js';
+import { Counter } from 'prom-client';
+import { AnalyticsService } from './analytics/service.js';
+import { registerAnalyticsRoutes } from './analytics/routes.js';
+import { EmailService } from './email/service.js';
+import { createEmailProvider } from './email/provider.js';
+import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
+import { DashboardService } from './analytics/dashboard-service.js';
+import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
+import { ExperimentService } from './experiments/service.js';
+import { registerExperimentRoutes } from './experiments/routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -129,7 +156,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   setupValidation(app);
   setupErrorHandling(app, config);
   setupSecurityHeaders(app);
-  setupMetrics(app);
+  setupCachePolicy(app);
+  const metricsRegistry = setupMetrics(app);
 
 
   const health = new HealthRegistry();
@@ -274,12 +302,77 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDictionaryRoutes(app);
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099)
-    registerAdminRoutes(app, new AdminTotpService(app.db));
-    // push infrastructure (KUR-094): device token lifecycle + queued delivery
+    const adminTotp = new AdminTotpService(app.db);
+    registerAdminRoutes(app, adminTotp);
+    // admin content management: draft→review→publish + optimistic locking (KUR-100)
+    registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp);
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
+    // gated by per-category preferences + quiet hours at delivery time (KUR-095)
     const deviceTokens = new DeviceTokenService(app.db);
-    registerPushRoutes(app, deviceTokens, new PushService(deviceTokens, createPushProvider(config)));
+    const notificationPrefs = new NotificationPrefsService(app.db);
+    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
+    const inbox = new InboxService(app.db);
+    registerNotificationRoutes(app, notificationPrefs);
+    registerInboxRoutes(app, inbox);
+    registerPushRoutes(app, deviceTokens, pushService, inbox);
+
+    // personalized streak reminders (KUR-096): hourly, bucketed by local time
+    const streakReminders = new StreakReminderService(app.db, {
+      enqueue: async (userId, notification) => {
+        // job path records to the inbox in the worker; inline path records here
+        if (app.jobs) await app.jobs.enqueue(makePushSendJob(pushService), { userId, notification });
+        else {
+          await inbox.record(userId, notification);
+          await pushService.deliver(userId, notification);
+        }
+      },
+    });
+    const reminderSweep = setInterval(
+      () => void streakReminders.runHourly().catch((err) => app.log.warn({ err }, 'streak reminder run failed')),
+      60 * 60 * 1000,
+    );
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
-    registerEventRoutes(app, new EventService(app.db, app.cache));
+    const events = new EventService(app.db, app.cache);
+    registerEventRoutes(app, events);
+    // event quests + explicit reward claims (KUR-091): progress derived from the
+    // ledgers over the event window; claims pay Zêr/Gems with a 72h grace period
+    registerQuestRoutes(
+      app,
+      new QuestService(app.db, events, new WalletService(app.db), new DbQuestMetrics(app.db)),
+    );
+    app.addHook('onClose', async () => clearInterval(reminderSweep));
+    // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp);
+    // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
+    registerAuditLog(app, new AuditService(app.db), adminTotp);
+    // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
+    const droppedEvents = new Counter({
+      name: 'analytics_events_dropped_total',
+      help: 'Analytics events rejected on ingest, by reason',
+      labelNames: ['reason'],
+      registers: [metricsRegistry],
+    });
+    const analytics = new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) });
+    registerAnalyticsRoutes(app, analytics);
+    // transactional email (KUR-098): bounce/complaint webhook feeds suppression;
+    // sends themselves run in the worker's send-email job
+    registerEmailWebhookRoutes(
+      app,
+      new EmailService(app.db, createEmailProvider(config)),
+      config.EMAIL_WEBHOOK_SECRET,
+    );
+
+    // core dashboards (KUR-106): daily-refreshed DAU/retention/funnel rollups
+    const dashboards = new DashboardService(app.db);
+    registerDashboardRoutes(app, dashboards);
+    const dashboardRefresh = setInterval(
+      () => void dashboards.refreshDay().catch((err) => app.log.warn({ err }, 'dashboard refresh failed')),
+      24 * 60 * 60 * 1000,
+    );
+    app.addHook('onClose', async () => clearInterval(dashboardRefresh));
+
+    // A/B experiments (KUR-107): deterministic bucketing + exposure logging
+    registerExperimentRoutes(app, new ExperimentService(app.db, analytics));
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
@@ -321,6 +414,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const matchmaking = new MatchmakingService(app.db, matchQueue, kv, realtime, options.matchmaking);
     app.decorate('matchmaking', matchmaking);
     registerMatchmakingRoutes(app, matchmaking);
+
+    // challenge a friend (KUR-088): direct unranked 1v1 invites over the KV + gateway
+    registerChallengeRoutes(
+      app,
+      new ChallengeService(kv, matchmaking, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, friends),
+    );
     const sweeper = setInterval(
       () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
       matchmaking.sweepIntervalMs,

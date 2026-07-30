@@ -42,6 +42,8 @@ const envSchema = z.object({
   TURNSTILE_SECRET: z.string().optional(),
   /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
   IAP_WEBHOOK_SECRET: z.string().optional(),
+  /** Shared secret guarding email bounce/complaint webhooks; disabled when unset (KUR-098). */
+  EMAIL_WEBHOOK_SECRET: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**

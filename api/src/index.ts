@@ -22,7 +22,18 @@ export {
   type JobClass,
   type BackpressurePolicy,
 } from './jobs/backpressure.js';
-export { sendEmailJob } from './jobs/email.js';
+export { sendEmailJob, makeSendEmailJob, SEND_EMAIL_JOB_NAME, type SendEmailPayload } from './jobs/email.js';
+export {
+  renderEmail,
+  EMAIL_TEMPLATES,
+  EMAIL_LOCALES,
+  type EmailTemplate,
+  type EmailLocale,
+  type RenderedEmail,
+} from './email/templates.js';
+export { StubEmailProvider, createEmailProvider, type EmailProvider, type EmailPayload } from './email/provider.js';
+export { EmailService, type SuppressionReason, type SendResult } from './email/service.js';
+export { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
 export { initSentry, captureError, scrubEvent } from './observability/sentry.js';
 export { setupMetrics } from './observability/metrics.js';
@@ -30,6 +41,8 @@ export { createPool, createReplicaPool, dbHealthCheck, type Queryable } from './
 export { DbRouter, type PoolLike, type DbRouterOptions } from './db/router.js';
 export { WritePinTracker, shouldPinToPrimary, READ_AFTER_WRITE_WINDOW_MS } from './db/routing.js';
 export { isLoadTestUser, loadTestEmail, LOADTEST_EMAIL_DOMAIN } from './loadtest/marker.js';
+export { setupCachePolicy } from './plugins/cache-policy.js';
+export { cachePolicy, isEdgeCacheable, type CachePolicy } from './http/cache-policy.js';
 export { setupRateLimit, DEFAULT_RATE_LIMIT, type RateLimitOptions } from './ratelimit/plugin.js';
 export { RedisRateLimitStore, MemoryRateLimitStore, type RateLimitStore } from './ratelimit/store.js';
 export { MediaStorage, createStorage, mediaKey, ALLOWED_CONTENT_TYPES, MAX_UPLOAD_BYTES, IMMUTABLE_CACHE_CONTROL, type UploadTicket } from './media/storage.js';
@@ -90,6 +103,13 @@ export {
   REMATCH_TTL_SECONDS,
   type RematchStatus,
 } from './game/rematch-service.js';
+export {
+  ChallengeService,
+  CHALLENGE_TTL_SECONDS,
+  type ChallengeResult,
+  type ChallengeStatus,
+} from './game/challenge-service.js';
+export { registerChallengeRoutes } from './game/challenge-routes.js';
 export {
   expectedScore,
   kFactor,
@@ -469,6 +489,30 @@ export { PushService, type Notification, type DeliveryReport } from './push/serv
 export { registerPushRoutes } from './push/routes.js';
 export { makePushSendJob, PUSH_SEND_JOB_NAME, type PushSendPayload } from './jobs/push-jobs.js';
 export {
+  allows as notificationAllows,
+  defaultPrefs,
+  inQuietHours,
+  minuteOfDayInTz,
+  NOTIFICATION_CATEGORIES,
+  type NotificationCategory,
+  type NotificationPrefs,
+} from './notifications/prefs.js';
+export { NotificationPrefsService, type PrefsPatch } from './notifications/prefs-service.js';
+export { registerNotificationRoutes } from './notifications/routes.js';
+export {
+  dueReminder,
+  preferredHour,
+  reminderMessage,
+  FALLBACK_HOUR,
+  LAST_CHANCE_HOUR,
+  LAST_CHANCE_MIN_STREAK,
+  type ReminderKind,
+  type ReminderContext,
+} from './notifications/streak-reminder.js';
+export { StreakReminderService, type ReminderEnqueuer } from './notifications/streak-reminder-service.js';
+export { InboxService, INBOX_LIMIT, type InboxItem } from './notifications/inbox-service.js';
+export { registerInboxRoutes } from './notifications/inbox-routes.js';
+export {
   type PronunciationScorer,
   type PronunciationScore,
   StubPronunciationScorer,
@@ -532,3 +576,75 @@ export {
   type AnnualEventTemplate,
   type EventOccurrence,
 } from './events/recurrence.js';
+export {
+  parseQuest,
+  parseQuests,
+  evaluateQuest,
+  claimBlock,
+  claimDeadline,
+  QUEST_TYPES,
+  QUEST_GRACE_HOURS,
+  type QuestType,
+  type QuestDef,
+  type QuestProgress,
+  type QuestReward,
+} from './events/quest-logic.js';
+export {
+  QuestService,
+  DbQuestMetrics,
+  type QuestMetrics,
+  type EventQuestsView,
+  type QuestView,
+  type ClaimResult as QuestClaimResult,
+} from './events/quest-service.js';
+export { registerQuestRoutes } from './events/quest-routes.js';
+export {
+  CONTENT_STATUSES,
+  allowedTransition,
+  canTransition,
+  isEditable,
+  type ContentStatus,
+  type Transition,
+} from './content/workflow.js';
+export { ContentAdminService, type LessonDetail, type ExerciseInput } from './content/admin-service.js';
+export { registerContentAdminRoutes } from './content/admin-routes.js';
+export {
+  banState,
+  isBanned,
+  isMuted,
+  normalizeReason,
+  expiryFrom,
+  MAX_REASON_LEN,
+  type ModAction,
+  type BanState,
+} from './admin/moderation.js';
+export { UserAdminService, type UserDetail, type UserSearchResult } from './admin/user-admin-service.js';
+export { registerUserAdminRoutes } from './admin/user-admin-routes.js';
+export { AuditService, type AuditEntry, type AuditRow, type AuditFilters } from './admin/audit-service.js';
+export { isAuditableAdminMutation, auditActionName } from './admin/audit-action.js';
+export { registerAuditLog } from './admin/audit-routes.js';
+export {
+  EVENT_SCHEMAS,
+  EVENT_TYPES,
+  isKnownEvent,
+  validateEvent,
+  type EventType,
+  type ValidationOutcome,
+} from './analytics/registry.js';
+export { AnalyticsService, type RawEvent, type IngestResult, type AnalyticsHooks } from './analytics/service.js';
+export { registerAnalyticsRoutes } from './analytics/routes.js';
+export {
+  retentionRate,
+  conversionRates,
+  windowStart,
+  daysBefore,
+  RETENTION_DAYS,
+  FUNNELS,
+  type FunnelStep,
+  type FunnelStepRate,
+} from './analytics/dashboards.js';
+export { DashboardService, type ActivityPoint, type RetentionPoint } from './analytics/dashboard-service.js';
+export { registerDashboardRoutes } from './analytics/dashboard-routes.js';
+export { assignVariant, bucketFraction, type Variant } from './experiments/bucketing.js';
+export { ExperimentService, type ExperimentDef, type UpsertExperimentInput } from './experiments/service.js';
+export { registerExperimentRoutes } from './experiments/routes.js';
