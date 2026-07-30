@@ -79,6 +79,7 @@ import { ModerationService } from './moderation/service.js';
 import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
+import { registerWordleRoutes } from './game/wordle-routes.js';
 import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
@@ -278,6 +279,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService);
+    registerWordleRoutes(app, { xp: xpService });
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
