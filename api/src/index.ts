@@ -588,3 +588,15 @@ export {
 } from './content/workflow.js';
 export { ContentAdminService, type LessonDetail, type ExerciseInput } from './content/admin-service.js';
 export { registerContentAdminRoutes } from './content/admin-routes.js';
+export {
+  banState,
+  isBanned,
+  isMuted,
+  normalizeReason,
+  expiryFrom,
+  MAX_REASON_LEN,
+  type ModAction,
+  type BanState,
+} from './admin/moderation.js';
+export { UserAdminService, type UserDetail, type UserSearchResult } from './admin/user-admin-service.js';
+export { registerUserAdminRoutes } from './admin/user-admin-routes.js';

@@ -98,6 +98,8 @@ import { StreakReminderService } from './notifications/streak-reminder-service.j
 import { makePushSendJob } from './jobs/push-jobs.js';
 import { ContentAdminService } from './content/admin-service.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
+import { UserAdminService } from './admin/user-admin-service.js';
+import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
 
 const pkg = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
@@ -323,6 +325,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       new QuestService(app.db, events, new WalletService(app.db), new DbQuestMetrics(app.db)),
     );
     app.addHook('onClose', async () => clearInterval(reminderSweep));
+    // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp);
 
     // realtime gateway (KUR-049): multi-node with Redis, single-node without
     const kv = app.redis ? new RedisKV(app.redis) : new MemoryKV();
