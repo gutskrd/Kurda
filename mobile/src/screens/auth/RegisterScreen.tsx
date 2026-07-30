@@ -46,10 +46,10 @@ export function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Hesabekî nû — Sign up">
+    <AuthScreenShell title="Sign up">
       <FormError message={formError} />
       <Field
-        label="E-name — Email"
+        label="Email"
         value={email}
         onChangeText={setEmail}
         error={errors.email}
@@ -57,26 +57,25 @@ export function RegisterScreen({ navigation }: Props) {
         testID="email"
       />
       <Field
-        label="Navê bikarhêner — Username"
+        label="Username"
         value={username}
         onChangeText={setUsername}
         error={errors.username}
         testID="username"
       />
       <Field
-        label="Şîfre — Password"
+        label="Password"
         value={password}
         onChangeText={setPassword}
         error={errors.password}
         secure
         testID="password"
       />
-      <SubmitButton label="Hesab çêke" busy={busy} onPress={submit} />
+      <SubmitButton label="Sign up" busy={busy} onPress={submit} />
       <Text style={styles.terms}>
-        Bi çêkirina hesabê tu Mercên Bikaranînê û Siyaseta Nepenîtiyê qebûl dikî. — By creating
-        an account you accept the Terms of Use and Privacy Policy.
+        By creating an account you accept the Terms of Use and Privacy Policy.
       </Text>
-      <LinkText label="Hesabê te heye? Têkeve — Have an account? Log in" onPress={() => navigation.navigate('Login')} />
+      <LinkText label="Have an account? Log in" onPress={() => navigation.navigate('Login')} />
     </AuthScreenShell>
   );
 }

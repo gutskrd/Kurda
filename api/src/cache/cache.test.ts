@@ -70,6 +70,20 @@ describe('Cache', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
+  it('collapses concurrent misses into one computation (single-flight, KUR-116)', async () => {
+    const cache = new Cache(fakeClient());
+    let calls = 0;
+    const fn = vi.fn(async () => {
+      calls += 1;
+      await new Promise((r) => setTimeout(r, 10)); // overlap window
+      return { v: 7 };
+    });
+    // 5 requests race for the same cold key
+    const results = await Promise.all(Array.from({ length: 5 }, () => cache.withCache('d', 'hot', 60, fn)));
+    expect(calls).toBe(1); // origin hit exactly once despite the herd
+    for (const r of results) expect(r).toEqual({ v: 7 });
+  });
+
   it('degrades gracefully when Redis is down: reads miss, writes drop, callers never throw', async () => {
     const cache = new Cache(brokenClient());
     expect(await cache.get('d', 'k')).toBeNull();

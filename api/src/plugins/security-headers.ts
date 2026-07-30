@@ -13,7 +13,10 @@ export const SECURITY_HEADERS: Record<string, string> = {
   'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
   'x-frame-options': 'DENY',
   'referrer-policy': 'no-referrer',
-  'cross-origin-resource-policy': 'same-origin',
+  // 'cross-origin' (not 'same-origin'): this is a JSON API called by
+  // browser clients on other origins (the web app). CORS still gates who
+  // may READ a response; CORP same-origin would block the read entirely.
+  'cross-origin-resource-policy': 'cross-origin',
   'permissions-policy': 'camera=(), microphone=(), geolocation=()',
 };
 

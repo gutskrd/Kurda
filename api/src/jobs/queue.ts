@@ -2,6 +2,7 @@ import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import type { AppConfig } from '../config/env.js';
 import type { JobDefinition } from './registry.js';
+import { priorityForJob, shouldShed } from './backpressure.js';
 
 export const QUEUE_NAME = 'kurda-jobs';
 
@@ -56,10 +57,27 @@ export class JobQueue {
     const job = await this.queue.add(def.name, parsed.data, {
       jobId: opts.idempotencyKey,
       delay: opts.delayMs,
+      // priority queues (KUR-119): auth emails > push > analytics
+      priority: priorityForJob(def.name),
       ...(opts.attempts ? { attempts: opts.attempts } : {}),
       ...(opts.backoffDelayMs ? { backoff: { type: 'exponential', delay: opts.backoffDelayMs } } : {}),
     });
     return job.id as string;
+  }
+
+  /** Current waiting-job depth — the backpressure signal (KUR-119). */
+  async waitingCount(): Promise<number> {
+    return this.queue.getWaitingCount();
+  }
+
+  /**
+   * Enqueue unless backpressure says to shed this job's class at the current
+   * depth (KUR-119). Critical jobs are never shed; bulk/analytics producers drop
+   * load first so a spike never delays auth email. Returns null when shed.
+   */
+  async enqueueUnlessShed<T>(def: JobDefinition<T>, payload: T, opts: EnqueueOptions = {}): Promise<string | null> {
+    if (shouldShed(def.name, await this.waitingCount())) return null;
+    return this.enqueue(def, payload, opts);
   }
 
   /** Upserts a repeatable schedule for a job (stable id per job name). */

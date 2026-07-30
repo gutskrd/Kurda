@@ -23,6 +23,10 @@ interface Connection {
   rooms: Set<string>;
   resumeToken: string;
   lastPongAt: number;
+  /** when the last heartbeat ping was sent (for RTT, KUR-057) */
+  pingSentAt?: number;
+  /** last measured round-trip time in ms */
+  rttMs?: number;
 }
 
 const clientMessageSchema = z.discriminatedUnion('type', [
@@ -30,6 +34,12 @@ const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('leave'), room: z.string().min(1).max(80) }),
   z.object({ type: z.literal('ping') }),
 ]);
+
+/** Feature handlers for custom client message types (game answers, ...). */
+export type ClientMessageHandler = (
+  userId: string,
+  payload: Record<string, unknown>,
+) => void | Promise<void>;
 
 /**
  * Realtime gateway (KUR-049).
@@ -49,6 +59,8 @@ const clientMessageSchema = z.discriminatedUnion('type', [
 export class RealtimeGateway {
   private readonly connections = new Map<string, Connection>();
   private readonly roomMembers = new Map<string, Set<Connection>>();
+  private readonly customHandlers = new Map<string, ClientMessageHandler>();
+  private readonly disconnectListeners: Array<(userId: string) => void> = [];
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
   private sweepTimer?: NodeJS.Timeout;
@@ -71,6 +83,29 @@ export class RealtimeGateway {
   /** Server-side event fan-out to everyone in the room (all nodes). */
   async publish(roomId: string, event: RoomEvent): Promise<void> {
     await this.bus.publish(roomId, event);
+  }
+
+  /** Direct push to a single user's connection on whichever node. */
+  async notifyUser(userId: string, event: RoomEvent): Promise<void> {
+    await this.bus.publish(`user:${userId}`, event);
+  }
+
+  /** Last measured RTT (ms) for a user's live connection, or null (KUR-057). */
+  rttFor(userId: string): number | null {
+    return this.connections.get(userId)?.rttMs ?? null;
+  }
+
+  /** Fires when a user's live connection drops (game disconnect, KUR-057). */
+  onDisconnect(listener: (userId: string) => void): void {
+    this.disconnectListeners.push(listener);
+  }
+
+  /** Registers a handler for a custom client message type ('answer', ...). */
+  onClientMessage(type: string, handler: ClientMessageHandler): void {
+    if (['join', 'leave', 'ping'].includes(type) || this.customHandlers.has(type)) {
+      throw new Error(`client message type already registered: ${type}`);
+    }
+    this.customHandlers.set(type, handler);
   }
 
   connectionCount(): number {
@@ -131,9 +166,14 @@ export class RealtimeGateway {
       lastPongAt: Date.now(),
     };
     this.connections.set(userId, conn);
+    // personal channel for server→user pushes (match found, invites, ...)
+    this.joinLocal(conn, `user:${userId}`);
 
     socket.on('pong', () => {
-      conn.lastPongAt = Date.now();
+      const now = Date.now();
+      conn.lastPongAt = now;
+      // RTT from the heartbeat round-trip (KUR-057), measured server-side
+      if (conn.pingSentAt !== undefined) conn.rttMs = now - conn.pingSentAt;
     });
     socket.on('message', (raw) => void this.onMessage(conn, raw.toString()));
     socket.on('close', () => this.dropConnection(conn));
@@ -160,9 +200,23 @@ export class RealtimeGateway {
   }
 
   private async onMessage(conn: Connection, raw: string): Promise<void> {
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      this.send(conn, { type: 'error', code: 'BAD_MESSAGE' });
+      return;
+    }
+
+    const typeName = (json as { type?: unknown }).type;
+    if (typeof typeName === 'string' && this.customHandlers.has(typeName)) {
+      await this.customHandlers.get(typeName)!(conn.userId, json as Record<string, unknown>);
+      return;
+    }
+
     let parsed: z.infer<typeof clientMessageSchema>;
     try {
-      parsed = clientMessageSchema.parse(JSON.parse(raw));
+      parsed = clientMessageSchema.parse(json);
     } catch {
       this.send(conn, { type: 'error', code: 'BAD_MESSAGE' });
       return;
@@ -216,20 +270,27 @@ export class RealtimeGateway {
   }
 
   private dropConnection(conn: Connection): void {
-    if (this.connections.get(conn.userId) === conn) {
+    const wasLive = this.connections.get(conn.userId) === conn;
+    if (wasLive) {
       this.connections.delete(conn.userId);
     }
     for (const roomId of conn.rooms) {
       this.roomMembers.get(roomId)?.delete(conn);
+    }
+    // notify features (game auto-wrong on mid-question disconnect, KUR-057)
+    if (wasLive) {
+      for (const listener of this.disconnectListeners) listener(conn.userId);
     }
     // resume state stays in the KV for RESUME_TTL so a quick reconnect
     // (app backgrounded, network blip) lands back in its rooms
   }
 
   private async persistResumeState(conn: Connection): Promise<void> {
+    // internal user channel is re-created on accept, not resumed
+    const rooms = [...conn.rooms].filter((room) => !room.startsWith('user:'));
     await this.kv.set(
       `rt:resume:${conn.resumeToken}`,
-      JSON.stringify({ userId: conn.userId, rooms: [...conn.rooms] }),
+      JSON.stringify({ userId: conn.userId, rooms }),
       RESUME_TTL_SECONDS,
     );
   }
@@ -245,6 +306,7 @@ export class RealtimeGateway {
         continue;
       }
       try {
+        conn.pingSentAt = Date.now();
         conn.socket.ping();
       } catch {
         // terminated between iteration steps — drop next sweep

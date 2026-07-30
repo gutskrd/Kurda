@@ -1,0 +1,230 @@
+{
+  "course": {
+    "slug": "kurmanji-basics",
+    "dialect": "kurmanji",
+    "titleKu": "Kurmancî ji bo Destpêkê",
+    "titleEn": "Kurmanji for Beginners"
+  },
+  "units": [
+    {
+      "position": 1,
+      "titleKu": "Destpêk",
+      "titleEn": "Basics",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Silav",
+          "titleEn": "Greetings",
+          "grammarMd": "# Silavkirin\n\nKurmanji greetings are simple:\n\n- **Silav** — hello\n- **Roj baş** — good day\n- **Spas** — thank you\n\nUse **Bi xatirê te** to say goodbye to one person.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Silav 1",
+              "titleEn": "Greetings 1",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Hello\" bi kurdî?", "options": ["Silav", "Spas", "Na"], "correctIndex": 0 } },
+                { "position": 2, "type": "translate", "payload": { "prompt": "Thank you", "accepted": ["Spas", "Spas dikim"] } },
+                { "position": 3, "type": "multiple_choice", "payload": { "prompt": "\"Roj baş\" tê çi wateyê?", "options": ["Good day", "Good night", "Goodbye"], "correctIndex": 0 } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Silav 2",
+              "titleEn": "Greetings 2",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "Goodbye (to one person)", "accepted": ["Bi xatirê te"] } },
+                { "position": 2, "type": "match_pairs", "payload": { "pairs": [ { "left": "Silav", "right": "Hello" }, { "left": "Spas", "right": "Thanks" }, { "left": "Erê", "right": "Yes" } ] } }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Nasname",
+          "titleEn": "Introductions",
+          "grammarMd": "# Xwe nas kirin\n\n**Navê min ... e** — My name is ...\n\n**Ez ... im** — I am ...  (the copula **im** attaches to \"I\").",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Nasname 1",
+              "titleEn": "Introductions 1",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "I am fine", "accepted": ["Ez baş im"] } },
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"My name is Dilan\"?", "options": ["Navê min Dilan e", "Navê te Dilan e", "Ez Dilan im na"], "correctIndex": 0 } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Nasname 2",
+              "titleEn": "Introductions 2",
+              "exercises": [
+                { "position": 1, "type": "writing", "payload": { "prompt": "Write: \"I am a student\" (xwendekar = student)", "accepted": ["Ez xwendekar im"] } },
+                { "position": 2, "type": "match_pairs", "payload": { "pairs": [ { "left": "ez", "right": "I" }, { "left": "tu", "right": "you" }, { "left": "ew", "right": "he/she" } ] } }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "titleKu": "Jimar",
+          "titleEn": "Numbers",
+          "grammarMd": "# Jimar 1–10\n\nyek, du, sê, çar, pênc, şeş, heft, heşt, neh, deh.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Jimar 1",
+              "titleEn": "Numbers 1",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Sê\" çend e?", "options": ["3", "2", "5"], "correctIndex": 0 } },
+                { "position": 2, "type": "match_pairs", "payload": { "pairs": [ { "left": "yek", "right": "1" }, { "left": "du", "right": "2" }, { "left": "pênc", "right": "5" } ] } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Jimar 2",
+              "titleEn": "Numbers 2",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "ten", "accepted": ["deh"] } },
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"Heft\" çend e?", "options": ["7", "8", "9"], "correctIndex": 0 } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "titleKu": "Malbat û Xwarin",
+      "titleEn": "Family & Food",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Malbat",
+          "titleEn": "Family",
+          "grammarMd": "# Malbat\n\n**dayik/dê** — mother · **bav** — father · **xwişk** — sister · **bira** — brother.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Malbat 1",
+              "titleEn": "Family 1",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "mother", "accepted": ["dayik", "dê"] } },
+                { "position": 2, "type": "match_pairs", "payload": { "pairs": [ { "left": "bav", "right": "father" }, { "left": "xwişk", "right": "sister" }, { "left": "bira", "right": "brother" } ] } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Malbat 2",
+              "titleEn": "Family 2",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"keç\" tê çi wateyê?", "options": ["girl/daughter", "boy/son", "mother"], "correctIndex": 0 } },
+                { "position": 2, "type": "writing", "payload": { "prompt": "Write: \"My father\" (min = my, comes after)", "accepted": ["bavê min"] } }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Xwarin",
+          "titleEn": "Food",
+          "grammarMd": "# Xwarin\n\n**nan** — bread · **av** — water · **sêv** — apple · **penîr** — cheese.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Xwarin 1",
+              "titleEn": "Food 1",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "apple", "accepted": ["sêv"] } },
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"nan\" tê çi wateyê?", "options": ["bread", "water", "meat"], "correctIndex": 0 } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Xwarin 2",
+              "titleEn": "Food 2",
+              "exercises": [
+                { "position": 1, "type": "match_pairs", "payload": { "pairs": [ { "left": "av", "right": "water" }, { "left": "penîr", "right": "cheese" }, { "left": "hêk", "right": "egg" } ] } },
+                { "position": 2, "type": "translate", "payload": { "prompt": "meat", "accepted": ["goşt"] } }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "titleKu": "Vexwarin",
+          "titleEn": "Drinks",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Vexwarin 1",
+              "titleEn": "Drinks 1",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "water", "accepted": ["av"] } },
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"çay\" tê çi wateyê?", "options": ["tea", "milk", "coffee"], "correctIndex": 0 } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "titleKu": "Jiyana Rojane",
+      "titleEn": "Daily Life",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Reng",
+          "titleEn": "Colors",
+          "grammarMd": "# Reng\n\n**sor** — red · **kesk** — green · **şîn** — blue · **zer** — yellow · **reş** — black · **spî** — white.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Reng 1",
+              "titleEn": "Colors 1",
+              "exercises": [
+                { "position": 1, "type": "match_pairs", "payload": { "pairs": [ { "left": "sor", "right": "red" }, { "left": "kesk", "right": "green" }, { "left": "şîn", "right": "blue" } ] } },
+                { "position": 2, "type": "translate", "payload": { "prompt": "black", "accepted": ["reş"] } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Reng 2",
+              "titleEn": "Colors 2",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"spî\" tê çi wateyê?", "options": ["white", "yellow", "red"], "correctIndex": 0 } },
+                { "position": 2, "type": "writing", "payload": { "prompt": "Write: \"the apple is red\" (sêv ... e)", "accepted": ["sêv sor e"] } }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Dem",
+          "titleEn": "Time",
+          "grammarMd": "# Dem\n\n**îro** — today · **sibe** — tomorrow · **do** — yesterday.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Dem 1",
+              "titleEn": "Time 1",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "today", "accepted": ["îro"] } },
+                { "position": 2, "type": "match_pairs", "payload": { "pairs": [ { "left": "sibe", "right": "tomorrow" }, { "left": "do", "right": "yesterday" }, { "left": "îro", "right": "today" } ] } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Dem 2",
+              "titleEn": "Time 2",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"şev\" tê çi wateyê?", "options": ["night", "day", "morning"], "correctIndex": 0 } },
+                { "position": 2, "type": "translate", "payload": { "prompt": "day", "accepted": ["roj"] } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
