@@ -57,9 +57,10 @@ export class TrustService {
     const res = await this.pool.query<{
       created_at: Date;
       email_verified_at: Date | null;
+      phone_verified_at: Date | null;
       violations: string;
     }>(
-      `SELECT u.created_at, u.email_verified_at,
+      `SELECT u.created_at, u.email_verified_at, u.phone_verified_at,
               (SELECT COUNT(*) FROM admin_actions a
                WHERE a.target_user_id = u.id
                  AND a.action IN ('mute','temp_ban','perm_ban','auto_mute','auto_suspend')) AS violations
@@ -71,7 +72,7 @@ export class TrustService {
     return getTrustLevel({
       accountAgeMs: Math.max(0, this.now().getTime() - row.created_at.getTime()),
       emailVerified: row.email_verified_at !== null,
-      phoneVerified: false, // no column yet (#297); fast-track lands with phone verify
+      phoneVerified: row.phone_verified_at !== null, // fast-tracks trust (#297)
       priorViolations: Number(row.violations),
     });
   }
