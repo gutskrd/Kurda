@@ -6,22 +6,24 @@ import { cachePolicy, isEdgeCacheable } from '../http/cache-policy.js';
  * Conservative by design: it only sets a header when the response is
  * authenticated (→ `private, no-store`, the safety invariant so a CDN can never
  * cache one user's data) or the route is explicitly edge-cacheable. Dynamic
- * public routes and routes that already set their own Cache-Control (media,
- * KUR-013) are left untouched.
+ * public routes are left untouched, and any route that sets its own
+ * Cache-Control later (media, KUR-013) overrides this default.
+ *
+ * The header is set in `preHandler` — before the route runs and before any
+ * hijacked/upgraded response (the WebSocket gateway, KUR-049) flushes its
+ * headers — so it can never fire after the response is committed
+ * (ERR_HTTP_HEADERS_SENT).
  */
 export function setupCachePolicy(app: FastifyInstance): void {
-  app.addHook('onSend', async (req, reply, payload) => {
+  app.addHook('preHandler', async (req, reply) => {
     const routeUrl = req.routeOptions?.url;
-    // hijacked/upgraded responses (e.g. the WebSocket gateway, KUR-049) have
-    // already flushed their headers — writing another would throw HEADERS_SENT.
-    if (!routeUrl || reply.raw.headersSent || reply.getHeader('cache-control')) return payload;
+    if (!routeUrl) return;
 
     const authenticated = !!req.user;
-    if (!authenticated && !isEdgeCacheable(routeUrl)) return payload;
+    if (!authenticated && !isEdgeCacheable(routeUrl)) return;
 
     const policy = cachePolicy(routeUrl, req.method, authenticated);
     reply.header('cache-control', policy.cacheControl);
     if (policy.vary) reply.header('vary', policy.vary);
-    return payload;
   });
 }
