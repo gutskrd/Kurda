@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { StyleSheet, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { colors, spacing, typography } from '../../theme/tokens';
 import { useAuth } from '../../auth/AuthContext';
 import {
   FIELD_ERROR_COPY,
@@ -44,10 +46,10 @@ export function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Hesabekî nû — Sign up">
+    <AuthScreenShell title="Sign up">
       <FormError message={formError} />
       <Field
-        label="E-name — Email"
+        label="Email"
         value={email}
         onChangeText={setEmail}
         error={errors.email}
@@ -55,22 +57,34 @@ export function RegisterScreen({ navigation }: Props) {
         testID="email"
       />
       <Field
-        label="Navê bikarhêner — Username"
+        label="Username"
         value={username}
         onChangeText={setUsername}
         error={errors.username}
         testID="username"
       />
       <Field
-        label="Şîfre — Password"
+        label="Password"
         value={password}
         onChangeText={setPassword}
         error={errors.password}
         secure
         testID="password"
       />
-      <SubmitButton label="Hesab çêke" busy={busy} onPress={submit} />
-      <LinkText label="Hesabê te heye? Têkeve — Have an account? Log in" onPress={() => navigation.navigate('Login')} />
+      <SubmitButton label="Sign up" busy={busy} onPress={submit} />
+      <Text style={styles.terms}>
+        By creating an account you accept the Terms of Use and Privacy Policy.
+      </Text>
+      <LinkText label="Have an account? Log in" onPress={() => navigation.navigate('Login')} />
     </AuthScreenShell>
   );
 }
+
+const styles = StyleSheet.create({
+  terms: {
+    marginTop: spacing.sm,
+    fontSize: typography.sizes.xs,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+});

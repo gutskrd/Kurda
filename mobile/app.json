@@ -28,6 +28,9 @@
       },
       "edgeToEdgeEnabled": true
     },
+    "web": {
+      "bundler": "metro"
+    },
     "plugins": [
       "expo-secure-store"
     ],

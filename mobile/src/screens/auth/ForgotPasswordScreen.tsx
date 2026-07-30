@@ -27,7 +27,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Şîfreyê vegerîne — Reset password">
+    <AuthScreenShell title="Reset password">
       {sent ? (
         <Text
           style={{
@@ -37,23 +37,22 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             textAlign: 'center',
           }}
         >
-          Eger hesabek bi vê e-nameyê hebe, lînka veguherandinê hat şandin. — If an account
-          exists for this email, a reset link is on its way.
+          If an account exists for this email, a reset link is on its way.
         </Text>
       ) : (
         <>
           <Field
-            label="E-name — Email"
+            label="Email"
             value={email}
             onChangeText={setEmail}
             error={error}
             keyboardType="email-address"
             testID="email"
           />
-          <SubmitButton label="Bişîne — Send" busy={busy} onPress={submit} />
+          <SubmitButton label="Send" busy={busy} onPress={submit} />
         </>
       )}
-      <LinkText label="Vegere têketinê — Back to log in" onPress={() => navigation.navigate('Login')} />
+      <LinkText label="Back to log in" onPress={() => navigation.navigate('Login')} />
     </AuthScreenShell>
   );
 }

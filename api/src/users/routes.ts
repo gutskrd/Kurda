@@ -1,13 +1,17 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { normalizeKurdish } from '@kurda/shared';
+import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth } from '../plugins/auth.js';
 import { canonicalUsername } from './username.js';
+import { StreakService } from '../streaks/service.js';
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
+/** Timezone can be changed at most once per week (KUR-031 anti time-travel). */
+export const TIMEZONE_CHANGE_COOLDOWN_DAYS = 7;
 
 /**
  * Bio is stored as plain text only: tags stripped, angle brackets and
@@ -38,6 +42,13 @@ const timezoneSchema = z
     { message: 'must be a valid IANA timezone (e.g. Europe/Berlin)' },
   );
 
+export const consentBodySchema = z
+  .object({
+    acceptPolicy: z.literal(true).optional(),
+    analytics: z.boolean().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, { message: 'no consent changes' });
+
 export const patchMeBodySchema = z
   .object({
     displayName: z.string().min(1).max(60).optional(),
@@ -45,6 +56,8 @@ export const patchMeBodySchema = z
     locale: z.enum(['en', 'ku', 'de', 'tr', 'ar']).optional(),
     timezone: timezoneSchema.optional(),
     username: z.string().min(3).max(30).optional(),
+    /** deny mic → speaking exercises skipped course-wide (KUR-036) */
+    skipSpeaking: z.boolean().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'no fields to update' });
 
@@ -59,6 +72,12 @@ interface MeRow {
   roles: string[];
   email_verified_at: Date | null;
   username_changed_at: Date | null;
+  consent_version: string | null;
+  analytics_consent: boolean;
+  restricted_mode: boolean;
+  xp: number;
+  skip_speaking: boolean;
+  profile_visibility: string;
   created_at: Date;
 }
 
@@ -73,14 +92,26 @@ function toMe(row: MeRow) {
     timezone: row.timezone,
     roles: row.roles,
     emailVerified: row.email_verified_at !== null,
+    consentVersion: row.consent_version,
+    needsReconsent: row.consent_version !== CURRENT_POLICY_VERSION,
+    analyticsConsent: row.analytics_consent,
+    restrictedMode: row.restricted_mode,
+    xp: row.xp,
+    skipSpeaking: row.skip_speaking,
+    profileVisibility: row.profile_visibility,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
 
 export function registerUserRoutes(app: FastifyInstance): void {
+  const streaks = new StreakService(app.db);
+
   app.get('/me', { preHandler: requireAuth }, async (req) => {
     const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
-    return { user: toMe(result.rows[0] as MeRow) };
+    const row = result.rows[0] as MeRow;
+    // settle the streak on read so a lapsed day shows as broken (KUR-031)
+    const streak = await streaks.get(row.id, row.timezone);
+    return { user: { ...toMe(row), streak } };
   });
 
   /** Active sessions = live refresh-token families (KUR-022). */
@@ -129,6 +160,29 @@ export function registerUserRoutes(app: FastifyInstance): void {
       // when the caller revoked their own session, the client must drop
       // its tokens now — the access token would otherwise live ≤15 min
       return { revoked: true, current: id === req.user!.familyId };
+    },
+  );
+
+  /** Re-consent + analytics preference (KUR-109). */
+  app.post(
+    '/me/consent',
+    { schema: { body: consentBodySchema }, preHandler: requireAuth },
+    async (req) => {
+      const body = req.body as z.infer<typeof consentBodySchema>;
+      if (body.acceptPolicy) {
+        await app.db.query(
+          `UPDATE users SET consent_version = $2, consented_at = now() WHERE id = $1`,
+          [req.user!.id, CURRENT_POLICY_VERSION],
+        );
+      }
+      if (body.analytics !== undefined) {
+        await app.db.query(`UPDATE users SET analytics_consent = $2 WHERE id = $1`, [
+          req.user!.id,
+          body.analytics,
+        ]);
+      }
+      const row = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
+      return { user: toMe(row.rows[0] as MeRow) };
     },
   );
 
@@ -191,7 +245,32 @@ export function registerUserRoutes(app: FastifyInstance): void {
       if (body.displayName !== undefined) add('display_name', normalizeKurdish(body.displayName));
       if (body.bio !== undefined) add('bio', sanitizeBio(body.bio));
       if (body.locale !== undefined) add('locale', body.locale);
-      if (body.timezone !== undefined) add('timezone', body.timezone);
+      if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);
+
+      if (body.timezone !== undefined) {
+        const cur = await app.db.query<{ timezone: string; timezone_changed_at: Date | null }>(
+          `SELECT timezone, timezone_changed_at FROM users WHERE id = $1`,
+          [userId],
+        );
+        const row = cur.rows[0]!;
+        if (body.timezone !== row.timezone) {
+          // Cap tz changes to once a week so a streak can't be farmed by
+          // hopping timezones to fabricate extra days (KUR-031).
+          const cooldownMs = TIMEZONE_CHANGE_COOLDOWN_DAYS * 24 * 3_600_000;
+          if (
+            row.timezone_changed_at &&
+            Date.now() - new Date(row.timezone_changed_at).getTime() < cooldownMs
+          ) {
+            throw new AppError(
+              'TIMEZONE_CHANGE_COOLDOWN',
+              429,
+              `timezone can only be changed once every ${TIMEZONE_CHANGE_COOLDOWN_DAYS} days`,
+            );
+          }
+          add('timezone', body.timezone);
+          add('timezone_changed_at', new Date());
+        }
+      }
 
       if (body.username !== undefined) {
         const username = canonicalUsername(body.username);

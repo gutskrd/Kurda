@@ -39,7 +39,8 @@ describe.skipIf(!DATABASE_URL)('signup anti-bot (integration)', () => {
     app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { username: `ab_${suffix}`.slice(0, 30), password: 'a-strong-password', ...body },
+      payload: { username: `ab_${suffix}`.slice(0, 30), password: 'a-strong-password',
+        acceptTerms: true, ...body },
       remoteAddress: ip,
     });
 

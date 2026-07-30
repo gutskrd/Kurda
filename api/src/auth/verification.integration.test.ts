@@ -33,6 +33,7 @@ describe.skipIf(!DATABASE_URL)('email verification (integration)', () => {
         email: userEmail,
         username: `verify_${suffix}`.slice(0, 30),
         password: 'a-strong-password',
+        acceptTerms: true,
       },
       remoteAddress: '10.6.0.1',
     });
@@ -57,7 +58,7 @@ describe.skipIf(!DATABASE_URL)('email verification (integration)', () => {
   });
 
   it.skipIf(!REDIS_URL)('signup enqueued a verify-email job', async () => {
-    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'completed']);
+    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'prioritized', 'completed']);
     const match = jobs.find(
       (j) => j.name === 'send-email' && (j.data as { to?: string }).to === userEmail,
     );

@@ -17,7 +17,12 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
   const uname = (n: string) => `${n}_${suffix}`.slice(0, 30);
 
   const register = (body: Record<string, unknown>, ip = '10.1.0.1') =>
-    app.inject({ method: 'POST', url: '/auth/register', payload: body, remoteAddress: ip });
+    app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { acceptTerms: true, ...body },
+      remoteAddress: ip,
+    });
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -36,6 +41,7 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
       email: email('rojda'),
       username: uname('rojda'),
       password: 'a-strong-password',
+        acceptTerms: true,
       displayName: 'Rojda',
     });
     expect(res.statusCode).toBe(201);
