@@ -82,7 +82,8 @@ import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
-import { registerAiModerationRoutes } from './moderation/ai-routes.js';
+import { ImageModerationService } from './moderation/image-moderation-service.js';
+import { registerAiModerationRoutes, registerImageModerationRoutes } from './moderation/ai-routes.js';
 import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
@@ -257,6 +258,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // provider-pluggable; feeds the #102 review queue via moderation_flags
     const aiMod = new AiModerationService(app.db);
     registerAiModerationRoutes(app, aiMod);
+    // automatic image scanning (KUR-294): stub scanner (clean) by default,
+    // provider-pluggable; image consumers call ImageModerationService.scan at
+    // finalize to gate visibility before serving
+    registerImageModerationRoutes(app, new ImageModerationService(app.db));
     registerGroupRoutes(app, groups, trust);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
