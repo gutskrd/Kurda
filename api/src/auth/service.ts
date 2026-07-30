@@ -11,6 +11,7 @@ import {
 } from '../users/repository.js';
 import { sendEmailJob } from '../jobs/email.js';
 import type { JobQueue } from '../jobs/queue.js';
+import { CURRENT_POLICY_VERSION, isRestrictedAge } from '../gdpr/consent.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { LockoutService } from './lockout.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
@@ -48,6 +49,7 @@ export interface RegisterInput {
   locale?: string;
   timezone?: string;
   deviceName?: string;
+  birthDate?: string;
 }
 
 export interface PublicUser {
@@ -218,6 +220,16 @@ export class AuthService {
       }
       throw err;
     }
+
+    // versioned consent + minor protection (KUR-109). The route schema
+    // guarantees acceptTerms was true.
+    const birthDate = input.birthDate ? new Date(input.birthDate) : null;
+    await this.pool.query(
+      `UPDATE users SET consent_version = $2, consented_at = now(),
+              birth_date = $3, restricted_mode = $4
+       WHERE id = $1`,
+      [user.id, CURRENT_POLICY_VERSION, birthDate, birthDate ? isRestrictedAge(birthDate) : false],
+    );
 
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,

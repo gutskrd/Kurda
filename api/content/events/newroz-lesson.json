@@ -1,0 +1,64 @@
+{
+  "$comment": "Newroz cultural mini-lesson (KUR-090). Standard authoring format (KUR-041) — import with `npm run content:import content/events/newroz-lesson.json --publish`. A short, self-contained course: the story of Kawa + core Newroz vocabulary.",
+  "course": {
+    "slug": "newroz-culture",
+    "dialect": "kurmanji",
+    "titleKu": "Newroz: Cejna Biharê",
+    "titleEn": "Newroz: The Spring Festival"
+  },
+  "units": [
+    {
+      "position": 1,
+      "titleKu": "Newroz",
+      "titleEn": "Newroz",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Çîrok û Dîrok",
+          "titleEn": "Story & History",
+          "grammarMd": "# Newroz\n\n**Newroz** (\"roja nû\" — the new day) is the Kurdish New Year, celebrated on **21 March**, the spring equinox.\n\nThe legend tells of **Kawayê Hesinkar** (Kawa the Blacksmith), who rose against the tyrant **Zuhak** and freed the people. Kawa lit a great **fire (agir)** on the mountains to announce freedom — which is why bonfires, dancing the **govend**, and wearing colourful clothes mark Newroz today.\n\nNewroz is a festival of **spring (bihar)**, renewal, and resistance.",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Çîroka Kawa",
+              "titleEn": "The Story of Kawa",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "On which date is Newroz celebrated?", "options": ["21 March", "1 January", "21 December"], "correctIndex": 0 } },
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "Who is the hero of the Newroz legend?", "options": ["Kawayê Hesinkar", "Zuhak", "Rustem"], "correctIndex": 0 } },
+                { "position": 3, "type": "multiple_choice", "payload": { "prompt": "What did Kawa light to announce freedom?", "options": ["Agir (fire)", "Av (water)", "Berf (snow)"], "correctIndex": 0 } },
+                { "position": 4, "type": "multiple_choice", "payload": { "prompt": "\"Newroz\" tê çi wateyê?", "options": ["Roja nû (the new day)", "Şeva dirêj (long night)", "Havîn (summer)"], "correctIndex": 0 } }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Peyvên Newrozê",
+          "titleEn": "Newroz Vocabulary",
+          "grammarMd": "# Peyvên Newrozê — Newroz words\n\n- **Newroz** — the new day / New Year\n- **Agir** — fire\n- **Bihar** — spring\n- **Cejn** — festival\n- **Govend** — the circle dance\n- **Serbilindî** — pride",
+          "lessons": [
+            {
+              "position": 1,
+              "titleKu": "Peyv 1",
+              "titleEn": "Words 1",
+              "exercises": [
+                { "position": 1, "type": "translate", "payload": { "prompt": "Fire", "accepted": ["Agir"] } },
+                { "position": 2, "type": "translate", "payload": { "prompt": "Spring (the season)", "accepted": ["Bihar"] } },
+                { "position": 3, "type": "match_pairs", "payload": { "pairs": [ { "left": "Newroz", "right": "New day" }, { "left": "Agir", "right": "Fire" }, { "left": "Bihar", "right": "Spring" }, { "left": "Cejn", "right": "Festival" } ] } }
+              ]
+            },
+            {
+              "position": 2,
+              "titleKu": "Peyv 2",
+              "titleEn": "Words 2",
+              "exercises": [
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Govend\" tê çi wateyê?", "options": ["Circle dance", "Bonfire", "New year"], "correctIndex": 0 } },
+                { "position": 2, "type": "translate", "payload": { "prompt": "Festival", "accepted": ["Cejn"] } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

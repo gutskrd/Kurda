@@ -48,7 +48,12 @@ describe('refresh token hashing', () => {
 });
 
 describe('registerBodySchema', () => {
-  const valid = { email: 'rojda@example.com', username: 'rojda', password: 'longenough1' };
+  const valid = {
+    email: 'rojda@example.com',
+    username: 'rojda',
+    password: 'longenough1',
+    acceptTerms: true,
+  };
 
   it('accepts a valid payload', () => {
     expect(registerBodySchema.safeParse(valid).success).toBe(true);
