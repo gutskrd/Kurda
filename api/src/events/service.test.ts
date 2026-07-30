@@ -77,7 +77,7 @@ describe('EventService.active caching', () => {
   it('serves the active set from cache within the boundary TTL', async () => {
     const now = new Date('2026-03-21T12:00:00.000Z');
     const { pool, state } = fakePool([row({ key: 'a', priority: 2 }), row({ key: 'b', priority: 1 })]);
-    const cache = new Cache(new MemoryCacheClient(() => now.getTime()));
+    const cache = new Cache(new MemoryCacheClient(() => now.getTime()), undefined, { jitterRatio: 0 });
     const svc = new EventService(pool, cache);
 
     const first = await svc.active(now);
@@ -93,7 +93,7 @@ describe('EventService.active caching', () => {
   it('busts the cache on upsert so a correction is visible immediately', async () => {
     const now = new Date('2026-03-21T12:00:00.000Z');
     const { pool, state } = fakePool([row({ key: 'a' })]);
-    const cache = new Cache(new MemoryCacheClient(() => now.getTime()));
+    const cache = new Cache(new MemoryCacheClient(() => now.getTime()), undefined, { jitterRatio: 0 });
     const svc = new EventService(pool, cache);
 
     await svc.active(now);
@@ -114,7 +114,7 @@ describe('EventService.active caching', () => {
   it('re-queries after the boundary TTL lapses', async () => {
     let clock = Date.parse('2026-03-21T23:59:30.000Z'); // 30s before window end
     const { pool, state } = fakePool([row({ key: 'a' })]);
-    const cache = new Cache(new MemoryCacheClient(() => clock));
+    const cache = new Cache(new MemoryCacheClient(() => clock), undefined, { jitterRatio: 0 });
     const svc = new EventService(pool, cache);
 
     await svc.active(new Date(clock));
