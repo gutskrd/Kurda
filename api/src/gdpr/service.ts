@@ -69,6 +69,7 @@ export class GdprService {
            username = 'deleted_' || substr(id::text, 1, 8),
            display_name = NULL, bio = NULL, password_hash = NULL,
            email_verified_at = NULL,
+           phone_verified_at = NULL, phone_hash = NULL, phone_masked = NULL,
            token_version = token_version + 1,
            deleted_at = now()
          WHERE id = $1`,
@@ -80,6 +81,7 @@ export class GdprService {
       );
       await this.pool.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [row.id]);
       await this.pool.query(`DELETE FROM email_tokens WHERE user_id = $1`, [row.id]);
+      await this.pool.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [row.id]);
       this.deps.log?.info({ userId: row.id }, 'account anonymized after grace period');
     }
     return due.rows.length;
@@ -109,7 +111,8 @@ export class GdprService {
   async buildExport(userId: string): Promise<Record<string, unknown>> {
     const user = await this.pool.query(
       `SELECT id, email, username, display_name, bio, locale, timezone, roles,
-              email_verified_at, created_at, updated_at, deletion_requested_at
+              email_verified_at, phone_verified_at, phone_masked,
+              created_at, updated_at, deletion_requested_at
        FROM users WHERE id = $1`,
       [userId],
     );

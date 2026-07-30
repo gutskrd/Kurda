@@ -81,6 +81,9 @@ import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { TrustService } from './trust/service.js';
+import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
+import { PhoneVerificationService } from './auth/phone-verification-service.js';
+import { StubSmsSender } from './auth/sms.js';
 import { registerMediaRoutes } from './media/routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
@@ -232,6 +235,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.addHook('onClose', async () => clearInterval(leagueSettle));
 
     registerAuthRoutes(app, config);
+    // optional phone (SMS) verification (KUR-297) — stub sender until a provider
+    // is configured; raises trust (#295) and is exported/deleted with the account
+    registerPhoneVerificationRoutes(app, new PhoneVerificationService(app.db, { sms: new StubSmsSender() }));
     registerUserRoutes(app);
     registerAchievementRoutes(app, gemService, activity);
     registerWalletRoutes(app);
