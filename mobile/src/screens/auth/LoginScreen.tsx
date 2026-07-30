@@ -32,10 +32,10 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Têkeve — Log in">
+    <AuthScreenShell title="Log in">
       <FormError message={formError} />
       <Field
-        label="E-name — Email"
+        label="Email"
         value={email}
         onChangeText={setEmail}
         error={errors.email}
@@ -43,20 +43,20 @@ export function LoginScreen({ navigation }: Props) {
         testID="email"
       />
       <Field
-        label="Şîfre — Password"
+        label="Password"
         value={password}
         onChangeText={setPassword}
         error={errors.password}
         secure
         testID="password"
       />
-      <SubmitButton label="Têkeve" busy={busy} onPress={submit} />
+      <SubmitButton label="Log in" busy={busy} onPress={submit} />
       <LinkText
-        label="Şîfreya xwe ji bîr kir? — Forgot password?"
+        label="Forgot password?"
         onPress={() => navigation.navigate('ForgotPassword')}
       />
       <LinkText
-        label="Hesabekî nû çêke — Create an account"
+        label="Create an account"
         onPress={() => navigation.navigate('Register')}
       />
     </AuthScreenShell>

@@ -1,0 +1,39 @@
+{
+  "$comment": "Cultural event template (KUR-090). Consumed by `npm run events:seed`, which materializes one events-table row per upcoming year (key `newroz-<year>`) from month/day/durationDays. Copy this file to add another cultural event (Yalda, Language Day, harvest) — config only, no code. `quests` and `rewards` are opaque config the quest engine (KUR-091) and reward hooks read; `lessonCourseSlug` links the mini-lesson imported via `npm run content:import content/events/newroz-lesson.json --publish`.",
+  "key": "newroz",
+  "name": "Newroz",
+  "type": "cultural",
+  "theme": "newroz",
+  "month": 3,
+  "day": 21,
+  "durationDays": 3,
+  "priority": 10,
+  "lessonCourseSlug": "newroz-culture",
+  "quests": [
+    {
+      "id": "newroz-xp",
+      "type": "earn_xp",
+      "count": 300,
+      "titleEn": "Welcome spring — earn 300 XP",
+      "titleKu": "Bi xêr hatî bihar — 300 XP bi dest bixe",
+      "reward": { "gems": 30 }
+    },
+    {
+      "id": "newroz-play-3",
+      "type": "win_games",
+      "count": 3,
+      "titleEn": "Win 3 quiz games during Newroz",
+      "titleKu": "Di rojên Newrozê de 3 lîstikan bibe",
+      "reward": { "gems": 40 }
+    },
+    {
+      "id": "newroz-lessons-2",
+      "type": "complete_lessons",
+      "count": 2,
+      "titleEn": "Complete 2 lessons over Newroz",
+      "titleKu": "Di Newrozê de 2 dersan temam bike",
+      "reward": { "gems": 30, "zer": 200 }
+    }
+  ],
+  "rewards": { "completionBadge": "newroz", "gems": 100 }
+}

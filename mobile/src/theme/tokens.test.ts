@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { colors, kurdishSample, radii, spacing, typography } from './tokens';
+import { colors, KURDISH_CHARSET, radii, spacing, typography } from './tokens';
 
 describe('design tokens', () => {
   it('defines all colors as hex values', () => {
@@ -16,9 +16,9 @@ describe('design tokens', () => {
     expect(asc(Object.values(typography.sizes))).toBe(true);
   });
 
-  it('kurdish sample covers every special letter both cases', () => {
+  it('the Kurdish charset covers every special letter in both cases', () => {
     for (const ch of ['Ê', 'ê', 'Î', 'î', 'Û', 'û', 'Ç', 'ç', 'Ş', 'ş']) {
-      expect(kurdishSample).toContain(ch);
+      expect(KURDISH_CHARSET).toContain(ch);
     }
   });
 });

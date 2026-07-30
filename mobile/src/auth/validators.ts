@@ -30,10 +30,13 @@ export function validateUsername(value: string): FieldError | null {
   return USERNAME_PATTERN.test(v) ? null : 'invalid_username';
 }
 
-/** Kurdish-first copy with English fallback (full i18n in KUR-093). */
+/**
+ * English UI copy — learners don't read Kurdish yet, so English is the
+ * default app language. Language selection ships with the i18n issue.
+ */
 export const FIELD_ERROR_COPY: Record<FieldError, string> = {
-  required: 'Pêwîst e — required',
-  invalid_email: 'E-nameyeke derbasdar binivîse — enter a valid email',
-  password_too_short: 'Şîfre herî kêm 8 tîp — password must be at least 8 characters',
-  invalid_username: '3-30 tîp: herf, hejmar an _ — 3-30 letters, digits or _',
+  required: 'Required',
+  invalid_email: 'Enter a valid email address',
+  password_too_short: 'Password must be at least 8 characters',
+  invalid_username: 'Username must be 3–30 characters (letters, digits or _)',
 };

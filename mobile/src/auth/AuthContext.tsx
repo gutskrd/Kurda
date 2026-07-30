@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ApiClient } from '../api/client';
 import { apiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
-import { SecureTokenStorage } from './storage';
+import { createTokenStorage } from './storage';
 
 export interface SessionUser {
   id: string;
@@ -17,6 +17,8 @@ interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
   client: ApiClient;
+  /** API origin, used to derive the realtime WebSocket URL (KUR-054). */
+  baseUrl: string;
   login(email: string, password: string): Promise<string | null>;
   register(input: {
     email: string;
@@ -36,13 +38,23 @@ interface AuthPayload {
 
 export function AuthProvider({
   children,
-  storage = new SecureTokenStorage(),
-  baseUrl = process.env.EXPO_PUBLIC_API_URL ?? apiBaseUrl('development'),
+  storage: storageProp,
+  baseUrl: baseUrlProp,
 }: {
   children: ReactNode;
   storage?: TokenStorage;
   baseUrl?: string;
 }) {
+  // Stabilise storage and baseUrl for the lifetime of the provider.
+  // A plain default parameter (createTokenStorage()) runs on EVERY
+  // render, producing a new storage instance each time, which recreates
+  // the client and re-runs the restore effect in a loop — bouncing the
+  // user back to the login screen. useState initialisers run once.
+  const [storage] = useState<TokenStorage>(() => storageProp ?? createTokenStorage());
+  const [baseUrl] = useState<string>(
+    () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? apiBaseUrl('development'),
+  );
+
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
 
@@ -96,6 +108,7 @@ export function AuthProvider({
     status,
     user,
     client,
+    baseUrl,
     login: async (email, password) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
       if (!res.ok) return res.error.message;
@@ -103,7 +116,12 @@ export function AuthProvider({
       return null;
     },
     register: async (input) => {
-      const res = await client.post<AuthPayload>('/auth/register', input);
+      // consent is versioned server-side (KUR-109); the register screen
+      // shows the ToS/privacy notice next to the submit button
+      const res = await client.post<AuthPayload>('/auth/register', {
+        ...input,
+        acceptTerms: true,
+      });
       if (!res.ok) return res.error.message;
       await applyAuth(res.data);
       return null;

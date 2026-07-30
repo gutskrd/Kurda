@@ -13,6 +13,11 @@ const envSchema = z.object({
     .string()
     .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection URL')
     .optional(),
+  /** Optional read-replica pool (KUR-114); reads route here, writes stay on the primary. */
+  DATABASE_REPLICA_URL: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection URL')
+    .optional(),
   /** Optional; without it caching is a no-op and /health reports not_configured. */
   REDIS_URL: z
     .string()
@@ -35,8 +40,18 @@ const envSchema = z.object({
   APPLE_CLIENT_IDS: z.string().optional(),
   /** Cloudflare Turnstile; CAPTCHA disabled when unset (KUR-025). */
   TURNSTILE_SECRET: z.string().optional(),
+  /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
+  IAP_WEBHOOK_SECRET: z.string().optional(),
+  /** Shared secret guarding email bounce/complaint webhooks; disabled when unset (KUR-098). */
+  EMAIL_WEBHOOK_SECRET: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
+  /**
+   * Comma-separated browser origins allowed to call the API (CORS).
+   * The web client (localhost:8081) needs this; native apps don't send
+   * Origin so they're unaffected. Empty = no cross-origin browser access.
+   */
+  CORS_ORIGINS: z.string().default(''),
 });
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;

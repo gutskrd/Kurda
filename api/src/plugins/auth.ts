@@ -33,8 +33,9 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       token_version: number;
       deleted_at: Date | null;
       banned_at: Date | null;
+      banned_until: Date | null;
     }>(
-      `SELECT id, roles, token_version, deleted_at, banned_at FROM users WHERE id = $1`,
+      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until FROM users WHERE id = $1`,
       [claims.sub],
     );
     const user = result.rows[0];
@@ -43,7 +44,9 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       req.authFailure = 'invalid_token';
       return;
     }
-    if (user.deleted_at || user.banned_at) {
+    // a temp ban lapses on its own once banned_until passes (KUR-101)
+    const banActive = user.banned_at && (user.banned_until === null || user.banned_until > new Date());
+    if (user.deleted_at || banActive) {
       req.authFailure = 'account_disabled';
       return;
     }
