@@ -2,12 +2,17 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import type { GroupService } from './service.js';
+import type { TrustService } from '../trust/service.js';
 
 const idParam = z.object({ id: z.uuid() });
 const memberParam = z.object({ id: z.uuid(), userId: z.uuid() });
 
 /** Groups / clubs (KUR-084). */
-export function registerGroupRoutes(app: FastifyInstance, groups: GroupService): void {
+export function registerGroupRoutes(
+  app: FastifyInstance,
+  groups: GroupService,
+  trust?: TrustService,
+): void {
   /** Create a group (creator becomes owner). */
   app.post(
     '/groups',
@@ -21,7 +26,23 @@ export function registerGroupRoutes(app: FastifyInstance, groups: GroupService):
       },
       preHandler: requireAuth,
     },
-    async (req) => groups.create(req.user!.id, req.body as { name: string; description?: string; privacy?: 'open' | 'invite' }),
+    async (req, reply) => {
+      if (trust) {
+        // per-level cap (KUR-295): a new account can't spin up many groups fast
+        const gate = await trust.checkAction(req.user!.id, 'group_create');
+        if (!gate.allowed) {
+          return reply
+            .code(429)
+            .send({ code: 'TRUST_VELOCITY', message: 'new accounts can create fewer groups — this lifts as your account ages' });
+        }
+      }
+      const created = await groups.create(
+        req.user!.id,
+        req.body as { name: string; description?: string; privacy?: 'open' | 'invite' },
+      );
+      if (trust) await trust.recordAction(req.user!.id, 'group_create');
+      return created;
+    },
   );
 
   /** Discover open groups + your own. */

@@ -3,11 +3,16 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import type { ChatService } from './service.js';
 import { MAX_MESSAGE_LEN } from './service.js';
+import type { TrustService } from '../trust/service.js';
 
 const userParam = z.object({ userId: z.uuid() });
 
 /** 1:1 direct messages (KUR-083). Send over HTTP; receive/receipts over WS. */
-export function registerChatRoutes(app: FastifyInstance, chat: ChatService): void {
+export function registerChatRoutes(
+  app: FastifyInstance,
+  chat: ChatService,
+  trust?: TrustService,
+): void {
   /** Conversation list with last message + unread counts. */
   app.get('/chat/conversations', { preHandler: requireAuth }, async (req) => ({
     conversations: await chat.conversations(req.user!.id),
@@ -38,11 +43,38 @@ export function registerChatRoutes(app: FastifyInstance, chat: ChatService): voi
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireAuth,
     },
-    async (req) => {
+    async (req, reply) => {
       const { userId } = req.params as { userId: string };
-      return chat.send(req.user!.id, userId, (req.body as { body: string }).body);
+      const body = (req.body as { body: string }).body;
+      if (trust) {
+        // per-level velocity cap (KUR-295): new accounts throttled tighter
+        const gate = await trust.checkAction(req.user!.id, 'message');
+        if (!gate.allowed) {
+          return reply
+            .code(429)
+            .send({ code: 'TRUST_VELOCITY', message: 'you are messaging too fast — slows down for new accounts' });
+        }
+        // duplicate/burst spam → auto-mute/suspend before the message lands
+        const spam = await trust.assessContent(req.user!.id, body);
+        if (spam.enforced) {
+          return reply
+            .code(403)
+            .send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
+        }
+      }
+      const msg = await chat.send(req.user!.id, userId, body);
+      if (trust) await trust.recordAction(req.user!.id, 'message');
+      return msg;
     },
   );
+
+  if (trust) {
+    /** Current trust level + per-action caps (transparency for the client). */
+    app.get('/me/trust', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+      const level = await trust.getLevel(req.user!.id);
+      return { level, caps: trust.capsFor(level) };
+    });
+  }
 
   /** Mark their messages read (fires a read receipt). */
   app.post(
