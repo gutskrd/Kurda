@@ -29,6 +29,18 @@ describe.skipIf(!DATABASE_URL)('content admin CMS (integration)', () => {
   });
 
   afterAll(async () => {
+    // published lessons are immutable and cannot be deleted; archive them first
+    // (the one allowed transition) so the course cascade delete is permitted.
+    await pool.query(
+      `UPDATE lessons SET status = 'archived'
+         WHERE status = 'published'
+           AND skill_id IN (
+             SELECT s.id FROM skills s
+             JOIN units u ON u.id = s.unit_id
+             WHERE u.course_id = $1
+           )`,
+      [courseId],
+    );
     await pool.query(`DELETE FROM courses WHERE id = $1`, [courseId]); // cascades units→skills→lessons→exercises
     await pool.end();
   });
