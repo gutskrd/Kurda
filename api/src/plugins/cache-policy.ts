@@ -12,7 +12,9 @@ import { cachePolicy, isEdgeCacheable } from '../http/cache-policy.js';
 export function setupCachePolicy(app: FastifyInstance): void {
   app.addHook('onSend', async (req, reply, payload) => {
     const routeUrl = req.routeOptions?.url;
-    if (!routeUrl || reply.getHeader('cache-control')) return payload;
+    // hijacked/upgraded responses (e.g. the WebSocket gateway, KUR-049) have
+    // already flushed their headers — writing another would throw HEADERS_SENT.
+    if (!routeUrl || reply.raw.headersSent || reply.getHeader('cache-control')) return payload;
 
     const authenticated = !!req.user;
     if (!authenticated && !isEdgeCacheable(routeUrl)) return payload;
