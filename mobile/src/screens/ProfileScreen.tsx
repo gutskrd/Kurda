@@ -8,6 +8,7 @@ import { StreakBadge } from '../streak/StreakBadge';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL } from '../i18n/translations';
+import { NotificationBell } from '../notifications/NotificationBell';
 import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 
@@ -63,8 +64,9 @@ export function ProfileScreen() {
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Shop')}>
         <Text style={styles.shopText}>🛒 {t('profile.shop')}</Text>
       </Pressable>
+      <NotificationBell />
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Notifications')}>
-        <Text style={styles.shopText}>🔔 Notifications</Text>
+        <Text style={styles.shopText}>⚙️ Notification settings</Text>
       </Pressable>
 
       <View style={styles.privacy}>

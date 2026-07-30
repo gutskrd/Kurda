@@ -92,6 +92,8 @@ import { QuestService, DbQuestMetrics } from './events/quest-service.js';
 import { registerQuestRoutes } from './events/quest-routes.js';
 import { NotificationPrefsService } from './notifications/prefs-service.js';
 import { registerNotificationRoutes } from './notifications/routes.js';
+import { InboxService } from './notifications/inbox-service.js';
+import { registerInboxRoutes } from './notifications/inbox-routes.js';
 import { StreakReminderService } from './notifications/streak-reminder-service.js';
 import { makePushSendJob } from './jobs/push-jobs.js';
 
@@ -286,14 +288,20 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const deviceTokens = new DeviceTokenService(app.db);
     const notificationPrefs = new NotificationPrefsService(app.db);
     const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
+    const inbox = new InboxService(app.db);
     registerNotificationRoutes(app, notificationPrefs);
-    registerPushRoutes(app, deviceTokens, pushService);
+    registerInboxRoutes(app, inbox);
+    registerPushRoutes(app, deviceTokens, pushService, inbox);
 
     // personalized streak reminders (KUR-096): hourly, bucketed by local time
     const streakReminders = new StreakReminderService(app.db, {
       enqueue: async (userId, notification) => {
+        // job path records to the inbox in the worker; inline path records here
         if (app.jobs) await app.jobs.enqueue(makePushSendJob(pushService), { userId, notification });
-        else await pushService.deliver(userId, notification);
+        else {
+          await inbox.record(userId, notification);
+          await pushService.deliver(userId, notification);
+        }
       },
     });
     const reminderSweep = setInterval(
