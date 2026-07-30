@@ -14,5 +14,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     fileParallelism: !process.env.DATABASE_URL,
+    // flush Redis before each integration file to prevent cross-file key leakage
+    setupFiles: process.env.REDIS_URL ? ['./vitest.setup.ts'] : [],
   },
 });
