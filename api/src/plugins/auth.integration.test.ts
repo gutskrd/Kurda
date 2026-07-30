@@ -32,6 +32,7 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
         email: `guard_${suffix}@it.kurda.app`,
         username: `guard_${suffix}`.slice(0, 30),
         password: 'a-strong-password',
+        acceptTerms: true,
       },
       remoteAddress: '10.5.0.1',
     });

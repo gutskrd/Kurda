@@ -49,6 +49,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
         email: `me_${suffix}@it.kurda.app`,
         username: `me_${suffix}`.slice(0, 30),
         password: 'a-strong-password',
+        acceptTerms: true,
       },
       remoteAddress: '10.10.0.2',
     });
@@ -91,6 +92,15 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
   it('rejects invalid timezones and empty patches', async () => {
     expect((await me('PATCH', { timezone: 'Mars/OlympusMons' })).statusCode).toBe(400);
     expect((await me('PATCH', {})).statusCode).toBe(400);
+  });
+
+  it('timezone change hits the 1/week cooldown (anti streak time-travel)', async () => {
+    // the profile test above already moved this user to Europe/Berlin
+    const again = await me('PATCH', { timezone: 'Asia/Tokyo' });
+    expect(again.statusCode).toBe(429);
+    expect(again.json().code).toBe('TIMEZONE_CHANGE_COOLDOWN');
+    // re-setting the SAME timezone is a no-op, not a violation
+    expect((await me('PATCH', { timezone: 'Europe/Berlin' })).statusCode).toBe(200);
   });
 
   it('username change works once, then hits the 30-day cooldown', async () => {

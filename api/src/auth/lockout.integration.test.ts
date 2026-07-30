@@ -46,7 +46,7 @@ describe.skipIf(!DATABASE_URL)('login lockout (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email, username: `lock_${suffix}`.slice(0, 30), password },
+      payload: { email, username: `lock_${suffix}`.slice(0, 30), password, acceptTerms: true },
       remoteAddress: freshIp(),
     });
     userId = reg.json().user.id;
