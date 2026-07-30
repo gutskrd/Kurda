@@ -49,7 +49,11 @@ export function registerDashboardRoutes(app: FastifyInstance, dashboards: Dashbo
   /** Ops/manual rollup refresh for a specific day (defaults to yesterday). */
   app.post(
     '/admin/analytics/refresh',
-    { schema: { querystring: z.object({ day: z.string().regex(DAY).optional() }) }, preHandler: requireRoles('admin') },
+    {
+      schema: { querystring: z.object({ day: z.string().regex(DAY).optional() }) },
+      config: { skipValidation: true },
+      preHandler: requireRoles('admin'),
+    },
     async (req) => {
       const day = (req.query as { day?: string }).day;
       await dashboards.refreshDay(day);
