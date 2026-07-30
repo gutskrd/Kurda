@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import type { ChatService } from './service.js';
 import { MAX_MESSAGE_LEN } from './service.js';
 import type { TrustService } from '../trust/service.js';
+import type { AiModerationService } from '../moderation/ai-service.js';
 
 const userParam = z.object({ userId: z.uuid() });
 
@@ -12,6 +13,7 @@ export function registerChatRoutes(
   app: FastifyInstance,
   chat: ChatService,
   trust?: TrustService,
+  aiMod?: AiModerationService,
 ): void {
   /** Conversation list with last message + unread counts. */
   app.get('/chat/conversations', { preHandler: requireAuth }, async (req) => ({
@@ -60,6 +62,14 @@ export function registerChatRoutes(
           return reply
             .code(403)
             .send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
+        }
+      }
+      if (aiMod) {
+        // AI-assisted moderation (KUR-293), layered after the #086 wordlist:
+        // a high-confidence hit blocks the send; lower hits are flagged (#102).
+        const verdict = await aiMod.moderate({ surface: 'chat', text: body, authorId: req.user!.id, contentType: 'dm' });
+        if (verdict.blocked) {
+          return reply.code(422).send({ code: 'CONTENT_BLOCKED', message: 'this message was blocked by moderation' });
         }
       }
       const msg = await chat.send(req.user!.id, userId, body);
