@@ -81,6 +81,8 @@ import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { TrustService } from './trust/service.js';
+import { AiModerationService } from './moderation/ai-service.js';
+import { registerAiModerationRoutes } from './moderation/ai-routes.js';
 import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
@@ -251,6 +253,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const groups = new GroupService(app.db);
     // trust levels + velocity caps + spam auto-moderation (KUR-295)
     const trust = new TrustService(app.db, { redis: app.redis });
+    // AI-assisted content moderation (KUR-293): spam/scam heuristic by default,
+    // provider-pluggable; feeds the #102 review queue via moderation_flags
+    const aiMod = new AiModerationService(app.db);
+    registerAiModerationRoutes(app, aiMod);
     registerGroupRoutes(app, groups, trust);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
@@ -406,6 +412,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       app,
       new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
       trust,
+      aiMod,
     );
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
