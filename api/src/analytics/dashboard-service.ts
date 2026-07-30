@@ -9,6 +9,16 @@ import {
   type FunnelStepRate,
 } from './dashboards.js';
 
+/**
+ * Format a pg `date` value (which node-postgres parses to a Date at *local*
+ * midnight) back to YYYY-MM-DD without a timezone shift. `toISOString()` would
+ * move the day on any server west/east of UTC; using the local components keeps
+ * the calendar day pg gave us.
+ */
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export interface ActivityPoint {
   day: string;
   dau: number;
@@ -98,7 +108,7 @@ export class DashboardService {
     );
     const byDay = new Map<string, ActivityPoint>();
     for (const r of res.rows) {
-      const key = r.day.toISOString().slice(0, 10);
+      const key = ymd(r.day);
       const point = byDay.get(key) ?? { day: key, dau: 0, wau: 0, mau: 0 };
       point[r.metric as 'dau' | 'wau' | 'mau'] = r.value;
       byDay.set(key, point);
@@ -127,7 +137,7 @@ export class DashboardService {
       [from, to],
     );
     return res.rows.map((r) => ({
-      cohortDay: r.cohort_day.toISOString().slice(0, 10),
+      cohortDay: ymd(r.cohort_day),
       dayN: r.day_n,
       cohortSize: r.cohort_size,
       retained: r.retained,
