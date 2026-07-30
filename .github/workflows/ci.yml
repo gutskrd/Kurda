@@ -17,7 +17,7 @@ jobs:
       docker: ${{ steps.dockerfilter.outputs.docker }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           # Root config changes affect every package, so each filter
@@ -39,7 +39,7 @@ jobs:
             mobile:
               - 'mobile/**'
               - *root
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: dockerfilter
         with:
           filters: |
