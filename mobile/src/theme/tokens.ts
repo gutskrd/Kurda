@@ -39,8 +39,8 @@ export const radii = {
 export const typography = {
   /**
    * System fonts render Kurdish Latin diacritics (ê î û ç ş) correctly on
-   * both platforms. Any future custom font MUST be verified against
-   * kurdishSample before shipping (no tofu/fallback mixing).
+   * both platforms. Any future custom font MUST be verified against the
+   * full Kurdish character set before shipping (no tofu/fallback mixing).
    */
   fontFamily: 'System',
   sizes: {
@@ -58,8 +58,11 @@ export const typography = {
   },
 } as const;
 
-/** Rendered on placeholder screens so a font regression is visible instantly. */
-export const kurdishSample = 'Êê Îî Ûû Çç Şş — Jiyan bi kurdî xweştire';
+/**
+ * The full Kurdish Latin special-character set. NOT for display — used
+ * by tests (and future font checks) to verify diacritic rendering.
+ */
+export const KURDISH_CHARSET = 'ÊêÎîÛûÇçŞş';
 
 /**
  * RTL readiness (future Sorani/Arabic-script support, KUR-093):

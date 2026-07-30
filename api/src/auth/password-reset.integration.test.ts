@@ -34,6 +34,7 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
         email: userEmail,
         username: `reset_${suffix}`.slice(0, 30),
         password: 'old-password-123',
+        acceptTerms: true,
       },
       remoteAddress: '10.7.0.1',
     });
@@ -108,7 +109,7 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
   });
 
   it.skipIf(!REDIS_URL)('password-changed notification was enqueued', async () => {
-    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'completed']);
+    const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'prioritized', 'completed']);
     const match = jobs.find(
       (j) =>
         j.name === 'send-email' &&
