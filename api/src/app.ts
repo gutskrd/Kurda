@@ -88,6 +88,7 @@ import { ModerationQueueService } from './moderation/queue-service.js';
 import { registerModerationQueueRoutes } from './moderation/queue-routes.js';
 import { BotDetectionService } from './antibot/service.js';
 import { registerAntibotRoutes } from './antibot/routes.js';
+import { registerLibraryRoutes } from './library/routes.js';
 import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
@@ -270,6 +271,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerModerationQueueRoutes(app, new ModerationQueueService(app.db));
     // behavioral bot detection (KUR-110): scoring + CAPTCHA gating + ledger reversal
     registerAntibotRoutes(app, new BotDetectionService(app.db));
+    // community library (KUR-281): stories & poems authoring + browsing
+    registerLibraryRoutes(app);
     registerGroupRoutes(app, groups, trust);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
