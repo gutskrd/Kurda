@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
+import type { AiModerationService } from '../moderation/ai-service.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
@@ -23,7 +24,7 @@ const idParam = z.object({ id: z.uuid() });
  * editing, and deleting require auth (guests read-only) plus an ownership/admin
  * check. Comment creation is rate-limited (#010).
  */
-export function registerLibraryCommentRoutes(app: FastifyInstance, comments = new LibraryCommentService(app.db)): void {
+export function registerLibraryCommentRoutes(app: FastifyInstance, comments = new LibraryCommentService(app.db), aiMod?: AiModerationService): void {
   /** Post a comment (text / audio / both) or a reply. */
   app.post(
     '/library/posts/:postId/comments',
@@ -35,7 +36,15 @@ export function registerLibraryCommentRoutes(app: FastifyInstance, comments = ne
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
       const res = await comments.create(postId, req.user!.id, isAdmin(req) ? 'admin' : 'user', req.body as CreateCommentInput);
-      if (res.ok) return reply.code(201).send(res.comment);
+      if (res.ok) {
+        // auto-screen comment text (KUR-285/#293) — a flag enters the #102 queue
+        if (aiMod && res.comment.body) {
+          await aiMod
+            .moderate({ surface: 'library', text: res.comment.body, authorId: req.user!.id, contentType: 'comment', contentRef: res.comment.id })
+            .catch((err) => app.log.warn({ err }, 'library comment auto-moderation failed'));
+        }
+        return reply.code(201).send(res.comment);
+      }
       switch (res.reason) {
         case 'empty':
           return reply.code(422).send({ code: 'EMPTY_COMMENT', message: 'a comment needs text or audio' });

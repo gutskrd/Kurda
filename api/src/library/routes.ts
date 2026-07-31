@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { LibraryService } from './service.js';
+import type { AiModerationService } from '../moderation/ai-service.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
@@ -28,7 +29,7 @@ const idParam = z.object({ id: z.uuid() });
  * Community library authoring + browsing (KUR-281). Reads are public (guests can
  * read/listen); authoring/editing require auth and an ownership/admin check.
  */
-export function registerLibraryRoutes(app: FastifyInstance, library = new LibraryService(app.db)): void {
+export function registerLibraryRoutes(app: FastifyInstance, library = new LibraryService(app.db), aiMod?: AiModerationService): void {
   /** Create a story/poem (text required, audio optional). */
   app.post(
     '/library/posts',
@@ -41,6 +42,13 @@ export function registerLibraryRoutes(app: FastifyInstance, library = new Librar
       const body = req.body as z.infer<typeof createBody>;
       const res = await library.create(req.user!.id, isAdmin(req) ? 'admin' : 'user', body);
       if (!res.ok) return reply.code(422).send({ code: 'INVALID_POST', message: 'title and body are required' });
+      // auto-screen the text (KUR-285/#293): a flag enters the #102 queue. Never
+      // blocks literature — reviewers decide; runs after the post exists.
+      if (aiMod) {
+        await aiMod
+          .moderate({ surface: 'library', text: `${res.post.title}\n${res.post.body}`, authorId: req.user!.id, contentType: 'post', contentRef: res.post.id })
+          .catch((err) => app.log.warn({ err }, 'library post auto-moderation failed'));
+      }
       return reply.code(201).send(res.post);
     },
   );
