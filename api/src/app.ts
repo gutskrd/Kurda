@@ -90,6 +90,7 @@ import { BotDetectionService } from './antibot/service.js';
 import { registerAntibotRoutes } from './antibot/routes.js';
 import { registerLibraryRoutes } from './library/routes.js';
 import { registerLibraryCommentRoutes } from './library/comment-routes.js';
+import { registerLibraryReportRoutes } from './library/report-routes.js';
 import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
@@ -272,10 +273,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerModerationQueueRoutes(app, new ModerationQueueService(app.db));
     // behavioral bot detection (KUR-110): scoring + CAPTCHA gating + ledger reversal
     registerAntibotRoutes(app, new BotDetectionService(app.db));
-    // community library (KUR-281): stories & poems authoring + browsing
-    registerLibraryRoutes(app);
+    // community library (KUR-281): stories & poems authoring + browsing;
+    // text auto-screened via the AI moderation tier (KUR-285/#293)
+    registerLibraryRoutes(app, undefined, aiMod);
     // threaded comments on library posts (KUR-283)
-    registerLibraryCommentRoutes(app);
+    registerLibraryCommentRoutes(app, undefined, aiMod);
+    // community library reporting → unified moderation queue (KUR-285)
+    registerLibraryReportRoutes(app);
     registerGroupRoutes(app, groups, trust);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),

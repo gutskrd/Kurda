@@ -1,7 +1,7 @@
 import type pg from 'pg';
 
-export type CaseSource = 'chat_report' | 'anti_cheat' | 'text_flag' | 'image_flag';
-export type CaseResolution = 'dismiss' | 'warn' | 'mute' | 'ban';
+export type CaseSource = 'chat_report' | 'anti_cheat' | 'text_flag' | 'image_flag' | 'library_report';
+export type CaseResolution = 'dismiss' | 'warn' | 'mute' | 'ban' | 'remove';
 
 export interface QueueCase {
   id: string;
@@ -70,6 +70,28 @@ export class ModerationQueueService {
        FROM image_scans WHERE status = 'pending'`,
       'image_flag',
     );
+    // community library reports (#285) — one case per reported item (mass-report
+    // dedup), keyed 'library_post:<id>' / 'library_comment:<id>'
+    added += await this.ingest(
+      `SELECT 'library_post:' || r.target_id AS ref, p.author_id AS subject, 55 AS severity,
+              'Library post reported: ' || left(p.title, 60) AS summary,
+              jsonb_build_object('targetType','library_post','targetId',r.target_id,'reports',count(*),'audio',p.audio_media_id) AS evidence,
+              min(r.created_at) AS created_at
+       FROM library_reports r JOIN library_posts p ON p.id = r.target_id
+       WHERE r.target_type = 'library_post' AND r.status = 'open' AND p.status <> 'removed'
+       GROUP BY r.target_id, p.author_id, p.title, p.audio_media_id`,
+      'library_report',
+    );
+    added += await this.ingest(
+      `SELECT 'library_comment:' || r.target_id AS ref, c.author_id AS subject, 55 AS severity,
+              'Library comment reported' AS summary,
+              jsonb_build_object('targetType','library_comment','targetId',r.target_id,'reports',count(*),'audio',c.audio_media_id,'postId',c.post_id) AS evidence,
+              min(r.created_at) AS created_at
+       FROM library_reports r JOIN library_comments c ON c.id = r.target_id
+       WHERE r.target_type = 'library_comment' AND r.status = 'open' AND c.status <> 'removed'
+       GROUP BY r.target_id, c.author_id, c.audio_media_id, c.post_id`,
+      'library_report',
+    );
     return added;
   }
 
@@ -134,6 +156,10 @@ export class ModerationQueueService {
 
       if (resolution !== 'dismiss' && c.subject_user_id) {
         await this.applyAction(client, c.subject_user_id, moderatorId, resolution);
+      }
+      // `remove` soft-deletes the reported library content (retained for audit)
+      if (resolution === 'remove' && c.source === 'library_report') {
+        await this.removeLibraryContent(client, c.source_ref);
       }
       await this.closeSource(client, c.source, c.source_ref, resolution);
 
@@ -204,6 +230,42 @@ export class ModerationQueueService {
       case 'image_flag':
         await client.query(`UPDATE image_scans SET status = $2, resolved_at = now() WHERE id = $1::uuid`, [ref, actioned ? 'actioned' : 'reversed']);
         break;
+      case 'library_report': {
+        const parsed = parseLibraryRef(ref);
+        if (parsed) {
+          await client.query(
+            `UPDATE library_reports SET status = 'resolved' WHERE target_type = $1 AND target_id = $2 AND status = 'open'`,
+            [parsed.type, parsed.id],
+          );
+        }
+        break;
+      }
     }
   }
+
+  /** Soft-delete reported library content (retained for audit/appeal). */
+  private async removeLibraryContent(client: pg.PoolClient, ref: string): Promise<void> {
+    const parsed = parseLibraryRef(ref);
+    if (!parsed) return;
+    if (parsed.type === 'library_post') {
+      await client.query(`UPDATE library_posts SET status = 'removed', updated_at = now() WHERE id = $1 AND status <> 'removed'`, [parsed.id]);
+    } else {
+      const res = await client.query<{ post_id: string }>(
+        `UPDATE library_comments SET status = 'removed', body = NULL, audio_media_id = NULL, updated_at = now()
+         WHERE id = $1 AND status = 'visible' RETURNING post_id`,
+        [parsed.id],
+      );
+      const postId = res.rows[0]?.post_id;
+      if (postId) await client.query(`UPDATE library_posts SET comment_count = GREATEST(0, comment_count - 1) WHERE id = $1`, [postId]);
+    }
+  }
+}
+
+/** Parse a library case ref 'library_post:<id>' / 'library_comment:<id>'. */
+function parseLibraryRef(ref: string): { type: 'library_post' | 'library_comment'; id: string } | null {
+  const i = ref.indexOf(':');
+  if (i < 0) return null;
+  const type = ref.slice(0, i);
+  const id = ref.slice(i + 1);
+  return type === 'library_post' || type === 'library_comment' ? { type, id } : null;
 }
