@@ -27,8 +27,8 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     return { token: res.json().tokens.accessToken, id };
   }
 
-  const post = (method: string, url: string, token?: string, payload?: unknown) =>
-    app.inject({ method: method as 'POST', url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.30.0.9' });
+  const post = (method: 'POST' | 'GET' | 'PATCH' | 'DELETE', url: string, token?: string, payload?: Record<string, unknown>) =>
+    app.inject({ method, url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.30.0.9' });
 
   beforeAll(async () => {
     app = buildApp(config);
