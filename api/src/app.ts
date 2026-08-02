@@ -91,6 +91,7 @@ import { registerAntibotRoutes } from './antibot/routes.js';
 import { registerLibraryRoutes } from './library/routes.js';
 import { registerLibraryCommentRoutes } from './library/comment-routes.js';
 import { registerLibraryReportRoutes } from './library/report-routes.js';
+import { registerImagePostRoutes } from './images/routes.js';
 import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
@@ -280,6 +281,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLibraryCommentRoutes(app, undefined, aiMod);
     // community library reporting → unified moderation queue (KUR-285)
     registerLibraryReportRoutes(app);
+    // community image & meme sharing (KUR-290): content model + upload API
+    registerImagePostRoutes(app);
     registerGroupRoutes(app, groups, trust);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
