@@ -80,9 +80,10 @@ export class RedisMatchQueue implements MatchQueue {
   }
 
   async entries(): Promise<QueueEntry[]> {
+    // ioredis 6: zrange `stop` is string|Buffer (no number) — pass '-1' as text
     const [members, times] = await Promise.all([
-      this.redis.zrange(this.queueKey, 0, -1, 'WITHSCORES'),
-      this.redis.zrange(this.timeKey, 0, -1, 'WITHSCORES'),
+      this.redis.zrange(this.queueKey, 0, '-1', 'WITHSCORES'),
+      this.redis.zrange(this.timeKey, 0, '-1', 'WITHSCORES'),
     ]);
     const enqueuedAt = new Map<string, number>();
     for (let i = 0; i < times.length; i += 2) {
