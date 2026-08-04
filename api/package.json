@@ -27,7 +27,7 @@
     "@kurda/shared": "*",
     "@sentry/node": "^10.69.0",
     "argon2": "^0.45.1",
-    "bullmq": "^5.81.2",
+    "bullmq": "^6.0.5",
     "fastify": "^5.11.0",
     "ioredis": "^5.10.1",
     "jose": "^6.2.7",
