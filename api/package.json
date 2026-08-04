@@ -20,17 +20,17 @@
     "dev:db": "node scripts/dev-db.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1098.0",
-    "@aws-sdk/s3-request-presigner": "^3.1098.0",
+    "@aws-sdk/client-s3": "^3.1101.0",
+    "@aws-sdk/s3-request-presigner": "^3.1101.0",
     "@fastify/cors": "^11.3.0",
     "@fastify/websocket": "^11.3.0",
     "@kurda/shared": "*",
     "@sentry/node": "^10.69.0",
     "argon2": "^0.45.1",
     "bullmq": "^5.81.2",
-    "fastify": "^5.10.0",
+    "fastify": "^5.11.0",
     "ioredis": "^5.10.1",
-    "jose": "^6.2.4",
+    "jose": "^6.2.7",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
@@ -39,7 +39,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/pg": "^8.20.0",
+    "@types/pg": "^8.20.3",
     "@types/ws": "^8.18.1",
     "embedded-postgres": "^18.4.0-beta.17",
     "pino-pretty": "^13.1.3"
