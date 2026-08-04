@@ -82,10 +82,12 @@ export class JobQueue {
 
   /** Upserts a repeatable schedule for a job (stable id per job name). */
   async scheduleEvery<T>(def: JobDefinition<T>, everyMs: number, payload: T): Promise<void> {
-    await this.queue.add(def.name, payload, {
-      repeat: { every: everyMs },
-      jobId: `repeat:${def.name}`,
-    });
+    // bullmq 6: repeatable jobs use job schedulers (the `repeat` add-option was removed)
+    await this.queue.upsertJobScheduler(
+      `repeat:${def.name}`,
+      { every: everyMs },
+      { name: def.name, data: payload },
+    );
   }
 
   async close(): Promise<void> {
