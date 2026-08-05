@@ -93,6 +93,8 @@ import { registerLibraryCommentRoutes } from './library/comment-routes.js';
 import { registerLibraryReportRoutes } from './library/report-routes.js';
 import { registerImagePostRoutes } from './images/routes.js';
 import { registerTagRoutes } from './tags/routes.js';
+import { ConfigService } from './admin/config-service.js';
+import { registerConfigRoutes } from './admin/config-routes.js';
 import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
@@ -380,6 +382,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // config-driven events (KUR-089): data-defined windows, boundary-cached feed
     const events = new EventService(app.db, app.cache);
     registerEventRoutes(app, events);
+    // shop + event config with dual-admin approval (KUR-103)
+    registerConfigRoutes(
+      app,
+      new ConfigService(app.db, {
+        shop: new ShopService(app.db, new WalletService(app.db), app.cache),
+        events,
+      }),
+    );
     // event quests + explicit reward claims (KUR-091): progress derived from the
     // ledgers over the event window; claims pay Zêr/Gems with a 72h grace period
     registerQuestRoutes(
