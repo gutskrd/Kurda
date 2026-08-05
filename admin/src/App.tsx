@@ -6,11 +6,13 @@ import { Shell, type NavItem } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
 import { Config } from './pages/Config';
 import { Analytics } from './pages/Analytics';
+import { Tags } from './pages/Tags';
 
 const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
+  { key: 'tags', label: 'Tags', render: () => <Tags /> },
 ];
 
 function Workspace(): React.JSX.Element {
