@@ -7,12 +7,16 @@ import { Moderation } from './pages/Moderation';
 import { Config } from './pages/Config';
 import { Analytics } from './pages/Analytics';
 import { Tags } from './pages/Tags';
+import { Users } from './pages/Users';
+import { Security } from './pages/Security';
 
 const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
+  { key: 'users', label: 'Users', render: () => <Users /> },
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
+  { key: 'security', label: 'Security', render: () => <Security /> },
 ];
 
 function Workspace(): React.JSX.Element {
