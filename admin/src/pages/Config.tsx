@@ -70,6 +70,7 @@ export function Config(): React.JSX.Element {
         ) : pending.length === 0 ? (
           <div className="empty">Nothing pending approval.</div>
         ) : (
+          <div className="tablewrap">
           <table>
             <thead>
               <tr>
@@ -101,6 +102,7 @@ export function Config(): React.JSX.Element {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
