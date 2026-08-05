@@ -4,9 +4,11 @@ import { useHashRoute } from './nav';
 import { Login } from './pages/Login';
 import { Shell, type NavItem } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
+import { Config } from './pages/Config';
 
 const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
+  { key: 'config', label: 'Config', render: () => <Config /> },
 ];
 
 function Workspace(): React.JSX.Element {
