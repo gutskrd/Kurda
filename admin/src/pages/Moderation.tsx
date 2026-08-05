@@ -85,6 +85,7 @@ export function Moderation(): React.JSX.Element {
         ) : cases.length === 0 ? (
           <div className="empty">🎉 Queue is empty — nothing to review.</div>
         ) : (
+          <div className="tablewrap">
           <table>
             <thead>
               <tr>
@@ -132,6 +133,7 @@ export function Moderation(): React.JSX.Element {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
