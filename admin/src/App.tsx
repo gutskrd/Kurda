@@ -5,10 +5,12 @@ import { Login } from './pages/Login';
 import { Shell, type NavItem } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
 import { Config } from './pages/Config';
+import { Analytics } from './pages/Analytics';
 
 const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
   { key: 'config', label: 'Config', render: () => <Config /> },
+  { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
 ];
 
 function Workspace(): React.JSX.Element {
