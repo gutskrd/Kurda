@@ -36,6 +36,12 @@ export async function api<T>(
     },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
+  if (res.status === 401) {
+    // session expired/invalid — drop the token and bounce to the login screen
+    setToken(null);
+    location.reload();
+    throw new ApiError(401, 'UNAUTHENTICATED', 'session expired');
+  }
   if (res.status === 204) return undefined as T;
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {

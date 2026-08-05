@@ -28,13 +28,16 @@ export function Moderation(): React.JSX.Element {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [q, s] = await Promise.all([
-      api<{ cases: QueueCase[] }>('/admin/moderation/queue'),
-      api<{ medianSeconds: number | null; resolved: number }>('/admin/moderation/sla'),
-    ]);
-    setCases(q.cases);
-    setSla(s);
-    setLoading(false);
+    try {
+      const [q, s] = await Promise.all([
+        api<{ cases: QueueCase[] }>('/admin/moderation/queue'),
+        api<{ medianSeconds: number | null; resolved: number }>('/admin/moderation/sla'),
+      ]);
+      setCases(q.cases);
+      setSla(s);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
