@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { api, setToken, getToken } from './api';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { api, ApiError, setToken, getToken } from './api';
 
 interface Me {
   id: string;
@@ -16,6 +16,20 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [me, setMe] = useState<Me | null>(null);
+
+  // Rehydrate the current user after a reload — the token persists in
+  // localStorage but `me` is in-memory only, so without this the @username
+  // (and any role-based UI) disappears on refresh.
+  useEffect(() => {
+    if (!getToken() || me) return;
+    void api<{ user: Me }>('/me')
+      .then((res) => setMe(res.user))
+      .catch((err) => {
+        // a 401 already bounced us to login via the api client; ignore others
+        if (!(err instanceof ApiError)) throw err;
+      });
+    // run once on mount; login()/logout() keep `me` in sync afterwards
+  }, []);
 
   async function login(email: string, password: string): Promise<void> {
     const res = await api<{ tokens: { accessToken: string }; user: Me }>('/auth/login', {
