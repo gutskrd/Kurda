@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { typography } from '../theme/tokens';
+import { scaledFontSize } from '../a11y/dynamicType';
+import { useFontScale } from '../a11y/useFontScale';
 import { initialsAvatar } from './initials';
 
 /**
@@ -22,6 +24,8 @@ export function InitialsAvatar({
   textStyle?: StyleProp<TextStyle>;
 }) {
   const { initials, backgroundColor, textColor } = initialsAvatar(name, id);
+  // honour Dynamic Type, but tightly so the monogram stays inside the circle
+  const fontScale = useFontScale({ max: 1.15 });
   return (
     <View
       accessibilityRole="image"
@@ -30,7 +34,7 @@ export function InitialsAvatar({
     >
       <Text
         allowFontScaling={false}
-        style={[styles.text, { color: textColor, fontSize: Math.round(size * 0.4) }, textStyle]}
+        style={[styles.text, { color: textColor, fontSize: scaledFontSize(Math.round(size * 0.4), fontScale) }, textStyle]}
       >
         {initials}
       </Text>
