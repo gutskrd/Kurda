@@ -4,20 +4,12 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, Vi
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
-}
-
-function Monogram({ name }: { name: string }) {
-  const initial = (name || '?').normalize('NFC').trim()[0]?.toUpperCase() ?? '?';
-  return (
-    <View style={styles.monogram}>
-      <Text style={styles.monogramText}>{initial}</Text>
-    </View>
-  );
 }
 
 /** Social tab (KUR-082): find people + see friends and pending requests. */
@@ -64,7 +56,7 @@ export function SocialScreen() {
 
   const row = (u: UserRow, right?: React.ReactNode) => (
     <Pressable key={u.userId} style={styles.row} onPress={() => openProfile(u.userId)}>
-      <Monogram name={u.username} />
+      <InitialsAvatar name={u.username} id={u.userId} size={36} />
       <View style={styles.rowMain}>
         <Text style={styles.username}>{u.username}</Text>
         {u.displayName ? <Text style={styles.display}>{u.displayName}</Text> : null}
@@ -159,6 +151,4 @@ const styles = StyleSheet.create({
   acceptText: { color: colors.textOnPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
   decline: { color: colors.danger, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   empty: { textAlign: 'center', color: colors.textSecondary, marginTop: spacing.xl },
-  monogram: { width: 36, height: 36, borderRadius: radii.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  monogramText: { color: colors.textOnPrimary, fontWeight: typography.weights.bold },
 });

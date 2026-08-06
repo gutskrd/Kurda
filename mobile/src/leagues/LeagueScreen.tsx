@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { colors, radii, spacing, typography } from '../theme/tokens';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { countdown, tierMeta, zoneFor, type Zone } from './format';
 
 interface StandingRow {
@@ -34,15 +35,6 @@ interface Board {
 type Tab = 'league' | 'global' | 'friends';
 
 const zoneColor: Record<Zone, string> = { promotion: colors.success, demotion: colors.danger, safe: colors.border };
-
-function Monogram({ name }: { name: string }) {
-  const initial = (name || '?').normalize('NFC').trim()[0]?.toUpperCase() ?? '?';
-  return (
-    <View style={styles.monogram}>
-      <Text style={styles.monogramText}>{initial}</Text>
-    </View>
-  );
-}
 
 /** League standings + global/friends leaderboards (KUR-064). */
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
@@ -139,7 +131,7 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
         return (
           <View style={[styles.row, item.isSelf && styles.rowSelf, { borderLeftColor: zoneColor[zone], borderLeftWidth: 4 }]}>
             <Text style={styles.rank}>{item.rank}</Text>
-            <Monogram name={item.username} />
+            <InitialsAvatar name={item.username} id={item.userId} size={28} />
             <Text style={[styles.name, item.isSelf && styles.nameSelf]} numberOfLines={1}>{item.username}</Text>
             <Text style={styles.score}>{item.weeklyXp} XP</Text>
           </View>
@@ -162,7 +154,7 @@ function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
       renderItem={({ item }) => (
         <View style={styles.row}>
           <Text style={styles.rank}>{item.rank}</Text>
-          <Monogram name={item.username} />
+          <InitialsAvatar name={item.username} id={item.userId} size={28} />
           <Text style={styles.name} numberOfLines={1}>{item.username}</Text>
           <Text style={styles.score}>{item.score}</Text>
         </View>
@@ -199,8 +191,6 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontSize: typography.sizes.md, color: colors.textPrimary },
   nameSelf: { fontWeight: typography.weights.bold },
   score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  monogram: { width: 28, height: 28, borderRadius: radii.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  monogramText: { color: colors.textOnPrimary, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   emoji: { fontSize: 48 },
   ctaText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary, textAlign: 'center' },
   dim: { color: colors.textSecondary, textAlign: 'center' },
