@@ -15,6 +15,7 @@ import { AiModeration } from './pages/AiModeration';
 import { Content } from './pages/Content';
 import { Experiments } from './pages/Experiments';
 import { Events } from './pages/Events';
+import { Ops } from './pages/Ops';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 
@@ -29,6 +30,7 @@ const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'experiments', label: 'Experiments', render: () => <Experiments /> },
   { key: 'events', label: 'Events', render: () => <Events /> },
   { key: 'economy', label: 'Economy', render: () => <Economy /> },
+  { key: 'ops', label: 'Ops', render: () => <Ops /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
   { key: 'audit', label: 'Audit', render: () => <Audit /> },
