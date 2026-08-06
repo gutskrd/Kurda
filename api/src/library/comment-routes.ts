@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
+import type { TrustService } from '../trust/service.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
@@ -24,7 +25,12 @@ const idParam = z.object({ id: z.uuid() });
  * editing, and deleting require auth (guests read-only) plus an ownership/admin
  * check. Comment creation is rate-limited (#010).
  */
-export function registerLibraryCommentRoutes(app: FastifyInstance, comments = new LibraryCommentService(app.db), aiMod?: AiModerationService): void {
+export function registerLibraryCommentRoutes(
+  app: FastifyInstance,
+  comments = new LibraryCommentService(app.db),
+  aiMod?: AiModerationService,
+  trust?: TrustService,
+): void {
   /** Post a comment (text / audio / both) or a reply. */
   app.post(
     '/library/posts/:postId/comments',
@@ -35,8 +41,24 @@ export function registerLibraryCommentRoutes(app: FastifyInstance, comments = ne
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
-      const res = await comments.create(postId, req.user!.id, isAdmin(req) ? 'admin' : 'user', req.body as CreateCommentInput);
+      const input = req.body as CreateCommentInput;
+      if (trust) {
+        // per-level velocity cap (KUR-295): new accounts comment fewer per hour
+        const gate = await trust.checkAction(req.user!.id, 'comment');
+        if (!gate.allowed) {
+          return reply.code(429).send({ code: 'TRUST_VELOCITY', message: 'you are commenting too fast — slow down for new accounts' });
+        }
+        // duplicate/burst spam on the text → auto-mute/suspend before it lands
+        if (input.body) {
+          const spam = await trust.assessContent(req.user!.id, input.body);
+          if (spam.enforced) {
+            return reply.code(403).send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
+          }
+        }
+      }
+      const res = await comments.create(postId, req.user!.id, isAdmin(req) ? 'admin' : 'user', input);
       if (res.ok) {
+        if (trust) await trust.recordAction(req.user!.id, 'comment');
         // auto-screen comment text (KUR-285/#293) — a flag enters the #102 queue
         if (aiMod && res.comment.body) {
           await aiMod
