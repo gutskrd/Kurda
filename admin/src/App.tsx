@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { AuthProvider, hasSession } from './auth';
+import { AuthProvider, hasSession, useAuth } from './auth';
 import { useHashRoute } from './nav';
 import { Login } from './pages/Login';
 import { Shell, type NavItem } from './pages/Shell';
@@ -19,12 +19,18 @@ import { Ops } from './pages/Ops';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 
-const PAGES: Array<NavItem & { render: () => ReactNode }> = [
+// `roles` gates the nav link (cosmetic only — the API re-authorizes every
+// action). It's set for the three pages whose server guard is a single clean
+// RBAC-role check (requireAdmin(totp, ...roles)); every other page uses the
+// legacy `admin` role and is always shown.
+type Page = NavItem & { render: () => ReactNode; roles?: string[] };
+
+const PAGES: Page[] = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
   { key: 'antibot', label: 'Antibot', render: () => <Antibot /> },
   { key: 'aimod', label: 'AI Mod', render: () => <AiModeration /> },
-  { key: 'users', label: 'Users', render: () => <Users /> },
-  { key: 'content', label: 'Content', render: () => <Content /> },
+  { key: 'users', label: 'Users', roles: ['superadmin', 'moderator', 'support'], render: () => <Users /> },
+  { key: 'content', label: 'Content', roles: ['superadmin', 'content_editor'], render: () => <Content /> },
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
   { key: 'experiments', label: 'Experiments', render: () => <Experiments /> },
@@ -33,16 +39,24 @@ const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'ops', label: 'Ops', render: () => <Ops /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
-  { key: 'audit', label: 'Audit', render: () => <Audit /> },
+  { key: 'audit', label: 'Audit', roles: ['superadmin'], render: () => <Audit /> },
   { key: 'security', label: 'Security', render: () => <Security /> },
 ];
 
 function Workspace(): React.JSX.Element {
-  const [page, navigate] = useHashRoute(PAGES[0]!.key);
+  const { me } = useAuth();
+  const roles = me?.roles ?? [];
+  // until roles are known (empty), show everything — never wrongly hide a link
+  const known = roles.length > 0;
+  const visible = PAGES.filter((p) => !p.roles || !known || roles.some((r) => p.roles!.includes(r)));
+
+  const [page, navigate] = useHashRoute(visible[0]!.key);
   const [, setTick] = useState(0);
-  const active = PAGES.find((p) => p.key === page) ?? PAGES[0]!;
+  // render the routed page even if its nav link is hidden — it enforces its own
+  // access (a role-gated page shows its own "insufficient permissions" notice)
+  const active = PAGES.find((p) => p.key === page) ?? visible[0]!;
   return (
-    <Shell nav={PAGES} page={active.key} onNav={navigate} onLogout={() => setTick((t) => t + 1)}>
+    <Shell nav={visible} page={active.key} onNav={navigate} onLogout={() => setTick((t) => t + 1)}>
       {active.render()}
     </Shell>
   );

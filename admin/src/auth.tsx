@@ -32,12 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   }, []);
 
   async function login(email: string, password: string): Promise<void> {
-    const res = await api<{ tokens: { accessToken: string }; user: Me }>('/auth/login', {
+    const res = await api<{ tokens: { accessToken: string } }>('/auth/login', {
       method: 'POST',
       body: { email, password },
     });
     setToken(res.tokens.accessToken);
-    setMe(res.user);
+    // the login payload omits roles — fetch the full profile so role-based UI works
+    const meRes = await api<{ user: Me }>('/me');
+    setMe(meRes.user);
   }
 
   function logout(): void {
