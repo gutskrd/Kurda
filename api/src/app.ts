@@ -279,9 +279,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAntibotRoutes(app, new BotDetectionService(app.db));
     // community library (KUR-281): stories & poems authoring + browsing;
     // text auto-screened via the AI moderation tier (KUR-285/#293)
-    registerLibraryRoutes(app, undefined, aiMod);
+    registerLibraryRoutes(app, undefined, aiMod, trust);
     // threaded comments on library posts (KUR-283)
-    registerLibraryCommentRoutes(app, undefined, aiMod);
+    registerLibraryCommentRoutes(app, undefined, aiMod, trust);
     // community library reporting → unified moderation queue (KUR-285)
     registerLibraryReportRoutes(app);
     // community image & meme sharing (KUR-290): content model + upload API

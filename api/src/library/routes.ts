@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { LibraryService } from './service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
+import type { TrustService } from '../trust/service.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
@@ -29,7 +30,12 @@ const idParam = z.object({ id: z.uuid() });
  * Community library authoring + browsing (KUR-281). Reads are public (guests can
  * read/listen); authoring/editing require auth and an ownership/admin check.
  */
-export function registerLibraryRoutes(app: FastifyInstance, library = new LibraryService(app.db), aiMod?: AiModerationService): void {
+export function registerLibraryRoutes(
+  app: FastifyInstance,
+  library = new LibraryService(app.db),
+  aiMod?: AiModerationService,
+  trust?: TrustService,
+): void {
   /** Create a story/poem (text required, audio optional). */
   app.post(
     '/library/posts',
@@ -40,8 +46,21 @@ export function registerLibraryRoutes(app: FastifyInstance, library = new Librar
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
+      if (trust) {
+        // per-level velocity cap (KUR-295): new accounts post fewer per hour
+        const gate = await trust.checkAction(req.user!.id, 'post');
+        if (!gate.allowed) {
+          return reply.code(429).send({ code: 'TRUST_VELOCITY', message: 'you are posting too fast — slow down for new accounts' });
+        }
+        // duplicate/burst spam → auto-mute/suspend before the post lands
+        const spam = await trust.assessContent(req.user!.id, `${body.title}\n${body.body}`);
+        if (spam.enforced) {
+          return reply.code(403).send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
+        }
+      }
       const res = await library.create(req.user!.id, isAdmin(req) ? 'admin' : 'user', body);
       if (!res.ok) return reply.code(422).send({ code: 'INVALID_POST', message: 'title and body are required' });
+      if (trust) await trust.recordAction(req.user!.id, 'post');
       // auto-screen the text (KUR-285/#293): a flag enters the #102 queue. Never
       // blocks literature — reviewers decide; runs after the post exists.
       if (aiMod) {
