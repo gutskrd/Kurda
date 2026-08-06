@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface Conversation {
   userId: string;
@@ -43,9 +44,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
             style={styles.row}
             onPress={() => navigation.navigate('Chat', { userId: item.userId, username: item.username })}
           >
-            <View style={styles.monogram}>
-              <Text style={styles.monogramText}>{(item.username[0] ?? '?').toUpperCase()}</Text>
-            </View>
+            <InitialsAvatar name={item.username} id={item.userId} size={44} />
             <View style={styles.main}>
               <Text style={styles.name}>{item.username}</Text>
               <Text style={styles.preview} numberOfLines={1}>
@@ -70,8 +69,6 @@ const styles = StyleSheet.create({
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
   list: { padding: spacing.lg, gap: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.md },
-  monogram: { width: 44, height: 44, borderRadius: radii.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  monogramText: { color: colors.textOnPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
   main: { flex: 1 },
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
   preview: { fontSize: typography.sizes.sm, color: colors.textSecondary },
