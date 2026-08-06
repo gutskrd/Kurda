@@ -10,6 +10,7 @@ import { Tags } from './pages/Tags';
 import { Users } from './pages/Users';
 import { Economy } from './pages/Economy';
 import { Antibot } from './pages/Antibot';
+import { Fraud } from './pages/Fraud';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 
@@ -20,6 +21,7 @@ const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
   { key: 'economy', label: 'Economy', render: () => <Economy /> },
+  { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
   { key: 'audit', label: 'Audit', render: () => <Audit /> },
   { key: 'security', label: 'Security', render: () => <Security /> },
