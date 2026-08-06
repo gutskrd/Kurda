@@ -4,6 +4,8 @@ import { useAuth } from '../auth/AuthContext';
 import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
 import type { RootNavigation } from '../navigation/rootStack';
+import type { ApiError } from '../api/types';
+import { describeError } from '../api/errors';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
 const PRACTICE_PATHS: SessionPaths = {
@@ -22,25 +24,30 @@ interface PracticeStart {
 export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigation; onExit: () => void }) {
   const { client } = useAuth();
   const [start, setStart] = useState<PracticeStart | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setError(null);
+    setStart(null);
     void client.post<PracticeStart>('/practice/session').then((res) => {
       if (!active) return;
       if (res.ok) setStart(res.data);
-      else setError(res.error.message);
+      else setError(res.error);
     });
     return () => {
       active = false;
     };
-  }, [client]);
+  }, [client, reloadKey]);
 
   if (error) {
+    const { message, retryable } = describeError(error);
     return (
       <Centered>
         <Text style={styles.title}>Couldn’t start practice.</Text>
-        <Text style={styles.detail}>{error}</Text>
+        <Text style={styles.detail}>{message}</Text>
+        {retryable ? <Primary label="Try again" onPress={() => setReloadKey((k) => k + 1)} /> : null}
         <Primary label="Back" onPress={onExit} />
       </Centered>
     );
