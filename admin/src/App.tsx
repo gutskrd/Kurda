@@ -14,6 +14,7 @@ import { Fraud } from './pages/Fraud';
 import { AiModeration } from './pages/AiModeration';
 import { Content } from './pages/Content';
 import { Experiments } from './pages/Experiments';
+import { Events } from './pages/Events';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 
@@ -26,6 +27,7 @@ const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
   { key: 'experiments', label: 'Experiments', render: () => <Experiments /> },
+  { key: 'events', label: 'Events', render: () => <Events /> },
   { key: 'economy', label: 'Economy', render: () => <Economy /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
