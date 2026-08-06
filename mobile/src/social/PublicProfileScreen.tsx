@@ -6,6 +6,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface Profile {
   userId: string;
@@ -79,13 +80,11 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   }
 
   const label = friendActionLabel(profile.friendStatus);
-  const initial = profile.username.normalize('NFC').trim()[0]?.toUpperCase() ?? '?';
-
   return (
     <View style={styles.screen}>
       <Header onExit={onExit} />
       <View style={styles.card}>
-        <View style={styles.monogram}><Text style={styles.monogramText}>{initial}</Text></View>
+        <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} />
         <Text style={styles.username}>{profile.username}</Text>
         {profile.displayName ? <Text style={styles.display}>{profile.displayName}</Text> : null}
 
@@ -162,8 +161,6 @@ const styles = StyleSheet.create({
   close: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.xl },
-  monogram: { width: 96, height: 96, borderRadius: radii.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  monogramText: { color: colors.textOnPrimary, fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
   username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
   display: { fontSize: typography.sizes.md, color: colors.textSecondary },
   stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },

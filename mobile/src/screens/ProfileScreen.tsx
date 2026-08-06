@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
@@ -12,11 +13,6 @@ import { NotificationBell } from '../notifications/NotificationBell';
 import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 
-/** First letter of the display name / username, NFC-normalised. */
-function initial(name: string | null | undefined): string {
-  const s = (name ?? '?').normalize('NFC').trim();
-  return s ? s[0]!.toUpperCase() : '?';
-}
 
 export function ProfileScreen() {
   const { user, client, logout } = useAuth();
@@ -46,13 +42,14 @@ export function ProfileScreen() {
     void client.put('/me/privacy', { visibility: v });
   };
 
-  // Placeholder monogram until the profile-picture system (#177–#181)
-  // lands (photo upload + a proper initials fallback).
   return (
     <View style={styles.screen}>
-      <View style={styles.monogram}>
-        <Text style={styles.monogramText}>{initial(user?.displayName ?? user?.username)}</Text>
-      </View>
+      <InitialsAvatar
+        name={user?.displayName ?? user?.username ?? ''}
+        id={user?.id ?? ''}
+        size={120}
+        style={{ marginBottom: spacing.md }}
+      />
       <Text style={styles.username}>{user?.username}</Text>
       {user?.displayName ? <Text style={styles.displayName}>{user.displayName}</Text> : null}
 
@@ -127,20 +124,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: spacing.lg,
     gap: spacing.sm,
-  },
-  monogram: {
-    width: 120,
-    height: 120,
-    borderRadius: radii.pill,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  monogramText: {
-    fontSize: typography.sizes.xxl,
-    fontWeight: typography.weights.bold,
-    color: colors.textOnPrimary,
   },
   username: {
     fontSize: typography.sizes.xl,
