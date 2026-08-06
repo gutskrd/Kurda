@@ -142,6 +142,23 @@ tr:last-child td { border-bottom: none; }
 .grid2 .k { color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
 
+/* monospace JSON editor (content exercises) */
+.code-area {
+  font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  resize: vertical;
+  white-space: pre;
+  overflow: auto;
+}
+textarea { font: inherit; }
+
 /* expandable signals blob (antibot) */
 .signals-json {
   margin: 6px 0 0;

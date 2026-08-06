@@ -12,6 +12,7 @@ import { Economy } from './pages/Economy';
 import { Antibot } from './pages/Antibot';
 import { Fraud } from './pages/Fraud';
 import { AiModeration } from './pages/AiModeration';
+import { Content } from './pages/Content';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 
@@ -20,6 +21,7 @@ const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'antibot', label: 'Antibot', render: () => <Antibot /> },
   { key: 'aimod', label: 'AI Mod', render: () => <AiModeration /> },
   { key: 'users', label: 'Users', render: () => <Users /> },
+  { key: 'content', label: 'Content', render: () => <Content /> },
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
   { key: 'economy', label: 'Economy', render: () => <Economy /> },
