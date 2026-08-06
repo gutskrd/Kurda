@@ -9,11 +9,13 @@ import { Analytics } from './pages/Analytics';
 import { Tags } from './pages/Tags';
 import { Users } from './pages/Users';
 import { Economy } from './pages/Economy';
+import { Antibot } from './pages/Antibot';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 
 const PAGES: Array<NavItem & { render: () => ReactNode }> = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
+  { key: 'antibot', label: 'Antibot', render: () => <Antibot /> },
   { key: 'users', label: 'Users', render: () => <Users /> },
   { key: 'config', label: 'Config', render: () => <Config /> },
   { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
