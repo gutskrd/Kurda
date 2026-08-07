@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
 import { colors, spacing, typography } from '../theme/tokens';
 import { encodeAnswer } from './answers';
@@ -54,7 +55,7 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
     void client.get<SessionView>(`/lessons/${lessonId}/session`).then((res) => {
       if (!active) return;
       if (res.ok) setView(res.data);
-      else setLoadError(res.error.message);
+      else setLoadError(describeError(res.error).message);
     });
     return () => {
       active = false;

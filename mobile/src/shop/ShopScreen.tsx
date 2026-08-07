@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { describeError } from '../api/errors';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import {
   canAfford,
@@ -66,7 +67,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         load(); // pull fresh prices
         Alert.alert('Price changed', 'This item’s price changed. Please review and try again.');
       } else {
-        Alert.alert('Purchase failed', res.error.message);
+        Alert.alert('Purchase failed', describeError(res.error).message);
       }
     },
     [client, load],

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 
@@ -27,7 +28,7 @@ export function PlayScreen() {
       setNote('Searching for an opponent…');
     } else {
       setSearching(false);
-      setNote(res.error.message);
+      setNote(describeError(res.error).message);
     }
   };
 
