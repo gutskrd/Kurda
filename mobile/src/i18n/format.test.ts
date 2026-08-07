@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   countdownParts,
+  formatCompact,
   formatCountdown,
   interpolate,
   isRTL,
@@ -50,5 +51,22 @@ describe('remainingUntil', () => {
     const now = Date.parse('2026-03-21T00:00:00.000Z');
     expect(remainingUntil('2026-03-21T01:00:00.000Z', now)).toBe(3_600_000);
     expect(remainingUntil('not-a-date', now)).toBe(0);
+  });
+});
+
+describe('formatCompact', () => {
+  it('leaves values under 1000 as plain numbers', () => {
+    expect(formatCompact(500, 'en')).toBe('500');
+    expect(formatCompact(0, 'en')).toBe('0');
+  });
+
+  it('compacts thousands and millions', () => {
+    expect(formatCompact(1234, 'en')).toBe('1.2K');
+    expect(formatCompact(12000, 'en')).toBe('12K');
+    expect(formatCompact(1_500_000, 'en')).toBe('1.5M');
+  });
+
+  it('handles negatives', () => {
+    expect(formatCompact(-2500, 'en')).toBe('-2.5K');
   });
 });
