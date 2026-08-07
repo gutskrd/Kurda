@@ -4,6 +4,8 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { useAuth } from '../auth/AuthContext';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useI18n } from '../i18n/I18nContext';
+import { formatCompact } from '../i18n/format';
 import { countdown, tierMeta, zoneFor, type Zone } from './format';
 
 interface StandingRow {
@@ -106,6 +108,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
 }
 
 function LeagueTab({ league }: { league: LeagueView | null }) {
+  const { locale } = useI18n();
   if (!league) return <Centered><Text style={styles.dim}>No league yet.</Text></Centered>;
   const meta = tierMeta(league.tier);
   const total = league.standings.length;
@@ -133,7 +136,7 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
             <Text style={styles.rank}>{item.rank}</Text>
             <InitialsAvatar name={item.username} id={item.userId} size={28} />
             <Text style={[styles.name, item.isSelf && styles.nameSelf]} numberOfLines={1}>{item.username}</Text>
-            <Text style={styles.score}>{item.weeklyXp} XP</Text>
+            <Text style={styles.score}>{formatCompact(item.weeklyXp, locale)} XP</Text>
           </View>
         );
       }}
@@ -142,6 +145,7 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
 }
 
 function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
+  const { locale } = useI18n();
   if (!board) return <Centered><Text style={styles.dim}>No board yet.</Text></Centered>;
   return (
     <FlatList
@@ -149,14 +153,14 @@ function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
       keyExtractor={(e) => e.userId}
       contentContainerStyle={styles.list}
       ListHeaderComponent={
-        board.me ? <Text style={styles.myRank}>You’re #{board.me.rank} · {board.me.score} {unit}</Text> : null
+        board.me ? <Text style={styles.myRank}>You’re #{board.me.rank} · {formatCompact(board.me.score, locale)} {unit}</Text> : null
       }
       renderItem={({ item }) => (
         <View style={styles.row}>
           <Text style={styles.rank}>{item.rank}</Text>
           <InitialsAvatar name={item.username} id={item.userId} size={28} />
           <Text style={styles.name} numberOfLines={1}>{item.username}</Text>
-          <Text style={styles.score}>{item.score}</Text>
+          <Text style={styles.score}>{formatCompact(item.score, locale)}</Text>
         </View>
       )}
       ListEmptyComponent={<Centered><Text style={styles.dim}>Nobody ranked yet.</Text></Centered>}

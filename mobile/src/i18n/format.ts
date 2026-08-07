@@ -26,6 +26,19 @@ export function formatNumber(value: number, locale: Locale): string {
   }
 }
 
+/**
+ * Compact large numbers for tight spots (leaderboards, counters): 1234 → "1.2K",
+ * 1_500_000 → "1.5M". Values under 1000 render normally. Falls back to the plain
+ * number if the runtime lacks compact Intl support.
+ */
+export function formatCompact(value: number, locale: Locale): string {
+  try {
+    return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+  } catch {
+    return formatNumber(value, locale);
+  }
+}
+
 /** Localized date+time in the device's local timezone (or an explicit tz). */
 export function formatDateTime(iso: string, locale: Locale, timeZone?: string): string {
   const date = new Date(iso);
