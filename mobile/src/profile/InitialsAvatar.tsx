@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { typography } from '../theme/tokens';
+import { AAA_NORMAL } from '../a11y/contrast';
+import { ensureContrast } from '../a11y/ensureContrast';
 import { scaledFontSize } from '../a11y/dynamicType';
 import { useFontScale } from '../a11y/useFontScale';
 import { initialsAvatar } from './initials';
@@ -23,7 +25,10 @@ export function InitialsAvatar({
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }) {
-  const { initials, backgroundColor, textColor } = initialsAvatar(name, id);
+  const { initials, backgroundColor: baseColor, textColor } = initialsAvatar(name, id);
+  // the palette is already AA against white; nudge it to AAA (7:1) so monograms
+  // stay crisp for low-vision users (deterministic — same id → same colour)
+  const backgroundColor = ensureContrast(baseColor, textColor, AAA_NORMAL);
   // honour Dynamic Type, but tightly so the monogram stays inside the circle
   const fontScale = useFontScale({ max: 1.15 });
   return (
