@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { colors, radii, spacing, typography } from '../theme/tokens';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
@@ -113,7 +114,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   onPress={() =>
                     void client.post('/challenges', { userId: profile.userId }).then((res) => {
                       if (res.ok) Alert.alert('Challenge sent ⚔️', 'Waiting for them to accept…');
-                      else Alert.alert('Could not challenge', res.error.message);
+                      else Alert.alert('Could not challenge', describeError(res.error).message);
                     })
                   }
                   style={styles.secondary}
