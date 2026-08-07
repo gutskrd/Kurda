@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
+import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
@@ -53,7 +54,7 @@ export class ChatService {
 
   async send(from: string, to: string, rawBody: string): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
-    const trimmed = rawBody.trim();
+    const trimmed = stripControlChars(rawBody).trim();
     if (!trimmed || trimmed.length > MAX_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_MESSAGE_LEN} characters`);
     }

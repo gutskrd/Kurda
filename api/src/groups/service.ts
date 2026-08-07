@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from './roles.js';
@@ -54,9 +55,12 @@ export class GroupService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      // strip control/invisible chars from user-visible text (#108)
+      const name = stripControlChars(input.name).trim();
+      const description = input.description != null ? stripControlChars(input.description).trim() : null;
       const g = await client.query<{ id: string }>(
         `INSERT INTO groups (name, description, privacy, owner_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-        [input.name, input.description ?? null, input.privacy ?? 'open', ownerId],
+        [name, description, input.privacy ?? 'open', ownerId],
       );
       const id = g.rows[0]!.id;
       await client.query(
