@@ -9,6 +9,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { canonicalUsername } from './username.js';
 import { StreakService } from '../streaks/service.js';
 import { MediaService } from '../media/service.js';
+import { ImageModerationService } from '../moderation/image-moderation-service.js';
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
 /** Profile photos are small; cap tighter than the global media limit (KUR-177). */
@@ -169,16 +170,19 @@ export function registerUserRoutes(app: FastifyInstance): void {
       if (!key.startsWith(`${PROFILE_PHOTO_KIND}/`)) {
         return reply.code(400).send({ code: 'BAD_KEY', message: 'not a profile-photo key' });
       }
-      const media = new MediaService(app.db, app.storage);
-      // confirm the pending upload; allow an already-confirmed key (same photo
-      // re-set), but reject a key that was never requested through the pipeline
-      const confirmed = await media.confirmUpload(key);
-      if (!confirmed) {
-        const exists = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1`, [key]);
-        if ((exists.rowCount ?? 0) === 0) {
-          return reply.code(400).send({ code: 'UNKNOWN_KEY', message: 'request an upload URL first' });
-        }
+      // the key must have come through the upload pipeline (confirmed or not)
+      const known = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1`, [key]);
+      if ((known.rowCount ?? 0) === 0) {
+        return reply.code(400).send({ code: 'UNKNOWN_KEY', message: 'request an upload URL first' });
       }
+      // auto-screen before it lands (KUR-181): a non-cleared image is rejected
+      // and left unconfirmed, so the media orphan job reclaims it
+      const outcome = await new ImageModerationService(app.db).scan(key, 'profile');
+      if (outcome.scanStatus !== 'cleared') {
+        return reply.code(422).send({ code: 'PHOTO_REJECTED', message: 'this image was rejected by moderation' });
+      }
+      const media = new MediaService(app.db, app.storage);
+      await media.confirmUpload(key);
       const prev = await app.db.query<{ profile_photo_key: string | null }>(
         `SELECT profile_photo_key FROM users WHERE id = $1`,
         [req.user!.id],
