@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { normalizeKurdish } from '@kurda/shared';
+import { normalizeKurdish, stripControlChars } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
@@ -242,7 +242,7 @@ export function registerUserRoutes(app: FastifyInstance): void {
         sets.push(`${column} = $${values.length}`);
       };
 
-      if (body.displayName !== undefined) add('display_name', normalizeKurdish(body.displayName));
+      if (body.displayName !== undefined) add('display_name', stripControlChars(normalizeKurdish(body.displayName)));
       if (body.bio !== undefined) add('bio', sanitizeBio(body.bio));
       if (body.locale !== undefined) add('locale', body.locale);
       if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);

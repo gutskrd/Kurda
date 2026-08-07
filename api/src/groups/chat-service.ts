@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { GroupService } from './service.js';
 import { canManage } from './roles.js';
@@ -67,7 +68,7 @@ export class GroupChatService {
     if (this.moderation && (await this.moderation.isChatMuted(userId))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
-    const trimmed = rawBody.trim();
+    const trimmed = stripControlChars(rawBody).trim();
     if (!trimmed || trimmed.length > MAX_GROUP_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_GROUP_MESSAGE_LEN} characters`);
     }
