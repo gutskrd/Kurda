@@ -77,6 +77,11 @@ describe.skipIf(!ready)('profile photo (integration)', () => {
     expect(set.json().profilePhotoUrl).toContain(key);
     expect((await me()).profilePhotoUrl).toContain(key);
 
+    // the photo was auto-screened on the way in (KUR-181); the default scanner
+    // clears clean images, recording the scan status on the upload row
+    const scan = await pool.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1`, [key]);
+    expect(scan.rows[0]?.scan_status).toBe('cleared');
+
     const del = await app.inject({ method: 'DELETE', url: '/me/profile-picture', headers: auth(token) });
     expect(del.statusCode).toBe(200);
     expect((await me()).profilePhotoUrl).toBeNull();
