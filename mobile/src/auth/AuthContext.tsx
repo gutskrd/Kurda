@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ApiClient } from '../api/client';
 import { apiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
+import { describeError } from '../api/errors';
 import { createTokenStorage } from './storage';
 
 export interface SessionUser {
@@ -111,7 +112,7 @@ export function AuthProvider({
     baseUrl,
     login: async (email, password) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
-      if (!res.ok) return res.error.message;
+      if (!res.ok) return describeError(res.error).message;
       await applyAuth(res.data);
       return null;
     },
@@ -122,7 +123,7 @@ export function AuthProvider({
         ...input,
         acceptTerms: true,
       });
-      if (!res.ok) return res.error.message;
+      if (!res.ok) return describeError(res.error).message;
       await applyAuth(res.data);
       return null;
     },
