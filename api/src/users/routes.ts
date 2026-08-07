@@ -8,8 +8,13 @@ import { AppError } from '../plugins/errors.js';
 import { requireAuth } from '../plugins/auth.js';
 import { canonicalUsername } from './username.js';
 import { StreakService } from '../streaks/service.js';
+import { MediaService } from '../media/service.js';
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
+/** Profile photos are small; cap tighter than the global media limit (KUR-177). */
+export const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
+const PROFILE_PHOTO_KIND = 'profile-photo';
+const PROFILE_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 /** Timezone can be changed at most once per week (KUR-031 anti time-travel). */
 export const TIMEZONE_CHANGE_COOLDOWN_DAYS = 7;
 
@@ -78,6 +83,7 @@ interface MeRow {
   xp: number;
   skip_speaking: boolean;
   profile_visibility: string;
+  profile_photo_key: string | null;
   created_at: Date;
 }
 
@@ -103,15 +109,95 @@ function toMe(row: MeRow) {
   };
 }
 
+/**
+ * Un-confirm a replaced/cleared photo key so the media orphan job reclaims it —
+ * but only when no other user still references it (content-hashed keys are shared
+ * when two users happen to have identical photos).
+ */
+async function scheduleOrphan(app: FastifyInstance, oldKey: string | null, newKey: string | null): Promise<void> {
+  if (!oldKey || oldKey === newKey) return;
+  const stillUsed = await app.db.query(`SELECT 1 FROM users WHERE profile_photo_key = $1 LIMIT 1`, [oldKey]);
+  if ((stillUsed.rowCount ?? 0) > 0) return;
+  await app.db.query(`UPDATE media_uploads SET confirmed_at = NULL, created_at = now() WHERE key = $1`, [oldKey]);
+}
+
 export function registerUserRoutes(app: FastifyInstance): void {
   const streaks = new StreakService(app.db);
+
+  /** Resolve a stored photo key to a public CDN URL (null when unset/no storage). */
+  const photoUrl = (key: string | null): string | null =>
+    key && app.storage ? app.storage.publicUrl(key) : null;
 
   app.get('/me', { preHandler: requireAuth }, async (req) => {
     const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
     const row = result.rows[0] as MeRow;
     // settle the streak on read so a lapsed day shows as broken (KUR-031)
     const streak = await streaks.get(row.id, row.timezone);
-    return { user: { ...toMe(row), streak } };
+    return { user: { ...toMe(row), streak, profilePhotoUrl: photoUrl(row.profile_photo_key) } };
+  });
+
+  // ---- Profile photo (KUR-177): upload → confirm/set → resolve/clear ----
+
+  /** Signed PUT for a profile photo (image types only, tighter size cap). */
+  app.post(
+    '/me/profile-picture/upload-url',
+    {
+      schema: {
+        body: z.object({
+          contentType: z.enum(PROFILE_PHOTO_TYPES),
+          contentLength: z.number().int().positive().max(MAX_PROFILE_PHOTO_BYTES),
+          sha256Hex: z.string().regex(/^[a-f0-9]{64}$/),
+        }),
+      },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
+      const b = req.body as { contentType: string; contentLength: number; sha256Hex: string };
+      const media = new MediaService(app.db, app.storage);
+      return media.requestUpload({ kind: PROFILE_PHOTO_KIND, ...b });
+    },
+  );
+
+  /** Confirm an uploaded key and set it as the user's photo. */
+  app.post(
+    '/me/profile-picture',
+    { schema: { body: z.object({ key: z.string().min(1).max(256) }) }, preHandler: requireAuth },
+    async (req, reply) => {
+      if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
+      const { key } = req.body as { key: string };
+      if (!key.startsWith(`${PROFILE_PHOTO_KIND}/`)) {
+        return reply.code(400).send({ code: 'BAD_KEY', message: 'not a profile-photo key' });
+      }
+      const media = new MediaService(app.db, app.storage);
+      // confirm the pending upload; allow an already-confirmed key (same photo
+      // re-set), but reject a key that was never requested through the pipeline
+      const confirmed = await media.confirmUpload(key);
+      if (!confirmed) {
+        const exists = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1`, [key]);
+        if ((exists.rowCount ?? 0) === 0) {
+          return reply.code(400).send({ code: 'UNKNOWN_KEY', message: 'request an upload URL first' });
+        }
+      }
+      const prev = await app.db.query<{ profile_photo_key: string | null }>(
+        `SELECT profile_photo_key FROM users WHERE id = $1`,
+        [req.user!.id],
+      );
+      await app.db.query(`UPDATE users SET profile_photo_key = $2 WHERE id = $1`, [req.user!.id, key]);
+      await scheduleOrphan(app, prev.rows[0]?.profile_photo_key ?? null, key);
+      return { profilePhotoUrl: photoUrl(key) };
+    },
+  );
+
+  /** Clear the photo (revert to the initials fallback). */
+  app.delete('/me/profile-picture', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+    const prev = await app.db.query<{ profile_photo_key: string | null }>(
+      `SELECT profile_photo_key FROM users WHERE id = $1`,
+      [req.user!.id],
+    );
+    await app.db.query(`UPDATE users SET profile_photo_key = NULL WHERE id = $1`, [req.user!.id]);
+    await scheduleOrphan(app, prev.rows[0]?.profile_photo_key ?? null, null);
+    return { ok: true };
   });
 
   /** Active sessions = live refresh-token families (KUR-022). */
