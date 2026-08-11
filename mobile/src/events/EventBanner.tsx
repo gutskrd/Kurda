@@ -6,6 +6,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
 import { radii, spacing, typography } from '../theme/tokens';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface ActiveEvent {
@@ -45,7 +46,7 @@ export function EventBanner() {
       onPress={() => navigation.navigate('EventQuests')}
       style={[styles.banner, { backgroundColor: pack ? pack.bannerColors[0] : colors.primary }]}
     >
-      <Text style={styles.emoji}>{pack ? pack.emoji : '🎉'}</Text>
+      {pack ? <Text style={styles.emoji}>{pack.emoji}</Text> : <Icon name="sparkle" size={24} color={colors.textOnPrimary} />}
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.textOnPrimary }]}>{event.name}</Text>
         <Text style={[styles.subtitle, { color: colors.textOnPrimary }]}>{t('events.bannerSubtitle')}</Text>
