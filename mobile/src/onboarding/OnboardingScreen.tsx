@@ -171,7 +171,7 @@ function WelcomeSlide(): React.JSX.Element {
 
   return (
     <View style={[styles.slide, styles.centered]}>
-      <Text style={[styles.brand, { color: colors.primary }]}>Kurda 🌿</Text>
+      <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
       <GlassCard style={styles.welcomeCard}>
         {reduce ? (

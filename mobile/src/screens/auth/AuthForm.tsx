@@ -10,7 +10,7 @@ export function AuthScreenShell({ title, children }: { title: string; children: 
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Text style={[styles.brand, { color: colors.primary }]}>Kurda 🌿</Text>
+        <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
         <GlassCard>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>

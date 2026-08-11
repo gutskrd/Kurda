@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import type { Palette } from '../theme/palette';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -114,7 +115,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
           <BoardTab board={global} unit="rating" />
         ) : (
           <Centered>
-            <Text style={styles.emoji}>👥</Text>
+            <Icon name="people" size={48} tone="secondary" />
             <Text style={[styles.ctaText, { color: colors.textPrimary }]}>Add friends to race them here.</Text>
             <Text style={[styles.dim, { color: colors.textSecondary }]}>Friends leaderboards are coming soon.</Text>
           </Centered>
@@ -144,7 +145,7 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
           <Text style={[styles.tierName, { color: meta.color }]}>{meta.emoji} {meta.label} League</Text>
           <Text style={[styles.countdown, { color: colors.textSecondary }]}>Ends in {countdown(league.weekKey)} · UTC</Text>
           {notStarted ? (
-            <Text style={[styles.cta, { color: colors.accent }]}>Do a lesson to enter this week’s race! 🚀</Text>
+            <Text style={[styles.cta, { color: colors.accent }]}>Do a lesson to enter this week’s race!</Text>
           ) : null}
         </View>
       }
@@ -218,7 +219,6 @@ const styles = StyleSheet.create({
   name: { flex: 1, fontSize: typography.sizes.md },
   nameSelf: { fontWeight: typography.weights.bold },
   score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  emoji: { fontSize: 48 },
   ctaText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
   dim: { textAlign: 'center' },
 });

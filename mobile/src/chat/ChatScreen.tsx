@@ -121,7 +121,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
                 </View>
               );
             }}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Say hello 👋</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Say hello</Text>}
           />
         )}
 

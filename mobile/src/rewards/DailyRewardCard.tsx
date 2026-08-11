@@ -91,7 +91,7 @@ export function DailyRewardCard() {
         </Pressable>
       ) : (
         <Text style={[styles.done, { color: colors.textSecondary }]}>
-          {justEarned != null ? `+${justEarned} Zêr claimed!` : 'Come back tomorrow 🌙'}
+          {justEarned != null ? `+${justEarned} Zêr claimed!` : 'Come back tomorrow'}
         </Text>
       )}
     </View>
