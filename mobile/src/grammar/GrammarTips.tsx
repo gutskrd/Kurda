@@ -1,5 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { useTheme } from '../theme/ThemeProvider';
 import { MarkdownView } from './MarkdownView';
 
 /**
@@ -7,23 +9,26 @@ import { MarkdownView } from './MarkdownView';
  * mid-lesson never unmounts the player — session state is untouched.
  */
 export function GrammarTips({ source, onClose }: { source: string; onClose: () => void }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.title}>💡 Tips</Text>
-        <Pressable onPress={onClose} accessibilityLabel="Close tips" hitSlop={12}>
-          <Text style={styles.close}>✕</Text>
-        </Pressable>
+    <GradientBackground>
+      <View style={styles.screen}>
+        <View style={[styles.header, { borderBottomColor: colors.glassBorder }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Tips</Text>
+          <Pressable onPress={onClose} accessibilityLabel="Close tips" hitSlop={12}>
+            <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={styles.body}>
+          <MarkdownView source={source} />
+        </ScrollView>
       </View>
-      <ScrollView contentContainerStyle={styles.body}>
-        <MarkdownView source={source} />
-      </ScrollView>
-    </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -31,10 +36,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  close: { fontSize: typography.sizes.lg, color: colors.textSecondary },
+  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  close: { fontSize: typography.sizes.lg },
   body: { padding: spacing.lg },
 });

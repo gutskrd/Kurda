@@ -1,5 +1,6 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 
 interface Props {
@@ -10,10 +11,11 @@ interface Props {
 }
 
 export function TranslateExercise({ exercise, text, onChangeText, disabled }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Translate</Text>
-      {exercise.prompt ? <Text style={styles.prompt}>{exercise.prompt}</Text> : null}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Translate</Text>
+      {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
       <TextInput
         value={text}
         onChangeText={onChangeText}
@@ -22,7 +24,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled }: Pr
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, disabled && styles.dim]}
+        style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel="Your translation"
       />
     </View>
@@ -31,17 +33,14 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled }: Pr
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, color: colors.textSecondary, textTransform: 'uppercase' },
-  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
+  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   input: {
     borderWidth: 2,
-    borderColor: colors.border,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: typography.sizes.lg,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
   },
   dim: { opacity: 0.6 },
 });

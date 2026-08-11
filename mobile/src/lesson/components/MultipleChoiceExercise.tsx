@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 
 interface Props {
@@ -10,9 +11,10 @@ interface Props {
 }
 
 export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.container}>
-      {exercise.prompt ? <Text style={styles.prompt}>{exercise.prompt}</Text> : null}
+      {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
       <View style={styles.options}>
         {(exercise.options ?? []).map((option, i) => {
           const selected = choice === i;
@@ -23,9 +25,13 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled }:
               onPress={() => onSelect(i)}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
-              style={[styles.option, selected && styles.optionSelected, disabled && styles.dim]}
+              style={[
+                styles.option,
+                { borderColor: selected ? colors.primary : colors.glassBorder, backgroundColor: selected ? colors.primary : colors.controlTrack },
+                disabled && styles.dim,
+              ]}
             >
-              <Text style={[styles.optionText, selected && styles.optionTextSelected]}>{option}</Text>
+              <Text style={[styles.optionText, { color: selected ? colors.textOnPrimary : colors.textPrimary }, selected && styles.optionTextSelected]}>{option}</Text>
             </Pressable>
           );
         })}
@@ -36,18 +42,15 @@ export function MultipleChoiceExercise({ exercise, choice, onSelect, disabled }:
 
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
-  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   options: { gap: spacing.sm },
   option: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: radii.md,
     borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
-  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
-  optionText: { fontSize: typography.sizes.md, color: colors.textPrimary },
-  optionTextSelected: { color: colors.textOnPrimary, fontWeight: typography.weights.bold },
+  optionText: { fontSize: typography.sizes.md },
+  optionTextSelected: { fontWeight: typography.weights.bold },
   dim: { opacity: 0.6 },
 });

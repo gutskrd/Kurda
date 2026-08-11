@@ -3,7 +3,10 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
-import { colors, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
+import { useTheme } from '../theme/ThemeProvider';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { HeartsBar } from './components/HeartsBar';
@@ -47,6 +50,7 @@ const LESSON_PATHS: SessionPaths = {
  */
 export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [view, setView] = useState<SessionView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -64,20 +68,24 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
 
   if (loadError) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Couldn’t load the lesson.</Text>
-        <Text style={styles.errorDetail}>{loadError}</Text>
-        <Pressable onPress={onExit} style={styles.exitButton}>
-          <Text style={styles.exitText}>Back</Text>
-        </Pressable>
-      </View>
+      <GradientBackground>
+        <View style={styles.centered}>
+          <Text style={[styles.errorText, { color: colors.textPrimary }]}>Couldn’t load the lesson.</Text>
+          <Text style={[styles.errorDetail, { color: colors.textSecondary }]}>{loadError}</Text>
+          <Pressable onPress={onExit} style={styles.exitButton}>
+            <Text style={[styles.exitText, { color: colors.primary }]}>Back</Text>
+          </Pressable>
+        </View>
+      </GradientBackground>
     );
   }
   if (!view) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <GradientBackground>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </GradientBackground>
     );
   }
   return <SessionPlayer view={view} paths={LESSON_PATHS} onExit={onExit} />;
@@ -98,6 +106,7 @@ export function SessionPlayer({
   onExit: () => void;
 }) {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
 
@@ -219,39 +228,44 @@ export function SessionPlayer({
 
   if (state.status === 'finished' && results) {
     return (
-      <LessonResults
-        results={results}
-        exercises={state.exercises}
-        failed={outOfHearts(state)}
-        onDone={onExit}
-      />
+      <GradientBackground>
+        <LessonResults
+          results={results}
+          exercises={state.exercises}
+          failed={outOfHearts(state)}
+          onDone={onExit}
+        />
+      </GradientBackground>
     );
   }
   if (state.status === 'finished') {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.tallying}>Tallying results…</Text>
-      </View>
+      <GradientBackground>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.tallying, { color: colors.textSecondary }]}>Tallying results…</Text>
+        </View>
+      </GradientBackground>
     );
   }
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable onPress={onExit} accessibilityLabel="Quit lesson">
-          <Text style={styles.quit}>✕</Text>
-        </Pressable>
-        <View style={styles.progressWrap}>
-          <ProgressBar value={progress(state)} />
-        </View>
-        {view.grammarMd ? (
-          <Pressable onPress={() => setShowTips(true)} accessibilityLabel="Grammar tips" hitSlop={8}>
-            <Text style={styles.tips}>💡</Text>
+    <GradientBackground>
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable onPress={onExit} accessibilityLabel="Quit lesson">
+            <Text style={[styles.quit, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>
-        ) : null}
-        <HeartsBar hearts={state.hearts} max={STARTING_HEARTS} />
-      </View>
+          <View style={styles.progressWrap}>
+            <ProgressBar value={progress(state)} />
+          </View>
+          {view.grammarMd ? (
+            <Pressable onPress={() => setShowTips(true)} accessibilityLabel="Grammar tips" hitSlop={8}>
+              <Icon name="sparkle" size={22} color={colors.gold} />
+            </Pressable>
+          ) : null}
+          <HeartsBar hearts={state.hearts} max={STARTING_HEARTS} />
+        </View>
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
@@ -312,28 +326,29 @@ export function SessionPlayer({
         ) : null}
       </ScrollView>
 
-      {offline ? (
-        <Pressable onPress={retry} style={styles.offline}>
-          <Text style={styles.offlineText}>
-            {submitting ? 'Syncing…' : 'You’re offline — tap to retry'}
-          </Text>
-        </Pressable>
-      ) : (
-        <FeedbackFooter
-          feedback={state.feedback}
-          canCheck={canCheck}
-          submitting={submitting}
-          onCheck={check}
-          onContinue={() => dispatch({ type: 'CONTINUE' })}
-        />
-      )}
-    </View>
+        {offline ? (
+          <Pressable onPress={retry} style={[styles.offline, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.offlineText, { color: colors.textSecondary }]}>
+              {submitting ? 'Syncing…' : 'You’re offline — tap to retry'}
+            </Text>
+          </Pressable>
+        ) : (
+          <FeedbackFooter
+            feedback={state.feedback}
+            canCheck={canCheck}
+            submitting={submitting}
+            onCheck={check}
+            onContinue={() => dispatch({ type: 'CONTINUE' })}
+          />
+        )}
+      </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl, backgroundColor: colors.background },
+  screen: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,21 +357,20 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.md,
   },
-  quit: { fontSize: typography.sizes.lg, color: colors.textSecondary },
-  tips: { fontSize: typography.sizes.lg },
+  quit: { fontSize: typography.sizes.lg },
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
-  tallying: { color: colors.textSecondary, fontSize: typography.sizes.md },
-  errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  errorDetail: { fontSize: typography.sizes.sm, color: colors.textSecondary, textAlign: 'center' },
+  tallying: { fontSize: typography.sizes.md },
+  errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  errorDetail: { fontSize: typography.sizes.sm, textAlign: 'center' },
   exitButton: { marginTop: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.xl },
-  exitText: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  exitText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   offline: {
     margin: spacing.lg,
     padding: spacing.md,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
-  offlineText: { color: colors.textSecondary, fontSize: typography.sizes.md },
+  offlineText: { fontSize: typography.sizes.md },
 });

@@ -8,7 +8,8 @@ import {
   type TextInputSelectionChangeEventData,
   View,
 } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { KURDISH_KEYS, insertAtSelection } from '../kurdishKeys';
 import type { Exercise } from '../types';
 
@@ -21,6 +22,7 @@ interface Props {
 
 /** Free-text writing with a Kurdish special-character hint bar (KUR-037). */
 export function WritingExercise({ exercise, text, onChangeText, disabled }: Props) {
+  const { colors } = useTheme();
   const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   const onSelectionChange = (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) =>
@@ -34,8 +36,8 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Write your answer</Text>
-      {exercise.prompt ? <Text style={styles.prompt}>{exercise.prompt}</Text> : null}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Write your answer</Text>
+      {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {/* Kurdish keyboard hint bar */}
       <View style={styles.keys}>
@@ -45,9 +47,9 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
             disabled={disabled}
             onPress={() => insertKey(key)}
             accessibilityLabel={`Insert ${key}`}
-            style={[styles.key, disabled && styles.dim]}
+            style={[styles.key, { borderColor: colors.glassBorder, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
           >
-            <Text style={styles.keyText}>{key}</Text>
+            <Text style={[styles.keyText, { color: colors.textPrimary }]}>{key}</Text>
           </Pressable>
         ))}
       </View>
@@ -63,7 +65,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, disabled && styles.dim]}
+        style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel="Your written answer"
       />
     </View>
@@ -72,29 +74,24 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, color: colors.textSecondary, textTransform: 'uppercase' },
-  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
+  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   keys: { flexDirection: 'row', gap: spacing.sm },
   key: {
     minWidth: 40,
     paddingVertical: spacing.sm,
     borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
     alignItems: 'center',
   },
-  keyText: { fontSize: typography.sizes.lg, color: colors.textPrimary },
+  keyText: { fontSize: typography.sizes.lg },
   input: {
     minHeight: 96,
     borderWidth: 2,
-    borderColor: colors.border,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: typography.sizes.lg,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
     textAlignVertical: 'top',
   },
   dim: { opacity: 0.6 },
