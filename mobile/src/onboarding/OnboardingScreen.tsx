@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import {
@@ -171,7 +172,10 @@ function WelcomeSlide(): React.JSX.Element {
 
   return (
     <View style={[styles.slide, styles.centered]}>
-      <Text style={[styles.brand, { color: colors.primary }]}>Kurda 🌿</Text>
+      <View style={styles.brandRow}>
+        <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
+        <Icon name="sun" size={30} color={colors.gold} />
+      </View>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
       <GlassCard style={styles.welcomeCard}>
         {reduce ? (
@@ -229,6 +233,7 @@ const styles = StyleSheet.create({
   langLabel: { fontSize: typography.sizes.lg },
   langLabelActive: { fontWeight: typography.weights.bold },
   check: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
   welcomeCard: { alignSelf: 'stretch' },

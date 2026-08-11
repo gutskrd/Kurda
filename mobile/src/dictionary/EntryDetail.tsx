@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { SenseSection } from './SenseSection';
 import type { Entry } from './types';
@@ -59,7 +60,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                   accessibilityLabel="Play pronunciation"
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
                 >
-                  <Text style={styles.audioIcon}>🔊</Text>
+                  <Icon name="speaker" size={22} tone="primary" />
                 </Pressable>
               ) : null}
               <Pressable
@@ -68,7 +69,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 accessibilityState={{ selected: saved }}
                 style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
               >
-                <Text style={[styles.audioIcon, saved && { color: colors.gold }]}>{saved ? '★' : '☆'}</Text>
+                <Icon name={saved ? 'star' : 'star-outline'} size={22} color={saved ? colors.gold : colors.textSecondary} />
               </Pressable>
             </View>
             <Text style={[styles.dialect, { color: colors.textSecondary }]}>{entry.dialect}</Text>
@@ -109,7 +110,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  audioIcon: { fontSize: typography.sizes.lg },
   dialect: { fontSize: typography.sizes.sm, textTransform: 'capitalize' },
   senses: { marginTop: spacing.md },
   xrefs: { marginTop: spacing.lg, gap: spacing.xs },

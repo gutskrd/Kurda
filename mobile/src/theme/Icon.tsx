@@ -36,8 +36,7 @@ export type IconName =
   | 'chevron-right'
   | 'sparkle'
   | 'ice'
-  | 'moon'
-  | 'wave';
+  | 'moon';
 
 /** 24×24 filled-silhouette path data, keyed by icon name. */
 const PATHS: Record<IconName, string> = {
@@ -77,9 +76,9 @@ const PATHS: Record<IconName, string> = {
   'chevron-left': 'M15.4 5.4 8.8 12l6.6 6.6 1.4-1.4L11.6 12l5.2-5.2-1.4-1.4Z',
   'chevron-right': 'M8.6 5.4 7.2 6.8 12.4 12l-5.2 5.2 1.4 1.4L16 12 8.6 5.4Z',
   sparkle: 'M12 2c.8 4.2 2.8 6.2 7 7-4.2.8-6.2 2.8-7 7-.8-4.2-2.8-6.2-7-7 4.2-.8 6.2-2.8 7-7Z',
-  ice: 'M12 2v20M4 7l16 10M20 7 4 17M12 2l-2.5 2.5M12 2l2.5 2.5M12 22l-2.5-2.5M12 22l2.5-2.5M4 7l.2 3.4M4 7l3.3-.6M20 17l-.2-3.4M20 17l-3.3.6M20 7l-3.3-.6M20 7l-.2 3.4M4 17l3.3.6M4 17l.2-3.4Z',
+  // filled 6-point snowflake / ice crystal
+  ice: 'M12 1.5l1.7 3.6 3.9-1-1 3.9 3.6 1.7-3.6 1.7 1 3.9-3.9-1L12 19.5l-1.7-3.7-3.9 1 1-3.9L2.9 12l3.6-1.7-1-3.9 3.9 1L12 1.5Z',
   moon: 'M13 2.5A9.5 9.5 0 1 0 21.5 15 7.5 7.5 0 0 1 13 2.5Z',
-  wave: 'M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8.5-6c1.5 1 2.5 3 2.5 5m-3 0c1 .7 1.7 2 1.7 3.5M3 21c0-4.4 2.2-8 5-8s5 3.6 5 8H3Z',
 };
 
 /**

@@ -14,6 +14,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import {
   canAfford,
@@ -101,8 +102,14 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           </Pressable>
           <Text style={[styles.title, { color: colors.primary }]}>Shop</Text>
           <View style={styles.balances}>
-            <Text style={[styles.balance, { color: colors.textPrimary }]}>🪙 {balances.zer}</Text>
-            <Text style={[styles.balance, { color: colors.textPrimary }]}>💎 {balances.gems}</Text>
+            <View style={styles.balanceChip}>
+              <Icon name="coin" size={18} color={colors.gold} />
+              <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.zer}</Text>
+            </View>
+            <View style={styles.balanceChip}>
+              <Icon name="gem" size={18} color={colors.accent} />
+              <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.gems}</Text>
+            </View>
           </View>
         </View>
 
@@ -120,9 +127,12 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                   <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.name}</Text>
                   {item.description ? <Text style={[styles.itemDesc, { color: colors.textSecondary }]} numberOfLines={1}>{item.description}</Text> : null}
                 </View>
-                <Text style={[styles.price, { color: canAfford(item, balances) ? colors.textPrimary : colors.textSecondary }]}>
-                  {item.price} {item.currency === 'zer' ? '🪙' : '💎'}
-                </Text>
+                <View style={styles.priceRow}>
+                  <Text style={[styles.price, { color: canAfford(item, balances) ? colors.textPrimary : colors.textSecondary }]}>
+                    {item.price}
+                  </Text>
+                  <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.accent} />
+                </View>
               </Pressable>
             )}
             ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>The shop is empty right now — check back soon.</Text>}
@@ -161,7 +171,11 @@ function ItemDetail({
     <View style={styles.detail}>
       {/* preview placeholder until item art lands with the design pass */}
       <View style={[styles.preview, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, borderWidth: StyleSheet.hairlineWidth }]}>
-        <Text style={styles.previewEmoji}>{item.category === 'freeze' ? '🧊' : item.category === 'powerup' ? '⚡' : '✨'}</Text>
+        <Icon
+          name={item.category === 'freeze' ? 'ice' : item.category === 'powerup' ? 'bolt' : 'sparkle'}
+          size={44}
+          color={colors.primary}
+        />
       </View>
       <Text style={[styles.detailName, { color: colors.textPrimary }]}>{item.name}</Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
@@ -194,7 +208,9 @@ const styles = StyleSheet.create({
   close: { fontSize: typography.sizes.lg },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, flex: 1 },
   balances: { flexDirection: 'row', gap: spacing.md },
+  balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   list: { padding: spacing.lg, gap: spacing.xs },
   section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.md, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth },
@@ -207,7 +223,6 @@ const styles = StyleSheet.create({
   sheet: { borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
   detail: { alignItems: 'center', gap: spacing.sm },
   preview: { width: 96, height: 96, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
-  previewEmoji: { fontSize: 48 },
   detailName: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },
   detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginVertical: spacing.sm },

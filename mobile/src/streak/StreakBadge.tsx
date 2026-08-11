@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { Icon } from '../theme/Icon';
 import { useEventTheme } from '../theme/EventThemeContext';
-import { flameSkin, themeAccent } from '../theme/eventThemes';
+import { themeAccent } from '../theme/eventThemes';
 import { isFlameLit, streakLabel, type Streak } from './format';
 
 /**
@@ -21,11 +22,11 @@ export function StreakBadge({ streak }: { streak: Streak }) {
         { backgroundColor: lit ? (pack ? themeAccent(pack, colors.accent) : colors.accent) : colors.controlTrack },
       ]}
     >
-      <Text style={styles.flame}>{lit ? flameSkin(pack) : '🕯️'}</Text>
+      <Icon name="flame" size={18} color={lit ? colors.danger : colors.textSecondary} />
       <Text style={[styles.count, { color: lit ? colors.textOnPrimary : colors.textSecondary }]}>
         {streakLabel(streak.current)}
       </Text>
-      {streak.freezes > 0 ? <Text style={styles.freeze}>❄️</Text> : null}
+      {streak.freezes > 0 ? <Icon name="ice" size={14} color={colors.primary} /> : null}
     </View>
   );
 }
@@ -39,7 +40,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.pill,
   },
-  flame: { fontSize: typography.sizes.lg },
   count: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  freeze: { fontSize: typography.sizes.sm },
 });

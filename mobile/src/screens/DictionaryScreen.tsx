@@ -7,6 +7,7 @@ import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 
 /**
@@ -106,7 +107,10 @@ export function DictionaryScreen() {
 
         {isEmpty && saved.length > 0 ? (
           <View style={styles.recents}>
-            <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>★ Saved</Text>
+            <View style={styles.savedHeading}>
+              <Icon name="star" size={13} color={colors.gold} />
+              <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>Saved</Text>
+            </View>
             {saved.map((w) => (
               <View key={w.entryId} style={styles.savedRow}>
                 <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
@@ -161,6 +165,7 @@ const styles = StyleSheet.create({
   },
   banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
+  savedHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   recentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
   recentRow: { paddingVertical: spacing.sm },
   recentText: { fontSize: typography.sizes.md },

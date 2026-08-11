@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GradientBackground } from '../../theme/glass';
+import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 
@@ -10,7 +11,10 @@ export function AuthScreenShell({ title, children }: { title: string; children: 
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Text style={[styles.brand, { color: colors.primary }]}>Kurda 🌿</Text>
+        <View style={styles.brandRow}>
+          <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
+          <Icon name="sun" size={26} color={colors.gold} />
+        </View>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
         <GlassCard>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
@@ -96,7 +100,8 @@ export function FormError({ message }: { message: string | null }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
-  brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.md },
   field: { marginBottom: spacing.md },
