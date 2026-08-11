@@ -6,17 +6,20 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { spacing } from '../../theme/tokens';
 import { AuthScreenShell } from './AuthForm';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
+  /** re-open the intro (language / welcome slides) — provided by the app root */
+  onBack?: () => void;
+};
 
 /**
  * The sign-in choice (KUR-271): "Continue with email" (sign up) vs "I already
  * have an account" (log in). The auth stack's initial route, so Login/Register
- * can always go back here.
+ * can always go back here; its own back re-opens the intro slides.
  */
-export function WelcomeScreen({ navigation }: Props) {
+export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors } = useTheme();
   return (
-    <AuthScreenShell title="Get started">
+    <AuthScreenShell title="Get started" onBack={onBack}>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         Create an account to save your progress, or sign in.
       </Text>

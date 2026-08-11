@@ -210,13 +210,16 @@ function Root() {
   }
 
   if (status === 'signedOut') {
-    // first launch: show onboarding before the auth screens (KUR-271/272/273/274)
+    // first launch: show the intro before the auth screens (KUR-271/272/273)
     if (onboarding.needsOnboarding) {
-      return <OnboardingScreen onComplete={onboarding.complete} />;
+      return <OnboardingScreen onComplete={onboarding.complete} initialStep={onboarding.reopenStep} />;
     }
     return (
       <AuthStack.Navigator initialRouteName={AUTH_INITIAL_ROUTE} screenOptions={{ headerShown: false }}>
-        <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
+        {/* Welcome's back walks into the intro (KUR-271): choice → welcome → language */}
+        <AuthStack.Screen name="Welcome">
+          {(props) => <WelcomeScreen {...props} onBack={() => onboarding.reopen('welcome')} />}
+        </AuthStack.Screen>
         <AuthStack.Screen name="Login" component={LoginScreen} />
         <AuthStack.Screen name="Register" component={RegisterScreen} />
         <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

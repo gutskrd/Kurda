@@ -34,12 +34,11 @@ describe('initOnboardingState', () => {
 describe('navigation', () => {
   it('advances through the slides with next', () => {
     expect(currentStep(run({ type: 'next' }))).toBe('welcome');
-    expect(currentStep(run({ type: 'next' }, { type: 'next' }))).toBe('account');
   });
 
   it('clamps next at the last slide', () => {
-    const s = run({ type: 'next' }, { type: 'next' }, { type: 'next' }, { type: 'next' });
-    expect(currentStep(s)).toBe('account');
+    const s = run({ type: 'next' }, { type: 'next' }, { type: 'next' });
+    expect(currentStep(s)).toBe('welcome');
     expect(isLastStep(s)).toBe(true);
     expect(s.stepIndex).toBe(ONBOARDING_STEPS.length - 1);
   });
@@ -66,7 +65,7 @@ describe('language selection', () => {
 
 describe('completion', () => {
   it('finish marks completed via finished', () => {
-    const s = run({ type: 'next' }, { type: 'next' }, { type: 'finish' });
+    const s = run({ type: 'next' }, { type: 'finish' });
     expect(s.status).toBe('completed');
     expect(s.completedVia).toBe('finished');
   });
