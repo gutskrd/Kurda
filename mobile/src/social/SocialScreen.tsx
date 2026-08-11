@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 
@@ -81,8 +82,9 @@ export function SocialScreen() {
       <View style={styles.screen}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: colors.primary }]}>Social</Text>
-          <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8}>
-            <Text style={[styles.messages, { color: colors.primary }]}>💬 Messages</Text>
+          <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink}>
+            <Icon name="chat" size={18} tone="primary" />
+            <Text style={[styles.messages, { color: colors.primary }]}>Messages</Text>
           </Pressable>
         </View>
         <TextInput
@@ -149,6 +151,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
   title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   input: { borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },

@@ -74,11 +74,11 @@ export function ProfileScreen() {
         {streak ? <StreakBadge streak={streak} /> : null}
 
         <View style={styles.actions}>
-          <ClayButton label={`🏆 ${t('profile.league')}`} tone="primary" onPress={() => navigation.navigate('League')} />
-          <ClayButton label={`🛒 ${t('profile.shop')}`} tone="primary" onPress={() => navigation.navigate('Shop')} />
+          <ClayButton label={t('profile.league')} icon="trophy" tone="primary" onPress={() => navigation.navigate('League')} />
+          <ClayButton label={t('profile.shop')} icon="cart" tone="primary" onPress={() => navigation.navigate('Shop')} />
           <NotificationBell />
-          <ClayButton label="⚙️ Notification settings" tone="neutral" onPress={() => navigation.navigate('Notifications')} />
-          <ClayButton label="🎨 Appearance" tone="neutral" onPress={() => navigation.navigate('Appearance')} />
+          <ClayButton label="Notification settings" icon="gear" tone="neutral" onPress={() => navigation.navigate('Notifications')} />
+          <ClayButton label="Appearance" icon="palette" tone="neutral" onPress={() => navigation.navigate('Appearance')} />
         </View>
 
         <View style={styles.group}>
