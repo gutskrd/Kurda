@@ -4,13 +4,15 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../auth/AuthContext';
 import { FIELD_ERROR_COPY, validateEmail } from '../../auth/validators';
 import type { AuthStackParamList } from '../../navigation/authStack';
-import { colors, spacing, typography } from '../../theme/tokens';
+import { spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { AuthScreenShell, Field, LinkText, SubmitButton } from './AuthForm';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
 export function ForgotPasswordScreen({ navigation }: Props) {
   const { requestPasswordReset } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
