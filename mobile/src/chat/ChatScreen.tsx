@@ -11,7 +11,9 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { useTheme } from '../theme/ThemeProvider';
 import { useChatSocket } from './useChatSocket';
 
 interface Message {
@@ -27,6 +29,7 @@ const MAX_LEN = 2000;
 /** 1:1 conversation thread (KUR-083). */
 export function ChatScreen({ userId, username, onExit }: { userId: string; username: string; onExit: () => void }) {
   const { client, user } = useAuth();
+  const { colors } = useTheme();
   const me = user?.id ?? '';
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
@@ -85,75 +88,84 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
   }, [client, draft, userId]);
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.header}>
-        <Pressable onPress={onExit} hitSlop={10}><Text style={styles.close}>‹ Back</Text></Pressable>
-        <Text style={styles.title}>{username}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <GradientBackground>
+      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={[styles.header, { borderBottomColor: colors.glassBorder }]}>
+          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{username}</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-      ) : (
-        <FlatList
-          data={messages}
-          keyExtractor={(m) => m.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => {
-            const mine = item.senderId === me;
-            return (
-              <View style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}>
-                <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
-                  <Text style={[styles.body, mine && styles.bodyMine]}>{item.body}</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+        ) : (
+          <FlatList
+            data={messages}
+            keyExtractor={(m) => m.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => {
+              const mine = item.senderId === me;
+              return (
+                <View style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}>
+                  <View
+                    style={[
+                      styles.bubble,
+                      mine
+                        ? { backgroundColor: colors.primary }
+                        : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder },
+                    ]}
+                  >
+                    <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{item.body}</Text>
+                  </View>
+                  {mine && item.readAt ? <Text style={[styles.receipt, { color: colors.textSecondary }]}>Read</Text> : null}
                 </View>
-                {mine && item.readAt ? <Text style={styles.receipt}>Read</Text> : null}
-              </View>
-            );
-          }}
-          ListEmptyComponent={<Text style={styles.empty}>Say hello 👋</Text>}
-        />
-      )}
+              );
+            }}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Say hello 👋</Text>}
+          />
+        )}
 
-      {peerTyping ? <Text style={styles.typing}>{username} is typing…</Text> : null}
+        {peerTyping ? <Text style={[styles.typing, { color: colors.textSecondary }]}>{username} is typing…</Text> : null}
 
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Message…"
-          placeholderTextColor={colors.textSecondary}
-          value={draft}
-          onChangeText={onType}
-          maxLength={MAX_LEN}
-          multiline
-        />
-        <Pressable onPress={send} disabled={!draft.trim()} style={[styles.sendBtn, !draft.trim() && styles.sendMuted]}>
-          <Text style={styles.sendText}>Send</Text>
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+        <View style={[styles.inputRow, { borderTopColor: colors.glassBorder }]}>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+            placeholder="Message…"
+            placeholderTextColor={colors.textSecondary}
+            value={draft}
+            onChangeText={onType}
+            maxLength={MAX_LEN}
+            multiline
+          />
+          <Pressable
+            onPress={send}
+            disabled={!draft.trim()}
+            style={[styles.sendBtn, { backgroundColor: draft.trim() ? colors.primary : colors.controlTrack }]}
+          >
+            <Text style={[styles.sendText, { color: draft.trim() ? colors.textOnPrimary : colors.textSecondary }]}>Send</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
-  close: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 40 },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  screen: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 40 },
+  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   list: { padding: spacing.lg, gap: spacing.xs },
   bubbleRow: { maxWidth: '80%' },
   rowMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   rowTheirs: { alignSelf: 'flex-start' },
   bubble: { borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  bubbleMine: { backgroundColor: colors.primary },
-  bubbleTheirs: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  body: { fontSize: typography.sizes.md, color: colors.textPrimary },
-  bodyMine: { color: colors.textOnPrimary },
-  receipt: { fontSize: typography.sizes.xs, color: colors.textSecondary, marginTop: 2 },
-  empty: { textAlign: 'center', color: colors.textSecondary, marginTop: spacing.xl },
-  typing: { color: colors.textSecondary, fontStyle: 'italic', paddingHorizontal: spacing.lg, paddingBottom: spacing.xs, fontSize: typography.sizes.sm },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
-  input: { flex: 1, maxHeight: 120, backgroundColor: colors.surface, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.textPrimary, fontSize: typography.sizes.md },
-  sendBtn: { backgroundColor: colors.primary, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radii.md },
-  sendMuted: { backgroundColor: colors.border },
-  sendText: { color: colors.textOnPrimary, fontWeight: typography.weights.bold },
+  body: { fontSize: typography.sizes.md },
+  receipt: { fontSize: typography.sizes.xs, marginTop: 2 },
+  empty: { textAlign: 'center', marginTop: spacing.xl },
+  typing: { fontStyle: 'italic', paddingHorizontal: spacing.lg, paddingBottom: spacing.xs, fontSize: typography.sizes.sm },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
+  input: { flex: 1, maxHeight: 120, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  sendBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radii.md },
+  sendText: { fontWeight: typography.weights.bold },
 });
