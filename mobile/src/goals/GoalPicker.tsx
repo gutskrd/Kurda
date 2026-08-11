@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { GOAL_OPTIONS, type GoalOption } from './format';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 /** Segmented daily-goal selector (10/20/30/50 XP). */
 export function GoalPicker({ value, onChange, disabled }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
       {GOAL_OPTIONS.map((option) => {
@@ -21,9 +23,13 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
             onPress={() => onChange(option)}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            style={[styles.segment, selected && styles.segmentSelected, disabled && styles.dim]}
+            style={[
+              styles.segment,
+              { borderColor: selected ? colors.primary : colors.glassBorder, backgroundColor: selected ? colors.primary : colors.controlTrack },
+              disabled && styles.dim,
+            ]}
           >
-            <Text style={[styles.label, selected && styles.labelSelected]}>{option}</Text>
+            <Text style={[styles.label, { color: selected ? colors.textOnPrimary : colors.textPrimary }]}>{option}</Text>
           </Pressable>
         );
       })}
@@ -37,13 +43,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: spacing.sm,
     borderRadius: radii.md,
-    borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
-  segmentSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
-  label: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  labelSelected: { color: colors.textOnPrimary },
+  label: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   dim: { opacity: 0.5 },
 });

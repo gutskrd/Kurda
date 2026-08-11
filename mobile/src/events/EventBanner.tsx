@@ -5,7 +5,8 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 
 interface ActiveEvent {
   key: string;
@@ -22,6 +23,7 @@ export function EventBanner() {
   const { client } = useAuth();
   const { pack } = useEventTheme();
   const { t } = useI18n();
+  const { colors } = useTheme();
   const [event, setEvent] = useState<ActiveEvent | null>(null);
 
   useFocusEffect(
@@ -41,14 +43,14 @@ export function EventBanner() {
   return (
     <Pressable
       onPress={() => navigation.navigate('EventQuests')}
-      style={[styles.banner, pack ? { backgroundColor: pack.bannerColors[0] } : null]}
+      style={[styles.banner, { backgroundColor: pack ? pack.bannerColors[0] : colors.primary }]}
     >
       <Text style={styles.emoji}>{pack ? pack.emoji : '🎉'}</Text>
       <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{event.name}</Text>
-        <Text style={styles.subtitle}>{t('events.bannerSubtitle')}</Text>
+        <Text style={[styles.title, { color: colors.textOnPrimary }]}>{event.name}</Text>
+        <Text style={[styles.subtitle, { color: colors.textOnPrimary }]}>{t('events.bannerSubtitle')}</Text>
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Text style={[styles.chevron, { color: colors.textOnPrimary }]}>›</Text>
     </Pressable>
   );
 }
@@ -58,13 +60,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.primary,
     borderRadius: radii.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
   emoji: { fontSize: typography.sizes.xl },
-  title: { color: colors.textOnPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
-  subtitle: { color: colors.textOnPrimary, opacity: 0.9, fontSize: typography.sizes.sm },
-  chevron: { color: colors.textOnPrimary, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  title: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
+  subtitle: { opacity: 0.9, fontSize: typography.sizes.sm },
+  chevron: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
 });

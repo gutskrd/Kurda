@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { flameSkin, themeAccent } from '../theme/eventThemes';
 import { isFlameLit, streakLabel, type Streak } from './format';
@@ -12,12 +13,16 @@ import { isFlameLit, streakLabel, type Streak } from './format';
 export function StreakBadge({ streak }: { streak: Streak }) {
   const lit = isFlameLit(streak.current);
   const { pack } = useEventTheme();
+  const { colors } = useTheme();
   return (
     <View
-      style={[styles.badge, lit ? styles.badgeLit : styles.badgeCold, lit && pack ? { backgroundColor: themeAccent(pack, colors.accent) } : null]}
+      style={[
+        styles.badge,
+        { backgroundColor: lit ? (pack ? themeAccent(pack, colors.accent) : colors.accent) : colors.controlTrack },
+      ]}
     >
       <Text style={styles.flame}>{lit ? flameSkin(pack) : '🕯️'}</Text>
-      <Text style={[styles.count, lit ? styles.countLit : styles.countCold]}>
+      <Text style={[styles.count, { color: lit ? colors.textOnPrimary : colors.textSecondary }]}>
         {streakLabel(streak.current)}
       </Text>
       {streak.freezes > 0 ? <Text style={styles.freeze}>❄️</Text> : null}
@@ -34,11 +39,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.pill,
   },
-  badgeLit: { backgroundColor: colors.accent },
-  badgeCold: { backgroundColor: colors.surface },
   flame: { fontSize: typography.sizes.lg },
   count: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  countLit: { color: colors.textOnPrimary },
-  countCold: { color: colors.textSecondary },
   freeze: { fontSize: typography.sizes.sm },
 });
