@@ -80,7 +80,7 @@ export function LearnScreen() {
           <GoalPicker value={goal.goal} onChange={changeGoal} />
         </View>
       ) : null}
-      <ClayButton label="⚡ Practice" tone="primary" onPress={() => navigation.navigate('Practice')} style={styles.practice} />
+      <ClayButton label="Practice" icon="bolt" tone="primary" onPress={() => navigation.navigate('Practice')} style={styles.practice} />
       <EventBanner />
       <DailyRewardCard />
       <WordOfDayCard />

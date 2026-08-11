@@ -6,6 +6,7 @@ import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 
 /**
@@ -39,7 +40,7 @@ export function PlayScreen() {
     <GradientBackground>
       <View style={styles.screen}>
         <GlassCard style={styles.card}>
-          <Text style={styles.emoji}>🎮</Text>
+          <Icon name="play" size={56} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>Play</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Head-to-head Kurdish quiz — fastest correct answers win.</Text>
 
@@ -61,7 +62,6 @@ export function PlayScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
-  emoji: { fontSize: typography.sizes.xxl },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center' },
   button: { alignSelf: 'stretch', marginTop: spacing.md },

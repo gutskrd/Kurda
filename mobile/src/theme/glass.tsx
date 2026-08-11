@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
 import { useTheme } from './ThemeProvider';
+import { Icon, type IconName } from './Icon';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -53,11 +54,14 @@ export function ClayButton({
   label,
   onPress,
   tone = 'neutral',
+  icon,
   style,
 }: {
   label: string;
   onPress: () => void;
   tone?: 'neutral' | 'primary';
+  /** Optional skeuomorphic icon rendered before the label. */
+  icon?: IconName;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -71,6 +75,7 @@ export function ClayButton({
         end={{ x: 0, y: 1 }}
         style={[styles.clay, { borderColor: colors.clayBorder, shadowColor: colors.softShadow }]}
       >
+        {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
         <Text style={[styles.clayText, { color: textColor }]}>{label}</Text>
       </LinearGradient>
     </Pressable>
@@ -125,7 +130,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.22,
     shadowRadius: 14,
