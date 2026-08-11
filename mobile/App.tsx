@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
 import * as Linking from 'expo-linking';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
@@ -32,6 +32,7 @@ import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { Icon } from './src/theme/Icon';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
@@ -83,8 +84,8 @@ function SignedInTabs() {
           name={tab.name}
           options={{
             title: tab.title,
-            tabBarIcon: ({ focused }) => (
-              <Text style={{ opacity: focused ? 1 : 0.5 }}>{tab.emoji}</Text>
+            tabBarIcon: ({ focused, color }) => (
+              <Icon name={tab.icon} size={24} color={color} style={{ opacity: focused ? 1 : 0.6 }} />
             ),
           }}
         >
