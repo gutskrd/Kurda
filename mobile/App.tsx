@@ -1,9 +1,10 @@
-import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, type LinkingOptions, type Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { BlurView } from 'expo-blur';
 import * as Linking from 'expo-linking';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
@@ -30,7 +31,7 @@ import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
-import { ThemeProvider } from './src/theme/ThemeProvider';
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
@@ -53,12 +54,27 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 function SignedInTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        // frosted-glass tab bar: transparent chrome over a backdrop blur + tint.
+        // Kept in normal flow (not absolute) so no screen's content is clipped;
+        // upgrade to a floating bar once every tab screen reserves a bottom inset.
+        tabBarStyle: {
+          backgroundColor: 'transparent',
+          borderTopColor: colors.glassBorder,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          elevation: 0,
+        },
+        tabBarBackground: () => (
+          <BlurView intensity={colors.blurIntensity} tint={colors.blurTint} style={StyleSheet.absoluteFill}>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
+          </BlurView>
+        ),
       }}
     >
       {TABS.map((tab) => (
@@ -208,16 +224,36 @@ function Root() {
   return <SignedInRoot />;
 }
 
+/** NavigationContainer + StatusBar wired to the active palette (KUR-268). */
+function ThemedNavigation() {
+  const { colors, scheme } = useTheme();
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const navTheme: Theme = {
+    ...base,
+    colors: {
+      ...base.colors,
+      background: colors.background,
+      card: colors.background,
+      primary: colors.primary,
+      text: colors.textPrimary,
+      border: colors.glassBorder,
+    },
+  };
+  return (
+    <NavigationContainer linking={linking} theme={navTheme}>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      <Root />
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <I18nProvider>
         <AuthProvider>
           <EventThemeProvider>
-            <NavigationContainer linking={linking}>
-              <StatusBar style="auto" />
-              <Root />
-            </NavigationContainer>
+            <ThemedNavigation />
           </EventThemeProvider>
         </AuthProvider>
       </I18nProvider>
