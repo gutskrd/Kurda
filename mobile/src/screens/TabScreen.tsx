@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { TabDef } from '../navigation/tabs';
 import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 
@@ -13,7 +14,7 @@ export function TabScreen({ tab }: { tab: TabDef }) {
   return (
     <GradientBackground>
       <View style={styles.container}>
-        <Text style={styles.emoji}>{tab.emoji}</Text>
+        <Icon name={tab.icon} size={56} tone="primary" />
         <Text style={[styles.title, { color: colors.primary }]}>{tab.title}</Text>
       </View>
     </GradientBackground>
@@ -27,9 +28,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.lg,
     gap: spacing.sm,
-  },
-  emoji: {
-    fontSize: typography.sizes.xxl,
   },
   title: {
     fontSize: typography.sizes.xl,
