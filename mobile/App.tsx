@@ -30,6 +30,8 @@ import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
+import { ThemeProvider } from './src/theme/ThemeProvider';
+import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { ChallengeListener } from './src/challenge/ChallengeListener';
@@ -169,6 +171,9 @@ function SignedInRoot() {
       <RootStack.Screen name="NotificationCenter" options={{ presentation: 'card' }}>
         {({ navigation }) => <NotificationCenterScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
+      <RootStack.Screen name="Appearance" options={{ presentation: 'card' }}>
+        {({ navigation }) => <AppearanceScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       </RootStack.Navigator>
     </>
   );
@@ -205,15 +210,17 @@ function Root() {
 
 export default function App() {
   return (
-    <I18nProvider>
-      <AuthProvider>
-        <EventThemeProvider>
-          <NavigationContainer linking={linking}>
-            <StatusBar style="auto" />
-            <Root />
-          </NavigationContainer>
-        </EventThemeProvider>
-      </AuthProvider>
-    </I18nProvider>
+    <ThemeProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <EventThemeProvider>
+            <NavigationContainer linking={linking}>
+              <StatusBar style="auto" />
+              <Root />
+            </NavigationContainer>
+          </EventThemeProvider>
+        </AuthProvider>
+      </I18nProvider>
+    </ThemeProvider>
   );
 }

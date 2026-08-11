@@ -17,6 +17,7 @@ export type RootStackParamList = {
   EventQuests: undefined;
   Notifications: undefined;
   NotificationCenter: undefined;
+  Appearance: undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
