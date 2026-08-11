@@ -2,7 +2,9 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { useTheme } from '../theme/ThemeProvider';
 import {
   CATEGORY_LABEL,
   NOTIFICATION_CATEGORIES,
@@ -18,6 +20,7 @@ const DEFAULT_QUIET = { start: 22 * 60, end: 7 * 60 };
 /** Per-category notification toggles + quiet hours (KUR-095). */
 export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
 
   const load = useCallback(() => {
@@ -38,73 +41,78 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
 
   if (!prefs) {
     return (
-      <View style={styles.screen}>
-        <Header onExit={onExit} />
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-      </View>
+      <GradientBackground>
+        <View style={styles.screen}>
+          <Header onExit={onExit} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+        </View>
+      </GradientBackground>
     );
   }
 
   const quiet = quietEnabled(prefs);
 
   return (
-    <View style={styles.screen}>
-      <Header onExit={onExit} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.section}>Categories</Text>
-        {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
-          <View key={cat} style={styles.row}>
-            <Text style={styles.label}>{CATEGORY_LABEL[cat]}</Text>
+    <GradientBackground>
+      <View style={styles.screen}>
+        <Header onExit={onExit} />
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text style={[styles.section, { color: colors.textSecondary }]}>Categories</Text>
+          {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
+            <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>{CATEGORY_LABEL[cat]}</Text>
+              <Switch
+                value={prefs[cat]}
+                onValueChange={(on) => save({ [cat]: on } as Partial<NotificationPrefs>)}
+                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+              />
+            </View>
+          ))}
+
+          <Text style={[styles.section, { color: colors.textSecondary }]}>Quiet hours</Text>
+          <View style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>Enable quiet hours</Text>
             <Switch
-              value={prefs[cat]}
-              onValueChange={(on) => save({ [cat]: on } as Partial<NotificationPrefs>)}
-              trackColor={{ true: colors.primary, false: colors.border }}
+              value={quiet}
+              onValueChange={(on) =>
+                save(on ? { quietStartMin: DEFAULT_QUIET.start, quietEndMin: DEFAULT_QUIET.end } : { quietStartMin: null, quietEndMin: null })
+              }
+              trackColor={{ true: colors.primary, false: colors.controlTrack }}
             />
           </View>
-        ))}
-
-        <Text style={styles.section}>Quiet hours</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Enable quiet hours</Text>
-          <Switch
-            value={quiet}
-            onValueChange={(on) =>
-              save(on ? { quietStartMin: DEFAULT_QUIET.start, quietEndMin: DEFAULT_QUIET.end } : { quietStartMin: null, quietEndMin: null })
-            }
-            trackColor={{ true: colors.primary, false: colors.border }}
-          />
-        </View>
-        {quiet ? (
-          <>
-            <TimeRow
-              label="From"
-              minute={prefs.quietStartMin!}
-              onStep={(dir) => save({ quietStartMin: stepMinute(prefs.quietStartMin!, dir) })}
-            />
-            <TimeRow
-              label="To"
-              minute={prefs.quietEndMin!}
-              onStep={(dir) => save({ quietEndMin: stepMinute(prefs.quietEndMin!, dir) })}
-            />
-            <Text style={styles.hint}>No notifications are sent during this window.</Text>
-          </>
-        ) : null}
-      </ScrollView>
-    </View>
+          {quiet ? (
+            <>
+              <TimeRow
+                label="From"
+                minute={prefs.quietStartMin!}
+                onStep={(dir) => save({ quietStartMin: stepMinute(prefs.quietStartMin!, dir) })}
+              />
+              <TimeRow
+                label="To"
+                minute={prefs.quietEndMin!}
+                onStep={(dir) => save({ quietEndMin: stepMinute(prefs.quietEndMin!, dir) })}
+              />
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>No notifications are sent during this window.</Text>
+            </>
+          ) : null}
+        </ScrollView>
+      </View>
+    </GradientBackground>
   );
 }
 
 function TimeRow({ label, minute, onStep }: { label: string; minute: number; onStep: (dir: 1 | -1) => void }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.row}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>
       <View style={styles.stepper}>
-        <Pressable onPress={() => onStep(-1)} style={styles.stepBtn} hitSlop={8}>
-          <Text style={styles.stepText}>−</Text>
+        <Pressable onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8}>
+          <Text style={[styles.stepText, { color: colors.textOnPrimary }]}>−</Text>
         </Pressable>
-        <Text style={styles.time}>{formatMinute(minute)}</Text>
-        <Pressable onPress={() => onStep(1)} style={styles.stepBtn} hitSlop={8}>
-          <Text style={styles.stepText}>+</Text>
+        <Text style={[styles.time, { color: colors.textPrimary }]}>{formatMinute(minute)}</Text>
+        <Pressable onPress={() => onStep(1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8}>
+          <Text style={[styles.stepText, { color: colors.textOnPrimary }]}>+</Text>
         </Pressable>
       </View>
     </View>
@@ -112,28 +120,29 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
 }
 
 function Header({ onExit }: { onExit: () => void }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.header}>
       <Pressable onPress={onExit} hitSlop={10}>
-        <Text style={styles.close}>‹ Back</Text>
+        <Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text>
       </Pressable>
-      <Text style={styles.heading}>🔔 Notifications</Text>
+      <Text style={[styles.heading, { color: colors.textPrimary }]}>Notifications</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
+  screen: { flex: 1, padding: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.md, marginBottom: spacing.md },
-  close: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  heading: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  heading: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   content: { gap: spacing.xs, paddingBottom: spacing.xl },
-  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', marginTop: spacing.lg, marginBottom: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.surface, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  label: { fontSize: typography.sizes.md, color: colors.textPrimary, flex: 1 },
+  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginTop: spacing.lg, marginBottom: spacing.xs },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  label: { fontSize: typography.sizes.md, flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  stepBtn: { width: 32, height: 32, borderRadius: radii.pill, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepText: { color: colors.textOnPrimary, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  time: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary, minWidth: 56, textAlign: 'center' },
-  hint: { fontSize: typography.sizes.sm, color: colors.textSecondary, marginTop: spacing.sm },
+  stepBtn: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  stepText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  time: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, minWidth: 56, textAlign: 'center' },
+  hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
 });

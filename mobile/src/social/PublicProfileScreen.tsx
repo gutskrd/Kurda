@@ -4,7 +4,10 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'rea
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { Icon, type IconName } from '../theme/Icon';
+import { useTheme } from '../theme/ThemeProvider';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -26,6 +29,7 @@ interface Profile {
 export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
+  const { colors } = useTheme();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -65,116 +69,128 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
   if (notFound) {
     return (
-      <View style={styles.screen}>
-        <Header onExit={onExit} />
-        <View style={styles.centered}><Text style={styles.dim}>This profile isn’t available.</Text></View>
-      </View>
+      <GradientBackground>
+        <View style={styles.screen}>
+          <Header onExit={onExit} />
+          <View style={styles.centered}><Text style={[styles.dim, { color: colors.textSecondary }]}>This profile isn’t available.</Text></View>
+        </View>
+      </GradientBackground>
     );
   }
   if (!profile) {
     return (
-      <View style={styles.screen}>
-        <Header onExit={onExit} />
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-      </View>
+      <GradientBackground>
+        <View style={styles.screen}>
+          <Header onExit={onExit} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+        </View>
+      </GradientBackground>
     );
   }
 
   const label = friendActionLabel(profile.friendStatus);
   return (
-    <View style={styles.screen}>
-      <Header onExit={onExit} />
-      <View style={styles.card}>
-        <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} />
-        <Text style={styles.username}>{profile.username}</Text>
-        {profile.displayName ? <Text style={styles.display}>{profile.displayName}</Text> : null}
+    <GradientBackground>
+      <View style={styles.screen}>
+        <Header onExit={onExit} />
+        <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+          <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} />
+          <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
+          {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
 
-        {profile.private ? (
-          <Text style={styles.dim}>This profile is private.</Text>
-        ) : (
-          <View style={styles.stats}>
-            <Stat label="Streak" value={`🔥 ${profile.streak ?? 0}`} />
-            <Stat label="XP" value={`${profile.xp ?? 0}`} />
-            <Stat label="League" value={tierMeta(profile.tier ?? 'bronze').emoji} />
-            <Stat label="Badges" value={`${profile.achievements ?? 0}`} />
-          </View>
-        )}
+          {profile.private ? (
+            <Text style={[styles.dim, { color: colors.textSecondary }]}>This profile is private.</Text>
+          ) : (
+            <View style={styles.stats}>
+              <Stat label="Streak" value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
+              <Stat label="XP" value={`${profile.xp ?? 0}`} />
+              <Stat label="League" value={tierMeta(profile.tier ?? 'bronze').label} />
+              <Stat label="Badges" value={`${profile.achievements ?? 0}`} />
+            </View>
+          )}
 
-        {profile.friendStatus !== 'self' ? (
-          <View style={styles.actions}>
-            {profile.friendStatus === 'friends' ? (
-              <>
+          {profile.friendStatus !== 'self' ? (
+            <View style={styles.actions}>
+              {profile.friendStatus === 'friends' ? (
+                <>
+                  <Pressable
+                    onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
+                    style={[styles.primary, { backgroundColor: colors.primary }]}
+                  >
+                    <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>Message</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() =>
+                      void client.post('/challenges', { userId: profile.userId }).then((res) => {
+                        if (res.ok) Alert.alert('Challenge sent', 'Waiting for them to accept…');
+                        else Alert.alert('Could not challenge', describeError(res.error).message);
+                      })
+                    }
+                    style={[styles.secondary, { borderColor: colors.accent }]}
+                  >
+                    <Icon name="play" size={18} color={colors.accent} />
+                    <Text style={[styles.secondaryText, { color: colors.accent }]}>Challenge to 1v1</Text>
+                  </Pressable>
+                </>
+              ) : null}
+              {label ? (
                 <Pressable
-                  onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
-                  style={styles.primary}
+                  onPress={() => isActionable(profile.friendStatus) && act(profile.friendStatus)}
+                  disabled={busy || !isActionable(profile.friendStatus)}
+                  style={[styles.primary, { backgroundColor: isActionable(profile.friendStatus) ? colors.primary : colors.controlTrack }]}
                 >
-                  <Text style={styles.primaryText}>Message</Text>
+                  {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{label}</Text>}
                 </Pressable>
-                <Pressable
-                  onPress={() =>
-                    void client.post('/challenges', { userId: profile.userId }).then((res) => {
-                      if (res.ok) Alert.alert('Challenge sent ⚔️', 'Waiting for them to accept…');
-                      else Alert.alert('Could not challenge', describeError(res.error).message);
-                    })
-                  }
-                  style={styles.secondary}
-                >
-                  <Text style={styles.secondaryText}>⚔️ Challenge to 1v1</Text>
-                </Pressable>
-              </>
-            ) : null}
-            {label ? (
-              <Pressable
-                onPress={() => isActionable(profile.friendStatus) && act(profile.friendStatus)}
-                disabled={busy || !isActionable(profile.friendStatus)}
-                style={[styles.primary, !isActionable(profile.friendStatus) && styles.primaryMuted]}
-              >
-                {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={styles.primaryText}>{label}</Text>}
-              </Pressable>
-            ) : null}
-            <Pressable onPress={block} style={styles.block}><Text style={styles.blockText}>Block</Text></Pressable>
-          </View>
-        ) : null}
+              ) : null}
+              <Pressable onPress={block} style={styles.block}><Text style={[styles.blockText, { color: colors.danger }]}>Block</Text></Pressable>
+            </View>
+          ) : null}
+        </View>
       </View>
-    </View>
+    </GradientBackground>
   );
 }
 
 function Header({ onExit }: { onExit: () => void }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.header}>
-      <Pressable onPress={onExit} hitSlop={10}><Text style={styles.close}>‹ Back</Text></Pressable>
+      <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
     </View>
   );
 }
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, icon, iconColor }: { label: string; value: string; icon?: IconName; iconColor?: string }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <View style={styles.statValueRow}>
+        {icon ? <Icon name={icon} size={16} color={iconColor} /> : null}
+        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+      </View>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
+  screen: { flex: 1, padding: spacing.lg },
   header: { paddingTop: spacing.md, marginBottom: spacing.md },
-  close: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.xl },
-  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  display: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
+  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  display: { fontSize: typography.sizes.md },
   stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },
   stat: { alignItems: 'center', gap: 2 },
-  statValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  statLabel: { fontSize: typography.sizes.xs, color: colors.textSecondary, textTransform: 'uppercase' },
+  statValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  statValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  statLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase' },
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
-  primary: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  primaryMuted: { backgroundColor: colors.border },
-  primaryText: { color: colors.textOnPrimary, fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
-  secondary: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', borderWidth: 2, borderColor: colors.accent },
-  secondaryText: { color: colors.accent, fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
+  primary: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
+  primaryText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
+  secondary: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', borderWidth: 2 },
+  secondaryText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
   block: { paddingVertical: spacing.sm, alignItems: 'center' },
-  blockText: { color: colors.danger, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  dim: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md },
+  blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  dim: { textAlign: 'center', marginTop: spacing.md },
 });
