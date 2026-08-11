@@ -14,6 +14,7 @@ import {
   isLastStep,
   onboardingReducer,
   type CompletedVia,
+  type OnboardingStep,
   type PersistedOnboarding,
 } from './flow';
 import { createOnboardingStorage } from './storage';
@@ -28,10 +29,15 @@ const storage = createOnboardingStorage();
 export function useOnboarding(): {
   ready: boolean;
   needsOnboarding: boolean;
+  /** step to mount onboarding at when re-opened from the auth choice; null = normal start */
+  reopenStep: OnboardingStep | null;
   complete: (persisted: PersistedOnboarding) => void;
+  /** re-show the intro from the auth stack (e.g. "‹ Back" on the Welcome choice) */
+  reopen: (step: OnboardingStep) => void;
 } {
   const [ready, setReady] = useState(false);
   const [needsOnboarding, setNeeds] = useState(false);
+  const [reopenStep, setReopenStep] = useState<OnboardingStep | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -47,10 +53,16 @@ export function useOnboarding(): {
 
   const complete = useCallback((persisted: PersistedOnboarding) => {
     setNeeds(false);
+    setReopenStep(null);
     void storage.set(persisted);
   }, []);
 
-  return { ready, needsOnboarding, complete };
+  const reopen = useCallback((step: OnboardingStep) => {
+    setReopenStep(step);
+    setNeeds(true);
+  }, []);
+
+  return { ready, needsOnboarding, reopenStep, complete, reopen };
 }
 
 const VALUE_PROPS = [
@@ -60,16 +72,31 @@ const VALUE_PROPS = [
   'Keep your streak and climb the leagues',
 ];
 
-/** The 3-slide first-launch onboarding (KUR-272/273/274), on the glass theme. */
-export function OnboardingScreen({ onComplete }: { onComplete: (persisted: PersistedOnboarding) => void }): React.JSX.Element {
+/**
+ * The 2-slide first-launch intro (KUR-272/273), on the glass theme. `initialStep`
+ * lets the auth Welcome choice re-open it partway (at the intro) so "‹ Back"
+ * walks all the way back to the language chooser.
+ */
+export function OnboardingScreen({
+  onComplete,
+  initialStep,
+}: {
+  onComplete: (persisted: PersistedOnboarding) => void;
+  initialStep?: OnboardingStep | null;
+}): React.JSX.Element {
   const { colors } = useTheme();
-  const [state, dispatch] = useReducer(onboardingReducer, undefined, initOnboardingState);
-  const { setLocale } = useI18n();
+  const [state, dispatch] = useReducer(onboardingReducer, initialStep, (start) => {
+    const base = initOnboardingState();
+    const idx = start ? ONBOARDING_STEPS.indexOf(start) : 0;
+    return { ...base, stepIndex: idx >= 0 ? idx : 0 };
+  });
+  const { locale, setLocale } = useI18n();
   const step = currentStep(state);
 
   const end = (via: CompletedVia): void => {
-    // compute the record from the current state (dispatch only marks it inert)
-    onComplete({ completed: true, preferredLanguage: state.selectedLanguage });
+    // compute the record from the current state (dispatch only marks it inert);
+    // fall back to the live app locale so re-opening never wipes the language
+    onComplete({ completed: true, preferredLanguage: state.selectedLanguage ?? locale });
     dispatch(via === 'skipped' ? { type: 'skip' } : { type: 'finish' });
   };
 
@@ -106,7 +133,6 @@ export function OnboardingScreen({ onComplete }: { onComplete: (persisted: Persi
         <View style={styles.body}>
           {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} />}
           {step === 'welcome' && <WelcomeSlide />}
-          {step === 'account' && <AccountSlide onCreate={() => end('finished')} onLogin={() => end('finished')} />}
         </View>
 
         <View style={styles.nav}>
@@ -117,7 +143,9 @@ export function OnboardingScreen({ onComplete }: { onComplete: (persisted: Persi
           ) : (
             <View style={{ flex: 1 }} />
           )}
-          {!isLastStep(state) && (
+          {isLastStep(state) ? (
+            <ClayButton label="Get started" tone="primary" onPress={() => end('finished')} style={styles.next} />
+          ) : (
             <ClayButton label="Continue" tone="primary" onPress={() => dispatch({ type: 'next' })} style={styles.next} />
           )}
         </View>
@@ -186,20 +214,6 @@ function WelcomeSlide(): React.JSX.Element {
           <Text style={[styles.prop, styles.propRotating, { color: colors.textPrimary }]}>{VALUE_PROPS[i]}</Text>
         )}
       </GlassCard>
-    </View>
-  );
-}
-
-function AccountSlide({ onCreate, onLogin }: { onCreate: () => void; onLogin: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.slide, styles.centered]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Ready to start?</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Create an account to save your progress, or sign in.</Text>
-      <View style={{ gap: spacing.md, marginTop: spacing.xl, alignSelf: 'stretch' }}>
-        <ClayButton label="Continue with email" tone="primary" onPress={onCreate} />
-        <ClayButton label="I already have an account" tone="neutral" onPress={onLogin} />
-      </View>
     </View>
   );
 }

@@ -29,7 +29,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Reset password">
+    <AuthScreenShell title="Reset password" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
       {sent ? (
         <Text
           style={{
