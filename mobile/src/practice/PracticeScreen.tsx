@@ -6,7 +6,10 @@ import type { Exercise, SessionView } from '../lesson/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import type { ApiError } from '../api/types';
 import { describeError } from '../api/errors';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
+import { useTheme } from '../theme/ThemeProvider';
 
 const PRACTICE_PATHS: SessionPaths = {
   answers: (id) => `/practice/sessions/${id}/answers`,
@@ -23,6 +26,7 @@ interface PracticeStart {
 /** Practice/review mode (KUR-034): reuses the lesson player over the SR queue. */
 export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigation; onExit: () => void }) {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [start, setStart] = useState<PracticeStart | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -45,8 +49,8 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
     const { message, retryable } = describeError(error);
     return (
       <Centered>
-        <Text style={styles.title}>Couldn’t start practice.</Text>
-        <Text style={styles.detail}>{message}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Couldn’t start practice.</Text>
+        <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text>
         {retryable ? <Primary label="Try again" onPress={() => setReloadKey((k) => k + 1)} /> : null}
         <Primary label="Back" onPress={onExit} />
       </Centered>
@@ -64,9 +68,9 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
   if (start.empty || !start.sessionId || !start.exercises?.length) {
     return (
       <Centered>
-        <Text style={styles.emoji}>🌱</Text>
-        <Text style={styles.title}>Nothing to review yet</Text>
-        <Text style={styles.detail}>Finish a lesson to start building your review deck.</Text>
+        <Icon name="sparkle" size={56} color={colors.gold} />
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Nothing to review yet</Text>
+        <Text style={[styles.detail, { color: colors.textSecondary }]}>Finish a lesson to start building your review deck.</Text>
         {start.suggestion ? (
           <Primary
             label={`Start: ${start.suggestion.title}`}
@@ -92,13 +96,18 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
 }
 
 function Centered({ children }: { children: React.ReactNode }) {
-  return <View style={styles.centered}>{children}</View>;
+  return (
+    <GradientBackground>
+      <View style={styles.centered}>{children}</View>
+    </GradientBackground>
+  );
 }
 
 function Primary({ label, onPress }: { label: string; onPress: () => void }) {
+  const { colors } = useTheme();
   return (
-    <Pressable onPress={onPress} style={styles.button}>
-      <Text style={styles.buttonText}>{label}</Text>
+    <Pressable onPress={onPress} style={[styles.button, { backgroundColor: colors.primary }]}>
+      <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -110,18 +119,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
     padding: spacing.xl,
-    backgroundColor: colors.background,
   },
-  emoji: { fontSize: 56 },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary, textAlign: 'center' },
-  detail: { fontSize: typography.sizes.md, color: colors.textSecondary, textAlign: 'center' },
+  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  detail: { fontSize: typography.sizes.md, textAlign: 'center' },
   button: {
     marginTop: spacing.md,
     alignSelf: 'stretch',
-    backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     borderRadius: radii.md,
     alignItems: 'center',
   },
-  buttonText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

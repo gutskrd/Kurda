@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { Icon } from '../../theme/Icon';
+import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useAudio } from '../useAudio';
 
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabled }: Props) {
+  const { colors } = useTheme();
   const audio = useAudio(exercise.audioUrl);
   const skippedRef = useRef(false);
 
@@ -28,28 +31,29 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Listen and type what you hear</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Listen and type what you hear</Text>
 
       <View style={styles.controls}>
         <Pressable
           disabled={disabled || cannotPlay}
           onPress={() => audio.play(1)}
           accessibilityLabel="Play audio"
-          style={[styles.playButton, (disabled || cannotPlay) && styles.dim]}
+          style={[styles.playButton, { backgroundColor: colors.primary }, (disabled || cannotPlay) && styles.dim]}
         >
-          <Text style={styles.playText}>▶︎ Play</Text>
+          <Icon name="speaker" size={20} color={colors.textOnPrimary} />
+          <Text style={[styles.playText, { color: colors.textOnPrimary }]}>Play</Text>
         </Pressable>
         <Pressable
           disabled={disabled || cannotPlay}
           onPress={() => audio.play(0.75)}
           accessibilityLabel="Play at slow speed"
-          style={[styles.slowButton, (disabled || cannotPlay) && styles.dim]}
+          style={[styles.slowButton, { borderColor: colors.primary }, (disabled || cannotPlay) && styles.dim]}
         >
-          <Text style={styles.slowText}>🐢 0.75×</Text>
+          <Text style={[styles.slowText, { color: colors.primary }]}>0.75×</Text>
         </Pressable>
       </View>
 
-      {exercise.prompt ? <Text style={styles.prompt}>{exercise.prompt}</Text> : null}
+      {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textSecondary }]}>{exercise.prompt}</Text> : null}
 
       <TextInput
         value={text}
@@ -59,12 +63,12 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, disabled && styles.dim]}
+        style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel="What you heard"
       />
 
       <Pressable disabled={disabled} onPress={onSkip} accessibilityRole="button" style={styles.skip}>
-        <Text style={styles.skipText}>Can’t listen now — skip</Text>
+        <Text style={[styles.skipText, { color: colors.textSecondary }]}>Can’t listen now — skip</Text>
       </Pressable>
     </View>
   );
@@ -72,37 +76,35 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, color: colors.textSecondary, textTransform: 'uppercase' },
+  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   controls: { flexDirection: 'row', gap: spacing.sm },
   playButton: {
     flex: 1,
-    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
     paddingVertical: spacing.md,
     borderRadius: radii.md,
     alignItems: 'center',
   },
-  playText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  playText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   slowButton: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: radii.md,
     borderWidth: 2,
-    borderColor: colors.primary,
     alignItems: 'center',
   },
-  slowText: { color: colors.primary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  prompt: { fontSize: typography.sizes.md, color: colors.textSecondary },
+  slowText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  prompt: { fontSize: typography.sizes.md },
   input: {
     borderWidth: 2,
-    borderColor: colors.border,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: typography.sizes.lg,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
   },
   skip: { alignItems: 'center', paddingVertical: spacing.sm },
-  skipText: { color: colors.textSecondary, fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
+  skipText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
   dim: { opacity: 0.4 },
 });

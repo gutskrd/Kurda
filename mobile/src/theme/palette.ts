@@ -17,6 +17,8 @@ export interface Palette {
   gold: string;
   danger: string;
   success: string;
+  successFill: string; // soft tint behind a "correct" banner
+  dangerFill: string; // soft tint behind a "wrong" banner
 
   // text
   textPrimary: string;
@@ -50,6 +52,8 @@ export const LIGHT: Palette = {
   gold: '#EBA905',
   danger: '#C0392B',
   success: '#2E7D32',
+  successFill: '#E6F4EA',
+  dangerFill: '#FBE9E7',
 
   textPrimary: '#15241D',
   textSecondary: '#5C6B63',
@@ -79,6 +83,8 @@ export const DARK: Palette = {
   gold: '#F0C24A',
   danger: '#E5695B',
   success: '#4FB783',
+  successFill: 'rgba(79,183,131,0.18)',
+  dangerFill: 'rgba(229,105,91,0.18)',
 
   textPrimary: '#EAF2EE',
   textSecondary: '#9DB2AA',

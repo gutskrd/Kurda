@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import {
   isLeftMatched,
   isRightMatched,
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function MatchPairsExercise({ exercise, state, onChange, disabled }: Props) {
+  const { colors } = useTheme();
   const token = (
     label: string,
     matched: boolean,
@@ -30,18 +32,20 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled }: Prop
       accessibilityState={{ selected: selected || matched }}
       style={[
         styles.token,
-        matched && styles.tokenMatched,
-        selected && styles.tokenSelected,
+        {
+          backgroundColor: matched ? colors.success : colors.controlTrack,
+          borderColor: matched ? colors.success : selected ? colors.primary : colors.glassBorder,
+        },
         disabled && styles.dim,
       ]}
     >
-      <Text style={[styles.tokenText, (matched || selected) && styles.tokenTextActive]}>{label}</Text>
+      <Text style={[styles.tokenText, { color: matched ? colors.textOnPrimary : colors.textPrimary }, (matched || selected) && styles.tokenTextActive]}>{label}</Text>
     </Pressable>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Match the pairs</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Match the pairs</Text>
       <View style={styles.columns}>
         <View style={styles.column}>
           {(exercise.lefts ?? []).map((left) =>
@@ -62,7 +66,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled }: Prop
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, color: colors.textSecondary, textTransform: 'uppercase' },
+  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   columns: { flexDirection: 'row', gap: spacing.md },
   column: { flex: 1, gap: spacing.sm },
   token: {
@@ -70,13 +74,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.md,
     borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
     alignItems: 'center',
   },
-  tokenSelected: { borderColor: colors.primary },
-  tokenMatched: { borderColor: colors.success, backgroundColor: colors.success },
-  tokenText: { fontSize: typography.sizes.md, color: colors.textPrimary },
-  tokenTextActive: { color: colors.textOnPrimary, fontWeight: typography.weights.bold },
+  tokenText: { fontSize: typography.sizes.md },
+  tokenTextActive: { fontWeight: typography.weights.bold },
   dim: { opacity: 0.6 },
 });

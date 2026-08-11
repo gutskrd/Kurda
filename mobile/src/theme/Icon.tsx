@@ -35,7 +35,8 @@ export type IconName =
   | 'chevron-right'
   | 'sparkle'
   | 'ice'
-  | 'moon';
+  | 'moon'
+  | 'heart';
 
 /** 24×24 filled-silhouette path data, keyed by icon name. */
 const PATHS: Record<IconName, string> = {
@@ -76,6 +77,7 @@ const PATHS: Record<IconName, string> = {
   // filled 6-point snowflake / ice crystal
   ice: 'M12 1.5l1.7 3.6 3.9-1-1 3.9 3.6 1.7-3.6 1.7 1 3.9-3.9-1L12 19.5l-1.7-3.7-3.9 1 1-3.9L2.9 12l3.6-1.7-1-3.9 3.9 1L12 1.5Z',
   moon: 'M13 2.5A9.5 9.5 0 1 0 21.5 15 7.5 7.5 0 0 1 13 2.5Z',
+  heart: 'M12 21.3 3.8 13a5.6 5.6 0 0 1 7.9-7.9l.3.3.3-.3A5.6 5.6 0 0 1 20.2 13L12 21.3Z',
 };
 
 /**

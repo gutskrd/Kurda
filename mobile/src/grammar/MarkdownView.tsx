@@ -1,12 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { parseMarkdown, type Span } from './markdown';
 
 function Inline({ spans }: { spans: Span[] }) {
+  const { colors } = useTheme();
   return (
     <Text>
       {spans.map((s, i) => (
-        <Text key={i} style={[s.bold && styles.bold, s.code && styles.code]}>
+        <Text key={i} style={[s.bold && styles.bold, s.code && [styles.code, { backgroundColor: colors.glassFill, color: colors.primaryStrong }]]}>
           {s.text}
         </Text>
       ))}
@@ -16,6 +18,7 @@ function Inline({ spans }: { spans: Span[] }) {
 
 /** Renders a grammar note's markdown with the system font (no tofu). */
 export function MarkdownView({ source }: { source: string }) {
+  const { colors } = useTheme();
   const blocks = parseMarkdown(source);
   return (
     <View style={styles.container}>
@@ -23,13 +26,13 @@ export function MarkdownView({ source }: { source: string }) {
         switch (block.type) {
           case 'heading':
             return (
-              <Text key={i} style={[styles.heading, headingSize(block.level)]}>
+              <Text key={i} style={[styles.heading, headingSize(block.level), { color: colors.textPrimary }]}>
                 <Inline spans={block.spans} />
               </Text>
             );
           case 'paragraph':
             return (
-              <Text key={i} style={styles.paragraph}>
+              <Text key={i} style={[styles.paragraph, { color: colors.textPrimary }]}>
                 <Inline spans={block.spans} />
               </Text>
             );
@@ -38,8 +41,8 @@ export function MarkdownView({ source }: { source: string }) {
               <View key={i} style={styles.bullets}>
                 {block.items.map((item, j) => (
                   <View key={j} style={styles.bulletRow}>
-                    <Text style={styles.bulletDot}>•</Text>
-                    <Text style={styles.bulletText}>
+                    <Text style={[styles.bulletDot, { color: colors.primary }]}>•</Text>
+                    <Text style={[styles.bulletText, { color: colors.textPrimary }]}>
                       <Inline spans={item} />
                     </Text>
                   </View>
@@ -48,8 +51,8 @@ export function MarkdownView({ source }: { source: string }) {
             );
           case 'code':
             return (
-              <View key={i} style={styles.codeBlock}>
-                <Text style={styles.codeText}>{block.text}</Text>
+              <View key={i} style={[styles.codeBlock, { backgroundColor: colors.glassFill }]}>
+                <Text style={[styles.codeText, { color: colors.textPrimary }]}>{block.text}</Text>
               </View>
             );
         }
@@ -64,14 +67,14 @@ function headingSize(level: 1 | 2 | 3) {
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  heading: { fontFamily: typography.fontFamily, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  paragraph: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md, color: colors.textPrimary, lineHeight: 24 },
+  heading: { fontFamily: typography.fontFamily, fontWeight: typography.weights.bold },
+  paragraph: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md, lineHeight: 24 },
   bold: { fontWeight: typography.weights.bold },
-  code: { fontFamily: typography.fontFamily, backgroundColor: colors.surface, color: colors.primaryDark },
+  code: { fontFamily: typography.fontFamily },
   bullets: { gap: spacing.xs },
   bulletRow: { flexDirection: 'row', gap: spacing.sm },
-  bulletDot: { color: colors.primary, fontSize: typography.sizes.md },
-  bulletText: { flex: 1, fontSize: typography.sizes.md, color: colors.textPrimary, lineHeight: 24 },
-  codeBlock: { backgroundColor: colors.surface, borderRadius: 8, padding: spacing.md },
-  codeText: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md, color: colors.textPrimary },
+  bulletDot: { fontSize: typography.sizes.md },
+  bulletText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 24 },
+  codeBlock: { borderRadius: 8, padding: spacing.md },
+  codeText: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md },
 });

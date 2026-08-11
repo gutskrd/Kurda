@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import type { Feedback } from '../player';
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
  * correction, plus a Continue button.
  */
 export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue }: Props) {
+  const { colors } = useTheme();
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,9 +36,9 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
         <Pressable
           disabled={!canCheck || submitting}
           onPress={onCheck}
-          style={[styles.button, styles.check, (!canCheck || submitting) && styles.disabled]}
+          style={[styles.button, { backgroundColor: colors.primary }, (!canCheck || submitting) && styles.disabled]}
         >
-          <Text style={styles.buttonText}>{submitting ? 'Checking…' : 'Check'}</Text>
+          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{submitting ? 'Checking…' : 'Check'}</Text>
         </Pressable>
       </View>
     );
@@ -48,16 +50,16 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
 
   return (
     <Animated.View
-      style={[styles.banner, good ? styles.bannerGood : styles.bannerBad, { opacity: slide, transform: [{ translateY }] }]}
+      style={[styles.banner, { backgroundColor: good ? colors.successFill : colors.dangerFill }, { opacity: slide, transform: [{ translateY }] }]}
     >
-      <Text style={[styles.bannerTitle, good ? styles.textGood : styles.textBad]}>{title}</Text>
+      <Text style={[styles.bannerTitle, { color: good ? colors.success : colors.danger }]}>{title}</Text>
       {feedback.correction ? (
-        <Text style={styles.correction}>
+        <Text style={[styles.correction, { color: colors.textPrimary }]}>
           Answer: <Text style={styles.correctionValue}>{feedback.correction}</Text>
         </Text>
       ) : null}
-      <Pressable onPress={onContinue} style={[styles.button, good ? styles.continueGood : styles.continueBad]}>
-        <Text style={styles.buttonText}>Continue</Text>
+      <Pressable onPress={onContinue} style={[styles.button, { backgroundColor: good ? colors.success : colors.danger }]}>
+        <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>Continue</Text>
       </Pressable>
     </Animated.View>
   );
@@ -70,22 +72,15 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     alignItems: 'center',
   },
-  check: { backgroundColor: colors.primary },
   disabled: { opacity: 0.4 },
-  buttonText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   banner: {
     padding: spacing.lg,
     gap: spacing.sm,
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
   },
-  bannerGood: { backgroundColor: '#E6F4EA' },
-  bannerBad: { backgroundColor: '#FBE9E7' },
   bannerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  textGood: { color: colors.success },
-  textBad: { color: colors.danger },
-  correction: { fontSize: typography.sizes.md, color: colors.textPrimary },
+  correction: { fontSize: typography.sizes.md },
   correctionValue: { fontWeight: typography.weights.bold },
-  continueGood: { backgroundColor: colors.success },
-  continueBad: { backgroundColor: colors.danger },
 });
