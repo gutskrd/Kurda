@@ -10,6 +10,7 @@ import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/au
 import { TABS, linkingScreens } from './src/navigation/tabs';
 import type { RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
+import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
@@ -215,6 +216,7 @@ function Root() {
     }
     return (
       <AuthStack.Navigator initialRouteName={AUTH_INITIAL_ROUTE} screenOptions={{ headerShown: false }}>
+        <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
         <AuthStack.Screen name="Login" component={LoginScreen} />
         <AuthStack.Screen name="Register" component={RegisterScreen} />
         <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

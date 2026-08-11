@@ -48,7 +48,7 @@ export function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Sign up">
+    <AuthScreenShell title="Sign up" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
       <FormError message={formError} />
       <Field
         label="Email"

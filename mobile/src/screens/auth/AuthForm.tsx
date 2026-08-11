@@ -5,10 +5,15 @@ import { GlassCard, GradientBackground } from '../../theme/glass';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 
-export function AuthScreenShell({ title, children }: { title: string; children: ReactNode }) {
+export function AuthScreenShell({ title, children, onBack }: { title: string; children: ReactNode; onBack?: () => void }) {
   const { colors } = useTheme();
   return (
     <GradientBackground>
+      {onBack ? (
+        <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={styles.back}>
+          <Text style={[styles.backText, { color: colors.primary }]}>‹ Back</Text>
+        </Pressable>
+      ) : null}
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
@@ -96,6 +101,8 @@ export function FormError({ message }: { message: string | null }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
+  back: { position: 'absolute', top: spacing.xl, left: spacing.lg, zIndex: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.xs },
+  backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.md },

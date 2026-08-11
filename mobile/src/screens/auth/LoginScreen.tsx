@@ -32,7 +32,7 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Log in">
+    <AuthScreenShell title="Log in" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
       <FormError message={formError} />
       <Field
         label="Email"

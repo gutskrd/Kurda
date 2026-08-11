@@ -106,7 +106,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: (persisted: Persi
         <View style={styles.body}>
           {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} />}
           {step === 'welcome' && <WelcomeSlide />}
-          {step === 'account' && <AccountSlide onCreate={() => end('finished')} onLogin={() => end('finished')} />}
+          {step === 'account' && <AccountSlide onStart={() => end('finished')} />}
         </View>
 
         <View style={styles.nav}>
@@ -190,15 +190,14 @@ function WelcomeSlide(): React.JSX.Element {
   );
 }
 
-function AccountSlide({ onCreate, onLogin }: { onCreate: () => void; onLogin: () => void }): React.JSX.Element {
+function AccountSlide({ onStart }: { onStart: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   return (
     <View style={[styles.slide, styles.centered]}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>Ready to start?</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Create an account to save your progress, or sign in.</Text>
       <View style={{ gap: spacing.md, marginTop: spacing.xl, alignSelf: 'stretch' }}>
-        <ClayButton label="Continue with email" tone="primary" onPress={onCreate} />
-        <ClayButton label="I already have an account" tone="neutral" onPress={onLogin} />
+        <ClayButton label="Get started" tone="primary" onPress={onStart} />
       </View>
     </View>
   );
