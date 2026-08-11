@@ -65,6 +65,9 @@ export function ProfileScreen() {
       <Pressable style={styles.shop} onPress={() => navigation.navigate('Notifications')}>
         <Text style={styles.shopText}>⚙️ Notification settings</Text>
       </Pressable>
+      <Pressable style={styles.shop} onPress={() => navigation.navigate('Appearance')}>
+        <Text style={styles.shopText}>🎨 Appearance</Text>
+      </Pressable>
 
       <View style={styles.privacy}>
         <Text style={styles.privacyLabel}>Who can see my profile</Text>
