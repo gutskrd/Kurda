@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import {
@@ -133,6 +134,7 @@ export function OnboardingScreen({
         <View style={styles.body}>
           {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} />}
           {step === 'welcome' && <WelcomeSlide />}
+          {step === 'notifications' && <NotificationsSlide />}
         </View>
 
         <View style={styles.nav}>
@@ -218,6 +220,22 @@ function WelcomeSlide(): React.JSX.Element {
   );
 }
 
+/** Soft-ask notifications intro (KUR-095 onboarding). Informational — no OS
+ *  prompt here; the actual permission lives in Profile → Notification settings. */
+function NotificationsSlide(): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.slide, styles.centered]}>
+      <Icon name="bell" size={64} tone="primary" />
+      <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>A Kurdish story every day</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        Turn on notifications so you never miss one. One a day, in your language, never more.
+      </Text>
+      <Text style={[styles.notifHint, { color: colors.textSecondary }]}>You can turn them on later in Profile.</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.lg },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 32 },
@@ -229,6 +247,8 @@ const styles = StyleSheet.create({
   slide: { flex: 1, justifyContent: 'center' },
   centered: { alignItems: 'center' },
   title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  notifTitle: { marginTop: spacing.lg },
+  notifHint: { fontSize: typography.sizes.sm, textAlign: 'center', marginTop: spacing.lg, fontStyle: 'italic' },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   langList: { alignSelf: 'stretch', marginTop: spacing.lg, maxHeight: 360 },
   langRow: {

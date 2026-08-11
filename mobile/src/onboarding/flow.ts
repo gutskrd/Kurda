@@ -1,18 +1,17 @@
 /**
- * First-launch onboarding flow (KUR-271). Pure state machine for the 2-slide
- * intro (Language → Welcome) plus the first-launch gating and the shape that
- * gets persisted. The sign-in method choice that used to be a third slide now
- * lives on the auth stack's Welcome screen, so the intro flows straight into
- * it (and back out again). No storage, no navigation, no React here — the app
- * root feeds actions in and reads state out, so the whole flow is
- * unit-testable. The slides themselves are KUR-272 / 273; storage lives in
- * ./storage.ts.
+ * First-launch onboarding flow (KUR-271). Pure state machine for the 3-slide
+ * intro (Language → Welcome → Notifications) plus the first-launch gating and
+ * the shape that gets persisted. The sign-in method choice lives on the auth
+ * stack's Welcome screen, so the intro flows straight into it (and back out
+ * again). No storage, no navigation, no React here — the app root feeds actions
+ * in and reads state out, so the whole flow is unit-testable. The slides
+ * themselves are KUR-272 / 273; storage lives in ./storage.ts.
  */
 
-export type OnboardingStep = 'language' | 'welcome';
+export type OnboardingStep = 'language' | 'welcome' | 'notifications';
 
 /** Slide order; also the source of truth for the page-indicator count. */
-export const ONBOARDING_STEPS: readonly OnboardingStep[] = ['language', 'welcome'];
+export const ONBOARDING_STEPS: readonly OnboardingStep[] = ['language', 'welcome', 'notifications'];
 
 /** How a finished onboarding ended — for analytics and QA, both mark it done. */
 export type CompletedVia = 'finished' | 'skipped';

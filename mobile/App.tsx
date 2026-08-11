@@ -216,9 +216,9 @@ function Root() {
     }
     return (
       <AuthStack.Navigator initialRouteName={AUTH_INITIAL_ROUTE} screenOptions={{ headerShown: false }}>
-        {/* Welcome's back walks into the intro (KUR-271): choice → welcome → language */}
+        {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
         <AuthStack.Screen name="Welcome">
-          {(props) => <WelcomeScreen {...props} onBack={() => onboarding.reopen('welcome')} />}
+          {(props) => <WelcomeScreen {...props} onBack={() => onboarding.reopen('notifications')} />}
         </AuthStack.Screen>
         <AuthStack.Screen name="Login" component={LoginScreen} />
         <AuthStack.Screen name="Register" component={RegisterScreen} />
