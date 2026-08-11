@@ -82,8 +82,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: npm audit (high severity blocks)
-        run: npm audit --audit-level=high
+      - name: npm audit (high/critical blocks; allowlist in scripts/ci-audit.mjs)
+        run: node scripts/ci-audit.mjs
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v3
         env:
