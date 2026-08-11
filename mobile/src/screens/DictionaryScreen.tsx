@@ -5,7 +5,9 @@ import { EntryDetail } from '../dictionary/EntryDetail';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { useTheme } from '../theme/ThemeProvider';
 
 /**
  * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
@@ -14,6 +16,7 @@ import { colors, radii, spacing, typography } from '../theme/tokens';
  */
 export function DictionaryScreen() {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,98 +78,97 @@ export function DictionaryScreen() {
   const showRecents = isEmpty && recents.length > 0;
 
   return (
-    <View style={styles.screen}>
-      <TextInput
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search Kurdish or English…"
-        placeholderTextColor={colors.textSecondary}
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={styles.input}
-        accessibilityLabel="Dictionary search"
-      />
+    <GradientBackground>
+      <View style={styles.screen}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search Kurdish or English…"
+          placeholderTextColor={colors.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+          accessibilityLabel="Dictionary search"
+        />
 
-      {result?.fuzzy ? <Text style={styles.banner}>No exact match — showing closest words</Text> : null}
+        {result?.fuzzy ? <Text style={[styles.banner, { color: colors.textSecondary }]}>No exact match — showing closest words</Text> : null}
 
-      {showRecents ? (
-        <View style={styles.recents}>
-          <Text style={styles.recentsTitle}>Recent</Text>
-          {recents.map((r) => (
-            <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow}>
-              <Text style={styles.recentText}>{r}</Text>
+        {showRecents ? (
+          <View style={styles.recents}>
+            <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>Recent</Text>
+            {recents.map((r) => (
+              <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow}>
+                <Text style={[styles.recentText, { color: colors.primary }]}>{r}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+        {isEmpty && saved.length > 0 ? (
+          <View style={styles.recents}>
+            <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>★ Saved</Text>
+            {saved.map((w) => (
+              <View key={w.entryId} style={styles.savedRow}>
+                <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
+                  <Text style={[styles.recentText, { color: colors.primary }]}>{w.headword}</Text>
+                  <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {w.definitionEn ?? ''}
+                  </Text>
+                </Pressable>
+                <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={`Remove ${w.headword}`} hitSlop={8}>
+                  <Text style={[styles.remove, { color: colors.textSecondary }]}>✕</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {loading && results.length === 0 ? (
+          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+        ) : null}
+
+        {query.trim().length > 0 && !loading && results.length === 0 ? (
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>No results for “{query.trim()}”.</Text>
+        ) : null}
+
+        <FlatList
+          data={results}
+          keyExtractor={(h) => h.entryId}
+          renderItem={({ item }) => (
+            <Pressable onPress={() => openHit(item)} style={[styles.hit, { borderBottomColor: colors.glassBorder }]}>
+              <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
+              <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
+                {item.pos ? `${item.pos} · ` : ''}
+                {item.definitionEn ?? ''}
+              </Text>
             </Pressable>
-          ))}
-        </View>
-      ) : null}
-
-      {isEmpty && saved.length > 0 ? (
-        <View style={styles.recents}>
-          <Text style={styles.recentsTitle}>★ Saved</Text>
-          {saved.map((w) => (
-            <View key={w.entryId} style={styles.savedRow}>
-              <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
-                <Text style={styles.recentText}>{w.headword}</Text>
-                <Text style={styles.hitDef} numberOfLines={1}>
-                  {w.definitionEn ?? ''}
-                </Text>
-              </Pressable>
-              <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={`Remove ${w.headword}`} hitSlop={8}>
-                <Text style={styles.remove}>✕</Text>
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      {loading && results.length === 0 ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
-      ) : null}
-
-      {query.trim().length > 0 && !loading && results.length === 0 ? (
-        <Text style={styles.empty}>No results for “{query.trim()}”.</Text>
-      ) : null}
-
-      <FlatList
-        data={results}
-        keyExtractor={(h) => h.entryId}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => openHit(item)} style={styles.hit}>
-            <Text style={styles.hitWord}>{item.headword}</Text>
-            <Text style={styles.hitDef} numberOfLines={1}>
-              {item.pos ? `${item.pos} · ` : ''}
-              {item.definitionEn ?? ''}
-            </Text>
-          </Pressable>
-        )}
-        keyboardShouldPersistTaps="handled"
-      />
-    </View>
+          )}
+          keyboardShouldPersistTaps="handled"
+        />
+      </View>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, gap: spacing.sm },
+  screen: { flex: 1, padding: spacing.lg, gap: spacing.sm },
   input: {
-    borderWidth: 2,
-    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: typography.sizes.lg,
-    color: colors.textPrimary,
-    backgroundColor: colors.surface,
   },
-  banner: { fontSize: typography.sizes.sm, color: colors.textSecondary, fontStyle: 'italic' },
+  banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
-  recentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase' },
+  recentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
   recentRow: { paddingVertical: spacing.sm },
-  recentText: { fontSize: typography.sizes.md, color: colors.primary },
+  recentText: { fontSize: typography.sizes.md },
   savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
-  remove: { fontSize: typography.sizes.md, color: colors.textSecondary },
-  empty: { color: colors.textSecondary, marginTop: spacing.lg },
-  hit: { paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
-  hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  hitDef: { fontSize: typography.sizes.sm, color: colors.textSecondary },
+  remove: { fontSize: typography.sizes.md },
+  empty: { marginTop: spacing.lg },
+  hit: { paddingVertical: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  hitDef: { fontSize: typography.sizes.sm },
 });
