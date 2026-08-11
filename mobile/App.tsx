@@ -29,6 +29,7 @@ import { PushRegistration } from './src/push/PushRegistration';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
+import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { ChallengeListener } from './src/challenge/ChallengeListener';
@@ -175,8 +176,9 @@ function SignedInRoot() {
 
 function Root() {
   const { status } = useAuth();
+  const onboarding = useOnboarding();
 
-  if (status === 'restoring') {
+  if (status === 'restoring' || !onboarding.ready) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -185,6 +187,10 @@ function Root() {
   }
 
   if (status === 'signedOut') {
+    // first launch: show onboarding before the auth screens (KUR-271/272/273/274)
+    if (onboarding.needsOnboarding) {
+      return <OnboardingScreen onComplete={onboarding.complete} />;
+    }
     return (
       <AuthStack.Navigator initialRouteName={AUTH_INITIAL_ROUTE} screenOptions={{ headerShown: false }}>
         <AuthStack.Screen name="Login" component={LoginScreen} />
