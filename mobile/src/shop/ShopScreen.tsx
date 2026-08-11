@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { GradientBackground } from '../theme/glass';
+import { useTheme } from '../theme/ThemeProvider';
 import {
   canAfford,
   currencyLabel,
@@ -30,6 +32,7 @@ function attemptKey(sku: string): string {
 /** Categorized shop with balances, item detail, and purchase confirmation (KUR-070). */
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   const [loading, setLoading] = useState(true);
@@ -90,50 +93,52 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const sections = groupByCategory(items);
 
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable onPress={onExit} hitSlop={10}>
-          <Text style={styles.close}>✕</Text>
-        </Pressable>
-        <Text style={styles.title}>Shop</Text>
-        <View style={styles.balances}>
-          <Text style={styles.balance}>🪙 {balances.zer}</Text>
-          <Text style={styles.balance}>💎 {balances.gems}</Text>
-        </View>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-      ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(i) => i.sku}
-          contentContainerStyle={styles.list}
-          renderSectionHeader={({ section }) => <Text style={styles.section}>{section.title}</Text>}
-          renderItem={({ item }) => (
-            <Pressable style={styles.row} onPress={() => setSelected(item)}>
-              <View style={styles.rowMain}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                {item.description ? <Text style={styles.itemDesc} numberOfLines={1}>{item.description}</Text> : null}
-              </View>
-              <Text style={[styles.price, !canAfford(item, balances) && styles.priceUnaffordable]}>
-                {item.price} {item.currency === 'zer' ? '🪙' : '💎'}
-              </Text>
-            </Pressable>
-          )}
-          ListEmptyComponent={<Text style={styles.empty}>The shop is empty right now — check back soon.</Text>}
-          stickySectionHeadersEnabled={false}
-        />
-      )}
-
-      <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
-        <Pressable style={styles.backdrop} onPress={() => setSelected(null)}>
-          <Pressable style={styles.sheet} onPress={() => undefined}>
-            {selected ? <ItemDetail item={selected} balances={balances} busy={busy} onBuy={confirmBuy} onEarnMore={onEarnMore} /> : null}
+    <GradientBackground>
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable onPress={onExit} hitSlop={10}>
+            <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>
-        </Pressable>
-      </Modal>
-    </View>
+          <Text style={[styles.title, { color: colors.primary }]}>Shop</Text>
+          <View style={styles.balances}>
+            <Text style={[styles.balance, { color: colors.textPrimary }]}>🪙 {balances.zer}</Text>
+            <Text style={[styles.balance, { color: colors.textPrimary }]}>💎 {balances.gems}</Text>
+          </View>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+        ) : (
+          <SectionList
+            sections={sections}
+            keyExtractor={(i) => i.sku}
+            contentContainerStyle={styles.list}
+            renderSectionHeader={({ section }) => <Text style={[styles.section, { color: colors.textSecondary }]}>{section.title}</Text>}
+            renderItem={({ item }) => (
+              <Pressable style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]} onPress={() => setSelected(item)}>
+                <View style={styles.rowMain}>
+                  <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.name}</Text>
+                  {item.description ? <Text style={[styles.itemDesc, { color: colors.textSecondary }]} numberOfLines={1}>{item.description}</Text> : null}
+                </View>
+                <Text style={[styles.price, { color: canAfford(item, balances) ? colors.textPrimary : colors.textSecondary }]}>
+                  {item.price} {item.currency === 'zer' ? '🪙' : '💎'}
+                </Text>
+              </Pressable>
+            )}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>The shop is empty right now — check back soon.</Text>}
+            stickySectionHeadersEnabled={false}
+          />
+        )}
+
+        <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
+          <Pressable style={styles.backdrop} onPress={() => setSelected(null)}>
+            <Pressable style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]} onPress={() => undefined}>
+              {selected ? <ItemDetail item={selected} balances={balances} busy={busy} onBuy={confirmBuy} onEarnMore={onEarnMore} /> : null}
+            </Pressable>
+          </Pressable>
+        </Modal>
+      </View>
+    </GradientBackground>
   );
 }
 
@@ -150,30 +155,31 @@ function ItemDetail({
   onBuy: (item: ShopItem) => void;
   onEarnMore: () => void;
 }) {
+  const { colors } = useTheme();
   const affordable = canAfford(item, balances);
   return (
     <View style={styles.detail}>
       {/* preview placeholder until item art lands with the design pass */}
-      <View style={styles.preview}>
+      <View style={[styles.preview, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, borderWidth: StyleSheet.hairlineWidth }]}>
         <Text style={styles.previewEmoji}>{item.category === 'freeze' ? '🧊' : item.category === 'powerup' ? '⚡' : '✨'}</Text>
       </View>
-      <Text style={styles.detailName}>{item.name}</Text>
-      {item.description ? <Text style={styles.detailDesc}>{item.description}</Text> : null}
-      <Text style={styles.detailPrice}>{item.price} {currencyLabel(item.currency)}</Text>
+      <Text style={[styles.detailName, { color: colors.textPrimary }]}>{item.name}</Text>
+      {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
+      <Text style={[styles.detailPrice, { color: colors.accent }]}>{item.price} {currencyLabel(item.currency)}</Text>
 
       {affordable ? (
-        <Pressable style={styles.buy} disabled={busy} onPress={() => onBuy(item)}>
-          {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={styles.buyText}>Buy</Text>}
+        <Pressable style={[styles.buy, { backgroundColor: colors.primary }]} disabled={busy} onPress={() => onBuy(item)}>
+          {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.buyText, { color: colors.textOnPrimary }]}>Buy</Text>}
         </Pressable>
       ) : (
         <View style={styles.insufficient}>
-          <Text style={styles.insufficientText}>
+          <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
             Not enough {currencyLabel(item.currency)}.
             {item.currency === 'zer' ? ' Play and learn to earn more!' : ' Gem packs are coming soon.'}
           </Text>
           {item.currency === 'zer' ? (
-            <Pressable style={styles.earn} onPress={onEarnMore}>
-              <Text style={styles.earnText}>Earn Zêr</Text>
+            <Pressable style={[styles.earn, { backgroundColor: colors.accent }]} onPress={onEarnMore}>
+              <Text style={[styles.earnText, { color: colors.textOnPrimary }]}>Earn Zêr</Text>
             </Pressable>
           ) : null}
         </View>
@@ -183,33 +189,32 @@ function ItemDetail({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md },
-  close: { fontSize: typography.sizes.lg, color: colors.textSecondary },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.primary, flex: 1 },
+  close: { fontSize: typography.sizes.lg },
+  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, flex: 1 },
   balances: { flexDirection: 'row', gap: spacing.md },
-  balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   list: { padding: spacing.lg, gap: spacing.xs },
-  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: colors.textSecondary, textTransform: 'uppercase', marginTop: spacing.md, marginBottom: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginTop: spacing.md, marginBottom: spacing.xs },
+  row: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.md, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth },
   rowMain: { flex: 1, gap: 2 },
-  itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  itemDesc: { fontSize: typography.sizes.sm, color: colors.textSecondary },
-  price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  priceUnaffordable: { color: colors.textSecondary },
-  empty: { textAlign: 'center', color: colors.textSecondary, marginTop: spacing.xl },
+  itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  itemDesc: { fontSize: typography.sizes.sm },
+  price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  empty: { textAlign: 'center', marginTop: spacing.xl },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.background, borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, padding: spacing.xl },
+  sheet: { borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
   detail: { alignItems: 'center', gap: spacing.sm },
-  preview: { width: 96, height: 96, borderRadius: radii.md, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
+  preview: { width: 96, height: 96, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   previewEmoji: { fontSize: 48 },
-  detailName: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  detailDesc: { fontSize: typography.sizes.md, color: colors.textSecondary, textAlign: 'center' },
-  detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.accent, marginVertical: spacing.sm },
-  buy: { alignSelf: 'stretch', backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  buyText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  detailName: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },
+  detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginVertical: spacing.sm },
+  buy: { alignSelf: 'stretch', paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
+  buyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   insufficient: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm },
-  insufficientText: { color: colors.textSecondary, textAlign: 'center', fontSize: typography.sizes.sm },
-  earn: { backgroundColor: colors.accent, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
-  earnText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  insufficientText: { textAlign: 'center', fontSize: typography.sizes.sm },
+  earn: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
+  earnText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });
