@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { stateIcon } from './node';
 import type { SkillNode } from './types';
 
@@ -7,10 +8,11 @@ const NODE = 72;
 
 /** A single skill node on the map; ring/fill reflect its state (KUR-040). */
 export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () => void }) {
+  const { colors } = useTheme();
   const s = node.state;
   const ringColor =
-    s === 'gold' ? colors.sun : s === 'decayed' ? colors.danger : s === 'locked' ? colors.border : colors.primary;
-  const fill = s === 'locked' ? colors.surface : s === 'unlocked' ? colors.background : colors.primary;
+    s === 'gold' ? colors.gold : s === 'decayed' ? colors.danger : s === 'locked' ? colors.glassBorder : colors.primary;
+  const fill = s === 'locked' ? colors.controlTrack : s === 'unlocked' ? colors.glassFill : colors.primary;
   const cracked = s === 'decayed';
 
   return (
@@ -21,14 +23,14 @@ export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () 
         accessibilityLabel={`${node.title}, ${s}`}
         style={[styles.node, { borderColor: ringColor, backgroundColor: fill }, cracked && styles.cracked]}
       >
-        <Text style={[styles.icon, s === 'unlocked' && styles.iconUnlocked]}>{stateIcon(s) || node.level}</Text>
+        <Text style={[styles.icon, { color: s === 'unlocked' ? colors.primary : colors.textOnPrimary }]}>{stateIcon(s) || node.level}</Text>
       </Pressable>
       <View style={styles.meta}>
-        <Text style={styles.title}>{node.title}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{node.title}</Text>
         {node.state !== 'locked' ? (
-          <Text style={styles.strength}>Strength {node.strength}%{cracked ? ' · cracked' : ''}</Text>
+          <Text style={[styles.strength, { color: colors.textSecondary }]}>Strength {node.strength}%{cracked ? ' · cracked' : ''}</Text>
         ) : (
-          <Text style={styles.locked}>Locked</Text>
+          <Text style={[styles.locked, { color: colors.textSecondary }]}>Locked</Text>
         )}
       </View>
     </View>
@@ -46,10 +48,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cracked: { borderStyle: 'dashed' },
-  icon: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.textOnPrimary },
-  iconUnlocked: { color: colors.primary },
+  icon: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   meta: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
-  strength: { fontSize: typography.sizes.sm, color: colors.textSecondary },
-  locked: { fontSize: typography.sizes.sm, color: colors.textSecondary },
+  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  strength: { fontSize: typography.sizes.sm },
+  locked: { fontSize: typography.sizes.sm },
 });

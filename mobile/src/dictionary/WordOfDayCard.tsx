@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { EntryDetail } from './EntryDetail';
 
 interface WordOfDay {
@@ -14,6 +15,7 @@ interface WordOfDay {
 /** Home-screen word-of-the-day card (KUR-046); tapping opens the entry. */
 export function WordOfDayCard() {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [word, setWord] = useState<WordOfDay | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -31,10 +33,10 @@ export function WordOfDayCard() {
 
   return (
     <>
-      <Pressable onPress={() => setOpen(true)} style={styles.card} accessibilityRole="button">
-        <Text style={styles.label}>Word of the day</Text>
-        <Text style={styles.headword}>{word.headword}</Text>
-        <Text style={styles.def} numberOfLines={1}>
+      <Pressable onPress={() => setOpen(true)} style={[styles.card, { backgroundColor: colors.primary }]} accessibilityRole="button">
+        <Text style={[styles.label, { color: colors.textOnPrimary }]}>Word of the day</Text>
+        <Text style={[styles.headword, { color: colors.textOnPrimary }]}>{word.headword}</Text>
+        <Text style={[styles.def, { color: colors.textOnPrimary }]} numberOfLines={1}>
           {word.pos ? `${word.pos} · ` : ''}
           {word.definitionEn ?? ''}
         </Text>
@@ -49,12 +51,11 @@ export function WordOfDayCard() {
 const styles = StyleSheet.create({
   card: {
     alignSelf: 'stretch',
-    backgroundColor: colors.primary,
     borderRadius: radii.md,
     padding: spacing.lg,
     gap: spacing.xs,
   },
-  label: { fontSize: typography.sizes.xs, color: colors.textOnPrimary, textTransform: 'uppercase', opacity: 0.8 },
-  headword: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, color: colors.textOnPrimary },
-  def: { fontSize: typography.sizes.md, color: colors.textOnPrimary, opacity: 0.9 },
+  label: { fontSize: typography.sizes.xs, textTransform: 'uppercase', opacity: 0.8 },
+  headword: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  def: { fontSize: typography.sizes.md, opacity: 0.9 },
 });

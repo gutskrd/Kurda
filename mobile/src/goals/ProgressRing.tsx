@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, typography } from '../theme/tokens';
+import { typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { goalPercentLabel, ringStroke } from './format';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 
 /** Circular XP-goal progress ring for the home screen (KUR-032). */
 export function ProgressRing({ progress, completed, caption, size = 140 }: Props) {
+  const { colors } = useTheme();
   const stroke = 12;
   const radius = (size - stroke) / 2;
   const { circumference, dashoffset } = ringStroke(progress, radius);
@@ -22,7 +24,7 @@ export function ProgressRing({ progress, completed, caption, size = 140 }: Props
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size}>
         {/* track */}
-        <Circle cx={size / 2} cy={size / 2} r={radius} stroke={colors.border} strokeWidth={stroke} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={radius} stroke={colors.glassBorder} strokeWidth={stroke} fill="none" />
         {/* progress arc, starting at 12 o'clock */}
         <Circle
           cx={size / 2}
@@ -39,7 +41,7 @@ export function ProgressRing({ progress, completed, caption, size = 140 }: Props
       </Svg>
       <View style={styles.center}>
         <Text style={[styles.pct, { color: tint }]}>{completed ? '✓' : goalPercentLabel(progress)}</Text>
-        <Text style={styles.caption}>{caption}</Text>
+        <Text style={[styles.caption, { color: colors.textSecondary }]}>{caption}</Text>
       </View>
     </View>
   );
@@ -48,5 +50,5 @@ export function ProgressRing({ progress, completed, caption, size = 140 }: Props
 const styles = StyleSheet.create({
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   pct: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
-  caption: { fontSize: typography.sizes.sm, color: colors.textSecondary },
+  caption: { fontSize: typography.sizes.sm },
 });

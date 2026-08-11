@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 
 interface DailyStatus {
   canClaim: boolean;
@@ -18,6 +19,7 @@ type CellState = 'claimed' | 'today' | 'upcoming';
 /** Login calendar + daily Zêr claim (KUR-067). */
 export function DailyRewardCard() {
   const { client } = useAuth();
+  const { colors } = useTheme();
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [justEarned, setJustEarned] = useState<number | null>(null);
@@ -52,42 +54,43 @@ export function DailyRewardCard() {
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.heading}>Daily Zêr</Text>
+    <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+      <Text style={[styles.heading, { color: colors.textPrimary }]}>Daily Zêr</Text>
       <View style={styles.row}>
         {status.schedule.map((amount, i) => {
           const day = i + 1;
           const state = cellState(day);
           const bonus = day === status.schedule.length;
+          const active = state !== 'upcoming';
+          const borderColor =
+            state === 'claimed' ? colors.success : state === 'today' ? colors.primary : bonus ? colors.accent : colors.glassBorder;
+          const textColor = active ? colors.textOnPrimary : colors.textSecondary;
           return (
             <View
               key={day}
               style={[
                 styles.cell,
-                bonus && styles.cellBonus,
-                state === 'claimed' && styles.cellClaimed,
+                { borderColor, backgroundColor: state === 'claimed' ? colors.success : colors.glassFill },
                 state === 'today' && styles.cellToday,
               ]}
             >
-              <Text style={[styles.cellDay, state !== 'upcoming' && styles.cellDayActive]}>
-                {state === 'claimed' ? '✓' : `D${day}`}
-              </Text>
-              <Text style={[styles.cellAmount, state !== 'upcoming' && styles.cellDayActive]}>{amount}</Text>
+              <Text style={[styles.cellDay, { color: textColor }]}>{state === 'claimed' ? '✓' : `D${day}`}</Text>
+              <Text style={[styles.cellAmount, { color: textColor }]}>{amount}</Text>
             </View>
           );
         })}
       </View>
 
       {status.canClaim ? (
-        <Pressable onPress={claim} disabled={claiming} style={styles.claim}>
+        <Pressable onPress={claim} disabled={claiming} style={[styles.claim, { backgroundColor: colors.primary }]}>
           {claiming ? (
             <ActivityIndicator color={colors.textOnPrimary} />
           ) : (
-            <Text style={styles.claimText}>Claim {status.reward} Zêr</Text>
+            <Text style={[styles.claimText, { color: colors.textOnPrimary }]}>Claim {status.reward} Zêr</Text>
           )}
         </Pressable>
       ) : (
-        <Text style={styles.done}>
+        <Text style={[styles.done, { color: colors.textSecondary }]}>
           {justEarned != null ? `+${justEarned} Zêr claimed!` : 'Come back tomorrow 🌙'}
         </Text>
       )}
@@ -96,17 +99,14 @@ export function DailyRewardCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { alignSelf: 'stretch', backgroundColor: colors.surface, borderRadius: radii.md, padding: spacing.md, gap: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: colors.textPrimary },
+  card: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth },
+  heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.xs },
-  cell: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radii.sm, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, gap: 2 },
-  cellBonus: { borderColor: colors.accent },
-  cellClaimed: { backgroundColor: colors.success, borderColor: colors.success },
-  cellToday: { borderColor: colors.primary, borderWidth: 2 },
-  cellDay: { fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.bold },
-  cellDayActive: { color: colors.textOnPrimary },
-  cellAmount: { fontSize: typography.sizes.xs, color: colors.textSecondary },
-  claim: { backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  claimText: { color: colors.textOnPrimary, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  done: { textAlign: 'center', color: colors.textSecondary, fontSize: typography.sizes.sm, paddingVertical: spacing.sm },
+  cell: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radii.sm, borderWidth: 1, gap: 2 },
+  cellToday: { borderWidth: 2 },
+  cellDay: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  cellAmount: { fontSize: typography.sizes.xs },
+  claim: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
+  claimText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  done: { textAlign: 'center', fontSize: typography.sizes.sm, paddingVertical: spacing.sm },
 });
