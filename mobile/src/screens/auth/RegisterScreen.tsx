@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { colors, spacing, typography } from '../../theme/tokens';
+import { spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
 import {
   FIELD_ERROR_COPY,
@@ -16,6 +17,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
   const { register } = useAuth();
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -72,7 +74,7 @@ export function RegisterScreen({ navigation }: Props) {
         testID="password"
       />
       <SubmitButton label="Sign up" busy={busy} onPress={submit} />
-      <Text style={styles.terms}>
+      <Text style={[styles.terms, { color: colors.textSecondary }]}>
         By creating an account you accept the Terms of Use and Privacy Policy.
       </Text>
       <LinkText label="Have an account? Log in" onPress={() => navigation.navigate('Login')} />
@@ -84,7 +86,6 @@ const styles = StyleSheet.create({
   terms: {
     marginTop: spacing.sm,
     fontSize: typography.sizes.xs,
-    color: colors.textSecondary,
     textAlign: 'center',
   },
 });
