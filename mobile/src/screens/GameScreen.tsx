@@ -7,6 +7,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 
 interface GameScreenProps {
   roomId: string;
@@ -23,6 +24,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
   const { state, answer, forfeit } = useGameSocket(roomId, selfId);
   const rematch = useRematch(roomId);
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [now, setNow] = useState(() => Date.now());
 
   // navigate as soon as the rematch room is minted
@@ -44,7 +46,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
     ]);
 
   const header = (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={confirmForfeit} accessibilityLabel="Forfeit" hitSlop={10}>
         <Text style={[styles.forfeit, { color: colors.danger }]}>Forfeit</Text>
       </Pressable>
