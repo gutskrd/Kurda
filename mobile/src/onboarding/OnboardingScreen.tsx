@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { BreathingIcon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -205,19 +205,17 @@ function WelcomeSlide(): React.JSX.Element {
       <BreathingIcon name="sparkle" size={60} tone="primary" style={styles.slideIcon} />
       <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
-      <GlassCard style={styles.welcomeCard}>
-        {reduce ? (
-          <View style={{ gap: spacing.sm }}>
-            {VALUE_PROPS.map((p) => (
-              <Text key={p} style={[styles.prop, { color: colors.textPrimary }]}>
-                • {p}
-              </Text>
-            ))}
-          </View>
-        ) : (
-          <Text style={[styles.prop, styles.propRotating, { color: colors.textPrimary }]}>{VALUE_PROPS[i]}</Text>
-        )}
-      </GlassCard>
+      {reduce ? (
+        <View style={styles.propList}>
+          {VALUE_PROPS.map((p) => (
+            <Text key={p} style={[styles.prop, { color: colors.textSecondary }]}>
+              {p}
+            </Text>
+          ))}
+        </View>
+      ) : (
+        <Text style={[styles.propRotating, { color: colors.textSecondary }]}>{VALUE_PROPS[i]}</Text>
+      )}
     </View>
   );
 }
@@ -268,9 +266,9 @@ const styles = StyleSheet.create({
   check: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
-  welcomeCard: { alignSelf: 'stretch' },
+  propList: { marginTop: spacing.lg, gap: spacing.sm, alignItems: 'center' },
   prop: { fontSize: typography.sizes.md, textAlign: 'center' },
-  propRotating: { fontSize: typography.sizes.lg, fontWeight: typography.weights.medium, minHeight: 56 },
+  propRotating: { fontSize: typography.sizes.lg, fontWeight: typography.weights.medium, textAlign: 'center', marginTop: spacing.lg, minHeight: 56, paddingHorizontal: spacing.lg },
   nav: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
   back: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
