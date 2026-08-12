@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
@@ -112,6 +112,74 @@ export function Segmented<T extends string>({
   );
 }
 
+/**
+ * A settings row that shows the current value + a chevron and opens a frosted
+ * glass menu to pick another (KUR-268). Used for the Language / Theme choosers.
+ */
+export function GlassSelect<T extends string>({
+  label,
+  value,
+  options,
+  labelOf,
+  onChange,
+  icon,
+}: {
+  label: string;
+  value: T;
+  options: readonly T[];
+  labelOf: (v: T) => string;
+  onChange: (v: T) => void;
+  icon?: IconName;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        style={[styles.selectRow, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+      >
+        {icon ? <Icon name={icon} size={18} color={colors.primary} /> : null}
+        <Text style={[styles.selectLabel, { color: colors.textPrimary }]}>{label}</Text>
+        <View style={styles.selectValueWrap}>
+          <Text style={[styles.selectValue, { color: colors.primary }]}>{labelOf(value)}</Text>
+          <Icon name="chevron-down" size={14} color={colors.primary} />
+        </View>
+      </Pressable>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.selectBackdrop} onPress={() => setOpen(false)}>
+          <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
+            <GlassCard style={styles.selectMenu}>
+              <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
+              {options.map((opt) => {
+                const active = opt === value;
+                return (
+                  <Pressable
+                    key={opt}
+                    onPress={() => {
+                      onChange(opt);
+                      setOpen(false);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    style={styles.selectOption}
+                  >
+                    <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
+                      {labelOf(opt)}
+                    </Text>
+                    {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
+                  </Pressable>
+                );
+              })}
+            </GlassCard>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   shadow: {
@@ -143,4 +211,24 @@ const styles = StyleSheet.create({
   segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 4, gap: 4 },
   segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: spacing.sm, alignItems: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  selectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    alignSelf: 'stretch',
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  selectLabel: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  selectValueWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  selectValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  selectMenuWrap: { alignSelf: 'stretch' },
+  selectMenu: { alignSelf: 'stretch', gap: spacing.xs },
+  selectMenuTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginBottom: spacing.xs },
+  selectOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.md },
+  selectOptionText: { fontSize: typography.sizes.lg },
+  selectOptionActive: { fontWeight: typography.weights.bold },
 });

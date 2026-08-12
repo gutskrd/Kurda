@@ -33,6 +33,8 @@ export type IconName =
   | 'close'
   | 'chevron-left'
   | 'chevron-right'
+  | 'chevron-down'
+  | 'check'
   | 'sparkle'
   | 'ice'
   | 'moon'
@@ -76,6 +78,8 @@ const PATHS: Record<IconName, string> = {
   close: 'M6 4.6 4.6 6 10.6 12 4.6 18 6 19.4 12 13.4 18 19.4 19.4 18 13.4 12 19.4 6 18 4.6 12 10.6 6 4.6Z',
   'chevron-left': 'M15.4 5.4 8.8 12l6.6 6.6 1.4-1.4L11.6 12l5.2-5.2-1.4-1.4Z',
   'chevron-right': 'M8.6 5.4 7.2 6.8 12.4 12l-5.2 5.2 1.4 1.4L16 12 8.6 5.4Z',
+  'chevron-down': 'M5.4 8.6 4 10l8 8 8-8-1.4-1.4L12 15.2 5.4 8.6Z',
+  check: 'M9.5 16.2 4.8 11.5l-1.4 1.4 6.1 6.1L20.6 8 19.2 6.6 9.5 16.2Z',
   sparkle: 'M12 2c.8 4.2 2.8 6.2 7 7-4.2.8-6.2 2.8-7 7-.8-4.2-2.8-6.2-7-7 4.2-.8 6.2-2.8 7-7Z',
   // filled 6-point snowflake / ice crystal
   ice: 'M12 1.5l1.7 3.6 3.9-1-1 3.9 3.6 1.7-3.6 1.7 1 3.9-3.9-1L12 19.5l-1.7-3.7-3.9 1 1-3.9L2.9 12l3.6-1.7-1-3.9 3.9 1L12 1.5Z',
