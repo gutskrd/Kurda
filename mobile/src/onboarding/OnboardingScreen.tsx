@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -86,6 +87,7 @@ export function OnboardingScreen({
   initialStep?: OnboardingStep | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [state, dispatch] = useReducer(onboardingReducer, initialStep, (start) => {
     const base = initOnboardingState();
     const idx = start ? ONBOARDING_STEPS.indexOf(start) : 0;
@@ -108,7 +110,7 @@ export function OnboardingScreen({
 
   return (
     <GradientBackground>
-      <View style={styles.screen}>
+      <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.lg }]}>
         <View style={styles.topBar}>
           <View style={styles.dots}>
             {ONBOARDING_STEPS.map((s, i) => (

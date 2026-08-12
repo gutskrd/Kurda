@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, type IconName } from '../../theme/Icon';
@@ -19,10 +20,17 @@ export function AuthScreenShell({
   hero?: IconName;
 }) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <GradientBackground>
       {onBack ? (
-        <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={styles.back}>
+        <Pressable
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          hitSlop={10}
+          style={[styles.back, { top: insets.top + spacing.sm }]}
+        >
           <Text style={[styles.backText, { color: colors.primary }]}>‹ Back</Text>
         </Pressable>
       ) : null}
