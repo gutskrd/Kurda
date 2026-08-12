@@ -40,7 +40,6 @@ import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { ChallengeListener } from './src/challenge/ChallengeListener';
-import { colors } from './src/theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -223,10 +222,11 @@ function SignedInRoot() {
 function Root() {
   const { status } = useAuth();
   const onboarding = useOnboarding();
+  const { colors } = useTheme();
 
   if (status === 'restoring' || !onboarding.ready) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
