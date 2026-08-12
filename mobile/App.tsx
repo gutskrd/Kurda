@@ -81,13 +81,18 @@ function SignedInTabs() {
           borderTopWidth: 0,
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.glassBorder,
+          // the island is already offset by the safe area (bottom, above); zero
+          // the tab bar's own safe-area padding so the icons stay centred and
+          // don't leave a gap where the labels used to be.
+          paddingBottom: 0,
+          paddingTop: 0,
           elevation: 12,
           shadowColor: colors.softShadow,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.22,
           shadowRadius: 16,
         },
-        tabBarItemStyle: { height: TAB_BAR_HEIGHT },
+        tabBarItemStyle: { height: TAB_BAR_HEIGHT, paddingVertical: 0 },
         tabBarBackground: () => (
           <View style={[StyleSheet.absoluteFill, { borderRadius: TAB_BAR_HEIGHT / 2, overflow: 'hidden' }]}>
             <BlurView intensity={colors.blurIntensity} tint={colors.blurTint} style={StyleSheet.absoluteFill}>
