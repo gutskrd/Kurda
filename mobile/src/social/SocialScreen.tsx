@@ -7,6 +7,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface UserRow {
@@ -20,6 +21,7 @@ export function SocialScreen() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const tabBarInset = useTabBarInset();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserRow[] | null>(null);
   const [friends, setFriends] = useState<UserRow[]>([]);
@@ -100,7 +102,7 @@ export function SocialScreen() {
           <FlatList
             data={results}
             keyExtractor={(u) => u.userId}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
               searching ? (
@@ -114,7 +116,7 @@ export function SocialScreen() {
           <FlatList
             data={friends}
             keyExtractor={(u) => u.userId}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             ListHeaderComponent={
               requests.length > 0 ? (
                 <View>

@@ -5,9 +5,11 @@ import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
 import * as Linking from 'expo-linking';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
+import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './src/navigation/tabBarLayout';
 import type { RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
@@ -57,25 +59,41 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 function SignedInTabs() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
-        // frosted-glass tab bar: transparent chrome over a backdrop blur + tint.
-        // Kept in normal flow (not absolute) so no screen's content is clipped;
-        // upgrade to a floating bar once every tab screen reserves a bottom inset.
+        // floating glass island: a rounded, translucent bar detached from the
+        // edges, icons only. Scrollable tab screens reserve useTabBarInset()
+        // bottom space so nothing hides behind it.
         tabBarStyle: {
+          position: 'absolute',
+          left: TAB_BAR_MARGIN + 8,
+          right: TAB_BAR_MARGIN + 8,
+          bottom: insets.bottom + TAB_BAR_MARGIN,
+          height: TAB_BAR_HEIGHT,
+          borderRadius: TAB_BAR_HEIGHT / 2,
           backgroundColor: 'transparent',
-          borderTopColor: colors.glassBorder,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          elevation: 0,
+          borderTopWidth: 0,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.glassBorder,
+          elevation: 12,
+          shadowColor: colors.softShadow,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.22,
+          shadowRadius: 16,
         },
+        tabBarItemStyle: { height: TAB_BAR_HEIGHT },
         tabBarBackground: () => (
-          <BlurView intensity={colors.blurIntensity} tint={colors.blurTint} style={StyleSheet.absoluteFill}>
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-          </BlurView>
+          <View style={[StyleSheet.absoluteFill, { borderRadius: TAB_BAR_HEIGHT / 2, overflow: 'hidden' }]}>
+            <BlurView intensity={colors.blurIntensity} tint={colors.blurTint} style={StyleSheet.absoluteFill}>
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
+            </BlurView>
+          </View>
         ),
       }}
     >
@@ -86,7 +104,7 @@ function SignedInTabs() {
           options={{
             title: tab.title,
             tabBarIcon: ({ focused, color }) => (
-              <Icon name={tab.icon} size={24} color={color} style={{ opacity: focused ? 1 : 0.6 }} />
+              <Icon name={tab.icon} size={26} color={color} style={{ opacity: focused ? 1 : 0.55 }} />
             ),
           }}
         >

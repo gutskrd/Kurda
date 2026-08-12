@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'reac
 import { useAuth } from '../auth/AuthContext';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 import { GoalPicker } from '../goals/GoalPicker';
 import { ProgressRing } from '../goals/ProgressRing';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
@@ -25,6 +26,7 @@ export function LearnScreen() {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
+  const tabBarInset = useTabBarInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
   const [map, setMap] = useState<CourseMap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export function LearnScreen() {
     <GradientBackground>
       <FlatList
         style={styles.screen}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         data={rows}
         keyExtractor={(r) => r.key}
         renderItem={renderRow}

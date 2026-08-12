@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { SenseSection } from './SenseSection';
@@ -15,6 +16,7 @@ const COLLAPSE_AFTER = 8;
 export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const tabBarInset = useTabBarInset();
   const [entry, setEntry] = useState<Entry | null>(null);
   const [saved, setSaved] = useState(false);
   const audio = useAudio(entry?.audio[0]?.url);
@@ -51,7 +53,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
         {!entry ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
         ) : (
-          <ScrollView contentContainerStyle={styles.body}>
+          <ScrollView contentContainerStyle={[styles.body, { paddingBottom: tabBarInset }]}>
             <View style={styles.headwordRow}>
               <Text style={[styles.headword, { color: colors.textPrimary }]}>{entry.headword}</Text>
               {entry.audio.length > 0 && audio.supported ? (
