@@ -4,13 +4,14 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-nat
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, radii, typography } from '../theme/tokens';
-import { ClayButton, GradientBackground } from '../theme/glass';
+import { ClayButton, GlassSelect, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
-import { LOCALES, LOCALE_LABEL } from '../i18n/translations';
+import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { NotificationBell } from '../notifications/NotificationBell';
 import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
@@ -18,7 +19,7 @@ import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 export function ProfileScreen() {
   const { user, client, logout } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const { colors } = useTheme();
+  const { colors, preference, setPreference } = useTheme();
   const [streak, setStreak] = useState<Streak | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('everyone');
   const { optedOut, setOptedOut } = useEventTheme();
@@ -90,13 +91,23 @@ export function ProfileScreen() {
           </View>
         </View>
 
-        <View style={styles.group}>
-          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.language')}</Text>
-          <View style={styles.pillRow}>
-            {LOCALES.map((l) => (
-              <Pill key={l} label={LOCALE_LABEL[l]} active={locale === l} onPress={() => setLocale(l)} />
-            ))}
-          </View>
+        <View style={styles.selects}>
+          <GlassSelect
+            label={t('settings.language')}
+            icon="book"
+            value={locale}
+            options={LOCALES}
+            labelOf={(l) => LOCALE_LABEL[l as Locale]}
+            onChange={(l) => setLocale(l as Locale)}
+          />
+          <GlassSelect
+            label="Theme"
+            icon="palette"
+            value={preference}
+            options={THEME_PREFERENCES}
+            labelOf={(p) => PREFERENCE_LABEL[p]}
+            onChange={setPreference}
+          />
         </View>
 
         <View style={styles.settingRow}>
@@ -122,6 +133,7 @@ const styles = StyleSheet.create({
   displayName: { fontSize: typography.sizes.md },
   actions: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.lg },
   group: { marginTop: spacing.xl, alignItems: 'center', gap: spacing.sm },
+  selects: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.xl },
   groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap', justifyContent: 'center' },
   pill: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },
