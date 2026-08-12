@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
-import { Icon } from '../theme/Icon';
+import { BreathingIcon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import {
@@ -160,6 +160,7 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
   const { colors } = useTheme();
   return (
     <View style={styles.slide}>
+      <View style={styles.slideIcon}><BreathingIcon name="globe" size={52} tone="primary" /></View>
       <Text style={[styles.title, { color: colors.textPrimary }]}>Choose your language</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>You can change this any time in Settings.</Text>
       <ScrollView style={styles.langList} contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.sm }}>
@@ -201,6 +202,7 @@ function WelcomeSlide(): React.JSX.Element {
 
   return (
     <View style={[styles.slide, styles.centered]}>
+      <BreathingIcon name="sparkle" size={60} tone="primary" style={styles.slideIcon} />
       <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
       <GlassCard style={styles.welcomeCard}>
@@ -226,7 +228,7 @@ function NotificationsSlide(): React.JSX.Element {
   const { colors } = useTheme();
   return (
     <View style={[styles.slide, styles.centered]}>
-      <Icon name="bell" size={64} tone="primary" />
+      <BreathingIcon name="bell" size={64} tone="primary" />
       <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>A Kurdish story every day</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         Turn on notifications so you never miss one. One a day, in your language, never more.
@@ -246,6 +248,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, justifyContent: 'center' },
   slide: { flex: 1, justifyContent: 'center' },
   centered: { alignItems: 'center' },
+  slideIcon: { alignSelf: 'center', marginBottom: spacing.md },
   title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
   notifTitle: { marginTop: spacing.lg },
   notifHint: { fontSize: typography.sizes.sm, textAlign: 'center', marginTop: spacing.lg, fontStyle: 'italic' },

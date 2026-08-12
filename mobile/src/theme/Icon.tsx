@@ -1,5 +1,7 @@
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from './ThemeProvider';
 
 /**
@@ -41,7 +43,8 @@ export type IconName =
   | 'heart'
   | 'mail'
   | 'apple'
-  | 'google';
+  | 'google'
+  | 'globe';
 
 /** 24×24 filled-silhouette path data, keyed by icon name. */
 const PATHS: Record<IconName, string> = {
@@ -87,9 +90,12 @@ const PATHS: Record<IconName, string> = {
   heart: 'M12 21.3 3.8 13a5.6 5.6 0 0 1 7.9-7.9l.3.3.3-.3A5.6 5.6 0 0 1 20.2 13L12 21.3Z',
   // filled envelope
   mail: 'M2 6.2A2.2 2.2 0 0 1 4.2 4h15.6A2.2 2.2 0 0 1 22 6.2l-10 6.1L2 6.2Zm0 2.5V17.8A2.2 2.2 0 0 0 4.2 20h15.6a2.2 2.2 0 0 0 2.2-2.2V8.7l-9.5 5.8a1 1 0 0 1-1 0L2 8.7Z',
-  // apple silhouette (leaf + body)
+  // Apple logo (body + leaf)
   apple:
-    'M16.5 2.2c.1 1.1-.35 2.2-1 3-.7.8-1.85 1.4-2.9 1.3-.12-1.1.4-2.25 1.05-2.95.72-.8 1.95-1.4 2.85-1.35Zm3.15 7.35c-.15-.1-2.6-1.4-2.63-4 .95-1.35 2.55-1.5 2.6-1.5-.9-1.3-2.3-1.48-2.8-1.5-1.2-.12-2.3.7-2.9.7-.6 0-1.55-.68-2.55-.66-1.32.02-2.53.76-3.2 1.94-1.36 2.37-.35 5.88.98 7.8.65.94 1.42 2 2.44 1.96.98-.04 1.35-.63 2.53-.63 1.18 0 1.51.63 2.55.61 1.05-.02 1.72-.96 2.36-1.9.4-.6.72-1.24.96-1.9-.02-.01-.02-.01-.03-.02Z',
+    'M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.89 2.65 3.24 2.6 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.53.99-1.45 1.4-2.85 1.42-2.92-.03-.01-2.73-1.05-2.75-4.16ZM14.5 4.9c.72-.87 1.2-2.08 1.07-3.29-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.09 3.18 1.15.09 2.32-.58 3.04-1.45Z',
+  // globe / world (language)
+  globe:
+    'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93Zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39Z',
   // Google "G" glyph (monochrome, filled)
   google:
     'M21.6 12.2c0-.68-.06-1.34-.18-1.97H12v3.73h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.75 2.98-4.33 2.98-7.28ZM12 22c2.7 0 4.96-.9 6.62-2.42l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.76-5.58-4.12H3.06v2.58A10 10 0 0 0 12 22ZM6.42 13.9a6 6 0 0 1 0-3.82V7.5H3.06a10 10 0 0 0 0 9l3.36-2.6ZM12 5.96c1.47 0 2.78.5 3.82 1.5l2.86-2.86A10 10 0 0 0 12 2 10 10 0 0 0 3.06 7.5l3.36 2.58C7.2 7.72 9.4 5.96 12 5.96Z',
@@ -137,14 +143,48 @@ export function Icon({
           </LinearGradient>
         </Defs>
         {/* dark shadow edge (down) */}
-        <Path d={d} fill="#000000" opacity={0.28} transform={`translate(0 ${inset})`} />
+        <Path d={d} fill="#000000" fillRule="evenodd" opacity={0.28} transform={`translate(0 ${inset})`} />
         {/* light highlight edge (up) */}
-        <Path d={d} fill="#FFFFFF" opacity={0.45} transform={`translate(0 ${-inset})`} />
+        <Path d={d} fill="#FFFFFF" fillRule="evenodd" opacity={0.45} transform={`translate(0 ${-inset})`} />
         {/* solid face in the icon tint */}
-        <Path d={d} fill={base} />
+        <Path d={d} fill={base} fillRule="evenodd" />
         {/* beveled sheen: light top → dark bottom over the face */}
-        <Path d={d} fill={`url(#${gid})`} />
+        <Path d={d} fill={`url(#${gid})`} fillRule="evenodd" />
       </Svg>
     </View>
+  );
+}
+
+/**
+ * An {@link Icon} that gently "breathes" — a slow opacity pulse that never fully
+ * fades — for the hero glyphs on the onboarding / sign-in slides. Falls back to
+ * a static icon when the user prefers reduced motion.
+ */
+export function BreathingIcon(props: {
+  name: IconName;
+  size?: number;
+  color?: string;
+  tone?: 'primary' | 'secondary' | 'onPrimary';
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
+  const reduce = useReducedMotion();
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (reduce) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.4, duration: 1700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 1700, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [reduce, opacity]);
+
+  return (
+    <Animated.View style={{ opacity: reduce ? 1 : opacity }}>
+      <Icon {...props} />
+    </Animated.View>
   );
 }

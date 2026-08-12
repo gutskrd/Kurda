@@ -2,10 +2,22 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GradientBackground } from '../../theme/glass';
+import { BreathingIcon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 
-export function AuthScreenShell({ title, children, onBack }: { title: string; children: ReactNode; onBack?: () => void }) {
+export function AuthScreenShell({
+  title,
+  children,
+  onBack,
+  hero,
+}: {
+  title: string;
+  children: ReactNode;
+  onBack?: () => void;
+  /** optional breathing hero glyph shown above the title (sign-in choice) */
+  hero?: IconName;
+}) {
   const { colors } = useTheme();
   return (
     <GradientBackground>
@@ -18,6 +30,7 @@ export function AuthScreenShell({ title, children, onBack }: { title: string; ch
         <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
         <GlassCard>
+          {hero ? <BreathingIcon name={hero} size={52} tone="primary" style={styles.hero} /> : null}
           <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
           {children}
         </GlassCard>
@@ -105,6 +118,7 @@ const styles = StyleSheet.create({
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
+  hero: { alignSelf: 'center', marginBottom: spacing.md },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.md },
   field: { marginBottom: spacing.md },
   label: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
