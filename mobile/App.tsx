@@ -36,6 +36,7 @@ import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { Icon } from './src/theme/Icon';
+import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
@@ -274,7 +275,10 @@ function ThemedNavigation() {
   return (
     <NavigationContainer linking={linking} theme={navTheme}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <Root />
+      <View style={{ flex: 1 }}>
+        <Root />
+        <OfflineBanner />
+      </View>
     </NavigationContainer>
   );
 }
