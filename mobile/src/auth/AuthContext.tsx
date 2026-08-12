@@ -28,6 +28,12 @@ interface AuthContextValue {
   }): Promise<string | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
+  /**
+   * Start account deletion (KUR-275). Schedules a grace-period delete server-side
+   * (DELETE /me) and signs out locally; logging back in before it elapses cancels
+   * it. Resolves to an error message, or null on success.
+   */
+  deleteAccount(): Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -134,6 +140,14 @@ export function AuthProvider({
       await storage.clear();
       setUser(null);
       setStatus('signedOut');
+    },
+    deleteAccount: async () => {
+      const res = await client.delete<{ deletionScheduled: boolean; graceDays: number }>('/me');
+      if (!res.ok) return describeError(res.error).message;
+      await storage.clear();
+      setUser(null);
+      setStatus('signedOut');
+      return null;
     },
   };
 

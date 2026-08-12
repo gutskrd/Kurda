@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, radii, typography } from '../theme/tokens';
@@ -18,7 +18,7 @@ import type { Streak } from '../streak/format';
 import { VISIBILITY_LABEL, type Visibility } from '../social/format';
 
 export function ProfileScreen() {
-  const { user, client, logout } = useAuth();
+  const { user, client, logout, deleteAccount } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, preference, setPreference } = useTheme();
   const tabBarInset = useTabBarInset();
@@ -45,6 +45,27 @@ export function ProfileScreen() {
   const changeVisibility = (v: Visibility) => {
     setVisibility(v);
     void client.put('/me/privacy', { visibility: v });
+  };
+
+  // Apple-required in-app account deletion (KUR-275). Server keeps a 14-day
+  // grace window — signing back in cancels it — so we warn, then sign out.
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete account?',
+      'Your account and all your data will be permanently deleted after 14 days. Sign in again before then to cancel.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void deleteAccount().then((err) => {
+              if (err) Alert.alert('Could not delete account', err);
+            });
+          },
+        },
+      ],
+    );
   };
 
   // Reusable themed pill for the privacy / language choosers.
@@ -124,6 +145,9 @@ export function ProfileScreen() {
         <Pressable style={styles.logout} onPress={logout}>
           <Text style={[styles.logoutText, { color: colors.danger }]}>{t('profile.logout')}</Text>
         </Pressable>
+        <Pressable style={styles.delete} onPress={confirmDelete} accessibilityRole="button">
+          <Text style={[styles.deleteText, { color: colors.textSecondary }]}>Delete account</Text>
+        </Pressable>
       </ScrollView>
     </GradientBackground>
   );
@@ -142,6 +166,8 @@ const styles = StyleSheet.create({
   pillText: { fontSize: typography.sizes.sm },
   pillTextActive: { fontWeight: typography.weights.bold },
   settingRow: { marginTop: spacing.xl, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  logout: { marginTop: spacing.xl, marginBottom: spacing.xl },
+  logout: { marginTop: spacing.xl },
   logoutText: { fontSize: typography.sizes.sm },
+  delete: { marginTop: spacing.md, marginBottom: spacing.xl },
+  deleteText: { fontSize: typography.sizes.xs, textDecorationLine: 'underline' },
 });
