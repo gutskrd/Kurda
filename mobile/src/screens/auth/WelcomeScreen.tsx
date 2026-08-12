@@ -29,7 +29,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     Alert.alert(`${provider} sign-in is coming soon`, 'For now, continue with email — it takes a few seconds.');
 
   return (
-    <AuthScreenShell title="Sign in or create an account" onBack={onBack}>
+    <AuthScreenShell title="Sign in or create an account" onBack={onBack} hero="person">
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         Apple, Google or email — your choice. You can always sign in later.
       </Text>
