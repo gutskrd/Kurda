@@ -6,6 +6,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import type { Palette } from '../theme/palette';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
@@ -50,6 +51,7 @@ const zoneColor = (colors: Palette): Record<Zone, string> => ({
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [tab, setTab] = useState<Tab>('league');
   const [league, setLeague] = useState<LeagueView | null>(null);
   const [global, setGlobal] = useState<Board | null>(null);
@@ -76,7 +78,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   }, []);
 
   const header = (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text></Pressable>
       <Text style={[styles.title, { color: colors.primary }]}>League</Text>
       <View style={{ width: 20 }} />

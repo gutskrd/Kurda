@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import {
   CATEGORY_LABEL,
   NOTIFICATION_CATEGORIES,
@@ -121,8 +122,9 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
 
 function Header({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={onExit} hitSlop={10}>
         <Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text>
       </Pressable>

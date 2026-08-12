@@ -7,6 +7,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { SenseSection } from './SenseSection';
 import type { Entry } from './types';
 
@@ -16,6 +17,7 @@ const COLLAPSE_AFTER = 8;
 export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
   const [entry, setEntry] = useState<Entry | null>(null);
   const [saved, setSaved] = useState(false);
@@ -44,7 +46,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, { paddingTop: topInset }]}>
           <Pressable onPress={onBack} accessibilityLabel="Back to search" hitSlop={12}>
             <Text style={[styles.back, { color: colors.primary }]}>‹ Back</Text>
           </Pressable>

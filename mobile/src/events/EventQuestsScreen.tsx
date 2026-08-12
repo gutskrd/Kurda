@@ -7,6 +7,7 @@ import { formatCountdown, remainingUntil } from '../i18n/format';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import {
   claimState,
   progressPct,
@@ -27,6 +28,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { t } = useI18n();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -68,7 +70,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: topInset }]}>
           <Pressable onPress={onExit} hitSlop={10}>
             <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
           </Pressable>

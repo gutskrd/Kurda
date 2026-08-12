@@ -2,6 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { MarkdownView } from './MarkdownView';
 
 /**
@@ -10,10 +11,11 @@ import { MarkdownView } from './MarkdownView';
  */
 export function GrammarTips({ source, onClose }: { source: string; onClose: () => void }) {
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.header, { borderBottomColor: colors.glassBorder }]}>
+        <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Tips</Text>
           <Pressable onPress={onClose} accessibilityLabel="Close tips" hitSlop={12}>
             <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>

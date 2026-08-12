@@ -16,6 +16,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import {
   canAfford,
   currencyLabel,
@@ -34,6 +35,7 @@ function attemptKey(sku: string): string {
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: topInset }]}>
           <Pressable onPress={onExit} hitSlop={10}>
             <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>

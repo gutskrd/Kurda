@@ -14,6 +14,7 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { useChatSocket } from './useChatSocket';
 
 interface Message {
@@ -30,6 +31,7 @@ const MAX_LEN = 2000;
 export function ChatScreen({ userId, username, onExit }: { userId: string; username: string; onExit: () => void }) {
   const { client, user } = useAuth();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const me = user?.id ?? '';
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
@@ -90,7 +92,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.header, { borderBottomColor: colors.glassBorder }]}>
+        <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
           <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{username}</Text>
           <View style={{ width: 40 }} />

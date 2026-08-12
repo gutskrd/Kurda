@@ -8,6 +8,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -153,8 +154,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
 function Header({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
     </View>
   );

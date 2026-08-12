@@ -7,6 +7,7 @@ import { spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { HeartsBar } from './components/HeartsBar';
@@ -107,6 +108,7 @@ export function SessionPlayer({
 }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
 
@@ -252,7 +254,7 @@ export function SessionPlayer({
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: topInset }]}>
           <Pressable onPress={onExit} accessibilityLabel="Quit lesson">
             <Text style={[styles.quit, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>

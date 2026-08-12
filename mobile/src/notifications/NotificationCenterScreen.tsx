@@ -6,6 +6,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { relativeTime, resolveDeepLink, type InboxItem } from './inbox.js';
 
 /** In-app notification center: list, mark-read, deep links (KUR-097). */
@@ -13,6 +14,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [items, setItems] = useState<InboxItem[] | null>(null);
 
   const load = useCallback(() => {
@@ -51,7 +53,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: topInset }]}>
           <Pressable onPress={onExit} hitSlop={10}>
             <Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text>
           </Pressable>
