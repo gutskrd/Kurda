@@ -9,6 +9,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 
 /**
  * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
@@ -18,6 +19,7 @@ import { useTheme } from '../theme/ThemeProvider';
 export function DictionaryScreen() {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const tabBarInset = useTabBarInset();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -138,6 +140,7 @@ export function DictionaryScreen() {
         <FlatList
           data={results}
           keyExtractor={(h) => h.entryId}
+          contentContainerStyle={{ paddingBottom: tabBarInset }}
           renderItem={({ item }) => (
             <Pressable onPress={() => openHit(item)} style={[styles.hit, { borderBottomColor: colors.glassBorder }]}>
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>

@@ -6,6 +6,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, radii, typography } from '../theme/tokens';
 import { ClayButton, GlassSelect, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { StreakBadge } from '../streak/StreakBadge';
@@ -20,6 +21,7 @@ export function ProfileScreen() {
   const { user, client, logout } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, preference, setPreference } = useTheme();
+  const tabBarInset = useTabBarInset();
   const [streak, setStreak] = useState<Streak | null>(null);
   const [visibility, setVisibility] = useState<Visibility>('everyone');
   const { optedOut, setOptedOut } = useEventTheme();
@@ -62,7 +64,7 @@ export function ProfileScreen() {
 
   return (
     <GradientBackground>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
         <InitialsAvatar
           name={user?.displayName ?? user?.username ?? ''}
           id={user?.id ?? ''}
