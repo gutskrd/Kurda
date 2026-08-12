@@ -107,6 +107,9 @@ function SignedInTabs() {
           name={tab.name}
           options={{
             title: tab.title,
+            // icons only (labels hidden), so name the tab explicitly for
+            // screen readers (KUR-266)
+            tabBarAccessibilityLabel: tab.title,
             tabBarIcon: ({ focused, color }) => (
               <Icon name={tab.icon} size={26} color={color} style={{ opacity: focused ? 1 : 0.55 }} />
             ),
