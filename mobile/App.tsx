@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
 import * as Linking from 'expo-linking';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
@@ -281,14 +281,16 @@ function ThemedNavigation() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <I18nProvider>
-        <AuthProvider>
-          <EventThemeProvider>
-            <ThemedNavigation />
-          </EventThemeProvider>
-        </AuthProvider>
-      </I18nProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <EventThemeProvider>
+              <ThemedNavigation />
+            </EventThemeProvider>
+          </AuthProvider>
+        </I18nProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
