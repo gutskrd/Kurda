@@ -54,13 +54,20 @@ export function PlayScreen() {
           )}
           {!searching && note ? <Text style={[styles.note, { color: colors.textSecondary }]}>{note}</Text> : null}
         </GlassCard>
+
+        <GlassCard style={styles.card}>
+          <Icon name="sparkle" size={40} tone="primary" />
+          <Text style={[styles.title, { color: colors.primary }]}>Kurdish Wordle</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Guess the daily word in six tries — solo.</Text>
+          <ClayButton label="Play Wordle" tone="neutral" onPress={() => navigation.navigate('Wordle')} style={styles.button} />
+        </GlassCard>
       </View>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.lg },
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center' },

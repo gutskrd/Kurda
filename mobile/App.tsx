@@ -39,6 +39,7 @@ import { Icon } from './src/theme/Icon';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { WordleScreen } from './src/wordle/WordleScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { ChallengeListener } from './src/challenge/ChallengeListener';
@@ -221,6 +222,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Settings" options={{ presentation: 'card' }}>
         {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Wordle" options={{ presentation: 'card' }}>
+        {({ navigation }) => <WordleScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
     </>
