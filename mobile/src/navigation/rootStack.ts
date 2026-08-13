@@ -19,6 +19,7 @@ export type RootStackParamList = {
   NotificationCenter: undefined;
   Appearance: undefined;
   Settings: undefined;
+  Wordle: undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
