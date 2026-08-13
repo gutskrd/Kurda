@@ -18,6 +18,7 @@ export type RootStackParamList = {
   Notifications: undefined;
   NotificationCenter: undefined;
   Appearance: undefined;
+  Settings: undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
