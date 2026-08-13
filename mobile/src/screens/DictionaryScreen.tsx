@@ -6,7 +6,7 @@ import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useTabBarInset } from '../navigation/tabBarLayout';
@@ -23,6 +23,8 @@ export function DictionaryScreen() {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const [recents, setRecents] = useState<string[]>([]);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [saved, setSaved] = useState<SavedWord[]>([]);
@@ -40,19 +42,22 @@ export function DictionaryScreen() {
     const q = debounced.trim();
     if (q.length === 0) {
       setResult(null);
+      setFailed(false);
       return;
     }
     let active = true;
     setLoading(true);
+    setFailed(false);
     void client.get<SearchResult>(`/dictionary/search?q=${encodeURIComponent(q)}`).then((res) => {
       if (!active) return;
       setLoading(false);
       if (res.ok) setResult(res.data);
+      else setFailed(true);
     });
     return () => {
       active = false;
     };
-  }, [debounced, client]);
+  }, [debounced, client, retryKey]);
 
   const openHit = useCallback((hit: SearchHit) => {
     setRecents((r) => pushRecent(r, hit.headword));
@@ -133,7 +138,12 @@ export function DictionaryScreen() {
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
         ) : null}
 
-        {query.trim().length > 0 && !loading && results.length === 0 ? (
+        {failed && !loading ? (
+          <ErrorRetry
+            message="Couldn’t search right now. Check your connection and try again."
+            onRetry={() => setRetryKey((k) => k + 1)}
+          />
+        ) : query.trim().length > 0 && !loading && results.length === 0 ? (
           <Text style={[styles.empty, { color: colors.textSecondary }]}>No results for “{query.trim()}”.</Text>
         ) : null}
 

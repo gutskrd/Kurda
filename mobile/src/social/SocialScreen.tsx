@@ -4,7 +4,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, Vi
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useTabBarInset } from '../navigation/tabBarLayout';
@@ -27,9 +27,17 @@ export function SocialScreen() {
   const [friends, setFriends] = useState<UserRow[]>([]);
   const [requests, setRequests] = useState<UserRow[]>([]);
   const [searching, setSearching] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const loadLists = useCallback(() => {
-    void client.get<{ friends: UserRow[] }>('/friends').then((r) => r.ok && setFriends(r.data.friends));
+    void client.get<{ friends: UserRow[] }>('/friends').then((r) => {
+      if (r.ok) {
+        setFriends(r.data.friends);
+        setFailed(false);
+      } else {
+        setFailed(true);
+      }
+    });
     void client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => r.ok && setRequests(r.data.requests));
   }, [client]);
 
@@ -112,6 +120,8 @@ export function SocialScreen() {
               )
             }
           />
+        ) : failed && friends.length === 0 ? (
+          <ErrorRetry onRetry={loadLists} />
         ) : (
           <FlatList
             data={friends}

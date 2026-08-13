@@ -82,6 +82,33 @@ export function ClayButton({
   );
 }
 
+/**
+ * A centered "couldn't load — try again" state (KUR-278). Shown in place of a
+ * screen's content when its data fetch fails, so a network/server error reads as
+ * an error with a retry — not a misleading empty state.
+ */
+export function ErrorRetry({
+  message,
+  onRetry,
+  style,
+}: {
+  message?: string;
+  onRetry: () => void;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.errorWrap, style]}>
+      <Icon name="close" size={28} color={colors.danger} />
+      <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Couldn’t load</Text>
+      <Text style={[styles.errorMsg, { color: colors.textSecondary }]}>
+        {message ?? 'Something went wrong. Check your connection and try again.'}
+      </Text>
+      <ClayButton label="Try again" tone="primary" onPress={onRetry} style={styles.errorButton} />
+    </View>
+  );
+}
+
 /** Segmented control on a glass track (used for the theme picker). */
 export function Segmented<T extends string>({
   options,
@@ -231,4 +258,8 @@ const styles = StyleSheet.create({
   selectOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.md },
   selectOptionText: { fontSize: typography.sizes.lg },
   selectOptionActive: { fontWeight: typography.weights.bold },
+  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
+  errorTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  errorMsg: { fontSize: typography.sizes.md, textAlign: 'center' },
+  errorButton: { marginTop: spacing.md, alignSelf: 'stretch' },
 });

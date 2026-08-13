@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { ClayButton, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { GoalPicker } from '../goals/GoalPicker';
@@ -30,27 +30,38 @@ export function LearnScreen() {
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
   const [map, setMap] = useState<CourseMap | null>(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      setFailed(false);
+      setLoading(true);
       void client.get<DailyGoalStatus>('/me/daily-goal').then((res) => {
         if (active && res.ok) setGoal(res.data);
       });
       void (async () => {
         const list = await client.get<{ courses: CourseSummary[] }>('/courses');
         if (!active) return;
-        const first = list.ok ? list.data.courses[0] : undefined;
+        if (!list.ok) {
+          setFailed(true);
+          setLoading(false);
+          return;
+        }
+        const first = list.data.courses[0];
         if (first) {
           const m = await client.get<CourseMap>(`/courses/${first.id}/map`);
-          if (active && m.ok) setMap(m.data);
+          if (!active) return;
+          if (m.ok) setMap(m.data);
+          else setFailed(true);
         }
         if (active) setLoading(false);
       })();
       return () => {
         active = false;
       };
-    }, [client]),
+    }, [client, reloadKey]),
   );
 
   const changeGoal = useCallback(
@@ -98,6 +109,14 @@ export function LearnScreen() {
     );
 
   const rows = map ? flattenMap(map) : [];
+
+  if (failed && !map) {
+    return (
+      <GradientBackground>
+        <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} />
+      </GradientBackground>
+    );
+  }
 
   return (
     <GradientBackground>
