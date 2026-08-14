@@ -303,9 +303,16 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // payment fraud (KUR-073): holds suspicious purchases for admin review
     const fraudService = new FraudService(app.db, new WalletService(app.db));
     registerFraudRoutes(app, fraudService);
+    const receiptVerifier = createReceiptVerifier(config);
+    if (config.NODE_ENV === 'production' && config.IAP_ALLOW_STUB === 'true') {
+      app.log.warn(
+        'IAP is using the STUB receipt verifier in production (IAP_ALLOW_STUB=true) — ' +
+          'in-app purchases are NOT cryptographically verified. Dev/testing only.',
+      );
+    }
     registerIapRoutes(
       app,
-      new IapService(app.db, new WalletService(app.db), createReceiptVerifier(config), config, fraudService),
+      new IapService(app.db, new WalletService(app.db), receiptVerifier, config, fraudService),
       config,
     );
 

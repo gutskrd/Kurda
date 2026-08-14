@@ -42,6 +42,15 @@ const envSchema = z.object({
   TURNSTILE_SECRET: z.string().optional(),
   /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
   IAP_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * Permit the dev/test STUB receipt verifier even under NODE_ENV=production
+   * (KUR-072). For dev/testing deploys that have no App Store / Play Store
+   * credentials yet — it lets the API boot without a real verifier. NEVER set
+   * this on a store-facing deployment: the stub does not cryptographically
+   * verify receipts, so real purchases could be forged. Default 'false' keeps
+   * production a hard error until a real verifier + credentials are wired.
+   */
+  IAP_ALLOW_STUB: z.enum(['true', 'false']).default('false'),
   /** Shared secret guarding email bounce/complaint webhooks; disabled when unset (KUR-098). */
   EMAIL_WEBHOOK_SECRET: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */

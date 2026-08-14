@@ -58,14 +58,19 @@ export class StubReceiptVerifier implements ReceiptVerifier {
  * Select the verifier for the current environment. Real store verifiers are
  * wired here once their credentials are configured; until then (and in tests)
  * the stub is used. Production without a real verifier is a hard error so we
- * never silently accept unverified receipts on the live store.
+ * never silently accept unverified receipts on the live store — UNLESS the
+ * deployment explicitly opts in with IAP_ALLOW_STUB=true, for a dev/testing
+ * environment that has no store credentials (never a real store-facing one).
  */
 export function createReceiptVerifier(config: AppConfig): ReceiptVerifier {
   // NOTE: AppleReceiptVerifier / GoogleReceiptVerifier (real S2S calls) plug in
   // here when APPLE/GOOGLE store credentials land — follow-up, needs live
   // store accounts to integration-test. Until then dev/test use the stub.
-  if (config.NODE_ENV === 'production') {
-    throw new Error('IAP: no production receipt verifier configured (store credentials required)');
+  if (config.NODE_ENV === 'production' && config.IAP_ALLOW_STUB !== 'true') {
+    throw new Error(
+      'IAP: no production receipt verifier configured (store credentials required). ' +
+        'Set IAP_ALLOW_STUB=true only for a dev/testing deploy without store credentials.',
+    );
   }
   return new StubReceiptVerifier();
 }

@@ -60,6 +60,12 @@ services:
       # Sign in with Apple: the native token audience is the app bundle id
       - key: APPLE_CLIENT_IDS
         value: app.kurda.mobile
+      # Dev/testing deploy without App Store / Play credentials: allow the stub
+      # IAP receipt verifier so the API can boot. NOT for a store-facing deploy
+      # (the stub doesn't verify real purchases). Remove once a real verifier +
+      # store credentials are configured.
+      - key: IAP_ALLOW_STUB
+        value: "true"
 
   # ---- Background worker (notifications, schedulers, queues) -----------------
   # Render's free plan doesn't offer background workers, so this is disabled for
