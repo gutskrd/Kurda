@@ -26,6 +26,14 @@ interface AuthContextValue {
     username: string;
     password: string;
   }): Promise<string | null>;
+  /**
+   * Sign in (or create an account) with a provider identity token (KUR-276).
+   * The native flow (e.g. Sign in with Apple) obtains the token; we hand it to
+   * the backend (POST /auth/oauth), which verifies it and returns a session —
+   * stored via the same path as email login. Resolves to an error message, or
+   * null on success.
+   */
+  oauthSignIn(provider: 'apple' | 'google', idToken: string): Promise<string | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
   /**
@@ -129,6 +137,12 @@ export function AuthProvider({
         ...input,
         acceptTerms: true,
       });
+      if (!res.ok) return describeError(res.error).message;
+      await applyAuth(res.data);
+      return null;
+    },
+    oauthSignIn: async (provider, idToken) => {
+      const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken });
       if (!res.ok) return describeError(res.error).message;
       await applyAuth(res.data);
       return null;

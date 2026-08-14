@@ -46,6 +46,8 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
+      # Sign in with Apple (KUR-276): native token audience = the app bundle id
+      APPLE_CLIENT_IDS: app.kurda.mobile
     depends_on:
       migrate:
         condition: service_completed_successfully

@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/authStack';
+import { useAuth } from '../../auth/AuthContext';
 import { Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -16,14 +19,46 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
  * initial route, so Login/Register can always go back here; its own back
  * re-opens the intro slides.
  *
- * Email is fully wired. Apple/Google need native modules
- * (expo-apple-authentication + a Google flow) and OAuth credentials that match
- * the backend's GOOGLE_CLIENT_IDS / APPLE_CLIENT_IDS — the backend route
- * (POST /auth/oauth) already exists; until the native side + credentials land
- * these show a "coming soon" notice rather than a broken flow.
+ * Sign in with Apple (KUR-276) is wired end-to-end: the native flow returns an
+ * identity token that the backend (POST /auth/oauth) verifies. Apple's own
+ * button is shown only where the OS supports it (iOS 13+), per App Store rules.
+ * Google still needs its native flow + GOOGLE_CLIENT_IDS, so it shows a
+ * "coming soon" notice rather than a broken flow.
  */
 export function WelcomeScreen({ navigation, onBack }: Props) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
+  const { oauthSignIn } = useAuth();
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void AppleAuthentication.isAvailableAsync().then((ok) => active && setAppleAvailable(ok));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const onApple = async () => {
+    try {
+      const cred = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!cred.identityToken) {
+        Alert.alert('Sign in with Apple failed', 'No identity token was returned. Please try again.');
+        return;
+      }
+      const err = await oauthSignIn('apple', cred.identityToken);
+      if (err) Alert.alert('Could not sign in', err);
+    } catch (e) {
+      // the user tapping Cancel throws ERR_REQUEST_CANCELED — not an error to surface
+      if ((e as { code?: string }).code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert('Sign in with Apple failed', 'Something went wrong. Please try again.');
+      }
+    }
+  };
 
   const soon = (provider: string) =>
     Alert.alert(`${provider} sign-in is coming soon`, 'For now, continue with email — it takes a few seconds.');
@@ -35,13 +70,19 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       </Text>
 
       <View style={styles.methods}>
-        <MethodButton
-          icon="apple"
-          label="Continue with Apple"
-          onPress={() => soon('Apple')}
-          background="#000000"
-          foreground="#FFFFFF"
-        />
+        {appleAvailable ? (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+            buttonStyle={
+              scheme === 'dark'
+                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+            }
+            cornerRadius={radii.pill}
+            style={styles.appleButton}
+            onPress={onApple}
+          />
+        ) : null}
         <MethodButton
           icon="google"
           label="Continue with Google"
@@ -99,6 +140,9 @@ function MethodButton({
 const styles = StyleSheet.create({
   subtitle: { fontSize: typography.sizes.sm, marginBottom: spacing.lg },
   methods: { gap: spacing.md },
+  // Apple's button is a native view with no intrinsic height — size it to
+  // match the custom method buttons below it.
+  appleButton: { height: 50, width: '100%' },
   method: {
     flexDirection: 'row',
     alignItems: 'center',
