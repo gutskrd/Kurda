@@ -15,8 +15,8 @@ Railway and Fly.io are fine alternatives; the env vars below are the same.)
 3. Click **Apply**. Render will:
    - provision Postgres + Redis,
    - build the Docker image,
-   - run the database migrations (`preDeployCommand`),
-   - start the API and worker.
+   - start the API — which runs the database migrations at container startup
+     (before it listens; see `dockerCommand` in `render.yaml`) — and the worker.
 4. When it finishes, open the **kurda-api** service — its URL looks like
    `https://kurda-api-XXXX.onrender.com`. Visit `…/health`; you should get
    `{"status":"ok",...}` with `db` and `redis` reporting healthy.

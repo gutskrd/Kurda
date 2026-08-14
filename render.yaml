@@ -34,8 +34,14 @@ services:
     dockerContext: .
     plan: free
     healthCheckPath: /health
-    # runs the 81 DB migrations before each deploy goes live
-    preDeployCommand: npm run migrate:up --workspace api
+    # Free web services don't support `preDeployCommand`, so run the 81 DB
+    # migrations at container startup, before the API begins listening. This
+    # overrides the image's default CMD (`npx tsx api/src/server.ts`) to chain
+    # the migration step in front of it. node-pg-migrate records which
+    # migrations it has applied, so this is idempotent — only new migrations run,
+    # and it's a fast no-op on every subsequent boot / wake-from-sleep. The API
+    # only starts serving once migrations succeed.
+    dockerCommand: sh -c "npm run migrate:up --workspace api && npx tsx api/src/server.ts"
     envVars:
       - key: NODE_ENV
         value: production
