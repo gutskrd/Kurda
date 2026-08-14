@@ -11,12 +11,12 @@ Railway and Fly.io are fine alternatives; the env vars below are the same.)
    access to the `gutskrd/Kurda` repo).
 2. **New → Blueprint**, select the `gutskrd/Kurda` repo. Render reads
    `render.yaml` and shows the plan: a Postgres DB, a Key Value (Redis) store,
-   the **kurda-api** web service, and the **kurda-worker** background worker.
+   and the **kurda-api** web service.
 3. Click **Apply**. Render will:
    - provision Postgres + Redis,
    - build the Docker image,
    - start the API — which runs the database migrations at container startup
-     (before it listens; see `dockerCommand` in `render.yaml`) — and the worker.
+     (before it listens; see `dockerCommand` in `render.yaml`).
 4. When it finishes, open the **kurda-api** service — its URL looks like
    `https://kurda-api-XXXX.onrender.com`. Visit `…/health`; you should get
    `{"status":"ok",...}` with `db` and `redis` reporting healthy.
@@ -26,8 +26,14 @@ by the Blueprint — nothing else is required for sign-in to work.
 
 > **Free-tier notes:** free web services sleep after ~15 min idle (the next
 > request wakes them, slowly) and free Postgres is time-limited. For an
-> always-on, durable App Store backend, change the three `plan: free` lines in
+> always-on, durable App Store backend, bump the `plan: free` lines in
 > `render.yaml` to `starter` and re-apply.
+>
+> The background **worker is disabled** on free tier (Render offers no free
+> workers). Sign-in and the core API are unaffected; only background jobs (push
+> notifications, streak reminders, scheduled rollups, queue processing) don't
+> run until you move to paid hosting and uncomment the `kurda-worker` block in
+> `render.yaml`.
 
 ## 2. Point the mobile app at that URL
 
