@@ -34,18 +34,14 @@ services:
     dockerContext: .
     plan: free
     healthCheckPath: /health
-    # Free web services don't support `preDeployCommand`, so run the 81 DB
-    # migrations at container startup, before the API begins listening. This
-    # overrides the image's default CMD (`npx tsx api/src/server.ts`) to chain
-    # the migration step in front of it. node-pg-migrate records which
-    # migrations it has applied, so this is idempotent — only new migrations run,
-    # and it's a fast no-op on every subsequent boot / wake-from-sleep. The API
-    # only starts serving once migrations succeed.
-    # NOTE: invoke the shell by its ABSOLUTE path (/bin/sh) with the chained
-    # command in SINGLE quotes — this is the form Render's Docker docs
-    # prescribe for running multiple commands. A bare `sh` doesn't resolve in
-    # Render's exec context (exit status 127, command not found); /bin/sh does.
-    dockerCommand: "/bin/sh -c 'npm run migrate:up --workspace api && npx tsx api/src/server.ts'"
+    # Free web services don't support `preDeployCommand`, so migrations run at
+    # container startup via api/start.sh (migrate, then exec the server). We run
+    # a script rather than an inline `sh -c "... && ..."` chain because Render
+    # misparses the chain no matter how it's quoted — a single script path has
+    # no shell metacharacters to mangle. node-pg-migrate is idempotent, so the
+    # migrate step is a fast no-op once the schema is current, and the API only
+    # starts serving after migrations succeed.
+    dockerCommand: /bin/sh api/start.sh
     envVars:
       - key: NODE_ENV
         value: production
