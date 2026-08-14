@@ -1,0 +1,83 @@
+# Render Blueprint for the Kurda API (KUR-008 hosting).
+#
+# One-time setup on render.com (see DEPLOY.md for the full walkthrough):
+#   1. Sign in to Render with your GitHub account.
+#   2. New → Blueprint → pick the gutskrd/Kurda repo. Render reads this file.
+#   3. Apply. It provisions Postgres + a Key Value (Redis) store, builds the
+#      Docker image, runs the migrations (preDeployCommand), and starts the API
+#      + worker. The API gets a public HTTPS URL like
+#      https://kurda-api-XXXX.onrender.com — that URL goes into the mobile
+#      build's EXPO_PUBLIC_API_URL.
+#
+# Plans are set to `free` so you can bring it up at no cost. Free web services
+# sleep after ~15 min idle (first request after is slow) and free Postgres is
+# time-limited — bump the three `plan:` lines to `starter` for an always-on,
+# durable setup once you're ready to ship.
+
+databases:
+  - name: kurda-db
+    plan: free
+    databaseName: kurda
+
+services:
+  # ---- Redis / Key Value (rate limiting, cache, realtime, job queue) --------
+  - type: keyvalue
+    name: kurda-redis
+    plan: free
+    ipAllowList: [] # internal-only; no public access
+
+  # ---- API (HTTP) -----------------------------------------------------------
+  - type: web
+    name: kurda-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    # runs the 81 DB migrations before each deploy goes live
+    preDeployCommand: npm run migrate:up --workspace api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kurda-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: kurda-redis
+          property: connectionString
+      # a strong random secret, generated once and kept stable by Render
+      - key: JWT_SECRET
+        generateValue: true
+      # Sign in with Apple: the native token audience is the app bundle id
+      - key: APPLE_CLIENT_IDS
+        value: app.kurda.mobile
+
+  # ---- Background worker (notifications, schedulers, queues) -----------------
+  - type: worker
+    name: kurda-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    dockerCommand: npx tsx api/src/workers/main.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kurda-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: kurda-redis
+          property: connectionString
+      # reuse the API's generated secret so both sign/verify the same tokens
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: kurda-api
+          envVarKey: JWT_SECRET
