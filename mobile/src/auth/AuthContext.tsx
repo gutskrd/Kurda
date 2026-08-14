@@ -143,7 +143,13 @@ export function AuthProvider({
     },
     oauthSignIn: async (provider, idToken) => {
       const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken });
-      if (!res.ok) return describeError(res.error).message;
+      if (!res.ok) {
+        // Append the server's own error code (e.g. OAUTH_NOT_CONFIGURED,
+        // INVALID_OAUTH_TOKEN) when present — it names the actual cause, which
+        // the friendly copy alone hides for 5xx/401 responses.
+        const friendly = describeError(res.error).message;
+        return res.error.code ? `${friendly} (${res.error.code})` : friendly;
+      }
       await applyAuth(res.data);
       return null;
     },

@@ -39,25 +39,29 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   }, []);
 
   const onApple = async () => {
+    // The Apple sheet and the backend exchange are separate failure domains, so
+    // report them distinctly — a raw "something went wrong" hides whether Apple
+    // rejected the authorization (entitlement/provisioning) or our API did.
+    let cred: AppleAuthentication.AppleAuthenticationCredential;
     try {
-      const cred = await AppleAuthentication.signInAsync({
+      cred = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-      if (!cred.identityToken) {
-        Alert.alert('Sign in with Apple failed', 'No identity token was returned. Please try again.');
-        return;
-      }
-      const err = await oauthSignIn('apple', cred.identityToken);
-      if (err) Alert.alert('Could not sign in', err);
     } catch (e) {
-      // the user tapping Cancel throws ERR_REQUEST_CANCELED — not an error to surface
-      if ((e as { code?: string }).code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Sign in with Apple failed', 'Something went wrong. Please try again.');
-      }
+      const code = (e as { code?: string }).code;
+      if (code === 'ERR_REQUEST_CANCELED') return; // user tapped Cancel — not an error
+      Alert.alert('Sign in with Apple failed', `${(e as Error).message ?? 'Unknown error'}${code ? `\n(${code})` : ''}`);
+      return;
     }
+    if (!cred.identityToken) {
+      Alert.alert('Sign in with Apple failed', 'Apple didn’t return an identity token. Please try again.');
+      return;
+    }
+    const err = await oauthSignIn('apple', cred.identityToken);
+    if (err) Alert.alert('Could not sign in', err);
   };
 
   const soon = (provider: string) =>
