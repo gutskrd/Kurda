@@ -41,7 +41,11 @@ services:
     # migrations it has applied, so this is idempotent — only new migrations run,
     # and it's a fast no-op on every subsequent boot / wake-from-sleep. The API
     # only starts serving once migrations succeed.
-    dockerCommand: sh -c "npm run migrate:up --workspace api && npx tsx api/src/server.ts"
+    # NOTE: use SINGLE quotes around the chained command. Render wraps
+    # dockerCommand in its own `sh -c "..."`; double quotes here would collide
+    # with that wrapper and the whole chain gets passed as one bogus command
+    # name ("... : not found"). Single quotes nest cleanly inside Render's.
+    dockerCommand: "sh -c 'npm run migrate:up --workspace api && npx tsx api/src/server.ts'"
     envVars:
       - key: NODE_ENV
         value: production
