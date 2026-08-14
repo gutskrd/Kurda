@@ -1,0 +1,4 @@
+# Shell scripts must stay LF so they run under /bin/sh on Alpine in the Docker
+# image (a CRLF would break the shebang / `set -e`), regardless of the OS they
+# were committed from.
+*.sh text eol=lf
