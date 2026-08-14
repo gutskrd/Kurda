@@ -115,6 +115,27 @@ describe('ApiClient', () => {
     if (!res.ok) expect(res.error.kind).toBe('network');
   });
 
+  it('times out a hanging request as a network error (unreachable API)', async () => {
+    // a fetch that never resolves on its own, but rejects when aborted —
+    // models an unreachable host. Without the client timeout this would hang.
+    const fetchFn = vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        }),
+    );
+    const client = new ApiClient({
+      baseUrl: 'https://api.test',
+      storage: new MemoryTokenStorage(),
+      onLogout: vi.fn(),
+      fetchFn: fetchFn as never,
+      timeoutMs: 20,
+    });
+    const res = await client.get('/slow');
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.kind).toBe('network');
+  });
+
   it('returns a typed rate_limited result with retryAfterSec', async () => {
     const fetchFn = vi.fn().mockResolvedValue(
       jsonResponse(

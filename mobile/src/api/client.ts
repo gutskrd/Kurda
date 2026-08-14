@@ -10,7 +10,16 @@ export interface ApiClientOptions {
   fetchFn?: FetchLike;
   /** Injectable for tests. */
   idGenerator?: () => string;
+  /**
+   * Per-request timeout in ms. Without one, a request to an unreachable API
+   * (e.g. a device build pointed at a dead URL) hangs indefinitely and the UI
+   * spins forever with no error. On timeout the request aborts and surfaces as
+   * a `network` failure — the offline banner + retry recover from there.
+   */
+  timeoutMs?: number;
 }
+
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 interface RequestOptions {
   body?: unknown;
@@ -34,11 +43,27 @@ const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 export class ApiClient {
   private readonly fetchFn: FetchLike;
   private readonly idGenerator: () => string;
+  private readonly timeoutMs: number;
   private refreshInFlight: Promise<boolean> | null = null;
 
   constructor(private readonly opts: ApiClientOptions) {
     this.fetchFn = opts.fetchFn ?? ((url, init) => fetch(url, init));
     this.idGenerator = opts.idGenerator ?? (() => crypto.randomUUID());
+    this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  }
+
+  /**
+   * fetch with an abort-on-timeout so an unreachable host fails fast (rejects,
+   * caught as a network error) instead of hanging the request forever.
+   */
+  private async timedFetch(url: string, init: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      return await this.fetchFn(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   get<T>(path: string, options?: RequestOptions): Promise<ApiResult<T>> {
@@ -70,7 +95,7 @@ export class ApiClient {
 
       let res: Response;
       try {
-        res = await this.fetchFn(`${this.opts.baseUrl}${path}`, {
+        res = await this.timedFetch(`${this.opts.baseUrl}${path}`, {
           method,
           headers: withAuth,
           body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
@@ -113,7 +138,7 @@ export class ApiClient {
     if (!tokens) return false;
     let res: Response;
     try {
-      res = await this.fetchFn(`${this.opts.baseUrl}/auth/refresh`, {
+      res = await this.timedFetch(`${this.opts.baseUrl}/auth/refresh`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ refreshToken: tokens.refreshToken }),
