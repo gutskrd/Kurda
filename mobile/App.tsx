@@ -2,14 +2,13 @@ import { NavigationContainer, DefaultTheme, DarkTheme, type LinkingOptions, type
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import { BlurView } from 'expo-blur';
 import * as Linking from 'expo-linking';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
-import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './src/navigation/tabBarLayout';
+import { GlassTabBar } from './src/navigation/GlassTabBar';
 import type { RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
@@ -35,7 +34,6 @@ import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
-import { Icon } from './src/theme/Icon';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -60,64 +58,14 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 function SignedInTabs() {
-  const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        // floating glass island: a rounded, translucent bar detached from the
-        // edges, icons only. Scrollable tab screens reserve useTabBarInset()
-        // bottom space so nothing hides behind it.
-        tabBarStyle: {
-          position: 'absolute',
-          left: TAB_BAR_MARGIN + 8,
-          right: TAB_BAR_MARGIN + 8,
-          bottom: insets.bottom + TAB_BAR_MARGIN,
-          height: TAB_BAR_HEIGHT,
-          borderRadius: TAB_BAR_HEIGHT / 2,
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.glassBorder,
-          // the island is already offset by the safe area (bottom, above); zero
-          // the tab bar's own safe-area padding so the icons stay centred and
-          // don't leave a gap where the labels used to be.
-          paddingBottom: 0,
-          paddingTop: 0,
-          elevation: 12,
-          shadowColor: colors.softShadow,
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.22,
-          shadowRadius: 16,
-        },
-        tabBarItemStyle: { height: TAB_BAR_HEIGHT, paddingVertical: 0 },
-        tabBarBackground: () => (
-          <View style={[StyleSheet.absoluteFill, { borderRadius: TAB_BAR_HEIGHT / 2, overflow: 'hidden' }]}>
-            <BlurView intensity={colors.blurIntensity} tint={colors.blurTint} style={StyleSheet.absoluteFill}>
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
-            </BlurView>
-          </View>
-        ),
-      }}
+      screenOptions={{ headerShown: false }}
+      // custom frosted-glass island with labels + a sliding active highlight
+      tabBar={(props) => <GlassTabBar {...props} />}
     >
       {TABS.map((tab) => (
-        <Tab.Screen
-          key={tab.name}
-          name={tab.name}
-          options={{
-            title: tab.title,
-            // icons only (labels hidden), so name the tab explicitly for
-            // screen readers (KUR-266)
-            tabBarAccessibilityLabel: tab.title,
-            tabBarIcon: ({ focused, color }) => (
-              <Icon name={tab.icon} size={26} color={color} style={{ opacity: focused ? 1 : 0.55 }} />
-            ),
-          }}
-        >
+        <Tab.Screen key={tab.name} name={tab.name}>
           {() =>
             tab.name === 'Profile' ? (
               <ProfileScreen />
