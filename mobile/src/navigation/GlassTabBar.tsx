@@ -40,11 +40,11 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
   }, [state.index, tabWidth, reduceMotion, translateX]);
 
   const dark = scheme === 'dark';
-  const barBg = dark ? 'rgba(14,17,15,0.72)' : 'rgba(255,255,255,0.82)';
+  const barBg = dark ? 'rgba(12,12,13,0.74)' : 'rgba(255,255,255,0.82)';
   const border = dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)';
-  const pillColor = dark ? '#F4F6F5' : '#16211C';
-  const activeText = dark ? '#0B0F0D' : '#FFFFFF';
-  const inactiveText = dark ? 'rgba(233,242,238,0.55)' : 'rgba(21,36,29,0.5)';
+  const pillColor = dark ? '#F4F5F4' : '#1A1A1A';
+  const activeText = dark ? '#0A0A0A' : '#FFFFFF';
+  const inactiveText = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)';
 
   return (
     <View
