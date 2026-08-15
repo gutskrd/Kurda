@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiClient } from './client';
+import { ApiClient, generateRequestId } from './client';
 import { apiBaseUrl } from './env';
 import { MemoryTokenStorage } from './types';
 
@@ -113,6 +113,30 @@ describe('ApiClient', () => {
     const res = await client.get('/me');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error.kind).toBe('network');
+  });
+
+  it('stamps a real idempotency key on POST even with no global crypto (Hermes)', async () => {
+    // React Native/Hermes has no global crypto — the default id generator must
+    // NOT throw (that silently killed every POST, e.g. sign-in).
+    const saved = (globalThis as { crypto?: unknown }).crypto;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (globalThis as any).crypto;
+    try {
+      const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { ok: 1 }));
+      const storage = new MemoryTokenStorage();
+      const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout: vi.fn(), fetchFn: fetchFn as never });
+      const res = await client.post('/auth/oauth', { provider: 'apple', idToken: 't' });
+      expect(res.ok).toBe(true);
+      const key = fetchFn.mock.calls[0]![1].headers['idempotency-key'];
+      expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).crypto = saved;
+    }
+  });
+
+  it('generateRequestId returns a v4-shaped uuid', () => {
+    expect(generateRequestId()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   });
 
   it('times out a hanging request as a network error (unreachable API)', async () => {

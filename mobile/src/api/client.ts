@@ -32,6 +32,24 @@ interface RequestOptions {
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
+ * A unique id for the Idempotency-Key header. Uses `crypto.randomUUID` when the
+ * runtime has it (browsers, Node 19+), but falls back to a non-crypto UUID on
+ * React Native / Hermes, which has NO global `crypto` — there, `crypto.randomUUID()`
+ * throws a TypeError before the request even fires, silently killing every
+ * POST/PUT/PATCH/DELETE (e.g. sign-in). The key only needs uniqueness for
+ * server-side dedup, not cryptographic strength, so Math.random is fine.
+ */
+export function generateRequestId(): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/**
  * Typed API client (KUR-012).
  *
  * - attaches the access token to every request
@@ -51,7 +69,7 @@ export class ApiClient {
 
   constructor(private readonly opts: ApiClientOptions) {
     this.fetchFn = opts.fetchFn ?? ((url, init) => fetch(url, init));
-    this.idGenerator = opts.idGenerator ?? (() => crypto.randomUUID());
+    this.idGenerator = opts.idGenerator ?? generateRequestId;
     this.timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 

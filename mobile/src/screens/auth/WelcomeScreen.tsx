@@ -84,8 +84,13 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       Alert.alert('Sign in with Apple failed', 'Apple didn’t return an identity token. Please try again.');
       return;
     }
-    const err = await oauthSignIn('apple', cred.identityToken);
-    if (err) Alert.alert('Could not sign in', err);
+    try {
+      const err = await oauthSignIn('apple', cred.identityToken);
+      if (err) Alert.alert('Could not sign in', err);
+    } catch (e) {
+      // never let a post-Apple failure die silently — surface it
+      Alert.alert('Sign-in error', (e as Error)?.message ?? String(e));
+    }
   };
 
   const soon = (provider: string) =>
