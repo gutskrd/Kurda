@@ -27,8 +27,9 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
  */
 export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors, scheme } = useTheme();
-  const { oauthSignIn } = useAuth();
+  const { oauthSignIn, baseUrl } = useAuth();
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const [conn, setConn] = useState<'checking' | 'ok' | 'fail'>('checking');
 
   useEffect(() => {
     let active = true;
@@ -37,6 +38,29 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       active = false;
     };
   }, []);
+
+  // Connection diagnostic (KUR-008): show which API the build actually points at
+  // and whether the device can reach it, so a "nothing happens" sign-in has an
+  // obvious cause (wrong URL baked in / unreachable) instead of a silent hang.
+  useEffect(() => {
+    let active = true;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    setConn('checking');
+    fetch(`${baseUrl}/health`, { signal: ctrl.signal })
+      .then((r) => {
+        if (active) setConn(r.ok ? 'ok' : 'fail');
+      })
+      .catch(() => {
+        if (active) setConn('fail');
+      })
+      .finally(() => clearTimeout(timer));
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [baseUrl]);
 
   const onApple = async () => {
     // The Apple sheet and the backend exchange are separate failure domains, so
@@ -107,6 +131,20 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       <Pressable onPress={() => navigation.navigate('Login')} style={styles.link} accessibilityRole="button">
         <Text style={[styles.linkText, { color: colors.primary }]}>I already have an account</Text>
       </Pressable>
+
+      <View style={styles.diag}>
+        <Text style={[styles.diagText, { color: colors.textSecondary }]} numberOfLines={1}>
+          API: {baseUrl.replace(/^https?:\/\//, '')}
+        </Text>
+        <Text
+          style={[
+            styles.diagText,
+            { color: conn === 'ok' ? colors.success : conn === 'fail' ? colors.danger : colors.textSecondary },
+          ]}
+        >
+          {conn === 'checking' ? 'checking connection…' : conn === 'ok' ? 'reachable ✓' : 'unreachable ✗'}
+        </Text>
+      </View>
     </AuthScreenShell>
   );
 }
@@ -159,4 +197,6 @@ const styles = StyleSheet.create({
   methodText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   link: { marginTop: spacing.lg, alignItems: 'center' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  diag: { marginTop: spacing.xl, alignItems: 'center', gap: 2 },
+  diagText: { fontSize: typography.sizes.xs },
 });
