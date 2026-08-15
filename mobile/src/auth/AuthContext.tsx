@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ApiClient } from '../api/client';
-import { apiBaseUrl } from '../api/env';
+import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
 import { describeError } from '../api/errors';
 import { createTokenStorage } from './storage';
@@ -67,7 +67,7 @@ export function AuthProvider({
   // user back to the login screen. useState initialisers run once.
   const [storage] = useState<TokenStorage>(() => storageProp ?? createTokenStorage());
   const [baseUrl] = useState<string>(
-    () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? apiBaseUrl('development'),
+    () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl(),
   );
 
   const [status, setStatus] = useState<AuthStatus>('restoring');
