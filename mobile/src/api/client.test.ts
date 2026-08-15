@@ -187,7 +187,7 @@ describe('apiBaseUrl', () => {
   it('maps each environment and honors overrides', () => {
     expect(apiBaseUrl('development')).toContain('localhost');
     expect(apiBaseUrl('staging')).toContain('staging');
-    expect(apiBaseUrl('production')).toBe('https://api.kurda.app');
+    expect(apiBaseUrl('production')).toBe('https://kurda-api.onrender.com');
     expect(apiBaseUrl('development', 'http://10.0.2.2:3000')).toBe('http://10.0.2.2:3000');
   });
 });
