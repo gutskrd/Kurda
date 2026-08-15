@@ -7,7 +7,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface UserRow {
@@ -22,6 +22,7 @@ export function SocialScreen() {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const tabBarInset = useTabBarInset();
+  const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserRow[] | null>(null);
   const [friends, setFriends] = useState<UserRow[]>([]);
@@ -89,7 +90,7 @@ export function SocialScreen() {
 
   return (
     <GradientBackground>
-      <View style={styles.screen}>
+      <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: colors.primary }]}>Social</Text>
           <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink}>

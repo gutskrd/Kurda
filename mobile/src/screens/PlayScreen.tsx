@@ -8,6 +8,7 @@ import { spacing, typography } from '../theme/tokens';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
 
 /**
  * Play tab (KUR-054): find a 1v1 match. Queuing returns a room once an
@@ -17,6 +18,7 @@ export function PlayScreen() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const topInset = useScreenTopInset();
   const [searching, setSearching] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export function PlayScreen() {
 
   return (
     <GradientBackground>
-      <View style={styles.screen}>
+      <View style={[styles.screen, { paddingTop: topInset }]}>
         <GlassCard style={styles.card}>
           <Icon name="play" size={56} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>Play</Text>
@@ -67,7 +69,7 @@ export function PlayScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.lg },
+  screen: { flex: 1, alignItems: 'center', padding: spacing.xl, gap: spacing.lg },
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center' },

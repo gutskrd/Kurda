@@ -46,61 +46,65 @@ export interface Palette {
 
 export const LIGHT: Palette = {
   scheme: 'light',
-  primary: '#2D6A4F',
-  primaryStrong: '#1B4332',
-  accent: '#D4A017',
+  // Monochrome brand: near-black on a near-white app (SCRL-style). Functional
+  // accents (gold XP, danger, success) stay coloured for meaning.
+  primary: '#1A1A1A',
+  primaryStrong: '#000000',
+  accent: '#333333',
   gold: '#EBA905',
   danger: '#C0392B',
   success: '#2E7D32',
   successFill: '#E6F4EA',
   dangerFill: '#FBE9E7',
 
-  textPrimary: '#15241D',
-  textSecondary: '#5C6B63',
+  textPrimary: '#141414',
+  textSecondary: '#6B6B6B',
   textOnPrimary: '#FFFFFF',
 
-  background: '#E8F0EA',
-  gradient: ['#F4F9F5', '#E6F0EA', '#DAE8EF'],
+  background: '#F3F3F3',
+  gradient: ['#FBFBFB', '#F4F4F4', '#EDEDED'],
 
   blurTint: 'light',
   blurIntensity: 28,
-  glassFill: 'rgba(255,255,255,0.55)',
-  glassBorder: 'rgba(255,255,255,0.75)',
+  glassFill: 'rgba(255,255,255,0.62)',
+  glassBorder: 'rgba(255,255,255,0.8)',
   glassHighlight: 'rgba(255,255,255,0.95)',
 
-  clayFill: ['#FFFFFF', '#E7F0EB'],
+  clayFill: ['#FFFFFF', '#EFEFEF'],
   clayBorder: 'rgba(255,255,255,0.9)',
-  softShadow: '#3E5147',
+  softShadow: '#3A3A3A',
 
-  controlTrack: 'rgba(21,36,29,0.06)',
+  controlTrack: 'rgba(0,0,0,0.06)',
 };
 
 export const DARK: Palette = {
   scheme: 'dark',
-  primary: '#43B085',
-  primaryStrong: '#2E8C68',
-  accent: '#E8B23A',
+  // Monochrome brand: near-white on a near-black app (SCRL-style). Functional
+  // accents (gold XP, danger, success) stay coloured for meaning.
+  primary: '#F4F5F4',
+  primaryStrong: '#FFFFFF',
+  accent: '#CFCFCF',
   gold: '#F0C24A',
   danger: '#E5695B',
   success: '#4FB783',
   successFill: 'rgba(79,183,131,0.18)',
   dangerFill: 'rgba(229,105,91,0.18)',
 
-  textPrimary: '#EAF2EE',
-  textSecondary: '#9DB2AA',
-  textOnPrimary: '#06120D',
+  textPrimary: '#F3F4F3',
+  textSecondary: '#9A9A9A',
+  textOnPrimary: '#0A0A0A',
 
-  background: '#0B1410',
-  // green-black → deep teal → indigo hint: a subtle spatial gradient
-  gradient: ['#0C1712', '#0E1B24', '#141A2C'],
+  background: '#0A0A0B',
+  // neutral near-black spatial gradient (no colour tint)
+  gradient: ['#0D0D0E', '#0A0A0B', '#111112'],
 
   blurTint: 'dark',
   blurIntensity: 44,
-  glassFill: 'rgba(255,255,255,0.08)',
-  glassBorder: 'rgba(255,255,255,0.16)',
-  glassHighlight: 'rgba(255,255,255,0.32)',
+  glassFill: 'rgba(255,255,255,0.06)',
+  glassBorder: 'rgba(255,255,255,0.14)',
+  glassHighlight: 'rgba(255,255,255,0.28)',
 
-  clayFill: ['#1C2B25', '#111F19'],
+  clayFill: ['#1E1E1E', '#151515'],
   clayBorder: 'rgba(255,255,255,0.10)',
   softShadow: '#000000',
 

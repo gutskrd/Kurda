@@ -9,7 +9,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 
 /**
  * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
@@ -20,6 +20,7 @@ export function DictionaryScreen() {
   const { client } = useAuth();
   const { colors } = useTheme();
   const tabBarInset = useTabBarInset();
+  const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,7 +88,7 @@ export function DictionaryScreen() {
 
   return (
     <GradientBackground>
-      <View style={styles.screen}>
+      <View style={[styles.screen, { paddingTop: topInset }]}>
         <TextInput
           value={query}
           onChangeText={setQuery}

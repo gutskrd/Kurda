@@ -6,7 +6,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useI18n } from '../i18n/I18nContext';
@@ -23,6 +23,7 @@ export function ProfileScreen() {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const tabBarInset = useTabBarInset();
+  const topInset = useScreenTopInset();
   const [streak, setStreak] = useState<Streak | null>(null);
   const { t } = useI18n();
 
@@ -40,7 +41,7 @@ export function ProfileScreen() {
 
   return (
     <GradientBackground>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
         <InitialsAvatar
           name={user?.displayName ?? user?.username ?? ''}
           id={user?.id ?? ''}
@@ -64,7 +65,7 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { alignItems: 'center', padding: spacing.lg, paddingTop: spacing.xxl, gap: spacing.sm, flexGrow: 1, justifyContent: 'center' },
+  content: { alignItems: 'center', padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
   username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   displayName: { fontSize: typography.sizes.md },
   actions: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.lg },
