@@ -19,7 +19,10 @@ export interface ApiClientOptions {
   timeoutMs?: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 15_000;
+// 30s rather than a snappier timeout because a free-tier host (e.g. Render)
+// cold-starts on the first request after idle, which can take 20-40s. A shorter
+// timeout would abort a legitimate wake-up.
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 interface RequestOptions {
   body?: unknown;
