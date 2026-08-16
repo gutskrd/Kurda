@@ -80,6 +80,7 @@ import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
+import { registerRhymeRoutes } from './game/rhyme-routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -333,6 +334,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService);
     registerWordleRoutes(app, { xp: xpService });
+    registerRhymeRoutes(app, { xp: xpService });
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
