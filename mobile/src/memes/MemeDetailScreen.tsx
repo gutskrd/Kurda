@@ -20,7 +20,8 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { addComment, clearReaction, getPost, getReactions, listComments, setReaction } from './api';
+import { confirmReport } from '../moderation/report';
+import { addComment, clearReaction, getPost, getReactions, listComments, reportComment, reportPost, setReaction } from './api';
 import {
   commentText,
   relativeTime,
@@ -118,6 +119,14 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 <Image source={{ uri: post.imageUrl }} style={styles.image} resizeMode="contain" accessibilityIgnoresInvertColors />
               ) : null}
               {post.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{post.caption}</Text> : null}
+              <Pressable
+                onPress={() => confirmReport('post', () => reportPost(client, post.id))}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel="Report this post"
+              >
+                <Text style={[styles.report, { color: colors.textSecondary }]}>⚐ Report post</Text>
+              </Pressable>
 
               <View style={styles.reactionBar}>
                 {REACTION_ORDER.map((r) => {
@@ -158,11 +167,18 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                       <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
                         {commentText(c)}
                       </Text>
-                      {c.replyCount > 0 ? (
-                        <Text style={[styles.replyHint, { color: colors.textSecondary }]}>
-                          {c.replyCount} {c.replyCount === 1 ? 'reply' : 'replies'}
-                        </Text>
-                      ) : null}
+                      <View style={styles.commentFoot}>
+                        {c.replyCount > 0 ? (
+                          <Text style={[styles.replyHint, { color: colors.textSecondary }]}>
+                            {c.replyCount} {c.replyCount === 1 ? 'reply' : 'replies'}
+                          </Text>
+                        ) : null}
+                        {c.status !== 'removed' ? (
+                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel="Report this comment">
+                            <Text style={[styles.replyHint, { color: colors.textSecondary }]}>⚐ Report</Text>
+                          </Pressable>
+                        ) : null}
+                      </View>
                     </View>
                   </View>
                 ))
@@ -227,7 +243,9 @@ const styles = StyleSheet.create({
   commentMain: { flex: 1, gap: 2 },
   commentAge: { fontSize: typography.sizes.xs },
   commentBody: { fontSize: typography.sizes.md },
+  commentFoot: { flexDirection: 'row', gap: spacing.md },
   replyHint: { fontSize: typography.sizes.xs },
+  report: { fontSize: typography.sizes.sm },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
   input: { flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

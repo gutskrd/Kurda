@@ -96,6 +96,7 @@ import { registerLibraryCommentRoutes } from './library/comment-routes.js';
 import { registerLibraryReportRoutes } from './library/report-routes.js';
 import { registerImagePostRoutes } from './images/routes.js';
 import { registerImageInteractionRoutes } from './images/interaction-routes.js';
+import { registerImageReportRoutes } from './images/report-routes.js';
 import { registerTagRoutes } from './tags/routes.js';
 import { ConfigService } from './admin/config-service.js';
 import { registerConfigRoutes } from './admin/config-routes.js';
@@ -296,6 +297,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // reactions + threaded comments on image/meme posts (KUR-291), trust-gated
     // and auto-screened like library comments (#293/#295)
     registerImageInteractionRoutes(app, undefined, undefined, aiMod, trust);
+    // image/meme reporting → unified moderation queue (KUR-292)
+    registerImageReportRoutes(app);
     // user tags & badges (KUR-286): main-tag precedence + claimable tags
     registerTagRoutes(app);
     registerGroupRoutes(app, groups, trust);

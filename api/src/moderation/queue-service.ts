@@ -1,6 +1,6 @@
 import type pg from 'pg';
 
-export type CaseSource = 'chat_report' | 'anti_cheat' | 'text_flag' | 'image_flag' | 'library_report';
+export type CaseSource = 'chat_report' | 'anti_cheat' | 'text_flag' | 'image_flag' | 'library_report' | 'image_report';
 export type CaseResolution = 'dismiss' | 'warn' | 'mute' | 'ban' | 'remove';
 
 export interface QueueCase {
@@ -92,6 +92,28 @@ export class ModerationQueueService {
        GROUP BY r.target_id, c.author_id, c.audio_media_id, c.post_id`,
       'library_report',
     );
+    // image/meme reports (#292) — one case per reported item, keyed
+    // 'image_post:<id>' / 'image_comment:<id>'
+    added += await this.ingest(
+      `SELECT 'image_post:' || r.target_id AS ref, p.author_id AS subject, 55 AS severity,
+              'Image post reported (' || p.category || ')' AS summary,
+              jsonb_build_object('targetType','image_post','targetId',r.target_id,'reports',count(*),'mediaKey',p.image_media_id) AS evidence,
+              min(r.created_at) AS created_at
+       FROM image_reports r JOIN image_posts p ON p.id = r.target_id
+       WHERE r.target_type = 'image_post' AND r.status = 'open' AND p.status <> 'removed'
+       GROUP BY r.target_id, p.author_id, p.category, p.image_media_id`,
+      'image_report',
+    );
+    added += await this.ingest(
+      `SELECT 'image_comment:' || r.target_id AS ref, c.author_id AS subject, 55 AS severity,
+              'Image comment reported' AS summary,
+              jsonb_build_object('targetType','image_comment','targetId',r.target_id,'reports',count(*),'postId',c.post_id) AS evidence,
+              min(r.created_at) AS created_at
+       FROM image_reports r JOIN image_comments c ON c.id = r.target_id
+       WHERE r.target_type = 'image_comment' AND r.status = 'open' AND c.status <> 'removed'
+       GROUP BY r.target_id, c.author_id, c.post_id`,
+      'image_report',
+    );
     return added;
   }
 
@@ -157,9 +179,12 @@ export class ModerationQueueService {
       if (resolution !== 'dismiss' && c.subject_user_id) {
         await this.applyAction(client, c.subject_user_id, moderatorId, resolution);
       }
-      // `remove` soft-deletes the reported library content (retained for audit)
+      // `remove` soft-deletes the reported content (retained for audit)
       if (resolution === 'remove' && c.source === 'library_report') {
         await this.removeLibraryContent(client, c.source_ref);
+      }
+      if (resolution === 'remove' && c.source === 'image_report') {
+        await this.removeImageContent(client, c.source_ref);
       }
       await this.closeSource(client, c.source, c.source_ref, resolution);
 
@@ -240,6 +265,16 @@ export class ModerationQueueService {
         }
         break;
       }
+      case 'image_report': {
+        const parsed = parseImageRef(ref);
+        if (parsed) {
+          await client.query(
+            `UPDATE image_reports SET status = 'resolved' WHERE target_type = $1 AND target_id = $2 AND status = 'open'`,
+            [parsed.type, parsed.id],
+          );
+        }
+        break;
+      }
     }
   }
 
@@ -259,6 +294,23 @@ export class ModerationQueueService {
       if (postId) await client.query(`UPDATE library_posts SET comment_count = GREATEST(0, comment_count - 1) WHERE id = $1`, [postId]);
     }
   }
+
+  /** `remove` for image/meme reports — soft-delete the post/comment (KUR-292). */
+  private async removeImageContent(client: pg.PoolClient, ref: string): Promise<void> {
+    const parsed = parseImageRef(ref);
+    if (!parsed) return;
+    if (parsed.type === 'image_post') {
+      await client.query(`UPDATE image_posts SET status = 'removed', updated_at = now() WHERE id = $1 AND status <> 'removed'`, [parsed.id]);
+    } else {
+      const res = await client.query<{ post_id: string }>(
+        `UPDATE image_comments SET status = 'removed', body = NULL, updated_at = now()
+         WHERE id = $1 AND status = 'visible' RETURNING post_id`,
+        [parsed.id],
+      );
+      const postId = res.rows[0]?.post_id;
+      if (postId) await client.query(`UPDATE image_posts SET comment_count = GREATEST(0, comment_count - 1) WHERE id = $1`, [postId]);
+    }
+  }
 }
 
 /** Parse a library case ref 'library_post:<id>' / 'library_comment:<id>'. */
@@ -268,4 +320,12 @@ function parseLibraryRef(ref: string): { type: 'library_post' | 'library_comment
   const type = ref.slice(0, i);
   const id = ref.slice(i + 1);
   return type === 'library_post' || type === 'library_comment' ? { type, id } : null;
+}
+
+function parseImageRef(ref: string): { type: 'image_post' | 'image_comment'; id: string } | null {
+  const i = ref.indexOf(':');
+  if (i < 0) return null;
+  const type = ref.slice(0, i);
+  const id = ref.slice(i + 1);
+  return type === 'image_post' || type === 'image_comment' ? { type, id } : null;
 }
