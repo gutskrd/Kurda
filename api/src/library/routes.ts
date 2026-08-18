@@ -36,6 +36,11 @@ export function registerLibraryRoutes(
   aiMod?: AiModerationService,
   trust?: TrustService,
 ): void {
+  /** Resolve the optional audio rendition's media key to a public CDN URL. */
+  const withAudioUrl = <T extends { audioMediaId: string | null }>(post: T): T & { audioUrl: string | null } => ({
+    ...post,
+    audioUrl: post.audioMediaId && app.storage ? app.storage.publicUrl(post.audioMediaId) : null,
+  });
   /** Create a story/poem (text required, audio optional). */
   app.post(
     '/library/posts',
@@ -68,7 +73,7 @@ export function registerLibraryRoutes(
           .moderate({ surface: 'library', text: `${res.post.title}\n${res.post.body}`, authorId: req.user!.id, contentType: 'post', contentRef: res.post.id })
           .catch((err) => app.log.warn({ err }, 'library post auto-moderation failed'));
       }
-      return reply.code(201).send(res.post);
+      return reply.code(201).send(withAudioUrl(res.post));
     },
   );
 
@@ -83,14 +88,14 @@ export function registerLibraryRoutes(
       limit: q.limit ? Number(q.limit) : undefined,
       offset: q.offset ? Number(q.offset) : undefined,
     });
-    return { posts };
+    return { posts: posts.map(withAudioUrl) };
   });
 
   /** Read one post + increment views (public). */
   app.get('/library/posts/:id', { schema: { params: idParam } }, async (req, reply) => {
     const post = await library.get((req.params as { id: string }).id);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such post' });
-    return post;
+    return withAudioUrl(post);
   });
 
   /** Edit (author or admin). */

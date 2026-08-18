@@ -42,6 +42,9 @@ import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
+import { LibraryScreen } from './src/library/LibraryScreen';
+import { LibraryPostScreen } from './src/library/LibraryPostScreen';
+import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { ChallengeListener } from './src/challenge/ChallengeListener';
@@ -189,6 +192,15 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Tags" options={{ presentation: 'card' }}>
         {({ navigation }) => <TagsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Library" options={{ presentation: 'card' }}>
+        {({ navigation }) => <LibraryScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="LibraryPost" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal' }}>
+        {({ navigation }) => <LibraryComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
     </>

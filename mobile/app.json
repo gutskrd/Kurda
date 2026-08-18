@@ -60,6 +60,12 @@
         {
           "photosPermission": "Allow MyKurda to access your photos so you can set a profile picture."
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow MyKurda to record voice notes and audio renditions."
+        }
       ]
     ],
     "extra": {

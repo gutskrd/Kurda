@@ -68,6 +68,7 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     expect(res.statusCode).toBe(201);
     expect(res.json().authorRole).toBe('admin');
     expect(res.json().audioMediaId).toBe('media/audio/x.mp3');
+    expect(res.json()).toHaveProperty('audioUrl'); // resolved CDN URL (null when storage unset)
 
     expect((await post('POST', '/library/posts', adminTok, { type: 'story', title: 'ok', body: '   ' })).statusCode).toBe(422);
   });

@@ -24,6 +24,9 @@ export type RootStackParamList = {
   Memes: undefined;
   MemeDetail: { postId: string };
   Tags: undefined;
+  Library: undefined;
+  LibraryPost: { postId: string };
+  LibraryCompose: undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
