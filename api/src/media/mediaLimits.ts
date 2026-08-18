@@ -46,6 +46,34 @@ export function imagePostLimits(config: AppConfig): MediaLimits {
   };
 }
 
+/** Cost-safety limits for voice-note audio (KUR-282). Stored as-is (no transcode),
+ *  so `maxUploadBytes` is the cost lever; shares the storage/op ceilings. */
+export interface AudioLimits {
+  maxUploadBytes: number;
+  maxSeconds: number;
+  storageLimitBytes: number;
+  classALimit: number;
+  uploadRateMax: number;
+  uploadRateWindowMs: number;
+  allowedTypes: Set<string>;
+}
+
+export function audioLimits(config: AppConfig): AudioLimits {
+  return {
+    maxUploadBytes: Math.round(config.MEDIA_AUDIO_MAX_UPLOAD_MB * 1024 * 1024),
+    maxSeconds: config.MEDIA_AUDIO_MAX_SECONDS,
+    storageLimitBytes: Math.round(config.MEDIA_STORAGE_LIMIT_GB * 1024 * 1024 * 1024),
+    classALimit: config.MEDIA_MONTHLY_CLASS_A_LIMIT,
+    uploadRateMax: config.MEDIA_AUDIO_UPLOAD_RATE_MAX,
+    uploadRateWindowMs: Math.round(config.MEDIA_AUDIO_UPLOAD_RATE_WINDOW_MIN * 60_000),
+    allowedTypes: new Set(
+      config.MEDIA_AUDIO_ALLOWED_TYPES.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  };
+}
+
 export function exceedsUploadSize(byteLength: number, maxUploadBytes: number): boolean {
   return byteLength > maxUploadBytes;
 }

@@ -41,6 +41,14 @@ export function registerLibraryRoutes(
     ...post,
     audioUrl: post.audioMediaId && app.storage ? app.storage.publicUrl(post.audioMediaId) : null,
   });
+
+  /** An attached voice note must have cleared the upload pipeline (KUR-282) —
+   *  a client can't reference an arbitrary/unconfirmed audio key. */
+  const audioOk = async (key: string | null | undefined): Promise<boolean> => {
+    if (!key) return true; // audio is optional
+    const res = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`, [key]);
+    return (res.rowCount ?? 0) > 0;
+  };
   /** Create a story/poem (text required, audio optional). */
   app.post(
     '/library/posts',
@@ -51,6 +59,9 @@ export function registerLibraryRoutes(
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
+      if (!(await audioOk(body.audioMediaId))) {
+        return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
+      }
       if (trust) {
         // per-level velocity cap (KUR-295): new accounts post fewer per hour
         const gate = await trust.checkAction(req.user!.id, 'post');

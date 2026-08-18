@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sniffImageType } from './mimeSniff.js';
+import { sniffAudioType, sniffImageType } from './mimeSniff.js';
 
 const bytes = (...b: number[]) => new Uint8Array(b);
 
@@ -17,5 +17,20 @@ describe('sniffImageType', () => {
     expect(sniffImageType(bytes(0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x41, 0x56, 0x45))).toBeNull(); // RIFF WAVE
     expect(sniffImageType(bytes(0xff, 0xd8))).toBeNull(); // truncated
     expect(sniffImageType(new Uint8Array())).toBeNull();
+  });
+});
+
+describe('sniffAudioType', () => {
+  it('detects MP3 (ID3 + frame-sync) and m4a/mp4 (ftyp)', () => {
+    expect(sniffAudioType(bytes(0x49, 0x44, 0x33, 0x03, 0, 0))).toBe('audio/mpeg'); // "ID3"
+    expect(sniffAudioType(bytes(0xff, 0xfb, 0x90, 0))).toBe('audio/mpeg'); // MPEG frame sync
+    expect(sniffAudioType(bytes(0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20))).toBe('audio/mp4'); // ....ftypM4A
+  });
+
+  it('returns null for non-audio and truncated input', () => {
+    expect(sniffAudioType(bytes(0x89, 0x50, 0x4e, 0x47))).toBeNull(); // PNG
+    expect(sniffAudioType(new TextEncoder().encode('not audio'))).toBeNull();
+    expect(sniffAudioType(bytes(0xff))).toBeNull(); // truncated frame sync
+    expect(sniffAudioType(new Uint8Array())).toBeNull();
   });
 });

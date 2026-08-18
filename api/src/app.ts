@@ -104,6 +104,7 @@ import { registerPhoneVerificationRoutes } from './auth/phone-routes.js';
 import { PhoneVerificationService } from './auth/phone-verification-service.js';
 import { StubSmsSender } from './auth/sms.js';
 import { registerMediaRoutes } from './media/routes.js';
+import { registerVoiceRoutes } from './media/voice-routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
@@ -366,6 +367,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(seasonSweep));
     registerMediaRoutes(app);
+    // cost-safe through-server voice-note upload (KUR-282)
+    registerVoiceRoutes(app, config);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);

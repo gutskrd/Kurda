@@ -47,6 +47,14 @@ describe.skipIf(!DATABASE_URL)('library comments (integration)', () => {
     expect((await call('POST', `/library/posts/${postId}/comments`, undefined, { body: 'hi' })).statusCode).toBe(401);
     expect((await call('POST', `/library/posts/${postId}/comments`, authorTok, {})).statusCode).toBe(422);
 
+    // a voice comment must reference a confirmed audio upload (KUR-282)
+    expect((await call('POST', `/library/posts/${postId}/comments`, otherTok, { audioMediaId: 'media/unconfirmed.mp3' })).statusCode).toBe(422);
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
+       VALUES ('media/a.mp3','audio/mpeg',2048,now(),'cleared'), ('media/b.mp3','audio/mpeg',2048,now(),'cleared')
+       ON CONFLICT (key) DO UPDATE SET confirmed_at = now()`,
+    );
+
     expect((await call('POST', `/library/posts/${postId}/comments`, authorTok, { body: 'text only' })).statusCode).toBe(201);
     expect((await call('POST', `/library/posts/${postId}/comments`, otherTok, { audioMediaId: 'media/a.mp3' })).statusCode).toBe(201);
     const both = await call('POST', `/library/posts/${postId}/comments`, authorTok, { body: 'text + audio', audioMediaId: 'media/b.mp3' });
