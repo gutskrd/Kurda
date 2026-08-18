@@ -34,6 +34,11 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
     tags.profileTags(req.user!.id),
   );
 
+  /** My own self-claimed tags incl. hidden ones (owner manage UI, #287). */
+  app.get('/me/tags/claimed', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+    tags: await tags.claimedTags(req.user!.id),
+  }));
+
   /** The claimable catalog. */
   app.get('/tags', { config: { skipValidation: true }, preHandler: requireAuth }, async () => ({ tags: await tags.catalog() }));
 
