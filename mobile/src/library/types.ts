@@ -31,6 +31,7 @@ export interface LibraryComment {
   depth: number;
   body: string | null;
   audioMediaId: string | null;
+  audioUrl: string | null;
   status: 'visible' | 'removed';
   replyCount: number;
   createdAt: string;

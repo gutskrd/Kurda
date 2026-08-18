@@ -8,6 +8,8 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { createPost } from './api';
+import { uploadVoiceNote } from './voiceUpload';
+import { VoiceRecorder } from './VoiceRecorder';
 import type { PostType } from './types';
 
 /**
@@ -23,6 +25,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
   const [type, setType] = useState<PostType>('story');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [voiceUri, setVoiceUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const submit = async (publish: boolean) => {
@@ -32,7 +35,18 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
       return;
     }
     setSaving(true);
-    const res = await createPost(client, { type, title: title.trim(), body: body.trim(), publish });
+    // upload the optional narration first so the post references a confirmed key
+    let audioMediaId: string | undefined;
+    if (voiceUri) {
+      const up = await uploadVoiceNote(client, { uri: voiceUri });
+      if (!up.ok) {
+        setSaving(false);
+        Alert.alert('Couldn’t upload narration', up.error);
+        return;
+      }
+      audioMediaId = up.audioMediaId;
+    }
+    const res = await createPost(client, { type, title: title.trim(), body: body.trim(), publish, audioMediaId });
     setSaving(false);
     if (!res.ok) {
       Alert.alert('Couldn’t save', describeError(res.error).message);
@@ -73,6 +87,8 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
               textAlignVertical="top"
               maxLength={50000}
             />
+            <Text style={[styles.narrationLabel, { color: colors.textSecondary }]}>Optional narration</Text>
+            <VoiceRecorder value={voiceUri} onChange={setVoiceUri} />
           </ScrollView>
 
           <View style={styles.actions}>
@@ -93,5 +109,6 @@ const styles = StyleSheet.create({
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   titleInput: { borderWidth: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   bodyInput: { borderWidth: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },
+  narrationLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   actions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
 });

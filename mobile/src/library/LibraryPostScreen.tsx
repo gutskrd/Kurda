@@ -22,6 +22,8 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { AudioPlayer } from './AudioPlayer';
 import { confirmReport } from '../moderation/report';
 import { addComment, getPost, listComments, reportComment, reportPost } from './api';
+import { uploadVoiceNote } from './voiceUpload';
+import { VoiceRecorder } from './VoiceRecorder';
 import { commentText, type LibraryComment, type LibraryPost } from './types';
 
 /**
@@ -37,6 +39,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   const [comments, setComments] = useState<LibraryComment[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [draft, setDraft] = useState('');
+  const [voiceUri, setVoiceUri] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
 
   const loadAll = useCallback(async () => {
@@ -56,18 +59,29 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   const submit = useCallback(async () => {
     const body = draft.trim();
-    if (!body || posting) return;
+    if ((!body && !voiceUri) || posting) return;
     setPosting(true);
-    const res = await addComment(client, postId, body);
+    let audioMediaId: string | undefined;
+    if (voiceUri) {
+      const up = await uploadVoiceNote(client, { uri: voiceUri });
+      if (!up.ok) {
+        setPosting(false);
+        Alert.alert('Couldn’t upload voice comment', up.error);
+        return;
+      }
+      audioMediaId = up.audioMediaId;
+    }
+    const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
     setPosting(false);
     if (!res.ok) {
       Alert.alert('Couldn’t comment', describeError(res.error).message);
       return;
     }
     setDraft('');
+    setVoiceUri(null);
     setComments((prev) => (prev ? [res.data, ...prev] : [res.data]));
     setPost((prev) => (prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev));
-  }, [client, postId, draft, posting]);
+  }, [client, postId, draft, voiceUri, posting]);
 
   const header = (
     <View style={styles.titleRow}>
@@ -123,9 +137,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                   <View key={c.id} style={[styles.comment, { borderColor: colors.glassBorder }]}>
                     <InitialsAvatar name={c.authorId.slice(0, 2)} id={c.authorId} size={28} />
                     <View style={styles.commentMain}>
-                      <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
-                        {commentText(c)}
-                      </Text>
+                      {c.status !== 'removed' && c.audioUrl ? <AudioPlayer url={c.audioUrl} /> : null}
+                      {c.body || c.status === 'removed' || !c.audioUrl ? (
+                        <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
+                          {commentText(c)}
+                        </Text>
+                      ) : null}
                       <View style={styles.commentFoot}>
                         {c.replyCount > 0 ? (
                           <Text style={[styles.replyHint, { color: colors.textSecondary }]}>
@@ -145,26 +162,29 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
             </ScrollView>
           )}
 
-          <View style={[styles.composer, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Add a comment…"
-              placeholderTextColor={colors.textSecondary}
-              value={draft}
-              onChangeText={setDraft}
-              multiline
-              maxLength={10000}
-            />
-            <Pressable
-              onPress={() => void submit()}
-              disabled={!draft.trim() || posting}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Post comment"
-              style={{ opacity: !draft.trim() || posting ? 0.4 : 1 }}
-            >
-              <Icon name="chevron-right" size={24} tone="primary" />
-            </Pressable>
+          <View style={styles.composerWrap}>
+            <VoiceRecorder value={voiceUri} onChange={setVoiceUri} />
+            <View style={[styles.composer, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder={voiceUri ? 'Add a note (optional)…' : 'Add a comment…'}
+                placeholderTextColor={colors.textSecondary}
+                value={draft}
+                onChangeText={setDraft}
+                multiline
+                maxLength={10000}
+              />
+              <Pressable
+                onPress={() => void submit()}
+                disabled={(!draft.trim() && !voiceUri) || posting}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Post comment"
+                style={{ opacity: (!draft.trim() && !voiceUri) || posting ? 0.4 : 1 }}
+              >
+                <Icon name="chevron-right" size={24} tone="primary" />
+              </Pressable>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -188,6 +208,7 @@ const styles = StyleSheet.create({
   commentFoot: { flexDirection: 'row', gap: spacing.md },
   replyHint: { fontSize: typography.sizes.xs },
   report: { fontSize: typography.sizes.sm },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
+  composerWrap: { gap: spacing.sm, marginBottom: spacing.md },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   input: { flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

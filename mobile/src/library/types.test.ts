@@ -22,7 +22,7 @@ describe('bodyPreview', () => {
 describe('commentText', () => {
   const base: LibraryComment = {
     id: '1', postId: 'p', authorId: 'a', authorRole: 'user', parentCommentId: null, depth: 0,
-    body: 'hello', audioMediaId: null, status: 'visible', replyCount: 0, createdAt: '', updatedAt: '',
+    body: 'hello', audioMediaId: null, audioUrl: null, status: 'visible', replyCount: 0, createdAt: '', updatedAt: '',
   };
   it('shows body, voice placeholder, or removed placeholder', () => {
     expect(commentText(base)).toBe('hello');
