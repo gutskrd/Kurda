@@ -205,7 +205,7 @@ function WelcomeSlide(): React.JSX.Element {
   return (
     <View style={[styles.slide, styles.centered]}>
       <BreathingIcon name="sparkle" size={60} tone="primary" style={styles.slideIcon} />
-      <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
+      <Text style={[styles.brand, { color: colors.primary }]}>MyKurda</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
       {reduce ? (
         <View style={styles.propList}>
