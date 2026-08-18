@@ -94,9 +94,34 @@ the API returns `503 MEDIA_UNAVAILABLE` and the app shows an error. Cloudflare
    (These are declared, commented, on the `kurda-api` service in `render.yaml`.)
 5. Redeploy the API. `/health` stays green; profile-photo upload now works.
 
-Notes: native uploads use a presigned PUT (no browser → no CORS preflight
-needed); only the **public GET** at `CDN_BASE_URL` must be reachable. The 14-day
-media-orphan job cleans up replaced/unconfirmed photos automatically.
+Notes: the app uploads **through the API** (bytes are validated, resized to
+≤512 px, and re-encoded as WebP ≤250 KB server-side — the client's declared type
+is never trusted); only the **public GET** at `CDN_BASE_URL` must be reachable.
+The media-orphan job cleans up replaced/unconfirmed objects automatically.
+
+### Cost-safety (stay inside R2's free tier)
+
+All limits are env-driven (sensible defaults; raise them to scale). They're
+application-level guards — **Cloudflare's dashboard is the source of truth** for
+real billing, and **Class B reads (public image views) bypass the API entirely,
+so only Cloudflare can see them.**
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MEDIA_MAX_UPLOAD_MB` | 5 | reject raw uploads bigger than this |
+| `MEDIA_MAX_STORED_KB` | 250 | hard cap on the stored (processed) object |
+| `MEDIA_MAX_DIMENSION` | 512 | longest edge of the processed image |
+| `MEDIA_STORAGE_LIMIT_GB` | 9 | **hard** app-level total-storage kill switch (below R2's free 10 GB) |
+| `MEDIA_MONTHLY_CLASS_A_LIMIT` | 900000 | monthly write/list op ceiling (below Cloudflare's 1M) |
+| `MEDIA_MONTHLY_CLASS_B_LIMIT` | 9000000 | monthly read op ceiling (below Cloudflare's 10M) |
+| `MEDIA_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 10 / 60 | per-user upload rate limit |
+| `MEDIA_ALLOWED_TYPES` | jpeg,png,webp | accepted source types (sniffed, not declared) |
+
+At the storage limit the API returns `MEDIA_STORAGE_LIMIT_REACHED` and stores
+nothing new; **existing photos keep working and are never auto-deleted**. If
+storage usage can't be read, it **fails closed**. Monitor via
+`GET /admin/media/usage` (admin) → stored bytes/objects + our own Class A/B op
+counts vs. the limits.
 
 ## Rollback
 

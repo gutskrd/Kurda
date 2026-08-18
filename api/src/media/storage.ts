@@ -115,6 +115,20 @@ export class MediaStorage {
   async delete(key: string): Promise<void> {
     await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
   }
+
+  /** Upload a processed object directly (through-server flow, KUR-177 hardening). */
+  async put(key: string, body: Buffer, contentType: string): Promise<void> {
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        ContentLength: body.length,
+        CacheControl: IMMUTABLE_CACHE_CONTROL,
+      }),
+    );
+  }
 }
 
 export function createStorage(config: AppConfig): MediaStorage | null {

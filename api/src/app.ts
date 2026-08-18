@@ -253,7 +253,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // optional phone (SMS) verification (KUR-297) — stub sender until a provider
     // is configured; raises trust (#295) and is exported/deleted with the account
     registerPhoneVerificationRoutes(app, new PhoneVerificationService(app.db, { sms: new StubSmsSender() }));
-    registerUserRoutes(app);
+    registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
     registerWalletRoutes(app);
 
