@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -8,7 +8,7 @@ import { spacing, typography } from '../theme/tokens';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 
 /**
  * Play tab (KUR-054): find a 1v1 match. Queuing returns a room once an
@@ -19,6 +19,7 @@ export function PlayScreen() {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const topInset = useScreenTopInset();
+  const tabBarInset = useTabBarInset();
   const [searching, setSearching] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
@@ -40,7 +41,7 @@ export function PlayScreen() {
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
+      <ScrollView contentContainerStyle={[styles.screen, { paddingTop: topInset, paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
         <GlassCard style={styles.card}>
           <Icon name="play" size={56} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>Play</Text>
@@ -63,13 +64,20 @@ export function PlayScreen() {
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Guess the daily word in six tries — solo.</Text>
           <ClayButton label="Play Wordle" tone="neutral" onPress={() => navigation.navigate('Wordle')} style={styles.button} />
         </GlassCard>
-      </View>
+
+        <GlassCard style={styles.card}>
+          <Icon name="chat" size={40} tone="primary" />
+          <Text style={[styles.title, { color: colors.primary }]}>Rhyming Words</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Find Kurdish words that rhyme, against the clock — solo.</Text>
+          <ClayButton label="Play Rhymes" tone="neutral" onPress={() => navigation.navigate('Rhyme')} style={styles.button} />
+        </GlassCard>
+      </ScrollView>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, alignItems: 'center', padding: spacing.xl, gap: spacing.lg },
+  screen: { flexGrow: 1, alignItems: 'center', padding: spacing.xl, gap: spacing.lg },
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center' },
