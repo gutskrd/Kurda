@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Image, StyleSheet, Text, View, type ImageStyle, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { typography } from '../theme/tokens';
 import { AAA_NORMAL } from '../a11y/contrast';
 import { ensureContrast } from '../a11y/ensureContrast';
@@ -17,6 +17,7 @@ export function InitialsAvatar({
   size = 44,
   style,
   textStyle,
+  photoUrl,
 }: {
   name: string;
   /** Stable id (e.g. user id) → the same colour every render. */
@@ -24,8 +25,21 @@ export function InitialsAvatar({
   size?: number;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  /** When set, the user's profile photo is shown instead of the monogram (KUR-179). */
+  photoUrl?: string | null;
 }) {
   const { initials, backgroundColor: baseColor, textColor } = initialsAvatar(name, id);
+
+  if (photoUrl) {
+    return (
+      <Image
+        source={{ uri: photoUrl }}
+        accessibilityRole="image"
+        accessibilityLabel={name ? `${name} profile photo` : 'profile photo'}
+        style={[{ width: size, height: size, borderRadius: size / 2 }, style as StyleProp<ImageStyle>]}
+      />
+    );
+  }
   // the palette is already AA against white; nudge it to AAA (7:1) so monograms
   // stay crisp for low-vision users (deterministic — same id → same colour)
   const backgroundColor = ensureContrast(baseColor, textColor, AAA_NORMAL);
