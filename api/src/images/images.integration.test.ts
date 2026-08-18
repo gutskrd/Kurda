@@ -67,6 +67,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     expect(meme.statusCode).toBe(201);
     expect(meme.json().category).toBe('meme'); // default
     expect(meme.json().authorRole).toBe('user');
+    expect(meme.json()).toHaveProperty('imageUrl'); // resolved CDN URL (null when storage unset)
 
     await seedMedia('media/f.png');
     const founderPost = await call('POST', '/images', founderTok, { imageMediaId: 'media/f.png', category: 'image' });

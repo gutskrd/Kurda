@@ -21,6 +21,8 @@ export type RootStackParamList = {
   Settings: undefined;
   Wordle: undefined;
   Rhyme: undefined;
+  Memes: undefined;
+  MemeDetail: { postId: string };
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
