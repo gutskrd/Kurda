@@ -96,6 +96,10 @@ export function SocialScreen() {
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: colors.primary }]}>Social</Text>
           <View style={styles.headerLinks}>
+            <Pressable onPress={() => navigation.navigate('Library')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Community library">
+              <Icon name="book" size={18} tone="primary" />
+              <Text style={[styles.messages, { color: colors.primary }]}>Library</Text>
+            </Pressable>
             <Pressable onPress={() => navigation.navigate('Memes')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Meme feed">
               <Icon name="flame" size={18} tone="primary" />
               <Text style={[styles.messages, { color: colors.primary }]}>Memes</Text>
