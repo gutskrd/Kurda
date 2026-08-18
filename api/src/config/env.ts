@@ -33,6 +33,26 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
+
+  /* --- Media cost-safety (KUR-177 hardening) — keep R2 within the free tier ---
+   * All application-level guards; Cloudflare is the source of truth for real
+   * billing. Configurable so limits can grow without code changes. */
+  /** Reject a raw upload larger than this before processing. */
+  MEDIA_MAX_UPLOAD_MB: z.coerce.number().positive().default(5),
+  /** Target/hard cap for the final stored (processed) object. */
+  MEDIA_MAX_STORED_KB: z.coerce.number().positive().default(250),
+  /** Longest edge of the processed image, in px. */
+  MEDIA_MAX_DIMENSION: z.coerce.number().int().positive().default(512),
+  /** App-level total-storage kill switch (below R2's free 10 GB). */
+  MEDIA_STORAGE_LIMIT_GB: z.coerce.number().positive().default(9),
+  /** App-level monthly R2 op ceilings (below Cloudflare's free A/B allowances). */
+  MEDIA_MONTHLY_CLASS_A_LIMIT: z.coerce.number().int().positive().default(900_000),
+  MEDIA_MONTHLY_CLASS_B_LIMIT: z.coerce.number().int().positive().default(9_000_000),
+  /** Per-user profile-photo change rate limit. */
+  MEDIA_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(10),
+  MEDIA_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
+  /** Accepted source image MIME types (comma-separated). */
+  MEDIA_ALLOWED_TYPES: z.string().default('image/jpeg,image/png,image/webp'),
   /** HMAC secret for access tokens. MUST be overridden in production. */
   JWT_SECRET: z.string().min(32).default('kurda-dev-secret-do-not-use-in-prod!!'),
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */
