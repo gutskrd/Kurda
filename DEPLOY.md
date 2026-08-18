@@ -119,6 +119,10 @@ so only Cloudflare can see them.**
 | `MEDIA_IMAGE_MAX_DIMENSION` | 1280 | longest edge of a processed image/meme post |
 | `MEDIA_IMAGE_MAX_STORED_KB` | 500 | hard cap on a stored image/meme (processed WebP) |
 | `MEDIA_IMAGE_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user image/meme upload rate limit |
+| `MEDIA_AUDIO_MAX_UPLOAD_MB` | 3 | hard cap on a voice note (stored as-is, no transcode) |
+| `MEDIA_AUDIO_MAX_SECONDS` | 120 | advisory max recording length (client-enforced) |
+| `MEDIA_AUDIO_ALLOWED_TYPES` | mpeg,mp4 | accepted audio types (sniffed, not declared) |
+| `MEDIA_AUDIO_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user voice-note upload rate limit |
 
 Image/meme posts (KUR-291) upload the same way as avatars — `POST /images/upload`
 takes raw bytes, the server sniffs/resizes/WebP-compresses/moderates them, then

@@ -82,6 +82,10 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
 
   it('reports a comment (text or audio) into the queue and bans from it', async () => {
     const fresh = (await call('POST', '/library/posts', authorTok, { type: 'poem', title: 'P2', body: 'x' })).json();
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
+       VALUES ('media/voice.mp3','audio/mpeg',2048,now(),'cleared') ON CONFLICT (key) DO UPDATE SET confirmed_at = now()`,
+    );
     const audioComment = (await call('POST', `/library/posts/${fresh.id}/comments`, authorTok, { audioMediaId: 'media/voice.mp3' })).json();
 
     expect((await call('POST', `/library/comments/${audioComment.id}/report`, reporterTok, { reason: 'audio abuse' })).statusCode).toBe(200);

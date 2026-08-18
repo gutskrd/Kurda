@@ -42,6 +42,13 @@ export function registerLibraryCommentRoutes(
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
       const input = req.body as CreateCommentInput;
+      // an attached voice note must have cleared the upload pipeline (KUR-282)
+      if (input.audioMediaId) {
+        const ok = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`, [input.audioMediaId]);
+        if ((ok.rowCount ?? 0) === 0) {
+          return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
+        }
+      }
       if (trust) {
         // per-level velocity cap (KUR-295): new accounts comment fewer per hour
         const gate = await trust.checkAction(req.user!.id, 'comment');

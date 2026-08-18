@@ -60,6 +60,14 @@ const envSchema = z.object({
   /** Per-user image-post upload rate limit. */
   MEDIA_IMAGE_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),
   MEDIA_IMAGE_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
+  /** Voice notes (KUR-282) — audio renditions/comments. Stored as-is (no server
+   * transcode), so cost is capped by a tight upload size + rate limit. */
+  MEDIA_AUDIO_MAX_UPLOAD_MB: z.coerce.number().positive().default(3),
+  /** Advisory max recording length (client-enforced); the server caps by size. */
+  MEDIA_AUDIO_MAX_SECONDS: z.coerce.number().int().positive().default(120),
+  MEDIA_AUDIO_ALLOWED_TYPES: z.string().default('audio/mpeg,audio/mp4'),
+  MEDIA_AUDIO_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),
+  MEDIA_AUDIO_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** HMAC secret for access tokens. MUST be overridden in production. */
   JWT_SECRET: z.string().min(32).default('kurda-dev-secret-do-not-use-in-prod!!'),
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */

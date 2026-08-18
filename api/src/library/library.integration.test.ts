@@ -64,6 +64,10 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
   });
 
   it('admin can author with text + audio; empty body is rejected', async () => {
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
+       VALUES ('media/audio/x.mp3','audio/mpeg',2048,now(),'cleared') ON CONFLICT (key) DO UPDATE SET confirmed_at = now()`,
+    );
     const res = await post('POST', '/library/posts', adminTok, { type: 'story', title: 'Çîrok', body: 'Demek dûr...', audioMediaId: 'media/audio/x.mp3' });
     expect(res.statusCode).toBe(201);
     expect(res.json().authorRole).toBe('admin');
