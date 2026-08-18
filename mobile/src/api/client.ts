@@ -87,6 +87,18 @@ export class ApiClient {
     }
   }
 
+  /** Base URL, for out-of-band calls (e.g. binary media uploads) that can't go
+   *  through `request()`, which JSON-encodes its body. */
+  get baseUrl(): string {
+    return this.opts.baseUrl;
+  }
+
+  /** Current access token for those same out-of-band calls; null when signed out.
+   *  (Unlike `request()`, these can't auto-refresh — the caller retries on 401.) */
+  async getAccessToken(): Promise<string | null> {
+    return (await this.opts.storage.get())?.accessToken ?? null;
+  }
+
   get<T>(path: string, options?: RequestOptions): Promise<ApiResult<T>> {
     return this.request('GET', path, options);
   }
