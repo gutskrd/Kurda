@@ -26,7 +26,7 @@ export const getPost = (client: ApiClient, id: string): Promise<ApiResult<Librar
 
 export const createPost = (
   client: ApiClient,
-  input: { type: PostType; title: string; body: string; publish?: boolean },
+  input: { type: PostType; title: string; body: string; publish?: boolean; audioMediaId?: string },
 ): Promise<ApiResult<LibraryPost>> => client.post('/library/posts', input);
 
 export const listComments = (
@@ -42,8 +42,16 @@ export const listComments = (
   return client.get(`/library/posts/${postId}/comments${s ? `?${s}` : ''}`);
 };
 
-export const addComment = (client: ApiClient, postId: string, body: string, parentId?: string): Promise<ApiResult<LibraryComment>> =>
-  client.post(`/library/posts/${postId}/comments`, { body, ...(parentId ? { parentId } : {}) });
+export const addComment = (
+  client: ApiClient,
+  postId: string,
+  input: { body?: string; audioMediaId?: string; parentId?: string },
+): Promise<ApiResult<LibraryComment>> =>
+  client.post(`/library/posts/${postId}/comments`, {
+    ...(input.body ? { body: input.body } : {}),
+    ...(input.audioMediaId ? { audioMediaId: input.audioMediaId } : {}),
+    ...(input.parentId ? { parentId: input.parentId } : {}),
+  });
 
 export const reportPost = (client: ApiClient, postId: string, reason?: string): Promise<ApiResult<{ reported: true }>> =>
   client.post(`/library/posts/${postId}/report`, reason ? { reason } : {});

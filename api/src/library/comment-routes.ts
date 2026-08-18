@@ -31,6 +31,12 @@ export function registerLibraryCommentRoutes(
   aiMod?: AiModerationService,
   trust?: TrustService,
 ): void {
+  /** Attach the public CDN URL for a comment's optional voice note (KUR-282). */
+  const withAudioUrl = <T extends { audioMediaId: string | null }>(c: T): T & { audioUrl: string | null } => ({
+    ...c,
+    audioUrl: c.audioMediaId && app.storage ? app.storage.publicUrl(c.audioMediaId) : null,
+  });
+
   /** Post a comment (text / audio / both) or a reply. */
   app.post(
     '/library/posts/:postId/comments',
@@ -72,7 +78,7 @@ export function registerLibraryCommentRoutes(
             .moderate({ surface: 'library', text: res.comment.body, authorId: req.user!.id, contentType: 'comment', contentRef: res.comment.id })
             .catch((err) => app.log.warn({ err }, 'library comment auto-moderation failed'));
         }
-        return reply.code(201).send(res.comment);
+        return reply.code(201).send(withAudioUrl(res.comment));
       }
       switch (res.reason) {
         case 'empty':
@@ -90,11 +96,11 @@ export function registerLibraryCommentRoutes(
     const { postId } = req.params as { postId: string };
     const q = req.query as Record<string, string | undefined>;
     return {
-      comments: await comments.topLevel(postId, {
+      comments: (await comments.topLevel(postId, {
         limit: q.limit ? Number(q.limit) : undefined,
         offset: q.offset ? Number(q.offset) : undefined,
         sort: q.sort === 'oldest' ? 'oldest' : 'newest',
-      }),
+      })).map(withAudioUrl),
     };
   });
 
@@ -103,10 +109,10 @@ export function registerLibraryCommentRoutes(
     const { id } = req.params as { id: string };
     const q = req.query as Record<string, string | undefined>;
     return {
-      comments: await comments.replies(id, {
+      comments: (await comments.replies(id, {
         limit: q.limit ? Number(q.limit) : undefined,
         offset: q.offset ? Number(q.offset) : undefined,
-      }),
+      })).map(withAudioUrl),
     };
   });
 
