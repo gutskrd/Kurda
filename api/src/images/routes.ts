@@ -39,6 +39,12 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
   const limits = imagePostLimits(config);
   const usage = new MediaUsageService(app.db, app.redis ?? null);
 
+  /** Attach the public CDN URL so clients don't need to know the media key layout. */
+  const withUrl = <T extends { imageMediaId: string }>(post: T): T & { imageUrl: string | null } => ({
+    ...post,
+    imageUrl: app.storage ? app.storage.publicUrl(post.imageMediaId) : null,
+  });
+
   /** Through-server upload: raw image bytes → cost-safe stored WebP → media id. */
   app.post(
     '/images/upload',
@@ -79,28 +85,27 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
       }
       const res = await images.create(req.user!.id, authorRole(req), body);
       if (!res.ok) return reply.code(422).send({ code: 'INVALID_POST', message: 'an image is required' });
-      return reply.code(201).send(res.post);
+      return reply.code(201).send(withUrl(res.post));
     },
   );
 
   app.get('/images', { config: { skipValidation: true } }, async (req) => {
     const q = req.query as Record<string, string | undefined>;
-    return {
-      posts: await images.list({
-        category: q.category === 'image' ? 'image' : q.category === 'meme' ? 'meme' : undefined,
-        language: q.language,
-        authorId: q.authorId,
-        sort: q.sort === 'popular' ? 'popular' : 'newest',
-        limit: q.limit ? Number(q.limit) : undefined,
-        offset: q.offset ? Number(q.offset) : undefined,
-      }),
-    };
+    const posts = await images.list({
+      category: q.category === 'image' ? 'image' : q.category === 'meme' ? 'meme' : undefined,
+      language: q.language,
+      authorId: q.authorId,
+      sort: q.sort === 'popular' ? 'popular' : 'newest',
+      limit: q.limit ? Number(q.limit) : undefined,
+      offset: q.offset ? Number(q.offset) : undefined,
+    });
+    return { posts: posts.map(withUrl) };
   });
 
   app.get('/images/:id', { schema: { params: idParam } }, async (req, reply) => {
     const post = await images.get((req.params as { id: string }).id);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
-    return post;
+    return withUrl(post);
   });
 
   app.patch(

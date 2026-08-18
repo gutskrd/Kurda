@@ -95,10 +95,16 @@ export function SocialScreen() {
       <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: colors.primary }]}>Social</Text>
-          <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Messages">
-            <Icon name="chat" size={18} tone="primary" />
-            <Text style={[styles.messages, { color: colors.primary }]}>Messages</Text>
-          </Pressable>
+          <View style={styles.headerLinks}>
+            <Pressable onPress={() => navigation.navigate('Memes')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Meme feed">
+              <Icon name="flame" size={18} tone="primary" />
+              <Text style={[styles.messages, { color: colors.primary }]}>Memes</Text>
+            </Pressable>
+            <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Messages">
+              <Icon name="chat" size={18} tone="primary" />
+              <Text style={[styles.messages, { color: colors.primary }]}>Messages</Text>
+            </Pressable>
+          </View>
         </View>
         <TextInput
           style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
@@ -176,6 +182,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
   title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  headerLinks: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   input: { borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },

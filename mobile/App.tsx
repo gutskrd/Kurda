@@ -39,6 +39,8 @@ import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { WordleScreen } from './src/wordle/WordleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
+import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
+import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { ChallengeListener } from './src/challenge/ChallengeListener';
@@ -177,6 +179,12 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Rhyme" options={{ presentation: 'card' }}>
         {({ navigation }) => <RhymeTrainingScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="MemeDetail" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
     </>
