@@ -35,7 +35,7 @@ export function AuthScreenShell({
         </Pressable>
       ) : null}
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Text style={[styles.brand, { color: colors.primary }]}>Kurda</Text>
+        <Text style={[styles.brand, { color: colors.primary }]}>MyKurda</Text>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
         <GlassCard>
           {hero ? <BreathingIcon name={hero} size={52} tone="primary" style={styles.hero} /> : null}
