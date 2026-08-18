@@ -84,6 +84,7 @@ import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
+import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -351,6 +352,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService });
     registerRhymeRoutes(app, { xp: xpService });
+    // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
+    registerRhymeMatchRoutes(app, { xp: xpService });
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
