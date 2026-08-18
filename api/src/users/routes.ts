@@ -5,17 +5,18 @@ import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { canonicalUsername } from './username.js';
 import { StreakService } from '../streaks/service.js';
-import { MediaService } from '../media/service.js';
 import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import type { AppConfig } from '../config/env.js';
+import { mediaLimits } from '../media/mediaLimits.js';
+import { MediaUsageService } from '../media/mediaUsage.js';
+import { setProfilePhoto } from '../media/profilePhoto.js';
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
 /** Profile photos are small; cap tighter than the global media limit (KUR-177). */
 export const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
-const PROFILE_PHOTO_KIND = 'profile-photo';
-const PROFILE_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 /** Timezone can be changed at most once per week (KUR-031 anti time-travel). */
 export const TIMEZONE_CHANGE_COOLDOWN_DAYS = 7;
 
@@ -122,8 +123,18 @@ async function scheduleOrphan(app: FastifyInstance, oldKey: string | null, newKe
   await app.db.query(`UPDATE media_uploads SET confirmed_at = NULL, created_at = now() WHERE key = $1`, [oldKey]);
 }
 
-export function registerUserRoutes(app: FastifyInstance): void {
+export function registerUserRoutes(app: FastifyInstance, config: AppConfig): void {
   const streaks = new StreakService(app.db);
+  const limits = mediaLimits(config);
+  const usage = new MediaUsageService(app.db, app.redis ?? null);
+
+  // Accept raw image bytes on the profile-photo route (through-server upload,
+  // KUR-177). Fastify rejects a body over bodyLimit (413) before buffering it.
+  app.addContentTypeParser(
+    ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'],
+    { parseAs: 'buffer', bodyLimit: limits.maxUploadBytes + 1024 },
+    (_req, body, done) => done(null, body),
+  );
 
   /** Resolve a stored photo key to a public CDN URL (null when unset/no storage). */
   const photoUrl = (key: string | null): string | null =>
@@ -137,60 +148,47 @@ export function registerUserRoutes(app: FastifyInstance): void {
     return { user: { ...toMe(row), streak, profilePhotoUrl: photoUrl(row.profile_photo_key) } };
   });
 
-  // ---- Profile photo (KUR-177): upload → confirm/set → resolve/clear ----
+  // ---- Profile photo (KUR-177 + cost-safety): through-server upload ----
 
-  /** Signed PUT for a profile photo (image types only, tighter size cap). */
+  /**
+   * Upload a profile photo: POST the raw image bytes (Content-Type image/*). The
+   * server validates + resizes + WebP-compresses it, enforces the size / storage /
+   * op limits, stores it, and replaces the old one. Per-user rate-limited.
+   */
   app.post(
-    '/me/profile-picture/upload-url',
+    '/me/profile-picture',
     {
-      schema: {
-        body: z.object({
-          contentType: z.enum(PROFILE_PHOTO_TYPES),
-          contentLength: z.number().int().positive().max(MAX_PROFILE_PHOTO_BYTES),
-          sha256Hex: z.string().regex(/^[a-f0-9]{64}$/),
-        }),
+      config: {
+        rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
+        skipValidation: true,
       },
       preHandler: requireAuth,
     },
-    async (req) => {
+    async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
-      const b = req.body as { contentType: string; contentLength: number; sha256Hex: string };
-      const media = new MediaService(app.db, app.storage);
-      return media.requestUpload({ kind: PROFILE_PHOTO_KIND, ...b });
+      const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
+      if (!raw) return reply.code(415).send({ code: 'INVALID_IMAGE', message: 'send raw image bytes with an image/* content-type' });
+
+      const res = await setProfilePhoto(
+        { pool: app.db, storage: app.storage, usage, moderation: new ImageModerationService(app.db), limits, log: app.log },
+        req.user!.id,
+        raw,
+      );
+      if (!res.ok) {
+        req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'profile photo upload rejected');
+        return reply.code(res.status).send({ code: res.code, message: res.message });
+      }
+      return { profilePhotoUrl: res.profilePhotoUrl };
     },
   );
 
-  /** Confirm an uploaded key and set it as the user's photo. */
-  app.post(
-    '/me/profile-picture',
-    { schema: { body: z.object({ key: z.string().min(1).max(256) }) }, preHandler: requireAuth },
-    async (req, reply) => {
-      if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
-      const { key } = req.body as { key: string };
-      if (!key.startsWith(`${PROFILE_PHOTO_KIND}/`)) {
-        return reply.code(400).send({ code: 'BAD_KEY', message: 'not a profile-photo key' });
-      }
-      // the key must have come through the upload pipeline (confirmed or not)
-      const known = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1`, [key]);
-      if ((known.rowCount ?? 0) === 0) {
-        return reply.code(400).send({ code: 'UNKNOWN_KEY', message: 'request an upload URL first' });
-      }
-      // auto-screen before it lands (KUR-181): a non-cleared image is rejected
-      // and left unconfirmed, so the media orphan job reclaims it
-      const outcome = await new ImageModerationService(app.db).scan(key, 'profile');
-      if (outcome.scanStatus !== 'cleared') {
-        return reply.code(422).send({ code: 'PHOTO_REJECTED', message: 'this image was rejected by moderation' });
-      }
-      const media = new MediaService(app.db, app.storage);
-      await media.confirmUpload(key);
-      const prev = await app.db.query<{ profile_photo_key: string | null }>(
-        `SELECT profile_photo_key FROM users WHERE id = $1`,
-        [req.user!.id],
-      );
-      await app.db.query(`UPDATE users SET profile_photo_key = $2 WHERE id = $1`, [req.user!.id, key]);
-      await scheduleOrphan(app, prev.rows[0]?.profile_photo_key ?? null, key);
-      return { profilePhotoUrl: photoUrl(key) };
-    },
+  /** Media cost-safety monitoring (admin): stored bytes/objects + our R2 op counts. */
+  app.get('/admin/media/usage', { config: { skipValidation: true }, preHandler: requireRoles('admin') }, async () =>
+    usage.snapshot({
+      storageLimitBytes: limits.storageLimitBytes,
+      classALimit: limits.classALimit,
+      classBLimit: limits.classBLimit,
+    }),
   );
 
   /** Clear the photo (revert to the initials fallback). */
