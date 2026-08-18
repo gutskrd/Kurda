@@ -20,6 +20,7 @@ export type RootStackParamList = {
   Appearance: undefined;
   Settings: undefined;
   Wordle: undefined;
+  Rhyme: undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
