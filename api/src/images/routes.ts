@@ -1,7 +1,15 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { AppError } from '../plugins/errors.js';
+import type { AppConfig } from '../config/env.js';
+import { imagePostLimits } from '../media/mediaLimits.js';
+import { MediaUsageService } from '../media/mediaUsage.js';
+import { storeImageMedia } from '../media/imageMedia.js';
+import { ImageModerationService } from '../moderation/image-moderation-service.js';
 import { ImagePostService, type AuthorRole } from './service.js';
+
+const IMAGE_POST_KIND = 'image-post';
 
 function authorRole(req: FastifyRequest): AuthorRole {
   const roles = req.user?.roles ?? [];
@@ -21,16 +29,55 @@ const editBody = z.object({ caption: z.string().max(2_000).nullable() });
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * Community image & meme sharing (KUR-290). Reads public (guests view); upload/
- * edit/remove require auth + an ownership/admin check. Author role (user/admin/
- * founder) from RBAC (#099/#286).
+ * Community image & meme sharing (KUR-290/291). Reads public (guests view);
+ * upload/create/edit/remove require auth + an ownership/admin check. Images are
+ * uploaded through the server (`POST /images/upload`) so every byte is validated,
+ * resized, WebP-compressed and moderated cost-safely before a post can reference
+ * it — the create step only accepts a media id that already cleared that pipeline.
  */
-export function registerImagePostRoutes(app: FastifyInstance, images = new ImagePostService(app.db)): void {
+export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig, images = new ImagePostService(app.db)): void {
+  const limits = imagePostLimits(config);
+  const usage = new MediaUsageService(app.db, app.redis ?? null);
+
+  /** Through-server upload: raw image bytes → cost-safe stored WebP → media id. */
+  app.post(
+    '/images/upload',
+    {
+      config: {
+        rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
+        skipValidation: true,
+      },
+      preHandler: requireAuth,
+    },
+    async (req, reply) => {
+      if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
+      const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
+      if (!raw) return reply.code(415).send({ code: 'INVALID_IMAGE', message: 'send raw image bytes with an image/* content-type' });
+
+      const res = await storeImageMedia(
+        { pool: app.db, storage: app.storage, usage, moderation: new ImageModerationService(app.db), limits, log: app.log },
+        IMAGE_POST_KIND,
+        raw,
+      );
+      if (!res.ok) {
+        req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'image upload rejected');
+        return reply.code(res.status).send({ code: res.code, message: res.message });
+      }
+      return reply.code(201).send({ imageMediaId: res.mediaId, url: res.url });
+    },
+  );
+
   app.post(
     '/images',
     { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
     async (req, reply) => {
-      const res = await images.create(req.user!.id, authorRole(req), req.body as z.infer<typeof createBody>);
+      const body = req.body as z.infer<typeof createBody>;
+      // the referenced media must have cleared the upload pipeline — a client
+      // cannot attach an arbitrary, unmoderated, or oversized key.
+      if (!(await mediaIsServable(app, body.imageMediaId))) {
+        return reply.code(422).send({ code: 'INVALID_POST', message: 'image must be uploaded via /images/upload first' });
+      }
+      const res = await images.create(req.user!.id, authorRole(req), body);
       if (!res.ok) return reply.code(422).send({ code: 'INVALID_POST', message: 'an image is required' });
       return reply.code(201).send(res.post);
     },
@@ -69,6 +116,16 @@ export function registerImagePostRoutes(app: FastifyInstance, images = new Image
     async (req, reply) =>
       respond(reply, await images.remove((req.params as { id: string }).id, req.user!.id, isAdmin(req))),
   );
+}
+
+/** A media key is postable only if it's a confirmed, non-blocked upload (#294). */
+async function mediaIsServable(app: FastifyInstance, key: string): Promise<boolean> {
+  const res = await app.db.query<{ scan_status: string }>(
+    `SELECT scan_status FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`,
+    [key],
+  );
+  const status = res.rows[0]?.scan_status;
+  return status != null && status !== 'blocked';
 }
 
 function respond(reply: FastifyReply, res: { ok: true; post: unknown } | { ok: false; reason: 'not-found' | 'forbidden' }): unknown {

@@ -31,6 +31,21 @@ export function mediaLimits(config: AppConfig): MediaLimits {
   };
 }
 
+/**
+ * Limits for community image/meme posts (KUR-290/291): same storage/op ceilings
+ * and accepted types as avatars (shared R2 budget), but a larger dimension + stored
+ * cap and its own upload rate limit.
+ */
+export function imagePostLimits(config: AppConfig): MediaLimits {
+  return {
+    ...mediaLimits(config),
+    maxStoredBytes: Math.round(config.MEDIA_IMAGE_MAX_STORED_KB * 1024),
+    maxDimension: config.MEDIA_IMAGE_MAX_DIMENSION,
+    uploadRateMax: config.MEDIA_IMAGE_UPLOAD_RATE_MAX,
+    uploadRateWindowMs: Math.round(config.MEDIA_IMAGE_UPLOAD_RATE_WINDOW_MIN * 60_000),
+  };
+}
+
 export function exceedsUploadSize(byteLength: number, maxUploadBytes: number): boolean {
   return byteLength > maxUploadBytes;
 }

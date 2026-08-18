@@ -53,6 +53,13 @@ const envSchema = z.object({
   MEDIA_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** Accepted source image MIME types (comma-separated). */
   MEDIA_ALLOWED_TYPES: z.string().default('image/jpeg,image/png,image/webp'),
+  /** Community image/meme posts (KUR-290/291) — larger than an avatar but still
+   * cost-capped. Longest edge + hard stored cap for the processed WebP. */
+  MEDIA_IMAGE_MAX_DIMENSION: z.coerce.number().int().positive().default(1280),
+  MEDIA_IMAGE_MAX_STORED_KB: z.coerce.number().positive().default(500),
+  /** Per-user image-post upload rate limit. */
+  MEDIA_IMAGE_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),
+  MEDIA_IMAGE_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** HMAC secret for access tokens. MUST be overridden in production. */
   JWT_SECRET: z.string().min(32).default('kurda-dev-secret-do-not-use-in-prod!!'),
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */

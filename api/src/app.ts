@@ -6,6 +6,8 @@ import { registerAuthRoutes } from './auth/routes.js';
 import { Cache } from './cache/cache.js';
 import { JobQueue } from './jobs/queue.js';
 import { createStorage, type MediaStorage } from './media/storage.js';
+import { registerImageUploadParser } from './media/uploadParser.js';
+import { mediaLimits } from './media/mediaLimits.js';
 import { createRedis, redisHealthCheck } from './cache/redis.js';
 import type { AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
@@ -253,6 +255,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // optional phone (SMS) verification (KUR-297) — stub sender until a provider
     // is configured; raises trust (#295) and is exported/deleted with the account
     registerPhoneVerificationRoutes(app, new PhoneVerificationService(app.db, { sms: new StubSmsSender() }));
+    // shared raw-image body parser for every through-server upload (KUR-177/290)
+    registerImageUploadParser(app, mediaLimits(config).maxUploadBytes);
     registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
     registerWalletRoutes(app);
@@ -285,8 +289,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLibraryCommentRoutes(app, undefined, aiMod, trust);
     // community library reporting → unified moderation queue (KUR-285)
     registerLibraryReportRoutes(app);
-    // community image & meme sharing (KUR-290): content model + upload API
-    registerImagePostRoutes(app);
+    // community image & meme sharing (KUR-290): content model + cost-safe
+    // through-server upload (KUR-291)
+    registerImagePostRoutes(app, config);
     // user tags & badges (KUR-286): main-tag precedence + claimable tags
     registerTagRoutes(app);
     registerGroupRoutes(app, groups, trust);

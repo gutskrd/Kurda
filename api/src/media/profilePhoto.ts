@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
-import { processProfileImage } from './imageProcess.js';
+import { processImage } from './imageProcess.js';
 import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type MediaLimits } from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 
@@ -55,7 +55,7 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
   }
 
   // 3) process: real type + resize + WebP + compress-to-cap (or reject)
-  const proc = await processProfileImage(raw, {
+  const proc = await processImage(raw, {
     maxDimension: limits.maxDimension,
     maxStoredBytes: limits.maxStoredBytes,
     allowedTypes: limits.allowedTypes,
