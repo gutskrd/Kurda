@@ -26,7 +26,12 @@ export function NotificationBell() {
   const badge = unreadBadge(unread);
 
   return (
-    <Pressable style={[styles.row, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate('NotificationCenter')}>
+    <Pressable
+      style={[styles.row, { backgroundColor: colors.primary }]}
+      onPress={() => navigation.navigate('NotificationCenter')}
+      accessibilityRole="button"
+      accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+    >
       <Icon name="bell" size={20} color={colors.textOnPrimary} />
       <Text style={[styles.label, { color: colors.textOnPrimary }]}>Notifications</Text>
       {badge ? (

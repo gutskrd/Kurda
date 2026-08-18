@@ -82,7 +82,13 @@ export function DailyRewardCard() {
       </View>
 
       {status.canClaim ? (
-        <Pressable onPress={claim} disabled={claiming} style={[styles.claim, { backgroundColor: colors.primary }]}>
+        <Pressable
+          onPress={claim}
+          disabled={claiming}
+          style={[styles.claim, { backgroundColor: colors.primary }]}
+          accessibilityRole="button"
+          accessibilityLabel={`Claim ${status.reward} Zêr daily reward`}
+        >
           {claiming ? (
             <ActivityIndicator color={colors.textOnPrimary} />
           ) : (
