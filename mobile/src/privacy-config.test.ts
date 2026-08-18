@@ -3,14 +3,10 @@
  * tracking, honest permission strings, only permissions the app actually uses, and
  * a complete Privacy Manifest. Reads mobile/app.json directly.
  */
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import rawAppJson from '../app.json';
 
-const appJson = JSON.parse(
-  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'app.json'), 'utf8'),
-) as {
+const appJson = rawAppJson as unknown as {
   expo: {
     ios: {
       privacyManifests: {
