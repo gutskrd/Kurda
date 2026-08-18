@@ -20,15 +20,18 @@ export interface ProcessOptions {
 const QUALITY_LADDER = [82, 72, 62, 52, 42, 32];
 
 /**
- * Validate + normalise a profile image for storage (KUR-177 hardening):
+ * Validate + normalise an image for storage (KUR-177 hardening; shared by profile
+ * photos and community image/meme posts KUR-290):
  *   1. sniff the real type (magic bytes) and reject anything not allowed,
  *   2. decode with sharp (rejects malformed images),
  *   3. auto-orient, strip metadata, resize to fit `maxDimension` (never enlarge),
  *   4. encode WebP, stepping quality down until it fits `maxStoredBytes`; if even
  *      the lowest quality is too big, reject rather than store an oversized file.
  * Pure w.r.t. I/O — takes and returns buffers, so it is fully unit-testable.
+ * Caller supplies the dimension/size/type limits, so the same code caps a 512 px
+ * avatar and a 1280 px meme.
  */
-export async function processProfileImage(input: Buffer, opts: ProcessOptions): Promise<ProcessResult> {
+export async function processImage(input: Buffer, opts: ProcessOptions): Promise<ProcessResult> {
   const sniffed = sniffImageType(input);
   if (!sniffed || !opts.allowedTypes.has(sniffed)) return { ok: false, reason: 'invalid-type' };
 

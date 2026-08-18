@@ -127,14 +127,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   const streaks = new StreakService(app.db);
   const limits = mediaLimits(config);
   const usage = new MediaUsageService(app.db, app.redis ?? null);
-
-  // Accept raw image bytes on the profile-photo route (through-server upload,
-  // KUR-177). Fastify rejects a body over bodyLimit (413) before buffering it.
-  app.addContentTypeParser(
-    ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'],
-    { parseAs: 'buffer', bodyLimit: limits.maxUploadBytes + 1024 },
-    (_req, body, done) => done(null, body),
-  );
+  // The raw-image body parser is registered app-wide (registerImageUploadParser),
+  // shared with the meme/image upload route (KUR-290).
 
   /** Resolve a stored photo key to a public CDN URL (null when unset/no storage). */
   const photoUrl = (key: string | null): string | null =>

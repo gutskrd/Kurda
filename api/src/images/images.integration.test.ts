@@ -27,6 +27,16 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   const call = (method: 'POST' | 'GET' | 'PATCH' | 'DELETE', url: string, token?: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.60.0.9' });
 
+  // A post can only reference media that cleared the upload pipeline (#294), so
+  // seed a confirmed+cleared row for the keys these model tests use.
+  const seedMedia = (key: string, scanStatus = 'cleared') =>
+    pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
+       VALUES ($1, 'image/webp', 1024, now(), $2)
+       ON CONFLICT (key) DO UPDATE SET confirmed_at = now(), scan_status = EXCLUDED.scan_status`,
+      [key, scanStatus],
+    );
+
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -52,18 +62,29 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     expect((await call('POST', '/images', undefined, { imageMediaId: 'm/x.jpg' })).statusCode).toBe(401);
     expect((await call('POST', '/images', authorTok, { caption: 'no image' })).statusCode).toBe(400); // schema: imageMediaId required
 
+    await seedMedia('media/meme.gif');
     const meme = await call('POST', '/images', authorTok, { imageMediaId: 'media/meme.gif', caption: 'kurdî meme' });
     expect(meme.statusCode).toBe(201);
     expect(meme.json().category).toBe('meme'); // default
     expect(meme.json().authorRole).toBe('user');
 
+    await seedMedia('media/f.png');
     const founderPost = await call('POST', '/images', founderTok, { imageMediaId: 'media/f.png', category: 'image' });
     expect(founderPost.statusCode).toBe(201);
     expect(founderPost.json().authorRole).toBe('founder');
     expect(founderPost.json().caption).toBeNull();
   });
 
+  it('rejects a post whose media never cleared the upload pipeline', async () => {
+    // unknown key
+    expect((await call('POST', '/images', authorTok, { imageMediaId: 'media/never-uploaded.webp' })).statusCode).toBe(422);
+    // known but blocked by moderation
+    await seedMedia('media/blocked.webp', 'blocked');
+    expect((await call('POST', '/images', authorTok, { imageMediaId: 'media/blocked.webp' })).statusCode).toBe(422);
+  });
+
   it('browse is public, filters by category, and read increments views', async () => {
+    await seedMedia('media/m2.jpg');
     await call('POST', '/images', authorTok, { imageMediaId: 'media/m2.jpg', category: 'meme' });
     const list = await call('GET', '/images?category=meme');
     expect(list.statusCode).toBe(200);
@@ -76,6 +97,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   });
 
   it('author or admin edits caption / removes; others cannot; removed hidden but retained', async () => {
+    await seedMedia('media/edit.jpg');
     const post = (await call('POST', '/images', authorTok, { imageMediaId: 'media/edit.jpg', caption: 'v1' })).json();
 
     expect((await call('PATCH', `/images/${post.id}`, otherTok, { caption: 'hijack' })).statusCode).toBe(403);

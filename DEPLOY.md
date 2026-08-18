@@ -114,8 +114,16 @@ so only Cloudflare can see them.**
 | `MEDIA_STORAGE_LIMIT_GB` | 9 | **hard** app-level total-storage kill switch (below R2's free 10 GB) |
 | `MEDIA_MONTHLY_CLASS_A_LIMIT` | 900000 | monthly write/list op ceiling (below Cloudflare's 1M) |
 | `MEDIA_MONTHLY_CLASS_B_LIMIT` | 9000000 | monthly read op ceiling (below Cloudflare's 10M) |
-| `MEDIA_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 10 / 60 | per-user upload rate limit |
+| `MEDIA_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 10 / 60 | per-user profile-photo upload rate limit |
 | `MEDIA_ALLOWED_TYPES` | jpeg,png,webp | accepted source types (sniffed, not declared) |
+| `MEDIA_IMAGE_MAX_DIMENSION` | 1280 | longest edge of a processed image/meme post |
+| `MEDIA_IMAGE_MAX_STORED_KB` | 500 | hard cap on a stored image/meme (processed WebP) |
+| `MEDIA_IMAGE_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user image/meme upload rate limit |
+
+Image/meme posts (KUR-291) upload the same way as avatars — `POST /images/upload`
+takes raw bytes, the server sniffs/resizes/WebP-compresses/moderates them, then
+`POST /images` creates a post that can only reference a media key that cleared that
+pipeline. They share the storage/op ceilings above (one R2 budget).
 
 At the storage limit the API returns `MEDIA_STORAGE_LIMIT_REACHED` and stores
 nothing new; **existing photos keep working and are never auto-deleted**. If
