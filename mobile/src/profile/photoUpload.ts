@@ -1,54 +1,48 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
-import { describeError } from '../api/errors';
-import { base64ToBytes, sha256Hex } from './photoHash';
+import { describeUploadFailure, normalizeContentType, type UploadResult } from './photoUploadResult';
 
-/** The signed-upload ticket from the API (KUR-177). */
-interface UploadTicket {
-  key: string;
-  uploadUrl: string;
-  requiredHeaders: Record<string, string>;
-  publicUrl: string;
-}
-
-export type UploadResult = { ok: true; url: string } | { ok: false; error: string };
+export type { UploadResult } from './photoUploadResult';
 
 /**
- * Upload a picked/cropped image as the user's profile photo (KUR-180):
- * hash + size the file → request a signed PUT (#177) → binary-PUT the bytes →
- * confirm (moderation-gated, #181) which sets it and returns the public URL.
+ * Upload a picked/cropped image as the user's profile photo (KUR-177, through-server).
  *
- * The hashing is pure + tested; the network steps require live object storage
- * (S3/R2) configured on the API — they can't be exercised without it.
+ * POSTs the raw image bytes to `/me/profile-picture`; the server validates the
+ * *actual* file type, resizes to ≤512 px, re-encodes to WebP ≤250 KB, enforces the
+ * storage / op / rate limits, stores it, and swaps out the old one — returning the
+ * public URL. The client's declared content-type is a hint only; the server sniffs.
+ *
+ * Binary bodies can't go through `ApiClient.request()` (it JSON-encodes), so this
+ * streams the file with expo-file-system and attaches the access token directly.
  */
 export async function uploadProfilePhoto(
   client: ApiClient,
   photo: { uri: string; contentType: string },
 ): Promise<UploadResult> {
   try {
-    const base64 = await FileSystem.readAsStringAsync(photo.uri, { encoding: FileSystem.EncodingType.Base64 });
-    const bytes = base64ToBytes(base64);
+    const token = await client.getAccessToken();
+    if (!token) return { ok: false, error: 'Your session expired. Please sign in again.' };
 
-    const ticketRes = await client.post<UploadTicket>('/me/profile-picture/upload-url', {
-      contentType: photo.contentType,
-      contentLength: bytes.length,
-      sha256Hex: sha256Hex(bytes),
-    });
-    if (!ticketRes.ok) return { ok: false, error: describeError(ticketRes.error).message };
-    const ticket = ticketRes.data;
-
-    const put = await FileSystem.uploadAsync(ticket.uploadUrl, photo.uri, {
-      httpMethod: 'PUT',
-      headers: ticket.requiredHeaders,
+    const res = await FileSystem.uploadAsync(`${client.baseUrl}/me/profile-picture`, photo.uri, {
+      httpMethod: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': normalizeContentType(photo.contentType),
+      },
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     });
-    if (put.status < 200 || put.status >= 300) {
-      return { ok: false, error: `Upload failed (${put.status}). Please try again.` };
+
+    if (res.status >= 200 && res.status < 300) {
+      try {
+        const body = JSON.parse(res.body) as { profilePhotoUrl?: string };
+        if (body.profilePhotoUrl) return { ok: true, url: body.profilePhotoUrl };
+      } catch {
+        // fall through to the generic error below
+      }
+      return { ok: false, error: 'The upload finished but no photo was returned. Please try again.' };
     }
 
-    const confirm = await client.post<{ profilePhotoUrl: string }>('/me/profile-picture', { key: ticket.key });
-    if (!confirm.ok) return { ok: false, error: describeError(confirm.error).message };
-    return { ok: true, url: confirm.data.profilePhotoUrl };
+    return { ok: false, error: describeUploadFailure(res.status, res.body) };
   } catch (e) {
     return { ok: false, error: (e as Error)?.message ?? 'Could not upload the photo.' };
   }
