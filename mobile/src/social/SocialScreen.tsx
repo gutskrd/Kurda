@@ -74,6 +74,8 @@ export function SocialScreen() {
       key={u.userId}
       style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
       onPress={() => openProfile(u.userId)}
+      accessibilityRole="button"
+      accessibilityLabel={`${u.username}${u.displayName ? `, ${u.displayName}` : ''} — open profile`}
     >
       <InitialsAvatar name={u.username} id={u.userId} size={36} />
       <View style={styles.rowMain}>
@@ -93,7 +95,7 @@ export function SocialScreen() {
       <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: colors.primary }]}>Social</Text>
-          <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink}>
+          <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Messages">
             <Icon name="chat" size={18} tone="primary" />
             <Text style={[styles.messages, { color: colors.primary }]}>Messages</Text>
           </Pressable>
@@ -136,10 +138,20 @@ export function SocialScreen() {
                     row(
                       u,
                       <View style={styles.actions}>
-                        <Pressable onPress={() => respond(u.userId, true)} style={[styles.accept, { backgroundColor: colors.primary }]}>
+                        <Pressable
+                          onPress={() => respond(u.userId, true)}
+                          style={[styles.accept, { backgroundColor: colors.primary }]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Accept friend request from ${u.username}`}
+                        >
                           <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accept</Text>
                         </Pressable>
-                        <Pressable onPress={() => respond(u.userId, false)} hitSlop={8}>
+                        <Pressable
+                          onPress={() => respond(u.userId, false)}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Decline friend request from ${u.username}`}
+                        >
                           <Text style={[styles.decline, { color: colors.danger }]}>✕</Text>
                         </Pressable>
                       </View>,
