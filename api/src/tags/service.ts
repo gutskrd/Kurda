@@ -35,6 +35,16 @@ export interface ProfileTags {
   claimable: DisplayTag[];
 }
 
+/** A user's own self-claimed tag incl. its display state (owner manage UI). */
+export interface ClaimedTag {
+  key: string;
+  label: string;
+  category: string;
+  value: string | null;
+  sensitive: boolean;
+  displayed: boolean;
+}
+
 export type ClaimResult =
   | { ok: true }
   | { ok: false; reason: 'unknown-tag' | 'not-claimable' | 'consent-required' };
@@ -88,6 +98,19 @@ export class TagService {
       ...claimed.rows.map((r) => ({ key: r.key, label: r.label, category: r.category, value: r.value, sensitive: r.sensitive, auto: false })),
     ];
     return { main, claimable };
+  }
+
+  /** All of a user's self-claimed tags incl. hidden ones (for the owner's manage
+   *  UI, KUR-287) — unlike profileTags which only returns displayed tags. */
+  async claimedTags(userId: string): Promise<ClaimedTag[]> {
+    const res = await this.pool.query<{ key: string; label: string; category: string; value: string | null; sensitive: boolean; displayed: boolean }>(
+      `SELECT t.key, t.label, t.category, ut.value, t.sensitive, ut.displayed
+       FROM user_tags ut JOIN tags t ON t.id = ut.tag_id
+       WHERE ut.user_id = $1 AND t.active = true AND t.acquisition = 'self_claim'
+       ORDER BY t.category`,
+      [userId],
+    );
+    return res.rows.map((r) => ({ key: r.key, label: r.label, category: r.category, value: r.value, sensitive: r.sensitive, displayed: r.displayed }));
   }
 
   /** Self-claim a claimable tag. Sensitive tags require explicit consent (#109). */

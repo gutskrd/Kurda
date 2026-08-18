@@ -85,6 +85,11 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
     shown = (await call('GET', '/me/tags', userTok)).json().claimable.map((t: { key: string }) => t.key);
     expect(shown).not.toContain('age');
 
+    // the owner-manage endpoint still lists it (hidden) so it can be re-enabled (#287)
+    const managed = (await call('GET', '/me/tags/claimed', userTok)).json().tags as Array<{ key: string; displayed: boolean }>;
+    const ageRow = managed.find((t) => t.key === 'age');
+    expect(ageRow?.displayed).toBe(false);
+
     // revoke removes the data entirely
     expect((await call('DELETE', '/me/tags/age', userTok)).statusCode).toBe(200);
     const rows = await pool.query(`SELECT 1 FROM user_tags ut JOIN tags t ON t.id = ut.tag_id WHERE ut.user_id = $1 AND t.key = 'age'`, [userId]);
