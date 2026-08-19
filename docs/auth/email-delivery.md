@@ -50,6 +50,21 @@ Provider notes:
   sandbox to send to arbitrary recipients; verify the domain / From address.
 - **Postmark / Mailgun** — use the SMTP credentials from their dashboard.
 
+## Where to set these
+
+The config is read from environment variables (there's no `.env` auto-loader in
+the app). The **worker** process is what actually sends, so it must have them.
+
+- **Local dev:** export them in your shell (or inline) before starting the
+  worker, e.g. `RESEND_API_KEY=… EMAIL_FROM=… npm run worker --workspace api`.
+  `api/.env.example` lists the keys.
+- **Docker (`docker compose up`):** `docker-compose.yml` already passes these
+  through to both the `api` and `worker` services via `${VAR}` substitution —
+  put the real values in a **`.env` beside `docker-compose.yml`** (copy the root
+  `.env.example`; it's gitignored). Unset values fall back to the stub.
+- **Production/staging:** set them as real environment variables (or a mounted
+  `.env`) on the host running the container. Never commit the key.
+
 ## Bounces & complaints
 
 `POST /webhooks/email` (guarded by `EMAIL_WEBHOOK_SECRET`) adds bounced/complained
