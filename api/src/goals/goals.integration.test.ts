@@ -21,7 +21,7 @@ describe.skipIf(!DATABASE_URL)('daily goals (integration)', () => {
       payload: {
         email: `goal_${suffix}_${ip}@it.kurda.app`,
         username: `goal_${suffix}_${ip}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: `10.40.0.${ip}`,

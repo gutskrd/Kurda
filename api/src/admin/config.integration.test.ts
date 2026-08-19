@@ -19,7 +19,7 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
   async function admin(tag: string, ip: string): Promise<string> {
     const r = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `cfg_${tag}_${suffix}@it.kurda.app`, username: `cfg_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `cfg_${tag}_${suffix}@it.kurda.app`, username: `cfg_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     const id = r.json().user.id;

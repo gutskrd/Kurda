@@ -29,7 +29,7 @@ describe.skipIf(!DATABASE_URL)('weekly leagues (integration)', () => {
       payload: {
         email: `lg_${i}_${suffix}@it.kurda.app`,
         username: `lg_${i}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       // distinct IPs so 12 signups don't trip per-IP anti-bot limits

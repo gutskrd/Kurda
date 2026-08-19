@@ -18,7 +18,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   async function register(tag: string, ip: string): Promise<{ token: string; id: string }> {
     const res = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `img_${tag}_${suffix}@it.kurda.app`, username: `img_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `img_${tag}_${suffix}@it.kurda.app`, username: `img_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     userIds.push(res.json().user.id);
@@ -47,7 +47,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     await pool.query(`UPDATE users SET roles = '{founder}' WHERE id = $1`, [founder.id]);
     founderTok = await app.inject({
       method: 'POST', url: '/auth/login',
-      payload: { email: `img_founder_${suffix}@it.kurda.app`, password: 'a-strong-password' },
+      payload: { email: `img_founder_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: '10.60.0.3',
     }).then((r) => r.json().tokens.accessToken);
   });

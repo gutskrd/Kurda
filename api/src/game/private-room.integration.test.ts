@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('private rooms (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email, username: `room_${suffix}_${tag}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email, username: `room_${suffix}_${tag}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: `10.23.0.${(emails.length % 250) + 1}`,
     });
     return { id: reg.json().user.id, token: reg.json().tokens.accessToken };

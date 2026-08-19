@@ -26,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('login lockout (integration)', () => {
   let userId: string;
   const suffix = Date.now().toString(36);
   const email = `lock_${suffix}@it.kurda.app`;
-  const password = 'a-strong-password';
+  const password = 'a-strong-password1';
   let ipCounter = 0;
   const freshIp = () => `10.12.${Math.floor(ipCounter / 250)}.${(ipCounter++ % 250) + 1}`;
 

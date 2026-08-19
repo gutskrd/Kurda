@@ -26,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('experiments (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `exp_${suffix}@it.kurda.app`, username: `exp_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `exp_${suffix}@it.kurda.app`, username: `exp_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.107.0.1',
     });
     userId = res.json().user.id;

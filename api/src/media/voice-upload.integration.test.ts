@@ -111,7 +111,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `voice_${suffix}@it.kurda.app`, username: `voice_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `voice_${suffix}@it.kurda.app`, username: `voice_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.64.0.9',
     });
     const token = reg.json().tokens.accessToken as string;

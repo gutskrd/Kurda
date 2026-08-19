@@ -25,7 +25,7 @@ describe.skipIf(!DATABASE_URL)('activity feed (integration)', () => {
       payload: {
         email: `act_${tag}_${suffix}@it.kurda.app`,
         username: `act_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

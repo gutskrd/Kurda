@@ -27,7 +27,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('library trust enforcement (integra
       payload: {
         email: `libtrust_${tag}_${suffix}@it.kurda.app`,
         username: `libt_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

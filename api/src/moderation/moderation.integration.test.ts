@@ -29,7 +29,7 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
       payload: {
         email: `mod_${tag}_${suffix}@it.kurda.app`,
         username: `mod_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

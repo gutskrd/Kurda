@@ -28,7 +28,7 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
       payload: {
         email: `wallet_${suffix}@it.kurda.app`,
         username: `wallet_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.19.0.1',

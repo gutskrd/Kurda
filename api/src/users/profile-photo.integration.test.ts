@@ -182,7 +182,7 @@ describe.skipIf(!ready)('profile photo cost-safety (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email, username: `pprl_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email, username: `pprl_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.77.0.9',
     });
     const token = reg.json().tokens.accessToken as string;

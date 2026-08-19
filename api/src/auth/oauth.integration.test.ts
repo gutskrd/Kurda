@@ -104,7 +104,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     const created = await pool.query(
       `INSERT INTO users (email, username, password_hash, email_verified_at)
        VALUES ($1, $2, $3, now()) RETURNING id`,
-      [email, `linked_${suffix}`.slice(0, 30), await hashPassword('a-strong-password')],
+      [email, `linked_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
     );
     const token = await makeToken('google', { sub: `g-link-${suffix}`, email, emailVerified: true });
     const result = await service.signIn('google', token);
@@ -116,7 +116,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     const email = `unverified_${suffix}@gmail.com`;
     await pool.query(
       `INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3)`,
-      [email, `unver_${suffix}`.slice(0, 30), await hashPassword('a-strong-password')],
+      [email, `unver_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
     );
     const token = await makeToken('google', { sub: `g-unver-${suffix}`, email, emailVerified: true });
     await expect(service.signIn('google', token)).rejects.toMatchObject({

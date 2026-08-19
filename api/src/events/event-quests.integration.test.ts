@@ -37,7 +37,7 @@ describe.skipIf(!DATABASE_URL)('event quests (integration)', () => {
       payload: {
         email: `quests_${suffix}@it.kurda.app`,
         username: `quests_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.91.0.1',

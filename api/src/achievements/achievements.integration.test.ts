@@ -36,7 +36,7 @@ describe.skipIf(!DATABASE_URL)('achievement awards (integration)', () => {
       payload: {
         email: `ach_${suffix}@it.kurda.app`,
         username: `ach_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.18.0.1',

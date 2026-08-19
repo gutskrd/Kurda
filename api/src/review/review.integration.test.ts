@@ -29,7 +29,7 @@ describe.skipIf(!DATABASE_URL)('review queue (integration)', () => {
       payload: {
         email: `rev_${suffix}@it.kurda.app`,
         username: `rev_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.50.0.1',

@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
   const register = async (tag: string, ip: string): Promise<{ token: string; id: string }> => {
     const res = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `im_${tag}_${suffix}@it.kurda.app`, username: `im_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `im_${tag}_${suffix}@it.kurda.app`, username: `im_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     userIds.push(res.json().user.id);

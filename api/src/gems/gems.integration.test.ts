@@ -25,7 +25,7 @@ describe.skipIf(!DATABASE_URL)('gem earning (integration)', () => {
       payload: {
         email: `gem_${tag}_${suffix}@it.kurda.app`,
         username: `gem_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.68.0.1',

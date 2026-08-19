@@ -8,6 +8,15 @@ import { OAuthService } from './oauth.js';
 import { AuthService } from './service.js';
 import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
+import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
+
+/** Rejects a password that fails policy with a specific, actionable reason. */
+function assertPasswordPolicy(password: string): void {
+  const check = validatePassword(password);
+  if (!check.ok) {
+    throw new AppError('WEAK_PASSWORD', 400, PASSWORD_ERROR_MESSAGE[check.reason], { reason: check.reason });
+  }
+}
 
 /** Optional client device fingerprint (#110), supplied as a header. */
 function deviceIdOf(headers: Record<string, unknown>): string | null {
@@ -19,7 +28,7 @@ function deviceIdOf(headers: Record<string, unknown>): string | null {
 export const registerBodySchema = z.object({
   email: z.email().max(254),
   username: z.string().min(3).max(30),
-  password: z.string().min(8).max(128),
+  password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
   displayName: z.string().min(1).max(60).optional(),
   locale: z.enum(['en', 'ku', 'de', 'tr', 'ar']).optional(),
   timezone: z.string().max(50).optional(),
@@ -62,7 +71,7 @@ export const passwordResetRequestBodySchema = z.object({
 
 export const resetPasswordBodySchema = z.object({
   token: z.string().min(20).max(200),
-  password: z.string().min(8).max(128),
+  password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
 });
 
 export const oauthBodySchema = z.object({
@@ -93,6 +102,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       // reason; the DB citext unique index remains the case-insensitive authority.
       const uname = validateUsername(body.username);
       if (!uname.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[uname.reason], { reason: uname.reason });
+      assertPasswordPolicy(body.password);
       if (isDisposableEmail(body.email)) throw signupRejected();
       if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw signupRejected();
 
@@ -217,6 +227,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req) => {
       const body = req.body as z.infer<typeof resetPasswordBodySchema>;
+      assertPasswordPolicy(body.password);
       await service.resetPassword(body.token, body.password);
       return { reset: true };
     },

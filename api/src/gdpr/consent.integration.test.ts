@@ -31,7 +31,7 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
     app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { password: 'a-strong-password', acceptTerms: true, ...body },
+      payload: { password: 'a-strong-password1', acceptTerms: true, ...body },
       remoteAddress: ip,
     });
 
@@ -54,7 +54,7 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
       payload: {
         email: `noterms_${suffix}@it.kurda.app`,
         username: `noterms_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
       },
       remoteAddress: '10.15.0.1',
     });

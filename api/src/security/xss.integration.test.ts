@@ -30,7 +30,7 @@ describe.skipIf(!DATABASE_URL)('XSS corpus vs. profile bio (integration)', () =>
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `xss_${suffix}@it.kurda.app`, username: `xss_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `xss_${suffix}@it.kurda.app`, username: `xss_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.108.0.1',
     });
     token = res.json().tokens.accessToken;

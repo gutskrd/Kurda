@@ -31,7 +31,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
       payload: {
         email: `${name}_${suffix}@it.kurda.app`,
         username: `${name}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

@@ -30,7 +30,7 @@ describe.skipIf(!DATABASE_URL)('notification preferences (integration)', () => {
       payload: {
         email: `notif_${suffix}@it.kurda.app`,
         username: `notif_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.95.0.1',

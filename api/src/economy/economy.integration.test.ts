@@ -45,7 +45,7 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
       payload: {
         email: `econ_${suffix}@it.kurda.app`,
         username: `econ_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.74.0.1',

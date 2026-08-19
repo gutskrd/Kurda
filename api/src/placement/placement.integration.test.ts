@@ -44,7 +44,7 @@ describe.skipIf(!DATABASE_URL)('placement (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `plc_${suffix}@it.kurda.app`, username: `plc_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `plc_${suffix}@it.kurda.app`, username: `plc_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.80.0.2',
     });
     token = reg.json().tokens.accessToken;

@@ -33,7 +33,7 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
       payload: {
         email: `daily_${suffix}@it.kurda.app`,
         username: `daily_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.67.0.1',

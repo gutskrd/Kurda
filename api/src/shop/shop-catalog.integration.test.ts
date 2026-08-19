@@ -30,7 +30,7 @@ describe.skipIf(!DATABASE_URL)('shop catalog (integration)', () => {
       payload: {
         email: `shopcat_${tag}_${suffix}@it.kurda.app`,
         username: `shopcat_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.69.0.1',
