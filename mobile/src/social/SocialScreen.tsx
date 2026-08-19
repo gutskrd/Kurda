@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 
@@ -127,7 +128,7 @@ export function SocialScreen() {
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
               searching ? (
-                <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+                <SkeletonList count={5} style={{ marginTop: spacing.sm }} />
               ) : (
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>No users found.</Text>
               )

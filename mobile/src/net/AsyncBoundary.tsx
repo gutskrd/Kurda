@@ -1,7 +1,9 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
 import type { ApiError } from '../api/types';
 import { spacing, radii, typography } from '../theme/tokens';
 import { ErrorRetry } from '../theme/glass';
+import { SkeletonList } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useIsOnline } from './useNetworkStatus';
 import { deriveAsyncState } from './asyncState';
@@ -19,6 +21,7 @@ export function AsyncBoundary({
   isEmpty,
   onRetry,
   emptyText = 'Nothing here yet.',
+  skeleton,
   children,
 }: {
   loading: boolean;
@@ -26,6 +29,9 @@ export function AsyncBoundary({
   isEmpty?: boolean;
   onRetry?: () => void;
   emptyText?: string;
+  /** Loading placeholder. Defaults to a generic list skeleton; pass a screen-shaped
+   *  skeleton for a closer match to the content that's coming. */
+  skeleton?: ReactNode;
   /** Content to show once ready. Pass a function when it dereferences loaded data —
    *  it's only invoked in the ready state, so it never runs during loading/error. */
   children: React.ReactNode | (() => React.ReactNode);
@@ -36,7 +42,7 @@ export function AsyncBoundary({
 
   switch (state.kind) {
     case 'loading':
-      return <ActivityIndicator color={colors.primary} style={styles.center} accessibilityLabel="Loading" />;
+      return <>{skeleton ?? <SkeletonList style={styles.skeleton} />}</>;
 
     case 'offline':
       return (
@@ -73,6 +79,7 @@ export function AsyncBoundary({
 }
 
 const styles = StyleSheet.create({
+  skeleton: { padding: spacing.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { fontSize: typography.sizes.md, textAlign: 'center' },

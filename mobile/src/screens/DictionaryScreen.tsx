@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { pushRecent } from '../dictionary/recents';
@@ -9,6 +9,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 
 /**
@@ -136,7 +137,7 @@ export function DictionaryScreen() {
         ) : null}
 
         {loading && results.length === 0 ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+          <SkeletonList avatar={false} count={5} style={{ marginTop: spacing.sm }} />
         ) : null}
 
         {failed && !loading ? (

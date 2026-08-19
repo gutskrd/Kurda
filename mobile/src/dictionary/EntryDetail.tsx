@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -7,6 +7,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { SenseSection } from './SenseSection';
 import type { Entry } from './types';
@@ -53,7 +54,10 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
         </View>
 
         {!entry ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+          <View style={styles.body}>
+            <Skeleton width="45%" height={28} />
+            <SkeletonLines count={4} />
+          </View>
         ) : (
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: tabBarInset }]}>
             <View style={styles.headwordRow}>
