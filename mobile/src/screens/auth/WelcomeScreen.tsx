@@ -4,6 +4,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { useAuth } from '../../auth/AuthContext';
+import { signInWithGoogle } from '../../auth/google';
 import { Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -19,11 +20,13 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
  * initial route, so Login/Register can always go back here; its own back
  * re-opens the intro slides.
  *
- * Sign in with Apple (KUR-276) is wired end-to-end: the native flow returns an
- * identity token that the backend (POST /auth/oauth) verifies. Apple's own
- * button is shown only where the OS supports it (iOS 13+), per App Store rules.
- * Google still needs its native flow + GOOGLE_CLIENT_IDS, so it shows a
- * "coming soon" notice rather than a broken flow.
+ * Sign in with Apple (KUR-276) and Google (KUR-018) are both wired end-to-end:
+ * the native flow returns an identity token that the backend (POST /auth/oauth)
+ * verifies. Apple's own button is shown only where the OS supports it (iOS 13+),
+ * per App Store rules. Google is enabled once its client IDs are configured
+ * (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID + backend GOOGLE_CLIENT_IDS); until then it
+ * falls back to a "coming soon" notice rather than a broken flow. See
+ * docs/auth/google-signin.md.
  */
 export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors, scheme } = useTheme();
@@ -96,6 +99,27 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   const soon = (provider: string) =>
     Alert.alert(`${provider} sign-in is coming soon`, 'For now, continue with email — it takes a few seconds.');
 
+  const onGoogle = async () => {
+    // The native sheet and the backend exchange are separate failure domains.
+    const res = await signInWithGoogle();
+    if (res.kind === 'cancelled') return; // user backed out — not an error
+    if (res.kind === 'not-configured') {
+      // no GOOGLE_CLIENT_IDS in this build yet — keep the graceful fallback
+      soon('Google');
+      return;
+    }
+    if (res.kind === 'error') {
+      Alert.alert('Google sign-in failed', res.message);
+      return;
+    }
+    try {
+      const err = await oauthSignIn('google', res.idToken);
+      if (err) Alert.alert('Could not sign in', err);
+    } catch (e) {
+      Alert.alert('Sign-in error', (e as Error)?.message ?? String(e));
+    }
+  };
+
   return (
     <AuthScreenShell title="Sign in or create an account" onBack={onBack} hero="person">
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -119,7 +143,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         <MethodButton
           icon="google"
           label="Continue with Google"
-          onPress={() => soon('Google')}
+          onPress={onGoogle}
           background={colors.controlTrack}
           foreground={colors.textPrimary}
           border={colors.glassBorder}
