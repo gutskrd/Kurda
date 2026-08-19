@@ -256,6 +256,21 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(leagueSettle));
 
+    // Hot-table partition maintenance (KUR-115): create upcoming monthly partitions
+    // ahead of time so inserts always have a home. Runs in the API process (works
+    // without the worker on free tier) and is idempotent, so multiple replicas
+    // running it is harmless. Retention (dropping old partitions) is left off by
+    // default — no data is auto-deleted; enable per-table with a retain window.
+    const PARTITIONED_TABLES = ['notifications'];
+    const ensurePartitions = async (): Promise<void> => {
+      for (const tbl of PARTITIONED_TABLES) {
+        await app.db.query('SELECT ensure_partitions($1, 3, NULL)', [tbl]).catch((err) => app.log.warn({ err, tbl }, 'ensure_partitions failed'));
+      }
+    };
+    void ensurePartitions();
+    const partitionSweep = setInterval(() => void ensurePartitions(), 24 * 60 * 60 * 1000);
+    app.addHook('onClose', async () => clearInterval(partitionSweep));
+
     registerAuthRoutes(app, config);
     // optional phone (SMS) verification (KUR-297) — stub sender until a provider
     // is configured; raises trust (#295) and is exported/deleted with the account
