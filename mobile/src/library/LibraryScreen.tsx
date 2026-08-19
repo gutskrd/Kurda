@@ -4,7 +4,9 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { ClayButton, ErrorRetry, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -27,16 +29,13 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const [type, setType] = useState<PostType>('story');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
   const [posts, setPosts] = useState<LibraryPost[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [end, setEnd] = useState(false);
 
   const fetchPage = useCallback(
-    async (offset: number): Promise<LibraryPost[] | null> => {
-      const res = await listPosts(client, { type, sort, limit: PAGE, offset });
-      return res.ok ? res.data.posts : null;
-    },
+    (offset: number) => listPosts(client, { type, sort, limit: PAGE, offset }),
     [client, type, sort],
   );
 
@@ -44,14 +43,14 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     useCallback(() => {
       let active = true;
       void (async () => {
-        const rows = await fetchPage(0);
+        const res = await fetchPage(0);
         if (!active) return;
-        if (rows) {
-          setPosts(rows);
-          setEnd(rows.length < PAGE);
-          setFailed(false);
+        if (res.ok) {
+          setPosts(res.data.posts);
+          setEnd(res.data.posts.length < PAGE);
+          setError(null);
         } else {
-          setFailed(true);
+          setError(res.error);
         }
       })();
       return () => {
@@ -62,10 +61,11 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    const rows = await fetchPage(0);
-    if (rows) {
-      setPosts(rows);
-      setEnd(rows.length < PAGE);
+    const res = await fetchPage(0);
+    if (res.ok) {
+      setPosts(res.data.posts);
+      setEnd(res.data.posts.length < PAGE);
+      setError(null);
     }
     setRefreshing(false);
   }, [fetchPage]);
@@ -73,10 +73,10 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const loadMore = useCallback(async () => {
     if (loadingMore || end || !posts) return;
     setLoadingMore(true);
-    const rows = await fetchPage(posts.length);
-    if (rows) {
-      setPosts((prev) => (prev ? [...prev, ...rows] : rows));
-      setEnd(rows.length < PAGE);
+    const res = await fetchPage(posts.length);
+    if (res.ok) {
+      setPosts((prev) => (prev ? [...prev, ...res.data.posts] : res.data.posts));
+      setEnd(res.data.posts.length < PAGE);
     }
     setLoadingMore(false);
   }, [fetchPage, loadingMore, end, posts]);
@@ -123,11 +123,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <Segmented options={['newest', 'popular'] as const} value={sort} onChange={setSort} labelOf={(s) => (s === 'newest' ? 'Newest' : 'Popular')} />
         </View>
 
-        {failed && !posts ? (
-          <ErrorRetry onRetry={refresh} />
-        ) : posts === null ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : (
+        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()}>
           <FlatList
             data={posts}
             keyExtractor={(p) => p.id}
@@ -139,7 +135,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Nothing here yet — write the first!</Text>}
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
           />
-        )}
+        </AsyncBoundary>
 
         <View style={styles.fab}>
           <ClayButton label="+ Write" tone="primary" onPress={() => navigation.navigate('LibraryCompose')} />
