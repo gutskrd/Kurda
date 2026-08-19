@@ -267,11 +267,13 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
   app.post(
     '/auth/resend-verification-code',
     {
-      // takes no fields, but every route must declare a body schema (KUR-005)
-      schema: { body: z.object({}) },
       preHandler: requireAuth,
-      // a new code must not become a mail-spam vector
-      config: { rateLimit: { max: 4, windowMs: 3_600_000, per: 'ip' as const } },
+      config: {
+        // no input fields — accept an empty/absent body (KUR-005 opt-out)
+        skipValidation: true,
+        // a new code must not become a mail-spam vector
+        rateLimit: { max: 4, windowMs: 3_600_000, per: 'ip' as const },
+      },
     },
     async (req) => {
       await service.resendVerificationCode(req.user!.id);
