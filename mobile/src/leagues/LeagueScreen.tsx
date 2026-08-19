@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
@@ -56,6 +58,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const [league, setLeague] = useState<LeagueView | null>(null);
   const [global, setGlobal] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
   const [, setTick] = useState(0);
 
   const load = useCallback(() => {
@@ -66,6 +69,8 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
     ]).then(([lg, gl]) => {
       if (lg.ok) setLeague(lg.data);
       if (gl.ok) setGlobal(gl.data);
+      // only a hard error (both requests failed) surfaces as an error/offline state
+      setError(!lg.ok && !gl.ok ? lg.error : null);
       setLoading(false);
     });
   }, [client]);
@@ -109,19 +114,19 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
       <View style={styles.screen}>
         {header}
         {tabs}
-        {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : tab === 'league' ? (
-          <LeagueTab league={league} />
-        ) : tab === 'global' ? (
-          <BoardTab board={global} unit="rating" />
-        ) : (
-          <Centered>
-            <Icon name="people" size={48} tone="secondary" />
-            <Text style={[styles.ctaText, { color: colors.textPrimary }]}>Add friends to race them here.</Text>
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>Friends leaderboards are coming soon.</Text>
-          </Centered>
-        )}
+        <AsyncBoundary loading={loading && !league && !global} error={!league && !global ? error : null} onRetry={load}>
+          {tab === 'league' ? (
+            <LeagueTab league={league} />
+          ) : tab === 'global' ? (
+            <BoardTab board={global} unit="rating" />
+          ) : (
+            <Centered>
+              <Icon name="people" size={48} tone="secondary" />
+              <Text style={[styles.ctaText, { color: colors.textPrimary }]}>Add friends to race them here.</Text>
+              <Text style={[styles.dim, { color: colors.textSecondary }]}>Friends leaderboards are coming soon.</Text>
+            </Centered>
+          )}
+        </AsyncBoundary>
       </View>
     </GradientBackground>
   );

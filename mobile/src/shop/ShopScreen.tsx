@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -39,6 +41,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
   const [selected, setSelected] = useState<ShopItem | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -49,6 +52,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     ]).then(([cat, wallet]) => {
       if (cat.ok) setItems(cat.data.items);
       if (wallet.ok) setBalances(wallet.data.balances);
+      setError(cat.ok ? null : cat.error); // the catalog is the screen's core data
       setLoading(false);
     });
   }, [client]);
@@ -115,9 +119,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           </View>
         </View>
 
-        {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : (
+        <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load}>
           <SectionList
             sections={sections}
             keyExtractor={(i) => i.sku}
@@ -140,7 +142,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>The shop is empty right now — check back soon.</Text>}
             stickySectionHeadersEnabled={false}
           />
-        )}
+        </AsyncBoundary>
 
         <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
           <Pressable style={styles.backdrop} onPress={() => setSelected(null)}>

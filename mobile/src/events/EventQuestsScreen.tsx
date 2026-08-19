@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { formatCountdown, remainingUntil } from '../i18n/format';
@@ -30,6 +32,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
   const topInset = useScreenTopInset();
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
 
@@ -42,13 +45,14 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const load = useCallback(async () => {
     const active = await client.get<{ events: ActiveEvent[] }>('/events/active');
     if (!active.ok) {
-      setEvents([]);
+      setError(active.error);
       return;
     }
     const views = await Promise.all(
       active.data.events.map((e) => client.get<EventQuestsView>(`/events/${e.key}/quests`)),
     );
     setEvents(views.filter((v) => v.ok).map((v) => (v as { data: EventQuestsView }).data));
+    setError(null);
   }, [client]);
 
   useFocusEffect(
@@ -77,13 +81,8 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
           <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('events.title')}</Text>
         </View>
 
-        {events === null ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : events.length === 0 ? (
-          <View style={styles.centered}>
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('events.none')}</Text>
-          </View>
-        ) : (
+        <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} emptyText={t('events.none')}>
+          {() => events == null ? null : (
           <ScrollView contentContainerStyle={styles.content}>
             {events.map((event) => {
               const countdown = formatCountdown(remainingUntil(event.endsAt, now));
@@ -105,7 +104,8 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
               );
             })}
           </ScrollView>
-        )}
+          )}
+        </AsyncBoundary>
       </View>
     </GradientBackground>
   );

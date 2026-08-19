@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
@@ -16,10 +18,16 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
   const topInset = useScreenTopInset();
   const [items, setItems] = useState<InboxItem[] | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   const load = useCallback(() => {
     void client.get<{ notifications: InboxItem[] }>('/me/notifications').then((res) => {
-      if (res.ok) setItems(res.data.notifications);
+      if (res.ok) {
+        setItems(res.data.notifications);
+        setError(null);
+      } else {
+        setError(res.error);
+      }
     });
   }, [client]);
 
@@ -67,15 +75,15 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           )}
         </View>
 
-        {items === null ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : items.length === 0 ? (
-          <View style={styles.centered}>
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>You're all caught up.</Text>
-          </View>
-        ) : (
+        <AsyncBoundary
+          loading={items === null}
+          error={items === null ? error : null}
+          isEmpty={items?.length === 0}
+          onRetry={load}
+          emptyText="You're all caught up."
+        >
           <FlatList
-            data={items}
+            data={items ?? []}
             keyExtractor={(i) => i.id}
             contentContainerStyle={styles.list}
             renderItem={({ item }) => (
@@ -96,7 +104,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
               </Pressable>
             )}
           />
-        )}
+        </AsyncBoundary>
       </View>
     </GradientBackground>
   );

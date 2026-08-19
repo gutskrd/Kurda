@@ -3,6 +3,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
@@ -34,11 +36,18 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
 
   const load = useCallback(() => {
     void client.get<Profile>(`/users/${userId}`).then((res) => {
-      if (res.ok) setProfile(res.data);
-      else setNotFound(true);
+      if (res.ok) {
+        setProfile(res.data);
+        setError(null);
+      } else if (res.error.kind === 'client' && res.error.status === 404) {
+        setNotFound(true); // genuinely unavailable — distinct from offline/server error
+      } else {
+        setError(res.error);
+      }
     });
   }, [client, userId]);
 
@@ -78,22 +87,15 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       </GradientBackground>
     );
   }
-  if (!profile) {
-    return (
-      <GradientBackground>
-        <View style={styles.screen}>
-          <Header onExit={onExit} />
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        </View>
-      </GradientBackground>
-    );
-  }
-
-  const label = friendActionLabel(profile.friendStatus);
   return (
     <GradientBackground>
       <View style={styles.screen}>
         <Header onExit={onExit} />
+        <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load}>
+          {() => {
+            if (!profile) return null;
+            const label = friendActionLabel(profile.friendStatus);
+            return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
           <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} />
           <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
@@ -147,6 +149,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             </View>
           ) : null}
         </View>
+            );
+          }}
+        </AsyncBoundary>
       </View>
     </GradientBackground>
   );

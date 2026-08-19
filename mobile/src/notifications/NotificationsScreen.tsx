@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -23,10 +25,16 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   const load = useCallback(() => {
     void client.get<NotificationPrefs>('/me/notification-prefs').then((res) => {
-      if (res.ok) setPrefs(res.data);
+      if (res.ok) {
+        setPrefs(res.data);
+        setError(null);
+      } else {
+        setError(res.error);
+      }
     });
   }, [client]);
 
@@ -40,23 +48,15 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
     [client],
   );
 
-  if (!prefs) {
-    return (
-      <GradientBackground>
-        <View style={styles.screen}>
-          <Header onExit={onExit} />
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
-        </View>
-      </GradientBackground>
-    );
-  }
-
-  const quiet = quietEnabled(prefs);
-
   return (
     <GradientBackground>
       <View style={styles.screen}>
         <Header onExit={onExit} />
+        <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load}>
+          {() => {
+            if (!prefs) return null;
+            const quiet = quietEnabled(prefs);
+            return (
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={[styles.section, { color: colors.textSecondary }]}>Categories</Text>
           {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
@@ -97,6 +97,9 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
             </>
           ) : null}
         </ScrollView>
+            );
+          }}
+        </AsyncBoundary>
       </View>
     </GradientBackground>
   );
