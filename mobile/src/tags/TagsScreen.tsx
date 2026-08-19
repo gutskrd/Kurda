@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
+import type { ApiError } from '../api/types';
+import { AsyncBoundary } from '../net/AsyncBoundary';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -27,7 +29,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [profile, setProfile] = useState<ProfileTags | null>(null);
   const [claimed, setClaimed] = useState<ClaimedTag[]>([]);
   const [catalog, setCatalog] = useState<TagRow[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
   // inline claim form state
   const [claiming, setClaiming] = useState<TagRow | null>(null);
@@ -35,10 +37,10 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [consent, setConsent] = useState(false);
 
   const load = useCallback(async () => {
-    setFailed(false);
+    setError(null);
     const [p, mine, c] = await Promise.all([myTags(client), myClaimedTags(client), tagCatalog(client)]);
     if (!p.ok || !mine.ok || !c.ok) {
-      setFailed(true);
+      setError((!p.ok && p.error) || (!mine.ok && mine.error) || (!c.ok ? c.error : null));
       return;
     }
     setProfile(p.data);
@@ -107,17 +109,6 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     </View>
   );
 
-  if (failed && !profile) {
-    return (
-      <GradientBackground>
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          {header}
-          <ErrorRetry onRetry={() => void load()} />
-        </View>
-      </GradientBackground>
-    );
-  }
-
   const autos = profile ? profile.claimable.filter((t) => t.auto) : [];
   const toClaim = catalog ? claimableCatalog(catalog, claimed) : [];
   const toBuy = profile && catalog ? purchasableTags(catalog, profile.main) : [];
@@ -126,9 +117,8 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
         {header}
-        {profile === null ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
-        ) : (
+        <AsyncBoundary loading={profile === null} error={profile === null ? error : null} onRetry={() => void load()}>
+          {() => profile == null ? null : (
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             {/* main tag */}
             <Text style={[styles.section, { color: colors.textSecondary }]}>Main tag</Text>
@@ -193,7 +183,8 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               </>
             ) : null}
           </ScrollView>
-        )}
+          )}
+        </AsyncBoundary>
 
         {/* inline claim sheet */}
         {claiming ? (
