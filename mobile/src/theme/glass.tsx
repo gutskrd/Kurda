@@ -108,7 +108,7 @@ export function GlassRow({
           {subtitle ? <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
         </View>
         {value ? <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{value}</Text> : null}
-        {trailing ?? (onPress && !value ? <Icon name="chevron-right" size={16} color={colors.textSecondary} /> : null)}
+        {trailing ?? (onPress ? <Icon name="chevron-right" size={16} color={colors.textSecondary} /> : null)}
       </View>
     </>
   );

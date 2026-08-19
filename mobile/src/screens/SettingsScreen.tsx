@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -27,18 +27,24 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const { optedOut, setOptedOut } = useEventTheme();
   const { t, locale, setLocale } = useI18n();
   const [visibility, setVisibility] = useState<Visibility>('everyone');
+  const [username, setUsername] = useState<string | null>(null);
 
-  // Profile visibility lives server-side on /me; load it so the picker reflects
-  // the saved choice rather than defaulting every time the hub opens.
-  useEffect(() => {
-    let active = true;
-    void client.get<{ user: { profileVisibility: Visibility } }>('/me').then((res) => {
-      if (active && res.ok) setVisibility(res.data.user.profileVisibility);
-    });
-    return () => {
-      active = false;
-    };
-  }, [client]);
+  // Profile visibility + username live server-side on /me; load them so the hub
+  // reflects the saved values rather than defaulting every time it opens.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void client.get<{ user: { profileVisibility: Visibility; username: string } }>('/me').then((res) => {
+        if (active && res.ok) {
+          setVisibility(res.data.user.profileVisibility);
+          setUsername(res.data.user.username);
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }, [client]),
+  );
 
   const changeVisibility = (v: Visibility) => {
     setVisibility(v);
@@ -139,7 +145,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Account</Text>
         <GlassCard padding="tight">
-          <GlassRow first icon="person" title={t('profile.logout')} onPress={logout} destructive />
+          <GlassRow first icon="person" title="Username" value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
+          <GlassRow icon="person" title={t('profile.logout')} onPress={logout} destructive />
           <GlassRow icon="close" iconColor={colors.textSecondary} title="Delete account" destructive onPress={confirmDelete} />
         </GlassCard>
       </ScrollView>
@@ -161,7 +168,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginLeft: spacing.xs,
     marginBottom: spacing.xs,
-  },
+  },
   groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
   pill: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },

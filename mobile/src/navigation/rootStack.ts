@@ -24,6 +24,7 @@ export type RootStackParamList = {
   Memes: undefined;
   MemeDetail: { postId: string };
   Tags: undefined;
+  ChangeUsername: undefined;
   Library: undefined;
   LibraryPost: { postId: string };
   LibraryCompose: undefined;
