@@ -46,6 +46,13 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
+      # Required in production; override in a .env for real deploys (like the
+      # postgres password above, this local default is not a real secret).
+      JWT_SECRET: ${JWT_SECRET:-local-compose-jwt-secret-change-me-min-32-chars}
+      # No App/Play store credentials in this local stack: use the stub IAP
+      # verifier so buildApp() boots (the app's documented dev escape hatch).
+      # NEVER set this on a store-facing deployment.
+      IAP_ALLOW_STUB: ${IAP_ALLOW_STUB:-true}
       # Sign in with Apple (KUR-276): native token audience = the app bundle id
       APPLE_CLIENT_IDS: app.kurda.mobile
       # Transactional email (KUR-098): put real values in a .env beside this file.
@@ -73,6 +80,7 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-local-compose-jwt-secret-change-me-min-32-chars}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       SMTP_URL: ${SMTP_URL:-}
       SMTP_HOST: ${SMTP_HOST:-}
