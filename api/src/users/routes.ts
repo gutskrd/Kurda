@@ -6,7 +6,7 @@ import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
-import { canonicalUsername } from './username.js';
+import { validateUsername, USERNAME_ERROR_MESSAGE } from './username.js';
 import { StreakService } from '../streaks/service.js';
 import { ImageModerationService } from '../moderation/image-moderation-service.js';
 import type { AppConfig } from '../config/env.js';
@@ -355,29 +355,27 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       }
 
       if (body.username !== undefined) {
-        const username = canonicalUsername(body.username);
-        if (!username) {
-          throw new AppError(
-            'INVALID_USERNAME',
-            400,
-            'username must be 3-30 letters, digits or _ (Kurdish letters allowed)',
-          );
+        const res = validateUsername(body.username);
+        if (!res.ok) {
+          throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[res.reason], { reason: res.reason });
         }
+        const username = res.value;
         const current = await app.db.query<{ username: string; username_changed_at: Date | null }>(
           `SELECT username, username_changed_at FROM users WHERE id = $1`,
           [userId],
         );
         const row = current.rows[0] as { username: string; username_changed_at: Date | null };
+        // case-insensitive compare: only a real change spends the cooldown (a
+        // re-cased no-op like Mohamad→mohamad is not a "change")
         if (username.toLowerCase() !== row.username.toLowerCase()) {
           const cooldownMs = USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 3_600_000;
-          if (
-            row.username_changed_at &&
-            Date.now() - new Date(row.username_changed_at).getTime() < cooldownMs
-          ) {
+          if (row.username_changed_at && Date.now() - new Date(row.username_changed_at).getTime() < cooldownMs) {
+            const availableAt = new Date(new Date(row.username_changed_at).getTime() + cooldownMs);
             throw new AppError(
               'USERNAME_CHANGE_COOLDOWN',
               429,
-              `username can only be changed once every ${USERNAME_CHANGE_COOLDOWN_DAYS} days`,
+              `You can change your username again on ${availableAt.toISOString().slice(0, 10)}.`,
+              { availableAt: availableAt.toISOString(), cooldownDays: USERNAME_CHANGE_COOLDOWN_DAYS },
             );
           }
           add('username', username);

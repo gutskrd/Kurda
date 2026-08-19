@@ -7,6 +7,7 @@ import { isDisposableEmail } from './disposable-domains.js';
 import { OAuthService } from './oauth.js';
 import { AuthService } from './service.js';
 import { RiskService } from '../risk/service.js';
+import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 
 /** Optional client device fingerprint (#110), supplied as a header. */
 function deviceIdOf(headers: Record<string, unknown>): string | null {
@@ -88,6 +89,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof registerBodySchema>;
+      // full username policy (reserved names, structure, length) with a specific
+      // reason; the DB citext unique index remains the case-insensitive authority.
+      const uname = validateUsername(body.username);
+      if (!uname.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[uname.reason], { reason: uname.reason });
       if (isDisposableEmail(body.email)) throw signupRejected();
       if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw signupRejected();
 
