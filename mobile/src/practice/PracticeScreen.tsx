@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
@@ -10,6 +10,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 
 const PRACTICE_PATHS: SessionPaths = {
   answers: (id) => `/practice/sessions/${id}/answers`,
@@ -58,9 +59,13 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
   }
   if (!start) {
     return (
-      <Centered>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </Centered>
+      <GradientBackground>
+        <View style={styles.loading}>
+          <Skeleton width="55%" height={22} />
+          <SkeletonLines count={3} />
+          <Skeleton height={140} radius={radii.lg} />
+        </View>
+      </GradientBackground>
     );
   }
 
@@ -120,6 +125,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.xl,
   },
+  loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   detail: { fontSize: typography.sizes.md, textAlign: 'center' },
   button: {

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +13,7 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { useChatSocket } from './useChatSocket';
 
@@ -99,7 +99,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+          <SkeletonList style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg }} />
         ) : (
           <FlatList
             data={messages}

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -18,6 +17,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { Skeleton, SkeletonLines, SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { confirmReport } from '../moderation/report';
@@ -112,7 +112,10 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
         <View style={[styles.screen, { paddingTop: topInset }]}>
           <Header colors={colors} onExit={onExit} />
           {post === null ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+            <View style={styles.loading}>
+              <Skeleton height={220} radius={radii.lg} />
+              <SkeletonLines count={2} />
+            </View>
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               {post.imageUrl ? (
@@ -155,7 +158,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}
               </Text>
               {comments === null ? (
-                <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.md }} />
+                <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
               ) : comments.length === 0 ? (
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>No comments yet.</Text>
               ) : (
@@ -231,6 +234,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
+  loading: { padding: spacing.lg, gap: spacing.lg },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md, backgroundColor: '#0002' },
   caption: { fontSize: typography.sizes.md },
   reactionBar: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

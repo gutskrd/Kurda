@@ -3,10 +3,11 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
@@ -83,8 +84,10 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
   if (!view) {
     return (
       <GradientBackground>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <View style={styles.loading}>
+          <Skeleton width="55%" height={22} />
+          <SkeletonLines count={3} />
+          <Skeleton height={140} radius={radii.lg} />
         </View>
       </GradientBackground>
     );
@@ -351,6 +354,7 @@ export function SessionPlayer({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
+  loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
+import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { GoalPicker } from '../goals/GoalPicker';
 import { ProgressRing } from '../goals/ProgressRing';
@@ -130,7 +131,7 @@ export function LearnScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.xl }} />
+            <SkeletonList style={{ marginTop: spacing.md }} />
           ) : (
             <Text style={[styles.empty, { color: colors.textSecondary }]}>No course content yet.</Text>
           )
