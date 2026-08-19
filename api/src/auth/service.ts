@@ -13,6 +13,7 @@ import { sendEmailJob } from '../jobs/email.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { CURRENT_POLICY_VERSION, isRestrictedAge } from '../gdpr/consent.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
+import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
 import { LockoutService } from './lockout.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
 
@@ -59,6 +60,7 @@ export interface PublicUser {
   displayName: string | null;
   locale: string;
   timezone: string;
+  emailVerified: boolean;
   createdAt: string;
 }
 
@@ -70,6 +72,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     displayName: row.display_name,
     locale: row.locale,
     timezone: row.timezone,
+    emailVerified: row.email_verified_at !== null,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -92,7 +95,7 @@ export class AuthService {
     this.lockouts = new LockoutService(pool);
   }
 
-  /** Best-effort: signup must never fail because email couldn't enqueue. */
+  /** Legacy link-based verification, still served by /auth/resend-verification. */
   private async sendVerificationEmail(user: { id: string; email: string; username: string }) {
     try {
       const token = await createEmailToken(this.pool, user.id, 'verify_email');
@@ -106,6 +109,62 @@ export class AuthService {
     } catch (err) {
       this.deps.log?.warn({ err, userId: user.id }, 'failed to enqueue verification email');
     }
+  }
+
+  /**
+   * Emails a 6-digit ownership-verification code (KUR-014). Best-effort: signup
+   * must never fail because email couldn't enqueue. Returns the raw code for
+   * tests; production callers ignore it (only the mailbox owner sees it).
+   */
+  private async sendVerificationCode(user: {
+    id: string;
+    email: string;
+    username: string;
+  }): Promise<string | null> {
+    try {
+      const code = await createVerificationCode(this.pool, user.id);
+      if (this.deps.jobs) {
+        await this.deps.jobs.enqueue(sendEmailJob, {
+          to: user.email,
+          template: 'verify-email-code',
+          vars: { code, username: user.username },
+        });
+      }
+      return code;
+    } catch (err) {
+      this.deps.log?.warn({ err, userId: user.id }, 'failed to enqueue verification code');
+      return null;
+    }
+  }
+
+  /**
+   * Re-issues a verification code for a signed-in, still-unverified user.
+   * No-ops silently if the account is already verified.
+   */
+  async resendVerificationCode(userId: string): Promise<void> {
+    const res = await this.pool.query<{ email: string; username: string; email_verified_at: Date | null }>(
+      `SELECT email, username, email_verified_at FROM users WHERE id = $1 AND deleted_at IS NULL`,
+      [userId],
+    );
+    const user = res.rows[0];
+    if (!user || user.email_verified_at) return;
+    await this.sendVerificationCode({ id: userId, email: user.email, username: user.username });
+  }
+
+  /**
+   * Verifies a submitted code for a signed-in user and, on success, marks the
+   * email verified. Returns the low-level result so the route can map it to a
+   * specific status/error.
+   */
+  async verifyEmailCode(userId: string, code: string): Promise<VerifyResult> {
+    const result = await verifyCode(this.pool, userId, code);
+    if (result === 'ok') {
+      await this.pool.query(
+        `UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $1`,
+        [userId],
+      );
+    }
+    return result;
   }
 
   /** Always succeeds from the caller's perspective (no enumeration). */
@@ -234,7 +293,8 @@ export class AuthService {
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
     });
-    await this.sendVerificationEmail(user);
+    // Email ownership is proven by a 6-digit code the client enters (KUR-014).
+    await this.sendVerificationCode(user);
     return { user: toPublicUser(user), tokens };
   }
 

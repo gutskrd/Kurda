@@ -9,6 +9,7 @@ const payloadSchema = z.object({
   to: z.email(),
   template: z.enum([
     'verify-email',
+    'verify-email-code',
     'password-reset',
     'password-changed',
     'oauth-no-password',

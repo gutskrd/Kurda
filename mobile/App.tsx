@@ -12,6 +12,7 @@ import { GlassTabBar } from './src/navigation/GlassTabBar';
 import type { RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
+import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
@@ -223,7 +224,7 @@ function SignedInRoot() {
 }
 
 function Root() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const onboarding = useOnboarding();
   const { colors } = useTheme();
 
@@ -251,6 +252,12 @@ function Root() {
         <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       </AuthStack.Navigator>
     );
+  }
+
+  // Email-ownership gate (KUR-014): a signed-in but unverified account can't
+  // reach the app until it enters the emailed code.
+  if (user && !user.emailVerified) {
+    return <VerifyEmailScreen />;
   }
 
   return <SignedInRoot />;
