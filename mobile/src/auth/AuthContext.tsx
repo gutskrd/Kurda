@@ -10,6 +10,8 @@ export interface SessionUser {
   email: string;
   username: string;
   displayName: string | null;
+  /** Whether the user has proven ownership of their email (KUR-014). */
+  emailVerified: boolean;
 }
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
@@ -34,6 +36,14 @@ interface AuthContextValue {
    * null on success.
    */
   oauthSignIn(provider: 'apple' | 'google', idToken: string): Promise<string | null>;
+  /**
+   * Submit the 6-digit email-ownership code (KUR-014). On success the session
+   * user is marked verified, which lifts the verification gate. Resolves to an
+   * error message, or null on success.
+   */
+  verifyEmailCode(code: string): Promise<string | null>;
+  /** Ask the server to email a fresh verification code. */
+  resendVerificationCode(): Promise<string | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
   /**
@@ -151,6 +161,17 @@ export function AuthProvider({
         return res.error.code ? `${friendly} (${res.error.code})` : friendly;
       }
       await applyAuth(res.data);
+      return null;
+    },
+    verifyEmailCode: async (code) => {
+      const res = await client.post<{ verified: boolean }>('/auth/verify-email-code', { code });
+      if (!res.ok) return describeError(res.error).message;
+      setUser((prev) => (prev ? { ...prev, emailVerified: true } : prev));
+      return null;
+    },
+    resendVerificationCode: async () => {
+      const res = await client.post<{ sent: boolean }>('/auth/resend-verification-code', {});
+      if (!res.ok) return describeError(res.error).message;
       return null;
     },
     requestPasswordReset: async (email) => {

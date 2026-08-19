@@ -9,6 +9,7 @@ import { AuthService } from './service.js';
 import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
+import { requireAuth } from '../plugins/auth.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
 function assertPasswordPolicy(password: string): void {
@@ -72,6 +73,10 @@ export const passwordResetRequestBodySchema = z.object({
 export const resetPasswordBodySchema = z.object({
   token: z.string().min(20).max(200),
   password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
+});
+
+export const verifyEmailCodeBodySchema = z.object({
+  code: z.string().regex(/^\d{6}$/),
 });
 
 export const oauthBodySchema = z.object({
@@ -230,6 +235,49 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       assertPasswordPolicy(body.password);
       await service.resetPassword(body.token, body.password);
       return { reset: true };
+    },
+  );
+
+  // Email ownership by code (KUR-014). Authenticated: a just-registered user
+  // has a session but an unverified email; the code is bound to that user id.
+  app.post(
+    '/auth/verify-email-code',
+    {
+      schema: { body: verifyEmailCodeBodySchema },
+      preHandler: requireAuth,
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'ip' as const } },
+    },
+    async (req) => {
+      const { code } = req.body as z.infer<typeof verifyEmailCodeBodySchema>;
+      const result = await service.verifyEmailCode(req.user!.id, code);
+      switch (result) {
+        case 'ok':
+          return { verified: true };
+        case 'invalid':
+          throw new AppError('INVALID_CODE', 400, 'that code is not correct', { reason: result });
+        case 'expired':
+        case 'no-code':
+          throw new AppError('CODE_EXPIRED', 400, 'that code has expired — request a new one', { reason: result });
+        case 'too-many-attempts':
+          throw new AppError('TOO_MANY_ATTEMPTS', 429, 'too many attempts — request a new code', { reason: result });
+      }
+    },
+  );
+
+  app.post(
+    '/auth/resend-verification-code',
+    {
+      preHandler: requireAuth,
+      config: {
+        // no input fields — accept an empty/absent body (KUR-005 opt-out)
+        skipValidation: true,
+        // a new code must not become a mail-spam vector
+        rateLimit: { max: 4, windowMs: 3_600_000, per: 'ip' as const },
+      },
+    },
+    async (req) => {
+      await service.resendVerificationCode(req.user!.id);
+      return { sent: true };
     },
   );
 

@@ -6,6 +6,7 @@
 
 export const EMAIL_TEMPLATES = [
   'verify-email',
+  'verify-email-code',
   'password-reset',
   'password-changed',
   'oauth-no-password',
@@ -35,6 +36,16 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'E-nameya xwe piştrast bike',
       text: 'Bi xêr hatî Kurda!\n\nJi bo destpêkê e-nameya xwe piştrast bike: {link}\n\nEger te tomar nekiriye, vê peyamê pişguh bike.',
+    },
+  },
+  'verify-email-code': {
+    en: {
+      subject: 'Your Kurda verification code',
+      text: 'Welcome to Kurda!\n\nYour verification code is {code}. It expires in 15 minutes.\n\nIf you didn’t sign up, ignore this message.',
+    },
+    ku: {
+      subject: 'Koda piştrastkirinê ya Kurda',
+      text: 'Bi xêr hatî Kurda!\n\nKoda te ya piştrastkirinê {code} e. Di 15 deqîqeyan de diqede.\n\nEger te tomar nekiriye, vê peyamê pişguh bike.',
     },
   },
   'password-reset': {

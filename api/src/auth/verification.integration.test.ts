@@ -49,21 +49,21 @@ describe.skipIf(!DATABASE_URL)('email verification (integration)', () => {
   const verify = (token: string, ip = '10.6.0.2') =>
     app.inject({ method: 'POST', url: '/auth/verify-email', payload: { token }, remoteAddress: ip });
 
-  it('signup created a pending verification token', async () => {
+  it('signup created a pending verification code', async () => {
     const rows = await pool.query(
-      `SELECT 1 FROM email_tokens WHERE user_id = $1 AND purpose = 'verify_email' AND used_at IS NULL`,
+      `SELECT 1 FROM email_verification_codes WHERE user_id = $1`,
       [userId],
     );
-    expect(rows.rowCount).toBeGreaterThanOrEqual(1);
+    expect(rows.rowCount).toBe(1);
   });
 
-  it.skipIf(!REDIS_URL)('signup enqueued a verify-email job', async () => {
+  it.skipIf(!REDIS_URL)('signup enqueued a verify-email-code job', async () => {
     const jobs = await app.jobs!.raw.getJobs(['waiting', 'delayed', 'prioritized', 'completed']);
     const match = jobs.find(
       (j) => j.name === 'send-email' && (j.data as { to?: string }).to === userEmail,
     );
     expect(match).toBeDefined();
-    expect((match?.data as { template: string }).template).toBe('verify-email');
+    expect((match?.data as { template: string }).template).toBe('verify-email-code');
   });
 
   it('verifies with a valid token — session not required', async () => {
