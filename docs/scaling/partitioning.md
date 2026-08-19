@@ -11,11 +11,13 @@
 > - **Lifecycle — in-repo `ensure_partitions()`** (this file), **no** `pg_partman` /
 >   `pg_cron` dependency; called on a daily interval from the API process.
 >
-> **Progress:** `notifications` partitioned by month (structural twin + bounded copy
-> + swap; PK `id`→`(id, created_at)`, no guarantee weakened) + `ensure_partitions()`
-> + an EXPLAIN pruning test. **`wordle_games` needs care** — see the game-tables note
-> below (its daily-unique index is the same class of guarantee that kept `xp_ledger`
-> out). `rhyme_games` is clean.
+> **Done (structural scope):** `notifications` + `rhyme_games` partitioned by month
+> (structural twin + bounded copy + swap; composite PK, no guarantee weakened) +
+> `ensure_partitions()` + EXPLAIN-pruning/retention tests. **`xp_ledger` and
+> `wordle_games` are deliberately left unpartitioned** to protect their DB-level
+> unique guarantees (double-award; one-daily-per-day) — revisit only if either
+> becomes a real bottleneck. The at-scale online-backfill procedure below stays
+> documented for when there's production volume (not executed — no data yet).
 
 ## TL;DR
 
@@ -224,10 +226,11 @@ Integration test (`notifications/partition.integration.test.ts`, Postgres, the
 
 1. **`notifications`** — done (migration `…_partition-notifications.js`): monthly by
    `created_at`, `ensure_partitions()`, EXPLAIN-pruning + retention tests. ✅
-2. **`rhyme_games`** — clean (PK `id` only); partition by `started_at`. Next.
-3. **`wordle_games`** — ⚠️ its partial `UNIQUE(user_id, day_index) WHERE mode='daily'`
-   (one-daily-per-day) would be weakened by time-partitioning, exactly the reason
-   `xp_ledger` was left out. To honour Decision A's spirit, partition it by
-   **`day_index`** (already in that unique index → guarantee preserved; practice
-   games have `day_index NULL` → a DEFAULT partition), **not** by `started_at` — or
-   leave it unpartitioned. Do not weaken the daily guarantee.
+2. **`rhyme_games`** — done: clean (PK `id` only), partitioned by `started_at`. ✅
+3. **`wordle_games`** — **left unpartitioned (decided).** Its partial
+   `UNIQUE(user_id, day_index) WHERE mode='daily'` (one-daily-per-day) would be
+   weakened by time-partitioning — the same reason `xp_ledger` was left out. It has
+   no time-bounded queries (so no pruning benefit) and no pre-launch retention need,
+   so partitioning it (which would require a bespoke `day_index`-range scheme to keep
+   the guarantee) isn't worth it now. Revisit with a `day_index` scheme only if game
+   history volume ever warrants retention.
