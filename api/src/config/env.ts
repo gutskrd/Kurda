@@ -88,6 +88,21 @@ const envSchema = z.object({
   IAP_ALLOW_STUB: z.enum(['true', 'false']).default('false'),
   /** Shared secret guarding email bounce/complaint webhooks; disabled when unset (KUR-098). */
   EMAIL_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * Transactional email delivery (KUR-098). Provider is chosen by which of these
+   * is set: RESEND_API_KEY → Resend (HTTP); else SMTP_URL or SMTP_HOST → SMTP
+   * (works with SES/Postmark/Mailgun/Gmail); else a no-op stub (dev/test). See
+   * docs/auth/email-delivery.md.
+   */
+  RESEND_API_KEY: z.string().optional(),
+  SMTP_URL: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z.enum(['true', 'false']).optional(),
+  /** From address for transactional email. */
+  EMAIL_FROM: z.string().default('MyKurda <no-reply@mykurda.app>'),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**

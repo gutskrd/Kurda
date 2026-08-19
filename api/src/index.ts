@@ -31,7 +31,14 @@ export {
   type EmailLocale,
   type RenderedEmail,
 } from './email/templates.js';
-export { StubEmailProvider, createEmailProvider, type EmailProvider, type EmailPayload } from './email/provider.js';
+export {
+  StubEmailProvider,
+  ResendEmailProvider,
+  SmtpEmailProvider,
+  createEmailProvider,
+  type EmailProvider,
+  type EmailPayload,
+} from './email/provider.js';
 export { EmailService, type SuppressionReason, type SendResult } from './email/service.js';
 export { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 export { createWorker, buildRegistry } from './jobs/worker.js';
