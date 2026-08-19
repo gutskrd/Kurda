@@ -1,9 +1,3 @@
-import {
-  GoogleSignin,
-  isErrorWithCode,
-  isSuccessResponse,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
 import type { GoogleResult } from './googleTypes';
 
 /**
@@ -17,6 +11,13 @@ import type { GoogleResult } from './googleTypes';
  *  - EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID — the iOS client id (iOS only).
  * Until the web client id is set the feature reports `not-configured`, and the
  * UI keeps its "coming soon" affordance instead of a broken flow.
+ *
+ * The native SDK is loaded lazily (dynamic import), never at module scope: the
+ * package registers a TurboModule (`RNGoogleSignin`) at evaluation time, which
+ * throws on a dev/managed build that wasn't compiled with it. Deferring the
+ * import to the moment of use — and only when configured — means a build without
+ * the module runs fine and simply can't sign in with Google, rather than
+ * crashing at startup.
  */
 const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
@@ -24,15 +25,24 @@ const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 export const isGoogleConfigured = Boolean(webClientId);
 
 let configured = false;
-function ensureConfigured(): void {
-  if (configured || !webClientId) return;
-  GoogleSignin.configure({ webClientId, iosClientId, offlineAccess: false });
-  configured = true;
-}
 
 export async function signInWithGoogle(): Promise<GoogleResult> {
   if (!isGoogleConfigured) return { kind: 'not-configured' };
-  ensureConfigured();
+
+  let sdk: typeof import('@react-native-google-signin/google-signin');
+  try {
+    sdk = await import('@react-native-google-signin/google-signin');
+  } catch {
+    // native module absent (build predates it) — degrade instead of crashing
+    return { kind: 'error', message: 'Google sign-in isn’t available in this build yet.' };
+  }
+  const { GoogleSignin, isSuccessResponse, isErrorWithCode, statusCodes } = sdk;
+
+  if (!configured && webClientId) {
+    GoogleSignin.configure({ webClientId, iosClientId, offlineAccess: false });
+    configured = true;
+  }
+
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const response = await GoogleSignin.signIn();
