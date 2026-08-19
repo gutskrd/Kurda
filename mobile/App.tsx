@@ -43,6 +43,7 @@ import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
+import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
@@ -203,6 +204,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Tags" options={{ presentation: 'card' }}>
         {({ navigation }) => <TagsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="ChangeUsername" options={{ presentation: 'card' }}>
+        {({ navigation }) => <ChangeUsernameScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Library" options={{ presentation: 'card' }}>
         {({ navigation }) => <LibraryScreen onExit={() => navigation.goBack()} />}
