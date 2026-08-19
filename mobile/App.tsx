@@ -34,6 +34,7 @@ import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { useReducedMotion } from './src/a11y/useReducedMotion';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -118,11 +119,21 @@ function GameRoute({
 }
 
 function SignedInRoot() {
+  const { colors } = useTheme();
+  const reduceMotion = useReducedMotion();
   return (
     <>
       <PushRegistration />
       <ChallengeListener />
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator
+        screenOptions={{
+          headerShown: false,
+          // scene paints the theme background during the push/pop so a transition
+          // never flashes a white frame; reduced-motion disables the slide entirely.
+          contentStyle: { backgroundColor: colors.background },
+          animation: reduceMotion ? 'none' : 'default',
+        }}
+      >
         <RootStack.Screen name="Tabs" component={SignedInTabs} />
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
