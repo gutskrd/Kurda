@@ -24,7 +24,7 @@ describe.skipIf(!DATABASE_URL)('dashboards (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `${name}_${suffix}@it.kurda.app`, username: name.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `${name}_${suffix}@it.kurda.app`, username: name.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     return res.json().user.id;

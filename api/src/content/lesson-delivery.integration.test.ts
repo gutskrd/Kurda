@@ -60,7 +60,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
       payload: {
         email: `del_${suffix}@it.kurda.app`,
         username: `del_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.30.0.2',
@@ -278,7 +278,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
       payload: {
         email: `del2_${suffix}@it.kurda.app`,
         username: `del2_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.30.0.3',

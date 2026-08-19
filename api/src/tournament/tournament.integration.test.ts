@@ -26,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
       payload: {
         email: `tourn_${tag}_${suffix}@it.kurda.app`,
         username: `tourn_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.60.0.1',

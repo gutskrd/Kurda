@@ -23,7 +23,7 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
       payload: {
         email: `grp_${tag}_${suffix}@it.kurda.app`,
         username: `grp_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

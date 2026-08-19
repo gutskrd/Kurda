@@ -33,7 +33,7 @@ describe.skipIf(!DATABASE_URL)('seasons (integration)', () => {
       payload: {
         email: `season_${suffix}@it.kurda.app`,
         username: `season_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.65.0.1',
@@ -95,7 +95,7 @@ describe.skipIf(!DATABASE_URL)('seasons (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { email: `season_${suffix}@it.kurda.app`, password: 'a-strong-password' },
+      payload: { email: `season_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: '10.65.0.1',
     });
     const token = res.json().tokens.accessToken as string;

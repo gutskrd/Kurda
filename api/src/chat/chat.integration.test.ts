@@ -36,7 +36,7 @@ describe.skipIf(!DATABASE_URL)('direct messages (integration)', () => {
       payload: {
         email: `dm_${tag}_${suffix}@it.kurda.app`,
         username: `dm_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

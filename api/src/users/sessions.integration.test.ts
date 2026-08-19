@@ -14,7 +14,7 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
   let userId: string;
   const suffix = Date.now().toString(36);
   const email = `sess_${suffix}@it.kurda.app`;
-  const password = 'a-strong-password';
+  const password = 'a-strong-password1';
 
   interface Tokens {
     accessToken: string;

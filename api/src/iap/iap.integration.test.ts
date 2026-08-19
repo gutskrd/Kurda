@@ -35,7 +35,7 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
       payload: {
         email: `iap_${suffix}@it.kurda.app`,
         username: `iap_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.72.0.1',
@@ -102,7 +102,7 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
       payload: {
         email: `iap2_${suffix}@it.kurda.app`,
         username: `iap2_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.72.0.2',

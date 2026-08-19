@@ -19,7 +19,7 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     const id = res.json().user.id;
@@ -41,7 +41,7 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [adminId]);
     adminTok = (await app.inject({
       method: 'POST', url: '/auth/login',
-      payload: { email: `lib_admin_${suffix}@it.kurda.app`, password: 'a-strong-password' },
+      payload: { email: `lib_admin_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: '10.30.0.3',
     }).then((r) => r.json().tokens.accessToken)); // fresh token carries the admin role
   });

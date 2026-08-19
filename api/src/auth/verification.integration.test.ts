@@ -32,7 +32,7 @@ describe.skipIf(!DATABASE_URL)('email verification (integration)', () => {
       payload: {
         email: userEmail,
         username: `verify_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.6.0.1',

@@ -32,7 +32,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       payload: {
         email: `soc_${tag}_${suffix}@it.kurda.app`,
         username: uname[tag]!,
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

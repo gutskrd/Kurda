@@ -31,7 +31,7 @@ describe.skipIf(!DATABASE_URL)('POST /media/uploads (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email, username: `media_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email, username: `media_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.70.0.1',
     });
     token = reg.json().tokens.accessToken;

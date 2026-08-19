@@ -26,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('anti-cheat (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email, username: `ac_${suffix}_${tag}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email, username: `ac_${suffix}_${tag}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: `10.24.0.${emails.length}`,
     });
     return reg.json().user.id;

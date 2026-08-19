@@ -23,7 +23,7 @@ describe.skipIf(!DATABASE_URL)('analytics ingest (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `analytics_${suffix}@it.kurda.app`, username: `analytics_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `analytics_${suffix}@it.kurda.app`, username: `analytics_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.105.0.1',
     });
     userId = res.json().user.id;
@@ -78,7 +78,7 @@ describe.skipIf(!DATABASE_URL)('analytics ingest (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { email: `analytics_${suffix}@it.kurda.app`, password: 'a-strong-password' },
+      payload: { email: `analytics_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: '10.105.0.1',
     });
     return res.json().tokens.accessToken;

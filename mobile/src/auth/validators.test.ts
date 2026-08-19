@@ -14,10 +14,15 @@ describe('validateEmail', () => {
 });
 
 describe('validatePassword', () => {
-  it('mirrors the server minimum of 8', () => {
-    expect(validatePassword('12345678')).toBeNull();
-    expect(validatePassword('1234567')).toBe('password_too_short');
+  it('accepts ≥8 chars with a letter and a number', () => {
+    expect(validatePassword('abcde123')).toBeNull();
+    expect(validatePassword('şêrîn123')).toBeNull(); // Kurdish letters count as letters
+  });
+  it('mirrors the server policy reasons', () => {
     expect(validatePassword('')).toBe('required');
+    expect(validatePassword('abc123')).toBe('password_too_short');
+    expect(validatePassword('12345678')).toBe('password_needs_letter');
+    expect(validatePassword('abcdefgh')).toBe('password_needs_number');
   });
 });
 

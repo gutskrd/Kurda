@@ -38,7 +38,7 @@ describe.skipIf(!DATABASE_URL)('admin audit log (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `${name}_${suffix}@it.kurda.app`, username: name.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `${name}_${suffix}@it.kurda.app`, username: name.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     return { id: res.json().user.id, token: res.json().tokens.accessToken };

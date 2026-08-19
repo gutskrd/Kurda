@@ -25,7 +25,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
       payload: {
         email: `lb_${tag}_${suffix}@it.kurda.app`,
         username: `lb_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: ip,

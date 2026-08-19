@@ -40,7 +40,7 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
     const res = await register({
       email: email('rojda'),
       username: uname('rojda'),
-      password: 'a-strong-password',
+      password: 'a-strong-password1',
         acceptTerms: true,
       displayName: 'Rojda',
     });
@@ -66,9 +66,9 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
   });
 
   it('duplicate email returns a safe generic error (no enumeration)', async () => {
-    await register({ email: email('dup'), username: uname('dupa'), password: 'a-strong-password' }, '10.1.0.2');
+    await register({ email: email('dup'), username: uname('dupa'), password: 'a-strong-password1' }, '10.1.0.2');
     const res = await register(
-      { email: email('dup'), username: uname('dupb'), password: 'a-strong-password' },
+      { email: email('dup'), username: uname('dupb'), password: 'a-strong-password1' },
       '10.1.0.3',
     );
     expect(res.statusCode).toBe(409);
@@ -78,9 +78,9 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
   });
 
   it('duplicate username returns USERNAME_TAKEN (usernames are public)', async () => {
-    await register({ email: email('u1'), username: uname('şêrîn'), password: 'a-strong-password' }, '10.1.0.4');
+    await register({ email: email('u1'), username: uname('şêrîn'), password: 'a-strong-password1' }, '10.1.0.4');
     const res = await register(
-      { email: email('u2'), username: uname('şêrîn'), password: 'a-strong-password' },
+      { email: email('u2'), username: uname('şêrîn'), password: 'a-strong-password1' },
       '10.1.0.5',
     );
     expect(res.statusCode).toBe(409);
@@ -100,7 +100,7 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
     let last;
     for (let i = 0; i < 6; i++) {
       last = await register(
-        { email: email(`rl${i}`), username: uname(`rl${i}`), password: 'a-strong-password' },
+        { email: email(`rl${i}`), username: uname(`rl${i}`), password: 'a-strong-password1' },
         '10.9.9.9',
       );
     }
@@ -114,13 +114,13 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
 
     beforeAll(async () => {
       await register(
-        { email: email('login'), username: uname('login'), password: 'a-strong-password' },
+        { email: email('login'), username: uname('login'), password: 'a-strong-password1' },
         '10.2.0.1',
       );
     });
 
     it('returns user + tokens on valid credentials', async () => {
-      const res = await login({ email: email('login'), password: 'a-strong-password' }, '10.2.0.2');
+      const res = await login({ email: email('login'), password: 'a-strong-password1' }, '10.2.0.2');
       expect(res.statusCode).toBe(200);
       const body = res.json();
       expect(body.user.username).toBe(uname('login'));
@@ -131,7 +131,7 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
     it('wrong password and unknown email return the identical error', async () => {
       const wrongPw = await login({ email: email('login'), password: 'wrong-password' }, '10.2.0.3');
       const noUser = await login(
-        { email: email('ghost'), password: 'a-strong-password' },
+        { email: email('ghost'), password: 'a-strong-password1' },
         '10.2.0.4',
       );
       expect(wrongPw.statusCode).toBe(401);
@@ -156,7 +156,7 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
 
     async function freshTokens(name: string, ip: string) {
       const res = await register(
-        { email: email(name), username: uname(name), password: 'a-strong-password' },
+        { email: email(name), username: uname(name), password: 'a-strong-password1' },
         ip,
       );
       return res.json().tokens as { accessToken: string; refreshToken: string };

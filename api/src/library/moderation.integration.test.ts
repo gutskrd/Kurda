@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
   async function register(tag: string, ip: string): Promise<{ token: string; id: string }> {
     const res = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `lm_${tag}_${suffix}@it.kurda.app`, username: `lm_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password', acceptTerms: true },
+      payload: { email: `lm_${tag}_${suffix}@it.kurda.app`, username: `lm_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
     userIds.push(res.json().user.id);

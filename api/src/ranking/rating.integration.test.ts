@@ -25,7 +25,7 @@ describe.skipIf(!DATABASE_URL)('rating (integration)', () => {
       payload: {
         email: `rate_${tag}_${suffix}@it.kurda.app`,
         username: `rate_${tag}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.61.0.1',

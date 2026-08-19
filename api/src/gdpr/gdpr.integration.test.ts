@@ -24,7 +24,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       payload: {
         email: `${name}_${suffix}@it.kurda.app`,
         username: `${name}_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: `10.13.0.${Math.floor(Math.random() * 200) + 1}`,
@@ -67,7 +67,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     const login = await app.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { email: user.email, password: 'a-strong-password' },
+      payload: { email: user.email, password: 'a-strong-password1' },
       remoteAddress: '10.13.1.2',
     });
     expect(login.statusCode).toBe(200);

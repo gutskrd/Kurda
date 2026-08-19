@@ -48,7 +48,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
       payload: {
         email: `me_${suffix}@it.kurda.app`,
         username: `me_${suffix}`.slice(0, 30),
-        password: 'a-strong-password',
+        password: 'a-strong-password1',
         acceptTerms: true,
       },
       remoteAddress: '10.10.0.2',
@@ -162,7 +162,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
       const r = await app.inject({
         method: 'POST',
         url: '/auth/register',
-        payload: { email: `${tag}_${suffix}@it.kurda.app`, username: `${tag}_${suffix}`.slice(0, 28), password: 'a-strong-password', acceptTerms: true },
+        payload: { email: `${tag}_${suffix}@it.kurda.app`, username: `${tag}_${suffix}`.slice(0, 28), password: 'a-strong-password1', acceptTerms: true },
         remoteAddress: ip,
       });
       return { token: r.json().tokens.accessToken as string, id: r.json().user.id as string };

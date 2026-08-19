@@ -6,6 +6,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
 import {
   FIELD_ERROR_COPY,
+  PASSWORD_RULES_TEXT,
   validateEmail,
   validatePassword,
   validateUsername,
@@ -73,6 +74,9 @@ export function RegisterScreen({ navigation }: Props) {
         secure
         testID="password"
       />
+      {!errors.password ? (
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{PASSWORD_RULES_TEXT}</Text>
+      ) : null}
       <SubmitButton label="Sign up" busy={busy} onPress={submit} />
       <Text style={[styles.terms, { color: colors.textSecondary }]}>
         By creating an account you accept the Terms of Use and Privacy Policy.
@@ -83,6 +87,11 @@ export function RegisterScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  hint: {
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
+    fontSize: typography.sizes.xs,
+  },
   terms: {
     marginTop: spacing.sm,
     fontSize: typography.sizes.xs,

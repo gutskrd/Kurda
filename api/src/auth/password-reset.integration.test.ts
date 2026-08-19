@@ -73,7 +73,7 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/reset-password',
-      payload: { token: raw, password: 'brand-new-password' },
+      payload: { token: raw, password: 'brand-new-password1' },
       remoteAddress: '10.7.0.4',
     });
     expect(res.statusCode).toBe(200);
@@ -89,7 +89,7 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
     const newLogin = await app.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { email: userEmail, password: 'brand-new-password' },
+      payload: { email: userEmail, password: 'brand-new-password1' },
       remoteAddress: '10.7.0.6',
     });
     expect(newLogin.statusCode).toBe(200);
