@@ -14,6 +14,22 @@ describe('createEmailProvider', () => {
     expect(createEmailProvider(loadConfig(base))).toBeInstanceOf(StubEmailProvider);
   });
 
+  it('treats empty compose-substituted values as unconfigured (boots as stub)', () => {
+    // exactly what docker-compose injects when the host .env sets nothing
+    const cfg = loadConfig({
+      ...base,
+      RESEND_API_KEY: '',
+      SMTP_URL: '',
+      SMTP_HOST: '',
+      SMTP_PORT: '587',
+      SMTP_USER: '',
+      SMTP_PASS: '',
+      SMTP_SECURE: 'false',
+      EMAIL_FROM: 'MyKurda <no-reply@mykurda.app>',
+    });
+    expect(createEmailProvider(cfg)).toBeInstanceOf(StubEmailProvider);
+  });
+
   it('uses Resend when RESEND_API_KEY is set', () => {
     const provider = createEmailProvider(loadConfig({ ...base, RESEND_API_KEY: 're_test' }));
     expect(provider).toBeInstanceOf(ResendEmailProvider);

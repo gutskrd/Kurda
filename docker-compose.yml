@@ -48,6 +48,17 @@ services:
       NODE_ENV: production
       # Sign in with Apple (KUR-276): native token audience = the app bundle id
       APPLE_CLIENT_IDS: app.kurda.mobile
+      # Transactional email (KUR-098): put real values in a .env beside this file.
+      # Unset secrets fall back to the no-op stub; the port/secure/from defaults
+      # keep config validation happy when nothing is configured.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.app>}"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -57,10 +68,19 @@ services:
   worker:
     build: .
     command: npx tsx api/src/workers/main.ts
+    # the worker is what actually sends email, so it needs the provider config
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.app>}"
     depends_on:
       migrate:
         condition: service_completed_successfully
