@@ -26,7 +26,9 @@ export function AsyncBoundary({
   isEmpty?: boolean;
   onRetry?: () => void;
   emptyText?: string;
-  children: React.ReactNode;
+  /** Content to show once ready. Pass a function when it dereferences loaded data —
+   *  it's only invoked in the ready state, so it never runs during loading/error. */
+  children: React.ReactNode | (() => React.ReactNode);
 }): React.JSX.Element {
   const online = useIsOnline();
   const { colors } = useTheme();
@@ -66,7 +68,7 @@ export function AsyncBoundary({
       );
 
     case 'ready':
-      return <>{children}</>;
+      return <>{typeof children === 'function' ? children() : children}</>;
   }
 }
 
