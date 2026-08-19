@@ -8,7 +8,6 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
 import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './tabBarLayout';
 import { TABS } from './tabs';
-import { typography } from '../theme/tokens';
 
 const PILL_INSET_Y = 8;
 const PILL_INSET_X = 6;
@@ -21,7 +20,7 @@ const PILL_INSET_X = 6;
  * black-dominant glass in dark mode with a near-white pill.
  */
 export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element {
-  const { scheme } = useTheme();
+  const { scheme, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const [barWidth, setBarWidth] = useState(0);
@@ -40,11 +39,14 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
   }, [state.index, tabWidth, reduceMotion, translateX]);
 
   const dark = scheme === 'dark';
-  const barBg = dark ? 'rgba(12,12,13,0.74)' : 'rgba(255,255,255,0.82)';
-  const border = dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)';
-  const pillColor = dark ? '#F4F5F4' : '#1A1A1A';
-  const activeText = dark ? '#0A0A0A' : '#FFFFFF';
-  const inactiveText = dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)';
+  // Translucent enough that the content behind stays recognizable (the strong blur
+  // does the legibility work); no opaque block, no bright frost ring.
+  const barBg = dark ? 'rgba(14,14,16,0.55)' : 'rgba(255,255,255,0.58)';
+  const border = colors.glassBorder;
+  // The active state is a soft, translucent pill — not a high-contrast solid block.
+  const pillColor = dark ? 'rgba(255,255,255,0.10)' : 'rgba(20,20,20,0.055)';
+  const activeText = colors.primary; // brand near-black / near-white, full strength
+  const inactiveText = colors.textSecondary;
 
   return (
     <View
@@ -53,7 +55,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
     >
       <View style={[styles.island, { shadowColor: dark ? '#000000' : '#3E5147' }]}>
         <View style={styles.clip}>
-          <BlurView intensity={dark ? 40 : 30} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <BlurView intensity={colors.blurStrong} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           <View style={[StyleSheet.absoluteFill, styles.tint, { backgroundColor: barBg, borderColor: border }]} />
 
           <View style={styles.row} onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}>
@@ -82,7 +84,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                   style={styles.item}
                 >
                   <Icon name={(tab?.icon ?? 'home') as IconName} size={22} color={color} />
-                  <Text numberOfLines={1} style={[styles.label, { color }]}>
+                  <Text numberOfLines={1} style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
                     {tab?.title}
                   </Text>
                 </Pressable>
@@ -100,10 +102,11 @@ const styles = StyleSheet.create({
   island: {
     height: TAB_BAR_HEIGHT,
     borderRadius: TAB_BAR_HEIGHT / 2,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    elevation: 12,
+    // a soft spatial lift, not a hard drop shadow
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 22,
+    elevation: 10,
   },
   clip: { flex: 1, borderRadius: TAB_BAR_HEIGHT / 2, overflow: 'hidden' },
   tint: { borderRadius: TAB_BAR_HEIGHT / 2, borderWidth: StyleSheet.hairlineWidth },
@@ -115,6 +118,6 @@ const styles = StyleSheet.create({
     bottom: PILL_INSET_Y,
     borderRadius: (TAB_BAR_HEIGHT - PILL_INSET_Y * 2) / 2,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4 },
-  label: { fontSize: 10.5, fontWeight: typography.weights.bold, letterSpacing: 0.2 },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4, paddingHorizontal: 2 },
+  label: { fontSize: 11, letterSpacing: 0.1 },
 });

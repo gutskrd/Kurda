@@ -29,12 +29,17 @@ export interface Palette {
   background: string;
   gradient: readonly [string, string, string];
 
-  // glassmorphism / liquid glass
+  // glassmorphism / liquid glass — three blur tiers so we can go stronger on
+  // floating surfaces (nav, modals, sheets) and lighter on flat, scrolled content
+  // (cards, rows) where heavy blur costs performance and hurts readability.
   blurTint: 'light' | 'dark';
-  blurIntensity: number;
+  blurSoft: number; // flat, in-flow surfaces (cards, rows)
+  blurIntensity: number; // the standard tier (default)
+  blurStrong: number; // floating surfaces (tab bar, modals, sheets)
   glassFill: string; // translucent tint painted over the blur
-  glassBorder: string; // hairline edge
+  glassBorder: string; // hairline edge — kept subtle (no "frost line")
   glassHighlight: string; // top sheen for the "liquid glass" catch-light
+  separator: string; // faint divider between rows inside a surface
 
   // claymorphism / neumorphism (soft, puffy controls)
   clayFill: readonly [string, string]; // vertical gradient for a soft button
@@ -65,16 +70,20 @@ export const LIGHT: Palette = {
   gradient: ['#FBFBFB', '#F4F4F4', '#EDEDED'],
 
   blurTint: 'light',
-  blurIntensity: 28,
-  glassFill: 'rgba(255,255,255,0.62)',
-  glassBorder: 'rgba(255,255,255,0.8)',
-  glassHighlight: 'rgba(255,255,255,0.95)',
+  blurSoft: 18,
+  blurIntensity: 30,
+  blurStrong: 50,
+  glassFill: 'rgba(255,255,255,0.55)',
+  // a soft catch-light edge, not an opaque white ring (was 0.8 → the "frost line")
+  glassBorder: 'rgba(255,255,255,0.45)',
+  glassHighlight: 'rgba(255,255,255,0.9)',
+  separator: 'rgba(20,20,20,0.07)',
 
   clayFill: ['#FFFFFF', '#EFEFEF'],
-  clayBorder: 'rgba(255,255,255,0.9)',
+  clayBorder: 'rgba(255,255,255,0.8)',
   softShadow: '#3A3A3A',
 
-  controlTrack: 'rgba(0,0,0,0.06)',
+  controlTrack: 'rgba(0,0,0,0.05)',
 };
 
 export const DARK: Palette = {
@@ -99,16 +108,19 @@ export const DARK: Palette = {
   gradient: ['#0D0D0E', '#0A0A0B', '#111112'],
 
   blurTint: 'dark',
+  blurSoft: 28,
   blurIntensity: 44,
-  glassFill: 'rgba(255,255,255,0.06)',
-  glassBorder: 'rgba(255,255,255,0.14)',
-  glassHighlight: 'rgba(255,255,255,0.28)',
+  blurStrong: 64,
+  glassFill: 'rgba(255,255,255,0.055)',
+  glassBorder: 'rgba(255,255,255,0.12)',
+  glassHighlight: 'rgba(255,255,255,0.24)',
+  separator: 'rgba(255,255,255,0.08)',
 
   clayFill: ['#1E1E1E', '#151515'],
   clayBorder: 'rgba(255,255,255,0.10)',
   softShadow: '#000000',
 
-  controlTrack: 'rgba(255,255,255,0.08)',
+  controlTrack: 'rgba(255,255,255,0.07)',
 };
 
 export const PALETTES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };

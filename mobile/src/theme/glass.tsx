@@ -25,17 +25,24 @@ export function GlassCard({
   children,
   style,
   intensity,
+  blur = 'regular',
+  padding = 'regular',
 }: {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   intensity?: number;
+  /** Blur tier: 'soft' for flat scrolled content, 'strong' for floating surfaces. */
+  blur?: 'soft' | 'regular' | 'strong';
+  /** 'tight' trims the vertical padding for dense row-lists (Settings). */
+  padding?: 'regular' | 'tight';
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const level = intensity ?? (blur === 'soft' ? colors.blurSoft : blur === 'strong' ? colors.blurStrong : colors.blurIntensity);
   return (
     <View style={[styles.shadow, { shadowColor: colors.softShadow }, style]}>
       <View style={styles.clip}>
-        <BlurView intensity={intensity ?? colors.blurIntensity} tint={colors.blurTint} style={StyleSheet.absoluteFill} />
-        <View style={[styles.glassFace, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
+        <BlurView intensity={level} tint={colors.blurTint} style={StyleSheet.absoluteFill} />
+        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
           <LinearGradient
             colors={[colors.glassHighlight, 'transparent']}
             start={{ x: 0.1, y: 0 }}
@@ -46,6 +53,70 @@ export function GlassCard({
         </View>
       </View>
     </View>
+  );
+}
+
+/** A faint hairline divider between rows inside a glass surface. */
+export function Separator({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
+  const { colors } = useTheme();
+  return <View style={[styles.separator, { backgroundColor: colors.separator }, style]} />;
+}
+
+/**
+ * A single settings / list row inside a GlassCard (KUR-270 polish). One consistent
+ * layout — optional leading icon, a title + optional subtitle, and a trailing slot
+ * (value text, chevron, switch, or any node) — with a comfortable ≥52px touch
+ * target and a subtle press highlight. The row itself is translucent; the parent
+ * GlassCard supplies the glass, so there's no per-row border ("frost line").
+ */
+export function GlassRow({
+  icon,
+  iconColor,
+  title,
+  subtitle,
+  value,
+  trailing,
+  onPress,
+  destructive = false,
+  first = false,
+}: {
+  icon?: IconName;
+  iconColor?: string;
+  title: string;
+  subtitle?: string;
+  value?: string;
+  /** Right-hand node (chevron, Switch, custom). A chevron is implied when onPress is set and no trailing/value is given. */
+  trailing?: ReactNode;
+  onPress?: () => void;
+  destructive?: boolean;
+  /** Skip the top separator (use for the first row in a card). */
+  first?: boolean;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const titleColor = destructive ? colors.danger : colors.textPrimary;
+  const body = (pressed: boolean) => (
+    <>
+      {first ? null : <Separator style={styles.rowSeparator} />}
+      <View style={[styles.row, pressed && { opacity: 0.6 }]}>
+        {icon ? (
+          <View style={styles.rowIcon}>
+            <Icon name={icon} size={20} color={iconColor ?? (destructive ? colors.danger : colors.primary)} />
+          </View>
+        ) : null}
+        <View style={styles.rowMain}>
+          <Text style={[styles.rowTitle, { color: titleColor }]} numberOfLines={1}>{title}</Text>
+          {subtitle ? <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
+        </View>
+        {value ? <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{value}</Text> : null}
+        {trailing ?? (onPress && !value ? <Icon name="chevron-right" size={16} color={colors.textSecondary} /> : null)}
+      </View>
+    </>
+  );
+  if (!onPress) return <View>{body(false)}</View>;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={title}>
+      {({ pressed }) => body(pressed)}
+    </Pressable>
   );
 }
 
@@ -150,6 +221,7 @@ export function GlassSelect<T extends string>({
   labelOf,
   onChange,
   icon,
+  first = false,
 }: {
   label: string;
   value: T;
@@ -157,22 +229,29 @@ export function GlassSelect<T extends string>({
   labelOf: (v: T) => string;
   onChange: (v: T) => void;
   icon?: IconName;
+  /** Skip the top separator (first row in a card). */
+  first?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Pressable
-        onPress={() => setOpen(true)}
-        accessibilityRole="button"
-        style={[styles.selectRow, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
-      >
-        {icon ? <Icon name={icon} size={18} color={colors.primary} /> : null}
-        <Text style={[styles.selectLabel, { color: colors.textPrimary }]}>{label}</Text>
-        <View style={styles.selectValueWrap}>
-          <Text style={[styles.selectValue, { color: colors.primary }]}>{labelOf(value)}</Text>
-          <Icon name="chevron-down" size={14} color={colors.primary} />
-        </View>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={label}>
+        {({ pressed }) => (
+          <>
+            {first ? null : <Separator style={styles.rowSeparator} />}
+            <View style={[styles.row, pressed && { opacity: 0.6 }]}>
+              {icon ? (
+                <View style={styles.rowIcon}>
+                  <Icon name={icon} size={20} color={colors.primary} />
+                </View>
+              ) : null}
+              <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>{label}</Text>
+              <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{labelOf(value)}</Text>
+              <Icon name="chevron-down" size={14} color={colors.textSecondary} />
+            </View>
+          </>
+        )}
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.selectBackdrop} onPress={() => setOpen(false)}>
@@ -219,7 +298,16 @@ const styles = StyleSheet.create({
   },
   clip: { borderRadius: radii.lg, overflow: 'hidden' },
   glassFace: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.lg, overflow: 'hidden' },
+  glassFaceTight: { paddingVertical: spacing.xs },
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '55%', opacity: 0.6 },
+  separator: { height: StyleSheet.hairlineWidth, alignSelf: 'stretch' },
+  rowSeparator: { marginHorizontal: -spacing.lg },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52, paddingVertical: spacing.sm },
+  rowIcon: { width: 26, alignItems: 'center' },
+  rowMain: { flex: 1, gap: 2 },
+  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  rowSubtitle: { fontSize: typography.sizes.sm },
+  rowValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   clay: {
     borderRadius: radii.pill,
     borderWidth: 1,
@@ -238,19 +326,6 @@ const styles = StyleSheet.create({
   segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 4, gap: 4 },
   segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: spacing.sm, alignItems: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  selectRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    alignSelf: 'stretch',
-    borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  selectLabel: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  selectValueWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  selectValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },

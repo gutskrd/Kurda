@@ -4,8 +4,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GlassCard, GlassSelect, GradientBackground } from '../theme/glass';
-import { Icon, type IconName } from '../theme/Icon';
+import { GlassCard, GlassRow, GlassSelect, GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
@@ -66,14 +66,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     );
   };
 
-  const NavRow = ({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) => (
-    <Pressable onPress={onPress} accessibilityRole="button" style={styles.navRow}>
-      <Icon name={icon} size={20} color={colors.primary} />
-      <Text style={[styles.navLabel, { color: colors.textPrimary }]}>{label}</Text>
-      <Icon name="chevron-right" size={16} color={colors.textSecondary} />
-    </Pressable>
-  );
-
   const Pill = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => (
     <Pressable
       onPress={onPress}
@@ -103,8 +95,9 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </View>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Preferences</Text>
-        <GlassCard style={styles.card}>
+        <GlassCard padding="tight">
           <GlassSelect
+            first
             label={t('settings.language')}
             icon="book"
             value={locale}
@@ -120,22 +113,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             labelOf={(p) => PREFERENCE_LABEL[p]}
             onChange={setPreference}
           />
-          <NavRow icon="sparkle" label="Appearance & preview" onPress={() => navigation.navigate('Appearance')} />
-          <View style={styles.switchRow}>
-            <Icon name="star" size={20} color={colors.primary} />
-            <Text style={[styles.navLabel, { color: colors.textPrimary }]}>{t('settings.eventThemes')}</Text>
-            <Switch value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />
-          </View>
+          <GlassRow icon="sparkle" title="Appearance & preview" onPress={() => navigation.navigate('Appearance')} />
+          <GlassRow
+            icon="star"
+            title={t('settings.eventThemes')}
+            trailing={<Switch value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
+          />
         </GlassCard>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Notifications</Text>
-        <GlassCard style={styles.card}>
-          <NavRow icon="gear" label="Notification settings" onPress={() => navigation.navigate('Notifications')} />
-          <NavRow icon="bell" label="Notification center" onPress={() => navigation.navigate('NotificationCenter')} />
+        <GlassCard padding="tight">
+          <GlassRow first icon="gear" title="Notification settings" onPress={() => navigation.navigate('Notifications')} />
+          <GlassRow icon="bell" title="Notification center" onPress={() => navigation.navigate('NotificationCenter')} />
         </GlassCard>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Privacy</Text>
-        <GlassCard style={styles.card}>
+        <GlassCard>
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Who can see my profile</Text>
           <View style={styles.pillRow}>
             {(['everyone', 'friends', 'nobody'] as Visibility[]).map((v) => (
@@ -145,15 +138,9 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </GlassCard>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Account</Text>
-        <GlassCard style={styles.card}>
-          <Pressable onPress={logout} accessibilityRole="button" style={styles.navRow}>
-            <Icon name="person" size={20} color={colors.textSecondary} />
-            <Text style={[styles.navLabel, { color: colors.danger }]}>{t('profile.logout')}</Text>
-          </Pressable>
-          <Pressable onPress={confirmDelete} accessibilityRole="button" style={styles.navRow}>
-            <Icon name="close" size={20} color={colors.textSecondary} />
-            <Text style={[styles.navLabel, { color: colors.textSecondary }]}>Delete account</Text>
-          </Pressable>
+        <GlassCard padding="tight">
+          <GlassRow first icon="person" title={t('profile.logout')} onPress={logout} destructive />
+          <GlassRow icon="close" iconColor={colors.textSecondary} title="Delete account" destructive onPress={confirmDelete} />
         </GlassCard>
       </ScrollView>
     </GradientBackground>
@@ -174,12 +161,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginLeft: spacing.xs,
     marginBottom: spacing.xs,
-  },
-  card: { gap: spacing.sm },
-  navRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
-  navLabel: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
-  groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
+  },
+  groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
   pill: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },
   pillText: { fontSize: typography.sizes.sm },
