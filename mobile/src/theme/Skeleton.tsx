@@ -5,7 +5,7 @@ import { useTheme } from './ThemeProvider';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
- * Skeleton placeholder (KUR-266 polish). A soft translucent block that gently
+ * Skeleton placeholder. A soft translucent block that gently
  * pulses while content loads — the glass-native replacement for spinning loaders.
  * Honours reduce-motion (holds a static dimmed state) and is hidden from screen
  * readers (it's decorative; the screen announces "loading" via the boundary).
