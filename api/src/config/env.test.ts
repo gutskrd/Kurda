@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadConfig } from './env.js';
+import { loadConfig, DEV_JWT_SECRET } from './env.js';
 
 describe('loadConfig', () => {
   it('applies defaults for a minimal environment', () => {
@@ -47,6 +47,36 @@ describe('loadConfig', () => {
     expect(
       loadConfig({ NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(32) }).JWT_SECRET,
     ).toBe('x'.repeat(32));
+  });
+
+  it('rejects the built-in dev JWT secret in production', () => {
+    expect(() => loadConfig({ NODE_ENV: 'production', JWT_SECRET: DEV_JWT_SECRET })).toThrow(
+      /JWT_SECRET.*development secret/,
+    );
+    // but it's fine in dev/test (that's the whole point of the default)
+    expect(loadConfig({ NODE_ENV: 'development' }).JWT_SECRET).toBe(DEV_JWT_SECRET);
+  });
+
+  it('rejects a wildcard CORS_ORIGINS in production', () => {
+    const prod = { NODE_ENV: 'production', JWT_SECRET: 'a-real-production-secret-32-chars-long!!' };
+    expect(() => loadConfig({ ...prod, CORS_ORIGINS: '*' })).toThrow(/CORS_ORIGINS.*wildcard/);
+    expect(() => loadConfig({ ...prod, CORS_ORIGINS: 'https://a.com,*' })).toThrow(/CORS_ORIGINS/);
+    // an explicit allowlist is accepted
+    expect(
+      loadConfig({ ...prod, CORS_ORIGINS: 'https://admin.mykurda.com' }).CORS_ORIGINS,
+    ).toBe('https://admin.mykurda.com');
+    // wildcard is fine outside production
+    expect(loadConfig({ CORS_ORIGINS: '*' }).CORS_ORIGINS).toBe('*');
+  });
+
+  it('boots the local docker-compose shape (prod mode, placeholder secret, no CORS wildcard)', () => {
+    expect(() =>
+      loadConfig({
+        NODE_ENV: 'production',
+        JWT_SECRET: 'local-compose-jwt-secret-change-me-min-32-chars',
+        IAP_ALLOW_STUB: 'true',
+      }),
+    ).not.toThrow();
   });
 
   it('returns a frozen config object', () => {

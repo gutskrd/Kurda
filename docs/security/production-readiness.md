@@ -316,20 +316,57 @@ XP idempotency (`rhyme-match.integration.test.ts`).
 
 ---
 
-## Production deployment hardening gate
+## Production deployment hardening checklist
 
-Verify before every production deploy. Production must **not** run with:
+Two lists: what the **repository already enforces automatically**, and what **you
+must configure by hand in the production provider** (the repo cannot see live
+managed infrastructure, so those are never auto-verified).
 
-- `NODE_ENV` other than `production`, or debug/verbose stack traces enabled.
-- `IAP_ALLOW_STUB=true` (dev-only stub receipt verifier — never on a store deploy).
-- The compose placeholder `JWT_SECRET` — set a real ≥32-char secret from secrets
-  management.
-- Wildcard/empty `CORS_ORIGINS` for the web app — set the real origins.
-- The Postgres **superuser** as the app DB user (use `kurda_app`, above).
-- Publicly reachable Postgres/Redis, seeded test accounts, or debug/test routes.
-- Email/OAuth/storage credentials absent where the feature is enabled
-  (`RESEND_API_KEY`/`SMTP_*`, `GOOGLE_CLIENT_IDS`, R2 keys) — see
-  [email-delivery](email-delivery.md) and [google-signin](google-signin.md).
+### A. Enforced automatically at boot (`config/env.ts`, verified by tests)
+
+When `NODE_ENV=production`, `loadConfig()` **fails closed** (the process refuses to
+start) if:
+
+- `JWT_SECRET` is missing, shorter than 32 chars, or the **built-in dev secret**
+  (`DEV_JWT_SECRET`).
+- `CORS_ORIGINS` contains a `*` wildcard.
+
+Also always-on, regardless of environment: parameterized SQL, per-route rate
+limits, strict security headers, DTO responses, log redaction of
+`authorization`/`cookie`/`password`/`token`/`email`, and pretty logs only in
+development. The API and worker both handle `SIGTERM`/`SIGINT` for graceful
+shutdown (drain in-flight work, close pool/Redis, run `onClose`).
+
+### B. Must be set by hand in the production provider (NOT auto-verifiable)
+
+- **`JWT_SECRET`** — a strong, unique ≥32-char secret from secrets management (not
+  the compose placeholder). Rotating it invalidates all access tokens.
+- **`CORS_ORIGINS`** — the explicit production origin allowlist. The known admin
+  origin is `https://admin.mykurda.com`; add the production web-app origin **only
+  if a browser web client is actually deployed** (native apps send no Origin and
+  need no entry). Do not use `*`. _Note: the admin SPA calls the API over
+  same-origin relative paths via a Cloudflare Pages proxy — in that setup it needs
+  no CORS entry; add `https://admin.mykurda.com` only if the admin is pointed at a
+  cross-origin API._
+- **Database role** — the runtime `DATABASE_URL` for api+worker must use a
+  least-privilege, **non-superuser** role (the `kurda_app` model in §16); the
+  migrator uses a separate DDL-capable role. On a managed DB (e.g. Render), create
+  the role out-of-band and verify the app connection is not the superuser. **The
+  repo cannot verify the live managed database — confirm this manually.**
+- **Network exposure** — production Postgres and Redis must **not** be publicly
+  reachable: private network / VPC, no public bind, firewall/security-group locked
+  to the API+worker only. Managed Redis must require **auth** (credentials in
+  `REDIS_URL`). The compose stack binds both to `127.0.0.1` locally, but a managed
+  provider's network config is yours to lock down.
+- **`IAP_ALLOW_STUB`** — leave unset (or `false`) on any store-facing deploy; it
+  enables the dev stub receipt verifier. The API logs a loud warning when it is
+  `true` in production.
+- **External-service credentials** (only where the feature is enabled) —
+  `RESEND_API_KEY`/`SMTP_*` (see [email-delivery](email-delivery.md)),
+  `GOOGLE_CLIENT_IDS`/`APPLE_CLIENT_IDS` (see [google-signin](google-signin.md)),
+  R2/S3 keys — all from env/secrets, never committed.
+- **No dev artifacts** — no seeded test accounts, debug/test routes, or dev
+  credentials in the production environment.
 
 ## SSRF posture
 

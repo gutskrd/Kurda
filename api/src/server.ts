@@ -21,6 +21,25 @@ async function main(): Promise<void> {
     app.log.error(err);
     process.exit(1);
   }
+
+  // Graceful shutdown (KUR-111): on SIGTERM/SIGINT from the orchestrator, stop
+  // accepting connections, drain in-flight requests, and run onClose hooks
+  // (DB pool, Redis, interval sweepers) before exiting — never a hard kill.
+  let closing = false;
+  const shutdown = async (signal: string): Promise<void> => {
+    if (closing) return;
+    closing = true;
+    app.log.info({ signal }, 'shutting down');
+    try {
+      await app.close();
+      process.exit(0);
+    } catch (err) {
+      app.log.error(err, 'error during graceful shutdown');
+      process.exit(1);
+    }
+  };
+  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+  process.on('SIGINT', () => void shutdown('SIGINT'));
 }
 
 void main();

@@ -1,6 +1,9 @@
 /* eslint-disable no-restricted-syntax -- the only module allowed to read process.env */
 import { z } from 'zod';
 
+/** The built-in development JWT secret — rejected in production (see loadConfig). */
+export const DEV_JWT_SECRET = 'kurda-dev-secret-do-not-use-in-prod!!';
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
@@ -69,7 +72,7 @@ const envSchema = z.object({
   MEDIA_AUDIO_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),
   MEDIA_AUDIO_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** HMAC secret for access tokens. MUST be overridden in production. */
-  JWT_SECRET: z.string().min(32).default('kurda-dev-secret-do-not-use-in-prod!!'),
+  JWT_SECRET: z.string().min(32).default(DEV_JWT_SECRET),
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */
   GOOGLE_CLIENT_IDS: z.string().optional(),
   APPLE_CLIENT_IDS: z.string().optional(),
@@ -122,14 +125,32 @@ export type AppConfig = Readonly<z.infer<typeof envSchema>>;
  */
 export function loadConfig(env: Record<string, string | undefined> = process.env): AppConfig {
   const result = envSchema.safeParse(env);
-  if (result.success && result.data.NODE_ENV === 'production' && !env.JWT_SECRET) {
-    throw new Error('Invalid environment configuration:\n  JWT_SECRET: required in production');
-  }
   if (!result.success) {
     const problems = result.error.issues
       .map((issue) => `  ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
     throw new Error(`Invalid environment configuration:\n${problems}`);
   }
-  return Object.freeze(result.data);
+  const config = result.data;
+
+  // Production safety guards — fail closed at boot rather than at first request.
+  // These deliberately do NOT trip the local docker-compose stack (which runs as
+  // NODE_ENV=production with a distinct, non-default JWT placeholder and no CORS
+  // wildcard); they catch real misconfiguration on a live deploy.
+  if (config.NODE_ENV === 'production') {
+    const problems: string[] = [];
+    if (!env.JWT_SECRET) {
+      problems.push('  JWT_SECRET: required in production');
+    } else if (env.JWT_SECRET === DEV_JWT_SECRET) {
+      problems.push('  JWT_SECRET: the built-in development secret must not be used in production');
+    }
+    if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
+      problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");
+    }
+    if (problems.length > 0) {
+      throw new Error(`Invalid environment configuration:\n${problems.join('\n')}`);
+    }
+  }
+
+  return Object.freeze(config);
 }
