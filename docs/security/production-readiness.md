@@ -261,6 +261,37 @@ lifecycle already exists). Do not pre-partition an empty table.
 
 ---
 
+## Adversarial audit results (live, against the running API)
+
+A black-box pass driving real requests at the running backend with two attacker
+accounts. Every attempt below was **rejected server-side**; findings are
+classified by realistic impact.
+
+| Attack | Result |
+|---|---|
+| No / malformed / signature-tampered / `alg=none` token → `/me` | **401** (JWT forgery blocked) |
+| Normal user → `POST /admin/users/:id/wallet` (grant Zêr), valid body | **403 FORBIDDEN** — authz runs after validation; no credit written |
+| Normal user → `GET /admin/users/:id` | **403** |
+| `PATCH /me` with `{xp, roles, isAdmin, emailVerified, zer}` | **200, extras stripped** — DB verified `xp=0, roles=[], email_verified_at=null` (no mass assignment) |
+| `GET /users/:id` (another user) | public DTO only — **no email/hash**; blocked users → 404 |
+| Guest (no token) → ranked/matchmaking | **401** — no server-side `isGuest` flag to flip |
+| Ranked 1v1 result forgery | not possible — client sends only a choice index; server computes `correct` vs the server-held answer, scores with server-recorded timing, blocks double/late answers, awards rating/XP server-side (`engine.ts`); anti-cheat shadow-flagging + idempotent `(source,ref_id)` XP ledger |
+| BOLA on `/wordle|rhyme/*/results` | **fixed** (participant-scoped, PR #502) — regression tests assert an outsider gets null |
+| Malformed UUID in `:id` | **400** (not 500) |
+| Stored XSS via `bio` | **sanitized server-side** (`<script>`/`<img onerror>` stripped) |
+| Unbounded pagination (`limit=999999` / negative) | **clamped** (`Math.min(limit, 50)`; list schemas `.max(100/200)`) |
+| SQL injection via id/search | parameterized `pg` + UUID validation — no injection |
+
+**Severity summary:** Critical 0 · High 0 (the one BOLA was fixed) · Medium 0 ·
+Low/Informational: admin SPA CSP (host-dependent); `state()` shows opponent
+*progress* to non-participants (product decision on spectating).
+
+Regression tests added/confirmed: BOLA game-results (PR #502), mass-assignment
+(`profile.integration.test.ts`), admin-bypass 403 (`admin.integration.test.ts`),
+XP idempotency (`rhyme-match.integration.test.ts`).
+
+---
+
 ## Production deployment hardening gate
 
 Verify before every production deploy. Production must **not** run with:

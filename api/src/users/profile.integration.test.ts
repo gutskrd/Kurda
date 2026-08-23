@@ -89,6 +89,28 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     expect(user.timezone).toBe('Europe/Berlin');
   });
 
+  it('ignores unknown/privileged fields on PATCH /me (no mass assignment)', async () => {
+    const res = await me('PATCH', {
+      displayName: 'Legit Name',
+      // attacker-supplied privileged fields — must never be written
+      xp: 999_999,
+      roles: ['superadmin'],
+      isAdmin: true,
+      emailVerified: true,
+      zer: 999_999,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().user.displayName).toBe('Legit Name');
+    // the privileged columns are untouched in the database
+    const row = await pool.query<{ xp: number; roles: string[]; email_verified_at: Date | null }>(
+      `SELECT xp, roles, email_verified_at FROM users WHERE id = $1`,
+      [userId],
+    );
+    expect(row.rows[0]!.xp).toBe(0);
+    expect(row.rows[0]!.roles).toEqual([]);
+    expect(row.rows[0]!.email_verified_at).toBeNull();
+  });
+
   it('rejects invalid timezones and empty patches', async () => {
     expect((await me('PATCH', { timezone: 'Mars/OlympusMons' })).statusCode).toBe(400);
     expect((await me('PATCH', {})).statusCode).toBe(400);
