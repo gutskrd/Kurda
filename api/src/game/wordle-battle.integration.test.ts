@@ -102,8 +102,12 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     expect(p2state.status).toBe('finished');
     expect(p2state.target).toBe(target); // revealed post-match
 
+    // BOLA: a non-participant cannot read another battle's results
+    const outsider = await makeUser();
+    expect(await svc.results(battleId, outsider)).toBeNull();
+
     // results: host wins (rank 1) with more XP than the non-solver
-    const results = await svc.results(battleId);
+    const results = await svc.results(battleId, host);
     expect(results).toBeTruthy();
     const hostRow = results!.ranking.find((r) => r.userId === host)!;
     const p2Row = results!.ranking.find((r) => r.userId === p2)!;
