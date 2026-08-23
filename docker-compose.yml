@@ -15,6 +15,8 @@ services:
       - '127.0.0.1:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # creates the least-privilege kurda_app role on first init (before migrations)
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
@@ -46,10 +48,9 @@ services:
     ports:
       - '3000:3000'
     environment:
-      # NOTE: still the superuser here. Switching to the least-privilege
-      # kurda_app role (docs/security/production-readiness.md) is the next step,
-      # pending a `docker compose down -v && up` smoke test of the grant set.
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
+      # least-privilege app role (DML only); the migrate service uses the
+      # superuser. Override APP_DATABASE_URL in prod with a real app-role URL.
+      DATABASE_URL: ${APP_DATABASE_URL:-postgres://kurda_app:kurda_app@postgres:5432/kurda}
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
       # Required in production; override in a .env for real deploys (like the
@@ -83,7 +84,8 @@ services:
     command: npx tsx api/src/workers/main.ts
     # the worker is what actually sends email, so it needs the provider config
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
+      # least-privilege app role (DML only); the migrate service uses the superuser
+      DATABASE_URL: ${APP_DATABASE_URL:-postgres://kurda_app:kurda_app@postgres:5432/kurda}
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:-local-compose-jwt-secret-change-me-min-32-chars}

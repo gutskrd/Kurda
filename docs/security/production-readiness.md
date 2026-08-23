@@ -159,26 +159,47 @@ and the compose `${VAR:-…}` placeholders hold non-secret defaults only.
 
 ---
 
+## 16. Database least privilege — IMPLEMENTED
+
+The runtime application connects as **`kurda_app`**, a role with **DML only**
+(`SELECT/INSERT/UPDATE/DELETE`), plus `USAGE,SELECT` on sequences and `EXECUTE`
+on functions. It has **no** `CREATE/DROP/ALTER`, no role management, and no
+superuser. Administrative ownership stays with the `postgres` role, which the
+**migrate** service uses (DDL/owner). The two are separate.
+
+- Role + grants: `docker/postgres-init/10-app-role.sql` (runs once, as superuser,
+  before migrations). `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` makes every
+  object migrations create afterwards — and every runtime partition — auto-grant
+  DML to `kurda_app`, so no re-grant step is needed.
+- Partition maintenance keeps working because `ensure_partitions()` is
+  `SECURITY DEFINER` with a pinned `search_path` (migration `1751000087000`): it
+  runs the `CREATE TABLE` as its owner while `kurda_app` only needs `EXECUTE`.
+- Compose wiring: `api`/`worker` use `${APP_DATABASE_URL:-…kurda_app…}`; `migrate`
+  uses the superuser. Override `APP_DATABASE_URL` in production with a real
+  app-role URL whose password comes from secrets management.
+
+**Verified** (`docker compose down -v && up`, then `psql` as `kurda_app`):
+
+| Operation | Result |
+|---|---|
+| read users / partitioned tables, transactions, register+`/me` (real writes) | **allowed** |
+| `SELECT ensure_partitions(...)` | **allowed** (runs as owner) |
+| `CREATE TABLE` / `DROP TABLE` / `ALTER TABLE` | denied (`permission denied` / `must be owner`) |
+| `CREATE ROLE` / `ALTER ROLE … SUPERUSER` / alter another role | denied |
+| `TRUNCATE`, `CREATE EXTENSION`, `COPY … TO file` | denied |
+| `SELECT rolpassword FROM pg_authid` | denied |
+
+---
+
 ## Residual gaps & remediation
 
-The controls above are implemented. These are the genuine remaining items, in
-priority order:
-
-1. **Least-privilege database role.** The Docker/self-host stack connects the app
-   as the Postgres **superuser**. Production should use a role with **DML only**
-   (no DDL/superuser). Prerequisite: `ensure_partitions()` — which the app calls at
-   runtime (`app.ts`) and which does `CREATE TABLE` — must become
-   **`SECURITY DEFINER`** (with a pinned `search_path`) so partition creation works
-   under a least-privilege caller. Migrations run as a separate migrator role.
-   Design SQL below.
-2. **Compose network exposure.** `docker-compose.yml` publishes Postgres (`5432`)
-   and Redis (`6379`) to the host. Bind them to `127.0.0.1` (local-only) or drop the
-   publish so they are reachable only over the internal compose network.
-3. **Admin SPA CSP.** The API's CSP is strict, but the admin web app ships no
+1. **Admin SPA CSP.** The API's CSP is strict, but the admin web app ships no
    app-level CSP — add one at the static host (a `_headers`/host config with a
-   locked-down policy). Admin is already behind auth + role + TOTP.
+   locked-down policy) once the admin's production hosting is fixed. A `<meta>` CSP
+   can't set `frame-ancestors` and breaks Vite dev HMR, so this belongs at the
+   host, not in the SPA. Admin is already behind auth + role + TOTP.
 
-### Least-privilege role — design SQL (review before applying)
+### Least-privilege role — the applied SQL (see `docker/postgres-init/10-app-role.sql`)
 
 ```sql
 -- 1) Make partition creation run as the function owner, not the caller.
