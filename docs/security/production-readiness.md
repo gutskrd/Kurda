@@ -232,6 +232,35 @@ as `kurda_app`.
 
 ---
 
+## Scalability findings
+
+Reviewed the hot read paths (leaderboards, rankings, chat, notifications, game
+results). The architecture scales without rework: pooling, Redis caching of
+boards, BullMQ for expensive/async work, `notifications`/`rhyme_games`
+partitioned, list endpoints paginated, `player_ratings(rating)` indexed for the
+rating board, and per-user `xp_ledger(user_id, created_at)` for profile totals.
+No client-declared rewards; XP/Zêr via idempotent append-only ledgers.
+
+**Acted on — weekly XP-leaderboard index** (migration `1751000088000`). The
+weekly board rebuild aggregates `xp_ledger` filtered by `created_at >= weekStart`,
+but the only index led with `user_id`, forcing a `Seq Scan` over the entire
+append-only ledger each rebuild. Added a partial index
+`xp_ledger (created_at) WHERE amount > 0`. Validated with `EXPLAIN (ANALYZE,
+BUFFERS)` on a 50k-row bench: `Seq Scan` (cost 1568, 9.2 ms, 568 buffers) →
+`Bitmap Index Scan` (cost 907, 3.1 ms); the margin grows with total ledger size
+(seq scan tracks all rows; index scan tracks only the week's). Write cost: one
+partial single-column index on a high-write table; the `amount > 0` predicate
+limits it to credits. Board results are Redis-cached, so this runs on periodic
+rebuilds, not per request.
+
+**Watch (no action needed yet).** High-write tables — `xp_ledger`, game results,
+chat, notifications — are append-only/partitioned and currently well within
+limits. Scaling path if volume grows: a maintained per-user XP rollup for
+all-time boards, and partitioning `xp_ledger` by month (the `ensure_partitions()`
+lifecycle already exists). Do not pre-partition an empty table.
+
+---
+
 ## Production deployment hardening gate
 
 Verify before every production deploy. Production must **not** run with:
