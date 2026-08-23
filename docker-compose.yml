@@ -9,8 +9,10 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: kurda
+    # bound to localhost so the database is never exposed to the LAN/internet;
+    # containers reach it over the internal compose network regardless
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -21,8 +23,9 @@ services:
 
   redis:
     image: redis:7
+    # localhost-only: Redis has no auth here and must not be publicly reachable
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -43,6 +46,9 @@ services:
     ports:
       - '3000:3000'
     environment:
+      # NOTE: still the superuser here. Switching to the least-privilege
+      # kurda_app role (docs/security/production-readiness.md) is the next step,
+      # pending a `docker compose down -v && up` smoke test of the grant set.
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/kurda
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
