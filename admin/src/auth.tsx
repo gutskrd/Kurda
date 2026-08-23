@@ -8,7 +8,7 @@ interface Me {
 }
 interface AuthState {
   me: Me | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   logout: () => void;
 }
 
@@ -31,12 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     // run once on mount; login()/logout() keep `me` in sync afterwards
   }, []);
 
-  async function login(email: string, password: string): Promise<void> {
+  async function login(email: string, password: string, remember = true): Promise<void> {
     const res = await api<{ tokens: { accessToken: string } }>('/auth/login', {
       method: 'POST',
       body: { email, password },
     });
-    setToken(res.tokens.accessToken);
+    setToken(res.tokens.accessToken, remember);
     // the login payload omits roles — fetch the full profile so role-based UI works
     const meRes = await api<{ user: Me }>('/me');
     setMe(meRes.user);
