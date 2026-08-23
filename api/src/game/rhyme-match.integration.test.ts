@@ -112,7 +112,10 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
 
     // window elapses → results finalize: host rank 1, more XP than p2
     clock.t = new Date(clock.t.getTime() + 60_001);
-    const results = await svc().results(matchId);
+    // BOLA: a non-participant cannot read another match's results
+    const outsider = await makeUser();
+    expect(await svc().results(matchId, outsider)).toBeNull();
+    const results = await svc().results(matchId, host);
     expect(results).toBeTruthy();
     const hostRow = results!.ranking.find((r) => r.userId === host)!;
     const p2Row = results!.ranking.find((r) => r.userId === p2)!;
@@ -122,7 +125,7 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
 
     // XP landed in the ledger and is idempotent (calling results again = no change)
     expect(await ledgerXp(host)).toBe(hostRow.xpAwarded);
-    await svc().results(matchId);
+    await svc().results(matchId, host);
     expect(await ledgerXp(host)).toBe(hostRow.xpAwarded);
   });
 

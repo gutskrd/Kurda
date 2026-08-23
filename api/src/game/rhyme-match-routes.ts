@@ -88,7 +88,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: { xp?: XpSe
 
   /** Post-match results: placement + scores + everyone's used words + XP. */
   app.get('/rhyme/matches/:id/results', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
-    const results = await matches.results((req.params as { id: string }).id);
+    const results = await matches.results((req.params as { id: string }).id, req.user!.id);
     if (!results) return reply.code(409).send({ code: 'NOT_FINISHED', message: 'results are available once the match ends' });
     return results;
   });

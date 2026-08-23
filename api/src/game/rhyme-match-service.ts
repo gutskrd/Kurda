@@ -237,12 +237,15 @@ export class RhymeMatchService {
     };
   }
 
-  async results(matchId: string): Promise<RhymeMatchResults | null> {
+  async results(matchId: string, userId: string): Promise<RhymeMatchResults | null> {
     await this.finalizeIfElapsed(matchId);
     const m = await this.pool.query<MatchRow>(`SELECT * FROM rhyme_matches WHERE id = $1`, [matchId]);
     const match = m.rows[0];
     if (!match || match.status !== 'finished') return null;
     const players = await this.pool.query<PlayerRow>(`SELECT * FROM rhyme_match_players WHERE match_id = $1`, [matchId]);
+    // participants only — a non-participant gets null, never another match's used
+    // words / placement / XP (BOLA protection)
+    if (!players.rows.some((r) => r.user_id === userId)) return null;
     const ranked = rankRhyme(players.rows.map((r) => this.toResult(r)));
     const byId = new Map(players.rows.map((r) => [r.user_id, r]));
     return {

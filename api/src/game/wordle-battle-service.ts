@@ -286,12 +286,17 @@ export class WordleBattleService {
     };
   }
 
-  /** Post-match results (finished only): all histories + word + placement + XP. */
-  async results(battleId: string): Promise<BattleResults | null> {
+  /**
+   * Post-match results (finished only): all histories + word + placement + XP.
+   * Scoped to participants — a non-participant gets `null` (never another match's
+   * guess histories / answer word), same as an unknown id (BOLA protection).
+   */
+  async results(battleId: string, userId: string): Promise<BattleResults | null> {
     const b = await this.pool.query<BattleRow>(`SELECT * FROM wordle_battles WHERE id = $1`, [battleId]);
     const battle = b.rows[0];
     if (!battle || battle.status !== 'finished') return null;
     const players = await this.pool.query<PlayerRow>(`SELECT * FROM wordle_battle_players WHERE battle_id = $1`, [battleId]);
+    if (!players.rows.some((r) => r.user_id === userId)) return null; // participants only
     const ranked = rankBattle(players.rows.map((r) => this.toBattleResult(r)));
     const byId = new Map(players.rows.map((r) => [r.user_id, r]));
     return {

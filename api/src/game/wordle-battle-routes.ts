@@ -81,7 +81,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: { xp?: Xp
 
   /** Post-match results: all guess histories + the word + placement + XP. */
   app.get('/wordle/battles/:id/results', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
-    const results = await battles.results((req.params as { id: string }).id);
+    const results = await battles.results((req.params as { id: string }).id, req.user!.id);
     if (!results) return reply.code(409).send({ code: 'NOT_FINISHED', message: 'results are available once the match ends' });
     return results;
   });
