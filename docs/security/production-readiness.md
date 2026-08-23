@@ -191,13 +191,36 @@ superuser. Administrative ownership stays with the `postgres` role, which the
 
 ---
 
+## 17. Admin SPA security headers — IMPLEMENTED
+
+The admin panel (`admin.mykurda.com`, Cloudflare Pages) ships a locked-down CSP
+and companion headers as an **HTTP response header** via `admin/public/_headers`
+(Vite copies it to the build root; Pages serves it) — not a `<meta>` tag, so
+`frame-ancestors` works and dev HMR is unaffected.
+
+Policy (validated by loading the production build under it — renders clean, zero
+CSP violations): `default-src 'none'`; `script-src/style-src/connect-src/font-src
+'self'`; `img-src 'self' data:`; `base-uri/form-action 'self'`; `frame-ancestors
+'none'`; `object-src 'none'`; `upgrade-insecure-requests`. Plus `X-Frame-Options:
+DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, HSTS
+(2y, preload), a locked `Permissions-Policy`, and `COOP/CORP: same-origin`.
+
+It is maximally strict because the admin is self-contained: it loads only its own
+hashed `/assets/*.js` + `/assets/*.css`, uses React inline styles (CSSOM, so no
+`'unsafe-inline'` needed), renders no external images/fonts, and calls the API
+over same-origin relative paths. If the admin is ever pointed at a cross-origin
+API add that origin to `connect-src`; if it renders R2 media add that host to
+`img-src`.
+
+---
+
 ## Residual gaps & remediation
 
-1. **Admin SPA CSP.** The API's CSP is strict, but the admin web app ships no
-   app-level CSP — add one at the static host (a `_headers`/host config with a
-   locked-down policy) once the admin's production hosting is fixed. A `<meta>` CSP
-   can't set `frame-ancestors` and breaks Vite dev HMR, so this belongs at the
-   host, not in the SPA. Admin is already behind auth + role + TOTP.
+_None blocking._ Remaining is a product decision, not a vulnerability:
+
+- `state()` on wordle/rhyme returns opponent **progress** (not their letters) to a
+  non-participant with the match id — decide whether spectating is intended; scope
+  it to participants if not.
 
 ### Least-privilege role — the applied SQL (see `docker/postgres-init/10-app-role.sql`)
 
@@ -283,8 +306,9 @@ classified by realistic impact.
 | SQL injection via id/search | parameterized `pg` + UUID validation — no injection |
 
 **Severity summary:** Critical 0 · High 0 (the one BOLA was fixed) · Medium 0 ·
-Low/Informational: admin SPA CSP (host-dependent); `state()` shows opponent
-*progress* to non-participants (product decision on spectating).
+Low/Informational: `state()` shows opponent *progress* (not letters) to
+non-participants (product decision on spectating). The admin SPA CSP is now
+implemented (§17).
 
 Regression tests added/confirmed: BOLA game-results (PR #502), mass-assignment
 (`profile.integration.test.ts`), admin-bypass 403 (`admin.integration.test.ts`),
