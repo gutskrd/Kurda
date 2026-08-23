@@ -301,18 +301,53 @@ textarea { font: inherit; }
 .funnel-fill { height: 100%; background: var(--text); border-radius: var(--radius-xs); min-width: 2px; opacity: 0.82; }
 .funnel-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: var(--text-2); }
 
-/* ---- login: centered glass card ---------------------------------------- */
-.login { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+/* ---- login: looping video backdrop + centered glass card --------------- */
+.login { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 24px; overflow: hidden; }
+.login-bg { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.login-scrim {
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(1200px 820px at 50% 38%, rgba(12, 14, 18, 0.35), rgba(6, 8, 12, 0.72));
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
 .login .card {
-  width: 360px; max-width: 100%;
-  display: flex; flex-direction: column; gap: 14px;
-  padding: 30px 28px;
+  position: relative; z-index: 1;
+  width: 374px; max-width: 100%;
+  display: flex; flex-direction: column; gap: 13px;
+  padding: 32px 30px;
+  background: var(--glass-solid);
   box-shadow: var(--shadow-lg);
   text-align: center;
 }
-.login .brand { padding: 0 0 4px; font-size: 20px; text-align: center; }
+.login .brand { padding: 0; font-size: 20px; text-align: center; }
+.login-sub { margin: -4px 0 6px; font-size: 13px; text-align: center; }
 .login label { text-align: left; }
-.login button.primary { margin-top: 4px; }
+.login button.primary { margin-top: 6px; padding: 10px 14px; }
+
+/* icon-in-input fields */
+.field { position: relative; }
+.field-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); display: flex; color: var(--text-dim); pointer-events: none; }
+.field input.with-icon { padding-left: 40px; }
+.field input.has-toggle { padding-right: 44px; }
+.field-toggle {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; box-shadow: none;
+  padding: 6px; border-radius: var(--radius-xs); color: var(--text-dim); cursor: pointer;
+}
+.field-toggle:hover { color: var(--text); background: var(--control); }
+
+/* remember + forgot row */
+.login-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; margin: 2px 0; }
+.remember { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 500; cursor: pointer; }
+.remember input[type='checkbox'] {
+  width: 16px; height: 16px; margin: 0; padding: 0;
+  border: 0; background: none; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  accent-color: var(--primary); cursor: pointer;
+}
+.link-btn { background: none; border: none; box-shadow: none; padding: 0; color: var(--text-2); font-weight: 500; cursor: pointer; }
+.link-btn:hover { color: var(--text); text-decoration: underline; background: none; }
+.note { color: var(--text-2); font-size: 13px; text-align: left; }
 
 /* ---- states ------------------------------------------------------------ */
 .error { color: var(--danger); font-size: 13px; }

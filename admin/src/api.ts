@@ -3,12 +3,16 @@
  * proxied same-origin to the api dev server (see vite.config). Throws `ApiError`
  * with the server's error envelope on non-2xx.
  */
-let token: string | null = localStorage.getItem('kurda_admin_token');
+const TOKEN_KEY = 'kurda_admin_token';
+// "Remember me" on → localStorage (persists across browser restarts);
+// off → sessionStorage (cleared when the tab/browser closes).
+let token: string | null = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
 
-export function setToken(next: string | null): void {
+export function setToken(next: string | null, persist = true): void {
   token = next;
-  if (next) localStorage.setItem('kurda_admin_token', next);
-  else localStorage.removeItem('kurda_admin_token');
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  if (next) (persist ? localStorage : sessionStorage).setItem(TOKEN_KEY, next);
 }
 export function getToken(): string | null {
   return token;
