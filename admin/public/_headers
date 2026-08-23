@@ -1,0 +1,16 @@
+# Cloudflare Pages response headers for the MyKurda admin (admin.mykurda.com).
+# The admin is a self-contained Vite SPA: it loads only its own hashed
+# /assets/*.js + /assets/*.css, renders no external images/fonts, and calls the
+# API over same-origin relative paths (proxied at the edge). The policy below
+# allows exactly that and nothing more. If the admin is ever pointed at a
+# cross-origin API, add that origin to connect-src; if it starts rendering media
+# from R2, add that host to img-src.
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
