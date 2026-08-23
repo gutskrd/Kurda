@@ -83,7 +83,7 @@ export function Moderation(): React.JSX.Element {
         {loading ? (
           <div className="empty">Loading…</div>
         ) : cases.length === 0 ? (
-          <div className="empty">🎉 Queue is empty — nothing to review.</div>
+          <div className="empty">Queue is empty — nothing to review.</div>
         ) : (
           <div className="tablewrap">
           <table>

@@ -26,7 +26,7 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
   return (
     <div className="login">
       <form className="card" onSubmit={submit}>
-        <div className="brand">Kurda Admin 🌿</div>
+        <div className="brand">MyKurda Admin</div>
         <label>
           Email
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />

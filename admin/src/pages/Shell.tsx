@@ -24,7 +24,7 @@ export function Shell({
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand">Kurda Admin 🌿</div>
+        <div className="brand">MyKurda Admin</div>
         {nav.map((n) => (
           <a
             key={n.key}

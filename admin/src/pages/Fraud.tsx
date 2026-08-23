@@ -89,7 +89,7 @@ export function Fraud(): React.JSX.Element {
         {loading ? (
           <div className="empty">Loading…</div>
         ) : reviews.length === 0 ? (
-          <div className="empty">No open fraud reviews. 🎉</div>
+          <div className="empty">No open fraud reviews.</div>
         ) : (
           <div className="tablewrap">
             <table>
