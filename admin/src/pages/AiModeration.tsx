@@ -109,7 +109,7 @@ export function AiModeration(): React.JSX.Element {
               Text flags ({text.length})
             </div>
             {text.length === 0 ? (
-              <div className="empty">No pending text flags. 🎉</div>
+              <div className="empty">No pending text flags.</div>
             ) : (
               <div className="tablewrap">
                 <table>
@@ -161,7 +161,7 @@ export function AiModeration(): React.JSX.Element {
               Image flags ({images.length})
             </div>
             {images.length === 0 ? (
-              <div className="empty">No pending image flags. 🎉</div>
+              <div className="empty">No pending image flags.</div>
             ) : (
               <div className="tablewrap">
                 <table>

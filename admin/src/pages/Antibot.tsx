@@ -106,7 +106,7 @@ export function Antibot(): React.JSX.Element {
         {loading ? (
           <div className="empty">Loading…</div>
         ) : flagged.length === 0 ? (
-          <div className="empty">No accounts are currently flagged. 🎉</div>
+          <div className="empty">No accounts are currently flagged.</div>
         ) : (
           <div className="tablewrap">
             <table>
