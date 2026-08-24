@@ -31,7 +31,9 @@ describe('ProfileModal', () => {
             emailVerified: true,
             bio: null,
             xp: 1234,
-            streak: 7,
+            // /me returns the streak as an OBJECT, not a number (regression for
+            // React error #31 — rendering the object directly used to crash).
+            streak: { current: 7, longest: 12, freezes: 1, lastActiveOn: '2026-08-20' },
             profileVisibility: 'everyone',
             profilePhotoUrl: null,
             createdAt: '2026-01-01T00:00:00.000Z',
@@ -47,6 +49,9 @@ describe('ProfileModal', () => {
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
     expect(screen.getByText('@ada')).toBeInTheDocument();
     expect(screen.getByText('1,234')).toBeInTheDocument(); // XP
+    // renders streak.current (not the object) — no crash, no error state
+    expect(screen.getByText('7 days')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows the loading state while /me is in flight', async () => {
@@ -87,7 +92,7 @@ describe('ProfileModal', () => {
       'fetch',
       vi.fn(async () =>
         jsonResponse(200, {
-          user: { id: '1', email: 'a@b.com', username: 'ada', displayName: null, emailVerified: true, bio: null, xp: 0, streak: 0, profileVisibility: 'everyone', profilePhotoUrl: null, createdAt: '2026-01-01T00:00:00.000Z' },
+          user: { id: '1', email: 'a@b.com', username: 'ada', displayName: null, emailVerified: true, bio: null, xp: 0, streak: { current: 0, longest: 0, freezes: 0, lastActiveOn: null }, profileVisibility: 'everyone', profilePhotoUrl: null, createdAt: '2026-01-01T00:00:00.000Z' },
         }),
       ),
     );
