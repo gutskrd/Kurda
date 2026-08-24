@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
-import { ThemeToggle } from './ThemeToggle';
 import { MenuIcon, CloseIcon } from './icons';
 
 export interface NavItem {
@@ -45,7 +44,6 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
         <span className="nav-spacer" />
 
         <div className="nav-actions">
-          <ThemeToggle />
           {signedIn ? (
             <>
               <LinkButton to="/app/profile" variant="secondary" size="sm" className="nav-desktop-only">

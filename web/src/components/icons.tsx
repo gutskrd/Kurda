@@ -12,15 +12,11 @@ const base = (size: number) => ({
   'aria-hidden': true,
 });
 
-export const BrandMark = ({ size = 26, className }: P): React.JSX.Element => (
-  <svg width={size} height={size} viewBox="0 0 32 32" className={className} aria-hidden="true">
-    <circle cx="16" cy="16" r="7" fill="none" stroke="var(--gold)" strokeWidth="2" />
-    <path
-      d="M16 4v2.5M16 25.5V28M4 16h2.5M25.5 16H28M7.5 7.5l1.8 1.8M22.7 22.7l1.8 1.8M24.5 7.5l-1.8 1.8M9.3 22.7l-1.8 1.8"
-      stroke="var(--gold)"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
+/** Filled head-and-shoulders silhouette (the contact-card figure). */
+export const PersonGlyph = ({ size = 128, className }: P): React.JSX.Element => (
+  <svg width={size} height={size} viewBox="0 0 128 128" className={className} fill="currentColor" aria-hidden="true">
+    <circle cx="64" cy="40" r="28" />
+    <path d="M18 118a46 34 0 0 1 92 0 6 6 0 0 1-6 6H24a6 6 0 0 1-6-6z" />
   </svg>
 );
 

@@ -1,5 +1,4 @@
-/* Reset + base typography + shared primitives. Class-based, so it stays simple
-   and predictable. Hierarchy comes from type, space and contrast — not colour. */
+/* Reset + base typography + the fixed photo backdrop the whole app sits on. */
 
 *,
 *::before,
@@ -18,9 +17,27 @@ body {
   font-size: 16px;
   line-height: 1.6;
   color: var(--ink);
-  background: var(--bg);
+  background: #0b0d10; /* fallback behind the photo */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Fixed photo backdrop + a scrim so white text stays readable everywhere. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: url(/background.jpg) center center / cover no-repeat fixed;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(1200px 900px at 50% 12%, rgba(8, 10, 14, 0.35), rgba(6, 8, 12, 0.66)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.62));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -48,17 +65,14 @@ h4 {
 p {
   margin: 0;
 }
-
 a {
   color: inherit;
   text-decoration: none;
 }
-
 img {
   max-width: 100%;
   display: block;
 }
-
 button {
   font-family: inherit;
 }
@@ -69,7 +83,6 @@ button {
   border-radius: var(--r-xs);
 }
 
-/* skip link for keyboard users */
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -116,8 +129,6 @@ button {
   font-style: italic;
   color: var(--ink-2);
 }
-
-/* type scale (display uses serif via h*) */
 .display {
   font-size: clamp(2.4rem, 5vw, 3.75rem);
   letter-spacing: -0.022em;
