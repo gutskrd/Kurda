@@ -52,6 +52,22 @@
   align-items: center;
   gap: 10px;
 }
+.nav-icon-btn {
+  width: 40px;
+  padding: 0;
+}
+/* actions that live only inside the mobile dropdown */
+.nav-mobile-actions {
+  display: none;
+}
+button.nav-link {
+  background: none;
+  border: 0;
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
 .nav-toggle {
   display: none;
   width: 40px;
@@ -120,6 +136,14 @@
   }
   .nav-desktop-only {
     display: none;
+  }
+  .nav-mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
   }
 }
 

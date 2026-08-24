@@ -22,3 +22,11 @@ export function jsonResponse(status: number, body: unknown): Response {
     headers: { 'content-type': 'application/json' },
   });
 }
+
+/** A fetch stub that answers by matching a substring of the request URL. */
+export function routedFetch(map: Record<string, unknown>): (url: string) => Promise<Response> {
+  return async (url: string) => {
+    const key = Object.keys(map).find((k) => url.includes(k));
+    return jsonResponse(200, key ? map[key] : {});
+  };
+}
