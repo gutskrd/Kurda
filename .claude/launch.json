@@ -4,16 +4,8 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--workspace", "mobile"],
-      "port": 8081,
-      "autoPort": false
-    },
-    {
-      "name": "admin",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "admin"],
-      "port": 5173,
-      "autoPort": false
+      "runtimeArgs": ["run", "-w", "web", "dev"],
+      "port": 5174
     }
   ]
 }

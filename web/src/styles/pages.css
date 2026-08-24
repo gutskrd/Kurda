@@ -1,0 +1,332 @@
+/* ---- landing / marketing ---------------------------------------------- */
+.hero {
+  padding: clamp(56px, 9vw, 120px) 0 clamp(40px, 6vw, 72px);
+}
+.hero-inner {
+  max-width: 780px;
+}
+.hero h1 {
+  margin-top: 18px;
+}
+.hero .lead {
+  margin-top: 22px;
+  max-width: 56ch;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 34px;
+}
+.hero-note {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+}
+
+.section {
+  padding: clamp(48px, 7vw, 88px) 0;
+}
+.section-head {
+  max-width: 640px;
+  margin-bottom: 40px;
+}
+.section-head h2 {
+  margin-top: 10px;
+}
+.section-head p {
+  margin-top: 12px;
+  color: var(--ink-2);
+  font-size: 1.08rem;
+}
+.divider {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.feature {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+}
+.feature-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.feature h3 {
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 650;
+  margin-bottom: 7px;
+}
+.feature p {
+  color: var(--ink-3);
+  font-size: 0.96rem;
+}
+
+.cta {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: clamp(32px, 5vw, 56px);
+  text-align: center;
+}
+.cta h2 {
+  max-width: 20ch;
+  margin: 0 auto 14px;
+}
+.cta p {
+  max-width: 48ch;
+  margin: 0 auto 26px;
+  color: var(--ink-2);
+}
+
+/* ---- auth -------------------------------------------------------------- */
+.auth-wrap {
+  min-height: calc(100vh - var(--nav-h));
+  display: grid;
+  place-items: center;
+  padding: 48px 20px 72px;
+}
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+.auth-card h1 {
+  font-size: 1.9rem;
+}
+.auth-head {
+  margin-bottom: 26px;
+}
+.auth-head p {
+  margin-top: 8px;
+  color: var(--ink-3);
+}
+.auth-alt {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 0.92rem;
+  color: var(--ink-3);
+}
+.auth-alt a {
+  color: var(--ink);
+  font-weight: 600;
+}
+.auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.check input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  font-weight: 550;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.oauth-note {
+  margin-top: 18px;
+  font-size: 0.82rem;
+  color: var(--ink-4);
+  text-align: center;
+}
+
+/* ---- home dashboard ---------------------------------------------------- */
+.hello {
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+}
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0 8px;
+}
+.stat {
+  flex: 1 1 150px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.stat .k {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  letter-spacing: 0.03em;
+}
+.stat .v {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+/* ---- library (stories / poems) ---------------------------------------- */
+.post-list {
+  display: grid;
+  gap: 14px;
+}
+.post {
+  display: block;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  transition:
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+.post:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.post h3 {
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+.post-excerpt {
+  color: var(--ink-2);
+  font-size: 0.96rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.chip {
+  height: 36px;
+  padding: 0 15px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip.active {
+  background: var(--primary);
+  color: var(--primary-ink);
+  border-color: var(--primary);
+}
+
+/* ---- rankings ---------------------------------------------------------- */
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.rank-pos {
+  width: 30px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-align: center;
+}
+.rank-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-score {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+/* ---- profile ----------------------------------------------------------- */
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--ink);
+  flex: none;
+}
+.def-list {
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--border);
+}
+.def-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg);
+}
+.def-row dt {
+  color: var(--ink-3);
+  font-size: 0.9rem;
+}
+.def-row dd {
+  margin: 0;
+  font-weight: 550;
+  text-align: right;
+}

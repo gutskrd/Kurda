@@ -11,3 +11,7 @@ coverage/
 .expo/
 
 api/.pgdata/
+
+# The demo site is its own standalone repo (preserved separately) — never
+# absorb it into this monorepo. See Demo-MyKurda/README.md.
+/Demo-MyKurda/
