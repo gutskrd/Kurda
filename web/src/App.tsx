@@ -13,8 +13,9 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { Home } from './pages/Home';
 import { Learn } from './pages/Learn';
 import { Rankings } from './pages/Rankings';
-import { Profile } from './pages/Profile';
+import { Friends } from './pages/Friends';
 import { NotFound } from './pages/NotFound';
+import { ProfileModalProvider } from './profile/ProfileModal';
 
 /** Keep signed-in users out of the sign-in / sign-up pages. */
 function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -27,6 +28,7 @@ export function App(): React.JSX.Element {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ProfileModalProvider>
         <Routes>
           {/* public marketing site */}
           <Route element={<MarketingLayout />}>
@@ -70,9 +72,10 @@ export function App(): React.JSX.Element {
             <Route index element={<Home />} />
             <Route path="learn" element={<Learn />} />
             <Route path="rankings" element={<Rankings />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="friends" element={<Friends />} />
           </Route>
         </Routes>
+        </ProfileModalProvider>
       </BrowserRouter>
     </AuthProvider>
   );

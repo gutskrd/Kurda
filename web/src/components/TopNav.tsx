@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { useProfileModal } from '../profile/ProfileModal';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
 import { MenuIcon, CloseIcon } from './icons';
@@ -13,6 +14,7 @@ export interface NavItem {
 /** Desktop-first top navigation. Collapses to a menu under 860px. */
 export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   const { status, logout } = useAuth();
+  const { openProfile } = useProfileModal();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const signedIn = status === 'signedIn';
@@ -46,9 +48,14 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
         <div className="nav-actions">
           {signedIn ? (
             <>
-              <LinkButton to="/app/profile" variant="secondary" size="sm" className="nav-desktop-only">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="nav-desktop-only"
+                onClick={() => openProfile({ kind: 'me' })}
+              >
                 Profile
-              </LinkButton>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
