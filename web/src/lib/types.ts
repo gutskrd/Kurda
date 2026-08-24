@@ -59,15 +59,23 @@ export interface MeProfile extends SessionUser {
   createdAt: string;
 }
 
+export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';
+
 /** Another user's public profile (GET /users/:id — privacy/block gated). */
 export interface PublicProfile {
+  userId: string;
   username: string;
   displayName: string | null;
-  xp: number;
-  streak: number;
-  tier: string;
-  rating: number;
-  achievements: number;
+  friendStatus: FriendStatus;
+  /** true when privacy hides the details (identity still shown to allow a request) */
+  private: boolean;
+  bio?: string | null;
+  profilePhotoUrl?: string | null;
+  xp?: number;
+  streak?: number;
+  tier?: string;
+  rating?: number;
+  achievements?: number;
 }
 
 /** A friend or search hit. */
