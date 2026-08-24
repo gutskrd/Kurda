@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { MeProfile, PublicProfile } from '../lib/types';
+import type { ApiResult, MeProfile, PublicProfile } from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Loading, ErrorState } from '../components/states';
@@ -36,6 +36,21 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
   );
 }
 
+/**
+ * Turn a failed (or unusably-empty) profile response into user-facing copy, and
+ * log the technical detail for debugging. Never logs the auth token or any
+ * response body — only the transport-level error metadata.
+ */
+function failureReason(path: string, res: ApiResult<unknown>): string {
+  if (res.ok) {
+    console.error(`[profile] ${path} returned 200 but no usable profile in the body`);
+    return 'We couldn’t read this profile. Please try again.';
+  }
+  const { kind, status, code, requestId } = res.error;
+  console.error(`[profile] ${path} failed`, { kind, status, code, requestId });
+  return describeError(res.error);
+}
+
 /** Card body: fetches /me for your own profile, /users/:id for others. */
 function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const { client } = useAuth();
@@ -43,6 +58,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const [other, setOther] = useState<PublicProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0); // bump to retry
 
   useEffect(() => {
     let cancelled = false;
@@ -50,20 +66,31 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     setError(null);
     setMe(null);
     setOther(null);
-    const req =
-      target.kind === 'me'
-        ? client.get<{ user: MeProfile }>('/me').then((r) => (r.ok ? setMe(r.data.user) : setError(describeError(r.error))))
-        : client
-            .get<PublicProfile>(`/users/${target.userId}`)
-            .then((r) => (r.ok ? setOther(r.data) : setError(describeError(r.error))));
-    void req.finally(() => !cancelled && setLoading(false));
+
+    void (async () => {
+      if (target.kind === 'me') {
+        const r = await client.get<{ user: MeProfile }>('/me');
+        if (cancelled) return;
+        // A successful response with no usable user is still a failure — never
+        // fall through to a blank card. (Guards a shape mismatch / empty body.)
+        if (r.ok && r.data?.user?.username) setMe(r.data.user);
+        else setError(failureReason('/me', r));
+      } else {
+        const r = await client.get<PublicProfile>(`/users/${target.userId}`);
+        if (cancelled) return;
+        if (r.ok && r.data?.username) setOther(r.data);
+        else setError(failureReason(`/users/${target.userId}`, r));
+      }
+      if (!cancelled) setLoading(false);
+    })();
+
     return () => {
       cancelled = true;
     };
-  }, [client, target]);
+  }, [client, target, attempt]);
 
   if (loading) return <Loading label="Loading profile…" />;
-  if (error) return <ErrorState message={error} />;
+  if (error) return <ErrorState title="Couldn’t load this profile" message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
   const isMe = target.kind === 'me';
   const p = isMe ? me : other;

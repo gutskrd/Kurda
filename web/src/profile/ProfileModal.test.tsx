@@ -49,6 +49,39 @@ describe('ProfileModal', () => {
     expect(screen.getByText('1,234')).toBeInTheDocument(); // XP
   });
 
+  it('shows the loading state while /me is in flight', async () => {
+    // a fetch that never resolves keeps the request pending
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+    renderApp(<Opener />);
+    await userEvent.click(screen.getByText('open-me'));
+    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/loading profile/i)).toBeInTheDocument();
+  });
+
+  it('shows a visible error (never a blank card) when /me fails, with retry', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(500, { code: 'SERVER_ERROR', message: 'boom' })),
+    );
+    renderApp(<Opener />);
+    await userEvent.click(screen.getByText('open-me'));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    // it must NOT silently render an empty profile card
+    expect(screen.queryByText('@ada')).not.toBeInTheDocument();
+  });
+
+  it('treats a 200 with no usable user as an error, not a blank card', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(200, { user: {} })),
+    );
+    renderApp(<Opener />);
+    await userEvent.click(screen.getByText('open-me'));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
+
   it('closes on the close button', async () => {
     vi.stubGlobal(
       'fetch',
