@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
-import { MenuIcon, CloseIcon } from './icons';
+import { MenuIcon, CloseIcon, GearIcon } from './icons';
 
 export interface NavItem {
   label: string;
@@ -20,6 +20,14 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   const signedIn = status === 'signedIn';
 
   const close = (): void => setOpen(false);
+  const signOut = (): void => {
+    close();
+    void logout().then(() => navigate('/'));
+  };
+  const showProfile = (): void => {
+    close();
+    openProfile({ kind: 'me' });
+  };
 
   return (
     <header className="nav">
@@ -40,6 +48,22 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                 </NavLink>
               </li>
             ))}
+
+            {/* actions inside the mobile dropdown only */}
+            <li className="nav-mobile-actions">
+              {signedIn ? (
+                <>
+                  <button type="button" className="nav-link" onClick={showProfile}>Profile</button>
+                  <NavLink to="/app/settings" className="nav-link" onClick={close}>Settings</NavLink>
+                  <button type="button" className="nav-link" onClick={signOut}>Sign out</button>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/login" className="nav-link" onClick={close}>Log in</NavLink>
+                  <NavLink to="/register" className="nav-link" onClick={close}>Get started</NavLink>
+                </>
+              )}
+            </li>
           </ul>
         </nav>
 
@@ -48,27 +72,24 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
         <div className="nav-actions">
           {signedIn ? (
             <>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="nav-desktop-only"
-                onClick={() => openProfile({ kind: 'me' })}
+              <Link
+                to="/app/settings"
+                className="btn btn-ghost btn-sm nav-icon-btn nav-desktop-only"
+                aria-label="Settings"
+                title="Settings"
               >
+                <GearIcon size={19} />
+              </Link>
+              <Button variant="secondary" size="sm" className="nav-desktop-only" onClick={() => openProfile({ kind: 'me' })}>
                 Profile
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  void logout().then(() => navigate('/'));
-                }}
-              >
+              <Button variant="ghost" size="sm" className="nav-desktop-only" onClick={signOut}>
                 Sign out
               </Button>
             </>
           ) : (
             <>
-              <LinkButton to="/login" variant="ghost" size="sm">
+              <LinkButton to="/login" variant="ghost" size="sm" className="nav-desktop-only">
                 Log in
               </LinkButton>
               <LinkButton to="/register" variant="primary" size="sm" className="nav-desktop-only">

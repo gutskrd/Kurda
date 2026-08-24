@@ -60,6 +60,29 @@ export class ApiClient {
     return this.request('DELETE', path, options);
   }
 
+  /**
+   * Upload raw bytes (e.g. a profile photo) — the endpoint reads the request
+   * body as an image, so this sends the Blob directly with its own content-type
+   * rather than JSON. Returns a typed result; no auto-refresh (caller retries).
+   */
+  async uploadBytes<T>(path: string, blob: Blob): Promise<ApiResult<T>> {
+    const tokens = this.storage.get();
+    try {
+      const res = await this.timedFetch(`${this.baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          'content-type': blob.type || 'application/octet-stream',
+          'idempotency-key': requestId(),
+          ...(tokens ? { authorization: `Bearer ${tokens.accessToken}` } : {}),
+        },
+        body: blob,
+      });
+      return this.toResult<T>(res);
+    } catch {
+      return { ok: false, error: { kind: 'network', message: 'network request failed' } };
+    }
+  }
+
   private async timedFetch(url: string, init: RequestInit): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);

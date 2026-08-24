@@ -595,3 +595,126 @@ button.feature {
   cursor: pointer;
   color: var(--ink);
 }
+
+/* ---- daily Zêr reward -------------------------------------------------- */
+.zer-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-rim);
+}
+.zer-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.zer-coin {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
+}
+.zer-balance {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.zer-unit {
+  font-size: 0.95rem;
+  color: var(--gold-ink);
+}
+.zer-sub {
+  font-size: 0.88rem;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.zer-action {
+  flex: none;
+}
+.zer-msg {
+  flex-basis: 100%;
+  font-size: 0.88rem;
+  color: var(--gold-ink);
+}
+
+/* ---- full profile page ------------------------------------------------- */
+.profile-hero {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-rim);
+}
+.profile-hero-avatar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.avatar-fallback {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+}
+.profile-hero-avatar .pcard-avatar {
+  width: 96px;
+  height: 96px;
+}
+.profile-hero-body {
+  flex: 1;
+  min-width: 0;
+}
+.profile-bio {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.stat-link {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.stat-link:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.danger-card {
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+}
+
+@media (max-width: 560px) {
+  .profile-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+}

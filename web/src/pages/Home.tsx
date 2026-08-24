@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from '../profile/ProfileModal';
+import { DailyReward } from '../components/DailyReward';
 import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, UserIcon, ArrowIcon } from '../components/icons';
 
 const LINK_TILES = [
@@ -52,6 +53,8 @@ export function Home(): React.JSX.Element {
           open the MyKurda app to confirm it.
         </div>
       )}
+
+      <DailyReward />
 
       <div className="grid grid-3">
         {LINK_TILES.map((t) => (

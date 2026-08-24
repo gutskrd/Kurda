@@ -77,6 +77,30 @@ export interface UserSummary {
   displayName?: string | null;
 }
 
+/** Wallet balances (GET /me/wallet). */
+export interface WalletBalances {
+  zer: number;
+  gems: number;
+}
+
+/** Daily reward status (GET /rewards/daily). */
+export interface DailyRewardStatus {
+  canClaim: boolean;
+  claimableDay: number;
+  reward: number;
+  schedule: number[];
+  alreadyClaimedToday: boolean;
+  cycleDay: number;
+}
+
+/** Result of POST /rewards/daily/claim. */
+export interface ClaimResult {
+  claimed: boolean;
+  cycleDay: number;
+  reward: number;
+  balance: number;
+}
+
 /** A community library post (story or poem) — the one public browse endpoint. */
 export interface LibraryPost {
   id: string;

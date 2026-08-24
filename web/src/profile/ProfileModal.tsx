@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiResult, MeProfile, PublicProfile } from '../lib/types';
@@ -12,6 +13,7 @@ type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string
 
 interface Ctx {
   openProfile: (target: Target) => void;
+  closeProfile: () => void;
 }
 const ProfileCtx = createContext<Ctx | null>(null);
 
@@ -27,7 +29,7 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
   const close = useCallback(() => setTarget(null), []);
 
   return (
-    <ProfileCtx.Provider value={{ openProfile }}>
+    <ProfileCtx.Provider value={{ openProfile, closeProfile: close }}>
       {children}
       <Modal open={target !== null} onClose={close} label="Profile">
         {target && <ProfileContent target={target} />}
@@ -54,6 +56,8 @@ function failureReason(path: string, res: ApiResult<unknown>): string {
 /** Card body: fetches /me for your own profile, /users/:id for others. */
 function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const { client } = useAuth();
+  const { closeProfile } = useProfileModal();
+  const navigate = useNavigate();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [other, setOther] = useState<PublicProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -160,6 +164,21 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           MyKurda
         </span>
       </div>
+
+      {isMe && (
+        <div className="profile-actions" style={{ marginTop: 18 }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              closeProfile();
+              navigate('/app/profile');
+            }}
+          >
+            View full profile
+          </Button>
+        </div>
+      )}
     </article>
   );
 }
