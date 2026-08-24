@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '../auth';
 import { api, ApiError } from '../api';
 
+// Whether this browser has signed in to the admin before — drives the greeting
+// ("Welcome back" for returning admins vs. a first-time prompt).
+const RETURNING_KEY = 'kurda_admin_returning';
+
 /* Inline SVG — no external resources, so it's fine under the strict CSP. */
 function EyeIcon({ off }: { off: boolean }): React.JSX.Element {
   return off ? (
@@ -27,6 +31,8 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Read once on first render — a returning admin has a flag from a prior sign-in.
+  const [returning] = useState(() => localStorage.getItem(RETURNING_KEY) === '1');
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -35,6 +41,7 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
     setNote(null);
     try {
       await login(email, password, remember);
+      localStorage.setItem(RETURNING_KEY, '1');
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Sign-in failed');
@@ -60,19 +67,21 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
 
   return (
     <div className="login">
-      <video className="login-bg" autoPlay loop muted playsInline>
-        <source src="/background.mp4" type="video/mp4" />
-      </video>
+      <img className="login-bg" src="/background.jpg" alt="" aria-hidden="true" />
       <div className="login-scrim" />
 
       <form className="login-card" onSubmit={submit}>
         <div className="login-top">
           <span>MyKurda</span>
-          <span>Admin</span>
+          <span>Admin console</span>
         </div>
 
         <h1 className="login-title">Log In</h1>
-        <p className="login-welcome">Welcome back. Please log in to your account.</p>
+        <p className="login-welcome">
+          {returning
+            ? 'Welcome back. Sign in to continue.'
+            : 'Sign in to the MyKurda admin console.'}
+        </p>
 
         <div className="login-input">
           <input
