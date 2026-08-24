@@ -151,8 +151,19 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         </dl>
 
         {!isMe && target.kind === 'user' && (
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, display: 'grid', gap: 8 }}>
             <AddFriend userId={target.userId} />
+            <Button
+              variant="secondary"
+              size="sm"
+              block
+              onClick={() => {
+                closeProfile();
+                navigate(`/app/messages?to=${target.userId}&name=${encodeURIComponent(p.username)}`);
+              }}
+            >
+              Message
+            </Button>
           </div>
         )}
       </div>
