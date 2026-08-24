@@ -351,7 +351,7 @@ textarea { font: inherit; }
   .login-card::before {
     content: ''; position: absolute; inset: 0; z-index: 0;
     border-radius: inherit; box-sizing: border-box;
-    padding: 18px; /* ring thickness — the warp lives in this rim */
+    padding: 28px; /* ring thickness — the warp lives in this rim */
     -webkit-backdrop-filter: url(#liquid-glass);
     backdrop-filter: url(#liquid-glass);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
