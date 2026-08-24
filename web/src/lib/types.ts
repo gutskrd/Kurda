@@ -37,6 +37,34 @@ export interface AuthPayload {
   tokens: TokenPair;
 }
 
+/** The signed-in user's full profile (GET /me). */
+export interface MeProfile extends SessionUser {
+  bio: string | null;
+  xp: number;
+  streak: number;
+  profileVisibility: 'everyone' | 'friends' | 'nobody';
+  profilePhotoUrl: string | null;
+  createdAt: string;
+}
+
+/** Another user's public profile (GET /users/:id — privacy/block gated). */
+export interface PublicProfile {
+  username: string;
+  displayName: string | null;
+  xp: number;
+  streak: number;
+  tier: string;
+  rating: number;
+  achievements: number;
+}
+
+/** A friend or search hit. */
+export interface UserSummary {
+  userId: string;
+  username: string;
+  displayName?: string | null;
+}
+
 /** A community library post (story or poem) — the one public browse endpoint. */
 export interface LibraryPost {
   id: string;

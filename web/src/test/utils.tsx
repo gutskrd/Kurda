@@ -2,12 +2,15 @@ import type { ReactNode } from 'react';
 import { render, type RenderResult } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthProvider';
+import { ProfileModalProvider } from '../profile/ProfileModal';
 
-/** Render a tree wrapped in the auth context + an in-memory router. */
+/** Render a tree wrapped in the auth context, router, and profile-modal context. */
 export function renderApp(ui: ReactNode, initialEntries: string[] = ['/']): RenderResult {
   return render(
     <AuthProvider>
-      <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
+        <ProfileModalProvider>{ui}</ProfileModalProvider>
+      </MemoryRouter>
     </AuthProvider>,
   );
 }
