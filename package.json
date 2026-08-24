@@ -7,7 +7,8 @@
     "shared",
     "api",
     "admin",
-    "mobile"
+    "mobile",
+    "web"
   ],
   "scripts": {
     "lint": "npm run lint --workspaces",
