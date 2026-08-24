@@ -98,6 +98,8 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
 
   const name = p.displayName || p.username;
   const photo = isMe ? me?.profilePhotoUrl : null;
+  // /me returns streak as an object ({current,longest,…}); /users/:id as a number.
+  const streakDays = target.kind === 'me' ? (me?.streak.current ?? 0) : (other?.streak ?? 0);
 
   return (
     <article className="pcard pcard-modal">
@@ -124,7 +126,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           </div>
           <div className="pcard-row">
             <dt>Streak</dt>
-            <dd>{p.streak} day{p.streak === 1 ? '' : 's'}</dd>
+            <dd>{streakDays} day{streakDays === 1 ? '' : 's'}</dd>
           </div>
           {!isMe && other && (
             <>

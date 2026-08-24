@@ -37,11 +37,23 @@ export interface AuthPayload {
   tokens: TokenPair;
 }
 
+/**
+ * Streak summary as returned by GET /me (api streaks StreakSummary). This is an
+ * OBJECT, not a number — rendering it directly throws React error #31.
+ */
+export interface StreakSummary {
+  current: number;
+  longest: number;
+  freezes: number;
+  lastActiveOn: string | null;
+}
+
 /** The signed-in user's full profile (GET /me). */
 export interface MeProfile extends SessionUser {
   bio: string | null;
   xp: number;
-  streak: number;
+  /** /me returns the full streak object; use streak.current for the count. */
+  streak: StreakSummary;
   profileVisibility: 'everyone' | 'friends' | 'nobody';
   profilePhotoUrl: string | null;
   createdAt: string;
