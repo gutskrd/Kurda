@@ -77,6 +77,26 @@ export interface UserSummary {
   displayName?: string | null;
 }
 
+/** A 1:1 direct message (chat). */
+export interface DmMessage {
+  id: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  deliveredAt: string | null;
+  readAt: string | null;
+}
+
+/** A conversation summary (GET /chat/conversations). */
+export interface Conversation {
+  userId: string;
+  username: string;
+  lastMessage: string;
+  lastAt: string;
+  lastFromMe: boolean;
+  unread: number;
+}
+
 /** Wallet balances (GET /me/wallet). */
 export interface WalletBalances {
   zer: number;
