@@ -327,8 +327,11 @@ textarea { font: inherit; }
      bend through the card, per the reference. Falls back to a hair of blur
      where url() backdrop-filters aren't supported. */
   background: rgba(255, 255, 255, 0.04);
-  -webkit-backdrop-filter: blur(2px) saturate(1.08);
-  backdrop-filter: blur(2px) saturate(1.08);
+  /* No centre blur — the middle stays perfectly clear; only the rim bends
+     (see .login-card::before). A tiny saturate keeps the glass tint alive
+     without frosting the view. */
+  -webkit-backdrop-filter: saturate(1.05);
+  backdrop-filter: saturate(1.05);
   border: 1px solid rgba(255, 255, 255, 0.26);
   box-shadow:
     0 34px 90px rgba(0, 0, 0, 0.45),
