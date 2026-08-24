@@ -39,6 +39,9 @@ jobs:
             mobile:
               - 'mobile/**'
               - *root
+            web:
+              - 'web/**'
+              - *root
       - uses: dorny/paths-filter@v4
         id: dockerfilter
         with:
