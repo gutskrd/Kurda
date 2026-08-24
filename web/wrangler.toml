@@ -1,0 +1,17 @@
+# Cloudflare Worker (static assets only) for the MyKurda web app → mykurda.com.
+#
+# This deploys the built Vite output in ./dist as static assets. There is NO
+# Worker script (no `main`) — the platform serves the files directly, so no
+# server code runs and nothing about the app changes. SPA deep links are served
+# index.html via `not_found_handling`. The API stays on Render; this is not it.
+#
+# `name` must match your existing Cloudflare Worker ("mykurda") so a deploy
+# updates that Worker instead of creating a new one.
+name = "mykurda"
+compatibility_date = "2024-11-01"
+
+[assets]
+# relative to this file → web/dist (produced by `vite build`)
+directory = "./dist"
+# client-side routing: serve index.html (200) for any non-asset path
+not_found_handling = "single-page-application"
