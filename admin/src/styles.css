@@ -342,24 +342,25 @@ textarea { font: inherit; }
    under the strict CSP, so hide it via this class). */
 .liquid-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
 
-/* Where url() backdrop-filters are supported (Chromium), refract the backdrop
-   only in a ring at the card's edge — the centre stays clear like a real lens.
-   A ::before pinned to the card edge carries the displacement, masked with the
-   classic border-only recipe so only the rim shows the warp. */
-@supports (backdrop-filter: url("#l")) or (-webkit-backdrop-filter: url("#l")) {
-  .login-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .login-card::before {
-    content: ''; position: absolute; inset: 0; z-index: 0;
-    border-radius: inherit; box-sizing: border-box;
-    padding: 28px; /* ring thickness — the warp lives in this rim */
-    -webkit-backdrop-filter: url(#liquid-glass);
-    backdrop-filter: url(#liquid-glass);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    pointer-events: none;
-  }
+/* Rim refraction that works in EVERY browser (Safari included): instead of
+   backdrop-filter: url() — which only Chromium renders — the ::before paints a
+   viewport-aligned COPY of the page background and warps it with `filter: url()`
+   (widely supported). It's masked to a ring, so only the card's edge shows the
+   bent copy; the clear centre lets the true background through underneath. The
+   copy is sized/positioned exactly like the real background image, so the two
+   line up and the rim reads as a lens bending the shapes at the edge. */
+.login-card::before {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  border-radius: inherit; box-sizing: border-box;
+  background:
+    linear-gradient(rgba(6, 8, 12, 0.5), rgba(6, 8, 12, 0.5)),
+    url(/background.jpg) center center / cover fixed;
+  filter: url(#liquid-glass);
+  /* Feather the rim into the clear centre so the bend has no hard seam:
+     opaque at the edges, fading to transparent in the middle. */
+  -webkit-mask: radial-gradient(ellipse 78% 78% at 50% 50%, transparent 46%, #000 84%);
+          mask: radial-gradient(ellipse 78% 78% at 50% 50%, transparent 46%, #000 84%);
+  pointer-events: none;
 }
 
 .login-top {
