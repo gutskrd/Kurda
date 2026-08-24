@@ -314,15 +314,19 @@ textarea { font: inherit; }
 
 /* The card: large radius, very transparent, heavily blurred, rim highlight. */
 .login-card {
-  position: relative; z-index: 1;
+  position: relative; z-index: 1; isolation: isolate;
   width: 452px; max-width: 100%; min-width: 0;
   display: flex; flex-direction: column;
+  /* keep white text legible over the clear centre */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   padding: 40px 44px 44px;
   color: #fff;
   border-radius: 30px;
-  /* Clear glass, not frosted: barely any blur so the photo shows through
-     sharply — transparency does the work, per the reference. */
-  background: rgba(255, 255, 255, 0.05);
+  /* Clear liquid glass: almost no fill, and the backdrop is *refracted*
+     (SVG displacement map below) rather than frosted — the photo's shapes
+     bend through the card, per the reference. Falls back to a hair of blur
+     where url() backdrop-filters aren't supported. */
+  background: rgba(255, 255, 255, 0.04);
   -webkit-backdrop-filter: blur(2px) saturate(1.08);
   backdrop-filter: blur(2px) saturate(1.08);
   border: 1px solid rgba(255, 255, 255, 0.26);
@@ -330,6 +334,32 @@ textarea { font: inherit; }
     0 34px 90px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
     inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+/* Keep the card's content above the edge-refraction ring (::before, z-index 0). */
+.login-card > * { position: relative; z-index: 1; }
+
+/* Off-screen holder for the SVG filter defs (can't use an inline style attr
+   under the strict CSP, so hide it via this class). */
+.liquid-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+
+/* Where url() backdrop-filters are supported (Chromium), refract the backdrop
+   only in a ring at the card's edge — the centre stays clear like a real lens.
+   A ::before pinned to the card edge carries the displacement, masked with the
+   classic border-only recipe so only the rim shows the warp. */
+@supports (backdrop-filter: url("#l")) or (-webkit-backdrop-filter: url("#l")) {
+  .login-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .login-card::before {
+    content: ''; position: absolute; inset: 0; z-index: 0;
+    border-radius: inherit; box-sizing: border-box;
+    padding: 24px; /* ring thickness — the warp lives in this rim */
+    -webkit-backdrop-filter: url(#liquid-glass);
+    backdrop-filter: url(#liquid-glass);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
 }
 
 .login-top {

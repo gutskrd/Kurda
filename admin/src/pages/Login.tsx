@@ -70,6 +70,20 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
       <img className="login-bg" src="/background.jpg" alt="" aria-hidden="true" />
       <div className="login-scrim" />
 
+      {/* Liquid-glass rim refraction: an SVG displacement map bends the backdrop.
+          It's applied (via CSS) only to a ring at the card's edge, so the shapes
+          warp around the rim while the centre stays clear — like a real lens.
+          Inline SVG is a same-document fragment, so it's CSP-safe. */}
+      <svg className="liquid-defs" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id="liquid-glass" x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.007 0.01" numOctaves="2" seed="9" result="noise" />
+            <feGaussianBlur in="noise" stdDeviation="1.1" result="softNoise" />
+            <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="48" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
       <form className="login-card" onSubmit={submit}>
         <div className="login-top">
           <span>MyKurda</span>
