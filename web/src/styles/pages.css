@@ -1,12 +1,13 @@
-/* ---- landing / marketing ---------------------------------------------- */
+/* ---- landing / marketing (text sits directly on the photo) ------------- */
 .hero {
-  padding: clamp(56px, 9vw, 120px) 0 clamp(40px, 6vw, 72px);
+  padding: clamp(64px, 10vw, 132px) 0 clamp(40px, 6vw, 72px);
 }
 .hero-inner {
   max-width: 780px;
 }
 .hero h1 {
   margin-top: 18px;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
 }
 .hero .lead {
   margin-top: 22px;
@@ -44,19 +45,24 @@
   border-top: 1px solid var(--border);
 }
 
+/* glass feature/info card */
 .feature {
   padding: 24px;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--bg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-rim), var(--shadow-sm);
 }
 .feature-icon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border-radius: var(--r-md);
   background: var(--surface-2);
+  border: 1px solid var(--border);
   color: var(--ink);
   margin-bottom: 16px;
 }
@@ -73,8 +79,11 @@
 
 .cta {
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-rim), var(--shadow);
   padding: clamp(32px, 5vw, 56px);
   text-align: center;
 }
@@ -88,7 +97,7 @@
   color: var(--ink-2);
 }
 
-/* ---- auth -------------------------------------------------------------- */
+/* ---- auth (glass card over the photo, like the admin login) ------------ */
 .auth-wrap {
   min-height: calc(100vh - var(--nav-h));
   display: grid;
@@ -97,7 +106,14 @@
 }
 .auth-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 430px;
+  padding: 36px 34px 32px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  backdrop-filter: blur(28px) saturate(1.3);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
 }
 .auth-card h1 {
   font-size: 1.9rem;
@@ -139,7 +155,7 @@
 .check input {
   width: 17px;
   height: 17px;
-  accent-color: var(--primary);
+  accent-color: #fff;
   cursor: pointer;
 }
 .link-btn {
@@ -176,7 +192,9 @@
   padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: var(--bg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
 }
 .stat .k {
   font-size: 0.78rem;
@@ -200,13 +218,18 @@
   padding: 20px 22px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: var(--bg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-rim);
   transition:
     border-color 0.15s ease,
+    background 0.15s ease,
     transform 0.12s ease;
 }
 .post:hover {
   border-color: var(--border-strong);
+  background: var(--surface-2);
   transform: translateY(-2px);
 }
 .post-meta {
@@ -242,7 +265,9 @@
   padding: 0 15px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border-strong);
-  background: var(--bg);
+  background: var(--surface-2);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
   color: var(--ink-2);
   font-size: 0.9rem;
   font-weight: 500;
@@ -262,7 +287,9 @@
   padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: var(--bg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
 }
 .rank-pos {
   width: 30px;
@@ -285,48 +312,126 @@
   color: var(--ink-2);
 }
 
-/* ---- profile ----------------------------------------------------------- */
-.profile-head {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 28px;
-}
-.avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+/* ---- profile: liquid-glass contact card -------------------------------- */
+.profile-wrap {
+  min-height: calc(100vh - var(--nav-h));
   display: grid;
   place-items: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--ink);
-  flex: none;
+  padding: 40px 20px 72px;
 }
-.def-list {
+.pcard {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 5 / 6;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(10, 12, 16, 0.5);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  backdrop-filter: blur(30px) saturate(1.3);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(28px, 6vw, 44px);
+}
+/* white person silhouette (head + shoulders) */
+.pcard-figure {
+  color: #fff;
+  margin-top: 6px;
+  filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.4));
+}
+/* frosted plate that holds the details, overlapping the figure's shoulders */
+.pcard-plate {
+  position: relative;
+  width: 100%;
+  margin-top: -18px;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: var(--glass-rim);
+}
+.pcard-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.pcard-handle {
+  color: var(--ink-3);
+  font-size: 0.95rem;
+  margin-top: 2px;
+}
+.pcard-rows {
+  margin-top: 16px;
   display: grid;
   gap: 1px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   overflow: hidden;
   background: var(--border);
 }
-.def-row {
+.pcard-row {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
-  background: var(--bg);
+  gap: 14px;
+  padding: 11px 14px;
+  background: rgba(20, 22, 28, 0.35);
+  font-size: 0.92rem;
 }
-.def-row dt {
+.pcard-row dt {
   color: var(--ink-3);
-  font-size: 0.9rem;
 }
-.def-row dd {
+.pcard-row dd {
   margin: 0;
+  color: var(--ink);
   font-weight: 550;
   text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* footer row: label left, MyKurda logo bottom-right */
+.pcard-foot {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pcard-label {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.pcard-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px 7px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+.pcard-logo img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.profile-actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: center;
 }
