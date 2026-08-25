@@ -975,6 +975,77 @@ button.feature {
   color: var(--ink-3);
 }
 
+/* ---- favorites picker -------------------------------------------------- */
+.fav-kind {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.fav-kind:first-of-type {
+  border-top: 0;
+  padding-top: 4px;
+}
+.fav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fav-current {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fav-label {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.fav-value {
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fav-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+.fav-browse {
+  margin-top: 12px;
+}
+.fav-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+.fav-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+.fav-options li:last-child .fav-option {
+  border-bottom: 0;
+}
+.fav-option:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.fav-option.is-current {
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+
 @media (max-width: 560px) {
   .profile-hero {
     flex-direction: column;
