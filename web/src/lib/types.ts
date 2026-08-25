@@ -168,6 +168,38 @@ export interface WalletBalances {
   gems: number;
 }
 
+/** A buyable catalog item (GET /shop). Owned unique items are hidden here. */
+export interface ShopItem {
+  sku: string;
+  name: string;
+  description: string | null;
+  category: string;
+  currency: 'zer' | 'gems';
+  price: number;
+  isUnique: boolean;
+  premiumOnly: boolean;
+  /** resolved thumbnail URL for cosmetics (null for non-media / unconfigured storage) */
+  assetUrl: string | null;
+}
+
+/** An owned item (GET /me/inventory), incl. resolved cosmetic asset. */
+export interface InventoryItem {
+  sku: string;
+  name: string;
+  category: string;
+  quantity: number;
+  premiumOnly: boolean;
+  assetUrl: string | null;
+}
+
+/** Result of POST /shop/purchase. */
+export interface PurchaseResult {
+  purchased: boolean;
+  duplicate: boolean;
+  sku: string;
+  balance: number;
+}
+
 /** Daily reward status (GET /rewards/daily). */
 export interface DailyRewardStatus {
   canClaim: boolean;
