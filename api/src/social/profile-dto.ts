@@ -28,6 +28,8 @@ export interface PublicProfileDto {
   background: ResolvedBackground | null;
   icon: ResolvedIcon | null;
   premium: boolean;
+  /** presence — only present for the user themselves or their friends */
+  online?: boolean;
   level?: LevelInfo;
   streak?: number;
   tier?: string;
@@ -72,6 +74,7 @@ export function toPublicProfileDto(
     background: cosmetics.background,
     icon: cosmetics.icon,
     premium: cosmetics.premium,
+    online: profile.online,
     level: profile.xp != null ? levelInfo(profile.xp) : undefined,
     streak: profile.streak,
     tier: profile.tier,

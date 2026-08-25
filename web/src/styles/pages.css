@@ -547,6 +547,25 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* "● Online" line under the handle in the profile card */
+.pcard-online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #37d67a;
+}
+.presence-dot-inline {
+  position: static;
+  right: auto;
+  bottom: auto;
+  width: 9px;
+  height: 9px;
+  border: 0;
+  box-shadow: none;
+}
 
 /* ---- equipped cosmetics (profile popup) -------------------------------- */
 /* equipped background: sits behind the card content, dimmed for legibility */
