@@ -790,6 +790,49 @@ button.feature {
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-rim);
 }
+/* showcase variant: equipped background banner behind the hero content */
+.profile-hero-showcase {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.profile-hero-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3;
+  z-index: 0;
+  pointer-events: none;
+}
+/* fade toward the left so the avatar + text stay legible over the banner */
+.profile-hero-showcase.has-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--surface) 0%, color-mix(in srgb, var(--surface) 55%, transparent) 55%, transparent 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+.profile-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 22px;
+}
+.profile-hero-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.profile-hero-badges .pcard-premium {
+  margin-left: 0;
+}
 .profile-hero-avatar {
   flex: none;
   display: flex;
@@ -1047,9 +1090,13 @@ button.feature {
 }
 
 @media (max-width: 560px) {
-  .profile-hero {
+  .profile-hero,
+  .profile-hero-inner {
     flex-direction: column;
     text-align: center;
+  }
+  .profile-hero-badges {
+    justify-content: center;
   }
 }
 

@@ -49,6 +49,36 @@ describe('Profile page', () => {
     expect(screen.getByRole('button', { name: /change photo/i })).toBeInTheDocument();
   });
 
+  it('renders the showcase hero: equipped background, level, premium, resolved avatar', async () => {
+    const enriched = {
+      ...meUser,
+      avatarUrl: 'https://cdn.test/a.png',
+      background: { sku: 'bg1', assetKey: 'backgrounds/b.png', type: 'image', url: 'https://cdn.test/b.png' },
+      icon: { sku: 'ic1', assetKey: 'icons/i.png', url: '/cosmetics/icons/i.png' },
+      level: { xp: 500, level: 3, currentLevelXp: 400, nextLevelXp: 900, progress: 0.2 },
+      premium: true,
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 0, gems: 0 } },
+          '/friends': { friends: [] },
+          '/me': { user: enriched },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+
+    expect(await screen.findByText('Level 3')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '20');
+    expect(screen.getByText('Premium')).toBeInTheDocument();
+    const banner = document.querySelector('.profile-hero-media') as HTMLImageElement | null;
+    expect(banner?.src).toBe('https://cdn.test/b.png');
+    const avatar = document.querySelector('.profile-hero-avatar .pcard-avatar') as HTMLImageElement | null;
+    expect(avatar?.src).toBe('https://cdn.test/a.png');
+  });
+
   it('picks a default avatar via PUT /me/cosmetics/avatar', async () => {
     const calls: Array<{ body: unknown }> = [];
     vi.stubGlobal(

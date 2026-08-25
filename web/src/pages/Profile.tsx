@@ -6,6 +6,7 @@ import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
+import { CosmeticBackground, LevelBar, PremiumPill, EquippedIcon } from '../profile/cosmetic-parts';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
@@ -114,22 +115,36 @@ function ProfileHeader({ me, onAvatarChanged }: { me: MeProfile; onAvatarChanged
     else setMsg(describeError(res.error));
   }
 
+  // avatarUrl already resolves photo → default avatar server-side; fall back to
+  // the legacy photo field for older responses.
+  const avatar = me.avatarUrl ?? me.profilePhotoUrl;
+
   return (
-    <div className="profile-hero">
-      <div className="profile-hero-avatar">
-        {me.profilePhotoUrl ? (
-          <img src={me.profilePhotoUrl} alt="" className="pcard-avatar" />
-        ) : (
-          <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={64} /></span>
-        )}
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={busy}>
-          {busy ? 'Uploading…' : 'Change photo'}
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} aria-label="Upload profile photo" />
-      </div>
-      <div className="profile-hero-body">
-        {me.bio ? <p className="profile-bio">{me.bio}</p> : <p className="muted profile-bio">No bio yet.</p>}
-        {msg && <div className="msg" role="status" style={{ marginTop: 10 }}>{msg}</div>}
+    <div className={`profile-hero profile-hero-showcase${me.background ? ' has-bg' : ''}`}>
+      {me.background && <CosmeticBackground background={me.background} className="profile-hero-media" />}
+      <div className="profile-hero-inner">
+        <div className="profile-hero-avatar">
+          {avatar ? (
+            <img src={avatar} alt="" className="pcard-avatar" />
+          ) : (
+            <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={64} /></span>
+          )}
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={busy}>
+            {busy ? 'Uploading…' : 'Change photo'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} aria-label="Upload profile photo" />
+        </div>
+        <div className="profile-hero-body">
+          {(me.icon || me.premium) && (
+            <div className="profile-hero-badges">
+              {me.icon && <EquippedIcon icon={me.icon} />}
+              {me.premium && <PremiumPill />}
+            </div>
+          )}
+          {me.level && <LevelBar level={me.level} />}
+          {me.bio ? <p className="profile-bio">{me.bio}</p> : <p className="muted profile-bio">No bio yet.</p>}
+          {msg && <div className="msg" role="status" style={{ marginTop: 10 }}>{msg}</div>}
+        </div>
       </div>
     </div>
   );
