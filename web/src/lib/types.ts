@@ -48,8 +48,60 @@ export interface StreakSummary {
   lastActiveOn: string | null;
 }
 
+/**
+ * A resolved equipped background (server has already checked ownership/premium
+ * and turned the R2 key into a ready-to-render URL). `type` picks the element:
+ * image/gif → <img>, video → <video>.
+ */
+export interface ProfileBackground {
+  sku: string;
+  assetKey: string;
+  type: 'image' | 'gif' | 'video';
+  url: string;
+}
+
+/** A resolved equipped icon (web-static URL). */
+export interface ProfileIcon {
+  sku: string;
+  assetKey: string;
+  url: string;
+}
+
+/**
+ * Level + progress, derived server-side from XP with the single shared formula.
+ * `progress` is 0..1 toward the next level. Never compute level on the client.
+ */
+export interface LevelInfo {
+  xp: number;
+  level: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  progress: number;
+}
+
+/** A favorite poem/story as exposed publicly — id + title only. */
+export interface FavoriteRef {
+  id: string;
+  title: string;
+}
+
+/**
+ * Resolved cosmetic + progression fields shared by /me and /users/:id. All
+ * optional so older responses (and privacy-hidden profiles) stay valid.
+ */
+export interface ProfileCosmetics {
+  /** Resolved avatar: uploaded photo → selected default avatar → null. */
+  avatarUrl?: string | null;
+  background?: ProfileBackground | null;
+  icon?: ProfileIcon | null;
+  level?: LevelInfo;
+  premium?: boolean;
+  favoritePoem?: FavoriteRef | null;
+  favoriteStory?: FavoriteRef | null;
+}
+
 /** The signed-in user's full profile (GET /me). */
-export interface MeProfile extends SessionUser {
+export interface MeProfile extends SessionUser, ProfileCosmetics {
   bio: string | null;
   xp: number;
   /** /me returns the full streak object; use streak.current for the count. */
@@ -57,12 +109,17 @@ export interface MeProfile extends SessionUser {
   profileVisibility: 'everyone' | 'friends' | 'nobody';
   profilePhotoUrl: string | null;
   createdAt: string;
+  /** self-only equip state, for the cosmetic pickers (not exposed publicly) */
+  selectedAvatarKey?: string | null;
+  equippedBackgroundSku?: string | null;
+  equippedIconSku?: string | null;
+  premiumUntil?: string | null;
 }
 
 export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';
 
 /** Another user's public profile (GET /users/:id — privacy/block gated). */
-export interface PublicProfile {
+export interface PublicProfile extends ProfileCosmetics {
   userId: string;
   username: string;
   displayName: string | null;

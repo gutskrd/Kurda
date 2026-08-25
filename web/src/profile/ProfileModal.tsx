@@ -2,7 +2,16 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiResult, FriendStatus, MeProfile, PublicProfile } from '../lib/types';
+import type {
+  ApiResult,
+  FavoriteRef,
+  FriendStatus,
+  LevelInfo,
+  MeProfile,
+  ProfileBackground,
+  ProfileIcon,
+  PublicProfile,
+} from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Loading, ErrorState } from '../components/states';
@@ -101,6 +110,12 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   let username = '';
   let photo: string | null = null;
   let bio: string | null = null;
+  let background: ProfileBackground | null = null;
+  let icon: ProfileIcon | null = null;
+  let level: LevelInfo | undefined;
+  let premium = false;
+  let favPoem: FavoriteRef | null = null;
+  let favStory: FavoriteRef | null = null;
   const stats: Array<{ label: string; value: string; cap?: boolean }> = [];
   let actions: React.JSX.Element | null = null;
   const unavailable = <ErrorState title="Couldn’t load this profile" message="Profile unavailable." onRetry={() => setAttempt((n) => n + 1)} />;
@@ -109,16 +124,30 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     if (!me) return unavailable;
     name = me.displayName || me.username;
     username = me.username;
-    photo = me.profilePhotoUrl;
+    // avatarUrl already resolves photo → default avatar server-side; fall back to
+    // the legacy photo field for older responses.
+    photo = me.avatarUrl ?? me.profilePhotoUrl;
     bio = me.bio;
+    background = me.background ?? null;
+    icon = me.icon ?? null;
+    level = me.level;
+    premium = me.premium ?? false;
+    favPoem = me.favoritePoem ?? null;
+    favStory = me.favoriteStory ?? null;
     stats.push({ label: 'XP', value: me.xp.toLocaleString() });
     stats.push({ label: 'Streak', value: `${me.streak.current} day${me.streak.current === 1 ? '' : 's'}` });
   } else {
     if (!other) return unavailable;
     name = other.displayName || other.username;
     username = other.username;
-    photo = other.profilePhotoUrl ?? null;
+    photo = other.avatarUrl ?? other.profilePhotoUrl ?? null;
     bio = other.bio ?? null;
+    background = other.background ?? null;
+    icon = other.icon ?? null;
+    level = other.level;
+    premium = other.premium ?? false;
+    favPoem = other.favoritePoem ?? null;
+    favStory = other.favoriteStory ?? null;
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
     if (other.streak !== undefined) stats.push({ label: 'Streak', value: `${other.streak} day${other.streak === 1 ? '' : 's'}` });
     if (other.tier) stats.push({ label: 'League', value: other.tier, cap: true });
@@ -137,7 +166,10 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   }
 
   return (
-    <article className="pcard pcard-modal">
+    <article className={`pcard pcard-modal${background ? ' pcard-has-bg' : ''}`}>
+      {/* equipped background sits behind everything (owned/premium-gated server-side) */}
+      {background && <CosmeticBackground background={background} />}
+
       {/* full photo (or silhouette), like the reference — not a small circle */}
       <div className="pcard-photo">
         {photo ? (
@@ -148,8 +180,15 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
       </div>
 
       <div className="pcard-plate">
-        <div className="pcard-name">{name}</div>
+        <div className="pcard-name-row">
+          <div className="pcard-name">{name}</div>
+          {icon && <img className="pcard-icon" src={icon.url} alt="" title="Equipped icon" />}
+          {premium && <span className="pcard-premium" title="Premium member">Premium</span>}
+        </div>
         <div className="pcard-handle">@{username}</div>
+
+        {level && <LevelBar level={level} />}
+
         {bio && <p className="pcard-bio">{bio}</p>}
 
         {stats.length > 0 && (
@@ -160,6 +199,23 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
                 <dd style={s.cap ? { textTransform: 'capitalize' } : undefined}>{s.value}</dd>
               </div>
             ))}
+          </dl>
+        )}
+
+        {(favPoem || favStory) && (
+          <dl className="pcard-rows pcard-favorites">
+            {favPoem && (
+              <div className="pcard-row" key="fav-poem">
+                <dt>Favorite poem</dt>
+                <dd>{favPoem.title}</dd>
+              </div>
+            )}
+            {favStory && (
+              <div className="pcard-row" key="fav-story">
+                <dt>Favorite story</dt>
+                <dd>{favStory.title}</dd>
+              </div>
+            )}
           </dl>
         )}
 
@@ -189,6 +245,44 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         </div>
       )}
     </article>
+  );
+}
+
+/** Renders the equipped background as the right element for its media type. */
+function CosmeticBackground({ background }: { background: ProfileBackground }): React.JSX.Element {
+  if (background.type === 'video') {
+    return (
+      <video
+        className="pcard-bg-media"
+        src={background.url}
+        autoPlay
+        muted
+        loop
+        playsInline
+        // decorative only — never a focus/interaction target
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+    );
+  }
+  // image + gif both render as <img> (gif animates natively)
+  return <img className="pcard-bg-media" src={background.url} alt="" aria-hidden="true" />;
+}
+
+/** Level badge + progress bar toward the next level (derived server-side). */
+function LevelBar({ level }: { level: LevelInfo }): React.JSX.Element {
+  const pct = Math.round(Math.min(1, Math.max(0, level.progress)) * 100);
+  const toNext = Math.max(0, level.nextLevelXp - level.xp);
+  return (
+    <div className="pcard-level" title={`${toNext.toLocaleString()} XP to level ${level.level + 1}`}>
+      <div className="pcard-level-head">
+        <span className="pcard-level-badge">Level {level.level}</span>
+        <span className="pcard-level-xp">{level.xp.toLocaleString()} XP</span>
+      </div>
+      <div className="pcard-level-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+        <div className="pcard-level-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   );
 }
 
