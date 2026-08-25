@@ -78,7 +78,7 @@ export function Messages(): React.JSX.Element {
                 to={`/app/messages?to=${c.userId}&name=${encodeURIComponent(c.username)}`}
                 className={`chat-convo${c.userId === activeId ? ' active' : ''}`}
               >
-                <Avatar url={c.avatarUrl} />
+                <Avatar url={c.avatarUrl} online={c.online} />
                 <span className="chat-convo-body">
                   <span className="chat-convo-top">
                     <span className="chat-convo-name">{c.username}</span>
