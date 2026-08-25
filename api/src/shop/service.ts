@@ -298,16 +298,20 @@ export class ShopService {
     }
   }
 
-  /** Items the user owns, with catalog detail. */
-  async inventory(userId: string): Promise<Array<{ sku: string; name: string; category: string; quantity: number; acquiredAt: Date }>> {
+  /** Items the user owns, with catalog detail (incl. cosmetic asset key). */
+  async inventory(
+    userId: string,
+  ): Promise<Array<{ sku: string; name: string; category: string; quantity: number; acquiredAt: Date; assetKey: string | null; premiumOnly: boolean }>> {
     const rows = await this.pool.query<{
       sku: string;
       name: string;
       category: string;
       quantity: number;
       acquired_at: Date;
+      asset_key: string | null;
+      premium_only: boolean;
     }>(
-      `SELECT e.sku, i.name, i.category, e.quantity, e.acquired_at
+      `SELECT e.sku, i.name, i.category, e.quantity, e.acquired_at, i.asset_key, i.premium_only
          FROM user_entitlements e JOIN shop_items i ON i.sku = e.sku
         WHERE e.user_id = $1 ORDER BY e.acquired_at DESC`,
       [userId],
@@ -318,6 +322,8 @@ export class ShopService {
       category: r.category,
       quantity: r.quantity,
       acquiredAt: r.acquired_at,
+      assetKey: r.asset_key,
+      premiumOnly: r.premium_only,
     }));
   }
 
