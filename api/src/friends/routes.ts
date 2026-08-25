@@ -5,6 +5,11 @@ import type { FriendService } from './service.js';
 
 const targetParam = z.object({ userId: z.uuid() });
 
+// Tighter than the global default (100/min): sending friend requests is a spam /
+// harassment vector, and the friends-of-friends suggestion query is expensive.
+const REQUEST_LIMIT = { max: 20, windowMs: 60_000, per: 'user-or-ip' as const };
+const SUGGESTIONS_LIMIT = { max: 30, windowMs: 60_000, per: 'user-or-ip' as const };
+
 /** Friend system (KUR-081): request/accept/decline, block, list. */
 export function registerFriendRoutes(app: FastifyInstance, friends: FriendService): void {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
@@ -18,14 +23,16 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   }));
 
   /** People-you-may-know (friends-of-friends, ranked by mutual count). */
-  app.get('/friends/suggestions', { preHandler: requireAuth }, async (req) => ({
-    suggestions: await friends.suggestions(req.user!.id, publicUrl),
-  }));
+  app.get(
+    '/friends/suggestions',
+    { config: { rateLimit: SUGGESTIONS_LIMIT }, preHandler: requireAuth },
+    async (req) => ({ suggestions: await friends.suggestions(req.user!.id, publicUrl) }),
+  );
 
   /** Send a friend request (auto-accepts a mutual pending request). */
   app.post(
     '/friends/requests',
-    { schema: { body: z.object({ userId: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { body: z.object({ userId: z.uuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: requireAuth },
     async (req) => ({ outcome: await friends.request(req.user!.id, (req.body as { userId: string }).userId) }),
   );
 
