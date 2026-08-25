@@ -2,7 +2,8 @@ import type pg from 'pg';
 import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
-import type { EquippedItem } from '../cosmetics/access.js';
+import { resolveAvatarUrl } from '../cosmetics/access.js';
+import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -19,6 +20,7 @@ export interface SearchHit {
   userId: string;
   username: string;
   displayName: string | null;
+  avatarUrl: string | null;
 }
 
 export interface PublicProfile {
@@ -66,11 +68,11 @@ export class SocialService {
   ) {}
 
   /** Prefix search by username, excluding self, blocks, and non-searchable users. */
-  async search(viewerId: string, query: string, limit = 20): Promise<SearchHit[]> {
+  async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
     const folded = foldForm(query);
     if (folded.length < MIN_QUERY) return [];
-    const rows = await this.pool.query<{ id: string; username: string; display_name: string | null }>(
-      `SELECT u.id, u.username, u.display_name FROM users u
+    const rows = await this.pool.query<{ id: string; username: string; display_name: string | null; profile_photo_key: string | null; selected_avatar_key: string | null }>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM users u
         WHERE u.deleted_at IS NULL AND u.id <> $1
           AND u.profile_visibility <> 'nobody'
           AND translate(lower(u.username::text), 'êîûçş', 'eiucs') LIKE $2 || '%'
@@ -81,7 +83,12 @@ export class SocialService {
         ORDER BY u.username LIMIT $3`,
       [viewerId, folded, limit],
     );
-    return rows.rows.map((r) => ({ userId: r.id, username: r.username, displayName: r.display_name }));
+    return rows.rows.map((r) => ({
+      userId: r.id,
+      username: r.username,
+      displayName: r.display_name,
+      avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+    }));
   }
 
   /** Update the caller's profile visibility. */

@@ -17,7 +17,7 @@ export function registerChatRoutes(
 ): void {
   /** Conversation list with last message + unread counts. */
   app.get('/chat/conversations', { preHandler: requireAuth }, async (req) => ({
-    conversations: await chat.conversations(req.user!.id),
+    conversations: await chat.conversations(req.user!.id, (k) => (app.storage ? app.storage.publicUrl(k) : null)),
   }));
 
   /** Paginated history with a user (marks their messages delivered). */

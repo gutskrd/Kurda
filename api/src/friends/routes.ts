@@ -7,12 +7,14 @@ const targetParam = z.object({ userId: z.uuid() });
 
 /** Friend system (KUR-081): request/accept/decline, block, list. */
 export function registerFriendRoutes(app: FastifyInstance, friends: FriendService): void {
+  const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
+
   /** Accepted friends. */
-  app.get('/friends', { preHandler: requireAuth }, async (req) => ({ friends: await friends.list(req.user!.id) }));
+  app.get('/friends', { preHandler: requireAuth }, async (req) => ({ friends: await friends.list(req.user!.id, publicUrl) }));
 
   /** Incoming pending requests. */
   app.get('/friends/requests', { preHandler: requireAuth }, async (req) => ({
-    requests: await friends.incomingRequests(req.user!.id),
+    requests: await friends.incomingRequests(req.user!.id, publicUrl),
   }));
 
   /** Send a friend request (auto-accepts a mutual pending request). */
