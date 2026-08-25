@@ -31,6 +31,11 @@ function toFriendSummary(r: FriendRow, publicUrl: PublicUrl): FriendSummary {
   };
 }
 
+/** A friend suggestion: a summary plus how many friends you have in common. */
+export interface SuggestedFriend extends FriendSummary {
+  mutualCount: number;
+}
+
 interface EdgeRow {
   status: string;
   requested_by: string | null;
@@ -233,6 +238,47 @@ export class FriendService {
       [user, String(REQUEST_TTL_DAYS)],
     );
     return rows.rows.map((r) => toFriendSummary(r, publicUrl));
+  }
+
+  /**
+   * People-you-may-know: friends-of-friends the user isn't already connected to,
+   * ranked by number of mutual friends. Excludes self, existing friends, anyone
+   * with a pending request either way, blocked users, and profiles hidden from
+   * discovery. Returns [] for a user with no friends yet.
+   */
+  async suggestions(user: string, publicUrl: PublicUrl = () => null, limit = 10): Promise<SuggestedFriend[]> {
+    const rows = await this.pool.query<FriendRow & { mutual: number }>(
+      `WITH my_friends AS (
+         SELECT CASE WHEN user_lo = $1 THEN user_hi ELSE user_lo END AS fid
+           FROM friendships
+          WHERE status = 'accepted' AND (user_lo = $1 OR user_hi = $1)
+       )
+       SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key,
+              count(*)::int AS mutual
+         FROM my_friends mf
+         JOIN friendships f2
+           ON f2.status = 'accepted' AND (f2.user_lo = mf.fid OR f2.user_hi = mf.fid)
+         JOIN users u
+           ON u.id = CASE WHEN f2.user_lo = mf.fid THEN f2.user_hi ELSE f2.user_lo END
+        WHERE u.id <> $1
+          AND u.deleted_at IS NULL
+          AND u.profile_visibility <> 'nobody'
+          AND u.id NOT IN (SELECT fid FROM my_friends)
+          AND NOT EXISTS (
+            SELECT 1 FROM friendships fp
+             WHERE fp.status = 'pending'
+               AND ((fp.user_lo = $1 AND fp.user_hi = u.id) OR (fp.user_lo = u.id AND fp.user_hi = $1))
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM blocks b
+             WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
+          )
+        GROUP BY u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key
+        ORDER BY mutual DESC, u.username
+        LIMIT $2`,
+      [user, limit],
+    );
+    return rows.rows.map((r) => ({ ...toFriendSummary(r, publicUrl), mutualCount: r.mutual }));
   }
 
   /** Relationship of `viewer` to `target` — powers friend buttons (KUR-082). */
