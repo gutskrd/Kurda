@@ -513,6 +513,41 @@
   box-shadow: var(--shadow);
 }
 
+/* large full photo area at the top of the profile card (reference look) */
+.pcard-photo {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+}
+.pcard-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pcard-photo-glyph {
+  color: #fff;
+  opacity: 0.94;
+  filter: drop-shadow(0 10px 34px rgba(0, 0, 0, 0.45));
+}
+/* the frosted plate overlaps the bottom of the photo, like the reference */
+.pcard-modal .pcard-plate {
+  margin-top: -30px;
+  z-index: 1;
+}
+.pcard-bio {
+  margin-top: 10px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* ---- friends ----------------------------------------------------------- */
 .friend-search {
   display: flex;

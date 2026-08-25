@@ -19,6 +19,7 @@ export interface PublicProfile {
   friendStatus: FriendStatus;
   /** true when privacy hides the details (still shows identity to allow a request). */
   private: boolean;
+  bio?: string | null;
   xp?: number;
   streak?: number;
   tier?: string;
@@ -75,6 +76,7 @@ export class SocialService {
     const row = await this.pool.query<{
       username: string;
       display_name: string | null;
+      bio: string | null;
       xp: number;
       profile_visibility: Visibility;
       streak: number;
@@ -82,7 +84,7 @@ export class SocialService {
       rating: number;
       achievements: number;
     }>(
-      `SELECT u.username, u.display_name, u.xp, u.profile_visibility,
+      `SELECT u.username, u.display_name, u.bio, u.xp, u.profile_visibility,
               COALESCE(s.current_streak, 0) AS streak,
               COALESCE(ul.tier, 'bronze') AS tier,
               COALESCE(r.rating, 1000) AS rating,
@@ -119,6 +121,7 @@ export class SocialService {
     if (!canSeeDetail) return base;
     return {
       ...base,
+      bio: u.bio,
       xp: u.xp,
       streak: u.streak,
       tier: u.tier,

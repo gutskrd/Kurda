@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiResult, MeProfile, PublicProfile } from '../lib/types';
+import type { ApiResult, FriendStatus, MeProfile, PublicProfile } from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Loading, ErrorState } from '../components/states';
@@ -96,88 +96,86 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   if (loading) return <Loading label="Loading profile…" />;
   if (error) return <ErrorState title="Couldn’t load this profile" message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
-  const isMe = target.kind === 'me';
-  const p = isMe ? me : other;
-  if (!p) return <ErrorState message="Profile unavailable." />;
+  // One normalized view drives a shared card shell for both own + others.
+  let name = '';
+  let username = '';
+  let photo: string | null = null;
+  let bio: string | null = null;
+  const stats: Array<{ label: string; value: string; cap?: boolean }> = [];
+  let actions: React.JSX.Element | null = null;
+  const unavailable = <ErrorState title="Couldn’t load this profile" message="Profile unavailable." onRetry={() => setAttempt((n) => n + 1)} />;
 
-  const name = p.displayName || p.username;
-  const photo = isMe ? me?.profilePhotoUrl : null;
-  // /me returns streak as an object ({current,longest,…}); /users/:id as a number.
-  const streakDays = target.kind === 'me' ? (me?.streak.current ?? 0) : (other?.streak ?? 0);
+  if (target.kind === 'me') {
+    if (!me) return unavailable;
+    name = me.displayName || me.username;
+    username = me.username;
+    photo = me.profilePhotoUrl;
+    bio = me.bio;
+    stats.push({ label: 'XP', value: me.xp.toLocaleString() });
+    stats.push({ label: 'Streak', value: `${me.streak.current} day${me.streak.current === 1 ? '' : 's'}` });
+  } else {
+    if (!other) return unavailable;
+    name = other.displayName || other.username;
+    username = other.username;
+    photo = other.profilePhotoUrl ?? null;
+    bio = other.bio ?? null;
+    if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
+    if (other.streak !== undefined) stats.push({ label: 'Streak', value: `${other.streak} day${other.streak === 1 ? '' : 's'}` });
+    if (other.tier) stats.push({ label: 'League', value: other.tier, cap: true });
+    if (other.rating !== undefined) stats.push({ label: 'Rating', value: `${other.rating}` });
+    if (other.achievements !== undefined) stats.push({ label: 'Achievements', value: `${other.achievements}` });
+    actions = (
+      <OtherActions
+        userId={other.userId}
+        status={other.friendStatus}
+        onMessage={() => {
+          closeProfile();
+          navigate(`/app/messages?to=${other.userId}&name=${encodeURIComponent(other.username)}`);
+        }}
+      />
+    );
+  }
 
   return (
     <article className="pcard pcard-modal">
-      {photo ? (
-        <img className="pcard-avatar" src={photo} alt="" />
-      ) : (
-        <PersonGlyph className="pcard-figure" size={112} />
-      )}
-
-      <div className="pcard-plate">
-        <div className="pcard-name">{name}</div>
-        <div className="pcard-handle">@{p.username}</div>
-
-        <dl className="pcard-rows">
-          {isMe && me && (
-            <div className="pcard-row">
-              <dt>Email</dt>
-              <dd>{me.email}</dd>
-            </div>
-          )}
-          <div className="pcard-row">
-            <dt>XP</dt>
-            <dd>{p.xp.toLocaleString()}</dd>
-          </div>
-          <div className="pcard-row">
-            <dt>Streak</dt>
-            <dd>{streakDays} day{streakDays === 1 ? '' : 's'}</dd>
-          </div>
-          {!isMe && other && (
-            <>
-              <div className="pcard-row">
-                <dt>League</dt>
-                <dd style={{ textTransform: 'capitalize' }}>{other.tier}</dd>
-              </div>
-              <div className="pcard-row">
-                <dt>Rating</dt>
-                <dd>{other.rating}</dd>
-              </div>
-              <div className="pcard-row">
-                <dt>Achievements</dt>
-                <dd>{other.achievements}</dd>
-              </div>
-            </>
-          )}
-        </dl>
-
-        {!isMe && target.kind === 'user' && (
-          <div style={{ marginTop: 16, display: 'grid', gap: 8 }}>
-            <AddFriend userId={target.userId} />
-            <Button
-              variant="secondary"
-              size="sm"
-              block
-              onClick={() => {
-                closeProfile();
-                navigate(`/app/messages?to=${target.userId}&name=${encodeURIComponent(p.username)}`);
-              }}
-            >
-              Message
-            </Button>
-          </div>
+      {/* full photo (or silhouette), like the reference — not a small circle */}
+      <div className="pcard-photo">
+        {photo ? (
+          <img className="pcard-photo-img" src={photo} alt="" />
+        ) : (
+          <PersonGlyph className="pcard-photo-glyph" size={92} />
         )}
       </div>
 
+      <div className="pcard-plate">
+        <div className="pcard-name">{name}</div>
+        <div className="pcard-handle">@{username}</div>
+        {bio && <p className="pcard-bio">{bio}</p>}
+
+        {stats.length > 0 && (
+          <dl className="pcard-rows">
+            {stats.map((s) => (
+              <div className="pcard-row" key={s.label}>
+                <dt>{s.label}</dt>
+                <dd style={s.cap ? { textTransform: 'capitalize' } : undefined}>{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {actions && <div style={{ marginTop: 14 }}>{actions}</div>}
+      </div>
+
       <div className="pcard-foot">
-        <span className="pcard-label">{isMe ? 'Profile' : name}</span>
+        <span className="pcard-label">{target.kind === 'me' ? 'Profile' : name}</span>
         <span className="pcard-logo">
           <img src="/logo.png" alt="" aria-hidden="true" />
           MyKurda
         </span>
       </div>
 
-      {isMe && (
-        <div className="profile-actions" style={{ marginTop: 18 }}>
+      {target.kind === 'me' && (
+        <div className="profile-actions" style={{ marginTop: 16 }}>
           <Button
             variant="secondary"
             size="sm"
@@ -194,23 +192,66 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   );
 }
 
-function AddFriend({ userId }: { userId: string }): React.JSX.Element {
+/** Friend + message actions for another user, driven by the friend status. */
+function OtherActions({
+  userId,
+  status,
+  onMessage,
+}: {
+  userId: string;
+  status: FriendStatus;
+  onMessage: () => void;
+}): React.JSX.Element {
   const { client } = useAuth();
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [state, setState] = useState<FriendStatus>(status);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(false);
 
-  async function send(): Promise<void> {
-    setState('sending');
+  async function addFriend(): Promise<void> {
+    setBusy(true);
+    setErr(false);
     const res = await client.post('/friends/requests', { userId });
-    setState(res.ok ? 'sent' : 'error');
+    setBusy(false);
+    if (res.ok) setState('pending_out');
+    else setErr(true);
+  }
+  async function accept(): Promise<void> {
+    setBusy(true);
+    setErr(false);
+    const res = await client.post(`/friends/requests/${userId}/accept`);
+    setBusy(false);
+    if (res.ok) setState('friends');
+    else setErr(true);
   }
 
-  if (state === 'sent') return <div className="msg msg-success">Friend request sent.</div>;
+  const message = (
+    <Button variant="secondary" size="sm" block onClick={onMessage}>
+      Message
+    </Button>
+  );
+
   return (
-    <>
-      <Button size="sm" block onClick={send} disabled={state === 'sending'}>
-        {state === 'sending' ? 'Sending…' : 'Add friend'}
-      </Button>
-      {state === 'error' && <div className="msg msg-error" style={{ marginTop: 8 }}>Couldn’t send the request.</div>}
-    </>
+    <div style={{ display: 'grid', gap: 8 }}>
+      {state === 'friends' && message}
+      {state === 'none' && (
+        <Button size="sm" block onClick={addFriend} disabled={busy}>
+          {busy ? 'Sending…' : 'Add friend'}
+        </Button>
+      )}
+      {state === 'pending_out' && (
+        <Button size="sm" block disabled>
+          Request sent
+        </Button>
+      )}
+      {state === 'pending_in' && (
+        <>
+          <Button size="sm" block onClick={accept} disabled={busy}>
+            {busy ? 'Accepting…' : 'Accept request'}
+          </Button>
+          {message}
+        </>
+      )}
+      {err && <div className="msg msg-error" style={{ marginTop: 4 }}>Something went wrong. Please try again.</div>}
+    </div>
   );
 }
