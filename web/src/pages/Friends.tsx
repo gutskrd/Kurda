@@ -16,7 +16,7 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
         className="friend-id"
         onClick={() => openProfile({ kind: 'user', userId: user.userId, username: user.username })}
       >
-        <Avatar url={user.avatarUrl} />
+        <Avatar url={user.avatarUrl} online={user.online} />
         <span className="friend-name">{user.displayName || user.username}</span>
         <span className="friend-handle">{meta ?? `@${user.username}`}</span>
       </button>

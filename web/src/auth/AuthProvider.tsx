@@ -56,6 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     };
   }, [client, storage]);
 
+  // Presence heartbeat: while signed in, tell the server we're active so friends
+  // see us as online. Fires immediately and then once a minute; the server
+  // derives "online" from the last beat within a short window.
+  useEffect(() => {
+    if (status !== 'signedIn') return;
+    const ping = (): void => {
+      void client.post('/me/heartbeat');
+    };
+    ping();
+    const id = setInterval(ping, 60_000);
+    return () => clearInterval(id);
+  }, [status, client]);
+
   const applyAuth = (payload: AuthPayload, remember: boolean): void => {
     persistTokens(payload.tokens, remember);
     setUser(payload.user);
