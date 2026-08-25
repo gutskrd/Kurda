@@ -140,6 +140,7 @@ export interface UserSummary {
   userId: string;
   username: string;
   displayName?: string | null;
+  avatarUrl?: string | null;
 }
 
 /** A 1:1 direct message (chat). */
@@ -156,6 +157,7 @@ export interface DmMessage {
 export interface Conversation {
   userId: string;
   username: string;
+  avatarUrl?: string | null;
   lastMessage: string;
   lastAt: string;
   lastFromMe: boolean;

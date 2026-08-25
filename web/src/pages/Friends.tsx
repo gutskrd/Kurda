@@ -4,7 +4,7 @@ import { useApiGet } from '../lib/useApi';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
-import { PersonGlyph } from '../components/icons';
+import { Avatar } from '../components/Avatar';
 import type { UserSummary } from '../lib/types';
 
 function Row({ user, actions }: { user: UserSummary; actions?: React.ReactNode }): React.JSX.Element {
@@ -16,9 +16,7 @@ function Row({ user, actions }: { user: UserSummary; actions?: React.ReactNode }
         className="friend-id"
         onClick={() => openProfile({ kind: 'user', userId: user.userId, username: user.username })}
       >
-        <span className="friend-avatar" aria-hidden="true">
-          <PersonGlyph size={22} />
-        </span>
+        <Avatar url={user.avatarUrl} />
         <span className="friend-name">{user.displayName || user.username}</span>
         <span className="friend-handle">@{user.username}</span>
       </button>

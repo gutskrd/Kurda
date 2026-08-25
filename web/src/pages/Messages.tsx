@@ -6,7 +6,8 @@ import type { ApiError, Conversation, DmMessage } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
-import { PersonGlyph, ArrowIcon } from '../components/icons';
+import { ArrowIcon } from '../components/icons';
+import { Avatar } from '../components/Avatar';
 
 const CONVO_POLL_MS = 8000;
 const THREAD_POLL_MS = 4000;
@@ -77,7 +78,7 @@ export function Messages(): React.JSX.Element {
                 to={`/app/messages?to=${c.userId}&name=${encodeURIComponent(c.username)}`}
                 className={`chat-convo${c.userId === activeId ? ' active' : ''}`}
               >
-                <span className="friend-avatar" aria-hidden="true"><PersonGlyph size={22} /></span>
+                <Avatar url={c.avatarUrl} />
                 <span className="chat-convo-body">
                   <span className="chat-convo-top">
                     <span className="chat-convo-name">{c.username}</span>
