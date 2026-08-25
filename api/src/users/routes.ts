@@ -173,6 +173,16 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     };
   });
 
+  /**
+   * Presence heartbeat: the client pings this periodically while the app is
+   * open. Records last activity; "online" is derived from it at read time. Cheap
+   * single-row update, rate-limited by the global default.
+   */
+  app.post('/me/heartbeat', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+    await app.db.query(`UPDATE users SET last_seen_at = now() WHERE id = $1`, [req.user!.id]);
+    return { ok: true };
+  });
+
   // ---- Profile photo (KUR-177 + cost-safety): through-server upload ----
 
   /**
