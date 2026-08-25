@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
+import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
@@ -66,6 +67,11 @@ export function Profile(): React.JSX.Element {
         onSaved={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
       />
 
+      <Customize
+        me={me}
+        onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
+      />
+
       <div style={{ marginTop: 24 }}>
         <Link to="/app/settings" className="btn btn-secondary">Account settings</Link>
       </div>
@@ -114,6 +120,78 @@ function ProfileHeader({ me, onAvatarChanged }: { me: MeProfile; onAvatarChanged
         {msg && <div className="msg" role="status" style={{ marginTop: 10 }}>{msg}</div>}
       </div>
     </div>
+  );
+}
+
+/**
+ * Avatar customizer: pick one of the free default avatars (or clear it). The
+ * server validates the key and stores only a reference. An uploaded photo always
+ * takes priority on the profile, so we note that when one is set. Backgrounds and
+ * icons are equipped from the shop (a later phase) since they need owned/premium
+ * catalog items.
+ */
+function Customize({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
+  const { client } = useAuth();
+  const [selected, setSelected] = useState<string | null>(me.selectedAvatarKey ?? null);
+  const [busy, setBusy] = useState<string | null>(null); // key currently being applied
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+
+  async function pick(key: string | null): Promise<void> {
+    if (busy) return;
+    const prev = selected;
+    setBusy(key ?? '__none__');
+    setMsg(null);
+    // optimistic: reflect the choice immediately, roll back on failure
+    setSelected(key);
+    const res = await client.put<{ avatarKey: string | null }>('/me/cosmetics/avatar', { key });
+    setBusy(null);
+    if (res.ok) {
+      setMsg({ kind: 'ok', text: key ? 'Avatar updated.' : 'Avatar cleared.' });
+      onChanged();
+    } else {
+      setSelected(prev);
+      setMsg({ kind: 'err', text: describeError(res.error) });
+    }
+  }
+
+  return (
+    <section className="card" style={{ marginTop: 24 }}>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>Avatar</h2>
+      {me.profilePhotoUrl && (
+        <p className="field-hint" style={{ marginTop: 0 }}>
+          Your uploaded photo is shown on your profile. Remove it to display a default avatar.
+        </p>
+      )}
+      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+
+      <div className="avatar-grid" role="radiogroup" aria-label="Choose a default avatar">
+        <button
+          type="button"
+          className={`avatar-tile avatar-tile-none${selected === null ? ' is-selected' : ''}`}
+          role="radio"
+          aria-checked={selected === null}
+          aria-label="No avatar"
+          disabled={busy !== null}
+          onClick={() => void pick(null)}
+        >
+          <PersonGlyph size={30} />
+        </button>
+        {DEFAULT_AVATAR_KEYS.map((key) => (
+          <button
+            key={key}
+            type="button"
+            className={`avatar-tile${selected === key ? ' is-selected' : ''}`}
+            role="radio"
+            aria-checked={selected === key}
+            aria-label={`Avatar ${key}`}
+            disabled={busy !== null}
+            onClick={() => void pick(key)}
+          >
+            <img src={avatarAssetUrl(key)} alt="" loading="lazy" />
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
