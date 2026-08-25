@@ -8,6 +8,9 @@ import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from './username.js';
 import { StreakService } from '../streaks/service.js';
+import { SocialService } from '../social/service.js';
+import { FriendService } from '../friends/service.js';
+import { toPublicProfileDto } from '../social/profile-dto.js';
 import { ImageModerationService } from '../moderation/image-moderation-service.js';
 import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
@@ -86,6 +89,10 @@ interface MeRow {
   skip_speaking: boolean;
   profile_visibility: string;
   profile_photo_key: string | null;
+  selected_avatar_key: string | null;
+  equipped_background_sku: string | null;
+  equipped_icon_sku: string | null;
+  premium_until: Date | null;
   created_at: Date;
 }
 
@@ -134,12 +141,36 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   const photoUrl = (key: string | null): string | null =>
     key && app.storage ? app.storage.publicUrl(key) : null;
 
+  const social = new SocialService(app.db, new FriendService(app.db));
+
   app.get('/me', { preHandler: requireAuth }, async (req) => {
     const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
     const row = result.rows[0] as MeRow;
     // settle the streak on read so a lapsed day shows as broken (KUR-031)
     const streak = await streaks.get(row.id, row.timezone);
-    return { user: { ...toMe(row), streak, profilePhotoUrl: photoUrl(row.profile_photo_key) } };
+    // reuse the single enriched profile query + resolver for cosmetics/level/
+    // favorites (self view: friendStatus 'self', details always visible)
+    const publicDto = toPublicProfileDto(await social.profile(row.id, row.id), app.storage);
+    return {
+      user: {
+        ...toMe(row),
+        streak,
+        profilePhotoUrl: photoUrl(row.profile_photo_key),
+        // resolved, safe cosmetic + progression fields (same as public profile)
+        avatarUrl: publicDto.avatarUrl,
+        background: publicDto.background,
+        icon: publicDto.icon,
+        level: publicDto.level,
+        premium: publicDto.premium,
+        favoritePoem: publicDto.favoritePoem,
+        favoriteStory: publicDto.favoriteStory,
+        // self-only equip state, for the cosmetic pickers (not exposed publicly)
+        selectedAvatarKey: row.selected_avatar_key,
+        equippedBackgroundSku: row.equipped_background_sku,
+        equippedIconSku: row.equipped_icon_sku,
+        premiumUntil: row.premium_until,
+      },
+    };
   });
 
   // ---- Profile photo (KUR-177 + cost-safety): through-server upload ----
