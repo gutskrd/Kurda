@@ -49,6 +49,26 @@ describe('Friends', () => {
     expect(img?.src).toBe('https://cdn.test/a.png');
   });
 
+  it('shows an online presence dot for online friends only', async () => {
+    vi.stubGlobal(
+      'fetch',
+      routedFetch({
+        '/friends/requests': { requests: [] },
+        '/friends': {
+          friends: [
+            { userId: 'u2', username: 'online1', online: true },
+            { userId: 'u3', username: 'offline1', online: false },
+          ],
+        },
+      }),
+    );
+    renderApp(<Friends />);
+
+    await screen.findByText('online1');
+    // exactly one presence dot (the online friend)
+    expect(document.querySelectorAll('.presence-dot')).toHaveLength(1);
+  });
+
   it('shows incoming requests with accept/decline', async () => {
     vi.stubGlobal(
       'fetch',

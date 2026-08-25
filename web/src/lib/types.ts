@@ -143,6 +143,8 @@ export interface UserSummary {
   username: string;
   displayName?: string | null;
   avatarUrl?: string | null;
+  /** present on friend lists / requests / suggestions — online in the last few minutes */
+  online?: boolean;
 }
 
 /** A friend suggestion (GET /friends/suggestions) — with mutual-friend count. */
