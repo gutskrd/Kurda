@@ -17,6 +17,43 @@ const offlineConfig = loadConfig({
   S3_SECRET_ACCESS_KEY: 'test',
 });
 
+describe('publicUrl', () => {
+  it('derives a public URL as CDN_BASE_URL + "/" + key, with no double slash', () => {
+    const key = `profile-photo/${HASH}.webp`;
+    // explicit CDN base
+    const storage = createStorage(
+      loadConfig({
+        NODE_ENV: 'test',
+        S3_BUCKET: 'mykurda-media',
+        S3_ACCESS_KEY_ID: 'x',
+        S3_SECRET_ACCESS_KEY: 'y',
+        CDN_BASE_URL: 'https://media.mykurda.com',
+      }),
+    )!;
+    expect(storage.publicUrl(key)).toBe(`https://media.mykurda.com/profile-photo/${HASH}.webp`);
+    expect(storage.publicUrl(key)).not.toContain('//profile-photo');
+  });
+
+  it('tolerates a CDN_BASE_URL with a trailing slash (no doubled slash in the URL)', () => {
+    const storage = createStorage(
+      loadConfig({
+        NODE_ENV: 'test', // trailing-slash rejection only applies in production
+        S3_BUCKET: 'mykurda-media',
+        S3_ACCESS_KEY_ID: 'x',
+        S3_SECRET_ACCESS_KEY: 'y',
+        CDN_BASE_URL: 'https://media.mykurda.com/',
+      }),
+    )!;
+    expect(storage.publicUrl('profile-photo/x.webp')).toBe('https://media.mykurda.com/profile-photo/x.webp');
+  });
+
+  it('falls back to the S3 endpoint/bucket when no CDN_BASE_URL is set', () => {
+    expect(createStorage(offlineConfig)!.publicUrl('profile-photo/x.webp')).toBe(
+      'http://localhost:9000/kurda-test/profile-photo/x.webp',
+    );
+  });
+});
+
 describe('mediaKey', () => {
   it('builds content-hashed keys with the right extension', () => {
     expect(mediaKey('lesson-audio', HASH, 'audio/mpeg')).toBe(`lesson-audio/${HASH}.mp3`);

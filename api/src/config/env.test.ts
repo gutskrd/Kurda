@@ -69,6 +69,31 @@ describe('loadConfig', () => {
     expect(loadConfig({ CORS_ORIGINS: '*' }).CORS_ORIGINS).toBe('*');
   });
 
+  it('validates CDN_BASE_URL in production', () => {
+    const prod = { NODE_ENV: 'production', JWT_SECRET: 'a-real-production-secret-32-chars-long!!' };
+    // a clean public https origin is accepted
+    expect(loadConfig({ ...prod, CDN_BASE_URL: 'https://media.mykurda.com' }).CDN_BASE_URL).toBe(
+      'https://media.mykurda.com',
+    );
+    // trailing slash, a path, http, and credentials are all rejected
+    expect(() => loadConfig({ ...prod, CDN_BASE_URL: 'https://media.mykurda.com/' })).toThrow(/CDN_BASE_URL.*trailing/);
+    expect(() => loadConfig({ ...prod, CDN_BASE_URL: 'https://media.mykurda.com/profile-photo' })).toThrow(
+      /CDN_BASE_URL.*path/,
+    );
+    expect(() => loadConfig({ ...prod, CDN_BASE_URL: 'http://media.mykurda.com' })).toThrow(/CDN_BASE_URL.*https/);
+    expect(() => loadConfig({ ...prod, CDN_BASE_URL: 'https://user:pass@media.mykurda.com' })).toThrow(
+      /CDN_BASE_URL.*credentials/,
+    );
+    // must not be the private S3 endpoint
+    expect(() =>
+      loadConfig({
+        ...prod,
+        S3_ENDPOINT: 'https://acct.r2.cloudflarestorage.com',
+        CDN_BASE_URL: 'https://acct.r2.cloudflarestorage.com',
+      }),
+    ).toThrow(/CDN_BASE_URL.*private S3/);
+  });
+
   it('boots the local docker-compose shape (prod mode, placeholder secret, no CORS wildcard)', () => {
     expect(() =>
       loadConfig({

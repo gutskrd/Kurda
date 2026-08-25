@@ -114,13 +114,19 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
   const oldKey = await withUserLock(pool, userId, key);
 
   // 9) delete the replaced object now; on failure the orphan job retries (it's
-  //    already un-confirmed) — never breaks the user's new photo.
+  //    already un-confirmed) — never breaks the user's new photo. Content-hashed
+  //    keys are shared when two users have identical photos, so only delete when
+  //    no OTHER user still references the replaced key (the current user's row now
+  //    holds the new key). Otherwise leave it — deleting would 404 their photo.
   if (oldKey && oldKey !== key) {
-    try {
-      await storage.delete(oldKey);
-      await usage.recordOps('A');
-    } catch (err) {
-      log.warn({ err, key: oldKey }, 'failed to delete replaced profile photo; orphan job will retry');
+    const stillUsed = await pool.query(`SELECT 1 FROM users WHERE profile_photo_key = $1 LIMIT 1`, [oldKey]);
+    if ((stillUsed.rowCount ?? 0) === 0) {
+      try {
+        await storage.delete(oldKey);
+        await usage.recordOps('A');
+      } catch (err) {
+        log.warn({ err, key: oldKey }, 'failed to delete replaced profile photo; orphan job will retry');
+      }
     }
   }
 

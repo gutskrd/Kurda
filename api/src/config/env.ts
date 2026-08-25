@@ -147,6 +147,35 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
       problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");
     }
+    // CDN_BASE_URL is the public base for media URLs (CDN_BASE_URL + '/' + key).
+    // It must be a clean public HTTPS origin — never the private S3 endpoint,
+    // never a path/trailing slash/credentials (which would corrupt every URL).
+    if (config.CDN_BASE_URL) {
+      const raw = config.CDN_BASE_URL;
+      if (!raw.startsWith('https://')) {
+        problems.push('  CDN_BASE_URL: must be an https:// URL in production');
+      }
+      if (raw.endsWith('/')) {
+        problems.push('  CDN_BASE_URL: must not end with a trailing slash');
+      }
+      let parsed: URL | null = null;
+      try {
+        parsed = new URL(raw);
+      } catch {
+        problems.push('  CDN_BASE_URL: is not a valid URL');
+      }
+      if (parsed) {
+        if (parsed.pathname !== '/' && parsed.pathname !== '') {
+          problems.push('  CDN_BASE_URL: must not include a path (e.g. /profile-photo) — only the origin');
+        }
+        if (parsed.username || parsed.password) {
+          problems.push('  CDN_BASE_URL: must not contain credentials');
+        }
+      }
+      if (config.S3_ENDPOINT && raw.replace(/\/$/, '') === config.S3_ENDPOINT.replace(/\/$/, '')) {
+        problems.push('  CDN_BASE_URL: must be the public CDN/custom-domain, not the private S3_ENDPOINT');
+      }
+    }
     if (problems.length > 0) {
       throw new Error(`Invalid environment configuration:\n${problems.join('\n')}`);
     }
