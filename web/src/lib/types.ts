@@ -30,6 +30,8 @@ export interface SessionUser {
   username: string;
   displayName: string | null;
   emailVerified: boolean;
+  /** resolved avatar (populated by /me; absent right after login until refresh) */
+  avatarUrl?: string | null;
 }
 
 export interface AuthPayload {

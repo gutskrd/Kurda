@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
+import { Avatar } from './Avatar';
 import { MenuIcon, CloseIcon, GearIcon } from './icons';
 
 export interface NavItem {
@@ -13,7 +14,7 @@ export interface NavItem {
 
 /** Desktop-first top navigation. Collapses to a menu under 860px. */
 export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
-  const { status, logout } = useAuth();
+  const { status, logout, user } = useAuth();
   const { openProfile } = useProfileModal();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -80,12 +81,18 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
               >
                 <GearIcon size={19} />
               </Link>
-              <Button variant="secondary" size="sm" className="nav-desktop-only" onClick={() => openProfile({ kind: 'me' })}>
-                Profile
-              </Button>
               <Button variant="ghost" size="sm" className="nav-desktop-only" onClick={signOut}>
                 Sign out
               </Button>
+              <button
+                type="button"
+                className="nav-avatar-btn nav-desktop-only"
+                onClick={() => openProfile({ kind: 'me' })}
+                aria-label="Your profile"
+                title="Your profile"
+              >
+                <Avatar url={user?.avatarUrl} glyphSize={20} />
+              </button>
             </>
           ) : (
             <>
