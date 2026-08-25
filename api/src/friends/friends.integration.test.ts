@@ -118,4 +118,18 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(has(forX, y)).toBe(false); // already a friend
     expect(has(forX, x)).toBe(false); // never yourself
   });
+
+  it('reflects online presence from last_seen_at', async () => {
+    const p = await register('pon', '10.81.20.1');
+    const q = await register('pof', '10.81.20.2');
+    await friends.request(p, q);
+    await friends.respond(q, p, true);
+    // Q just heartbeated; P never did
+    await pool.query(`UPDATE users SET last_seen_at = now() WHERE id = $1`, [q]);
+
+    const forP = await friends.list(p);
+    expect(forP.find((x) => x.userId === q)?.online).toBe(true);
+    const forQ = await friends.list(q);
+    expect(forQ.find((x) => x.userId === p)?.online).toBe(false);
+  });
 });

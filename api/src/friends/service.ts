@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
+import { isOnline } from '../social/presence.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
@@ -11,6 +12,7 @@ export interface FriendSummary {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  online: boolean;
 }
 
 /** Raw user columns joined for a friend/request row. */
@@ -20,14 +22,16 @@ interface FriendRow {
   display_name: string | null;
   profile_photo_key: string | null;
   selected_avatar_key: string | null;
+  last_seen_at: Date | null;
 }
 
-function toFriendSummary(r: FriendRow, publicUrl: PublicUrl): FriendSummary {
+function toFriendSummary(r: FriendRow, publicUrl: PublicUrl, now: Date): FriendSummary {
   return {
     userId: r.id,
     username: r.username,
     displayName: r.display_name,
     avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+    online: isOnline(r.last_seen_at, now),
   };
 }
 
@@ -213,19 +217,20 @@ export class FriendService {
   /** Accepted friends of `user` (blocked users can't be friends). */
   async list(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
     const rows = await this.pool.query<FriendRow>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM friendships f
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
         ORDER BY u.username`,
       [user],
     );
-    return rows.rows.map((r) => toFriendSummary(r, publicUrl));
+    const now = new Date();
+    return rows.rows.map((r) => toFriendSummary(r, publicUrl, now));
   }
 
   /** Incoming pending requests (not expired, requester not since blocked). */
   async incomingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
     const rows = await this.pool.query<FriendRow>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM friendships f
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at FROM friendships f
          JOIN users u ON u.id = f.requested_by
         WHERE f.status = 'pending' AND f.requested_by <> $1
           AND (f.user_lo = $1 OR f.user_hi = $1)
@@ -237,7 +242,8 @@ export class FriendService {
         ORDER BY f.created_at DESC`,
       [user, String(REQUEST_TTL_DAYS)],
     );
-    return rows.rows.map((r) => toFriendSummary(r, publicUrl));
+    const now = new Date();
+    return rows.rows.map((r) => toFriendSummary(r, publicUrl, now));
   }
 
   /**
@@ -253,7 +259,7 @@ export class FriendService {
            FROM friendships
           WHERE status = 'accepted' AND (user_lo = $1 OR user_hi = $1)
        )
-       SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key,
+       SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at,
               count(*)::int AS mutual
          FROM my_friends mf
          JOIN friendships f2
@@ -273,12 +279,13 @@ export class FriendService {
             SELECT 1 FROM blocks b
              WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
           )
-        GROUP BY u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key
+        GROUP BY u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at
         ORDER BY mutual DESC, u.username
         LIMIT $2`,
       [user, limit],
     );
-    return rows.rows.map((r) => ({ ...toFriendSummary(r, publicUrl), mutualCount: r.mutual }));
+    const now = new Date();
+    return rows.rows.map((r) => ({ ...toFriendSummary(r, publicUrl, now), mutualCount: r.mutual }));
   }
 
   /** Relationship of `viewer` to `target` — powers friend buttons (KUR-082). */
