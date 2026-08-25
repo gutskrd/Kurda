@@ -20,6 +20,8 @@ export interface PublicProfile {
   /** true when privacy hides the details (still shows identity to allow a request). */
   private: boolean;
   bio?: string | null;
+  /** Stored R2/S3 object key; the route resolves it to a public URL and omits it. */
+  profilePhotoKey?: string | null;
   xp?: number;
   streak?: number;
   tier?: string;
@@ -77,6 +79,7 @@ export class SocialService {
       username: string;
       display_name: string | null;
       bio: string | null;
+      profile_photo_key: string | null;
       xp: number;
       profile_visibility: Visibility;
       streak: number;
@@ -84,7 +87,7 @@ export class SocialService {
       rating: number;
       achievements: number;
     }>(
-      `SELECT u.username, u.display_name, u.bio, u.xp, u.profile_visibility,
+      `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.xp, u.profile_visibility,
               COALESCE(s.current_streak, 0) AS streak,
               COALESCE(ul.tier, 'bronze') AS tier,
               COALESCE(r.rating, 1000) AS rating,
@@ -122,6 +125,7 @@ export class SocialService {
     return {
       ...base,
       bio: u.bio,
+      profilePhotoKey: u.profile_photo_key,
       xp: u.xp,
       streak: u.streak,
       tier: u.tier,

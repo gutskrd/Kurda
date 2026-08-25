@@ -34,6 +34,15 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
   app.get(
     '/users/:id',
     { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
-    async (req) => social.profile(req.user!.id, (req.params as { id: string }).id),
+    async (req) => {
+      const profile = await social.profile(req.user!.id, (req.params as { id: string }).id);
+      // Resolve the stored object key to a public CDN URL via the same storage
+      // abstraction /me uses, and never expose the raw key to the client.
+      const { profilePhotoKey, ...rest } = profile;
+      return {
+        ...rest,
+        profilePhotoUrl: profilePhotoKey && app.storage ? app.storage.publicUrl(profilePhotoKey) : null,
+      };
+    },
   );
 }
