@@ -16,6 +16,7 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
+import { CosmeticBackground, LevelBar, PremiumPill, EquippedIcon } from './cosmetic-parts';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -182,8 +183,8 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
       <div className="pcard-plate">
         <div className="pcard-name-row">
           <div className="pcard-name">{name}</div>
-          {icon && <img className="pcard-icon" src={icon.url} alt="" title="Equipped icon" />}
-          {premium && <span className="pcard-premium" title="Premium member">Premium</span>}
+          {icon && <EquippedIcon icon={icon} />}
+          {premium && <PremiumPill />}
         </div>
         <div className="pcard-handle">@{username}</div>
 
@@ -245,44 +246,6 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         </div>
       )}
     </article>
-  );
-}
-
-/** Renders the equipped background as the right element for its media type. */
-function CosmeticBackground({ background }: { background: ProfileBackground }): React.JSX.Element {
-  if (background.type === 'video') {
-    return (
-      <video
-        className="pcard-bg-media"
-        src={background.url}
-        autoPlay
-        muted
-        loop
-        playsInline
-        // decorative only — never a focus/interaction target
-        aria-hidden="true"
-        tabIndex={-1}
-      />
-    );
-  }
-  // image + gif both render as <img> (gif animates natively)
-  return <img className="pcard-bg-media" src={background.url} alt="" aria-hidden="true" />;
-}
-
-/** Level badge + progress bar toward the next level (derived server-side). */
-function LevelBar({ level }: { level: LevelInfo }): React.JSX.Element {
-  const pct = Math.round(Math.min(1, Math.max(0, level.progress)) * 100);
-  const toNext = Math.max(0, level.nextLevelXp - level.xp);
-  return (
-    <div className="pcard-level" title={`${toNext.toLocaleString()} XP to level ${level.level + 1}`}>
-      <div className="pcard-level-head">
-        <span className="pcard-level-badge">Level {level.level}</span>
-        <span className="pcard-level-xp">{level.xp.toLocaleString()} XP</span>
-      </div>
-      <div className="pcard-level-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-        <div className="pcard-level-fill" style={{ width: `${pct}%` }} />
-      </div>
-    </div>
   );
 }
 
