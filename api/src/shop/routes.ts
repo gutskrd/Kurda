@@ -7,7 +7,7 @@ const itemBody = z.object({
   sku: z.string().min(1).max(80),
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
-  category: z.enum(['cosmetic', 'powerup', 'freeze', 'misc']).optional(),
+  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'misc']).optional(),
   currency: z.enum(['zer', 'gems']),
   price: z.number().int().min(0).max(10_000_000),
   isUnique: z.boolean().optional(),
@@ -15,6 +15,10 @@ const itemBody = z.object({
   inStock: z.boolean().optional(),
   availableFrom: z.coerce.date().optional(),
   availableTo: z.coerce.date().optional(),
+  /** cosmetics: storage/static key + premium access + catalog ordering */
+  assetKey: z.string().max(200).optional(),
+  premiumOnly: z.boolean().optional(),
+  displayOrder: z.number().int().min(0).max(100_000).optional(),
 });
 
 const purchaseBody = z.object({

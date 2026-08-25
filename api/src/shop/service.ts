@@ -15,6 +15,12 @@ export interface ShopItem {
   inStock: boolean;
   availableFrom: Date | null;
   availableTo: Date | null;
+  /** storage/static key the app resolves to a URL (cosmetics); null for non-media items */
+  assetKey: string | null;
+  /** accessible while premium is active (still permanently purchasable) */
+  premiumOnly: boolean;
+  /** catalog display ordering within a category */
+  displayOrder: number;
 }
 
 export interface CreateItemInput {
@@ -29,6 +35,9 @@ export interface CreateItemInput {
   inStock?: boolean;
   availableFrom?: Date | null;
   availableTo?: Date | null;
+  assetKey?: string | null;
+  premiumOnly?: boolean;
+  displayOrder?: number;
 }
 
 export interface PurchaseResult {
@@ -51,6 +60,9 @@ interface ItemRow {
   in_stock: boolean;
   available_from: Date | null;
   available_to: Date | null;
+  asset_key: string | null;
+  premium_only: boolean;
+  display_order: number;
 }
 
 /**
@@ -69,6 +81,9 @@ interface CachedItem {
   inStock: boolean;
   availableFromMs: number | null;
   availableToMs: number | null;
+  assetKey: string | null;
+  premiumOnly: boolean;
+  displayOrder: number;
 }
 
 const CATALOG_TTL_SECONDS = 300;
@@ -106,13 +121,15 @@ export class ShopService {
     if (input.price < 0) throw new AppError('BAD_PRICE', 400, 'price must be ≥ 0');
     const row = await this.pool.query<ItemRow>(
       `INSERT INTO shop_items
-         (sku, name, description, category, currency, price, is_unique, active, in_stock, available_from, available_to)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         (sku, name, description, category, currency, price, is_unique, active, in_stock, available_from, available_to,
+          asset_key, premium_only, display_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        ON CONFLICT (sku) DO UPDATE SET
          name = EXCLUDED.name, description = EXCLUDED.description, category = EXCLUDED.category,
          currency = EXCLUDED.currency, price = EXCLUDED.price, is_unique = EXCLUDED.is_unique,
          active = EXCLUDED.active, in_stock = EXCLUDED.in_stock,
-         available_from = EXCLUDED.available_from, available_to = EXCLUDED.available_to
+         available_from = EXCLUDED.available_from, available_to = EXCLUDED.available_to,
+         asset_key = EXCLUDED.asset_key, premium_only = EXCLUDED.premium_only, display_order = EXCLUDED.display_order
        RETURNING *`,
       [
         input.sku,
@@ -126,6 +143,9 @@ export class ShopService {
         input.inStock ?? true,
         input.availableFrom ?? null,
         input.availableTo ?? null,
+        input.assetKey ?? null,
+        input.premiumOnly ?? false,
+        input.displayOrder ?? 0,
       ],
     );
     await this.invalidate();
@@ -143,7 +163,7 @@ export class ShopService {
   private async activeItems(): Promise<CachedItem[]> {
     const load = async (): Promise<CachedItem[]> => {
       const rows = await this.pool.query<ItemRow>(
-        `SELECT * FROM shop_items WHERE active = true ORDER BY category, price`,
+        `SELECT * FROM shop_items WHERE active = true ORDER BY category, display_order, price`,
       );
       return rows.rows.map((r) => ({
         sku: r.sku,
@@ -156,6 +176,9 @@ export class ShopService {
         inStock: r.in_stock,
         availableFromMs: r.available_from ? new Date(r.available_from).getTime() : null,
         availableToMs: r.available_to ? new Date(r.available_to).getTime() : null,
+        assetKey: r.asset_key,
+        premiumOnly: r.premium_only,
+        displayOrder: r.display_order,
       }));
     };
     return this.cache
@@ -197,6 +220,9 @@ export class ShopService {
         inStock: i.inStock,
         availableFrom: i.availableFromMs == null ? null : new Date(i.availableFromMs),
         availableTo: i.availableToMs == null ? null : new Date(i.availableToMs),
+        assetKey: i.assetKey,
+        premiumOnly: i.premiumOnly,
+        displayOrder: i.displayOrder,
       }));
   }
 
@@ -308,6 +334,9 @@ export class ShopService {
       inStock: r.in_stock,
       availableFrom: r.available_from,
       availableTo: r.available_to,
+      assetKey: r.asset_key,
+      premiumOnly: r.premium_only,
+      displayOrder: r.display_order,
     };
   }
 }

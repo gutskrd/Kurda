@@ -13,6 +13,8 @@
     "migrate:down": "node-pg-migrate down",
     "migrate:create": "node-pg-migrate create --migration-file-language js",
     "db:seed": "tsx scripts/seed.ts",
+    "seed:cosmetics": "tsx scripts/seed-cosmetics.ts",
+    "cosmetics:upload": "tsx scripts/upload-cosmetics.ts",
     "content:import": "tsx scripts/import-content.ts",
     "dict:import": "tsx scripts/import-lexicon.ts",
     "events:seed": "tsx scripts/seed-events.ts",
