@@ -167,6 +167,7 @@ export interface Conversation {
   userId: string;
   username: string;
   avatarUrl?: string | null;
+  online?: boolean;
   lastMessage: string;
   lastAt: string;
   lastFromMe: boolean;

@@ -6,6 +6,7 @@ import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
+import { isOnline } from '../social/presence.js';
 
 export const MAX_MESSAGE_LEN = 2000;
 
@@ -34,6 +35,7 @@ export interface Conversation {
   userId: string;
   username: string;
   avatarUrl: string | null;
+  online: boolean;
   lastMessage: string;
   lastAt: string;
   lastFromMe: boolean;
@@ -164,6 +166,7 @@ export class ChatService {
       username: string;
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
+      last_seen_at: Date | null;
       body: string;
       created_at: Date;
       sender_id: string;
@@ -174,7 +177,7 @@ export class ChatService {
            FROM dm_messages WHERE user_lo = $1 OR user_hi = $1
        )
        SELECT CASE WHEN c.user_lo = $1 THEN c.user_hi ELSE c.user_lo END AS other,
-              u.username, u.profile_photo_key, u.selected_avatar_key, c.body, c.created_at, c.sender_id,
+              u.username, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at, c.body, c.created_at, c.sender_id,
               (SELECT count(*)::int FROM dm_messages m
                 WHERE m.user_lo = c.user_lo AND m.user_hi = c.user_hi
                   AND m.sender_id <> $1 AND m.read_at IS NULL) AS unread
@@ -188,10 +191,12 @@ export class ChatService {
         ORDER BY c.created_at DESC`,
       [user],
     );
+    const now = new Date();
     return rows.rows.map((r) => ({
       userId: r.other,
       username: r.username,
       avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+      online: isOnline(r.last_seen_at, now),
       lastMessage: r.body,
       lastAt: r.created_at.toISOString(),
       lastFromMe: r.sender_id === user,
