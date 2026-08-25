@@ -65,6 +65,25 @@ describe('Friends', () => {
     expect(screen.getByRole('button', { name: /decline/i })).toBeInTheDocument();
   });
 
+  it('shows people-you-may-know with mutual count and an Add button', async () => {
+    vi.stubGlobal(
+      'fetch',
+      routedFetch({
+        '/friends/suggestions': { suggestions: [{ userId: 'u5', username: 'baran', displayName: 'Baran', mutualCount: 2 }] },
+        '/friends/requests': { requests: [] },
+        '/friends': { friends: [] },
+      }),
+    );
+    renderApp(<Friends />);
+
+    expect(await screen.findByText('People you may know')).toBeInTheDocument();
+    expect(screen.getByText('Baran')).toBeInTheDocument();
+    expect(screen.getByText('2 mutual friends')).toBeInTheDocument();
+    const add = screen.getByRole('button', { name: /^add$/i });
+    await userEvent.click(add);
+    expect(await screen.findByRole('button', { name: /requested/i })).toBeInTheDocument();
+  });
+
   it('searches for users and renders results', async () => {
     vi.stubGlobal(
       'fetch',

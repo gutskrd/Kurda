@@ -5,9 +5,9 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
-import type { UserSummary } from '../lib/types';
+import type { SuggestedFriend, UserSummary } from '../lib/types';
 
-function Row({ user, actions }: { user: UserSummary; actions?: React.ReactNode }): React.JSX.Element {
+function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
   return (
     <div className="friend-row">
@@ -18,7 +18,7 @@ function Row({ user, actions }: { user: UserSummary; actions?: React.ReactNode }
       >
         <Avatar url={user.avatarUrl} />
         <span className="friend-name">{user.displayName || user.username}</span>
-        <span className="friend-handle">@{user.username}</span>
+        <span className="friend-handle">{meta ?? `@${user.username}`}</span>
       </button>
       {actions}
     </div>
@@ -29,10 +29,17 @@ export function Friends(): React.JSX.Element {
   const { client } = useAuth();
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
+  const suggestions = useApiGet<{ suggestions: SuggestedFriend[] }>('/friends/suggestions');
 
   const [q, setQ] = useState('');
   const [results, setResults] = useState<UserSummary[] | null>(null);
   const [searching, setSearching] = useState(false);
+  const [requested, setRequested] = useState<Set<string>>(new Set());
+
+  async function addFriend(userId: string): Promise<void> {
+    const res = await client.post('/friends/requests', { userId });
+    if (res.ok) setRequested((prev) => new Set(prev).add(userId));
+  }
 
   async function search(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -47,6 +54,7 @@ export function Friends(): React.JSX.Element {
     await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
     requests.reload();
     friends.reload();
+    suggestions.reload();
   }
 
   return (
@@ -105,6 +113,33 @@ export function Friends(): React.JSX.Element {
                       Decline
                     </Button>
                   </span>
+                }
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* people you may know */}
+      {!suggestions.loading && (suggestions.data?.suggestions?.length ?? 0) > 0 && (
+        <section className="friend-section">
+          <h2 className="friend-heading">People you may know</h2>
+          <div className="post-list">
+            {suggestions.data!.suggestions.map((u) => (
+              <Row
+                key={u.userId}
+                user={u}
+                meta={`${u.mutualCount} mutual friend${u.mutualCount === 1 ? '' : 's'}`}
+                actions={
+                  requested.has(u.userId) ? (
+                    <Button size="sm" disabled>
+                      Requested
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => addFriend(u.userId)}>
+                      Add
+                    </Button>
+                  )
                 }
               />
             ))}

@@ -145,6 +145,11 @@ export interface UserSummary {
   avatarUrl?: string | null;
 }
 
+/** A friend suggestion (GET /friends/suggestions) — with mutual-friend count. */
+export interface SuggestedFriend extends UserSummary {
+  mutualCount: number;
+}
+
 /** A 1:1 direct message (chat). */
 export interface DmMessage {
   id: string;
