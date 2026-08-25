@@ -115,6 +115,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   let icon: ProfileIcon | null = null;
   let level: LevelInfo | undefined;
   let premium = false;
+  let online: boolean | undefined;
   let favPoem: FavoriteRef | null = null;
   let favStory: FavoriteRef | null = null;
   const stats: Array<{ label: string; value: string; cap?: boolean }> = [];
@@ -133,6 +134,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     icon = me.icon ?? null;
     level = me.level;
     premium = me.premium ?? false;
+    online = me.online;
     favPoem = me.favoritePoem ?? null;
     favStory = me.favoriteStory ?? null;
     stats.push({ label: 'XP', value: me.xp.toLocaleString() });
@@ -147,6 +149,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     icon = other.icon ?? null;
     level = other.level;
     premium = other.premium ?? false;
+    online = other.online;
     favPoem = other.favoritePoem ?? null;
     favStory = other.favoriteStory ?? null;
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
@@ -187,6 +190,9 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           {premium && <PremiumPill />}
         </div>
         <div className="pcard-handle">@{username}</div>
+        {online && (
+          <div className="pcard-online"><span className="presence-dot presence-dot-inline" /> Online</div>
+        )}
 
         {level && <LevelBar level={level} />}
 

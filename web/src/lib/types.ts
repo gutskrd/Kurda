@@ -98,6 +98,8 @@ export interface ProfileCosmetics {
   icon?: ProfileIcon | null;
   level?: LevelInfo;
   premium?: boolean;
+  /** presence — only present when viewing yourself or a friend */
+  online?: boolean;
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
 }

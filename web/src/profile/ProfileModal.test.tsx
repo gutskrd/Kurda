@@ -75,6 +75,7 @@ describe('ProfileModal', () => {
           icon: { sku: 'ic-1', assetKey: 'icons/i.png', url: '/cosmetics/icons/i.png' },
           level: { xp: 250, level: 2, currentLevelXp: 100, nextLevelXp: 400, progress: 0.5 },
           premium: true,
+          online: true,
           favoritePoem: { id: 'p1', title: 'The River' },
           favoriteStory: null,
         }),
@@ -88,6 +89,7 @@ describe('ProfileModal', () => {
     expect(screen.getByText('Level 2')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
     expect(screen.getByText('Premium')).toBeInTheDocument();
+    expect(screen.getByText('Online')).toBeInTheDocument();
     expect(screen.getByText('The River')).toBeInTheDocument();
     // the avatar uses the resolved avatarUrl (photo → default avatar server-side)
     const avatar = document.querySelector('.pcard-photo-img') as HTMLImageElement | null;

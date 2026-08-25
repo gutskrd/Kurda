@@ -4,6 +4,7 @@ import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
+import { isOnline } from './presence.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -45,6 +46,8 @@ export interface PublicProfile {
   tier?: string;
   rating?: number;
   achievements?: number;
+  /** presence — only populated for the user themselves or their friends */
+  online?: boolean;
 }
 
 const MIN_QUERY = 2;
@@ -104,6 +107,7 @@ export class SocialService {
       bio: string | null;
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
+      last_seen_at: Date | null;
       premium_until: Date | null;
       xp: number;
       profile_visibility: Visibility;
@@ -135,7 +139,7 @@ export class SocialService {
       // Single query: profile + stats + equipped cosmetics (with the owner's
       // ownership of each) + favorites. No N+1; the route resolves keys → URLs.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
-              u.premium_until, u.xp, u.profile_visibility,
+              u.last_seen_at, u.premium_until, u.xp, u.profile_visibility,
               u.equipped_background_sku, u.equipped_icon_sku,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
@@ -227,6 +231,8 @@ export class SocialService {
       tier: u.tier,
       rating: u.rating,
       achievements: u.achievements,
+      // presence is private: only the user themselves and their friends see it
+      online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };
   }
 }
