@@ -17,6 +17,11 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
     requests: await friends.incomingRequests(req.user!.id, publicUrl),
   }));
 
+  /** People-you-may-know (friends-of-friends, ranked by mutual count). */
+  app.get('/friends/suggestions', { preHandler: requireAuth }, async (req) => ({
+    suggestions: await friends.suggestions(req.user!.id, publicUrl),
+  }));
+
   /** Send a friend request (auto-accepts a mutual pending request). */
   app.post(
     '/friends/requests',

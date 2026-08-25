@@ -100,4 +100,22 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     await expect(friends.request(id.a!, id.a!)).rejects.toThrow(/yourself/i);
     await expect(friends.block(id.a!, id.a!)).rejects.toThrow(/yourself/i);
   });
+
+  it('suggests friends-of-friends ranked by mutual count', async () => {
+    // fresh graph (independent of the mutated a–e users): X–Y and Y–Z are friends
+    const x = await register('sx', '10.81.10.1');
+    const y = await register('sy', '10.81.10.2');
+    const z = await register('sz', '10.81.10.3');
+    await friends.request(x, y);
+    await friends.respond(y, x, true);
+    await friends.request(y, z);
+    await friends.respond(z, y, true);
+
+    const forX = await friends.suggestions(x);
+    const zSug = forX.find((s) => s.userId === z);
+    expect(zSug).toBeTruthy();
+    expect(zSug!.mutualCount).toBe(1); // Y is the mutual friend
+    expect(has(forX, y)).toBe(false); // already a friend
+    expect(has(forX, x)).toBe(false); // never yourself
+  });
 });
