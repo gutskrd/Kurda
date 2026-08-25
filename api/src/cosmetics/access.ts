@@ -61,6 +61,9 @@ export interface LevelInfo {
 /** Web-static base for avatars/icons (served by the web app at its own origin). */
 const STATIC_BASE = '/cosmetics';
 
+/** Resolves a stored object key to a public URL (null when storage is unconfigured). */
+export type PublicUrl = (key: string) => string | null;
+
 /**
  * Resolve a cosmetic catalog item's asset key to a public URL for *browsing*
  * (shop + inventory), using the same hybrid delivery as the profile resolver:
@@ -81,6 +84,22 @@ export function cosmeticAssetUrl(
 
 export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date()): boolean {
   return premiumUntil != null && premiumUntil.getTime() > now.getTime();
+}
+
+/**
+ * Resolve a user's display avatar URL from their stored keys, with the canonical
+ * priority: uploaded photo → selected default avatar → null (client shows a
+ * silhouette). Shared by the profile resolver and the social/chat list DTOs so
+ * avatars look identical everywhere.
+ */
+export function resolveAvatarUrl(
+  profilePhotoKey: string | null,
+  selectedAvatarKey: string | null,
+  publicUrl: (key: string) => string | null,
+): string | null {
+  if (profilePhotoKey) return publicUrl(profilePhotoKey);
+  if (selectedAvatarKey) return `${STATIC_BASE}/avatars/${selectedAvatarKey}.png`;
+  return null;
 }
 
 /** Access = owned OR (premium_only AND premium active). Inactive items are never usable. */
@@ -109,9 +128,7 @@ export function resolveCosmetics(
   const premium = isPremiumActive(raw.premiumUntil, now);
 
   // avatar: uploaded photo → selected default avatar → null (web shows silhouette)
-  let avatarUrl: string | null = null;
-  if (raw.profilePhotoKey) avatarUrl = publicUrl(raw.profilePhotoKey);
-  else if (raw.selectedAvatarKey) avatarUrl = `${STATIC_BASE}/avatars/${raw.selectedAvatarKey}.png`;
+  const avatarUrl = resolveAvatarUrl(raw.profilePhotoKey, raw.selectedAvatarKey, publicUrl);
 
   let background: ResolvedBackground | null = null;
   if (raw.background && raw.background.assetKey && hasAccess(raw.background, premium)) {

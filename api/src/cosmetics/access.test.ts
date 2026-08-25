@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCosmetics, levelInfo, isPremiumActive, hasAccess, cosmeticAssetUrl, type EquippedItem } from './access.js';
+import { resolveCosmetics, levelInfo, isPremiumActive, hasAccess, cosmeticAssetUrl, resolveAvatarUrl, type EquippedItem } from './access.js';
 
 const url = (key: string): string => `https://cdn.test/${key}`;
 const NOW = new Date('2026-08-25T12:00:00Z');
@@ -119,6 +119,18 @@ describe('resolveCosmetics — icon', () => {
       NOW,
     );
     expect(r.icon).toBeNull();
+  });
+});
+
+describe('resolveAvatarUrl (shared by profile + social/chat lists)', () => {
+  const pub = (key: string): string => `https://cdn.test/${key}`;
+  it('prefers the uploaded photo, then the default avatar, then null', () => {
+    expect(resolveAvatarUrl('profile-photo/a.webp', 'default-05', pub)).toBe('https://cdn.test/profile-photo/a.webp');
+    expect(resolveAvatarUrl(null, 'default-05', pub)).toBe('/cosmetics/avatars/default-05.png');
+    expect(resolveAvatarUrl(null, null, pub)).toBeNull();
+  });
+  it('is null for a photo when storage is unconfigured', () => {
+    expect(resolveAvatarUrl('profile-photo/a.webp', null, () => null)).toBeNull();
   });
 });
 

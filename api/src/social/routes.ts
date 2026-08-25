@@ -14,7 +14,9 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireAuth,
     },
-    async (req) => ({ results: await social.search(req.user!.id, (req.query as { q: string }).q) }),
+    async (req) => ({
+      results: await social.search(req.user!.id, (req.query as { q: string }).q, (k) => (app.storage ? app.storage.publicUrl(k) : null)),
+    }),
   );
 
   /** Set who can see your profile. */

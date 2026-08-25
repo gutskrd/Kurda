@@ -1,5 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
+import { resolveAvatarUrl } from '../cosmetics/access.js';
+import type { PublicUrl } from '../cosmetics/access.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
@@ -7,6 +9,26 @@ export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'sil
 export interface FriendSummary {
   userId: string;
   username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+/** Raw user columns joined for a friend/request row. */
+interface FriendRow {
+  id: string;
+  username: string;
+  display_name: string | null;
+  profile_photo_key: string | null;
+  selected_avatar_key: string | null;
+}
+
+function toFriendSummary(r: FriendRow, publicUrl: PublicUrl): FriendSummary {
+  return {
+    userId: r.id,
+    username: r.username,
+    displayName: r.display_name,
+    avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+  };
 }
 
 interface EdgeRow {
@@ -184,21 +206,21 @@ export class FriendService {
   }
 
   /** Accepted friends of `user` (blocked users can't be friends). */
-  async list(user: string): Promise<FriendSummary[]> {
-    const rows = await this.pool.query<{ id: string; username: string }>(
-      `SELECT u.id, u.username FROM friendships f
+  async list(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
+    const rows = await this.pool.query<FriendRow>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
         ORDER BY u.username`,
       [user],
     );
-    return rows.rows.map((r) => ({ userId: r.id, username: r.username }));
+    return rows.rows.map((r) => toFriendSummary(r, publicUrl));
   }
 
   /** Incoming pending requests (not expired, requester not since blocked). */
-  async incomingRequests(user: string): Promise<FriendSummary[]> {
-    const rows = await this.pool.query<{ id: string; username: string }>(
-      `SELECT u.id, u.username FROM friendships f
+  async incomingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
+    const rows = await this.pool.query<FriendRow>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM friendships f
          JOIN users u ON u.id = f.requested_by
         WHERE f.status = 'pending' AND f.requested_by <> $1
           AND (f.user_lo = $1 OR f.user_hi = $1)
@@ -210,7 +232,7 @@ export class FriendService {
         ORDER BY f.created_at DESC`,
       [user, String(REQUEST_TTL_DAYS)],
     );
-    return rows.rows.map((r) => ({ userId: r.id, username: r.username }));
+    return rows.rows.map((r) => toFriendSummary(r, publicUrl));
   }
 
   /** Relationship of `viewer` to `target` — powers friend buttons (KUR-082). */
