@@ -15,3 +15,10 @@ api/.pgdata/
 # The demo site is its own standalone repo (preserved separately) — never
 # absorb it into this monorepo. See Demo-MyKurda/README.md.
 /Demo-MyKurda/
+
+# Cosmetic source assets — canonical copies live in web/public/cosmetics (avatars/icons)
+# and Cloudflare R2 (backgrounds, via api/scripts/upload-cosmetics). Keys/manifest are
+# committed (api/content/cosmetics.json); the large/binary sources are not.
+/default-avatars/
+/premium-icons/
+/mykurda-background/

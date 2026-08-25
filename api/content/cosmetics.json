@@ -1,0 +1,749 @@
+{
+  "avatars": [
+    {
+      "key": "default-01"
+    },
+    {
+      "key": "default-02"
+    },
+    {
+      "key": "default-03"
+    },
+    {
+      "key": "default-04"
+    },
+    {
+      "key": "default-05"
+    },
+    {
+      "key": "default-06"
+    },
+    {
+      "key": "default-07"
+    },
+    {
+      "key": "default-08"
+    },
+    {
+      "key": "default-09"
+    },
+    {
+      "key": "default-10"
+    },
+    {
+      "key": "default-11"
+    },
+    {
+      "key": "default-12"
+    },
+    {
+      "key": "default-13"
+    },
+    {
+      "key": "default-14"
+    },
+    {
+      "key": "default-15"
+    },
+    {
+      "key": "default-16"
+    },
+    {
+      "key": "default-17"
+    },
+    {
+      "key": "default-18"
+    },
+    {
+      "key": "default-19"
+    },
+    {
+      "key": "default-20"
+    },
+    {
+      "key": "default-21"
+    },
+    {
+      "key": "default-22"
+    },
+    {
+      "key": "default-23"
+    },
+    {
+      "key": "default-24"
+    },
+    {
+      "key": "default-25"
+    },
+    {
+      "key": "default-26"
+    },
+    {
+      "key": "default-27"
+    },
+    {
+      "key": "default-29"
+    },
+    {
+      "key": "default-30"
+    },
+    {
+      "key": "default-31"
+    },
+    {
+      "key": "default-32"
+    },
+    {
+      "key": "default-33"
+    },
+    {
+      "key": "default-34"
+    },
+    {
+      "key": "default-35"
+    },
+    {
+      "key": "default-36"
+    },
+    {
+      "key": "default-37"
+    },
+    {
+      "key": "default-38"
+    },
+    {
+      "key": "default-39"
+    },
+    {
+      "key": "default-40"
+    },
+    {
+      "key": "default-41"
+    }
+  ],
+  "icons": [
+    {
+      "sku": "icon-accessoire-icon-01",
+      "name": "Accessoire Icon 01",
+      "assetKey": "icons/accessoire-icon-01.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 0
+    },
+    {
+      "sku": "icon-accessoire-icon-02",
+      "name": "Accessoire Icon 02",
+      "assetKey": "icons/accessoire-icon-02.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 1
+    },
+    {
+      "sku": "icon-accessoire-icon-03",
+      "name": "Accessoire Icon 03",
+      "assetKey": "icons/accessoire-icon-03.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 2
+    },
+    {
+      "sku": "icon-accessoire-icon-04",
+      "name": "Accessoire Icon 04",
+      "assetKey": "icons/accessoire-icon-04.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 3
+    },
+    {
+      "sku": "icon-accessoire-icon-05",
+      "name": "Accessoire Icon 05",
+      "assetKey": "icons/accessoire-icon-05.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 4
+    },
+    {
+      "sku": "icon-accessoire-icon-06",
+      "name": "Accessoire Icon 06",
+      "assetKey": "icons/accessoire-icon-06.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 5
+    },
+    {
+      "sku": "icon-accessoire-icon-07",
+      "name": "Accessoire Icon 07",
+      "assetKey": "icons/accessoire-icon-07.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 6
+    },
+    {
+      "sku": "icon-accessoire-icon-08",
+      "name": "Accessoire Icon 08",
+      "assetKey": "icons/accessoire-icon-08.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 7
+    },
+    {
+      "sku": "icon-accessoire-icon-09",
+      "name": "Accessoire Icon 09",
+      "assetKey": "icons/accessoire-icon-09.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 8
+    },
+    {
+      "sku": "icon-accessoire-icon-10",
+      "name": "Accessoire Icon 10",
+      "assetKey": "icons/accessoire-icon-10.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 9
+    },
+    {
+      "sku": "icon-accessoire-icon-11",
+      "name": "Accessoire Icon 11",
+      "assetKey": "icons/accessoire-icon-11.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 10
+    },
+    {
+      "sku": "icon-accessoire-icon-12",
+      "name": "Accessoire Icon 12",
+      "assetKey": "icons/accessoire-icon-12.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 11
+    },
+    {
+      "sku": "icon-accessoire-icon-13",
+      "name": "Accessoire Icon 13",
+      "assetKey": "icons/accessoire-icon-13.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 12
+    },
+    {
+      "sku": "icon-accessoire-icon-14",
+      "name": "Accessoire Icon 14",
+      "assetKey": "icons/accessoire-icon-14.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 13
+    },
+    {
+      "sku": "icon-accessoire-icon-15",
+      "name": "Accessoire Icon 15",
+      "assetKey": "icons/accessoire-icon-15.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 14
+    },
+    {
+      "sku": "icon-accessoire-icon-16",
+      "name": "Accessoire Icon 16",
+      "assetKey": "icons/accessoire-icon-16.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 15
+    },
+    {
+      "sku": "icon-accessoire-icon-17",
+      "name": "Accessoire Icon 17",
+      "assetKey": "icons/accessoire-icon-17.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 16
+    },
+    {
+      "sku": "icon-accessoire-icon-18",
+      "name": "Accessoire Icon 18",
+      "assetKey": "icons/accessoire-icon-18.png",
+      "price": 800,
+      "premiumOnly": true,
+      "displayOrder": 17
+    }
+  ],
+  "backgrounds": [
+    {
+      "sku": "bg-background-01",
+      "name": "Background 01",
+      "assetKey": "backgrounds/background-01.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 0
+    },
+    {
+      "sku": "bg-background-02",
+      "name": "Background 02",
+      "assetKey": "backgrounds/background-02.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 1
+    },
+    {
+      "sku": "bg-background-03",
+      "name": "Background 03",
+      "assetKey": "backgrounds/background-03.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 2
+    },
+    {
+      "sku": "bg-background-04",
+      "name": "Background 04",
+      "assetKey": "backgrounds/background-04.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 3
+    },
+    {
+      "sku": "bg-background-05",
+      "name": "Background 05",
+      "assetKey": "backgrounds/background-05.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 4
+    },
+    {
+      "sku": "bg-background-06",
+      "name": "Background 06",
+      "assetKey": "backgrounds/background-06.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 5
+    },
+    {
+      "sku": "bg-background-07",
+      "name": "Background 07",
+      "assetKey": "backgrounds/background-07.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 6
+    },
+    {
+      "sku": "bg-background-08",
+      "name": "Background 08",
+      "assetKey": "backgrounds/background-08.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 7
+    },
+    {
+      "sku": "bg-background-09",
+      "name": "Background 09",
+      "assetKey": "backgrounds/background-09.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 8
+    },
+    {
+      "sku": "bg-background-10",
+      "name": "Background 10",
+      "assetKey": "backgrounds/background-10.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 9
+    },
+    {
+      "sku": "bg-background-11",
+      "name": "Background 11",
+      "assetKey": "backgrounds/background-11.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 10
+    },
+    {
+      "sku": "bg-background-12",
+      "name": "Background 12",
+      "assetKey": "backgrounds/background-12.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 11
+    },
+    {
+      "sku": "bg-background-13",
+      "name": "Background 13",
+      "assetKey": "backgrounds/background-13.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 12
+    },
+    {
+      "sku": "bg-background-14",
+      "name": "Background 14",
+      "assetKey": "backgrounds/background-14.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 13
+    },
+    {
+      "sku": "bg-background-15",
+      "name": "Background 15",
+      "assetKey": "backgrounds/background-15.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 14
+    },
+    {
+      "sku": "bg-background-16",
+      "name": "Background 16",
+      "assetKey": "backgrounds/background-16.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 15
+    },
+    {
+      "sku": "bg-background-17",
+      "name": "Background 17",
+      "assetKey": "backgrounds/background-17.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 16
+    },
+    {
+      "sku": "bg-background-18",
+      "name": "Background 18",
+      "assetKey": "backgrounds/background-18.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 17
+    },
+    {
+      "sku": "bg-background-19",
+      "name": "Background 19",
+      "assetKey": "backgrounds/background-19.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 18
+    },
+    {
+      "sku": "bg-background-20",
+      "name": "Background 20",
+      "assetKey": "backgrounds/background-20.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 19
+    },
+    {
+      "sku": "bg-background-21",
+      "name": "Background 21",
+      "assetKey": "backgrounds/background-21.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 20
+    },
+    {
+      "sku": "bg-background-22",
+      "name": "Background 22",
+      "assetKey": "backgrounds/background-22.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 21
+    },
+    {
+      "sku": "bg-background-23",
+      "name": "Background 23",
+      "assetKey": "backgrounds/background-23.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 22
+    },
+    {
+      "sku": "bg-background-24",
+      "name": "Background 24",
+      "assetKey": "backgrounds/background-24.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 23
+    },
+    {
+      "sku": "bg-background-25",
+      "name": "Background 25",
+      "assetKey": "backgrounds/background-25.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 24
+    },
+    {
+      "sku": "bg-background-26",
+      "name": "Background 26",
+      "assetKey": "backgrounds/background-26.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 25
+    },
+    {
+      "sku": "bg-background-27",
+      "name": "Background 27",
+      "assetKey": "backgrounds/background-27.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 26
+    },
+    {
+      "sku": "bg-background-28",
+      "name": "Background 28",
+      "assetKey": "backgrounds/background-28.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 27
+    },
+    {
+      "sku": "bg-background-29",
+      "name": "Background 29",
+      "assetKey": "backgrounds/background-29.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 28
+    },
+    {
+      "sku": "bg-background-30",
+      "name": "Background 30",
+      "assetKey": "backgrounds/background-30.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 29
+    },
+    {
+      "sku": "bg-background-31",
+      "name": "Background 31",
+      "assetKey": "backgrounds/background-31.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 30
+    },
+    {
+      "sku": "bg-background-32",
+      "name": "Background 32",
+      "assetKey": "backgrounds/background-32.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 31
+    },
+    {
+      "sku": "bg-background-33",
+      "name": "Background 33",
+      "assetKey": "backgrounds/background-33.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 32
+    },
+    {
+      "sku": "bg-background-34",
+      "name": "Background 34",
+      "assetKey": "backgrounds/background-34.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 33
+    },
+    {
+      "sku": "bg-background-35",
+      "name": "Background 35",
+      "assetKey": "backgrounds/background-35.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 34
+    },
+    {
+      "sku": "bg-background-36",
+      "name": "Background 36",
+      "assetKey": "backgrounds/background-36.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 35
+    },
+    {
+      "sku": "bg-background-37",
+      "name": "Background 37",
+      "assetKey": "backgrounds/background-37.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 36
+    },
+    {
+      "sku": "bg-background-38",
+      "name": "Background 38",
+      "assetKey": "backgrounds/background-38.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 37
+    },
+    {
+      "sku": "bg-background-39",
+      "name": "Background 39",
+      "assetKey": "backgrounds/background-39.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 38
+    },
+    {
+      "sku": "bg-background-40",
+      "name": "Background 40",
+      "assetKey": "backgrounds/background-40.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 39
+    },
+    {
+      "sku": "bg-background-41",
+      "name": "Background 41",
+      "assetKey": "backgrounds/background-41.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 40
+    },
+    {
+      "sku": "bg-background-42",
+      "name": "Background 42",
+      "assetKey": "backgrounds/background-42.png",
+      "type": "image",
+      "price": 500,
+      "premiumOnly": true,
+      "displayOrder": 41
+    },
+    {
+      "sku": "bg-background-43",
+      "name": "Background 43",
+      "assetKey": "backgrounds/background-43.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 42
+    },
+    {
+      "sku": "bg-background-44",
+      "name": "Background 44",
+      "assetKey": "backgrounds/background-44.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 43
+    },
+    {
+      "sku": "bg-background-45",
+      "name": "Background 45",
+      "assetKey": "backgrounds/background-45.mp4",
+      "type": "video",
+      "price": 1000,
+      "premiumOnly": true,
+      "displayOrder": 44
+    },
+    {
+      "sku": "bg-background-46",
+      "name": "Background 46",
+      "assetKey": "backgrounds/background-46.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 45
+    },
+    {
+      "sku": "bg-background-47",
+      "name": "Background 47",
+      "assetKey": "backgrounds/background-47.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 46
+    },
+    {
+      "sku": "bg-background-48",
+      "name": "Background 48",
+      "assetKey": "backgrounds/background-48.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 47
+    },
+    {
+      "sku": "bg-background-49",
+      "name": "Background 49",
+      "assetKey": "backgrounds/background-49.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 48
+    },
+    {
+      "sku": "bg-background-50",
+      "name": "Background 50",
+      "assetKey": "backgrounds/background-50.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 49
+    },
+    {
+      "sku": "bg-background-51",
+      "name": "Background 51",
+      "assetKey": "backgrounds/background-51.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 50
+    },
+    {
+      "sku": "bg-background-52",
+      "name": "Background 52",
+      "assetKey": "backgrounds/background-52.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 51
+    },
+    {
+      "sku": "bg-background-53",
+      "name": "Background 53",
+      "assetKey": "backgrounds/background-53.gif",
+      "type": "gif",
+      "price": 700,
+      "premiumOnly": true,
+      "displayOrder": 52
+    }
+  ]
+}
