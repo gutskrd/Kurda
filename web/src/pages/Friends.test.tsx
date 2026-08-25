@@ -34,6 +34,21 @@ describe('Friends', () => {
     expect(screen.queryByText('Requests')).not.toBeInTheDocument();
   });
 
+  it('renders a friend’s resolved avatar image when present', async () => {
+    vi.stubGlobal(
+      'fetch',
+      routedFetch({
+        '/friends/requests': { requests: [] },
+        '/friends': { friends: [{ userId: 'u2', username: 'zana', avatarUrl: 'https://cdn.test/a.png' }] },
+      }),
+    );
+    renderApp(<Friends />);
+
+    await screen.findByText('zana');
+    const img = document.querySelector('.friend-avatar img') as HTMLImageElement | null;
+    expect(img?.src).toBe('https://cdn.test/a.png');
+  });
+
   it('shows incoming requests with accept/decline', async () => {
     vi.stubGlobal(
       'fetch',
