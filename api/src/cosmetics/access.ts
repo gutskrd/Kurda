@@ -61,6 +61,24 @@ export interface LevelInfo {
 /** Web-static base for avatars/icons (served by the web app at its own origin). */
 const STATIC_BASE = '/cosmetics';
 
+/**
+ * Resolve a cosmetic catalog item's asset key to a public URL for *browsing*
+ * (shop + inventory), using the same hybrid delivery as the profile resolver:
+ * backgrounds live in R2 (publicUrl), icons are web-static. Returns null for
+ * non-cosmetic categories or when there is no key. This is presentation only —
+ * ownership/premium access is still enforced server-side at equip time.
+ */
+export function cosmeticAssetUrl(
+  category: string,
+  assetKey: string | null,
+  publicUrl: (key: string) => string | null,
+): string | null {
+  if (!assetKey) return null;
+  if (category === 'background') return publicUrl(assetKey);
+  if (category === 'icon') return `${STATIC_BASE}/${assetKey}`;
+  return null;
+}
+
 export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date()): boolean {
   return premiumUntil != null && premiumUntil.getTime() > now.getTime();
 }

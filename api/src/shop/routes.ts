@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { cosmeticAssetUrl } from '../cosmetics/access.js';
 import type { ShopService } from './service.js';
 
 const itemBody = z.object({
@@ -52,8 +53,17 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
     },
   );
 
-  /** Live catalog, filtered to what this user can currently see/buy. */
-  app.get('/shop', { preHandler: requireAuth }, async (req) => ({ items: await shop.catalog(req.user!.id) }));
+  /** Public URL for a stored asset key (null when storage is unconfigured). */
+  const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
+
+  /** Live catalog, filtered to what this user can currently see/buy. Cosmetic
+   *  items carry a resolved `assetUrl` so the client can render thumbnails. */
+  app.get('/shop', { preHandler: requireAuth }, async (req) => ({
+    items: (await shop.catalog(req.user!.id)).map((i) => ({
+      ...i,
+      assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+    })),
+  }));
 
   /** Buy an item. Atomic validate → debit → grant; idempotency key required. */
   app.post(
@@ -69,8 +79,11 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
     },
   );
 
-  /** The caller's owned items. */
+  /** The caller's owned items, incl. a resolved cosmetic `assetUrl`. */
   app.get('/me/inventory', { preHandler: requireAuth }, async (req) => ({
-    items: await shop.inventory(req.user!.id),
+    items: (await shop.inventory(req.user!.id)).map((i) => ({
+      ...i,
+      assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+    })),
   }));
 }

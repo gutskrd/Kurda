@@ -15,6 +15,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
   let cosmetics: CosmeticsService;
   const s = Date.now().toString(36).slice(-6);
   let userA = '';
+  let tokenA = '';
   let tokenB = '';
   const sku = { owned: `bg-owned-${s}`, prem: `bg-prem-${s}`, inactive: `bg-off-${s}`, icon: `icon-${s}` };
   let poemId = '';
@@ -37,7 +38,9 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     cosmetics = new CosmeticsService(pool);
 
-    userA = (await register('a', '10.9.0.1')).id;
+    const a = await register('a', '10.9.0.1');
+    userA = a.id;
+    tokenA = a.token;
     tokenB = (await register('b', '10.9.0.2')).token;
 
     await pool.query(
@@ -48,7 +51,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
               ($4,'Icon','icon','zer',800,true,true,true,'icons/i.png',true)`,
       [sku.owned, sku.prem, sku.inactive, sku.icon],
     );
-    await pool.query(`INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1,$2,'purchase')`, [userA, sku.owned]);
+    await pool.query(`INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1,$2,'purchase'), ($1,$3,'purchase')`, [userA, sku.owned, sku.icon]);
 
     const poem = await pool.query<{ id: string }>(
       `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, published_at)
@@ -113,5 +116,16 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     }
     expect(body.level).toHaveProperty('level');
     expect(body.favoritePoem).toEqual({ id: poemId, title: 'My Poem' });
+  });
+
+  it('inventory carries a resolved cosmetic assetUrl (icons are web-static)', async () => {
+    const res = await app.inject({ method: 'GET', url: '/me/inventory', headers: { authorization: `Bearer ${tokenA}` } });
+    expect(res.statusCode).toBe(200);
+    const items = res.json().items as Array<{ sku: string; category: string; assetKey: string | null; assetUrl: string | null; premiumOnly: boolean }>;
+    const iconItem = items.find((i) => i.sku === sku.icon);
+    expect(iconItem).toMatchObject({ category: 'icon', assetKey: 'icons/i.png', assetUrl: '/cosmetics/icons/i.png', premiumOnly: true });
+    // backgrounds resolve via R2 → null here (no storage configured in the test)
+    const bgItem = items.find((i) => i.sku === sku.owned);
+    expect(bgItem).toMatchObject({ category: 'background', assetUrl: null });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCosmetics, levelInfo, isPremiumActive, hasAccess, type EquippedItem } from './access.js';
+import { resolveCosmetics, levelInfo, isPremiumActive, hasAccess, cosmeticAssetUrl, type EquippedItem } from './access.js';
 
 const url = (key: string): string => `https://cdn.test/${key}`;
 const NOW = new Date('2026-08-25T12:00:00Z');
@@ -119,6 +119,19 @@ describe('resolveCosmetics — icon', () => {
       NOW,
     );
     expect(r.icon).toBeNull();
+  });
+});
+
+describe('cosmeticAssetUrl (shop/inventory browsing)', () => {
+  const pub = (key: string): string => `https://cdn.test/${key}`;
+  it('resolves backgrounds via R2 publicUrl and icons via the web-static base', () => {
+    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4', pub)).toBe('https://cdn.test/backgrounds/a.mp4');
+    expect(cosmeticAssetUrl('icon', 'icons/i.png', pub)).toBe('/cosmetics/icons/i.png');
+  });
+  it('is null for non-cosmetic categories, missing keys, or no storage', () => {
+    expect(cosmeticAssetUrl('powerup', 'x', pub)).toBeNull();
+    expect(cosmeticAssetUrl('background', null, pub)).toBeNull();
+    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4', () => null)).toBeNull();
   });
 });
 
