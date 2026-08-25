@@ -879,6 +879,102 @@ button.feature {
   color: var(--ink-2);
 }
 
+/* ---- cosmetic shop (background + icon) --------------------------------- */
+.cosmetic-section {
+  margin-top: 18px;
+}
+.cosmetic-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.cosmetic-section-title {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0;
+}
+.cosmetic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+.cosmetic-tile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md, 12px);
+  background: var(--surface-2);
+}
+.cosmetic-tile.is-equipped {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold-soft);
+}
+.cosmetic-thumb {
+  position: relative;
+  width: 100%;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+.cosmetic-thumb-background {
+  aspect-ratio: 16 / 9;
+}
+.cosmetic-thumb-icon {
+  aspect-ratio: 1;
+}
+.cosmetic-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cosmetic-thumb-icon img {
+  object-fit: contain;
+}
+.cosmetic-thumb-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cosmetic-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.cosmetic-name {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cosmetic-equipped,
+.cosmetic-locked {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 0;
+}
+.cosmetic-equipped {
+  color: var(--gold-ink);
+}
+.cosmetic-locked {
+  color: var(--ink-3);
+}
+
 @media (max-width: 560px) {
   .profile-hero {
     flex-direction: column;

@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
+import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
@@ -68,6 +69,11 @@ export function Profile(): React.JSX.Element {
       />
 
       <Customize
+        me={me}
+        onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
+      />
+
+      <CosmeticCustomizer
         me={me}
         onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
       />

@@ -18,7 +18,7 @@ import { createTokenStorage, persistTokens, type TokenStorage } from './tokenSto
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const TIMEOUT_MS = 30_000; // Render free tier can cold-start ~20-40s
 
-function requestId(): string {
+export function requestId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
