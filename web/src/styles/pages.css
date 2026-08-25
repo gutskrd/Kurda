@@ -548,6 +548,95 @@
   overflow-wrap: anywhere;
 }
 
+/* ---- equipped cosmetics (profile popup) -------------------------------- */
+/* equipped background: sits behind the card content, dimmed for legibility */
+.pcard-bg-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--r-lg);
+  opacity: 0.5;
+  z-index: 0;
+  pointer-events: none;
+}
+/* keep the photo + plate above the background layer */
+.pcard-has-bg .pcard-photo,
+.pcard-has-bg .pcard-plate,
+.pcard-has-bg .pcard-foot,
+.pcard-has-bg .profile-actions {
+  position: relative;
+  z-index: 1;
+}
+.pcard-has-bg .pcard-photo {
+  background: rgba(10, 12, 16, 0.35);
+}
+
+/* name + equipped icon + premium badge on one line */
+.pcard-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pcard-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+.pcard-premium {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* level badge + progress bar */
+.pcard-level {
+  margin-top: 14px;
+}
+.pcard-level-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.pcard-level-badge {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--gold-ink);
+}
+.pcard-level-xp {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.pcard-level-track {
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.pcard-level-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 70%, transparent), var(--gold));
+  transition: width 0.4s ease;
+}
+
+.pcard-favorites {
+  margin-top: 10px;
+}
+
 /* ---- friends ----------------------------------------------------------- */
 .friend-search {
   display: flex;

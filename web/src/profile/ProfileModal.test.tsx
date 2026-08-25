@@ -17,6 +17,11 @@ function Opener(): React.JSX.Element {
   );
 }
 
+function OpenUser(): React.JSX.Element {
+  const { openProfile } = useProfileModal();
+  return <button onClick={() => openProfile({ kind: 'user', userId: 'u2' })}>open-user</button>;
+}
+
 describe('ProfileModal', () => {
   it('opens as a dialog and shows the signed-in user from /me', async () => {
     vi.stubGlobal(
@@ -52,6 +57,45 @@ describe('ProfileModal', () => {
     // renders streak.current (not the object) — no crash, no error state
     expect(screen.getByText('7 days')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('renders equipped cosmetics, level and favorites for another user', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        jsonResponse(200, {
+          userId: 'u2',
+          username: 'zana',
+          displayName: 'Zana K',
+          friendStatus: 'friends',
+          private: false,
+          bio: 'poet',
+          avatarUrl: 'https://cdn.test/profile-photo/z.webp',
+          background: { sku: 'bg-1', assetKey: 'backgrounds/a.mp4', type: 'video', url: 'https://cdn.test/backgrounds/a.mp4' },
+          icon: { sku: 'ic-1', assetKey: 'icons/i.png', url: '/cosmetics/icons/i.png' },
+          level: { xp: 250, level: 2, currentLevelXp: 100, nextLevelXp: 400, progress: 0.5 },
+          premium: true,
+          favoritePoem: { id: 'p1', title: 'The River' },
+          favoriteStory: null,
+        }),
+      ),
+    );
+    renderApp(<OpenUser />);
+    await userEvent.click(screen.getByText('open-user'));
+
+    // name appears in both the plate and the footer label — assert the plate one
+    expect((await screen.findByText('@zana')).previousSibling).toHaveTextContent('Zana K');
+    expect(screen.getByText('Level 2')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
+    expect(screen.getByText('Premium')).toBeInTheDocument();
+    expect(screen.getByText('The River')).toBeInTheDocument();
+    // the avatar uses the resolved avatarUrl (photo → default avatar server-side)
+    const avatar = document.querySelector('.pcard-photo-img') as HTMLImageElement | null;
+    expect(avatar?.src).toBe('https://cdn.test/profile-photo/z.webp');
+    // a video background renders as a muted, looping <video>
+    const bg = document.querySelector('video.pcard-bg-media') as HTMLVideoElement | null;
+    expect(bg).not.toBeNull();
+    expect(bg?.getAttribute('src')).toBe('https://cdn.test/backgrounds/a.mp4');
   });
 
   it('shows the loading state while /me is in flight', async () => {
