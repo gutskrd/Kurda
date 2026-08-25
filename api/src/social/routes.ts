@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import type { SocialService } from './service.js';
+import { toPublicProfileDto } from './profile-dto.js';
 
 /** User search + public profiles + privacy (KUR-082). */
 export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
@@ -36,13 +37,10 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
     async (req) => {
       const profile = await social.profile(req.user!.id, (req.params as { id: string }).id);
-      // Resolve the stored object key to a public CDN URL via the same storage
-      // abstraction /me uses, and never expose the raw key to the client.
-      const { profilePhotoKey, ...rest } = profile;
-      return {
-        ...rest,
-        profilePhotoUrl: profilePhotoKey && app.storage ? app.storage.publicUrl(profilePhotoKey) : null,
-      };
+      // Resolve cosmetics → URLs, derive level, expose only safe favorites, and
+      // strip every raw key/entitlement/premium field. The browser loads media
+      // directly from R2/static — the API never proxies images.
+      return toPublicProfileDto(profile, app.storage);
     },
   );
 }

@@ -37,6 +37,8 @@ import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { CosmeticsService } from './cosmetics/service.js';
+import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
 import { registerIapRoutes } from './iap/routes.js';
 import { createReceiptVerifier } from './iap/verifier.js';
@@ -331,6 +333,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(requestExpiry));
     registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache));
+    // Profile cosmetics: equip (server-verified access) + favorites (KUR profile)
+    registerCosmeticsRoutes(app, new CosmeticsService(app.db));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
     const fraudService = new FraudService(app.db, new WalletService(app.db));
     registerFraudRoutes(app, fraudService);
