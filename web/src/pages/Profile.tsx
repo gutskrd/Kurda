@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
+import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
@@ -74,6 +75,11 @@ export function Profile(): React.JSX.Element {
       />
 
       <CosmeticCustomizer
+        me={me}
+        onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
+      />
+
+      <FavoritesPicker
         me={me}
         onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
       />
