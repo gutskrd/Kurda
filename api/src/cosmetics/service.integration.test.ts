@@ -73,7 +73,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
   it('equips an owned background; rejects premium/wrong-category/inactive/missing', async () => {
     await expect(cosmetics.equipBackground(userA, sku.owned)).resolves.toBeUndefined();
     await expect(cosmetics.equipBackground(userA, sku.prem)).rejects.toThrow(/access/i); // not owned, no premium
-    await expect(cosmetics.equipBackground(userA, sku.icon)).rejects.toThrow(/category/i);
+    await expect(cosmetics.equipBackground(userA, sku.icon)).rejects.toThrow(/not a background/i);
     await expect(cosmetics.equipBackground(userA, sku.inactive)).rejects.toThrow(/available/i);
     await expect(cosmetics.equipBackground(userA, `nope-${s}`)).rejects.toThrow(/no such item/i);
   });
