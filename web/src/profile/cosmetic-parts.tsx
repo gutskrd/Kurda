@@ -53,7 +53,21 @@ export function PremiumPill(): React.JSX.Element {
   );
 }
 
-/** The equipped profile icon, as a small image badge. */
-export function EquippedIcon({ icon }: { icon: ProfileIcon }): React.JSX.Element {
-  return <img className="pcard-icon" src={icon.url} alt="" title="Equipped icon" />;
+/**
+ * The equipped premium icon, rendered as a decorative overlay that straddles the
+ * avatar boundary (partly inside, partly outside). Place it inside a
+ * position:relative avatar container; sizing/offset come from that container's
+ * CSS so the icon scales with the avatar. It is a separate layer over the
+ * avatar — never baked into the avatar image.
+ */
+export function IconOverlay({ icon }: { icon: ProfileIcon }): React.JSX.Element {
+  return (
+    <img
+      className="cosmetic-icon-overlay"
+      src={icon.url}
+      alt=""
+      role="img"
+      aria-label="Premium profile icon"
+    />
+  );
 }

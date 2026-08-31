@@ -599,11 +599,39 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-.pcard-icon {
-  width: 26px;
-  height: 26px;
+/* premium icon overlay — straddles the avatar boundary (partly inside/outside).
+   The wrapper is position:relative and NOT clipped; the photo itself keeps its
+   rounded overflow. Sizing/offset are per-surface so the icon scales with the
+   avatar. Decorative layer over the avatar — never baked into the image. */
+.pcard-photo-wrap {
+  position: relative;
+  width: 100%;
+}
+.cosmetic-icon-overlay {
+  position: absolute;
   object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+/* profile popup: large photo → larger badge at the top-right corner */
+.pcard-photo-wrap .cosmetic-icon-overlay {
+  width: clamp(38px, 12vw, 52px);
+  height: clamp(38px, 12vw, 52px);
+  top: -12px;
+  right: -6px;
+}
+/* full-profile hero: 96px avatar → medium badge */
+.hero-avatar-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+.hero-avatar-wrap .cosmetic-icon-overlay {
+  width: 38px;
+  height: 38px;
+  top: -10px;
+  right: -10px;
 }
 .pcard-premium {
   margin-left: auto;
@@ -1094,6 +1122,21 @@ button.feature {
 }
 .cosmetic-locked {
   color: var(--ink-3);
+}
+.icon-visibility {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.icon-visibility input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+  cursor: pointer;
 }
 
 /* ---- favorites picker -------------------------------------------------- */

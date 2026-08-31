@@ -7,7 +7,7 @@ import type { AvatarOption, MeProfile, UserSummary, WalletBalances } from '../li
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
-import { CosmeticBackground, LevelBar, PremiumPill, EquippedIcon } from '../profile/cosmetic-parts';
+import { CosmeticBackground, LevelBar, PremiumPill, IconOverlay } from '../profile/cosmetic-parts';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
@@ -125,21 +125,23 @@ function ProfileHeader({ me, onAvatarChanged }: { me: MeProfile; onAvatarChanged
       {me.background && <CosmeticBackground background={me.background} className="profile-hero-media" />}
       <div className="profile-hero-inner">
         <div className="profile-hero-avatar">
-          {avatar ? (
-            <img src={avatar} alt="" className="pcard-avatar" />
-          ) : (
-            <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={64} /></span>
-          )}
+          <span className="hero-avatar-wrap">
+            {avatar ? (
+              <img src={avatar} alt="" className="pcard-avatar" />
+            ) : (
+              <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={64} /></span>
+            )}
+            {me.icon && <IconOverlay icon={me.icon} />}
+          </span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={busy}>
             {busy ? 'Uploading…' : 'Change photo'}
           </button>
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} aria-label="Upload profile photo" />
         </div>
         <div className="profile-hero-body">
-          {(me.icon || me.premium) && (
+          {me.premium && (
             <div className="profile-hero-badges">
-              {me.icon && <EquippedIcon icon={me.icon} />}
-              {me.premium && <PremiumPill />}
+              <PremiumPill />
             </div>
           )}
           {me.level && <LevelBar level={me.level} />}
