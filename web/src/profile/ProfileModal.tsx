@@ -16,7 +16,7 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
-import { CosmeticBackground, LevelBar, PremiumPill, EquippedIcon } from './cosmetic-parts';
+import { CosmeticBackground, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -174,19 +174,23 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
       {/* equipped background sits behind everything (owned/premium-gated server-side) */}
       {background && <CosmeticBackground background={background} />}
 
-      {/* full photo (or silhouette), like the reference — not a small circle */}
-      <div className="pcard-photo">
-        {photo ? (
-          <img className="pcard-photo-img" src={photo} alt="" />
-        ) : (
-          <PersonGlyph className="pcard-photo-glyph" size={92} />
-        )}
+      {/* full photo (or silhouette), like the reference — not a small circle.
+          The premium icon overlays the avatar boundary (never baked in); the
+          wrapper is not clipped so the icon can straddle the edge. */}
+      <div className="pcard-photo-wrap">
+        <div className="pcard-photo">
+          {photo ? (
+            <img className="pcard-photo-img" src={photo} alt="" />
+          ) : (
+            <PersonGlyph className="pcard-photo-glyph" size={92} />
+          )}
+        </div>
+        {icon && <IconOverlay icon={icon} />}
       </div>
 
       <div className="pcard-plate">
         <div className="pcard-name-row">
           <div className="pcard-name">{name}</div>
-          {icon && <EquippedIcon icon={icon} />}
           {premium && <PremiumPill />}
         </div>
         <div className="pcard-handle">@{username}</div>

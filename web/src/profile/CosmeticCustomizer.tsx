@@ -45,6 +45,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     background: me.equippedBackgroundSku ?? null,
     icon: me.equippedIconSku ?? null,
   });
+  const [iconEnabled, setIconEnabled] = useState<boolean>(me.premiumIconEnabled ?? true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -146,8 +147,33 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
         onEquip={(sku) => void equip('icon', sku)}
         onBuy={(t) => void buy(t)}
       />
+
+      {equipped.icon && (
+        <label className="icon-visibility">
+          <input
+            type="checkbox"
+            checked={iconEnabled}
+            disabled={busy !== null}
+            onChange={(e) => void toggleIconVisibility(e.target.checked)}
+          />
+          <span>Show premium icon on my profile</span>
+        </label>
+      )}
     </section>
   );
+
+  async function toggleIconVisibility(enabled: boolean): Promise<void> {
+    const prev = iconEnabled;
+    setIconEnabled(enabled); // optimistic
+    setMsg(null);
+    const res = await client.put('/me/cosmetics/icon/visibility', { enabled });
+    if (res.ok) {
+      onChanged();
+    } else {
+      setIconEnabled(prev);
+      setMsg({ kind: 'err', text: describeError(res.error) });
+    }
+  }
 }
 
 function CosmeticSection({

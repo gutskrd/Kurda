@@ -36,6 +36,10 @@ function makeFetch(calls: Array<{ url: string; body: unknown }>) {
       calls.push({ url, body });
       return jsonResponse(200, { backgroundSku: body?.sku ?? null });
     }
+    if (url.includes('/me/cosmetics/icon/visibility')) {
+      calls.push({ url, body });
+      return jsonResponse(200, { premiumIconEnabled: body?.enabled });
+    }
     if (url.includes('/shop/purchase')) {
       calls.push({ url, body });
       return jsonResponse(200, { purchased: true, duplicate: false, sku: 'ic-buy', balance: 200 });
@@ -85,5 +89,27 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
     expect(await screen.findByText('No backgrounds available yet.')).toBeInTheDocument();
     expect(screen.getByText('No icons available yet.')).toBeInTheDocument();
+  });
+
+  it('toggles premium-icon visibility when an icon is equipped', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', vi.fn(makeFetch(calls)));
+    const withIcon: MeProfile = { ...me, premium: true, equippedIconSku: 'ic-buy', premiumIconEnabled: true };
+    renderApp(<CosmeticCustomizer me={withIcon} onChanged={() => {}} />, ['/app/profile']);
+
+    const toggle = await screen.findByRole('checkbox', { name: /show premium icon/i });
+    expect(toggle).toBeChecked();
+    await userEvent.click(toggle);
+
+    const call = calls.find((c) => c.url.includes('/me/cosmetics/icon/visibility'));
+    expect(call?.body).toEqual({ enabled: false });
+    expect(toggle).not.toBeChecked();
+  });
+
+  it('hides the visibility toggle when no icon is equipped', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
+    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
+    await screen.findByText('No icons available yet.');
+    expect(screen.queryByRole('checkbox', { name: /show premium icon/i })).not.toBeInTheDocument();
   });
 });

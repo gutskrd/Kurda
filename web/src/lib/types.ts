@@ -117,6 +117,7 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
   selectedAvatarKey?: string | null;
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
+  premiumIconEnabled?: boolean;
   premiumUntil?: string | null;
 }
 
