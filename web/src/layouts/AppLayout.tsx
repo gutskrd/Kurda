@@ -9,6 +9,7 @@ const LINKS: NavItem[] = [
   { label: 'Rankings', to: '/app/rankings' },
   { label: 'Friends', to: '/app/friends' },
   { label: 'Messages', to: '/app/messages' },
+  { label: 'Shop', to: '/app/shop' },
 ];
 
 /** Signed-in app shell. Content pages set their own container + header. */
