@@ -67,9 +67,6 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
 
   return (
     <div className="login">
-      <img className="login-bg" src="/background.jpg" alt="" aria-hidden="true" />
-      <div className="login-scrim" />
-
       <form className="login-card" onSubmit={submit}>
         <div className="login-top">
           <span>MyKurda</span>

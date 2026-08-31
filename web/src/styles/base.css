@@ -1,4 +1,5 @@
-/* Reset + base typography + the fixed photo backdrop the whole app sits on. */
+/* Reset + base typography. The app sits on one consistent base color; the only
+   user-specific background is the profile background, rendered inside profiles. */
 
 *,
 *::before,
@@ -17,27 +18,9 @@ body {
   font-size: 16px;
   line-height: 1.6;
   color: var(--ink);
-  background: #0b0d10; /* fallback behind the photo */
+  background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-/* Fixed photo backdrop + a scrim so white text stays readable everywhere. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background: url(/background.jpg) center center / cover no-repeat fixed;
-}
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(1200px 900px at 50% 12%, rgba(8, 10, 14, 0.35), rgba(6, 8, 12, 0.66)),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.62));
 }
 
 @media (prefers-reduced-motion: reduce) {
