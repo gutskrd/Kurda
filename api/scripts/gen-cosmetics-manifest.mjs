@@ -28,9 +28,13 @@ const title = (base) => base.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toU
 const bgType = (ext) => (ext === '.mp4' || ext === '.webm' ? 'video' : ext === '.gif' ? 'gif' : 'image');
 const bgPrice = (type) => (type === 'video' ? 1000 : type === 'gif' ? 700 : 500);
 
+// default-01 is the universal free fallback; every other default avatar is premium-gated.
 const avatars = list('default-avatars')
   .filter((f) => /\.(png|webp|jpg|jpeg|avif)$/i.test(f))
-  .map((f) => ({ key: f.replace(extname(f), '') }));
+  .map((f) => {
+    const key = f.replace(extname(f), '');
+    return { key, requiresPremium: key !== 'default-01' };
+  });
 
 const icons = list('premium-icons')
   .filter((f) => /\.(png|webp|avif)$/i.test(f))

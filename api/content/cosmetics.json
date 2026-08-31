@@ -1,124 +1,164 @@
 {
   "avatars": [
     {
-      "key": "default-01"
+      "key": "default-01",
+      "requiresPremium": false
     },
     {
-      "key": "default-02"
+      "key": "default-02",
+      "requiresPremium": true
     },
     {
-      "key": "default-03"
+      "key": "default-03",
+      "requiresPremium": true
     },
     {
-      "key": "default-04"
+      "key": "default-04",
+      "requiresPremium": true
     },
     {
-      "key": "default-05"
+      "key": "default-05",
+      "requiresPremium": true
     },
     {
-      "key": "default-06"
+      "key": "default-06",
+      "requiresPremium": true
     },
     {
-      "key": "default-07"
+      "key": "default-07",
+      "requiresPremium": true
     },
     {
-      "key": "default-08"
+      "key": "default-08",
+      "requiresPremium": true
     },
     {
-      "key": "default-09"
+      "key": "default-09",
+      "requiresPremium": true
     },
     {
-      "key": "default-10"
+      "key": "default-10",
+      "requiresPremium": true
     },
     {
-      "key": "default-11"
+      "key": "default-11",
+      "requiresPremium": true
     },
     {
-      "key": "default-12"
+      "key": "default-12",
+      "requiresPremium": true
     },
     {
-      "key": "default-13"
+      "key": "default-13",
+      "requiresPremium": true
     },
     {
-      "key": "default-14"
+      "key": "default-14",
+      "requiresPremium": true
     },
     {
-      "key": "default-15"
+      "key": "default-15",
+      "requiresPremium": true
     },
     {
-      "key": "default-16"
+      "key": "default-16",
+      "requiresPremium": true
     },
     {
-      "key": "default-17"
+      "key": "default-17",
+      "requiresPremium": true
     },
     {
-      "key": "default-18"
+      "key": "default-18",
+      "requiresPremium": true
     },
     {
-      "key": "default-19"
+      "key": "default-19",
+      "requiresPremium": true
     },
     {
-      "key": "default-20"
+      "key": "default-20",
+      "requiresPremium": true
     },
     {
-      "key": "default-21"
+      "key": "default-21",
+      "requiresPremium": true
     },
     {
-      "key": "default-22"
+      "key": "default-22",
+      "requiresPremium": true
     },
     {
-      "key": "default-23"
+      "key": "default-23",
+      "requiresPremium": true
     },
     {
-      "key": "default-24"
+      "key": "default-24",
+      "requiresPremium": true
     },
     {
-      "key": "default-25"
+      "key": "default-25",
+      "requiresPremium": true
     },
     {
-      "key": "default-26"
+      "key": "default-26",
+      "requiresPremium": true
     },
     {
-      "key": "default-27"
+      "key": "default-27",
+      "requiresPremium": true
     },
     {
-      "key": "default-29"
+      "key": "default-29",
+      "requiresPremium": true
     },
     {
-      "key": "default-30"
+      "key": "default-30",
+      "requiresPremium": true
     },
     {
-      "key": "default-31"
+      "key": "default-31",
+      "requiresPremium": true
     },
     {
-      "key": "default-32"
+      "key": "default-32",
+      "requiresPremium": true
     },
     {
-      "key": "default-33"
+      "key": "default-33",
+      "requiresPremium": true
     },
     {
-      "key": "default-34"
+      "key": "default-34",
+      "requiresPremium": true
     },
     {
-      "key": "default-35"
+      "key": "default-35",
+      "requiresPremium": true
     },
     {
-      "key": "default-36"
+      "key": "default-36",
+      "requiresPremium": true
     },
     {
-      "key": "default-37"
+      "key": "default-37",
+      "requiresPremium": true
     },
     {
-      "key": "default-38"
+      "key": "default-38",
+      "requiresPremium": true
     },
     {
-      "key": "default-39"
+      "key": "default-39",
+      "requiresPremium": true
     },
     {
-      "key": "default-40"
+      "key": "default-40",
+      "requiresPremium": true
     },
     {
-      "key": "default-41"
+      "key": "default-41",
+      "requiresPremium": true
     }
   ],
   "icons": [

@@ -1,20 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { isPremiumActive } from './access.js';
-
-/** Valid default-avatar keys, loaded once from the committed manifest. */
-function loadAvatarKeys(): Set<string> {
-  try {
-    const p = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json');
-    const manifest = JSON.parse(readFileSync(p, 'utf8')) as { avatars: Array<{ key: string }> };
-    return new Set(manifest.avatars.map((a) => a.key));
-  } catch {
-    return new Set();
-  }
-}
+import { avatarRequiresPremium, isValidAvatarKey } from './avatars.js';
 
 interface AccessRow {
   category: string;
@@ -33,19 +20,25 @@ interface AccessRow {
  * cosmetics store, no client-trusted ownership.
  */
 export class CosmeticsService {
-  private readonly avatarKeys = loadAvatarKeys();
-
   constructor(private readonly pool: pg.Pool) {}
 
-  isValidAvatarKey(key: string): boolean {
-    return this.avatarKeys.has(key);
-  }
-
-  /** Select a default avatar (or clear with null). Does NOT touch the uploaded
-   *  photo — switching avatars never deletes profile_photo_key. */
-  async equipAvatar(userId: string, key: string | null): Promise<void> {
-    if (key !== null && !this.isValidAvatarKey(key)) {
-      throw new AppError('BAD_AVATAR', 400, 'unknown avatar');
+  /** Select a default avatar (or clear with null → universal fallback). Does NOT
+   *  touch the uploaded photo. Premium-gated avatars require active premium;
+   *  default-01 is always allowed. Server-authoritative — never trusts the client. */
+  async equipAvatar(userId: string, key: string | null, now: Date = new Date()): Promise<void> {
+    if (key !== null) {
+      if (!isValidAvatarKey(key)) {
+        throw new AppError('BAD_AVATAR', 400, 'unknown avatar');
+      }
+      if (avatarRequiresPremium(key)) {
+        const res = await this.pool.query<{ premium_until: Date | null }>(
+          `SELECT premium_until FROM users WHERE id = $1`,
+          [userId],
+        );
+        if (!isPremiumActive(res.rows[0]?.premium_until ?? null, now)) {
+          throw new AppError('NO_ACCESS', 403, 'this avatar requires premium');
+        }
+      }
     }
     await this.pool.query(`UPDATE users SET selected_avatar_key = $2 WHERE id = $1`, [userId, key]);
   }
