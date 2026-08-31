@@ -17,6 +17,7 @@ import { Friends } from './pages/Friends';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import { Messages } from './pages/Messages';
+import { Shop } from './pages/Shop';
 import { NotFound } from './pages/NotFound';
 import { ProfileModalProvider } from './profile/ProfileModal';
 
@@ -77,6 +78,7 @@ export function App(): React.JSX.Element {
             <Route path="rankings" element={<Rankings />} />
             <Route path="friends" element={<Friends />} />
             <Route path="messages" element={<Messages />} />
+            <Route path="shop" element={<Shop />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
           </Route>
