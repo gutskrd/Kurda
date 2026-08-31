@@ -95,6 +95,19 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     expect(r.rows[0]!.selected_avatar_key).toBe('default-01');
   });
 
+  it('gates premium default avatars by active premium (default-01 always free)', async () => {
+    await pool.query(`UPDATE users SET premium_until = NULL WHERE id = $1`, [userA]);
+    // no premium: a premium avatar is rejected, the free fallback is allowed
+    await expect(cosmetics.equipAvatar(userA, 'default-02')).rejects.toThrow(/premium/i);
+    await expect(cosmetics.equipAvatar(userA, 'default-01')).resolves.toBeUndefined();
+    // with premium: the premium avatar is allowed
+    await pool.query(`UPDATE users SET premium_until = now() + interval '1 day' WHERE id = $1`, [userA]);
+    await expect(cosmetics.equipAvatar(userA, 'default-02')).resolves.toBeUndefined();
+    // reset shared state for later tests
+    await cosmetics.equipAvatar(userA, 'default-01');
+    await pool.query(`UPDATE users SET premium_until = NULL WHERE id = $1`, [userA]);
+  });
+
   it('sets a published favorite poem; rejects draft and wrong type', async () => {
     await expect(cosmetics.setFavorite(userA, 'poem', poemId)).resolves.toBeUndefined();
     await expect(cosmetics.setFavorite(userA, 'poem', draftPoemId)).rejects.toThrow(/published/i);

@@ -49,21 +49,29 @@ describe('resolveCosmetics — avatar priority', () => {
     );
     expect(r.avatarUrl).toBe('https://cdn.test/profile-photo/abc.webp');
   });
-  it('falls back to the selected default avatar (web-static path)', () => {
+  it('resolves the selected premium default avatar while premium is active', () => {
     const r = resolveCosmetics(
-      { profilePhotoKey: null, selectedAvatarKey: 'default-05', premiumUntil: null, background: null, icon: null },
+      { profilePhotoKey: null, selectedAvatarKey: 'default-05', premiumUntil: FUTURE, background: null, icon: null },
       url,
       NOW,
     );
     expect(r.avatarUrl).toBe('/cosmetics/avatars/default-05.png');
   });
-  it('is null when neither is set (web shows silhouette)', () => {
+  it('falls back to default-01 when a selected premium avatar is no longer covered by premium', () => {
+    const r = resolveCosmetics(
+      { profilePhotoKey: null, selectedAvatarKey: 'default-05', premiumUntil: PAST, background: null, icon: null },
+      url,
+      NOW,
+    );
+    expect(r.avatarUrl).toBe('/cosmetics/avatars/default-01.png');
+  });
+  it('falls back to default-01 when nothing is set (never null/silhouette)', () => {
     const r = resolveCosmetics(
       { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: null, icon: null },
       url,
       NOW,
     );
-    expect(r.avatarUrl).toBeNull();
+    expect(r.avatarUrl).toBe('/cosmetics/avatars/default-01.png');
   });
 });
 
@@ -124,13 +132,18 @@ describe('resolveCosmetics — icon', () => {
 
 describe('resolveAvatarUrl (shared by profile + social/chat lists)', () => {
   const pub = (key: string): string => `https://cdn.test/${key}`;
-  it('prefers the uploaded photo, then the default avatar, then null', () => {
+  it('prefers the uploaded photo, then the default avatar, then the universal default-01', () => {
     expect(resolveAvatarUrl('profile-photo/a.webp', 'default-05', pub)).toBe('https://cdn.test/profile-photo/a.webp');
     expect(resolveAvatarUrl(null, 'default-05', pub)).toBe('/cosmetics/avatars/default-05.png');
-    expect(resolveAvatarUrl(null, null, pub)).toBeNull();
+    expect(resolveAvatarUrl(null, null, pub)).toBe('/cosmetics/avatars/default-01.png');
   });
-  it('is null for a photo when storage is unconfigured', () => {
-    expect(resolveAvatarUrl('profile-photo/a.webp', null, () => null)).toBeNull();
+  it('falls back to default-01 (never null) when storage is unconfigured for a photo', () => {
+    expect(resolveAvatarUrl('profile-photo/a.webp', null, () => null)).toBe('/cosmetics/avatars/default-01.png');
+  });
+  it('falls back to default-01 for a premium avatar when premium is inactive', () => {
+    expect(resolveAvatarUrl(null, 'default-05', pub, false)).toBe('/cosmetics/avatars/default-01.png');
+    // default-01 itself is always allowed
+    expect(resolveAvatarUrl(null, 'default-01', pub, false)).toBe('/cosmetics/avatars/default-01.png');
   });
 });
 

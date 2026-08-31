@@ -10,6 +10,7 @@
  * no revocation job and without deleting the user's equipped-SKU reference.
  */
 import { levelForXp, xpForLevel } from '../tags/level.js';
+import { avatarAssetUrl, effectiveAvatarKey } from './avatars.js';
 
 /** An equipped catalog item joined with the viewer's ownership of it. */
 export interface EquippedItem {
@@ -87,19 +88,24 @@ export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date(
 }
 
 /**
- * Resolve a user's display avatar URL from their stored keys, with the canonical
- * priority: uploaded photo → selected default avatar → null (client shows a
- * silhouette). Shared by the profile resolver and the social/chat list DTOs so
- * avatars look identical everywhere.
+ * Resolve a user's display avatar URL, with the canonical priority: uploaded
+ * photo → selected default avatar → universal fallback (default-01). It NEVER
+ * returns null — every user always has a valid avatar. A premium-gated avatar
+ * falls back to default-01 once premium lapses (`premiumActive` defaults to true
+ * for callers that don't track it, e.g. list DTOs). Shared by the profile
+ * resolver and the social/chat lists so avatars look identical everywhere.
  */
 export function resolveAvatarUrl(
   profilePhotoKey: string | null,
   selectedAvatarKey: string | null,
   publicUrl: (key: string) => string | null,
-): string | null {
-  if (profilePhotoKey) return publicUrl(profilePhotoKey);
-  if (selectedAvatarKey) return `${STATIC_BASE}/avatars/${selectedAvatarKey}.png`;
-  return null;
+  premiumActive = true,
+): string {
+  if (profilePhotoKey) {
+    const url = publicUrl(profilePhotoKey);
+    if (url) return url; // custom photo wins (independent of premium)
+  }
+  return avatarAssetUrl(effectiveAvatarKey(selectedAvatarKey, premiumActive));
 }
 
 /** Access = owned OR (premium_only AND premium active). Inactive items are never usable. */
@@ -127,8 +133,8 @@ export function resolveCosmetics(
 ): ResolvedCosmetics {
   const premium = isPremiumActive(raw.premiumUntil, now);
 
-  // avatar: uploaded photo → selected default avatar → null (web shows silhouette)
-  const avatarUrl = resolveAvatarUrl(raw.profilePhotoKey, raw.selectedAvatarKey, publicUrl);
+  // avatar: uploaded photo → selected default avatar (premium-gated) → default-01
+  const avatarUrl = resolveAvatarUrl(raw.profilePhotoKey, raw.selectedAvatarKey, publicUrl, premium);
 
   let background: ResolvedBackground | null = null;
   if (raw.background && raw.background.assetKey && hasAccess(raw.background, premium)) {
