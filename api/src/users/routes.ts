@@ -92,6 +92,7 @@ interface MeRow {
   selected_avatar_key: string | null;
   equipped_background_sku: string | null;
   equipped_icon_sku: string | null;
+  premium_icon_enabled: boolean;
   premium_until: Date | null;
   created_at: Date;
 }
@@ -165,6 +166,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         favoritePoem: publicDto.favoritePoem,
         favoriteStory: publicDto.favoriteStory,
         // self-only equip state, for the cosmetic pickers (not exposed publicly)
+        premiumIconEnabled: row.premium_icon_enabled,
         selectedAvatarKey: row.selected_avatar_key,
         equippedBackgroundSku: row.equipped_background_sku,
         equippedIconSku: row.equipped_icon_sku,

@@ -29,6 +29,8 @@ export interface CosmeticRaw {
   premiumUntil: Date | null;
   background: EquippedItem | null;
   icon: EquippedItem | null;
+  /** show/hide the equipped premium icon without losing the selection (default true) */
+  premiumIconEnabled?: boolean;
 }
 
 export interface ResolvedBackground {
@@ -143,7 +145,8 @@ export function resolveCosmetics(
   }
 
   let icon: ResolvedIcon | null = null;
-  if (raw.icon && raw.icon.assetKey && hasAccess(raw.icon, premium)) {
+  // visibility toggle (default on) gates rendering; access still required
+  if (raw.premiumIconEnabled !== false && raw.icon && raw.icon.assetKey && hasAccess(raw.icon, premium)) {
     // icons are web-static: assetKey is like "icons/accessoire-icon-01.png"
     icon = { sku: raw.icon.sku, assetKey: raw.icon.assetKey, url: `${STATIC_BASE}/${raw.icon.assetKey}` };
   }

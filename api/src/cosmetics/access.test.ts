@@ -128,6 +128,22 @@ describe('resolveCosmetics — icon', () => {
     );
     expect(r.icon).toBeNull();
   });
+  it('hidden icon (premiumIconEnabled=false) does not render even when owned', () => {
+    const r = resolveCosmetics(
+      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: null, icon: icon({ owned: true }), premiumIconEnabled: false },
+      url,
+      NOW,
+    );
+    expect(r.icon).toBeNull();
+  });
+  it('renders an owned icon when premiumIconEnabled is true/omitted', () => {
+    const enabled = resolveCosmetics(
+      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: null, icon: icon({ owned: true }), premiumIconEnabled: true },
+      url,
+      NOW,
+    );
+    expect(enabled.icon).not.toBeNull();
+  });
 });
 
 describe('resolveAvatarUrl (shared by profile + social/chat lists)', () => {

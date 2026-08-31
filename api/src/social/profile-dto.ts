@@ -53,6 +53,7 @@ export function toPublicProfileDto(
       premiumUntil: profile.premiumUntil ?? null,
       background: profile.background ?? null,
       icon: profile.icon ?? null,
+      premiumIconEnabled: profile.premiumIconEnabled ?? true,
     },
     publicUrl,
     now,
