@@ -79,32 +79,64 @@ describe('Profile page', () => {
     expect(avatar?.src).toBe('https://cdn.test/a.png');
   });
 
-  it('picks a default avatar via PUT /me/cosmetics/avatar', async () => {
-    const calls: Array<{ body: unknown }> = [];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init?: RequestInit) => {
-        // check the specific route before the generic /me match
-        if (url.includes('/me/cosmetics/avatar')) {
-          calls.push({ body: init?.body ? JSON.parse(init.body as string) : null });
-          return jsonResponse(200, { avatarKey: 'default-03' });
-        }
-        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0, gems: 0 } });
-        if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
-        if (url.includes('/me')) return jsonResponse(200, { user: meUser });
-        return jsonResponse(200, {});
-      }),
-    );
+  function avatarFetch(calls: Array<{ url: string; body: unknown }>, user: unknown = meUser) {
+    return vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes('/me/cosmetics/avatar')) {
+        calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null });
+        return jsonResponse(200, { avatarKey: null });
+      }
+      if (url.includes('/cosmetics/avatars')) {
+        return jsonResponse(200, {
+          avatars: [
+            { key: 'default-01', requiresPremium: false },
+            { key: 'default-02', requiresPremium: true },
+          ],
+        });
+      }
+      if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0, gems: 0 } });
+      if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+      if (url.includes('/me')) return jsonResponse(200, { user });
+      return jsonResponse(200, {});
+    });
+  }
+
+  it('picks a free default avatar via PUT /me/cosmetics/avatar', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', avatarFetch(calls));
     renderApp(<Profile />, ['/app/profile']);
 
-    const tile = await screen.findByRole('radio', { name: 'Avatar default-03' });
-    expect(tile).toHaveAttribute('aria-checked', 'false');
+    const tile = await screen.findByRole('radio', { name: 'Avatar default-01' });
     await userEvent.click(tile);
 
     expect(await screen.findByText('Avatar updated.')).toBeInTheDocument();
     expect(tile).toHaveAttribute('aria-checked', 'true');
     // the client sends only the key — never a URL or ownership claim
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.body).toEqual({ key: 'default-03' });
+    expect(calls[0]!.body).toEqual({ key: 'default-01' });
+  });
+
+  it('locks premium avatars for a non-premium user and does not select on tap', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', avatarFetch(calls, { ...meUser, premium: false }));
+    renderApp(<Profile />, ['/app/profile']);
+
+    const locked = await screen.findByRole('radio', { name: /Avatar default-02 \(Premium — locked\)/ });
+    expect(locked).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(locked);
+
+    expect(await screen.findByText(/Premium feature/i)).toBeInTheDocument();
+    expect(locked).toHaveAttribute('aria-checked', 'false');
+    expect(calls).toHaveLength(0); // no equip call for a locked avatar
+  });
+
+  it('does not lock premium avatars for a premium user', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', avatarFetch(calls, { ...meUser, premium: true }));
+    renderApp(<Profile />, ['/app/profile']);
+
+    const tile = await screen.findByRole('radio', { name: 'Avatar default-02' });
+    await userEvent.click(tile);
+    expect(await screen.findByText('Avatar updated.')).toBeInTheDocument();
+    expect(calls[0]!.body).toEqual({ key: 'default-02' });
   });
 });

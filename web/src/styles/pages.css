@@ -980,6 +980,25 @@ button.feature {
   place-items: center;
   color: var(--ink-2);
 }
+/* premium-locked avatar: dimmed art + a small lock badge (still tappable to explain) */
+.avatar-tile.is-locked img {
+  opacity: 0.5;
+}
+.avatar-tile.is-locked:hover:not(:disabled) {
+  border-color: var(--border);
+}
+.avatar-lock {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--r-pill);
+  background: rgba(10, 12, 16, 0.7);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
 
 /* ---- cosmetic shop (background + icon) --------------------------------- */
 .cosmetic-section {

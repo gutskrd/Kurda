@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
-import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
+import type { AvatarOption, MeProfile, UserSummary, WalletBalances } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
@@ -163,6 +164,15 @@ function Customize({ me, onChanged }: { me: MeProfile; onChanged: () => void }):
   const [busy, setBusy] = useState<string | null>(null); // key currently being applied
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
+  // Registry drives which avatars require premium; fall back to the static list
+  // (default-01 free, rest premium) if the endpoint is briefly unavailable.
+  const registry = useApiGet<{ avatars: AvatarOption[] }>('/cosmetics/avatars');
+  const avatars: AvatarOption[] =
+    registry.data?.avatars && registry.data.avatars.length > 0
+      ? registry.data.avatars
+      : DEFAULT_AVATAR_KEYS.map((key) => ({ key, requiresPremium: key !== 'default-01' }));
+  const isPremium = me.premium ?? false;
+
   async function pick(key: string | null): Promise<void> {
     if (busy) return;
     const prev = selected;
@@ -179,6 +189,14 @@ function Customize({ me, onChanged }: { me: MeProfile; onChanged: () => void }):
       setSelected(prev);
       setMsg({ kind: 'err', text: describeError(res.error) });
     }
+  }
+
+  function onTile(a: AvatarOption, locked: boolean): void {
+    if (locked) {
+      setMsg({ kind: 'err', text: 'This avatar is a Premium feature — upgrade to Premium to use it.' });
+      return;
+    }
+    void pick(a.key);
   }
 
   return (
@@ -203,20 +221,25 @@ function Customize({ me, onChanged }: { me: MeProfile; onChanged: () => void }):
         >
           <PersonGlyph size={30} />
         </button>
-        {DEFAULT_AVATAR_KEYS.map((key) => (
-          <button
-            key={key}
-            type="button"
-            className={`avatar-tile${selected === key ? ' is-selected' : ''}`}
-            role="radio"
-            aria-checked={selected === key}
-            aria-label={`Avatar ${key}`}
-            disabled={busy !== null}
-            onClick={() => void pick(key)}
-          >
-            <img src={avatarAssetUrl(key)} alt="" loading="lazy" />
-          </button>
-        ))}
+        {avatars.map((a) => {
+          const locked = a.requiresPremium && !isPremium;
+          return (
+            <button
+              key={a.key}
+              type="button"
+              className={`avatar-tile${selected === a.key ? ' is-selected' : ''}${locked ? ' is-locked' : ''}`}
+              role="radio"
+              aria-checked={selected === a.key}
+              aria-disabled={locked}
+              aria-label={`Avatar ${a.key}${locked ? ' (Premium — locked)' : ''}`}
+              disabled={busy !== null}
+              onClick={() => onTile(a, locked)}
+            >
+              <img src={avatarAssetUrl(a.key)} alt="" loading="lazy" />
+              {locked && <span className="avatar-lock" aria-hidden="true">🔒</span>}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
