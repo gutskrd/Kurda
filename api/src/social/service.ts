@@ -39,6 +39,7 @@ export interface PublicProfile {
   premiumUntil?: Date | null;
   background?: EquippedItem | null;
   icon?: EquippedItem | null;
+  premiumIconEnabled?: boolean;
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
   xp?: number;
@@ -127,6 +128,7 @@ export class SocialService {
       ic_active: boolean | null;
       ic_premium: boolean | null;
       ic_owned: boolean;
+      premium_icon_enabled: boolean;
       fp_title: string | null;
       fp_type: string | null;
       fp_status: string | null;
@@ -140,7 +142,7 @@ export class SocialService {
       // ownership of each) + favorites. No N+1; the route resolves keys → URLs.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility,
-              u.equipped_background_sku, u.equipped_icon_sku,
+              u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
               COALESCE(ul.tier, 'bronze') AS tier,
@@ -224,6 +226,7 @@ export class SocialService {
       premiumUntil: u.premium_until,
       background,
       icon,
+      premiumIconEnabled: u.premium_icon_enabled,
       favoritePoem,
       favoriteStory,
       xp: u.xp,

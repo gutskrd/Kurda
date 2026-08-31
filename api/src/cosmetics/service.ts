@@ -87,6 +87,12 @@ export class CosmeticsService {
     return this.equipCosmetic(userId, 'equipped_icon_sku', 'icon', sku, now);
   }
 
+  /** Show/hide the equipped premium icon without changing the selection. The icon
+   *  still only renders when the viewer has access (owns it, or premium active). */
+  async setIconVisibility(userId: string, enabled: boolean): Promise<void> {
+    await this.pool.query(`UPDATE users SET premium_icon_enabled = $2 WHERE id = $1`, [userId, enabled]);
+  }
+
   /** Set (or clear) a favorite poem/story. Verifies the post exists, is of the
    *  right type, and is publicly viewable before storing the reference. */
   async setFavorite(userId: string, kind: 'poem' | 'story', postId: string | null): Promise<void> {

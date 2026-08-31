@@ -141,4 +141,15 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     const bgItem = items.find((i) => i.sku === sku.owned);
     expect(bgItem).toMatchObject({ category: 'background', assetUrl: null });
   });
+
+  it('icon visibility toggle hides/shows the equipped icon in the profile DTO', async () => {
+    await cosmetics.equipIcon(userA, sku.icon); // userA owns sku.icon
+    await cosmetics.setIconVisibility(userA, false);
+    let res = await app.inject({ method: 'GET', url: `/users/${userA}`, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(res.json().icon).toBeNull();
+
+    await cosmetics.setIconVisibility(userA, true);
+    res = await app.inject({ method: 'GET', url: `/users/${userA}`, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(res.json().icon).toMatchObject({ sku: sku.icon, url: '/cosmetics/icons/i.png' });
+  });
 });

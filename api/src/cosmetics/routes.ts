@@ -53,6 +53,17 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
     },
   );
 
+  /** Show/hide the equipped premium icon (keeps the selection). */
+  app.put(
+    '/me/cosmetics/icon/visibility',
+    { schema: { body: z.object({ enabled: z.boolean() }) }, config: { rateLimit }, preHandler: requireAuth },
+    async (req) => {
+      const { enabled } = req.body as { enabled: boolean };
+      await cosmetics.setIconVisibility(req.user!.id, enabled);
+      return { premiumIconEnabled: enabled };
+    },
+  );
+
   app.put(
     '/me/favorites/poem',
     { schema: { body: postBody }, config: { rateLimit }, preHandler: requireAuth },
