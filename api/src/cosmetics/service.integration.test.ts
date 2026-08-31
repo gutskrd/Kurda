@@ -131,15 +131,15 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     expect(body.favoritePoem).toEqual({ id: poemId, title: 'My Poem' });
   });
 
-  it('inventory carries a resolved cosmetic assetUrl (icons are web-static)', async () => {
+  it('inventory carries a resolved web-static cosmetic assetUrl (icons + backgrounds)', async () => {
     const res = await app.inject({ method: 'GET', url: '/me/inventory', headers: { authorization: `Bearer ${tokenA}` } });
     expect(res.statusCode).toBe(200);
     const items = res.json().items as Array<{ sku: string; category: string; assetKey: string | null; assetUrl: string | null; premiumOnly: boolean }>;
     const iconItem = items.find((i) => i.sku === sku.icon);
     expect(iconItem).toMatchObject({ category: 'icon', assetKey: 'icons/i.png', assetUrl: '/cosmetics/icons/i.png', premiumOnly: true });
-    // backgrounds resolve via R2 → null here (no storage configured in the test)
+    // backgrounds are web-static too now (no R2 dependency)
     const bgItem = items.find((i) => i.sku === sku.owned);
-    expect(bgItem).toMatchObject({ category: 'background', assetUrl: null });
+    expect(bgItem).toMatchObject({ category: 'background', assetUrl: '/cosmetics/backgrounds/o.png' });
   });
 
   it('icon visibility toggle hides/shows the equipped icon in the profile DTO', async () => {

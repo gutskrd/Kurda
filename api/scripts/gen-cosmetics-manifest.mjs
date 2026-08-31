@@ -25,8 +25,7 @@ const list = (dir) => {
 };
 const title = (base) => base.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-const bgType = (ext) => (ext === '.mp4' || ext === '.webm' ? 'video' : ext === '.gif' ? 'gif' : 'image');
-const bgPrice = (type) => (type === 'video' ? 1000 : type === 'gif' ? 700 : 500);
+const bgPrice = (type) => (type === 'video' ? 1000 : 500);
 
 // default-01 is the universal free fallback; every other default avatar is premium-gated.
 const avatars = list('default-avatars')
@@ -47,14 +46,21 @@ const icons = list('premium-icons')
     displayOrder: i,
   }));
 
+// Backgrounds are optimized to web-static assets (see optimize-backgrounds.mjs):
+// png/jpg/gif → .webp (gif animates in an <img>); video copied as-is. So the
+// manifest asset keys point at the optimized web-static files, and the render
+// type is either 'image' (webp) or 'video' (mp4/webm).
 const backgrounds = list('mykurda-background')
-  .filter((f) => /\.(png|webp|avif|gif|mp4|webm)$/i.test(f))
+  .filter((f) => /\.(png|jpe?g|webp|avif|gif|mp4|webm)$/i.test(f))
   .map((f, i) => {
-    const type = bgType(extname(f).toLowerCase());
+    const key = f.replace(extname(f), '');
+    const ext = extname(f).toLowerCase();
+    const isVideo = ext === '.mp4' || ext === '.webm';
+    const type = isVideo ? 'video' : 'image';
     return {
-      sku: `bg-${f.replace(extname(f), '')}`,
-      name: title(f.replace(extname(f), '')),
-      assetKey: `backgrounds/${f}`,
+      sku: `bg-${key}`,
+      name: title(key),
+      assetKey: isVideo ? `backgrounds/${f}` : `backgrounds/${key}.webp`,
       type,
       price: bgPrice(type),
       premiumOnly: true,

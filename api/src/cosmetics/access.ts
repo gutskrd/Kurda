@@ -69,19 +69,19 @@ export type PublicUrl = (key: string) => string | null;
 
 /**
  * Resolve a cosmetic catalog item's asset key to a public URL for *browsing*
- * (shop + inventory), using the same hybrid delivery as the profile resolver:
- * backgrounds live in R2 (publicUrl), icons are web-static. Returns null for
- * non-cosmetic categories or when there is no key. This is presentation only —
- * ownership/premium access is still enforced server-side at equip time.
+ * (shop + inventory). Cosmetics (avatars, icons, backgrounds) are all web-static
+ * — served from the web app's own origin (Cloudflare CDN), no object storage —
+ * so this needs no R2. The `publicUrl` param is kept for signature compatibility
+ * but unused here. Returns null for non-cosmetic categories or a missing key.
+ * Presentation only — ownership/premium access is enforced server-side at equip.
  */
 export function cosmeticAssetUrl(
   category: string,
   assetKey: string | null,
-  publicUrl: (key: string) => string | null,
+  _publicUrl?: (key: string) => string | null,
 ): string | null {
   if (!assetKey) return null;
-  if (category === 'background') return publicUrl(assetKey);
-  if (category === 'icon') return `${STATIC_BASE}/${assetKey}`;
+  if (category === 'background' || category === 'icon') return `${STATIC_BASE}/${assetKey}`;
   return null;
 }
 
@@ -140,8 +140,13 @@ export function resolveCosmetics(
 
   let background: ResolvedBackground | null = null;
   if (raw.background && raw.background.assetKey && hasAccess(raw.background, premium)) {
-    const url = publicUrl(raw.background.assetKey);
-    if (url) background = { sku: raw.background.sku, assetKey: raw.background.assetKey, type: bgType(raw.background.assetKey), url };
+    // backgrounds are web-static (like icons): assetKey is "backgrounds/x.webp"
+    background = {
+      sku: raw.background.sku,
+      assetKey: raw.background.assetKey,
+      type: bgType(raw.background.assetKey),
+      url: `${STATIC_BASE}/${raw.background.assetKey}`,
+    };
   }
 
   let icon: ResolvedIcon | null = null;
