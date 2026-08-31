@@ -1,11 +1,15 @@
 /*
  * MyKurda web — liquid-glass design tokens.
- * The whole app sits over a fixed photo backdrop (see base.css); surfaces are
- * translucent, blurred glass with white text — matching the admin login screen.
+ * The app sits on ONE consistent base color (--app-bg); surfaces are translucent,
+ * blurred glass with white text. The only user-specific background is the profile
+ * background, rendered inside profiles — never the whole page.
  * Gold (#EBA905, the Zêr/XP accent) stays for meaning. Single immersive theme.
  */
 :root {
-  /* ink (light text on the photo) */
+  /* the single, consistent page background behind every surface */
+  --app-bg: #0b0d10;
+
+  /* ink (light text on the base color) */
   --ink: #ffffff;
   --ink-2: rgba(255, 255, 255, 0.84);
   --ink-3: rgba(255, 255, 255, 0.6);
