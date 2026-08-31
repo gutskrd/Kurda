@@ -311,7 +311,7 @@
     {
       "sku": "bg-background-01",
       "name": "Background 01",
-      "assetKey": "backgrounds/background-01.png",
+      "assetKey": "backgrounds/background-01.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -320,7 +320,7 @@
     {
       "sku": "bg-background-02",
       "name": "Background 02",
-      "assetKey": "backgrounds/background-02.png",
+      "assetKey": "backgrounds/background-02.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -329,7 +329,7 @@
     {
       "sku": "bg-background-03",
       "name": "Background 03",
-      "assetKey": "backgrounds/background-03.png",
+      "assetKey": "backgrounds/background-03.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -338,7 +338,7 @@
     {
       "sku": "bg-background-04",
       "name": "Background 04",
-      "assetKey": "backgrounds/background-04.png",
+      "assetKey": "backgrounds/background-04.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -347,7 +347,7 @@
     {
       "sku": "bg-background-05",
       "name": "Background 05",
-      "assetKey": "backgrounds/background-05.png",
+      "assetKey": "backgrounds/background-05.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -356,7 +356,7 @@
     {
       "sku": "bg-background-06",
       "name": "Background 06",
-      "assetKey": "backgrounds/background-06.png",
+      "assetKey": "backgrounds/background-06.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -365,7 +365,7 @@
     {
       "sku": "bg-background-07",
       "name": "Background 07",
-      "assetKey": "backgrounds/background-07.png",
+      "assetKey": "backgrounds/background-07.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -374,7 +374,7 @@
     {
       "sku": "bg-background-08",
       "name": "Background 08",
-      "assetKey": "backgrounds/background-08.png",
+      "assetKey": "backgrounds/background-08.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -383,7 +383,7 @@
     {
       "sku": "bg-background-09",
       "name": "Background 09",
-      "assetKey": "backgrounds/background-09.png",
+      "assetKey": "backgrounds/background-09.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -392,7 +392,7 @@
     {
       "sku": "bg-background-10",
       "name": "Background 10",
-      "assetKey": "backgrounds/background-10.png",
+      "assetKey": "backgrounds/background-10.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -401,7 +401,7 @@
     {
       "sku": "bg-background-11",
       "name": "Background 11",
-      "assetKey": "backgrounds/background-11.png",
+      "assetKey": "backgrounds/background-11.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -410,7 +410,7 @@
     {
       "sku": "bg-background-12",
       "name": "Background 12",
-      "assetKey": "backgrounds/background-12.png",
+      "assetKey": "backgrounds/background-12.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -419,7 +419,7 @@
     {
       "sku": "bg-background-13",
       "name": "Background 13",
-      "assetKey": "backgrounds/background-13.png",
+      "assetKey": "backgrounds/background-13.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -428,7 +428,7 @@
     {
       "sku": "bg-background-14",
       "name": "Background 14",
-      "assetKey": "backgrounds/background-14.png",
+      "assetKey": "backgrounds/background-14.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -437,25 +437,25 @@
     {
       "sku": "bg-background-15",
       "name": "Background 15",
-      "assetKey": "backgrounds/background-15.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-15.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 14
     },
     {
       "sku": "bg-background-16",
       "name": "Background 16",
-      "assetKey": "backgrounds/background-16.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-16.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 15
     },
     {
       "sku": "bg-background-17",
       "name": "Background 17",
-      "assetKey": "backgrounds/background-17.png",
+      "assetKey": "backgrounds/background-17.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -464,7 +464,7 @@
     {
       "sku": "bg-background-18",
       "name": "Background 18",
-      "assetKey": "backgrounds/background-18.png",
+      "assetKey": "backgrounds/background-18.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -473,7 +473,7 @@
     {
       "sku": "bg-background-19",
       "name": "Background 19",
-      "assetKey": "backgrounds/background-19.png",
+      "assetKey": "backgrounds/background-19.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -482,7 +482,7 @@
     {
       "sku": "bg-background-20",
       "name": "Background 20",
-      "assetKey": "backgrounds/background-20.png",
+      "assetKey": "backgrounds/background-20.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -491,7 +491,7 @@
     {
       "sku": "bg-background-21",
       "name": "Background 21",
-      "assetKey": "backgrounds/background-21.png",
+      "assetKey": "backgrounds/background-21.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -500,7 +500,7 @@
     {
       "sku": "bg-background-22",
       "name": "Background 22",
-      "assetKey": "backgrounds/background-22.png",
+      "assetKey": "backgrounds/background-22.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -509,7 +509,7 @@
     {
       "sku": "bg-background-23",
       "name": "Background 23",
-      "assetKey": "backgrounds/background-23.png",
+      "assetKey": "backgrounds/background-23.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -518,7 +518,7 @@
     {
       "sku": "bg-background-24",
       "name": "Background 24",
-      "assetKey": "backgrounds/background-24.png",
+      "assetKey": "backgrounds/background-24.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -527,7 +527,7 @@
     {
       "sku": "bg-background-25",
       "name": "Background 25",
-      "assetKey": "backgrounds/background-25.png",
+      "assetKey": "backgrounds/background-25.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -536,7 +536,7 @@
     {
       "sku": "bg-background-26",
       "name": "Background 26",
-      "assetKey": "backgrounds/background-26.png",
+      "assetKey": "backgrounds/background-26.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -545,7 +545,7 @@
     {
       "sku": "bg-background-27",
       "name": "Background 27",
-      "assetKey": "backgrounds/background-27.png",
+      "assetKey": "backgrounds/background-27.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -554,7 +554,7 @@
     {
       "sku": "bg-background-28",
       "name": "Background 28",
-      "assetKey": "backgrounds/background-28.png",
+      "assetKey": "backgrounds/background-28.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -563,7 +563,7 @@
     {
       "sku": "bg-background-29",
       "name": "Background 29",
-      "assetKey": "backgrounds/background-29.png",
+      "assetKey": "backgrounds/background-29.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -572,7 +572,7 @@
     {
       "sku": "bg-background-30",
       "name": "Background 30",
-      "assetKey": "backgrounds/background-30.png",
+      "assetKey": "backgrounds/background-30.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -581,7 +581,7 @@
     {
       "sku": "bg-background-31",
       "name": "Background 31",
-      "assetKey": "backgrounds/background-31.png",
+      "assetKey": "backgrounds/background-31.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -590,7 +590,7 @@
     {
       "sku": "bg-background-32",
       "name": "Background 32",
-      "assetKey": "backgrounds/background-32.png",
+      "assetKey": "backgrounds/background-32.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -599,7 +599,7 @@
     {
       "sku": "bg-background-33",
       "name": "Background 33",
-      "assetKey": "backgrounds/background-33.png",
+      "assetKey": "backgrounds/background-33.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -608,7 +608,7 @@
     {
       "sku": "bg-background-34",
       "name": "Background 34",
-      "assetKey": "backgrounds/background-34.png",
+      "assetKey": "backgrounds/background-34.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -617,7 +617,7 @@
     {
       "sku": "bg-background-35",
       "name": "Background 35",
-      "assetKey": "backgrounds/background-35.png",
+      "assetKey": "backgrounds/background-35.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -626,7 +626,7 @@
     {
       "sku": "bg-background-36",
       "name": "Background 36",
-      "assetKey": "backgrounds/background-36.png",
+      "assetKey": "backgrounds/background-36.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -635,7 +635,7 @@
     {
       "sku": "bg-background-37",
       "name": "Background 37",
-      "assetKey": "backgrounds/background-37.png",
+      "assetKey": "backgrounds/background-37.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -644,7 +644,7 @@
     {
       "sku": "bg-background-38",
       "name": "Background 38",
-      "assetKey": "backgrounds/background-38.png",
+      "assetKey": "backgrounds/background-38.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -653,7 +653,7 @@
     {
       "sku": "bg-background-39",
       "name": "Background 39",
-      "assetKey": "backgrounds/background-39.png",
+      "assetKey": "backgrounds/background-39.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -662,7 +662,7 @@
     {
       "sku": "bg-background-40",
       "name": "Background 40",
-      "assetKey": "backgrounds/background-40.png",
+      "assetKey": "backgrounds/background-40.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -671,7 +671,7 @@
     {
       "sku": "bg-background-41",
       "name": "Background 41",
-      "assetKey": "backgrounds/background-41.png",
+      "assetKey": "backgrounds/background-41.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -680,7 +680,7 @@
     {
       "sku": "bg-background-42",
       "name": "Background 42",
-      "assetKey": "backgrounds/background-42.png",
+      "assetKey": "backgrounds/background-42.webp",
       "type": "image",
       "price": 500,
       "premiumOnly": true,
@@ -689,18 +689,18 @@
     {
       "sku": "bg-background-43",
       "name": "Background 43",
-      "assetKey": "backgrounds/background-43.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-43.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 42
     },
     {
       "sku": "bg-background-44",
       "name": "Background 44",
-      "assetKey": "backgrounds/background-44.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-44.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 43
     },
@@ -716,72 +716,72 @@
     {
       "sku": "bg-background-46",
       "name": "Background 46",
-      "assetKey": "backgrounds/background-46.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-46.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 45
     },
     {
       "sku": "bg-background-47",
       "name": "Background 47",
-      "assetKey": "backgrounds/background-47.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-47.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 46
     },
     {
       "sku": "bg-background-48",
       "name": "Background 48",
-      "assetKey": "backgrounds/background-48.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-48.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 47
     },
     {
       "sku": "bg-background-49",
       "name": "Background 49",
-      "assetKey": "backgrounds/background-49.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-49.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 48
     },
     {
       "sku": "bg-background-50",
       "name": "Background 50",
-      "assetKey": "backgrounds/background-50.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-50.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 49
     },
     {
       "sku": "bg-background-51",
       "name": "Background 51",
-      "assetKey": "backgrounds/background-51.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-51.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 50
     },
     {
       "sku": "bg-background-52",
       "name": "Background 52",
-      "assetKey": "backgrounds/background-52.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-52.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 51
     },
     {
       "sku": "bg-background-53",
       "name": "Background 53",
-      "assetKey": "backgrounds/background-53.gif",
-      "type": "gif",
-      "price": 700,
+      "assetKey": "backgrounds/background-53.webp",
+      "type": "image",
+      "price": 500,
       "premiumOnly": true,
       "displayOrder": 52
     }

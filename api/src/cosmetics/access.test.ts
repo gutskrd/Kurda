@@ -82,7 +82,7 @@ describe('resolveCosmetics — background access + fallback', () => {
       url,
       NOW,
     );
-    expect(r.background).toEqual({ sku: 'bg-x', assetKey: 'backgrounds/x.png', type: 'image', url: 'https://cdn.test/backgrounds/x.png' });
+    expect(r.background).toEqual({ sku: 'bg-x', assetKey: 'backgrounds/x.png', type: 'image', url: '/cosmetics/backgrounds/x.png' });
   });
   it('premium-only background: usable with active premium, gone when expired/none', () => {
     const raw = (premiumUntil: Date | null) => ({
@@ -164,15 +164,14 @@ describe('resolveAvatarUrl (shared by profile + social/chat lists)', () => {
 });
 
 describe('cosmeticAssetUrl (shop/inventory browsing)', () => {
-  const pub = (key: string): string => `https://cdn.test/${key}`;
-  it('resolves backgrounds via R2 publicUrl and icons via the web-static base', () => {
-    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4', pub)).toBe('https://cdn.test/backgrounds/a.mp4');
-    expect(cosmeticAssetUrl('icon', 'icons/i.png', pub)).toBe('/cosmetics/icons/i.png');
+  it('resolves backgrounds and icons via the web-static base (no R2)', () => {
+    expect(cosmeticAssetUrl('background', 'backgrounds/a.webp')).toBe('/cosmetics/backgrounds/a.webp');
+    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4')).toBe('/cosmetics/backgrounds/a.mp4');
+    expect(cosmeticAssetUrl('icon', 'icons/i.png')).toBe('/cosmetics/icons/i.png');
   });
-  it('is null for non-cosmetic categories, missing keys, or no storage', () => {
-    expect(cosmeticAssetUrl('powerup', 'x', pub)).toBeNull();
-    expect(cosmeticAssetUrl('background', null, pub)).toBeNull();
-    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4', () => null)).toBeNull();
+  it('is null for non-cosmetic categories or a missing key', () => {
+    expect(cosmeticAssetUrl('powerup', 'x')).toBeNull();
+    expect(cosmeticAssetUrl('background', null)).toBeNull();
   });
 });
 
