@@ -154,6 +154,12 @@ export interface SuggestedFriend extends UserSummary {
   mutualCount: number;
 }
 
+/** A default-avatar option (GET /cosmetics/avatars). default-01 is always free. */
+export interface AvatarOption {
+  key: string;
+  requiresPremium: boolean;
+}
+
 /** A 1:1 direct message (chat). */
 export interface DmMessage {
   id: string;
