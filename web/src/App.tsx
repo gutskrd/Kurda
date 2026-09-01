@@ -15,6 +15,7 @@ import { Learn } from './pages/Learn';
 import { Rankings } from './pages/Rankings';
 import { Friends } from './pages/Friends';
 import { Profile } from './pages/Profile';
+import { ProfileEdit } from './pages/ProfileEdit';
 import { Settings } from './pages/Settings';
 import { Messages } from './pages/Messages';
 import { Shop } from './pages/Shop';
@@ -80,6 +81,7 @@ export function App(): React.JSX.Element {
             <Route path="messages" element={<Messages />} />
             <Route path="shop" element={<Shop />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="profile/edit" element={<ProfileEdit />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

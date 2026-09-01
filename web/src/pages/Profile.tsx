@@ -1,19 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
-import type { AvatarOption, MeProfile, UserSummary, WalletBalances } from '../lib/types';
-import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
-import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
-import { FavoritesPicker } from '../profile/FavoritesPicker';
-import { CosmeticBackground, LevelBar, PremiumPill, IconOverlay } from '../profile/cosmetic-parts';
+import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
+import { CosmeticBackground, IconOverlay, PremiumPill } from '../profile/cosmetic-parts';
 import { Loading, ErrorState } from '../components/states';
-import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
 
+/**
+ * Full profile — a read-only, Steam-style showcase of the signed-in user. The
+ * equipped profile background fills the card (contained to the profile, never the
+ * whole site); the avatar carries its premium-icon overlay. All editing lives on
+ * the separate Edit Profile page (reached via the button here).
+ */
 export function Profile(): React.JSX.Element {
-  const { client, refreshUser } = useAuth();
+  const { client } = useAuth();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [zer, setZer] = useState<number | null>(null);
   const [friendCount, setFriendCount] = useState<number | null>(null);
@@ -46,247 +47,98 @@ export function Profile(): React.JSX.Element {
   if (loading) return <Loading label="Loading profile…" />;
   if (error || !me) return <ErrorState title="Couldn’t load your profile" message={error ?? 'Unavailable.'} onRetry={() => setReloadKey((n) => n + 1)} />;
 
-  return (
-    <div className="container container-narrow">
-      <div className="page-header">
-        <span className="eyebrow">Profîl · Your profile</span>
-        <h1 className="page-title">{me.displayName || me.username}</h1>
-        <p className="page-sub">@{me.username}</p>
-      </div>
-
-      <ProfileHeader me={me} onAvatarChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }} />
-
-      <div className="stat-row" style={{ marginTop: 20 }}>
-        <div className="stat"><div className="k">XP</div><div className="v">{me.xp.toLocaleString()}</div></div>
-        <div className="stat"><div className="k">Streak</div><div className="v">{me.streak.current}</div></div>
-        <div className="stat"><div className="k">Zêr</div><div className="v">{zer === null ? '—' : zer.toLocaleString()}</div></div>
-        <Link className="stat stat-link" to="/app/friends">
-          <div className="k">Friends</div>
-          <div className="v">{friendCount === null ? '—' : friendCount}</div>
-        </Link>
-      </div>
-
-      <EditProfile
-        me={me}
-        onSaved={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
-      />
-
-      <Customize
-        me={me}
-        onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
-      />
-
-      <CosmeticCustomizer
-        me={me}
-        onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
-      />
-
-      <FavoritesPicker
-        me={me}
-        onChanged={() => { setReloadKey((n) => n + 1); void refreshUser(); }}
-      />
-
-      <div style={{ marginTop: 24 }}>
-        <Link to="/app/settings" className="btn btn-secondary">Account settings</Link>
-      </div>
-    </div>
-  );
-}
-
-function ProfileHeader({ me, onAvatarChanged }: { me: MeProfile; onAvatarChanged: () => void }): React.JSX.Element {
-  const { client } = useAuth();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setMsg('Please choose an image file.');
-      return;
-    }
-    setBusy(true);
-    setMsg(null);
-    const res = await client.uploadBytes<{ profilePhotoUrl: string }>('/me/profile-picture', file);
-    setBusy(false);
-    if (res.ok) onAvatarChanged();
-    else if (res.error.code === 'MEDIA_UNAVAILABLE') setMsg('Photo storage isn’t configured yet — try again once it’s enabled.');
-    else setMsg(describeError(res.error));
-  }
-
-  // avatarUrl already resolves photo → default avatar server-side; fall back to
-  // the legacy photo field for older responses.
+  const name = me.displayName || me.username;
   const avatar = me.avatarUrl ?? me.profilePhotoUrl;
+  const level = me.level?.level ?? 1;
+  const toNext = me.level ? Math.max(0, me.level.nextLevelXp - me.level.xp) : null;
+  const favPoem = me.favoritePoem ?? null;
+  const favStory = me.favoriteStory ?? null;
 
   return (
-    <div className={`profile-hero profile-hero-showcase${me.background ? ' has-bg' : ''}`}>
-      {me.background && <CosmeticBackground background={me.background} className="profile-hero-media" />}
-      <div className="profile-hero-inner">
-        <div className="profile-hero-avatar">
-          <span className="hero-avatar-wrap">
-            {avatar ? (
-              <img src={avatar} alt="" className="pcard-avatar" />
-            ) : (
-              <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={64} /></span>
-            )}
-            {me.icon && <IconOverlay icon={me.icon} />}
-          </span>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={busy}>
-            {busy ? 'Uploading…' : 'Change photo'}
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} aria-label="Upload profile photo" />
-        </div>
-        <div className="profile-hero-body">
-          {me.premium && (
-            <div className="profile-hero-badges">
-              <PremiumPill />
+    <div className="container">
+      <article className={`steam${me.background ? ' steam-has-bg' : ''}`}>
+        {me.background && <CosmeticBackground background={me.background} className="steam-bg" />}
+
+        <div className="steam-inner">
+          <header className="steam-head">
+            <div className="steam-id">
+              <span className="steam-avatar hero-avatar-wrap">
+                {avatar ? (
+                  <img src={avatar} alt="" className="steam-avatar-img" />
+                ) : (
+                  <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={72} /></span>
+                )}
+                {me.icon && <IconOverlay icon={me.icon} />}
+              </span>
+              <div className="steam-id-text">
+                <div className="steam-name">
+                  {name}
+                  {me.premium && <PremiumPill />}
+                </div>
+                <div className="steam-handle">@{me.username}</div>
+              </div>
             </div>
-          )}
-          {me.level && <LevelBar level={me.level} />}
-          {me.bio ? <p className="profile-bio">{me.bio}</p> : <p className="muted profile-bio">No bio yet.</p>}
-          {msg && <div className="msg" role="status" style={{ marginTop: 10 }}>{msg}</div>}
+
+            <div className="steam-level-col">
+              <div className="steam-level-line">
+                Level <span className="steam-level-badge">{level}</span>
+              </div>
+              {me.level && (
+                <div className="steam-featured">
+                  <div className="steam-featured-title">{me.level.xp.toLocaleString()} XP</div>
+                  <div className="steam-featured-sub">{toNext?.toLocaleString()} XP to level {level + 1}</div>
+                </div>
+              )}
+              <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">Edit Profile</Link>
+            </div>
+          </header>
+
+          <div className="steam-body">
+            <main className="steam-main">
+              <section className="steam-showcase">
+                <h2 className="steam-showcase-title">About</h2>
+                {me.bio ? <p className="steam-bio">{me.bio}</p> : <p className="muted steam-bio">No bio yet.</p>}
+              </section>
+
+              {(favPoem || favStory) && (
+                <section className="steam-showcase">
+                  <h2 className="steam-showcase-title">Favorites</h2>
+                  <div className="steam-fav-list">
+                    {favPoem && (
+                      <Link to={`/poems`} className="steam-fav">
+                        <span className="steam-fav-kind">Poem</span>
+                        <span className="steam-fav-title">{favPoem.title}</span>
+                      </Link>
+                    )}
+                    {favStory && (
+                      <Link to={`/stories`} className="steam-fav">
+                        <span className="steam-fav-kind">Story</span>
+                        <span className="steam-fav-title">{favStory.title}</span>
+                      </Link>
+                    )}
+                  </div>
+                </section>
+              )}
+            </main>
+
+            <aside className="steam-side">
+              <div className="steam-panel">
+                <h2 className="steam-panel-title">Currently Online</h2>
+                <dl className="steam-stats">
+                  <div className="steam-stat"><dt>Level</dt><dd>{level}</dd></div>
+                  <div className="steam-stat"><dt>XP</dt><dd>{me.xp.toLocaleString()}</dd></div>
+                  <div className="steam-stat"><dt>Streak</dt><dd>{me.streak.current} day{me.streak.current === 1 ? '' : 's'}</dd></div>
+                  <div className="steam-stat"><dt>Zêr</dt><dd>{zer === null ? '—' : zer.toLocaleString()}</dd></div>
+                </dl>
+                <Link className="steam-stat steam-stat-link" to="/app/friends">
+                  <dt>Friends</dt>
+                  <dd>{friendCount === null ? '—' : friendCount}</dd>
+                </Link>
+              </div>
+            </aside>
+          </div>
         </div>
-      </div>
+      </article>
     </div>
-  );
-}
-
-/**
- * Avatar customizer: pick one of the free default avatars (or clear it). The
- * server validates the key and stores only a reference. An uploaded photo always
- * takes priority on the profile, so we note that when one is set. Backgrounds and
- * icons are equipped from the shop (a later phase) since they need owned/premium
- * catalog items.
- */
-function Customize({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
-  const { client } = useAuth();
-  const [selected, setSelected] = useState<string | null>(me.selectedAvatarKey ?? null);
-  const [busy, setBusy] = useState<string | null>(null); // key currently being applied
-  const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
-
-  // Registry drives which avatars require premium; fall back to the static list
-  // (default-01 free, rest premium) if the endpoint is briefly unavailable.
-  const registry = useApiGet<{ avatars: AvatarOption[] }>('/cosmetics/avatars');
-  const avatars: AvatarOption[] =
-    registry.data?.avatars && registry.data.avatars.length > 0
-      ? registry.data.avatars
-      : DEFAULT_AVATAR_KEYS.map((key) => ({ key, requiresPremium: key !== 'default-01' }));
-  const isPremium = me.premium ?? false;
-
-  async function pick(key: string | null): Promise<void> {
-    if (busy) return;
-    const prev = selected;
-    setBusy(key ?? '__none__');
-    setMsg(null);
-    // optimistic: reflect the choice immediately, roll back on failure
-    setSelected(key);
-    const res = await client.put<{ avatarKey: string | null }>('/me/cosmetics/avatar', { key });
-    setBusy(null);
-    if (res.ok) {
-      setMsg({ kind: 'ok', text: key ? 'Avatar updated.' : 'Avatar cleared.' });
-      onChanged();
-    } else {
-      setSelected(prev);
-      setMsg({ kind: 'err', text: describeError(res.error) });
-    }
-  }
-
-  function onTile(a: AvatarOption, locked: boolean): void {
-    if (locked) {
-      setMsg({ kind: 'err', text: 'This avatar is a Premium feature — upgrade to Premium to use it.' });
-      return;
-    }
-    void pick(a.key);
-  }
-
-  return (
-    <section className="card" style={{ marginTop: 24 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Avatar</h2>
-      {me.profilePhotoUrl && (
-        <p className="field-hint" style={{ marginTop: 0 }}>
-          Your uploaded photo is shown on your profile. Remove it to display a default avatar.
-        </p>
-      )}
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
-
-      <div className="avatar-grid" role="radiogroup" aria-label="Choose a default avatar">
-        <button
-          type="button"
-          className={`avatar-tile avatar-tile-none${selected === null ? ' is-selected' : ''}`}
-          role="radio"
-          aria-checked={selected === null}
-          aria-label="No avatar"
-          disabled={busy !== null}
-          onClick={() => void pick(null)}
-        >
-          <PersonGlyph size={30} />
-        </button>
-        {avatars.map((a) => {
-          const locked = a.requiresPremium && !isPremium;
-          return (
-            <button
-              key={a.key}
-              type="button"
-              className={`avatar-tile${selected === a.key ? ' is-selected' : ''}${locked ? ' is-locked' : ''}`}
-              role="radio"
-              aria-checked={selected === a.key}
-              aria-disabled={locked}
-              aria-label={`Avatar ${a.key}${locked ? ' (Premium — locked)' : ''}`}
-              disabled={busy !== null}
-              onClick={() => onTile(a, locked)}
-            >
-              <img src={avatarAssetUrl(a.key)} alt="" loading="lazy" />
-              {locked && <span className="avatar-lock" aria-hidden="true">🔒</span>}
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function EditProfile({ me, onSaved }: { me: MeProfile; onSaved: () => void }): React.JSX.Element {
-  const { client } = useAuth();
-  const [displayName, setDisplayName] = useState(me.displayName ?? '');
-  const [bio, setBio] = useState(me.bio ?? '');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
-
-  const dirty = displayName.trim() !== (me.displayName ?? '') || bio !== (me.bio ?? '');
-
-  async function save(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    setBusy(true);
-    setMsg(null);
-    const body: { displayName?: string; bio?: string } = {};
-    if (displayName.trim() !== (me.displayName ?? '')) body.displayName = displayName.trim();
-    if (bio !== (me.bio ?? '')) body.bio = bio;
-    const res = await client.patch('/me', body);
-    setBusy(false);
-    if (res.ok) {
-      setMsg({ kind: 'ok', text: 'Profile updated.' });
-      onSaved();
-    } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
-    }
-  }
-
-  return (
-    <form className="card" onSubmit={save} style={{ marginTop: 24 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Edit profile</h2>
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
-      <div className="field">
-        <label className="field-label" htmlFor="displayName">Display name</label>
-        <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} placeholder={me.username} />
-      </div>
-      <div className="field">
-        <label className="field-label" htmlFor="bio">Bio</label>
-        <textarea id="bio" className="input" style={{ height: 96, padding: '10px 14px', resize: 'vertical' }} value={bio} maxLength={1000} onChange={(e) => setBio(e.target.value)} placeholder="Tell others a little about you…" />
-        <span className="field-hint">{bio.length}/1000</span>
-      </div>
-      <Button type="submit" disabled={busy || !dirty}>{busy ? 'Saving…' : 'Save changes'}</Button>
-    </form>
   );
 }

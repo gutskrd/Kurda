@@ -1451,3 +1451,255 @@ button.feature {
     display: inline-flex;
   }
 }
+
+/* ---- Steam-style full profile view ------------------------------------- */
+.steam {
+  position: relative;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(10, 12, 16, 0.55);
+}
+.steam-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  z-index: 0;
+}
+.steam-has-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 8, 12, 0.35), rgba(6, 8, 12, 0.78));
+  z-index: 0;
+  pointer-events: none;
+}
+.steam-inner {
+  position: relative;
+  z-index: 1;
+  padding: clamp(20px, 4vw, 40px);
+}
+.steam-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.steam-id {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  min-width: 0;
+}
+.steam-avatar {
+  display: inline-block;
+  flex: none;
+}
+.steam-avatar-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--r-md, 12px);
+  border: 2px solid var(--border-strong);
+  box-shadow: var(--shadow);
+  display: block;
+}
+.steam-id .avatar-fallback {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--r-md, 12px);
+}
+.steam-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.steam-name .pcard-premium {
+  margin-left: 0;
+}
+.steam-handle {
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+.steam-level-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.steam-level-line {
+  font-size: 1.1rem;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.steam-level-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  color: var(--gold-ink);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.steam-featured {
+  width: 220px;
+  max-width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: rgba(20, 22, 28, 0.5);
+}
+.steam-featured-title {
+  font-weight: 600;
+}
+.steam-featured-sub {
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+.steam-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  margin-top: 28px;
+}
+.steam-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+.steam-showcase {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: rgba(20, 22, 28, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  padding: 18px 20px;
+}
+.steam-showcase-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+.steam-bio {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.steam-fav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.steam-fav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: rgba(10, 12, 16, 0.4);
+  color: var(--ink);
+}
+.steam-fav:hover {
+  border-color: var(--border-strong);
+}
+.steam-fav-kind {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gold-ink);
+}
+.steam-fav-title {
+  font-weight: 550;
+}
+.steam-side {
+  min-width: 0;
+}
+.steam-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: rgba(20, 22, 28, 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  padding: 16px 18px;
+}
+.steam-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6fd0e0;
+  margin: 0 0 12px;
+}
+.steam-stats {
+  margin: 0;
+}
+.steam-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.steam-stats .steam-stat:last-child {
+  border-bottom: 0;
+}
+.steam-stat dt {
+  color: var(--ink-3);
+  margin: 0;
+}
+.steam-stat dd {
+  margin: 0;
+  font-weight: 600;
+}
+.steam-stat-link {
+  text-decoration: none;
+  color: var(--ink);
+}
+.steam-stat-link:hover dd {
+  color: var(--gold-ink);
+}
+
+/* edit page photo controls */
+.edit-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.edit-photo-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.edit-photo-row .pcard-avatar {
+  width: 88px;
+  height: 88px;
+}
+.link {
+  color: var(--gold-ink);
+}
+
+@media (max-width: 760px) {
+  .steam-body {
+    grid-template-columns: 1fr;
+  }
+  .steam-level-col {
+    align-items: flex-start;
+  }
+}
