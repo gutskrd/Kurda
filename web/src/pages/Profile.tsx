@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
+import type { InventoryItem, MeProfile, UserSummary, WalletBalances } from '../lib/types';
 import { CosmeticBackground, IconOverlay } from '../profile/cosmetic-parts';
+import { AvatarStack } from '../components/AvatarStack';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
 
@@ -18,7 +19,8 @@ export function Profile(): React.JSX.Element {
   const { client } = useAuth();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [zer, setZer] = useState<number | null>(null);
-  const [friendCount, setFriendCount] = useState<number | null>(null);
+  const [friends, setFriends] = useState<UserSummary[]>([]);
+  const [icons, setIcons] = useState<InventoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
@@ -28,16 +30,18 @@ export function Profile(): React.JSX.Element {
     setLoading(true);
     setError(null);
     void (async () => {
-      const [m, w, f] = await Promise.all([
+      const [m, w, f, inv] = await Promise.all([
         client.get<{ user: MeProfile }>('/me'),
         client.get<{ balances: WalletBalances }>('/me/wallet'),
         client.get<{ friends: UserSummary[] }>('/friends'),
+        client.get<{ items: InventoryItem[] }>('/me/inventory'),
       ]);
       if (cancelled) return;
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
       else setError(m.ok ? 'Your profile could not be loaded.' : describeError(m.error));
       if (w.ok) setZer(w.data.balances.zer);
-      if (f.ok) setFriendCount(f.data.friends.length);
+      if (f.ok) setFriends(f.data.friends ?? []);
+      if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
     })();
     return () => {
@@ -54,6 +58,7 @@ export function Profile(): React.JSX.Element {
   const xp = me.level?.xp ?? me.xp;
   const favPoem = me.favoritePoem ?? null;
   const favStory = me.favoriteStory ?? null;
+  const online = true; // viewing your own profile → you're online
 
   return (
     <div className={`steam-page${me.background ? ' steam-has-bg' : ''}`}>
@@ -131,14 +136,24 @@ export function Profile(): React.JSX.Element {
 
           <aside className="steam-side">
             <div className="steam-online">
-              <div className="steam-online-title">Currently Online</div>
+              <div className={`steam-online-title${online ? '' : ' is-offline'}`}>{online ? 'Currently Online' : 'Offline'}</div>
               <div className="steam-online-sub">@{me.username}</div>
+
               <div className="steam-info-row"><span className="l">Level</span><span className="n">{level}</span></div>
               <div className="steam-info-row"><span className="l">XP</span><span className="n">{xp.toLocaleString()}</span></div>
               <div className="steam-info-row"><span className="l">Streak</span><span className="n">{me.streak.current}</span></div>
               <div className="steam-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
-              <Link className="steam-info-row steam-info-link" to="/app/friends">
-                <span className="l">Friends</span><span className="n">{friendCount === null ? '—' : friendCount}</span>
+
+              {icons.length > 0 && (
+                <div className="steam-collection">
+                  <div className="steam-collection-head"><span className="l">Icons</span><span className="n">{icons.length}</span></div>
+                  <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
+                </div>
+              )}
+
+              <Link className="steam-collection steam-collection-link" to="/app/friends">
+                <div className="steam-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
+                {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
               </Link>
             </div>
           </aside>

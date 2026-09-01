@@ -196,10 +196,22 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
     setBusy(key ?? '__none__');
     setMsg(null);
     setSelected(key);
+    // An uploaded photo always wins over a default avatar, so choosing an avatar
+    // would otherwise appear to do nothing. Remove the uploaded photo first (from
+    // the DB + storage) so the selected avatar actually becomes the picture.
+    if (me.profilePhotoUrl) {
+      const del = await client.delete('/me/profile-picture');
+      if (!del.ok) {
+        setBusy(null);
+        setSelected(prev);
+        setMsg({ kind: 'err', text: describeError(del.error) });
+        return;
+      }
+    }
     const res = await client.put<{ avatarKey: string | null }>('/me/cosmetics/avatar', { key });
     setBusy(null);
     if (res.ok) {
-      setMsg({ kind: 'ok', text: key ? 'Avatar updated.' : 'Avatar cleared.' });
+      setMsg({ kind: 'ok', text: key ? 'Profile picture updated.' : 'Avatar cleared.' });
       onChanged();
     } else {
       setSelected(prev);
