@@ -55,10 +55,10 @@ export function Profile(): React.JSX.Element {
   const favStory = me.favoriteStory ?? null;
 
   return (
-    <div className="container">
-      <article className={`steam${me.background ? ' steam-has-bg' : ''}`}>
-        {me.background && <CosmeticBackground background={me.background} className="steam-bg" />}
+    <div className={`steam-page${me.background ? ' steam-has-bg' : ''}`}>
+      {me.background && <CosmeticBackground background={me.background} className="steam-bg" />}
 
+      <div className="steam-wrap">
         <div className="steam-inner">
           <header className="steam-head">
             <div className="steam-id">
@@ -138,7 +138,7 @@ export function Profile(): React.JSX.Element {
             </aside>
           </div>
         </div>
-      </article>
+      </div>
     </div>
   );
 }
