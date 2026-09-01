@@ -136,6 +136,12 @@ button.danger:hover { background: var(--bad-bg); }
 button.ghost { border-color: transparent; background: transparent; box-shadow: none; }
 button.ghost:hover { background: var(--control); }
 
+/* Hide the browser-native password reveal/clear (Edge) so it never doubles up
+   with the custom show/hide eye on the login form. */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
 input, select, textarea {
   font: inherit;
   padding: 9px 12px;
