@@ -38,7 +38,7 @@ describe('Profile view (Steam-style, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-    expect(screen.getByText('@ada')).toBeInTheDocument();
+    expect(document.querySelector('.steam-sub')?.textContent).toBe('@ada');
     expect(screen.getByText('Learning Kurdish.', { selector: 'p.steam-bio' })).toBeInTheDocument();
     expect(screen.getByText('3,200')).toBeInTheDocument(); // XP in the info panel
     expect(screen.getByText('450')).toBeInTheDocument(); // Zêr
@@ -80,7 +80,7 @@ describe('Profile view (Steam-style, read-only)', () => {
     expect(avatar?.src).toBe('https://cdn.test/a.png');
     expect(screen.getByText('Premium')).toBeInTheDocument();
     expect(screen.getByText('River Song')).toBeInTheDocument();
-    // level badge shows 3
-    expect(document.querySelector('.steam-level-badge')?.textContent).toBe('3');
+    // level hexagon shows 3
+    expect(document.querySelector('.steam-hex')?.textContent).toBe('3');
   });
 });

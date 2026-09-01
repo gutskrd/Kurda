@@ -89,6 +89,13 @@
   font-size: 0.8rem;
   color: var(--ink-3);
 }
+/* Hide the browser's own password reveal/clear control (Edge/IE ::-ms-reveal,
+   ::-ms-clear) so it never doubles up with our custom show/hide eye button. */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
 .input {
   width: 100%;
   height: 46px;

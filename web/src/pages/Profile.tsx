@@ -3,15 +3,16 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { MeProfile, UserSummary, WalletBalances } from '../lib/types';
-import { CosmeticBackground, IconOverlay, PremiumPill } from '../profile/cosmetic-parts';
+import { CosmeticBackground, IconOverlay } from '../profile/cosmetic-parts';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
 
 /**
- * Full profile — a read-only, Steam-style showcase of the signed-in user. The
- * equipped profile background fills the card (contained to the profile, never the
- * whole site); the avatar carries its premium-icon overlay. All editing lives on
- * the separate Edit Profile page (reached via the button here).
+ * Full profile — a read-only, Steam-style showcase of the signed-in user: a
+ * full-bleed equipped background (contained to the profile, never the whole
+ * site), a framed avatar with its premium-icon overlay, a hexagon Level badge +
+ * featured box, showcase boxes on the left, and a "Currently Online" info panel
+ * on the right. All editing lives on the separate Edit Profile page.
  */
 export function Profile(): React.JSX.Element {
   const { client } = useAuth();
@@ -50,7 +51,7 @@ export function Profile(): React.JSX.Element {
   const name = me.displayName || me.username;
   const avatar = me.avatarUrl ?? me.profilePhotoUrl;
   const level = me.level?.level ?? 1;
-  const toNext = me.level ? Math.max(0, me.level.nextLevelXp - me.level.xp) : null;
+  const xp = me.level?.xp ?? me.xp;
   const favPoem = me.favoritePoem ?? null;
   const favStory = me.favoriteStory ?? null;
 
@@ -59,84 +60,88 @@ export function Profile(): React.JSX.Element {
       {me.background && <CosmeticBackground background={me.background} className="steam-bg" />}
 
       <div className="steam-wrap">
-        <div className="steam-inner">
-          <header className="steam-head">
-            <div className="steam-id">
-              <span className="steam-avatar hero-avatar-wrap">
-                {avatar ? (
-                  <img src={avatar} alt="" className="steam-avatar-img" />
-                ) : (
-                  <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={72} /></span>
-                )}
-                {me.icon && <IconOverlay icon={me.icon} />}
-              </span>
-              <div className="steam-id-text">
-                <div className="steam-name">
-                  {name}
-                  {me.premium && <PremiumPill />}
-                </div>
-                <div className="steam-handle">@{me.username}</div>
-              </div>
+        {/* header: avatar | identity | level column */}
+        <header className="steam-head">
+          <span className="steam-avatar hero-avatar-wrap">
+            {avatar ? (
+              <img src={avatar} alt="" className="steam-avatar-img" />
+            ) : (
+              <span className="steam-avatar-img avatar-fallback" aria-hidden="true"><PersonGlyph size={72} /></span>
+            )}
+            {me.icon && <IconOverlay icon={me.icon} />}
+          </span>
+
+          <div className="steam-id-text">
+            <div className="steam-name">
+              {name}
+              {me.premium && <span className="steam-premium">Premium</span>}
             </div>
-
-            <div className="steam-level-col">
-              <div className="steam-level-line">
-                Level <span className="steam-level-badge">{level}</span>
-              </div>
-              {me.level && (
-                <div className="steam-featured">
-                  <div className="steam-featured-title">{me.level.xp.toLocaleString()} XP</div>
-                  <div className="steam-featured-sub">{toNext?.toLocaleString()} XP to level {level + 1}</div>
-                </div>
-              )}
-              <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">Edit Profile</Link>
-            </div>
-          </header>
-
-          <div className="steam-body">
-            <main className="steam-main">
-              <section className="steam-showcase">
-                <h2 className="steam-showcase-title">About</h2>
-                {me.bio ? <p className="steam-bio">{me.bio}</p> : <p className="muted steam-bio">No bio yet.</p>}
-              </section>
-
-              {(favPoem || favStory) && (
-                <section className="steam-showcase">
-                  <h2 className="steam-showcase-title">Favorites</h2>
-                  <div className="steam-fav-list">
-                    {favPoem && (
-                      <Link to={`/poems`} className="steam-fav">
-                        <span className="steam-fav-kind">Poem</span>
-                        <span className="steam-fav-title">{favPoem.title}</span>
-                      </Link>
-                    )}
-                    {favStory && (
-                      <Link to={`/stories`} className="steam-fav">
-                        <span className="steam-fav-kind">Story</span>
-                        <span className="steam-fav-title">{favStory.title}</span>
-                      </Link>
-                    )}
-                  </div>
-                </section>
-              )}
-            </main>
-
-            <aside className="steam-side">
-              <div className="steam-panel">
-                <h2 className="steam-panel-title">Currently Online</h2>
-                <dl className="steam-stats">
-                  <div className="steam-stat"><dt>Level</dt><dd>{level}</dd></div>
-                  <div className="steam-stat"><dt>XP</dt><dd>{me.xp.toLocaleString()}</dd></div>
-                  <div className="steam-stat"><dt>Streak</dt><dd>{me.streak.current} day{me.streak.current === 1 ? '' : 's'}</dd></div>
-                  <div className="steam-stat"><dt>Zêr</dt><dd>{zer === null ? '—' : zer.toLocaleString()}</dd></div>
-                </dl>
-                <Link className="steam-stat steam-stat-link" to="/app/friends">
-                  <dt>Friends</dt>
-                  <dd>{friendCount === null ? '—' : friendCount}</dd>
-                </Link>
-              </div>
-            </aside>
+            <div className="steam-sub">@{me.username}</div>
           </div>
+
+          <div className="steam-level-col">
+            <div className="steam-level-line">Level <span className="steam-hex">{level}</span></div>
+            <div className="steam-featured">
+              <span className="steam-featured-badge">
+                {me.icon ? <img src={me.icon.url} alt="" /> : <PersonGlyph size={26} />}
+              </span>
+              <span className="steam-featured-text">
+                <span className="steam-featured-title">Level {level}</span>
+                <span className="steam-featured-sub">{xp.toLocaleString()} XP</span>
+              </span>
+            </div>
+            <Link to="/app/profile/edit" className="steam-edit">Edit Profile</Link>
+          </div>
+        </header>
+
+        {/* body: showcases | info sidebar */}
+        <div className="steam-body">
+          <main className="steam-main">
+            <div className="steam-showcase-block">
+              <div className="steam-showcase-label">About</div>
+              <div className="steam-showcase">
+                {me.bio ? <p className="steam-bio">{me.bio}</p> : <p className="steam-bio muted">No bio yet.</p>}
+              </div>
+            </div>
+
+            {favPoem && (
+              <div className="steam-showcase-block">
+                <div className="steam-showcase-label">Favorite Poem</div>
+                <div className="steam-showcase">
+                  <Link to="/poems" className="steam-fav">
+                    <span className="steam-fav-thumb" aria-hidden="true">✒️</span>
+                    <span className="steam-fav-meta"><span className="steam-fav-title">{favPoem.title}</span></span>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {favStory && (
+              <div className="steam-showcase-block">
+                <div className="steam-showcase-label">Favorite Story</div>
+                <div className="steam-showcase">
+                  <Link to="/stories" className="steam-fav">
+                    <span className="steam-fav-thumb" aria-hidden="true">📖</span>
+                    <span className="steam-fav-meta"><span className="steam-fav-title">{favStory.title}</span></span>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </main>
+
+          <aside className="steam-side">
+            <div className="steam-online">
+              <div className="steam-online-title">Currently Online</div>
+              <div className="steam-online-sub">@{me.username}</div>
+              <div className="steam-info-row"><span className="l">Level</span><span className="n">{level}</span></div>
+              <div className="steam-info-row"><span className="l">XP</span><span className="n">{xp.toLocaleString()}</span></div>
+              <div className="steam-info-row"><span className="l">Streak</span><span className="n">{me.streak.current}</span></div>
+              <div className="steam-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
+              <Link className="steam-info-row steam-info-link" to="/app/friends">
+                <span className="l">Friends</span><span className="n">{friendCount === null ? '—' : friendCount}</span>
+              </Link>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
