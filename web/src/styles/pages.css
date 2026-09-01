@@ -1452,13 +1452,19 @@ button.feature {
   }
 }
 
-/* ---- Steam-style full profile view ------------------------------------- */
-.steam {
+/* ---- Steam-style full profile view (full-bleed) ------------------------ */
+/* The equipped background bleeds edge-to-edge under the nav; content sits in a
+   centered column over it — like a Steam profile. Contained to this page only. */
+.steam-page {
   position: relative;
-  border-radius: var(--r-xl);
+  width: 100%;
+  margin-top: -40px; /* cancel .app-main top padding so the bg starts under the nav */
+  min-height: calc(100vh - var(--nav-h));
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: rgba(10, 12, 16, 0.55);
+}
+.steam-page:not(.steam-has-bg) {
+  margin-top: 0;
+  min-height: 0;
 }
 .steam-bg {
   position: absolute;
@@ -1466,21 +1472,26 @@ button.feature {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.55;
   z-index: 0;
 }
+/* keep the artwork vivid — only a soft darkening for text legibility */
 .steam-has-bg::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(6, 8, 12, 0.35), rgba(6, 8, 12, 0.78));
+  background: linear-gradient(180deg, rgba(6, 8, 12, 0.3) 0%, rgba(6, 8, 12, 0.12) 28%, rgba(6, 8, 12, 0.45) 100%);
   z-index: 0;
   pointer-events: none;
 }
-.steam-inner {
+.steam-wrap {
   position: relative;
   z-index: 1;
-  padding: clamp(20px, 4vw, 40px);
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 44px 24px 88px;
+}
+.steam-inner {
+  position: relative;
 }
 .steam-head {
   display: flex;
@@ -1515,12 +1526,13 @@ button.feature {
 }
 .steam-name {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 .steam-name .pcard-premium {
   margin-left: 0;
