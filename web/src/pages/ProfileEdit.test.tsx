@@ -26,6 +26,10 @@ const meUser = {
 
 function editFetch(calls: Array<{ url: string; body: unknown }>, user: unknown = meUser) {
   return vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.includes('/me/profile-picture')) {
+      calls.push({ url: `${init?.method ?? 'GET'} /me/profile-picture`, body: null });
+      return jsonResponse(200, { ok: true });
+    }
     if (url.includes('/me/cosmetics/avatar')) {
       calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null });
       return jsonResponse(200, { avatarKey: null });
@@ -64,7 +68,7 @@ describe('Edit Profile page', () => {
 
     const tile = await screen.findByRole('radio', { name: 'Avatar default-01' });
     await userEvent.click(tile);
-    expect(await screen.findByText('Avatar updated.')).toBeInTheDocument();
+    expect(await screen.findByText('Profile picture updated.')).toBeInTheDocument();
     expect(calls.find((c) => c.url.includes('/me/cosmetics/avatar'))?.body).toEqual({ key: 'default-01' });
   });
 
@@ -78,6 +82,19 @@ describe('Edit Profile page', () => {
     await userEvent.click(locked);
     expect(await screen.findByText(/Premium feature/i)).toBeInTheDocument();
     expect(calls.some((c) => c.url.includes('/me/cosmetics/avatar'))).toBe(false);
+  });
+
+  it('removes the uploaded photo when selecting a default avatar (so the change takes effect)', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', editFetch(calls, { ...meUser, profilePhotoUrl: 'https://cdn.test/p.webp' }));
+    renderApp(<ProfileEdit />, ['/app/profile/edit']);
+
+    const tile = await screen.findByRole('radio', { name: 'Avatar default-01' });
+    await userEvent.click(tile);
+    expect(await screen.findByText('Profile picture updated.')).toBeInTheDocument();
+    // it deletes the uploaded photo first, then sets the avatar
+    expect(calls.some((c) => c.url === 'DELETE /me/profile-picture')).toBe(true);
+    expect(calls.find((c) => c.url.includes('/me/cosmetics/avatar'))?.body).toEqual({ key: 'default-01' });
   });
 
   it('shows a Remove button when a custom photo is set', async () => {

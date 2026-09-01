@@ -1575,8 +1575,11 @@ button.feature {
   align-items: center;
   width: 100%;
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 2px;
+  background: rgba(20, 24, 32, 0.34);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
 }
 .steam-featured-badge {
   width: 44px;
@@ -1640,10 +1643,13 @@ button.feature {
   margin: 0 0 6px 2px;
 }
 .steam-showcase {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
+  background: rgba(20, 24, 32, 0.34);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
   padding: 16px 18px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
 }
 .steam-bio {
   margin: 0;
@@ -1679,15 +1685,89 @@ button.feature {
 
 /* right info sidebar */
 .steam-online {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 2px;
+  background: rgba(20, 24, 32, 0.34);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
   padding: 14px 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
 }
 .steam-online-title {
   color: var(--teal, #66c0de);
   font-size: 1.15rem;
   font-weight: 400;
   margin-bottom: 2px;
+}
+.steam-online-title.is-offline {
+  color: var(--ink-3);
+}
+
+/* label + count with a thumbnail stack below (Steam "Badges 25" style) */
+.steam-collection {
+  display: block;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+.steam-collection-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.steam-collection-head .l {
+  color: var(--ink-2);
+}
+.steam-collection-head .n {
+  color: var(--ink-3);
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+}
+.steam-collection-link:hover .n {
+  color: var(--gold-ink);
+}
+
+/* overlapping thumbnail stack + "+N" chip */
+.avatar-stack {
+  display: flex;
+  align-items: center;
+}
+.avatar-stack-item {
+  width: 34px;
+  height: 34px;
+  margin-left: -8px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid rgba(20, 24, 32, 0.9);
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+.avatar-stack-item:first-child {
+  margin-left: 0;
+}
+.avatar-stack-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-stack-square .avatar-stack-item {
+  border-radius: 6px;
+}
+.avatar-stack-square .avatar-stack-item img {
+  object-fit: contain;
+  padding: 3px;
+}
+.avatar-stack-more {
+  margin-left: 8px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
 }
 .steam-online-sub {
   color: var(--ink-4);
