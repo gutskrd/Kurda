@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { InventoryItem, MeProfile, UserSummary, WalletBalances } from '../lib/types';
-import { SteamProfile, type SteamProfileView } from '../profile/SteamProfile';
+import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { Loading, ErrorState } from '../components/states';
 
 /**
- * The signed-in user's own full profile — a read-only, Steam-style showcase. All
+ * The signed-in user's own full profile — a read-only, MyKurda showcase. All
  * editing lives on /app/profile/edit (reached from the Edit Profile button). The
  * sidebar adds private-to-you rows: Zêr, an owned-icon stack, and a friend stack.
  */
@@ -50,7 +50,7 @@ export function Profile(): React.JSX.Element {
   if (loading) return <Loading label="Loading profile…" />;
   if (error || !me) return <ErrorState title="Couldn’t load your profile" message={error ?? 'Unavailable.'} onRetry={() => setReloadKey((n) => n + 1)} />;
 
-  const view: SteamProfileView = {
+  const view: FullProfileView = {
     name: me.displayName || me.username,
     username: me.username,
     avatarUrl: me.avatarUrl ?? me.profilePhotoUrl,
@@ -68,22 +68,22 @@ export function Profile(): React.JSX.Element {
   };
 
   return (
-    <SteamProfile
+    <FullProfile
       view={view}
-      headerAction={<Link to="/app/profile/edit" className="steam-edit">Edit Profile</Link>}
+      headerAction={<Link to="/app/profile/edit" className="mkp-edit">Edit Profile</Link>}
       sidebarExtra={
         <>
-          <div className="steam-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
+          <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
 
           {icons.length > 0 && (
-            <div className="steam-collection">
-              <div className="steam-collection-head"><span className="l">Icons</span><span className="n">{icons.length}</span></div>
+            <div className="mkp-collection">
+              <div className="mkp-collection-head"><span className="l">Icons</span><span className="n">{icons.length}</span></div>
               <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
             </div>
           )}
 
-          <Link className="steam-collection steam-collection-link" to="/app/friends">
-            <div className="steam-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
+          <Link className="mkp-collection mkp-collection-link" to="/app/friends">
+            <div className="mkp-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
             {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
           </Link>
         </>

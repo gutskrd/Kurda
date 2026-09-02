@@ -3,12 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FriendStatus, PublicProfile } from '../lib/types';
-import { SteamProfile, type SteamProfileView } from '../profile/SteamProfile';
+import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 
-/** Another user's full Steam-style profile (/app/users/:id), privacy-gated. */
+/** Another user's full MyKurda profile (/app/users/:id), privacy-gated. */
 export function UserProfile(): React.JSX.Element {
   const { id = '' } = useParams();
   const { client } = useAuth();
@@ -51,7 +51,7 @@ export function UserProfile(): React.JSX.Element {
     );
   }
 
-  const view: SteamProfileView = {
+  const view: FullProfileView = {
     name,
     username: profile.username,
     avatarUrl: profile.avatarUrl ?? profile.profilePhotoUrl,
@@ -69,14 +69,14 @@ export function UserProfile(): React.JSX.Element {
   };
 
   return (
-    <SteamProfile
+    <FullProfile
       view={view}
       headerAction={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
       sidebarExtra={
         <>
-          {profile.tier && <div className="steam-info-row"><span className="l">League</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
-          {profile.rating !== undefined && <div className="steam-info-row"><span className="l">Rating</span><span className="n">{profile.rating}</span></div>}
-          {profile.achievements !== undefined && <div className="steam-info-row"><span className="l">Achievements</span><span className="n">{profile.achievements}</span></div>}
+          {profile.tier && <div className="mkp-info-row"><span className="l">League</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
+          {profile.rating !== undefined && <div className="mkp-info-row"><span className="l">Rating</span><span className="n">{profile.rating}</span></div>}
+          {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">Achievements</span><span className="n">{profile.achievements}</span></div>}
         </>
       }
     />
@@ -110,8 +110,8 @@ function FriendActions({ userId, username, status }: { userId: string; username:
   );
 
   return (
-    <div className="steam-actions">
-      {state === 'self' && <Link to="/app/profile" className="steam-edit">Your profile</Link>}
+    <div className="mkp-actions">
+      {state === 'self' && <Link to="/app/profile" className="mkp-edit">Your profile</Link>}
       {state === 'friends' && message}
       {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? 'Sending…' : 'Add friend'}</Button>}
       {state === 'pending_out' && <Button size="sm" disabled>Request sent</Button>}

@@ -1,7 +1,7 @@
 import { PersonGlyph } from './icons';
 
 /**
- * A Steam-style stack of up to 3 overlapping thumbnails with a "+N" chip for the
+ * A MyKurda stack of up to 3 overlapping thumbnails with a "+N" chip for the
  * rest (e.g. the 3 most recent friends, then +N). Purely presentational — the
  * caller passes already-resolved image URLs and the true total count.
  */

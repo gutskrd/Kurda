@@ -515,6 +515,7 @@
 
 /* large full photo area at the top of the profile card (reference look) */
 .pcard-photo {
+  position: relative;
   width: 100%;
   height: 200px;
   border-radius: var(--r-lg);
@@ -523,6 +524,14 @@
   place-items: center;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
+}
+/* soft fade at the bottom of the image so it melts into the card */
+.pcard-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 45%, rgba(14, 16, 22, 0.85));
+  pointer-events: none;
 }
 .pcard-photo-img {
   width: 100%;
@@ -1453,19 +1462,19 @@ button.feature {
 }
 
 
-/* ---- Steam-style full profile (full-bleed, faithful layout) ------------ */
-.steam-page {
+/* ---- MyKurda full profile (full-bleed) ------------ */
+.mkp-page {
   position: relative;
   width: 100%;
   margin-top: -40px; /* start the bg under the nav (cancels .app-main top pad) */
   min-height: calc(100vh - var(--nav-h));
   overflow: hidden;
 }
-.steam-page:not(.steam-has-bg) {
+.mkp-page:not(.mkp-has-bg) {
   margin-top: 0;
   min-height: 0;
 }
-.steam-bg {
+.mkp-bg {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1473,7 +1482,7 @@ button.feature {
   object-fit: cover;
   z-index: 0;
 }
-.steam-page::after {
+.mkp-page::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -1481,7 +1490,7 @@ button.feature {
   z-index: 0;
   pointer-events: none;
 }
-.steam-wrap {
+.mkp-wrap {
   position: relative;
   z-index: 1;
   max-width: 940px;
@@ -1490,16 +1499,16 @@ button.feature {
 }
 
 /* header */
-.steam-head {
+.mkp-head {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 22px;
   align-items: start;
 }
-.steam-avatar {
+.mkp-avatar {
   line-height: 0;
 }
-.steam-avatar-img {
+.mkp-avatar-img {
   width: 120px;
   height: 120px;
   object-fit: cover;
@@ -1507,17 +1516,17 @@ button.feature {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.5);
   display: block;
 }
-.steam-avatar-img.avatar-fallback {
+.mkp-avatar-img.avatar-fallback {
   display: grid;
   place-items: center;
   background: var(--surface-2);
   color: var(--ink-2);
 }
-.steam-id-text {
+.mkp-id-text {
   padding-top: 6px;
   min-width: 0;
 }
-.steam-name {
+.mkp-name {
   font-family: var(--font-display);
   font-size: 1.7rem;
   font-weight: 500;
@@ -1527,7 +1536,7 @@ button.feature {
   flex-wrap: wrap;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
-.steam-premium {
+.mkp-premium {
   padding: 2px 8px;
   border-radius: var(--r-pill);
   border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
@@ -1538,12 +1547,12 @@ button.feature {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.steam-sub {
+.mkp-sub {
   color: var(--ink-3);
   margin-top: 3px;
   font-size: 0.9rem;
 }
-.steam-country {
+.mkp-country {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -1551,47 +1560,48 @@ button.feature {
   color: var(--ink-2);
   font-size: 0.85rem;
 }
-.steam-country .flag {
+.mkp-country .flag {
   display: block;
   border-radius: 2px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
 }
-.steam-actions {
+.mkp-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   width: 100%;
 }
-.steam-actions .btn {
+.mkp-actions .btn {
   flex: 1 1 auto;
 }
-.steam-level-col {
+.mkp-level-col {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
   min-width: 210px;
 }
-.steam-level-line {
+.mkp-level-line {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 1.25rem;
   color: var(--ink-2);
 }
-.steam-hex {
-  width: 40px;
-  height: 44px;
+.mkp-hex {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--gold-ink);
-  background: linear-gradient(var(--app-bg), var(--app-bg)) padding-box, var(--gold) border-box;
-  border: 2px solid transparent;
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: rgba(20, 24, 32, 0.5);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 3px rgba(240, 194, 74, 0.12);
 }
-.steam-featured {
+.mkp-featured {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -1603,7 +1613,7 @@ button.feature {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
 }
-.steam-featured-badge {
+.mkp-featured-badge {
   width: 44px;
   height: 44px;
   flex: none;
@@ -1613,24 +1623,24 @@ button.feature {
   border-radius: 3px;
   color: var(--ink-2);
 }
-.steam-featured-badge img {
+.mkp-featured-badge img {
   width: 34px;
   height: 34px;
   object-fit: contain;
 }
-.steam-featured-text {
+.mkp-featured-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
-.steam-featured-title {
+.mkp-featured-title {
   font-size: 0.9rem;
 }
-.steam-featured-sub {
+.mkp-featured-sub {
   color: var(--ink-3);
   font-size: 0.8rem;
 }
-.steam-edit {
+.mkp-edit {
   align-self: stretch;
   text-align: center;
   padding: 7px 14px;
@@ -1642,29 +1652,29 @@ button.feature {
   font-size: 0.82rem;
   font-weight: 600;
 }
-.steam-edit:hover {
+.mkp-edit:hover {
   background: rgba(255, 255, 255, 0.16);
 }
 
 /* body */
-.steam-body {
+.mkp-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 230px;
   gap: 20px;
   margin-top: 26px;
 }
-.steam-main {
+.mkp-main {
   display: flex;
   flex-direction: column;
   gap: 18px;
   min-width: 0;
 }
-.steam-showcase-label {
+.mkp-showcase-label {
   font-size: 0.95rem;
   color: var(--ink);
   margin: 0 0 6px 2px;
 }
-.steam-showcase {
+.mkp-showcase {
   background: rgba(20, 24, 32, 0.34);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
@@ -1673,21 +1683,21 @@ button.feature {
   padding: 16px 18px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
 }
-.steam-bio {
+.mkp-bio {
   margin: 0;
   color: var(--ink-2);
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.steam-fav {
+.mkp-fav {
   display: flex;
   gap: 14px;
   align-items: center;
   text-decoration: none;
   color: var(--ink);
 }
-.steam-fav-thumb {
+.mkp-fav-thumb {
   width: 64px;
   height: 64px;
   flex: none;
@@ -1697,16 +1707,16 @@ button.feature {
   border-radius: 2px;
   font-size: 1.5rem;
 }
-.steam-fav-meta {
+.mkp-fav-meta {
   flex: 1;
   min-width: 0;
 }
-.steam-fav-title {
+.mkp-fav-title {
   font-weight: 600;
 }
 
 /* right info sidebar */
-.steam-online {
+.mkp-online {
   background: rgba(20, 24, 32, 0.34);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
@@ -1715,18 +1725,18 @@ button.feature {
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
 }
-.steam-online-title {
+.mkp-online-title {
   color: var(--teal, #66c0de);
   font-size: 1.15rem;
   font-weight: 400;
   margin-bottom: 2px;
 }
-.steam-online-title.is-offline {
+.mkp-online-title.is-offline {
   color: var(--ink-3);
 }
 
-/* label + count with a thumbnail stack below (Steam "Badges 25" style) */
-.steam-collection {
+/* label + count with a thumbnail stack below (count + thumbnail stack) */
+.mkp-collection {
   display: block;
   padding: 10px 0 4px;
   border-top: 1px solid var(--border);
@@ -1734,23 +1744,23 @@ button.feature {
   text-decoration: none;
   color: inherit;
 }
-.steam-collection-head {
+.mkp-collection-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
   margin-bottom: 8px;
 }
-.steam-collection-head .l {
+.mkp-collection-head .l {
   color: var(--ink-2);
 }
-.steam-collection-head .n {
+.mkp-collection-head .n {
   color: var(--ink-3);
   font-size: 1.5rem;
   font-weight: 300;
   line-height: 1;
 }
-.steam-collection-link:hover .n {
+.mkp-collection-link:hover .n {
   color: var(--gold-ink);
 }
 
@@ -1791,12 +1801,12 @@ button.feature {
   font-size: 0.85rem;
   color: var(--ink-3);
 }
-.steam-online-sub {
+.mkp-online-sub {
   color: var(--ink-4);
   font-size: 0.8rem;
   margin-bottom: 14px;
 }
-.steam-info-row {
+.mkp-info-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -1804,16 +1814,16 @@ button.feature {
   padding: 7px 0;
   text-decoration: none;
 }
-.steam-info-row .l {
+.mkp-info-row .l {
   color: var(--ink-2);
 }
-.steam-info-row .n {
+.mkp-info-row .n {
   color: var(--ink-3);
   font-size: 1.5rem;
   font-weight: 300;
   line-height: 1;
 }
-.steam-info-link:hover .n {
+.mkp-info-link:hover .n {
   color: var(--gold-ink);
 }
 
@@ -1838,15 +1848,15 @@ button.feature {
 }
 
 @media (max-width: 760px) {
-  .steam-head {
+  .mkp-head {
     grid-template-columns: auto 1fr;
   }
-  .steam-level-col {
+  .mkp-level-col {
     grid-column: 1 / -1;
     align-items: stretch;
     min-width: 0;
   }
-  .steam-body {
+  .mkp-body {
     grid-template-columns: 1fr;
   }
 }
