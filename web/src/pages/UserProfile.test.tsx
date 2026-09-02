@@ -44,11 +44,15 @@ describe('UserProfile (other user, full Steam page)', () => {
         premium: true,
         favoritePoem: { id: 'p1', title: 'River Song' },
         tier: 'silver',
+        country: 'DE',
       },
       calls,
     );
 
     expect(await screen.findByText('Zana K')).toBeInTheDocument();
+    // country: real flag image + name under the username
+    expect(screen.getByText('Germany')).toBeInTheDocument();
+    expect((document.querySelector('.steam-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
     expect(document.querySelector('.steam-hex')?.textContent).toBe('5');
     expect((document.querySelector('.steam-bg') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();

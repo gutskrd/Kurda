@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { InventoryItem, MeProfile, UserSummary, WalletBalances } from '../lib/types';
 import { SteamProfile, type SteamProfileView } from '../profile/SteamProfile';
+import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { Loading, ErrorState } from '../components/states';
 
@@ -63,6 +64,7 @@ export function Profile(): React.JSX.Element {
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
     online: true, // viewing your own profile → you're online
+    country: me.country ? { code: me.country, name: countryName(me.country) ?? me.country } : null,
   };
 
   return (

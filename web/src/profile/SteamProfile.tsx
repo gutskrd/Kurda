@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { FavoriteRef, ProfileBackground, ProfileIcon } from '../lib/types';
+import { flagUrl } from '../lib/countries';
 import { CosmeticBackground, IconOverlay } from './cosmetic-parts';
 import { PersonGlyph } from '../components/icons';
 
@@ -21,13 +22,6 @@ export interface SteamProfileView {
   country?: { code: string; name: string } | null;
 }
 
-/** flag emoji from an ISO-3166 alpha-2 code (e.g. "DE" → 🇩🇪). */
-function flagEmoji(code: string): string {
-  const cc = code.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(cc)) return '';
-  return String.fromCodePoint(...[...cc].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
-}
-
 /**
  * Full-bleed, Steam-style profile shell used by both the signed-in user's page
  * and other users' pages. Renders the background, header (avatar + identity +
@@ -45,7 +39,6 @@ export function SteamProfile({
   sidebarExtra?: React.ReactNode;
 }): React.JSX.Element {
   const online = view.online ?? false;
-  const flag = view.country ? flagEmoji(view.country.code) : '';
   return (
     <div className={`steam-page${view.background ? ' steam-has-bg' : ''}`}>
       {view.background && <CosmeticBackground background={view.background} className="steam-bg" />}
@@ -69,7 +62,7 @@ export function SteamProfile({
             <div className="steam-sub">@{view.username}</div>
             {view.country && (
               <div className="steam-country">
-                <span className="flag" aria-hidden="true">{flag}</span>
+                <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
                 <span>{view.country.name}</span>
               </div>
             )}

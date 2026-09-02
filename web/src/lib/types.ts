@@ -102,6 +102,8 @@ export interface ProfileCosmetics {
   online?: boolean;
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
+  /** ISO-3166 alpha-2 country code (e.g. "DE"), shown as a flag + name */
+  country?: string | null;
 }
 
 /** The signed-in user's full profile (GET /me). */

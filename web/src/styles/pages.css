@@ -1552,8 +1552,9 @@ button.feature {
   font-size: 0.85rem;
 }
 .steam-country .flag {
-  font-size: 1.1rem;
-  line-height: 1;
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
 }
 .steam-actions {
   display: flex;

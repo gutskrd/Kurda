@@ -45,7 +45,10 @@ function editFetch(calls: Array<{ url: string; body: unknown }>, user: unknown =
     if (url.includes('/me/inventory')) return jsonResponse(200, { items: [] });
     if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0, gems: 0 } });
     if (url.includes('/shop')) return jsonResponse(200, { items: [] });
-    if (url.includes('/me')) return jsonResponse(200, { user });
+    if (url.includes('/me')) {
+      if (init?.method === 'PATCH') calls.push({ url: 'PATCH /me', body: init.body ? JSON.parse(init.body as string) : null });
+      return jsonResponse(200, { user });
+    }
     return jsonResponse(200, {});
   });
 }
@@ -95,6 +98,18 @@ describe('Edit Profile page', () => {
     // it deletes the uploaded photo first, then sets the avatar
     expect(calls.some((c) => c.url === 'DELETE /me/profile-picture')).toBe(true);
     expect(calls.find((c) => c.url.includes('/me/cosmetics/avatar'))?.body).toEqual({ key: 'default-01' });
+  });
+
+  it('saves a selected country via PATCH /me', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', editFetch(calls));
+    renderApp(<ProfileEdit />, ['/app/profile/edit']);
+
+    const select = await screen.findByLabelText('Country');
+    await userEvent.selectOptions(select, 'DE');
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    expect(await screen.findByText('Profile updated.')).toBeInTheDocument();
+    expect(calls.find((c) => c.url === 'PATCH /me')?.body).toMatchObject({ country: 'DE' });
   });
 
   it('shows a Remove button when a custom photo is set', async () => {

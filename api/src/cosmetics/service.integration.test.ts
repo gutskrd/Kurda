@@ -142,6 +142,17 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     expect(bgItem).toMatchObject({ category: 'background', assetUrl: '/cosmetics/backgrounds/o.png' });
   });
 
+  it('country round-trips through PATCH /me → profile DTO', async () => {
+    const patch = await app.inject({ method: 'PATCH', url: '/me', headers: { authorization: `Bearer ${tokenA}` }, payload: { country: 'de' } });
+    expect(patch.statusCode).toBe(200);
+    const res = await app.inject({ method: 'GET', url: `/users/${userA}`, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(res.json().country).toBe('DE'); // stored uppercased
+    // clearing works too
+    await app.inject({ method: 'PATCH', url: '/me', headers: { authorization: `Bearer ${tokenA}` }, payload: { country: '' } });
+    const cleared = await app.inject({ method: 'GET', url: `/users/${userA}`, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(cleared.json().country).toBeNull();
+  });
+
   it('icon visibility toggle hides/shows the equipped icon in the profile DTO', async () => {
     await cosmetics.equipIcon(userA, sku.icon); // userA owns sku.icon
     await cosmetics.setIconVisibility(userA, false);

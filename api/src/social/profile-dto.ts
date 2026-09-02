@@ -25,6 +25,7 @@ export interface PublicProfileDto {
    *  clients should prefer `avatarUrl`, which also resolves the default avatar. */
   profilePhotoUrl: string | null;
   avatarUrl: string | null;
+  country: string | null;
   background: ResolvedBackground | null;
   icon: ResolvedIcon | null;
   premium: boolean;
@@ -72,6 +73,7 @@ export function toPublicProfileDto(
     bio: profile.bio,
     profilePhotoUrl: profile.profilePhotoKey ? publicUrl(profile.profilePhotoKey) : null,
     avatarUrl: cosmetics.avatarUrl,
+    country: profile.country ?? null,
     background: cosmetics.background,
     icon: cosmetics.icon,
     premium: cosmetics.premium,
