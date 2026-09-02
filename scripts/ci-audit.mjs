@@ -22,6 +22,14 @@ const ALLOWLIST = {
   // downgrading Expo. REMOVE once a metro/Expo release ships a patched image-size.
   'GHSA-w3rx-r6r6-pgpr': 'image-size ICNS DoS — build-only (metro); no runtime exposure; awaiting patched Expo/metro',
   'GHSA-5p2g-fcmc-qvqq': 'image-size JXL/HEIF DoS — build-only (metro); no runtime exposure; awaiting patched Expo/metro',
+  // browserslist is a BUILD-TIME dep (autoprefixer / vite target resolution). Both
+  // advisories require untrusted input we never feed it — a custom browserslist-stats.json
+  // (we don't use one) or pathological distinct-query volume at build — and nothing
+  // browserslist touches is shipped or reachable in the app runtime. A deep transitive
+  // pin isn't cleanly overridable here without churning the monorepo lock; REMOVE once
+  // the dependency tree resolves browserslist > 4.28.6 on its own.
+  'GHSA-c83g-rgw3-j3cx': 'browserslist unbounded memory growth — build-only (autoprefixer/vite); no runtime exposure',
+  'GHSA-73wf-gq98-2v4g': 'browserslist crash via untrusted custom stats — build-only; we never pass custom stats; no runtime exposure',
 };
 
 function auditJson() {
