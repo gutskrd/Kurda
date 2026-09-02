@@ -4,8 +4,9 @@ import { TopNav, type NavItem } from '../components/TopNav';
 const LINKS: NavItem[] = [
   { label: 'Home', to: '/app' },
   { label: 'Learn', to: '/app/learn' },
-  { label: 'Stories', to: '/stories' },
-  { label: 'Poems', to: '/poems' },
+  { label: 'Stories', to: '/app/stories' },
+  { label: 'Poems', to: '/app/poems' },
+  { label: 'Games', to: '/app/games' },
   { label: 'Rankings', to: '/app/rankings' },
   { label: 'Friends', to: '/app/friends' },
   { label: 'Messages', to: '/app/messages' },

@@ -77,6 +77,9 @@ export function App(): React.JSX.Element {
           >
             <Route index element={<Home />} />
             <Route path="learn" element={<Learn />} />
+            <Route path="stories" element={<Stories />} />
+            <Route path="poems" element={<Poems />} />
+            <Route path="games" element={<Games />} />
             <Route path="rankings" element={<Rankings />} />
             <Route path="friends" element={<Friends />} />
             <Route path="messages" element={<Messages />} />

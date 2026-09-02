@@ -27,7 +27,7 @@ function render(user: unknown, calls?: Array<{ url: string; body: unknown }>) {
   renderApp(<Routes><Route path="/app/users/:id" element={<UserProfile />} /></Routes>, ['/app/users/u2']);
 }
 
-describe('UserProfile (other user, full Steam page)', () => {
+describe('UserProfile (other user, full page)', () => {
   it('renders another user’s public profile with a friend action', async () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     render(
@@ -52,9 +52,9 @@ describe('UserProfile (other user, full Steam page)', () => {
     expect(await screen.findByText('Zana K')).toBeInTheDocument();
     // country: real flag image + name under the username
     expect(screen.getByText('Germany')).toBeInTheDocument();
-    expect((document.querySelector('.steam-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
-    expect(document.querySelector('.steam-hex')?.textContent).toBe('5');
-    expect((document.querySelector('.steam-bg') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
+    expect((document.querySelector('.mkp-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
+    expect(document.querySelector('.mkp-hex')?.textContent).toBe('5');
+    expect((document.querySelector('.mkp-bg') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // no self-only Edit Profile button; a friend action instead
     expect(screen.queryByRole('link', { name: /edit profile/i })).not.toBeInTheDocument();
@@ -67,6 +67,6 @@ describe('UserProfile (other user, full Steam page)', () => {
     expect(await screen.findByText('Ghost')).toBeInTheDocument();
     expect(screen.getByText(/private/i)).toBeInTheDocument();
     // full showcase is not rendered
-    expect(document.querySelector('.steam-showcase')).toBeNull();
+    expect(document.querySelector('.mkp-showcase')).toBeNull();
   });
 });

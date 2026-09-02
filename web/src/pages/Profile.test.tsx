@@ -23,7 +23,7 @@ const meUser = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
-describe('Profile view (Steam-style, read-only)', () => {
+describe('Profile view (full, read-only)', () => {
   it('renders identity, stats and an Edit Profile link — no edit controls', async () => {
     vi.stubGlobal(
       'fetch',
@@ -38,8 +38,8 @@ describe('Profile view (Steam-style, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-    expect(document.querySelector('.steam-sub')?.textContent).toBe('@ada');
-    expect(screen.getByText('Learning Kurdish.', { selector: 'p.steam-bio' })).toBeInTheDocument();
+    expect(document.querySelector('.mkp-sub')?.textContent).toBe('@ada');
+    expect(screen.getByText('Learning Kurdish.', { selector: 'p.mkp-bio' })).toBeInTheDocument();
     expect(screen.getByText('3,200')).toBeInTheDocument(); // XP in the info panel
     expect(screen.getByText('450')).toBeInTheDocument(); // Zêr
     expect(screen.getByText('2')).toBeInTheDocument(); // friend count
@@ -74,13 +74,13 @@ describe('Profile view (Steam-style, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     await screen.findByText('Ada Lovelace');
-    const bg = document.querySelector('.steam-bg') as HTMLImageElement | null;
+    const bg = document.querySelector('.mkp-bg') as HTMLImageElement | null;
     expect(bg?.src).toContain('/cosmetics/backgrounds/b.webp');
-    const avatar = document.querySelector('.steam-avatar-img') as HTMLImageElement | null;
+    const avatar = document.querySelector('.mkp-avatar-img') as HTMLImageElement | null;
     expect(avatar?.src).toBe('https://cdn.test/a.png');
     expect(screen.getByText('Premium')).toBeInTheDocument();
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // level hexagon shows 3
-    expect(document.querySelector('.steam-hex')?.textContent).toBe('3');
+    expect(document.querySelector('.mkp-hex')?.textContent).toBe('3');
   });
 });
