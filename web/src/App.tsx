@@ -22,6 +22,7 @@ import { Messages } from './pages/Messages';
 import { Shop } from './pages/Shop';
 import { NotFound } from './pages/NotFound';
 import { ProfileModalProvider } from './profile/ProfileModal';
+import { RealtimeProvider } from './realtime/RealtimeProvider';
 
 /** Keep signed-in users out of the sign-in / sign-up pages. */
 function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -33,6 +34,7 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JS
 export function App(): React.JSX.Element {
   return (
     <AuthProvider>
+      <RealtimeProvider>
       <BrowserRouter>
         <ProfileModalProvider>
         <Routes>
@@ -92,6 +94,7 @@ export function App(): React.JSX.Element {
         </Routes>
         </ProfileModalProvider>
       </BrowserRouter>
+      </RealtimeProvider>
     </AuthProvider>
   );
 }
