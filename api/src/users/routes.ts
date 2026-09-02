@@ -68,6 +68,8 @@ export const patchMeBodySchema = z
     username: z.string().min(3).max(30).optional(),
     /** deny mic → speaking exercises skipped course-wide (KUR-036) */
     skipSpeaking: z.boolean().optional(),
+    /** ISO-3166 alpha-2 country, or '' to clear */
+    country: z.string().regex(/^[A-Za-z]{2}$/).or(z.literal('')).optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'no fields to update' });
 
@@ -94,6 +96,7 @@ interface MeRow {
   equipped_icon_sku: string | null;
   premium_icon_enabled: boolean;
   premium_until: Date | null;
+  country: string | null;
   created_at: Date;
 }
 
@@ -167,6 +170,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         favoriteStory: publicDto.favoriteStory,
         // self-only equip state, for the cosmetic pickers (not exposed publicly)
         premiumIconEnabled: row.premium_icon_enabled,
+        country: row.country,
         selectedAvatarKey: row.selected_avatar_key,
         equippedBackgroundSku: row.equipped_background_sku,
         equippedIconSku: row.equipped_icon_sku,
@@ -371,6 +375,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       if (body.bio !== undefined) add('bio', sanitizeBio(body.bio));
       if (body.locale !== undefined) add('locale', body.locale);
       if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);
+      if (body.country !== undefined) add('country', body.country === '' ? null : body.country.toUpperCase());
 
       if (body.timezone !== undefined) {
         const cur = await app.db.query<{ timezone: string; timezone_changed_at: Date | null }>(

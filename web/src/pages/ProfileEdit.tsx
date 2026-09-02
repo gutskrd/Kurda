@@ -5,6 +5,7 @@ import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import type { AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
+import { COUNTRIES } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { Loading, ErrorState } from '../components/states';
@@ -136,18 +137,20 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
   const { client } = useAuth();
   const [displayName, setDisplayName] = useState(me.displayName ?? '');
   const [bio, setBio] = useState(me.bio ?? '');
+  const [country, setCountry] = useState(me.country ?? '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
-  const dirty = displayName.trim() !== (me.displayName ?? '') || bio !== (me.bio ?? '');
+  const dirty = displayName.trim() !== (me.displayName ?? '') || bio !== (me.bio ?? '') || country !== (me.country ?? '');
 
   async function save(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const body: { displayName?: string; bio?: string } = {};
+    const body: { displayName?: string; bio?: string; country?: string } = {};
     if (displayName.trim() !== (me.displayName ?? '')) body.displayName = displayName.trim();
     if (bio !== (me.bio ?? '')) body.bio = bio;
+    if (country !== (me.country ?? '')) body.country = country; // '' clears it
     const res = await client.patch('/me', body);
     setBusy(false);
     if (res.ok) {
@@ -170,6 +173,13 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
         <label className="field-label" htmlFor="bio">Bio</label>
         <textarea id="bio" className="input" style={{ height: 96, padding: '10px 14px', resize: 'vertical' }} value={bio} maxLength={1000} onChange={(e) => setBio(e.target.value)} placeholder="Tell others a little about you…" />
         <span className="field-hint">{bio.length}/1000</span>
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="country">Country</label>
+        <select id="country" className="input" value={country} onChange={(e) => setCountry(e.target.value)}>
+          <option value="">— None —</option>
+          {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+        </select>
       </div>
       <Button type="submit" disabled={busy || !dirty}>{busy ? 'Saving…' : 'Save changes'}</Button>
     </form>
