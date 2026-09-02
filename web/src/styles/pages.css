@@ -260,6 +260,9 @@
   gap: 8px;
   margin-bottom: 22px;
 }
+.toolbar-end {
+  margin-left: auto;
+}
 .chip {
   height: 36px;
   padding: 0 15px;
