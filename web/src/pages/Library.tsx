@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useApiGet } from '../lib/useApi';
+import { useAuth } from '../auth/AuthProvider';
+import { describeError } from '../lib/api';
 import { Loading, ErrorState, EmptyState } from '../components/states';
+import { Modal } from '../components/Modal';
+import { Button } from '../components/Button';
 import type { LibraryPost } from '../lib/types';
 
 type Sort = 'newest' | 'popular';
@@ -26,12 +30,15 @@ export function Library({
   eyebrow: string;
   intro: string;
 }): React.JSX.Element {
+  const { status } = useAuth();
   const [sort, setSort] = useState<Sort>('newest');
+  const [composing, setComposing] = useState(false);
   const { data, error, loading, reload } = useApiGet<{ posts: LibraryPost[] }>(
     `/library/posts?type=${type}&sort=${sort}&limit=40`,
   );
 
   const posts = data?.posts ?? [];
+  const kind = type === 'story' ? 'story' : 'poem';
 
   return (
     <div className="container">
@@ -48,7 +55,16 @@ export function Library({
         <button className={`chip${sort === 'popular' ? ' active' : ''}`} onClick={() => setSort('popular')}>
           Most read
         </button>
+        {status === 'signedIn' && (
+          <Button size="sm" className="toolbar-end" onClick={() => setComposing(true)}>
+            Write a {kind}
+          </Button>
+        )}
       </div>
+
+      <Modal open={composing} onClose={() => setComposing(false)} label={`Write a ${kind}`}>
+        <ComposeForm type={type} onDone={() => { setComposing(false); reload(); }} />
+      </Modal>
 
       {loading ? (
         <Loading />
@@ -75,6 +91,44 @@ export function Library({
         </div>
       )}
     </div>
+  );
+}
+
+/** Compose + publish a new story or poem. */
+function ComposeForm({ type, onDone }: { type: 'story' | 'poem'; onDone: () => void }): React.JSX.Element {
+  const { client } = useAuth();
+  const kind = type === 'story' ? 'story' : 'poem';
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!title.trim() || !body.trim()) return;
+    setBusy(true);
+    setErr(null);
+    const res = await client.post('/library/posts', { type, title: title.trim(), body: body.trim(), publish: true });
+    setBusy(false);
+    if (res.ok) onDone();
+    else setErr(describeError(res.error));
+  }
+
+  return (
+    <form className="compose" onSubmit={submit}>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>Write a {kind}</h2>
+      {err && <div className="msg msg-error">{err}</div>}
+      <div className="field">
+        <label className="field-label" htmlFor="c-title">Title</label>
+        <input id="c-title" className="input" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} placeholder={`Your ${kind}'s title`} />
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="c-body">Text</label>
+        <textarea id="c-body" className="input" style={{ height: 220, padding: '12px 14px', resize: 'vertical' }} value={body} maxLength={50_000} onChange={(e) => setBody(e.target.value)} placeholder={`Write your ${kind} here…`} />
+        <span className="field-hint">{body.length.toLocaleString()}/50,000</span>
+      </div>
+      <Button type="submit" disabled={busy || !title.trim() || !body.trim()}>{busy ? 'Publishing…' : `Publish ${kind}`}</Button>
+    </form>
   );
 }
 
