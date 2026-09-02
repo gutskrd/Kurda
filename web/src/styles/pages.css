@@ -1543,6 +1543,27 @@ button.feature {
   margin-top: 3px;
   font-size: 0.9rem;
 }
+.steam-country {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.steam-country .flag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.steam-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.steam-actions .btn {
+  flex: 1 1 auto;
+}
 .steam-level-col {
   display: flex;
   flex-direction: column;

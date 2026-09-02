@@ -241,20 +241,18 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         </span>
       </div>
 
-      {target.kind === 'me' && (
-        <div className="profile-actions" style={{ marginTop: 16 }}>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              closeProfile();
-              navigate('/app/profile');
-            }}
-          >
-            View full profile
-          </Button>
-        </div>
-      )}
+      <div className="profile-actions" style={{ marginTop: 16 }}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            closeProfile();
+            navigate(target.kind === 'me' ? '/app/profile' : `/app/users/${target.userId}`);
+          }}
+        >
+          View full profile
+        </Button>
+      </div>
     </article>
   );
 }

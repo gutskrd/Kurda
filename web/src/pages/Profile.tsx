@@ -3,17 +3,14 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { InventoryItem, MeProfile, UserSummary, WalletBalances } from '../lib/types';
-import { CosmeticBackground, IconOverlay } from '../profile/cosmetic-parts';
+import { SteamProfile, type SteamProfileView } from '../profile/SteamProfile';
 import { AvatarStack } from '../components/AvatarStack';
 import { Loading, ErrorState } from '../components/states';
-import { PersonGlyph } from '../components/icons';
 
 /**
- * Full profile — a read-only, Steam-style showcase of the signed-in user: a
- * full-bleed equipped background (contained to the profile, never the whole
- * site), a framed avatar with its premium-icon overlay, a hexagon Level badge +
- * featured box, showcase boxes on the left, and a "Currently Online" info panel
- * on the right. All editing lives on the separate Edit Profile page.
+ * The signed-in user's own full profile — a read-only, Steam-style showcase. All
+ * editing lives on /app/profile/edit (reached from the Edit Profile button). The
+ * sidebar adds private-to-you rows: Zêr, an owned-icon stack, and a friend stack.
  */
 export function Profile(): React.JSX.Element {
   const { client } = useAuth();
@@ -52,113 +49,43 @@ export function Profile(): React.JSX.Element {
   if (loading) return <Loading label="Loading profile…" />;
   if (error || !me) return <ErrorState title="Couldn’t load your profile" message={error ?? 'Unavailable.'} onRetry={() => setReloadKey((n) => n + 1)} />;
 
-  const name = me.displayName || me.username;
-  const avatar = me.avatarUrl ?? me.profilePhotoUrl;
-  const level = me.level?.level ?? 1;
-  const xp = me.level?.xp ?? me.xp;
-  const favPoem = me.favoritePoem ?? null;
-  const favStory = me.favoriteStory ?? null;
-  const online = true; // viewing your own profile → you're online
+  const view: SteamProfileView = {
+    name: me.displayName || me.username,
+    username: me.username,
+    avatarUrl: me.avatarUrl ?? me.profilePhotoUrl,
+    icon: me.icon ?? null,
+    background: me.background ?? null,
+    premium: me.premium,
+    level: me.level?.level ?? 1,
+    xp: me.level?.xp ?? me.xp,
+    streakDays: me.streak.current,
+    bio: me.bio,
+    favPoem: me.favoritePoem ?? null,
+    favStory: me.favoriteStory ?? null,
+    online: true, // viewing your own profile → you're online
+  };
 
   return (
-    <div className={`steam-page${me.background ? ' steam-has-bg' : ''}`}>
-      {me.background && <CosmeticBackground background={me.background} className="steam-bg" />}
+    <SteamProfile
+      view={view}
+      headerAction={<Link to="/app/profile/edit" className="steam-edit">Edit Profile</Link>}
+      sidebarExtra={
+        <>
+          <div className="steam-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
 
-      <div className="steam-wrap">
-        {/* header: avatar | identity | level column */}
-        <header className="steam-head">
-          <span className="steam-avatar hero-avatar-wrap">
-            {avatar ? (
-              <img src={avatar} alt="" className="steam-avatar-img" />
-            ) : (
-              <span className="steam-avatar-img avatar-fallback" aria-hidden="true"><PersonGlyph size={72} /></span>
-            )}
-            {me.icon && <IconOverlay icon={me.icon} />}
-          </span>
-
-          <div className="steam-id-text">
-            <div className="steam-name">
-              {name}
-              {me.premium && <span className="steam-premium">Premium</span>}
+          {icons.length > 0 && (
+            <div className="steam-collection">
+              <div className="steam-collection-head"><span className="l">Icons</span><span className="n">{icons.length}</span></div>
+              <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
             </div>
-            <div className="steam-sub">@{me.username}</div>
-          </div>
+          )}
 
-          <div className="steam-level-col">
-            <div className="steam-level-line">Level <span className="steam-hex">{level}</span></div>
-            <div className="steam-featured">
-              <span className="steam-featured-badge">
-                {me.icon ? <img src={me.icon.url} alt="" /> : <PersonGlyph size={26} />}
-              </span>
-              <span className="steam-featured-text">
-                <span className="steam-featured-title">Level {level}</span>
-                <span className="steam-featured-sub">{xp.toLocaleString()} XP</span>
-              </span>
-            </div>
-            <Link to="/app/profile/edit" className="steam-edit">Edit Profile</Link>
-          </div>
-        </header>
-
-        {/* body: showcases | info sidebar */}
-        <div className="steam-body">
-          <main className="steam-main">
-            <div className="steam-showcase-block">
-              <div className="steam-showcase-label">About</div>
-              <div className="steam-showcase">
-                {me.bio ? <p className="steam-bio">{me.bio}</p> : <p className="steam-bio muted">No bio yet.</p>}
-              </div>
-            </div>
-
-            {favPoem && (
-              <div className="steam-showcase-block">
-                <div className="steam-showcase-label">Favorite Poem</div>
-                <div className="steam-showcase">
-                  <Link to="/poems" className="steam-fav">
-                    <span className="steam-fav-thumb" aria-hidden="true">✒️</span>
-                    <span className="steam-fav-meta"><span className="steam-fav-title">{favPoem.title}</span></span>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {favStory && (
-              <div className="steam-showcase-block">
-                <div className="steam-showcase-label">Favorite Story</div>
-                <div className="steam-showcase">
-                  <Link to="/stories" className="steam-fav">
-                    <span className="steam-fav-thumb" aria-hidden="true">📖</span>
-                    <span className="steam-fav-meta"><span className="steam-fav-title">{favStory.title}</span></span>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </main>
-
-          <aside className="steam-side">
-            <div className="steam-online">
-              <div className={`steam-online-title${online ? '' : ' is-offline'}`}>{online ? 'Currently Online' : 'Offline'}</div>
-              <div className="steam-online-sub">@{me.username}</div>
-
-              <div className="steam-info-row"><span className="l">Level</span><span className="n">{level}</span></div>
-              <div className="steam-info-row"><span className="l">XP</span><span className="n">{xp.toLocaleString()}</span></div>
-              <div className="steam-info-row"><span className="l">Streak</span><span className="n">{me.streak.current}</span></div>
-              <div className="steam-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
-
-              {icons.length > 0 && (
-                <div className="steam-collection">
-                  <div className="steam-collection-head"><span className="l">Icons</span><span className="n">{icons.length}</span></div>
-                  <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
-                </div>
-              )}
-
-              <Link className="steam-collection steam-collection-link" to="/app/friends">
-                <div className="steam-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
-                {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
-              </Link>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </div>
+          <Link className="steam-collection steam-collection-link" to="/app/friends">
+            <div className="steam-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
+            {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
+          </Link>
+        </>
+      }
+    />
   );
 }
