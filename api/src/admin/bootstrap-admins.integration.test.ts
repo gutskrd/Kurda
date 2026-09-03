@@ -44,10 +44,9 @@ describe.skipIf(!DATABASE_URL)('grantBootstrapAdmins (integration)', () => {
   });
 
   afterAll(async () => {
-    if (ids.length) {
-      await pool.query(`DELETE FROM admin_audit_log WHERE target_id = ANY($1)`, [ids]);
-      await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [ids]);
-    }
+    // audit rows are intentionally NOT cleaned up: the table is append-only
+    // (enforced by a DB trigger) and deliberately outlives the user it describes
+    if (ids.length) await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [ids]);
     await pool.end();
   });
 
