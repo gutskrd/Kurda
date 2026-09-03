@@ -1305,6 +1305,54 @@ button.feature {
   gap: 6px;
   padding-right: 4px;
 }
+/* Direct / Groups switch + list actions */
+.chat-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.chat-list-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+/* a simple monogram tile standing in for a group's icon */
+.group-avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.group-discover {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.group-discover-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.group-discover-row .chat-convo-body {
+  flex: 1;
+  min-width: 0;
+}
+/* sender name above a group message that isn't yours */
+.bubble-author {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  margin-bottom: 2px;
+}
 .chat-convo {
   display: flex;
   align-items: center;

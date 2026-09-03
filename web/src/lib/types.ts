@@ -185,6 +185,42 @@ export interface Conversation {
   unread: number;
 }
 
+export type GroupRole = 'owner' | 'moderator' | 'member';
+
+/** A group / club (KUR-084). */
+export interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  privacy: 'open' | 'invite';
+  ownerId: string | null;
+  archivedAt: string | null;
+  memberCount: number;
+}
+
+/** A group in the caller's own list (GET /me/groups) — carries their role. */
+export interface MyGroup extends Group {
+  myRole: GroupRole;
+}
+
+/** A member of a group (GET /groups/:id → members[]). */
+export interface GroupMember {
+  userId: string;
+  username: string;
+  role: GroupRole;
+  joinedAt: string;
+}
+
+/** A group chat message (GET/POST /groups/:id/chat). */
+export interface GroupMessage {
+  id: string;
+  senderId: string;
+  username: string;
+  body: string;
+  createdAt: string;
+  deleted: boolean;
+}
+
 /** Wallet balances (GET /me/wallet). */
 export interface WalletBalances {
   zer: number;

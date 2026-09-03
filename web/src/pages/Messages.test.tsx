@@ -29,6 +29,8 @@ function makeFakeClient(): { client: RealtimeClient; emit: (env: RealtimeEventEn
       connected = true;
     },
     destroy() {},
+    join() {},
+    leave() {},
   };
   return {
     client: fake as unknown as RealtimeClient,
@@ -119,5 +121,73 @@ describe('Messages', () => {
 
     // it shows up without any additional fetch/poll
     await waitFor(() => expect(screen.getByText('Live hello')).toBeInTheDocument());
+  });
+
+  it('creates a group from the Groups tab', async () => {
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/groups') && !url.includes('/me/groups') && init?.method === 'POST') {
+          calls.push({ url, body: init.body ? JSON.parse(init.body as string) : null });
+          return jsonResponse(201, { id: 'g-new' });
+        }
+        if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
+        if (url.includes('/groups/g-new/chat')) return jsonResponse(200, { messages: [] });
+        if (url.includes('/groups/g-new')) return jsonResponse(200, { id: 'g-new', name: 'Kurmancî learners', memberCount: 1 });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+
+    renderApp(<Messages />, ['/app/messages']);
+
+    await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+    await userEvent.type(screen.getByLabelText('Name'), 'Kurmancî learners');
+    await userEvent.click(screen.getByRole('button', { name: /create group/i }));
+
+    const created = calls.find((c) => c.url.includes('/groups'));
+    expect(created?.body).toMatchObject({ name: 'Kurmancî learners', privacy: 'open' });
+  });
+
+  it('appends an incoming group message over realtime', async () => {
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
+        if (url.includes('/groups/g1')) return jsonResponse(200, { id: 'g1', name: 'Test Group', memberCount: 2 });
+        if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+
+    const { client, emit, isConnected } = makeFakeClient();
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={client}>
+          <MemoryRouter initialEntries={['/app/messages?group=g1']}>
+            <ProfileModalProvider>
+              <Messages />
+            </ProfileModalProvider>
+          </MemoryRouter>
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByLabelText('Message')).toBeInTheDocument();
+    await waitFor(() => expect(isConnected()).toBe(true));
+    emit({
+      room: 'group:g1',
+      event: { type: 'group_msg', groupId: 'g1', message: { id: 'gm1', senderId: 'u9', username: 'zana', body: 'Silav hemû!', createdAt: '2026-08-24T12:00:00Z', deleted: false } },
+    });
+
+    await waitFor(() => expect(screen.getByText('Silav hemû!')).toBeInTheDocument());
+    expect(screen.getByText('zana')).toBeInTheDocument(); // sender name shown on others' bubbles
   });
 });
