@@ -2454,3 +2454,18 @@ button.feature {
 .invite-card-join {
   flex: none;
 }
+
+/* a "you're in" marker on a group row in Discover */
+.group-joined-badge {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
