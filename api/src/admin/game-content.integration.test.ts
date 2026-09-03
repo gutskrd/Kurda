@@ -82,7 +82,10 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(found.statusCode).toBe(200);
     const match = found.json().words.find((w: { headword: string }) => w.headword === word);
     expect(match).toBeTruthy();
-    expect(match.length).toBe(Array.from(word).length);
+    // `length` counts Kurdish *letters* (the games' view), so the digits in the
+    // run suffix are excluded — not the raw character count.
+    const letters = Array.from(word.normalize('NFC').replace(/[^\p{L}]/gu, '')).length;
+    expect(match.length).toBe(letters);
 
     const del = await authed('DELETE', `/admin/dictionary/${match.id}`, editorToken);
     expect(del.statusCode).toBe(200);
