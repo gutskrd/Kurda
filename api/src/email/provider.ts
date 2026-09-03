@@ -89,12 +89,25 @@ export class SmtpEmailProvider implements EmailProvider {
  * means an unconfigured deploy still boots and queues sends (they're logged, not
  * delivered), so email is never a hard startup dependency.
  */
-export function createEmailProvider(config: AppConfig): EmailProvider {
+export function createEmailProvider(
+  config: AppConfig,
+  log?: { warn: (obj: Record<string, unknown>, msg: string) => void },
+): EmailProvider {
   if (config.RESEND_API_KEY) {
     return new ResendEmailProvider(config.RESEND_API_KEY, config.EMAIL_FROM);
   }
   if (config.SMTP_URL || config.SMTP_HOST) {
     return new SmtpEmailProvider(config, config.EMAIL_FROM);
+  }
+  // Nothing configured: the stub records sends in memory and delivers nothing.
+  // That is fine in dev/test, but in production it silently strands everyone who
+  // needs a verification or password-reset mail — and signup now REQUIRES the
+  // emailed code — so make a misconfigured deploy loud rather than mysterious.
+  if (config.NODE_ENV === 'production') {
+    const msg =
+      'EMAIL IS NOT CONFIGURED: set RESEND_API_KEY (or SMTP_URL / SMTP_HOST). Verification and password-reset emails will NOT be delivered, so new accounts cannot finish signing up.';
+    if (log) log.warn({ provider: 'stub' }, msg);
+    else console.warn(msg);
   }
   return new StubEmailProvider();
 }

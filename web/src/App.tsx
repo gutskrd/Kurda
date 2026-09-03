@@ -15,6 +15,7 @@ import { RhymeMatch } from './pages/RhymeMatch';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { Home } from './pages/Home';
 import { Learn } from './pages/Learn';
 import { Rankings } from './pages/Rankings';
@@ -71,6 +72,15 @@ export function App(): React.JSX.Element {
               }
             />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* signed in but unverified: the only page reachable until confirmed */}
+            <Route
+              path="/verify-email"
+              element={
+                <ProtectedRoute>
+                  <VerifyEmail />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* signed-in app */}

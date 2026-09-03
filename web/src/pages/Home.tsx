@@ -47,13 +47,6 @@ export function Home(): React.JSX.Element {
         <p className="page-sub">Pick up where you left off, or explore something new.</p>
       </div>
 
-      {user && !user.emailVerified && (
-        <div className="msg" role="status" style={{ marginBottom: 24 }}>
-          Please verify your email to unlock everything. We sent a code to <strong>{user.email}</strong> —
-          open the MyKurda app to confirm it.
-        </div>
-      )}
-
       <DailyReward />
 
       <div className="grid grid-3">

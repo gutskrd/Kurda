@@ -465,7 +465,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // sends themselves run in the worker's send-email job
     registerEmailWebhookRoutes(
       app,
-      new EmailService(app.db, createEmailProvider(config)),
+      new EmailService(app.db, createEmailProvider(config, app.log)),
       config.EMAIL_WEBHOOK_SECRET,
     );
 
