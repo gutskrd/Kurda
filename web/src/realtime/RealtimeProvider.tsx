@@ -134,24 +134,26 @@ export function RealtimeProvider({
   return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>;
 }
 
-function useRealtimeCtx(): RealtimeContextValue {
-  const ctx = useContext(RealtimeCtx);
-  if (!ctx) throw new Error('useRealtime must be used within a RealtimeProvider');
-  return ctx;
-}
-
-/** Current realtime connection state (for a subtle indicator, if wanted). */
+/**
+ * Current realtime connection state (for a subtle indicator, if wanted).
+ * Degrades to 'idle' when no provider is mounted (e.g. in isolated unit tests),
+ * so consumers never crash for lack of realtime.
+ */
 export function useRealtime(): { state: RealtimeState } {
-  const { state } = useRealtimeCtx();
-  return { state };
+  const ctx = useContext(RealtimeCtx);
+  return { state: ctx?.state ?? 'idle' };
 }
 
 /**
  * Subscribe to realtime events of one type (e.g. 'dm', 'challenge_invite').
  * The handler must be stable or wrapped in useCallback by the caller if it
  * closes over changing values; here we re-subscribe whenever it changes.
+ * A no-op when no provider is mounted, so features degrade gracefully.
  */
 export function useRealtimeEvent(type: string, handler: (envelope: RealtimeEventEnvelope) => void): void {
-  const { onEvent } = useRealtimeCtx();
-  useEffect(() => onEvent(type, handler), [onEvent, type, handler]);
+  const ctx = useContext(RealtimeCtx);
+  useEffect(() => {
+    if (!ctx) return;
+    return ctx.onEvent(type, handler);
+  }, [ctx, type, handler]);
 }
