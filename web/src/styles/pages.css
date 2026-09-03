@@ -2028,3 +2028,98 @@ button.feature {
   color: var(--ink-2);
   padding: 48px 0;
 }
+
+/* ---- Rhyming Words (solo) ---------------------------------------------- */
+.rhyme-stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 20px 0 14px;
+}
+.rhyme-prompt-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rhyme-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.rhyme-prompt {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 700;
+  color: var(--ink);
+}
+.rhyme-meters {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rhyme-timer {
+  min-width: 58px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.3rem;
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.rhyme-timer.low {
+  color: #fff;
+  background: #c0392b;
+  border-color: #c0392b;
+}
+.rhyme-score {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+}
+.rhyme-compose {
+  display: flex;
+  gap: 10px;
+}
+.rhyme-compose .input {
+  flex: 1;
+}
+.rhyme-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+.rhyme-found {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rhyme-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-weight: 600;
+}
+.rhyme-chip .rhyme-pts {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+/* perfect rhymes read gold, near rhymes a subtle tint */
+.rhyme-perfect {
+  border-color: var(--primary, #b8922e);
+  box-shadow: 0 0 0 1px var(--primary, #b8922e) inset;
+}
+.rhyme-near {
+  border-color: var(--border-strong);
+}

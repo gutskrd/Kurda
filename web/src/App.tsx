@@ -8,6 +8,7 @@ import { Landing } from './pages/Landing';
 import { Stories, Poems } from './pages/Library';
 import { Games } from './pages/Games';
 import { Wordle } from './pages/Wordle';
+import { Rhyme } from './pages/Rhyme';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -84,6 +85,7 @@ export function App(): React.JSX.Element {
             <Route path="poems" element={<Poems />} />
             <Route path="games" element={<Games />} />
             <Route path="games/wordle" element={<Wordle />} />
+            <Route path="games/rhyme" element={<Rhyme />} />
             <Route path="rankings" element={<Rankings />} />
             <Route path="friends" element={<Friends />} />
             <Route path="messages" element={<Messages />} />
