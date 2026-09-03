@@ -33,7 +33,9 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   return (
     <header className="nav">
       <div className="container nav-inner">
-        <Brand />
+        {/* signed-in users stay inside the app shell instead of
+            landing on the marketing site (which has its own nav) */}
+        <Brand to={signedIn ? '/app' : '/'} />
 
         <nav aria-label="Primary">
           <ul className={`nav-links${open ? ' open' : ''}`}>
