@@ -33,6 +33,11 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
+    // The match prompt is drawn at random from the WHOLE dictionary, so every word
+    // present must rhyme with these fixtures. Own the table rather than assume it
+    // is empty (a baseline word pool ships in a seed migration); integration files
+    // run serially — see api/vitest.config.ts.
+    await pool.query(`DELETE FROM dict_entries`);
     for (const w of RHYMES) {
       const r = await pool.query<{ id: string }>(
         `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1,$1,'kurmanji') RETURNING id`,

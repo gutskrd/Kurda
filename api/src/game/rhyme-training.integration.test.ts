@@ -44,6 +44,11 @@ describe.skipIf(!DATABASE_URL)('rhyme training service (integration)', () => {
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
+    // The service picks its prompt at random from the WHOLE dictionary, so this
+    // suite must own that table rather than assume it is empty (a baseline word
+    // pool ships in a seed migration). Integration files run serially — see
+    // api/vitest.config.ts — and every suite seeds the words it needs.
+    await pool.query(`DELETE FROM dict_entries`);
     await Promise.all(['kul', 'roj'].map(seedWord)); // 'kul' rhymes with 'gul'; 'roj' does not
   });
 
