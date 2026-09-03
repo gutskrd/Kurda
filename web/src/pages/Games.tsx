@@ -22,9 +22,10 @@ const GAMES: GameCard[] = [
   },
   {
     icon: <FeatherIcon />,
-    name: 'Rhyme battles',
-    body: 'Head-to-head rhyming duels — think fast, match sounds, and climb the ladder against other learners.',
+    name: 'Rhyming Words',
+    body: 'A timed solo round: find as many words as you can that rhyme with the prompt. Head-to-head duels are on mobile.',
     status: 'On mobile',
+    playHref: '/app/games/rhyme',
   },
   {
     icon: <GameIcon />,

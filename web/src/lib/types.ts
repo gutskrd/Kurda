@@ -210,6 +210,33 @@ export interface WordleGame {
   xpAwarded: number | null;
 }
 
+export type RhymeQuality = 'perfect' | 'near' | 'none';
+export type RhymeReject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
+
+/** Client-safe view of a solo rhyme-training round (POST /rhyme/training). */
+export interface RhymeGame {
+  id: string;
+  mode: 'training';
+  dialect: 'kurmanci' | 'sorani';
+  prompt: string;
+  windowMs: number;
+  remainingMs: number;
+  usedWords: string[];
+  score: number;
+  accepted: number;
+  status: 'active' | 'ended';
+  xpAwarded: number | null;
+}
+
+/** The verdict for one submitted rhyme. */
+export interface RhymeResult {
+  accepted: boolean;
+  quality: RhymeQuality;
+  points: number;
+  normalized: string;
+  reason?: RhymeReject;
+}
+
 export type GroupRole = 'owner' | 'moderator' | 'member';
 
 /** A group / club (KUR-084). */
