@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AuthProvider } from '../auth/AuthProvider';
-import { RealtimeProvider, useRealtime, useRealtimeEvent, useRealtimeRoom } from './RealtimeProvider';
+import { RealtimeProvider, useRealtime, useRealtimeEvent, useRealtimeRoom, useRealtimeSend } from './RealtimeProvider';
 import type { RealtimeClient } from './RealtimeClient';
 import type { RealtimeEventEnvelope, RealtimeState } from './events';
 import { jsonResponse } from '../test/utils';
@@ -19,11 +19,13 @@ interface FakeClient {
   destroyed: boolean;
   joined: string[];
   left: string[];
+  sent: Record<string, unknown>[];
   on(type: string, handler: (arg: unknown) => void): () => void;
   connect(): void;
   destroy(): void;
   join(room: string): void;
   leave(room: string): void;
+  send(msg: Record<string, unknown>): void;
   emitEvent(env: RealtimeEventEnvelope): void;
   emitState(s: RealtimeState): void;
 }
@@ -35,6 +37,7 @@ function makeFakeClient(): FakeClient {
     destroyed: false,
     joined: [],
     left: [],
+    sent: [],
     on(type, handler) {
       (listeners[type] ??= new Set()).add(handler);
       return () => listeners[type]?.delete(handler);
@@ -50,6 +53,9 @@ function makeFakeClient(): FakeClient {
     },
     leave(room) {
       this.left.push(room);
+    },
+    send(msg) {
+      this.sent.push(msg);
     },
     emitEvent(env) {
       listeners['event']?.forEach((h) => h(env));
@@ -159,5 +165,27 @@ describe('RealtimeProvider', () => {
     // dropping the room unmounts the subscriber → the leader leaves it
     (await screen.findByText('close')).click();
     await waitFor(() => expect(fake.left).toContain('group:g1'));
+  });
+
+  it('sends a client message out the leader socket', async () => {
+    signIn();
+    const fake = makeFakeClient();
+
+    function Sender(): React.JSX.Element {
+      const send = useRealtimeSend();
+      return <button onClick={() => send({ type: 'ready', room: 'match:1' })}>ready</button>;
+    }
+
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={asClient(fake)}>
+          <Sender />
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(fake.connected).toBe(true));
+    (await screen.findByText('ready')).click();
+    await waitFor(() => expect(fake.sent).toContainEqual({ type: 'ready', room: 'match:1' }));
   });
 });
