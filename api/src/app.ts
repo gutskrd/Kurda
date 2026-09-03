@@ -140,6 +140,8 @@ import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
 import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
+import pino from 'pino';
+import { createWorker } from './jobs/worker.js';
 import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 import { DashboardService } from './analytics/dashboard-service.js';
 import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
@@ -208,6 +210,19 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     health.register('redis', redisHealthCheck(redis));
     const jobs = JobQueue.create(config);
     app.decorate('jobs', jobs);
+    // The API only enqueues; something must CONSUME the queue or verification and
+    // password-reset mail is never sent. Run the worker in-process by default so a
+    // single-service deploy still delivers mail (BullMQ shares work safely if a
+    // dedicated worker also runs). Skipped under test so suites don't spawn one.
+    if (config.NODE_ENV !== 'test' && config.RUN_WORKER_IN_API !== 'false') {
+      // its own pino instance: Fastify's logger type isn't pino's, and a distinct
+      // name keeps job logs separable from request logs
+      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'mykurda-api-worker' }));
+      app.log.info('processing background jobs in-process (set RUN_WORKER_IN_API=false if a dedicated worker runs)');
+      app.addHook('onClose', async () => {
+        await worker.close();
+      });
+    }
     app.addHook('onClose', async () => {
       await jobs.close();
       redis.disconnect();

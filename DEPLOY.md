@@ -29,11 +29,16 @@ by the Blueprint — nothing else is required for sign-in to work.
 > always-on, durable App Store backend, bump the `plan: free` lines in
 > `render.yaml` to `starter` and re-apply.
 >
-> The background **worker is disabled** on free tier (Render offers no free
-> workers). Sign-in and the core API are unaffected; only background jobs (push
-> notifications, streak reminders, scheduled rollups, queue processing) don't
-> run until you move to paid hosting and uncomment the `kurda-worker` block in
-> `render.yaml`.
+> The dedicated background **worker service is disabled** on free tier (Render
+> offers no free workers). The API therefore processes queued jobs **in-process**
+> by default, which is what actually delivers email — the API only *enqueues*, so
+> without a consumer, verification and password-reset mail sits in Redis forever
+> and signup cannot be completed. This needs `REDIS_URL` (the Blueprint provisions
+> it) plus an email provider (`RESEND_API_KEY`, or SMTP).
+>
+> If you move to paid hosting and uncomment the `kurda-worker` block in
+> `render.yaml`, set `RUN_WORKER_IN_API=false` on the API so only the dedicated
+> worker runs the recurring schedules.
 
 ## 2. Point the mobile app at that URL
 
