@@ -548,3 +548,18 @@ describe('RealtimeClient — rooms (join/leave)', () => {
     h.client.destroy();
   });
 });
+
+describe('RealtimeClient — send', () => {
+  it('sends an arbitrary message when open, drops it when not', async () => {
+    const h = makeClient();
+    // not connected yet → dropped
+    expect(h.client.send({ type: 'answer', room: 'match:1', index: 0, choice: 2 })).toBe(false);
+    h.client.connect();
+    await flush();
+    const ws = MockWebSocket.last();
+    ws.triggerOpen();
+    expect(h.client.send({ type: 'answer', room: 'match:1', index: 0, choice: 2 })).toBe(true);
+    expect(ws.sent).toContain(JSON.stringify({ type: 'answer', room: 'match:1', index: 0, choice: 2 }));
+    h.client.destroy();
+  });
+});

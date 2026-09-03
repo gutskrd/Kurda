@@ -227,17 +227,28 @@ export class RealtimeClient {
     this.trySend({ type: 'leave', room });
   }
 
-  /** Send a client message if the socket is open; returns whether it went out. */
-  private trySend(msg: ClientMessage): boolean {
+  /**
+   * Send an arbitrary client message (e.g. a game's `ready` / `answer`). Returns
+   * whether it actually went out; a message sent while the socket is not open is
+   * simply dropped (games are server-timed and resync from a snapshot on connect,
+   * so silently dropping a stale send is safe).
+   */
+  send(message: Record<string, unknown>): boolean {
+    if (this.destroyed) return false;
     if (this.socket && this.socket.readyState === WS_OPEN) {
       try {
-        this.socket.send(JSON.stringify(msg));
+        this.socket.send(JSON.stringify(message));
         return true;
       } catch {
         return false;
       }
     }
     return false;
+  }
+
+  /** Send a protocol control message (join/leave) if the socket is open. */
+  private trySend(msg: ClientMessage): boolean {
+    return this.send(msg as unknown as Record<string, unknown>);
   }
 
   /** Subscribe to an event; returns an unsubscribe function. */

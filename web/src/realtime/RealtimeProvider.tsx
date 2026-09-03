@@ -24,6 +24,8 @@ interface RealtimeContextValue {
   onEvent: (type: string, handler: (envelope: RealtimeEventEnvelope) => void) => () => void;
   /** Ref-counted room join for this tab; returns a matching leave. */
   joinRoom: (room: string) => () => void;
+  /** Send a client message out the leader's socket (routed cross-tab if needed). */
+  send: (message: Record<string, unknown>) => void;
 }
 
 const RealtimeCtx = createContext<RealtimeContextValue | null>(null);
@@ -35,6 +37,7 @@ type BcMessage =
   | { k: 'event'; env: RealtimeEventEnvelope }
   | { k: 'state'; s: RealtimeState }
   | { k: 'rooms'; tabId: string; rooms: string[] }
+  | { k: 'send'; msg: Record<string, unknown> }
   | { k: 'hello' };
 
 export function RealtimeProvider({
@@ -95,6 +98,13 @@ export function RealtimeProvider({
     bcRef.current?.postMessage({ k: 'rooms', tabId, rooms: mine } satisfies BcMessage);
   }).current;
 
+  // send a client message out the one socket: directly if we're the leader,
+  // otherwise ask the leader tab to send it on our behalf.
+  const sendMessage = useRef((msg: Record<string, unknown>) => {
+    if (isLeaderRef.current) clientRef.current?.send(msg);
+    else bcRef.current?.postMessage({ k: 'send', msg } satisfies BcMessage);
+  }).current;
+
   useEffect(() => {
     if (status !== 'signedIn') return;
 
@@ -136,6 +146,8 @@ export function RealtimeProvider({
           if (d.tabId === tabId) return;
           peerRooms.current.set(d.tabId, new Set(d.rooms));
           reconcile();
+        } else if (d?.k === 'send') {
+          if (isLeaderRef.current) clientRef.current?.send(d.msg); // only the socket-owner sends
         } else if (d?.k === 'hello') {
           announce(); // a new/late tab appeared — re-assert our rooms so it reconciles
         }
@@ -216,8 +228,9 @@ export function RealtimeProvider({
           }
         };
       },
+      send: sendMessage,
     }),
-    [state, reconcile, announce],
+    [state, reconcile, announce, sendMessage],
   );
 
   return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>;
@@ -257,4 +270,14 @@ export function useRealtimeRoom(room: string | null | undefined): void {
     if (!ctx || !room) return;
     return ctx.joinRoom(room);
   }, [ctx, room]);
+}
+
+/**
+ * Returns a function to send a client message out the realtime socket (e.g. a
+ * game's `ready` / `answer`). Routed through the leader tab. No-op without a
+ * provider, so callers stay unit-testable.
+ */
+export function useRealtimeSend(): (message: Record<string, unknown>) => void {
+  const ctx = useContext(RealtimeCtx);
+  return ctx?.send ?? (() => undefined);
 }
