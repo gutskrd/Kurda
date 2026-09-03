@@ -18,6 +18,8 @@ import { Events } from './pages/Events';
 import { Ops } from './pages/Ops';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
+import { Games } from './pages/Games';
+import { Shop } from './pages/Shop';
 
 // `roles` gates the nav link (cosmetic only — the API re-authorizes every
 // action). It's set for the three pages whose server guard is a single clean
@@ -38,6 +40,8 @@ const PAGES: Page[] = [
   { key: 'economy', label: 'Economy', render: () => <Economy /> },
   { key: 'ops', label: 'Ops', render: () => <Ops /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
+  { key: 'games', label: 'Games', roles: ['superadmin', 'content_editor'], render: () => <Games /> },
+  { key: 'shop', label: 'Shop', roles: ['superadmin'], render: () => <Shop /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
   { key: 'audit', label: 'Audit', roles: ['superadmin'], render: () => <Audit /> },
   { key: 'security', label: 'Security', render: () => <Security /> },
