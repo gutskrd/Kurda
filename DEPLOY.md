@@ -78,7 +78,7 @@ the API returns `503 MEDIA_UNAVAILABLE` and the app shows an error. Cloudflare
    Secret Access Key, and your account's S3 endpoint
    `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
 3. Make objects publicly readable: enable the bucket's **public r2.dev URL**, or
-   connect a **custom domain** (e.g. `media.mykurda.app`). That public base is
+   connect a **custom domain** (e.g. `media.mykurda.com`). That public base is
    `CDN_BASE_URL`.
 4. On the **kurda-api** Render service → Environment, set:
 

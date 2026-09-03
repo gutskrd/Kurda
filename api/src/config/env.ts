@@ -110,7 +110,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_SECURE: z.enum(['true', 'false']).optional(),
   /** From address for transactional email. */
-  EMAIL_FROM: z.string().default('MyKurda <no-reply@mykurda.app>'),
+  EMAIL_FROM: z.string().default('MyKurda <no-reply@mykurda.com>'),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**

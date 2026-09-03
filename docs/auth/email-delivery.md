@@ -8,7 +8,7 @@ password-reset emails won't reach real inboxes).
 
 Selection precedence (`createEmailProvider`): **Resend** → **SMTP** → **stub**.
 
-Set `EMAIL_FROM` for either provider (default `MyKurda <no-reply@mykurda.app>`);
+Set `EMAIL_FROM` for either provider (default `MyKurda <no-reply@mykurda.com>`);
 it must be an address on a domain you've verified with the provider.
 
 ## Option A — Resend (HTTP API, simplest)
