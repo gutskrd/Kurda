@@ -34,6 +34,11 @@ const envSchema = z.object({
   S3_BUCKET: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
+  /**
+   * Public origin of the web app. Email links (password reset, email
+   * verification) are built from this, so a wrong value sends users nowhere.
+   */
+  APP_BASE_URL: z.string().url().default('https://mykurda.com'),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
 
@@ -146,6 +151,14 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     }
     if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
       problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");
+    }
+    // APP_BASE_URL is the base of every emailed link; a trailing slash or an
+    // http:// origin would produce broken or downgraded reset links.
+    if (!config.APP_BASE_URL.startsWith('https://')) {
+      problems.push('  APP_BASE_URL: must be an https:// URL in production');
+    }
+    if (config.APP_BASE_URL.endsWith('/')) {
+      problems.push('  APP_BASE_URL: must not end with a trailing slash');
     }
     // CDN_BASE_URL is the public base for media URLs (CDN_BASE_URL + '/' + key).
     // It must be a clean public HTTPS origin — never the private S3 endpoint,
