@@ -185,6 +185,31 @@ export interface Conversation {
   unread: number;
 }
 
+export type LetterFeedback = 'green' | 'yellow' | 'gray';
+export type WordleStatus = 'playing' | 'won' | 'lost';
+
+/** One scored guess row (feedback per Kurdish letter). */
+export interface WordleGuessRow {
+  guess: string;
+  letters: string[];
+  feedback: LetterFeedback[];
+}
+
+/** Client-safe Wordle game view (POST /wordle/daily|practice, guess). */
+export interface WordleGame {
+  id: string;
+  mode: 'daily' | 'practice';
+  difficulty: 'easy' | 'medium' | 'hard';
+  status: WordleStatus;
+  targetLength: number;
+  guesses: WordleGuessRow[];
+  keyboard: Record<string, LetterFeedback>;
+  remainingAttempts: number;
+  /** revealed only once the game is over */
+  target: string | null;
+  xpAwarded: number | null;
+}
+
 export type GroupRole = 'owner' | 'moderator' | 'member';
 
 /** A group / club (KUR-084). */
