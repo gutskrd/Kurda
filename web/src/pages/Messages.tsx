@@ -4,13 +4,17 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, Conversation, DmMessage } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
+import { useRealtimeEvent } from '../realtime/RealtimeProvider';
+import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { Avatar } from '../components/Avatar';
 
-const CONVO_POLL_MS = 8000;
-const THREAD_POLL_MS = 4000;
+// Realtime delivers messages instantly; polling stays only as a safety net for
+// events missed while the socket was down, so it can run far slower than before.
+const CONVO_POLL_MS = 30000;
+const THREAD_POLL_MS = 20000;
 
 /** Map moderation/anti-bot server codes to human copy (server stays authoritative). */
 function sendError(err: ApiError): string {
@@ -55,6 +59,11 @@ export function Messages(): React.JSX.Element {
     const t = setInterval(() => void loadConvos(), CONVO_POLL_MS);
     return () => clearInterval(t);
   }, [loadConvos]);
+
+  // any incoming DM can change unread counts / last-message previews — refresh the list
+  const onDm = useCallback(() => void loadConvos(), [loadConvos]);
+  useRealtimeEvent('dm', onDm);
+  useRealtimeEvent('dm_read', onDm);
 
   return (
     <div className="container">
@@ -144,6 +153,22 @@ function Thread({
     const t = setInterval(() => void load(), THREAD_POLL_MS);
     return () => clearInterval(t);
   }, [load]);
+
+  // live receive: append a DM the moment it arrives from the person we're viewing
+  const onDm = useCallback(
+    (env: RealtimeEventEnvelope) => {
+      const ev = env.event as { from?: unknown; message?: DmMessage };
+      if (ev.from !== otherId || !ev.message?.id) return;
+      setMessages((m) => {
+        const list = m ?? [];
+        if (list.some((x) => x.id === ev.message!.id)) return list; // dedupe vs. poll
+        return [...list, ev.message!];
+      });
+      onSent(); // refresh the conversation list's preview/unread
+    },
+    [otherId, onSent],
+  );
+  useRealtimeEvent('dm', onDm);
 
   useEffect(() => {
     const el = scrollRef.current;
