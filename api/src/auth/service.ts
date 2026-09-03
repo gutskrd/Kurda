@@ -141,6 +141,13 @@ export class AuthService {
           template: 'verify-email-code',
           vars: { code, username: user.username },
         });
+      } else {
+        // no queue configured → the mail is silently dropped, which looks to the
+        // user like verification code simply never arriving
+        this.deps.log?.warn(
+          { userId: user.id },
+          'background jobs unavailable (no REDIS_URL): verification code email NOT sent',
+        );
       }
       return code;
     } catch (err) {
@@ -205,6 +212,13 @@ export class AuthService {
           template: 'password-reset',
           vars: { link: this.emailLink('/reset-password', token), username: user.username },
         });
+      } else {
+        // no queue configured → the mail is silently dropped, which looks to the
+        // user like password reset simply never arriving
+        this.deps.log?.warn(
+          { userId: user.id },
+          'background jobs unavailable (no REDIS_URL): password reset email NOT sent',
+        );
       }
     } catch (err) {
       this.deps.log?.warn({ err, userId: user.id }, 'failed to enqueue password reset email');

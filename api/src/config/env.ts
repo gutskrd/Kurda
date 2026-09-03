@@ -39,6 +39,14 @@ const envSchema = z.object({
    * verification) are built from this, so a wrong value sends users nowhere.
    */
   APP_BASE_URL: z.string().url().default('https://mykurda.com'),
+  /**
+   * Process background jobs inside the API instead of a separate worker service.
+   * The API only ENQUEUES jobs; without something consuming the queue, emails
+   * (verification, password reset) sit in Redis forever. Defaults on wherever
+   * Redis is configured so a single-service deploy still delivers its mail; set
+   * 'false' when a dedicated worker process is running.
+   */
+  RUN_WORKER_IN_API: z.enum(['true', 'false']).optional(),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
 
