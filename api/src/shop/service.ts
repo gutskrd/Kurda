@@ -159,6 +159,17 @@ export class ShopService {
     await this.invalidate();
   }
 
+  /**
+   * Admin: every catalog row, including inactive and out-of-stock ones, so prices
+   * and availability can be managed. Reads straight through (no cache) — an admin
+   * must always see the current truth right after editing it.
+   */
+  async allItems(): Promise<(ShopItem & { active: boolean; inStock: boolean })[]> {
+    const rows = await this.pool.query<ItemRow>(
+      `SELECT * FROM shop_items ORDER BY category, display_order, price`,
+    );
+    return rows.rows.map((r) => ({ ...this.toItem(r), active: r.active, inStock: r.in_stock }));
+  }
   /** All active items (window applied by callers), cached 5 min. */
   private async activeItems(): Promise<CachedItem[]> {
     const load = async (): Promise<CachedItem[]> => {

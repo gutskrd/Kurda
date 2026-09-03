@@ -114,6 +114,7 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
+import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
 import { createPushProvider } from './push/provider.js';
@@ -401,6 +402,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // admin RBAC + mandatory TOTP 2FA (KUR-099)
     const adminTotp = new AdminTotpService(app.db);
     registerAdminRoutes(app, adminTotp);
+    registerGameContentRoutes(app);
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp);
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,

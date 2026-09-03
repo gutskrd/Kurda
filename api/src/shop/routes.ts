@@ -35,7 +35,7 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
   /** Admin: create/update a catalog item. */
   app.post(
     '/shop/items',
-    { schema: { body: itemBody }, preHandler: requireRoles('admin') },
+    { schema: { body: itemBody }, preHandler: requireRoles('admin', 'superadmin') },
     async (req) => shop.createItem(req.body as z.infer<typeof itemBody>),
   );
 
@@ -44,7 +44,7 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
     '/shop/items/:sku/stock',
     {
       schema: { params: z.object({ sku: z.string().max(80) }), body: z.object({ inStock: z.boolean() }) },
-      preHandler: requireRoles('admin'),
+      preHandler: requireRoles('admin', 'superadmin'),
     },
     async (req) => {
       const { sku } = req.params as { sku: string };
@@ -53,6 +53,16 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
     },
   );
 
+  /**
+   * Admin: the FULL catalog, including inactive / out-of-stock items and their
+   * prices. `GET /shop` is the player-facing view (filtered to what they can buy),
+   * so managing prices needs its own unfiltered listing.
+   */
+  app.get(
+    '/admin/shop/items',
+    { config: { skipValidation: true }, preHandler: requireRoles('admin', 'superadmin') },
+    async () => ({ items: await shop.allItems() }),
+  );
   /** Public URL for a stored asset key (null when storage is unconfigured). */
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
