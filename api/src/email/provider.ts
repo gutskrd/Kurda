@@ -11,7 +11,10 @@ import type { AppConfig } from '../config/env.js';
 export interface EmailPayload {
   to: string;
   subject: string;
+  /** always sent — the fallback for clients that refuse HTML */
   text: string;
+  /** sent alongside `text` as multipart when the template defines one */
+  html?: string;
 }
 
 export interface EmailProvider {
@@ -39,14 +42,15 @@ export class ResendEmailProvider implements EmailProvider {
     private readonly from: string,
   ) {}
 
-  async send({ to, subject, text }: EmailPayload): Promise<{ messageId: string }> {
+  async send({ to, subject, text, html }: EmailPayload): Promise<{ messageId: string }> {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: this.from, to, subject, text }),
+      // `text` always goes too, so a client refusing HTML still gets the message
+      body: JSON.stringify({ from: this.from, to, subject, text, ...(html ? { html } : {}) }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
@@ -77,8 +81,8 @@ export class SmtpEmailProvider implements EmailProvider {
         });
   }
 
-  async send({ to, subject, text }: EmailPayload): Promise<{ messageId: string }> {
-    const info = await this.transport.sendMail({ from: this.from, to, subject, text });
+  async send({ to, subject, text, html }: EmailPayload): Promise<{ messageId: string }> {
+    const info = await this.transport.sendMail({ from: this.from, to, subject, text, ...(html ? { html } : {}) });
     return { messageId: info.messageId };
   }
 }

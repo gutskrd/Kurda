@@ -49,8 +49,8 @@ export class EmailService {
     locale: EmailLocale = 'en',
   ): Promise<SendResult> {
     if (await this.isSuppressed(to)) return { sent: false, suppressed: true };
-    const { subject, text } = renderEmail(template, locale, vars);
-    const { messageId } = await this.provider.send({ to, subject, text });
+    const { subject, text, html } = renderEmail(template, locale, vars);
+    const { messageId } = await this.provider.send({ to, subject, text, html });
     return { sent: true, suppressed: false, messageId };
   }
 }
