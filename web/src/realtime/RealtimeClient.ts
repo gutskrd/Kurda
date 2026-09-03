@@ -1,6 +1,7 @@
 import {
   CLOSE_CONNECTED_ELSEWHERE,
   CLOSE_NORMAL,
+  type ClientMessage,
   type HelloInfo,
   type RealtimeCloseInfo,
   type RealtimeEvent,
@@ -8,6 +9,9 @@ import {
   type RealtimeProtocolError,
   type RealtimeState,
 } from './events';
+
+/** WebSocket.OPEN — the numeric readyState for an open socket. */
+const WS_OPEN = 1;
 
 /**
  * Framework-agnostic realtime client for the MyKurda gateway.
@@ -100,6 +104,13 @@ export class RealtimeClient {
    */
   #resumeToken?: string;
   private _resumedRooms: string[] = [];
+
+  /**
+   * Rooms the app wants joined (beyond the auto-joined `user:<id>`). Re-sent on
+   * every (re)open so a reconnect or a resume-miss lands back in them. The server
+   * authorizes each join against its per-room invite grant.
+   */
+  private readonly desiredRooms = new Set<string>();
 
   private shouldReconnect = false;
   private destroyed = false;
@@ -198,6 +209,37 @@ export class RealtimeClient {
     }
   }
 
+  /**
+   * Join a room to receive its events (e.g. `group:<id>`). Idempotent: the room
+   * is remembered and (re)joined on every open, so it survives reconnects. The
+   * caller must have been granted access server-side first (for group chat, that
+   * grant is refreshed by fetching the channel history).
+   */
+  join(room: string): void {
+    if (this.destroyed) return;
+    this.desiredRooms.add(room);
+    this.trySend({ type: 'join', room });
+  }
+
+  /** Leave a room; stops re-joining it on future reconnects. */
+  leave(room: string): void {
+    this.desiredRooms.delete(room);
+    this.trySend({ type: 'leave', room });
+  }
+
+  /** Send a client message if the socket is open; returns whether it went out. */
+  private trySend(msg: ClientMessage): boolean {
+    if (this.socket && this.socket.readyState === WS_OPEN) {
+      try {
+        this.socket.send(JSON.stringify(msg));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }
+
   /** Subscribe to an event; returns an unsubscribe function. */
   on<K extends EventName>(type: K, handler: ListenerMap[K]): () => void {
     this.listeners[type].add(handler);
@@ -265,6 +307,9 @@ export class RealtimeClient {
   private onOpen(): void {
     this.setState('open');
     this.pendingTakeover = false;
+    // re-join every desired room (a fresh socket starts in only `user:<id>`;
+    // re-sending is harmless if the resume already rejoined it server-side)
+    for (const room of this.desiredRooms) this.trySend({ type: 'join', room });
     this.clearStableTimer();
     // reset backoff only after the connection proves stable (avoids 1s-flap loops)
     this.stableTimer = setTimeout(() => {
