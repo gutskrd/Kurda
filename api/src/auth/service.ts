@@ -95,6 +95,18 @@ export class AuthService {
     this.lockouts = new LockoutService(pool);
   }
 
+  /**
+   * Absolute link into the web app for an emailed token. Built from
+   * APP_BASE_URL because the API and the web app are different origins, and the
+   * token is what the linked page posts back.
+   */
+  private emailLink(path: string, token: string): string {
+    const base = this.config.APP_BASE_URL.endsWith('/')
+      ? this.config.APP_BASE_URL.slice(0, -1)
+      : this.config.APP_BASE_URL;
+    return `${base}${path}?token=${encodeURIComponent(token)}`;
+  }
+
   /** Legacy link-based verification, still served by /auth/resend-verification. */
   private async sendVerificationEmail(user: { id: string; email: string; username: string }) {
     try {
@@ -103,7 +115,7 @@ export class AuthService {
         await this.deps.jobs.enqueue(sendEmailJob, {
           to: user.email,
           template: 'verify-email',
-          vars: { token, username: user.username },
+          vars: { link: this.emailLink('/verify-email', token), username: user.username },
         });
       }
     } catch (err) {
@@ -173,12 +185,15 @@ export class AuthService {
     if (!user) return;
     try {
       if (!user.password_hash) {
-        // OAuth-only account (KUR-019): explain instead of a useless link
+        // OAuth-only account (KUR-019): there is no password to reset, but the
+        // mail invites them to SET one — so send a real reset link (resetPassword
+        // sets the hash whether or not one existed) rather than a dead message.
         if (this.deps.jobs) {
+          const setToken = await createEmailToken(this.pool, user.id, 'password_reset');
           await this.deps.jobs.enqueue(sendEmailJob, {
             to: user.email,
             template: 'oauth-no-password',
-            vars: { username: user.username },
+            vars: { link: this.emailLink('/reset-password', setToken), username: user.username },
           });
         }
         return;
@@ -188,7 +203,7 @@ export class AuthService {
         await this.deps.jobs.enqueue(sendEmailJob, {
           to: user.email,
           template: 'password-reset',
-          vars: { token, username: user.username },
+          vars: { link: this.emailLink('/reset-password', token), username: user.username },
         });
       }
     } catch (err) {

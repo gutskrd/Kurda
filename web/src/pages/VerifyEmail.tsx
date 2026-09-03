@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
@@ -41,6 +41,28 @@ export function VerifyEmail(): React.JSX.Element {
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [cooldown]);
+
+  // The emailed link carries a one-time token instead of a code; redeem it on
+  // arrival so following the link just works (that endpoint needs no session).
+  const [params] = useSearchParams();
+  const linkToken = params.get('token');
+  useEffect(() => {
+    if (!linkToken) return;
+    let cancelled = false;
+    void (async () => {
+      const res = await client.post('/auth/verify-email', { token: linkToken });
+      if (cancelled) return;
+      if (res.ok) {
+        await refreshUser();
+        navigate('/app', { replace: true });
+      } else {
+        setError('That confirmation link is invalid or has expired — enter the code below instead.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [linkToken, client, refreshUser, navigate]);
 
   // already verified (e.g. confirmed elsewhere) → don't strand them here
   useEffect(() => {
