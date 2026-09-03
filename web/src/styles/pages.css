@@ -2404,3 +2404,53 @@ button.feature {
   text-align: right;
   color: var(--ink-3);
 }
+
+/* ---- game invite card (in chat) ---------------------------------------- */
+.invite-lead {
+  margin: 0 0 8px;
+}
+.invite-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--primary, #b8922e);
+  background: var(--surface);
+  min-width: 240px;
+  max-width: 320px;
+}
+.invite-card-art {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.invite-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.invite-card-eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary, #b8922e);
+  font-weight: 700;
+}
+.invite-card-title {
+  font-weight: 700;
+}
+.invite-card-blurb {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+}
+.invite-card-join {
+  flex: none;
+}

@@ -11,6 +11,7 @@ import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { ArrowIcon } from '../components/icons';
 import { Avatar } from '../components/Avatar';
+import { MessageBody } from '../components/GameInviteCard';
 
 // Realtime delivers messages instantly; polling stays only as a safety net for
 // events missed while the socket was down, so it can run far slower than before.
@@ -446,7 +447,7 @@ function Thread({
         ) : (
           messages.map((m) => (
             <div key={m.id} className={`bubble${m.senderId === user?.id ? ' mine' : ''}`}>
-              {m.body}
+              <MessageBody body={m.body} />
             </div>
           ))
         )}
@@ -577,7 +578,7 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
             return (
               <div key={m.id} className={`bubble${mine ? ' mine' : ''}`}>
                 {!mine && <span className="bubble-author">{m.username}</span>}
-                {m.deleted ? <em className="muted">message deleted</em> : m.body}
+                {m.deleted ? <em className="muted">message deleted</em> : <MessageBody body={m.body} />}
               </div>
             );
           })
