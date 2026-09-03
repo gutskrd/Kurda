@@ -1,13 +1,24 @@
+import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { GameIcon, FeatherIcon, BookIcon, TrophyIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 
-const GAMES = [
+interface GameCard {
+  icon: React.JSX.Element;
+  name: string;
+  body: string;
+  status: string;
+  /** when present + signed in, the game is playable here */
+  playHref?: string;
+}
+
+const GAMES: GameCard[] = [
   {
     icon: <BookIcon />,
     name: 'Kurdish Wordle',
     body: 'Guess the Kurdish word in six tries. A daily puzzle plus endless practice rounds across difficulties.',
     status: 'On mobile',
+    playHref: '/app/games/wordle',
   },
   {
     icon: <FeatherIcon />,
@@ -52,16 +63,24 @@ export function Games(): React.JSX.Element {
       </div>
 
       <div className="grid grid-2">
-        {GAMES.map((g) => (
-          <article className="feature" key={g.name}>
-            <div className="feature-icon">{g.icon}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <h3 style={{ margin: 0 }}>{g.name}</h3>
-              <span className="badge badge-gold">{g.status}</span>
-            </div>
-            <p>{g.body}</p>
-          </article>
-        ))}
+        {GAMES.map((g) => {
+          const playable = signedIn && g.playHref;
+          return (
+            <article className="feature" key={g.name}>
+              <div className="feature-icon">{g.icon}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <h3 style={{ margin: 0 }}>{g.name}</h3>
+                <span className={`badge${playable ? ' badge-gold' : ''}`}>{playable ? 'Playable' : g.status}</span>
+              </div>
+              <p>{g.body}</p>
+              {playable && (
+                <Link to={g.playHref!} className="btn btn-primary btn-sm">
+                  Play
+                </Link>
+              )}
+            </article>
+          );
+        })}
       </div>
 
       <div className="cta" style={{ marginTop: 40 }}>

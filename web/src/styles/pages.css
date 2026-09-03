@@ -1911,3 +1911,120 @@ button.feature {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Kurdish Wordle ---------------------------------------------------- */
+.wordle-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.wordle-toolbar {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.wordle-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  margin: 20px 0 8px;
+}
+.wordle-row {
+  display: grid;
+  gap: 6px;
+}
+.wordle-cell {
+  width: clamp(40px, 12vw, 54px);
+  height: clamp(40px, 12vw, 54px);
+  display: grid;
+  place-items: center;
+  font-size: clamp(1.2rem, 4vw, 1.6rem);
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  text-transform: lowercase;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.wordle-typing {
+  border-color: var(--border-strong);
+}
+.wordle-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  max-width: 560px;
+  margin: 20px auto 0;
+}
+.wordle-krow {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  width: 100%;
+}
+.wordle-key {
+  min-width: 30px;
+  flex: 1 1 auto;
+  max-width: 44px;
+  height: 50px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+.wordle-key-wide {
+  min-width: 58px;
+  max-width: 72px;
+  font-size: 0.82rem;
+  text-transform: none;
+}
+.wordle-key:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* feedback colors — defined after the base rules so they win on shared elements */
+.wordle-green {
+  background: #2e7d5b;
+  border-color: #2e7d5b;
+  color: #fff;
+}
+.wordle-yellow {
+  background: #b8922e;
+  border-color: #b8922e;
+  color: #fff;
+}
+.wordle-gray {
+  background: var(--ink-3);
+  border-color: var(--ink-3);
+  color: var(--bg);
+}
+.wordle-notice {
+  text-align: center;
+  color: #c0392b;
+  margin-top: 8px;
+  font-size: 0.92rem;
+}
+.wordle-result {
+  text-align: center;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.wordle-result-title {
+  font-size: 1.1rem;
+}
+.wordle-msg {
+  text-align: center;
+  color: var(--ink-2);
+  padding: 48px 0;
+}
