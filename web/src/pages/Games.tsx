@@ -21,6 +21,13 @@ const GAMES: GameCard[] = [
     playHref: '/app/games/wordle',
   },
   {
+    icon: <BookIcon />,
+    name: 'Wordle Battle',
+    body: 'Race a friend to guess the same Kurdish word first. Create a battle and share the invite link.',
+    status: 'On mobile',
+    playHref: '/app/games/wordle-battle',
+  },
+  {
     icon: <FeatherIcon />,
     name: 'Rhyming Words',
     body: 'A timed solo round: find as many words as you can that rhyme with the prompt. Head-to-head duels are on mobile.',

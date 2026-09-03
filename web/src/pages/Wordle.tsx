@@ -2,21 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, LetterFeedback, WordleGame } from '../lib/types';
+import type { ApiError, WordleGame } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
+import { WordleBoard, WordleKeyboard, KURMANCI_LETTER_RE } from '../components/WordleBoard';
 
 type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
-
-// Kurmancî (Hawar) alphabet, laid out for an on-screen keyboard so the special
-// letters ç ê î ş û are always reachable regardless of the physical keyboard.
-const KEY_ROWS: string[][] = [
-  ['q', 'w', 'e', 'ê', 'r', 't', 'y', 'u', 'û', 'i', 'î', 'o', 'p'],
-  ['a', 's', 'ş', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-  ['z', 'x', 'c', 'ç', 'v', 'b', 'n', 'm'],
-];
 
 function guessError(err: ApiError): string {
   switch (err.code) {
@@ -100,7 +93,7 @@ export function Wordle(): React.JSX.Element {
       if (e.key === 'Enter') return press('Enter');
       if (e.key === 'Backspace') return press('Backspace');
       const k = e.key.toLowerCase();
-      if (k.length === 1 && /[a-zêîûçş]/.test(k)) press(k);
+      if (KURMANCI_LETTER_RE.test(k)) press(k);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -143,7 +136,13 @@ export function Wordle(): React.JSX.Element {
         <Loading />
       ) : (
         <>
-          <Board game={game} current={current} />
+          <WordleBoard
+            targetLength={game.targetLength}
+            guesses={game.guesses}
+            current={current}
+            totalRows={game.guesses.length + game.remainingAttempts}
+            showCurrent={game.status === 'playing'}
+          />
           {notice && <div className="wordle-notice" role="status">{notice}</div>}
           {game.status !== 'playing' && (
             <div className="wordle-result">
@@ -159,78 +158,9 @@ export function Wordle(): React.JSX.Element {
               )}
             </div>
           )}
-          <Keyboard keyboard={game.keyboard} onPress={press} disabled={!playing || submitting} />
+          <WordleKeyboard keyboard={game.keyboard} onPress={press} disabled={!playing || submitting} />
         </>
       )}
-    </div>
-  );
-}
-
-/** The guess grid: filled rows with feedback, the in-progress row, then blanks. */
-function Board({ game, current }: { game: WordleGame; current: string }): React.JSX.Element {
-  const totalRows = game.guesses.length + game.remainingAttempts;
-  const currentLetters = Array.from(current);
-  const rows: React.JSX.Element[] = [];
-  for (let r = 0; r < totalRows; r++) {
-    const done = game.guesses[r];
-    const isCurrent = !done && r === game.guesses.length && game.status === 'playing';
-    const cells: React.JSX.Element[] = [];
-    for (let c = 0; c < game.targetLength; c++) {
-      let letter = '';
-      let fb: LetterFeedback | 'empty' | 'typing' = 'empty';
-      if (done) {
-        letter = done.letters[c] ?? '';
-        fb = done.feedback[c] ?? 'gray';
-      } else if (isCurrent) {
-        letter = currentLetters[c] ?? '';
-        fb = letter ? 'typing' : 'empty';
-      }
-      cells.push(
-        <div key={c} className={`wordle-cell wordle-${fb}`} aria-label={letter || 'empty'}>
-          {letter}
-        </div>,
-      );
-    }
-    rows.push(
-      <div className="wordle-row" key={r} style={{ gridTemplateColumns: `repeat(${game.targetLength}, 1fr)` }}>
-        {cells}
-      </div>,
-    );
-  }
-  return <div className="wordle-board" aria-label="Guesses">{rows}</div>;
-}
-
-/** On-screen Kurmancî keyboard, tinted by each letter's best-known feedback. */
-function Keyboard({
-  keyboard,
-  onPress,
-  disabled,
-}: {
-  keyboard: Record<string, LetterFeedback>;
-  onPress: (key: string) => void;
-  disabled: boolean;
-}): React.JSX.Element {
-  return (
-    <div className="wordle-keyboard" aria-hidden={disabled}>
-      {KEY_ROWS.map((row, i) => (
-        <div className="wordle-krow" key={i}>
-          {i === KEY_ROWS.length - 1 && (
-            <button className="wordle-key wordle-key-wide" onClick={() => onPress('Enter')} disabled={disabled}>
-              Enter
-            </button>
-          )}
-          {row.map((k) => (
-            <button key={k} className={`wordle-key wordle-${keyboard[k] ?? 'key'}`} onClick={() => onPress(k)} disabled={disabled}>
-              {k}
-            </button>
-          ))}
-          {i === KEY_ROWS.length - 1 && (
-            <button className="wordle-key wordle-key-wide" onClick={() => onPress('Backspace')} disabled={disabled} aria-label="Delete">
-              ⌫
-            </button>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
