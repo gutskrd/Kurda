@@ -30,6 +30,21 @@ const ALLOWLIST = {
   // the dependency tree resolves browserslist > 4.28.6 on its own.
   'GHSA-c83g-rgw3-j3cx': 'browserslist unbounded memory growth — build-only (autoprefixer/vite); no runtime exposure',
   'GHSA-73wf-gq98-2v4g': 'browserslist crash via untrusted custom stats — build-only; we never pass custom stats; no runtime exposure',
+  // fast-uri host-confusion / SSRF advisories. fast-uri IS a runtime dependency,
+  // but only of ajv (JSON-schema $ref resolution + `format:"uri"` validation) and
+  // fast-json-stringify (response serialization) — neither ever makes a network
+  // request or trust decision from a parsed URI, so the SSRF/host-confusion sink
+  // does not exist in this stack. Crucially the API defines NO `format:"uri"` in
+  // any request schema (verified), so no attacker-controlled input ever reaches
+  // fast-uri at all; it only parses our own trusted, developer-authored $refs.
+  // The patched fast-uri@3.1.7 is within every consumer's ^3 range, but an npm
+  // `overrides` pin does not re-resolve the deduped transitive here without a full
+  // lockfile regen (out of scope for a feature PR). REMOVE once the tree resolves
+  // fast-uri > 3.1.5 on its own (Fastify/ajv dependency bump).
+  'GHSA-5jgf-p345-68v8': 'fast-uri host confusion (scheme-relative) — runtime dep of ajv/fast-json-stringify; no request/trust sink; no format:uri on user input',
+  'GHSA-f65p-4m7j-42xc': 'fast-uri SSRF via IPv6 normalization — runtime dep of ajv/fast-json-stringify; no request sink; no format:uri on user input',
+  'GHSA-fph4-wmhf-6fwf': 'fast-uri SSRF via hostname percent-decoding — runtime dep of ajv/fast-json-stringify; no request sink; no format:uri on user input',
+  'GHSA-jqff-g426-hqxp': 'fast-uri host confusion (percent-encoded scheme) — runtime dep of ajv/fast-json-stringify; no request/trust sink; no format:uri on user input',
 };
 
 function auditJson() {
