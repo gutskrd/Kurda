@@ -30,9 +30,16 @@ const GAMES: GameCard[] = [
   {
     icon: <FeatherIcon />,
     name: 'Rhyming Words',
-    body: 'A timed solo round: find as many words as you can that rhyme with the prompt. Head-to-head duels are on mobile.',
+    body: 'A timed solo round: find as many words as you can that rhyme with the prompt.',
     status: 'On mobile',
     playHref: '/app/games/rhyme',
+  },
+  {
+    icon: <FeatherIcon />,
+    name: 'Rhyme Match',
+    body: 'Head-to-head rhyming: race a friend to find the most rhymes for one prompt. Create a match and share the invite link.',
+    status: 'On mobile',
+    playHref: '/app/games/rhyme-match',
   },
   {
     icon: <TrophyIcon />,
