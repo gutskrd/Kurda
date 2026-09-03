@@ -153,6 +153,25 @@ describe('Messages', () => {
     expect(created?.body).toMatchObject({ name: 'Kurmancî learners', privacy: 'open' });
   });
 
+  it('renders a game-invite link in a DM as an invite card', async () => {
+    const invite = 'https://mykurda.com/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/chat/u2/messages'))
+          return jsonResponse(200, { messages: [{ id: 'm1', senderId: 'u2', body: `Play me! ${invite}`, createdAt: '2026-08-24T10:00:00Z', deliveredAt: null, readAt: null }] });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Messages />, ['/app/messages?to=u2&name=zana']);
+
+    expect(await screen.findByText('Wordle Battle')).toBeInTheDocument();
+    expect(screen.getByText('Play me!')).toBeInTheDocument();
+    const join = screen.getByRole('link', { name: /join/i });
+    expect(join).toHaveAttribute('href', '/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555');
+  });
+
   it('appends an incoming group message over realtime', async () => {
     localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
