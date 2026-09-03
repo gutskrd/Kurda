@@ -47,6 +47,14 @@ const envSchema = z.object({
    * 'false' when a dedicated worker process is running.
    */
   RUN_WORKER_IN_API: z.enum(['true', 'false']).optional(),
+
+  /**
+   * Comma-separated addresses granted admin on boot. Kept in configuration
+   * rather than the repository (which is public) so the admin accounts are not
+   * advertised. A grant requires the address to be CONFIRMED on its account —
+   * see grantBootstrapAdmins.
+   */
+  BOOTSTRAP_ADMIN_EMAILS: z.string().default(''),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
 

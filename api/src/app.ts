@@ -142,6 +142,7 @@ import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
 import { createWorker } from './jobs/worker.js';
+import { grantBootstrapAdmins } from './admin/bootstrap-admins.js';
 import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 import { DashboardService } from './analytics/dashboard-service.js';
 import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
@@ -196,6 +197,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   if (config.DATABASE_URL) {
     const pool = createPool(config);
     app.decorate('db', pool);
+    // reconcile the configured admin allowlist once the server is up (idempotent;
+    // only grants to accounts that have confirmed their address)
+    app.addHook('onReady', async () => {
+      await grantBootstrapAdmins(pool, config.BOOTSTRAP_ADMIN_EMAILS, app.log).catch((err) => {
+        app.log.warn({ err }, 'bootstrap admin reconciliation failed');
+      });
+    });
     health.register('db', dbHealthCheck(pool));
     app.addHook('onClose', async () => {
       await pool.end();
