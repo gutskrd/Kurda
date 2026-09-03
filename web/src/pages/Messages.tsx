@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, Conversation, DmMessage, Group, GroupMessage, MyGroup } from '../lib/types';
+import type { ApiError, Conversation, DmMessage, Group, GroupDetail, GroupMember, GroupMessage, GroupRole, MyGroup } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
@@ -401,6 +401,7 @@ function Thread({
     }
   }, [client, otherId]);
 
+
   useEffect(() => {
     setMessages(null);
     setLoadError(null);
@@ -499,6 +500,8 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   const { client, user } = useAuth();
   const { state } = useRealtime();
   const [name, setName] = useState<string>('Group');
+  const [detail, setDetail] = useState<GroupDetail | null>(null);
+  const [showMembers, setShowMembers] = useState(false);
   const [messages, setMessages] = useState<GroupMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -519,17 +522,23 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
     }
   }, [client, groupId]);
 
+  /** Group detail carries the roster + my role, which drives the members panel. */
+  const loadDetail = useCallback(async () => {
+    const r = await client.get<GroupDetail>(`/groups/${groupId}`);
+    if (r.ok) {
+      setDetail(r.data);
+      setName(r.data.name);
+    }
+  }, [client, groupId]);
   useEffect(() => {
     setMessages(null);
     setLoadError(null);
     void load();
-    void client.get<{ name: string }>(`/groups/${groupId}`).then((r) => {
-      if (r.ok) setName(r.data.name);
-    });
+    void loadDetail();
     void client.post(`/groups/${groupId}/chat/read`).catch(() => undefined);
     const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
     return () => clearInterval(t);
-  }, [load, client, groupId, state]);
+  }, [load, loadDetail, client, groupId, state]);
 
   const onGroupMsg = useCallback(
     (env: RealtimeEventEnvelope) => {
@@ -589,7 +598,14 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
         <span className="chat-thread-title" aria-current="page">
           {name}
         </span>
+        <button type="button" className="chat-members-btn" onClick={() => setShowMembers(true)}>
+          {detail?.members ? `${detail.members.length} members` : 'Members'}
+        </button>
       </header>
+
+      <Modal open={showMembers} onClose={() => setShowMembers(false)} label="Group members">
+        {detail?.members && <GroupMembers detail={detail} onChanged={loadDetail} />}
+      </Modal>
 
       <div className="chat-messages" ref={scrollRef}>
         {messages === null ? (
@@ -623,6 +639,115 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
           {sending ? 'Sending…' : 'Send'}
         </Button>
       </form>
+    </div>
+  );
+}
+
+/** Higher rank = more power, mirroring the server's group role hierarchy. */
+const ROLE_RANK: Record<GroupRole, number> = { member: 0, moderator: 1, owner: 2 };
+
+/**
+ * The group's roster and its admins. A group's creator is its owner; owners can
+ * promote members to moderator (a group admin) or demote them, and owners and
+ * moderators can remove anyone they outrank. This is entirely separate from
+ * MyKurda staff roles — being a group admin grants nothing outside the group.
+ * The server re-checks every action; this only mirrors the rules to hide buttons
+ * that would be rejected.
+ */
+function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: () => Promise<void> }): React.JSX.Element {
+  const { client, user } = useAuth();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const myRole = detail.myRole;
+  const canManage = (target: GroupMember): boolean =>
+    myRole !== null &&
+    (myRole === 'owner' || myRole === 'moderator') &&
+    ROLE_RANK[myRole] > ROLE_RANK[target.role] &&
+    target.userId !== user?.id;
+  // only an owner changes roles; ownership itself moves via transfer, not setRole
+  const canSetRole = myRole === 'owner';
+
+  async function act(
+    key: string,
+    run: () => Promise<{ ok: boolean; error?: ApiError }>,
+    confirmText?: string,
+  ): Promise<void> {
+    if (confirmText && !confirm(confirmText)) return;
+    setBusy(key);
+    setError(null);
+    const res = await run();
+    setBusy(null);
+    if (res.ok) await onChanged();
+    else setError(res.error ? describeError(res.error) : 'That did not work.');
+  }
+
+  const setRole = (m: GroupMember, role: 'moderator' | 'member'): Promise<void> =>
+    act(`${m.userId}:role`, () => client.put(`/groups/${detail.id}/members/${m.userId}/role`, { role }));
+
+  const remove = (m: GroupMember): Promise<void> =>
+    act(
+      `${m.userId}:remove`,
+      () => client.delete(`/groups/${detail.id}/members/${m.userId}`),
+      `Remove ${m.username} from ${detail.name}?`,
+    );
+
+  const transfer = (m: GroupMember): Promise<void> =>
+    act(
+      `${m.userId}:transfer`,
+      () => client.post(`/groups/${detail.id}/transfer`, { userId: m.userId }),
+      `Make ${m.username} the owner of ${detail.name}?\n\nYou will become a moderator and cannot undo this yourself.`,
+    );
+
+  const ordered = [...detail.members].sort(
+    (a, b) => ROLE_RANK[b.role] - ROLE_RANK[a.role] || a.username.localeCompare(b.username),
+  );
+
+  return (
+    <div className="group-members">
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{detail.name}</h2>
+      <p className="muted">
+        {detail.members.length} member{detail.members.length === 1 ? '' : 's'}
+        {myRole && <> · you are {myRole === 'owner' ? 'the owner' : `a ${myRole}`}</>}
+      </p>
+      {error && <div className="msg msg-error">{error}</div>}
+
+      <ul className="group-member-list">
+        {ordered.map((m) => (
+          <li className="group-member" key={m.userId}>
+            <span className="group-avatar" aria-hidden>{m.username.slice(0, 1).toUpperCase()}</span>
+            <span className="chat-convo-body">
+              <span className="chat-convo-name">
+                {m.username}
+                {m.userId === user?.id && <span className="group-joined-badge">You</span>}
+              </span>
+              <span className="chat-convo-last">{m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Admin' : 'Member'}</span>
+            </span>
+            <span className="group-member-actions">
+              {canSetRole && m.role === 'member' && m.userId !== user?.id && (
+                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'moderator')}>
+                  Make admin
+                </Button>
+              )}
+              {canSetRole && m.role === 'moderator' && (
+                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'member')}>
+                  Remove admin
+                </Button>
+              )}
+              {canSetRole && m.role === 'moderator' && (
+                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void transfer(m)}>
+                  Make owner
+                </Button>
+              )}
+              {canManage(m) && (
+                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void remove(m)}>
+                  Remove
+                </Button>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

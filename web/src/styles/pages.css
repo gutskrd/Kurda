@@ -2532,3 +2532,43 @@ button.feature {
   color: var(--ink-3);
   font-size: 0.88rem;
 }
+
+/* ---- group members / roles --------------------------------------------- */
+.chat-members-btn {
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chat-members-btn:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+.group-member-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.group-member {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.group-member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
