@@ -180,6 +180,43 @@ describe('Messages', () => {
     expect(screen.getByRole('button', { name: /^join$/i })).toBeInTheDocument();
   });
 
+  it('lets a group owner promote a member to group admin', async () => {
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    const calls: Array<{ url: string; method: string; body: unknown }> = [];
+    const detail = {
+      id: 'g1', name: 'Test Group', description: null, privacy: 'open', ownerId: 'me',
+      archivedAt: null, memberCount: 2, myRole: 'owner',
+      members: [
+        { userId: 'me', username: 'ada', role: 'owner', joinedAt: '2026-01-01T00:00:00.000Z' },
+        { userId: 'u9', username: 'zana', role: 'member', joinedAt: '2026-01-02T00:00:00.000Z' },
+      ],
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/members/u9/role')) {
+          calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? JSON.parse(init.body as string) : null });
+          return jsonResponse(200, { ok: true });
+        }
+        if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
+        if (url.includes('/groups/g1')) return jsonResponse(200, detail);
+        if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+
+    renderApp(<Messages />, ['/app/messages?group=g1']);
+
+    // the creator is the owner, so the roster offers promoting a member to admin
+    await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
+    expect(await screen.findByText(/you are the owner/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /make admin/i }));
+
+    expect(calls[0]?.method).toBe('PUT');
+    expect(calls[0]?.body).toMatchObject({ role: 'moderator' });
+  });
   it('renders a game-invite link in a DM as an invite card', async () => {
     const invite = 'https://mykurda.com/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
     vi.stubGlobal(
@@ -205,7 +242,7 @@ describe('Messages', () => {
       'fetch',
       vi.fn(async (url: string) => {
         if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
-        if (url.includes('/groups/g1')) return jsonResponse(200, { id: 'g1', name: 'Test Group', memberCount: 2 });
+        if (url.includes('/groups/g1')) return jsonResponse(200, { id: 'g1', name: 'Test Group', memberCount: 2, privacy: 'open', description: null, ownerId: 'me', archivedAt: null, myRole: 'owner', members: [{ userId: 'me', username: 'ada', role: 'owner', joinedAt: '2026-01-01T00:00:00.000Z' }, { userId: 'u9', username: 'zana', role: 'member', joinedAt: '2026-01-02T00:00:00.000Z' }] });
         if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
         if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
         if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });

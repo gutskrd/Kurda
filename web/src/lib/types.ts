@@ -263,6 +263,12 @@ export interface GroupMember {
   joinedAt: string;
 }
 
+/** Group detail with its roster and the caller's own role (GET /groups/:id). */
+export interface GroupDetail extends Group {
+  members: GroupMember[];
+  /** null when the caller is not a member */
+  myRole: GroupRole | null;
+}
 /** A group chat message (GET/POST /groups/:id/chat). */
 export interface GroupMessage {
   id: string;
