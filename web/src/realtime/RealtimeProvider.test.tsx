@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AuthProvider } from '../auth/AuthProvider';
-import { RealtimeProvider, useRealtime, useRealtimeEvent } from './RealtimeProvider';
+import { RealtimeProvider, useRealtime, useRealtimeEvent, useRealtimeRoom } from './RealtimeProvider';
 import type { RealtimeClient } from './RealtimeClient';
 import type { RealtimeEventEnvelope, RealtimeState } from './events';
 import { jsonResponse } from '../test/utils';
@@ -17,9 +17,13 @@ afterEach(() => {
 interface FakeClient {
   connected: boolean;
   destroyed: boolean;
+  joined: string[];
+  left: string[];
   on(type: string, handler: (arg: unknown) => void): () => void;
   connect(): void;
   destroy(): void;
+  join(room: string): void;
+  leave(room: string): void;
   emitEvent(env: RealtimeEventEnvelope): void;
   emitState(s: RealtimeState): void;
 }
@@ -29,6 +33,8 @@ function makeFakeClient(): FakeClient {
   return {
     connected: false,
     destroyed: false,
+    joined: [],
+    left: [],
     on(type, handler) {
       (listeners[type] ??= new Set()).add(handler);
       return () => listeners[type]?.delete(handler);
@@ -38,6 +44,12 @@ function makeFakeClient(): FakeClient {
     },
     destroy() {
       this.destroyed = true;
+    },
+    join(room) {
+      this.joined.push(room);
+    },
+    leave(room) {
+      this.left.push(room);
     },
     emitEvent(env) {
       listeners['event']?.forEach((h) => h(env));
@@ -112,5 +124,40 @@ describe('RealtimeProvider', () => {
     );
     expect(fake.connected).toBe(false);
     expect(screen.getByTestId('state')).toHaveTextContent('idle');
+  });
+
+  it('joins a room while a subscriber is mounted and leaves it on unmount', async () => {
+    signIn();
+    const fake = makeFakeClient();
+
+    function RoomProbe({ room }: { room: string | null }): React.JSX.Element {
+      useRealtimeRoom(room);
+      return <span data-testid="room">{room ?? 'none'}</span>;
+    }
+    function Harness(): React.JSX.Element {
+      const [room, setRoom] = useState<string | null>('group:g1');
+      return (
+        <>
+          <button onClick={() => setRoom(null)}>close</button>
+          <RoomProbe room={room} />
+        </>
+      );
+    }
+
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={asClient(fake)}>
+          <Harness />
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+
+    // leader connects, then the mounted subscriber's room is joined
+    await waitFor(() => expect(fake.connected).toBe(true));
+    await waitFor(() => expect(fake.joined).toContain('group:g1'));
+
+    // dropping the room unmounts the subscriber → the leader leaves it
+    (await screen.findByText('close')).click();
+    await waitFor(() => expect(fake.left).toContain('group:g1'));
   });
 });

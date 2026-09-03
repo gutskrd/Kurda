@@ -492,3 +492,59 @@ describe('RealtimeClient — no credential leakage', () => {
     h.client.destroy();
   });
 });
+
+describe('RealtimeClient — rooms (join/leave)', () => {
+  async function openClient() {
+    const h = makeClient();
+    h.client.connect();
+    await flush();
+    MockWebSocket.last().triggerOpen();
+    return h;
+  }
+
+  it('sends a join frame when the socket is open', async () => {
+    const h = await openClient();
+    h.client.join('group:g1');
+    expect(MockWebSocket.last().sent).toContain(JSON.stringify({ type: 'join', room: 'group:g1' }));
+    h.client.destroy();
+  });
+
+  it('queues a join requested before open and (re)joins every desired room on open', async () => {
+    const h = makeClient();
+    h.client.join('group:g1'); // before connect → nothing sent yet
+    h.client.connect();
+    await flush();
+    const ws = MockWebSocket.last();
+    expect(ws.sent).toHaveLength(0);
+    ws.triggerOpen();
+    expect(ws.sent).toContain(JSON.stringify({ type: 'join', room: 'group:g1' }));
+    h.client.destroy();
+  });
+
+  it('re-joins desired rooms on a reconnect (new socket)', async () => {
+    const h = await openClient();
+    h.client.join('group:g1');
+    // drop the socket → client reconnects
+    MockWebSocket.last().triggerClose(1006);
+    await vi.advanceTimersByTimeAsync(2000);
+    await flush();
+    const ws2 = MockWebSocket.last();
+    ws2.triggerOpen();
+    expect(ws2.sent).toContain(JSON.stringify({ type: 'join', room: 'group:g1' }));
+    h.client.destroy();
+  });
+
+  it('leave() sends a leave frame and stops re-joining after reconnect', async () => {
+    const h = await openClient();
+    h.client.join('group:g1');
+    h.client.leave('group:g1');
+    expect(MockWebSocket.last().sent).toContain(JSON.stringify({ type: 'leave', room: 'group:g1' }));
+    MockWebSocket.last().triggerClose(1006);
+    await vi.advanceTimersByTimeAsync(2000);
+    await flush();
+    const ws2 = MockWebSocket.last();
+    ws2.triggerOpen();
+    expect(ws2.sent).not.toContain(JSON.stringify({ type: 'join', room: 'group:g1' }));
+    h.client.destroy();
+  });
+});
