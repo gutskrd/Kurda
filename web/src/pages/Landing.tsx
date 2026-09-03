@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { LinkButton } from '../components/Button';
 import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, SparkIcon, CoinIcon } from '../components/icons';
+import { warmApi } from '../lib/warmup';
 
 const FEATURES = [
   { icon: <BookIcon />, title: 'Structured lessons', body: 'A clear path through Kurdish — vocabulary, grammar and listening, one confident step at a time.' },
@@ -11,6 +13,10 @@ const FEATURES = [
 ];
 
 export function Landing(): React.JSX.Element {
+  // warm the API early so sign-in later doesn't pay the cold-start penalty
+  useEffect(() => {
+    warmApi();
+  }, []);
   return (
     <>
       <section className="hero">
