@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, Conversation, DmMessage, Group, GroupMessage, MyGroup } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
-import { useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
+import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
@@ -13,10 +13,18 @@ import { ArrowIcon } from '../components/icons';
 import { Avatar } from '../components/Avatar';
 import { MessageBody } from '../components/GameInviteCard';
 
-// Realtime delivers messages instantly; polling stays only as a safety net for
-// events missed while the socket was down, so it can run far slower than before.
-const CONVO_POLL_MS = 30000;
-const THREAD_POLL_MS = 20000;
+// When the realtime socket is live it carries every message instantly, so polling
+// is just a slow safety net. When it is NOT connected, we fall back to a brisk
+// poll so chat still feels live for everyone.
+const CONVO_POLL_LIVE = 30000;
+const CONVO_POLL_FALLBACK = 5000;
+const THREAD_POLL_LIVE = 20000;
+const THREAD_POLL_FALLBACK = 4000;
+
+/** Oldest→newest by server timestamp, so the thread always reads top to bottom. */
+function byTime<T extends { createdAt: string }>(msgs: T[]): T[] {
+  return [...msgs].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+}
 
 /** Map moderation/anti-bot server codes to human copy (server stays authoritative). */
 function sendError(err: ApiError): string {
@@ -99,6 +107,7 @@ export function Messages(): React.JSX.Element {
 /** The list of 1:1 conversations. */
 function DirectList({ activeId, refreshKey }: { activeId: string | null; refreshKey: number }): React.JSX.Element {
   const { client } = useAuth();
+  const { state } = useRealtime();
   const [convos, setConvos] = useState<Conversation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const loadedOnce = useRef(false);
@@ -115,9 +124,9 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
 
   useEffect(() => {
     void loadConvos();
-    const t = setInterval(() => void loadConvos(), CONVO_POLL_MS);
+    const t = setInterval(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
     return () => clearInterval(t);
-  }, [loadConvos, refreshKey]);
+  }, [loadConvos, refreshKey, state]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
   useRealtimeEvent('dm', onDm);
@@ -326,25 +335,38 @@ function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined:
 
   if (error && groups === null) return <ErrorState message={error} onRetry={() => void load()} />;
   if (groups === null) return <Loading />;
-  const open = groups.filter((g) => g.privacy === 'open' && !mineIds.has(g.id));
+  // show open groups AND the caller's own (marked as already-in), rather than hiding them
+  const open = groups.filter((g) => g.privacy === 'open' || mineIds.has(g.id));
   if (open.length === 0)
-    return <EmptyState title="Nothing to join right now" message="No open groups you’re not already in. Create your own instead!" />;
+    return <EmptyState title="Nothing here yet" message="No groups to discover right now. Create your own to get started!" />;
 
   return (
     <div className="group-discover">
       {error && <div className="msg msg-error">{error}</div>}
-      {open.map((g) => (
-        <div className="group-discover-row" key={g.id}>
-          <span className="group-avatar" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
-          <span className="chat-convo-body">
-            <span className="chat-convo-name">{g.name}</span>
-            <span className="chat-convo-last">{g.description || `${g.memberCount} members`}</span>
-          </span>
-          <Button size="sm" disabled={joining === g.id} onClick={() => void join(g.id)}>
-            {joining === g.id ? 'Joining…' : 'Join'}
-          </Button>
-        </div>
-      ))}
+      {open.map((g) => {
+        const joined = mineIds.has(g.id);
+        return (
+          <div className="group-discover-row" key={g.id}>
+            <span className="group-avatar" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
+            <span className="chat-convo-body">
+              <span className="chat-convo-name">
+                {g.name}
+                {joined && <span className="group-joined-badge">Joined</span>}
+              </span>
+              <span className="chat-convo-last">{g.description || `${g.memberCount} member${g.memberCount === 1 ? '' : 's'}`}</span>
+            </span>
+            {joined ? (
+              <Link to={`/app/messages?group=${g.id}`} className="btn btn-secondary btn-sm" onClick={onJoined}>
+                Open
+              </Link>
+            ) : (
+              <Button size="sm" disabled={joining === g.id} onClick={() => void join(g.id)}>
+                {joining === g.id ? 'Joining…' : 'Join'}
+              </Button>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -359,6 +381,7 @@ function Thread({
   onSent: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
+  const { state } = useRealtime();
   const { openProfile } = useProfileModal();
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -370,8 +393,8 @@ function Thread({
   const load = useCallback(async () => {
     const res = await client.get<{ messages: DmMessage[] }>(`/chat/${otherId}/messages`);
     if (res.ok) {
-      // history returns newest-first; show oldest→newest
-      setMessages([...res.data.messages].reverse());
+      // server order can vary; sort explicitly so it always reads oldest→newest
+      setMessages(byTime(res.data.messages));
     } else {
       setMessages((m) => m ?? []);
       setLoadError(describeError(res.error));
@@ -382,9 +405,9 @@ function Thread({
     setMessages(null);
     setLoadError(null);
     void load();
-    const t = setInterval(() => void load(), THREAD_POLL_MS);
+    const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
     return () => clearInterval(t);
-  }, [load]);
+  }, [load, state]);
 
   // live receive: append a DM the moment it arrives from the person we're viewing
   const onDm = useCallback(
@@ -474,6 +497,7 @@ function Thread({
 /** A group chat channel — history, live messages over the `group:<id>` room, send. */
 function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   const { client, user } = useAuth();
+  const { state } = useRealtime();
   const [name, setName] = useState<string>('Group');
   const [messages, setMessages] = useState<GroupMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -488,7 +512,7 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   // fetching history also refreshes the server-side grant that authorizes the WS join
   const load = useCallback(async () => {
     const res = await client.get<{ messages: GroupMessage[] }>(`/groups/${groupId}/chat`);
-    if (res.ok) setMessages(res.data.messages);
+    if (res.ok) setMessages(byTime(res.data.messages));
     else {
       setMessages((m) => m ?? []);
       setLoadError(describeError(res.error));
@@ -503,9 +527,9 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
       if (r.ok) setName(r.data.name);
     });
     void client.post(`/groups/${groupId}/chat/read`).catch(() => undefined);
-    const t = setInterval(() => void load(), THREAD_POLL_MS);
+    const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
     return () => clearInterval(t);
-  }, [load, client, groupId]);
+  }, [load, client, groupId, state]);
 
   const onGroupMsg = useCallback(
     (env: RealtimeEventEnvelope) => {

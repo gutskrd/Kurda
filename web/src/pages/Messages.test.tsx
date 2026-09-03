@@ -153,6 +153,33 @@ describe('Messages', () => {
     expect(created?.body).toMatchObject({ name: 'Kurmancî learners', privacy: 'open' });
   });
 
+  it('shows groups I already belong to in Discover, marked as joined', async () => {
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    const mineG = { id: 'g1', name: 'My Club', description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner' };
+    const publicG = { id: 'g2', name: 'Open Circle', description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 4 };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/me/groups')) return jsonResponse(200, { groups: [mineG] });
+        if (url.endsWith('/groups') || url.includes('/groups?')) return jsonResponse(200, { groups: [mineG, publicG] });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Messages />, ['/app/messages']);
+
+    await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /discover/i }));
+
+    // my own group appears with a Joined marker + an Open link (not a Join button)
+    expect(await screen.findByText('Joined')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open/i })).toHaveAttribute('href', '/app/messages?group=g1');
+    // a group I'm not in still offers Join
+    expect(screen.getByText('Open Circle')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^join$/i })).toBeInTheDocument();
+  });
+
   it('renders a game-invite link in a DM as an invite card', async () => {
     const invite = 'https://mykurda.com/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
     vi.stubGlobal(
