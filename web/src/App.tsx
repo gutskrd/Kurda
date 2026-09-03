@@ -9,6 +9,7 @@ import { Stories, Poems } from './pages/Library';
 import { Games } from './pages/Games';
 import { Wordle } from './pages/Wordle';
 import { Rhyme } from './pages/Rhyme';
+import { Quiz } from './pages/Quiz';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -86,6 +87,7 @@ export function App(): React.JSX.Element {
             <Route path="games" element={<Games />} />
             <Route path="games/wordle" element={<Wordle />} />
             <Route path="games/rhyme" element={<Rhyme />} />
+            <Route path="games/quiz" element={<Quiz />} />
             <Route path="rankings" element={<Rankings />} />
             <Route path="friends" element={<Friends />} />
             <Route path="messages" element={<Messages />} />

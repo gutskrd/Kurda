@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
-import { GameIcon, FeatherIcon, BookIcon, TrophyIcon } from '../components/icons';
+import { FeatherIcon, BookIcon, TrophyIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 
 interface GameCard {
@@ -28,16 +28,11 @@ const GAMES: GameCard[] = [
     playHref: '/app/games/rhyme',
   },
   {
-    icon: <GameIcon />,
-    name: 'Quizzes',
-    body: 'Quick, focused quizzes that check what you’ve learned and turn review into a few fun minutes.',
-    status: 'On mobile',
-  },
-  {
     icon: <TrophyIcon />,
-    name: 'Ranked matches',
-    body: 'Compete in rated 1-v-1 matches where the server keeps score — fair, timed and tamper-proof.',
+    name: 'Ranked quiz',
+    body: 'Fast 1-v-1 matches: answer Kurdish questions quicker and more accurately than your opponent. Server-scored and rated.',
     status: 'On mobile',
+    playHref: '/app/games/quiz',
   },
 ];
 
