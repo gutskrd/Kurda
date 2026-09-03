@@ -42,8 +42,8 @@ describe('generateSecret / otpauthUri', () => {
     expect(secret).toMatch(/^[A-Z2-7]+$/);
     const code = totpCode(secret);
     expect(verifyTotp(secret, code)).toBe(true);
-    const uri = otpauthUri(secret, 'admin@kurda.app');
-    expect(uri).toContain('otpauth://totp/Kurda%20Admin:admin%40kurda.app');
+    const uri = otpauthUri(secret, 'admin@mykurda.com');
+    expect(uri).toContain('otpauth://totp/MyKurda%20Admin:admin%40mykurda.com');
     expect(uri).toContain(`secret=${secret}`);
   });
 });

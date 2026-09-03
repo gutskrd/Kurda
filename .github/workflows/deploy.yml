@@ -8,7 +8,7 @@ name: Deploy
 #
 # Required secrets for the staging deploy step (issue #8 tracks the
 # hosting decision; until they exist the deploy step reports and skips):
-#   STAGING_SSH_HOST  e.g. deploy@staging.kurda.app
+#   STAGING_SSH_HOST  e.g. deploy@staging.mykurda.com
 #   STAGING_SSH_KEY   private key authorized on the host
 
 on:

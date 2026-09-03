@@ -31,27 +31,27 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
   'verify-email': {
     en: {
       subject: 'Verify your email',
-      text: 'Welcome to Kurda!\n\nConfirm your email to get started: {link}\n\nIf you didn’t sign up, ignore this message.',
+      text: 'Welcome to MyKurda!\n\nConfirm your email to get started: {link}\n\nIf you didn’t sign up, ignore this message.',
     },
     ku: {
       subject: 'E-nameya xwe piştrast bike',
-      text: 'Bi xêr hatî Kurda!\n\nJi bo destpêkê e-nameya xwe piştrast bike: {link}\n\nEger te tomar nekiriye, vê peyamê pişguh bike.',
+      text: 'Bi xêr hatî MyKurda!\n\nJi bo destpêkê e-nameya xwe piştrast bike: {link}\n\nEger te tomar nekiriye, vê peyamê pişguh bike.',
     },
   },
   'verify-email-code': {
     en: {
-      subject: 'Your Kurda verification code',
-      text: 'Welcome to Kurda!\n\nYour verification code is {code}. It expires in 15 minutes.\n\nIf you didn’t sign up, ignore this message.',
+      subject: 'Your MyKurda verification code',
+      text: 'Welcome to MyKurda!\n\nYour verification code is {code}. It expires in 15 minutes.\n\nIf you didn’t sign up, ignore this message.',
     },
     ku: {
-      subject: 'Koda piştrastkirinê ya Kurda',
-      text: 'Bi xêr hatî Kurda!\n\nKoda te ya piştrastkirinê {code} e. Di 15 deqîqeyan de diqede.\n\nEger te tomar nekiriye, vê peyamê pişguh bike.',
+      subject: 'Koda piştrastkirinê ya MyKurda',
+      text: 'Bi xêr hatî MyKurda!\n\nKoda te ya piştrastkirinê {code} e. Di 15 deqîqeyan de diqede.\n\nEger te tomar nekiriye, vê peyamê pişguh bike.',
     },
   },
   'password-reset': {
     en: {
       subject: 'Reset your password',
-      text: 'Reset your Kurda password with this link (valid 1 hour): {link}\n\nIf you didn’t request this, you can ignore it.',
+      text: 'Reset your MyKurda password with this link (valid 1 hour): {link}\n\nIf you didn’t request this, you can ignore it.',
     },
     ku: {
       subject: 'Şîfreya xwe ji nû ve saz bike',
@@ -61,11 +61,11 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
   'password-changed': {
     en: {
       subject: 'Your password was changed',
-      text: 'Your Kurda password was just changed. If this wasn’t you, reset it immediately and contact support.',
+      text: 'Your MyKurda password was just changed. If this wasn’t you, reset it immediately and contact support.',
     },
     ku: {
       subject: 'Şîfreya te hate guhertin',
-      text: 'Şîfreya te ya Kurda nû hate guhertin. Eger ev ne tu bûyî, tavilê wê ji nû ve saz bike û bi piştgiriyê re têkilî deyne.',
+      text: 'Şîfreya te ya MyKurda nû hate guhertin. Eger ev ne tu bûyî, tavilê wê ji nû ve saz bike û bi piştgiriyê re têkilî deyne.',
     },
   },
   'oauth-no-password': {
@@ -81,11 +81,11 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
   'deletion-notice': {
     en: {
       subject: 'Your account is scheduled for deletion',
-      text: 'Your Kurda account will be deleted on {date}. Log in before then to cancel and keep your progress.',
+      text: 'Your MyKurda account will be deleted on {date}. Log in before then to cancel and keep your progress.',
     },
     ku: {
       subject: 'Hesabê te dê were jêbirin',
-      text: 'Hesabê te yê Kurda dê di {date} de were jêbirin. Berî wê têkeve da ku betal bikî û pêşketina xwe biparêzî.',
+      text: 'Hesabê te yê MyKurda dê di {date} de were jêbirin. Berî wê têkeve da ku betal bikî û pêşketina xwe biparêzî.',
     },
   },
 };

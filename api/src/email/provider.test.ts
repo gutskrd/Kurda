@@ -25,7 +25,7 @@ describe('createEmailProvider', () => {
       SMTP_USER: '',
       SMTP_PASS: '',
       SMTP_SECURE: 'false',
-      EMAIL_FROM: 'MyKurda <no-reply@mykurda.app>',
+      EMAIL_FROM: 'MyKurda <no-reply@mykurda.com>',
     });
     expect(createEmailProvider(cfg)).toBeInstanceOf(StubEmailProvider);
   });
@@ -60,7 +60,7 @@ describe('ResendEmailProvider', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ id: 'msg_123' }), { status: 200 }),
     );
-    const provider = new ResendEmailProvider('re_secret', 'MyKurda <no-reply@mykurda.app>');
+    const provider = new ResendEmailProvider('re_secret', 'MyKurda <no-reply@mykurda.com>');
     const res = await provider.send({ to: 'user@example.com', subject: 'Hi', text: 'Your code is 123456' });
 
     expect(res.messageId).toBe('msg_123');
@@ -69,7 +69,7 @@ describe('ResendEmailProvider', () => {
     expect((init!.headers as Record<string, string>).Authorization).toBe('Bearer re_secret');
     const body = JSON.parse(init!.body as string);
     expect(body).toMatchObject({
-      from: 'MyKurda <no-reply@mykurda.app>',
+      from: 'MyKurda <no-reply@mykurda.com>',
       to: 'user@example.com',
       subject: 'Hi',
       text: 'Your code is 123456',
@@ -80,7 +80,7 @@ describe('ResendEmailProvider', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('domain not verified', { status: 422 }),
     );
-    const provider = new ResendEmailProvider('re_secret', 'no-reply@mykurda.app');
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@mykurda.com');
     await expect(provider.send({ to: 'u@e.com', subject: 's', text: 't' })).rejects.toThrow(/422/);
   });
 });

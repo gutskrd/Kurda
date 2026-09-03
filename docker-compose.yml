@@ -72,7 +72,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.app>}"
+      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.com>}"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -96,7 +96,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.app>}"
+      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.com>}"
     depends_on:
       migrate:
         condition: service_completed_successfully
