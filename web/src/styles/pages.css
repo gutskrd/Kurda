@@ -2572,3 +2572,14 @@ button.feature {
   gap: 6px;
   justify-content: flex-end;
 }
+
+/* ---- email verification code ------------------------------------------- */
+.verify-code-input {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.45em;
+  /* the trailing letter-spacing would push the digits off-centre */
+  text-indent: 0.45em;
+  font-variant-numeric: tabular-nums;
+}
