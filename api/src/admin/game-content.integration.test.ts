@@ -31,7 +31,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 
-  const authed = (method: 'GET' | 'POST' | 'DELETE', url: string, token: string, payload?: unknown) =>
+  const authed = (method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string, token: string, payload?: unknown) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${token}` }, payload: payload as object, remoteAddress: '10.98.9.9' });
 
   beforeAll(async () => {
@@ -108,6 +108,76 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(body.perfect).not.toContain('gul'); // never rhymes with itself
   });
 
+  it('lets an admin decide a rhyme pair in both directions', async () => {
+    // 'gul'/'kul' share a rime, so it is accepted by the derived rule; 'roj' is not
+    for (const w of ['gul', 'kul', 'roj']) {
+      const r = await authed('POST', '/admin/dictionary', editorToken, { words: [w] });
+      if (r.json().added.length) added.push(w);
+    }
+
+    // rule OUT a pair the endings accept
+    const off = await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'kul', quality: 'none' });
+    expect(off.statusCode).toBe(200);
+    // and rule IN one they reject
+    const on = await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'roj', quality: 'perfect' });
+    expect(on.statusCode).toBe(200);
+
+    const report = await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken);
+    expect(report.json().overrides).toMatchObject({ kul: 'none', roj: 'perfect' });
+    // candidates lists the pool so a curator can rule in a word the endings missed
+    expect(report.json().candidates).toEqual(expect.arrayContaining(['roj']));
+
+    // 'auto' hands the pair back to the derived result
+    await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'kul', quality: 'auto' });
+    const after = await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken);
+    expect(after.json().overrides.kul).toBeUndefined();
+
+    await pool.query(`DELETE FROM rhyme_overrides WHERE prompt_normalized = 'gul'`);
+  });
+
+  it('refuses a word rhyming with itself', async () => {
+    const res = await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'gul', quality: 'perfect' });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('creates, edits and deletes a quiz question', async () => {
+    const body = {
+      prompt: `test-${suffix}?`,
+      options: ['a', 'b', 'c', 'd'],
+      correctIndex: 1,
+      category: 'vocabulary',
+      level: 2,
+    };
+    const made = await authed('POST', '/admin/quiz/questions', editorToken, body);
+    expect(made.statusCode).toBe(201);
+    const id = made.json().id;
+
+    const edited = await authed('PUT', `/admin/quiz/questions/${id}`, editorToken, {
+      ...body,
+      prompt: `edited-${suffix}?`,
+      correctIndex: 3,
+      active: false,
+    });
+    expect(edited.statusCode).toBe(200);
+    expect(edited.json()).toMatchObject({ prompt: `edited-${suffix}?`, correctIndex: 3, active: false });
+
+    const listed = await authed('GET', '/admin/quiz/questions', editorToken);
+    expect(listed.json().questions.some((q: { id: string }) => q.id === id)).toBe(true);
+
+    expect((await authed('DELETE', `/admin/quiz/questions/${id}`, editorToken)).statusCode).toBe(200);
+    expect((await authed('DELETE', `/admin/quiz/questions/${id}`, editorToken)).statusCode).toBe(404);
+  });
+
+  it('rejects a question that does not have exactly four options', async () => {
+    const res = await authed('POST', '/admin/quiz/questions', editorToken, {
+      prompt: 'too few?',
+      options: ['a', 'b'],
+      correctIndex: 0,
+      category: 'vocabulary',
+      level: 1,
+    });
+    expect(res.statusCode).toBe(400);
+  });
   it('reports pool coverage per Wordle difficulty band', async () => {
     const res = await authed('GET', '/admin/dictionary/stats', editorToken);
     expect(res.statusCode).toBe(200);

@@ -6,6 +6,7 @@ import {
   normalizeWord,
   type Dialect,
   type RhymeResult,
+  type RhymeQuality,
 } from './rhyme.js';
 
 /** Answer window for a training round. */
@@ -130,6 +131,15 @@ export class RhymeService {
       const normalized = normalizeWord(word);
       const known = await this.wordExists(client, normalized);
       const lexicon = new InMemoryLexicon(known ? [{ word: normalized, dialect: row.dialect }] : []);
+
+      // an admin's explicit verdict for this exact pair, if one exists
+      const override = await client.query<{ quality: string }>(
+        `SELECT quality FROM rhyme_overrides WHERE prompt_normalized = $1 AND rhyme_normalized = $2`,
+        [normalizeWord(row.prompt), normalized],
+      );
+      const overrideQuality = override.rows[0]
+        ? () => override.rows[0]!.quality as RhymeQuality
+        : undefined;
       const result = evaluateSubmission(
         {
           prompt: row.prompt,
@@ -139,7 +149,7 @@ export class RhymeService {
           dialect: row.dialect,
           usedWords: row.used_words,
         },
-        { lexicon },
+        { lexicon, overrideQuality },
       );
 
       let updated = row;

@@ -170,6 +170,12 @@ export interface RhymeSubmissionInput {
 
 export interface RhymeScorerDeps {
   lexicon: KurdishLexicon;
+  /**
+   * An admin's explicit verdict for this (prompt, submission) pair, if there is
+   * one. Returning a quality overrides the computed rhyme — including 'none',
+   * which rules a pair out that the endings would otherwise accept.
+   */
+  overrideQuality?: (promptNormalized: string, submissionNormalized: string) => RhymeQuality | undefined;
   /** profanity gate (#086); receives the normalized word. Optional. */
   isProfane?: (normalizedWord: string) => boolean;
 }
@@ -201,7 +207,8 @@ export function evaluateSubmission(
   if (usedWords.some((w) => normalizeWord(w) === normalized)) return reject('already-used');
   if (!deps.lexicon.has(normalized, dialect)) return reject('not-a-word');
 
-  const quality = classifyRhyme(prompt, submission, dialect);
+  // a curator's explicit decision beats the derived one, in both directions
+  const quality = deps.overrideQuality?.(normalizeWord(prompt), normalized) ?? classifyRhyme(prompt, submission, dialect);
   if (quality === 'none') return reject('no-rhyme');
 
   return {
