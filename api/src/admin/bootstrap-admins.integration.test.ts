@@ -101,6 +101,18 @@ describe.skipIf(!DATABASE_URL)('grantBootstrapAdmins (integration)', () => {
     expect(res.granted).toEqual([]);
   });
 
+  it('grants as soon as the address is confirmed, without a restart', async () => {
+    // the reconciler is re-run on verification, so an account that registers after
+    // the allowlist was configured becomes admin the moment it confirms
+    const id = await makeUser('later', { verified: false });
+    expect((await grantBootstrapAdmins(pool, emailFor('later'), silent)).granted).toEqual([]);
+    expect(await rolesOf(id)).toEqual([]);
+
+    await pool.query(`UPDATE users SET email_verified_at = now() WHERE id = $1`, [id]);
+    const after = await grantBootstrapAdmins(pool, emailFor('later'), silent);
+    expect(after.granted).toEqual([emailFor('later')]);
+    expect(await rolesOf(id)).toEqual(expect.arrayContaining([...BOOTSTRAP_ADMIN_ROLES]));
+  });
   it('never revokes a role that is already held', async () => {
     const id = await makeUser('keep');
     await pool.query(`UPDATE users SET roles = '{moderator}' WHERE id = $1`, [id]);

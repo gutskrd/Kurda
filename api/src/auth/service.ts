@@ -2,6 +2,7 @@ import argon2 from 'argon2';
 import type pg from 'pg';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
+import { grantBootstrapAdmins } from '../admin/bootstrap-admins.js';
 import {
   EmailTakenError,
   InvalidUsernameError,
@@ -79,7 +80,7 @@ export function toPublicUser(row: UserRow): PublicUser {
 
 export interface AuthServiceDeps {
   jobs?: JobQueue;
-  log?: { warn: (obj: unknown, msg: string) => void };
+  log?: { warn: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void };
 }
 
 export class AuthService {
@@ -175,6 +176,24 @@ export class AuthService {
    * email verified. Returns the low-level result so the route can map it to a
    * specific status/error.
    */
+  /**
+   * Confirming an address is exactly when a bootstrap-admin allowlist entry can
+   * first be honoured, so reconcile right here instead of waiting for the next
+   * restart. Idempotent and best-effort: a failure must never fail the
+   * verification the user just completed.
+   */
+  private async reconcileBootstrapAdmins(): Promise<void> {
+    if (!this.config.BOOTSTRAP_ADMIN_EMAILS) return;
+    try {
+      await grantBootstrapAdmins(this.pool, this.config.BOOTSTRAP_ADMIN_EMAILS, {
+        info: (obj, msg) => this.deps.log?.info?.(obj, msg),
+        warn: (obj, msg) => this.deps.log?.warn(obj, msg),
+      });
+    } catch (err) {
+      this.deps.log?.warn({ err }, 'bootstrap admin reconciliation after verification failed');
+    }
+  }
+
   async verifyEmailCode(userId: string, code: string): Promise<VerifyResult> {
     const result = await verifyCode(this.pool, userId, code);
     if (result === 'ok') {
@@ -182,6 +201,7 @@ export class AuthService {
         `UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $1`,
         [userId],
       );
+      await this.reconcileBootstrapAdmins();
     }
     return result;
   }
@@ -264,6 +284,7 @@ export class AuthService {
       `UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $1`,
       [userId],
     );
+    await this.reconcileBootstrapAdmins();
   }
 
   /** Always succeeds from the caller's perspective (no enumeration). */
