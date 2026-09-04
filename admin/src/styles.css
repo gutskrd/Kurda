@@ -21,9 +21,9 @@
   --glow-2: rgba(203, 203, 210, 0.5);
 
   /* translucent frosted surfaces */
-  --glass: rgba(255, 255, 255, 0.62);
-  --glass-solid: rgba(255, 255, 255, 0.82);
-  --glass-hover: rgba(255, 255, 255, 0.78);
+  --glass: rgba(255, 255, 255, 0.44);
+  --glass-solid: rgba(255, 255, 255, 0.66);
+  --glass-hover: rgba(255, 255, 255, 0.58);
   --glass-border: rgba(255, 255, 255, 0.7);
   --hairline: rgba(24, 24, 27, 0.09);
   --separator: rgba(24, 24, 27, 0.07);
@@ -63,9 +63,9 @@
     --glow-1: rgba(70, 70, 80, 0.45);
     --glow-2: rgba(44, 44, 52, 0.5);
 
-    --glass: rgba(28, 28, 33, 0.55);
-    --glass-solid: rgba(30, 30, 36, 0.85);
-    --glass-hover: rgba(40, 40, 47, 0.7);
+    --glass: rgba(28, 28, 33, 0.40);
+    --glass-solid: rgba(30, 30, 36, 0.62);
+    --glass-hover: rgba(40, 40, 47, 0.5);
     --glass-border: rgba(255, 255, 255, 0.09);
     --hairline: rgba(255, 255, 255, 0.08);
     --separator: rgba(255, 255, 255, 0.07);
@@ -115,7 +115,7 @@ body::before {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgba(243, 243, 245, 0.82), rgba(232, 232, 236, 0.88)),
+    linear-gradient(rgba(243, 243, 245, 0.52), rgba(232, 232, 236, 0.6)),
     url('/background.jpg');
   background-size: cover;
   background-position: center;
@@ -128,7 +128,7 @@ body::before {
 @media (prefers-color-scheme: dark) {
   body::before {
     background-image:
-      linear-gradient(rgba(10, 10, 12, 0.86), rgba(13, 13, 16, 0.9)),
+      linear-gradient(rgba(10, 10, 12, 0.6), rgba(13, 13, 16, 0.68)),
       url('/background.jpg');
   }
 }
@@ -522,8 +522,12 @@ textarea { font: inherit; }
 .tab {
   padding: 7px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--hairline);
-  background: var(--control);
+  border: 1px solid var(--glass-border);
+  /* tabs sit directly on the backdrop rather than inside a card, so they need
+     their own glass or they read as flat chips on the photo */
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
   color: var(--text-dim);
   font-weight: 600;
   font-size: 13px;

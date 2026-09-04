@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "-w", "web", "dev"],
       "port": 5174
+    },
+    {
+      "name": "admin-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--workspace", "admin", "--", "--port", "4173", "--strictPort"],
+      "port": 4173
     }
   ]
 }
