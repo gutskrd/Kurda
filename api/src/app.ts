@@ -249,11 +249,19 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
             await jobs.scheduleEvery(economyJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
             // Backfill once, not on every boot: this host spins down when idle, so
             // an unconditional 60-day re-aggregate would run constantly for nothing.
-            const seeded = await app.db.query(`SELECT 1 FROM analytics_daily_metrics LIMIT 1`);
-            if (!seeded.rowCount) {
-              await jobs.enqueue(analyticsJob, { days: 60 });
-              await jobs.enqueue(economyJob, { days: 60 });
-              app.log.info('enqueued a one-time dashboard backfill (no rollups present yet)');
+            // Each dashboard is checked against ITS OWN table — gating both on the
+            // analytics table left the economy permanently empty whenever analytics
+            // had already been seeded.
+            const backfills: Array<[string, typeof analyticsJob | typeof economyJob]> = [
+              ['analytics_daily_metrics', analyticsJob],
+              ['economy_daily', economyJob],
+            ];
+            for (const [table, job] of backfills) {
+              // table names here are literals in this array, never user input
+              const seeded = await app.db.query(`SELECT 1 FROM ${table} LIMIT 1`);
+              if (seeded.rowCount) continue;
+              await jobs.enqueue(job, { days: 60 });
+              app.log.info({ table, job: job.name }, 'enqueued a one-time dashboard backfill');
             }
           } catch (err) {
             app.log.warn({ err }, 'failed to schedule dashboard rollups');

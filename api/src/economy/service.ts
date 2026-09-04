@@ -17,7 +17,15 @@ export interface DriftReport {
   windowDays: number;
   faucet: number;
   sink: number;
-  ratio: number;
+  /**
+   * faucet/sink, or null when nothing was ever spent so the ratio is infinite.
+   *
+   * Nullable rather than Infinity because JSON has no infinity: JSON.stringify
+   * emits null for it regardless, which crashed the dashboard the moment a
+   * currency had faucets and no sinks — the normal state of a young economy.
+   * Making it explicit means clients handle the case on purpose.
+   */
+  ratio: number | null;
   target: number;
   drifting: boolean;
 }
@@ -99,7 +107,9 @@ export class EconomyService {
       windowDays,
       faucet,
       sink,
-      ratio,
+      // drifting is judged on the real (possibly infinite) ratio; only the wire
+      // value is narrowed, so a currency nobody can spend still raises the flag
+      ratio: Number.isFinite(ratio) ? ratio : null,
       target,
       drifting: isDrifting(ratio, target),
     };

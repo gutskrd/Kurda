@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ratioLabel } from '../format';
 import { api, ApiError } from '../api';
 
 type Currency = 'zer' | 'gems';
@@ -15,7 +16,8 @@ interface DriftReport {
   windowDays: number;
   faucet: number;
   sink: number;
-  ratio: number;
+  /** null when nothing has been spent yet, so the ratio is infinite. */
+  ratio: number | null;
   target: number;
   drifting: boolean;
 }
@@ -108,10 +110,17 @@ export function Economy(): React.JSX.Element {
             </div>
             <div className="card tile">
               <div className="n">
-                {drift ? drift.ratio.toFixed(2) : '—'}{' '}
+                {ratioLabel(drift)}{' '}
                 {drift && <span className={`badge ${drift.drifting ? 'hi' : 'ok'}`}>{drift.drifting ? 'drifting' : 'healthy'}</span>}
               </div>
-              <div className="k">Faucet/sink ratio (target {drift?.target ?? 1})</div>
+              <div className="k">
+                Faucet/sink ratio (target {drift?.target ?? 1})
+                {drift?.ratio === null && drift.faucet > 0 && (
+                  <div className="subtle" style={{ textTransform: 'none', letterSpacing: 0, marginTop: 5 }}>
+                    Nothing was spent in this window, so the ratio is unbounded.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
