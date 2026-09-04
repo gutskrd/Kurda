@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api, ApiError } from '../api';
+import { ItemActions, WalletActions } from './UserEconomy';
 
 type BanState = 'active' | 'temp_banned' | 'perm_banned';
 
@@ -195,6 +196,10 @@ function UserPanel({
       </div>
 
       <ModerationActions user={user} onChanged={onChanged} onError={onError} />
+
+      <WalletActions user={user} onChanged={onChanged} onError={onError} />
+
+      <ItemActions user={user} onChanged={onChanged} onError={onError} />
 
       {user.actions.length > 0 && (
         <div>

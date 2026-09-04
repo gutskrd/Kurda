@@ -28,7 +28,7 @@ export interface UserDetail {
 }
 
 type ActionOk = { ok: true; balance?: number };
-type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' };
+type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' };
 
 /**
  * Admin user lookup + moderation (KUR-101). Bans bump `token_version` so every
@@ -37,6 +37,18 @@ type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FU
  * with the `admin_adjustment` reason — never a direct balance edit. Every action
  * is recorded in `admin_actions` with its mandatory reason.
  */
+/** A shop item a user owns, as shown in the admin panel. */
+export interface OwnedItem {
+  sku: string;
+  name: string;
+  category: string;
+  quantity: number;
+  /** how they got it: 'purchase', 'admin_grant', … */
+  source: string;
+  /** currently worn — revoking it un-equips, so the profile can't show it */
+  equipped: boolean;
+}
+
 export class UserAdminService {
   constructor(
     private readonly pool: pg.Pool,
@@ -160,6 +172,72 @@ export class UserAdminService {
       [userId, until],
     );
     return this.record(adminId, userId, action, reason, until ? { until: until.toISOString() } : {});
+  }
+
+  /** Everything this user owns, flagged with whether it is currently equipped. */
+  async items(userId: string): Promise<OwnedItem[]> {
+    const res = await this.pool.query<{
+      sku: string; name: string; category: string; quantity: number; source: string; equipped: boolean;
+    }>(
+      `SELECT e.sku, i.name, i.category, e.quantity, e.source,
+              (u.equipped_background_sku = e.sku OR u.equipped_icon_sku = e.sku) AS equipped
+         FROM user_entitlements e
+         JOIN shop_items i ON i.sku = e.sku
+         JOIN users u ON u.id = e.user_id
+        WHERE e.user_id = $1
+        ORDER BY i.category, i.name`,
+      [userId],
+    );
+    return res.rows;
+  }
+
+  /**
+   * Give a user a catalog item without charging them. The SKU must exist, so a
+   * typo can't create an entitlement to nothing. Re-granting an item they own
+   * bumps the quantity, matching how a repeat purchase behaves.
+   */
+  async grantItem(adminId: string, userId: string, sku: string, reason: string): Promise<ActionResult> {
+    if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
+    const item = await this.pool.query(`SELECT 1 FROM shop_items WHERE sku = $1`, [sku]);
+    if (!item.rowCount) return { ok: false, code: 'ITEM_NOT_FOUND' };
+    await this.pool.query(
+      `INSERT INTO user_entitlements (user_id, sku, source)
+       VALUES ($1, $2, 'admin_grant')
+       ON CONFLICT (user_id, sku) DO UPDATE SET quantity = user_entitlements.quantity + 1`,
+      [userId, sku],
+    );
+    return this.record(adminId, userId, 'item_grant', reason, { sku });
+  }
+
+  /**
+   * Take an item back. Un-equips it in the same transaction: leaving it equipped
+   * would keep it on the user's profile after they stopped owning it.
+   */
+  async revokeItem(adminId: string, userId: string, sku: string, reason: string): Promise<ActionResult> {
+    if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const del = await client.query(`DELETE FROM user_entitlements WHERE user_id = $1 AND sku = $2`, [userId, sku]);
+      if (!del.rowCount) {
+        await client.query('ROLLBACK');
+        return { ok: false, code: 'NOT_OWNED' };
+      }
+      await client.query(
+        `UPDATE users
+            SET equipped_background_sku = NULLIF(equipped_background_sku, $2),
+                equipped_icon_sku = NULLIF(equipped_icon_sku, $2)
+          WHERE id = $1`,
+        [userId, sku],
+      );
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+    return this.record(adminId, userId, 'item_revoke', reason, { sku });
   }
 
   private async record(adminId: string, userId: string, action: string, reason: string, meta: Record<string, unknown>): Promise<ActionResult> {

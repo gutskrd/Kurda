@@ -11,12 +11,18 @@ const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
 const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional() });
 const walletBody = z.object({ reason: z.string(), currency: z.enum(['zer', 'gems']), amount: z.number().int() });
+const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
+const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
 
-type ActionResult = { ok: true; balance?: number } | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' };
+type ActionResult =
+  | { ok: true; balance?: number }
+  | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' };
 
 function sendResult(reply: FastifyReply, res: ActionResult) {
   if (res.ok) return reply.send({ ok: true, ...(res.balance !== undefined ? { balance: res.balance } : {}) });
   if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
+  if (res.code === 'ITEM_NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such shop item' });
+  if (res.code === 'NOT_OWNED') return reply.code(409).send({ code: res.code, message: 'the user does not own that item' });
   return reply.code(402).send({ code: res.code, message: 'insufficient balance for this debit' });
 }
 
@@ -66,6 +72,37 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
     return sendResult(reply, await users.unban(req.user!.id, (req.params as z.infer<typeof idParam>).id, reason));
   });
+
+  /** What the user owns (for the panel's item list). */
+  app.get(
+    '/admin/users/:id/items',
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: canView },
+    async (req) => ({ items: await users.items((req.params as z.infer<typeof idParam>).id) }),
+  );
+
+  /** Give a catalog item, free. Same economy bar as changing a balance. */
+  app.post(
+    '/admin/users/:id/items',
+    { schema: { params: idParam, body: itemBody }, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof itemBody>;
+      const reason = normalizeReason(b.reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      return sendResult(reply, await users.grantItem(req.user!.id, (req.params as z.infer<typeof idParam>).id, b.sku, reason));
+    },
+  );
+
+  /** Take an item back (also un-equips it). */
+  app.delete(
+    '/admin/users/:id/items/:sku',
+    { schema: { params: itemParams, body: reasonBody }, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const { id, sku } = req.params as z.infer<typeof itemParams>;
+      const reason = normalizeReason((req.body as z.infer<typeof reasonBody>).reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      return sendResult(reply, await users.revokeItem(req.user!.id, id, sku, reason));
+    },
+  );
 
   app.post('/admin/users/:id/wallet', { schema: { params: idParam, body: walletBody }, preHandler: canAdjustEconomy }, async (req, reply) => {
     const b = req.body as z.infer<typeof walletBody>;
