@@ -29,6 +29,8 @@ const listQuery = z.object({
   q: z.string().max(80).optional(),
   /** filter to one letter-length (the Wordle difficulty bands are length-based) */
   length: z.coerce.number().int().min(1).max(40).optional(),
+  /** only words marked as rhyme prompts */
+  prompts: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
 });
@@ -48,6 +50,7 @@ interface WordRow {
   headword: string;
   headword_normalized: string;
   dialect: string;
+  is_rhyme_prompt: boolean;
 }
 
 export function registerGameContentRoutes(app: FastifyInstance): void {
@@ -61,7 +64,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * locale-dependent SQL character class).
    */
   app.get('/admin/dictionary', { schema: { querystring: listQuery }, preHandler: canEdit }, async (req) => {
-    const { q, length, limit, offset } = req.query as z.infer<typeof listQuery>;
+    const { q, length, prompts, limit, offset } = req.query as z.infer<typeof listQuery>;
     const params: unknown[] = [];
     let clause = '';
     if (q) {
@@ -69,7 +72,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       clause = 'WHERE headword_normalized LIKE $1';
     }
     const rows = await app.db.query<WordRow>(
-      `SELECT id, headword, headword_normalized, dialect FROM dict_entries ${clause} ORDER BY headword ASC`,
+      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries ${clause} ORDER BY headword ASC`,
       params,
     );
     const all = rows.rows
@@ -78,9 +81,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         headword: r.headword,
         normalized: r.headword_normalized,
         dialect: r.dialect,
+        isRhymePrompt: r.is_rhyme_prompt,
         length: letterCount(r.headword),
       }))
-      .filter((w) => length === undefined || w.length === length);
+      .filter((w) => length === undefined || w.length === length)
+      .filter((w) => !prompts || w.isRhymePrompt);
     return { total: all.length, words: all.slice(offset, offset + limit) };
   });
 
@@ -113,6 +118,23 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     }
     return { added, skipped, invalid };
   });
+
+  /**
+   * Choose whether a word is used as a rhyme prompt. Rounds pick only from the
+   * curated set once anything is marked, so an admin can keep out words that have
+   * no rhyming partner and would make an unplayable round.
+   */
+  app.patch(
+    '/admin/dictionary/:id',
+    { schema: { params: z.object({ id: z.uuid() }), body: z.object({ isRhymePrompt: z.boolean() }) }, preHandler: canEdit },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const { isRhymePrompt } = req.body as { isRhymePrompt: boolean };
+      const res = await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = $2 WHERE id = $1`, [id, isRhymePrompt]);
+      if (!res.rowCount) throw new AppError('NOT_FOUND', 404, 'no such word');
+      return { ok: true, isRhymePrompt };
+    },
+  );
 
   /** Remove a word from the pool. */
   app.delete(
@@ -161,8 +183,12 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       lengths: [...DIFFICULTY_LENGTHS[d]],
       words: DIFFICULTY_LENGTHS[d].reduce((sum, n) => sum + (byLength.get(n) ?? 0), 0),
     }));
+    const prompts = await app.db.query<{ n: string }>(
+      `SELECT COUNT(*)::int AS n FROM dict_entries WHERE is_rhyme_prompt`,
+    );
     return {
       total: rows.rows.length,
+      rhymePrompts: Number(prompts.rows[0]?.n ?? 0),
       byLength: [...byLength.entries()].sort((a, b) => a[0] - b[0]).map(([length, words]) => ({ length, words })),
       difficulties,
     };

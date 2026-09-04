@@ -72,7 +72,12 @@ export class RhymeService {
   /** Start a training round with a random dictionary prompt. */
   async startTraining(userId: string, dialect: Dialect = 'kurmanci'): Promise<StartResult> {
     const picked = await this.pool.query<{ headword: string }>(
-      `SELECT headword FROM dict_entries WHERE headword_normalized <> '' ORDER BY random() LIMIT 1`,
+      `SELECT headword FROM dict_entries
+        WHERE headword_normalized <> ''
+          -- prefer curated prompts; fall back to any word while none are marked,
+          -- so rounds keep working before anyone has curated
+          AND (is_rhyme_prompt OR NOT EXISTS (SELECT 1 FROM dict_entries WHERE is_rhyme_prompt))
+        ORDER BY random() LIMIT 1`,
     );
     const prompt = picked.rows[0]?.headword;
     if (!prompt) return { ok: false, reason: 'empty-lexicon' };
