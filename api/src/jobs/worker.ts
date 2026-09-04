@@ -16,6 +16,9 @@ import { InboxService } from '../notifications/inbox-service.js';
 import { sendEmailJob, makeSendEmailJob } from './email.js';
 import { EmailService } from '../email/service.js';
 import { createEmailProvider } from '../email/provider.js';
+import { DashboardService } from '../analytics/dashboard-service.js';
+import { EconomyService } from '../economy/service.js';
+import { makeAnalyticsRollupJob, makeEconomyRollupJob } from './rollup-jobs.js';
 import { QUEUE_NAME, createQueueConnection } from './queue.js';
 import { JobRegistry } from './registry.js';
 
@@ -41,6 +44,9 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
       new NotificationPrefsService(pool),
     );
     registry.register(makePushSendJob(push, new InboxService(pool)));
+    // the dashboards read pre-aggregated tables; without these they stay empty
+    registry.register(makeAnalyticsRollupJob(new DashboardService(pool)));
+    registry.register(makeEconomyRollupJob(new EconomyService(pool)));
   } else {
     registry.register(sendEmailJob);
   }

@@ -57,6 +57,7 @@
     --text-2: #cfcfd4;
     --text-dim: #9a9aa3;
 
+
     --bg-1: #0d0d10;
     --bg-2: #0a0a0c;
     --glow-1: rgba(70, 70, 80, 0.45);
@@ -84,6 +85,7 @@
     --warn: #fbbf24; --warn-bg: rgba(251, 191, 36, 0.14);
     --bad: #f97066; --bad-bg: rgba(249, 112, 102, 0.14);
   }
+
 }
 
 * { box-sizing: border-box; }
@@ -97,8 +99,38 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* one consistent base color — no decorative global background */
+  /*
+   * The photographic backdrop the glass panels sample. It is fixed and covered so
+   * it never scrolls or tiles, and it sits UNDER a scrim (::before) rather than
+   * behind raw text — a photo straight behind dense tables destroys legibility,
+   * which is the usual way a background like this goes wrong. The base colour
+   * stays as the fallback if the image is missing.
+   */
   background: var(--bg-2);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(243, 243, 245, 0.82), rgba(232, 232, 236, 0.88)),
+    url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  pointer-events: none;
+}
+
+/* Same photo, dimmed rather than washed. This must come AFTER the base rule:
+   both match in dark mode with equal specificity, so source order decides. */
+@media (prefers-color-scheme: dark) {
+  body::before {
+    background-image:
+      linear-gradient(rgba(10, 10, 12, 0.86), rgba(13, 13, 16, 0.9)),
+      url('/background.jpg');
+  }
 }
 a { color: var(--text); text-decoration: none; }
 a:hover { color: var(--text-2); }
@@ -179,7 +211,15 @@ label { font-weight: 500; color: var(--text-2); }
   top: 0;
   align-self: start;
   height: 100vh;
+  /* the sidebar itself never scrolls: the brand stays put, the link list takes
+     the leftover height and scrolls on its own, and the account footer is pinned
+     — so with many sections nothing spills past the viewport */
+  overflow: hidden;
+  min-height: 0;
 }
+.sidebar .brand { flex: 0 0 auto; }
+.navlinks { flex: 1 1 auto; overflow-y: auto; min-height: 0; scrollbar-width: thin; padding-right: 2px; }
+.sidebar > button { flex: 0 0 auto; }
 .brand { font-weight: 700; font-size: 15px; padding: 4px 10px 18px; letter-spacing: -0.01em; color: var(--text); }
 .navlink {
   display: block;
@@ -202,7 +242,7 @@ label { font-weight: 500; color: var(--text-2); }
 .navlinks { display: flex; flex-direction: column; gap: 2px; }
 .nav-toggle { display: none; }
 .main { padding: 34px 40px; max-width: 1120px; min-width: 0; width: 100%; margin: 0 auto; }
-.spacer { flex: 1; }
+.spacer { flex: 0 0 auto; }
 
 @media (max-width: 820px) {
   .app { display: block; }

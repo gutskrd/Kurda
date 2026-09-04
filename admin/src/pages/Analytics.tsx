@@ -6,6 +6,7 @@ interface ActivityPoint {
   dau: number;
   wau: number;
   mau: number;
+  signups: number;
 }
 interface FunnelStep {
   step: string;
@@ -72,6 +73,7 @@ export function Analytics(): React.JSX.Element {
 
   const latest = activity[activity.length - 1];
   const maxDau = Math.max(1, ...activity.map((p) => p.dau));
+  const maxSignups = Math.max(1, ...activity.map((p) => p.signups));
 
   return (
     <div>
@@ -109,6 +111,10 @@ export function Analytics(): React.JSX.Element {
               <div className="n">{latest?.mau ?? 0}</div>
               <div className="k">MAU</div>
             </div>
+            <div className="card tile">
+              <div className="n">{activity.reduce((n, p) => n + p.signups, 0)}</div>
+              <div className="k">Signups (range)</div>
+            </div>
           </div>
 
           <div className="card">
@@ -121,6 +127,30 @@ export function Analytics(): React.JSX.Element {
               <div className="bars" title="DAU per day">
                 {activity.map((p) => (
                   <div key={p.day} className="b" style={{ height: `${(p.dau / maxDau) * 100}%` }} title={`${p.day}: ${p.dau}`} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="section-title" style={{ marginTop: 0 }}>
+              New signups
+            </div>
+            <div className="subtle" style={{ marginBottom: 10 }}>
+              Counted from account creation dates, so this covers the whole history — unlike active-user
+              counts, which start from when activity began being recorded.
+            </div>
+            {activity.length === 0 ? (
+              <div className="empty">Nothing in this range.</div>
+            ) : (
+              <div className="bars" title="Signups per day">
+                {activity.map((p) => (
+                  <div
+                    key={p.day}
+                    className="b"
+                    style={{ height: `${(p.signups / maxSignups) * 100}%` }}
+                    title={`${p.day}: ${p.signups}`}
+                  />
                 ))}
               </div>
             )}

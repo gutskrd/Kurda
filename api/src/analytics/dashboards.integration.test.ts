@@ -36,6 +36,10 @@ describe.skipIf(!DATABASE_URL)('dashboards (integration)', () => {
       [randomUUID(), userId, type, day],
     );
 
+  /** Active-user history now comes from the heartbeat's per-day rows, not events. */
+  const active = (userId: string, day: string) =>
+    pool.query(`INSERT INTO user_activity_days (day, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [day, userId]);
+
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -52,6 +56,13 @@ describe.skipIf(!DATABASE_URL)('dashboards (integration)', () => {
     await insert(u2, 'lesson_start', D0);
     // D1: only u1 returns
     await insert(u1, 'lesson_start', D1);
+
+    // Activity + retention read server-side truth now: per-day activity rows, and
+    // cohorts by signup date — so place both accounts' signup on D0.
+    await pool.query(`UPDATE users SET created_at = $1::date WHERE id = ANY($2)`, [D0, [u1, u2]]);
+    await active(u1, D0);
+    await active(u2, D0);
+    await active(u1, D1);
 
     await dashboards.refreshDay(D0);
     await dashboards.refreshDay(D1);
@@ -89,8 +100,8 @@ describe.skipIf(!DATABASE_URL)('dashboards (integration)', () => {
   });
 
   it('rollups survive deletion of the underlying user (GDPR)', async () => {
-    // delete u2's raw events; the already-computed D0 cohort size stays 2
-    await pool.query(`DELETE FROM analytics_events WHERE user_id = $1`, [u2]);
+    // remove u2's raw activity; the already-computed D0 cohort size stays 2
+    await pool.query(`DELETE FROM user_activity_days WHERE user_id = $1`, [u2]);
     const cohorts = await dashboards.retention(D0, D0);
     expect(cohorts.find((c) => c.dayN === 1)!.cohortSize).toBe(2);
   });

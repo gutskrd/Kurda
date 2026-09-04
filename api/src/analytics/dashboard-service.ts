@@ -24,6 +24,8 @@ export interface ActivityPoint {
   dau: number;
   wau: number;
   mau: number;
+  /** new accounts that day — derived from users.created_at, so it backfills */
+  signups: number;
 }
 
 export interface RetentionPoint {
@@ -49,15 +51,27 @@ export class DashboardService {
     try {
       await client.query('BEGIN');
 
-      // active-user counts over 1/7/30-day windows ending on `day`
+      // Active-user counts over 1/7/30-day windows ending on `day`, from the
+      // per-day activity the heartbeat records. (These used to read
+      // analytics_events, which only a client SDK writes — and none does, so the
+      // dashboard was always empty.)
       for (const [metric, win] of [['dau', 1], ['wau', 7], ['mau', 30]] as const) {
         const res = await client.query<{ n: string }>(
-          `SELECT COUNT(DISTINCT user_id)::int AS n FROM analytics_events
-           WHERE user_id IS NOT NULL AND day BETWEEN $1 AND $2`,
+          `SELECT COUNT(DISTINCT user_id)::int AS n FROM user_activity_days
+           WHERE day BETWEEN $1 AND $2`,
           [windowStart(day, win), day],
         );
         await this.upsertMetric(client, day, metric, Number(res.rows[0]?.n ?? 0));
       }
+
+      // Signups for the day. Derived from users.created_at, so this one is
+      // retroactive — a backfill populates real history immediately.
+      const signups = await client.query<{ n: string }>(
+        `SELECT COUNT(*)::int AS n FROM users
+          WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day')`,
+        [day],
+      );
+      await this.upsertMetric(client, day, 'signups', Number(signups.rows[0]?.n ?? 0));
 
       // funnel step reach for the day (distinct users who fired each step's event)
       for (const [name, steps] of Object.entries(FUNNELS)) {
@@ -75,11 +89,13 @@ export class DashboardService {
       for (const dayN of RETENTION_DAYS) {
         const cohortDay = daysBefore(day, dayN);
         const res = await client.query<{ size: string; retained: string }>(
-          `WITH firsts AS (SELECT user_id, MIN(day) AS fd FROM analytics_events WHERE user_id IS NOT NULL GROUP BY user_id),
-                cohort AS (SELECT user_id FROM firsts WHERE fd = $1)
+          // cohort = everyone who signed up that day; retained = those active on
+          // day N, both from server-side truth rather than client events
+          `WITH cohort AS (SELECT id AS user_id FROM users
+                            WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day'))
            SELECT (SELECT COUNT(*) FROM cohort)::int AS size,
-                  (SELECT COUNT(DISTINCT e.user_id) FROM analytics_events e JOIN cohort c ON e.user_id = c.user_id
-                   WHERE e.day = $2)::int AS retained`,
+                  (SELECT COUNT(DISTINCT a.user_id) FROM user_activity_days a JOIN cohort c ON a.user_id = c.user_id
+                   WHERE a.day = $2)::int AS retained`,
           [cohortDay, day],
         );
         await client.query(
@@ -103,14 +119,14 @@ export class DashboardService {
   async activity(from: string, to: string): Promise<ActivityPoint[]> {
     const res = await this.pool.query<{ day: Date; metric: string; value: number }>(
       `SELECT day, metric, value FROM analytics_daily_metrics
-       WHERE metric IN ('dau','wau','mau') AND day BETWEEN $1 AND $2 ORDER BY day`,
+       WHERE metric IN ('dau','wau','mau','signups') AND day BETWEEN $1 AND $2 ORDER BY day`,
       [from, to],
     );
     const byDay = new Map<string, ActivityPoint>();
     for (const r of res.rows) {
       const key = ymd(r.day);
-      const point = byDay.get(key) ?? { day: key, dau: 0, wau: 0, mau: 0 };
-      point[r.metric as 'dau' | 'wau' | 'mau'] = r.value;
+      const point = byDay.get(key) ?? { day: key, dau: 0, wau: 0, mau: 0, signups: 0 };
+      point[r.metric as 'dau' | 'wau' | 'mau' | 'signups'] = r.value;
       byDay.set(key, point);
     }
     return [...byDay.values()];
