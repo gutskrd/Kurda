@@ -1461,30 +1461,126 @@ button.feature {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  /* a run's own bubbles sit tighter than the gap between separate runs */
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-messages {
+    scroll-behavior: auto;
+  }
 }
 .chat-hint {
   margin: auto;
   font-size: 0.9rem;
 }
-.bubble {
+/* one sender's burst: their name once, their bubbles, one timestamp */
+.chat-run {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   max-width: 78%;
-  align-self: flex-start;
+  margin-right: auto;
+}
+.chat-run.mine {
+  align-items: flex-end;
+  margin-right: 0;
+  margin-left: auto;
+}
+.chat-run-author {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  padding: 0 4px 1px;
+}
+.chat-run-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 4px 0;
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* a day's worth of conversation, announced once */
+.chat-day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chat-day::before,
+.chat-day::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.bubble {
+  max-width: 100%;
   padding: 9px 13px;
-  border-radius: 16px 16px 16px 4px;
+  border-radius: 16px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--ink);
   font-size: 0.95rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
+  /* the composer can produce line breaks now, so they have to survive */
+  white-space: pre-wrap;
+}
+/* only the last bubble of a burst gets the tail, so a run reads as one block */
+.bubble.bubble-tail {
+  border-bottom-left-radius: 4px;
 }
 .bubble.mine {
-  align-self: flex-end;
   background: var(--primary);
   color: var(--primary-ink);
   border-color: var(--primary);
-  border-radius: 16px 16px 4px 16px;
+}
+.bubble.mine.bubble-tail {
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 4px;
+}
+/* an invite card brings its own layout; pre-wrap would add phantom lines */
+.bubble:has(.invite-card) {
+  white-space: normal;
+}
+
+/* offered only when the reader has scrolled away from the newest message */
+.chat-jump {
+  align-self: center;
+  margin: -6px auto 6px;
+  padding: 5px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+.chat-jump:hover {
+  background: var(--surface);
+}
+
+/* the composer grows with its content instead of scrolling one line */
+.chat-compose-input {
+  resize: none;
+  max-height: 132px;
+  overflow-y: auto;
+  line-height: 1.4;
 }
 .chat-senderr {
   margin: 0 16px;
