@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { AuthProvider, hasSession, useAuth } from './auth';
 import { useHashRoute } from './nav';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Login } from './pages/Login';
 import { Shell, type NavItem } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
@@ -61,7 +62,7 @@ function Workspace(): React.JSX.Element {
   const active = PAGES.find((p) => p.key === page) ?? visible[0]!;
   return (
     <Shell nav={visible} page={active.key} onNav={navigate} onLogout={() => setTick((t) => t + 1)}>
-      {active.render()}
+      <ErrorBoundary resetKey={active.key}>{active.render()}</ErrorBoundary>
     </Shell>
   );
 }

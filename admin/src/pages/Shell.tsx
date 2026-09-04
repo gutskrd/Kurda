@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../auth';
 
 export interface NavItem {
@@ -30,6 +30,21 @@ export function Shell({
   const [open, setOpen] = useState(false);
   const current = nav.find((n) => n.key === page);
 
+  // Escape closes the section list, as it does for any menu. Bound only while
+  // open so the admin's other keyboard handling is untouched the rest of the time.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  // Following a link the panel is already showing leaves it open otherwise —
+  // the click handler misses hash changes from the back button or a bookmark.
+  useEffect(() => setOpen(false), [page]);
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -46,6 +61,10 @@ export function Shell({
           <span>{current?.label ?? 'Menu'}</span>
           <span aria-hidden>{open ? '▲' : '▼'}</span>
         </button>
+
+        {/* tap-anywhere-off to dismiss; hidden from assistive tech since
+            Escape and the toggle already close the panel */}
+        {open && <button type="button" className="nav-scrim" aria-hidden tabIndex={-1} onClick={() => setOpen(false)} />}
 
         <nav id="admin-nav" className={`navlinks${open ? ' open' : ''}`} aria-label="Sections">
           {nav.map((n) => (

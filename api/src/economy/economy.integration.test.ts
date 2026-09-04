@@ -25,11 +25,11 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
   const suffix = Date.now().toString(36);
   let userId = '';
 
-  const ledger = async (day: string, amount: number, reason: string): Promise<void> => {
+  const ledger = async (day: string, amount: number, reason: string, currency = 'zer'): Promise<void> => {
     await pool.query(
       `INSERT INTO wallet_ledger (user_id, currency, amount, reason, created_at)
-       VALUES ($1, 'zer', $2, $3, ($4 || 'T12:00:00Z')::timestamptz)`,
-      [userId, amount, reason, day],
+       VALUES ($1, $5, $2, $3, ($4 || 'T12:00:00Z')::timestamptz)`,
+      [userId, amount, reason, day, currency],
     );
   };
 
@@ -59,6 +59,8 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
     // D5: +200 faucet, −400 sink
     await ledger(D5, 200, 'quest_reward');
     await ledger(D5, -400, 'shop_purchase');
+    // gems: earned, never spent — a currency with no sink at all
+    await ledger(D3, 40, 'achievement', 'gems');
 
     await economy.aggregateDay(new Date(`${D3}T12:00:00Z`));
     await economy.aggregateDay(new Date(`${D5}T12:00:00Z`));
@@ -117,6 +119,25 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
     // a target of 2.0 is > 20% away from the actual 1.0 → alert
     const skewed = await economy.drift('zer', 2);
     expect(skewed.drifting).toBe(true);
+  });
+
+  it('reports an unspendable currency as a null ratio, not Infinity', async () => {
+    // gems were only ever earned here, never spent. faucet/sink is infinite, and
+    // JSON cannot carry that: serialising Infinity yields null anyway, which the
+    // dashboard then called .toFixed() on and crashed to a blank page. The API
+    // now says null deliberately — and still flags the currency as drifting.
+    // this table is shared, so make the window's gems rows only the ones above
+    await pool.query(`DELETE FROM economy_daily WHERE currency = 'gems' AND day > (CURRENT_DATE - 7)`);
+    await economy.aggregateDay(new Date(`${D3}T12:00:00Z`));
+
+    const d = await economy.drift('gems', 1);
+    expect(d.sink).toBe(0);
+    expect(d.faucet).toBeGreaterThan(0);
+    expect(d.ratio).toBeNull();
+    expect(d.drifting).toBe(true);
+
+    // and it survives the round trip the browser actually makes
+    expect(JSON.parse(JSON.stringify(d)).ratio).toBeNull();
   });
 
   it('the dashboard endpoints are admin-only', async () => {

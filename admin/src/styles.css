@@ -240,7 +240,8 @@ label { font-weight: 500; color: var(--text-2); }
   font-weight: 600;
 }
 .navlinks { display: flex; flex-direction: column; gap: 2px; }
-.nav-toggle { display: none; }
+/* both are mobile-only chrome; the media query turns them on */
+.nav-toggle, .nav-scrim { display: none; }
 .main { padding: 34px 40px; max-width: 1120px; min-width: 0; width: 100%; margin: 0 auto; }
 .spacer { flex: 0 0 auto; }
 
@@ -252,7 +253,12 @@ label { font-weight: 500; color: var(--text-2); }
     flex-direction: row; flex-wrap: nowrap; align-items: center;
     gap: 8px; padding: 10px 16px; height: auto;
     border-right: none; border-bottom: 1px solid var(--hairline);
-    position: sticky; top: 0; z-index: 20;
+    position: sticky; top: 0; z-index: 40;
+    /* MUST be reset. The desktop rule clips the sidebar so its link list can
+       scroll inside a fixed-height column; left in place here it also clipped
+       the dropdown, which hangs BELOW the bar (top: 100%) — the panel opened
+       every time and was simply never visible. */
+    overflow: visible;
   }
   .brand { padding: 0; font-size: 15px; white-space: nowrap; }
   .sidebar .spacer { flex: 1; }
@@ -279,10 +285,39 @@ label { font-weight: 500; color: var(--text-2); }
     max-height: 70vh; overflow-y: auto;
   }
   .navlinks.open { display: flex; }
-  .navlink { padding: 10px 12px; }
+  .navlink { padding: 11px 12px; }
+
+  /* tapping anywhere off the panel closes it, the way a menu should */
+  .nav-scrim {
+    display: block;
+    position: fixed; inset: 0; z-index: 30;
+    background: transparent; border: none; padding: 0;
+    box-shadow: none; border-radius: 0; cursor: default;
+  }
 
   .main { padding: 20px 16px; max-width: none; }
   .toolbar { flex-wrap: wrap; }
+
+  /* 14px inputs make iOS Safari zoom the whole page on focus and never zoom
+     back out. 16px is the threshold at which it leaves the viewport alone. */
+  input, select, textarea { font-size: 16px; }
+
+  /* a toolbar's search box shouldn't collapse to a sliver next to its buttons */
+  .toolbar input, .toolbar select { min-width: 0; flex: 1 1 190px; width: auto; }
+
+  /* four metric tiles across a phone are unreadable; two rows of two are not */
+  .tiles { gap: 12px; }
+  .tile { flex: 1 1 calc(50% - 6px); min-width: 0; }
+  .tile .n { font-size: 22px; }
+
+  /* row actions stack rather than forcing the table wider */
+  td button { margin: 2px 4px 2px 0; }
+
+  h1 { font-size: 19px; }
+
+  /* a fixed attachment inside an already-fixed layer buys nothing and is a
+     known source of repaint jank on mobile Safari */
+  body::before { background-attachment: scroll; }
 }
 
 /* ---- typography -------------------------------------------------------- */
@@ -540,4 +575,14 @@ textarea { font: inherit; }
   color: var(--text);
   border-color: var(--glass-border);
   box-shadow: var(--shadow-sm);
+}
+
+/* ---- very small phones -------------------------------------------------- */
+@media (max-width: 430px) {
+  .main { padding: 16px 12px; }
+  .tile { flex: 1 1 100%; }
+  .card { padding: 16px; border-radius: var(--radius-sm); }
+  .nav-toggle { max-width: 48vw; }
+  .toolbar { gap: 8px; }
+  .toolbar input, .toolbar select { flex: 1 1 100%; }
 }
