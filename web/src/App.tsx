@@ -30,6 +30,7 @@ import { Shop } from './pages/Shop';
 import { NotFound } from './pages/NotFound';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
+import { MessagesProvider } from './chat/MessagesProvider';
 
 /** Keep signed-in users out of the sign-in / sign-up pages. */
 function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -44,6 +45,8 @@ export function App(): React.JSX.Element {
       <RealtimeProvider>
       <BrowserRouter>
         <ProfileModalProvider>
+        {/* inside the router: it reads the URL to know which chat is open */}
+        <MessagesProvider>
         <Routes>
           {/* public marketing site */}
           <Route element={<MarketingLayout />}>
@@ -115,6 +118,7 @@ export function App(): React.JSX.Element {
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
+        </MessagesProvider>
         </ProfileModalProvider>
       </BrowserRouter>
       </RealtimeProvider>

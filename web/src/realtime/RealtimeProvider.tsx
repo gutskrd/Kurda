@@ -273,6 +273,26 @@ export function useRealtimeRoom(room: string | null | undefined): void {
 }
 
 /**
+ * Like useRealtimeRoom, but for a set of rooms that changes over time — e.g. every
+ * group you belong to, so their messages reach you from anywhere in the app and
+ * not only while that group's channel is open.
+ *
+ * Rooms are keyed by their joined string rather than array identity, so a caller
+ * re-deriving an equal list on each render does not churn joins and leaves.
+ */
+export function useRealtimeRooms(rooms: readonly string[]): void {
+  const ctx = useContext(RealtimeCtx);
+  const key = rooms.join(',');
+  useEffect(() => {
+    if (!ctx || key === '') return;
+    const leaves = key.split(',').map((room) => ctx.joinRoom(room));
+    return () => {
+      for (const leave of leaves) leave();
+    };
+  }, [ctx, key]);
+}
+
+/**
  * Returns a function to send a client message out the realtime socket (e.g. a
  * game's `ready` / `answer`). Routed through the leader tab. No-op without a
  * provider, so callers stay unit-testable.

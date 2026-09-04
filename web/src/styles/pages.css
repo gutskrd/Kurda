@@ -1499,7 +1499,9 @@ button.feature {
 @media (max-width: 820px) {
   .chat-layout {
     grid-template-columns: minmax(0, 1fr);
-    height: calc(100vh - var(--nav-h) - 150px);
+    /* dvh, not vh: mobile browsers shrink the viewport as the URL bar slides in,
+       and a vh-based height leaves the compose box under the chrome */
+    height: calc(100dvh - var(--nav-h) - 150px);
   }
   .chat-layout.has-active .chat-list {
     display: none;
@@ -1509,6 +1511,46 @@ button.feature {
   }
   .chat-back {
     display: inline-flex;
+  }
+
+  /* An open conversation takes the whole screen below the nav. On a phone a
+     thread squeezed under a page title and a tab strip leaves almost no room
+     for the messages themselves, which is the only part that matters here. */
+  .chat-page.chat-active .page-header {
+    display: none;
+  }
+  .chat-page.chat-active {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .chat-layout.has-active {
+    position: fixed;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    height: calc(100dvh - var(--nav-h));
+    z-index: 20;
+    gap: 0;
+    background: var(--app-bg);
+  }
+  .chat-layout.has-active .chat-thread-pane {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
+  }
+  /* thumb-sized tap targets and no iOS zoom-on-focus in the composer */
+  .chat-compose {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+  .chat-compose .input {
+    font-size: 16px;
+  }
+  .chat-messages {
+    padding: 12px;
+  }
+  .bubble {
+    max-width: 85%;
   }
 }
 
@@ -2582,4 +2624,104 @@ button.feature {
   /* the trailing letter-spacing would push the digits off-centre */
   text-indent: 0.45em;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---- new-message banners (app-wide) ------------------------------------ */
+.msg-toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(340px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.msg-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: msg-toast-in 0.18s ease-out;
+}
+@keyframes msg-toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg-toast { animation: none; }
+}
+.msg-toast-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 10px 12px;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.msg-toast-open:hover {
+  background: var(--surface);
+}
+.msg-toast-title {
+  font-weight: 650;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-toast-body {
+  color: var(--ink-3);
+  font-size: 0.86rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-toast-close {
+  flex: none;
+  width: 34px;
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--border);
+  color: var(--ink-3);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.msg-toast-close:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* On a phone they drop from the top instead. Bottom-anchored banners land on
+   top of the compose bar once a conversation goes full-screen, and a top sheet
+   is where a phone shows an arriving message anyway. */
+@media (max-width: 820px) {
+  .msg-toasts {
+    left: 12px;
+    right: 12px;
+    top: calc(var(--nav-h) + 8px);
+    bottom: auto;
+    width: auto;
+  }
+  .msg-toast {
+    animation: msg-toast-in-top 0.18s ease-out;
+  }
+  @keyframes msg-toast-in-top {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+  }
 }

@@ -80,9 +80,17 @@ export class ChatService {
     const body = filtered.masked;
 
     const { lo, hi } = canonicalPair(from, to);
-    const row = await this.pool.query<{ id: string; created_at: Date }>(
-      `INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)
-       RETURNING id, created_at`,
+    // The sender's name comes back with the insert (one statement, no extra
+    // round trip) purely so the recipient's notification can say WHO wrote.
+    // Resolving it client-side would fail for the case that matters most: the
+    // first message from someone not yet in your conversation list.
+    const row = await this.pool.query<{ id: string; created_at: Date; username: string }>(
+      `WITH ins AS (
+         INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)
+         RETURNING id, created_at, sender_id
+       )
+       SELECT ins.id, ins.created_at, u.username
+         FROM ins JOIN users u ON u.id = ins.sender_id`,
       [lo, hi, from, body],
     );
     if (filtered.flagged && this.moderation) void this.moderation.recordOffense(from).catch(() => undefined);
@@ -94,7 +102,14 @@ export class ChatService {
       deliveredAt: null,
       readAt: null,
     };
-    await this.notifier.notifyUser(to, { type: 'dm', from, message }).catch(() => undefined);
+    await this.notifier
+      .notifyUser(to, {
+        type: 'dm',
+        from,
+        fromUsername: row.rows[0]!.username,
+        message,
+      })
+      .catch(() => undefined);
     return message;
   }
 

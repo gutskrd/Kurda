@@ -84,6 +84,28 @@ describe('Messages', () => {
     expect(fetchMock.mock.calls.some(([u, i]) => String(u).includes('/chat/u2/messages') && (i as RequestInit)?.method === 'POST')).toBe(true);
   });
 
+  it('marks a direct conversation read as soon as it is opened', async () => {
+    // the endpoint always existed and the group channel called it; the direct
+    // thread never did, so a DM stayed unread however long you looked at it
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      if (String(url).includes('/chat/u2/messages')) {
+        return jsonResponse(200, {
+          messages: [{ id: 'm1', senderId: 'u2', body: 'Silav!', createdAt: '2026-08-24T10:00:00Z', deliveredAt: null, readAt: null }],
+        });
+      }
+      if (String(url).includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderApp(<Messages />, ['/app/messages?to=u2&name=zana']);
+
+    expect(await screen.findByText('Silav!')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([u, i]) => String(u).endsWith('/chat/u2/read') && (i as RequestInit)?.method === 'POST')).toBe(true),
+    );
+  });
+
   it('appends an incoming DM instantly over realtime (no poll)', async () => {
     localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
