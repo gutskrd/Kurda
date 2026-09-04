@@ -30,11 +30,12 @@ So the order is:
 
 1. Register the account normally and **complete email verification**.
 2. Add the address to `BOOTSTRAP_ADMIN_EMAILS`.
-3. Restart the API.
+3. Restart the API — or simply verify, which reconciles on the spot.
 
 If an address is listed but its account hasn't verified yet, the API logs a warning
-and grants nothing. It re-checks on the next boot, so verifying later and restarting
-is enough.
+and grants nothing. The allowlist is re-checked **whenever an address is confirmed**,
+so verifying after the API started grants immediately — no restart needed. It is also
+re-checked on every boot, so a restart works too.
 
 ## What it will not do
 
