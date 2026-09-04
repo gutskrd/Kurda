@@ -4,6 +4,7 @@ import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { classifyRhyme, normalizeWord, type Dialect } from '../game/rhyme.js';
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
+import { QuizQuestionService } from './quiz-questions.js';
 
 /**
  * Admin management of the shared game word pool (`dict_entries`).
@@ -54,6 +55,7 @@ interface WordRow {
 }
 
 export function registerGameContentRoutes(app: FastifyInstance): void {
+  const quiz = new QuizQuestionService(app.db);
   // content_editor curates game content; admin/superadmin keep full access
   const canEdit = [requireAuth, requireRoles('admin', 'superadmin', 'content_editor')];
 
@@ -164,8 +166,63 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       if (q === 'perfect') perfect.push(r.headword);
       else if (q === 'near') near.push(r.headword);
     }
-    return { word, dialect, perfect: perfect.sort(), near: near.sort(), inDictionary: rows.rows.some((r) => normalizeWord(r.headword) === target) };
+    // an admin's explicit decisions for this prompt, so the UI can show which
+    // pairs are curated rather than merely derived
+    const overrides = await app.db.query<{ rhyme_normalized: string; quality: string }>(
+      `SELECT rhyme_normalized, quality FROM rhyme_overrides WHERE prompt_normalized = $1`,
+      [target],
+    );
+    return {
+      word,
+      dialect,
+      perfect: perfect.sort(),
+      near: near.sort(),
+      inDictionary: rows.rows.some((r) => normalizeWord(r.headword) === target),
+      overrides: Object.fromEntries(overrides.rows.map((o) => [o.rhyme_normalized, o.quality])),
+      /** every pool word, so a curator can rule one in that the endings missed */
+      candidates: rows.rows.map((r) => r.headword).filter((h) => normalizeWord(h) !== target).sort(),
+    };
   });
+
+  /**
+   * Decide a pair explicitly. 'perfect' / 'near' accept the word (and set what it
+   * scores); 'none' rules it out even though the endings match. Passing 'auto'
+   * removes the decision and hands the pair back to the derived result.
+   */
+  app.put(
+    '/admin/dictionary/rhymes',
+    {
+      schema: {
+        body: z.object({
+          word: z.string().min(1).max(64),
+          rhyme: z.string().min(1).max(64),
+          quality: z.enum(['perfect', 'near', 'none', 'auto']),
+        }),
+      },
+      preHandler: canEdit,
+    },
+    async (req) => {
+      const { word, rhyme, quality } = req.body as { word: string; rhyme: string; quality: string };
+      const prompt = normalizeWord(word);
+      const target = normalizeWord(rhyme);
+      if (!prompt || !target) throw new AppError('BAD_WORD', 400, 'both words must contain letters');
+      if (prompt === target) throw new AppError('SAME_WORD', 400, 'a word cannot rhyme with itself');
+      if (quality === 'auto') {
+        await app.db.query(
+          `DELETE FROM rhyme_overrides WHERE prompt_normalized = $1 AND rhyme_normalized = $2`,
+          [prompt, target],
+        );
+        return { ok: true, quality: 'auto' };
+      }
+      await app.db.query(
+        `INSERT INTO rhyme_overrides (prompt_normalized, rhyme_normalized, quality)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (prompt_normalized, rhyme_normalized) DO UPDATE SET quality = EXCLUDED.quality`,
+        [prompt, target, quality],
+      );
+      return { ok: true, quality };
+    },
+  );
 
   /**
    * Pool health: how many words sit in each Wordle difficulty band, so an admin
@@ -192,5 +249,60 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       byLength: [...byLength.entries()].sort((a, b) => a[0] - b[0]).map(([length, words]) => ({ length, words })),
       difficulties,
     };
+  });
+
+  // ---- quiz questions ----------------------------------------------------
+
+  const questionBody = z.object({
+    prompt: z.string().min(1).max(300),
+    /** exactly four, in display order */
+    options: z.array(z.string().min(1).max(120)).length(4),
+    correctIndex: z.number().int().min(0).max(3),
+    category: z.enum(['vocabulary', 'phrases']),
+    level: z.number().int().min(1).max(3),
+    active: z.boolean().optional(),
+  });
+
+  /** Every question, retired ones included. */
+  app.get('/admin/quiz/questions', { config: { skipValidation: true }, preHandler: canEdit }, async () => ({
+    questions: await quiz.list(),
+  }));
+
+  app.post('/admin/quiz/questions', { schema: { body: questionBody }, preHandler: canEdit }, async (req, reply) => {
+    const b = req.body as z.infer<typeof questionBody>;
+    return reply.code(201).send(await quiz.create(b));
+  });
+
+  app.put(
+    '/admin/quiz/questions/:id',
+    { schema: { params: z.object({ id: z.uuid() }), body: questionBody.extend({ active: z.boolean() }) }, preHandler: canEdit },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const updated = await quiz.update(id, req.body as z.infer<typeof questionBody> & { active: boolean });
+      if (!updated) throw new AppError('NOT_FOUND', 404, 'no such question');
+      return updated;
+    },
+  );
+
+  app.delete(
+    '/admin/quiz/questions/:id',
+    { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      if (!(await quiz.remove(id))) throw new AppError('NOT_FOUND', 404, 'no such question');
+      return { ok: true };
+    },
+  );
+
+  // Copy the built-in questions into the table once, then keep the engine's bank
+  // in step — the engine picks questions synchronously and cannot query per game.
+  app.addHook('onReady', async () => {
+    try {
+      const seeded = await quiz.seedIfEmpty();
+      const loaded = await quiz.refresh();
+      app.log.info({ seeded, loaded }, 'quiz question bank ready');
+    } catch (err) {
+      app.log.warn({ err }, 'failed to load quiz questions — using the built-in bank');
+    }
   });
 }

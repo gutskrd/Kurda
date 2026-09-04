@@ -1,5 +1,11 @@
 /**
- * Placeholder Kurmanji question bank (KUR-051). The real source is the
+ * Kurmanji question bank (KUR-051). Questions are edited in the admin panel and
+ * live in `quiz_questions`; this constant is the fallback used until that table
+ * has rows, so a fresh database still has a playable quiz. `setBank` swaps in the
+ * database copy — selection stays synchronous because the engine picks questions
+ * on a synchronous path.
+ *
+ * The original note: the eventual source is the
  * course content pipeline (KUR-026/#26, KUR-041/#41) selecting by the
  * overlap of both players' course levels — this module keeps the game
  * engine playable until that lands, behind the same interface.
@@ -66,17 +72,33 @@ const BANK: GameQuestion[] = [
  * filter (KUR-056) narrows by category/level; if it leaves too few, the full
  * bank backfills so a game always has enough questions.
  */
+/**
+ * The bank selection actually reads. Starts as the built-in constant and is
+ * replaced once the database copy loads (and after an admin edits a question).
+ */
+let activeBank: GameQuestion[] = BANK;
+
+/** Replace the live bank. An empty list is ignored — never leave the quiz unplayable. */
+export function setBank(questions: GameQuestion[]): void {
+  activeBank = questions.length > 0 ? questions : BANK;
+}
+
+/** The built-in fallback, for seeding the database on first run. */
+export function builtInBank(): GameQuestion[] {
+  return BANK;
+}
+
 export function selectQuestions(seed: string, count: number, filter?: QuestionFilter): GameQuestion[] {
   const matches = (q: GameQuestion) =>
     (filter?.category === undefined || q.category === filter.category) &&
     (filter?.level === undefined || q.level === filter.level);
 
-  const pool = BANK.filter(matches);
+  const pool = activeBank.filter(matches);
   const primary = order(pool, seed);
   if (primary.length >= count) return primary.slice(0, count);
   // backfill from the rest of the bank, keeping the filtered ones first
-  const rest = order(BANK.filter((q) => !matches(q)), seed);
-  return [...primary, ...rest].slice(0, Math.min(count, BANK.length));
+  const rest = order(activeBank.filter((q) => !matches(q)), seed);
+  return [...primary, ...rest].slice(0, Math.min(count, activeBank.length));
 }
 
 function order(questions: GameQuestion[], seed: string): GameQuestion[] {

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
+import { RhymeEditor } from './RhymeEditor';
+import { QuizQuestions } from './QuizQuestions';
 
 interface Word {
   id: string;
@@ -16,13 +18,6 @@ interface Stats {
   rhymePrompts: number;
   byLength: { length: number; words: number }[];
   difficulties: { difficulty: string; lengths: number[]; words: number }[];
-}
-interface RhymeReport {
-  word: string;
-  dialect: string;
-  perfect: string[];
-  near: string[];
-  inDictionary: boolean;
 }
 
 const PAGE = 50;
@@ -45,7 +40,7 @@ export function Games(): React.JSX.Element {
   const [page, setPage] = useState(0);
   // categories: the pool is shared, but Wordle and Rhyme care about different
   // things, so each gets its own view rather than one long undifferentiated page
-  const [section, setSection] = useState<'pool' | 'wordle' | 'rhyme'>('pool');
+  const [section, setSection] = useState<'pool' | 'wordle' | 'rhyme' | 'quiz'>('pool');
   const [promptsOnly, setPromptsOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -122,6 +117,7 @@ export function Games(): React.JSX.Element {
           ['pool', 'Word pool'],
           ['wordle', 'Wordle'],
           ['rhyme', 'Rhyme'],
+          ['quiz', 'Quiz'],
         ] as const).map(([key, label]) => (
           <button
             key={key}
@@ -149,7 +145,8 @@ export function Games(): React.JSX.Element {
           </div>
         </div>
       )}
-      {section === 'rhyme' && <RhymeChecker />}
+      {section === 'rhyme' && <RhymeEditor />}
+      {section === 'quiz' && <QuizQuestions />}
       {section === 'pool' && <AddWords onAdded={load} />}
 
       {section === 'pool' && (
@@ -357,66 +354,6 @@ function AddWords({ onAdded }: { onAdded: () => Promise<void> }): React.JSX.Elem
           Added {result.added.length}.{' '}
           {result.skipped.length > 0 && `Already present: ${result.skipped.length}. `}
           {result.invalid.length > 0 && `Rejected (not words): ${result.invalid.join(', ')}.`}
-        </div>
-      )}
-    </form>
-  );
-}
-
-/** Shows which pool words rhyme with a given word (computed, not stored). */
-function RhymeChecker(): React.JSX.Element {
-  const [word, setWord] = useState('');
-  const [dialect, setDialect] = useState('kurmanci');
-  const [report, setReport] = useState<RhymeReport | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function check(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!word.trim()) return;
-    setBusy(true);
-    try {
-      const params = new URLSearchParams({ word: word.trim(), dialect });
-      setReport(await api<RhymeReport>(`/admin/dictionary/rhymes?${params}`));
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form className="card" style={{ marginBottom: 16 }} onSubmit={(e) => void check(e)}>
-      <div className="section-title">Rhymes for a word</div>
-      <div className="subtle" style={{ marginBottom: 10 }}>
-        Rhymes aren’t stored — the game works them out from each word’s ending, so you don’t enter rhyme
-        pairs. You add words, and anything with a matching ending rhymes automatically. Check a word here
-        before using it as a prompt: with no partners in the pool, players can’t score on it.
-      </div>
-      <div className="toolbar">
-        <input placeholder="e.g. gul" value={word} onChange={(e) => setWord(e.target.value)} />
-        <select value={dialect} onChange={(e) => setDialect(e.target.value)}>
-          <option value="kurmanci">Kurmancî</option>
-          <option value="sorani">Soranî</option>
-        </select>
-        <button type="submit" disabled={busy || !word.trim()}>
-          {busy ? 'Checking…' : 'Check'}
-        </button>
-      </div>
-      {report && (
-        <div style={{ marginTop: 12 }}>
-          {!report.inDictionary && (
-            <div className="subtle" style={{ marginBottom: 8 }}>
-              Note: “{report.word}” isn’t in the pool yet, so it can’t be used as a prompt until you add it.
-            </div>
-          )}
-          <div style={{ marginBottom: 8 }}>
-            <strong>Perfect rhymes ({report.perfect.length}):</strong>{' '}
-            {report.perfect.length ? report.perfect.join(', ') : <span className="subtle">none in the pool</span>}
-          </div>
-          <div>
-            <strong>Near rhymes ({report.near.length}):</strong>{' '}
-            {report.near.length ? report.near.join(', ') : <span className="subtle">none in the pool</span>}
-          </div>
         </div>
       )}
     </form>

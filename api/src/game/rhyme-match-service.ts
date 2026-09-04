@@ -196,9 +196,18 @@ export class RhymeMatchService {
       const normalized = normalizeWord(word);
       const known = await this.wordExists(client, normalized);
       const lexicon = new InMemoryLexicon(known ? [{ word: normalized, dialect: match.dialect }] : []);
+
+      // an admin's explicit verdict for this exact pair, if one exists
+      const override = await client.query<{ quality: string }>(
+        `SELECT quality FROM rhyme_overrides WHERE prompt_normalized = $1 AND rhyme_normalized = $2`,
+        [normalizeWord(match.prompt), normalized],
+      );
+      const overrideQuality = override.rows[0]
+        ? () => override.rows[0]!.quality as RhymeQuality
+        : undefined;
       const result = evaluateSubmission(
         { prompt: match.prompt, submission: word, elapsedMs, windowMs: match.window_ms, dialect: match.dialect, usedWords: player.used_words },
-        { lexicon },
+        { lexicon, overrideQuality },
       );
 
       if (result.accepted) {
