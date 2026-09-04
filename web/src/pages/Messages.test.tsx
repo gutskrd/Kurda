@@ -145,6 +145,81 @@ describe('Messages', () => {
     await waitFor(() => expect(screen.getByText('Live hello')).toBeInTheDocument());
   });
 
+  it('shows a read receipt on your own message and updates it live', async () => {
+    // the server has tracked delivered_at/read_at all along and publishes
+    // dm_read — nothing on the client ever showed it, so a sent message looked
+    // identical whether it had been read or had never arrived
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (String(url).includes('/chat/u2/messages')) {
+          return jsonResponse(200, {
+            messages: [{ id: 'm1', senderId: 'me', body: 'Silav!', createdAt: new Date().toISOString(), deliveredAt: null, readAt: null }],
+          });
+        }
+        if (String(url).includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (String(url).includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada' } });
+        return jsonResponse(200, {});
+      }),
+    );
+
+    const { client, emit, isConnected } = makeFakeClient();
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={client}>
+          <MemoryRouter initialEntries={['/app/messages?to=u2&name=zana']}>
+            <ProfileModalProvider>
+              <Messages />
+            </ProfileModalProvider>
+          </MemoryRouter>
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByLabelText('Sent')).toBeInTheDocument();
+    await waitFor(() => expect(isConnected()).toBe(true));
+
+    emit({ room: 'user:me', event: { type: 'dm_read', by: 'u2' } });
+    await waitFor(() => expect(screen.getByLabelText('Read')).toBeInTheDocument());
+  });
+
+  it('shows a typing indicator, and only for the person you are reading', async () => {
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (String(url).includes('/chat/u2/messages')) return jsonResponse(200, { messages: [] });
+        if (String(url).includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (String(url).includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada' } });
+        return jsonResponse(200, {});
+      }),
+    );
+
+    const { client, emit, isConnected } = makeFakeClient();
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={client}>
+          <MemoryRouter initialEntries={['/app/messages?to=u2&name=zana']}>
+            <ProfileModalProvider>
+              <Messages />
+            </ProfileModalProvider>
+          </MemoryRouter>
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByLabelText('Message')).toBeInTheDocument();
+    await waitFor(() => expect(isConnected()).toBe(true));
+
+    // someone else's typing must not show up in this thread
+    emit({ room: 'user:me', event: { type: 'dm_typing', from: 'someone-else' } });
+    expect(screen.queryByText(/is typing/)).not.toBeInTheDocument();
+
+    emit({ room: 'user:me', event: { type: 'dm_typing', from: 'u2' } });
+    await waitFor(() => expect(screen.getByText('zana is typing…')).toBeInTheDocument());
+  });
+
   it('creates a group from the Groups tab', async () => {
     localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const calls: Array<{ url: string; body: unknown }> = [];

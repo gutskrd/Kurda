@@ -8,6 +8,8 @@ import { useMessages } from '../chat/MessagesProvider';
 import { MessageList } from '../chat/MessageList';
 import { Composer } from '../chat/Composer';
 import { useStickyScroll } from '../chat/useStickyScroll';
+import { useTypingSignal, useTypingWatch, typingLabel } from '../chat/useTyping';
+import { ReadReceipt } from '../chat/ReadReceipt';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading, ErrorState, EmptyState } from '../components/states';
@@ -396,6 +398,10 @@ function Thread({
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
+  const { typing, note } = useTypingWatch();
+  const signalTyping = useTypingSignal(
+    useCallback(() => void client.post(`/chat/${otherId}/typing`).catch(() => undefined), [client, otherId]),
+  );
 
   const load = useCallback(async () => {
     const res = await client.get<{ messages: DmMessage[] }>(`/chat/${otherId}/messages`);
@@ -449,6 +455,38 @@ function Thread({
   );
   useRealtimeEvent('dm', onDm);
 
+  // they opened the thread, or their client acknowledged delivery: stamp our own
+  // messages so the receipt updates without waiting for the next poll
+  const stamp = useCallback(
+    (field: 'deliveredAt' | 'readAt', from: string | undefined) => {
+      if (from !== otherId) return;
+      const now = new Date().toISOString();
+      setMessages((m) =>
+        (m ?? []).map((x) => (x.senderId === user?.id && !x[field] ? { ...x, [field]: now } : x)),
+      );
+    },
+    [otherId, user?.id],
+  );
+  const onDelivered = useCallback(
+    (env: RealtimeEventEnvelope) => stamp('deliveredAt', (env.event as { by?: string }).by),
+    [stamp],
+  );
+  const onRead = useCallback(
+    (env: RealtimeEventEnvelope) => stamp('readAt', (env.event as { by?: string }).by),
+    [stamp],
+  );
+  useRealtimeEvent('dm_delivered', onDelivered);
+  useRealtimeEvent('dm_read', onRead);
+
+  const onTyping = useCallback(
+    (env: RealtimeEventEnvelope) => {
+      if ((env.event as { from?: string }).from !== otherId) return;
+      note(otherName ?? 'They');
+    },
+    [otherId, otherName, note],
+  );
+  useRealtimeEvent('dm_typing', onTyping);
+
   async function send(): Promise<void> {
     const body = text.trim();
     if (!body) return;
@@ -487,9 +525,24 @@ function Thread({
         ) : messages.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? 'No messages yet. Say hello!'}</p>
         ) : (
-          <MessageList messages={messages} myId={user?.id} />
+          <MessageList
+            messages={messages}
+            myId={user?.id}
+            renderStatus={(m) => <ReadReceipt message={m} />}
+          />
         )}
       </div>
+
+      {typing.length > 0 && (
+        <div className="chat-typing" aria-live="polite">
+          <span className="chat-typing-dots" aria-hidden>
+            <i />
+            <i />
+            <i />
+          </span>
+          {typingLabel(typing)}
+        </div>
+      )}
 
       {!atBottom && messages !== null && messages.length > 0 && (
         <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
@@ -500,7 +553,10 @@ function Thread({
       {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
       <Composer
         value={text}
-        onChange={setText}
+        onChange={(next) => {
+          setText(next);
+          if (next) signalTyping();
+        }}
         onSubmit={() => void send()}
         sending={sending}
         placeholder="Write a message…"
@@ -523,6 +579,10 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   const [sendMsg, setSendMsg] = useState<string | null>(null);
   const { refreshUnread } = useMessages();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
+  const { typing, note } = useTypingWatch();
+  const signalTyping = useTypingSignal(
+    useCallback(() => void client.post(`/groups/${groupId}/chat/typing`).catch(() => undefined), [client, groupId]),
+  );
 
   // join the live room for as long as this channel is open (ref-counted, cross-tab)
   useRealtimeRoom(`group:${groupId}`);
@@ -586,6 +646,17 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   );
   useRealtimeEvent('group_msg_deleted', onDeleted);
 
+  // the room includes us, so our own pings come back — ignore those
+  const onTyping = useCallback(
+    (env: RealtimeEventEnvelope) => {
+      const ev = env.event as { groupId?: string; userId?: string; username?: string };
+      if (ev.groupId !== groupId || !ev.username || ev.userId === user?.id) return;
+      note(ev.username);
+    },
+    [groupId, user?.id, note],
+  );
+  useRealtimeEvent('group_typing', onTyping);
+
   async function send(): Promise<void> {
     const body = text.trim();
     if (!body) return;
@@ -634,6 +705,17 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
         )}
       </div>
 
+      {typing.length > 0 && (
+        <div className="chat-typing" aria-live="polite">
+          <span className="chat-typing-dots" aria-hidden>
+            <i />
+            <i />
+            <i />
+          </span>
+          {typingLabel(typing)}
+        </div>
+      )}
+
       {!atBottom && messages !== null && messages.length > 0 && (
         <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
           Jump to latest ↓
@@ -643,7 +725,10 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
       {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
       <Composer
         value={text}
-        onChange={setText}
+        onChange={(next) => {
+          setText(next);
+          if (next) signalTyping();
+        }}
         onSubmit={() => void send()}
         sending={sending}
         placeholder="Message the group…"
