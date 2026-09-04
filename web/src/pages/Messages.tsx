@@ -5,6 +5,9 @@ import { describeError } from '../lib/api';
 import type { ApiError, Conversation, DmMessage, Group, GroupDetail, GroupMember, GroupMessage, GroupRole, MyGroup } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from '../chat/MessagesProvider';
+import { MessageList } from '../chat/MessageList';
+import { Composer } from '../chat/Composer';
+import { useStickyScroll } from '../chat/useStickyScroll';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading, ErrorState, EmptyState } from '../components/states';
@@ -12,7 +15,6 @@ import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { ArrowIcon } from '../components/icons';
 import { Avatar } from '../components/Avatar';
-import { MessageBody } from '../components/GameInviteCard';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -393,7 +395,7 @@ function Thread({
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
 
   const load = useCallback(async () => {
     const res = await client.get<{ messages: DmMessage[] }>(`/chat/${otherId}/messages`);
@@ -447,13 +449,7 @@ function Thread({
   );
   useRealtimeEvent('dm', onDm);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    el?.scrollTo?.({ top: el.scrollHeight });
-  }, [messages]);
-
-  async function send(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
+  async function send(): Promise<void> {
     const body = text.trim();
     if (!body) return;
     setSending(true);
@@ -463,6 +459,7 @@ function Thread({
     if (res.ok) {
       setText('');
       setMessages((m) => [...(m ?? []), res.data]);
+      scrollToBottom('smooth'); // your own message always brings you back down
       onSent();
     } else {
       setSendMsg(sendError(res.error));
@@ -490,28 +487,24 @@ function Thread({
         ) : messages.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? 'No messages yet. Say hello!'}</p>
         ) : (
-          messages.map((m) => (
-            <div key={m.id} className={`bubble${m.senderId === user?.id ? ' mine' : ''}`}>
-              <MessageBody body={m.body} />
-            </div>
-          ))
+          <MessageList messages={messages} myId={user?.id} />
         )}
       </div>
 
+      {!atBottom && messages !== null && messages.length > 0 && (
+        <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
+          Jump to latest ↓
+        </button>
+      )}
+
       {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
-      <form className="chat-compose" onSubmit={send}>
-        <input
-          className="input"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write a message…"
-          maxLength={2000}
-          aria-label="Message"
-        />
-        <Button type="submit" disabled={sending || text.trim().length === 0}>
-          {sending ? 'Sending…' : 'Send'}
-        </Button>
-      </form>
+      <Composer
+        value={text}
+        onChange={setText}
+        onSubmit={() => void send()}
+        sending={sending}
+        placeholder="Write a message…"
+      />
     </div>
   );
 }
@@ -528,8 +521,8 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const { refreshUnread } = useMessages();
+  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
 
   // join the live room for as long as this channel is open (ref-counted, cross-tab)
   useRealtimeRoom(`group:${groupId}`);
@@ -593,13 +586,7 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   );
   useRealtimeEvent('group_msg_deleted', onDeleted);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    el?.scrollTo?.({ top: el.scrollHeight });
-  }, [messages]);
-
-  async function send(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
+  async function send(): Promise<void> {
     const body = text.trim();
     if (!body) return;
     setSending(true);
@@ -613,6 +600,7 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
         if (list.some((x) => x.id === res.data.id)) return list;
         return [...list, res.data];
       });
+      scrollToBottom('smooth');
     } else {
       setSendMsg(sendError(res.error));
     }
@@ -642,32 +630,24 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
         ) : messages.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? 'No messages yet. Say hello to the group!'}</p>
         ) : (
-          messages.map((m) => {
-            const mine = m.senderId === user?.id;
-            return (
-              <div key={m.id} className={`bubble${mine ? ' mine' : ''}`}>
-                {!mine && <span className="bubble-author">{m.username}</span>}
-                {m.deleted ? <em className="muted">message deleted</em> : <MessageBody body={m.body} />}
-              </div>
-            );
-          })
+          <MessageList messages={messages} myId={user?.id} showAuthors />
         )}
       </div>
 
+      {!atBottom && messages !== null && messages.length > 0 && (
+        <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
+          Jump to latest ↓
+        </button>
+      )}
+
       {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
-      <form className="chat-compose" onSubmit={send}>
-        <input
-          className="input"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Message the group…"
-          maxLength={2000}
-          aria-label="Message"
-        />
-        <Button type="submit" disabled={sending || text.trim().length === 0}>
-          {sending ? 'Sending…' : 'Send'}
-        </Button>
-      </form>
+      <Composer
+        value={text}
+        onChange={setText}
+        onSubmit={() => void send()}
+        sending={sending}
+        placeholder="Message the group…"
+      />
     </div>
   );
 }
