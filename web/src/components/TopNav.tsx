@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { useMessages } from '../chat/MessagesProvider';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
@@ -18,6 +19,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   const { openProfile } = useProfileModal();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { unreadTotal } = useMessages();
   const signedIn = status === 'signedIn';
 
   const close = (): void => setOpen(false);
@@ -39,18 +41,28 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
 
         <nav aria-label="Primary">
           <ul className={`nav-links${open ? ' open' : ''}`}>
-            {links.map((l) => (
-              <li key={l.to}>
-                <NavLink
-                  to={l.to}
-                  end={l.to === '/'}
-                  className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                  onClick={close}
-                >
-                  {l.label}
-                </NavLink>
-              </li>
-            ))}
+            {links.map((l) => {
+              // the Messages link carries the unread count, so a message is
+              // visible from anywhere without opening the page to check
+              const badge = l.to === '/app/messages' ? unreadTotal : 0;
+              return (
+                <li key={l.to}>
+                  <NavLink
+                    to={l.to}
+                    end={l.to === '/'}
+                    className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                    onClick={close}
+                  >
+                    {l.label}
+                    {badge > 0 && (
+                      <span className="nav-badge" aria-label={`${badge} unread`}>
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
+                  </NavLink>
+                </li>
+              );
+            })}
 
             {/* actions inside the mobile dropdown only */}
             <li className="nav-mobile-actions">

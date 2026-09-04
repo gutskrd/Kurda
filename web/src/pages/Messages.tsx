@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, Conversation, DmMessage, Group, GroupDetail, GroupMember, GroupMessage, GroupRole, MyGroup } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
+import { useMessages } from '../chat/MessagesProvider';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading, ErrorState, EmptyState } from '../components/states';
@@ -57,9 +58,12 @@ export function Messages(): React.JSX.Element {
   // bump to refresh the direct list after the current user sends (their own send
   // isn't pushed back to them over realtime, so the preview would otherwise lag)
   const [dmRefresh, setDmRefresh] = useState(0);
+  // stable identity: Thread depends on this inside an effect, so a new function
+  // on each render would reset the thread and wipe what is on screen
+  const onDmSent = useCallback(() => setDmRefresh((n) => n + 1), []);
 
   return (
-    <div className="container">
+    <div className={`container chat-page${activeId || activeGroup ? ' chat-active' : ''}`}>
       <div className="page-header">
         <span className="eyebrow">Peyam · Messages</span>
         <h1 className="page-title">Messages</h1>
@@ -92,7 +96,7 @@ export function Messages(): React.JSX.Element {
           {activeGroup ? (
             <GroupThread key={activeGroup} groupId={activeGroup} />
           ) : activeId ? (
-            <Thread key={activeId} otherId={activeId} otherName={activeName} onSent={() => setDmRefresh((n) => n + 1)} />
+            <Thread key={activeId} otherId={activeId} otherName={activeName} onSent={onDmSent} />
           ) : (
             <div className="chat-empty">
               <p className="muted">Select a conversation to start chatting.</p>
@@ -383,6 +387,7 @@ function Thread({
   const { client, user } = useAuth();
   const { state } = useRealtime();
   const { openProfile } = useProfileModal();
+  const { refreshUnread } = useMessages();
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -401,14 +406,29 @@ function Thread({
     }
   }, [client, otherId]);
 
+  /**
+   * Clear this conversation's unread badge and send the read receipt.
+   *
+   * The endpoint existed and the group channel called it, but the direct thread
+   * never did — so a DM stayed "unread" no matter how long you looked at it.
+   * Called on open AND on each arrival while open, otherwise the badge would pop
+   * back up for a message already on screen.
+   */
+  const markRead = useCallback(async () => {
+    await client.post(`/chat/${otherId}/read`).catch(() => undefined);
+    refreshUnread();
+    onSent();
+  }, [client, otherId, refreshUnread, onSent]);
+
 
   useEffect(() => {
     setMessages(null);
     setLoadError(null);
     void load();
+    void markRead();
     const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
     return () => clearInterval(t);
-  }, [load, state]);
+  }, [load, markRead, state]);
 
   // live receive: append a DM the moment it arrives from the person we're viewing
   const onDm = useCallback(
@@ -420,9 +440,10 @@ function Thread({
         if (list.some((x) => x.id === ev.message!.id)) return list; // dedupe vs. poll
         return [...list, ev.message!];
       });
-      onSent();
+      // it is on screen, so it is read — clear the badge instead of raising one
+      void markRead();
     },
-    [otherId, onSent],
+    [otherId, markRead],
   );
   useRealtimeEvent('dm', onDm);
 
@@ -508,9 +529,16 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { refreshUnread } = useMessages();
 
   // join the live room for as long as this channel is open (ref-counted, cross-tab)
   useRealtimeRoom(`group:${groupId}`);
+
+  /** Clear this group's unread badge; on open and on each arrival while open. */
+  const markRead = useCallback(async () => {
+    await client.post(`/groups/${groupId}/chat/read`).catch(() => undefined);
+    refreshUnread();
+  }, [client, groupId, refreshUnread]);
 
   // fetching history also refreshes the server-side grant that authorizes the WS join
   const load = useCallback(async () => {
@@ -535,10 +563,10 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
     setLoadError(null);
     void load();
     void loadDetail();
-    void client.post(`/groups/${groupId}/chat/read`).catch(() => undefined);
+    void markRead();
     const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
     return () => clearInterval(t);
-  }, [load, loadDetail, client, groupId, state]);
+  }, [load, loadDetail, markRead, state]);
 
   const onGroupMsg = useCallback(
     (env: RealtimeEventEnvelope) => {
@@ -549,8 +577,9 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
         if (list.some((x) => x.id === ev.message!.id)) return list;
         return [...list, ev.message!];
       });
+      void markRead(); // it is on screen, so it counts as read
     },
-    [groupId],
+    [groupId, markRead],
   );
   useRealtimeEvent('group_msg', onGroupMsg);
 

@@ -1,4 +1,5 @@
 import type { LetterFeedback } from '../lib/types';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 /**
  * Kurmancî (Hawar) alphabet laid out for an on-screen keyboard, so the special
@@ -9,6 +10,27 @@ export const KURMANCI_KEYS: string[][] = [
   ['a', 's', 'ş', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
   ['z', 'x', 'c', 'ç', 'v', 'b', 'n', 'm'],
 ];
+
+/**
+ * The same 31 letters re-split for a phone.
+ *
+ * The wide layout's top row is 13 keys — Kurmancî adds ê û î to QWERTY — which
+ * cannot fit across a 375px screen at a tappable size. Wrapping it in two keeps
+ * QWERTY order intact while leaving every key comfortably wide.
+ */
+export const KURMANCI_KEYS_NARROW: string[][] = [
+  ['q', 'w', 'e', 'ê', 'r', 't', 'y'],
+  ['u', 'û', 'i', 'î', 'o', 'p'],
+  ['a', 's', 'ş', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+  ['z', 'x', 'c', 'ç', 'v', 'b', 'n', 'm'],
+];
+
+/** Below this width the wide keyboard's 13-key row stops fitting. */
+const NARROW_KEYBOARD = '(max-width: 560px)';
+
+/** Cell size the board will not exceed, and the gap between cells (px). */
+const MAX_CELL = 54;
+const CELL_GAP = 6;
 
 /** letters a–z plus the Kurdish diacritics, for physical-keyboard capture */
 export const KURMANCI_LETTER_RE = /^[a-zêîûçş]$/;
@@ -56,7 +78,16 @@ export function WordleBoard({
       );
     }
     rows.push(
-      <div className="wordle-row" key={r} style={{ gridTemplateColumns: `repeat(${targetLength}, 1fr)` }}>
+      // the row fills the width available and caps at its natural size, so an
+      // 8-letter target shrinks to fit a phone instead of running off both edges
+      <div
+        className="wordle-row"
+        key={r}
+        style={{
+          gridTemplateColumns: `repeat(${targetLength}, 1fr)`,
+          maxWidth: targetLength * MAX_CELL + (targetLength - 1) * CELL_GAP,
+        }}
+      >
         {cells}
       </div>,
     );
@@ -78,11 +109,13 @@ export function WordleKeyboard({
   onPress: (key: string) => void;
   disabled: boolean;
 }): React.JSX.Element {
+  const narrow = useMediaQuery(NARROW_KEYBOARD);
+  const layout = narrow ? KURMANCI_KEYS_NARROW : KURMANCI_KEYS;
   return (
     <div className="wordle-keyboard" aria-hidden={disabled}>
-      {KURMANCI_KEYS.map((row, i) => (
+      {layout.map((row, i) => (
         <div className="wordle-krow" key={i}>
-          {i === KURMANCI_KEYS.length - 1 && (
+          {i === layout.length - 1 && (
             <button className="wordle-key wordle-key-wide" onClick={() => onPress('Enter')} disabled={disabled}>
               Enter
             </button>
@@ -92,7 +125,7 @@ export function WordleKeyboard({
               {k}
             </button>
           ))}
-          {i === KURMANCI_KEYS.length - 1 && (
+          {i === layout.length - 1 && (
             <button className="wordle-key wordle-key-wide" onClick={() => onPress('Backspace')} disabled={disabled} aria-label="Delete">
               ⌫
             </button>
