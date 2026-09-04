@@ -1973,17 +1973,22 @@ button.feature {
   gap: 6px;
   align-items: center;
   margin: 20px 0 8px;
+  width: 100%;
 }
 .wordle-row {
   display: grid;
   gap: 6px;
+  /* fill what is available; the component caps it at the cells' natural size.
+     Fixed-width cells made an 8-letter row 402px wide, which hung off BOTH
+     sides of a 375px phone. */
+  width: 100%;
 }
 .wordle-cell {
-  width: clamp(40px, 12vw, 54px);
-  height: clamp(40px, 12vw, 54px);
+  min-width: 0;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
-  font-size: clamp(1.2rem, 4vw, 1.6rem);
+  font-size: clamp(1rem, 5vw, 1.6rem);
   font-weight: 700;
   border: 2px solid var(--border);
   border-radius: 8px;
@@ -2008,8 +2013,10 @@ button.feature {
   width: 100%;
 }
 .wordle-key {
-  min-width: 30px;
-  flex: 1 1 auto;
+  /* basis 0 so keys divide the row rather than demanding a minimum that
+     pushed the last one clean off the screen */
+  min-width: 0;
+  flex: 1 1 0;
   max-width: 44px;
   height: 50px;
   padding: 0 6px;
@@ -2023,7 +2030,8 @@ button.feature {
   cursor: pointer;
 }
 .wordle-key-wide {
-  min-width: 58px;
+  flex: 1.9 1 0;
+  min-width: 0;
   max-width: 72px;
   font-size: 0.82rem;
   text-transform: none;
@@ -2069,6 +2077,25 @@ button.feature {
   text-align: center;
   color: var(--ink-2);
   padding: 48px 0;
+}
+
+@media (max-width: 560px) {
+  /* claw back the page gutter: the keyboard is the widest thing on the screen
+     and every pixel goes into key width */
+  .wordle-keyboard {
+    margin-inline: -8px;
+    gap: 6px;
+  }
+  .wordle-krow {
+    gap: 5px;
+  }
+  .wordle-key {
+    height: 46px;
+    font-size: 0.95rem;
+  }
+  .wordle-board {
+    margin: 14px 0 6px;
+  }
 }
 
 /* ---- Rhyming Words (solo) ---------------------------------------------- */
@@ -2405,6 +2432,20 @@ button.feature {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* one tap/click selects the whole link rather than part of a truncated one */
+  user-select: all;
+}
+
+@media (max-width: 560px) {
+  /* Truncating an invite link makes it useless — the point is to read or copy
+     it. On a phone there is no room for one line, so let it wrap instead. */
+  .battle-invite-url {
+    max-width: 100%;
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
 }
 .wordle-battle-play {
   display: flex;
