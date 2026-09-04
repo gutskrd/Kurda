@@ -199,21 +199,48 @@ label { font-weight: 500; color: var(--text-2); }
   box-shadow: var(--shadow-sm);
   font-weight: 600;
 }
+.navlinks { display: flex; flex-direction: column; gap: 2px; }
+.nav-toggle { display: none; }
 .main { padding: 34px 40px; max-width: 1120px; min-width: 0; width: 100%; margin: 0 auto; }
 .spacer { flex: 1; }
 
 @media (max-width: 820px) {
   .app { display: block; }
+  /* one compact bar; the sections live in a dropdown rather than wrapping
+     into an unreadable pile of links */
   .sidebar {
-    flex-direction: row; flex-wrap: wrap; align-items: center;
-    gap: 4px 6px; padding: 10px 16px; height: auto;
+    flex-direction: row; flex-wrap: nowrap; align-items: center;
+    gap: 8px; padding: 10px 16px; height: auto;
     border-right: none; border-bottom: 1px solid var(--hairline);
-    position: sticky; top: 0; z-index: 10;
+    position: sticky; top: 0; z-index: 20;
   }
-  .brand { padding: 0; margin-right: 8px; font-size: 15px; }
-  .navlink { padding: 6px 10px; }
+  .brand { padding: 0; font-size: 15px; white-space: nowrap; }
   .sidebar .spacer { flex: 1; }
   .sidebar .subtle { display: none; }
+
+  .nav-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline); background: var(--control);
+    color: var(--text); font-weight: 600; font-size: 13px; cursor: pointer;
+    max-width: 55vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* the panel drops below the bar and scrolls if the list is long */
+  .navlinks {
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0;
+    padding: 8px; gap: 2px;
+    background: var(--glass-solid);
+    -webkit-backdrop-filter: blur(var(--blur-strong));
+    backdrop-filter: blur(var(--blur-strong));
+    border-bottom: 1px solid var(--hairline);
+    box-shadow: var(--shadow-sm);
+    max-height: 70vh; overflow-y: auto;
+  }
+  .navlinks.open { display: flex; }
+  .navlink { padding: 10px 12px; }
+
   .main { padding: 20px 16px; max-width: none; }
   .toolbar { flex-wrap: wrap; }
 }

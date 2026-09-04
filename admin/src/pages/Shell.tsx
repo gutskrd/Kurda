@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useAuth } from '../auth';
 
 export interface NavItem {
@@ -6,7 +6,13 @@ export interface NavItem {
   label: string;
 }
 
-/** Admin app shell: sidebar nav + the active page (KUR-099). */
+/**
+ * Admin app shell: sidebar nav + the active page (KUR-099).
+ *
+ * On a phone the sidebar collapses to a single bar with a Menu button: there are
+ * too many sections to wrap into a readable row, so they open as a dropdown and
+ * the panel closes as soon as one is chosen.
+ */
 export function Shell({
   nav,
   page,
@@ -21,20 +27,42 @@ export function Shell({
   children: ReactNode;
 }): React.JSX.Element {
   const { me, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const current = nav.find((n) => n.key === page);
+
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="brand">MyKurda Admin</div>
-        {nav.map((n) => (
-          <a
-            key={n.key}
-            href={`#/${n.key}`}
-            className={`navlink${page === n.key ? ' active' : ''}`}
-            onClick={() => onNav(n.key)}
-          >
-            {n.label}
-          </a>
-        ))}
+
+        {/* mobile only — shows where you are, and opens the section list */}
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-expanded={open}
+          aria-controls="admin-nav"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span>{current?.label ?? 'Menu'}</span>
+          <span aria-hidden>{open ? '▲' : '▼'}</span>
+        </button>
+
+        <nav id="admin-nav" className={`navlinks${open ? ' open' : ''}`} aria-label="Sections">
+          {nav.map((n) => (
+            <a
+              key={n.key}
+              href={`#/${n.key}`}
+              className={`navlink${page === n.key ? ' active' : ''}`}
+              onClick={() => {
+                onNav(n.key);
+                setOpen(false);
+              }}
+            >
+              {n.label}
+            </a>
+          ))}
+        </nav>
+
         <div className="spacer" />
         {me && (
           <div className="subtle" style={{ padding: '0 10px 8px' }}>
