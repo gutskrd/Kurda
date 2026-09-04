@@ -166,6 +166,26 @@ export class GroupChatService {
     );
   }
 
+  /**
+   * Announce that someone is typing in the channel.
+   *
+   * Ephemeral: nothing is stored, it is published to the room and forgotten, so a
+   * missed ping costs nothing and there is no state to clean up. Membership is
+   * re-checked so a removed member cannot keep pinging a group they left.
+   *
+   * The username rides along because receivers need a name to show and the
+   * event is not worth a lookup per keystroke on the client.
+   */
+  async typing(userId: string, groupId: string): Promise<void> {
+    await this.requireMember(groupId, userId);
+    const who = await this.pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [userId]);
+    const username = who.rows[0]?.username;
+    if (!username) return;
+    await this.hub
+      .publish(room(groupId), { type: 'group_typing', groupId, userId, username })
+      .catch(() => undefined);
+  }
+
   /** Per-group unread counts for the caller's groups. */
   async unread(userId: string): Promise<Array<{ groupId: string; unread: number }>> {
     const rows = await this.pool.query<{ group_id: string; unread: number }>(

@@ -93,10 +93,21 @@ export function registerChatRoutes(
     async (req) => ({ read: await chat.markRead(req.user!.id, (req.params as { userId: string }).userId) }),
   );
 
-  /** Typing indicator (ephemeral). */
+  /**
+   * Typing indicator (ephemeral). Rate limited because it fires while someone is
+   * composing: unthrottled it is a free way to spam events at another user, and
+   * it was the one write path here with no limit at all.
+   */
   app.post(
     '/chat/:userId/typing',
-    { schema: { params: userParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    {
+      schema: { params: userParam },
+      config: {
+        skipValidation: true,
+        rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const },
+      },
+      preHandler: requireAuth,
+    },
     async (req) => {
       await chat.typing(req.user!.id, (req.params as { userId: string }).userId);
       return { ok: true };

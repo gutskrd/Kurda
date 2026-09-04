@@ -122,6 +122,33 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
     expect(after!.unread).toBe(0);
   });
 
+  it('publishes a typing ping to the room, named, and only for members', async () => {
+    const before = hub.published.length;
+    await chat.typing(id.a!, gid);
+
+    const ping = hub.published.slice(before).find((pub) => pub.ev.type === 'group_typing');
+    expect(ping).toBeDefined();
+    expect(ping!.room).toBe(`group:${gid}`);
+    // receivers need a name to show; looking it up per keystroke on the client
+    // would be a request per person per ping
+    expect(ping!.ev).toMatchObject({ groupId: gid, userId: id.a });
+    expect(String((ping!.ev as { username?: string }).username)).toContain('gc_a');
+
+    // removed in an earlier test — membership is re-checked, so they cannot
+    // keep pinging a group they left
+    await expect(chat.typing(id.c!, gid)).rejects.toThrow(/not in this group/i);
+    await expect(chat.typing(id.d!, gid)).rejects.toThrow(/not in this group/i);
+  });
+
+  it('stores nothing for a typing ping', async () => {
+    // it is ephemeral by design: a missed one costs nothing and there is no
+    // state to clean up
+    const before = await pool.query(`SELECT count(*)::int AS n FROM group_messages WHERE group_id = $1`, [gid]);
+    await chat.typing(id.a!, gid);
+    const after = await pool.query(`SELECT count(*)::int AS n FROM group_messages WHERE group_id = $1`, [gid]);
+    expect(after.rows[0]!.n).toBe(before.rows[0]!.n);
+  });
+
   it('rejects an over-long message', async () => {
     await expect(chat.send(id.a!, gid, 'x'.repeat(2001))).rejects.toThrow(/2000/);
   });

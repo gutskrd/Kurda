@@ -40,6 +40,26 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     },
   );
 
+  /**
+   * Typing indicator (ephemeral). Rate limited harder than sending: it fires
+   * while someone is composing, so it must never become a way to flood the room.
+   */
+  app.post(
+    '/groups/:id/chat/typing',
+    {
+      schema: { params: idParam },
+      config: {
+        skipValidation: true,
+        rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const },
+      },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      await chat.typing(req.user!.id, (req.params as { id: string }).id);
+      return { ok: true };
+    },
+  );
+
   /** Delete a message (staff any, author own). */
   app.delete(
     '/groups/:id/chat/:messageId',
