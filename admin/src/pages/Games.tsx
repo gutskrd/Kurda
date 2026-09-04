@@ -7,9 +7,13 @@ interface Word {
   normalized: string;
   dialect: string;
   length: number;
+  /** used as a rhyme-round prompt */
+  isRhymePrompt: boolean;
 }
 interface Stats {
   total: number;
+  /** how many words are curated as rhyme prompts */
+  rhymePrompts: number;
   byLength: { length: number; words: number }[];
   difficulties: { difficulty: string; lengths: number[]; words: number }[];
 }
@@ -39,6 +43,10 @@ export function Games(): React.JSX.Element {
   const [q, setQ] = useState('');
   const [length, setLength] = useState<number | ''>('');
   const [page, setPage] = useState(0);
+  // categories: the pool is shared, but Wordle and Rhyme care about different
+  // things, so each gets its own view rather than one long undifferentiated page
+  const [section, setSection] = useState<'pool' | 'wordle' | 'rhyme'>('pool');
+  const [promptsOnly, setPromptsOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +58,7 @@ export function Games(): React.JSX.Element {
       const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE) });
       if (q.trim()) params.set('q', q.trim());
       if (length !== '') params.set('length', String(length));
+      if (promptsOnly) params.set('prompts', 'true');
       const res = await api<{ total: number; words: Word[] }>(`/admin/dictionary?${params}`);
       setWords(res.words);
       setTotal(res.total);
@@ -59,7 +68,7 @@ export function Games(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [q, length, page]);
+  }, [q, length, page, promptsOnly]);
 
   useEffect(() => {
     void load();
@@ -73,6 +82,18 @@ export function Games(): React.JSX.Element {
     setBusy(w.id);
     try {
       await api(`/admin/dictionary/${w.id}`, { method: 'DELETE' });
+      await load();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function setPrompt(w: Word, isRhymePrompt: boolean): Promise<void> {
+    setBusy(w.id);
+    try {
+      await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { isRhymePrompt } });
       await load();
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Failed');
@@ -96,11 +117,42 @@ export function Games(): React.JSX.Element {
         </button>
       </div>
 
-      {error && <div className="card empty">{error}</div>}
-      {stats && <Coverage stats={stats} />}
-      <AddWords onAdded={load} />
-      <RhymeChecker />
+      <div className="tabs">
+        {([
+          ['pool', 'Word pool'],
+          ['wordle', 'Wordle'],
+          ['rhyme', 'Rhyme'],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            className={`tab${section === key ? ' active' : ''}`}
+            onClick={() => setSection(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
+      {error && <div className="card empty">{error}</div>}
+
+      {section === 'wordle' && stats && <Coverage stats={stats} />}
+      {section === 'rhyme' && stats && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="section-title">Rhyme prompts</div>
+          <div className="subtle">
+            Rounds draw their prompt only from words marked as prompts. While none are marked they fall back
+            to the whole pool — which can pick a word with no rhyming partner, making the round unplayable.
+            Use the checker below, then mark the good ones in the Word pool tab.
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <span className={`badge${stats.rhymePrompts === 0 ? ' mid' : ''}`}>{stats.rhymePrompts} curated</span>
+          </div>
+        </div>
+      )}
+      {section === 'rhyme' && <RhymeChecker />}
+      {section === 'pool' && <AddWords onAdded={load} />}
+
+      {section === 'pool' && (
       <div className="card" style={{ padding: 0 }}>
         <div className="toolbar" style={{ margin: '14px 16px 8px' }}>
           <div className="section-title">Word pool ({total})</div>
@@ -127,6 +179,17 @@ export function Games(): React.JSX.Element {
               </option>
             ))}
           </select>
+          <label className="row" style={{ gap: 6, width: 'auto' }}>
+            <input
+              type="checkbox"
+              checked={promptsOnly}
+              onChange={(e) => {
+                setPromptsOnly(e.target.checked);
+                setPage(0);
+              }}
+            />
+            <span className="subtle">Prompts only</span>
+          </label>
         </div>
 
         {loading ? (
@@ -141,6 +204,7 @@ export function Games(): React.JSX.Element {
                   <th>Word</th>
                   <th>Letters</th>
                   <th>Dialect</th>
+                  <th>Rhyme prompt</th>
                   <th></th>
                 </tr>
               </thead>
@@ -154,6 +218,17 @@ export function Games(): React.JSX.Element {
                       <span className="badge">{w.length}</span>
                     </td>
                     <td className="subtle">{w.dialect}</td>
+                    <td>
+                      <label className="row" style={{ gap: 6, width: 'auto' }}>
+                        <input
+                          type="checkbox"
+                          checked={w.isRhymePrompt}
+                          disabled={busy === w.id}
+                          onChange={(e) => void setPrompt(w, e.target.checked)}
+                        />
+                        <span className="subtle">use</span>
+                      </label>
+                    </td>
                     <td>
                       <button className="danger" onClick={() => void remove(w)} disabled={busy === w.id}>
                         Remove
@@ -180,6 +255,7 @@ export function Games(): React.JSX.Element {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

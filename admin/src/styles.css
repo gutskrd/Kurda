@@ -511,3 +511,29 @@ textarea { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---- section tabs (drill-down within a page) ---------------------------- */
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.tab {
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline);
+  background: var(--control);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  background: var(--glass-solid);
+  color: var(--text);
+  border-color: var(--glass-border);
+  box-shadow: var(--shadow-sm);
+}
