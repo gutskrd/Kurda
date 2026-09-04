@@ -186,6 +186,12 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
    */
   app.post('/me/heartbeat', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
     await app.db.query(`UPDATE users SET last_seen_at = now() WHERE id = $1`, [req.user!.id]);
+    // last_seen_at is overwritten in place, so it can say who is online now but
+    // keeps no history; this one row per user per day is what DAU/WAU/MAU count.
+    await app.db.query(
+      `INSERT INTO user_activity_days (day, user_id) VALUES (current_date, $1) ON CONFLICT DO NOTHING`,
+      [req.user!.id],
+    );
     return { ok: true };
   });
 

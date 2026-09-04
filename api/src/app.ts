@@ -142,6 +142,14 @@ import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
 import { createWorker } from './jobs/worker.js';
+import {
+  ROLLUP_INTERVAL_MS,
+  ROLLUP_WINDOW_DAYS,
+  makeAnalyticsRollupJob,
+  makeEconomyRollupJob,
+} from './jobs/rollup-jobs.js';
+import { DashboardService as RollupDashboards } from './analytics/dashboard-service.js';
+import { EconomyService as RollupEconomy } from './economy/service.js';
 import { grantBootstrapAdmins } from './admin/bootstrap-admins.js';
 import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 import { DashboardService } from './analytics/dashboard-service.js';
@@ -227,6 +235,25 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // name keeps job logs separable from request logs
       const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'mykurda-api-worker' }));
       app.log.info('processing background jobs in-process (set RUN_WORKER_IN_API=false if a dedicated worker runs)');
+      // The dashboards read pre-aggregated tables that nothing populated, so they
+      // were permanently empty. Schedule the rollups here (the dedicated worker
+      // service is off on the free tier), and kick off a one-time catch-up:
+      // signups and the economy both aggregate from existing rows, so a backfill
+      // fills real history straight away instead of starting from today.
+      if (config.DATABASE_URL) {
+        const analyticsJob = makeAnalyticsRollupJob(new RollupDashboards(app.db));
+        const economyJob = makeEconomyRollupJob(new RollupEconomy(app.db));
+        void (async () => {
+          try {
+            await jobs.scheduleEvery(analyticsJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
+            await jobs.scheduleEvery(economyJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
+            await jobs.enqueue(analyticsJob, { days: 60 });
+            await jobs.enqueue(economyJob, { days: 60 });
+          } catch (err) {
+            app.log.warn({ err }, 'failed to schedule dashboard rollups');
+          }
+        })();
+      }
       app.addHook('onClose', async () => {
         await worker.close();
       });
