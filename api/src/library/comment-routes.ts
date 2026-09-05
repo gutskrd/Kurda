@@ -95,25 +95,25 @@ export function registerLibraryCommentRoutes(
   app.get('/library/posts/:postId/comments', { schema: { params: postIdParam } }, async (req) => {
     const { postId } = req.params as { postId: string };
     const q = req.query as Record<string, string | undefined>;
-    return {
-      comments: (await comments.topLevel(postId, {
-        limit: q.limit ? Number(q.limit) : undefined,
-        offset: q.offset ? Number(q.offset) : undefined,
-        sort: q.sort === 'oldest' ? 'oldest' : 'newest',
-      })).map(withAudioUrl),
-    };
+    const rows = await comments.topLevel(postId, {
+      limit: q.limit ? Number(q.limit) : undefined,
+      offset: q.offset ? Number(q.offset) : undefined,
+      sort: q.sort === 'oldest' ? 'oldest' : 'newest',
+    });
+    const authored = await comments.withAuthors(rows, (k) => (app.storage ? app.storage.publicUrl(k) : null));
+    return { comments: authored.map(withAudioUrl) };
   });
 
   /** Direct replies to a comment (public, load-more per branch). */
   app.get('/library/comments/:id/replies', { schema: { params: idParam } }, async (req) => {
     const { id } = req.params as { id: string };
     const q = req.query as Record<string, string | undefined>;
-    return {
-      comments: (await comments.replies(id, {
-        limit: q.limit ? Number(q.limit) : undefined,
-        offset: q.offset ? Number(q.offset) : undefined,
-      })).map(withAudioUrl),
-    };
+    const rows = await comments.replies(id, {
+      limit: q.limit ? Number(q.limit) : undefined,
+      offset: q.offset ? Number(q.offset) : undefined,
+    });
+    const authored = await comments.withAuthors(rows, (k) => (app.storage ? app.storage.publicUrl(k) : null));
+    return { comments: authored.map(withAudioUrl) };
   });
 
   /** Edit own comment (admins any). */

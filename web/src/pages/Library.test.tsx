@@ -14,6 +14,7 @@ const post = {
   id: 'p1',
   authorId: 'u1',
   authorRole: 'user',
+  author: { id: 'u1', username: 'zana', avatarUrl: null },
   type: 'story',
   title: 'The Mountain Fox',
   body: 'Li çiyayekî bilind rovîyek dijiya...',

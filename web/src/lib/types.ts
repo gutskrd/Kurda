@@ -348,6 +348,8 @@ export interface LibraryPost {
   id: string;
   authorId: string;
   authorRole: string;
+  /** resolved server-side on the read paths, so a post shows who wrote it */
+  author: { id: string; username: string; avatarUrl: string | null };
   type: 'story' | 'poem';
   title: string;
   body: string;

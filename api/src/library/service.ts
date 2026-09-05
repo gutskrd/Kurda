@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
+import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
 export type PostType = 'story' | 'poem';
 export type AuthorRole = 'user' | 'admin';
@@ -39,6 +40,25 @@ export interface LibraryPost {
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
+}
+
+/** Who wrote something, resolved for display. */
+export interface Author {
+  id: string;
+  username: string;
+  /** already resolved (uploaded photo -> chosen avatar) */
+  avatarUrl: string | null;
+}
+
+/**
+ * A post with its author attached.
+ *
+ * A separate type rather than optional fields on LibraryPost: the read paths
+ * always populate it and the write paths never do, so making it optional would
+ * push a "did this one come with an author?" check onto every caller.
+ */
+export interface LibraryPostWithAuthor extends LibraryPost {
+  author: Author;
 }
 
 export interface ListFilters {
@@ -84,7 +104,21 @@ export class LibraryService {
     return { ok: true, post: toPost(res.rows[0]!) };
   }
 
+  /**
+   * Attach authors to posts in one extra query.
+   *
+   * Every post statement selects whole rows from library_posts alone; joining
+   * users into each of them would mean rewriting five statements to serve one
+   * display concern. A single lookup keyed by the ids already in hand is both
+   * smaller and easier to keep right.
+   */
+  async withAuthors(posts: LibraryPost[], publicUrl: PublicUrl = () => null): Promise<LibraryPostWithAuthor[]> {
+    const authors = await loadAuthors(this.pool, posts.map((p) => p.authorId), publicUrl);
+    return posts.map((p) => ({ ...p, author: authors.get(p.authorId) ?? unknownAuthor(p.authorId) }));
+  }
+
   /** Browse published posts (paginated, filterable). */
+
   async list(filters: ListFilters = {}): Promise<LibraryPost[]> {
     const conds = [`status = 'published'`];
     const params: unknown[] = [];
@@ -196,4 +230,39 @@ function toPost(r: Row): LibraryPost {
     audioMediaId: r.audio_media_id, language: r.language, status: r.status, viewCount: r.view_count,
     commentCount: r.comment_count, createdAt: r.created_at, updatedAt: r.updated_at, publishedAt: r.published_at,
   };
+}
+
+/**
+ * Look up display identity for a set of user ids.
+ *
+ * Shared by posts and comments — both need the same thing, and both should show
+ * the same face for the same person.
+ */
+export async function loadAuthors(
+  pool: pg.Pool,
+  ids: readonly string[],
+  publicUrl: PublicUrl = () => null,
+): Promise<Map<string, Author>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const rows = await pool.query<{
+    id: string;
+    username: string;
+    profile_photo_key: string | null;
+    selected_avatar_key: string | null;
+  }>(`SELECT id, username, profile_photo_key, selected_avatar_key FROM users WHERE id = ANY($1)`, [unique]);
+  return new Map(
+    rows.rows.map((r) => [
+      r.id,
+      { id: r.id, username: r.username, avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl) },
+    ]),
+  );
+}
+
+/**
+ * Stand-in for an author whose row has gone (a deleted account).
+ * The post survives deletion, so it still needs a name to show.
+ */
+export function unknownAuthor(id: string): Author {
+  return { id, username: 'Deleted account', avatarUrl: null };
 }

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { PostAuthor } from '../library/PostAuthor';
 import { useApiGet } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -83,9 +85,22 @@ export function Library({
                 <span className="badge">{p.type === 'poem' ? 'Poem' : 'Story'}</span>
                 {p.audioUrl && <span className="badge badge-gold">Audio</span>}
                 <span>{p.viewCount.toLocaleString()} reads</span>
+                <span>
+                  {p.commentCount.toLocaleString()} comment{p.commentCount === 1 ? '' : 's'}
+                </span>
               </div>
-              <h3>{p.title}</h3>
+              {/* the title is the link, so the byline inside stays clickable to
+                  the author rather than being swallowed by an outer anchor */}
+              <h3>
+                <Link className="post-title-link" to={`/app/library/${p.id}`}>
+                  {p.title}
+                </Link>
+              </h3>
+              <PostAuthor author={p.author} at={p.publishedAt ?? p.createdAt} size="sm" />
               <p className="post-excerpt">{excerpt(p.body)}</p>
+              <Link className="link-button" to={`/app/library/${p.id}`}>
+                Read {p.type === 'poem' ? 'poem' : 'story'} →
+              </Link>
             </article>
           ))}
         </div>
