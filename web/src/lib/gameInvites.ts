@@ -22,17 +22,8 @@ const BLURBS: Record<GameInviteType, string> = {
   'rhyme-match': 'Go head-to-head finding rhymes.',
 };
 
-/** The glyph shown on the invite card, and in a conversation preview. */
-const GLYPHS: Record<GameInviteType, string> = {
-  'wordle-battle': '🟩',
-  'rhyme-match': '🎤',
-};
-
 export function inviteLabel(type: GameInviteType): string {
   return LABELS[type];
-}
-export function inviteGlyph(type: GameInviteType): string {
-  return GLYPHS[type];
 }
 export function inviteBlurb(type: GameInviteType): string {
   return BLURBS[type];
