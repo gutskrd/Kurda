@@ -46,7 +46,21 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
   });
 
   afterAll(async () => {
-    if (added.length) await pool.query(`DELETE FROM dict_entries WHERE headword = ANY($1)`, [added]);
+    if (added.length) {
+      // Decisions are keyed by the normalized word and outlive the entry when it
+      // is removed with raw SQL like this. A test that fails mid-way would
+      // otherwise leave one behind and silently break a later suite — which is
+      // exactly what happened: a stray 'gul'/'kul' ruling made the rhyme
+      // training suite reject a word it expects to accept.
+      // the fixed words this suite uses are named explicitly: a re-run finds them
+      // already present, so they never enter `added` and would escape cleanup
+      const forms = [...new Set([...added, 'gul', 'kul', 'roj'].map(normalizeWord))];
+      await pool.query(
+        `DELETE FROM rhyme_overrides WHERE prompt_normalized = ANY($1) OR rhyme_normalized = ANY($1)`,
+        [forms],
+      );
+      await pool.query(`DELETE FROM dict_entries WHERE headword = ANY($1)`, [added]);
+    }
     await pool.query(`DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app'`);
     await pool.end();
     await app.close();
@@ -112,9 +126,10 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     const res = await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken);
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.perfect).toContain('kul');
-    expect(body.perfect).not.toContain('roj'); // different rime
-    expect(body.perfect).not.toContain('gul'); // never rhymes with itself
+    const at = (w: string) => body.rhymes.find((r: { word: string }) => r.word === w);
+    expect(at('kul')).toMatchObject({ quality: 'perfect', source: 'derived' });
+    expect(at('roj')).toBeUndefined(); // different rime
+    expect(at('gul')).toBeUndefined(); // never rhymes with itself
   });
 
   it('lets an admin decide a rhyme pair in both directions', async () => {
@@ -131,17 +146,27 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     const on = await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'roj', quality: 'perfect' });
     expect(on.statusCode).toBe(200);
 
-    const report = await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken);
-    expect(report.json().overrides).toMatchObject({ kul: 'none', roj: 'perfect' });
-    // candidates lists the pool so a curator can rule in a word the endings missed
-    expect(report.json().candidates).toEqual(expect.arrayContaining(['roj']));
+    const report = (await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken)).json();
+    // ruled in: accepted, and flagged as a decision rather than the endings
+    expect(report.rhymes.find((r: { word: string }) => r.word === 'roj')).toMatchObject({
+      quality: 'perfect',
+      derived: 'none',
+      source: 'decided',
+    });
+    // ruled out: gone from the accepted list, listed separately so it can be undone
+    expect(report.rhymes.some((r: { word: string }) => r.word === 'kul')).toBe(false);
+    expect(report.ruledOut.find((r: { word: string }) => r.word === 'kul')).toMatchObject({ derived: 'perfect' });
+    // candidates are what a curator could still rule in
+    expect(report.candidates).toEqual(expect.arrayContaining(['kul']));
 
     // 'auto' hands the pair back to the derived result
     await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'kul', quality: 'auto' });
-    const after = await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken);
-    expect(after.json().overrides.kul).toBeUndefined();
-
-    await pool.query(`DELETE FROM rhyme_overrides WHERE prompt_normalized = 'gul'`);
+    const after = (await authed('GET', '/admin/dictionary/rhymes?word=gul', editorToken)).json();
+    expect(after.rhymes.find((r: { word: string }) => r.word === 'kul')).toMatchObject({
+      quality: 'perfect',
+      source: 'derived',
+    });
+    expect(after.ruledOut).toHaveLength(0);
   });
 
   it('refuses a word rhyming with itself', async () => {
