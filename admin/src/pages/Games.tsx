@@ -132,19 +132,7 @@ export function Games(): React.JSX.Element {
       {error && <div className="card empty">{error}</div>}
 
       {section === 'wordle' && stats && <Coverage stats={stats} />}
-      {section === 'rhyme' && stats && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="section-title">Rhyme prompts</div>
-          <div className="subtle">
-            Rounds draw their prompt only from words marked as prompts. While none are marked they fall back
-            to the whole pool — which can pick a word with no rhyming partner, making the round unplayable.
-            Use the checker below, then mark the good ones in the Word pool tab.
-          </div>
-          <div style={{ marginTop: 10 }}>
-            <span className={`badge${stats.rhymePrompts === 0 ? ' mid' : ''}`}>{stats.rhymePrompts} curated</span>
-          </div>
-        </div>
-      )}
+      {/* the editor lists the base words itself, and says when none are chosen */}
       {section === 'rhyme' && <RhymeEditor />}
       {section === 'quiz' && <QuizQuestions />}
       {section === 'pool' && <AddWords onAdded={load} />}

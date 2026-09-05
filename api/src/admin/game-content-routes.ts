@@ -39,6 +39,15 @@ const listQuery = z.object({
 const addBody = z.object({
   words: z.array(z.string().min(1).max(64)).min(1).max(500),
   dialect: z.enum(['kurmanji', 'sorani']).default('kurmanji'),
+  /** mark them as rhyme prompts too — adding a base word is otherwise two steps */
+  isRhymePrompt: z.boolean().default(false),
+});
+
+const promptsQuery = z.object({
+  q: z.string().max(80).optional(),
+  dialect: z.enum(['kurmanci', 'sorani']).default('kurmanci'),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).max(100_000).default(0),
 });
 
 const rhymeQuery = z.object({
@@ -96,7 +105,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * reported as skipped rather than duplicated.
    */
   app.post('/admin/dictionary', { schema: { body: addBody }, preHandler: canEdit }, async (req) => {
-    const { words, dialect } = req.body as z.infer<typeof addBody>;
+    const { words, dialect, isRhymePrompt } = req.body as z.infer<typeof addBody>;
     const added: string[] = [];
     const skipped: string[] = [];
     const invalid: string[] = [];
@@ -109,14 +118,24 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         continue;
       }
       const res = await app.db.query<{ id: string }>(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect)
-         SELECT $1, $2, $3
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect, is_rhyme_prompt)
+         SELECT $1, $2, $3, $4
           WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)
          RETURNING id`,
-        [headword, normalized, dialect],
+        [headword, normalized, dialect, isRhymePrompt],
       );
       if (res.rowCount) added.push(headword);
-      else skipped.push(headword);
+      else {
+        // already in the pool: still honour the request to use it as a prompt,
+        // so re-adding a word to promote it does what it looks like it does
+        if (isRhymePrompt) {
+          await app.db.query(
+            `UPDATE dict_entries SET is_rhyme_prompt = true WHERE headword_normalized = $1`,
+            [normalized],
+          );
+        }
+        skipped.push(headword);
+      }
     }
     return { added, skipped, invalid };
   });
@@ -128,15 +147,102 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    */
   app.patch(
     '/admin/dictionary/:id',
-    { schema: { params: z.object({ id: z.uuid() }), body: z.object({ isRhymePrompt: z.boolean() }) }, preHandler: canEdit },
+    {
+      schema: {
+        params: z.object({ id: z.uuid() }),
+        body: z
+          .object({ isRhymePrompt: z.boolean().optional(), headword: z.string().min(1).max(64).optional() })
+          .refine((b) => b.isRhymePrompt !== undefined || b.headword !== undefined, {
+            message: 'nothing to change',
+          }),
+      },
+      preHandler: canEdit,
+    },
     async (req) => {
       const { id } = req.params as { id: string };
-      const { isRhymePrompt } = req.body as { isRhymePrompt: boolean };
-      const res = await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = $2 WHERE id = $1`, [id, isRhymePrompt]);
-      if (!res.rowCount) throw new AppError('NOT_FOUND', 404, 'no such word');
-      return { ok: true, isRhymePrompt };
+      const { isRhymePrompt, headword } = req.body as { isRhymePrompt?: boolean; headword?: string };
+
+      const existing = await app.db.query<WordRow>(
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE id = $1`,
+        [id],
+      );
+      const before = existing.rows[0];
+      if (!before) throw new AppError('NOT_FOUND', 404, 'no such word');
+
+      if (headword !== undefined) {
+        const trimmed = headword.trim();
+        const normalized = normalizeWord(trimmed);
+        if (!normalized || letterCount(trimmed) < 2) {
+          throw new AppError('BAD_WORD', 400, 'a word must be at least two letters');
+        }
+        const clash = await app.db.query(
+          `SELECT 1 FROM dict_entries WHERE headword_normalized = $1 AND id <> $2`,
+          [normalized, id],
+        );
+        if (clash.rowCount) throw new AppError('DUPLICATE_WORD', 409, 'another entry already uses that word');
+        await renameWord(id, before.headword_normalized, trimmed, normalized);
+      }
+
+      if (isRhymePrompt !== undefined) {
+        await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = $2 WHERE id = $1`, [id, isRhymePrompt]);
+      }
+
+      const after = await app.db.query<WordRow>(
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE id = $1`,
+        [id],
+      );
+      const row = after.rows[0]!;
+      return { ok: true, headword: row.headword, isRhymePrompt: row.is_rhyme_prompt };
     },
   );
+
+  /**
+   * Rename a word, carrying its rhyme decisions with it.
+   *
+   * Decisions are keyed by the NORMALIZED form, not the word's id, so a rename
+   * would otherwise orphan every one of them: the curated pairs would silently
+   * stop applying and reappear only if the old spelling ever came back. All of it
+   * happens in one transaction — a half-migrated rename would leave decisions
+   * pointing at a word that no longer exists.
+   */
+  async function renameWord(id: string, from: string, headword: string, to: string): Promise<void> {
+    const client = await app.db.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`UPDATE dict_entries SET headword = $2, headword_normalized = $3 WHERE id = $1`, [
+        id,
+        headword,
+        to,
+      ]);
+      // Only the normalized form keys the decisions, so a cosmetic edit (case or
+      // punctuation) needs no migration at all.
+      if (from !== to) {
+        // a decision may already exist under the new name; the rename must not
+        // violate the primary key, so drop the ones that would collide
+        await client.query(
+          `DELETE FROM rhyme_overrides o
+             WHERE (o.prompt_normalized = $2
+                    AND EXISTS (SELECT 1 FROM rhyme_overrides x
+                                 WHERE x.prompt_normalized = $1 AND x.rhyme_normalized = o.rhyme_normalized))
+                OR (o.rhyme_normalized = $2
+                    AND EXISTS (SELECT 1 FROM rhyme_overrides x
+                                 WHERE x.rhyme_normalized = $1 AND x.prompt_normalized = o.prompt_normalized))`,
+          [from, to],
+        );
+        await client.query(`UPDATE rhyme_overrides SET prompt_normalized = $2 WHERE prompt_normalized = $1`, [from, to]);
+        await client.query(`UPDATE rhyme_overrides SET rhyme_normalized = $2 WHERE rhyme_normalized = $1`, [from, to]);
+        // renaming one half of a pair onto the other makes it self-referential,
+        // and nothing rhymes with itself
+        await client.query(`DELETE FROM rhyme_overrides WHERE prompt_normalized = rhyme_normalized`);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
 
   /** Remove a word from the pool. */
   app.delete(
@@ -144,8 +250,29 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
     async (req) => {
       const { id } = req.params as { id: string };
-      const res = await app.db.query(`DELETE FROM dict_entries WHERE id = $1`, [id]);
-      if (!res.rowCount) throw new AppError('NOT_FOUND', 404, 'no such word');
+      const row = await app.db.query<{ headword_normalized: string }>(
+        `SELECT headword_normalized FROM dict_entries WHERE id = $1`,
+        [id],
+      );
+      const word = row.rows[0];
+      if (!word) throw new AppError('NOT_FOUND', 404, 'no such word');
+      const client = await app.db.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query(`DELETE FROM dict_entries WHERE id = $1`, [id]);
+        // otherwise the decisions linger and would quietly reattach if the word
+        // were ever added back, with no sign of where they came from
+        await client.query(
+          `DELETE FROM rhyme_overrides WHERE prompt_normalized = $1 OR rhyme_normalized = $1`,
+          [word.headword_normalized],
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw err;
+      } finally {
+        client.release();
+      }
       return { ok: true };
     },
   );
@@ -172,16 +299,105 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       `SELECT rhyme_normalized, quality FROM rhyme_overrides WHERE prompt_normalized = $1`,
       [target],
     );
+    const decided = new Map(overrides.rows.map((o) => [o.rhyme_normalized, o.quality]));
+
+    // What the game will actually accept, and at what strength: the derived
+    // answer with any decision applied on top. Strongest first, so thin coverage
+    // for a prompt is obvious at a glance.
+    const ORDER: Record<string, number> = { perfect: 0, near: 1 };
+    const rhymes = rows.rows
+      .map((r) => r.headword)
+      .filter((h) => normalizeWord(h) !== target)
+      .map((h) => {
+        const derivedQuality = classifyRhyme(word, h, dialect as Dialect);
+        const chosen = decided.get(normalizeWord(h));
+        return {
+          word: h,
+          quality: chosen ?? derivedQuality,
+          derived: derivedQuality,
+          /** 'decided' means a curator overrode the endings, in either direction */
+          source: chosen ? ('decided' as const) : ('derived' as const),
+        };
+      });
+
     return {
       word,
       dialect,
-      perfect: perfect.sort(),
-      near: near.sort(),
       inDictionary: rows.rows.some((r) => normalizeWord(r.headword) === target),
-      overrides: Object.fromEntries(overrides.rows.map((o) => [o.rhyme_normalized, o.quality])),
-      /** every pool word, so a curator can rule one in that the endings missed */
-      candidates: rows.rows.map((r) => r.headword).filter((h) => normalizeWord(h) !== target).sort(),
+      /** accepted rhymes, strongest first */
+      rhymes: rhymes
+        .filter((r) => r.quality !== 'none')
+        .sort((a, b) => ORDER[a.quality]! - ORDER[b.quality]! || a.word.localeCompare(b.word)),
+      /** words a curator ruled out that the endings would have accepted */
+      ruledOut: rhymes
+        .filter((r) => r.quality === 'none' && r.source === 'decided' && r.derived !== 'none')
+        .sort((a, b) => a.word.localeCompare(b.word)),
+      // kept for the pair editor: every pool word, so a curator can rule one IN
+      // that the endings missed
+      candidates: rhymes.filter((r) => r.quality === 'none').map((r) => r.word),
     };
+  });
+
+  /**
+   * The words a round can actually open with, each with how much it has to rhyme
+   * against.
+   *
+   * A prompt with nothing to rhyme with makes an unplayable round, and that was
+   * invisible until someone hit it in a game. Counts are computed per listed word
+   * against the whole pool rather than for every pair up front — the page is small
+   * and the pool is hand-curated, so this stays exact instead of approximating.
+   */
+  app.get('/admin/rhyme/prompts', { schema: { querystring: promptsQuery }, preHandler: canEdit }, async (req) => {
+    const { q, dialect, limit, offset } = req.query as z.infer<typeof promptsQuery>;
+    const all = await app.db.query<WordRow>(
+      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries ORDER BY headword ASC`,
+    );
+    const curated = all.rows.filter((r) => r.is_rhyme_prompt);
+    // Rounds fall back to the WHOLE pool while nothing is curated, so that is
+    // genuinely the set of possible base words — say so rather than showing none.
+    const usingFallback = curated.length === 0;
+    const base = usingFallback ? all.rows : curated;
+
+    const needle = q ? normalizeWord(q) : '';
+    const matched = needle ? base.filter((r) => r.headword_normalized.includes(needle)) : base;
+    const page = matched.slice(offset, offset + limit);
+
+    const decided = await app.db.query<{ prompt_normalized: string; rhyme_normalized: string; quality: string }>(
+      `SELECT prompt_normalized, rhyme_normalized, quality FROM rhyme_overrides`,
+    );
+    const byPrompt = new Map<string, Map<string, string>>();
+    for (const d of decided.rows) {
+      const m = byPrompt.get(d.prompt_normalized) ?? new Map<string, string>();
+      m.set(d.rhyme_normalized, d.quality);
+      byPrompt.set(d.prompt_normalized, m);
+    }
+
+    const words = page.map((row) => {
+      const overrides = byPrompt.get(row.headword_normalized);
+      let perfect = 0;
+      let near = 0;
+      let ruledOut = 0;
+      for (const other of all.rows) {
+        if (other.headword_normalized === row.headword_normalized) continue;
+        const derived = classifyRhyme(row.headword, other.headword, dialect as Dialect);
+        const quality = overrides?.get(other.headword_normalized) ?? derived;
+        if (quality === 'perfect') perfect++;
+        else if (quality === 'near') near++;
+        else if (overrides?.get(other.headword_normalized) === 'none' && derived !== 'none') ruledOut++;
+      }
+      return {
+        id: row.id,
+        headword: row.headword,
+        dialect: row.dialect,
+        isRhymePrompt: row.is_rhyme_prompt,
+        perfect,
+        near,
+        ruledOut,
+        decided: overrides?.size ?? 0,
+      };
+    });
+
+    return { total: matched.length, poolSize: all.rows.length, usingFallback, words };
   });
 
   /**
@@ -197,22 +413,50 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
           word: z.string().min(1).max(64),
           rhyme: z.string().min(1).max(64),
           quality: z.enum(['perfect', 'near', 'none', 'auto']),
+          /**
+           * Put the rhyme in the word pool if it is not already there. A rhyme
+           * outside the pool is rejected by the game as "not a word" whatever
+           * this says, so adding one is genuinely two changes; the caller opts
+           * in rather than having a decision silently grow the pool.
+           */
+          addToPool: z.boolean().default(false),
+          dialect: z.enum(['kurmanji', 'sorani']).default('kurmanji'),
         }),
       },
       preHandler: canEdit,
     },
     async (req) => {
-      const { word, rhyme, quality } = req.body as { word: string; rhyme: string; quality: string };
+      const { word, rhyme, quality, addToPool, dialect } = req.body as {
+        word: string;
+        rhyme: string;
+        quality: string;
+        addToPool: boolean;
+        dialect: string;
+      };
       const prompt = normalizeWord(word);
       const target = normalizeWord(rhyme);
       if (!prompt || !target) throw new AppError('BAD_WORD', 400, 'both words must contain letters');
       if (prompt === target) throw new AppError('SAME_WORD', 400, 'a word cannot rhyme with itself');
+
+      let addedToPool = false;
+      if (addToPool) {
+        const trimmed = rhyme.trim();
+        if (letterCount(trimmed) < 2) throw new AppError('BAD_WORD', 400, 'a word must be at least two letters');
+        const ins = await app.db.query(
+          `INSERT INTO dict_entries (headword, headword_normalized, dialect)
+           SELECT $1, $2, $3
+            WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)`,
+          [trimmed, target, dialect],
+        );
+        addedToPool = (ins.rowCount ?? 0) > 0;
+      }
+
       if (quality === 'auto') {
         await app.db.query(
           `DELETE FROM rhyme_overrides WHERE prompt_normalized = $1 AND rhyme_normalized = $2`,
           [prompt, target],
         );
-        return { ok: true, quality: 'auto' };
+        return { ok: true, quality: 'auto', addedToPool };
       }
       await app.db.query(
         `INSERT INTO rhyme_overrides (prompt_normalized, rhyme_normalized, quality)
@@ -220,7 +464,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
          ON CONFLICT (prompt_normalized, rhyme_normalized) DO UPDATE SET quality = EXCLUDED.quality`,
         [prompt, target, quality],
       );
-      return { ok: true, quality };
+      return { ok: true, quality, addedToPool };
     },
   );
 
