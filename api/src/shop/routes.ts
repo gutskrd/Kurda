@@ -2,7 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
+import { AppError } from '../plugins/errors.js';
 import type { ShopService } from './service.js';
+import type { FriendService } from '../friends/service.js';
+import type { InboxService } from '../notifications/inbox-service.js';
 
 const itemBody = z.object({
   sku: z.string().min(1).max(80),
@@ -22,6 +25,13 @@ const itemBody = z.object({
   displayOrder: z.number().int().min(0).max(100_000).optional(),
 });
 
+const giftBody = z.object({
+  sku: z.string().min(1).max(80),
+  toUserId: z.uuid(),
+  idempotencyKey: z.string().min(8).max(120),
+  expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
+});
+
 const purchaseBody = z.object({
   sku: z.string().min(1).max(80),
   /** required so retries never double-charge (KUR-071) */
@@ -30,8 +40,12 @@ const purchaseBody = z.object({
   expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
 });
 
-/** Shop catalog + purchase + inventory (KUR-071). */
-export function registerShopRoutes(app: FastifyInstance, shop: ShopService): void {
+/** Shop catalog + purchase + gifting + inventory (KUR-071). */
+export function registerShopRoutes(
+  app: FastifyInstance,
+  shop: ShopService,
+  deps: { friends?: FriendService; inbox?: InboxService } = {},
+): void {
   /** Admin: create/update a catalog item. */
   app.post(
     '/shop/items',
@@ -88,6 +102,74 @@ export function registerShopRoutes(app: FastifyInstance, shop: ShopService): voi
       return shop.purchase(req.user!.id, sku, idempotencyKey, new Date(), expectedPrice);
     },
   );
+
+  /**
+   * Buy an item for a friend.
+   *
+   * Friends only, deliberately. An unsolicited gift from a stranger is a way to
+   * put your name in front of someone who has not agreed to hear from you — the
+   * same reason direct messages are friends-only. It also means the notification
+   * below can never be used to reach a stranger.
+   */
+  app.post(
+    '/shop/gift',
+    {
+      schema: { body: giftBody },
+      config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
+      const from = req.user!.id;
+
+      // checked before friendship: "you cannot gift yourself" is the accurate
+      // answer, and nobody is friends with themselves
+      if (from === toUserId) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
+
+      if (deps.friends) {
+        const status = await deps.friends.statusBetween(from, toUserId);
+        if (status !== 'friends') {
+          throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
+        }
+      }
+
+      const result = await shop.gift(from, toUserId, sku, idempotencyKey, new Date(), expectedPrice);
+
+      // outside the transaction on purpose: a notification that fails to send is
+      // not a reason to undo someone's present
+      if (!result.duplicate && deps.inbox) {
+        const sender = await app.db.query<{ username: string }>(
+          `SELECT username FROM users WHERE id = $1`,
+          [from],
+        );
+        const who = sender.rows[0]?.username ?? 'Someone';
+        await deps.inbox
+          .record(toUserId, {
+            category: 'friends',
+            title: 'You have a gift',
+            body: `${who} sent you ${result.name}.`,
+            data: { kind: 'gift', giftId: result.giftId, sku: result.sku, fromUserId: from },
+          })
+          .catch(() => undefined);
+      }
+
+      return { gifted: true, duplicate: result.duplicate, sku: result.sku, balance: result.balance };
+    },
+  );
+
+  /** Gifts the caller has received, and how many are unopened. */
+  app.get('/me/gifts', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+    gifts: (await shop.giftsReceived(req.user!.id)).map((g) => ({
+      ...g,
+      assetUrl: cosmeticAssetUrl(g.category, g.assetKey, publicUrl),
+    })),
+    unseen: await shop.unseenGiftCount(req.user!.id),
+  }));
+
+  /** Mark received gifts as opened (clears the badge). */
+  app.post('/me/gifts/seen', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+    seen: await shop.markGiftsSeen(req.user!.id),
+  }));
 
   /** The caller's owned items, incl. a resolved cosmetic `assetUrl`. */
   app.get('/me/inventory', { preHandler: requireAuth }, async (req) => ({

@@ -48,6 +48,18 @@ export interface PurchaseResult {
   balance: number;
 }
 
+/** A gift the caller received: what it was, and who sent it. */
+export interface ReceivedGift {
+  id: string;
+  sku: string;
+  name: string;
+  category: string;
+  assetKey: string | null;
+  from: { id: string; username: string } | null;
+  createdAt: Date;
+  seenAt: Date | null;
+}
+
 interface ItemRow {
   sku: string;
   name: string;
@@ -307,6 +319,170 @@ export class ShopService {
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Buy an item for somebody else.
+   *
+   * The same transaction as a purchase, with one difference that matters: the
+   * sender is debited and the RECIPIENT is granted. Everything is decided inside
+   * the transaction — that the item exists, is available, is not already owned
+   * by the recipient, and that the sender can afford it — so a gift either
+   * happens completely or not at all.
+   *
+   * Returns the gift row so the caller can notify the recipient; notifying is
+   * deliberately left outside the transaction, because a notification failing is
+   * not a reason to un-buy someone's present.
+   */
+  async gift(
+    fromUserId: string,
+    toUserId: string,
+    sku: string,
+    idempotencyKey: string,
+    now: Date = new Date(),
+    expectedPrice?: number,
+  ): Promise<{ giftId: string; sku: string; name: string; price: number; currency: string; balance: number; duplicate: boolean }> {
+    if (fromUserId === toUserId) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Before anything else: has this exact attempt already happened? A retry
+      // must be recognised here, or the already-owns check below would report
+      // that the recipient owns the very item this attempt just gave them.
+      const prior = await client.query<{ id: string; price: number; currency: string }>(
+        `SELECT id, price, currency FROM gifts WHERE from_user_id = $1 AND idempotency_key = $2`,
+        [fromUserId, idempotencyKey],
+      );
+      if (prior.rows[0]) {
+        const balances = await this.wallet.balances(fromUserId);
+        await client.query('COMMIT');
+        const row = prior.rows[0];
+        return {
+          giftId: row.id,
+          sku,
+          name: '',
+          price: row.price,
+          currency: row.currency,
+          balance: balances[row.currency as 'zer' | 'gems'],
+          duplicate: true,
+        };
+      }
+
+      const itemRes = await client.query<ItemRow>(`SELECT * FROM shop_items WHERE sku = $1`, [sku]);
+      const item = itemRes.rows[0];
+      if (!item) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
+      if (!isPurchasable(item, now)) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+      if (expectedPrice != null && item.price !== expectedPrice) {
+        throw new AppError('PRICE_CHANGED', 409, 'the price changed; please review and try again');
+      }
+
+      // a unique item they already own would be money for nothing
+      if (item.is_unique) {
+        const owned = await client.query(
+          `SELECT 1 FROM user_entitlements WHERE user_id = $1 AND sku = $2`,
+          [toUserId, sku],
+        );
+        if ((owned.rowCount ?? 0) > 0) {
+          throw new AppError('ALREADY_OWNED', 409, 'they already own this item');
+        }
+      }
+
+      let balance = 0;
+      if (item.price > 0) {
+        const debit = await this.wallet.debitWithin(client, {
+          userId: fromUserId,
+          currency: item.currency,
+          amount: item.price,
+          reason: 'shop_purchase',
+          refId: sku,
+          idempotencyKey,
+        });
+        balance = debit.balance;
+        if (debit.duplicate) {
+          // the key was spent on something else (a plain purchase); the gift row
+          // check above already handled a genuine gift retry
+          throw new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
+        }
+      }
+
+      await client.query(
+        `INSERT INTO user_entitlements (user_id, sku, source)
+         VALUES ($1, $2, 'gift')
+         ON CONFLICT (user_id, sku) DO UPDATE SET quantity = user_entitlements.quantity + 1`,
+        [toUserId, sku],
+      );
+
+      const gift = await client.query<{ id: string }>(
+        `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, idempotency_key)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [fromUserId, toUserId, sku, item.price, item.currency, idempotencyKey],
+      );
+
+      await client.query('COMMIT');
+      return {
+        giftId: gift.rows[0]!.id,
+        sku,
+        name: item.name,
+        price: item.price,
+        currency: item.currency,
+        balance,
+        duplicate: false,
+      };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** Gifts the caller has been given, newest first. */
+  async giftsReceived(userId: string, limit = 50): Promise<ReceivedGift[]> {
+    const rows = await this.pool.query<{
+      id: string; sku: string; name: string; category: string; asset_key: string | null;
+      from_id: string | null; from_username: string | null; created_at: Date; seen_at: Date | null;
+    }>(
+      `SELECT g.id, g.sku, i.name, i.category, i.asset_key,
+              u.id AS from_id, u.username AS from_username, g.created_at, g.seen_at
+         FROM gifts g
+         JOIN shop_items i ON i.sku = g.sku
+         LEFT JOIN users u ON u.id = g.from_user_id
+        WHERE g.to_user_id = $1
+        ORDER BY g.created_at DESC
+        LIMIT $2`,
+      [userId, limit],
+    );
+    return rows.rows.map((r) => ({
+      id: r.id,
+      sku: r.sku,
+      name: r.name,
+      category: r.category,
+      assetKey: r.asset_key,
+      // the sender's row can be gone; the gift is still theirs
+      from: r.from_id && r.from_username ? { id: r.from_id, username: r.from_username } : null,
+      createdAt: r.created_at,
+      seenAt: r.seen_at,
+    }));
+  }
+
+  /** How many gifts the caller has not opened yet. */
+  async unseenGiftCount(userId: string): Promise<number> {
+    const res = await this.pool.query<{ n: string }>(
+      `SELECT count(*)::text n FROM gifts WHERE to_user_id = $1 AND seen_at IS NULL`,
+      [userId],
+    );
+    return Number(res.rows[0]?.n ?? 0);
+  }
+
+  /** Mark every unopened gift as seen; returns how many changed. */
+  async markGiftsSeen(userId: string): Promise<number> {
+    const res = await this.pool.query(
+      `UPDATE gifts SET seen_at = now() WHERE to_user_id = $1 AND seen_at IS NULL`,
+      [userId],
+    );
+    return res.rowCount ?? 0;
   }
 
   /** Items the user owns, with catalog detail (incl. cosmetic asset key). */

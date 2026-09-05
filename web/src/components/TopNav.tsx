@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useMessages } from '../chat/MessagesProvider';
+import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
@@ -20,6 +21,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { unreadTotal } = useMessages();
+  const unopenedGifts = useUnseenGifts();
   const signedIn = status === 'signedIn';
 
   const close = (): void => setOpen(false);
@@ -42,9 +44,15 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
         <nav aria-label="Primary">
           <ul className={`nav-links${open ? ' open' : ''}`}>
             {links.map((l) => {
-              // the Messages link carries the unread count, so a message is
+              // a link carries its own waiting count, so something arriving is
               // visible from anywhere without opening the page to check
-              const badge = l.to === '/app/messages' ? unreadTotal : 0;
+              const badge =
+                l.to === '/app/messages' ? unreadTotal : l.to === '/app/shop' ? unopenedGifts : 0;
+              // "1 unread" is right for a message and wrong for a present
+              const badgeLabel =
+                l.to === '/app/shop'
+                  ? `${badge} gift${badge === 1 ? '' : 's'} waiting`
+                  : `${badge} unread`;
               return (
                 <li key={l.to}>
                   <NavLink
@@ -55,7 +63,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                   >
                     {l.label}
                     {badge > 0 && (
-                      <span className="nav-badge" aria-label={`${badge} unread`}>
+                      <span className="nav-badge" aria-label={badgeLabel}>
                         {badge > 99 ? '99+' : badge}
                       </span>
                     )}
