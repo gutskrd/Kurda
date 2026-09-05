@@ -10,6 +10,7 @@ import { LibraryPostPage } from './pages/LibraryPostPage';
 import { Games } from './pages/Games';
 import { Wordle } from './pages/Wordle';
 import { Rhyme } from './pages/Rhyme';
+import { Race } from './pages/Race';
 import { Quiz } from './pages/Quiz';
 import { WordleBattle } from './pages/WordleBattle';
 import { RhymeMatch } from './pages/RhymeMatch';
@@ -108,6 +109,7 @@ export function App(): React.JSX.Element {
             <Route path="games" element={<Games />} />
             <Route path="games/wordle" element={<Wordle />} />
             <Route path="games/rhyme" element={<Rhyme />} />
+            <Route path="games/race" element={<Race />} />
             <Route path="games/quiz" element={<Quiz />} />
             <Route path="games/wordle-battle" element={<WordleBattle />} />
             <Route path="games/rhyme-match" element={<RhymeMatch />} />

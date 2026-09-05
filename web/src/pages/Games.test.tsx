@@ -50,9 +50,12 @@ describe('Games hub', () => {
   it('links a single-mode game straight to its page', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    // Ranked Quiz has one mode, so it is a direct link rather than a chooser
-    const quizLink = await screen.findByRole('link', { name: /^play$/i });
-    expect(quizLink).toHaveAttribute('href', '/app/games/quiz');
+    // a game with one mode is a direct link rather than a chooser; there is
+    // more than one such game now, so check the set rather than assuming one
+    const direct = await screen.findAllByRole('link', { name: /^play/i });
+    const hrefs = direct.map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('/app/games/quiz');
+    expect(hrefs).toContain('/app/games/race');
   });
 });
 
