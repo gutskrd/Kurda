@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { normalizeWord } from '../game/rhyme.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -31,7 +32,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 
-  const authed = (method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string, token: string, payload?: unknown) =>
+  const authed = (method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, token: string, payload?: unknown) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${token}` }, payload: payload as object, remoteAddress: '10.98.9.9' });
 
   beforeAll(async () => {
@@ -50,6 +51,14 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     await pool.end();
     await app.close();
   });
+
+  /** Add a throwaway word and remember it for cleanup. */
+  async function seed(word: string, isRhymePrompt = false): Promise<string> {
+    added.push(word);
+    await authed('POST', '/admin/dictionary', editorToken, { words: [word], isRhymePrompt });
+    const list = await authed('GET', `/admin/dictionary?q=${encodeURIComponent(word)}`, editorToken);
+    return list.json().words.find((w: { headword: string }) => w.headword === word).id as string;
+  }
 
   it('refuses word management to a non-admin', async () => {
     const res = await authed('POST', '/admin/dictionary', userToken, { words: ['sêvik'] });
@@ -187,4 +196,114 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(easy.lengths).toEqual([4]);
     expect(typeof easy.words).toBe('number');
   });
+
+  it('adding a word can mark it a base word in one step', async () => {
+    const word = `bazbend${suffix}`;
+    await seed(word, true);
+    const res = await authed('GET', '/admin/rhyme/prompts?limit=100', editorToken);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().words.some((w: { headword: string }) => w.headword === word)).toBe(true);
+  });
+
+  it('re-adding an existing word still promotes it to a base word', async () => {
+    const word = `serbilind${suffix}`;
+    await seed(word); // not a prompt yet
+    const again = await authed('POST', '/admin/dictionary', editorToken, { words: [word], isRhymePrompt: true });
+    expect(again.json().skipped).toContain(word); // not duplicated...
+    const list = await authed('GET', `/admin/dictionary?q=${encodeURIComponent(word)}`, editorToken);
+    expect(list.json().words[0].isRhymePrompt).toBe(true); // ...but promoted
+  });
+
+  it('lists base words with how much each has to rhyme against', async () => {
+    const base = `kanîzar${suffix}`;
+    const mate = `gulzar${suffix}`;
+    await seed(base, true);
+    await seed(mate);
+    await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: base, rhyme: mate, quality: 'perfect' });
+
+    const res = await authed('GET', `/admin/rhyme/prompts?q=${encodeURIComponent(base)}`, editorToken);
+    const row = res.json().words.find((w: { headword: string }) => w.headword === base);
+    expect(row.perfect).toBeGreaterThanOrEqual(1);
+    expect(row.decided).toBeGreaterThanOrEqual(1);
+  });
+
+  it('a renamed base word keeps its rhyme decisions', async () => {
+    // decisions are keyed by the normalized word, not its id, so without a
+    // migration a rename silently orphans every curated pair
+    const before = `hêvîdar${suffix}`;
+    const after = `hêvîdarî${suffix}`;
+    const mate = `bextiyar${suffix}`;
+    const id = await seed(before, true);
+    await seed(mate);
+    added.push(after);
+    await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: before, rhyme: mate, quality: 'near' });
+
+    const renamed = await authed('PATCH', `/admin/dictionary/${id}`, editorToken, { headword: after });
+    expect(renamed.statusCode).toBe(200);
+    expect(renamed.json().headword).toBe(after);
+
+    const view = await authed('GET', `/admin/dictionary/rhymes?word=${encodeURIComponent(after)}`, editorToken);
+    const kept = view.json().rhymes.find((r: { word: string }) => r.word === mate);
+    expect(kept).toMatchObject({ quality: 'near', source: 'decided' });
+  });
+
+  it('refuses a rename that would duplicate another word', async () => {
+    const a = `dilşad${suffix}`;
+    const b = `dilgeş${suffix}`;
+    const id = await seed(a);
+    await seed(b);
+    const res = await authed('PATCH', `/admin/dictionary/${id}`, editorToken, { headword: b });
+    expect(res.statusCode).toBe(409);
+  });
+
+  it('deleting a word clears the decisions that referenced it', async () => {
+    const base = `çiyager${suffix}`;
+    const mate = `rêwîger${suffix}`;
+    await seed(base, true);
+    const mateId = await seed(mate);
+    await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: base, rhyme: mate, quality: 'perfect' });
+
+    await authed('DELETE', `/admin/dictionary/${mateId}`, editorToken);
+    const left = await pool.query(
+      `SELECT 1 FROM rhyme_overrides WHERE prompt_normalized = $1 OR rhyme_normalized = $1`,
+      // normalizing is more than lowercasing — it strips the digits in the
+      // test suffix too, so use the server's own function
+      [normalizeWord(mate)],
+    );
+    // otherwise they linger and quietly reattach if the word is ever added back
+    expect(left.rowCount).toBe(0);
+  });
+
+  it('adding a rhyme can put it in the pool, because the game needs it there', async () => {
+    const base = `dengbêj${suffix}`;
+    const fresh = `hunermend${suffix}`;
+    await seed(base, true);
+    added.push(fresh);
+
+    const res = await authed('PUT', '/admin/dictionary/rhymes', editorToken, {
+      word: base,
+      rhyme: fresh,
+      quality: 'near',
+      addToPool: true,
+    });
+    expect(res.json()).toMatchObject({ ok: true, addedToPool: true });
+
+    const pool2 = await authed('GET', `/admin/dictionary?q=${encodeURIComponent(fresh)}`, editorToken);
+    expect(pool2.json().words.map((w: { headword: string }) => w.headword)).toContain(fresh);
+  });
+
+  it('separates accepted rhymes from ones a curator ruled out', async () => {
+    const base = `zarok${suffix}`;
+    const mate = `kanok${suffix}`;
+    await seed(base, true);
+    await seed(mate);
+    // the endings accept it; the curator disagrees
+    await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: base, rhyme: mate, quality: 'none' });
+
+    const view = await authed('GET', `/admin/dictionary/rhymes?word=${encodeURIComponent(base)}`, editorToken);
+    const body = view.json();
+    expect(body.rhymes.some((r: { word: string }) => r.word === mate)).toBe(false);
+    expect(body.ruledOut.some((r: { word: string }) => r.word === mate)).toBe(true);
+  });
+
 });
