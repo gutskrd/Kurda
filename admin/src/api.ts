@@ -65,6 +65,12 @@ export async function api<T>(
   }
   if (res.status === 204) return undefined as T;
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  // A 2FA window that expired mid-session turns every call into a 403. Reload so
+  // the gate re-checks and shows the code prompt, rather than leaving a
+  // workspace where nothing works and nothing explains why.
+  if (res.status === 403 && (data.code === 'TOTP_REQUIRED' || data.code === 'TOTP_ENROLLMENT_REQUIRED')) {
+    location.reload();
+  }
   if (!res.ok) {
     throw new ApiError(res.status, String(data.code ?? 'ERROR'), String(data.message ?? res.statusText));
   }

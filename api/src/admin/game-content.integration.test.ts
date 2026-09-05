@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { normalizeWord } from '../game/rhyme.js';
+import { pass2fa } from '../test/admin-2fa.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -43,6 +44,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     editorToken = editor.token;
     userToken = (await register('gcPlain', '10.98.0.2')).token;
     await pool.query(`UPDATE users SET roles = '{content_editor}' WHERE id = $1`, [editor.id]);
+    // /admin is gated on 2FA, so a role alone no longer reaches it
+    await pass2fa(app, editorToken);
   });
 
   afterAll(async () => {
