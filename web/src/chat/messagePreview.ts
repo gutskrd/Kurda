@@ -1,4 +1,4 @@
-import { inviteGlyph, inviteLabel, inviteLinkPattern, parseInvite } from '../lib/gameInvites';
+import { inviteLabel, inviteLinkPattern, parseInvite } from '../lib/gameInvites';
 
 /**
  * A message reduced to one line, for a conversation row or a notification.
@@ -17,7 +17,8 @@ export function messagePreview(body: string): string {
 
   if (!invite) return collapse(body);
 
-  const label = `${inviteGlyph(invite.type)} ${inviteLabel(invite.type)} invite`;
+  // a row of text, so it says what the thing is rather than drawing a picture
+  const label = `${inviteLabel(invite.type)} invite`;
   // whatever the sender typed around the link is worth keeping — "join me!" says
   // more than the label alone
   const rest = collapse(body.replace(inviteLinkPattern(), ' '));

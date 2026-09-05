@@ -68,6 +68,32 @@ export const CoinIcon = ({ size = 22, className }: P): React.JSX.Element => (
   </svg>
 );
 
+/**
+ * A row of letter tiles with one solved — the Wordle board, reduced to its
+ * smallest recognisable form.
+ */
+export const TilesIcon = ({ size = 22, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <rect x="2.6" y="9.4" width="5.2" height="5.2" rx="1.4" />
+    <rect x="9.4" y="9.4" width="5.2" height="5.2" rx="1.4" fill="currentColor" stroke="none" />
+    <rect x="16.2" y="9.4" width="5.2" height="5.2" rx="1.4" />
+  </svg>
+);
+
+/** A spoken waveform — sound, for the rhyming game. */
+export const WaveformIcon = ({ size = 22, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <path d="M4 10.5v3M8 7.5v9M12 5v14M16 8.5v7M20 10.5v3" />
+  </svg>
+);
+
+/** The "there is more this way" chevron, for a row that leads somewhere. */
+export const ChevronIcon = ({ size = 18, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <path d="M9 5.5 15.5 12 9 18.5" />
+  </svg>
+);
+
 export const MenuIcon = ({ size = 22, className }: P): React.JSX.Element => (
   <svg {...base(size)} className={className}>
     <path d="M4 7h16M4 12h16M4 17h16" />

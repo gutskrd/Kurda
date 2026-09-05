@@ -9,17 +9,17 @@ describe('messagePreview', () => {
     // the whole point: a conversation row used to read
     // "https://mykurda.com/app/games/wordle-battle?id=8f3c…"
     const out = messagePreview(wordle);
-    expect(out).toBe('🟩 Wordle Battle invite');
+    expect(out).toBe('Wordle Battle invite');
     expect(out).not.toContain('http');
     expect(out).not.toContain('id=');
   });
 
   it('names the right game', () => {
-    expect(messagePreview(rhyme)).toBe('🎤 Rhyme Match invite');
+    expect(messagePreview(rhyme)).toBe('Rhyme Match invite');
   });
 
   it('keeps what the sender wrote around the link', () => {
-    expect(messagePreview(`join me! ${wordle} now`)).toBe('join me! now · 🟩 Wordle Battle invite');
+    expect(messagePreview(`join me! ${wordle} now`)).toBe('join me! now · Wordle Battle invite');
   });
 
   it('leaves an ordinary message alone', () => {
@@ -36,13 +36,13 @@ describe('messagePreview', () => {
   });
 
   it('handles a relative invite link, as an in-app share produces', () => {
-    expect(messagePreview('/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77')).toBe('🎤 Rhyme Match invite');
+    expect(messagePreview('/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77')).toBe('Rhyme Match invite');
   });
 
   it('strips every link when several are pasted', () => {
     // a global pattern is rebuilt per call; a shared one would skip matches
     // because lastIndex carries over between uses
-    expect(messagePreview(`${wordle} and ${rhyme}`)).toBe('and · 🟩 Wordle Battle invite');
+    expect(messagePreview(`${wordle} and ${rhyme}`)).toBe('and · Wordle Battle invite');
   });
 });
 
