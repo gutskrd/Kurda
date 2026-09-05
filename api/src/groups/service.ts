@@ -3,6 +3,7 @@ import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from './roles.js';
+import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
 export interface Group {
   id: string;
@@ -17,6 +18,8 @@ export interface Group {
 export interface GroupMember {
   userId: string;
   username: string;
+  /** resolved server-side, so the roster shows real faces not initials */
+  avatarUrl: string | null;
   role: Role;
   joinedAt: string;
 }
@@ -199,20 +202,29 @@ export class GroupService {
     await this.pool.query(`DELETE FROM groups WHERE id = $1`, [groupId]);
   }
 
-  async get(groupId: string, viewerId: string): Promise<Group & { members: GroupMember[]; myRole: Role | null }> {
+  async get(
+    groupId: string,
+    viewerId: string,
+    publicUrl: PublicUrl = () => null,
+  ): Promise<Group & { members: GroupMember[]; myRole: Role | null }> {
     const g = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null;
     }>(`SELECT id, name, description, privacy, owner_id, archived_at FROM groups WHERE id = $1`, [groupId]);
     const grp = g.rows[0];
     if (!grp) throw new AppError('GROUP_NOT_FOUND', 404, 'no such group');
-    const members = await this.pool.query<{ user_id: string; username: string; role: string; joined_at: Date }>(
-      `SELECT m.user_id, u.username, m.role, m.joined_at FROM group_members m JOIN users u ON u.id = m.user_id
+    const members = await this.pool.query<{
+      user_id: string; username: string; role: string; joined_at: Date;
+      profile_photo_key: string | null; selected_avatar_key: string | null;
+    }>(
+      `SELECT m.user_id, u.username, m.role, m.joined_at, u.profile_photo_key, u.selected_avatar_key
+         FROM group_members m JOIN users u ON u.id = m.user_id
         WHERE m.group_id = $1 ORDER BY m.role = 'owner' DESC, m.role = 'moderator' DESC, u.username`,
       [groupId],
     );
     const list: GroupMember[] = members.rows.map((r) => ({
       userId: r.user_id,
       username: r.username,
+      avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
       role: isRole(r.role) ? r.role : 'member',
       joinedAt: r.joined_at.toISOString(),
     }));

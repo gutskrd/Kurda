@@ -1506,19 +1506,45 @@ button.feature {
   margin: auto;
   font-size: 0.9rem;
 }
-/* one sender's burst: their name once, their bubbles, one timestamp */
+/* one sender's burst: their face and name once, their bubbles, one timestamp */
 .chat-run {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 82%;
+  margin-right: auto;
+}
+.chat-run.mine {
+  margin-right: 0;
+  margin-left: auto;
+}
+.chat-run-body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  max-width: 78%;
-  margin-right: auto;
+  min-width: 0;
 }
-.chat-run.mine {
+.chat-run.mine .chat-run-body {
   align-items: flex-end;
-  margin-right: 0;
-  margin-left: auto;
+}
+/* the avatar aligns with the FIRST bubble, not the name above it */
+.chat-run-avatar {
+  flex: none;
+  margin-top: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.chat-run-avatar .friend-avatar {
+  width: 30px;
+  height: 30px;
+}
+.chat-run-avatar:hover {
+  opacity: 0.85;
 }
 .chat-run-author {
   font-size: 0.72rem;
@@ -3010,4 +3036,48 @@ button.feature {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: none; }
   }
+}
+
+/* ---- group roster ------------------------------------------------------- */
+/* the identity half of a row is one big target that opens the profile */
+.group-member-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+.group-member-who:hover .chat-convo-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* role reads as a badge, not as body text that looks like a message preview */
+.member-role {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.member-role-owner {
+  color: var(--gold);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+}
+.member-role-moderator {
+  color: var(--ink);
+  border-color: var(--border-strong);
 }

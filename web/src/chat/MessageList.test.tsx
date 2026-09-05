@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MessageList } from './MessageList';
 
@@ -31,7 +32,6 @@ describe('MessageList', () => {
           msg('3', 'u2', 'third', at(10, 2), { username: 'zana' }),
         ]}
         myId="me"
-        showAuthors
       />,
     );
     expect(screen.getAllByText('zana')).toHaveLength(1);
@@ -39,10 +39,45 @@ describe('MessageList', () => {
     expect(screen.getByText('third')).toBeInTheDocument();
   });
 
-  it('does not name the sender in a one-to-one thread', () => {
+  it('names the sender in a one-to-one thread too', () => {
+    // Snapchat-style: every burst says who wrote it, in both kinds of thread
     show(<MessageList messages={[msg('1', 'u2', 'hello', at(10, 0), { username: 'zana' })]} myId="me" />);
-    expect(screen.queryByText('zana')).not.toBeInTheDocument();
+    expect(screen.getByText('zana')).toBeInTheDocument();
     expect(screen.getByText('hello')).toBeInTheDocument();
+  });
+
+  it('labels your own run as You', () => {
+    show(<MessageList messages={[msg('1', 'me', 'mine', at(10, 0), { username: 'hamude' })]} myId="me" />);
+    expect(screen.getByText('You')).toBeInTheDocument();
+  });
+
+  it('shows one avatar per burst, at its start, and none on your own', () => {
+    const { container } = show(
+      <MessageList
+        messages={[
+          msg('1', 'u2', 'a', at(10, 0), { username: 'zana', avatarUrl: 'https://img/z.png' }),
+          msg('2', 'u2', 'b', at(10, 1), { username: 'zana', avatarUrl: 'https://img/z.png' }),
+          msg('3', 'me', 'mine', at(10, 30), { username: 'hamude' }),
+        ]}
+        myId="me"
+      />,
+    );
+    // two bubbles from zana, one avatar — a face beside every line is noise
+    expect(container.querySelectorAll('.chat-run-avatar')).toHaveLength(1);
+    expect(container.querySelector('.chat-run-avatar img')?.getAttribute('src')).toBe('https://img/z.png');
+  });
+
+  it('opens a profile from the avatar', async () => {
+    const onOpenProfile = vi.fn();
+    show(
+      <MessageList
+        messages={[msg('1', 'u2', 'hi', at(10, 0), { username: 'zana' })]}
+        myId="me"
+        onOpenProfile={onOpenProfile}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /zana.s profile/i }));
+    expect(onOpenProfile).toHaveBeenCalledWith('u2', 'zana');
   });
 
   it('marks your own run so it can be aligned and coloured differently', () => {
@@ -92,7 +127,6 @@ describe('MessageList', () => {
       <MessageList
         messages={[msg('1', 'u2', 'the original text', at(10, 0), { username: 'zana', deleted: true })]}
         myId="me"
-        showAuthors
       />,
     );
     expect(screen.getByText('message deleted')).toBeInTheDocument();

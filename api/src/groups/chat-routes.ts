@@ -16,7 +16,10 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireAuth,
     },
-    async (req) => chat.send(req.user!.id, (req.params as { id: string }).id, (req.body as { body: string }).body),
+    async (req) =>
+      chat.send(req.user!.id, (req.params as { id: string }).id, (req.body as { body: string }).body, (k) =>
+        app.storage ? app.storage.publicUrl(k) : null,
+      ),
   );
 
   /** Channel history — authorized on fetch, so removal revokes access at once. */
@@ -26,7 +29,8 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     async (req) => {
       const { id } = req.params as { id: string };
       const { before } = req.query as { before?: string };
-      return { messages: await chat.history(req.user!.id, id, before) };
+      const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
+      return { messages: await chat.history(req.user!.id, id, before, 30, publicUrl) };
     },
   );
 
