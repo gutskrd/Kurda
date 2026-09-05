@@ -64,10 +64,11 @@ describe.skipIf(!DATABASE_URL)('admin RBAC + 2FA (integration)', () => {
     expect(enroll.statusCode).toBe(200);
     const { secret } = enroll.json() as { secret: string };
 
-    // enrolled but not confirmed → still blocked
+    // enrolled but not confirmed → still blocked, and told to finish setting up
+    // rather than to enter a code they cannot produce yet
     const blocked = await authed('GET', '/admin/me', adminToken);
     expect(blocked.statusCode).toBe(403);
-    expect(blocked.json().code).toBe('TOTP_REQUIRED');
+    expect(blocked.json().code).toBe('TOTP_ENROLLMENT_REQUIRED');
 
     // confirm with a live code
     const confirm = await authed('POST', '/admin/2fa/confirm', adminToken, { code: totpCode(secret) });

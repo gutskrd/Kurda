@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { AuthProvider, hasSession, useAuth } from './auth';
 import { useHashRoute } from './nav';
 import { ErrorBoundary } from './ErrorBoundary';
+import { TwoFactorGate } from './pages/TwoFactorGate';
 import { Login } from './pages/Login';
 import { Shell, type NavItem } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
@@ -71,7 +72,15 @@ export function App(): React.JSX.Element {
   const [, setTick] = useState(0);
   return (
     <AuthProvider>
-      {hasSession() ? <Workspace /> : <Login onDone={() => setTick((t) => t + 1)} />}
+      {hasSession() ? (
+        // the API refuses every /admin route without 2FA, so the workspace must
+        // not render before this session has cleared it
+        <TwoFactorGate>
+          <Workspace />
+        </TwoFactorGate>
+      ) : (
+        <Login onDone={() => setTick((t) => t + 1)} />
+      )}
     </AuthProvider>
   );
 }

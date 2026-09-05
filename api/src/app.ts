@@ -114,6 +114,7 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
+import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
@@ -284,8 +285,19 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // hook order matters: authenticate → userId logging → rate limiting
   // (user-keyed limits need req.user set first)
+  // shared with the admin routes further down; declared here because the 2FA
+  // gate has to be installed before any route is registered
+  let adminTotp: AdminTotpService | undefined;
   if (config.DATABASE_URL) {
     setupAuth(app, config);
+
+    // Mandatory 2FA on everything under /admin: one prefix hook rather than a
+    // guard on each of forty routes, so a new admin route is covered the day it
+    // is written. Installed HERE, before any route is registered, because a
+    // Fastify hook only applies to routes added after it — placing it further
+    // down would silently leave the earlier admin routes ungated.
+    adminTotp = new AdminTotpService(app.db);
+    installAdminGate(app, adminTotp);
   }
   app.addHook('onRequest', async (req) => {
     if (req.user?.id) {
@@ -463,12 +475,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerCourseMapRoutes(app);
     registerDictionaryRoutes(app);
 
-    // admin RBAC + mandatory TOTP 2FA (KUR-099)
-    const adminTotp = new AdminTotpService(app.db);
-    registerAdminRoutes(app, adminTotp);
+    // admin RBAC + mandatory TOTP 2FA (KUR-099). adminTotp is set whenever a
+    // database is configured, which this branch already requires.
+    registerAdminRoutes(app, adminTotp!);
     registerGameContentRoutes(app);
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
-    registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp);
+    registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,
     // gated by per-category preferences + quiet hours at delivery time (KUR-095)
     const deviceTokens = new DeviceTokenService(app.db);
@@ -513,9 +525,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(reminderSweep));
     // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
-    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp);
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp!);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
-    registerAuditLog(app, new AuditService(app.db), adminTotp);
+    registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
     const droppedEvents = new Counter({
       name: 'analytics_events_dropped_total',

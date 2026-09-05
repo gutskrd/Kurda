@@ -9,6 +9,29 @@
 export const ADMIN_ROLES = ['superadmin', 'content_editor', 'moderator', 'support'] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 
+/**
+ * The legacy catch-all role. Most admin routes are still guarded by
+ * requireRoles('admin') rather than an RBAC role, so anything asking "is this
+ * person staff at all" — the 2FA gate especially — must count it, or an account
+ * holding only 'admin' would slip past.
+ */
+export const LEGACY_ADMIN_ROLE = 'admin';
+
+/**
+ * Every role that can reach anything under /admin, and so must clear 2FA.
+ *
+ * 'founder' is here because it curates the tag catalog through /admin/tags. The
+ * rule is deliberately "anything under /admin", with no exceptions — a role that
+ * could reach staff surface without 2FA would be the hole the gate exists to
+ * close, and exceptions are exactly what gets forgotten.
+ */
+export const PRIVILEGED_ROLES: readonly string[] = [...ADMIN_ROLES, LEGACY_ADMIN_ROLE, 'founder'];
+
+/** True if the user can reach admin surface at all (RBAC role or the legacy one). */
+export function isPrivileged(roles: readonly string[]): boolean {
+  return roles.some((r) => PRIVILEGED_ROLES.includes(r));
+}
+
 export const CAPABILITIES = [
   'content.edit',
   'content.publish',

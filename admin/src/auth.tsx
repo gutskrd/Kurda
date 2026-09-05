@@ -43,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   }
 
   function logout(): void {
+    // best effort, and before the token goes: ends this login's 2FA server-side
+    // so signing out is not merely local
+    void api('/admin/session/end', { method: 'POST' }).catch(() => undefined);
     setToken(null);
     setMe(null);
   }

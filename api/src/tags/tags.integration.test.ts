@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { pass2fa } from '../test/admin-2fa.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -36,6 +37,9 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
     ({ token: founderTok, id: founderId } = await register('founder', '10.70.0.3'));
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [adminId]);
     await pool.query(`UPDATE users SET roles = '{founder}' WHERE id = $1`, [founderId]);
+    // /admin/tags is under /admin, so both curators must clear 2FA
+    await pass2fa(app, adminTok);
+    await pass2fa(app, founderTok);
   });
 
   afterAll(async () => {

@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { pass2fa } from '../test/admin-2fa.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -36,6 +37,9 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     adminTok = await admin('a1', '10.80.0.1');
     admin2Tok = await admin('a2', '10.80.0.2');
+    // /admin is gated on 2FA, so a role alone no longer reaches it
+    await pass2fa(app, adminTok);
+    await pass2fa(app, admin2Tok);
   });
   afterAll(async () => {
     if (skus.length) await pool.query(`DELETE FROM shop_items WHERE sku = ANY($1)`, [skus]);
