@@ -99,14 +99,18 @@ export function registerLibraryRoutes(
       limit: q.limit ? Number(q.limit) : undefined,
       offset: q.offset ? Number(q.offset) : undefined,
     });
-    return { posts: posts.map(withAudioUrl) };
+    const withAuthor = await library.withAuthors(posts, (k) => (app.storage ? app.storage.publicUrl(k) : null));
+    return { posts: withAuthor.map(withAudioUrl) };
   });
 
   /** Read one post + increment views (public). */
   app.get('/library/posts/:id', { schema: { params: idParam } }, async (req, reply) => {
     const post = await library.get((req.params as { id: string }).id);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such post' });
-    return withAudioUrl(post);
+    const [withAuthor] = await library.withAuthors([post], (k) =>
+      app.storage ? app.storage.publicUrl(k) : null,
+    );
+    return withAudioUrl(withAuthor!);
   });
 
   /** Edit (author or admin). */

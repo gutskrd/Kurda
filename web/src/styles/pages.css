@@ -3081,3 +3081,164 @@ button.feature {
   color: var(--ink);
   border-color: var(--border-strong);
 }
+
+/* ---- byline: who wrote a post or comment -------------------------------- */
+.byline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.byline-who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+.byline-who:hover .byline-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.byline-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+  min-width: 0;
+}
+.byline-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.byline-when {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+.byline-trailing {
+  margin-left: auto;
+}
+.byline-sm .friend-avatar {
+  width: 28px;
+  height: 28px;
+}
+.byline-sm .byline-name {
+  font-size: 0.86rem;
+}
+
+/* ---- a post read in full ------------------------------------------------ */
+.post-title-link {
+  color: inherit;
+}
+.post-title-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+}
+.back-link:hover {
+  color: var(--ink);
+}
+.back-link svg {
+  transform: rotate(180deg);
+}
+.post-full {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  padding: 24px;
+}
+.post-body {
+  /* a poem's line breaks ARE the poem */
+  white-space: pre-wrap;
+  line-height: 1.75;
+  font-size: 1.02rem;
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+}
+.post-audio {
+  width: 100%;
+  margin-top: 14px;
+}
+
+/* ---- comments ----------------------------------------------------------- */
+.comments {
+  margin-top: 28px;
+}
+.section-heading {
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 0 0 12px;
+}
+.comment-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* replies indent once and stop, so a deep thread stays readable on a phone */
+.comment-replies {
+  margin-top: 14px;
+  padding-left: 16px;
+  border-left: 2px solid var(--border);
+}
+.comment-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+  padding-left: 38px;
+}
+.comment-actions {
+  display: flex;
+  gap: 14px;
+  padding-left: 38px;
+  margin-top: 6px;
+}
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.link-button:hover {
+  color: var(--ink);
+}
+.link-button.danger {
+  color: var(--danger);
+}
+.comment-form {
+  margin: 12px 0 0;
+}
+.comment-input {
+  height: auto;
+  padding: 10px 14px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.comment-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.comments-empty {
+  margin-top: 16px;
+}

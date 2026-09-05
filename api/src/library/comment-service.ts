@@ -1,5 +1,7 @@
 import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
+import type { PublicUrl } from '../cosmetics/access.js';
+import { loadAuthors, unknownAuthor, type Author } from './service.js';
 
 export type AuthorRole = 'user' | 'admin';
 export const MAX_COMMENT_LEN = 10_000;
@@ -23,6 +25,11 @@ export interface Comment {
   replyCount: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** A comment with its author attached, for the read paths. */
+export interface CommentWithAuthor extends Comment {
+  author: Author;
 }
 
 export interface Page {
@@ -100,6 +107,12 @@ export class LibraryCommentService {
   }
 
   /** Direct replies to a comment (paginated, oldest-first by default). */
+  /** Attach authors, using the same loader posts use so faces match. */
+  async withAuthors(comments: Comment[], publicUrl: PublicUrl = () => null): Promise<CommentWithAuthor[]> {
+    const authors = await loadAuthors(this.pool, comments.map((c) => c.authorId), publicUrl);
+    return comments.map((c) => ({ ...c, author: authors.get(c.authorId) ?? unknownAuthor(c.authorId) }));
+  }
+
   async replies(parentId: string, page: Page = {}): Promise<Comment[]> {
     const parent = await this.pool.query<{ post_id: string }>(`SELECT post_id FROM library_comments WHERE id = $1`, [parentId]);
     if (parent.rowCount === 0) return [];
