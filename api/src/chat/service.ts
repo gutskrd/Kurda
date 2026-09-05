@@ -25,6 +25,10 @@ export interface ChatModeration {
 export interface DmMessage {
   id: string;
   senderId: string;
+  /** who wrote it, so a thread can show a name without a second lookup */
+  username: string;
+  /** already resolved (uploaded photo -> chosen avatar); null when unknown */
+  avatarUrl: string | null;
   body: string;
   createdAt: string;
   deliveredAt: string | null;
@@ -57,7 +61,7 @@ export class ChatService {
     private readonly moderation?: ChatModeration,
   ) {}
 
-  async send(from: string, to: string, rawBody: string): Promise<DmMessage> {
+  async send(from: string, to: string, rawBody: string, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
     const trimmed = stripControlChars(rawBody).trim();
     if (!trimmed || trimmed.length > MAX_MESSAGE_LEN) {
@@ -69,7 +73,16 @@ export class ChatService {
     }
     // silent block: pretend it sent, but drop it (never reveal the block)
     if (await this.friends.areBlocked(from, to)) {
-      return { id: randomUUID(), senderId: from, body: trimmed, createdAt: new Date().toISOString(), deliveredAt: null, readAt: null };
+      return {
+        id: randomUUID(),
+        senderId: from,
+        username: '',
+        avatarUrl: null,
+        body: trimmed,
+        createdAt: new Date().toISOString(),
+        deliveredAt: null,
+        readAt: null,
+      };
     }
     if ((await this.friends.statusBetween(from, to)) !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
@@ -84,12 +97,18 @@ export class ChatService {
     // round trip) purely so the recipient's notification can say WHO wrote.
     // Resolving it client-side would fail for the case that matters most: the
     // first message from someone not yet in your conversation list.
-    const row = await this.pool.query<{ id: string; created_at: Date; username: string }>(
+    const row = await this.pool.query<{
+      id: string;
+      created_at: Date;
+      username: string;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
+    }>(
       `WITH ins AS (
          INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)
          RETURNING id, created_at, sender_id
        )
-       SELECT ins.id, ins.created_at, u.username
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
          FROM ins JOIN users u ON u.id = ins.sender_id`,
       [lo, hi, from, body],
     );
@@ -97,6 +116,8 @@ export class ChatService {
     const message: DmMessage = {
       id: row.rows[0]!.id,
       senderId: from,
+      username: row.rows[0]!.username,
+      avatarUrl: resolveAvatarUrl(row.rows[0]!.profile_photo_key, row.rows[0]!.selected_avatar_key, publicUrl),
       body,
       createdAt: row.rows[0]!.created_at.toISOString(),
       deliveredAt: null,
@@ -114,20 +135,31 @@ export class ChatService {
   }
 
   /** Paginated history (newest first past `before`); marks incoming delivered. */
-  async history(user: string, other: string, before?: string, limit = 30): Promise<DmMessage[]> {
+  async history(
+    user: string,
+    other: string,
+    before?: string,
+    limit = 30,
+    publicUrl: PublicUrl = () => null,
+  ): Promise<DmMessage[]> {
     if (await this.friends.areBlocked(user, other)) return [];
     const { lo, hi } = canonicalPair(user, other);
     const rows = await this.pool.query<{
       id: string;
       sender_id: string;
+      username: string;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
       body: string;
       created_at: Date;
       delivered_at: Date | null;
       read_at: Date | null;
     }>(
-      `SELECT id, sender_id, body, created_at, delivered_at, read_at FROM dm_messages
-        WHERE user_lo = $1 AND user_hi = $2 ${before ? 'AND created_at < $4::timestamptz' : ''}
-        ORDER BY created_at DESC LIMIT $3`,
+      `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
+              m.body, m.created_at, m.delivered_at, m.read_at
+         FROM dm_messages m JOIN users u ON u.id = m.sender_id
+        WHERE m.user_lo = $1 AND m.user_hi = $2 ${before ? 'AND m.created_at < $4::timestamptz' : ''}
+        ORDER BY m.created_at DESC LIMIT $3`,
       before ? [lo, hi, limit, before] : [lo, hi, limit],
     );
     await this.markDelivered(lo, hi, user, other);
@@ -135,6 +167,8 @@ export class ChatService {
       .map((r) => ({
         id: r.id,
         senderId: r.sender_id,
+        username: r.username,
+        avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
         body: r.body,
         createdAt: r.created_at.toISOString(),
         deliveredAt: r.delivered_at ? r.delivered_at.toISOString() : null,

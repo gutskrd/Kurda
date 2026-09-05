@@ -530,6 +530,7 @@ function Thread({
             messages={messages}
             myId={user?.id}
             renderStatus={(m) => <ReadReceipt message={m} />}
+            onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
           />
         )}
       </div>
@@ -579,6 +580,7 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
   const { refreshUnread } = useMessages();
+  const { openProfile } = useProfileModal();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
@@ -702,7 +704,11 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
         ) : messages.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? 'No messages yet. Say hello to the group!'}</p>
         ) : (
-          <MessageList messages={messages} myId={user?.id} showAuthors />
+          <MessageList
+            messages={messages}
+            myId={user?.id}
+            onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+          />
         )}
       </div>
 
@@ -751,6 +757,7 @@ const ROLE_RANK: Record<GroupRole, number> = { member: 0, moderator: 1, owner: 2
  */
 function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: () => Promise<void> }): React.JSX.Element {
   const { client, user } = useAuth();
+  const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -810,14 +817,26 @@ function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: (
       <ul className="group-member-list">
         {ordered.map((m) => (
           <li className="group-member" key={m.userId}>
-            <span className="group-avatar" aria-hidden>{m.username.slice(0, 1).toUpperCase()}</span>
-            <span className="chat-convo-body">
-              <span className="chat-convo-name">
-                {m.username}
-                {m.userId === user?.id && <span className="group-joined-badge">You</span>}
+            {/* the whole identity opens the profile — a roster you cannot click
+                through is a dead end when you want to know who someone is */}
+            <button
+              type="button"
+              className="group-member-who"
+              onClick={() => openProfile({ kind: 'user', userId: m.userId, username: m.username })}
+            >
+              <Avatar url={m.avatarUrl} glyphSize={18} />
+              <span className="chat-convo-body">
+                <span className="chat-convo-name">
+                  {m.username}
+                  {m.userId === user?.id && <span className="group-joined-badge">You</span>}
+                </span>
+                <span className="chat-convo-last">
+                  <span className={`member-role member-role-${m.role}`}>
+                    {m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Admin' : 'Member'}
+                  </span>
+                </span>
               </span>
-              <span className="chat-convo-last">{m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Admin' : 'Member'}</span>
-            </span>
+            </button>
             <span className="group-member-actions">
               {canSetRole && m.role === 'member' && m.userId !== user?.id && (
                 <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'moderator')}>

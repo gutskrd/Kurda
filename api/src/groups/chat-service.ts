@@ -3,6 +3,7 @@ import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { GroupService } from './service.js';
 import { canManage } from './roles.js';
+import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
 export const MAX_GROUP_MESSAGE_LEN = 2000;
 export type MuteDuration = '1h' | '24h' | 'perm';
@@ -24,6 +25,8 @@ export interface GroupMessage {
   id: string;
   senderId: string;
   username: string;
+  /** already resolved (uploaded photo -> chosen avatar); null when unknown */
+  avatarUrl: string | null;
   body: string;
   createdAt: string;
   deleted: boolean;
@@ -62,7 +65,12 @@ export class GroupChatService {
     return (r.rowCount ?? 0) > 0;
   }
 
-  async send(userId: string, groupId: string, rawBody: string): Promise<GroupMessage> {
+  async send(
+    userId: string,
+    groupId: string,
+    rawBody: string,
+    publicUrl: PublicUrl = () => null,
+  ): Promise<GroupMessage> {
     await this.requireMember(groupId, userId);
     if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
     if (this.moderation && (await this.moderation.isChatMuted(userId))) {
@@ -75,12 +83,16 @@ export class GroupChatService {
     // mask profanity on delivery; flagged messages escalate repeat offenders
     const filtered = this.moderation ? this.moderation.filter(trimmed) : { masked: trimmed, flagged: false };
     const body = filtered.masked;
-    const row = await this.pool.query<{ id: string; created_at: Date; username: string }>(
+    const row = await this.pool.query<{
+      id: string; created_at: Date; username: string;
+      profile_photo_key: string | null; selected_avatar_key: string | null;
+    }>(
       `WITH ins AS (
          INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, $3)
          RETURNING id, sender_id, created_at
        )
-       SELECT ins.id, ins.created_at, u.username FROM ins JOIN users u ON u.id = ins.sender_id`,
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+         FROM ins JOIN users u ON u.id = ins.sender_id`,
       [groupId, userId, body],
     );
     if (filtered.flagged && this.moderation) void this.moderation.recordOffense(userId).catch(() => undefined);
@@ -88,6 +100,7 @@ export class GroupChatService {
       id: row.rows[0]!.id,
       senderId: userId,
       username: row.rows[0]!.username,
+      avatarUrl: resolveAvatarUrl(row.rows[0]!.profile_photo_key, row.rows[0]!.selected_avatar_key, publicUrl),
       body,
       createdAt: row.rows[0]!.created_at.toISOString(),
       deleted: false,
@@ -97,14 +110,22 @@ export class GroupChatService {
   }
 
   /** History — membership re-checked here, so removal revokes access at once. */
-  async history(userId: string, groupId: string, before?: string, limit = 30): Promise<GroupMessage[]> {
+  async history(
+    userId: string,
+    groupId: string,
+    before?: string,
+    limit = 30,
+    publicUrl: PublicUrl = () => null,
+  ): Promise<GroupMessage[]> {
     await this.requireMember(groupId, userId);
     // grant this member access to the live room for the WS join
     await this.hub.invite(room(groupId), userId, ROOM_TTL).catch(() => undefined);
     const rows = await this.pool.query<{
-      id: string; sender_id: string; username: string; body: string; created_at: Date; deleted_at: Date | null;
+      id: string; sender_id: string; username: string; profile_photo_key: string | null;
+      selected_avatar_key: string | null; body: string; created_at: Date; deleted_at: Date | null;
     }>(
-      `SELECT m.id, m.sender_id, u.username, m.body, m.created_at, m.deleted_at
+      `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
+              m.body, m.created_at, m.deleted_at
          FROM group_messages m JOIN users u ON u.id = m.sender_id
         WHERE m.group_id = $1 ${before ? 'AND m.created_at < $3::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $2`,
@@ -115,6 +136,7 @@ export class GroupChatService {
         id: r.id,
         senderId: r.sender_id,
         username: r.username,
+        avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
         body: r.deleted_at ? '' : r.body,
         createdAt: r.created_at.toISOString(),
         deleted: r.deleted_at !== null,

@@ -33,7 +33,8 @@ export function registerChatRoutes(
     async (req) => {
       const { userId } = req.params as { userId: string };
       const { before } = req.query as { before?: string };
-      return { messages: await chat.history(req.user!.id, userId, before) };
+      const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
+      return { messages: await chat.history(req.user!.id, userId, before, 30, publicUrl) };
     },
   );
 
@@ -72,7 +73,9 @@ export function registerChatRoutes(
           return reply.code(422).send({ code: 'CONTENT_BLOCKED', message: 'this message was blocked by moderation' });
         }
       }
-      const msg = await chat.send(req.user!.id, userId, body);
+      const msg = await chat.send(req.user!.id, userId, body, (k) =>
+        app.storage ? app.storage.publicUrl(k) : null,
+      );
       if (trust) await trust.recordAction(req.user!.id, 'message');
       return msg;
     },

@@ -51,7 +51,9 @@ export function registerGroupRoutes(
 
   /** Group detail with roster. */
   app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAuth }, async (req) =>
-    groups.get((req.params as { id: string }).id, req.user!.id),
+    groups.get((req.params as { id: string }).id, req.user!.id, (k) =>
+      app.storage ? app.storage.publicUrl(k) : null,
+    ),
   );
 
   const ok = { ok: true } as const;

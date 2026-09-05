@@ -167,6 +167,10 @@ export interface AvatarOption {
 export interface DmMessage {
   id: string;
   senderId: string;
+  /** who wrote it — the thread shows a name per burst, not per message */
+  username: string;
+  /** resolved server-side (uploaded photo -> chosen avatar) */
+  avatarUrl: string | null;
   body: string;
   createdAt: string;
   deliveredAt: string | null;
@@ -259,6 +263,8 @@ export interface MyGroup extends Group {
 export interface GroupMember {
   userId: string;
   username: string;
+  /** resolved server-side, so the roster shows real faces not initials */
+  avatarUrl: string | null;
   role: GroupRole;
   joinedAt: string;
 }
@@ -274,6 +280,8 @@ export interface GroupMessage {
   id: string;
   senderId: string;
   username: string;
+  /** resolved server-side (uploaded photo -> chosen avatar) */
+  avatarUrl: string | null;
   body: string;
   createdAt: string;
   deleted: boolean;
