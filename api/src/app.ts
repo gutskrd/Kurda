@@ -86,6 +86,7 @@ import { registerPracticeRoutes } from './practice/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
+import { registerRaceRoutes } from './game/race-routes.js';
 import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
@@ -448,6 +449,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService });
     registerRhymeRoutes(app, { xp: xpService });
+    // typing race (solo time trial) over admin-curated texts
+    registerRaceRoutes(app, { xp: xpService });
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
     registerRhymeMatchRoutes(app, { xp: xpService });
 

@@ -3242,3 +3242,104 @@ button.feature {
 .comments-empty {
   margin-top: 16px;
 }
+
+/* ---- typing race -------------------------------------------------------- */
+.race-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+.race-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 18px 0 12px;
+}
+.race-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.15rem;
+  min-width: 66px;
+}
+.race-progress {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.race-progress-fill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.1s linear;
+}
+/* the text to copy: every character coloured as it is typed */
+.race-text {
+  font-size: 1.15rem;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.race-char {
+  border-radius: 2px;
+}
+.race-ok {
+  color: var(--success);
+}
+.race-bad {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+/* where you are, so the eye does not have to search for it */
+.race-cursor {
+  box-shadow: inset 2px 0 0 var(--ink);
+}
+.race-input {
+  height: auto;
+  margin-top: 14px;
+  padding: 12px 14px;
+  resize: vertical;
+  line-height: 1.6;
+  font-size: 1.02rem;
+}
+.race-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.race-result {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+.race-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin: 12px 0 18px;
+}
+.race-figure {
+  display: flex;
+  flex-direction: column;
+}
+.race-figure-value {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.race-figure-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-3);
+}

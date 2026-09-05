@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import { RhymeEditor } from './RhymeEditor';
 import { QuizQuestions } from './QuizQuestions';
+import { RaceTexts } from './RaceTexts';
 
 interface Word {
   id: string;
@@ -40,7 +41,7 @@ export function Games(): React.JSX.Element {
   const [page, setPage] = useState(0);
   // categories: the pool is shared, but Wordle and Rhyme care about different
   // things, so each gets its own view rather than one long undifferentiated page
-  const [section, setSection] = useState<'pool' | 'wordle' | 'rhyme' | 'quiz'>('pool');
+  const [section, setSection] = useState<'pool' | 'wordle' | 'rhyme' | 'quiz' | 'race'>('pool');
   const [promptsOnly, setPromptsOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -118,6 +119,7 @@ export function Games(): React.JSX.Element {
           ['wordle', 'Wordle'],
           ['rhyme', 'Rhyme'],
           ['quiz', 'Quiz'],
+          ['race', 'Race'],
         ] as const).map(([key, label]) => (
           <button
             key={key}
@@ -135,6 +137,7 @@ export function Games(): React.JSX.Element {
       {/* the editor lists the base words itself, and says when none are chosen */}
       {section === 'rhyme' && <RhymeEditor />}
       {section === 'quiz' && <QuizQuestions />}
+      {section === 'race' && <RaceTexts />}
       {section === 'pool' && <AddWords onAdded={load} />}
 
       {section === 'pool' && (

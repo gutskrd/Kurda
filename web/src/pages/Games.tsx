@@ -40,6 +40,18 @@ const GAMES: GameCard[] = [
     ],
   },
   {
+    icon: <FeatherIcon />,
+    name: 'Typing Race',
+    body: 'Type a Kurdish text as fast and as accurately as you can — speed is measured server-side.',
+    modes: [
+      {
+        label: 'Race the clock',
+        blurb: 'Pick a length, type the text, and get your words per minute and accuracy.',
+        href: '/app/games/race',
+      },
+    ],
+  },
+  {
     icon: <TrophyIcon />,
     name: 'Ranked Quiz',
     body: 'Fast 1-v-1 matches: answer Kurdish questions quicker and more accurately than your opponent.',
