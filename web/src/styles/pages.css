@@ -3356,3 +3356,130 @@ button.feature {
   letter-spacing: 0.07em;
   color: var(--ink-3);
 }
+
+/* ---- shop: buying, gifting, and being gifted ---------------------------- */
+.shop-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shop-gift-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.shop-gift-btn:hover:not(:disabled) {
+  background: var(--gold-soft);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  color: var(--gold);
+}
+.shop-gift-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/*
+ * The moment a purchase lands. One short, self-cancelling flourish: the tile
+ * lifts and a band of light crosses the artwork. Anything longer gets in the
+ * way of buying a second thing.
+ */
+.shop-tile-won {
+  animation: shop-pop 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+@keyframes shop-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+.shop-thumb {
+  position: relative;
+  overflow: hidden;
+}
+.shop-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  animation: shop-shine 0.85s ease-out;
+}
+@keyframes shop-shine {
+  to { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shop-tile-won { animation: none; }
+  .shop-shine { display: none; }
+}
+
+/* a gift you were sent */
+.gift-tile {
+  position: relative;
+}
+.gift-new {
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.gift-from {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+
+/* choosing who a gift goes to */
+.gift-friends {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.gift-friend {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.gift-friend:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.gift-friend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.gift-friend-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.gift-friend-go {
+  flex: none;
+  color: var(--ink-3);
+}

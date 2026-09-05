@@ -94,6 +94,15 @@ export const ChevronIcon = ({ size = 18, className }: P): React.JSX.Element => (
   </svg>
 );
 
+/** A wrapped box with a ribbon — a gift. */
+export const GiftIcon = ({ size = 22, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <path d="M3.5 11h17v9.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z" />
+    <path d="M2.5 7.5h19V11h-19zM12 7.5v14" />
+    <path d="M12 7.5S10.8 3 8.6 3a2.2 2.2 0 0 0 0 4.5zM12 7.5S13.2 3 15.4 3a2.2 2.2 0 0 1 0 4.5z" />
+  </svg>
+);
+
 export const MenuIcon = ({ size = 22, className }: P): React.JSX.Element => (
   <svg {...base(size)} className={className}>
     <path d="M4 7h16M4 12h16M4 17h16" />

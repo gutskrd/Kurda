@@ -43,7 +43,7 @@ describe('Shop', () => {
     // affordable background shows its price and buys with the expected-price guard
     const sunset = (await screen.findByText('Sunset')).closest('figure')!;
     await userEvent.click(within(sunset).getByRole('button', { name: /Buy · 500 Zêr/ }));
-    expect(await screen.findByText(/Purchased Sunset/)).toBeInTheDocument();
+    expect(await screen.findByText(/Sunset is yours/)).toBeInTheDocument();
     const buy = calls.find((c) => c.url.includes('/shop/purchase'));
     expect(buy?.body).toMatchObject({ sku: 'bg-1', expectedPrice: 500 });
     // after buying it flips to Owned

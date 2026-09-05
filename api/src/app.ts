@@ -410,7 +410,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       6 * 60 * 60 * 1000,
     );
     app.addHook('onClose', async () => clearInterval(requestExpiry));
-    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache));
+    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache), {
+      // gifting is friends-only, and tells the recipient it arrived
+      friends,
+      inbox: new InboxService(app.db),
+    });
     // Profile cosmetics: equip (server-verified access) + favorites (KUR profile)
     registerCosmeticsRoutes(app, new CosmeticsService(app.db));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
