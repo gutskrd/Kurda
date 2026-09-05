@@ -302,3 +302,21 @@ input[type='password']::-ms-clear {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/*
+ * Dropdown options.
+ *
+ * A native <select> popup is drawn by the OS, not on the page, so the control's
+ * translucent background composites against the system surface (white on
+ * Windows) instead of the dark app behind it. The options inherit the control's
+ * white text, and the list came out white on white — unreadable. They need an
+ * OPAQUE background of their own; color-scheme alone does not cover it, because
+ * an author-set background is what the browser uses when one is present.
+ */
+select.input option,
+select.input optgroup,
+select option,
+select optgroup {
+  background-color: #14181e;
+  color: #fff;
+}

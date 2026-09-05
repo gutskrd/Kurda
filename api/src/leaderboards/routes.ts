@@ -3,17 +3,33 @@ import { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import type { LeaderboardService } from './service.js';
-import { isBoardType } from './rank.js';
+import { isBoardScope, isBoardType } from './rank.js';
 
-/** Leaderboards (KUR-063): top 50 + the caller's own rank. */
+/**
+ * Leaderboards (KUR-063): one page of a board plus the caller's own rank.
+ *
+ * `scope` picks who the board covers — everyone, your friends, or your country —
+ * and the caller's rank is always computed within that same board, so the number
+ * beside your name means what the list around it means.
+ */
 export function registerLeaderboardRoutes(app: FastifyInstance, boards: LeaderboardService): void {
+  const query = z.object({
+    scope: z.string().max(12).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    offset: z.coerce.number().int().min(0).max(100_000).optional(),
+  });
+
   app.get(
     '/leaderboards/:type',
-    { schema: { params: z.object({ type: z.string().max(20) }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ type: z.string().max(20) }), querystring: query }, preHandler: requireAuth },
     async (req) => {
       const { type } = req.params as { type: string };
+      const { scope, limit, offset } = req.query as z.infer<typeof query>;
       if (!isBoardType(type)) throw new AppError('BAD_BOARD', 400, 'unknown leaderboard');
-      return boards.board(type, req.user!.id);
+      if (scope !== undefined && !isBoardScope(scope)) {
+        throw new AppError('BAD_SCOPE', 400, 'unknown leaderboard scope');
+      }
+      return boards.board(type, req.user!.id, { scope, limit, offset });
     },
   );
 
