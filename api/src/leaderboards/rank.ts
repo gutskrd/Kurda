@@ -10,6 +10,14 @@ export function isBoardType(value: string): value is BoardType {
   return value === 'rating' || value === 'weekly_xp';
 }
 
+/** Who a board covers: everyone, your friends, or people in your country. */
+export const BOARD_SCOPES = ['global', 'friends', 'country'] as const;
+export type BoardScope = (typeof BOARD_SCOPES)[number];
+
+export function isBoardScope(value: string): value is BoardScope {
+  return (BOARD_SCOPES as readonly string[]).includes(value);
+}
+
 export interface ScoreRow {
   userId: string;
   username: string;
@@ -35,7 +43,12 @@ export function rankForScore(scoresDesc: number[], myScore: number): number {
   return higher + 1;
 }
 
-/** Attach 1-based ranks to an already-sorted (descending) score list. */
-export function withRanks(rows: ScoreRow[]): RankedEntry[] {
-  return rows.map((r, i) => ({ ...r, rank: i + 1 }));
+/**
+ * Attach ranks to an already-sorted (descending) score list.
+ *
+ * startAt is the 0-based position of the first row within the whole board, so a
+ * second page continues from 51 instead of starting again at 1.
+ */
+export function withRanks(rows: ScoreRow[], startAt = 0): RankedEntry[] {
+  return rows.map((r, i) => ({ ...r, rank: startAt + i + 1 }));
 }

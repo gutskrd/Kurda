@@ -188,6 +188,19 @@ input, select, textarea {
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
 input::placeholder, textarea::placeholder { color: var(--text-dim); }
+
+/*
+ * Dropdown options need OPAQUE colours.
+ *
+ * The popup is drawn by the OS, not on the page, so the control's translucent
+ * --control fill composites against the system surface rather than the frosted
+ * panel behind it. Options inherit the control's text colour, which left the
+ * list nearly invisible — light text on a light popup.
+ */
+option, optgroup { background-color: #ffffff; color: #18181b; }
+@media (prefers-color-scheme: dark) {
+  option, optgroup { background-color: #1c1c21; color: #f4f4f5; }
+}
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--text) 40%, transparent);

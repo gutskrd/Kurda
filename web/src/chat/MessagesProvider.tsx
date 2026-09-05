@@ -97,7 +97,9 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
   const loadGroups = useCallback(async () => {
     if (!signedIn) return;
     const res = await client.get<{ groups: MyGroup[] }>('/me/groups');
-    if (res.ok) setGroups(res.data.groups);
+    // an unexpected shape would otherwise leave groups undefined, and the room
+    // list below maps over it — one malformed response would blank the whole app
+    if (res.ok) setGroups(res.data.groups ?? []);
   }, [client, signedIn]);
 
   const refreshUnread = useCallback(() => {

@@ -33,11 +33,21 @@ export function ErrorState({
   );
 }
 
-export function EmptyState({ title, message }: { title: string; message: string }): React.JSX.Element {
+export function EmptyState({
+  title,
+  message,
+  action,
+}: {
+  title: string;
+  message: string;
+  /** optional way out of the empty state, e.g. a link to the setting that fills it */
+  action?: React.ReactNode;
+}): React.JSX.Element {
   return (
     <div className="state">
       <h3>{title}</h3>
       <p>{message}</p>
+      {action}
     </div>
   );
 }
