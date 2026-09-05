@@ -8,6 +8,7 @@ import { useMessages } from '../chat/MessagesProvider';
 import { MessageList } from '../chat/MessageList';
 import { Composer } from '../chat/Composer';
 import { useStickyScroll } from '../chat/useStickyScroll';
+import { messagePreview } from '../chat/messagePreview';
 import { useTypingSignal, useTypingWatch, typingLabel } from '../chat/useTyping';
 import { ReadReceipt } from '../chat/ReadReceipt';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
@@ -160,7 +161,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
             </span>
             <span className="chat-convo-last">
               {c.lastFromMe ? 'You: ' : ''}
-              {c.lastMessage}
+              {messagePreview(c.lastMessage)}
             </span>
           </span>
         </Link>

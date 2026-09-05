@@ -2634,50 +2634,121 @@ button.feature {
 .invite-lead {
   margin: 0 0 8px;
 }
+
+/*
+ * Game invite: a rich embed, not a bordered box.
+ *
+ * It paints its OWN dark surface rather than inheriting the bubble's. Your own
+ * bubble is --primary, which is white in this theme, so a translucent card with
+ * a --primary border and eyebrow was effectively invisible on invites you sent.
+ * Fixed colours here mean it reads identically from either side.
+ */
 .invite-card {
+  --invite-accent: #f0c24a;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 320px;
+  margin-top: 2px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: #14181e;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+}
+.invite-card:hover {
+  border-color: color-mix(in srgb, var(--invite-accent) 55%, transparent);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+.invite-card:active {
+  transform: translateY(1px);
+}
+/* per-game accent, so the two lobbies are told apart at a glance */
+.invite-wordle-battle {
+  --invite-accent: #57c98a;
+}
+.invite-rhyme-match {
+  --invite-accent: #f0c24a;
+}
+
+.invite-card-head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--primary, #b8922e);
-  background: var(--surface);
-  min-width: 240px;
-  max-width: 320px;
+  gap: 11px;
+  padding: 12px 13px 0;
 }
 .invite-card-art {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
-  font-size: 1.5rem;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
+  font-size: 1.35rem;
+  line-height: 1;
+  border-radius: var(--r-sm);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--invite-accent) 30%, transparent),
+    color-mix(in srgb, var(--invite-accent) 8%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--invite-accent) 35%, transparent);
 }
-.invite-card-body {
-  flex: 1;
-  min-width: 0;
+.invite-card-heading {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  min-width: 0;
 }
 .invite-card-eyebrow {
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--primary, #b8922e);
   font-weight: 700;
+  color: var(--invite-accent);
 }
 .invite-card-title {
   font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .invite-card-blurb {
-  font-size: 0.82rem;
-  color: var(--ink-2);
+  display: block;
+  padding: 7px 13px 11px;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
 }
+/* a full-width action bar: the whole card is the link, this shows where it goes */
 .invite-card-join {
-  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 13px;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--invite-accent);
+  background: color-mix(in srgb, var(--invite-accent) 12%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--invite-accent) 22%, transparent);
+}
+.invite-card:hover .invite-card-join {
+  background: color-mix(in srgb, var(--invite-accent) 20%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-card {
+    transition: none;
+  }
+  .invite-card:active {
+    transform: none;
+  }
 }
 
 /* a "you're in" marker on a group row in Discover */

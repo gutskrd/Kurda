@@ -22,8 +22,17 @@ const BLURBS: Record<GameInviteType, string> = {
   'rhyme-match': 'Go head-to-head finding rhymes.',
 };
 
+/** The glyph shown on the invite card, and in a conversation preview. */
+const GLYPHS: Record<GameInviteType, string> = {
+  'wordle-battle': '🟩',
+  'rhyme-match': '🎤',
+};
+
 export function inviteLabel(type: GameInviteType): string {
   return LABELS[type];
+}
+export function inviteGlyph(type: GameInviteType): string {
+  return GLYPHS[type];
 }
 export function inviteBlurb(type: GameInviteType): string {
   return BLURBS[type];
@@ -43,6 +52,17 @@ export function buildInviteUrl(type: GameInviteType, id: string): string {
 
 // matches "/app/games/<type>?id=<id>" anywhere in a string, any origin (or none)
 const INVITE_RE = /\/app\/games\/(wordle-battle|rhyme-match)\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})/;
+
+/**
+ * The link itself, for removing it from displayed text. Global so a body with
+ * several links is fully cleaned; built fresh per call because a global regex
+ * carries lastIndex between uses.
+ */
+export function inviteLinkPattern(): RegExp {
+  // built from a raw source string rather than a literal: the escaping stays
+  // readable, and `/` needs none inside the constructor
+  return new RegExp(String.raw`\S*/app/games/(?:wordle-battle|rhyme-match)\?id=[A-Za-z0-9-]+\S*`, 'g');
+}
 
 /** Extract the first game invite from arbitrary text, or null. */
 export function parseInvite(text: string): GameInvite | null {
