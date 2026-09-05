@@ -13,6 +13,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useRealtimeEvent, useRealtimeRooms } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/types';
+import { messagePreview, truncate } from './messagePreview';
 
 /**
  * App-wide message awareness: unread counts and arrival notifications.
@@ -68,10 +69,9 @@ const MAX_TOASTS = 3;
 /** Counts are event-driven; this is only a safety net for missed events. */
 const COUNT_POLL_MS = 60_000;
 
-/** Trim a message to something that fits a banner. */
+/** What a banner shows: a game invite reads as an invite, not as its URL. */
 function preview(body: string): string {
-  const clean = body.replace(/\s+/g, ' ').trim();
-  return clean.length > 90 ? clean.slice(0, 89) + '…' : clean;
+  return truncate(messagePreview(body), 90);
 }
 
 export function MessagesProvider({ children }: { children: ReactNode }): React.JSX.Element {
