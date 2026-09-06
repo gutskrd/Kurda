@@ -50,12 +50,37 @@ describe('Games hub', () => {
   it('links a single-mode game straight to its page', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    // a game with one mode is a direct link rather than a chooser; there is
-    // more than one such game now, so check the set rather than assuming one
-    const direct = await screen.findAllByRole('link', { name: /^play/i });
-    const hrefs = direct.map((a) => a.getAttribute('href'));
+    // wait for the session to land: a signed-out visitor also sees Play links
+    // now, so querying too early answers about the wrong reader
+    await screen.findAllByRole('button', { name: /^play$/i });
+
+    const hrefs = screen.getAllByRole('link', { name: /^play/i }).map((a) => a.getAttribute('href'));
     expect(hrefs).toContain('/app/games/quiz');
     expect(hrefs).toContain('/app/games/race');
+  });
+
+  it('lets a signed-out visitor play the games you play alone', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
+    renderApp(<Games />, ['/app/games']);
+
+    const hrefs = (await screen.findAllByRole('link', { name: /^play/i })).map((a) => a.getAttribute('href'));
+    // solo is solo whether or not anyone knows who you are
+    expect(hrefs).toContain('/app/games/wordle');
+    expect(hrefs).toContain('/app/games/race');
+    // but nothing that puts you in front of another person
+    expect(hrefs).not.toContain('/app/games/wordle-battle');
+    expect(hrefs).not.toContain('/app/games/rhyme-match');
+    expect(hrefs).not.toContain('/app/games/quiz');
+  });
+
+  it('says which modes need an account rather than hiding them', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
+    renderApp(<Games />, ['/app/games']);
+
+    // knowing there is more here once you sign up is the reason to sign up
+    expect((await screen.findAllByText(/needs an account/)).length).toBeGreaterThan(0);
+    // a game with no solo mode at all is the only one marked closed
+    expect(screen.getAllByText('Sign in to play')).toHaveLength(1);
   });
 });
 

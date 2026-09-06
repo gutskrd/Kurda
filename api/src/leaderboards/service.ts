@@ -129,7 +129,14 @@ export class LeaderboardService {
   }
 
   /** One page of a board, plus the caller's own rank within that same board. */
-  async board(type: BoardType, userId: string, opts: BoardOptions = {}): Promise<Board> {
+  /**
+   * A leaderboard.
+   *
+   * `userId` is null for a signed-out reader, who gets the global board with no
+   * `me` on it. The friends and country scopes are about a particular person, so
+   * they come back empty rather than inventing an answer.
+   */
+  async board(type: BoardType, userId: string | null, opts: BoardOptions = {}): Promise<Board> {
     const now = opts.now ?? new Date();
     const scope = opts.scope ?? 'global';
     const limit = Math.min(Math.max(opts.limit ?? PAGE_SIZE, 1), MAX_PAGE);
@@ -141,6 +148,7 @@ export class LeaderboardService {
     }
 
     if (scope === 'friends') {
+      if (userId === null) return { type, scope, top: [], total: 0, me: null };
       const ids = await this.friendIds(userId);
       // you belong on your own friends board — a ranking you are absent from
       // gives you nothing to measure against
@@ -148,6 +156,7 @@ export class LeaderboardService {
       return this.fromRows(type, scope, userId, rows, now, limit, offset);
     }
 
+    if (userId === null) return { type, scope, top: [], total: 0, me: null, country: null };
     const country = await this.countryOf(userId);
     // no country set is different from an empty board, and the UI says so
     if (!country) return { type, scope, top: [], total: 0, me: null, country: null };
@@ -159,14 +168,15 @@ export class LeaderboardService {
   private async fromRows(
     type: BoardType,
     scope: BoardScope,
-    userId: string,
+    userId: string | null,
     all: ScoreRow[],
     now: Date,
     limit: number,
     offset: number,
   ): Promise<Board> {
     const top = withRanks(all.slice(offset, offset + limit), offset);
-    const myScore = await this.myScore(type, userId, now);
+    // a signed-out reader has no place on the board to find
+    const myScore = userId === null ? null : await this.myScore(type, userId, now);
     const me =
       myScore === null ? null : { score: myScore, rank: rankForScore(all.map((r) => r.score), myScore) };
     return { type, scope, top, total: all.length, me };
@@ -174,7 +184,7 @@ export class LeaderboardService {
 
   private async globalFromRedis(
     type: BoardType,
-    userId: string,
+    userId: string | null,
     now: Date,
     limit: number,
     offset: number,
@@ -196,7 +206,7 @@ export class LeaderboardService {
     );
 
     const total = await this.redis!.zcard(key);
-    const myScore = await this.myScore(type, userId, now);
+    const myScore = userId === null ? null : await this.myScore(type, userId, now);
     const me =
       myScore === null
         ? null

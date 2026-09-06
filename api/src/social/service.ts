@@ -108,7 +108,15 @@ export class SocialService {
   }
 
   /** A user's public profile, gated by their privacy setting + blocks. */
-  async profile(viewerId: string, targetId: string): Promise<PublicProfile> {
+  /**
+   * Someone's public profile.
+   *
+   * `viewerId` is null for a signed-out reader. That is not a special case so
+   * much as the least-privileged one: no blocks apply, nobody is a friend, and
+   * so a profile set to friends-only or nobody shows a stranger exactly what it
+   * shows any other non-friend.
+   */
+  async profile(viewerId: string | null, targetId: string): Promise<PublicProfile> {
     const row = await this.pool.query<{
       username: string;
       display_name: string | null;
@@ -191,13 +199,14 @@ export class SocialService {
     const u = row.rows[0];
     if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
 
-    const isSelf = viewerId === targetId;
+    const isSelf = viewerId !== null && viewerId === targetId;
     // a block hides the profile entirely — never reveal the block itself
-    if (!isSelf && (await this.friends.areBlocked(viewerId, targetId))) {
+    if (viewerId !== null && !isSelf && (await this.friends.areBlocked(viewerId, targetId))) {
       throw new AppError('USER_NOT_FOUND', 404, 'no such user');
     }
 
-    const friendStatus: FriendStatus = isSelf ? 'self' : await this.friends.statusBetween(viewerId, targetId);
+    const friendStatus: FriendStatus =
+      isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
     const canSeeDetail =
       isSelf ||
       u.profile_visibility === 'everyone' ||

@@ -4,8 +4,9 @@ import { MarketingLayout } from './layouts/MarketingLayout';
 import { AppLayout } from './layouts/AppLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AppGate } from './components/AppGate';
+import { RequireAccount } from './components/RequireAccount';
 import { Landing } from './pages/Landing';
-import { Stories, Poems } from './pages/Library';
 import { LibraryPostPage } from './pages/LibraryPostPage';
 import { Civak } from './pages/Civak';
 import { Saved } from './pages/Saved';
@@ -44,6 +45,18 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JS
   return <>{children}</>;
 }
 
+/**
+ * What /app opens to.
+ *
+ * Home greets you by name and offers your daily Zêr, which is nothing to a
+ * signed-out reader — they get the wall instead, which is what they came for.
+ */
+function AppHome(): React.JSX.Element {
+  const { status } = useAuth();
+  if (status === 'signedOut') return <Navigate to="/app/civak" replace />;
+  return <Home />;
+}
+
 export function App(): React.JSX.Element {
   return (
     <AuthProvider>
@@ -53,14 +66,14 @@ export function App(): React.JSX.Element {
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
         <Routes>
-          {/* public marketing site */}
+          {/* the landing page, and old public addresses that now live in the app */}
           <Route element={<MarketingLayout />}>
             <Route path="/" element={<Landing />} />
-            <Route path="/stories" element={<Stories />} />
-            <Route path="/poems" element={<Poems />} />
-            <Route path="/games" element={<Games />} />
             <Route path="*" element={<NotFound />} />
           </Route>
+          <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
+          <Route path="/poems" element={<Navigate to="/app/civak?section=gotin&kind=helbest" replace />} />
+          <Route path="/games" element={<Navigate to="/app/games" replace />} />
 
           {/* authentication */}
           <Route element={<AuthLayout />}>
@@ -94,21 +107,25 @@ export function App(): React.JSX.Element {
             />
           </Route>
 
-          {/* signed-in app */}
+          {/*
+            * The app, open to read. Anyone can browse the community, open a
+            * post and play alone; the pages that are about you, or about
+            * reaching other people, ask for an account themselves.
+            */}
           <Route
             path="/app"
             element={
-              <ProtectedRoute>
+              <AppGate>
                 <AppLayout />
-              </ProtectedRoute>
+              </AppGate>
             }
           >
-            <Route index element={<Home />} />
-            <Route path="learn" element={<Learn />} />
+            <Route index element={<AppHome />} />
+            <Route path="learn" element={<RequireAccount what="follow the course"><Learn /></RequireAccount>} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
             <Route path="civak" element={<Civak />} />
-            <Route path="saved" element={<Saved />} />
+            <Route path="saved" element={<RequireAccount what="keep posts"><Saved /></RequireAccount>} />
             {/* the three old walls now point at the one that replaced them, each
                 landing on its own filter so a bookmark still means something */}
             <Route path="stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
@@ -119,17 +136,30 @@ export function App(): React.JSX.Element {
             <Route path="games/wordle" element={<Wordle />} />
             <Route path="games/rhyme" element={<Rhyme />} />
             <Route path="games/race" element={<Race />} />
-            <Route path="games/quiz" element={<Quiz />} />
-            <Route path="games/wordle-battle" element={<WordleBattle />} />
-            <Route path="games/rhyme-match" element={<RhymeMatch />} />
+            <Route
+              path="games/quiz"
+              element={<RequireAccount what="play against other people"><Quiz /></RequireAccount>}
+            />
+            {/* the two games played against other people */}
+            <Route
+              path="games/wordle-battle"
+              element={<RequireAccount what="play against other people"><WordleBattle /></RequireAccount>}
+            />
+            <Route
+              path="games/rhyme-match"
+              element={<RequireAccount what="play against other people"><RhymeMatch /></RequireAccount>}
+            />
             <Route path="rankings" element={<Rankings />} />
-            <Route path="friends" element={<Friends />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="shop" element={<Shop />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="profile/edit" element={<ProfileEdit />} />
+            <Route path="friends" element={<RequireAccount what="add friends"><Friends /></RequireAccount>} />
+            <Route path="messages" element={<RequireAccount what="send messages"><Messages /></RequireAccount>} />
+            <Route path="shop" element={<RequireAccount what="buy anything"><Shop /></RequireAccount>} />
+            <Route path="profile" element={<RequireAccount what="have a profile"><Profile /></RequireAccount>} />
+            <Route
+              path="profile/edit"
+              element={<RequireAccount what="have a profile"><ProfileEdit /></RequireAccount>}
+            />
             <Route path="users/:id" element={<UserProfile />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<RequireAccount what="change your settings"><Settings /></RequireAccount>} />
           </Route>
         </Routes>
         </MessagesProvider>

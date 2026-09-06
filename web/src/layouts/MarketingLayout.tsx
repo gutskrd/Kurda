@@ -2,13 +2,17 @@ import { Outlet } from 'react-router-dom';
 import { TopNav, type NavItem } from '../components/TopNav';
 import { Footer } from '../components/Footer';
 
-const LINKS: NavItem[] = [
-  { label: 'Stories', to: '/stories' },
-  { label: 'Poems', to: '/poems' },
-  { label: 'Games', to: '/games' },
-];
+/**
+ * One way in.
+ *
+ * This used to list Stories, Poems and Games as separate public pages. They are
+ * not separate any more — Civak is one wall — and the app itself is now open to
+ * read, so the landing page points at it rather than keeping a second, thinner
+ * copy of the same content behind its own nav.
+ */
+const LINKS: NavItem[] = [{ label: 'Civak', to: '/app/civak' }];
 
-/** Public marketing shell: nav + page + footer. */
+/** The landing page's shell: nav + page + footer. */
 export function MarketingLayout(): React.JSX.Element {
   return (
     <>
