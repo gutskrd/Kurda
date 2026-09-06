@@ -252,20 +252,6 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         >
           View full profile
         </Button>
-        {/* Saved is yours, so it is reachable from your own profile rather than
-            from the social panel, which is about other people */}
-        {target.kind === 'me' && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              closeProfile();
-              navigate('/app/saved');
-            }}
-          >
-            Saved
-          </Button>
-        )}
       </div>
     </article>
   );

@@ -5,6 +5,7 @@ import { VISIBILITIES, type SocialService, type Visibility } from './service.js'
 import { toPublicProfileDto } from './profile-dto.js';
 import { AppError } from '../plugins/errors.js';
 import {
+  PROFILE_SECTIONS,
   isProfileSection,
   ProfileActivityService,
   type ActivityEntry,
@@ -81,15 +82,15 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       const visible = await activity.sections(id);
       if (!visible[kind] && viewerId !== id) return { entries: [] };
 
-      if (kind === 'stories') return { entries: await activity.posts(id, 'story', limit, offset) };
-      if (kind === 'poems') return { entries: await activity.posts(id, 'poem', limit, offset) };
       if (kind === 'games') return { entries: await activity.games(id, limit, offset) };
-      if (kind === 'likes' || kind === 'bookmarks') {
+      if (kind === 'likes' || kind === 'saved') {
+        // 'saved' is the word the app uses; the engagement table still calls the
+        // row a bookmark, and renaming a stored value is not worth a migration
         const engaged = await activity.engaged(id, kind === 'likes' ? 'like' : 'bookmark', limit, offset);
         return { entries: engaged.map(withImageUrl) };
       }
 
-      const rows = await activity.images(id, limit, offset);
+      const rows = await activity.allPosts(id, limit, offset);
       return { entries: rows.map(withImageUrl) };
     },
   );
@@ -99,14 +100,17 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     '/me/profile/sections',
     {
       schema: {
-        body: z.object({
-          stories: z.boolean().optional(),
-          poems: z.boolean().optional(),
-          images: z.boolean().optional(),
-          games: z.boolean().optional(),
-          likes: z.boolean().optional(),
-          bookmarks: z.boolean().optional(),
-        }),
+        /*
+         * Built from PROFILE_SECTIONS rather than listed again. The two had
+         * already drifted once: this schema still named the old sections, so a
+         * toggle for a new one was accepted with a 200 and silently dropped.
+         */
+        body: z.object(
+          Object.fromEntries(PROFILE_SECTIONS.map((s) => [s, z.boolean().optional()])) as Record<
+            (typeof PROFILE_SECTIONS)[number],
+            z.ZodOptional<z.ZodBoolean>
+          >,
+        ),
       },
       preHandler: requireAuth,
     },

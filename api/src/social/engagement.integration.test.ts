@@ -149,12 +149,13 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
 
     const likes = await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.mate!);
     expect(likes.statusCode).toBe(200);
-    const kinds = likes.json().entries.map((e: { kind: string }) => e.kind);
-    // a liked picture keeps its own kind, so the tab can render it as a picture
-    expect(kinds).toContain('images');
-    expect(kinds).toContain('stories');
+    // a liked picture and a liked story are both posts you liked; the row shows
+    // a thumbnail when there is one rather than living in a separate tab
+    const titles = likes.json().entries.map((e: { title: string }) => e.title);
+    expect(titles).toHaveLength(2);
+    expect(likes.json().entries.every((e: { kind: string }) => e.kind === 'posts')).toBe(true);
 
-    const saved = await call('GET', `/users/${ids.me}/activity?kind=bookmarks`, tokens.mate!);
+    const saved = await call('GET', `/users/${ids.me}/activity?kind=saved`, tokens.mate!);
     expect(saved.json().entries).toHaveLength(1);
   });
 

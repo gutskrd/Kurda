@@ -57,9 +57,9 @@ describe('ProfileModal', () => {
     // renders streak.current (not the object) — no crash, no error state
     expect(screen.getByText('7 days')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    // Saved is yours, so it hangs off your own profile rather than the social
-    // panel, which is about other people
-    expect(screen.getByRole('button', { name: 'Saved' })).toBeInTheDocument();
+    // Saved is a section of the full profile, not a button on the card — this
+    // is a glance at who you are, not a place to keep every link
+    expect(screen.queryByRole('button', { name: 'Saved' })).not.toBeInTheDocument();
   });
 
   it('renders equipped cosmetics, level and favorites for another user', async () => {

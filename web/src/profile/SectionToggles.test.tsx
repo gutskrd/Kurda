@@ -11,18 +11,18 @@ afterEach(() => {
 });
 
 const me = { id: 'u1', username: 'ada' } as unknown as MeProfile;
-const ALL = { stories: true, poems: true, images: true, games: true, likes: true, bookmarks: true };
+const ALL = { posts: true, games: true, likes: true, saved: true };
 
 describe('SectionToggles', () => {
   it('reflects what the profile actually shows, read from the public profile', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => jsonResponse(200, { sections: { ...ALL, images: false } })),
+      vi.fn(async () => jsonResponse(200, { sections: { ...ALL, saved: false } })),
     );
     renderApp(<SectionToggles me={me} />);
 
-    expect(await screen.findByRole('checkbox', { name: /Stories/ })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: /Dîmen/ })).not.toBeChecked();
+    expect(await screen.findByRole('checkbox', { name: /^Posts/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /^Saved/ })).not.toBeChecked();
   });
 
   it('offers a switch for what you have liked and saved', async () => {
@@ -31,8 +31,8 @@ describe('SectionToggles', () => {
 
     // liking something in public and having it listed on your profile are two
     // different choices, so each gets its own switch
-    expect(await screen.findByRole('checkbox', { name: /Likes/ })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: /Bookmarks/ })).toBeChecked();
+    expect(await screen.findByRole('checkbox', { name: /^Likes/ })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /^Saved/ })).toBeChecked();
   });
 
   it('saves one section at a time and takes the server’s answer', async () => {
@@ -42,21 +42,21 @@ describe('SectionToggles', () => {
       vi.fn(async (url: string, init?: RequestInit) => {
         if (url.includes('/me/profile/sections')) {
           sent.push(JSON.parse(String(init?.body)));
-          // the server merges; it comes back with poems off and the rest intact
-          return jsonResponse(200, { sections: { ...ALL, poems: false } });
+          // the server merges; it comes back with likes off and the rest intact
+          return jsonResponse(200, { sections: { ...ALL, likes: false } });
         }
         return jsonResponse(200, { sections: ALL });
       }),
     );
     renderApp(<SectionToggles me={me} />);
 
-    await userEvent.click(await screen.findByRole('checkbox', { name: /Poems/ }));
+    await userEvent.click(await screen.findByRole('checkbox', { name: /^Likes/ }));
 
     // only the one that changed is sent — a full object would let two quick
     // toggles overwrite each other
-    await waitFor(() => expect(sent).toEqual([{ poems: false }]));
-    await waitFor(() => expect(screen.getByRole('checkbox', { name: /Poems/ })).not.toBeChecked());
-    expect(screen.getByRole('checkbox', { name: /Stories/ })).toBeChecked();
+    await waitFor(() => expect(sent).toEqual([{ likes: false }]));
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: /^Likes/ })).not.toBeChecked());
+    expect(screen.getByRole('checkbox', { name: /^Posts/ })).toBeChecked();
   });
 
   it('says when a save failed, and leaves the box as it really is', async () => {

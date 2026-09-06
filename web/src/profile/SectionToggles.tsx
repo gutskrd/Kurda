@@ -5,12 +5,10 @@ import type { MeProfile, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
 
 const COPY: Record<ProfileSection, { label: string; hint: string }> = {
-  stories: { label: 'Stories', hint: 'Stories you have published.' },
-  poems: { label: 'Poems', hint: 'Poems you have published.' },
-  images: { label: 'Dîmen', hint: 'Pictures you have posted.' },
+  posts: { label: 'Posts', hint: 'Everything you have posted — gotin, çîrok, helbest, wêne and mîm.' },
   games: { label: 'Games', hint: 'How your recent games went.' },
   likes: { label: 'Likes', hint: 'Posts you have liked.' },
-  bookmarks: { label: 'Bookmarks', hint: 'Posts you have saved.' },
+  saved: { label: 'Saved', hint: 'Posts you have saved.' },
 };
 
 /**

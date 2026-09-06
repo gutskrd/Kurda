@@ -118,13 +118,13 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
   });
 
   it('gets no activity from a profile that is not public', async () => {
-    const res = await guest(`/users/${ids.shy}/activity?kind=stories`);
+    const res = await guest(`/users/${ids.shy}/activity?kind=posts`);
     expect(res.statusCode).toBe(200);
     expect(res.json().entries).toEqual([]);
   });
 
   it('reads what a public profile has posted', async () => {
-    const res = await guest(`/users/${ids.open}/activity?kind=stories`);
+    const res = await guest(`/users/${ids.open}/activity?kind=posts`);
     expect(res.statusCode).toBe(200);
     expect(res.json().entries.map((e: { title: string }) => e.title)).toContain(`Story ${suffix}`);
   });
