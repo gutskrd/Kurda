@@ -21,8 +21,15 @@ import { ArrowIcon, CloseIcon } from '../components/icons';
 const THREAD_POLL_LIVE = 20000;
 const THREAD_POLL_FALLBACK = 4000;
 
-/** Oldest→newest by server timestamp, so the thread always reads top to bottom. */
-function byTime<T extends { createdAt: string }>(msgs: T[]): T[] {
+/**
+ * Oldest→newest by server timestamp, so the thread always reads top to bottom.
+ *
+ * Takes anything, because `ok` is about the status code and not the shape: a 200
+ * whose body has no `messages` array used to spread `undefined` and throw here,
+ * taking the whole conversation down rather than showing an empty one.
+ */
+function byTime<T extends { createdAt: string }>(msgs: readonly T[] | undefined | null): T[] {
+  if (!Array.isArray(msgs)) return [];
   return [...msgs].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
 }
 
@@ -85,10 +92,10 @@ export function DmThread({
   );
 
   const load = useCallback(async () => {
-    const res = await client.get<{ messages: DmMessage[] }>(`/chat/${otherId}/messages`);
+    const res = await client.get<{ messages?: DmMessage[] }>(`/chat/${otherId}/messages`);
     if (res.ok) {
       // server order can vary; sort explicitly so it always reads oldest→newest
-      setMessages(byTime(res.data.messages));
+      setMessages(byTime(res.data?.messages));
     } else {
       setMessages((m) => m ?? []);
       setLoadError(describeError(res.error));
