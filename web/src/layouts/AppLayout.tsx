@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { TopNav, type NavItem } from '../components/TopNav';
+import { SocialRail } from '../social/SocialRail';
+import { RailProvider } from '../social/RailProvider';
 
 const LINKS: NavItem[] = [
   { label: 'Home', to: '/app' },
@@ -17,7 +19,7 @@ const LINKS: NavItem[] = [
 /** Signed-in app shell. Content pages set their own container + header. */
 export function AppLayout(): React.JSX.Element {
   return (
-    <>
+    <RailProvider>
       <a href="#main" className="skip-link">
         Skip to content
       </a>
@@ -25,6 +27,8 @@ export function AppLayout(): React.JSX.Element {
       <main id="main" className="app-main">
         <Outlet />
       </main>
-    </>
+      {/* after main, so a screen reader reaches the page before the sidebar */}
+      <SocialRail />
+    </RailProvider>
   );
 }

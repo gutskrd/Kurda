@@ -8,6 +8,7 @@ import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
 import { Avatar } from './Avatar';
 import { MenuIcon, CloseIcon, GearIcon } from './icons';
+import { RailToggle } from '../social/RailToggle';
 
 export interface NavItem {
   label: string;
@@ -95,6 +96,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
         <div className="nav-actions">
           {signedIn ? (
             <>
+              <RailToggle />
               <Link
                 to="/app/settings"
                 className="btn btn-ghost btn-sm nav-icon-btn nav-desktop-only"
