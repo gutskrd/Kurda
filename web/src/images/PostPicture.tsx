@@ -190,9 +190,11 @@ export function PictureComposer({
             <div className="picture-raw" role="status">
               <PhotoIcon size={26} />
               <p className="picture-raw-name">{file!.name}</p>
+              {/* no promise that it will convert: HEIC needs a codec the server
+                  may not carry, and it says so plainly if it cannot */}
               <p className="muted">
                 Your browser can’t show this kind of picture, so there’s nothing to add text or
-                stickers to — but it will post fine. MyKurda converts it for you.
+                stickers to — you can still post it as it is.
               </p>
             </div>
           )}

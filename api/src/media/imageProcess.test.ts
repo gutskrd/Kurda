@@ -50,6 +50,34 @@ describe('processImage', () => {
     }
   });
 
+  it('blames the missing codec, not the file, when a HEIC will not decode', async () => {
+    /*
+     * A real HEIC cannot be built here — sharp's prebuilt binaries cannot write
+     * HEVC either — so this is a well-formed `ftypheic` container with no
+     * picture in it. That is enough: it sniffs as HEIC and fails to decode,
+     * which is exactly what a genuine iPhone photo does on a build without the
+     * HEVC decoder. Telling that person their photo is corrupt would be wrong.
+     */
+    const heicHeader = Buffer.concat([
+      Buffer.from([0, 0, 0, 0x18]),
+      Buffer.from('ftypheic'),
+      Buffer.from('mif1heic'),
+      Buffer.alloc(128),
+    ]);
+
+    const res = await processImage(heicHeader, opts({ allowedTypes: new Set([...ALLOWED, 'image/heic']) }));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toBe('codec-unavailable');
+  });
+
+  it('does not blame a codec for a format it can decode', async () => {
+    // a truncated PNG is genuinely broken, and should still say so
+    const truncated = (await png(64, 64)).subarray(0, 40);
+    const res = await processImage(truncated, opts());
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toBe('malformed');
+  });
+
   it('rejects a non-image (magic bytes fail)', async () => {
     const res = await processImage(Buffer.from('this is definitely not an image file'), opts());
     expect(res.ok).toBe(false);
