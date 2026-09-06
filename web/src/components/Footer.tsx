@@ -20,8 +20,7 @@ export function Footer(): React.JSX.Element {
           <div className="footer-col">
             <h4>Learn</h4>
             <Link to="/learn">Lessons</Link>
-            <Link to="/stories">Stories</Link>
-            <Link to="/poems">Poems</Link>
+            <Link to="/app/civak">Civak</Link>
             <Link to="/games">Games</Link>
           </div>
 
