@@ -9,7 +9,8 @@ import {
   signatureBox,
   type Layer,
 } from './layers';
-import { stubCanvas } from './canvasStubs';
+import { stubCanvas, stubImage } from './canvasStubs';
+import { ensureSticker } from './stickers';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -151,5 +152,40 @@ describe('drawLayers', () => {
     // a plate and a shadow behind nothing would be a mark on the picture
     expect(calls.some((c) => c.startsWith('fillText'))).toBe(false);
     expect(calls).not.toContain('fill');
+  });
+
+  describe('picture stickers', () => {
+    it('draws a loaded one as an image, not as text', async () => {
+      // jsdom never loads a real file, so the Image has to be the stub that does
+      stubImage({ width: 512, height: 512 });
+      await ensureSticker('/stickers/kurdistan_badge.webp');
+      const { calls } = stubCanvas();
+
+      drawLayers(document.createElement('canvas'), image, 900, 700, [
+        sticker({ src: '/stickers/kurdistan_badge.webp' }),
+      ]);
+
+      // one drawImage for the photo itself, one for the sticker
+      expect(calls.filter((c) => c === 'drawImage')).toHaveLength(2);
+      expect(calls.some((c) => c.startsWith('fillText'))).toBe(false);
+    });
+
+    it('draws nothing for one that has not loaded yet', () => {
+      const { calls } = stubCanvas();
+
+      drawLayers(document.createElement('canvas'), image, 900, 700, [
+        sticker({ src: '/stickers/never-loaded.webp' }),
+      ]);
+
+      // only the photo — a half-loaded sticker must not become a broken box
+      expect(calls.filter((c) => c === 'drawImage')).toHaveLength(1);
+      expect(calls.some((c) => c.startsWith('fillText'))).toBe(false);
+    });
+
+    it('still draws an emoji sticker as text', () => {
+      const { calls } = stubCanvas();
+      drawLayers(document.createElement('canvas'), image, 900, 700, [sticker({ glyph: '🔥' })]);
+      expect(calls).toContain('fillText:🔥');
+    });
   });
 });

@@ -15,12 +15,9 @@ import {
 } from './layers';
 import { ColorPicker } from './ColorPicker';
 import { CloseIcon, FeatherIcon, PhotoIcon, TextIcon } from '../components/icons';
+import { EMOJI_STICKERS, PICTURE_STICKERS, ensureSticker } from './stickers';
 
-/** A small, deliberately unfussy set — a picker of 3000 is a search problem. */
-const STICKERS = [
-  '❤️', '🔥', '✨', '⭐', '😂', '😍', '😮', '😢', '👍', '👏',
-  '🎉', '🌹', '🌞', '🌙', '☕', '🎵', '⚽', '🏔️', '🕊️', '💯',
-];
+
 
 type Tool = 'select' | 'draw';
 
@@ -55,6 +52,7 @@ export function PhotoEditor({
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
 }): React.JSX.Element {
   const [tool, setTool] = useState<Tool>('select');
+  const [stickerTab, setStickerTab] = useState<'marks' | 'emoji'>('marks');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [color, setColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(0.012);
@@ -209,7 +207,13 @@ export function PhotoEditor({
           <button
             type="button"
             className="editor-add"
-            onClick={() => add({ kind: 'sticker', id: newId(), glyph: '❤️', size: 0.14, rotation: 0, x: 0.5, y: 0.4 })}
+            onClick={() => {
+              // a mark by default, matching the tab the picker opens on
+              const first = PICTURE_STICKERS[0]!;
+              void ensureSticker(first.src).then(() =>
+                add({ kind: 'sticker', id: newId(), glyph: '❤️', src: first.src, size: 0.18, rotation: 0, x: 0.5, y: 0.4 }),
+              );
+            }}
           >
             <FeatherIcon size={16} /> Sticker
           </button>
@@ -281,20 +285,65 @@ export function PhotoEditor({
               </label>
             </>
           ) : (
-            <div className="sticker-grid" role="group" aria-label="Sticker">
-              {STICKERS.map((glyph) => (
+            <>
+              {/* two kinds of sticker, and a hundred emoji would bury seven
+                  marks if they shared one grid */}
+              <div className="seg seg-sub" role="group" aria-label="Sticker kind">
                 <button
-                  key={glyph}
                   type="button"
-                  className={`sticker${selected.glyph === glyph ? ' is-on' : ''}`}
-                  aria-label={glyph}
-                  aria-pressed={selected.glyph === glyph}
-                  onClick={() => update(selected.id, { glyph })}
+                  className={`seg-btn${stickerTab === 'marks' ? ' is-active' : ''}`}
+                  aria-pressed={stickerTab === 'marks'}
+                  onClick={() => setStickerTab('marks')}
                 >
-                  {glyph}
+                  Nîşan
                 </button>
-              ))}
-            </div>
+                <button
+                  type="button"
+                  className={`seg-btn${stickerTab === 'emoji' ? ' is-active' : ''}`}
+                  aria-pressed={stickerTab === 'emoji'}
+                  onClick={() => setStickerTab('emoji')}
+                >
+                  Emoji
+                </button>
+              </div>
+
+              {stickerTab === 'marks' ? (
+                <div className="sticker-grid sticker-grid-pics" role="group" aria-label="Sticker">
+                  {PICTURE_STICKERS.map((s) => (
+                    <button
+                      key={s.src}
+                      type="button"
+                      className={`sticker sticker-pic${selected.src === s.src ? ' is-on' : ''}`}
+                      aria-label={s.name}
+                      title={s.name}
+                      aria-pressed={selected.src === s.src}
+                      onClick={() => {
+                        // load before selecting, so the first draw has something
+                        void ensureSticker(s.src).then(() => update(selected.id, { src: s.src }));
+                      }}
+                    >
+                      <img src={s.src} alt="" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="sticker-grid" role="group" aria-label="Sticker">
+                  {EMOJI_STICKERS.map((glyph) => (
+                    <button
+                      key={glyph}
+                      type="button"
+                      className={`sticker${selected.glyph === glyph && !selected.src ? ' is-on' : ''}`}
+                      aria-label={glyph}
+                      aria-pressed={selected.glyph === glyph && !selected.src}
+                      // clearing src is what turns a picture back into a character
+                      onClick={() => update(selected.id, { glyph, src: undefined })}
+                    >
+                      {glyph}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           <label className="tool-row">

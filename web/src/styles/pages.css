@@ -4200,6 +4200,29 @@ a.mkp-activity-row:hover {
   background: var(--gold-soft);
 }
 
+/* the marks are pictures, and seven of them want room an emoji does not */
+.sticker-grid-pics {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.sticker-pic {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 6px;
+  /* a chequer behind them, so a white-on-transparent mark is still visible */
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.05) 75%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+}
+.sticker-pic img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /* ---- the colour picker -------------------------------------------------- */
 .cpick {
   display: flex;

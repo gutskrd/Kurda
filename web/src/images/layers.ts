@@ -1,3 +1,4 @@
+import { stickerImage } from './stickers';
 import { fontStack, layoutLines, type FontKey } from './photoText';
 
 /**
@@ -32,9 +33,23 @@ export interface TextLayerV2 extends Common {
   plate: boolean;
 }
 
+/**
+ * A sticker: either a character or a picture.
+ *
+ * `glyph` is an emoji, drawn as text in the system emoji font. `src` is a file
+ * under /stickers, drawn as an image. One of the two is set — a sticker with a
+ * `src` ignores its glyph — and they share everything else, so placing, turning
+ * and resizing needed no second implementation.
+ *
+ * The pictures are served from this app's own origin on purpose: drawing a
+ * cross-origin image onto a canvas taints it, and a tainted canvas cannot be
+ * exported at all, which would break posting rather than just the sticker.
+ */
 export interface StickerLayer extends Common {
   kind: 'sticker';
   glyph: string;
+  /** path under /stickers when this is a picture rather than a character */
+  src?: string;
   size: number;
 }
 
@@ -169,15 +184,30 @@ function drawText(ctx: CanvasRenderingContext2D, layer: TextLayerV2, width: numb
 }
 
 function drawSticker(ctx: CanvasRenderingContext2D, layer: StickerLayer, width: number, height: number): void {
-  const fontPx = Math.round(Math.min(width, height) * layer.size);
+  const px = Math.round(Math.min(width, height) * layer.size);
   ctx.save();
   ctx.translate(width * layer.x, height * layer.y);
   ctx.rotate((layer.rotation * Math.PI) / 180);
-  // a system emoji font, so the glyph is the one the writer picked
-  ctx.font = `${fontPx}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(layer.glyph, 0, 0);
+
+  if (layer.src) {
+    const img = stickerImage(layer.src);
+    // not loaded yet: draw nothing this frame rather than a broken box. The
+    // editor redraws when it arrives, and the export waits for all of them.
+    if (img) {
+      // `px` is the longest edge, so a tall sticker and a wide one at the same
+      // size setting take up the same amount of picture
+      const scale = px / Math.max(img.naturalWidth, img.naturalHeight);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+    }
+  } else {
+    // a system emoji font, so the glyph is the one the writer picked
+    ctx.font = `${px}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(layer.glyph, 0, 0);
+  }
   ctx.restore();
 }
 
