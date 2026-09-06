@@ -145,6 +145,22 @@ describe('PictureComposer', () => {
     expect(screen.queryByText(/can’t show this kind of picture/i)).not.toBeInTheDocument();
   });
 
+  it('says it is an editor, once there is something to edit', async () => {
+    signIn();
+    uploadFetch();
+    show();
+
+    // before: four unlabelled grey words under the photo, and no panel until you
+    // had both added a layer and selected one — so it looked finished on arrival
+    await pick();
+
+    expect(screen.getByText('Edit your picture')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add words/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add a sticker/ })).toBeInTheDocument();
+    // and it says what to do while the picture is still bare
+    expect(screen.getByText(/Add words or a sticker, or draw on it/)).toBeInTheDocument();
+  });
+
   it('offers nothing to post until there is a picture', async () => {
     signIn();
     uploadFetch();

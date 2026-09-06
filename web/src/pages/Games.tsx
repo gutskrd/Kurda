@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { FeatherIcon, BookIcon, TrophyIcon } from '../components/icons';
+import { FeatherIcon, BookIcon, KeyboardIcon, TrophyIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 
 interface GameMode {
@@ -42,7 +42,9 @@ const GAMES: GameCard[] = [
     ],
   },
   {
-    icon: <FeatherIcon />,
+    // a keyboard, not a quill: this one is about keys, and a second quill made
+    // it look like another version of Rhyming Words
+    icon: <KeyboardIcon />,
     name: 'Typing Race',
     body: 'Type a Kurdish text as fast and as accurately as you can — speed is measured server-side.',
     modes: [

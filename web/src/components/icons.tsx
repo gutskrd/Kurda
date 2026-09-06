@@ -27,6 +27,7 @@ import { Coin } from '@phosphor-icons/react/dist/icons/Coin';
 import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
 import { EyeSlash } from '@phosphor-icons/react/dist/icons/EyeSlash';
 import { PuzzlePiece } from '@phosphor-icons/react/dist/icons/PuzzlePiece';
+import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
 import { Gift } from '@phosphor-icons/react/dist/icons/Gift';
 import { Heart } from '@phosphor-icons/react/dist/icons/Heart';
@@ -76,6 +77,8 @@ export const FeatherIcon = named(PenNib, 22);
 /* A puzzle piece, not a console controller: these are word games — Wordle,
    rhyming, a race to answer — and a gamepad promised the wrong thing. */
 export const GameIcon = named(PuzzlePiece, 22);
+/** Typing, specifically — the race is about keys, not about writing. */
+export const KeyboardIcon = named(Keyboard, 22);
 export const PhotoIcon = named(ImageGlyph, 22);
 export const HeartIcon = named(Heart, 22);
 export const CommentIcon = named(ChatCircle, 22);
