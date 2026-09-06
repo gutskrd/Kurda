@@ -26,6 +26,7 @@ interface RailContext {
  */
 const ABSENT: RailContext = {
   data: {
+    you: null,
     friends: [],
     requests: [],
     challenges: [],

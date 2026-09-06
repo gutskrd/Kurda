@@ -1,24 +1,24 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { TopNav, type NavItem } from '../components/TopNav';
+import { BookIcon, ChatsIcon, GameIcon, HomeIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
 
 /** What anyone can reach, signed in or not. */
 const OPEN_LINKS: NavItem[] = [
-  { label: 'Home', to: '/app' },
+  { label: 'Home', to: '/app', icon: <HomeIcon size={18} /> },
   // one wall replaces the three pages that were the same page three times
-  { label: 'Civak', to: '/app/civak' },
-  { label: 'Games', to: '/app/games' },
-  { label: 'Rankings', to: '/app/rankings' },
+  { label: 'Civak', to: '/app/civak', icon: <WallIcon size={18} /> },
+  { label: 'Games', to: '/app/games', icon: <GameIcon size={18} /> },
+  { label: 'Rankings', to: '/app/rankings', icon: <TrophyIcon size={18} /> },
 ];
 
 /** What only an account can. */
 const MEMBER_LINKS: NavItem[] = [
-  { label: 'Learn', to: '/app/learn' },
-  { label: 'Friends', to: '/app/friends' },
-  { label: 'Messages', to: '/app/messages' },
-  { label: 'Shop', to: '/app/shop' },
+  { label: 'Learn', to: '/app/learn', icon: <BookIcon size={18} /> },
+  { label: 'Friends', to: '/app/friends', icon: <UsersIcon size={18} /> },
+  { label: 'Messages', to: '/app/messages', icon: <ChatsIcon size={18} /> },
 ];
 
 /**

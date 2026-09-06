@@ -28,6 +28,11 @@ import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
 import { EyeSlash } from '@phosphor-icons/react/dist/icons/EyeSlash';
 import { PuzzlePiece } from '@phosphor-icons/react/dist/icons/PuzzlePiece';
 import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
+import { House } from '@phosphor-icons/react/dist/icons/House';
+import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
+import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
+import { Diamond } from '@phosphor-icons/react/dist/icons/Diamond';
+import { SignOut } from '@phosphor-icons/react/dist/icons/SignOut';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
 import { Gift } from '@phosphor-icons/react/dist/icons/Gift';
 import { Heart } from '@phosphor-icons/react/dist/icons/Heart';
@@ -109,6 +114,15 @@ export const TextIcon = named(TextAa, 22);
 export const TrashIcon = named(Trash, 22);
 /** Add something — it makes no claim about what. */
 export const PlusIcon = named(Plus, 22);
+
+/* ---- the shell: one glyph per destination, so the nav reads at a glance ---- */
+export const HomeIcon = named(House, 22);
+/** The community wall — a page of what everyone wrote, not a group of people. */
+export const WallIcon = named(Newspaper, 22);
+export const ShopIcon = named(Storefront, 22);
+/** Gems, the harder currency; Zêr is the CoinIcon above. */
+export const GemIcon = named(Diamond, 22);
+export const SignOutIcon = named(SignOut, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

@@ -34,6 +34,8 @@ describe('Settings page', () => {
     expect(screen.getByRole('button', { name: 'Anyone on the web' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'MyKurda members' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Friends only' })).toBeInTheDocument();
+    // signing out moved here from the nav, where it sat beside your own face
+    expect(screen.getByRole('button', { name: /^sign out$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /log out everywhere/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /request data export/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^delete account$/i })).toBeInTheDocument();

@@ -45,10 +45,12 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       deps.inbox.unreadCount(me),
     ]);
 
-    // activity and invites both need the friend list, so they wait for it
-    const [activity, challenges] = await Promise.all([
+    // activity and invites both need the friend list, so they wait for it;
+    // `self` does not, and rides along rather than costing a third round trip
+    const [activity, challenges, you] = await Promise.all([
       rail.liveActivity(friends.map((f) => f.userId)),
       incomingChallenges(deps.challenges, me, friends),
+      rail.self(me, publicUrl),
     ]);
 
     const withActivity: RailFriend[] = friends.map((f) => ({
@@ -59,6 +61,7 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
     const unreadByGroup = new Map(unreadGroups.map((g) => [g.groupId, g.unread]));
 
     return {
+      you,
       friends: withActivity,
       requests,
       challenges,
