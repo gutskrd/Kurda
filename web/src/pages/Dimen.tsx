@@ -6,6 +6,7 @@ import type { ImagePost } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Avatar } from '../components/Avatar';
 import { HeartIcon, CommentIcon } from '../components/icons';
+import { PostPicture } from '../images/PostPicture';
 
 const PAGE = 24;
 
@@ -59,6 +60,9 @@ export function Dimen(): React.JSX.Element {
         <span className="eyebrow">Dîmen · Pictures</span>
         <h1 className="page-title">Dîmen</h1>
         <p className="page-sub">Pictures and memes from the community.</p>
+        {/* your picture goes to the front of the wall, where you can see it —
+            not somewhere down a list you have to go hunting through */}
+        <PostPicture onPosted={(post) => setPosts((prev) => [post, ...(prev ?? [])])} />
       </div>
 
       <div className="dimen-filters">

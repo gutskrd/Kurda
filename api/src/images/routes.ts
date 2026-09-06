@@ -86,7 +86,8 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
       }
       const res = await images.create(req.user!.id, authorRole(req), body);
       if (!res.ok) return reply.code(422).send({ code: 'INVALID_POST', message: 'an image is required' });
-      return reply.code(201).send(withUrl(res.post));
+      // with its byline, so the wall can show the new picture without refetching
+      return reply.code(201).send(withUrl((await images.withAuthors([res.post], publicUrl))[0]!));
     },
   );
 

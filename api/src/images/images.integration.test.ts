@@ -101,6 +101,8 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     await seedMedia('media/byline.jpg');
     const made = await call('POST', '/images', authorTok, { imageMediaId: 'media/byline.jpg', caption: 'a byline' });
     const id = made.json().id;
+    // on the way back out too, so the wall can show it without refetching
+    expect(made.json().author.username).toBe(`img_author_${suffix}`.slice(0, 30));
 
     const read = await call('GET', `/images/${id}`);
     expect(read.json().author).toMatchObject({ username: `img_author_${suffix}`.slice(0, 30) });
