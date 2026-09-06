@@ -11,16 +11,16 @@ const DATABASE_URL = process.env.DATABASE_URL;
 describe('resolveSections', () => {
   it('shows every section when nothing has been chosen', () => {
     // an existing account should not need a backfill to look normal
-    expect(resolveSections({})).toEqual({ stories: true, poems: true, images: true, games: true, likes: true, bookmarks: true });
-    expect(resolveSections(null)).toEqual({ stories: true, poems: true, images: true, games: true, likes: true, bookmarks: true });
+    expect(resolveSections({})).toEqual({ posts: true, games: true, likes: true, saved: true });
+    expect(resolveSections(null)).toEqual({ posts: true, games: true, likes: true, saved: true });
   });
 
   it('honours an explicit false and nothing else', () => {
-    expect(resolveSections({ poems: false })).toMatchObject({ poems: false, stories: true });
+    expect(resolveSections({ likes: false })).toMatchObject({ likes: false, posts: true });
   });
 
   it('ignores junk in the bag rather than trusting it', () => {
-    expect(resolveSections({ poems: 'no', nonsense: true })).toMatchObject({ poems: true, stories: true });
+    expect(resolveSections({ likes: 'no', nonsense: true })).toMatchObject({ likes: true, posts: true });
   });
 });
 
@@ -99,15 +99,17 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
     await app.close();
   });
 
-  it('lists what the owner has posted', async () => {
-    const stories = await call('GET', `/users/${ids.owner}/activity?kind=stories`, tokens.viewer!);
-    expect(stories.statusCode).toBe(200);
-    expect(stories.json().entries.map((e: { title: string }) => e.title)).toContain(`Story ${suffix}`);
+  it('lists everything the owner has posted in one section', async () => {
+    // stories and poems were separate tabs; they are one Posts list now, the
+    // same way the community wall stopped being three pages
+    const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
+    expect(res.statusCode).toBe(200);
 
-    const poems = await call('GET', `/users/${ids.owner}/activity?kind=poems`, tokens.viewer!);
-    expect(poems.json().entries.map((e: { title: string }) => e.title)).toContain(`Poem ${suffix}`);
-    // a story must not turn up under poems
-    expect(poems.json().entries.map((e: { title: string }) => e.title)).not.toContain(`Story ${suffix}`);
+    const titles = res.json().entries.map((e: { title: string }) => e.title);
+    expect(titles).toContain(`Story ${suffix}`);
+    expect(titles).toContain(`Poem ${suffix}`);
+    // and every entry says which section it belongs to
+    expect(res.json().entries.every((e: { kind: string }) => e.kind === 'posts')).toBe(true);
   });
 
   it('interleaves finished games from every mode, newest first', async () => {
@@ -132,43 +134,43 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
 
   it('the profile says which sections it shows', async () => {
     const res = await call('GET', `/users/${ids.owner}`, tokens.viewer!);
-    expect(res.json().sections).toEqual({ stories: true, poems: true, images: true, games: true, likes: true, bookmarks: true });
+    expect(res.json().sections).toEqual({ posts: true, games: true, likes: true, saved: true });
   });
 
   it('a hidden section returns nothing, and says nothing about being hidden', async () => {
-    expect((await call('PATCH', '/me/profile/sections', tokens.owner!, { poems: false })).statusCode).toBe(200);
+    expect((await call('PATCH', '/me/profile/sections', tokens.owner!, { posts: false })).statusCode).toBe(200);
 
-    const res = await call('GET', `/users/${ids.owner}/activity?kind=poems`, tokens.viewer!);
+    const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
     // an empty list, not an error: a viewer should not be able to tell a hidden
     // section from one that simply has nothing in it
     expect(res.statusCode).toBe(200);
     expect(res.json().entries).toEqual([]);
 
     // …but the person who wrote them still sees their own
-    const own = await call('GET', `/users/${ids.owner}/activity?kind=poems`, tokens.owner!);
+    const own = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.owner!);
     expect(own.json().entries.length).toBeGreaterThan(0);
 
     // and the profile stops advertising the tab
-    expect((await call('GET', `/users/${ids.owner}`, tokens.viewer!)).json().sections.poems).toBe(false);
+    expect((await call('GET', `/users/${ids.owner}`, tokens.viewer!)).json().sections.posts).toBe(false);
     // turning it back on restores it
-    await call('PATCH', '/me/profile/sections', tokens.owner!, { poems: true });
-    expect((await call('GET', `/users/${ids.owner}/activity?kind=poems`, tokens.viewer!)).json().entries.length)
+    await call('PATCH', '/me/profile/sections', tokens.owner!, { posts: true });
+    expect((await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!)).json().entries.length)
       .toBeGreaterThan(0);
   });
 
   it('one toggle does not reset the others', async () => {
-    await call('PATCH', '/me/profile/sections', tokens.owner!, { images: false });
+    await call('PATCH', '/me/profile/sections', tokens.owner!, { saved: false });
     const res = await call('PATCH', '/me/profile/sections', tokens.owner!, { games: false });
-    expect(res.json().sections).toMatchObject({ images: false, games: false, stories: true });
-    await call('PATCH', '/me/profile/sections', tokens.owner!, { images: true, games: true });
+    expect(res.json().sections).toMatchObject({ saved: false, games: false, posts: true });
+    await call('PATCH', '/me/profile/sections', tokens.owner!, { saved: true, games: true });
   });
 
   it('a private profile has no public activity either', async () => {
     await call('PUT', '/me/privacy', tokens.owner!, { visibility: 'nobody' });
-    const res = await call('GET', `/users/${ids.owner}/activity?kind=stories`, tokens.viewer!);
+    const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
     expect(res.json().entries).toEqual([]);
     // …but the owner still sees their own
-    const own = await call('GET', `/users/${ids.owner}/activity?kind=stories`, tokens.owner!);
+    const own = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.owner!);
     expect(own.json().entries.length).toBeGreaterThan(0);
     await call('PUT', '/me/privacy', tokens.owner!, { visibility: 'everyone' });
   });

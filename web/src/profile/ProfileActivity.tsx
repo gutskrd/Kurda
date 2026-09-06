@@ -4,26 +4,22 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ActivityEntry, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
-import { BookIcon, BookmarkIcon, FeatherIcon, GameIcon, HeartIcon, PhotoIcon } from '../components/icons';
+import { BookmarkIcon, GameIcon, HeartIcon, WallIcon } from '../components/icons';
 
 const PAGE = 12;
 
 /** What each tab is called, and the icon that stands in for an empty one. */
 const LABELS: Record<ProfileSection, string> = {
-  stories: 'Stories',
-  poems: 'Poems',
-  images: 'Dîmen',
+  posts: 'Posts',
   games: 'Games',
   likes: 'Likes',
-  bookmarks: 'Saved',
+  saved: 'Saved',
 };
 
 function SectionGlyph({ kind, size = 22 }: { kind: ProfileSection; size?: number }): React.JSX.Element {
-  if (kind === 'stories') return <BookIcon size={size} />;
-  if (kind === 'poems') return <FeatherIcon size={size} />;
-  if (kind === 'images') return <PhotoIcon size={size} />;
+  if (kind === 'posts') return <WallIcon size={size} />;
   if (kind === 'likes') return <HeartIcon size={size} />;
-  if (kind === 'bookmarks') return <BookmarkIcon size={size} />;
+  if (kind === 'saved') return <BookmarkIcon size={size} />;
   return <GameIcon size={size} />;
 }
 
@@ -143,36 +139,19 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
 
   return (
     <div id={`mkp-panel-${kind}`} role="tabpanel" aria-labelledby={`mkp-tab-${kind}`}>
-      {kind === 'images' ? (
-        <div className="mkp-gallery">
-          {entries.map((e) => {
-            const shot = (
-              <>
-                {e.imageUrl ? (
-                  <img src={e.imageUrl} alt={e.title} loading="lazy" />
-                ) : (
-                  <span className="mkp-shot-empty" aria-hidden="true"><PhotoIcon size={24} /></span>
-                )}
-                <figcaption>{e.title}</figcaption>
-              </>
-            );
-            return (
-              <figure className="mkp-shot" key={e.id}>
-                {/* a thumbnail is a promise that there is something to open */}
-                {e.href ? <Link to={e.href}>{shot}</Link> : shot}
-              </figure>
-            );
-          })}
-        </div>
-      ) : (
-        <ul className="mkp-activity-list">
-          {entries.map((e) => (
-            <li key={e.id}>
-              <ActivityRow entry={e} />
-            </li>
-          ))}
-        </ul>
-      )}
+      {/*
+        One list for everything, rather than a gallery for pictures and a list
+        for words. Posts is now both at once, and a row carries its own
+        thumbnail when it has one — which a gallery could not do for a saying,
+        and a plain list could not do for a picture.
+      */}
+      <ul className="mkp-activity-list">
+        {entries.map((e) => (
+          <li key={e.id}>
+            <ActivityRow entry={e} />
+          </li>
+        ))}
+      </ul>
 
       {more && (
         <button type="button" className="mkp-more" onClick={() => void load(entries.length)}>
@@ -187,7 +166,11 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
 function ActivityRow({ entry }: { entry: ActivityEntry }): React.JSX.Element {
   const inner = (
     <>
-      <span className="mkp-activity-glyph" aria-hidden="true"><SectionGlyph kind={entry.kind} /></span>
+      {entry.imageUrl ? (
+        <img className="mkp-activity-shot" src={entry.imageUrl} alt="" loading="lazy" />
+      ) : (
+        <span className="mkp-activity-glyph" aria-hidden="true"><SectionGlyph kind={entry.kind} /></span>
+      )}
       <span className="mkp-activity-meta">
         <span className="mkp-activity-title">{entry.title}</span>
         {entry.detail && <span className="mkp-activity-detail">{entry.detail}</span>}

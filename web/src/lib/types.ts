@@ -204,7 +204,7 @@ export interface FeedItem {
 }
 
 /** The activity sections a profile can show, in the order they appear. */
-export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games', 'likes', 'bookmarks'] as const;
+export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'saved'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 export type ProfileSections = Record<ProfileSection, boolean>;
 

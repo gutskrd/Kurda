@@ -11,7 +11,15 @@ import { EngagementService, type EngagementKind } from './engagement-service.js'
  */
 
 /** The sections a profile can show, in the order they appear. */
-export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games', 'likes', 'bookmarks'] as const;
+/*
+ * What a profile shows, in the order it shows it.
+ *
+ * 'posts' is everything they wrote or pictured — stories, poems, gotin, wêne,
+ * mîm — for the same reason the community wall stopped being three pages: they
+ * were one thing split three ways. 'saved' is what the app calls it everywhere
+ * else, so the profile calls it that too.
+ */
+export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'saved'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 
 export function isProfileSection(value: string): value is ProfileSection {
@@ -82,54 +90,56 @@ export class ProfileActivityService {
     return resolveSections(res.rows[0]?.profile_sections);
   }
 
-  /** Published stories or poems by this author, newest first. */
-  async posts(userId: string, type: 'story' | 'poem', limit: number, offset: number): Promise<ActivityEntry[]> {
-    const rows = await this.pool.query<{ id: string; title: string; body: string; created_at: Date }>(
-      `SELECT id, title, body, COALESCE(published_at, created_at) AS created_at
-         FROM library_posts
-        WHERE author_id = $1 AND type = $2 AND status = 'published'
-        ORDER BY COALESCE(published_at, created_at) DESC
-        LIMIT $3 OFFSET $4`,
-      [userId, type, limit, offset],
-    );
-    return rows.rows.map((r) => ({
-      id: r.id,
-      kind: type === 'story' ? 'stories' : 'poems',
-      title: r.title,
-      detail: excerpt(r.body),
-      href: `/app/library/${r.id}`,
-      imageUrl: null,
-      at: r.created_at,
-    }));
-  }
-
-  /** Published images by this author. The caller resolves the media key. */
-  async images(
+  /**
+   * Everything this person posted, newest first, whatever kind it is.
+   *
+   * The profile used to split writing into Stories and Poems and keep pictures
+   * in a third tab, which is the same three-pages-for-one-thing the community
+   * wall stopped doing. One UNION rather than three requests the client would
+   * have to interleave — and paging works, which merging three lists client-side
+   * could never do honestly.
+   */
+  async allPosts(
     userId: string,
     limit: number,
     offset: number,
   ): Promise<Array<ActivityEntry & { mediaId: string | null }>> {
     const rows = await this.pool.query<{
-      id: string; caption: string | null; image_media_id: string | null; created_at: Date;
+      id: string;
+      source: 'library' | 'image';
+      type: string;
+      title: string | null;
+      body: string | null;
+      media_id: string | null;
+      created_at: Date;
     }>(
-      `SELECT id, caption, image_media_id, created_at
+      `SELECT id, 'library' AS source, type, title, body, NULL AS media_id,
+              COALESCE(published_at, created_at) AS created_at
+         FROM library_posts
+        WHERE author_id = $1 AND status = 'published'
+        UNION ALL
+       SELECT id, 'image', category, caption, NULL, image_media_id, created_at
          FROM image_posts
         WHERE author_id = $1 AND status = 'published'
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3`,
       [userId, limit, offset],
     );
+
     return rows.rows.map((r) => ({
       id: r.id,
-      kind: 'images' as const,
-      title: r.caption?.trim() || 'Untitled',
-      detail: null,
-      href: `/app/dimen/${r.id}`,
+      kind: 'posts' as const,
+      // a gotin and a picture both go without a title; falling back to the body
+      // beats a column of "Untitled"
+      title: r.title?.trim() || excerpt(r.body ?? '') || 'Untitled',
+      detail: r.title?.trim() ? excerpt(r.body ?? '') : null,
+      href: r.source === 'image' ? `/app/dimen/${r.id}` : `/app/library/${r.id}`,
       imageUrl: null,
-      mediaId: r.image_media_id,
+      mediaId: r.media_id,
       at: r.created_at,
     }));
   }
+
 
   /**
    * What this person has liked or saved, newest first.
@@ -163,16 +173,18 @@ export class ProfileActivityService {
   private async libraryByIds(ids: string[]): Promise<Map<string, ActivityEntryWithMedia>> {
     const map = new Map<string, ActivityEntryWithMedia>();
     if (ids.length === 0) return map;
-    const rows = await this.pool.query<{ id: string; type: 'story' | 'poem'; title: string; body: string }>(
+    const rows = await this.pool.query<{ id: string; type: string; title: string | null; body: string }>(
       `SELECT id, type, title, body FROM library_posts WHERE id = ANY($1) AND status = 'published'`,
       [ids],
     );
     for (const r of rows.rows) {
       map.set(r.id, {
         id: r.id,
-        kind: r.type === 'story' ? 'stories' : 'poems',
-        title: r.title,
-        detail: excerpt(r.body),
+        // inside likes/saved these are all just posts you engaged with
+        kind: 'posts',
+        // a gotin has no title, so the words stand in for one
+        title: r.title?.trim() || excerpt(r.body) || 'Untitled',
+        detail: r.title?.trim() ? excerpt(r.body) : null,
         href: `/app/library/${r.id}`,
         imageUrl: null,
         at: new Date(),
@@ -192,7 +204,7 @@ export class ProfileActivityService {
     for (const r of rows.rows) {
       map.set(r.id, {
         id: r.id,
-        kind: 'images',
+        kind: 'posts',
         title: r.caption?.trim() || 'Untitled',
         detail: null,
         href: `/app/dimen/${r.id}`,
