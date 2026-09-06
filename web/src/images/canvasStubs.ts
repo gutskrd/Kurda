@@ -1,0 +1,69 @@
+import { vi } from 'vitest';
+
+/**
+ * jsdom has no canvas and never fires `load` on an object URL, so a component
+ * that draws a picture cannot be exercised without these.
+ *
+ * They are deliberately thin: enough for the composer to measure, draw and hand
+ * back a file, and no more. Testing what the canvas *paints* belongs to
+ * `photoText`, which is pure and does not need any of this.
+ */
+export function stubCanvas(): { calls: string[] } {
+  const calls: string[] = [];
+
+  const ctx = {
+    canvas: null as unknown,
+    font: '',
+    textAlign: '',
+    textBaseline: '',
+    fillStyle: '',
+    shadowColor: '',
+    shadowBlur: 0,
+    clearRect: () => calls.push('clearRect'),
+    drawImage: () => calls.push('drawImage'),
+    fillText: (t: string) => calls.push(`fillText:${t}`),
+    fill: () => calls.push('fill'),
+    save: () => calls.push('save'),
+    restore: () => calls.push('restore'),
+    translate: () => calls.push('translate'),
+    rotate: (r: number) => calls.push(`rotate:${r.toFixed(3)}`),
+    beginPath: () => undefined,
+    closePath: () => undefined,
+    moveTo: () => undefined,
+    arcTo: () => undefined,
+    // a width proportional to the string, so wrapping has something to measure
+    measureText: (t: string) => ({ width: t.length * 10 }),
+  };
+
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
+  vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((cb) => {
+    cb(new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }));
+  });
+
+  return { calls };
+}
+
+/** An Image that loads immediately, at a size the caller can rely on. */
+export function stubImage(width = 900, height = 700): void {
+  class LoadedImage {
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    naturalWidth = width;
+    naturalHeight = height;
+    #src = '';
+    set src(value: string) {
+      this.#src = value;
+      // a microtask, so the component's effect has finished before it lands
+      queueMicrotask(() => this.onload?.());
+    }
+    get src(): string {
+      return this.#src;
+    }
+  }
+  vi.stubGlobal('Image', LoadedImage);
+  vi.stubGlobal('URL', {
+    ...URL,
+    createObjectURL: () => 'blob:preview',
+    revokeObjectURL: () => undefined,
+  });
+}

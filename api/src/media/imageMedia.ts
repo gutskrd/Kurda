@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
 import { processImage } from './imageProcess.js';
+import { signPicture } from './signature.js';
 import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type MediaLimits } from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 import type { ImageSurface } from '../moderation/image-scan.js';
@@ -43,7 +44,22 @@ const reject = (status: number, code: string, message: string, reason: string): 
  * A failure at any step before confirm leaves an unconfirmed row the orphan job
  * reclaims and nothing publicly servable.
  */
-export async function storeImageMedia(deps: ImageMediaDeps, kind: string, raw: Buffer): Promise<StoreImageResult> {
+export interface StoreImageOptions {
+  /**
+   * Sign the picture for this handle before storing it.
+   *
+   * Community pictures carry a mark; avatars and everything else do not, which
+   * is why this is asked for rather than assumed.
+   */
+  signAs?: string;
+}
+
+export async function storeImageMedia(
+  deps: ImageMediaDeps,
+  kind: string,
+  raw: Buffer,
+  options: StoreImageOptions = {},
+): Promise<StoreImageResult> {
   const { pool, storage, usage, moderation, limits, log } = deps;
 
   if (raw.length === 0) return reject(400, 'EMPTY_UPLOAD', 'no image data', 'empty');
@@ -70,10 +86,28 @@ export async function storeImageMedia(deps: ImageMediaDeps, kind: string, raw: B
     return reject(status as number, code as string, message as string, proc.reason);
   }
 
-  const key = mediaKey(kind, createHash('sha256').update(proc.webp).digest('hex'), 'image/webp');
+  /*
+   * Sign before the key is derived. The key is a hash of the stored bytes, and
+   * two people posting the same photo must not collide onto one object now that
+   * each carries a different name — the signature is part of what is stored, so
+   * it has to be part of what is hashed.
+   */
+  let stored = proc.webp;
+  if (options.signAs) {
+    const signed = await signPicture(proc.webp, options.signAs);
+    if (signed.ok) {
+      stored = signed.signed;
+    } else {
+      // an unsigned picture is still a picture; losing the upload would be worse
+      log.warn({ reason: signed.reason, kind }, 'could not sign image');
+    }
+  }
 
-  // storage ceiling with the KNOWN processed size; fail closed on unknown usage
-  if (wouldExceedStorage(await usage.totalStoredBytes(), proc.bytes, limits.storageLimitBytes)) {
+  const key = mediaKey(kind, createHash('sha256').update(stored).digest('hex'), 'image/webp');
+
+  // storage ceiling against the size actually being written; fail closed on
+  // unknown usage
+  if (wouldExceedStorage(await usage.totalStoredBytes(), stored.length, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
   }
 
@@ -93,10 +127,10 @@ export async function storeImageMedia(deps: ImageMediaDeps, kind: string, raw: B
     `INSERT INTO media_uploads (key, content_type, content_length)
      VALUES ($1, 'image/webp', $2)
      ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length`,
-    [key, proc.bytes],
+    [key, stored.length],
   );
   try {
-    await storage.put(key, proc.webp, 'image/webp');
+    await storage.put(key, stored, 'image/webp');
     await usage.recordOps('A');
   } catch (err) {
     log.error({ err, key }, 'image post R2 put failed');

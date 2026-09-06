@@ -18,6 +18,9 @@ COPY api/package.json api/
 COPY shared/package.json shared/
 COPY admin/package.json admin/
 COPY mobile/package.json mobile/
+# a font, so sharp can draw the signature every community picture carries;
+# node:22-alpine ships none, and text would render as empty boxes without one
+RUN apk add --no-cache font-dejavu
 RUN npm ci --omit=dev
 
 COPY shared/ shared/
