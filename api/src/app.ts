@@ -71,6 +71,7 @@ import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
+import { registerSocialRailRoutes } from './social/rail-routes.js';
 import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
@@ -589,15 +590,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
 
     // group chat (KUR-085): per-group room fan-out over the bus + moderation
-    registerGroupChatRoutes(
-      app,
-      new GroupChatService(
-        app.db,
-        groups,
-        { publish: (r, ev) => realtime.publish(r, ev as never), invite: (r, uid, ttl) => realtime.invite(r, uid, ttl) },
-        moderation,
-      ),
+    const groupChat = new GroupChatService(
+      app.db,
+      groups,
+      { publish: (r, ev) => realtime.publish(r, ev as never), invite: (r, uid, ttl) => realtime.invite(r, uid, ttl) },
+      moderation,
     );
+    registerGroupChatRoutes(app, groupChat);
 
     // matchmaking (KUR-050): atomic queue + widening sweeper
     const matchQueue = app.redis
@@ -608,10 +607,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerMatchmakingRoutes(app, matchmaking);
 
     // challenge a friend (KUR-088): direct unranked 1v1 invites over the KV + gateway
-    registerChallengeRoutes(
-      app,
-      new ChallengeService(kv, matchmaking, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, friends),
+    const challenges = new ChallengeService(
+      kv,
+      matchmaking,
+      { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
+      friends,
     );
+    registerChallengeRoutes(app, challenges);
+
+    // the social rail's single read — everything it shows, in one answer, so a
+    // poll cannot leave the badge and the list disagreeing
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, challenges });
     const sweeper = setInterval(
       () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
       matchmaking.sweepIntervalMs,

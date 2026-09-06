@@ -13,6 +13,8 @@ export interface FriendSummary {
   displayName: string | null;
   avatarUrl: string | null;
   online: boolean;
+  /** when they were last seen, so a list can say how long ago; null if never */
+  lastSeenAt: string | null;
 }
 
 /** Raw user columns joined for a friend/request row. */
@@ -32,6 +34,7 @@ function toFriendSummary(r: FriendRow, publicUrl: PublicUrl, now: Date): FriendS
     displayName: r.display_name,
     avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
     online: isOnline(r.last_seen_at, now),
+    lastSeenAt: r.last_seen_at ? r.last_seen_at.toISOString() : null,
   };
 }
 
