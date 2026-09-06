@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   DEFAULT_TEXT,
+  MAX_EDGE,
+  canvasToFile,
+  fitWithin,
   ROTATION_RANGE,
   SIZE_RANGE,
   clampText,
@@ -131,5 +134,86 @@ describe('drawComposition', () => {
     const ctx = canvas.getContext('2d')!;
     expect(ctx.font).toContain('50px'); // 500 * 0.1, not 2000 * 0.1
     expect(wide.calls).toContain('fillText:hi');
+  });
+});
+
+describe('fitWithin', () => {
+  it('brings a phone photo down to the size that will be stored', () => {
+    // a 12MP photo exported at full resolution is ~19MB of lossless PNG, which
+    // is what put it over the server's 5MB upload cap
+    expect(fitWithin(4032, 3024)).toEqual({ width: MAX_EDGE, height: 960 });
+  });
+
+  it('never enlarges a small picture', () => {
+    expect(fitWithin(400, 300)).toEqual({ width: 400, height: 300 });
+  });
+
+  it('fits the longest edge whichever way round the picture is', () => {
+    expect(fitWithin(900, 3000).height).toBe(MAX_EDGE);
+    expect(fitWithin(3000, 900).width).toBe(MAX_EDGE);
+  });
+});
+
+describe('canvasToFile', () => {
+  /** A canvas whose toBlob answers with the sizes and types a test asks for. */
+  function canvasThatEncodes(answers: Record<string, { size: number; type?: string } | null>) {
+    const asked: string[] = [];
+    const canvas = document.createElement('canvas');
+    vi.spyOn(canvas, 'toBlob').mockImplementation((cb, type, quality) => {
+      asked.push(`${String(type)}@${String(quality)}`);
+      const answer = answers[String(type)];
+      if (!answer) return cb(null);
+      cb(new Blob([new Uint8Array(answer.size)], { type: answer.type ?? String(type) }));
+    });
+    return { canvas, asked };
+  }
+
+  it('prefers WebP, which keeps transparency and is smallest', async () => {
+    const { canvas, asked } = canvasThatEncodes({ 'image/webp': { size: 200_000 } });
+    const file = await canvasToFile(canvas, 'dimen');
+    expect(file!.type).toBe('image/webp');
+    expect(file!.name).toBe('dimen.webp');
+    // it stopped at the first thing that worked
+    expect(asked).toHaveLength(1);
+  });
+
+  it('falls back to JPEG when WebP cannot be encoded', async () => {
+    const { canvas } = canvasThatEncodes({ 'image/webp': null, 'image/jpeg': { size: 300_000 } });
+    const file = await canvasToFile(canvas, 'dimen');
+    expect(file!.type).toBe('image/jpeg');
+    expect(file!.name).toBe('dimen.jpg');
+  });
+
+  it('does not trust a browser that quietly hands back a PNG instead', async () => {
+    // asking for WebP and getting PNG is a documented browser behaviour, and a
+    // lossless photo is exactly what must not be uploaded
+    const { canvas } = canvasThatEncodes({
+      'image/webp': { size: 9_000_000, type: 'image/png' },
+      'image/jpeg': { size: 250_000 },
+    });
+    const file = await canvasToFile(canvas, 'dimen');
+    expect(file!.type).toBe('image/jpeg');
+  });
+
+  it('steps the quality down rather than exceeding the upload budget', async () => {
+    const { canvas, asked } = canvasThatEncodes({ 'image/webp': { size: 200_000 }, 'image/jpeg': { size: 1 } });
+    await canvasToFile(canvas, 'dimen');
+    expect(asked[0]).toBe('image/webp@0.9');
+  });
+
+  it('returns the smallest it managed when nothing fits, rather than nothing', async () => {
+    const { canvas } = canvasThatEncodes({
+      'image/webp': { size: 9_000_000 },
+      'image/jpeg': { size: 8_000_000 },
+      'image/png': { size: 12_000_000 },
+    });
+    const file = await canvasToFile(canvas, 'dimen');
+    // the server will reject it and say why; silently posting nothing is worse
+    expect(file!.size).toBe(8_000_000);
+  });
+
+  it('gives up honestly when the canvas encodes nothing at all', async () => {
+    const { canvas } = canvasThatEncodes({});
+    expect(await canvasToFile(canvas, 'dimen')).toBeNull();
   });
 });

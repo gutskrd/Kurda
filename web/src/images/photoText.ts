@@ -164,12 +164,73 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-/** The composed picture as a file, ready to upload. */
-export function canvasToFile(canvas: HTMLCanvasElement, name: string): Promise<File | null> {
-  return new Promise((resolve) => {
-    canvas.toBlob(
-      (blob) => resolve(blob ? new File([blob], name, { type: 'image/png' }) : null),
-      'image/png',
-    );
-  });
+/**
+ * The longest edge the composition is drawn at.
+ *
+ * The server resizes to 1280px anyway, so composing larger only makes a bigger
+ * file for it to throw away — and a full-resolution export is what put a phone
+ * photo over the 5 MB upload cap.
+ */
+export const MAX_EDGE = 1280;
+
+/** Stay comfortably under the server's upload ceiling. */
+const BUDGET_BYTES = 4 * 1024 * 1024;
+
+/** Tried in order: the first that both encodes and fits wins. */
+const ENCODINGS: ReadonlyArray<{ type: string; quality: number }> = [
+  { type: 'image/webp', quality: 0.9 },
+  { type: 'image/webp', quality: 0.75 },
+  { type: 'image/jpeg', quality: 0.88 },
+  { type: 'image/jpeg', quality: 0.7 },
+  { type: 'image/png', quality: 1 },
+];
+
+/** Fit a picture inside a box without ever enlarging it. */
+export function fitWithin(
+  width: number,
+  height: number,
+  maxEdge = MAX_EDGE,
+): { width: number; height: number } {
+  const longest = Math.max(width, height);
+  if (longest <= maxEdge) return { width, height };
+  const scale = maxEdge / longest;
+  return { width: Math.round(width * scale), height: Math.round(height * scale) };
+}
+
+function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+/**
+ * The composed picture as a file, ready to upload.
+ *
+ * WebP first because it keeps transparency and is by far the smallest; JPEG
+ * next for anything that cannot encode it; PNG last, because a lossless export
+ * of a photograph is what broke uploads in the first place. A browser that
+ * cannot produce the type asked for silently hands back a PNG, so each result
+ * is checked rather than trusted.
+ */
+export async function canvasToFile(canvas: HTMLCanvasElement, name: string): Promise<File | null> {
+  let fallback: File | null = null;
+
+  for (const { type, quality } of ENCODINGS) {
+    const blob = await toBlob(canvas, type, quality);
+    if (!blob) continue;
+    const file = new File([blob], nameFor(name, blob.type), { type: blob.type });
+    if (blob.type === type && blob.size <= BUDGET_BYTES) return file;
+    // keep the smallest thing that did encode, in case nothing fits
+    if (!fallback || file.size < fallback.size) fallback = file;
+  }
+  return fallback;
+}
+
+/**
+ * Give the file an extension that matches what it actually is.
+ *
+ * `base` is a bare stem, not a filename — the encoder decides the format, so
+ * the caller has no business claiming one.
+ */
+function nameFor(base: string, mime: string): string {
+  const ext = mime === 'image/webp' ? 'webp' : mime === 'image/jpeg' ? 'jpg' : 'png';
+  return `${base}.${ext}`;
 }

@@ -43,8 +43,15 @@ export function stubCanvas(): { calls: string[] } {
   return { calls };
 }
 
-/** An Image that loads immediately, at a size the caller can rely on. */
-export function stubImage(width = 900, height = 700): void {
+/**
+ * An Image that resolves immediately, at a size the caller can rely on.
+ *
+ * `fail` makes it refuse to decode, which is the only honest way to test a file
+ * that is not a picture — the component deliberately no longer judges by the
+ * file's declared type.
+ */
+export function stubImage(opts: { width?: number; height?: number; fail?: boolean } = {}): void {
+  const { width = 900, height = 700, fail = false } = opts;
   class LoadedImage {
     onload: (() => void) | null = null;
     onerror: (() => void) | null = null;
@@ -54,7 +61,7 @@ export function stubImage(width = 900, height = 700): void {
     set src(value: string) {
       this.#src = value;
       // a microtask, so the component's effect has finished before it lands
-      queueMicrotask(() => this.onload?.());
+      queueMicrotask(() => (fail ? this.onerror?.() : this.onload?.()));
     }
     get src(): string {
       return this.#src;
