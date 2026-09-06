@@ -68,6 +68,11 @@ export function Civak(): React.JSX.Element {
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
 
+  /** A post its author just deleted is gone; leaving the card would be a lie. */
+  const drop = useCallback((gone: FeedItem) => {
+    setItems((prev) => (prev ?? []).filter((i) => i.key !== gone.key));
+  }, []);
+
   return (
     <div className="container container-feed">
       <div className="page-header">
@@ -133,7 +138,7 @@ export function Civak(): React.JSX.Element {
         <>
           <div className="feed">
             {items.map((item) => (
-              <FeedCard key={item.key} item={item} onChanged={replace} />
+              <FeedCard key={item.key} item={item} onChanged={replace} onRemoved={drop} />
             ))}
           </div>
           {more && (

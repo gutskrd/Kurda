@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { HandPeace } from '@phosphor-icons/react/dist/icons/HandPeace';
+import { ICON_WEIGHT } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 
 /**
@@ -13,7 +15,7 @@ import { useAuth } from '../auth/AuthProvider';
  * sit with the rest of the icon set instead of importing a second visual
  * language at three different vendors' idea of what "wow" looks like.
  */
-export const REACTIONS = ['like', 'laugh', 'love', 'wow', 'sad', 'angry'] as const;
+export const REACTIONS = ['like', 'laugh', 'love', 'wow', 'sad', 'peace'] as const;
 export type Reaction = (typeof REACTIONS)[number];
 
 const LABELS: Record<Reaction, string> = {
@@ -22,7 +24,7 @@ const LABELS: Record<Reaction, string> = {
   love: 'Love',
   wow: 'Wow',
   sad: 'Sad',
-  angry: 'Angry',
+  peace: 'Peace',
 };
 
 const face = (size: number) => ({
@@ -82,14 +84,10 @@ function ReactionGlyph({ kind, size = 19 }: { kind: Reaction; size?: number }): 
       </svg>
     );
   }
-  return (
-    <svg {...face(size)}>
-      {head}
-      <path d="M7.6 8.2 10.4 9.6M16.4 8.2 13.6 9.6" />
-      <path d="M9 11.6h.01M15 11.6h.01" strokeWidth="2.2" />
-      <path d="M8.5 16.6a5 5 0 0 1 7 0" />
-    </svg>
-  );
+  // a hand, two fingers up — the only one here that is not a face, and the one
+  // glyph taken whole from Phosphor rather than drawn, because a hand has more
+  // in it than a circle with a mouth
+  return <HandPeace size={size} weight={ICON_WEIGHT} aria-hidden />;
 }
 
 export interface ReactionSummary {

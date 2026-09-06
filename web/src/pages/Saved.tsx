@@ -79,7 +79,7 @@ export function Saved(): React.JSX.Element {
         <>
           <div className="feed">
             {items.map((item) => (
-              <FeedCard key={item.key} item={item} onChanged={changed} />
+              <FeedCard key={item.key} item={item} onChanged={changed} onRemoved={(gone) => changed({ ...gone, engagement: { ...gone.engagement, bookmarked: false } })} />
             ))}
           </div>
           {more && (
