@@ -94,6 +94,39 @@ describe('PostPicture', () => {
     expect(JSON.parse(steps[1]!.replace('create ', '')).category).toBe('meme');
   });
 
+  it('takes a photo the operating system did not label', async () => {
+    signIn();
+    const { steps } = uploadFetch();
+    renderApp(<PostPicture onPosted={() => undefined} />);
+    await openComposer();
+
+    // plenty of real photos arrive with an empty `type`; judging by that string
+    // turned them away before anything had tried to read them
+    const unlabelled = new File([new Uint8Array([1, 2, 3])], 'IMG_4021.JPG', { type: '' });
+    // applyAccept:false because the real picker filters at the dialog and then
+    // hands the file over whatever `type` came back — which is the case here
+    await userEvent.upload(screen.getByLabelText('Picture file'), unlabelled, { applyAccept: false });
+
+    await screen.findByLabelText('Choose a different picture');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() => expect(steps.some((x) => x.startsWith('upload'))).toBe(true));
+  });
+
+  it('says so and clears the choice when a file will not open as a picture', async () => {
+    signIn();
+    uploadFetch();
+    stubImage({ fail: true });
+    renderApp(<PostPicture onPosted={() => undefined} />);
+    await openComposer();
+
+    await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/could not be opened as a picture/i);
+    // the file is dropped, so Post cannot sit there enabled over nothing
+    expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
+  });
+
   it('will not post without a picture', async () => {
     signIn();
     const { steps } = uploadFetch();

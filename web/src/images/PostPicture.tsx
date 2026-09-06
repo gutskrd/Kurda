@@ -8,6 +8,7 @@ import { PhotoIcon, TextIcon } from '../components/icons';
 import {
   DEFAULT_TEXT,
   FONTS,
+  fitWithin,
   ROTATION_RANGE,
   SIZE_RANGE,
   canvasToFile,
@@ -92,9 +93,15 @@ function Composer({
     const img = new Image();
     img.onload = () => {
       imageRef.current = img;
-      setSize({ width: img.naturalWidth, height: img.naturalHeight });
+      // the server resizes to its own maximum anyway, so composing larger only
+      // makes a bigger file for it to throw away — and a full-size export is
+      // what put a phone photo over the upload cap
+      setSize(fitWithin(img.naturalWidth, img.naturalHeight));
     };
-    img.onerror = () => setError('That file could not be read as a picture.');
+    img.onerror = () => {
+      setError('That file could not be opened as a picture. Try a JPEG, PNG or WebP.');
+      setFile(null);
+    };
     img.src = url;
     // an object URL is a live handle on the file; letting them pile up would pin
     // every picture browsed past in memory for the session
@@ -111,14 +118,19 @@ function Composer({
 
   useEffect(redraw, [redraw]);
 
+  /**
+   * Take whatever was chosen and let the browser decide if it is a picture.
+   *
+   * The old check was `file.type.startsWith('image/')`, which is whatever the
+   * operating system said when it handed the file over — and for plenty of real
+   * photos that is an empty string, so they were turned away before anything
+   * had tried to read them. If it decodes, it is a picture; if it does not, the
+   * load handler says so.
+   */
   function choose(e: React.ChangeEvent<HTMLInputElement>): void {
     const picked = e.target.files?.[0];
     e.target.value = '';
     if (!picked) return;
-    if (!picked.type.startsWith('image/')) {
-      setError('Please choose an image file.');
-      return;
-    }
     setError(null);
     setFile(picked);
   }
@@ -133,7 +145,12 @@ function Composer({
     setError(null);
 
     // the canvas is what is uploaded, so the words are part of the picture
-    const composed = (await canvasToFile(canvas, 'dimen.png')) ?? file;
+    const composed = await canvasToFile(canvas, 'dimen');
+    if (!composed) {
+      setBusy(false);
+      setError('That picture could not be prepared for upload.');
+      return;
+    }
 
     const up = await client.uploadBytes<{ imageMediaId: string }>('/images/upload', composed);
     if (!up.ok) {
