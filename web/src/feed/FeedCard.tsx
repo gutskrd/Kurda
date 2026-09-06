@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { BookmarkIcon, CommentIcon, HeartIcon } from '../components/icons';
+import { BookmarkIcon, CommentIcon, HeartIcon, TrashIcon } from '../components/icons';
+import { ConfirmButton } from '../components/ConfirmButton';
 import { useProfileModal } from '../profile/ProfileModal';
 import { dayLabel } from '../chat/messageGroups';
 import type { FeedItem } from '../lib/types';
@@ -20,8 +21,17 @@ import { CARD_LABEL } from './postKinds';
  * act, and only the body takes you to the post. A card that swallowed every
  * click would make liking something a navigation.
  */
-export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (next: FeedItem) => void }): React.JSX.Element {
-  const { client, status } = useAuth();
+export function FeedCard({
+  item,
+  onChanged,
+  onRemoved,
+}: {
+  item: FeedItem;
+  onChanged?: (next: FeedItem) => void;
+  /** told when the author deletes this post, so the list can drop the card */
+  onRemoved?: (item: FeedItem) => void;
+}): React.JSX.Element {
+  const { client, status, user } = useAuth();
   const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<'like' | 'bookmark' | null>(null);
   const signedIn = status === 'signedIn';
@@ -39,6 +49,15 @@ export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (nex
   }
 
   const { engagement: e } = item;
+  // only the person who wrote it; the server checks again, this only decides
+  // whether to offer the button
+  const mine = user?.id === item.author.id;
+
+  async function remove(): Promise<void> {
+    const path = item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`;
+    const res = await client.delete(path);
+    if (res.ok && onRemoved) onRemoved(item);
+  }
 
   /**
    * Say what the button does, not what it counts.
@@ -103,6 +122,17 @@ export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (nex
           <HeartIcon size={18} weight={e.liked ? 'fill' : 'regular'} />
           {e.likes > 0 && <span>{e.likes.toLocaleString()}</span>}
         </button>
+
+        {mine && (
+          <ConfirmButton
+            className="fcard-act fcard-delete"
+            title="Delete this post"
+            label={<TrashIcon size={18} />}
+            confirmLabel="Delete?"
+            busyLabel="…"
+            onConfirm={remove}
+          />
+        )}
 
         <button
           type="button"

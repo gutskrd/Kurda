@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
+import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
 import { useProfileModal } from '../profile/ProfileModal';
 import { Loading, ErrorState, EmptyState } from '../components/states';
@@ -48,6 +49,23 @@ export function Friends(): React.JSX.Element {
     const res = await client.get<{ results: UserSummary[] }>(`/users/search?q=${encodeURIComponent(q.trim())}`);
     setSearching(false);
     setResults(res.ok ? res.data.results : []);
+  }
+
+  /**
+   * Unfriending and blocking are different things and are offered as such.
+   * Removing is mutual and reversible; blocking is silent and absolute, so it
+   * is the quieter of the two buttons rather than the louder one.
+   */
+  async function unfriend(userId: string): Promise<void> {
+    await client.delete(`/friends/${userId}`);
+    friends.reload();
+    suggestions.reload();
+  }
+
+  async function block(userId: string): Promise<void> {
+    await client.post(`/friends/${userId}/block`);
+    friends.reload();
+    suggestions.reload();
   }
 
   async function respond(userId: string, accept: boolean): Promise<void> {
@@ -159,7 +177,26 @@ export function Friends(): React.JSX.Element {
         ) : (
           <div className="post-list">
             {friends.data!.friends.map((u) => (
-              <Row key={u.userId} user={u} />
+              <Row
+                key={u.userId}
+                user={u}
+                actions={
+                  <>
+                    <ConfirmButton
+                      className="btn btn-secondary btn-sm"
+                      title={`Remove ${u.username} as a friend`}
+                      label="Remove"
+                      onConfirm={() => unfriend(u.userId)}
+                    />
+                    <ConfirmButton
+                      className="btn btn-ghost btn-sm"
+                      title={`Block ${u.username}`}
+                      label="Block"
+                      onConfirm={() => block(u.userId)}
+                    />
+                  </>
+                }
+              />
             ))}
           </div>
         )}

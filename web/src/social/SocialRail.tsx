@@ -143,13 +143,7 @@ function RailContent({ data, onActed }: { data: SocialRailData; onActed: () => v
       </Section>
 
       <Section title="Recent" count={data.notifications.length} collapsible defaultOpen={false} hideWhenEmpty>
-        {data.notifications.map((n) => (
-          <div key={n.id} className={`rail-note${n.readAt === null ? ' is-unread' : ''}`}>
-            <span className="rail-note-title">{n.title}</span>
-            {n.body && <span className="rail-note-body">{n.body}</span>}
-            <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt)}</time>
-          </div>
-        ))}
+        <Notifications items={data.notifications} onActed={onActed} />
       </Section>
 
       {data.friends.length === 0 && (
@@ -302,5 +296,69 @@ function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void })
         </button>
       </span>
     </div>
+  );
+}
+
+/**
+ * The notification tail, and a way to be done with it.
+ *
+ * A notification you have read but cannot clear is a badge that never goes
+ * away, so each one can be dismissed and the whole list can be cleared at once.
+ * Dismissing marks it read on the server — there is no separate "ignored"
+ * state, and inventing one would mean a second thing to keep in step.
+ */
+function Notifications({
+  items,
+  onActed,
+}: {
+  items: SocialRailData['notifications'];
+  onActed: () => void;
+}): React.JSX.Element {
+  const { client } = useAuth();
+  const [going, setGoing] = useState<Set<string>>(new Set());
+  const unread = items.filter((n) => n.readAt === null).length;
+
+  async function dismiss(id: string): Promise<void> {
+    setGoing((prev) => new Set(prev).add(id));
+    await client.post(`/me/notifications/${id}/read`);
+    onActed();
+  }
+
+  async function dismissAll(): Promise<void> {
+    await client.post('/me/notifications/read-all');
+    onActed();
+  }
+
+  return (
+    <>
+      {items.map((n) => (
+        <div
+          key={n.id}
+          className={`rail-note${n.readAt === null && !going.has(n.id) ? ' is-unread' : ''}`}
+        >
+          <span className="rail-note-title">{n.title}</span>
+          {n.body && <span className="rail-note-body">{n.body}</span>}
+          <span className="rail-note-foot">
+            <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt)}</time>
+            {n.readAt === null && !going.has(n.id) && (
+              <button
+                type="button"
+                className="rail-note-dismiss"
+                aria-label={`Dismiss: ${n.title}`}
+                onClick={() => void dismiss(n.id)}
+              >
+                <CloseIcon size={13} />
+              </button>
+            )}
+          </span>
+        </div>
+      ))}
+
+      {unread > 1 && (
+        <button type="button" className="rail-note-clear" onClick={() => void dismissAll()}>
+          Dismiss all
+        </button>
+      )}
+    </>
   );
 }

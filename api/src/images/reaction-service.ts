@@ -1,7 +1,7 @@
 import type pg from 'pg';
 
 /** The emoji reactions a user can leave on an image/meme post (KUR-291). */
-export const REACTIONS = ['like', 'laugh', 'love', 'wow', 'sad', 'angry'] as const;
+export const REACTIONS = ['like', 'laugh', 'love', 'wow', 'sad', 'peace'] as const;
 export type Reaction = (typeof REACTIONS)[number];
 
 export function isReaction(v: string): v is Reaction {

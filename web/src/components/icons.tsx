@@ -39,6 +39,7 @@ import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 import { SquaresFour } from '@phosphor-icons/react/dist/icons/SquaresFour';
 import { Sun } from '@phosphor-icons/react/dist/icons/Sun';
 import { TextAa } from '@phosphor-icons/react/dist/icons/TextAa';
+import { Trash } from '@phosphor-icons/react/dist/icons/Trash';
 import { Trophy } from '@phosphor-icons/react/dist/icons/Trophy';
 import { User } from '@phosphor-icons/react/dist/icons/User';
 import { Users } from '@phosphor-icons/react/dist/icons/Users';
@@ -99,6 +100,8 @@ export const BellIcon = named(Bell, 22);
 /** More than one conversation: a group. */
 export const ChatsIcon = named(ChatsCircle, 22);
 export const TextIcon = named(TextAa, 22);
+/** Throw something away — always behind a confirm. */
+export const TrashIcon = named(Trash, 22);
 /** Add something — it makes no claim about what. */
 export const PlusIcon = named(Plus, 22);
 

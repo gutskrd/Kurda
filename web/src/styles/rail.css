@@ -576,3 +576,39 @@
     width: 0;
   }
 }
+
+/* a notification you can be done with */
+.rail-note-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rail-note-dismiss {
+  border: 0;
+  background: transparent;
+  color: var(--ink-4);
+  cursor: pointer;
+  padding: 2px;
+  line-height: 0;
+}
+.rail-note-dismiss:hover {
+  color: var(--ink);
+}
+.rail-note-clear {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.rail-note-clear:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}

@@ -287,3 +287,18 @@
   background: var(--gold-soft);
   color: var(--gold-ink);
 }
+
+/* deleting your own post: quiet until it is armed, then unmistakable */
+.fcard-delete.is-armed,
+.fcard-delete:hover:not(:disabled) {
+  color: var(--danger);
+}
+.fcard-delete.is-armed {
+  background: var(--danger-soft);
+  font-size: 0.78rem;
+}
+/* an armed confirm anywhere reads the same way */
+.btn.is-armed {
+  border-color: var(--danger);
+  color: var(--danger);
+}
