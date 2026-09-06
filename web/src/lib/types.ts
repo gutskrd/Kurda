@@ -146,6 +146,29 @@ export interface PublicProfile extends ProfileCosmetics {
   sections?: ProfileSections | null;
 }
 
+/** Who wrote a post or a comment, resolved for display. */
+export interface PostAuthorRef {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+/** A picture or meme posted to Dîmen (GET /images). */
+export interface ImagePost {
+  id: string;
+  authorId: string;
+  author: PostAuthorRef;
+  imageMediaId: string;
+  imageUrl: string | null;
+  caption: string | null;
+  category: 'meme' | 'image';
+  language: string | null;
+  viewCount: number;
+  reactionCount: number;
+  commentCount: number;
+  createdAt: string;
+}
+
 /** The activity sections a profile can show, in the order they appear. */
 export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];

@@ -6,7 +6,7 @@ import { Loading, ErrorState } from '../components/states';
 import { PostAuthor, type Author } from './PostAuthor';
 
 /**
- * Threaded comments on a library post.
+ * Threaded comments on a post.
  *
  * The server has supported replies since the table was created — `parent_comment_id`,
  * `depth`, `reply_count`, and an endpoint per branch — but nothing on the web
@@ -15,7 +15,27 @@ import { PostAuthor, type Author } from './PostAuthor';
  * Replies load per branch on demand rather than the whole tree at once: a
  * popular thread is mostly collapsed, and fetching every descendant to show
  * three of them wastes the reader's time and the server's.
+ *
+ * Two surfaces use it — library posts and Dîmen pictures. The APIs are the same
+ * shape at different paths, so the difference is a table of URLs rather than a
+ * second copy of the tree, the reply boxes and the tombstones to keep in step.
  */
+
+/** Which set of endpoints a thread talks to. */
+export type CommentSurface = 'library' | 'images';
+
+const ROUTES: Record<CommentSurface, { thread: (postId: string) => string; replies: (id: string) => string; one: (id: string) => string }> = {
+  library: {
+    thread: (postId) => `/library/posts/${postId}/comments`,
+    replies: (id) => `/library/comments/${id}/replies`,
+    one: (id) => `/library/comments/${id}`,
+  },
+  images: {
+    thread: (postId) => `/images/${postId}/comments`,
+    replies: (id) => `/images/comments/${id}/replies`,
+    one: (id) => `/images/comments/${id}`,
+  },
+};
 
 interface Comment {
   id: string;
@@ -33,20 +53,37 @@ interface Comment {
 const MAX_INDENT = 4;
 const PAGE = 20;
 
-export function Comments({ postId, commentCount }: { postId: string; commentCount: number }): React.JSX.Element {
+export function Comments({
+  postId,
+  commentCount,
+  surface = 'library',
+}: {
+  postId: string;
+  commentCount: number;
+  surface?: CommentSurface;
+}): React.JSX.Element {
   const { client, status } = useAuth();
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * The heading counts every comment in the thread, replies included, so it
+   * cannot be read off the loaded page — that is only the top level, and only
+   * the first page of it. The server's number is the truth on arrival; after
+   * that we move it by hand, because "0 comments" above the comment you just
+   * wrote reads as a bug.
+   */
+  const [count, setCount] = useState(commentCount);
+  useEffect(() => setCount(commentCount), [commentCount]);
 
   const load = useCallback(async () => {
     setError(null);
-    const res = await client.get<{ comments: Comment[] }>(`/library/posts/${postId}/comments?limit=${PAGE}`);
+    const res = await client.get<{ comments: Comment[] }>(`${ROUTES[surface].thread(postId)}?limit=${PAGE}`);
     if (res.ok) setComments(res.data.comments);
     else {
       setComments([]);
       setError(describeError(res.error));
     }
-  }, [client, postId]);
+  }, [client, postId, surface]);
 
   useEffect(() => {
     void load();
@@ -55,11 +92,17 @@ export function Comments({ postId, commentCount }: { postId: string; commentCoun
   return (
     <section className="comments" aria-label="Comments">
       <h2 className="section-heading">
-        {commentCount === 1 ? '1 comment' : `${commentCount.toLocaleString()} comments`}
+        {count === 1 ? '1 comment' : `${count.toLocaleString()} comments`}
       </h2>
 
       {status === 'signedIn' ? (
-        <CommentForm postId={postId} onDone={load} placeholder="Add a comment…" />
+        <CommentForm
+          postId={postId}
+          surface={surface}
+          onDone={load}
+          onAdded={() => setCount((n) => n + 1)}
+          placeholder="Add a comment…"
+        />
       ) : (
         <p className="muted">Sign in to join the conversation.</p>
       )}
@@ -73,7 +116,14 @@ export function Comments({ postId, commentCount }: { postId: string; commentCoun
       ) : (
         <ul className="comment-list">
           {comments.map((c) => (
-            <CommentNode key={c.id} comment={c} postId={postId} onChanged={load} />
+            <CommentNode
+              key={c.id}
+              comment={c}
+              postId={postId}
+              surface={surface}
+              onChanged={load}
+              onCountChange={(d) => setCount((n) => Math.max(0, n + d))}
+            />
           ))}
         </ul>
       )}
@@ -85,11 +135,16 @@ export function Comments({ postId, commentCount }: { postId: string; commentCoun
 function CommentNode({
   comment,
   postId,
+  surface,
   onChanged,
+  onCountChange,
 }: {
   comment: Comment;
   postId: string;
+  surface: CommentSurface;
   onChanged: () => Promise<void>;
+  /** +1 for a comment added anywhere in this branch, -1 for one removed */
+  onCountChange: (delta: number) => void;
 }): React.JSX.Element {
   const { client, user, status } = useAuth();
   const [replying, setReplying] = useState(false);
@@ -98,10 +153,10 @@ function CommentNode({
 
   const loadReplies = useCallback(async () => {
     setLoading(true);
-    const res = await client.get<{ comments: Comment[] }>(`/library/comments/${comment.id}/replies?limit=${PAGE}`);
+    const res = await client.get<{ comments: Comment[] }>(`${ROUTES[surface].replies(comment.id)}?limit=${PAGE}`);
     if (res.ok) setReplies(res.data.comments);
     setLoading(false);
-  }, [client, comment.id]);
+  }, [client, comment.id, surface]);
 
   const removed = comment.status === 'removed';
   const mine = comment.author.id === user?.id;
@@ -127,7 +182,8 @@ function CommentNode({
             className="link-button danger"
             onClick={async () => {
               if (!confirm('Delete this comment?')) return;
-              await client.delete(`/library/comments/${comment.id}`);
+              const res = await client.delete(ROUTES[surface].one(comment.id));
+              if (res.ok) onCountChange(-1);
               await onChanged();
             }}
           >
@@ -146,7 +202,9 @@ function CommentNode({
       {replying && (
         <CommentForm
           postId={postId}
+          surface={surface}
           parentId={comment.id}
+          onAdded={() => onCountChange(1)}
           placeholder={`Reply to ${comment.author.username}…`}
           onDone={async () => {
             setReplying(false);
@@ -161,7 +219,14 @@ function CommentNode({
       {replies && replies.length > 0 && (
         <ul className="comment-list comment-replies">
           {replies.map((r) => (
-            <CommentNode key={r.id} comment={r} postId={postId} onChanged={loadReplies} />
+            <CommentNode
+              key={r.id}
+              comment={r}
+              postId={postId}
+              surface={surface}
+              onChanged={loadReplies}
+              onCountChange={onCountChange}
+            />
           ))}
         </ul>
       )}
@@ -172,14 +237,19 @@ function CommentNode({
 /** Write a comment, or a reply when given a parent. */
 function CommentForm({
   postId,
+  surface,
   parentId,
   placeholder,
   onDone,
+  onAdded,
 }: {
   postId: string;
+  surface: CommentSurface;
   parentId?: string;
   placeholder: string;
   onDone: () => Promise<void>;
+  /** fired once the server has actually taken it */
+  onAdded: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const [body, setBody] = useState('');
@@ -192,13 +262,14 @@ function CommentForm({
     if (!text) return;
     setBusy(true);
     setError(null);
-    const res = await client.post(`/library/posts/${postId}/comments`, {
+    const res = await client.post(ROUTES[surface].thread(postId), {
       body: text,
       ...(parentId ? { parentId } : {}),
     });
     setBusy(false);
     if (res.ok) {
       setBody('');
+      onAdded();
       await onDone();
     } else {
       setError(describeError(res.error));

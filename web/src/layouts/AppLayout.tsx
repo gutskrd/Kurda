@@ -6,6 +6,7 @@ const LINKS: NavItem[] = [
   { label: 'Learn', to: '/app/learn' },
   { label: 'Stories', to: '/app/stories' },
   { label: 'Poems', to: '/app/poems' },
+  { label: 'Dîmen', to: '/app/dimen' },
   { label: 'Games', to: '/app/games' },
   { label: 'Rankings', to: '/app/rankings' },
   { label: 'Friends', to: '/app/friends' },

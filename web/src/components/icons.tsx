@@ -50,6 +50,20 @@ export const PhotoIcon = ({ size = 22, className }: P): React.JSX.Element => (
   </svg>
 );
 
+/** A heart, for how many people liked something. */
+export const HeartIcon = ({ size = 22, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <path d="M12 20.3 4.6 13a4.6 4.6 0 0 1 6.5-6.5l.9.9.9-.9A4.6 4.6 0 0 1 19.4 13z" />
+  </svg>
+);
+
+/** A speech bubble, for how many people said something. */
+export const CommentIcon = ({ size = 22, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <path d="M20.5 12.5a7.5 7.5 0 0 1-7.5 7.5 8 8 0 0 1-3.2-.66L4.5 21l1.2-4.4A7.5 7.5 0 1 1 20.5 12.5z" />
+  </svg>
+);
+
 export const TrophyIcon = ({ size = 22, className }: P): React.JSX.Element => (
   <svg {...base(size)} className={className}>
     <path d="M7 4h10v4a5 5 0 0 1-10 0z" />

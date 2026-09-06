@@ -7,6 +7,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Stories, Poems } from './pages/Library';
 import { LibraryPostPage } from './pages/LibraryPostPage';
+import { Dimen } from './pages/Dimen';
+import { DimenPost } from './pages/DimenPost';
 import { Games } from './pages/Games';
 import { Wordle } from './pages/Wordle';
 import { Rhyme } from './pages/Rhyme';
@@ -106,6 +108,8 @@ export function App(): React.JSX.Element {
             <Route path="poems" element={<Poems />} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
+            <Route path="dimen" element={<Dimen />} />
+            <Route path="dimen/:id" element={<DimenPost />} />
             <Route path="games" element={<Games />} />
             <Route path="games/wordle" element={<Wordle />} />
             <Route path="games/rhyme" element={<Rhyme />} />
