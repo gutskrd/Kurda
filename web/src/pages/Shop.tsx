@@ -7,7 +7,7 @@ import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
-import { GiftIcon } from '../components/icons';
+import { CoinIcon, GiftIcon } from '../components/icons';
 
 /** A catalog tile: the item plus whether the viewer already owns it. */
 interface Tile {
@@ -41,6 +41,31 @@ function currencyName(currency: 'zer' | 'gems'): string {
   return currency === 'gems' ? 'Gems' : 'Zêr';
 }
 
+/** What the shop can be narrowed to. 'all' is first because it is the default. */
+const CATEGORIES = [
+  { key: 'all', label: 'Everything' },
+  { key: 'background', label: 'Backgrounds' },
+  { key: 'icon', label: 'Icons' },
+] as const;
+type Category = (typeof CATEGORIES)[number]['key'];
+
+/**
+ * Narrow the catalogue: by kind, by name, and by what the wallet can reach.
+ *
+ * Kept out of the component so it can be reasoned about on its own — the
+ * affordability rule in particular, which has to leave owned items alone. You
+ * already have those; hiding one because it costs more than you hold today
+ * would be telling you that you cannot afford something you own.
+ */
+function narrow(tiles: Tile[], query: string, affordable: boolean, balance: number | null): Tile[] {
+  const q = query.trim().toLowerCase();
+  return tiles.filter((t) => {
+    if (q && !t.name.toLowerCase().includes(q)) return false;
+    if (affordable && !t.owned && (balance === null || balance < t.price)) return false;
+    return true;
+  });
+}
+
 function tilesFor(cat: string, shop: ShopItem[], owned: Set<string>): Tile[] {
   // /shop hides owned unique items, so owned ones come from inventory (below).
   return shop
@@ -68,6 +93,9 @@ export function Shop(): React.JSX.Element {
   const [bought, setBought] = useState<Set<string>>(new Set());
   /** the tile that just succeeded — drives the one-shot celebration */
   const [celebrating, setCelebrating] = useState<string | null>(null);
+  const [category, setCategory] = useState<Category>('all');
+  const [query, setQuery] = useState('');
+  const [affordable, setAffordable] = useState(false);
   const [gifting, setGifting] = useState<Tile | null>(null);
 
   const balance = zer ?? wallet.data?.balances?.zer ?? null;
@@ -78,8 +106,11 @@ export function Shop(): React.JSX.Element {
   }, [inventory.data, bought]);
 
   const items = shop.data?.items ?? [];
-  const backgrounds = tilesFor('background', items, ownedSkus);
-  const icons = tilesFor('icon', items, ownedSkus);
+  const backgrounds = narrow(tilesFor('background', items, ownedSkus), query, affordable, balance);
+  const icons = narrow(tilesFor('icon', items, ownedSkus), query, affordable, balance);
+  const showing = { background: category !== 'icon', icon: category !== 'background' };
+  const nothingMatches =
+    (!showing.background || backgrounds.length === 0) && (!showing.icon || icons.length === 0);
 
   /** Play the celebration once, then clear it so it can play again later. */
   const celebrate = useCallback((sku: string) => {
@@ -149,26 +180,66 @@ export function Shop(): React.JSX.Element {
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
 
-      <ShopSection
-        title="Profile Backgrounds"
-        cat="background"
-        tiles={backgrounds}
-        balance={balance}
-        busy={busy}
-        celebrating={celebrating}
-        onBuy={(t) => void buy(t)}
-        onGift={setGifting}
-      />
-      <ShopSection
-        title="Premium Icons"
-        cat="icon"
-        tiles={icons}
-        balance={balance}
-        busy={busy}
-        celebrating={celebrating}
-        onBuy={(t) => void buy(t)}
-        onGift={setGifting}
-      />
+      {/* the catalogue only grows, and scrolling all of it to find one thing is
+          not browsing — it is searching, badly */}
+      <div className="shop-filters">
+        <div className="seg" role="group" aria-label="Show">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              className={`seg-btn${category === c.key ? ' is-active' : ''}`}
+              aria-pressed={category === c.key}
+              onClick={() => setCategory(c.key)}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <input
+          type="search"
+          className="input shop-search"
+          value={query}
+          placeholder="Search by name…"
+          aria-label="Search the shop"
+          onChange={(e) => setQuery(e.target.value)}
+        />
+
+        <label className="shop-afford">
+          <input type="checkbox" checked={affordable} onChange={(e) => setAffordable(e.target.checked)} />
+          Within my Zêr
+        </label>
+      </div>
+
+      {nothingMatches && (
+        <p className="muted">Nothing matches that. Try a different word, or clear the filters.</p>
+      )}
+
+      {showing.background && (
+        <ShopSection
+          title="Profile Backgrounds"
+          cat="background"
+          tiles={backgrounds}
+          balance={balance}
+          busy={busy}
+          celebrating={celebrating}
+          onBuy={(t) => void buy(t)}
+          onGift={setGifting}
+        />
+      )}
+      {showing.icon && (
+        <ShopSection
+          title="Premium Icons"
+          cat="icon"
+          tiles={icons}
+          balance={balance}
+          busy={busy}
+          celebrating={celebrating}
+          onBuy={(t) => void buy(t)}
+          onGift={setGifting}
+        />
+      )}
 
       <Modal open={gifting !== null} onClose={() => setGifting(null)} label="Send as a gift">
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}
@@ -336,10 +407,24 @@ function ShopSection({
                   <span className="shop-owned">Owned</span>
                 ) : (
                   <div className="shop-actions">
+                    {/*
+                      The price is on the tile, not only inside the button. It used
+                      to live in the button's label, which meant an item you could
+                      not yet afford said "Not enough Zêr" and nothing else — so
+                      the one thing you needed to know, what to save towards, was
+                      the one thing the shop would not tell you.
+                    */}
+                    <span className={`shop-price${canAfford ? '' : ' is-short'}`}>
+                      <CoinIcon size={14} />
+                      {t.price.toLocaleString()} {currencyName(t.currency)}
+                      {!canAfford && balance !== null && (
+                        <span className="shop-short">
+                          {(t.price - balance).toLocaleString()} more
+                        </span>
+                      )}
+                    </span>
                     <Button size="sm" disabled={busy !== null || !canAfford} onClick={() => onBuy(t)}>
-                      {canAfford
-                        ? `Buy · ${t.price.toLocaleString()} ${currencyName(t.currency)}`
-                        : `Not enough ${currencyName(t.currency)}`}
+                      Buy
                     </Button>
                     <button
                       type="button"

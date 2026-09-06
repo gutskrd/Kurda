@@ -3739,6 +3739,61 @@ a.mkp-activity-row:hover {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* the price is a fact about the item, so it is shown whether or not you can
+   pay it — that is the whole point of knowing what to save for */
+.shop-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: auto;
+  color: var(--gold-ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.shop-price.is-short {
+  color: var(--ink-4);
+}
+/* how much further there is to go, which is the number you actually save against */
+.shop-short {
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* ---- narrowing the shop ------------------------------------------------- */
+.shop-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.shop-search {
+  flex: 1 1 190px;
+  min-width: 0;
+  max-width: 280px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 0.88rem;
+}
+.shop-afford {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-3);
+  font-size: 0.86rem;
+  cursor: pointer;
+  user-select: none;
+}
+.shop-afford input {
+  accent-color: var(--primary);
 }
 .shop-gift-btn {
   flex: none;
