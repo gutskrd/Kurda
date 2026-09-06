@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { BookmarkIcon, CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
-import { useProfileModal } from '../profile/ProfileModal';
+import { CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
 import { RailStrip } from './RailStrip';
 import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
-import type { RailFriend, RailSelf, SocialRailData } from './useSocialRail';
+import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
 
 /** Friends split the way you actually look for them. */
@@ -76,10 +75,6 @@ export function SocialRail(): React.JSX.Element | null {
           </button>
         </div>
 
-        {/* you, above your people — the panel is about who is around, and you
-            are the first of them */}
-        {data.you && <RailSelfCard you={data.you} />}
-
         {/*
           * Both are rendered and CSS picks one. The folded state belongs to the
           * fixed column; a drawer that opened to a strip of icons would be a
@@ -94,78 +89,6 @@ export function SocialRail(): React.JSX.Element | null {
 
       <RailToasts arrivals={arrivals} onDismiss={dismiss} onOpen={() => setOpen(true)} />
     </>
-  );
-}
-
-/**
- * You, at the top of the rail: your face, your level, and the way into Saved.
- *
- * The avatar used to sit in the top nav beside Sign out. It belongs here — the
- * rail is who is around, and you are the first of them — and putting it here
- * gives the level somewhere to live that a 22px nav button never had.
- */
-function RailSelfCard({ you }: { you: RailSelf }): React.JSX.Element {
-  const { openProfile } = useProfileModal();
-
-  return (
-    <div className="rail-self">
-      <button
-        type="button"
-        className="rail-self-face"
-        onClick={() => openProfile({ kind: 'me' })}
-        aria-label={`Your profile — level ${you.level.level}`}
-        title="Your profile"
-      >
-        <LevelRing progress={you.level.progress} />
-        <Avatar url={you.avatarUrl} glyphSize={22} />
-        <span className="rail-self-level">{you.level.level}</span>
-      </button>
-
-      <span className="rail-self-text">
-        <span className="rail-self-name">{you.displayName || you.username}</span>
-        <span className="rail-self-sub">
-          {/* the ring is the glance; the numbers are for when you want them */}
-          {Math.round(you.level.progress * 100)}% to level {you.level.level + 1}
-        </span>
-      </span>
-
-      <Link to="/app/saved" className="rail-self-saved" aria-label="Saved posts" title="Saved">
-        <BookmarkIcon size={17} />
-      </Link>
-    </div>
-  );
-}
-
-/** How far round the ring goes; the rest is the unfilled track. */
-const RING = { size: 52, stroke: 3 } as const;
-
-/**
- * A ring of progress around the avatar.
- *
- * SVG rather than a conic-gradient border: a stroked circle can be dashed to an
- * exact fraction of its own circumference, which is what "42% of the way" means,
- * and it stays a circle at any size without a second element to mask the middle.
- */
-function LevelRing({ progress }: { progress: number }): React.JSX.Element {
-  const r = (RING.size - RING.stroke) / 2;
-  const circumference = 2 * Math.PI * r;
-  const filled = Math.max(0, Math.min(1, progress)) * circumference;
-
-  return (
-    <svg className="rail-ring" viewBox={`0 0 ${RING.size} ${RING.size}`} aria-hidden focusable="false">
-      <circle className="rail-ring-track" cx={RING.size / 2} cy={RING.size / 2} r={r} strokeWidth={RING.stroke} />
-      <circle
-        className="rail-ring-fill"
-        cx={RING.size / 2}
-        cy={RING.size / 2}
-        r={r}
-        strokeWidth={RING.stroke}
-        strokeDasharray={`${filled} ${circumference - filled}`}
-        // start at twelve o'clock rather than three, which is where a ring
-        // reads as "filling up" instead of "rotating"
-        transform={`rotate(-90 ${RING.size / 2} ${RING.size / 2})`}
-      />
-    </svg>
   );
 }
 
