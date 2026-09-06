@@ -184,7 +184,14 @@ export interface FeedItem {
   key: string;
   targetType: 'library' | 'image';
   id: string;
-  kind: 'story' | 'poem' | 'image' | 'meme';
+  /**
+   * A gotin — a saying, posted without a title — has been one of these since
+   * the wall absorbed the three old pages, but this union never learned it.
+   * Nothing narrows on `kind` today, so it went unnoticed; the badge renders
+   * from `CARD_LABEL`, which is deliberately open and falls back to the raw
+   * kind so an unfamiliar one from the server still shows something.
+   */
+  kind: 'gotin' | 'story' | 'poem' | 'image' | 'meme';
   author: PostAuthorRef;
   title: string | null;
   excerpt: string | null;
