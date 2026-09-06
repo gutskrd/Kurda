@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { InventoryItem, MeProfile, UserSummary, WalletBalances } from '../lib/types';
+import type { InventoryItem, MeProfile, ProfileSections, UserSummary, WalletBalances } from '../lib/types';
 import { FullProfile, type FullProfileView } from '../profile/FullProfile';
+import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { Loading, ErrorState } from '../components/states';
@@ -24,6 +25,7 @@ export function Profile(): React.JSX.Element {
   const [reloadKey, setReloadKey] = useState(0);
 
   const [rank, setRank] = useState<number | null>(null);
+  const [sections, setSections] = useState<ProfileSections | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,12 +46,16 @@ export function Profile(): React.JSX.Element {
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
 
-      // your own ranked place: /me does not carry it, and the public profile
-      // endpoint already computes it the same way it does for everyone else
+      // your own ranked place and activity sections: /me carries neither, and
+      // the public profile endpoint already computes both the same way it does
+      // for everyone else
       const id = m.ok ? m.data?.user?.id : undefined;
       if (id) {
-        const p = await client.get<{ rank?: number | null }>(`/users/${id}`);
-        if (!cancelled && p.ok) setRank(p.data.rank ?? null);
+        const p = await client.get<{ rank?: number | null; sections?: ProfileSections | null }>(`/users/${id}`);
+        if (!cancelled && p.ok) {
+          setRank(p.data.rank ?? null);
+          setSections(p.data.sections ?? null);
+        }
       }
     })();
     return () => {
@@ -81,6 +87,7 @@ export function Profile(): React.JSX.Element {
     <FullProfile
       view={view}
       headerAction={<Link to="/app/profile/edit" className="mkp-edit">Edit Profile</Link>}
+      activity={<ProfileActivity userId={me.id} sections={sections} own />}
       sidebarExtra={
         <>
           <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>

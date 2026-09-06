@@ -69,8 +69,10 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       const profile = await social.profile(req.user!.id, id);
       if (profile.private) return { entries: [] };
 
+      // hiding a section hides it from other people, not from the person who
+      // wrote it — their own profile still shows it, marked as hidden
       const visible = await activity.sections(id);
-      if (!visible[kind]) return { entries: [] };
+      if (!visible[kind] && req.user!.id !== id) return { entries: [] };
 
       if (kind === 'stories') return { entries: await activity.posts(id, 'story', limit, offset) };
       if (kind === 'poems') return { entries: await activity.posts(id, 'poem', limit, offset) };

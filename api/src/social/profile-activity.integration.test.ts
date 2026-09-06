@@ -144,6 +144,10 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().entries).toEqual([]);
 
+    // …but the person who wrote them still sees their own
+    const own = await call('GET', `/users/${ids.owner}/activity?kind=poems`, tokens.owner!);
+    expect(own.json().entries.length).toBeGreaterThan(0);
+
     // and the profile stops advertising the tab
     expect((await call('GET', `/users/${ids.owner}`, tokens.viewer!)).json().sections.poems).toBe(false);
     // turning it back on restores it

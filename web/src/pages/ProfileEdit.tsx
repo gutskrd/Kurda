@@ -8,6 +8,7 @@ import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { COUNTRIES } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
+import { SectionToggles } from '../profile/SectionToggles';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
@@ -61,6 +62,7 @@ export function ProfileEdit(): React.JSX.Element {
       <AvatarPicker me={me} onChanged={changed} />
       <CosmeticCustomizer me={me} onChanged={changed} />
       <FavoritesPicker me={me} onChanged={changed} />
+      <SectionToggles me={me} />
 
       <div style={{ marginTop: 24 }}>
         <Link to="/app/settings" className="btn btn-secondary">Account settings</Link>

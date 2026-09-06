@@ -33,10 +33,13 @@ export function FullProfile({
   view,
   headerAction,
   sidebarExtra,
+  activity,
 }: {
   view: FullProfileView;
   headerAction?: React.ReactNode;
   sidebarExtra?: React.ReactNode;
+  /** what they have posted and played — below the showcases, above the fold on mobile */
+  activity?: React.ReactNode;
 }): React.JSX.Element {
   const online = view.online ?? false;
   return (
@@ -122,6 +125,7 @@ export function FullProfile({
                 </div>
               </div>
             )}
+            {activity}
           </main>
 
           <aside className="mkp-side">
