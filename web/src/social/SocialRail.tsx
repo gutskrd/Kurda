@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
+import { ChatsIcon, CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
+import { DmThread } from '../chat/DmThread';
 import { RailStrip } from './RailStrip';
 import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
@@ -44,6 +45,8 @@ export function SocialRail(): React.JSX.Element | null {
   const { status } = useAuth();
   const present = useRailPresent();
   const { data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed } = useRail();
+  /** the friend whose conversation is docked beside the rail, if any */
+  const [chatWith, setChatWith] = useState<RailFriend | null>(null);
 
   if (!present || status !== 'signedIn') return null;
 
@@ -83,16 +86,35 @@ export function SocialRail(): React.JSX.Element | null {
           */}
         <RailStrip data={data} onExpand={() => setCollapsed(false)} />
         <div className="rail-body">
-          {loading ? <p className="rail-empty">Loading…</p> : <RailContent data={data} onActed={refresh} />}
+          {loading ? <p className="rail-empty">Loading…</p> : <RailContent data={data} onActed={refresh} onChat={setChatWith} />}
         </div>
       </aside>
+
+      {/*
+        A conversation docked beside the rail, on a wide screen only.
+
+        The whole point of the rail is that reaching someone should not cost you
+        the page you are on. Sending "good luck" should not mean leaving the wall
+        you were reading, and on a narrow screen there is no room for two columns
+        — so there it stays a link to the messages page.
+      */}
+      {chatWith && (
+        <DmThread
+          key={chatWith.userId}
+          className="rail-chat"
+          otherId={chatWith.userId}
+          otherName={chatWith.displayName || chatWith.username}
+          onSent={refresh}
+          onClose={() => setChatWith(null)}
+        />
+      )}
 
       <RailToasts arrivals={arrivals} onDismiss={dismiss} onOpen={() => setOpen(true)} />
     </>
   );
 }
 
-function RailContent({ data, onActed }: { data: SocialRailData; onActed: () => void }): React.JSX.Element {
+function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (f: RailFriend) => void }): React.JSX.Element {
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
   const hasWaiting = data.challenges.length > 0 || data.requests.length > 0;
 
@@ -111,7 +133,7 @@ function RailContent({ data, onActed }: { data: SocialRailData; onActed: () => v
 
       <Section title="In a game" count={buckets.playing.length} hideWhenEmpty>
         {buckets.playing.map((f) => (
-          <FriendRow key={f.userId} friend={f} />
+          <FriendRow key={f.userId} friend={f} onChat={onChat} />
         ))}
       </Section>
 
@@ -119,13 +141,13 @@ function RailContent({ data, onActed }: { data: SocialRailData; onActed: () => v
         {buckets.online.length === 0 ? (
           <p className="rail-empty">Nobody right now.</p>
         ) : (
-          buckets.online.map((f) => <FriendRow key={f.userId} friend={f} />)
+          buckets.online.map((f) => <FriendRow key={f.userId} friend={f} onChat={onChat} />)
         )}
       </Section>
 
       <Section title="Offline" count={buckets.offline.length} collapsible defaultOpen={false} hideWhenEmpty>
         {buckets.offline.map((f) => (
-          <FriendRow key={f.userId} friend={f} />
+          <FriendRow key={f.userId} friend={f} onChat={onChat} />
         ))}
       </Section>
 
@@ -198,7 +220,7 @@ function Section({
 }
 
 /** One friend: who they are, and what they are doing about it. */
-function FriendRow({ friend }: { friend: RailFriend }): React.JSX.Element {
+function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (f: RailFriend) => void }): React.JSX.Element {
   // a live game needs a clock that moves; a static "4m" that never changes reads
   // as stale within a minute of looking at it
   const [, tick] = useState(0);
@@ -215,20 +237,50 @@ function FriendRow({ friend }: { friend: RailFriend }): React.JSX.Element {
       ? 'Online'
       : lastSeen(friend.lastSeenAt);
 
+  const name = friend.displayName || friend.username;
+
   return (
-    <Link to={`/app/users/${friend.userId}`} className="rail-row rail-friend">
-      <span className="rail-avatar">
-        <Avatar url={friend.avatarUrl} glyphSize={16} />
-        <span className={`rail-dot is-${state}`} aria-hidden />
-      </span>
-      <span className="rail-row-text">
-        <span className="rail-row-name">{friend.displayName || friend.username}</span>
-        <span className={`rail-row-sub${friend.activity ? ' is-playing' : ''}`}>
-          {friend.activity && <GameIcon size={12} />}
-          {sub}
+    <div className="rail-row rail-friend">
+      <Link to={`/app/users/${friend.userId}`} className="rail-friend-who">
+        <span className="rail-avatar">
+          <Avatar url={friend.avatarUrl} glyphSize={16} />
+          <span className={`rail-dot is-${state}`} aria-hidden />
         </span>
-      </span>
-    </Link>
+        <span className="rail-row-text">
+          <span className="rail-row-name">{name}</span>
+          <span className={`rail-row-sub${friend.activity ? ' is-playing' : ''}`}>
+            {friend.activity && <GameIcon size={12} />}
+            {sub}
+          </span>
+        </span>
+      </Link>
+
+      {/*
+        On a wide screen this docks the conversation beside the rail; on a narrow
+        one there is no room for a second column, so it is a link to the messages
+        page. Same button, two behaviours, chosen by whether a dock is offered.
+      */}
+      {onChat ? (
+        <button
+          type="button"
+          className="rail-friend-chat"
+          onClick={() => onChat(friend)}
+          aria-label={`Message ${name}`}
+          title={`Message ${name}`}
+        >
+          <ChatsIcon size={16} />
+        </button>
+      ) : (
+        <Link
+          to={`/app/messages?to=${friend.userId}&name=${encodeURIComponent(friend.username)}`}
+          className="rail-friend-chat"
+          aria-label={`Message ${name}`}
+          title={`Message ${name}`}
+        >
+          <ChatsIcon size={16} />
+        </Link>
+      )}
+    </div>
   );
 }
 

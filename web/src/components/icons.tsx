@@ -31,7 +31,7 @@ import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
 import { House } from '@phosphor-icons/react/dist/icons/House';
 import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
 import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
-import { Diamond } from '@phosphor-icons/react/dist/icons/Diamond';
+import { DiamondsFour } from '@phosphor-icons/react/dist/icons/DiamondsFour';
 import { SignOut } from '@phosphor-icons/react/dist/icons/SignOut';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
 import { Gift } from '@phosphor-icons/react/dist/icons/Gift';
@@ -121,7 +121,7 @@ export const HomeIcon = named(House, 22);
 export const WallIcon = named(Newspaper, 22);
 export const ShopIcon = named(Storefront, 22);
 /** Gems, the harder currency; Zêr is the CoinIcon above. */
-export const GemIcon = named(Diamond, 22);
+export const GemIcon = named(DiamondsFour, 22);
 export const SignOutIcon = named(SignOut, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */

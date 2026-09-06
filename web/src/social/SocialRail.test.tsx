@@ -55,6 +55,8 @@ function railFetch(answers: Array<Record<string, unknown>>) {
       call += 1;
       return jsonResponse(200, body);
     }
+    // a docked conversation asks for its own history
+    if (url.includes('/messages')) return jsonResponse(200, { messages: [] });
     if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
     if ((init?.method ?? 'GET') !== 'GET') posts.push(`${init!.method} ${url.slice(url.indexOf('/', 8))}`);
     return jsonResponse(200, { ok: true });
@@ -170,6 +172,60 @@ describe('SocialRail', () => {
     // is who else is around
     expect(container.querySelector('.rail-self')).toBeNull();
     expect(screen.queryByRole('link', { name: /saved/i })).not.toBeInTheDocument();
+  });
+
+  it('docks a conversation beside the rail instead of leaving the page', async () => {
+    signIn();
+    railFetch([rail({ friends: [person('u2', 'zana', { online: true })] })]);
+    const { container } = show();
+
+    await screen.findByText('zana');
+    // the name still opens the profile; the icon is what starts a conversation
+    expect(screen.getByRole('link', { name: /zana/ })).toHaveAttribute('href', '/app/users/u2');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+
+    // it appears in place rather than navigating — the page you were on stays
+    const chat = container.querySelector('.rail-chat');
+    expect(chat).not.toBeNull();
+    expect(within(chat as HTMLElement).getByRole('button', { name: 'Close this conversation' })).toBeInTheDocument();
+  });
+
+  it('opens an empty conversation rather than crashing on an odd response', async () => {
+    signIn();
+    const posts: string[] = [];
+    // a 200 with no `messages` array: `ok` is about the status code, not the
+    // shape, and spreading undefined used to throw and take the thread down
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/me/social')) {
+          return jsonResponse(200, rail({ friends: [person('u2', 'zana', { online: true })] }));
+        }
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        if ((init?.method ?? 'GET') !== 'GET') posts.push(url);
+        return jsonResponse(200, {});
+      }),
+    );
+    const { container } = show();
+
+    await screen.findByText('zana');
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+
+    expect(container.querySelector('.rail-chat')).not.toBeNull();
+    expect(await screen.findByText(/No messages yet/)).toBeInTheDocument();
+  });
+
+  it('closes the docked conversation without leaving the page', async () => {
+    signIn();
+    railFetch([rail({ friends: [person('u2', 'zana', { online: true })] })]);
+    const { container } = show();
+
+    await screen.findByText('zana');
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close this conversation' }));
+
+    expect(container.querySelector('.rail-chat')).toBeNull();
   });
 
   it('offers a way in when you have nobody yet', async () => {
