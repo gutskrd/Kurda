@@ -139,6 +139,8 @@ export interface PublicProfile extends ProfileCosmetics {
   streak?: number;
   tier?: string;
   rating?: number;
+  /** global rating place, or null when they have not played ranked */
+  rank?: number | null;
   achievements?: number;
 }
 

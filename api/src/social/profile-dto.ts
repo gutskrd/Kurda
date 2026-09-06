@@ -35,6 +35,8 @@ export interface PublicProfileDto {
   streak?: number;
   tier?: string;
   rating?: number;
+  /** global rating place, or null when they have not played ranked */
+  rank?: number | null;
   achievements?: number;
   favoritePoem?: FavoriteDto | null;
   favoriteStory?: FavoriteDto | null;
@@ -82,6 +84,7 @@ export function toPublicProfileDto(
     streak: profile.streak,
     tier: profile.tier,
     rating: profile.rating,
+    rank: profile.rank,
     achievements: profile.achievements,
     favoritePoem: fav(profile.favoritePoem),
     favoriteStory: fav(profile.favoriteStory),

@@ -23,6 +23,8 @@ export function Profile(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const [rank, setRank] = useState<number | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -41,6 +43,14 @@ export function Profile(): React.JSX.Element {
       if (f.ok) setFriends(f.data.friends ?? []);
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
+
+      // your own ranked place: /me does not carry it, and the public profile
+      // endpoint already computes it the same way it does for everyone else
+      const id = m.ok ? m.data?.user?.id : undefined;
+      if (id) {
+        const p = await client.get<{ rank?: number | null }>(`/users/${id}`);
+        if (!cancelled && p.ok) setRank(p.data.rank ?? null);
+      }
     })();
     return () => {
       cancelled = true;
@@ -74,6 +84,13 @@ export function Profile(): React.JSX.Element {
       sidebarExtra={
         <>
           <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
+          {/* only once ranked games have been played */}
+          {rank != null && (
+            <div className="mkp-info-row">
+              <span className="l">Rank</span>
+              <span className="n">#{rank.toLocaleString()}</span>
+            </div>
+          )}
 
           {icons.length > 0 && (
             <div className="mkp-collection">

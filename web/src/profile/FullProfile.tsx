@@ -41,7 +41,14 @@ export function FullProfile({
   const online = view.online ?? false;
   return (
     <div className={`mkp-page${view.background ? ' mkp-has-bg' : ''}`}>
-      {view.background && <CosmeticBackground background={view.background} className="mkp-bg" />}
+      {view.background && (
+        <>
+          <CosmeticBackground background={view.background} className="mkp-bg" />
+          {/* its own element, not ::after: the scrim has to be pinned to the
+              viewport alongside the picture, not to the page box */}
+          <div className="mkp-scrim" aria-hidden />
+        </>
+      )}
 
       <div className="mkp-wrap">
         <header className="mkp-head">
