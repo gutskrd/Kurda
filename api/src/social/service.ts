@@ -47,6 +47,12 @@ export interface PublicProfile {
   streak?: number;
   tier?: string;
   rating?: number;
+  /**
+   * Where they place on the global rating board, or null when they have never
+   * played a ranked game. A default rating with a rank beside it would read as
+   * a real standing rather than "has not played".
+   */
+  rank?: number | null;
   achievements?: number;
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
@@ -116,6 +122,8 @@ export class SocialService {
       streak: number;
       tier: string;
       rating: number;
+      has_rating: boolean;
+      rating_rank: number;
       achievements: number;
       equipped_background_sku: string | null;
       bg_asset: string | null;
@@ -149,6 +157,17 @@ export class SocialService {
               COALESCE(s.current_streak, 0) AS streak,
               COALESCE(ul.tier, 'bronze') AS tier,
               COALESCE(r.rating, 1000) AS rating,
+              (r.user_id IS NOT NULL) AS has_rating,
+              -- competition ranking, matching the leaderboard: strictly higher
+              -- ratings place above, and shadow-flagged cheats are not counted
+              (SELECT count(*)::int + 1
+                 FROM player_ratings r2 JOIN users u2 ON u2.id = r2.user_id
+                WHERE r2.rating > COALESCE(r.rating, 1000)
+                  AND u2.deleted_at IS NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM cheat_reviews cr
+                     WHERE cr.user_id = u2.id AND cr.shadow_flagged = true
+                  )) AS rating_rank,
               (SELECT count(*)::int FROM user_achievements ua WHERE ua.user_id = u.id) AS achievements,
               bg.asset_key AS bg_asset, bg.category AS bg_cat, bg.active AS bg_active,
               bg.premium_only AS bg_premium, (ebg.user_id IS NOT NULL) AS bg_owned,
@@ -236,6 +255,8 @@ export class SocialService {
       streak: u.streak,
       tier: u.tier,
       rating: u.rating,
+      // no ranked games played means no standing to report
+      rank: u.has_rating ? u.rating_rank : null,
       achievements: u.achievements,
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
