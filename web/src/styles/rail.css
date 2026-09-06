@@ -371,7 +371,8 @@
 /* ---- toasts ------------------------------------------------------------- */
 .rail-toasts {
   position: fixed;
-  right: calc(var(--rail-w) + 16px);
+  /* beside the strip, which is the width the page actually reserves */
+  right: calc(var(--rail-strip-w) + 16px);
   bottom: 20px;
   z-index: 60;
   display: flex;
@@ -479,16 +480,23 @@
   .rail-fold {
     display: block;
   }
+  /*
+   * The page reserves the strip's width and nothing more.
+   *
+   * The strip is always there and never changes size, so the gutter is a
+   * constant — and the expanded panel floats over the page instead of pushing
+   * it. Opening the rail used to reflow everything you were reading, which is a
+   * high price for a glance at who is online.
+   */
   .app-main {
-    padding-right: calc(var(--rail-w) + 16px);
-    transition: padding-right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  /* the page takes the width back when the rail gives it up */
-  body:has(.social-rail.is-collapsed) .app-main {
     padding-right: calc(var(--rail-strip-w) + 16px);
   }
   .social-rail {
     transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* it is above the page, so it needs an edge and a shadow to say so */
+  .social-rail:not(.is-collapsed) {
+    box-shadow: var(--shadow-lg);
   }
   .social-rail.is-collapsed {
     width: var(--rail-strip-w);
@@ -505,9 +513,7 @@
     justify-content: center;
     padding: 12px 0 10px;
   }
-  body:has(.social-rail.is-collapsed) .rail-toasts {
-    right: calc(var(--rail-strip-w) + 16px);
-  }
+
 }
 
 /* ---- narrow screen: the rail is a drawer -------------------------------- */
