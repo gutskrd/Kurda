@@ -14,7 +14,17 @@ export interface FavoriteRef {
   status: string;
 }
 
-export type Visibility = 'everyone' | 'friends' | 'nobody';
+/**
+ * Who may read a profile, widest first.
+ *
+ * 'members' is the meaningful one: signed in, but not necessarily a friend. It
+ * exists because the app is readable without an account, so 'everyone' now
+ * genuinely means the public web — a wider audience than most people want, and
+ * not one they should land in without choosing it.
+ */
+export const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
+
+export type Visibility = (typeof VISIBILITIES)[number];
 export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';
 
 export interface SearchHit {
@@ -69,8 +79,8 @@ function foldForm(input: string): string {
  * User search + public profiles (KUR-082). Username prefix search is
  * diacritic-folded (so "se" finds "sê"/"şev") and never surfaces users blocked
  * in either direction or those hidden from search. A profile's detail respects
- * its owner's visibility (everyone / friends / nobody), while identity + the
- * friend-relationship are always enough to send a request.
+ * its owner's visibility (everyone / members / friends / nobody), while identity
+ * + the friend-relationship are always enough to send a request.
  */
 export class SocialService {
   constructor(
@@ -210,6 +220,7 @@ export class SocialService {
     const canSeeDetail =
       isSelf ||
       u.profile_visibility === 'everyone' ||
+      (u.profile_visibility === 'members' && viewerId !== null) ||
       (u.profile_visibility === 'friends' && friendStatus === 'friends');
 
     const base: PublicProfile = {

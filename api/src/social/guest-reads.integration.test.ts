@@ -42,6 +42,12 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     await register('open', '10.95.0.1');
     await register('shy', '10.95.0.2');
+    await register('memb', '10.95.0.3');
+    await register('nosy', '10.95.0.4');
+
+    // 'everyone' now means the public web, and you have to ask for it: accounts
+    // are created 'members', which is signed-in readers only
+    await asMember('PUT', '/me/privacy', tokens.open!, { visibility: 'everyone' });
 
     await pool.query(
       `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, published_at)
@@ -87,6 +93,28 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
     expect(res.statusCode).toBe(200);
     expect(res.json().private).toBe(true);
     expect(res.json().bio ?? null).toBeNull();
+  });
+
+  it('is told nothing by a members-only profile, though members are', async () => {
+    // the default, so 'memb' has chosen nothing — this is what you get for free
+    const asGuest = await guest(`/users/${ids.memb}`);
+    expect(asGuest.statusCode).toBe(200);
+    expect(asGuest.json().username).toBe(`guest_memb_${suffix}`.slice(0, 30));
+    expect(asGuest.json().private).toBe(true);
+
+    // a signed-in stranger, no friendship between them, sees the whole thing
+    const asStranger = await asMember('GET', `/users/${ids.memb}`, tokens.nosy!);
+    expect(asStranger.statusCode).toBe(200);
+    expect(asStranger.json().private).toBe(false);
+    expect(asStranger.json().friendStatus).toBe('none');
+  });
+
+  it('accepts every rung of the ladder and nothing else', async () => {
+    for (const visibility of ['everyone', 'members', 'friends', 'nobody']) {
+      const res = await asMember('PUT', '/me/privacy', tokens.nosy!, { visibility });
+      expect(res.statusCode, visibility).toBe(200);
+    }
+    expect((await asMember('PUT', '/me/privacy', tokens.nosy!, { visibility: 'public' })).statusCode).toBe(400);
   });
 
   it('gets no activity from a profile that is not public', async () => {

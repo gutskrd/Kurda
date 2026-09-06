@@ -112,7 +112,8 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
   xp: number;
   /** /me returns the full streak object; use streak.current for the count. */
   streak: StreakSummary;
-  profileVisibility: 'everyone' | 'friends' | 'nobody';
+  /** 'everyone' is the public web; 'members' is everyone signed in. */
+  profileVisibility: 'everyone' | 'members' | 'friends' | 'nobody';
   profilePhotoUrl: string | null;
   createdAt: string;
   /** self-only equip state, for the cosmetic pickers (not exposed publicly) */

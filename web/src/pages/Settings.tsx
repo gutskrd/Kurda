@@ -7,11 +7,29 @@ import type { MeProfile } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 
-type Visibility = 'everyone' | 'friends' | 'nobody';
+const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
+type Visibility = (typeof VISIBILITIES)[number];
+
+/**
+ * 'Everyone' has to say *the web*, out loud.
+ *
+ * MyKurda can be read without an account, so the widest setting is genuinely
+ * public — findable, linkable, readable by someone who never signed up. A chip
+ * labelled "Everyone" reads like "everyone here", which is what 'Members' is,
+ * and nobody should learn the difference after the fact.
+ */
 const VIS_LABEL: Record<Visibility, string> = {
-  everyone: 'Everyone',
+  everyone: 'Anyone on the web',
+  members: 'MyKurda members',
   friends: 'Friends only',
   nobody: 'Nobody',
+};
+
+const VIS_HINT: Record<Visibility, string> = {
+  everyone: 'Anyone at all, signed in or not — including search engines.',
+  members: 'Anyone signed in to MyKurda. Signed-out visitors see only your name.',
+  friends: 'Only people you have added as friends.',
+  nobody: 'Nobody but you. You stay out of search and off the rankings.',
 };
 
 export function Settings(): React.JSX.Element {
@@ -80,13 +98,21 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
     <section className="card">
       <h2 className="friend-heading" style={{ marginTop: 0 }}>Profile visibility</h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>Who can see your profile.</p>
-      <div className="toolbar" style={{ marginBottom: 8 }}>
-        {(['everyone', 'friends', 'nobody'] as Visibility[]).map((v) => (
-          <button key={v} type="button" className={`chip${vis === v ? ' active' : ''}`} disabled={busy} onClick={() => change(v)}>
+      <div className="toolbar" style={{ marginBottom: 8 }} role="group" aria-label="Profile visibility">
+        {VISIBILITIES.map((v) => (
+          <button
+            key={v}
+            type="button"
+            className={`chip${vis === v ? ' active' : ''}`}
+            disabled={busy}
+            aria-pressed={vis === v}
+            onClick={() => change(v)}
+          >
             {VIS_LABEL[v]}
           </button>
         ))}
       </div>
+      <p className="field-hint" style={{ marginBottom: 0 }}>{VIS_HINT[vis]}</p>
       {msg && <span className="field-hint">{msg}</span>}
     </section>
   );
