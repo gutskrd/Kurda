@@ -6,7 +6,8 @@ import { Button } from '../components/Button';
 import { PhotoIcon } from '../components/icons';
 import { canvasToFile, fitWithin } from './photoText';
 import { PhotoEditor } from './PhotoEditor';
-import type { Layer } from './layers';
+import { drawLayers, type Layer } from './layers';
+import { ensureStickersFor } from './stickers';
 import { DIMEN_KINDS } from '../feed/postKinds';
 
 const MAX_CAPTION = 2_000;
@@ -111,8 +112,15 @@ export function PictureComposer({
     setError(null);
 
     // nothing was composed onto an unpreviewable file, so its own bytes are
-    // exactly what should be sent
-    const composed = rawOnly ? file : await canvasToFile(canvas!, 'dimen');
+    // exactly what should be sent — and there is no canvas to prepare
+    let composed: File | null = file;
+    if (!rawOnly) {
+      // the export draws synchronously, so every picture sticker has to be
+      // decoded first — otherwise one added a moment ago exports as nothing
+      await ensureStickersFor(layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)));
+      if (imageRef.current && size) drawLayers(canvas!, imageRef.current, size.width, size.height, layers);
+      composed = await canvasToFile(canvas!, 'dimen');
+    }
     if (!composed) {
       setBusy(false);
       setError('That picture could not be prepared for upload.');

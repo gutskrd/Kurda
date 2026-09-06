@@ -22,3 +22,8 @@ api/.pgdata/
 /default-avatars/
 /premium-icons/
 /mykurda-background/
+
+# Where source artwork is dropped for conversion (e.g. sticker PNGs). The files
+# that ship are the sized WebPs under web/public/stickers, generated from these.
+# Ignored so a `git add -A` cannot sweep multi-megabyte originals into a commit.
+/stickers/
