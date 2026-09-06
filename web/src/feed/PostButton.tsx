@@ -37,7 +37,9 @@ export function PostButton({ onPosted }: { onPosted: () => void }): React.JSX.El
   return (
     <>
       <button type="button" className="post-plus" onClick={() => setOpen(true)} aria-label="Post something">
-        <PlusIcon size={20} weight="bold" />
+        <PlusIcon size={18} weight="bold" />
+        {/* the word carries it on a wide screen; the + carries it on a narrow one */}
+        <span className="post-plus-word">Post</span>
       </button>
 
       <Modal open={open} onClose={close} label="Post something">
