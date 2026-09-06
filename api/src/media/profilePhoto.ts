@@ -64,9 +64,15 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
     const [status, code, message] =
       proc.reason === 'invalid-type'
         ? [415, 'INVALID_IMAGE', 'unsupported or non-image file']
-        : proc.reason === 'malformed'
-          ? [422, 'MALFORMED_IMAGE', 'the image could not be decoded']
-          : [422, 'IMAGE_TOO_LARGE', 'image could not be compressed to the size limit'];
+        : proc.reason === 'codec-unavailable'
+          ? [
+              415,
+              'HEIC_UNSUPPORTED',
+              'HEIC photos cannot be read yet. On iPhone: Settings › Camera › Formats › Most Compatible saves JPEGs instead.',
+            ]
+          : proc.reason === 'malformed'
+            ? [422, 'MALFORMED_IMAGE', 'the image could not be decoded']
+            : [422, 'IMAGE_TOO_LARGE', 'image could not be compressed to the size limit'];
     return reject(status as number, code as string, message as string, proc.reason);
   }
 

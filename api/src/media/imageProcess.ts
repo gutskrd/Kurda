@@ -1,7 +1,26 @@
 import sharp, { type Sharp } from 'sharp';
 import { sniffImageType } from './mimeSniff.js';
 
-export type ProcessReject = 'invalid-type' | 'malformed' | 'too-large-after-compression';
+export type ProcessReject =
+  | 'invalid-type'
+  | 'malformed'
+  | 'codec-unavailable'
+  | 'too-large-after-compression';
+
+/**
+ * Formats whose container we recognise but whose picture data needs a codec the
+ * build may not carry.
+ *
+ * sharp's prebuilt binaries ship AV1 (so AVIF decodes) but not HEVC, which is
+ * what an iPhone's HEIC actually contains — it is patent-encumbered and left
+ * out. So a HEIC arrives, sniffs correctly, and then fails to decode, and
+ * "the image could not be decoded" is a true but useless thing to tell someone
+ * whose photo is not corrupt at all.
+ *
+ * This is not hardcoded as "HEIC never works": if a deployment's libvips does
+ * carry the decoder, the decode simply succeeds and none of this runs.
+ */
+const CODEC_DEPENDENT: ReadonlySet<string> = new Set(['image/heic']);
 
 export type ProcessResult =
   | { ok: true; webp: Buffer; contentType: 'image/webp'; width: number; height: number; bytes: number }
@@ -43,7 +62,8 @@ export async function processImage(input: Buffer, opts: ProcessOptions): Promise
     // force a decode now so a malformed image is caught here, not later
     await base.clone().metadata();
   } catch {
-    return { ok: false, reason: 'malformed' };
+    // a format we admit but cannot decode is a missing codec, not a bad file
+    return { ok: false, reason: CODEC_DEPENDENT.has(sniffed) ? 'codec-unavailable' : 'malformed' };
   }
 
   for (const quality of QUALITY_LADDER) {
