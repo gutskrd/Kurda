@@ -4,11 +4,18 @@ import { requireAuth } from '../plugins/auth.js';
 import type { SocialService } from './service.js';
 import { toPublicProfileDto } from './profile-dto.js';
 import { AppError } from '../plugins/errors.js';
-import { isProfileSection, ProfileActivityService } from './profile-activity.js';
+import {
+  isProfileSection,
+  ProfileActivityService,
+  type ActivityEntry,
+  type ActivityEntryWithMedia,
+} from './profile-activity.js';
+import { EngagementService, isEngagementKind, isTargetType } from './engagement-service.js';
 
 /** User search + public profiles + privacy (KUR-082). */
 export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
   const activity = new ProfileActivityService(app.db);
+  const engagement = new EngagementService(app.db);
 
   /** Username prefix search (rate-limited against scraping). */
   app.get(
@@ -77,14 +84,13 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       if (kind === 'stories') return { entries: await activity.posts(id, 'story', limit, offset) };
       if (kind === 'poems') return { entries: await activity.posts(id, 'poem', limit, offset) };
       if (kind === 'games') return { entries: await activity.games(id, limit, offset) };
+      if (kind === 'likes' || kind === 'bookmarks') {
+        const engaged = await activity.engaged(id, kind === 'likes' ? 'like' : 'bookmark', limit, offset);
+        return { entries: engaged.map(withImageUrl) };
+      }
 
       const rows = await activity.images(id, limit, offset);
-      return {
-        entries: rows.map(({ mediaId, ...e }) => ({
-          ...e,
-          imageUrl: mediaId && app.storage ? app.storage.publicUrl(mediaId) : null,
-        })),
-      };
+      return { entries: rows.map(withImageUrl) };
     },
   );
 
@@ -98,6 +104,8 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
           poems: z.boolean().optional(),
           images: z.boolean().optional(),
           games: z.boolean().optional(),
+          likes: z.boolean().optional(),
+          bookmarks: z.boolean().optional(),
         }),
       },
       preHandler: requireAuth,
@@ -105,6 +113,44 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     async (req) => ({
       sections: await activity.setSections(req.user!.id, req.body as Record<string, boolean>),
     }),
+  );
+
+
+  /**
+   * A picture's media key becomes a URL here rather than in the service: the
+   * service does not know how media is served, and the route already holds the
+   * storage handle.
+   */
+  function withImageUrl({ mediaId, ...rest }: ActivityEntryWithMedia): ActivityEntry {
+    return { ...rest, imageUrl: mediaId && app.storage ? app.storage.publicUrl(mediaId) : null };
+  }
+
+  /**
+   * Like or save a post — one button, one endpoint, and the server decides.
+   *
+   * A toggle rather than add/remove: the client's idea of the current state can
+   * be stale (a second tab, a poll between renders), and letting the database
+   * answer from what is actually stored means a double click cannot leave the
+   * heart disagreeing with the count.
+   */
+  app.post(
+    '/posts/:type/:id/:kind',
+    {
+      schema: {
+        params: z.object({ type: z.string().max(16), id: z.uuid(), kind: z.string().max(16) }),
+      },
+      config: { rateLimit: { max: 120, windowMs: 60_000, per: 'user-or-ip' as const }, skipValidation: true },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { type, id, kind } = req.params as { type: string; id: string; kind: string };
+      if (!isTargetType(type)) throw new AppError('BAD_TARGET', 400, 'unknown post type');
+      if (!isEngagementKind(kind)) throw new AppError('BAD_KIND', 400, 'unknown engagement');
+
+      const { on } = await engagement.toggle(req.user!.id, type, id, kind);
+      const counts = await engagement.forPosts(req.user!.id, type, [id]);
+      return { on, engagement: counts.get(id) };
+    },
   );
 
   /** A user's public profile (privacy- and block-gated). */

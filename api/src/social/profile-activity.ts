@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { EngagementService, type EngagementKind } from './engagement-service.js';
 
 /**
  * What a profile shows besides the person themselves: what they have posted and
@@ -10,7 +11,7 @@ import type pg from 'pg';
  */
 
 /** The sections a profile can show, in the order they appear. */
-export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games'] as const;
+export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games', 'likes', 'bookmarks'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 
 export function isProfileSection(value: string): value is ProfileSection {
@@ -33,6 +34,14 @@ export function resolveSections(stored: unknown): SectionVisibility {
   return out;
 }
 
+/**
+ * An entry whose picture is still a media key.
+ *
+ * The service does not know how media is served, so it hands the key up and the
+ * route turns it into a URL. Optional because most sources have no picture.
+ */
+export type ActivityEntryWithMedia = ActivityEntry & { mediaId?: string | null };
+
 /** One thing that happened, in a shape every source can be flattened into. */
 export interface ActivityEntry {
   id: string;
@@ -49,7 +58,11 @@ export interface ActivityEntry {
 }
 
 export class ProfileActivityService {
-  constructor(private readonly pool: pg.Pool) {}
+  private readonly engagement: EngagementService;
+
+  constructor(private readonly pool: pg.Pool) {
+    this.engagement = new EngagementService(pool);
+  }
 
   async sections(userId: string): Promise<SectionVisibility> {
     const res = await this.pool.query<{ profile_sections: unknown }>(
@@ -116,6 +129,79 @@ export class ProfileActivityService {
       mediaId: r.image_media_id,
       at: r.created_at,
     }));
+  }
+
+  /**
+   * What this person has liked or saved, newest first.
+   *
+   * Engagement is stored as pointers — (type, id) — so this fetches the posts
+   * they point at and puts them back in the order they were liked. Two queries
+   * for a mixed page rather than one per entry, and posts that have since been
+   * removed simply drop out instead of leaving holes.
+   */
+  async engaged(userId: string, kind: EngagementKind, limit: number, offset: number): Promise<ActivityEntryWithMedia[]> {
+    const refs = await this.engagement.listFor(userId, kind, limit, offset);
+    if (refs.length === 0) return [];
+
+    const [posts, images] = await Promise.all([
+      this.libraryByIds(refs.filter((r) => r.targetType === 'library').map((r) => r.targetId)),
+      this.imagesByIds(refs.filter((r) => r.targetType === 'image').map((r) => r.targetId)),
+    ]);
+
+    const out: ActivityEntryWithMedia[] = [];
+    for (const ref of refs) {
+      const found = ref.targetType === 'library' ? posts.get(ref.targetId) : images.get(ref.targetId);
+      // the entry keeps its own kind — a liked picture is still a picture, and
+      // the tab needs that to render it as one rather than as a line of text.
+      // Which section this is was in the request.
+      if (found) out.push({ ...found, at: ref.at });
+    }
+    return out;
+  }
+
+  /** Published stories and poems by id, keyed for the caller to order. */
+  private async libraryByIds(ids: string[]): Promise<Map<string, ActivityEntryWithMedia>> {
+    const map = new Map<string, ActivityEntryWithMedia>();
+    if (ids.length === 0) return map;
+    const rows = await this.pool.query<{ id: string; type: 'story' | 'poem'; title: string; body: string }>(
+      `SELECT id, type, title, body FROM library_posts WHERE id = ANY($1) AND status = 'published'`,
+      [ids],
+    );
+    for (const r of rows.rows) {
+      map.set(r.id, {
+        id: r.id,
+        kind: r.type === 'story' ? 'stories' : 'poems',
+        title: r.title,
+        detail: excerpt(r.body),
+        href: `/app/library/${r.id}`,
+        imageUrl: null,
+        at: new Date(),
+      });
+    }
+    return map;
+  }
+
+  /** Published pictures by id. The caller resolves the media key to a URL. */
+  private async imagesByIds(ids: string[]): Promise<Map<string, ActivityEntryWithMedia>> {
+    const map = new Map<string, ActivityEntryWithMedia>();
+    if (ids.length === 0) return map;
+    const rows = await this.pool.query<{ id: string; caption: string | null; image_media_id: string | null }>(
+      `SELECT id, caption, image_media_id FROM image_posts WHERE id = ANY($1) AND status = 'published'`,
+      [ids],
+    );
+    for (const r of rows.rows) {
+      map.set(r.id, {
+        id: r.id,
+        kind: 'images',
+        title: r.caption?.trim() || 'Untitled',
+        detail: null,
+        href: `/app/dimen/${r.id}`,
+        imageUrl: null,
+        mediaId: r.image_media_id,
+        at: new Date(),
+      });
+    }
+    return map;
   }
 
   /**

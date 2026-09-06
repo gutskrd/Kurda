@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ActivityEntry, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
-import { BookIcon, FeatherIcon, GameIcon, PhotoIcon } from '../components/icons';
+import { BookIcon, BookmarkIcon, FeatherIcon, GameIcon, HeartIcon, PhotoIcon } from '../components/icons';
 
 const PAGE = 12;
 
@@ -14,12 +14,16 @@ const LABELS: Record<ProfileSection, string> = {
   poems: 'Poems',
   images: 'Dîmen',
   games: 'Games',
+  likes: 'Likes',
+  bookmarks: 'Saved',
 };
 
 function SectionGlyph({ kind, size = 22 }: { kind: ProfileSection; size?: number }): React.JSX.Element {
   if (kind === 'stories') return <BookIcon size={size} />;
   if (kind === 'poems') return <FeatherIcon size={size} />;
   if (kind === 'images') return <PhotoIcon size={size} />;
+  if (kind === 'likes') return <HeartIcon size={size} />;
+  if (kind === 'bookmarks') return <BookmarkIcon size={size} />;
   return <GameIcon size={size} />;
 }
 

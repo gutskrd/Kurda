@@ -9,7 +9,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const ALL = { stories: true, poems: true, images: true, games: true };
+const ALL = { stories: true, poems: true, images: true, games: true, likes: true, bookmarks: true };
 
 const entry = (id: string, kind: string, title: string, extra: Record<string, unknown> = {}) => ({
   id,
