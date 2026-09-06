@@ -102,7 +102,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
   });
 
   it('reads the global leaderboard, with no place of its own on it', async () => {
-    const res = await guest('/leaderboards/xp');
+    const res = await guest('/leaderboards/rating');
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.json().top)).toBe(true);
     // "me" is a question about a person, and there is no person here
@@ -111,7 +111,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
 
   it('gets an empty board for the scopes that are about a person', async () => {
     for (const scope of ['friends', 'country']) {
-      const res = await guest(`/leaderboards/xp?scope=${scope}`);
+      const res = await guest(`/leaderboards/rating?scope=${scope}`);
       // an empty board rather than a wrong one, and never someone else's
       expect(res.statusCode, scope).toBe(200);
       expect(res.json().top, scope).toEqual([]);
@@ -120,17 +120,30 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
   });
 
   it('still cannot do anything', async () => {
-    const forbidden: Array<[string, string]> = [
-      ['POST', '/library/posts'],
-      ['POST', '/images'],
-      ['GET', '/me/saved'],
-      ['GET', '/me/social'],
-      ['GET', '/friends'],
-      ['POST', '/friends/requests'],
+    /*
+     * The bodies are well-formed on purpose. Fastify validates a request body
+     * before it runs `requireAuth` (a preHandler), so a malformed one comes back
+     * 400 and would prove nothing about whether the endpoint is guarded.
+     */
+    const forbidden: Array<[string, string, unknown]> = [
+      ['POST', '/library/posts', { type: 'gotin', body: 'hello' }],
+      ['POST', '/images', { imageMediaId: 'media/x.webp' }],
+      ['GET', '/me/saved', undefined],
+      ['GET', '/me/social', undefined],
+      ['GET', '/friends', undefined],
+      ['POST', '/friends/requests', { userId: ids.open }],
+      ['GET', '/me/notifications', undefined],
+      ['PUT', '/me/privacy', { visibility: 'nobody' }],
     ];
-    for (const [method, url] of forbidden) {
-      const res = await app.inject({ method: method as 'GET' | 'POST', url, payload: {}, remoteAddress: '10.95.1.1' });
-      // reading is open; everything that changes something is not
+    for (const [method, url, payload] of forbidden) {
+      const res = await app.inject({
+        method: method as 'GET' | 'POST' | 'PUT',
+        url,
+        payload: payload as object,
+        remoteAddress: '10.95.1.1',
+      });
+      // reading is open; everything that changes something, or is about a
+      // particular person, is not
       expect(res.statusCode, `${method} ${url}`).toBe(401);
     }
   });
