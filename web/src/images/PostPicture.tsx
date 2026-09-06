@@ -5,6 +5,7 @@ import type { ImagePost } from '../lib/types';
 import { Button } from '../components/Button';
 import { PhotoIcon } from '../components/icons';
 import { canvasToFile, fitWithin } from './photoText';
+import { decodePicture, shouldHaveDecoded, sniffPictureFormat, type DecodedPicture } from './decode';
 import { PhotoEditor } from './PhotoEditor';
 import { drawLayers, type Layer } from './layers';
 import { ensureStickersFor } from './stickers';
@@ -36,7 +37,7 @@ export function PictureComposer({
   const { client } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+  const imageRef = useRef<CanvasImageSource | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -47,8 +48,12 @@ export function PictureComposer({
   const [error, setError] = useState<string | null>(null);
   /** The browser could not decode it, so it goes up as-is with nothing added. */
   const [rawOnly, setRawOnly] = useState(false);
+  /** what the bytes turned out to be, so a failure can be worded honestly */
+  const [format, setFormat] = useState<string | null>(null);
+  /** bumped to decode the same file again, for a failure that may not repeat */
+  const [attempt, setAttempt] = useState(0);
 
-  /** Load the chosen file into an image element the canvas can draw from. */
+  /** Decode the chosen file into something the canvas can draw from. */
   useEffect(() => {
     if (!file) {
       imageRef.current = null;
@@ -56,38 +61,41 @@ export function PictureComposer({
       setRawOnly(false);
       return;
     }
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    // a second run (React runs effects twice in development) revokes the first
-    // run's URL mid-load, and that failure must not be mistaken for a bad file
     let cancelled = false;
+    let decoded: DecodedPicture | null = null;
 
-    img.onload = () => {
-      if (cancelled) return;
-      imageRef.current = img;
+    void decodePicture(file).then((result) => {
+      decoded = result;
+      // React runs this effect twice in development, so a result belonging to a
+      // run that has already been torn down is dropped rather than rendered
+      if (cancelled) {
+        result?.release();
+        return;
+      }
+      if (!result) {
+        // Not a dead end, and not a broken file. Usually this browser has no
+        // decoder for these bytes — a HEIC from a phone. But read the bytes
+        // before saying so: a PNG that will not decode is not a format problem,
+        // and telling someone their screenshot is an unsupported kind of picture
+        // when it plainly is not sends them looking in the wrong place.
+        void sniffPictureFormat(file).then((f) => {
+          if (!cancelled) setFormat(f);
+        });
+        setRawOnly(true);
+        return;
+      }
+      imageRef.current = result.source;
       // the server resizes to its own maximum anyway, so composing larger only
       // makes a bigger file for it to throw away — and a full-size export is
       // what put a phone photo over the upload cap
-      setSize(fitWithin(img.naturalWidth, img.naturalHeight));
-      URL.revokeObjectURL(url);
-    };
-    img.onerror = () => {
-      if (cancelled) return;
-      URL.revokeObjectURL(url);
-      // Not a dead end. The browser cannot draw this one — a HEIC from a phone,
-      // most often — but the server decodes far more than any browser does and
-      // re-encodes everything to WebP anyway. So the picture is still postable;
-      // it just cannot be edited here, because there is nothing to edit on.
-      setRawOnly(true);
-    };
-    img.src = url;
-    // an object URL is a live handle on the file; letting them pile up would pin
-    // every picture browsed past in memory for the session
+      setSize(fitWithin(result.width, result.height));
+    });
+
     return () => {
       cancelled = true;
-      URL.revokeObjectURL(url);
+      decoded?.release();
     };
-  }, [file]);
+  }, [file, attempt]);
 
   /**
    * Take whatever was chosen and let the browser decide if it is a picture.
@@ -190,12 +198,27 @@ export function PictureComposer({
             <div className="picture-raw" role="status">
               <PhotoIcon size={26} />
               <p className="picture-raw-name">{file!.name}</p>
-              {/* no promise that it will convert: HEIC needs a codec the server
-                  may not carry, and it says so plainly if it cannot */}
-              <p className="muted">
-                Your browser can’t show this kind of picture, so there’s nothing to add text or
-                stickers to — you can still post it as it is.
-              </p>
+              {shouldHaveDecoded(format) ? (
+                <>
+                  {/* a PNG or JPEG that will not open is not a format problem, and
+                      saying it is would send someone converting a file that is
+                      already fine */}
+                  <p className="muted">
+                    This {format!.toUpperCase()} should have opened here and didn’t. Try again — or
+                    post it as it is, which still works.
+                  </p>
+                  <Button size="sm" variant="secondary" onClick={() => { setRawOnly(false); setAttempt((n) => n + 1); }}>
+                    Try again
+                  </Button>
+                </>
+              ) : (
+                /* no promise that it will convert: HEIC needs a codec the server
+                   may not carry, and it says so plainly if it cannot */
+                <p className="muted">
+                  Your browser can’t show {format ? `${format.toUpperCase()} pictures` : 'this kind of picture'},
+                  so there’s nothing to add text or stickers to — you can still post it as it is.
+                </p>
+              )}
             </div>
           )}
 
