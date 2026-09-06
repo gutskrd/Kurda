@@ -18,7 +18,9 @@
  */
 import { ArrowRight } from '@phosphor-icons/react/dist/icons/ArrowRight';
 import { BookOpen } from '@phosphor-icons/react/dist/icons/BookOpen';
+import { Bell } from '@phosphor-icons/react/dist/icons/Bell';
 import { BookmarkSimple } from '@phosphor-icons/react/dist/icons/BookmarkSimple';
+import { ChatsCircle } from '@phosphor-icons/react/dist/icons/ChatsCircle';
 import { CaretRight } from '@phosphor-icons/react/dist/icons/CaretRight';
 import { ChatCircle } from '@phosphor-icons/react/dist/icons/ChatCircle';
 import { Coin } from '@phosphor-icons/react/dist/icons/Coin';
@@ -91,6 +93,10 @@ export const MoonIcon = named(Moon, 20);
 export const GearIcon = named(Gear, 20);
 export const ArrowIcon = named(ArrowRight, 18);
 export const BookmarkIcon = named(BookmarkSimple, 22);
+/** Something is waiting for you to look at it. */
+export const BellIcon = named(Bell, 22);
+/** More than one conversation: a group. */
+export const ChatsIcon = named(ChatsCircle, 22);
 export const TextIcon = named(TextAa, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */

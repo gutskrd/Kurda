@@ -9,6 +9,9 @@ interface RailContext {
   refresh: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** wide screens only: the rail is a strip of icons rather than a full column */
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
   /** everything waiting: invites, requests, unread notifications and groups */
   total: number;
 }
@@ -36,8 +39,20 @@ const ABSENT: RailContext = {
   refresh: () => undefined,
   open: false,
   setOpen: () => undefined,
+  collapsed: false,
+  setCollapsed: () => undefined,
   total: 0,
 };
+
+const COLLAPSED_KEY = 'mykurda_rail_collapsed';
+
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 const Ctx = createContext<RailContext | null>(null);
 
@@ -60,6 +75,18 @@ export function useRail(): RailContext {
 export function RailProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { data, loading, arrivals, dismiss, refresh } = useSocialRail();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+
+  // whether you want the column or the strip is a per-browser preference, and
+  // having to re-collapse it on every page load would be worse than not having
+  // the choice at all
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch {
+      // a browser with site data blocked still gets a working rail
+    }
+  }, [collapsed]);
 
   // Escape closes it, the way every drawer should
   useEffect(() => {
@@ -75,8 +102,8 @@ export function RailProvider({ children }: { children: React.ReactNode }): React
     data.unread.challenges + data.unread.requests + data.unread.notifications + data.unread.groups;
 
   const value = useMemo(
-    () => ({ data, loading, arrivals, dismiss, refresh, open, setOpen, total }),
-    [data, loading, arrivals, dismiss, refresh, open, total],
+    () => ({ data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed, total }),
+    [data, loading, arrivals, dismiss, refresh, open, collapsed, total],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

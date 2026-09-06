@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
+import { RailStrip } from './RailStrip';
 import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
@@ -42,7 +43,7 @@ function bucket(friends: RailFriend[]): Buckets {
 export function SocialRail(): React.JSX.Element | null {
   const { status } = useAuth();
   const present = useRailPresent();
-  const { data, loading, arrivals, dismiss, refresh, open, setOpen } = useRail();
+  const { data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed } = useRail();
 
   if (!present || status !== 'signedIn') return null;
 
@@ -51,14 +52,36 @@ export function SocialRail(): React.JSX.Element | null {
       {/* the scrim only exists on narrow screens, where the rail is a drawer */}
       {open && <div className="rail-scrim" onClick={() => setOpen(false)} aria-hidden />}
 
-      <aside className={`social-rail${open ? ' is-open' : ''}`} aria-label="Social">
+      <aside
+        className={`social-rail${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
+        aria-label="Social"
+      >
         <div className="rail-head">
+          {/* on a wide screen this collapses the column to the strip; the drawer
+              has no room for it and hides it in CSS */}
+          <button
+            type="button"
+            className="rail-fold"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand the social panel' : 'Collapse the social panel'}
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Expand' : 'Collapse'}
+          >
+            <ChevronIcon size={16} className={collapsed ? 'rail-fold-arrow' : 'rail-fold-arrow is-open'} />
+          </button>
           <span className="rail-title">Social</span>
           <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label="Close social panel">
             <CloseIcon size={18} />
           </button>
         </div>
 
+        {/*
+          * Both are rendered and CSS picks one. The folded state belongs to the
+          * fixed column; a drawer that opened to a strip of icons would be a
+          * narrow screen giving up its width for nothing. Choosing in JS would
+          * mean a media query in two places that could disagree.
+          */}
+        <RailStrip data={data} onExpand={() => setCollapsed(false)} />
         <div className="rail-body">
           {loading ? <p className="rail-empty">Loading…</p> : <RailContent data={data} onActed={refresh} />}
         </div>

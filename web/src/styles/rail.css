@@ -4,6 +4,8 @@
  */
 :root {
   --rail-w: 296px;
+  /* wide enough for a 20px glyph, its badge, and air on both sides */
+  --rail-strip-w: 60px;
 }
 
 /* ---- the toggle in the nav ---------------------------------------------- */
@@ -306,6 +308,66 @@
   font-size: 0.7rem;
 }
 
+/* ---- folded to a strip of icons ----------------------------------------- */
+.rail-fold {
+  display: none; /* only the fixed column can fold; the drawer has no room */
+  border: 0;
+  background: transparent;
+  color: var(--ink-4);
+  cursor: pointer;
+  padding: 2px;
+}
+.rail-fold:hover {
+  color: var(--ink);
+}
+/* points left to fold the column away, right to bring it back */
+.rail-fold-arrow {
+  transition: transform 0.18s ease;
+}
+.rail-fold-arrow.is-open {
+  transform: rotate(180deg);
+}
+.rail-strip {
+  display: none; /* shown only by the folded column, in the wide-screen block */
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+}
+.rail-rung {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.rail-rung:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+.rail-rung.is-urgent {
+  color: var(--gold-ink);
+  border-color: rgba(240, 194, 74, 0.35);
+}
+.rail-rung-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  font-size: 0.62rem;
+}
+/* a count that is only informational should not shout like an invite does */
+.rail-rung:not(.is-urgent) .rail-rung-count {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
 /* ---- toasts ------------------------------------------------------------- */
 .rail-toasts {
   position: fixed;
@@ -414,13 +476,44 @@
   .rail-toggle {
     display: none;
   }
+  .rail-fold {
+    display: block;
+  }
   .app-main {
     padding-right: calc(var(--rail-w) + 16px);
+    transition: padding-right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* the page takes the width back when the rail gives it up */
+  body:has(.social-rail.is-collapsed) .app-main {
+    padding-right: calc(var(--rail-strip-w) + 16px);
+  }
+  .social-rail {
+    transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .social-rail.is-collapsed {
+    width: var(--rail-strip-w);
+  }
+  .social-rail.is-collapsed .rail-strip {
+    display: flex;
+  }
+  .social-rail.is-collapsed .rail-title,
+  .social-rail.is-collapsed .rail-close,
+  .social-rail.is-collapsed .rail-body {
+    display: none;
+  }
+  .social-rail.is-collapsed .rail-head {
+    justify-content: center;
+    padding: 12px 0 10px;
+  }
+  body:has(.social-rail.is-collapsed) .rail-toasts {
+    right: calc(var(--rail-strip-w) + 16px);
   }
 }
 
 /* ---- narrow screen: the rail is a drawer -------------------------------- */
 @media (max-width: 1179px) {
+  /* the drawer is either open or gone; folding is a wide-screen idea, so the
+     stored preference simply does not apply down here — nothing to undo */
   .social-rail {
     width: min(var(--rail-w), 86vw);
     transform: translateX(100%);
@@ -468,7 +561,9 @@
   .rail-scrim {
     animation: none;
   }
-  .social-rail {
+  .social-rail,
+  .app-main,
+  .rail-fold-arrow {
     transition: none;
   }
   .rail-toast-timer {
