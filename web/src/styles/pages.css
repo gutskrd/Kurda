@@ -3978,3 +3978,216 @@ a.mkp-activity-row:hover {
 .swatch.is-on {
   border-color: var(--ink);
 }
+
+/* ---- the photo editor --------------------------------------------------- */
+.editor-stage {
+  position: relative;
+  display: block;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.editor-canvas {
+  display: block;
+  width: 100%;
+  max-height: 44vh;
+  object-fit: contain;
+  touch-action: none; /* a drag is a drag, not a scroll */
+  cursor: grab;
+}
+.editor-canvas.is-drawing {
+  cursor: crosshair;
+}
+/*
+ * The corner the mark will take. Shaded rather than blocked: nothing can end up
+ * over the signature because the server draws it last, so this is a courtesy —
+ * it stops someone arranging something important there and wondering where it
+ * went.
+ */
+.editor-sig-zone {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px dashed rgba(255, 255, 255, 0.4);
+  background: rgba(8, 10, 14, 0.35);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.62rem;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.editor-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.editor-adds {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.editor-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.editor-add:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.editor-panel .input {
+  width: 100%;
+}
+.editor-panel .seg {
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+.editor-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.editor-panel-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.editor-remove {
+  border: 0;
+  background: transparent;
+  color: var(--ink-4);
+  cursor: pointer;
+  padding: 2px;
+}
+.editor-remove:hover {
+  color: var(--danger);
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+.sticker {
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.sticker:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.sticker.is-on {
+  border-color: var(--gold-ink);
+  background: var(--gold-soft);
+}
+
+/* ---- the colour picker -------------------------------------------------- */
+.cpick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cpick-square {
+  position: relative;
+  width: 100%;
+  height: 116px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  cursor: crosshair;
+  touch-action: none;
+}
+.cpick-dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.cpick-hue {
+  width: 100%;
+  height: 14px;
+  appearance: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    hsl(0 100% 50%), hsl(60 100% 50%), hsl(120 100% 50%),
+    hsl(180 100% 50%), hsl(240 100% 50%), hsl(300 100% 50%), hsl(360 100% 50%)
+  );
+  cursor: pointer;
+}
+.cpick-hue::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.cpick-hue::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.cpick-fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.cpick-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.cpick-field-label {
+  color: var(--ink-4);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cpick-field .input {
+  width: 100%;
+  padding: 5px 7px;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 460px) {
+  .cpick-fields {
+    grid-template-columns: 1fr;
+  }
+  .sticker-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+}
