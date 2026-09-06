@@ -156,4 +156,15 @@ describe('SocialRail', () => {
     show();
     expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/friends');
   });
+
+  it('opens the group you clicked, not the list of them', async () => {
+    signIn();
+    railFetch([rail({ groups: [{ id: 'g7', name: 'Amedspor', memberCount: 12, unread: 0 }] })]);
+    show();
+
+    // it linked to /app/messages with no id, which lands on the list and leaves
+    // you to find the group you had just named
+    const row = await screen.findByRole('link', { name: /Amedspor/ });
+    expect(row).toHaveAttribute('href', '/app/messages?group=g7');
+  });
 });
