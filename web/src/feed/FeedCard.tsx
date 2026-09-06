@@ -7,13 +7,7 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { dayLabel } from '../chat/messageGroups';
 import type { FeedItem } from '../lib/types';
 
-/** What each kind of post is called on its badge. */
-const KIND_LABEL: Record<FeedItem['kind'], string> = {
-  story: 'Çîrok',
-  poem: 'Helbest',
-  image: 'Dîmen',
-  meme: 'Meme',
-};
+import { CARD_LABEL } from './postKinds';
 
 /**
  * One post on the wall.
@@ -72,7 +66,7 @@ export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (nex
             </span>
           </span>
         </button>
-        <span className={`fcard-kind fcard-kind-${item.kind}`}>{KIND_LABEL[item.kind]}</span>
+        <span className={`fcard-kind fcard-kind-${item.kind}`}>{CARD_LABEL[item.kind] ?? item.kind}</span>
       </header>
 
       <Link to={item.href} className="fcard-body">

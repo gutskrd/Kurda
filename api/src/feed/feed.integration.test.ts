@@ -52,7 +52,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
   const get = (url: string, token?: string) =>
     app.inject({ method: 'GET', url, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.93.1.1' });
 
-  async function library(type: 'story' | 'poem', title: string, minutesAgo: number): Promise<string> {
+  async function library(type: 'gotin' | 'story' | 'poem', title: string | null, minutesAgo: number): Promise<string> {
     const res = await pool.query<{ id: string }>(
       `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, published_at)
        VALUES ($1, 'user', $2, $3, 'Peyvên xweş ji bo xwendinê.', 'kmr', 'published', now() - ($4 || ' minutes')::interval)
@@ -71,6 +71,8 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
 
     made.story = await library('story', `Story ${suffix}`, 30);
     made.poem = await library('poem', `Poem ${suffix}`, 10);
+    // a gotin is a saying: no title, and none needed
+    made.gotin = await library('gotin', null, 5);
 
     await pool.query(
       `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
@@ -108,7 +110,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
 
     // the point of merging: a poem posted this morning is not invisible to
     // someone who happened to be browsing pictures
-    expect(items.map((i) => i.kind)).toEqual(['poem', 'image', 'story']);
+    expect(items.map((i) => i.kind)).toEqual(['gotin', 'poem', 'image', 'story']);
   });
 
   it('says who wrote each one', async () => {
@@ -118,16 +120,44 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     }
   });
 
-  it('filters to one kind without changing the shape of a card', async () => {
-    const poems = mine((await get('/feed?kind=poems&limit=50')).json());
-    expect(poems).toHaveLength(1);
-    expect(poems[0]!.kind).toBe('poem');
-    expect(poems[0]!.title).toBe(`Poem ${suffix}`);
+  it('splits the wall into what people write and what they picture', async () => {
+    const gotin = mine((await get('/feed?section=gotin&limit=50')).json());
+    expect(gotin.map((i) => i.kind).sort()).toEqual(['gotin', 'poem', 'story']);
 
-    const pictures = mine((await get('/feed?kind=images&limit=50')).json());
-    expect(pictures).toHaveLength(1);
+    const dimen = mine((await get('/feed?section=dimen&limit=50')).json());
+    expect(dimen.map((i) => i.kind)).toEqual(['image']);
+  });
+
+  it('narrows to one kind inside a half', async () => {
+    const helbest = mine((await get('/feed?section=gotin&kind=helbest&limit=50')).json());
+    expect(helbest).toHaveLength(1);
+    expect(helbest[0]!.title).toBe(`Poem ${suffix}`);
+
+    const wene = mine((await get('/feed?section=dimen&kind=wene&limit=50')).json());
+    expect(wene).toHaveLength(1);
     // a picture has no title; its caption carries the words
-    expect(pictures[0]).toHaveProperty('imageUrl');
+    expect(wene[0]).toHaveProperty('imageUrl');
+  });
+
+  it('takes a kind without being told which half it is in', async () => {
+    // the kind implies the half, so a link can carry just the one
+    const cirok = mine((await get('/feed?kind=cirok&limit=50')).json());
+    expect(cirok.map((i) => i.title)).toEqual([`Story ${suffix}`]);
+  });
+
+  it('carries a gotin with no title at all', async () => {
+    const only = mine((await get('/feed?kind=gotin&limit=50')).json());
+    expect(only).toHaveLength(1);
+    expect(only[0]!.title).toBeNull();
+    // the words are still there — a gotin is all body
+    expect(only[0]!.excerpt).toBeTruthy();
+  });
+
+  it('refuses a kind that cannot live in the half asked for', async () => {
+    // a helbest inside Dîmen is a contradiction, not an empty wall
+    const res = await get('/feed?section=dimen&kind=helbest');
+    expect(res.statusCode).toBe(400);
+    expect(res.json().code).toBe('BAD_KIND');
   });
 
   it('sends a card to the right page for its kind', async () => {

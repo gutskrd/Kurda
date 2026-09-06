@@ -205,3 +205,85 @@
   margin: 0;
   max-width: 34ch;
 }
+
+/* the two levels of filter stack; the second appears only when it applies */
+.feed-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+/* one button for posting anything, making no claim about what */
+.post-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-ink);
+  cursor: pointer;
+}
+.post-plus:hover {
+  background: var(--primary-hover);
+}
+
+.post-choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+.post-choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.post-choice-card:hover {
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+.post-choice-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.post-choice-sub {
+  color: var(--ink-4);
+  font-size: 0.78rem;
+}
+.post-words .input {
+  width: 100%;
+}
+@media (max-width: 520px) {
+  .post-choice-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* the second row is a refinement of the first, and reads as one */
+.seg-sub {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+}
+.seg-sub .seg-btn {
+  font-size: 0.8rem;
+  padding: 5px 11px;
+}
+.seg-sub .seg-btn.is-active {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}

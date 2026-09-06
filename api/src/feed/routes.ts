@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { FeedService, isFeedKind } from './service.js';
+import { FeedService, isFeedKind, isFeedSection } from './service.js';
 
 /**
  * The community wall.
@@ -19,6 +19,7 @@ export function registerFeedRoutes(app: FastifyInstance): void {
     {
       schema: {
         querystring: z.object({
+          section: z.string().max(16).optional(),
           kind: z.string().max(16).optional(),
           limit: z.coerce.number().int().min(1).max(50).optional(),
           offset: z.coerce.number().int().min(0).max(10_000).optional(),
@@ -26,17 +27,26 @@ export function registerFeedRoutes(app: FastifyInstance): void {
       },
     },
     async (req) => {
-      const { kind = 'all', limit, offset } = req.query as { kind?: string; limit?: number; offset?: number };
+      const { section = 'all', kind = 'all', limit, offset } = req.query as {
+        section?: string;
+        kind?: string;
+        limit?: number;
+        offset?: number;
+      };
+      if (!isFeedSection(section)) throw new AppError('BAD_SECTION', 400, 'unknown feed section');
       if (!isFeedKind(kind)) throw new AppError('BAD_KIND', 400, 'unknown feed filter');
 
-      return {
-        items: await feed.list(req.user?.id ?? null, {
-          kind,
-          limit,
-          offset,
-          publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
-        }),
-      };
+      const items = await feed.list(req.user?.id ?? null, {
+        section,
+        kind,
+        limit,
+        offset,
+        publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
+      });
+      // a helbest inside Dîmen is a contradiction, not an empty wall
+      if (items === null) throw new AppError('BAD_KIND', 400, `${kind} is not part of ${section}`);
+
+      return { items };
     },
   );
 

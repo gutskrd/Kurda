@@ -34,6 +34,7 @@ import { Image as ImageGlyph } from '@phosphor-icons/react/dist/icons/Image';
 import { List } from '@phosphor-icons/react/dist/icons/List';
 import { Moon } from '@phosphor-icons/react/dist/icons/Moon';
 import { PenNib } from '@phosphor-icons/react/dist/icons/PenNib';
+import { Plus } from '@phosphor-icons/react/dist/icons/Plus';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 import { SquaresFour } from '@phosphor-icons/react/dist/icons/SquaresFour';
 import { Sun } from '@phosphor-icons/react/dist/icons/Sun';
@@ -98,6 +99,8 @@ export const BellIcon = named(Bell, 22);
 /** More than one conversation: a group. */
 export const ChatsIcon = named(ChatsCircle, 22);
 export const TextIcon = named(TextAa, 22);
+/** Add something — it makes no claim about what. */
+export const PlusIcon = named(Plus, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

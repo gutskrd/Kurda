@@ -5,22 +5,10 @@ import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { FeedCard } from '../feed/FeedCard';
-import { PostPicture } from '../images/PostPicture';
+import { PostButton } from '../feed/PostButton';
+import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
 
 const PAGE = 20;
-
-const FILTERS = [
-  { key: 'all', label: 'Everything' },
-  { key: 'stories', label: 'Çîrok' },
-  { key: 'poems', label: 'Helbest' },
-  { key: 'images', label: 'Dîmen' },
-] as const;
-
-type Kind = (typeof FILTERS)[number]['key'];
-
-function asKind(value: string | null): Kind {
-  return FILTERS.some((f) => f.key === value) ? (value as Kind) : 'all';
-}
 
 /**
  * Civak — everything the community has written and posted, on one wall.
@@ -35,7 +23,18 @@ function asKind(value: string | null): Kind {
 export function Civak(): React.JSX.Element {
   const { client } = useAuth();
   const [params, setParams] = useSearchParams();
-  const kind = asKind(params.get('kind'));
+  const section = asSection(params.get('section'));
+  // a kind belongs to a half; one left over from the other half is dropped
+  // rather than asked for, which the server would refuse
+  const kind = kindWithin(section, params.get('kind'));
+  const kinds = SECTIONS.find((s) => s.key === section)?.kinds ?? [];
+
+  const choose = (nextSection: string, nextKind: string | null): void => {
+    const next: Record<string, string> = {};
+    if (nextSection !== 'all') next.section = nextSection;
+    if (nextKind) next.kind = nextKind;
+    setParams(next, { replace: true });
+  };
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +42,9 @@ export function Civak(): React.JSX.Element {
 
   const load = useCallback(
     async (offset: number): Promise<void> => {
-      const res = await client.get<{ items: FeedItem[] }>(`/feed?kind=${kind}&limit=${PAGE}&offset=${offset}`);
+      const query = new URLSearchParams({ section, limit: String(PAGE), offset: String(offset) });
+      if (kind) query.set('kind', kind);
+      const res = await client.get<{ items: FeedItem[] }>(`/feed?${query}`);
       if (!res.ok) {
         setError(describeError(res.error));
         setItems([]);
@@ -54,7 +55,7 @@ export function Civak(): React.JSX.Element {
       setItems((prev) => (offset === 0 ? batch : [...(prev ?? []), ...batch]));
       setMore(batch.length === PAGE);
     },
-    [client, kind],
+    [client, section, kind],
   );
 
   useEffect(() => {
@@ -73,21 +74,53 @@ export function Civak(): React.JSX.Element {
         <span className="eyebrow">Civak · Community</span>
         <h1 className="page-title">Civak</h1>
         <p className="page-sub">Stories, poems and pictures from everyone.</p>
-        <PostPicture onPosted={() => void load(0)} />
+        <PostButton onPosted={() => void load(0)} />
       </div>
 
-      <div className="seg feed-filters" role="group" aria-label="Show">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            className={`seg-btn${kind === f.key ? ' is-active' : ''}`}
-            aria-pressed={kind === f.key}
-            onClick={() => setParams(f.key === 'all' ? {} : { kind: f.key }, { replace: true })}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="feed-filters">
+        <div className="seg" role="group" aria-label="Show">
+          {SECTIONS.map((sct) => (
+            <button
+              key={sct.key}
+              type="button"
+              className={`seg-btn${section === sct.key ? ' is-active' : ''}`}
+              aria-pressed={section === sct.key}
+              /* "Gotin" is both a half and a kind within it, so each says which
+                 it is — two identical buttons side by side is a coin toss */
+              aria-label={`Show ${sct.label}`}
+              onClick={() => choose(sct.key, null)}
+            >
+              {sct.label}
+            </button>
+          ))}
+        </div>
+
+        {/* the second level appears only once there is a half to narrow */}
+        {kinds.length > 0 && (
+          <div className="seg seg-sub" role="group" aria-label="Narrow">
+            <button
+              type="button"
+              className={`seg-btn${kind === null ? ' is-active' : ''}`}
+              aria-pressed={kind === null}
+              aria-label="Only: everything"
+              onClick={() => choose(section, null)}
+            >
+              Hemû
+            </button>
+            {kinds.map((k) => (
+              <button
+                key={k.key}
+                type="button"
+                className={`seg-btn${kind === k.key ? ' is-active' : ''}`}
+                aria-pressed={kind === k.key}
+                aria-label={`Only ${k.label}`}
+                onClick={() => choose(section, k.key)}
+              >
+                {k.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}
