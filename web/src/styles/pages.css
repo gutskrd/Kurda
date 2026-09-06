@@ -3844,3 +3844,37 @@ a.mkp-activity-row:hover {
   flex: none;
   color: var(--ink-3);
 }
+
+/* posting a picture to Dîmen */
+.post-picture .comment-input {
+  width: 100%;
+}
+.picture-drop {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  overflow: hidden;
+}
+.picture-drop:hover:not(:disabled) {
+  border-color: var(--ink-3);
+}
+.picture-drop img {
+  display: block;
+  width: 100%;
+  max-height: 46vh;
+  object-fit: contain;
+  background: var(--surface-2);
+}
+.picture-drop-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}
