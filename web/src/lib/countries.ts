@@ -1,9 +1,19 @@
 /**
- * ISO-3166 alpha-2 country codes → display names for the profile country picker.
- * The DB stores only the 2-letter code; the app maps it to a name and a flag.
- * Flags come from flagcdn.com (tiny cached PNGs) so a real flag renders on every
- * platform (emoji flags don't render on Windows).
+ * Two-letter country codes → display names for the profile country picker.
+ * The DB stores only the code; the app maps it to a name and a flag. Flags come
+ * from flagcdn.com (tiny cached PNGs) so a real flag renders on every platform
+ * (emoji flags don't render on Windows).
+ *
+ * All but one are ISO-3166 alpha-2. Kurdistan has no ISO code — it is not a
+ * state — so it takes `KU`, which ISO has never assigned, and its flag is served
+ * from this app rather than from a service that only knows about states. For an
+ * app called MyKurda, leaving it off the list was the odder choice.
  */
+
+/** Codes that are ours rather than ISO's, and where their flag lives. */
+const OWN_FLAGS: Record<string, string> = {
+  KU: '/flags/kurdistan.png',
+};
 export interface Country {
   code: string;
   name: string;
@@ -27,7 +37,8 @@ export const COUNTRIES: readonly Country[] = [
   { code: 'ID', name: 'Indonesia' }, { code: 'IR', name: 'Iran' }, { code: 'IQ', name: 'Iraq' },
   { code: 'IE', name: 'Ireland' }, { code: 'IL', name: 'Israel' }, { code: 'IT', name: 'Italy' },
   { code: 'JP', name: 'Japan' }, { code: 'JO', name: 'Jordan' }, { code: 'KZ', name: 'Kazakhstan' },
-  { code: 'KE', name: 'Kenya' }, { code: 'KW', name: 'Kuwait' }, { code: 'KG', name: 'Kyrgyzstan' },
+  { code: 'KE', name: 'Kenya' }, { code: 'KU', name: 'Kurdistan' }, { code: 'KW', name: 'Kuwait' },
+  { code: 'KG', name: 'Kyrgyzstan' },
   { code: 'LV', name: 'Latvia' }, { code: 'LB', name: 'Lebanon' }, { code: 'LY', name: 'Libya' },
   { code: 'LT', name: 'Lithuania' }, { code: 'LU', name: 'Luxembourg' }, { code: 'MY', name: 'Malaysia' },
   { code: 'MT', name: 'Malta' }, { code: 'MX', name: 'Mexico' }, { code: 'MD', name: 'Moldova' },
@@ -60,5 +71,7 @@ export function countryName(code?: string | null): string | null {
 
 /** A small cached flag image URL for a code (real flag on every platform). */
 export function flagUrl(code: string): string {
+  const own = OWN_FLAGS[code.toUpperCase()];
+  if (own) return own;
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
