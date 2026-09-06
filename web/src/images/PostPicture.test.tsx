@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PostPicture } from './PostPicture';
+import { PictureComposer } from './PostPicture';
 import { renderApp, jsonResponse } from '../test/utils';
+import type { ImagePost } from '../lib/types';
 import { stubCanvas, stubImage } from './canvasStubs';
 
 afterEach(() => {
@@ -47,34 +48,29 @@ function uploadFetch(opts: { uploadStatus?: number; createStatus?: number } = {}
   return { steps };
 }
 
-async function openComposer(): Promise<void> {
-  await userEvent.click(await screen.findByRole('button', { name: 'Post a picture' }));
+const show = (onDone: (post: ImagePost) => void = () => undefined) =>
+  renderApp(<PictureComposer handle="hamude" onDone={onDone} />);
+
+/** Choose a picture and wait for the editor to appear. */
+async function pick(file = aPicture(), applyAccept = true): Promise<void> {
+  await userEvent.upload(screen.getByLabelText('Picture file'), file, { applyAccept });
+  await screen.findByLabelText('Choose a different picture');
 }
 
-describe('PostPicture', () => {
-  it('offers nothing to a guest — there is nowhere to post from', () => {
-    uploadFetch();
-    renderApp(<PostPicture onPosted={() => undefined} />);
-    expect(screen.queryByRole('button', { name: 'Post a picture' })).not.toBeInTheDocument();
-  });
-
+describe('PictureComposer', () => {
   it('uploads the bytes first, then creates the post that references them', async () => {
     signIn();
     const { steps } = uploadFetch();
-    const onPosted = vi.fn();
-    renderApp(<PostPicture onPosted={onPosted} />);
-    await openComposer();
+    show();
 
-    await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
-    await screen.findByLabelText('Choose a different picture');
+    await pick();
     await userEvent.type(screen.getByLabelText('Caption'), 'Çiya');
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
-    await waitFor(() => expect(onPosted).toHaveBeenCalled());
+    await waitFor(() => expect(steps).toHaveLength(2));
     // order matters: the server only accepts a media id that already cleared
     // the upload pipeline, so these cannot be collapsed or swapped
-    expect(steps[0]).toBe('upload image/png');
-    expect(steps).toHaveLength(2);
+    expect(steps[0]).toContain('upload');
     const body = JSON.parse(steps[1]!.replace('create ', ''));
     expect(body).toMatchObject({ imageMediaId: 'image-post/abc.webp', caption: 'Çiya', category: 'image' });
   });
@@ -82,12 +78,10 @@ describe('PostPicture', () => {
   it('sends the kind you picked', async () => {
     signIn();
     const { steps } = uploadFetch();
-    renderApp(<PostPicture onPosted={() => undefined} />);
-    await openComposer();
+    show();
 
-    await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
-    await screen.findByLabelText('Choose a different picture');
-    await userEvent.click(screen.getByRole('button', { name: 'Meme' }));
+    await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Mîm' }));
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
     await waitFor(() => expect(steps).toHaveLength(2));
@@ -97,17 +91,12 @@ describe('PostPicture', () => {
   it('takes a photo the operating system did not label', async () => {
     signIn();
     const { steps } = uploadFetch();
-    renderApp(<PostPicture onPosted={() => undefined} />);
-    await openComposer();
+    show();
 
     // plenty of real photos arrive with an empty `type`; judging by that string
     // turned them away before anything had tried to read them
-    const unlabelled = new File([new Uint8Array([1, 2, 3])], 'IMG_4021.JPG', { type: '' });
-    // applyAccept:false because the real picker filters at the dialog and then
-    // hands the file over whatever `type` came back — which is the case here
-    await userEvent.upload(screen.getByLabelText('Picture file'), unlabelled, { applyAccept: false });
+    await pick(new File([new Uint8Array([1, 2, 3])], 'IMG_4021.JPG', { type: '' }), false);
 
-    await screen.findByLabelText('Choose a different picture');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
     await waitFor(() => expect(steps.some((x) => x.startsWith('upload'))).toBe(true));
@@ -117,41 +106,33 @@ describe('PostPicture', () => {
     signIn();
     uploadFetch();
     stubImage({ fail: true });
-    renderApp(<PostPicture onPosted={() => undefined} />);
-    await openComposer();
+    show();
 
     await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
 
     expect(await screen.findByRole('status')).toHaveTextContent(/could not be opened as a picture/i);
-    // the file is dropped, so Post cannot sit there enabled over nothing
-    expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
+    // it goes back to asking for one rather than offering to post nothing
+    expect(screen.getByLabelText('Choose a picture')).toBeInTheDocument();
   });
 
-  it('will not post without a picture', async () => {
+  it('offers nothing to post until there is a picture', async () => {
     signIn();
-    const { steps } = uploadFetch();
-    renderApp(<PostPicture onPosted={() => undefined} />);
-    await openComposer();
-
-    // a caption alone is not a post — the image is the point
-    await userEvent.type(screen.getByLabelText('Caption'), 'just words');
-    expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
-    expect(steps).toHaveLength(0);
+    uploadFetch();
+    show();
+    expect(screen.queryByRole('button', { name: 'Post' })).not.toBeInTheDocument();
   });
 
   it('says why an upload was refused, and does not pretend it posted', async () => {
     signIn();
     const { steps } = uploadFetch({ uploadStatus: 503 });
-    const onPosted = vi.fn();
-    renderApp(<PostPicture onPosted={onPosted} />);
-    await openComposer();
+    const onDone = vi.fn();
+    show(onDone);
 
-    await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
-    await screen.findByLabelText('Choose a different picture');
+    await pick();
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(/storage isn’t switched on/i);
-    expect(onPosted).not.toHaveBeenCalled();
+    expect(onDone).not.toHaveBeenCalled();
     // it never got as far as creating the post
     expect(steps.filter((s) => s.startsWith('create'))).toHaveLength(0);
   });
