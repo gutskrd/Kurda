@@ -90,8 +90,10 @@ describe('Reactions', () => {
     renderApp(<Reactions postId="p1" initial={{ counts: { laugh: 4 }, total: 4, mine: null }} />);
 
     // every one of them says the same thing to a guest, so there are six
-    const [laugh] = await screen.findAllByTitle('Sign in to react');
-    expect(laugh).toBeDisabled();
+    const all = await screen.findAllByTitle('Sign in to react');
+    expect(all).toHaveLength(6);
+    for (const b of all) expect(b).toBeDisabled();
+    const laugh = all[0]!;
     expect(screen.getByRole('group', { name: 'Reactions' }).textContent).toContain('4');
     await userEvent.click(laugh);
     expect(fetch).not.toHaveBeenCalled();
