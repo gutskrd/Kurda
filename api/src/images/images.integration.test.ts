@@ -97,6 +97,34 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     expect(read.json().viewCount).toBe(before + 1);
   });
 
+  it('says who posted a picture, in the list and on the post', async () => {
+    await seedMedia('media/byline.jpg');
+    const made = await call('POST', '/images', authorTok, { imageMediaId: 'media/byline.jpg', caption: 'a byline' });
+    const id = made.json().id;
+
+    const read = await call('GET', `/images/${id}`);
+    expect(read.json().author).toMatchObject({ username: `img_author_${suffix}`.slice(0, 30) });
+    expect(read.json().author).toHaveProperty('avatarUrl');
+
+    const list = await call('GET', `/images?authorId=${read.json().authorId}`);
+    const mine = list.json().posts.find((p: { id: string }) => p.id === id);
+    // the same name on the wall as on the post — one loader, one face
+    expect(mine.author.username).toBe(read.json().author.username);
+  });
+
+  it('takes the pictures with the account, so no byline is ever orphaned', async () => {
+    // image_posts.author_id is ON DELETE CASCADE, unlike a library post — the
+    // picture goes when the person does, which is why the feed never has to
+    // render a stand-in name for one
+    await seedMedia('media/ghost.jpg');
+    const ghost = await register('ghost', '10.60.0.4');
+    const post = (await call('POST', '/images', ghost.token, { imageMediaId: 'media/ghost.jpg' })).json();
+    expect((await call('GET', `/images/${post.id}`)).statusCode).toBe(200);
+
+    await pool.query(`DELETE FROM users WHERE id = $1`, [ghost.id]);
+    expect((await call('GET', `/images/${post.id}`)).statusCode).toBe(404);
+  });
+
   it('author or admin edits caption / removes; others cannot; removed hidden but retained', async () => {
     await seedMedia('media/edit.jpg');
     const post = (await call('POST', '/images', authorTok, { imageMediaId: 'media/edit.jpg', caption: 'v1' })).json();

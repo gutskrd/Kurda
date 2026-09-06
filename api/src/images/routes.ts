@@ -37,12 +37,13 @@ const idParam = z.object({ id: z.uuid() });
  */
 export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig, images = new ImagePostService(app.db)): void {
   const limits = imagePostLimits(config);
+  const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
   const usage = new MediaUsageService(app.db, app.redis ?? null);
 
   /** Attach the public CDN URL so clients don't need to know the media key layout. */
   const withUrl = <T extends { imageMediaId: string }>(post: T): T & { imageUrl: string | null } => ({
     ...post,
-    imageUrl: app.storage ? app.storage.publicUrl(post.imageMediaId) : null,
+    imageUrl: publicUrl(post.imageMediaId),
   });
 
   /** Through-server upload: raw image bytes → cost-safe stored WebP → media id. */
@@ -99,13 +100,15 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
       limit: q.limit ? Number(q.limit) : undefined,
       offset: q.offset ? Number(q.offset) : undefined,
     });
-    return { posts: posts.map(withUrl) };
+    // a wall of pictures with no names is not a community; the byline comes
+    // from the same loader the library uses, so one person has one face
+    return { posts: (await images.withAuthors(posts, publicUrl)).map(withUrl) };
   });
 
   app.get('/images/:id', { schema: { params: idParam } }, async (req, reply) => {
     const post = await images.get((req.params as { id: string }).id);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
-    return withUrl(post);
+    return withUrl((await images.withAuthors([post], publicUrl))[0]!);
   });
 
   app.patch(

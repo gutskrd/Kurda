@@ -1,5 +1,7 @@
 import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
+import type { PublicUrl } from '../cosmetics/access.js';
+import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
 export const MAX_COMMENT_LEN = 2_000;
@@ -21,6 +23,10 @@ export interface Comment {
   replyCount: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CommentWithAuthor extends Comment {
+  author: Author;
 }
 
 export interface Page {
@@ -96,6 +102,12 @@ export class ImageCommentService {
     const parent = await this.pool.query<{ post_id: string }>(`SELECT post_id FROM image_comments WHERE id = $1`, [parentId]);
     if (parent.rowCount === 0) return [];
     return this.fetchChildren(parent.rows[0]!.post_id, parentId, { sort: 'oldest', ...page });
+  }
+
+  /** Attach authors, using the loader posts use so the same face appears twice. */
+  async withAuthors(comments: Comment[], publicUrl: PublicUrl = () => null): Promise<CommentWithAuthor[]> {
+    const authors = await loadAuthors(this.pool, comments.map((c) => c.authorId), publicUrl);
+    return comments.map((c) => ({ ...c, author: authors.get(c.authorId) ?? unknownAuthor(c.authorId) }));
   }
 
   private async fetchChildren(postId: string, parentId: string | null, page: Page): Promise<Comment[]> {

@@ -1,4 +1,6 @@
 import type pg from 'pg';
+import type { PublicUrl } from '../cosmetics/access.js';
+import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { stripControlChars } from '@kurda/shared';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
@@ -28,6 +30,17 @@ export interface ImagePost {
   commentCount: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * A post with its author attached.
+ *
+ * A separate type rather than optional fields on ImagePost, for the same reason
+ * the library keeps them apart: the read paths always populate it and the write
+ * paths never do.
+ */
+export interface ImagePostWithAuthor extends ImagePost {
+  author: Author;
 }
 
 export interface ListFilters {
@@ -86,6 +99,12 @@ export class ImagePostService {
       params,
     );
     return res.rows.map(toPost);
+  }
+
+  /** Attach authors in one extra query, however many posts came back. */
+  async withAuthors(posts: ImagePost[], publicUrl: PublicUrl = () => null): Promise<ImagePostWithAuthor[]> {
+    const authors = await loadAuthors(this.pool, posts.map((p) => p.authorId), publicUrl);
+    return posts.map((p) => ({ ...p, author: authors.get(p.authorId) ?? unknownAuthor(p.authorId) }));
   }
 
   async get(id: string): Promise<ImagePost | null> {
