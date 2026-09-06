@@ -612,3 +612,93 @@
   color: var(--ink);
   background: rgba(255, 255, 255, 0.06);
 }
+
+/* ---- a conversation docked beside the rail ------------------------------ */
+/*
+ * Reaching someone should not cost you the page you are on — that is the whole
+ * point of the rail. A docked conversation sits to the LEFT of the column, so
+ * the rail stays where it is and the page keeps its own scroll position.
+ *
+ * Wide screens only. Below the rail's own breakpoint there is no room for two
+ * columns, so the friend row falls back to a link to the messages page and this
+ * never renders.
+ */
+.rail-chat {
+  display: none;
+}
+@media (min-width: 1180px) {
+  .rail-chat {
+    position: fixed;
+    right: calc(var(--rail-w) + 10px);
+    bottom: 12px;
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    /* tall enough to hold a conversation, short enough to leave the page visible */
+    height: min(440px, calc(100vh - var(--nav-h) - 32px));
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    background: rgba(16, 19, 25, 0.97);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    backdrop-filter: blur(18px) saturate(1.2);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: rail-chat-in 0.18s ease-out;
+  }
+  .rail-chat .chat-thread-head {
+    padding: 9px 12px;
+  }
+  .rail-chat .chat-messages {
+    padding: 8px 12px;
+  }
+}
+@keyframes rail-chat-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-chat {
+    animation: none;
+  }
+}
+
+/* the row splits: the name opens the profile, the icon opens the conversation */
+.rail-friend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rail-friend-who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.rail-friend-chat {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-4);
+  cursor: pointer;
+  /* quiet until the row is under the pointer, so a list of friends stays a list
+     of friends rather than a list of buttons */
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.rail-friend:hover .rail-friend-chat,
+.rail-friend-chat:focus-visible {
+  opacity: 1;
+}
+.rail-friend-chat:hover {
+  color: var(--gold-ink);
+  background: rgba(255, 255, 255, 0.06);
+}

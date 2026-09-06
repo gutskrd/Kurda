@@ -172,6 +172,35 @@ describe('SocialRail', () => {
     expect(screen.queryByRole('link', { name: /saved/i })).not.toBeInTheDocument();
   });
 
+  it('docks a conversation beside the rail instead of leaving the page', async () => {
+    signIn();
+    railFetch([rail({ friends: [person('u2', 'zana', { online: true })] })]);
+    const { container } = show();
+
+    await screen.findByText('zana');
+    // the name still opens the profile; the icon is what starts a conversation
+    expect(screen.getByRole('link', { name: /zana/ })).toHaveAttribute('href', '/app/users/u2');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+
+    // it appears in place rather than navigating — the page you were on stays
+    const chat = container.querySelector('.rail-chat');
+    expect(chat).not.toBeNull();
+    expect(within(chat as HTMLElement).getByRole('button', { name: 'Close this conversation' })).toBeInTheDocument();
+  });
+
+  it('closes the docked conversation without leaving the page', async () => {
+    signIn();
+    railFetch([rail({ friends: [person('u2', 'zana', { online: true })] })]);
+    const { container } = show();
+
+    await screen.findByText('zana');
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close this conversation' }));
+
+    expect(container.querySelector('.rail-chat')).toBeNull();
+  });
+
   it('offers a way in when you have nobody yet', async () => {
     signIn();
     railFetch([rail()]);

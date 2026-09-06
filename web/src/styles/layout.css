@@ -93,32 +93,40 @@
 }
 
 /* what you have to spend, stacked: read as a pair, in the width of one line */
+/*
+ * A rule to the left, not a box around it.
+ *
+ * A bordered box reads as a control you press; these are two numbers you glance
+ * at. A single vertical rule separates them from the links without drawing a
+ * frame round them, which is how a game client shows a balance.
+ */
 .purse {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  padding: 2px 4px 2px 14px;
+  border-left: 1px solid var(--border);
   color: var(--ink-2);
   font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
   text-decoration: none;
 }
-.purse:hover {
-  border-color: var(--border-strong);
+.purse:hover .purse-amount {
+  color: var(--ink);
 }
 .purse-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  /* the glyph carries the colour; the number stays readable ink */
   color: var(--gold-ink);
 }
 .purse-gems {
-  color: var(--accent-ink, #7cc6ff);
+  color: #7cc6ff;
 }
 .purse-amount {
+  color: var(--ink-2);
   font-weight: 600;
 }
 /* actions that live only inside the mobile dropdown */
@@ -164,6 +172,47 @@ button.nav-link {
   object-fit: contain;
   /* the logo art is light — a soft shadow keeps it crisp on bright photo areas */
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  /* the mark is a sun, so it turns rather than bounces */
+  animation: brand-rise 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1), filter 0.3s ease;
+}
+.brand:hover .brand-mark {
+  /* a sixteenth of a turn: enough to feel alive, not enough to spin */
+  transform: rotate(22.5deg) scale(1.06);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 7px rgba(240, 194, 74, 0.6));
+}
+.brand span {
+  transition: color 0.3s ease;
+}
+.brand:hover span {
+  color: var(--gold-ink);
+}
+
+/* arrives turning and settling, the way a sun comes up rather than drops in */
+@keyframes brand-rise {
+  from {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+/*
+ * Motion is decoration here, so it goes entirely rather than being shortened.
+ * The logo must still be visible — `both` on the animation would otherwise
+ * leave it holding the transparent first frame.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark {
+    animation: none;
+    transition: none;
+  }
+  .brand:hover .brand-mark {
+    transform: none;
+  }
 }
 
 /* mobile nav */
@@ -348,12 +397,20 @@ button.nav-link {
   fill: none;
   pointer-events: none;
 }
+/*
+ * The unfilled part has to be visible, or the ring reads as a stray gold arc
+ * rather than as progress round a circle. A dark, slightly blue-cast track sits
+ * against both the bar and the avatar without competing with the gold.
+ */
 .level-ring-track {
-  stroke: var(--border-strong);
+  stroke: #2b3038;
 }
 .level-ring-fill {
   stroke: var(--gold-ink);
   stroke-linecap: round;
+  /* a soft cast off the filled arc, so the ring has depth rather than looking
+     like a flat stroke pasted on the avatar */
+  filter: drop-shadow(0 0 3px rgba(240, 194, 74, 0.55));
   transition: stroke-dasharray 0.4s ease;
 }
 @media (prefers-reduced-motion: reduce) {
