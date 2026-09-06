@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@kurda/shared": "*",
+    "@phosphor-icons/react": "^2.1.10",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router-dom": "^7.1.5"
