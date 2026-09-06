@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 const me = { id: 'u1', username: 'ada' } as unknown as MeProfile;
-const ALL = { stories: true, poems: true, images: true, games: true };
+const ALL = { stories: true, poems: true, images: true, games: true, likes: true, bookmarks: true };
 
 describe('SectionToggles', () => {
   it('reflects what the profile actually shows, read from the public profile', async () => {
@@ -23,6 +23,16 @@ describe('SectionToggles', () => {
 
     expect(await screen.findByRole('checkbox', { name: /Stories/ })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /Dîmen/ })).not.toBeChecked();
+  });
+
+  it('offers a switch for what you have liked and saved', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { sections: { ...ALL, likes: false } })));
+    renderApp(<SectionToggles me={me} />);
+
+    // liking something in public and having it listed on your profile are two
+    // different choices, so each gets its own switch
+    expect(await screen.findByRole('checkbox', { name: /Likes/ })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Bookmarks/ })).toBeChecked();
   });
 
   it('saves one section at a time and takes the server’s answer', async () => {

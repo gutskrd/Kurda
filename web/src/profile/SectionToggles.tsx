@@ -9,6 +9,8 @@ const COPY: Record<ProfileSection, { label: string; hint: string }> = {
   poems: { label: 'Poems', hint: 'Poems you have published.' },
   images: { label: 'Dîmen', hint: 'Pictures you have posted.' },
   games: { label: 'Games', hint: 'How your recent games went.' },
+  likes: { label: 'Likes', hint: 'Posts you have liked.' },
+  bookmarks: { label: 'Bookmarks', hint: 'Posts you have saved.' },
 };
 
 /**
