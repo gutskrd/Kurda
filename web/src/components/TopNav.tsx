@@ -7,7 +7,7 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { Brand } from './Brand';
 import { Button, LinkButton } from './Button';
 import { Avatar } from './Avatar';
-import { MenuIcon, CloseIcon, GearIcon } from './icons';
+import { BookmarkIcon, MenuIcon, CloseIcon, GearIcon } from './icons';
 import { RailToggle } from '../social/RailToggle';
 
 export interface NavItem {
@@ -78,6 +78,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
               {signedIn ? (
                 <>
                   <button type="button" className="nav-link" onClick={showProfile}>Profile</button>
+                  <NavLink to="/app/saved" className="nav-link" onClick={close}>Saved</NavLink>
                   <NavLink to="/app/settings" className="nav-link" onClick={close}>Settings</NavLink>
                   <button type="button" className="nav-link" onClick={signOut}>Sign out</button>
                 </>
@@ -97,6 +98,14 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
           {signedIn ? (
             <>
               <RailToggle />
+              <Link
+                to="/app/saved"
+                className="btn btn-ghost btn-sm nav-icon-btn nav-desktop-only"
+                aria-label="Saved posts"
+                title="Saved"
+              >
+                <BookmarkIcon size={19} />
+              </Link>
               <Link
                 to="/app/settings"
                 className="btn btn-ghost btn-sm nav-icon-btn nav-desktop-only"

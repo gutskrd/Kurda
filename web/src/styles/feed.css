@@ -188,3 +188,20 @@
     animation: none;
   }
 }
+
+/* an empty reading list should say how to fill it, not just that it is empty */
+.saved-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+  color: var(--ink-4);
+  text-align: center;
+}
+.saved-empty p {
+  margin: 0;
+  max-width: 34ch;
+}

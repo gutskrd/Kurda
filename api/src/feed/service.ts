@@ -76,6 +76,26 @@ const FEED_SQL = `
   ORDER BY at DESC, id DESC
   LIMIT $2 OFFSET $3`;
 
+/**
+ * The same shape as the wall, for a known set of posts.
+ *
+ * Saved posts arrive as pointers with no ordering the database can apply, so
+ * this fetches them and the caller puts them back in the order they were saved.
+ */
+const BY_IDS_SQL = `
+  SELECT source, id, author_id, subtype, title, body, media, at, view_count, comment_count FROM (
+    SELECT 'library' AS source, l.id, l.author_id, l.type AS subtype, l.title, l.body,
+           NULL::text AS media, COALESCE(l.published_at, l.created_at) AS at,
+           l.view_count, l.comment_count
+      FROM library_posts l
+     WHERE l.status = 'published' AND l.id = ANY($1)
+    UNION ALL
+    SELECT 'image', i.id, i.author_id, i.category, NULL, i.caption,
+           i.image_media_id, i.created_at, i.view_count, i.comment_count
+      FROM image_posts i
+     WHERE i.status = 'published' AND i.id = ANY($2)
+  ) AS chosen`;
+
 /** Enough of a post to fill a card; the rest is on the post's own page. */
 const EXCERPT_CHARS = 240;
 
@@ -96,16 +116,52 @@ export class FeedService {
     const publicUrl = opts.publicUrl ?? (() => null);
 
     const rows = await this.pool.query<FeedRow>(FEED_SQL, [kind, limit, offset]);
-    if (rows.rows.length === 0) return [];
+    return this.hydrate(rows.rows, viewerId, publicUrl);
+  }
+
+  /**
+   * What you have saved, most recently saved first.
+   *
+   * Always your own: someone else's reading list is theirs, and the profile tab
+   * already covers what they have chosen to show. Posts that have since been
+   * removed simply drop out rather than leaving holes.
+   */
+  async saved(
+    userId: string,
+    opts: { limit?: number; offset?: number; publicUrl?: PublicUrl } = {},
+  ): Promise<FeedItem[]> {
+    const limit = Math.min(50, Math.max(1, opts.limit ?? 20));
+    const offset = Math.max(0, opts.offset ?? 0);
+    const publicUrl = opts.publicUrl ?? (() => null);
+
+    const refs = await this.engagement.listFor(userId, 'bookmark', limit, offset);
+    if (refs.length === 0) return [];
+
+    const rows = await this.pool.query<FeedRow>(BY_IDS_SQL, [
+      refs.filter((r) => r.targetType === 'library').map((r) => r.targetId),
+      refs.filter((r) => r.targetType === 'image').map((r) => r.targetId),
+    ]);
+
+    const items = await this.hydrate(rows.rows, userId, publicUrl);
+    // the database cannot order by when you saved something, so the pointers do
+    const byKey = new Map(items.map((i) => [i.key, i]));
+    return refs
+      .map((r) => byKey.get(`${r.targetType}:${r.targetId}`))
+      .filter((i): i is FeedItem => i !== undefined);
+  }
+
+  /** Attach authors and engagement to a page of rows, in three lookups. */
+  private async hydrate(rows: FeedRow[], viewerId: string | null, publicUrl: PublicUrl): Promise<FeedItem[]> {
+    if (rows.length === 0) return [];
 
     // three lookups for the whole page, not three per card
     const [authors, libraryEngagement, imageEngagement] = await Promise.all([
-      loadAuthors(this.pool, rows.rows.map((r) => r.author_id), publicUrl),
-      this.engagement.forPosts(viewerId, 'library', rows.rows.filter((r) => r.source === 'library').map((r) => r.id)),
-      this.engagement.forPosts(viewerId, 'image', rows.rows.filter((r) => r.source === 'image').map((r) => r.id)),
+      loadAuthors(this.pool, rows.map((r) => r.author_id), publicUrl),
+      this.engagement.forPosts(viewerId, 'library', rows.filter((r) => r.source === 'library').map((r) => r.id)),
+      this.engagement.forPosts(viewerId, 'image', rows.filter((r) => r.source === 'image').map((r) => r.id)),
     ]);
 
-    return rows.rows.map((r) => {
+    return rows.map((r) => {
       const isImage = r.source === 'image';
       const engagement = (isImage ? imageEngagement : libraryEngagement).get(r.id) ?? { ...NO_ENGAGEMENT };
       return {
