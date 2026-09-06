@@ -2132,6 +2132,170 @@ button.feature {
   color: var(--gold-ink);
 }
 
+/* ---- Dîmen: the community's pictures ----------------------------------- */
+.dimen-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+/* a segmented control, the way iOS does one */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+.seg-btn {
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.seg-btn:hover {
+  color: var(--ink);
+}
+.seg-btn.is-active {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.dimen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+.dimen-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+.dimen-card:hover {
+  border-color: var(--border-strong);
+}
+.dimen-thumb,
+.dimen-thumb-empty {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.dimen-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dimen-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.dimen-card-who {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dimen-card-counts {
+  display: flex;
+  gap: 10px;
+  flex: none;
+  color: var(--ink-4);
+  font-size: 0.78rem;
+}
+.dimen-card-counts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.dimen-card-caption {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* one picture, in full */
+.dimen-full {
+  margin-top: 8px;
+}
+.dimen-full-img {
+  display: block;
+  width: 100%;
+  /* a picture is the point of the page: show all of it, whatever shape it is */
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  margin-bottom: 14px;
+}
+.dimen-caption {
+  color: var(--ink-2);
+  line-height: 1.55;
+  margin: 10px 0 0;
+  white-space: pre-wrap;
+}
+
+/* reactions */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  min-height: 36px;
+}
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.reaction:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+.reaction:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.reaction.is-mine {
+  color: var(--gold-ink);
+  border-color: var(--gold-ink);
+  background: var(--gold-soft);
+}
+.reaction-count {
+  font-variant-numeric: tabular-nums;
+}
+
 /* activity: what someone has posted and played, under the showcases */
 .mkp-activity {
   padding: 12px 14px 14px;

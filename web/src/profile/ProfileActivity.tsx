@@ -141,16 +141,24 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
     <div id={`mkp-panel-${kind}`} role="tabpanel" aria-labelledby={`mkp-tab-${kind}`}>
       {kind === 'images' ? (
         <div className="mkp-gallery">
-          {entries.map((e) => (
-            <figure className="mkp-shot" key={e.id}>
-              {e.imageUrl ? (
-                <img src={e.imageUrl} alt={e.title} loading="lazy" />
-              ) : (
-                <span className="mkp-shot-empty" aria-hidden="true"><PhotoIcon size={24} /></span>
-              )}
-              <figcaption>{e.title}</figcaption>
-            </figure>
-          ))}
+          {entries.map((e) => {
+            const shot = (
+              <>
+                {e.imageUrl ? (
+                  <img src={e.imageUrl} alt={e.title} loading="lazy" />
+                ) : (
+                  <span className="mkp-shot-empty" aria-hidden="true"><PhotoIcon size={24} /></span>
+                )}
+                <figcaption>{e.title}</figcaption>
+              </>
+            );
+            return (
+              <figure className="mkp-shot" key={e.id}>
+                {/* a thumbnail is a promise that there is something to open */}
+                {e.href ? <Link to={e.href}>{shot}</Link> : shot}
+              </figure>
+            );
+          })}
         </div>
       ) : (
         <ul className="mkp-activity-list">

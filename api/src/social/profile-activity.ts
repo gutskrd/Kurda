@@ -111,7 +111,7 @@ export class ProfileActivityService {
       kind: 'images' as const,
       title: r.caption?.trim() || 'Untitled',
       detail: null,
-      href: null,
+      href: `/app/dimen/${r.id}`,
       imageUrl: null,
       mediaId: r.image_media_id,
       at: r.created_at,
