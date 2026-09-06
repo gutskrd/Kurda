@@ -22,6 +22,11 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
     requests: await friends.incomingRequests(req.user!.id, publicUrl),
   }));
 
+  /** Requests you have sent that are still unanswered. */
+  app.get('/friends/requests/outgoing', { preHandler: requireAuth }, async (req) => ({
+    requests: await friends.outgoingRequests(req.user!.id, publicUrl),
+  }));
+
   /** People-you-may-know (friends-of-friends, ranked by mutual count). */
   app.get(
     '/friends/suggestions',
@@ -46,6 +51,16 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
     '/friends/requests/:userId/decline',
     { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireAuth },
     async (req) => ({ result: await friends.respond(req.user!.id, (req.params as { userId: string }).userId, false) }),
+  );
+
+  /** Withdraw a request you sent. */
+  app.delete(
+    '/friends/requests/:userId',
+    { schema: { params: targetParam }, preHandler: requireAuth },
+    async (req) => {
+      await friends.cancelRequest(req.user!.id, (req.params as { userId: string }).userId);
+      return { ok: true };
+    },
   );
 
   /** Remove a friend. */

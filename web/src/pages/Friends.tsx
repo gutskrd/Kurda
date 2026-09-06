@@ -30,6 +30,7 @@ export function Friends(): React.JSX.Element {
   const { client } = useAuth();
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
+  const sent = useApiGet<{ requests: UserSummary[] }>('/friends/requests/outgoing');
   const suggestions = useApiGet<{ suggestions: SuggestedFriend[] }>('/friends/suggestions');
 
   const [q, setQ] = useState('');
@@ -39,7 +40,22 @@ export function Friends(): React.JSX.Element {
 
   async function addFriend(userId: string): Promise<void> {
     const res = await client.post('/friends/requests', { userId });
-    if (res.ok) setRequested((prev) => new Set(prev).add(userId));
+    if (res.ok) {
+      setRequested((prev) => new Set(prev).add(userId));
+      sent.reload();
+    }
+  }
+
+  /** Take back a request you sent — nothing tells the other person either way. */
+  async function cancelRequest(userId: string): Promise<void> {
+    await client.delete(`/friends/requests/${userId}`);
+    setRequested((prev) => {
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
+    });
+    sent.reload();
+    suggestions.reload();
   }
 
   async function search(e: React.FormEvent): Promise<void> {
@@ -131,6 +147,29 @@ export function Friends(): React.JSX.Element {
                       Decline
                     </Button>
                   </span>
+                }
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* requests you sent — otherwise a misfire is invisible and permanent */}
+      {!sent.loading && (sent.data?.requests.length ?? 0) > 0 && (
+        <section className="friend-section">
+          <h2 className="friend-heading">Sent</h2>
+          <div className="post-list">
+            {sent.data!.requests.map((u) => (
+              <Row
+                key={u.userId}
+                user={u}
+                actions={
+                  <ConfirmButton
+                    className="btn btn-ghost btn-sm"
+                    label="Cancel"
+                    title={`Cancel your request to ${u.displayName ?? u.username}`}
+                    onConfirm={() => cancelRequest(u.userId)}
+                  />
                 }
               />
             ))}
