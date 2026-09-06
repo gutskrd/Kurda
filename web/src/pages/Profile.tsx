@@ -7,6 +7,7 @@ import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
+import { BookmarkIcon } from '../components/icons';
 import { Loading, ErrorState } from '../components/states';
 
 /**
@@ -109,6 +110,15 @@ export function Profile(): React.JSX.Element {
           <Link className="mkp-collection mkp-collection-link" to="/app/friends">
             <div className="mkp-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
             {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
+          </Link>
+
+          {/* Saved lives here, with the rest of what is yours, rather than in
+              the social panel — that panel is other people */}
+          <Link className="mkp-collection mkp-collection-link" to="/app/saved">
+            <div className="mkp-collection-head">
+              <span className="l">Saved</span>
+              <BookmarkIcon size={17} />
+            </div>
           </Link>
         </>
       }

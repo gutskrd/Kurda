@@ -106,6 +106,62 @@ describe('TopNav', () => {
     expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
   });
 
+  it('ends the bar with your face, and your level around it', async () => {
+    signIn();
+    railFetch(you());
+    const { container } = show();
+
+    const face = await screen.findByRole('button', { name: /Your profile — level 58/ });
+    expect(container.querySelector('.nav-profile-level')!.textContent).toBe('58');
+
+    // at the far end of the bar, past the purse and the shop, so it lands in the
+    // same column as the social panel below it
+    const shop = within(container.querySelector<HTMLElement>('.nav-actions')!).getByRole('link', { name: 'Shop' });
+    expect(shop.compareDocumentPosition(face) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // the ring is filled to the fraction, not to a rounded step
+    const fill = container.querySelector<SVGCircleElement>('.level-ring-fill')!;
+    const r = Number(fill.getAttribute('r'));
+    const [drawn] = fill.getAttribute('stroke-dasharray')!.split(' ').map(Number);
+    expect(drawn! / (2 * Math.PI * r)).toBeCloseTo(0.42, 2);
+  });
+
+  it('keeps the ring inside its circle for a level that just filled', async () => {
+    signIn();
+    // a progress of 1 must not draw past the end of the circumference
+    railFetch(you({ level: { level: 9, progress: 1, xp: 0, currentLevelXp: 0, nextLevelXp: 1 } }));
+    const { container } = show();
+
+    await screen.findByRole('button', { name: /Your profile/ });
+    const fill = container.querySelector<SVGCircleElement>('.level-ring-fill')!;
+    const [, gap] = fill.getAttribute('stroke-dasharray')!.split(' ').map(Number);
+    expect(gap).toBeCloseTo(0, 5);
+  });
+
+  it('lights only the page you are on, not its parent', async () => {
+    signIn();
+    railFetch(you());
+    // /app is the parent of every route, so it stayed lit everywhere
+    renderApp(
+      <RailProvider>
+        <TopNav links={LINKS} />
+      </RailProvider>,
+      ['/app/games'],
+    );
+
+    expect(screen.getByRole('link', { name: 'Games' })).toHaveClass('active');
+    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveClass('active');
+  });
+
+  it('lights Home when Home is where you are', async () => {
+    signIn();
+    railFetch(you());
+    show();
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveClass('active');
+    expect(screen.getByRole('link', { name: 'Games' })).not.toHaveClass('active');
+  });
+
   it('no longer offers to sign you out from the nav', async () => {
     signIn();
     railFetch(you());

@@ -7,6 +7,9 @@ import { useRail } from '../social/RailProvider';
 import { Brand } from './Brand';
 import { LinkButton } from './Button';
 import { CoinIcon, GemIcon, MenuIcon, CloseIcon, ShopIcon } from './icons';
+import { Avatar } from './Avatar';
+import { LevelRing } from '../profile/LevelRing';
+import { useProfileModal } from '../profile/ProfileModal';
 import { RailToggle } from '../social/RailToggle';
 
 export interface NavItem {
@@ -18,6 +21,18 @@ export interface NavItem {
 
 /** Where the shop lives — kept out of `links` so it can sit on its own. */
 const SHOP = '/app/shop';
+
+/**
+ * Whether a link should only light up on an exact match.
+ *
+ * `/app` is the parent of every other route, so without this Home stayed lit on
+ * Civak, on Games, on all of them. The rule is derived rather than hardcoded:
+ * a link that another link is nested under has to match exactly, which stays
+ * true as links are added.
+ */
+function matchesExactly(to: string, all: readonly NavItem[]): boolean {
+  return all.some((other) => other.to !== to && other.to.startsWith(`${to}/`));
+}
 
 /**
  * Desktop-first top navigation. Collapses to a menu under 860px.
@@ -54,7 +69,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
               <li key={l.to}>
                 <NavLink
                   to={l.to}
-                  end={l.to === '/'}
+                  end={l.to === '/' || matchesExactly(l.to, links)}
                   className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                   onClick={close}
                 >
@@ -103,6 +118,9 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                 <ShopIcon size={20} />
                 {unopenedGifts > 0 && <span className="nav-badge">{unopenedGifts > 99 ? '99+' : unopenedGifts}</span>}
               </Link>
+              {/* your face is the last thing on the bar, which puts it directly
+                  above the social column it belongs to */}
+              <NavProfile />
               <RailToggle />
             </>
           ) : (
@@ -127,6 +145,37 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * You, at the end of the bar, with your level around your face.
+ *
+ * It sits last so it lands in the same column as the social panel and on the
+ * same line as the rest of the bar — the arrangement every game client uses,
+ * and the reason the ring has room here that a plain 22px button never gave it.
+ *
+ * Saved is not here. It is inside the profile this opens, with the rest of what
+ * is yours.
+ */
+function NavProfile(): React.JSX.Element | null {
+  const { data } = useRail();
+  const { openProfile } = useProfileModal();
+  const you = data.you;
+  if (!you) return null;
+
+  return (
+    <button
+      type="button"
+      className="nav-profile nav-desktop-only"
+      onClick={() => openProfile({ kind: 'me' })}
+      aria-label={`Your profile — level ${you.level.level}`}
+      title="Your profile"
+    >
+      <LevelRing progress={you.level.progress} />
+      <Avatar url={you.avatarUrl} glyphSize={18} />
+      <span className="nav-profile-level">{you.level.level}</span>
+    </button>
   );
 }
 
