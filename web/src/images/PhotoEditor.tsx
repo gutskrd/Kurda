@@ -160,6 +160,21 @@ export function PhotoEditor({
         </span>
       </div>
 
+      {/*
+        The editor has to say it is an editor.
+
+        These controls used to be four small grey words under the photo, with
+        nothing naming them and no panel until you had both added a layer and
+        selected it — so the picture looked finished the moment it loaded and
+        there was no visible way to change it.
+      */}
+      <div className="editor-head">
+        <h3 className="editor-title">Edit your picture</h3>
+        {layers.length === 0 && (
+          <p className="editor-hint">Add words or a sticker, or draw on it — then drag to move.</p>
+        )}
+      </div>
+
       <div className="editor-tools">
         <div className="seg" role="group" aria-label="Tool">
           <button
@@ -202,7 +217,7 @@ export function PhotoEditor({
               })
             }
           >
-            <TextIcon size={16} /> Words
+            <TextIcon size={16} /> Add words
           </button>
           <button
             type="button"
@@ -215,7 +230,7 @@ export function PhotoEditor({
               );
             }}
           >
-            <FeatherIcon size={16} /> Sticker
+            <FeatherIcon size={16} /> Add a sticker
           </button>
           {layers.length > 0 && (
             <button type="button" className="editor-add" onClick={() => onChange([])}>

@@ -4110,33 +4110,54 @@ a.mkp-activity-row:hover {
   overflow: hidden;
 }
 
+/* the editor names itself, so a loaded picture does not look finished */
+.editor-head {
+  margin-top: 14px;
+}
+.editor-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.editor-hint {
+  margin: 4px 0 0;
+  color: var(--ink-4);
+  font-size: 0.82rem;
+}
+
 .editor-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 .editor-adds {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
+/* adding something is the point of the editor, so these read as actions rather
+   than as the quiet outlines they were */
 .editor-add {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
   border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-2);
+  background: var(--surface-2);
+  color: var(--ink);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
 }
 .editor-add:hover {
-  color: var(--ink);
-  border-color: var(--border-strong);
+  border-color: var(--gold-ink);
+  color: var(--gold-ink);
 }
 
 .editor-panel {
