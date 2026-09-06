@@ -79,7 +79,10 @@ export function stubImage(opts: { width?: number; height?: number; fail?: boolea
     set src(value: string) {
       this.#src = value;
       // a microtask, so the component's effect has finished before it lands
-      queueMicrotask(() => (fail || !live.has(value) ? this.onerror?.() : this.onload?.()));
+      // revocation only applies to object URLs; an ordinary path (a sticker
+      // under /stickers, say) is not something createObjectURL ever issued
+      const revoked = value.startsWith('blob:') && !live.has(value);
+      queueMicrotask(() => (fail || revoked ? this.onerror?.() : this.onload?.()));
     }
     get src(): string {
       return this.#src;
