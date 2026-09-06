@@ -164,4 +164,23 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
     expect(await screen.findByText('Nothing here yet.')).toBeInTheDocument();
   });
+
+  it('badges a gotin, which has no title of its own', async () => {
+    feedFetch([item('library:g1', { kind: 'gotin', title: null, excerpt: 'Jiyan bi kurdî xweştire.' })]);
+    renderApp(<Civak />, ['/app/civak']);
+
+    expect(await screen.findByText('Jiyan bi kurdî xweştire.')).toBeInTheDocument();
+    // scoped to the card: 'Gotin' is also the name of the section filter above it
+    expect(within(screen.getByRole('article')).getByText('Gotin')).toBeInTheDocument();
+  });
+
+  it('shows an unfamiliar kind rather than an empty badge', async () => {
+    // CARD_LABEL is deliberately open: if the server ships a kind before the web
+    // knows its name, the wall should still render it, not a blank chip
+    feedFetch([item('library:x1', { kind: 'axaftin', title: 'Something new' })]);
+    renderApp(<Civak />, ['/app/civak']);
+
+    expect(await screen.findByText('Something new')).toBeInTheDocument();
+    expect(screen.getByText('axaftin')).toBeInTheDocument();
+  });
 });
