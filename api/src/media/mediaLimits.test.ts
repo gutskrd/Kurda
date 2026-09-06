@@ -13,7 +13,16 @@ describe('mediaLimits (from config)', () => {
     expect(l.classBLimit).toBe(9_000_000);
     expect(l.uploadRateMax).toBe(10);
     expect(l.uploadRateWindowMs).toBe(60 * 60_000);
-    expect([...l.allowedTypes].sort()).toEqual(['image/jpeg', 'image/png', 'image/webp']);
+    // heic/avif/tiff are accepted as sources and re-encoded to WebP: they are the
+    // photo formats no browser will draw, a phone's camera roll being the first
+    expect([...l.allowedTypes].sort()).toEqual([
+      'image/avif',
+      'image/heic',
+      'image/jpeg',
+      'image/png',
+      'image/tiff',
+      'image/webp',
+    ]);
   });
 
   it('honours env overrides', () => {

@@ -3878,6 +3878,28 @@ a.mkp-activity-row:hover {
 .picture-drop:hover:not(:disabled) {
   border-color: var(--ink-3);
 }
+/* a picture this browser cannot draw: say what will happen, don't mimic a preview */
+.picture-raw {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 26px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: center;
+}
+.picture-raw-name {
+  margin: 0;
+  font-weight: 600;
+  word-break: break-all;
+}
+.picture-raw .muted {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 0.9rem;
+}
 .picture-drop img {
   display: block;
   width: 100%;

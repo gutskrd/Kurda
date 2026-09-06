@@ -44,31 +44,48 @@ export function PictureComposer({
   const [postAs, setPostAs] = useState('image');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The browser could not decode it, so it goes up as-is with nothing added. */
+  const [rawOnly, setRawOnly] = useState(false);
 
   /** Load the chosen file into an image element the canvas can draw from. */
   useEffect(() => {
     if (!file) {
       imageRef.current = null;
       setSize(null);
+      setRawOnly(false);
       return;
     }
     const url = URL.createObjectURL(file);
     const img = new Image();
+    // a second run (React runs effects twice in development) revokes the first
+    // run's URL mid-load, and that failure must not be mistaken for a bad file
+    let cancelled = false;
+
     img.onload = () => {
+      if (cancelled) return;
       imageRef.current = img;
       // the server resizes to its own maximum anyway, so composing larger only
       // makes a bigger file for it to throw away — and a full-size export is
       // what put a phone photo over the upload cap
       setSize(fitWithin(img.naturalWidth, img.naturalHeight));
+      URL.revokeObjectURL(url);
     };
     img.onerror = () => {
-      setError('That file could not be opened as a picture. Try a JPEG, PNG or WebP.');
-      setFile(null);
+      if (cancelled) return;
+      URL.revokeObjectURL(url);
+      // Not a dead end. The browser cannot draw this one — a HEIC from a phone,
+      // most often — but the server decodes far more than any browser does and
+      // re-encodes everything to WebP anyway. So the picture is still postable;
+      // it just cannot be edited here, because there is nothing to edit on.
+      setRawOnly(true);
     };
     img.src = url;
     // an object URL is a live handle on the file; letting them pile up would pin
     // every picture browsed past in memory for the session
-    return () => URL.revokeObjectURL(url);
+    return () => {
+      cancelled = true;
+      URL.revokeObjectURL(url);
+    };
   }, [file]);
 
   /**
@@ -89,11 +106,13 @@ export function PictureComposer({
 
   async function submit(): Promise<void> {
     const canvas = canvasRef.current;
-    if (!file || !canvas || busy) return;
+    if (!file || busy || (!rawOnly && !canvas)) return;
     setBusy(true);
     setError(null);
 
-    const composed = await canvasToFile(canvas, 'dimen');
+    // nothing was composed onto an unpreviewable file, so its own bytes are
+    // exactly what should be sent
+    const composed = rawOnly ? file : await canvasToFile(canvas!, 'dimen');
     if (!composed) {
       setBusy(false);
       setError('That picture could not be prepared for upload.');
@@ -123,7 +142,9 @@ export function PictureComposer({
     else setError(describeError(made.error));
   }
 
-  const ready = file !== null && size !== null && imageRef.current !== null;
+  const editable = file !== null && size !== null && imageRef.current !== null;
+  // a picture to post, whether or not this browser can show it
+  const ready = editable || rawOnly;
 
   return (
     <div className="post-picture">
@@ -147,15 +168,26 @@ export function PictureComposer({
         </>
       ) : (
         <>
-          <PhotoEditor
-            image={imageRef.current!}
-            width={size!.width}
-            height={size!.height}
-            handle={handle}
-            layers={layers}
-            onChange={setLayers}
-            canvasRef={canvasRef}
-          />
+          {editable ? (
+            <PhotoEditor
+              image={imageRef.current!}
+              width={size!.width}
+              height={size!.height}
+              handle={handle}
+              layers={layers}
+              onChange={setLayers}
+              canvasRef={canvasRef}
+            />
+          ) : (
+            <div className="picture-raw" role="status">
+              <PhotoIcon size={26} />
+              <p className="picture-raw-name">{file!.name}</p>
+              <p className="muted">
+                Your browser can’t show this kind of picture, so there’s nothing to add text or
+                stickers to — but it will post fine. MyKurda converts it for you.
+              </p>
+            </div>
+          )}
 
           <button
             type="button"

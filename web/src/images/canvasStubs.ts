@@ -58,6 +58,18 @@ export function stubCanvas(): { calls: string[] } {
  */
 export function stubImage(opts: { width?: number; height?: number; fail?: boolean } = {}): void {
   const { width = 900, height = 700, fail = false } = opts;
+
+  /*
+   * Object URLs are tracked, and a revoked one refuses to load — which is what a
+   * browser does, and what a constant URL with a no-op revoke could never show.
+   * React runs an effect twice in development: mount, clean up, mount. The
+   * cleanup revokes the first run's URL while its image is still loading, so
+   * that image fails; treating that failure as a bad file is a bug this stub
+   * exists to catch.
+   */
+  let issued = 0;
+  const live = new Set<string>();
+
   class LoadedImage {
     onload: (() => void) | null = null;
     onerror: (() => void) | null = null;
@@ -67,7 +79,7 @@ export function stubImage(opts: { width?: number; height?: number; fail?: boolea
     set src(value: string) {
       this.#src = value;
       // a microtask, so the component's effect has finished before it lands
-      queueMicrotask(() => (fail ? this.onerror?.() : this.onload?.()));
+      queueMicrotask(() => (fail || !live.has(value) ? this.onerror?.() : this.onload?.()));
     }
     get src(): string {
       return this.#src;
@@ -76,7 +88,11 @@ export function stubImage(opts: { width?: number; height?: number; fail?: boolea
   vi.stubGlobal('Image', LoadedImage);
   vi.stubGlobal('URL', {
     ...URL,
-    createObjectURL: () => 'blob:preview',
-    revokeObjectURL: () => undefined,
+    createObjectURL: () => {
+      const url = `blob:preview-${++issued}`;
+      live.add(url);
+      return url;
+    },
+    revokeObjectURL: (url: string) => live.delete(url),
   });
 }

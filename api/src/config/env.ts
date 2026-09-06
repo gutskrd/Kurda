@@ -75,8 +75,15 @@ const envSchema = z.object({
   /** Per-user profile-photo change rate limit. */
   MEDIA_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(10),
   MEDIA_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
-  /** Accepted source image MIME types (comma-separated). */
-  MEDIA_ALLOWED_TYPES: z.string().default('image/jpeg,image/png,image/webp'),
+  /**
+   * Accepted source image MIME types (comma-separated), sniffed rather than
+   * declared. HEIC is here because it is what an iPhone camera roll contains and
+   * no desktop browser decodes it; every one of these is re-encoded to WebP on
+   * the way in, so the stored format is unchanged by admitting them.
+   */
+  MEDIA_ALLOWED_TYPES: z
+    .string()
+    .default('image/jpeg,image/png,image/webp,image/heic,image/avif,image/tiff'),
   /** Community image/meme posts (KUR-290/291) — larger than an avatar but still
    * cost-capped. Longest edge + hard stored cap for the processed WebP. */
   MEDIA_IMAGE_MAX_DIMENSION: z.coerce.number().int().positive().default(1280),
