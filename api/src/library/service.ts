@@ -1,6 +1,11 @@
 import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
-import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import type { PublicUrl } from '../cosmetics/access.js';
+import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
+
+// posts and comments both re-export these, so a caller importing from here
+// still gets the one shared loader
+export { loadAuthors, unknownAuthor, type Author };
 
 export type PostType = 'story' | 'poem';
 export type AuthorRole = 'user' | 'admin';
@@ -42,13 +47,6 @@ export interface LibraryPost {
   publishedAt: Date | null;
 }
 
-/** Who wrote something, resolved for display. */
-export interface Author {
-  id: string;
-  username: string;
-  /** already resolved (uploaded photo -> chosen avatar) */
-  avatarUrl: string | null;
-}
 
 /**
  * A post with its author attached.
@@ -232,37 +230,3 @@ function toPost(r: Row): LibraryPost {
   };
 }
 
-/**
- * Look up display identity for a set of user ids.
- *
- * Shared by posts and comments — both need the same thing, and both should show
- * the same face for the same person.
- */
-export async function loadAuthors(
-  pool: pg.Pool,
-  ids: readonly string[],
-  publicUrl: PublicUrl = () => null,
-): Promise<Map<string, Author>> {
-  const unique = [...new Set(ids)];
-  if (unique.length === 0) return new Map();
-  const rows = await pool.query<{
-    id: string;
-    username: string;
-    profile_photo_key: string | null;
-    selected_avatar_key: string | null;
-  }>(`SELECT id, username, profile_photo_key, selected_avatar_key FROM users WHERE id = ANY($1)`, [unique]);
-  return new Map(
-    rows.rows.map((r) => [
-      r.id,
-      { id: r.id, username: r.username, avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl) },
-    ]),
-  );
-}
-
-/**
- * Stand-in for an author whose row has gone (a deleted account).
- * The post survives deletion, so it still needs a name to show.
- */
-export function unknownAuthor(id: string): Author {
-  return { id, username: 'Deleted account', avatarUrl: null };
-}

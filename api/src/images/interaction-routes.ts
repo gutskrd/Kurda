@@ -33,6 +33,8 @@ export function registerImageInteractionRoutes(
   aiMod?: AiModerationService,
   trust?: TrustService,
 ): void {
+  const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
+
   // ---- reactions ----------------------------------------------------------
 
   /** Set (or change) the caller's reaction on a post. */
@@ -87,7 +89,7 @@ export function registerImageInteractionRoutes(
             .moderate({ surface: 'caption', text: res.comment.body, authorId: req.user!.id, contentType: 'comment', contentRef: res.comment.id })
             .catch((err) => app.log.warn({ err }, 'image comment auto-moderation failed'));
         }
-        return reply.code(201).send(res.comment);
+        return reply.code(201).send((await comments.withAuthors([res.comment], publicUrl))[0]!);
       }
       switch (res.reason) {
         case 'empty':
@@ -103,24 +105,22 @@ export function registerImageInteractionRoutes(
   /** Top-level comments of a post (public, paginated). */
   app.get('/images/:id/comments', { schema: { params: idParam } }, async (req) => {
     const q = req.query as Record<string, string | undefined>;
-    return {
-      comments: await comments.topLevel((req.params as { id: string }).id, {
-        limit: q.limit ? Number(q.limit) : undefined,
-        offset: q.offset ? Number(q.offset) : undefined,
-        sort: q.sort === 'oldest' ? 'oldest' : 'newest',
-      }),
-    };
+    const rows = await comments.topLevel((req.params as { id: string }).id, {
+      limit: q.limit ? Number(q.limit) : undefined,
+      offset: q.offset ? Number(q.offset) : undefined,
+      sort: q.sort === 'oldest' ? 'oldest' : 'newest',
+    });
+    return { comments: await comments.withAuthors(rows, publicUrl) };
   });
 
   /** Direct replies to a comment (public, load-more per branch). */
   app.get('/images/comments/:id/replies', { schema: { params: idParam } }, async (req) => {
     const q = req.query as Record<string, string | undefined>;
-    return {
-      comments: await comments.replies((req.params as { id: string }).id, {
-        limit: q.limit ? Number(q.limit) : undefined,
-        offset: q.offset ? Number(q.offset) : undefined,
-      }),
-    };
+    const rows = await comments.replies((req.params as { id: string }).id, {
+      limit: q.limit ? Number(q.limit) : undefined,
+      offset: q.offset ? Number(q.offset) : undefined,
+    });
+    return { comments: await comments.withAuthors(rows, publicUrl) };
   });
 
   /** Edit own comment (admins any). */
