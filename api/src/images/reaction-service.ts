@@ -1,7 +1,13 @@
 import type pg from 'pg';
 
 /** The emoji reactions a user can leave on an image/meme post (KUR-291). */
-export const REACTIONS = ['like', 'laugh', 'love', 'wow', 'sad', 'peace'] as const;
+/*
+ * Order is the order they appear under a picture, warmest first: love, peace,
+ * like, laugh, wow, sad, angry. It is not alphabetical and not the order they
+ * were added — it is the order asked for, and the check constraint in
+ * `1751000107000_restore-angry-reaction` allows exactly this set.
+ */
+export const REACTIONS = ['love', 'peace', 'like', 'laugh', 'wow', 'sad', 'angry'] as const;
 export type Reaction = (typeof REACTIONS)[number];
 
 export function isReaction(v: string): v is Reaction {

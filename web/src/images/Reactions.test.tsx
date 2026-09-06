@@ -84,18 +84,28 @@ describe('Reactions', () => {
     expect(calls.filter((c) => c.method === 'DELETE')).toHaveLength(0);
   });
 
+  it('lays the reactions out warmest first, in the order that was asked for', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    renderApp(<Reactions postId="p1" initial={{ counts: {}, total: 0, mine: null }} />);
+
+    const labels = (await screen.findAllByRole('button')).map((b) => b.textContent?.trim());
+    // love, peace, like, laugh, wow, sad, angry — peace was added, anger kept
+    expect(labels).toEqual(['Love', 'Peace', 'Like', 'Funny', 'Wow', 'Sad', 'Angry']);
+  });
+
   it('shows the counts to a guest but does not let them react', async () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     renderApp(<Reactions postId="p1" initial={{ counts: { laugh: 4 }, total: 4, mine: null }} />);
 
-    // every one of them says the same thing to a guest, so there are six
+    // every one of them says the same thing to a guest, so there are seven
     const all = await screen.findAllByTitle('Sign in to react');
-    expect(all).toHaveLength(6);
+    expect(all).toHaveLength(7);
     for (const b of all) expect(b).toBeDisabled();
-    const laugh = all[0]!;
+    // any of them: none should reach the server
+    const anyOfThem = all[0]!;
     expect(screen.getByRole('group', { name: 'Reactions' }).textContent).toContain('4');
-    await userEvent.click(laugh);
+    await userEvent.click(anyOfThem);
     expect(fetch).not.toHaveBeenCalled();
   });
 });
