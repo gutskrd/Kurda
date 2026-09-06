@@ -27,7 +27,10 @@ export function DailyReward(): React.JSX.Element | null {
       if (cancelled) return;
       if (s.ok) setStatus(s.data);
       else setFailed(true);
-      if (w.ok) setBalance(w.data.balances.zer);
+      // `ok` is about the status code, not the shape: a 200 whose body is not
+      // what we expect would otherwise throw here, unhandled, and take the
+      // whole home page's reward panel with it
+      if (w.ok) setBalance(w.data?.balances?.zer ?? null);
     });
     return () => {
       cancelled = true;

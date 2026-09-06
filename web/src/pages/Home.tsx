@@ -4,10 +4,16 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { DailyReward } from '../components/DailyReward';
 import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, UserIcon, UsersIcon, ArrowIcon } from '../components/icons';
 
+/*
+ * One tile for Civak, not three.
+ *
+ * Stories and Poems were separate pages; they are sections of one wall now, and
+ * /stories and /poems redirect there. Leaving both tiles up meant three doors
+ * that open into the same room — which reads as three places until you try them.
+ */
 const LINK_TILES = [
   { to: '/app/learn', icon: <BookIcon />, title: 'Learn', body: 'Continue your Kurdish course.' },
-  { to: '/stories', icon: <FeatherIcon />, title: 'Stories', body: 'Read & listen to the library.' },
-  { to: '/poems', icon: <FeatherIcon />, title: 'Poems', body: 'Explore Kurdish poetry.' },
+  { to: '/app/civak', icon: <FeatherIcon />, title: 'Civak', body: 'Stories, poems and pictures from everyone.' },
   { to: '/games', icon: <GameIcon />, title: 'Games', body: 'Practice by playing.' },
   { to: '/app/rankings', icon: <TrophyIcon />, title: 'Rankings', body: 'See where you stand.' },
   { to: '/app/friends', icon: <UsersIcon />, title: 'Friends', body: 'Find and add other learners.' },
