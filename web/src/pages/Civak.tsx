@@ -79,9 +79,9 @@ export function Civak(): React.JSX.Element {
         <span className="eyebrow">Civak · Community</span>
         <h1 className="page-title">Civak</h1>
         <p className="page-sub">Stories, poems and pictures from everyone.</p>
-        <PostButton onPosted={() => void load(0)} />
       </div>
 
+      {/* the + belongs with the wall it adds to, not adrift under the heading */}
       <div className="feed-filters">
         <div className="seg" role="group" aria-label="Show">
           {SECTIONS.map((sct) => (
@@ -126,6 +126,8 @@ export function Civak(): React.JSX.Element {
             ))}
           </div>
         )}
+
+        <PostButton onPosted={() => void load(0)} />
       </div>
 
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}

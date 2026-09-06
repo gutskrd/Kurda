@@ -214,21 +214,43 @@
   margin-bottom: 18px;
 }
 
-/* one button for posting anything, making no claim about what */
+/*
+ * One button for posting anything, making no claim about what.
+ *
+ * `margin-left: auto` pushes it to the end of the filter row, so the row reads
+ * as "what you are looking at … and how to add to it". It used to hang below the
+ * page heading, attached to nothing.
+ */
 .post-plus {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 38px;
+  gap: 7px;
   height: 38px;
+  padding: 0 16px 0 13px;
+  margin-left: auto;
   border: 0;
-  border-radius: 50%;
+  border-radius: 999px;
   background: var(--primary);
   color: var(--primary-ink);
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 .post-plus:hover {
   background: var(--primary-hover);
+}
+/* below this the row is tight, and a + on its own is understood */
+@media (max-width: 560px) {
+  .post-plus {
+    gap: 0;
+    padding: 0;
+    justify-content: center;
+    width: 38px;
+    border-radius: 50%;
+  }
+  .post-plus-word {
+    display: none;
+  }
 }
 
 .post-choice-row {
