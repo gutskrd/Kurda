@@ -92,8 +92,10 @@ export class EngagementService {
       n: number;
       mine: boolean;
     }>(
+      // COALESCE because a signed-out viewer makes every `user_id = $3` NULL,
+      // and bool_or over nothing but NULLs is NULL rather than false
       `SELECT target_id, kind, count(*)::int AS n,
-              bool_or(user_id = $3) AS mine
+              COALESCE(bool_or(user_id = $3), false) AS mine
          FROM post_engagements
         WHERE target_type = $1 AND target_id = ANY($2)
         GROUP BY target_id, kind`,

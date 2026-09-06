@@ -143,7 +143,6 @@ export class ProfileActivityService {
     const refs = await this.engagement.listFor(userId, kind, limit, offset);
     if (refs.length === 0) return [];
 
-    const section: ProfileSection = kind === 'like' ? 'likes' : 'bookmarks';
     const [posts, images] = await Promise.all([
       this.libraryByIds(refs.filter((r) => r.targetType === 'library').map((r) => r.targetId)),
       this.imagesByIds(refs.filter((r) => r.targetType === 'image').map((r) => r.targetId)),
@@ -152,7 +151,10 @@ export class ProfileActivityService {
     const out: ActivityEntryWithMedia[] = [];
     for (const ref of refs) {
       const found = ref.targetType === 'library' ? posts.get(ref.targetId) : images.get(ref.targetId);
-      if (found) out.push({ ...found, kind: section, at: ref.at });
+      // the entry keeps its own kind — a liked picture is still a picture, and
+      // the tab needs that to render it as one rather than as a line of text.
+      // Which section this is was in the request.
+      if (found) out.push({ ...found, at: ref.at });
     }
     return out;
   }
