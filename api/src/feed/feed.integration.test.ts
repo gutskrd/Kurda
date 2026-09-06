@@ -42,7 +42,7 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     imageUrl: string | null;
     href: string;
     author: { username: string };
-    engagement: { likes: number; liked: boolean };
+    engagement: { likes: number; liked: boolean; bookmarks: number; bookmarked: boolean };
   }
 
   /** Only this test's own posts — the shared database has others in it. */
@@ -187,6 +187,54 @@ describe.skipIf(!DATABASE_URL)('community feed (integration)', () => {
     const keys = ((await get('/feed?limit=50')).json().items as Item[]).map((i) => i.key);
     expect(keys).not.toContain(`library:${made.story}`);
     await pool.query(`UPDATE library_posts SET status = 'published' WHERE id = $1`, [made.story]);
+  });
+
+  it('keeps a reading list, most recently saved first', async () => {
+    const save = (type: string, id: string) =>
+      app.inject({
+        method: 'POST',
+        url: `/posts/${type}/${id}/bookmark`,
+        headers: { authorization: `Bearer ${tokens.reader}` },
+        remoteAddress: '10.93.1.1',
+      });
+
+    await save('library', made.story!);
+    await save('image', made.picture!);
+
+    const saved = (await get('/me/saved', tokens.reader)).json().items as Item[];
+    // the picture was saved second, so it is first — the order is when you saved
+    // it, not when it was posted
+    expect(saved.map((i) => i.key)).toEqual([`image:${made.picture}`, `library:${made.story}`]);
+    // and it is a full card, not a stub: the wall and the list are the same shape
+    expect(saved[0]!.author.username).toBe(`feed_author_${suffix}`.slice(0, 30));
+    expect(saved[0]!.engagement.bookmarked).toBe(true);
+  });
+
+  it('is your list and nobody else’s', async () => {
+    // the author saved nothing, and the reader's list is not theirs to see
+    expect((await get('/me/saved', tokens.author)).json().items).toEqual([]);
+
+    const guest = await get('/me/saved');
+    expect(guest.statusCode).toBe(401);
+  });
+
+  it('drops a post that has since been removed, rather than leaving a hole', async () => {
+    await pool.query(`UPDATE image_posts SET status = 'removed' WHERE id = $1`, [made.picture]);
+    const keys = ((await get('/me/saved', tokens.reader)).json().items as Item[]).map((i) => i.key);
+    expect(keys).not.toContain(`image:${made.picture}`);
+    expect(keys).toContain(`library:${made.story}`);
+    await pool.query(`UPDATE image_posts SET status = 'published' WHERE id = $1`, [made.picture]);
+  });
+
+  it('forgets a post the moment you unsave it', async () => {
+    await app.inject({
+      method: 'POST',
+      url: `/posts/library/${made.story}/bookmark`,
+      headers: { authorization: `Bearer ${tokens.reader}` },
+      remoteAddress: '10.93.1.1',
+    });
+    const keys = ((await get('/me/saved', tokens.reader)).json().items as Item[]).map((i) => i.key);
+    expect(keys).not.toContain(`library:${made.story}`);
   });
 
   it('refuses a filter it does not have', async () => {

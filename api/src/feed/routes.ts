@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { FeedService, isFeedKind } from './service.js';
 
@@ -31,6 +32,36 @@ export function registerFeedRoutes(app: FastifyInstance): void {
       return {
         items: await feed.list(req.user?.id ?? null, {
           kind,
+          limit,
+          offset,
+          publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
+        }),
+      };
+    },
+  );
+
+  /**
+   * Your reading list.
+   *
+   * Signed-in and always your own — there is no id in the path, because someone
+   * else's saved posts are theirs. What they have chosen to show is already on
+   * their profile.
+   */
+  app.get(
+    '/me/saved',
+    {
+      schema: {
+        querystring: z.object({
+          limit: z.coerce.number().int().min(1).max(50).optional(),
+          offset: z.coerce.number().int().min(0).max(10_000).optional(),
+        }),
+      },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { limit, offset } = req.query as { limit?: number; offset?: number };
+      return {
+        items: await feed.saved(req.user!.id, {
           limit,
           offset,
           publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),

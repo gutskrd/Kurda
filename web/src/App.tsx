@@ -8,6 +8,7 @@ import { Landing } from './pages/Landing';
 import { Stories, Poems } from './pages/Library';
 import { LibraryPostPage } from './pages/LibraryPostPage';
 import { Civak } from './pages/Civak';
+import { Saved } from './pages/Saved';
 import { DimenPost } from './pages/DimenPost';
 import { Games } from './pages/Games';
 import { Wordle } from './pages/Wordle';
@@ -107,6 +108,7 @@ export function App(): React.JSX.Element {
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
             <Route path="civak" element={<Civak />} />
+            <Route path="saved" element={<Saved />} />
             {/* the three old walls now point at the one that replaced them, each
                 landing on its own filter so a bookmark still means something */}
             <Route path="stories" element={<Navigate to="/app/civak?kind=stories" replace />} />
