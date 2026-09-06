@@ -9,6 +9,8 @@ interface GameMode {
   label: string;
   blurb: string;
   href: string;
+  /** played against other people, so it needs an account */
+  online?: boolean;
 }
 
 interface GameCard {
@@ -27,7 +29,7 @@ const GAMES: GameCard[] = [
     body: 'Guess the Kurdish word in six tries — on your own, or racing a friend.',
     modes: [
       { label: 'Play solo', blurb: 'Today’s daily puzzle, plus unlimited practice rounds across three difficulties.', href: '/app/games/wordle' },
-      { label: 'Play online', blurb: 'Create a battle, share the invite link, and race a friend to the same word.', href: '/app/games/wordle-battle' },
+      { label: 'Play online', blurb: 'Create a battle, share the invite link, and race a friend to the same word.', href: '/app/games/wordle-battle', online: true },
     ],
   },
   {
@@ -36,7 +38,7 @@ const GAMES: GameCard[] = [
     body: 'Find as many Kurdish words as you can that rhyme with the prompt.',
     modes: [
       { label: 'Play solo', blurb: 'A timed solo round against the clock — good for building vocabulary fast.', href: '/app/games/rhyme' },
-      { label: 'Play online', blurb: 'Head-to-head: share an invite link and out-rhyme a friend in one shared window.', href: '/app/games/rhyme-match' },
+      { label: 'Play online', blurb: 'Head-to-head: share an invite link and out-rhyme a friend in one shared window.', href: '/app/games/rhyme-match', online: true },
     ],
   },
   {
@@ -56,7 +58,7 @@ const GAMES: GameCard[] = [
     name: 'Ranked Quiz',
     body: 'Fast 1-v-1 matches: answer Kurdish questions quicker and more accurately than your opponent.',
     modes: [
-      { label: 'Play online', blurb: 'Get matched with an opponent. Server-scored and rated — your rating moves.', href: '/app/games/quiz' },
+      { label: 'Play online', blurb: 'Get matched with an opponent. Server-scored and rated — your rating moves.', href: '/app/games/quiz', online: true },
     ],
   },
 ];
@@ -84,21 +86,30 @@ export function Games(): React.JSX.Element {
 
       <div className="grid grid-2">
         {GAMES.map((g) => {
-          const single = g.modes.length === 1 ? g.modes[0] : undefined;
+          // a guest can play anything they play alone; only the modes against
+          // other people need an account, so a game is only closed to them when
+          // every way of playing it is
+          const playable = g.modes.filter((m) => signedIn || !m.online);
+          const single = playable.length === 1 ? playable[0] : undefined;
           return (
             <article className="feature game-card" key={g.name}>
               <div className="feature-icon">{g.icon}</div>
               <div className="game-card-head">
                 <h3>{g.name}</h3>
-                <span className={`badge${signedIn ? ' badge-gold' : ''}`}>{signedIn ? 'Playable' : 'Sign in to play'}</span>
+                <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
+                  {playable.length > 0 ? 'Playable' : 'Sign in to play'}
+                </span>
               </div>
               <p>{g.body}</p>
               <ul className="game-modes-hint">
                 {g.modes.map((m) => (
-                  <li key={m.href}>{m.label}</li>
+                  <li key={m.href}>
+                    {m.label}
+                    {!signedIn && m.online && <span className="mode-locked"> · needs an account</span>}
+                  </li>
                 ))}
               </ul>
-              {signedIn &&
+              {playable.length > 0 &&
                 (single ? (
                   <Link to={single.href} className="btn btn-primary btn-sm">
                     Play

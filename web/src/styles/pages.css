@@ -4191,3 +4191,32 @@ a.mkp-activity-row:hover {
     grid-template-columns: repeat(7, 1fr);
   }
 }
+
+/* asking for an account, rather than bouncing someone to a login form */
+.gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 40px;
+  padding: 40px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  text-align: center;
+}
+.gate .page-sub {
+  max-width: 44ch;
+  margin: 0;
+}
+.gate-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+/* a mode you cannot reach yet, said plainly next to the ones you can */
+.mode-locked {
+  color: var(--ink-4);
+  font-size: 0.86em;
+}

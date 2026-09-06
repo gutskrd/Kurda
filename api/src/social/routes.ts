@@ -64,7 +64,6 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
           offset: z.coerce.number().int().min(0).max(10_000).optional(),
         }),
       },
-      preHandler: requireAuth,
     },
     async (req) => {
       const { id } = req.params as { id: string };
@@ -73,13 +72,14 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
 
       // the profile call enforces privacy and blocks; reuse it rather than
       // reimplementing the rules where they could drift apart
-      const profile = await social.profile(req.user!.id, id);
+      const viewerId = req.user?.id ?? null;
+      const profile = await social.profile(viewerId, id);
       if (profile.private) return { entries: [] };
 
       // hiding a section hides it from other people, not from the person who
       // wrote it — their own profile still shows it, marked as hidden
       const visible = await activity.sections(id);
-      if (!visible[kind] && req.user!.id !== id) return { entries: [] };
+      if (!visible[kind] && viewerId !== id) return { entries: [] };
 
       if (kind === 'stories') return { entries: await activity.posts(id, 'story', limit, offset) };
       if (kind === 'poems') return { entries: await activity.posts(id, 'poem', limit, offset) };
@@ -153,13 +153,19 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     },
   );
 
-  /** A user's public profile (privacy- and block-gated). */
+  /**
+   * A user's public profile (privacy- and block-gated).
+   *
+   * Readable without an account: the bylines on the public wall have to lead
+   * somewhere. A signed-out reader is simply nobody's friend, so a profile set
+   * to friends-only or nobody shows them what it shows any other stranger.
+   */
   app.get(
     '/users/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: z.uuid() }) } },
     async (req) => {
       const id = (req.params as { id: string }).id;
-      const profile = await social.profile(req.user!.id, id);
+      const profile = await social.profile(req.user?.id ?? null, id);
       // Resolve cosmetics → URLs, derive level, expose only safe favorites, and
       // strip every raw key/entitlement/premium field. The browser loads media
       // directly from R2/static — the API never proxies images.

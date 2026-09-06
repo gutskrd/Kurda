@@ -47,8 +47,14 @@ export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (nex
    * announce as the name unless the label says otherwise — "4" tells you
    * nothing about what pressing it would do.
    */
-  const actionLabel = (verb: string, count?: number): string =>
-    !signedIn ? `Sign in to ${verb.toLowerCase()}` : count ? `${verb} (${count})` : verb;
+  const actionLabel = (verb: string, undo: string, count?: number): string => {
+    // a signed-out reader is invited to do the thing, never to undo it — they
+    // cannot have done it, and "sign in to unlike" is nonsense whatever the
+    // server happened to say about who liked what
+    if (!signedIn) return `Sign in to ${verb.toLowerCase()}`;
+    const label = undo;
+    return count ? `${label} (${count})` : label;
+  };
 
   return (
     <article className={`fcard fcard-${item.kind}`}>
@@ -90,7 +96,7 @@ export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (nex
           className={`fcard-act fcard-like${e.liked ? ' is-on' : ''}`}
           disabled={!signedIn || busy !== null}
           aria-pressed={e.liked}
-          aria-label={actionLabel(e.liked ? 'Unlike' : 'Like', e.likes)}
+          aria-label={actionLabel('Like', e.liked ? 'Unlike' : 'Like', e.likes)}
           title={signedIn ? (e.liked ? 'Unlike' : 'Like') : 'Sign in to like'}
           onClick={() => void toggle('like')}
         >
@@ -103,7 +109,7 @@ export function FeedCard({ item, onChanged }: { item: FeedItem; onChanged?: (nex
           className={`fcard-act fcard-save${e.bookmarked ? ' is-on' : ''}`}
           disabled={!signedIn || busy !== null}
           aria-pressed={e.bookmarked}
-          aria-label={actionLabel(e.bookmarked ? 'Remove from saved' : 'Save')}
+          aria-label={actionLabel('Save', e.bookmarked ? 'Remove from saved' : 'Save')}
           title={signedIn ? (e.bookmarked ? 'Remove from saved' : 'Save') : 'Sign in to save'}
           onClick={() => void toggle('bookmark')}
         >
