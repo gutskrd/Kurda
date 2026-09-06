@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FriendStatus, PublicProfile } from '../lib/types';
 import { FullProfile, type FullProfileView } from '../profile/FullProfile';
+import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
@@ -72,6 +73,7 @@ export function UserProfile(): React.JSX.Element {
     <FullProfile
       view={view}
       headerAction={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
+      activity={<ProfileActivity userId={profile.userId} sections={profile.sections} />}
       sidebarExtra={
         <>
           {profile.tier && <div className="mkp-info-row"><span className="l">League</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}

@@ -41,6 +41,15 @@ export const GameIcon = ({ size = 22, className }: P): React.JSX.Element => (
   </svg>
 );
 
+/** A framed picture: a horizon and a sun, for posted images. */
+export const PhotoIcon = ({ size = 22, className }: P): React.JSX.Element => (
+  <svg {...base(size)} className={className}>
+    <rect x="3" y="4.5" width="18" height="15" rx="3" />
+    <circle cx="8.5" cy="9.5" r="1.6" />
+    <path d="M3.5 16.5 8 12.5l3.5 3 3-2.5 6 5" />
+  </svg>
+);
+
 export const TrophyIcon = ({ size = 22, className }: P): React.JSX.Element => (
   <svg {...base(size)} className={className}>
     <path d="M7 4h10v4a5 5 0 0 1-10 0z" />

@@ -142,6 +142,25 @@ export interface PublicProfile extends ProfileCosmetics {
   /** global rating place, or null when they have not played ranked */
   rank?: number | null;
   achievements?: number;
+  /** which activity sections this profile shows; null when it is private */
+  sections?: ProfileSections | null;
+}
+
+/** The activity sections a profile can show, in the order they appear. */
+export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games'] as const;
+export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
+export type ProfileSections = Record<ProfileSection, boolean>;
+
+/** One thing someone posted or played (GET /users/:id/activity). */
+export interface ActivityEntry {
+  id: string;
+  kind: ProfileSection;
+  title: string;
+  detail: string | null;
+  /** where it lives, when it has a page of its own */
+  href: string | null;
+  imageUrl: string | null;
+  at: string;
 }
 
 /** A friend or search hit. */
