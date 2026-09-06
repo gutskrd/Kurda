@@ -250,6 +250,47 @@ export class FriendService {
   }
 
   /**
+   * Requests this user has sent and nobody has answered yet.
+   *
+   * The mirror of `incomingRequests`, and the reason it exists: a request you
+   * sent is invisible to you otherwise, so a misfire — the wrong name in a
+   * search, a tap on the wrong row — leaves a standing invitation you cannot
+   * see and cannot take back.
+   */
+  async outgoingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
+    const rows = await this.pool.query<FriendRow>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at FROM friendships f
+         JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
+        WHERE f.status = 'pending' AND f.requested_by = $1
+          AND (f.user_lo = $1 OR f.user_hi = $1)
+          AND f.created_at > now() - ($2 || ' days')::interval
+          AND NOT EXISTS (
+            SELECT 1 FROM blocks b
+             WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
+          )
+        ORDER BY f.created_at DESC`,
+      [user, String(REQUEST_TTL_DAYS)],
+    );
+    const now = new Date();
+    return rows.rows.map((r) => toFriendSummary(r, publicUrl, now));
+  }
+
+  /**
+   * Withdraw a request you sent.
+   *
+   * Scoped to `requested_by = user` so this can never be used to delete a
+   * request someone sent *to* you — declining is `respond`, and it is the other
+   * person's business who knows about it.
+   */
+  async cancelRequest(user: string, other: string): Promise<void> {
+    const { lo, hi } = canonicalPair(user, other);
+    await this.pool.query(
+      `DELETE FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'pending' AND requested_by = $3`,
+      [lo, hi, user],
+    );
+  }
+
+  /**
    * People-you-may-know: friends-of-friends the user isn't already connected to,
    * ranked by number of mutual friends. Excludes self, existing friends, anyone
    * with a pending request either way, blocked users, and profiles hidden from

@@ -65,6 +65,40 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(has(await friends.list(id.a!), id.c!)).toBe(false);
   });
 
+  it('shows a sent request to the sender, and to nobody else as sent', async () => {
+    await friends.request(id.d!, id.e!);
+
+    expect(has(await friends.outgoingRequests(id.d!), id.e!)).toBe(true);
+    // it is incoming for them, not outgoing — the two lists are not the same list
+    expect(has(await friends.outgoingRequests(id.e!), id.d!)).toBe(false);
+    expect(has(await friends.incomingRequests(id.e!), id.d!)).toBe(true);
+  });
+
+  it('lets the sender take a request back', async () => {
+    await friends.cancelRequest(id.d!, id.e!);
+
+    expect(has(await friends.outgoingRequests(id.d!), id.e!)).toBe(false);
+    expect(has(await friends.incomingRequests(id.e!), id.d!)).toBe(false);
+    // withdrawn, not answered: they can still be friends later
+    expect(await friends.request(id.d!, id.e!)).toBe('requested');
+    await friends.cancelRequest(id.d!, id.e!);
+  });
+
+  it('will not let the recipient cancel a request as if they had sent it', async () => {
+    await friends.request(id.d!, id.e!);
+
+    // e is the recipient; cancelling is for the sender, and declining is a
+    // separate act that e is entitled to make instead
+    await friends.cancelRequest(id.e!, id.d!);
+    expect(has(await friends.incomingRequests(id.e!), id.d!)).toBe(true);
+
+    expect(await friends.respond(id.e!, id.d!, false)).toBe('declined');
+  });
+
+  it('cancelling something that is not there is not an error', async () => {
+    await expect(friends.cancelRequest(id.d!, id.e!)).resolves.toBeUndefined();
+  });
+
   it('a mutual request auto-accepts', async () => {
     await friends.request(id.a!, id.d!);
     expect(await friends.request(id.d!, id.a!)).toBe('accepted');
