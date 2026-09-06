@@ -61,10 +61,15 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_IMAGE', message: 'send raw image bytes with an image/* content-type' });
 
+      // the handle comes from the database, never from the request: a mark the
+      // uploader could name is a mark they could put someone else's name on
+      const who = await app.db.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [req.user!.id]);
+
       const res = await storeImageMedia(
         { pool: app.db, storage: app.storage, usage, moderation: new ImageModerationService(app.db), limits, log: app.log },
         IMAGE_POST_KIND,
         raw,
+        { signAs: who.rows[0]?.username },
       );
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'image upload rejected');

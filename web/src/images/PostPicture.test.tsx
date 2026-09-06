@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PostPicture } from './PostPicture';
 import { renderApp, jsonResponse } from '../test/utils';
+import { stubCanvas, stubImage } from './canvasStubs';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -17,15 +18,13 @@ const aPicture = () => new File([new Uint8Array([1, 2, 3])], 'welat.png', { type
 /**
  * Answer the two upload steps and record them in order.
  *
- * jsdom has no object URLs; the preview would throw without these stubs.
+ * jsdom has neither a canvas nor an Image that loads, and the composer draws
+ * the picture before it can upload it — hence the stubs.
  */
 function uploadFetch(opts: { uploadStatus?: number; createStatus?: number } = {}) {
   const steps: string[] = [];
-  vi.stubGlobal('URL', {
-    ...URL,
-    createObjectURL: () => 'blob:preview',
-    revokeObjectURL: () => undefined,
-  });
+  stubImage();
+  stubCanvas();
   const fetch = vi.fn(async (url: string, init?: RequestInit) => {
     if (url.includes('/me') && !url.includes('images')) {
       return jsonResponse(200, { user: { id: 'me', username: 'me' } });
@@ -67,6 +66,7 @@ describe('PostPicture', () => {
     await openComposer();
 
     await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
+    await screen.findByLabelText('Choose a different picture');
     await userEvent.type(screen.getByLabelText('Caption'), 'Çiya');
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
@@ -86,6 +86,7 @@ describe('PostPicture', () => {
     await openComposer();
 
     await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
+    await screen.findByLabelText('Choose a different picture');
     await userEvent.click(screen.getByRole('button', { name: 'Meme' }));
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
@@ -113,6 +114,7 @@ describe('PostPicture', () => {
     await openComposer();
 
     await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
+    await screen.findByLabelText('Choose a different picture');
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(/storage isn’t switched on/i);
