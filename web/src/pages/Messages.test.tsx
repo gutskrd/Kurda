@@ -314,6 +314,62 @@ describe('Messages', () => {
     expect(calls[0]?.method).toBe('PUT');
     expect(calls[0]?.body).toMatchObject({ role: 'moderator' });
   });
+  /** A group roster, seen through the eyes of whoever `myRole` says you are. */
+  function stubGroup(myRole: 'owner' | 'moderator' | 'member', calls: Array<{ url: string; method: string }>) {
+    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    const detail = {
+      id: 'g1', name: 'Test Group', description: null, privacy: 'open', ownerId: myRole === 'owner' ? 'me' : 'u9',
+      archivedAt: null, memberCount: 2, myRole,
+      members: [
+        { userId: 'me', username: 'ada', role: myRole, joinedAt: '2026-01-01T00:00:00.000Z' },
+        { userId: 'u9', username: 'zana', role: myRole === 'owner' ? 'member' : 'owner', joinedAt: '2026-01-02T00:00:00.000Z' },
+      ],
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/groups/g1/leave')) {
+          calls.push({ url, method: init?.method ?? 'GET' });
+          return jsonResponse(200, { ok: true });
+        }
+        if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
+        if (url.includes('/groups/g1')) return jsonResponse(200, detail);
+        if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+  }
+
+  it('lets a member leave a group, on the second press', async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    stubGroup('member', calls);
+    renderApp(<Messages />, ['/app/messages?group=g1']);
+
+    await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
+    const leave = await screen.findByRole('button', { name: /^Leave Test Group$/ });
+
+    await userEvent.click(leave);
+    expect(calls).toHaveLength(0); // armed, not fired
+
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(calls[0]?.method).toBe('POST');
+  });
+
+  it('tells an owner what to do instead of offering a button that fails', async () => {
+    const calls: Array<{ url: string; method: string }> = [];
+    stubGroup('owner', calls);
+    renderApp(<Messages />, ['/app/messages?group=g1']);
+
+    await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
+
+    // the server refuses an owner's leave (a group with no owner has nobody who
+    // can hand it on), so the roster says so rather than asking and failing
+    expect(await screen.findByText(/To leave, make someone else the owner first/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Leave Test Group$/ })).not.toBeInTheDocument();
+  });
+
   it('renders a game-invite link in a DM as an invite card', async () => {
     const invite = 'https://mykurda.com/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
     vi.stubGlobal(

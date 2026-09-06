@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
+import { ConfirmButton } from '../components/ConfirmButton';
 import { Loading, ErrorState } from '../components/states';
 import { PostAuthor, type Author } from './PostAuthor';
 
@@ -177,18 +178,17 @@ function CommentNode({
           </button>
         )}
         {mine && !removed && (
-          <button
-            type="button"
+          <ConfirmButton
             className="link-button danger"
-            onClick={async () => {
-              if (!confirm('Delete this comment?')) return;
+            label="Delete"
+            title="Delete this comment"
+            onConfirm={async () => {
               const res = await client.delete(ROUTES[surface].one(comment.id));
               if (res.ok) onCountChange(-1);
+              // refetch either way: if it failed, the thread should show why
               await onChanged();
             }}
-          >
-            Delete
-          </button>
+          />
         )}
         {comment.replyCount > 0 && replies === null && (
           <button type="button" className="link-button" onClick={() => void loadReplies()} disabled={loading}>

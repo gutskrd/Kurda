@@ -103,4 +103,24 @@ describe('Comments', () => {
     // and the text stays in the box, so it is not lost to a rejection
     expect(box).toHaveValue('spam');
   });
+
+  it('deletes your own comment on the second press, and nobody else’s at all', async () => {
+    signIn();
+    const mine = comment('c1', 'my words', { author: { id: 'me', username: 'me', avatarUrl: null } });
+    const theirs = comment('c2', 'their words');
+    const { fetch, urls } = commentFetch([mine, theirs]);
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<Comments postId="p1" commentCount={2} />);
+
+    await screen.findByText('my words');
+    // one Delete on the page: the author's own comment, not the other one
+    const del = screen.getByRole('button', { name: 'Delete this comment' });
+
+    await userEvent.click(del);
+    expect(urls.some((u) => u.startsWith('DELETE'))).toBe(false); // armed, not fired
+
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    await waitFor(() => expect(urls.some((u) => u === 'DELETE /library/comments/c1')).toBe(true));
+    expect(screen.getByText('1 comment')).toBeInTheDocument();
+  });
 });

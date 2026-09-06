@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, Conversation, DmMessage, Group, GroupDetail, GroupMember, GroupMessage, GroupRole, MyGroup } from '../lib/types';
+import { ConfirmButton } from '../components/ConfirmButton';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from '../chat/MessagesProvider';
 import { MessageList } from '../chat/MessageList';
@@ -569,6 +570,7 @@ function Thread({
 
 /** A group chat channel — history, live messages over the `group:<id>` room, send. */
 function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
+  const navigateAway = useNavigate();
   const { client, user } = useAuth();
   const { state } = useRealtime();
   const [name, setName] = useState<string>('Group');
@@ -695,7 +697,15 @@ function GroupThread({ groupId }: { groupId: string }): React.JSX.Element {
       </header>
 
       <Modal open={showMembers} onClose={() => setShowMembers(false)} label="Group members">
-        {detail?.members && <GroupMembers detail={detail} onChanged={loadDetail} />}
+        {detail?.members && (
+          <GroupMembers
+            detail={detail}
+            onChanged={loadDetail}
+            // reloading the detail of a group you just left would only 403 —
+            // go back to the list instead
+            onLeft={() => navigateAway('/app/messages?group=')}
+          />
+        )}
       </Modal>
 
       <div className="chat-messages" ref={scrollRef}>
@@ -755,7 +765,15 @@ const ROLE_RANK: Record<GroupRole, number> = { member: 0, moderator: 1, owner: 2
  * The server re-checks every action; this only mirrors the rules to hide buttons
  * that would be rejected.
  */
-function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: () => Promise<void> }): React.JSX.Element {
+function GroupMembers({
+  detail,
+  onChanged,
+  onLeft,
+}: {
+  detail: GroupDetail;
+  onChanged: () => Promise<void>;
+  onLeft: () => void;
+}): React.JSX.Element {
   const { client, user } = useAuth();
   const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<string | null>(null);
@@ -770,12 +788,13 @@ function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: (
   // only an owner changes roles; ownership itself moves via transfer, not setRole
   const canSetRole = myRole === 'owner';
 
-  async function act(
-    key: string,
-    run: () => Promise<{ ok: boolean; error?: ApiError }>,
-    confirmText?: string,
-  ): Promise<void> {
-    if (confirmText && !confirm(confirmText)) return;
+  /*
+   * No `confirm()` here any more. The destructive actions below are
+   * ConfirmButtons instead: a browser dialog cannot be styled, lands outside the
+   * page for a screen reader, and is blocked outright in some embedded browsers
+   * — where it returns false and the action becomes quietly impossible.
+   */
+  async function act(key: string, run: () => Promise<{ ok: boolean; error?: ApiError }>): Promise<void> {
     setBusy(key);
     setError(null);
     const res = await run();
@@ -788,18 +807,25 @@ function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: (
     act(`${m.userId}:role`, () => client.put(`/groups/${detail.id}/members/${m.userId}/role`, { role }));
 
   const remove = (m: GroupMember): Promise<void> =>
-    act(
-      `${m.userId}:remove`,
-      () => client.delete(`/groups/${detail.id}/members/${m.userId}`),
-      `Remove ${m.username} from ${detail.name}?`,
-    );
+    act(`${m.userId}:remove`, () => client.delete(`/groups/${detail.id}/members/${m.userId}`));
 
   const transfer = (m: GroupMember): Promise<void> =>
-    act(
-      `${m.userId}:transfer`,
-      () => client.post(`/groups/${detail.id}/transfer`, { userId: m.userId }),
-      `Make ${m.username} the owner of ${detail.name}?\n\nYou will become a moderator and cannot undo this yourself.`,
-    );
+    act(`${m.userId}:transfer`, () => client.post(`/groups/${detail.id}/transfer`, { userId: m.userId }));
+
+  /**
+   * Leaving is the one action here that is about you rather than someone else,
+   * so it sits apart from the roster. The owner cannot leave — the server
+   * refuses, since a group with no owner has nobody who can hand it on — so they
+   * are told what to do instead of being given a button that fails.
+   */
+  async function leave(): Promise<void> {
+    setBusy('leave');
+    setError(null);
+    const res = await client.post(`/groups/${detail.id}/leave`);
+    setBusy(null);
+    if (res.ok) onLeft();
+    else setError(res.error ? describeError(res.error) : 'That did not work.');
+  }
 
   const ordered = [...detail.members].sort(
     (a, b) => ROLE_RANK[b.role] - ROLE_RANK[a.role] || a.username.localeCompare(b.username),
@@ -849,19 +875,45 @@ function GroupMembers({ detail, onChanged }: { detail: GroupDetail; onChanged: (
                 </Button>
               )}
               {canSetRole && m.role === 'moderator' && (
-                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void transfer(m)}>
-                  Make owner
-                </Button>
+                <ConfirmButton
+                  className="btn btn-ghost btn-sm"
+                  label="Make owner"
+                  disabled={busy !== null}
+                  title={`Make ${m.username} the owner — you become a moderator and cannot undo this yourself`}
+                  onConfirm={() => transfer(m)}
+                />
               )}
               {canManage(m) && (
-                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void remove(m)}>
-                  Remove
-                </Button>
+                <ConfirmButton
+                  className="btn btn-ghost btn-sm"
+                  label="Remove"
+                  disabled={busy !== null}
+                  title={`Remove ${m.username} from ${detail.name}`}
+                  onConfirm={() => remove(m)}
+                />
               )}
             </span>
           </li>
         ))}
       </ul>
+
+      {myRole === 'owner' ? (
+        <p className="muted group-leave-note">
+          You own {detail.name}. To leave, make someone else the owner first.
+        </p>
+      ) : (
+        myRole !== null && (
+          <div className="group-leave">
+            <ConfirmButton
+              className="btn btn-ghost btn-sm danger"
+              label={`Leave ${detail.name}`}
+              disabled={busy !== null}
+              title={`Leave ${detail.name}`}
+              onConfirm={leave}
+            />
+          </div>
+        )
+      )}
     </div>
   );
 }
