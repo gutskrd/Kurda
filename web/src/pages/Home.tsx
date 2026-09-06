@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from '../profile/ProfileModal';
 import { DailyReward } from '../components/DailyReward';
-import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, UserIcon, ArrowIcon } from '../components/icons';
+import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, UserIcon, UsersIcon, ArrowIcon } from '../components/icons';
 
 const LINK_TILES = [
   { to: '/app/learn', icon: <BookIcon />, title: 'Learn', body: 'Continue your Kurdish course.' },
@@ -10,7 +10,7 @@ const LINK_TILES = [
   { to: '/poems', icon: <FeatherIcon />, title: 'Poems', body: 'Explore Kurdish poetry.' },
   { to: '/games', icon: <GameIcon />, title: 'Games', body: 'Practice by playing.' },
   { to: '/app/rankings', icon: <TrophyIcon />, title: 'Rankings', body: 'See where you stand.' },
-  { to: '/app/friends', icon: <UserIcon />, title: 'Friends', body: 'Find and add other learners.' },
+  { to: '/app/friends', icon: <UsersIcon />, title: 'Friends', body: 'Find and add other learners.' },
 ];
 
 function Tile({

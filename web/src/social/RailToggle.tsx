@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { UserIcon } from '../components/icons';
+import { UsersIcon } from '../components/icons';
 import { badgeLabel } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 
@@ -34,7 +34,8 @@ export function RailToggle(): React.JSX.Element | null {
       aria-expanded={open}
       onClick={() => setOpen(!open)}
     >
-      <UserIcon size={19} />
+      {/* two people, not one — this is your friends, not your profile */}
+      <UsersIcon size={19} />
       {total > 0 && (
         <span key={popKey} className="rail-badge rail-badge-pop">
           {badgeLabel(total)}
