@@ -131,7 +131,9 @@ function RailContent({ data, onActed }: { data: SocialRailData; onActed: () => v
 
       <Section title="Groups" count={data.groups.length} hideWhenEmpty>
         {data.groups.map((g) => (
-          <Link key={g.id} to="/app/messages" className="rail-row rail-group">
+          // the group, not the list of groups: everywhere else that names a
+          // group links straight into it, and a rail row naming one should too
+          <Link key={g.id} to={`/app/messages?group=${g.id}`} className="rail-row rail-group">
             <span className="rail-group-mark" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
             <span className="rail-row-text">
               <span className="rail-row-name">{g.name}</span>
