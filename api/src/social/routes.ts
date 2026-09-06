@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
-import type { SocialService } from './service.js';
+import { VISIBILITIES, type SocialService, type Visibility } from './service.js';
 import { toPublicProfileDto } from './profile-dto.js';
 import { AppError } from '../plugins/errors.js';
 import {
@@ -34,11 +34,11 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
   app.put(
     '/me/privacy',
     {
-      schema: { body: z.object({ visibility: z.enum(['everyone', 'friends', 'nobody']) }) },
+      schema: { body: z.object({ visibility: z.enum(VISIBILITIES) }) },
       preHandler: requireAuth,
     },
     async (req) => {
-      const { visibility } = req.body as { visibility: 'everyone' | 'friends' | 'nobody' };
+      const { visibility } = req.body as { visibility: Visibility };
       await social.setVisibility(req.user!.id, visibility);
       return { visibility };
     },
