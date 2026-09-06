@@ -1,0 +1,190 @@
+/*
+ * Civak — the community wall.
+ *
+ * One column of cards, all the same shape whatever the post is. A reading width
+ * rather than the full page: a wall of text stretched across a desktop is a wall
+ * nobody reads.
+ */
+.container-feed {
+  max-width: 640px;
+}
+.feed-filters {
+  margin-bottom: 18px;
+}
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fcard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.fcard:hover {
+  border-color: var(--border-strong);
+}
+
+/* ---- who, and when ------------------------------------------------------ */
+.fcard-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 8px;
+}
+.fcard-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fcard-who-text {
+  min-width: 0;
+}
+.fcard-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fcard-who:hover .fcard-name {
+  text-decoration: underline;
+}
+.fcard-when {
+  display: block;
+  color: var(--ink-4);
+  font-size: 0.76rem;
+}
+/* the badge says what kind of post this is, since the wall mixes them */
+.fcard-kind {
+  flex: none;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  color: var(--ink-3);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fcard-kind-poem {
+  color: var(--gold-ink);
+  border-color: rgba(240, 194, 74, 0.3);
+}
+
+/* ---- the post itself ---------------------------------------------------- */
+.fcard-body {
+  display: block;
+  padding: 0 14px 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.fcard-title {
+  margin: 2px 0 6px;
+  font-size: 1.06rem;
+  line-height: 1.3;
+}
+.fcard-text {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  /* a poem's line breaks are the poem, and an excerpt keeps them */
+  white-space: pre-wrap;
+}
+.fcard-shot {
+  display: block;
+  margin: 4px -14px 10px;
+  background: var(--surface-2);
+}
+.fcard-shot img {
+  display: block;
+  width: 100%;
+  /* tall pictures are common and a card should not become a page */
+  max-height: 560px;
+  object-fit: cover;
+}
+/* a picture's caption sits under it and reads as a caption, not a body */
+.fcard-image .fcard-text,
+.fcard-meme .fcard-text {
+  font-size: 0.88rem;
+  color: var(--ink-3);
+}
+
+/* ---- comment, like, save ------------------------------------------------ */
+.fcard-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.fcard-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-4);
+  font: inherit;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fcard-act:hover:not(:disabled) {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+.fcard-act:disabled {
+  cursor: default;
+}
+/* the save button sits at the far end, away from the counts */
+.fcard-save {
+  margin-left: auto;
+}
+.fcard-like.is-on {
+  color: #ff8fa3;
+}
+.fcard-like.is-on:hover:not(:disabled) {
+  background: rgba(255, 143, 163, 0.12);
+  color: #ff8fa3;
+}
+.fcard-save.is-on {
+  color: var(--gold-ink);
+}
+.fcard-save.is-on:hover:not(:disabled) {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+/* the fill lands rather than appears, so a tap feels answered */
+.fcard-like.is-on svg,
+.fcard-save.is-on svg {
+  animation: fcard-pop 0.28s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+@keyframes fcard-pop {
+  from { transform: scale(0.7); }
+  to { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fcard-like.is-on svg,
+  .fcard-save.is-on svg {
+    animation: none;
+  }
+}

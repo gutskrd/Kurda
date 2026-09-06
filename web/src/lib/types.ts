@@ -169,6 +169,32 @@ export interface ImagePost {
   createdAt: string;
 }
 
+/** How a post has been received, and whether you are part of it. */
+export interface PostEngagement {
+  likes: number;
+  bookmarks: number;
+  liked: boolean;
+  bookmarked: boolean;
+}
+
+/** One card on the community wall (GET /feed). */
+export interface FeedItem {
+  /** unique across both source tables */
+  key: string;
+  targetType: 'library' | 'image';
+  id: string;
+  kind: 'story' | 'poem' | 'image' | 'meme';
+  author: PostAuthorRef;
+  title: string | null;
+  excerpt: string | null;
+  imageUrl: string | null;
+  href: string;
+  viewCount: number;
+  commentCount: number;
+  engagement: PostEngagement;
+  at: string;
+}
+
 /** The activity sections a profile can show, in the order they appear. */
 export const PROFILE_SECTIONS = ['stories', 'poems', 'images', 'games', 'likes', 'bookmarks'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];

@@ -6,6 +6,7 @@ import './styles/base.css';
 import './styles/ui.css';
 import './styles/layout.css';
 import './styles/pages.css';
+import './styles/feed.css';
 import './styles/rail.css';
 
 const root = document.getElementById('root');
