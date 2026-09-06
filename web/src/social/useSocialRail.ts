@@ -32,7 +32,19 @@ export interface RailNotification {
   readAt: string | null;
 }
 
+/** You, as the rail shows you: a face, a level ring, and what you can spend. */
+export interface RailSelf {
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  /** derived server-side from XP; `progress` is 0..1 toward the next level */
+  level: { level: number; progress: number; xp: number; currentLevelXp: number; nextLevelXp: number };
+  balances: { zer: number; gems: number };
+}
+
 export interface SocialRailData {
+  /** null until the first read lands, and for a response from before this field */
+  you: RailSelf | null;
   friends: RailFriend[];
   requests: RailFriend[];
   challenges: RailFriend[];
@@ -51,6 +63,7 @@ export interface Arrival {
 }
 
 const EMPTY: SocialRailData = {
+  you: null,
   friends: [],
   requests: [],
   challenges: [],

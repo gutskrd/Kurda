@@ -52,16 +52,30 @@ export function Settings(): React.JSX.Element {
       <section className="card" style={{ marginTop: 20 }}>
         <h2 className="friend-heading" style={{ marginTop: 0 }}>Sessions</h2>
         <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-          Signs you out on every device, including this one.
+          Sign out here, or on every device at once.
         </p>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            void client.delete('/me/sessions').then(() => logout()).then(() => navigate('/'));
-          }}
-        >
-          Log out everywhere
-        </Button>
+        {/*
+          Signing out lives here now rather than in the nav, where it sat one slip
+          away from ending your session every time you reached for your profile.
+          It belongs with the other things you do to your account.
+        */}
+        <div className="settings-actions">
+          <Button
+            onClick={() => {
+              void logout().then(() => navigate('/'));
+            }}
+          >
+            Sign out
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void client.delete('/me/sessions').then(() => logout()).then(() => navigate('/'));
+            }}
+          >
+            Log out everywhere
+          </Button>
+        </div>
       </section>
 
       <ExportData />

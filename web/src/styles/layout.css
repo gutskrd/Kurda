@@ -56,6 +56,71 @@
   width: 40px;
   padding: 0;
 }
+
+/* a glyph before each label; the nav reads faster as icon + word than as words */
+.nav-link-icon {
+  display: inline-flex;
+  margin-right: 7px;
+  color: var(--ink-4);
+}
+.nav-link:hover .nav-link-icon,
+.nav-link.active .nav-link-icon {
+  color: var(--gold-ink);
+}
+
+/*
+ * Shop stands apart from the links, because it is a place you spend rather than
+ * a place you read. No word beside it — the storefront says it, and the two
+ * currencies sitting next to it say what for.
+ */
+.nav-shop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  color: var(--ink-3);
+}
+.nav-shop:hover {
+  color: var(--gold-ink);
+  background: var(--surface-2);
+}
+.nav-shop .nav-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+/* what you have to spend, stacked: read as a pair, in the width of one line */
+.purse {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  text-decoration: none;
+}
+.purse:hover {
+  border-color: var(--border-strong);
+}
+.purse-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold-ink);
+}
+.purse-gems {
+  color: var(--accent-ink, #7cc6ff);
+}
+.purse-amount {
+  font-weight: 600;
+}
 /* actions that live only inside the mobile dropdown */
 .nav-mobile-actions {
   display: none;

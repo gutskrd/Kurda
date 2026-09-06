@@ -25,7 +25,17 @@ const person = (id: string, username: string, extra: Record<string, unknown> = {
   ...extra,
 });
 
+const self = (over: Record<string, unknown> = {}) => ({
+  username: 'ada',
+  displayName: 'Ada',
+  avatarUrl: null,
+  level: { level: 58, progress: 0.42, xp: 1240, currentLevelXp: 1000, nextLevelXp: 1600 },
+  balances: { zer: 13880, gems: 90 },
+  ...over,
+});
+
 const rail = (over: Record<string, unknown> = {}) => ({
+  you: null,
   friends: [],
   requests: [],
   challenges: [],
@@ -148,6 +158,45 @@ describe('SocialRail', () => {
     await screen.findByText('Invited you to play');
     // a burst of toasts for things that were already there is noise
     expect(screen.queryByText('Game invite')).not.toBeInTheDocument();
+  });
+
+  it('puts you at the top, with your level around your face', async () => {
+    signIn();
+    railFetch([rail({ you: self() })]);
+    const { container } = show();
+
+    expect(await screen.findByText('Ada')).toBeInTheDocument();
+    // the level reads without opening anything — that is the point of the ring
+    expect(screen.getByRole('button', { name: /Your profile — level 58/ })).toBeInTheDocument();
+    expect(screen.getByText('42% to level 59')).toBeInTheDocument();
+
+    // the ring is filled to the fraction, not to a rounded step
+    const fill = container.querySelector<SVGCircleElement>('.rail-ring-fill')!;
+    const r = Number(fill.getAttribute('r'));
+    const [drawn] = fill.getAttribute('stroke-dasharray')!.split(' ').map(Number);
+    expect(drawn! / (2 * Math.PI * r)).toBeCloseTo(0.42, 2);
+  });
+
+  it('keeps the ring inside its circle for a level that just filled', async () => {
+    signIn();
+    // a progress of 1 must not draw past the end of the circumference
+    railFetch([rail({ you: self({ level: { level: 9, progress: 1, xp: 0, currentLevelXp: 0, nextLevelXp: 1 } }) })]);
+    const { container } = show();
+
+    await screen.findByText('Ada');
+    const fill = container.querySelector<SVGCircleElement>('.rail-ring-fill')!;
+    const [, gap] = fill.getAttribute('stroke-dasharray')!.split(' ').map(Number);
+    expect(gap).toBeCloseTo(0, 5);
+  });
+
+  it('shows no self card until the server says who you are', async () => {
+    signIn();
+    railFetch([rail()]);
+    const { container } = show();
+
+    await screen.findByText('Online');
+    // an empty face with level 0 under it would be a worse first paint
+    expect(container.querySelector('.rail-self')).toBeNull();
   });
 
   it('offers a way in when you have nobody yet', async () => {

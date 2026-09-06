@@ -4357,3 +4357,10 @@ a.mkp-activity-row:hover {
   color: var(--ink-4);
   font-size: 0.86em;
 }
+
+/* sign out and sign-out-everywhere sit together; they are the same decision */
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
