@@ -7,7 +7,20 @@ import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 // still gets the one shared loader
 export { loadAuthors, unknownAuthor, type Author };
 
-export type PostType = 'story' | 'poem';
+/**
+ * What a written post is.
+ *
+ * A çîrok and a helbest are pieces of work — titled, and looked for by name. A
+ * gotin is a saying: a line or two, read in passing and no title needed.
+ */
+export type PostType = 'gotin' | 'story' | 'poem';
+
+export const POST_TYPES: readonly PostType[] = ['gotin', 'story', 'poem'];
+
+/** Only a gotin may go without a name; the database enforces this too. */
+export function titleRequired(type: PostType): boolean {
+  return type !== 'gotin';
+}
 export type AuthorRole = 'user' | 'admin';
 export type PostStatus = 'draft' | 'published' | 'removed';
 
@@ -16,7 +29,8 @@ export const MAX_BODY_LEN = 50_000;
 
 export interface CreateInput {
   type: PostType;
-  title: string;
+  /** required for a çîrok or a helbest; a gotin has none */
+  title?: string | null;
   body: string;
   audioMediaId?: string | null;
   language?: string;
@@ -35,7 +49,8 @@ export interface LibraryPost {
   authorId: string;
   authorRole: AuthorRole;
   type: PostType;
-  title: string;
+  /** null on a gotin, which has no name */
+  title: string | null;
   body: string;
   audioMediaId: string | null;
   language: string;
@@ -72,7 +87,7 @@ export type CreateResult = { ok: true; post: LibraryPost } | { ok: false; reason
 export type MutateResult = { ok: true; post: LibraryPost } | { ok: false; reason: 'not-found' | 'forbidden' };
 
 interface Row {
-  id: string; author_id: string; author_role: AuthorRole; type: PostType; title: string; body: string;
+  id: string; author_id: string; author_role: AuthorRole; type: PostType; title: string | null; body: string;
   audio_media_id: string | null; language: string; status: PostStatus; view_count: number;
   comment_count: number; created_at: Date; updated_at: Date; published_at: Date | null;
 }
@@ -87,17 +102,17 @@ export class LibraryService {
   constructor(private readonly pool: pg.Pool) {}
 
   async create(authorId: string, authorRole: AuthorRole, input: CreateInput): Promise<CreateResult> {
-    const title = clean(input.title, MAX_TITLE_LEN);
+    const title = input.title ? clean(input.title, MAX_TITLE_LEN) : '';
     const body = clean(input.body, MAX_BODY_LEN);
-    if (!title || !body || (input.type !== 'story' && input.type !== 'poem')) {
-      return { ok: false, reason: 'invalid' };
-    }
+    if (!body || !POST_TYPES.includes(input.type)) return { ok: false, reason: 'invalid' };
+    // a story or a poem without a name is a mistake; a gotin without one is not
+    if (titleRequired(input.type) && !title) return { ok: false, reason: 'invalid' };
     const publish = input.publish !== false;
     const res = await this.pool.query<Row>(
       `INSERT INTO library_posts (author_id, author_role, type, title, body, audio_media_id, language, status, published_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8, CASE WHEN $8 = 'published' THEN now() ELSE NULL END)
        RETURNING *`,
-      [authorId, authorRole, input.type, title, body, input.audioMediaId ?? null, input.language ?? 'kmr', publish ? 'published' : 'draft'],
+      [authorId, authorRole, input.type, title || null, body, input.audioMediaId ?? null, input.language ?? 'kmr', publish ? 'published' : 'draft'],
     );
     return { ok: true, post: toPost(res.rows[0]!) };
   }

@@ -78,18 +78,36 @@ describe('Civak', () => {
     const { queries } = feedFetch([item('library:s1')]);
     renderApp(<Civak />, ['/app/civak']);
     await screen.findByText('Çîroka min');
-    expect(queries[0]).toContain('kind=all');
+    expect(queries[0]).toContain('section=all');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Helbest' }));
-    await waitFor(() => expect(queries.some((q) => q.includes('kind=poems'))).toBe(true));
+    // the kinds appear only once a half is chosen — Helbest is not a thing you
+    // can ask for from the top level
+    expect(screen.queryByRole('button', { name: 'Only Helbest' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show Gotin' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Only Helbest' }));
+
+    await waitFor(() =>
+      expect(queries.some((q) => q.includes('section=gotin') && q.includes('kind=helbest'))).toBe(true),
+    );
   });
 
-  it('starts on the filter the address asked for', async () => {
-    const { queries } = feedFetch([item('library:i1')]);
-    // so /app/stories can simply redirect here and land somewhere meaningful
-    renderApp(<Civak />, ['/app/civak?kind=images']);
-    await waitFor(() => expect(queries[0]).toContain('kind=images'));
-    expect(screen.getByRole('button', { name: 'Dîmen' })).toHaveAttribute('aria-pressed', 'true');
+  it('starts on the half and kind the address asked for', async () => {
+    const { queries } = feedFetch([item('library:p1')]);
+    // so /app/poems can simply redirect here and land somewhere meaningful
+    renderApp(<Civak />, ['/app/civak?section=gotin&kind=helbest']);
+    await waitFor(() => expect(queries[0]).toContain('kind=helbest'));
+    expect(screen.getByRole('button', { name: 'Show Gotin' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Only Helbest' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('drops a kind that does not belong to the half it is asked with', async () => {
+    const { queries } = feedFetch([item('library:s1')]);
+    // a helbest inside Dîmen is a contradiction the server refuses, so the
+    // leftover kind is dropped rather than sent
+    renderApp(<Civak />, ['/app/civak?section=dimen&kind=helbest']);
+    await waitFor(() => expect(queries).toHaveLength(1));
+    expect(queries[0]).toContain('section=dimen');
+    expect(queries[0]).not.toContain('kind=');
   });
 
   it('likes a post and keeps the new count, without reloading the wall', async () => {

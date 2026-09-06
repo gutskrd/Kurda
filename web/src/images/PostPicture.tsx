@@ -60,6 +60,18 @@ export function PostPicture({ onPosted }: { onPosted: (post: ImagePost) => void 
 
 type Client = ReturnType<typeof useAuth>['client'];
 
+/** The picture composer on its own, for the shared post button to open. */
+export function PictureComposer({
+  handle,
+  onDone,
+}: {
+  handle: string;
+  onDone: (post: ImagePost) => void;
+}): React.JSX.Element {
+  const { client } = useAuth();
+  return <Composer client={client} handle={handle} onDone={onDone} />;
+}
+
 function Composer({
   client,
   handle,

@@ -12,12 +12,49 @@ import { EngagementService, NO_ENGAGEMENT, type Engagement, type TargetType } fr
  * happened to be browsing pictures.
  */
 
-/** What a card can be. `all` is the unfiltered wall. */
-export const FEED_KINDS = ['all', 'stories', 'poems', 'images'] as const;
+/**
+ * The wall has two halves and each has its own kinds.
+ *
+ * Gotin is what people write, Dîmen is what they photograph or make. They read
+ * differently and are looked for differently, so the filter is two levels: pick
+ * a half, then narrow it. `all` at either level means "do not narrow".
+ */
+export const FEED_SECTIONS = ['all', 'gotin', 'dimen'] as const;
+export type FeedSection = (typeof FEED_SECTIONS)[number];
+
+/** The written kinds, and the picture kinds, as the database stores them. */
+const GOTIN_KINDS = { gotin: 'gotin', cirok: 'story', helbest: 'poem' } as const;
+const DIMEN_KINDS = { wene: 'image', mim: 'meme' } as const;
+
+export const FEED_KINDS = ['all', ...Object.keys(GOTIN_KINDS), ...Object.keys(DIMEN_KINDS)] as const;
 export type FeedKind = (typeof FEED_KINDS)[number];
 
+export function isFeedSection(v: string): v is FeedSection {
+  return (FEED_SECTIONS as readonly string[]).includes(v);
+}
 export function isFeedKind(v: string): v is FeedKind {
   return (FEED_KINDS as readonly string[]).includes(v);
+}
+
+/**
+ * Which half a kind belongs to, and what it is called in the database.
+ *
+ * A kind implies its half — asking for helbest inside Dîmen is a contradiction,
+ * not an empty result, so the caller is told rather than quietly given nothing.
+ */
+export function resolveKind(
+  section: FeedSection,
+  kind: FeedKind,
+): { ok: true; section: FeedSection; dbType: string | null } | { ok: false } {
+  if (kind === 'all') return { ok: true, section, dbType: null };
+
+  const written = (GOTIN_KINDS as Record<string, string>)[kind];
+  if (written) return section === 'dimen' ? { ok: false } : { ok: true, section: 'gotin', dbType: written };
+
+  const pictured = (DIMEN_KINDS as Record<string, string>)[kind];
+  if (pictured) return section === 'gotin' ? { ok: false } : { ok: true, section: 'dimen', dbType: pictured };
+
+  return { ok: false };
 }
 
 export interface FeedItem {
@@ -66,15 +103,19 @@ const FEED_SQL = `
            NULL::text AS media, COALESCE(l.published_at, l.created_at) AS at,
            l.view_count, l.comment_count
       FROM library_posts l
-     WHERE l.status = 'published' AND ($1 = 'all' OR $1 = l.type || 's')
+     WHERE l.status = 'published'
+       AND ($1 = 'all' OR $1 = 'gotin')
+       AND ($2::text IS NULL OR l.type = $2)
     UNION ALL
     SELECT 'image', i.id, i.author_id, i.category, NULL, i.caption,
            i.image_media_id, i.created_at, i.view_count, i.comment_count
       FROM image_posts i
-     WHERE i.status = 'published' AND ($1 = 'all' OR $1 = 'images')
+     WHERE i.status = 'published'
+       AND ($1 = 'all' OR $1 = 'dimen')
+       AND ($2::text IS NULL OR i.category = $2)
   ) AS wall
   ORDER BY at DESC, id DESC
-  LIMIT $2 OFFSET $3`;
+  LIMIT $3 OFFSET $4`;
 
 /**
  * The same shape as the wall, for a known set of posts.
@@ -108,14 +149,18 @@ export class FeedService {
 
   async list(
     viewerId: string | null,
-    opts: { kind?: FeedKind; limit?: number; offset?: number; publicUrl?: PublicUrl } = {},
-  ): Promise<FeedItem[]> {
-    const kind = opts.kind ?? 'all';
+    opts: { section?: FeedSection; kind?: FeedKind; limit?: number; offset?: number; publicUrl?: PublicUrl } = {},
+  ): Promise<FeedItem[] | null> {
+    const resolved = resolveKind(opts.section ?? 'all', opts.kind ?? 'all');
+    // a kind that cannot live in the half asked for is a contradiction, and the
+    // caller should hear that rather than an empty wall
+    if (!resolved.ok) return null;
+
     const limit = Math.min(50, Math.max(1, opts.limit ?? 20));
     const offset = Math.max(0, opts.offset ?? 0);
     const publicUrl = opts.publicUrl ?? (() => null);
 
-    const rows = await this.pool.query<FeedRow>(FEED_SQL, [kind, limit, offset]);
+    const rows = await this.pool.query<FeedRow>(FEED_SQL, [resolved.section, resolved.dbType, limit, offset]);
     return this.hydrate(rows.rows, viewerId, publicUrl);
   }
 

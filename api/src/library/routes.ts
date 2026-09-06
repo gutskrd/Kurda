@@ -9,8 +9,10 @@ const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
 
 const createBody = z.object({
-  type: z.enum(['story', 'poem']),
-  title: z.string().min(1).max(200),
+  type: z.enum(['gotin', 'story', 'poem']),
+  // optional here and checked in the service, so one rule decides it: a gotin
+  // needs no name, a çîrok and a helbest do
+  title: z.string().min(1).max(200).optional(),
   body: z.string().min(1).max(50_000),
   audioMediaId: z.string().max(512).optional(),
   language: z.string().max(16).optional(),

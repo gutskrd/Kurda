@@ -111,9 +111,9 @@ export function App(): React.JSX.Element {
             <Route path="saved" element={<Saved />} />
             {/* the three old walls now point at the one that replaced them, each
                 landing on its own filter so a bookmark still means something */}
-            <Route path="stories" element={<Navigate to="/app/civak?kind=stories" replace />} />
-            <Route path="poems" element={<Navigate to="/app/civak?kind=poems" replace />} />
-            <Route path="dimen" element={<Navigate to="/app/civak?kind=images" replace />} />
+            <Route path="stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
+            <Route path="poems" element={<Navigate to="/app/civak?section=gotin&kind=helbest" replace />} />
+            <Route path="dimen" element={<Navigate to="/app/civak?section=dimen" replace />} />
             <Route path="dimen/:id" element={<DimenPost />} />
             <Route path="games" element={<Games />} />
             <Route path="games/wordle" element={<Wordle />} />
