@@ -4,7 +4,13 @@
  * actual file header. Returns the real type, or null for anything that isn't a
  * supported image (so non-images / malformed files are rejected).
  */
-export type SniffedImageType = 'image/jpeg' | 'image/png' | 'image/webp';
+export type SniffedImageType =
+  | 'image/jpeg'
+  | 'image/png'
+  | 'image/webp'
+  | 'image/heic'
+  | 'image/avif'
+  | 'image/tiff';
 
 function startsWith(bytes: Uint8Array, sig: readonly number[], offset = 0): boolean {
   if (bytes.length < offset + sig.length) return false;
@@ -18,12 +24,43 @@ const JPEG = [0xff, 0xd8, 0xff];
 const PNG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const RIFF = [0x52, 0x49, 0x46, 0x46]; // "RIFF"
 const WEBP = [0x57, 0x45, 0x42, 0x50]; // "WEBP" at offset 8
+// "ftyp" at offset 4 — an ISO-BMFF container. Shared: the same box starts a HEIC
+// photo and an m4a voice note, and only the brand at offset 8 tells them apart.
+const FTYP = [0x66, 0x74, 0x79, 0x70];
+
+/**
+ * ISO-BMFF brands, read at offset 8.
+ *
+ * This is the container iPhones write photos in, which is why it matters: a
+ * phone's camera roll is HEIC, no desktop browser decodes it, and refusing it
+ * here means the most common source of photographs cannot be posted at all.
+ * `sharp` reads both of these and the pipeline re-encodes everything to WebP,
+ * so nothing downstream ever sees the original format.
+ */
+const HEIC_BRANDS = ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs', 'mif1', 'msf1'];
+const AVIF_BRANDS = ['avif', 'avis'];
+
+// TIFF, by byte order: "II*\0" little-endian, "MM\0*" big-endian. Same reasoning
+// as HEIC — a real photo format that no browser will draw.
+const TIFF_LE = [0x49, 0x49, 0x2a, 0x00];
+const TIFF_BE = [0x4d, 0x4d, 0x00, 0x2a];
+
+function brandAt8(bytes: Uint8Array): string | null {
+  if (bytes.length < 12) return null;
+  return String.fromCharCode(bytes[8]!, bytes[9]!, bytes[10]!, bytes[11]!);
+}
 
 export function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
   if (startsWith(bytes, JPEG)) return 'image/jpeg';
   if (startsWith(bytes, PNG)) return 'image/png';
   // WebP = RIFF container with a "WEBP" fourcc at byte 8
   if (startsWith(bytes, RIFF) && startsWith(bytes, WEBP, 8)) return 'image/webp';
+  if (startsWith(bytes, TIFF_LE) || startsWith(bytes, TIFF_BE)) return 'image/tiff';
+  if (startsWith(bytes, FTYP, 4)) {
+    const brand = brandAt8(bytes);
+    if (brand && HEIC_BRANDS.includes(brand)) return 'image/heic';
+    if (brand && AVIF_BRANDS.includes(brand)) return 'image/avif';
+  }
   return null;
 }
 
@@ -31,7 +68,6 @@ export function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
 export type SniffedAudioType = 'audio/mpeg' | 'audio/mp4';
 
 const ID3 = [0x49, 0x44, 0x33]; // "ID3" — MP3 with an ID3v2 tag
-const FTYP = [0x66, 0x74, 0x79, 0x70]; // "ftyp" at offset 4 — ISO-BMFF (m4a/mp4/aac)
 
 /**
  * Audio type by magic bytes (KUR-282). Recognises MP3 (ID3 tag or a raw MPEG

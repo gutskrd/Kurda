@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -102,17 +103,46 @@ describe('PictureComposer', () => {
     await waitFor(() => expect(steps.some((x) => x.startsWith('upload'))).toBe(true));
   });
 
-  it('says so and clears the choice when a file will not open as a picture', async () => {
+  it('still posts a picture this browser cannot draw', async () => {
     signIn();
-    uploadFetch();
+    const { steps } = uploadFetch();
     stubImage({ fail: true });
     show();
 
+    // a phone photo: the browser has no HEIC decoder, but the server does
+    const heic = new File([new Uint8Array([1, 2, 3])], 'IMG_4021.HEIC', { type: 'image/heic' });
+    await userEvent.upload(screen.getByLabelText('Picture file'), heic, { applyAccept: false });
+
+    // no editor — there is nothing on screen to put a sticker on — but it says
+    // so plainly and still offers to post
+    expect(await screen.findByText(/can’t show this kind of picture/i)).toBeInTheDocument();
+    expect(screen.getByText('IMG_4021.HEIC')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() => expect(steps).toHaveLength(2));
+    // the original bytes, not a canvas export of a picture that never rendered
+    expect(steps[0]).toBe('upload image/heic');
+  });
+
+  it('survives the double render the app actually runs under', async () => {
+    signIn();
+    uploadFetch();
+    renderApp(
+      <StrictMode>
+        <PictureComposer handle="hamude" onDone={() => undefined} />
+      </StrictMode>,
+    );
+
+    /*
+     * The app is wrapped in StrictMode, so in development every effect here runs
+     * mount → cleanup → mount, and the cleanup revokes the first run's object URL
+     * while its image is still reading from it. A picture must not be judged
+     * unreadable on the strength of that.
+     */
     await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/could not be opened as a picture/i);
-    // it goes back to asking for one rather than offering to post nothing
-    expect(screen.getByLabelText('Choose a picture')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Choose a different picture')).toBeInTheDocument();
+    expect(screen.queryByText(/can’t show this kind of picture/i)).not.toBeInTheDocument();
   });
 
   it('offers nothing to post until there is a picture', async () => {

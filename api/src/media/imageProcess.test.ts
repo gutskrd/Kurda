@@ -31,6 +31,25 @@ describe('processImage', () => {
     if (res.ok) expect(res.width).toBe(100);
   });
 
+  it('converts a photo format no browser can draw', async () => {
+    /*
+     * AVIF stands in for HEIC here: the same ISO-BMFF container, the same libheif
+     * decoder, and one sharp can also *write*, so the test needs no binary
+     * fixture. If this passes, an iPhone's camera roll goes through too.
+     */
+    const avif = await sharp({ create: { width: 900, height: 600, channels: 3, background: { r: 20, g: 90, b: 160 } } })
+      .avif({ quality: 50 })
+      .toBuffer();
+
+    const res = await processImage(avif, opts({ allowedTypes: new Set([...ALLOWED, 'image/avif']) }));
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      // whatever went in, WebP comes out — nothing downstream sees the original
+      expect(res.contentType).toBe('image/webp');
+      expect(res.width).toBe(512);
+    }
+  });
+
   it('rejects a non-image (magic bytes fail)', async () => {
     const res = await processImage(Buffer.from('this is definitely not an image file'), opts());
     expect(res.ok).toBe(false);

@@ -120,7 +120,7 @@ so only Cloudflare can see them.**
 | `MEDIA_MONTHLY_CLASS_A_LIMIT` | 900000 | monthly write/list op ceiling (below Cloudflare's 1M) |
 | `MEDIA_MONTHLY_CLASS_B_LIMIT` | 9000000 | monthly read op ceiling (below Cloudflare's 10M) |
 | `MEDIA_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 10 / 60 | per-user profile-photo upload rate limit |
-| `MEDIA_ALLOWED_TYPES` | jpeg,png,webp | accepted source types (sniffed, not declared) |
+| `MEDIA_ALLOWED_TYPES` | jpeg,png,webp,heic,avif,tiff | accepted source types (sniffed, not declared); all are re-encoded to WebP, and heic/avif/tiff are the photo formats browsers cannot display |
 | `MEDIA_IMAGE_MAX_DIMENSION` | 1280 | longest edge of a processed image/meme post |
 | `MEDIA_IMAGE_MAX_STORED_KB` | 500 | hard cap on a stored image/meme (processed WebP) |
 | `MEDIA_IMAGE_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user image/meme upload rate limit |

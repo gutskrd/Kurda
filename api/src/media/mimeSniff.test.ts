@@ -11,6 +11,34 @@ describe('sniffImageType', () => {
     expect(sniffImageType(bytes(0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50))).toBe('image/webp');
   });
 
+  it('detects the ISO-BMFF photo formats a phone actually produces', () => {
+    // size, "ftyp", then the brand at offset 8
+    const bmff = (brand: string) =>
+      new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, ...[...brand].map((c) => c.charCodeAt(0)), 0, 0, 0, 0]);
+
+    for (const brand of ['heic', 'heix', 'hevc', 'mif1', 'msf1']) {
+      expect(sniffImageType(bmff(brand)), brand).toBe('image/heic');
+    }
+    expect(sniffImageType(bmff('avif'))).toBe('image/avif');
+    expect(sniffImageType(bmff('avis'))).toBe('image/avif');
+
+    // TIFF, both byte orders
+    expect(sniffImageType(bytes(0x49, 0x49, 0x2a, 0x00, 8, 0, 0, 0))).toBe('image/tiff');
+    expect(sniffImageType(bytes(0x4d, 0x4d, 0x00, 0x2a, 0, 0, 0, 8))).toBe('image/tiff');
+  });
+
+  it('does not mistake other ISO-BMFF files for photographs', () => {
+    const bmff = (brand: string) =>
+      new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, ...[...brand].map((c) => c.charCodeAt(0)), 0, 0, 0, 0]);
+
+    // the same container carries video and audio; only the image brands qualify
+    expect(sniffImageType(bmff('isom'))).toBeNull();
+    expect(sniffImageType(bmff('mp42'))).toBeNull();
+    expect(sniffImageType(bmff('M4A '))).toBeNull();
+    // "ftyp" present but the brand is cut off
+    expect(sniffImageType(new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65]))).toBeNull();
+  });
+
   it('returns null for non-images and RIFF-but-not-WEBP', () => {
     expect(sniffImageType(bytes(0x25, 0x50, 0x44, 0x46))).toBeNull(); // %PDF
     expect(sniffImageType(new TextEncoder().encode('just some text'))).toBeNull();
