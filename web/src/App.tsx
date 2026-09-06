@@ -7,7 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Landing } from './pages/Landing';
 import { Stories, Poems } from './pages/Library';
 import { LibraryPostPage } from './pages/LibraryPostPage';
-import { Dimen } from './pages/Dimen';
+import { Civak } from './pages/Civak';
 import { DimenPost } from './pages/DimenPost';
 import { Games } from './pages/Games';
 import { Wordle } from './pages/Wordle';
@@ -104,11 +104,14 @@ export function App(): React.JSX.Element {
           >
             <Route index element={<Home />} />
             <Route path="learn" element={<Learn />} />
-            <Route path="stories" element={<Stories />} />
-            <Route path="poems" element={<Poems />} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
-            <Route path="dimen" element={<Dimen />} />
+            <Route path="civak" element={<Civak />} />
+            {/* the three old walls now point at the one that replaced them, each
+                landing on its own filter so a bookmark still means something */}
+            <Route path="stories" element={<Navigate to="/app/civak?kind=stories" replace />} />
+            <Route path="poems" element={<Navigate to="/app/civak?kind=poems" replace />} />
+            <Route path="dimen" element={<Navigate to="/app/civak?kind=images" replace />} />
             <Route path="dimen/:id" element={<DimenPost />} />
             <Route path="games" element={<Games />} />
             <Route path="games/wordle" element={<Wordle />} />

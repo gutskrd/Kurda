@@ -6,9 +6,8 @@ import { RailProvider } from '../social/RailProvider';
 const LINKS: NavItem[] = [
   { label: 'Home', to: '/app' },
   { label: 'Learn', to: '/app/learn' },
-  { label: 'Stories', to: '/app/stories' },
-  { label: 'Poems', to: '/app/poems' },
-  { label: 'Dîmen', to: '/app/dimen' },
+  // one wall replaces the three pages that were the same page three times
+  { label: 'Civak', to: '/app/civak' },
   { label: 'Games', to: '/app/games' },
   { label: 'Rankings', to: '/app/rankings' },
   { label: 'Friends', to: '/app/friends' },

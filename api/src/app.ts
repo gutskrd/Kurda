@@ -72,6 +72,7 @@ import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
 import { registerSocialRoutes } from './social/routes.js';
 import { registerSocialRailRoutes } from './social/rail-routes.js';
+import { registerFeedRoutes } from './feed/routes.js';
 import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
@@ -366,6 +367,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerFriendRoutes(app, friends);
     registerSocialRoutes(app, new SocialService(app.db, friends));
     registerActivityRoutes(app, activity);
+    // one wall for stories, poems and pictures — public, like the pages it replaces
+    registerFeedRoutes(app);
 
     // groups / clubs (KUR-084): heal ownerless groups after account deletions
     const groups = new GroupService(app.db);
