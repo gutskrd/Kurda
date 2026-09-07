@@ -101,7 +101,9 @@ export function SocialRail(): React.JSX.Element | null {
       {chatWith && (
         <DmThread
           key={chatWith.userId}
-          className="rail-chat"
+          // the dock is anchored to the rail's edge, so it has to know which
+          // width the rail is currently at
+          className={`rail-chat${collapsed ? ' is-tight' : ''}`}
           otherId={chatWith.userId}
           otherName={chatWith.displayName || chatWith.username}
           onSent={refresh}

@@ -627,10 +627,18 @@
   display: none;
 }
 @media (min-width: 1180px) {
+  /*
+   * The dock is anchored to the rail's edge, not to a fixed distance from the
+   * window. `right` was a constant, so folding the rail to its strip left the
+   * chat stranded 236px out with a gap behind it. It now reads the same width
+   * the rail is currently using, and shares the rail's easing so the two move as
+   * one thing rather than one chasing the other.
+   */
   .rail-chat {
     position: fixed;
     right: calc(var(--rail-w) + 10px);
     bottom: 12px;
+    transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 41;
     display: flex;
     flex-direction: column;
@@ -645,6 +653,10 @@
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     animation: rail-chat-in 0.18s ease-out;
+  }
+  /* folded to the strip, the rail is 60px wide and the dock sits against that */
+  .rail-chat.is-tight {
+    right: calc(var(--rail-strip-w) + 10px);
   }
   .rail-chat .chat-thread-head {
     padding: 9px 12px;
@@ -701,4 +713,23 @@
 .rail-friend-chat:hover {
   color: var(--gold-ink);
   background: rgba(255, 255, 255, 0.06);
+}
+
+/* the dock's close sits where a window's close sits: the far end of its bar */
+.chat-dock-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-4);
+  cursor: pointer;
+}
+.chat-dock-close:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.08);
 }

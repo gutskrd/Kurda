@@ -188,7 +188,23 @@ describe('SocialRail', () => {
     // it appears in place rather than navigating — the page you were on stays
     const chat = container.querySelector('.rail-chat');
     expect(chat).not.toBeNull();
-    expect(within(chat as HTMLElement).getByRole('button', { name: 'Close this conversation' })).toBeInTheDocument();
+    expect(within(chat as HTMLElement).getByRole('button', { name: 'Close the chat with zana' })).toBeInTheDocument();
+  });
+
+  it('moves the dock with the rail when the rail folds', async () => {
+    signIn();
+    railFetch([rail({ friends: [person('u2', 'zana', { online: true })] })]);
+    const { container } = show();
+
+    await screen.findByText('zana');
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+    // anchored to the rail's full width to begin with
+    expect(container.querySelector('.rail-chat')).not.toHaveClass('is-tight');
+
+    await userEvent.click(screen.getByRole('button', { name: /Collapse the social panel/ }));
+
+    // folding left it stranded out at the old offset, with a gap behind it
+    expect(container.querySelector('.rail-chat')).toHaveClass('is-tight');
   });
 
   it('opens an empty conversation rather than crashing on an odd response', async () => {
@@ -223,7 +239,7 @@ describe('SocialRail', () => {
 
     await screen.findByText('zana');
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Close this conversation' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close the chat with zana' }));
 
     expect(container.querySelector('.rail-chat')).toBeNull();
   });
