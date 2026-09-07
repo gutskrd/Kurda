@@ -215,6 +215,45 @@ button.nav-link {
   }
 }
 
+/*
+ * The squeeze between the mobile menu and the full bar.
+ *
+ * Above 860px the whole bar is shown; below 1180px the social rail is not yet a
+ * fixed column, so the bar still carries its toggle. The container is capped at
+ * 1120px at every width, so what decides whether the words fit is not the window
+ * — it is that toggle, which costs 52px. With it, the bar needs 1158px of 1120
+ * and runs off the screen, taking the whole page sideways with it.
+ *
+ * Hence the upper bound is the rail's own breakpoint rather than a width that
+ * looked about right: at 1180 the rail becomes a column, the toggle goes, and
+ * the words fit again.
+ *
+ * The words go and the glyphs stay. Every destination is still there and still
+ * one click away — which is the point of having given each link an icon.
+ */
+@media (min-width: 861px) and (max-width: 1179px) {
+  .nav-link-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .nav-link {
+    padding: 0 10px;
+  }
+  .nav-link-icon {
+    margin-right: 0;
+  }
+  .nav-inner {
+    gap: 16px;
+  }
+}
+
 /* mobile nav */
 @media (max-width: 860px) {
   .nav-toggle {

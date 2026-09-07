@@ -74,7 +74,10 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                   onClick={close}
                 >
                   {l.icon && <span className="nav-link-icon" aria-hidden>{l.icon}</span>}
-                  {l.label}
+                  {/* wrapped so the middle widths can hide the word and keep the
+                      glyph — hidden by clipping, never display:none, or the link
+                      would lose its accessible name along with its label */}
+                  <span className="nav-link-label">{l.label}</span>
                   {/* a link carries its own waiting count, so something arriving is
                       visible from anywhere without opening the page to check */}
                   {l.to === '/app/messages' && unreadTotal > 0 && (

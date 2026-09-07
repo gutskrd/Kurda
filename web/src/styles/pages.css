@@ -254,8 +254,16 @@
   overflow: hidden;
 }
 
+/*
+ * A row of controls that wraps rather than running off the screen.
+ *
+ * Without the wrap, four visibility chips on a 375px phone pushed the last one
+ * past the edge and made the whole page scroll sideways — the chip was outside
+ * the panel that was supposed to hold it.
+ */
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-bottom: 22px;
@@ -4032,10 +4040,19 @@ a.mkp-activity-row:hover {
   align-self: flex-start;
   flex-wrap: wrap;
 }
+/*
+ * A range plus its label and value. `min-width: 0` because a flex child will not
+ * shrink below its content otherwise, and a slider's default intrinsic width is
+ * wide enough to push the row past the panel on a phone.
+ */
 .tool-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+}
+.tool-row input[type='range'] {
+  min-width: 0;
 }
 .tool-label {
   flex: none;
