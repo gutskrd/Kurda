@@ -378,10 +378,15 @@ button.nav-link {
   min-width: 18px;
   padding: 0 4px;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  /*
+   * Near-black rather than the surface tint: this badge sits on top of the
+   * avatar, so whatever is behind it is a photograph. A translucent panel colour
+   * let the picture through and the small gold number all but disappeared.
+   */
+  background: #0b0d11;
   border: 1px solid var(--border-strong);
   color: var(--gold-ink);
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 13px;

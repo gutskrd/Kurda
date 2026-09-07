@@ -192,11 +192,9 @@ export function DmThread({
   return (
     <div className={`chat-thread${className ? ` ${className}` : ''}`}>
       <header className="chat-thread-head">
-        {onClose ? (
-          <button type="button" className="chat-back" onClick={onClose} aria-label="Close this conversation">
-            <CloseIcon size={16} />
-          </button>
-        ) : (
+        {/* a page goes back; a dock closes, and the two do not belong in the
+            same corner — a × on the left reads as "back" and gets missed */}
+        {!onClose && (
           <Link to="/app/messages" className="chat-back" aria-label="Back to conversations">
             <ArrowIcon size={18} />
           </Link>
@@ -208,6 +206,11 @@ export function DmThread({
         >
           {otherName ?? 'Conversation'}
         </button>
+        {onClose && (
+          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={`Close the chat with ${otherName ?? 'this person'}`}>
+            <CloseIcon size={16} />
+          </button>
+        )}
       </header>
 
       <div className="chat-messages" ref={scrollRef}>
