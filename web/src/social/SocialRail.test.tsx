@@ -191,6 +191,40 @@ describe('SocialRail', () => {
     expect(within(chat as HTMLElement).getByRole('button', { name: 'Close the chat with zana' })).toBeInTheDocument();
   });
 
+  it('docks a group the same way it docks a person', async () => {
+    signIn();
+    railFetch([rail({ groups: [{ id: 'g7', name: 'Amedspor', memberCount: 12, unread: 0 }] })]);
+    const { container } = show();
+
+    await screen.findByText('Amedspor');
+    // the name still opens the full page, where the roster and members panel are
+    expect(screen.getByRole('link', { name: /Amedspor/ })).toHaveAttribute('href', '/app/messages?group=g7');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Message Amedspor' }));
+
+    const dock = container.querySelector('.rail-chat');
+    expect(dock).not.toBeNull();
+    expect(within(dock as HTMLElement).getByRole('button', { name: /Close the chat with/ })).toBeInTheDocument();
+  });
+
+  it('keeps one dock, so a group replaces a person rather than overlapping it', async () => {
+    signIn();
+    railFetch([
+      rail({
+        friends: [person('u2', 'zana', { online: true })],
+        groups: [{ id: 'g7', name: 'Amedspor', memberCount: 12, unread: 0 }],
+      }),
+    ]);
+    const { container } = show();
+
+    await screen.findByText('zana');
+    await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Message Amedspor' }));
+
+    // both are anchored to the same edge, so two would sit on top of each other
+    expect(container.querySelectorAll('.rail-chat')).toHaveLength(1);
+  });
+
   it('moves the dock with the rail when the rail folds', async () => {
     signIn();
     railFetch([rail({ friends: [person('u2', 'zana', { online: true })] })]);

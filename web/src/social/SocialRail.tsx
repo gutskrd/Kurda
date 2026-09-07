@@ -4,11 +4,23 @@ import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { ChatsIcon, CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
 import { DmThread } from '../chat/DmThread';
+import { GroupThread } from '../chat/GroupThread';
 import { RailStrip } from './RailStrip';
 import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
+
+/**
+ * What the dock beside the rail is showing.
+ *
+ * One slot, not two: opening a group while a person's chat is docked should
+ * replace it, the way clicking another conversation does. Two docks would
+ * overlap, since both are anchored to the same edge.
+ */
+export type DockTarget =
+  | { kind: 'dm'; id: string; name: string }
+  | { kind: 'group'; id: string; name: string };
 
 /** Friends split the way you actually look for them. */
 interface Buckets {
@@ -45,8 +57,8 @@ export function SocialRail(): React.JSX.Element | null {
   const { status } = useAuth();
   const present = useRailPresent();
   const { data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed } = useRail();
-  /** the friend whose conversation is docked beside the rail, if any */
-  const [chatWith, setChatWith] = useState<RailFriend | null>(null);
+  /** the conversation docked beside the rail — a person or a group, if any */
+  const [dock, setDock] = useState<DockTarget | null>(null);
 
   if (!present || status !== 'signedIn') return null;
 
@@ -86,7 +98,7 @@ export function SocialRail(): React.JSX.Element | null {
           */}
         <RailStrip data={data} onExpand={() => setCollapsed(false)} />
         <div className="rail-body">
-          {loading ? <p className="rail-empty">Loading…</p> : <RailContent data={data} onActed={refresh} onChat={setChatWith} />}
+          {loading ? <p className="rail-empty">Loading…</p> : <RailContent data={data} onActed={refresh} onChat={setDock} />}
         </div>
       </aside>
 
@@ -98,16 +110,24 @@ export function SocialRail(): React.JSX.Element | null {
         you were reading, and on a narrow screen there is no room for two columns
         — so there it stays a link to the messages page.
       */}
-      {chatWith && (
+      {/* the dock is anchored to the rail's edge, so it has to know which width
+          the rail is currently at */}
+      {dock?.kind === 'dm' && (
         <DmThread
-          key={chatWith.userId}
-          // the dock is anchored to the rail's edge, so it has to know which
-          // width the rail is currently at
+          key={dock.id}
           className={`rail-chat${collapsed ? ' is-tight' : ''}`}
-          otherId={chatWith.userId}
-          otherName={chatWith.displayName || chatWith.username}
+          otherId={dock.id}
+          otherName={dock.name}
           onSent={refresh}
-          onClose={() => setChatWith(null)}
+          onClose={() => setDock(null)}
+        />
+      )}
+      {dock?.kind === 'group' && (
+        <GroupThread
+          key={dock.id}
+          className={`rail-chat${collapsed ? ' is-tight' : ''}`}
+          groupId={dock.id}
+          onClose={() => setDock(null)}
         />
       )}
 
@@ -116,7 +136,7 @@ export function SocialRail(): React.JSX.Element | null {
   );
 }
 
-function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (f: RailFriend) => void }): React.JSX.Element {
+function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
   const hasWaiting = data.challenges.length > 0 || data.requests.length > 0;
 
@@ -155,16 +175,29 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
 
       <Section title="Groups" count={data.groups.length} hideWhenEmpty>
         {data.groups.map((g) => (
-          // the group, not the list of groups: everywhere else that names a
-          // group links straight into it, and a rail row naming one should too
-          <Link key={g.id} to={`/app/messages?group=${g.id}`} className="rail-row rail-group">
-            <span className="rail-group-mark" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
-            <span className="rail-row-text">
-              <span className="rail-row-name">{g.name}</span>
-              <span className="rail-row-sub">{g.memberCount.toLocaleString()} members</span>
-            </span>
+          <div key={g.id} className="rail-row rail-group">
+            {/* the name goes to the page, for when you want the whole roster and
+                the members panel; the bubble docks it, like a friend's does */}
+            <Link to={`/app/messages?group=${g.id}`} className="rail-row-link">
+              <span className="rail-group-mark" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
+              <span className="rail-row-text">
+                <span className="rail-row-name">{g.name}</span>
+                <span className="rail-row-sub">{g.memberCount.toLocaleString()} members</span>
+              </span>
+            </Link>
             {g.unread > 0 && <span className="rail-badge">{badgeLabel(g.unread)}</span>}
-          </Link>
+            {onChat && (
+              <button
+                type="button"
+                className="rail-friend-chat"
+                aria-label={`Message ${g.name}`}
+                title={`Message ${g.name}`}
+                onClick={() => onChat({ kind: 'group', id: g.id, name: g.name })}
+              >
+                <ChatsIcon size={16} />
+              </button>
+            )}
+          </div>
         ))}
       </Section>
 
@@ -222,7 +255,7 @@ function Section({
 }
 
 /** One friend: who they are, and what they are doing about it. */
-function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (f: RailFriend) => void }): React.JSX.Element {
+function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   // a live game needs a clock that moves; a static "4m" that never changes reads
   // as stale within a minute of looking at it
   const [, tick] = useState(0);
@@ -266,7 +299,7 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (f: RailFr
         <button
           type="button"
           className="rail-friend-chat"
-          onClick={() => onChat(friend)}
+          onClick={() => onChat({ kind: 'dm', id: friend.userId, name })}
           aria-label={`Message ${name}`}
           title={`Message ${name}`}
         >
