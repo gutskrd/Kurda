@@ -325,3 +325,96 @@
     max-width: 58px;
   }
 }
+
+/* ---- the selected layer ------------------------------------------------- */
+
+/*
+ * An outline round what is selected, laid over the canvas rather than painted
+ * into it: it stays one crisp pixel at any canvas resolution, and the handles
+ * can be real targets with real cursors.
+ *
+ * The box takes no pointer events. Dragging inside it falls through to the
+ * canvas, which already knows how to move a layer — so grabbing the middle of
+ * a sticker moves it and grabbing a corner resizes it, without either handler
+ * needing to know about the other.
+ */
+.layer-box {
+  position: absolute;
+  pointer-events: none;
+  outline: 1px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+}
+
+.layer-handle {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  margin: -7px 0 0 -7px;
+  border: 1.5px solid rgba(10, 12, 16, 0.75);
+  border-radius: 50%;
+  background: #fff;
+  pointer-events: auto;
+  touch-action: none;
+}
+.layer-handle:hover {
+  background: var(--gold-ink);
+}
+.layer-handle-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.layer-handle-ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.layer-handle-se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.layer-handle-sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+
+/* the turn handle stands off the top edge, on a stem, the way every editor does it */
+.layer-handle-turn {
+  left: 50%;
+  top: -26px;
+  cursor: grab;
+  background: var(--gold-ink);
+}
+.layer-handle-turn:active {
+  cursor: grabbing;
+}
+.layer-turn-stem {
+  position: absolute;
+  left: 50%;
+  top: -26px;
+  width: 1px;
+  height: 26px;
+  margin-left: -0.5px;
+  background: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+
+/* a finger is not a mouse pointer: bigger targets, and no hover to rely on */
+@media (pointer: coarse) {
+  .layer-handle {
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+  }
+}
+
+/* the row of things you can do to the selected layer */
+.layer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}

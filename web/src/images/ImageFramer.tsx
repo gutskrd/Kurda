@@ -9,7 +9,7 @@ import {
   zoomFrame,
   type Frame,
 } from './frame';
-import { drawLayers } from './layers';
+import { captureIfPossible, drawLayers } from './layers';
 
 /** How far one wheel notch moves the zoom. */
 const WHEEL_STEP = 0.0016;
@@ -103,7 +103,7 @@ export function ImageFramer({
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>): void {
     if (busy) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
+    captureIfPossible(e.currentTarget, e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2) pinch.current = { dist: spread(pointers.current), zoom: frame.zoom };
   }

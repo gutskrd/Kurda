@@ -264,6 +264,89 @@ describe('PictureComposer', () => {
     expect(heart.querySelector('img')).toHaveAttribute('src', '/emoji/2764.webp');
   });
 
+  /** Choose a picture, switch to Add, and place a sticker (which selects it). */
+  async function placeSticker(): Promise<void> {
+    await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Zilan' }));
+    await screen.findByText('Sticker', { exact: true });
+  }
+
+  /**
+   * Before this there was no way to tell what was selected except by noticing
+   * which panel had appeared underneath, and the only way to resize or turn
+   * something was to leave the picture and find a slider.
+   */
+  it('shows the selected layer with handles to resize and turn it', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await placeSticker();
+
+    const box = document.querySelector('.layer-box');
+    expect(box).not.toBeNull();
+    // four corners to pull, and one above the top edge to turn by
+    expect(box!.querySelectorAll('.layer-handle')).toHaveLength(5);
+    expect(box!.querySelector('.layer-handle-turn')).not.toBeNull();
+  });
+
+  it('takes the handles away when nothing is selected', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await placeSticker();
+    expect(document.querySelector('.layer-box')).not.toBeNull();
+
+    await userEvent.keyboard('{Escape}');
+    expect(document.querySelector('.layer-box')).toBeNull();
+  });
+
+  it('removes the selected layer with Delete', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await placeSticker();
+
+    await userEvent.keyboard('{Delete}');
+    expect(screen.queryByText('Sticker', { exact: true })).not.toBeInTheDocument();
+    expect(document.querySelector('.layer-box')).toBeNull();
+  });
+
+  it('nudges the selected layer with the arrow keys', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await placeSticker();
+
+    const left = () => (document.querySelector('.layer-box') as HTMLElement).style.left;
+    const before = left();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(left()).not.toBe(before);
+    // and it is a step you can take back, not a hundred
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+  });
+
+  it('duplicates and reorders, so two things on one spot are not stuck', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await placeSticker();
+
+    // one layer: nothing to move it above or below
+    expect(screen.getByRole('button', { name: 'Bring forward' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send back' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
+    // the copy is on top, so it can go back but not further forward
+    expect(screen.getByRole('button', { name: 'Bring forward' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Send back' })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Send back' }));
+    expect(screen.getByRole('button', { name: 'Bring forward' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Send back' })).toBeDisabled();
+  });
+
   it('offers nothing to post until there is a picture', async () => {
     signIn();
     uploadFetch();

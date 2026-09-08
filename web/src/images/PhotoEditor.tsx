@@ -4,6 +4,7 @@ import {
   ROTATION_RANGE,
   SIZE_RANGE,
   STROKE_RANGE,
+  captureIfPossible,
   clampLayer,
   isPlaced,
   keepInside,
@@ -24,6 +25,7 @@ import {
 import { ADJUSTMENT_KEYS, ADJUSTMENT_LABELS, NEUTRAL, isNeutral, rangeFor, type Adjustments } from './adjust';
 import { NO_FILTER, overlaySources } from './filters';
 import { FilterStrip } from './FilterStrip';
+import { LayerHandles } from './LayerHandles';
 import { ImageFramer } from './ImageFramer';
 import type { History } from './useHistory';
 import { ColorPicker } from './ColorPicker';
@@ -110,6 +112,7 @@ export function PhotoEditor({
   const aspect = aspectOf(doc, iw, ih);
   const size = outputSize(iw, ih, aspect, doc.frame);
   const crop = cropRect(iw, ih, aspect, doc.frame);
+  const selectedIndex = doc.layers.findIndex((l) => l.id === selectedId);
   const selected: PlacedLayer | null =
     doc.layers.find((l): l is PlacedLayer => isPlaced(l) && l.id === selectedId) ?? null;
 
@@ -155,6 +158,37 @@ export function PhotoEditor({
     setSelectedId(null);
   };
 
+  /**
+   * Move a layer up or down the stack.
+   *
+   * The list is the stacking order — later is on top — so this is a swap with
+   * the neighbour rather than a sort. Without it, two things placed on the same
+   * spot are stuck in the order they happened to be added.
+   */
+  const reorder = (id: string, by: 1 | -1): void => {
+    const from = doc.layers.findIndex((l) => l.id === id);
+    const to = from + by;
+    if (from < 0 || to < 0 || to >= doc.layers.length) return;
+    const next = [...doc.layers];
+    const moved = next[from]!;
+    next[from] = next[to]!;
+    next[to] = moved;
+    setLayers(next);
+  };
+
+  /** A copy, offset a little so it is visibly a second thing and not a no-op. */
+  const duplicate = (id: string): void => {
+    const found = doc.layers.find((l) => l.id === id);
+    if (!found || !isPlaced(found)) return;
+    const copy = keepInside(
+      { ...found, id: newId(), x: found.x + 0.04, y: found.y + 0.04 },
+      size.width,
+      size.height,
+    );
+    setLayers([...doc.layers, copy]);
+    setSelectedId(copy.id);
+  };
+
   /* a filter's artwork has to be decoded before a synchronous draw can use it */
   useEffect(() => {
     let live = true;
@@ -178,6 +212,15 @@ export function PhotoEditor({
   }, [image, iw, ih, doc, mode, artReady]);
 
   /**
+   * What the keyboard listener should act on, kept current without making it
+   * resubscribe. The listener is on the document and lives for the life of the
+   * editor; reading these through a ref is what stops it from closing over the
+   * selection as it was when the editor mounted.
+   */
+  const latest = useRef({ selected, patch, remove });
+  latest.current = { selected, patch, remove };
+
+  /**
    * Undo and redo from the keyboard, the way every other editor does it.
    *
    * Bound on the document rather than the canvas so it works wherever the
@@ -186,13 +229,45 @@ export function PhotoEditor({
    */
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
-      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return;
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
+      // inside a field the browser's own keys are the ones that were meant
       if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
+
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && (key === 'z' || key === 'y')) {
+        e.preventDefault();
+        if (key === 'y' || e.shiftKey) history.redo();
+        else history.undo();
+        return;
+      }
+
+      const target = latest.current.selected;
+      if (!target) return;
+
+      if (e.key === 'Escape') {
+        setSelectedId(null);
+        return;
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        latest.current.remove(target.id);
+        return;
+      }
+
+      // a nudge is one part in two hundred of the picture; with shift, ten of
+      // them — fine placement without hunting for the last pixel by hand
+      const step = e.shiftKey ? 0.05 : 0.005;
+      const moves: Record<string, [number, number]> = {
+        ArrowLeft: [-step, 0],
+        ArrowRight: [step, 0],
+        ArrowUp: [0, -step],
+        ArrowDown: [0, step],
+      };
+      const move = moves[e.key];
+      if (!move) return;
       e.preventDefault();
-      if (e.key.toLowerCase() === 'y' || e.shiftKey) history.redo();
-      else history.undo();
+      latest.current.patch(target.id, { x: target.x + move[0], y: target.y + move[1] });
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -208,7 +283,7 @@ export function PhotoEditor({
   };
 
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>): void {
-    e.currentTarget.setPointerCapture(e.pointerId);
+    captureIfPossible(e.currentTarget, e.pointerId);
     const p = at(e);
 
     if (mode === 'draw') {
@@ -289,6 +364,17 @@ export function PhotoEditor({
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           />
+          {/* what is selected, and how to change it without leaving the picture */}
+          {mode === 'move' && selected && !picker && (
+            <LayerHandles
+              layer={selected}
+              width={size.width}
+              height={size.height}
+              onPreview={(p) => patch(selected.id, p, true)}
+              onSettle={history.settle}
+            />
+          )}
+
           {/* the corner the mark will take, so nothing important is put under it */}
           <span
             className="editor-sig-zone"
@@ -567,6 +653,32 @@ export function PhotoEditor({
               <CloseIcon size={16} />
             </button>
           </div>
+
+          {/* the list is the stacking order, so this is a swap with the neighbour */}
+          <div className="layer-actions">
+            <button
+              type="button"
+              className="editor-add"
+              disabled={selectedIndex >= doc.layers.length - 1}
+              onClick={() => reorder(selected.id, 1)}
+            >
+              Bring forward
+            </button>
+            <button
+              type="button"
+              className="editor-add"
+              disabled={selectedIndex <= 0}
+              onClick={() => reorder(selected.id, -1)}
+            >
+              Send back
+            </button>
+            <button type="button" className="editor-add" onClick={() => duplicate(selected.id)}>
+              Duplicate
+            </button>
+          </div>
+          <p className="editor-hint">
+            Drag a corner to resize, the handle above it to turn. Arrow keys nudge, Delete removes.
+          </p>
 
           {selected.kind === 'text' ? (
             <>
