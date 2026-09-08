@@ -178,7 +178,7 @@ export function ImageFramer({
       <div
         ref={boxRef}
         className={`framer-stage${round ? ' is-round' : ''}`}
-        style={{ aspectRatio: String(aspect) }}
+        style={{ aspectRatio: String(aspect), '--framer-aspect': String(aspect) } as React.CSSProperties}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

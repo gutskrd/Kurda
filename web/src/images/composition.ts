@@ -39,11 +39,18 @@ export function aspectOf(doc: Composition, iw: number, ih: number): number {
  * eventually — instead of producing a different picture each notch.
  *
  * Capped by `fitWithin`: the server resizes to its own maximum anyway, so a
- * larger export is only a bigger upload for it to throw away.
+ * larger export is only a bigger upload for it to throw away. `maxEdge` lowers
+ * that cap for a picture that is known to be shown small — an avatar rendered
+ * at 40px does not need the same ceiling as a photo on the feed.
  */
-export function outputSize(iw: number, ih: number, aspect: number): { width: number; height: number } {
+export function outputSize(
+  iw: number,
+  ih: number,
+  aspect: number,
+  maxEdge?: number,
+): { width: number; height: number } {
   const widest = widestCrop(iw, ih, aspect);
-  return fitWithin(Math.max(1, Math.round(widest.w)), Math.max(1, Math.round(widest.h)));
+  return fitWithin(Math.max(1, Math.round(widest.w)), Math.max(1, Math.round(widest.h)), maxEdge);
 }
 
 /**
@@ -59,9 +66,10 @@ export function compose(
   iw: number,
   ih: number,
   doc: Composition,
+  maxEdge?: number,
 ): { width: number; height: number } {
   const aspect = aspectOf(doc, iw, ih);
-  const size = outputSize(iw, ih, aspect);
+  const size = outputSize(iw, ih, aspect, maxEdge);
   drawLayers(canvas, image, size.width, size.height, doc.layers, cropRect(iw, ih, aspect, doc.frame));
   return size;
 }

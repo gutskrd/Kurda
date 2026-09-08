@@ -15,7 +15,14 @@
 .framer-stage {
   position: relative;
   width: 100%;
-  max-height: 62vh;
+  /*
+   * The height ceiling is expressed as a width, because a `max-height` on an
+   * `aspect-ratio` box does not shrink the width to match — it clips the height
+   * and leaves the width at 100%, which turned the avatar's circle into an
+   * ellipse on a short window. The component hands the ratio down as a custom
+   * property so the cap can be worked out from it.
+   */
+  max-width: calc(62vh * var(--framer-aspect, 1));
   margin-inline: auto;
   overflow: hidden;
   border-radius: var(--r-md);
@@ -164,9 +171,26 @@
 
 @media (max-width: 560px) {
   .framer-stage {
-    max-height: 52vh;
+    max-width: calc(52vh * var(--framer-aspect, 1));
   }
   .editor-modes {
     gap: 6px;
   }
+}
+
+/* ---- framing a profile picture ------------------------------------------ */
+
+/*
+ * A profile picture is shown in a circle everywhere the app uses one, so it is
+ * framed through a circle too. Narrower than the composer's stage: an avatar is
+ * a face, and a full-width crop box for one would be a box mostly full of wall.
+ */
+.avatar-framing {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.avatar-framing-stage {
+  width: 100%;
+  max-width: 260px;
 }
