@@ -7,7 +7,7 @@ import { PhotoIcon } from '../components/icons';
 import { canvasToFile } from './photoText';
 import { decodePicture, shouldHaveDecoded, sniffPictureFormat, type DecodedPicture } from './decode';
 import { PhotoEditor } from './PhotoEditor';
-import { UNTOUCHED, compose, type Composition } from './composition';
+import { UNTOUCHED, compose, forgetGraded, type Composition } from './composition';
 import { useHistory } from './useHistory';
 import { ensureStickersFor } from './stickers';
 import { DIMEN_KINDS } from '../feed/postKinds';
@@ -114,7 +114,9 @@ export function PictureComposer({
     e.target.value = '';
     if (!picked) return;
     setError(null);
-    // a new picture is a new document: undo must not walk back into the last one
+    // a new picture is a new document: undo must not walk back into the last
+    // one, and the graded copy of the last one is now worth nothing
+    forgetGraded();
     history.reset(UNTOUCHED);
     setFile(picked);
   }
@@ -132,6 +134,7 @@ export function PictureComposer({
       // decoded first — otherwise one added a moment ago exports as nothing
       await ensureStickersFor(history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)));
       const canvas = document.createElement('canvas');
+      // full size this time, not the preview's ceiling — this is the file
       compose(canvas, imageRef.current, source.w, source.h, history.present);
       composed = await canvasToFile(canvas, 'dimen');
     }

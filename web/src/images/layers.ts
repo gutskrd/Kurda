@@ -249,6 +249,10 @@ export function drawLayers(
   if (!ctx) return;
 
   ctx.clearRect(0, 0, width, height);
+  // scaling a photograph is the one thing this canvas does that quality shows
+  // on, and the default in some engines is a box filter
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   // one draw path for the preview and the export, so what is arranged is what
   // is stored — a second implementation for one of them is how they drift
   if (crop) ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height);

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   ASPECTS,
+  MIN_EXPORT_EDGE,
   WHOLE_PICTURE,
   ZOOM_RANGE,
   clampFrame,
   cropRect,
   isWholePicture,
+  maxZoomFor,
   panFrame,
   ratioFor,
   widestCrop,
@@ -47,9 +49,10 @@ describe('cropRect', () => {
   });
 
   it('halves the crop at zoom 2', () => {
-    const c = cropRect(1600, 900, 1, { zoom: 2, cx: 0.5, cy: 0.5 });
-    expect(c.sw).toBe(450);
-    expect(c.sh).toBe(450);
+    // a big picture, so the resolution ceiling is nowhere near this zoom
+    const c = cropRect(4000, 2250, 1, { zoom: 2, cx: 0.5, cy: 0.5 });
+    expect(c.sw).toBe(1125);
+    expect(c.sh).toBe(1125);
   });
 
   it('stays inside the picture at every zoom and corner', () => {
@@ -67,8 +70,23 @@ describe('cropRect', () => {
 
 describe('clampFrame', () => {
   it('holds zoom inside its range', () => {
-    expect(clampFrame(1000, 1000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).zoom).toBe(ZOOM_RANGE.max);
-    expect(clampFrame(1000, 1000, 1, { zoom: 0.1, cx: 0.5, cy: 0.5 }).zoom).toBe(ZOOM_RANGE.min);
+    // 4000px of picture has detail to spare, so the whole range is available
+    expect(clampFrame(4000, 4000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).zoom).toBe(ZOOM_RANGE.max);
+    expect(clampFrame(4000, 4000, 1, { zoom: 0.1, cx: 0.5, cy: 0.5 }).zoom).toBe(ZOOM_RANGE.min);
+  });
+
+  /**
+   * The ceiling is the picture's, not a constant. Zooming past what the source
+   * holds cannot reveal anything — it can only hand back an upscale — so the
+   * gesture stops instead.
+   */
+  it('stops a small picture short of the full range', () => {
+    // a 1000px square: at zoom 1.95 the crop is already down to MIN_EXPORT_EDGE
+    const capped = clampFrame(1000, 1000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).zoom;
+    expect(capped).toBeCloseTo(1000 / MIN_EXPORT_EDGE, 6);
+    expect(capped).toBeLessThan(ZOOM_RANGE.max);
+    // and the crop it produces is exactly the floor, never below it
+    expect(cropRect(1000, 1000, 1, { zoom: 99, cx: 0.5, cy: 0.5 }).sw).toBeCloseTo(MIN_EXPORT_EDGE, 6);
   });
 
   it('centres an axis the crop spans completely', () => {
@@ -106,7 +124,7 @@ describe('panFrame', () => {
 
 describe('zoomFrame', () => {
   it('keeps the anchored point of the picture under the anchor', () => {
-    const iw = 1600, ih = 900, aspect = 1;
+    const iw = 4000, ih = 2250, aspect = 1;
     const start: Frame = { zoom: 1.2, cx: 0.5, cy: 0.5 };
     const ax = 0.2, ay = 0.8;
     const before = cropRect(iw, ih, aspect, start);
@@ -127,6 +145,27 @@ describe('zoomFrame', () => {
   it('stays inside the picture when the anchor is at a corner', () => {
     const f = zoomFrame(1600, 900, 1, WHOLE_PICTURE, ZOOM_RANGE.max, 0, 0);
     expectInside(1600, 900, 1, f);
+  });
+});
+
+describe('maxZoomFor', () => {
+  it('gives a big picture the whole range', () => {
+    expect(maxZoomFor(4032, 3024, 1)).toBe(ZOOM_RANGE.max);
+  });
+
+  it('gives a small one only what it can carry', () => {
+    expect(maxZoomFor(1000, 1000, 1)).toBeCloseTo(1000 / MIN_EXPORT_EDGE, 6);
+  });
+
+  it('never drops below 1, so every picture can still be framed', () => {
+    expect(maxZoomFor(120, 90, 1)).toBe(ZOOM_RANGE.min);
+  });
+
+  it('depends on the shape, because the shape decides the crop', () => {
+    // a square crop of a landscape picture is bounded by its height
+    expect(maxZoomFor(4000, 1200, 1)).toBeCloseTo(1200 / MIN_EXPORT_EDGE, 6);
+    // the same picture at its own ratio is bounded by its width
+    expect(maxZoomFor(4000, 1200, 4000 / 1200)).toBe(ZOOM_RANGE.max);
   });
 });
 

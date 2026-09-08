@@ -12,8 +12,17 @@ import {
   type PlacedLayer,
   type StrokeLayer,
 } from './layers';
-import { ASPECTS, type Frame } from './frame';
-import { aspectOf, compose, outputSize, type Composition } from './composition';
+import { ASPECTS, cropRect, type Frame } from './frame';
+import {
+  PREVIEW_MAX_EDGE,
+  aspectOf,
+  compose,
+  outputSize,
+  type Composition,
+} from './composition';
+import { ADJUSTMENT_KEYS, ADJUSTMENT_LABELS, NEUTRAL, isNeutral, rangeFor, type Adjustments } from './adjust';
+import { NO_FILTER } from './filters';
+import { FilterStrip } from './FilterStrip';
 import { ImageFramer } from './ImageFramer';
 import type { History } from './useHistory';
 import { ColorPicker } from './ColorPicker';
@@ -22,17 +31,19 @@ import {
   CropIcon,
   DrawIcon,
   FeatherIcon,
+  FilterIcon,
   PhotoIcon,
   RedoIcon,
   TextIcon,
   UndoIcon,
 } from '../components/icons';
-import { EMOJI_STICKERS, PICTURE_STICKERS, ensureSticker } from './stickers';
+import { EMOJI_STICKERS, PICTURE_STICKERS, emojiSrc, ensureSticker } from './stickers';
 
-type Mode = 'frame' | 'move' | 'draw';
+type Mode = 'frame' | 'filter' | 'move' | 'draw';
 
 const MODES: ReadonlyArray<{ key: Mode; label: string; icon: React.ReactNode }> = [
   { key: 'frame', label: 'Frame', icon: <CropIcon size={16} /> },
+  { key: 'filter', label: 'Filter', icon: <FilterIcon size={16} /> },
   { key: 'move', label: 'Add', icon: <TextIcon size={16} /> },
   { key: 'draw', label: 'Draw', icon: <DrawIcon size={16} /> },
 ];
@@ -78,6 +89,15 @@ export function PhotoEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>('frame');
   const [stickerTab, setStickerTab] = useState<'marks' | 'emoji'>('marks');
+  /**
+   * The sticker picker, and what choosing one will do.
+   *
+   * Adding a sticker used to drop a fixed one onto the picture and leave you to
+   * find the grid that changed it into the one you wanted — two steps, in the
+   * wrong order, with a wrong sticker on your photograph in between. Now the
+   * picker opens first and what you click is what you get.
+   */
+  const [picker, setPicker] = useState<null | { mode: 'add' } | { mode: 'replace'; id: string }>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [color, setColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(0.012);
@@ -85,7 +105,8 @@ export function PhotoEditor({
   const dragging = useRef<{ id: string; dx: number; dy: number } | null>(null);
 
   const aspect = aspectOf(doc, iw, ih);
-  const size = outputSize(iw, ih, aspect);
+  const size = outputSize(iw, ih, aspect, doc.frame);
+  const crop = cropRect(iw, ih, aspect, doc.frame);
   const selected: PlacedLayer | null =
     doc.layers.find((l): l is PlacedLayer => isPlaced(l) && l.id === selectedId) ?? null;
 
@@ -102,6 +123,18 @@ export function PhotoEditor({
     if (layer.kind !== 'stroke') setSelectedId(layer.id);
     setMode('move');
   };
+  /** Put the chosen sticker where the picker was opened for. */
+  const chooseSticker = (src: string, glyph: string): void => {
+    const target = picker;
+    if (!target) return;
+    // decoded before it lands, so the first draw after it has something to draw
+    void ensureSticker(src).then(() => {
+      if (target.mode === 'replace') patch(target.id, { src, glyph });
+      else add({ kind: 'sticker', id: newId(), glyph, src, size: 0.18, rotation: 0, x: 0.5, y: 0.4 });
+      setPicker(null);
+    });
+  };
+
   const remove = (id: string): void => {
     setLayers(doc.layers.filter((l) => l.id !== id));
     setSelectedId(null);
@@ -109,8 +142,14 @@ export function PhotoEditor({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) compose(canvas, image, iw, ih, doc);
-  }, [image, iw, ih, doc]);
+    // drawn small: grading costs a pass over every pixel, and this runs on every
+    // slider tick. The export is drawn full size, once, when it is posted.
+    if (canvas) compose(canvas, image, iw, ih, doc, PREVIEW_MAX_EDGE);
+    // `mode` is a dependency because it decides whether this canvas exists at
+    // all: framing shows the framer instead, so leaving frame mode mounts a
+    // fresh canvas that nothing else would ever draw into — the document has
+    // not changed, only what is on screen.
+  }, [image, iw, ih, doc, mode]);
 
   /**
    * Undo and redo from the keyboard, the way every other editor does it.
@@ -230,7 +269,10 @@ export function PhotoEditor({
         {mode === 'frame' && (
           <p className="editor-hint">Drag it to choose what’s in the frame, and pinch or scroll to zoom.</p>
         )}
-        {mode !== 'frame' && doc.layers.length === 0 && (
+        {mode === 'filter' && (
+          <p className="editor-hint">Pick a look, then turn it down or tune it by hand.</p>
+        )}
+        {(mode === 'move' || mode === 'draw') && doc.layers.length === 0 && (
           <p className="editor-hint">Add words or a sticker, or draw on it — then drag to move.</p>
         )}
       </div>
@@ -296,6 +338,60 @@ export function PhotoEditor({
         </div>
       )}
 
+      {mode === 'filter' && (
+        <div className="editor-panel">
+          <FilterStrip
+            image={image}
+            crop={crop}
+            activeKey={doc.filterKey}
+            // a new filter arrives at full strength; turning it down is the
+            // next thing you do, not something to have to undo first
+            onPick={(filterKey) => history.set({ ...doc, filterKey, strength: 1 })}
+          />
+
+          {doc.filterKey !== NO_FILTER && (
+            <label className="tool-row">
+              <span className="tool-label">Strength</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round(doc.strength * 100)}
+                aria-label="Filter strength"
+                onChange={(e) => history.preview({ ...doc, strength: Number(e.target.value) / 100 })}
+                onPointerUp={history.settle}
+                onKeyUp={history.settle}
+              />
+              <span className="tool-value">{Math.round(doc.strength * 100)}</span>
+            </label>
+          )}
+
+          <div className="editor-panel-head editor-adjust-head">
+            <span className="editor-panel-title">Adjust</span>
+            <button
+              type="button"
+              className="link-button"
+              disabled={isNeutral(doc.adjustments)}
+              onClick={() => history.set({ ...doc, adjustments: NEUTRAL })}
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="editor-adjust">
+            {ADJUSTMENT_KEYS.map((key) => (
+              <AdjustRow
+                key={key}
+                name={key}
+                value={doc.adjustments[key]}
+                onPreview={(v) => history.preview({ ...doc, adjustments: { ...doc.adjustments, [key]: v } })}
+                onSettle={history.settle}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {mode === 'move' && (
         <div className="editor-adds">
           <button
@@ -321,13 +417,8 @@ export function PhotoEditor({
           <button
             type="button"
             className="editor-add"
-            onClick={() => {
-              // a mark by default, matching the tab the picker opens on
-              const first = PICTURE_STICKERS[0]!;
-              void ensureSticker(first.src).then(() =>
-                add({ kind: 'sticker', id: newId(), glyph: '❤️', src: first.src, size: 0.18, rotation: 0, x: 0.5, y: 0.4 }),
-              );
-            }}
+            aria-expanded={picker !== null}
+            onClick={() => setPicker({ mode: 'add' })}
           >
             <FeatherIcon size={16} /> Add a sticker
           </button>
@@ -336,6 +427,76 @@ export function PhotoEditor({
               <PhotoIcon size={16} /> Clear all
             </button>
           )}
+        </div>
+      )}
+
+      {mode === 'move' && picker && (
+        <div className="editor-panel">
+          <div className="editor-panel-head">
+            <span className="editor-panel-title">
+              {picker.mode === 'replace' ? 'Swap the sticker' : 'Pick a sticker'}
+            </span>
+            <button
+              type="button"
+              className="editor-remove"
+              onClick={() => setPicker(null)}
+              aria-label="Close the sticker picker"
+            >
+              <CloseIcon size={16} />
+            </button>
+          </div>
+
+          {/* two kinds, because fifty-six emoji would bury seven marks in one grid */}
+          <div className="seg seg-sub" role="group" aria-label="Sticker kind">
+            <button
+              type="button"
+              className={`seg-btn${stickerTab === 'marks' ? ' is-active' : ''}`}
+              aria-pressed={stickerTab === 'marks'}
+              onClick={() => setStickerTab('marks')}
+            >
+              Nîşan
+            </button>
+            <button
+              type="button"
+              className={`seg-btn${stickerTab === 'emoji' ? ' is-active' : ''}`}
+              aria-pressed={stickerTab === 'emoji'}
+              onClick={() => setStickerTab('emoji')}
+            >
+              Emoji
+            </button>
+          </div>
+
+          <div
+            className={`sticker-grid ${stickerTab === 'marks' ? 'sticker-grid-pics' : 'sticker-grid-emoji'}`}
+            role="group"
+            aria-label="Stickers"
+          >
+            {stickerTab === 'marks'
+              ? PICTURE_STICKERS.map((p) => (
+                  <button
+                    key={p.src}
+                    type="button"
+                    className="sticker sticker-pic"
+                    aria-label={p.name}
+                    title={p.name}
+                    onClick={() => chooseSticker(p.src, p.name)}
+                  >
+                    <img src={p.src} alt="" />
+                  </button>
+                ))
+              : EMOJI_STICKERS.map((e) => (
+                  <button
+                    key={e.key}
+                    type="button"
+                    className="sticker sticker-pic"
+                    aria-label={e.glyph}
+                    title={e.glyph}
+                    onClick={() => chooseSticker(emojiSrc(e.key), e.glyph)}
+                  >
+                    <img src={emojiSrc(e.key)} alt="" loading="lazy" />
+                  </button>
+                ))}
+          </div>
         </div>
       )}
 
@@ -356,7 +517,7 @@ export function PhotoEditor({
         </div>
       )}
 
-      {mode === 'move' && selected && (
+      {mode === 'move' && selected && !picker && (
         <div className="editor-panel">
           <div className="editor-panel-head">
             <span className="editor-panel-title">{selected.kind === 'text' ? 'Words' : 'Sticker'}</span>
@@ -402,65 +563,13 @@ export function PhotoEditor({
               </label>
             </>
           ) : (
-            <>
-              {/* two kinds of sticker, and a hundred emoji would bury seven
-                  marks if they shared one grid */}
-              <div className="seg seg-sub" role="group" aria-label="Sticker kind">
-                <button
-                  type="button"
-                  className={`seg-btn${stickerTab === 'marks' ? ' is-active' : ''}`}
-                  aria-pressed={stickerTab === 'marks'}
-                  onClick={() => setStickerTab('marks')}
-                >
-                  Nîşan
-                </button>
-                <button
-                  type="button"
-                  className={`seg-btn${stickerTab === 'emoji' ? ' is-active' : ''}`}
-                  aria-pressed={stickerTab === 'emoji'}
-                  onClick={() => setStickerTab('emoji')}
-                >
-                  Emoji
-                </button>
-              </div>
-
-              {stickerTab === 'marks' ? (
-                <div className="sticker-grid sticker-grid-pics" role="group" aria-label="Sticker">
-                  {PICTURE_STICKERS.map((s) => (
-                    <button
-                      key={s.src}
-                      type="button"
-                      className={`sticker sticker-pic${selected.src === s.src ? ' is-on' : ''}`}
-                      aria-label={s.name}
-                      title={s.name}
-                      aria-pressed={selected.src === s.src}
-                      onClick={() => {
-                        // load before selecting, so the first draw has something
-                        void ensureSticker(s.src).then(() => patch(selected.id, { src: s.src }));
-                      }}
-                    >
-                      <img src={s.src} alt="" />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="sticker-grid" role="group" aria-label="Sticker">
-                  {EMOJI_STICKERS.map((glyph) => (
-                    <button
-                      key={glyph}
-                      type="button"
-                      className={`sticker${selected.glyph === glyph && !selected.src ? ' is-on' : ''}`}
-                      aria-label={glyph}
-                      aria-pressed={selected.glyph === glyph && !selected.src}
-                      // clearing src is what turns a picture back into a character
-                      onClick={() => patch(selected.id, { glyph, src: undefined })}
-                    >
-                      {glyph}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
+            <button
+              type="button"
+              className="editor-add"
+              onClick={() => setPicker({ mode: 'replace', id: selected.id })}
+            >
+              <FeatherIcon size={16} /> Swap sticker
+            </button>
           )}
 
           <label className="tool-row">
@@ -507,3 +616,44 @@ export function PhotoEditor({
   );
 }
 
+/**
+ * One adjustment.
+ *
+ * The number is shown only when it is doing something, so a panel of nine
+ * sliders reads as "nothing is on" at a glance rather than as nine zeroes. The
+ * value emits continuously and settles on release, so dragging one end to end
+ * is a single step in the history rather than a hundred.
+ */
+function AdjustRow({
+  name,
+  value,
+  onPreview,
+  onSettle,
+}: {
+  name: keyof Adjustments;
+  value: number;
+  onPreview: (value: number) => void;
+  onSettle: () => void;
+}): React.JSX.Element {
+  const range = rangeFor(name);
+  return (
+    <label className={`tool-row${value !== 0 ? ' is-set' : ''}`}>
+      <span className="tool-label">{ADJUSTMENT_LABELS[name]}</span>
+      <input
+        type="range"
+        min={range.min}
+        max={range.max}
+        value={Math.round(value)}
+        aria-label={ADJUSTMENT_LABELS[name]}
+        onChange={(e) => onPreview(Number(e.target.value))}
+        onPointerUp={onSettle}
+        onKeyUp={onSettle}
+        onDoubleClick={() => {
+          onPreview(0);
+          onSettle();
+        }}
+      />
+      <span className="tool-value">{value === 0 ? '' : Math.round(value)}</span>
+    </label>
+  );
+}

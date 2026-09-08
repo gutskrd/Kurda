@@ -213,6 +213,57 @@ describe('PictureComposer', () => {
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
 
+  /**
+   * Adding a sticker used to drop a fixed one onto the picture and leave you to
+   * hunt for the grid that turned it into the one you wanted — two steps, in
+   * the wrong order, with the wrong sticker on your photograph in between.
+   */
+  it('opens a picker instead of guessing which sticker you meant', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
+
+    expect(screen.getByText('Pick a sticker')).toBeInTheDocument();
+    // and nothing has been put on the picture yet
+    expect(screen.queryByText('Sticker', { exact: true })).not.toBeInTheDocument();
+  });
+
+  it('adds the sticker that was actually clicked, and closes the picker', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Zilan' }));
+
+    expect(await screen.findByText('Sticker', { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText('Pick a sticker')).not.toBeInTheDocument();
+    // and it is one step, so undo takes the whole sticker back
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+  });
+
+  /**
+   * Emoji used to be drawn as text in whichever font the writer's machine had,
+   * so the same post came out with Segoe's emoji from Windows and Apple's from
+   * a Mac. They are pictures now, served from this origin.
+   */
+  it('draws emoji from pictures, not from whatever font the machine has', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Emoji' }));
+
+    const heart = screen.getByRole('button', { name: '❤️' });
+    expect(heart.querySelector('img')).toHaveAttribute('src', '/emoji/2764.webp');
+  });
+
   it('offers nothing to post until there is a picture', async () => {
     signIn();
     uploadFetch();

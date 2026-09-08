@@ -194,3 +194,134 @@
   width: 100%;
   max-width: 260px;
 }
+
+/* ---- the sticker picker ------------------------------------------------- */
+
+/*
+ * Emoji are small and there are fifty-six of them, so they get a denser grid
+ * than the seven marks do, and a ceiling with a scrollbar rather than a panel
+ * that pushes the photograph off the screen.
+ */
+.sticker-grid-emoji {
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  max-height: 216px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+.sticker-grid-emoji .sticker-pic {
+  padding: 3px;
+  /* the chequer is there to keep a white mark visible; an emoji is never white
+     on transparent, and at this size it only makes the grid look noisy */
+  background: none;
+}
+.sticker-grid-emoji .sticker-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 560px) {
+  .sticker-grid-emoji {
+    grid-template-columns: repeat(6, 1fr);
+    max-height: 184px;
+  }
+}
+
+/* ---- filters ------------------------------------------------------------ */
+
+/*
+ * A horizontal reel, the way every photo editor shows filters, because the
+ * whole point is comparing them against each other on your own picture. It
+ * scrolls rather than wraps: two ragged rows of thumbnails read as a grid you
+ * have to scan, one row reads as a choice you flick through.
+ */
+.filter-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+.filter-thumb {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+.filter-thumb-canvas {
+  display: block;
+  width: 62px;
+  height: 62px;
+  border-radius: var(--r-sm);
+  /* the ring lives on the canvas rather than the button so the label does not
+     shift by a pixel when a filter is chosen */
+  border: 2px solid transparent;
+  background: #0b0d11;
+}
+.filter-thumb:hover .filter-thumb-canvas {
+  border-color: var(--border-strong);
+}
+.filter-thumb.is-on .filter-thumb-canvas {
+  border-color: var(--gold-ink);
+}
+.filter-thumb.is-on {
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+.filter-thumb-label {
+  max-width: 66px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- the adjustment sliders --------------------------------------------- */
+
+.editor-adjust-head {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.editor-adjust {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/*
+ * A slider that is doing something says so: nine rows of zeroes should read as
+ * "nothing is on" at a glance, and the one you moved should be findable without
+ * reading all nine.
+ */
+.editor-adjust .tool-row.is-set .tool-label {
+  color: var(--ink);
+}
+.editor-adjust .tool-row.is-set .tool-value {
+  color: var(--gold-ink);
+  font-variant-numeric: tabular-nums;
+}
+.editor-adjust .tool-value {
+  min-width: 2.4em;
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .filter-thumb-canvas {
+    width: 54px;
+    height: 54px;
+  }
+  .filter-thumb-label {
+    max-width: 58px;
+  }
+}
