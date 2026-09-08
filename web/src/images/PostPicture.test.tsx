@@ -145,6 +145,35 @@ describe('PictureComposer', () => {
     expect(screen.queryByText(/can’t show this kind of picture/i)).not.toBeInTheDocument();
   });
 
+  /*
+   * Framing is the first decision — which part of this did you mean — so it is
+   * the tab the editor opens on, before anything can be put on top.
+   */
+  it('opens on framing, with something to frame with', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+
+    expect(screen.getByText('Edit your picture')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Frame' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('Zoom')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+    expect(screen.getByText(/Drag it to choose what/)).toBeInTheDocument();
+  });
+
+  it('offers the shapes a picture can be posted in', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+
+    for (const shape of ['Original', 'Square', 'Portrait', 'Wide']) {
+      expect(screen.getByRole('button', { name: shape })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('button', { name: 'Original' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('says it is an editor, once there is something to edit', async () => {
     signIn();
     uploadFetch();
@@ -153,12 +182,35 @@ describe('PictureComposer', () => {
     // before: four unlabelled grey words under the photo, and no panel until you
     // had both added a layer and selected one — so it looked finished on arrival
     await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(screen.getByText('Edit your picture')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add words/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add a sticker/ })).toBeInTheDocument();
     // and it says what to do while the picture is still bare
     expect(screen.getByText(/Add words or a sticker, or draw on it/)).toBeInTheDocument();
+  });
+
+  /*
+   * The point of undo is that it is there before you need it and off until you
+   * do — a live Undo button on an untouched picture is a lie about what it can
+   * take back.
+   */
+  it('has nothing to take back until something is done', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await userEvent.click(screen.getByRole('button', { name: /Add words/ }));
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.getByRole('button', { name: 'Redo' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
 
   it('offers nothing to post until there is a picture', async () => {

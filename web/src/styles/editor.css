@@ -1,0 +1,172 @@
+/* ---- framing: deciding what part of a picture is the picture ------------ */
+
+.framer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/*
+ * The stage is sized by its aspect ratio and the width it is given, so the
+ * shape you are framing for is the shape you are looking at. The dark ground
+ * shows for the instant before the first draw and never again — the crop always
+ * covers the box.
+ */
+.framer-stage {
+  position: relative;
+  width: 100%;
+  max-height: 62vh;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: #0b0d11;
+  border: 1px solid var(--border);
+  cursor: grab;
+  /* the browser must not claim the drag for scrolling or pinch-zooming, or a
+     one-finger pan on a phone moves the page instead of the picture */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.framer-stage:active {
+  cursor: grabbing;
+}
+.framer-stage:focus-visible {
+  outline: 2px solid var(--gold-ink);
+  outline-offset: 2px;
+}
+.framer-stage.is-round {
+  border-radius: 50%;
+}
+
+.framer-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Thirds, the way a camera shows them: only while the picture is being moved,
+ * so it is a guide during the act and not furniture the rest of the time.
+ */
+.framer-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.34) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.34) 1px, transparent 1px);
+  background-size: 33.333% 33.333%;
+  background-position: -1px -1px;
+}
+.framer-stage:active .framer-grid,
+.framer-stage:focus-visible .framer-grid {
+  opacity: 1;
+}
+.framer-stage.is-round .framer-grid {
+  display: none;
+}
+
+.framer-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.framer-zoom {
+  flex: 1;
+  min-width: 0;
+}
+.framer-zoom-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.framer-zoom-btn:hover:not(:disabled) {
+  color: var(--gold-ink);
+  border-color: var(--gold-ink);
+}
+.framer-zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.framer-reset {
+  flex: none;
+  font-size: 0.85rem;
+}
+.framer-reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .framer-grid {
+    transition: none;
+  }
+}
+
+/* ---- the editor's own chrome -------------------------------------------- */
+
+/*
+ * Undo and redo sit apart from everything that makes a change, on the opposite
+ * side of the bar. They are the two controls that take something back, and
+ * putting them next to the controls that add things is how a person reaches for
+ * one and hits the other.
+ */
+.editor-history {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.editor-history-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.editor-history-btn:hover:not(:disabled) {
+  color: var(--gold-ink);
+  border-color: var(--gold-ink);
+  background: var(--surface-2);
+}
+.editor-history-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* the mode bar: framing, words, stickers, drawing — one row, always visible */
+.editor-modes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .framer-stage {
+    max-height: 52vh;
+  }
+  .editor-modes {
+    gap: 6px;
+  }
+}
