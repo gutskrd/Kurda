@@ -1,6 +1,6 @@
 import { fitWithin } from './photoText';
 import { drawLayers, type Layer } from './layers';
-import { ASPECTS, WHOLE_PICTURE, cropRect, ratioFor, widestCrop, type Frame } from './frame';
+import { ASPECTS, WHOLE_PICTURE, cropRect, ratioFor, type Frame } from './frame';
 
 /**
  * Everything a person decided about a picture.
@@ -31,26 +31,32 @@ export function aspectOf(doc: Composition, iw: number, ih: number): number {
 }
 
 /**
- * How big the exported picture is.
+ * How big the exported picture is: exactly the pixels the crop actually has.
  *
- * Derived from the shape rather than from the zoom, so that closing in does not
- * quietly change the size of the file. Zooming samples a smaller part of the
- * source into the same output — which is what zooming is, and why it goes soft
- * eventually — instead of producing a different picture each notch.
+ * This used to be derived from the shape alone and held constant through the
+ * zoom, which meant closing in sampled fewer and fewer source pixels and then
+ * stretched them back up to the same output. That is how zooming wrecked a
+ * photograph — by the top of the range it was a five-fold upscale of a fifth of
+ * the picture.
  *
- * Capped by `fitWithin`: the server resizes to its own maximum anyway, so a
- * larger export is only a bigger upload for it to throw away. `maxEdge` lowers
- * that cap for a picture that is known to be shown small — an avatar rendered
- * at 40px does not need the same ceiling as a photo on the feed.
+ * Taking the crop's own size instead means the export never enlarges anything:
+ * zoom in and you get a smaller picture, not a mushier one. `fitWithin` only
+ * ever shrinks, so under the cap this is a 1:1 copy of the pixels that were
+ * chosen. The zoom itself stops before the crop gets too small to be worth
+ * posting — see `maxZoomFor`.
+ *
+ * `maxEdge` lowers the ceiling for a picture known to be shown small: an avatar
+ * rendered at 32px in a nav bar does not need a feed photo's resolution.
  */
 export function outputSize(
   iw: number,
   ih: number,
   aspect: number,
+  frame: Frame,
   maxEdge?: number,
 ): { width: number; height: number } {
-  const widest = widestCrop(iw, ih, aspect);
-  return fitWithin(Math.max(1, Math.round(widest.w)), Math.max(1, Math.round(widest.h)), maxEdge);
+  const crop = cropRect(iw, ih, aspect, frame);
+  return fitWithin(Math.max(1, Math.round(crop.sw)), Math.max(1, Math.round(crop.sh)), maxEdge);
 }
 
 /**
@@ -69,7 +75,7 @@ export function compose(
   maxEdge?: number,
 ): { width: number; height: number } {
   const aspect = aspectOf(doc, iw, ih);
-  const size = outputSize(iw, ih, aspect, maxEdge);
+  const size = outputSize(iw, ih, aspect, doc.frame, maxEdge);
   drawLayers(canvas, image, size.width, size.height, doc.layers, cropRect(iw, ih, aspect, doc.frame));
   return size;
 }

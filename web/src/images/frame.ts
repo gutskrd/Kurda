@@ -33,6 +33,32 @@ export interface CropRect {
 
 export const ZOOM_RANGE = { min: 1, max: 5 } as const;
 
+/**
+ * The smallest picture worth posting, on its longer edge.
+ *
+ * This is what stops zoom from wrecking a photograph. Closing in samples fewer
+ * source pixels; if the export size is held constant those fewer pixels get
+ * stretched back up, and past about 2x that is visible as mush. So the export
+ * takes the pixels the crop actually has, and the zoom stops at the point where
+ * the crop would fall below this — you cannot zoom a picture into something it
+ * does not contain, and pretending otherwise just returns a soft picture.
+ */
+export const MIN_EXPORT_EDGE = 512;
+
+/**
+ * How far this particular picture can be zoomed before it comes apart.
+ *
+ * A 12-megapixel phone photo has detail to spare and gets the whole range. A
+ * 700px one that has already been round the internet does not, and its slider
+ * stops early rather than handing back a blur.
+ */
+export function maxZoomFor(iw: number, ih: number, aspect: number, minEdge = MIN_EXPORT_EDGE): number {
+  const widest = widestCrop(iw, ih, aspect);
+  const longest = Math.max(widest.w, widest.h);
+  if (minEdge <= 0) return ZOOM_RANGE.max;
+  return clamp(longest / minEdge, ZOOM_RANGE.min, ZOOM_RANGE.max);
+}
+
 export const WHOLE_PICTURE: Frame = { zoom: 1, cx: 0.5, cy: 0.5 };
 
 /** Is this frame untouched — the whole picture, centred? */
@@ -53,9 +79,15 @@ export function widestCrop(iw: number, ih: number, aspect: number): { w: number;
   return { w, h: w / aspect };
 }
 
-/** Hold a frame where it can actually go: zoom in range, crop inside the picture. */
+/**
+ * Hold a frame where it can actually go: zoom in range, crop inside the picture.
+ *
+ * The upper end of "in range" is the picture's own, not a constant — see
+ * `maxZoomFor`. Every gesture funnels through here, so none of them can push a
+ * picture past what it has the pixels for.
+ */
 export function clampFrame(iw: number, ih: number, aspect: number, frame: Frame): Frame {
-  const zoom = clamp(frame.zoom, ZOOM_RANGE.min, ZOOM_RANGE.max);
+  const zoom = clamp(frame.zoom, ZOOM_RANGE.min, maxZoomFor(iw, ih, aspect));
   const widest = widestCrop(iw, ih, aspect);
   const sw = widest.w / zoom;
   const sh = widest.h / zoom;

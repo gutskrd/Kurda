@@ -16,8 +16,8 @@ function show(frame: Frame = WHOLE_PICTURE) {
   render(
     <ImageFramer
       image={{} as unknown as CanvasImageSource}
-      iw={1600}
-      ih={900}
+      iw={4000}
+      ih={2250}
       aspect={1}
       frame={frame}
       onChange={onChange}
@@ -67,8 +67,8 @@ describe('ImageFramer', () => {
     render(
       <ImageFramer
         image={{} as unknown as CanvasImageSource}
-        iw={1600}
-        ih={900}
+        iw={4000}
+        ih={2250}
         aspect={1}
         frame={{ zoom: 3, cx: 0.2, cy: 0.5 }}
         onChange={onChange}
@@ -125,8 +125,8 @@ describe('ImageFramer', () => {
     render(
       <ImageFramer
         image={{} as unknown as CanvasImageSource}
-        iw={1600}
-        ih={900}
+        iw={4000}
+        ih={2250}
         aspect={1}
         frame={WHOLE_PICTURE}
         onChange={onChange}

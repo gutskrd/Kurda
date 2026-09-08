@@ -4,6 +4,7 @@ import {
   ZOOM_RANGE,
   cropRect,
   isWholePicture,
+  maxZoomFor,
   panFrame,
   zoomFrame,
   type Frame,
@@ -90,6 +91,15 @@ export function ImageFramer({
   }, [image, iw, ih, aspect, frame, box]);
 
   const settle = useCallback((): void => onSettled?.(), [onSettled]);
+
+  /*
+   * Where the slider ends, which is a property of this picture rather than a
+   * constant: a 12-megapixel photo gets the whole range, one that has already
+   * been round the internet stops early. Going past it could only hand back an
+   * upscale of itself.
+   */
+  const maxZoom = maxZoomFor(iw, ih, aspect);
+  const atCeiling = frame.zoom >= maxZoom - 1e-6;
 
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>): void {
     if (busy) return;
@@ -211,7 +221,7 @@ export function ImageFramer({
           type="range"
           className="framer-zoom"
           min={ZOOM_RANGE.min * 100}
-          max={ZOOM_RANGE.max * 100}
+          max={Math.round(maxZoom * 100)}
           value={Math.round(frame.zoom * 100)}
           aria-label="Zoom"
           disabled={busy}
@@ -223,7 +233,7 @@ export function ImageFramer({
           type="button"
           className="framer-zoom-btn"
           aria-label="Zoom in"
-          disabled={busy || frame.zoom >= ZOOM_RANGE.max}
+          disabled={busy || atCeiling}
           onClick={() => {
             onChange(zoomFrame(iw, ih, aspect, frame, frame.zoom + 0.25));
             settle();

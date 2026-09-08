@@ -85,7 +85,7 @@ export function PhotoEditor({
   const dragging = useRef<{ id: string; dx: number; dy: number } | null>(null);
 
   const aspect = aspectOf(doc, iw, ih);
-  const size = outputSize(iw, ih, aspect);
+  const size = outputSize(iw, ih, aspect, doc.frame);
   const selected: PlacedLayer | null =
     doc.layers.find((l): l is PlacedLayer => isPlaced(l) && l.id === selectedId) ?? null;
 
