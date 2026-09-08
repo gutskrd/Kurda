@@ -12,6 +12,23 @@ html {
   scroll-behavior: smooth;
 }
 
+/*
+ * Nothing may be dragged sideways.
+ *
+ * A page that scrolls horizontally on a phone feels broken even when the
+ * overflow is a single stray pixel, and the causes are easy to reintroduce —
+ * one 100vw, one unwrapped wide element. This is the backstop.
+ *
+ * `clip` rather than `hidden` on purpose: `overflow: hidden` turns the element
+ * into a scroll container, which breaks `position: sticky` inside it, and the
+ * top navigation is sticky. `clip` refuses the scroll without becoming one.
+ */
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
