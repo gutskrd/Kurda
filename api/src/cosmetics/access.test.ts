@@ -57,13 +57,13 @@ describe('resolveCosmetics — avatar priority', () => {
     );
     expect(r.avatarUrl).toBe('/cosmetics/avatars/default-05.png');
   });
-  it('falls back to default-01 when a selected premium avatar is no longer covered by premium', () => {
+  it('keeps a chosen avatar after premium lapses, now that none of them are gated', () => {
     const r = resolveCosmetics(
       { profilePhotoKey: null, selectedAvatarKey: 'default-05', premiumUntil: PAST, background: null, icon: null },
       url,
       NOW,
     );
-    expect(r.avatarUrl).toBe('/cosmetics/avatars/default-01.png');
+    expect(r.avatarUrl).toBe('/cosmetics/avatars/default-05.png');
   });
   it('falls back to default-01 when nothing is set (never null/silhouette)', () => {
     const r = resolveCosmetics(
@@ -156,10 +156,11 @@ describe('resolveAvatarUrl (shared by profile + social/chat lists)', () => {
   it('falls back to default-01 (never null) when storage is unconfigured for a photo', () => {
     expect(resolveAvatarUrl('profile-photo/a.webp', null, () => null)).toBe('/cosmetics/avatars/default-01.png');
   });
-  it('falls back to default-01 for a premium avatar when premium is inactive', () => {
-    expect(resolveAvatarUrl(null, 'default-05', pub, false)).toBe('/cosmetics/avatars/default-01.png');
-    // default-01 itself is always allowed
+  it('resolves any built-in avatar without premium, and an unknown one to the fallback', () => {
+    expect(resolveAvatarUrl(null, 'default-05', pub, false)).toBe('/cosmetics/avatars/default-05.png');
     expect(resolveAvatarUrl(null, 'default-01', pub, false)).toBe('/cosmetics/avatars/default-01.png');
+    // an unrecognised key still degrades to a picture rather than to nothing
+    expect(resolveAvatarUrl(null, 'bogus-key', pub, false)).toBe('/cosmetics/avatars/default-01.png');
   });
 });
 

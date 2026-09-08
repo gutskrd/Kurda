@@ -199,7 +199,8 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
   const avatars: AvatarOption[] =
     registry.data?.avatars && registry.data.avatars.length > 0
       ? registry.data.avatars
-      : DEFAULT_AVATAR_KEYS.map((key) => ({ key, requiresPremium: key !== 'default-01' }));
+      // every built-in avatar is free, so the offline fallback must not lock any
+      : DEFAULT_AVATAR_KEYS.map((key) => ({ key, requiresPremium: false }));
   const isPremium = me.premium ?? false;
 
   async function pick(key: string | null): Promise<void> {
