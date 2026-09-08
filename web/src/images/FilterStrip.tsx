@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { FILTERS, type FilterPreset } from './filters';
-import { applyAdjustments, isNeutral } from './adjust';
+import { FILTERS, gradeOf } from './filters';
+import { applyGrade, drawOverlay, gradeDoesNothing } from './composition';
+import { NEUTRAL } from './adjust';
 import type { CropRect } from './frame';
 
 /** Drawn size of one thumbnail, in CSS pixels. */
@@ -21,11 +22,14 @@ export function FilterStrip({
   image,
   crop,
   activeKey,
+  artReady,
   onPick,
 }: {
   image: CanvasImageSource;
   crop: CropRect;
   activeKey: string;
+  /** bumped when overlay artwork decodes, so a thumbnail that needs it redraws */
+  artReady: number;
   onPick: (key: string) => void;
 }): React.JSX.Element {
   // the middle square of the crop, so every thumbnail is the same shape
@@ -45,7 +49,7 @@ export function FilterStrip({
           title={preset.hint}
           onClick={() => onPick(preset.key)}
         >
-          <Thumb image={image} sx={sx} sy={sy} side={side} preset={preset} />
+          <Thumb image={image} sx={sx} sy={sy} side={side} filterKey={preset.key} artReady={artReady} />
           <span className="filter-thumb-label">{preset.label}</span>
         </button>
       ))}
@@ -65,13 +69,15 @@ function Thumb({
   sx,
   sy,
   side,
-  preset,
+  filterKey,
+  artReady,
 }: {
   image: CanvasImageSource;
   sx: number;
   sy: number;
   side: number;
-  preset: FilterPreset;
+  filterKey: string;
+  artReady: number;
 }): React.JSX.Element {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -89,16 +95,20 @@ function Thumb({
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(image, sx, sy, side, side, 0, 0, px, px);
 
-    if (isNeutral(preset.adjustments)) return;
+    // the same grade the live preview and the export will use, at full
+    // strength: a thumbnail is what the filter does, not what it is doing now
+    const grade = gradeOf(filterKey, 1, NEUTRAL);
+    if (gradeDoesNothing(grade)) return;
     try {
       const pixels = ctx.getImageData(0, 0, px, px);
-      applyAdjustments(pixels.data, px, px, preset.adjustments);
+      applyGrade(pixels.data, px, px, grade);
       ctx.putImageData(pixels, 0, 0);
+      if (grade.overlay) drawOverlay(ctx, px, px, grade.overlay);
     } catch {
       // a tainted canvas refuses a read-back; an ungraded thumbnail is a fine
       // outcome for something that is only a hint at what the filter does
     }
-  }, [image, sx, sy, side, preset]);
+  }, [image, sx, sy, side, filterKey, artReady]);
 
   return <canvas ref={ref} className="filter-thumb-canvas" aria-hidden />;
 }

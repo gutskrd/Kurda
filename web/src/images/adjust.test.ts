@@ -3,11 +3,15 @@ import {
   ADJUSTMENT_KEYS,
   NEUTRAL,
   applyAdjustments,
+  blockSizeFor,
+  buildRamp,
   combine,
   isNeutral,
+  pixelate,
   rangeFor,
   scale,
   type Adjustments,
+  type ColourStop,
 } from './adjust';
 
 const adj = (over: Partial<Adjustments>): Adjustments => ({ ...NEUTRAL, ...over });
@@ -230,5 +234,156 @@ describe('the slider ranges', () => {
     for (const key of ADJUSTMENT_KEYS) {
       expect(rangeFor(key).max).toBeGreaterThan(rangeFor(key).min);
     }
+  });
+});
+
+describe('the gradient map', () => {
+  const SEPIA: ColourStop[] = [
+    [0, 30, 20, 10],
+    [1, 250, 230, 200],
+  ];
+
+  it('interpolates between the stops it was given', () => {
+    const ramp = buildRamp(SEPIA);
+    expect([ramp[0], ramp[1], ramp[2]]).toEqual([30, 20, 10]);
+    expect([ramp[765], ramp[766], ramp[767]]).toEqual([250, 230, 200]);
+    // halfway along, halfway between
+    expect(ramp[384]).toBeCloseTo((30 + 250) / 2, -1);
+  });
+
+  it('survives being given no stops at all', () => {
+    expect(buildRamp([]).length).toBe(768);
+  });
+
+  it('puts stops in order rather than trusting the caller', () => {
+    const forwards = buildRamp([[0, 0, 0, 0], [1, 255, 255, 255]]);
+    const backwards = buildRamp([[1, 255, 255, 255], [0, 0, 0, 0]]);
+    expect([...backwards]).toEqual([...forwards]);
+  });
+
+  /**
+   * The point of a gradient map: the picture is repainted from its brightness,
+   * so a grey and a red of the same brightness come out the same colour. No
+   * amount of saturation or warmth can do that.
+   */
+  it('repaints from brightness, discarding the original hue', () => {
+    const ramp = buildRamp(SEPIA);
+    const tone = { ramp, amount: 1 };
+    // a grey and a green with the same luminance: 0.7152 x 200 = 143.0
+    const grey = new Uint8ClampedArray([143, 143, 143, 255]);
+    const green = new Uint8ClampedArray([0, 200, 0, 255]);
+    applyAdjustments(grey, 1, 1, NEUTRAL, tone);
+    applyAdjustments(green, 1, 1, NEUTRAL, tone);
+    expect([...green].slice(0, 3)).toEqual([...grey].slice(0, 3));
+  });
+
+  it('mixes back towards the original as the amount comes down', () => {
+    const ramp = buildRamp(SEPIA);
+    const full = new Uint8ClampedArray([128, 128, 128, 255]);
+    const half = new Uint8ClampedArray([128, 128, 128, 255]);
+    const none = new Uint8ClampedArray([128, 128, 128, 255]);
+    applyAdjustments(full, 1, 1, NEUTRAL, { ramp, amount: 1 });
+    applyAdjustments(half, 1, 1, NEUTRAL, { ramp, amount: 0.5 });
+    applyAdjustments(none, 1, 1, NEUTRAL, { ramp, amount: 0 });
+    expect(none[0]).toBe(128);
+    expect(half[0]).toBeGreaterThan(Math.min(128, full[0]!) - 1);
+    expect(half[0]).toBeLessThan(Math.max(128, full[0]!) + 1);
+    expect(half[0]).not.toBe(full[0]);
+  });
+});
+
+describe('pixelate', () => {
+  /** A w×h image where every pixel differs. */
+  const noisy = (w: number, h: number): Uint8ClampedArray => {
+    const d = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < w * h; i++) d.set([(i * 7) % 256, (i * 13) % 256, (i * 29) % 256, 255], i * 4);
+    return d;
+  };
+
+  it('makes every pixel in a block the same', () => {
+    const d = noisy(8, 8);
+    pixelate(d, 8, 8, 4);
+    const at = (x: number, y: number): number[] => [...d.slice((y * 8 + x) * 4, (y * 8 + x) * 4 + 3)];
+    expect(at(0, 0)).toEqual(at(3, 3));
+    expect(at(4, 4)).toEqual(at(7, 7));
+    // and different blocks are still different
+    expect(at(0, 0)).not.toEqual(at(4, 4));
+  });
+
+  it('handles a picture that does not divide evenly into blocks', () => {
+    const d = noisy(7, 5);
+    expect(() => pixelate(d, 7, 5, 3)).not.toThrow();
+    expect(d.length).toBe(7 * 5 * 4);
+  });
+
+  it('does nothing at a block size of one', () => {
+    const before = noisy(4, 4);
+    const after = before.slice();
+    pixelate(after, 4, 4, 1);
+    expect([...after]).toEqual([...before]);
+  });
+
+  it('leaves alpha alone', () => {
+    const d = new Uint8ClampedArray([10, 10, 10, 40, 200, 200, 200, 90, 0, 0, 0, 255, 5, 5, 5, 7]);
+    pixelate(d, 2, 2, 2);
+    expect([d[3], d[7], d[11], d[15]]).toEqual([40, 90, 255, 7]);
+  });
+
+  it('scales the block to the picture, so it looks the same at any size', () => {
+    expect(blockSizeFor(0, 1000, 1000)).toBe(1);
+    expect(blockSizeFor(100, 1000, 1000)).toBe(60);
+    // a square crop of a landscape picture is bounded by its height
+    expect(blockSizeFor(100, 2000, 1000)).toBe(60);
+  });
+});
+
+describe('grain', () => {
+  const flat = (w: number, h: number): Uint8ClampedArray => {
+    const d = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < w * h; i++) d.set([128, 128, 128, 255], i * 4);
+    return d;
+  };
+
+  it('roughens a flat surface', () => {
+    const d = flat(40, 40);
+    applyAdjustments(d, 40, 40, adj({ grain: 100 }));
+    const values = new Set<number>();
+    for (let i = 0; i < d.length; i += 4) values.add(d[i]!);
+    expect(values.size).toBeGreaterThan(8);
+  });
+
+  it('is the same every time, so a redraw is not a reshuffle', () => {
+    const a = flat(20, 20);
+    const b = flat(20, 20);
+    applyAdjustments(a, 20, 20, adj({ grain: 70 }));
+    applyAdjustments(b, 20, 20, adj({ grain: 70 }));
+    expect([...a]).toEqual([...b]);
+  });
+
+  /**
+   * The claim that makes grain safe to ship: the preview and the export must
+   * carry the same texture. Noise tied to the pixel grid would be coarse in a
+   * 360px preview and fine in a 720px export, and the preview would stop being
+   * a preview. The lattice is mapped onto the picture instead, so the same
+   * *relative* point gets the same grain at either size.
+   */
+  it('is the same texture at preview size and export size', () => {
+    const small = flat(180, 180);
+    const large = flat(360, 360);
+    applyAdjustments(small, 180, 180, adj({ grain: 90 }));
+    applyAdjustments(large, 360, 360, adj({ grain: 90 }));
+
+    let matches = 0;
+    let compared = 0;
+    for (let y = 0; y < 180; y += 7) {
+      for (let x = 0; x < 180; x += 7) {
+        const s = small[(y * 180 + x) * 4]!;
+        // the same fraction of the way across the larger picture
+        const l = large[(y * 2 * 360 + x * 2) * 4]!;
+        compared += 1;
+        if (Math.abs(s - l) <= 1) matches += 1;
+      }
+    }
+    expect(matches / compared).toBeGreaterThan(0.95);
   });
 });

@@ -1,8 +1,16 @@
 import { fitWithin } from './photoText';
 import { drawLayers, type Layer } from './layers';
 import { ASPECTS, WHOLE_PICTURE, cropRect, ratioFor, type CropRect, type Frame } from './frame';
-import { NEUTRAL, applyAdjustments, combine, isNeutral, scale, type Adjustments } from './adjust';
-import { NO_FILTER, presetByKey } from './filters';
+import {
+  ADJUSTMENT_KEYS,
+  NEUTRAL,
+  applyAdjustments,
+  blockSizeFor,
+  pixelate,
+  type Adjustments,
+} from './adjust';
+import { NO_FILTER, gradeOf, type Grade, type Overlay } from './filters';
+import { stickerImage } from './stickers';
 
 /**
  * Everything a person decided about a picture.
@@ -42,16 +50,79 @@ export function aspectOf(doc: Composition, iw: number, ih: number): number {
 }
 
 /**
- * The grading that actually gets applied: the filter, turned down to its
+ * Everything that will be done to this picture: the filter turned down to its
  * strength, plus whatever the person moved by hand.
  *
  * They add rather than override because both are expressed the same way, as
  * distances from "unchanged". A filter that warms by 30 and a warmth slider
- * pulled 10 the other way leave 20 — which is what someone dragging that slider
- * while a filter is on expects to happen.
+ * pulled 10 the other way leave 20 — which is what someone dragging that
+ * slider while a filter is on expects to happen.
  */
-export function effectiveAdjustments(doc: Composition): Adjustments {
-  return combine(scale(presetByKey(doc.filterKey).adjustments, doc.strength), doc.adjustments);
+export function effectiveGrade(doc: Composition): Grade {
+  return gradeOf(doc.filterKey, doc.strength, doc.adjustments);
+}
+
+/** Is there any colour work to do, ignoring pixelation, which is its own pass? */
+function gradesColour(grade: Grade): boolean {
+  if (grade.tone && grade.tone.amount > 0) return true;
+  return ADJUSTMENT_KEYS.some((k) => k !== 'pixelate' && grade.adjustments[k] !== 0);
+}
+
+/** Is this picture going to be changed at all? */
+export function gradeDoesNothing(grade: Grade): boolean {
+  return !gradesColour(grade) && grade.adjustments.pixelate <= 0 && !grade.overlay;
+}
+
+/**
+ * Every pixel pass, in order.
+ *
+ * Pixelation runs first so that everything after it grades the blocks rather
+ * than grading detail that is about to be averaged away — the other order
+ * produces the same blocks with the wrong colours in them.
+ *
+ * Shared by the live preview, the export and the ten filter thumbnails, so
+ * none of the three can drift from the others.
+ */
+export function applyGrade(data: Uint8ClampedArray, width: number, height: number, grade: Grade): void {
+  if (grade.adjustments.pixelate > 0) {
+    pixelate(data, width, height, blockSizeFor(grade.adjustments.pixelate, width, height));
+  }
+  if (gradesColour(grade)) applyAdjustments(data, width, height, grade.adjustments, grade.tone);
+}
+
+/**
+ * Lay the overlay artwork over the top-right corner.
+ *
+ * Drawn onto the photograph rather than over the finished picture, so that
+ * words and stickers can still be placed on top of it. Its own proportions are
+ * kept — stretching a flag to the shape of the crop would be worse than not
+ * having one.
+ *
+ * Nothing is drawn if the artwork has not loaded; the editor asks for it and
+ * redraws when it arrives, and the export waits for it before composing.
+ */
+export function drawOverlay(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  overlay: Overlay,
+): void {
+  const art = stickerImage(overlay.src);
+  if (!art || overlay.opacity <= 0 || art.naturalWidth === 0 || art.naturalHeight === 0) return;
+  const ratio = art.naturalHeight / art.naturalWidth;
+  let w = width * overlay.widthShare;
+  let h = w * ratio;
+  // sized by width alone, a nearly-square artwork hangs off the bottom of a
+  // landscape crop; the canvas would clip it without saying so
+  const maxH = height * overlay.maxHeightShare;
+  if (h > maxH) {
+    h = maxH;
+    w = h / ratio;
+  }
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, overlay.opacity);
+  ctx.drawImage(art, width - w, 0, w, h);
+  ctx.restore();
 }
 
 /**
@@ -129,9 +200,9 @@ function gradedPhoto(
   width: number,
   height: number,
   crop: CropRect,
-  adj: Adjustments,
+  grade: Grade,
 ): CanvasImageSource | null {
-  const key = JSON.stringify([idOf(image), width, height, crop, adj]);
+  const key = `${idOf(image)}|${width}x${height}|${crop.sx},${crop.sy},${crop.sw},${crop.sh}|${grade.signature}`;
   if (graded && graded.key === key) return graded.canvas;
 
   const canvas = graded?.canvas ?? document.createElement('canvas');
@@ -147,8 +218,9 @@ function gradedPhoto(
 
   try {
     const pixels = ctx.getImageData(0, 0, width, height);
-    applyAdjustments(pixels.data, width, height, adj);
+    applyGrade(pixels.data, width, height, grade);
     ctx.putImageData(pixels, 0, 0);
+    if (grade.overlay) drawOverlay(ctx, width, height, grade.overlay);
   } catch {
     // reading pixels back is refused on a tainted canvas. Our source is the
     // person's own file so this should not happen, but an ungraded picture
@@ -182,14 +254,14 @@ export function compose(
   const aspect = aspectOf(doc, iw, ih);
   const size = outputSize(iw, ih, aspect, doc.frame, maxEdge);
   const crop = cropRect(iw, ih, aspect, doc.frame);
-  const adj = effectiveAdjustments(doc);
+  const grade = effectiveGrade(doc);
 
-  if (isNeutral(adj)) {
+  if (gradeDoesNothing(grade)) {
     drawLayers(canvas, image, size.width, size.height, doc.layers, crop);
     return size;
   }
 
-  const photo = gradedPhoto(image, size.width, size.height, crop, adj);
+  const photo = gradedPhoto(image, size.width, size.height, crop, grade);
   // the graded copy is already cropped and already the right size, so it goes
   // on whole; if grading was refused, fall back to the plain crop
   if (photo) drawLayers(canvas, photo, size.width, size.height, doc.layers);

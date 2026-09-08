@@ -27,3 +27,4 @@ api/.pgdata/
 # that ship are the sized WebPs under web/public/stickers, generated from these.
 # Ignored so a `git add -A` cannot sweep multi-megabyte originals into a commit.
 /stickers/
+/kurdistan_filter.png

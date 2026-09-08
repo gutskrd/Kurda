@@ -21,7 +21,7 @@ import {
   type Composition,
 } from './composition';
 import { ADJUSTMENT_KEYS, ADJUSTMENT_LABELS, NEUTRAL, isNeutral, rangeFor, type Adjustments } from './adjust';
-import { NO_FILTER } from './filters';
+import { NO_FILTER, overlaySources } from './filters';
 import { FilterStrip } from './FilterStrip';
 import { ImageFramer } from './ImageFramer';
 import type { History } from './useHistory';
@@ -37,7 +37,7 @@ import {
   TextIcon,
   UndoIcon,
 } from '../components/icons';
-import { EMOJI_STICKERS, PICTURE_STICKERS, emojiSrc, ensureSticker } from './stickers';
+import { EMOJI_STICKERS, PICTURE_STICKERS, emojiSrc, ensureSticker, ensureStickersFor } from './stickers';
 
 type Mode = 'frame' | 'filter' | 'move' | 'draw';
 
@@ -102,6 +102,8 @@ export function PhotoEditor({
   const [color, setColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(0.012);
   const drawing = useRef<StrokeLayer | null>(null);
+  /** bumped when overlay artwork finishes decoding, so the draws can catch up */
+  const [artReady, setArtReady] = useState(0);
   const dragging = useRef<{ id: string; dx: number; dy: number } | null>(null);
 
   const aspect = aspectOf(doc, iw, ih);
@@ -140,6 +142,17 @@ export function PhotoEditor({
     setSelectedId(null);
   };
 
+  /* a filter's artwork has to be decoded before a synchronous draw can use it */
+  useEffect(() => {
+    let live = true;
+    void ensureStickersFor(overlaySources()).then(() => {
+      if (live) setArtReady((n) => n + 1);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     // drawn small: grading costs a pass over every pixel, and this runs on every
@@ -149,7 +162,7 @@ export function PhotoEditor({
     // all: framing shows the framer instead, so leaving frame mode mounts a
     // fresh canvas that nothing else would ever draw into — the document has
     // not changed, only what is on screen.
-  }, [image, iw, ih, doc, mode]);
+  }, [image, iw, ih, doc, mode, artReady]);
 
   /**
    * Undo and redo from the keyboard, the way every other editor does it.
@@ -343,6 +356,7 @@ export function PhotoEditor({
           <FilterStrip
             image={image}
             crop={crop}
+            artReady={artReady}
             activeKey={doc.filterKey}
             // a new filter arrives at full strength; turning it down is the
             // next thing you do, not something to have to undo first
