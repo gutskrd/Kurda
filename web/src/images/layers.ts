@@ -1,5 +1,6 @@
 import { stickerImage } from './stickers';
 import { fontStack, layoutLines, type FontKey } from './photoText';
+import type { CropRect } from './frame';
 
 /**
  * What sits on top of a picture.
@@ -240,6 +241,7 @@ export function drawLayers(
   width: number,
   height: number,
   layers: readonly Layer[],
+  crop?: CropRect,
 ): void {
   canvas.width = width;
   canvas.height = height;
@@ -247,7 +249,10 @@ export function drawLayers(
   if (!ctx) return;
 
   ctx.clearRect(0, 0, width, height);
-  ctx.drawImage(image, 0, 0, width, height);
+  // one draw path for the preview and the export, so what is arranged is what
+  // is stored — a second implementation for one of them is how they drift
+  if (crop) ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height);
+  else ctx.drawImage(image, 0, 0, width, height);
 
   for (const raw of layers) {
     const layer = clampLayer(raw);

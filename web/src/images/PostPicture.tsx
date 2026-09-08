@@ -4,10 +4,11 @@ import { describeError } from '../lib/api';
 import type { ImagePost } from '../lib/types';
 import { Button } from '../components/Button';
 import { PhotoIcon } from '../components/icons';
-import { canvasToFile, fitWithin } from './photoText';
+import { canvasToFile } from './photoText';
 import { decodePicture, shouldHaveDecoded, sniffPictureFormat, type DecodedPicture } from './decode';
 import { PhotoEditor } from './PhotoEditor';
-import { drawLayers, type Layer } from './layers';
+import { UNTOUCHED, compose, type Composition } from './composition';
+import { useHistory } from './useHistory';
 import { ensureStickersFor } from './stickers';
 import { DIMEN_KINDS } from '../feed/postKinds';
 
@@ -21,11 +22,16 @@ const MAX_CAPTION = 2_000;
  * them before handing back a media id, and only then does `POST /images` accept
  * a post referencing it. A client cannot attach an arbitrary key.
  *
- * Everything you add is burned into a canvas here and the canvas is what is
- * uploaded, so the preview and the stored file are the same pixels. The MyKurda
- * mark is the exception: the server adds that afterwards, because a mark the
- * client applies is a mark the client can leave off — which is also why nothing
- * here can end up over the top of it.
+ * The framing and everything added is burned into a canvas here and the canvas
+ * is what is uploaded, so the preview and the stored file are the same pixels.
+ * The MyKurda mark is the exception: the server adds that afterwards, because a
+ * mark the client applies is a mark the client can leave off — which is also
+ * why nothing here can end up over the top of it.
+ *
+ * The export canvas is made at the moment of posting rather than being the one
+ * on screen. The editor's canvas is not mounted while you are framing, and a
+ * post that failed because you happened to be on the wrong tab would be a
+ * baffling thing to debug.
  */
 export function PictureComposer({
   handle,
@@ -36,12 +42,12 @@ export function PictureComposer({
 }): React.JSX.Element {
   const { client } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<CanvasImageSource | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const [layers, setLayers] = useState<Layer[]>([]);
+  /** the source picture's own pixels, before any framing */
+  const [source, setSource] = useState<{ w: number; h: number } | null>(null);
+  const history = useHistory<Composition>(UNTOUCHED);
   const [caption, setCaption] = useState('');
   const [postAs, setPostAs] = useState('image');
   const [busy, setBusy] = useState(false);
@@ -57,7 +63,7 @@ export function PictureComposer({
   useEffect(() => {
     if (!file) {
       imageRef.current = null;
-      setSize(null);
+      setSource(null);
       setRawOnly(false);
       return;
     }
@@ -85,10 +91,9 @@ export function PictureComposer({
         return;
       }
       imageRef.current = result.source;
-      // the server resizes to its own maximum anyway, so composing larger only
-      // makes a bigger file for it to throw away — and a full-size export is
-      // what put a phone photo over the upload cap
-      setSize(fitWithin(result.width, result.height));
+      // the source picture's real size: the framing is expressed against this,
+      // and the export size is worked out from the shape it is framed to
+      setSource({ w: result.width, h: result.height });
     });
 
     return () => {
@@ -109,25 +114,26 @@ export function PictureComposer({
     e.target.value = '';
     if (!picked) return;
     setError(null);
-    setLayers([]);
+    // a new picture is a new document: undo must not walk back into the last one
+    history.reset(UNTOUCHED);
     setFile(picked);
   }
 
   async function submit(): Promise<void> {
-    const canvas = canvasRef.current;
-    if (!file || busy || (!rawOnly && !canvas)) return;
+    if (!file || busy) return;
     setBusy(true);
     setError(null);
 
     // nothing was composed onto an unpreviewable file, so its own bytes are
-    // exactly what should be sent — and there is no canvas to prepare
+    // exactly what should be sent
     let composed: File | null = file;
-    if (!rawOnly) {
+    if (!rawOnly && imageRef.current && source) {
       // the export draws synchronously, so every picture sticker has to be
       // decoded first — otherwise one added a moment ago exports as nothing
-      await ensureStickersFor(layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)));
-      if (imageRef.current && size) drawLayers(canvas!, imageRef.current, size.width, size.height, layers);
-      composed = await canvasToFile(canvas!, 'dimen');
+      await ensureStickersFor(history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)));
+      const canvas = document.createElement('canvas');
+      compose(canvas, imageRef.current, source.w, source.h, history.present);
+      composed = await canvasToFile(canvas, 'dimen');
     }
     if (!composed) {
       setBusy(false);
@@ -158,7 +164,7 @@ export function PictureComposer({
     else setError(describeError(made.error));
   }
 
-  const editable = file !== null && size !== null && imageRef.current !== null;
+  const editable = file !== null && source !== null && imageRef.current !== null;
   // a picture to post, whether or not this browser can show it
   const ready = editable || rawOnly;
 
@@ -187,12 +193,10 @@ export function PictureComposer({
           {editable ? (
             <PhotoEditor
               image={imageRef.current!}
-              width={size!.width}
-              height={size!.height}
+              iw={source!.w}
+              ih={source!.h}
               handle={handle}
-              layers={layers}
-              onChange={setLayers}
-              canvasRef={canvasRef}
+              history={history}
             />
           ) : (
             <div className="picture-raw" role="status">
@@ -216,7 +220,7 @@ export function PictureComposer({
                    may not carry, and it says so plainly if it cannot */
                 <p className="muted">
                   Your browser can’t show {format ? `${format.toUpperCase()} pictures` : 'this kind of picture'},
-                  so there’s nothing to add text or stickers to — you can still post it as it is.
+                  so there’s nothing to frame or add to — you can still post it as it is.
                 </p>
               )}
             </div>

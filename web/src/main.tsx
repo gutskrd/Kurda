@@ -8,6 +8,7 @@ import './styles/layout.css';
 import './styles/pages.css';
 import './styles/feed.css';
 import './styles/rail.css';
+import './styles/editor.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

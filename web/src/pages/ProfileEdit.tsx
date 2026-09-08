@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
@@ -7,6 +7,7 @@ import type { AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { COUNTRIES } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
+import { ProfilePhotoPicker } from '../profile/ProfilePhotoPicker';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { SectionToggles } from '../profile/SectionToggles';
 import { Loading, ErrorState } from '../components/states';
@@ -57,7 +58,7 @@ export function ProfileEdit(): React.JSX.Element {
         <p className="page-sub"><Link to="/app/profile" className="link">← Back to your profile</Link></p>
       </div>
 
-      <PhotoControls me={me} onChanged={changed} />
+      <ProfilePhotoPicker me={me} onChanged={changed} />
       <ProfileDetailsForm me={me} onSaved={changed} />
       <AvatarPicker me={me} onChanged={changed} />
       <CosmeticCustomizer me={me} onChanged={changed} />
@@ -68,69 +69,6 @@ export function ProfileEdit(): React.JSX.Element {
         <Link to="/app/settings" className="btn btn-secondary">Account settings</Link>
       </div>
     </div>
-  );
-}
-
-/** Upload or remove the custom profile photo. */
-function PhotoControls({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
-  const { client } = useAuth();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState<null | 'upload' | 'remove'>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const avatar = me.avatarUrl ?? me.profilePhotoUrl;
-  const hasPhoto = Boolean(me.profilePhotoUrl);
-
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setMsg('Please choose an image file.');
-      return;
-    }
-    setBusy('upload');
-    setMsg(null);
-    const res = await client.uploadBytes<{ profilePhotoUrl: string }>('/me/profile-picture', file);
-    setBusy(null);
-    if (res.ok) onChanged();
-    else if (res.error.code === 'MEDIA_UNAVAILABLE') setMsg('Photo storage isn’t configured yet — try again once it’s enabled.');
-    else setMsg(describeError(res.error));
-  }
-
-  async function removePhoto(): Promise<void> {
-    setBusy('remove');
-    setMsg(null);
-    const res = await client.delete('/me/profile-picture');
-    setBusy(null);
-    if (res.ok) onChanged();
-    else setMsg(describeError(res.error));
-  }
-
-  return (
-    <section className="card">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Profile picture</h2>
-      <div className="edit-photo-row">
-        <span className="hero-avatar-wrap">
-          {avatar ? (
-            <img src={avatar} alt="" className="pcard-avatar" />
-          ) : (
-            <span className="avatar-fallback" aria-hidden="true"><PersonGlyph size={48} /></span>
-          )}
-        </span>
-        <div className="edit-photo-actions">
-          <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={busy !== null}>
-            {busy === 'upload' ? 'Uploading…' : 'Upload your own'}
-          </Button>
-          {hasPhoto && (
-            <Button variant="ghost" size="sm" onClick={() => void removePhoto()} disabled={busy !== null}>
-              {busy === 'remove' ? 'Removing…' : 'Remove'}
-            </Button>
-          )}
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} aria-label="Upload profile photo" />
-        </div>
-      </div>
-      {msg && <div className="msg" role="status" style={{ marginTop: 12 }}>{msg}</div>}
-    </section>
   );
 }
 
