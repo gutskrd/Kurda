@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { FavoriteRef, ProfileBackground, ProfileIcon } from '../lib/types';
 import { flagUrl } from '../lib/countries';
-import { CosmeticBackground, IconOverlay } from './cosmetic-parts';
+import { CosmeticBackground, GiftedNote, IconOverlay } from './cosmetic-parts';
 import { PersonGlyph } from '../components/icons';
 
 /** Normalized data a MyKurda profile renders (self or another user). */
@@ -76,6 +76,7 @@ export function FullProfile({
                 <span>{view.country.name}</span>
               </div>
             )}
+            <GiftedNote background={view.background} icon={view.icon} />
           </div>
 
           <div className="mkp-level-col">

@@ -16,7 +16,7 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
-import { CosmeticBackground, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
+import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -194,6 +194,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           {premium && <PremiumPill />}
         </div>
         <div className="pcard-handle">@{username}</div>
+        <GiftedNote background={background} icon={icon} />
         {online && (
           <div className="pcard-online"><span className="presence-dot presence-dot-inline" /> Online</div>
         )}

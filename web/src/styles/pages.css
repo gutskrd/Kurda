@@ -4438,3 +4438,35 @@ a.mkp-activity-row:hover {
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* ---- who gave them what they are wearing --------------------------------- */
+
+/*
+ * A gift stops looking like a gift the moment it is equipped — it becomes
+ * indistinguishable from something bought. This is the card that came with it.
+ * Quiet on purpose: it is an attribution, not a badge to be won.
+ */
+.gifted-notes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gifted-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+.gifted-note svg {
+  flex: none;
+  color: var(--gold-ink);
+}
+.gifted-note strong {
+  color: var(--ink-2);
+  font-weight: 600;
+}

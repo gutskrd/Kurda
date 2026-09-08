@@ -14,6 +14,21 @@ import { useAuth } from '../auth/AuthProvider';
  */
 const POLL_MS = 60_000;
 
+/**
+ * Everyone currently showing the count.
+ *
+ * Opening the gifts and showing the badge are two different screens, so the one
+ * that clears the badge has no way to tell the one that draws it. Without this
+ * the badge went on insisting you had unopened gifts for up to a minute after
+ * you had opened them — which teaches people to ignore it.
+ */
+const watchers = new Set<() => void>();
+
+/** Say that the gift list has been read, so the badge stops claiming otherwise. */
+export function giftsWereOpened(): void {
+  for (const refresh of watchers) refresh();
+}
+
 export function useUnseenGifts(): number {
   const { client, status } = useAuth();
   const [count, setCount] = useState(0);
@@ -22,7 +37,9 @@ export function useUnseenGifts(): number {
   const refresh = useCallback(() => {
     if (!signedIn) return;
     void (async () => {
-      const res = await client.get<{ unseen: number }>('/me/gifts');
+      // the count alone: polled by every signed-in tab every minute, so it does
+      // not go and build the whole gift list with its joins to answer "any?"
+      const res = await client.get<{ unseen: number }>('/me/gifts/unseen');
       if (res.ok) setCount(res.data.unseen ?? 0);
     })();
   }, [client, signedIn]);
@@ -34,7 +51,11 @@ export function useUnseenGifts(): number {
     }
     refresh();
     const t = setInterval(refresh, POLL_MS);
-    return () => clearInterval(t);
+    watchers.add(refresh);
+    return () => {
+      clearInterval(t);
+      watchers.delete(refresh);
+    };
   }, [signedIn, refresh]);
 
   return count;

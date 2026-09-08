@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { CoinIcon, GiftIcon } from '../components/icons';
+import { giftsWereOpened } from '../shop/useUnseenGifts';
 
 /** A catalog tile: the item plus whether the viewer already owns it. */
 interface Tile {
@@ -268,7 +269,12 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
       setGifts(res.data.gifts);
       // reading the list IS opening them; anything else leaves a badge that
       // never clears no matter what you do
-      if (res.data.unseen > 0) await client.post('/me/gifts/seen');
+      if (res.data.unseen > 0) {
+        await client.post('/me/gifts/seen');
+        // and tell the badge, which is on another screen and would otherwise go
+        // on claiming there are unopened gifts until its next poll
+        giftsWereOpened();
+      }
     })();
     return () => {
       cancelled = true;

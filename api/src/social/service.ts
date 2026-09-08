@@ -165,6 +165,10 @@ export class SocialService {
       fs_status: string | null;
       favorite_poem_id: string | null;
       favorite_story_id: string | null;
+      bg_gifter_id: string | null;
+      bg_gifter_name: string | null;
+      ic_gifter_id: string | null;
+      ic_gifter_name: string | null;
     }>(
       // Single query: profile + stats + equipped cosmetics (with the owner's
       // ownership of each) + favorites. No N+1; the route resolves keys → URLs.
@@ -191,6 +195,8 @@ export class SocialService {
               bg.premium_only AS bg_premium, (ebg.user_id IS NOT NULL) AS bg_owned,
               ic.asset_key AS ic_asset, ic.category AS ic_cat, ic.active AS ic_active,
               ic.premium_only AS ic_premium, (eic.user_id IS NOT NULL) AS ic_owned,
+              bgg.id AS bg_gifter_id, bgg.username AS bg_gifter_name,
+              icg.id AS ic_gifter_id, icg.username AS ic_gifter_name,
               fp.title AS fp_title, fp.type AS fp_type, fp.status AS fp_status,
               fs.title AS fs_title, fs.type AS fs_type, fs.status AS fs_status
          FROM users u
@@ -201,6 +207,25 @@ export class SocialService {
          LEFT JOIN user_entitlements ebg ON ebg.user_id = u.id AND ebg.sku = u.equipped_background_sku
          LEFT JOIN shop_items ic ON ic.sku = u.equipped_icon_sku
          LEFT JOIN user_entitlements eic ON eic.user_id = u.id AND eic.sku = u.equipped_icon_sku
+         -- who sent each equipped item, when it arrived as a gift. LATERAL with
+         -- LIMIT 1 because the same SKU can have been gifted more than once over
+         -- time; the latest sender is the one who gave the one being worn.
+         LEFT JOIN LATERAL (
+           SELECT gu.id, gu.username
+             FROM gifts g
+             JOIN users gu ON gu.id = g.from_user_id
+            WHERE g.to_user_id = u.id AND g.sku = u.equipped_background_sku
+            ORDER BY g.created_at DESC
+            LIMIT 1
+         ) bgg ON true
+         LEFT JOIN LATERAL (
+           SELECT gu.id, gu.username
+             FROM gifts g
+             JOIN users gu ON gu.id = g.from_user_id
+            WHERE g.to_user_id = u.id AND g.sku = u.equipped_icon_sku
+            ORDER BY g.created_at DESC
+            LIMIT 1
+         ) icg ON true
          LEFT JOIN library_posts fp ON fp.id = u.favorite_poem_id
          LEFT JOIN library_posts fs ON fs.id = u.favorite_story_id
         WHERE u.id = $1 AND u.deleted_at IS NULL`,
@@ -239,6 +264,8 @@ export class SocialService {
           active: u.bg_active ?? false,
           premiumOnly: u.bg_premium ?? false,
           owned: u.bg_owned,
+          giftedBy:
+            u.bg_gifter_id && u.bg_gifter_name ? { id: u.bg_gifter_id, username: u.bg_gifter_name } : null,
         }
       : null;
     const icon: EquippedItem | null = u.equipped_icon_sku
@@ -249,6 +276,8 @@ export class SocialService {
           active: u.ic_active ?? false,
           premiumOnly: u.ic_premium ?? false,
           owned: u.ic_owned,
+          giftedBy:
+            u.ic_gifter_id && u.ic_gifter_name ? { id: u.ic_gifter_id, username: u.ic_gifter_name } : null,
         }
       : null;
     const favoritePoem: FavoriteRef | null =

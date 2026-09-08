@@ -142,6 +142,49 @@ describe.skipIf(!DATABASE_URL)('shop gifts (integration)', () => {
     expect((await call('GET', '/me/gifts', tokens.taker!)).json().unseen).toBe(0);
   });
 
+  /**
+   * The point of a gift is that it is seen to be from someone. Once equipped it
+   * is otherwise indistinguishable from something bought, so the profile has to
+   * carry the sender or the card has been thrown away with the wrapping.
+   */
+  it('names the sender on the profile once the gift is equipped', async () => {
+    // an equipped background only resolves when it has artwork to resolve to,
+    // and the shared test row was created without any
+    await pool.query(`UPDATE shop_items SET asset_key = 'backgrounds/background-01.webp' WHERE sku = $1`, [SKU]);
+    await pool.query(`UPDATE users SET equipped_background_sku = $1 WHERE id = $2`, [SKU, ids.taker!]);
+
+    const res = await call('GET', `/users/${ids.taker!}`, tokens.giver!);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().background?.giftedBy).toEqual({ id: ids.giver!, username: expect.stringContaining('gift_giver') });
+  });
+
+  it('says nothing about a gift on an item that was not one', async () => {
+    // bought outright rather than given: same shape, no sender
+    const bought = `bought_${suffix}`;
+    await pool.query(
+      `INSERT INTO shop_items (sku, name, category, currency, price, is_unique, active, in_stock, asset_key)
+       VALUES ($1, 'Bought Test Item', 'background', 'zer', 10, true, true, true, 'backgrounds/background-02.webp')`,
+      [bought],
+    );
+    await pool.query(
+      `INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1, $2, 'purchase')
+       ON CONFLICT DO NOTHING`,
+      [ids.taker!, bought],
+    );
+    await pool.query(`UPDATE users SET equipped_background_sku = $1 WHERE id = $2`, [bought, ids.taker!]);
+
+    const res = await call('GET', `/users/${ids.taker!}`, tokens.giver!);
+    expect(res.statusCode).toBe(200);
+    // the background really is there — otherwise this would pass by resolving
+    // to nothing at all, which proves nothing about gifts
+    expect(res.json().background?.sku).toBe(bought);
+    expect(res.json().background?.giftedBy ?? null).toBeNull();
+
+    // put the shared row back for the tests that follow
+    await pool.query(`UPDATE users SET equipped_background_sku = NULL WHERE id = $1`, [ids.taker!]);
+    await pool.query(`DELETE FROM shop_items WHERE sku = $1`, [bought]);
+  });
+
   it('refuses a gift to someone who is not a friend', async () => {
     // an unsolicited gift is a way to put your name in front of a stranger
     const res = await call('POST', '/shop/gift', tokens.giver!, {

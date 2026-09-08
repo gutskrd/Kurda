@@ -82,7 +82,41 @@ describe('resolveCosmetics — background access + fallback', () => {
       url,
       NOW,
     );
-    expect(r.background).toEqual({ sku: 'bg-x', assetKey: 'backgrounds/x.png', type: 'image', url: '/cosmetics/backgrounds/x.png' });
+    expect(r.background).toEqual({
+      sku: 'bg-x',
+      assetKey: 'backgrounds/x.png',
+      type: 'image',
+      url: '/cosmetics/backgrounds/x.png',
+      giftedBy: null,
+    });
+  });
+
+  /**
+   * A gift stops looking like a gift the moment it is equipped. Carrying the
+   * sender through is what lets a profile say who it came from.
+   */
+  it('carries the sender through when the item was a gift', () => {
+    const r = resolveCosmetics(
+      {
+        profilePhotoKey: null,
+        selectedAvatarKey: null,
+        premiumUntil: null,
+        background: bg({ owned: true, giftedBy: { id: 'u-1', username: 'rojin' } }),
+        icon: null,
+      },
+      url,
+      NOW,
+    );
+    expect(r.background?.giftedBy).toEqual({ id: 'u-1', username: 'rojin' });
+  });
+
+  it('says nothing when the item was bought rather than given', () => {
+    const r = resolveCosmetics(
+      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: bg({ owned: true }), icon: null },
+      url,
+      NOW,
+    );
+    expect(r.background?.giftedBy).toBeNull();
   });
   it('premium-only background: usable with active premium, gone when expired/none', () => {
     const raw = (premiumUntil: Date | null) => ({
@@ -118,7 +152,27 @@ describe('resolveCosmetics — icon', () => {
       url,
       NOW,
     );
-    expect(r.icon).toEqual({ sku: 'icon-x', assetKey: 'icons/x.png', url: '/cosmetics/icons/x.png' });
+    expect(r.icon).toEqual({
+      sku: 'icon-x',
+      assetKey: 'icons/x.png',
+      url: '/cosmetics/icons/x.png',
+      giftedBy: null,
+    });
+  });
+
+  it('carries the sender through for a gifted icon too', () => {
+    const r = resolveCosmetics(
+      {
+        profilePhotoKey: null,
+        selectedAvatarKey: null,
+        premiumUntil: null,
+        background: null,
+        icon: icon({ owned: true, giftedBy: { id: 'u-2', username: 'zana' } }),
+      },
+      url,
+      NOW,
+    );
+    expect(r.icon?.giftedBy).toEqual({ id: 'u-2', username: 'zana' });
   });
   it('premium-only icon disappears when premium is not active', () => {
     const r = resolveCosmetics(
