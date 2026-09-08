@@ -265,3 +265,102 @@ export function drawLayers(
     else drawStroke(ctx, layer, width, height);
   }
 }
+
+/* --- keeping things inside the picture ------------------------------------ */
+
+/**
+ * A context used only for measuring text, never for drawing.
+ *
+ * Text has no size until it has been laid out, and a layer has to be held
+ * inside the frame at the moment it is dragged rather than at the moment it is
+ * painted. Created once, lazily, and allowed to be null: without it the size is
+ * estimated instead, which is worse but never wrong enough to matter.
+ */
+let measurer: CanvasRenderingContext2D | null | undefined;
+function measuringContext(): CanvasRenderingContext2D | null {
+  if (measurer === undefined) {
+    try {
+      measurer = document.createElement('canvas').getContext('2d');
+    } catch {
+      measurer = null;
+    }
+  }
+  return measurer;
+}
+
+/**
+ * How big a layer is drawn, in pixels, before it is turned.
+ *
+ * Deliberately mirrors `drawText` and `drawSticker` — if those change, this has
+ * to change with them, because a box that does not match what is painted is
+ * worse than no box at all.
+ */
+export function layerBox(layer: PlacedLayer, width: number, height: number): { w: number; h: number } {
+  const shortEdge = Math.min(width, height);
+
+  if (layer.kind === 'sticker') {
+    const px = Math.round(shortEdge * layer.size);
+    const img = layer.src ? stickerImage(layer.src) : null;
+    if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
+      // `px` is the longest edge, so a tall sticker and a wide one at the same
+      // setting take up the same amount of picture
+      const scale = px / Math.max(img.naturalWidth, img.naturalHeight);
+      return { w: img.naturalWidth * scale, h: img.naturalHeight * scale };
+    }
+    return { w: px, h: px };
+  }
+
+  const fontPx = Math.round(shortEdge * layer.size);
+  const lineHeight = Math.round(fontPx * 1.22);
+  const pad = Math.round(fontPx * 0.34);
+  const ctx = measuringContext();
+
+  let lines: string[];
+  let blockWidth: number;
+  if (ctx) {
+    ctx.font = `600 ${fontPx}px ${fontStack(layer.font)}`;
+    lines = layoutLines(ctx, layer.value, width * 0.86);
+    blockWidth = Math.max(0, ...lines.map((l) => ctx.measureText(l).width));
+  } else {
+    // no canvas to ask: assume an average glyph a little over half the font size
+    lines = layer.value.split('\n');
+    blockWidth = Math.min(width * 0.86, Math.max(...lines.map((l) => l.length)) * fontPx * 0.55);
+  }
+
+  const blockHeight = Math.max(1, lines.length) * lineHeight;
+  // the plate is what you actually see the edge of, so it is what must fit
+  return layer.plate
+    ? { w: blockWidth + pad * 2, h: blockHeight + pad * 1.4 }
+    : { w: blockWidth, h: blockHeight };
+}
+
+/**
+ * Hold a layer inside the picture.
+ *
+ * `clampLayer` keeps the *centre* between 0 and 1, which lets half of a sticker
+ * hang off the edge — and on export that half is simply gone. This clamps the
+ * box instead, so what you place is what gets posted.
+ *
+ * A turned layer needs more room than an upright one: the bounding box of a
+ * rotated rectangle grows by |cos| and |sin| of the angle, which is why the two
+ * axes are mixed together below.
+ *
+ * Something genuinely bigger than the picture is centred rather than jammed
+ * against an edge — there is no position that fits it, and the middle is the
+ * least surprising place for it to be.
+ */
+export function keepInside(layer: PlacedLayer, width: number, height: number): PlacedLayer {
+  if (width <= 0 || height <= 0) return layer;
+  const box = layerBox(layer, width, height);
+  const radians = (layer.rotation * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
+  const halfW = (box.w / 2) * cos + (box.h / 2) * sin;
+  const halfH = (box.w / 2) * sin + (box.h / 2) * cos;
+
+  const marginX = halfW / width;
+  const marginY = halfH / height;
+  const x = marginX * 2 >= 1 ? 0.5 : clamp(layer.x, marginX, 1 - marginX);
+  const y = marginY * 2 >= 1 ? 0.5 : clamp(layer.y, marginY, 1 - marginY);
+  return x === layer.x && y === layer.y ? layer : { ...layer, x, y };
+}

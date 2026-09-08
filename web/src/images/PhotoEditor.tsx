@@ -6,6 +6,7 @@ import {
   STROKE_RANGE,
   clampLayer,
   isPlaced,
+  keepInside,
   newId,
   signatureBox,
   type Layer,
@@ -115,13 +116,25 @@ export function PhotoEditor({
   /* --- ways to change the document ------------------------------------- */
   const setLayers = (layers: Layer[]): void => history.set({ ...doc, layers });
   const previewLayers = (layers: Layer[]): void => history.preview({ ...doc, layers });
+  /**
+   * Change one layer, and keep it inside the picture.
+   *
+   * Every route to moving, resizing or turning something goes through here, so
+   * this is the one place that has to hold the box inside the frame. Anything
+   * hanging over the edge is simply cut off on export, so what is placed here
+   * would not be what gets posted.
+   */
   const patch = (id: string, p: Partial<PlacedLayer>, live = false): void => {
-    const next = doc.layers.map((l) => (isPlaced(l) && l.id === id ? clampLayer({ ...l, ...p } as Layer) : l));
+    const next = doc.layers.map((l) =>
+      isPlaced(l) && l.id === id
+        ? keepInside(clampLayer({ ...l, ...p } as Layer) as PlacedLayer, size.width, size.height)
+        : l,
+    );
     if (live) previewLayers(next);
     else setLayers(next);
   };
   const add = (layer: Layer): void => {
-    setLayers([...doc.layers, layer]);
+    setLayers([...doc.layers, isPlaced(layer) ? keepInside(layer, size.width, size.height) : layer]);
     if (layer.kind !== 'stroke') setSelectedId(layer.id);
     setMode('move');
   };
@@ -237,6 +250,21 @@ export function PhotoEditor({
     if (wasGesture) history.settle();
   }
 
+  /**
+   * The document with a different shape, and everything on it pulled back
+   * inside. A tall crop is narrower than a wide one, so words that fitted
+   * before may not fit now — leaving them where they were would push them off
+   * the edge without anyone touching them.
+   */
+  const reshaped = (aspectKey: string): Composition => {
+    const next = { ...doc, aspectKey };
+    const fitted = outputSize(iw, ih, aspectOf(next, iw, ih), next.frame);
+    return {
+      ...next,
+      layers: next.layers.map((l) => (isPlaced(l) ? keepInside(l, fitted.width, fitted.height) : l)),
+    };
+  };
+
   const sig = signatureBox(size.width, size.height, handle);
 
   return (
@@ -342,7 +370,7 @@ export function PhotoEditor({
                 type="button"
                 className={`seg-btn${doc.aspectKey === a.key ? ' is-active' : ''}`}
                 aria-pressed={doc.aspectKey === a.key}
-                onClick={() => history.set({ ...doc, aspectKey: a.key })}
+                onClick={() => history.set(reshaped(a.key))}
               >
                 {a.label}
               </button>
