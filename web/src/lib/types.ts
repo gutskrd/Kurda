@@ -55,11 +55,18 @@ export interface StreakSummary {
  * and turned the R2 key into a ready-to-render URL). `type` picks the element:
  * image/gif → <img>, video → <video>.
  */
+/** Who sent an equipped item, when it arrived as a gift rather than a purchase. */
+export interface Gifter {
+  id: string;
+  username: string;
+}
+
 export interface ProfileBackground {
   sku: string;
   assetKey: string;
   type: 'image' | 'gif' | 'video';
   url: string;
+  giftedBy?: Gifter | null;
 }
 
 /** A resolved equipped icon (web-static URL). */
@@ -67,6 +74,7 @@ export interface ProfileIcon {
   sku: string;
   assetKey: string;
   url: string;
+  giftedBy?: Gifter | null;
 }
 
 /**

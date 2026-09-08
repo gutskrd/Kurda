@@ -166,6 +166,17 @@ export function registerShopRoutes(
     unseen: await shop.unseenGiftCount(req.user!.id),
   }));
 
+  /**
+   * Just the count.
+   *
+   * Every signed-in tab asks for this once a minute to draw the badge, and the
+   * full list joins shop_items and users for up to fifty rows to answer a
+   * question that is really "any?".
+   */
+  app.get('/me/gifts/unseen', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+    unseen: await shop.unseenGiftCount(req.user!.id),
+  }));
+
   /** Mark received gifts as opened (clears the badge). */
   app.post('/me/gifts/seen', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
     seen: await shop.markGiftsSeen(req.user!.id),

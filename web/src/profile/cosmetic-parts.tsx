@@ -1,4 +1,5 @@
 import type { LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
+import { GiftIcon } from '../components/icons';
 
 /**
  * Shared cosmetic render parts used by both the profile popup and the full
@@ -69,5 +70,42 @@ export function IconOverlay({ icon }: { icon: ProfileIcon }): React.JSX.Element 
       role="img"
       aria-label="Premium profile icon"
     />
+  );
+}
+
+/**
+ * Who gave them what they are wearing.
+ *
+ * Half the point of a gift is that it is seen to be from someone. Without this
+ * a gifted background is indistinguishable from a bought one the moment it is
+ * equipped, which is a present with the card thrown away.
+ *
+ * Shown on both profile surfaces from one component, so the two cannot drift.
+ * Nothing is rendered when nothing was gifted — an empty line saying so would
+ * only be noise on the great majority of profiles.
+ */
+export function GiftedNote({
+  background,
+  icon,
+}: {
+  background?: ProfileBackground | null;
+  icon?: ProfileIcon | null;
+}): React.JSX.Element | null {
+  const notes: Array<{ what: string; from: string }> = [];
+  if (background?.giftedBy) notes.push({ what: 'Background', from: background.giftedBy.username });
+  if (icon?.giftedBy) notes.push({ what: 'Icon', from: icon.giftedBy.username });
+  if (notes.length === 0) return null;
+
+  return (
+    <ul className="gifted-notes">
+      {notes.map((n) => (
+        <li key={n.what} className="gifted-note">
+          <GiftIcon size={14} />
+          <span>
+            {n.what} gifted by <strong>@{n.from}</strong>
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

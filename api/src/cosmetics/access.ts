@@ -12,6 +12,18 @@
 import { levelForXp, xpForLevel } from '../tags/level.js';
 import { avatarAssetUrl, effectiveAvatarKey } from './avatars.js';
 
+/**
+ * Who gave someone the thing they are wearing.
+ *
+ * Half the point of a gift is that it is seen to be from someone. An item that
+ * arrives and then looks exactly like one that was bought is a present with the
+ * card thrown away.
+ */
+export interface Gifter {
+  id: string;
+  username: string;
+}
+
 /** An equipped catalog item joined with the viewer's ownership of it. */
 export interface EquippedItem {
   sku: string;
@@ -21,6 +33,8 @@ export interface EquippedItem {
   premiumOnly: boolean;
   /** the profile owner owns this SKU via user_entitlements */
   owned: boolean;
+  /** the friend who sent it, when this item arrived as a gift */
+  giftedBy?: Gifter | null;
 }
 
 export interface CosmeticRaw {
@@ -38,11 +52,13 @@ export interface ResolvedBackground {
   assetKey: string;
   type: 'image' | 'gif' | 'video';
   url: string;
+  giftedBy: Gifter | null;
 }
 export interface ResolvedIcon {
   sku: string;
   assetKey: string;
   url: string;
+  giftedBy: Gifter | null;
 }
 export interface ResolvedCosmetics {
   avatarUrl: string | null;
@@ -146,6 +162,7 @@ export function resolveCosmetics(
       assetKey: raw.background.assetKey,
       type: bgType(raw.background.assetKey),
       url: `${STATIC_BASE}/${raw.background.assetKey}`,
+      giftedBy: raw.background.giftedBy ?? null,
     };
   }
 
@@ -153,7 +170,12 @@ export function resolveCosmetics(
   // visibility toggle (default on) gates rendering; access still required
   if (raw.premiumIconEnabled !== false && raw.icon && raw.icon.assetKey && hasAccess(raw.icon, premium)) {
     // icons are web-static: assetKey is like "icons/accessoire-icon-01.png"
-    icon = { sku: raw.icon.sku, assetKey: raw.icon.assetKey, url: `${STATIC_BASE}/${raw.icon.assetKey}` };
+    icon = {
+      sku: raw.icon.sku,
+      assetKey: raw.icon.assetKey,
+      url: `${STATIC_BASE}/${raw.icon.assetKey}`,
+      giftedBy: raw.icon.giftedBy ?? null,
+    };
   }
 
   return { avatarUrl, background, icon, premium };
