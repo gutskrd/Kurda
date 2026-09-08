@@ -1,4 +1,21 @@
 /* ---- top navigation (desktop-first) ------------------------------------ */
+
+/*
+ * The bar is allowed wider than the page it sits over.
+ *
+ * The content column is capped at 1120px so long lines stay readable, but the
+ * navigation is not a column of text — pinning it to the same cap left a wide
+ * screen with the brand and everything you own huddled in the middle and empty
+ * space either side. It gets a wider cap of its own — the container already
+ * carries its own side padding, so no viewport arithmetic is needed (and none
+ * is wanted: `100vw` counts the scrollbar, which is what made the page draggable
+ * sideways in the first place).
+ */
+@media (min-width: 1180px) {
+  .nav .container.nav-inner {
+    max-width: 1440px;
+  }
+}
 .nav {
   position: sticky;
   top: 0;
@@ -47,10 +64,17 @@
 .nav-spacer {
   flex: 1;
 }
+/*
+ * What you have, on the right.
+ *
+ * Given room to breathe: the purse, the shop and your face were shoulder to
+ * shoulder at the same 10px that separates the nav links, which read as one
+ * crowded clump rather than as three separate things.
+ */
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 .nav-icon-btn {
   width: 40px;

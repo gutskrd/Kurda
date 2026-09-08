@@ -473,9 +473,13 @@ a.rank-name:hover {
   object-fit: contain;
 }
 
+/* more than one of these can appear at once — add friend, message, view — and
+   with no gap they sit against each other as one undifferentiated slab */
 .profile-actions {
   margin-top: 22px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
 }
 
@@ -539,7 +543,12 @@ a.rank-name:hover {
   max-width: none;
   aspect-ratio: auto;
   min-width: 0;
-  padding: 6px 0 0;
+  /*
+   * No padding at the top. There used to be six pixels of it, which is six
+   * pixels of equipped background showing above the picture — a bright strip
+   * across the top of every card belonging to someone with a background on.
+   */
+  padding: 0;
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -575,6 +584,30 @@ a.rank-name:hover {
   inset: 0;
   background: linear-gradient(to bottom, transparent 45%, rgba(14, 16, 22, 0.85));
   pointer-events: none;
+}
+
+/*
+ * On the popup the picture is the top of the card, so it takes the card's own
+ * corners at the top and none at the bottom — square, because the bottom is not
+ * an edge any more, it is where the picture stops being a picture.
+ *
+ * The fade is a mask on the image rather than a wash laid over it. A wash can
+ * only fade towards a colour it has to name, which paints over the background
+ * behind it; a mask takes the picture away and lets whatever is behind come
+ * through, which is what fading into the background means.
+ */
+.pcard-modal .pcard-photo {
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border: 0;
+}
+.pcard-modal .pcard-photo-img,
+.pcard-modal .pcard-photo-glyph {
+  -webkit-mask-image: linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0.35) 84%, transparent);
+  mask-image: linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0.35) 84%, transparent);
+}
+/* the wash is only there to keep the name legible, so it stops well short */
+.pcard-modal .pcard-photo::after {
+  background: linear-gradient(to bottom, transparent 62%, rgba(14, 16, 22, 0.45));
 }
 .pcard-photo-img {
   width: 100%;
@@ -629,6 +662,9 @@ a.rank-name:hover {
   object-fit: cover;
   border-radius: var(--r-lg);
   opacity: 0.5;
+  /* it is a photograph being shown small: let the browser scale it properly
+     rather than with the fast filter it uses for decorative fills */
+  image-rendering: auto;
   z-index: 0;
   pointer-events: none;
 }
@@ -1786,12 +1822,20 @@ button.feature {
  * No filter, no transform, no downscaling: an animated GIF is served and painted
  * at its own resolution, exactly as before.
  */
+/*
+ * Pinned with `right` rather than `width: 100vw`.
+ *
+ * `100vw` is the viewport including the scrollbar gutter, so a fixed element at
+ * `left: 0; width: 100vw` reaches past the right edge by the width of the
+ * scrollbar — which is a page you can drag sideways. `left: 0; right: 0` is the
+ * viewport as it actually is.
+ */
 .mkp-bg,
 .mkp-scrim {
   position: fixed;
   top: var(--nav-h);
   left: 0;
-  width: 100vw;
+  right: 0;
   /* dvh so a phone's collapsing URL bar cannot expose a strip underneath */
   height: calc(100dvh - var(--nav-h));
   z-index: 0;
@@ -4242,6 +4286,19 @@ a.mkp-activity-row:hover {
 .sticker-grid-pics {
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
+}
+/*
+ * `min-width: 0` is load-bearing.
+ *
+ * A grid track of `1fr` is `minmax(auto, 1fr)`, and that `auto` floors at the
+ * item's min-content width — which for a tile holding an image is the image's
+ * intrinsic width, `max-width: 100%` notwithstanding. So the tracks refused to
+ * shrink, the row overflowed its grid, and on a 375px phone the last Kurdish
+ * mark sat off the edge of the screen where nobody could reach it.
+ */
+.sticker,
+.sticker-pic {
+  min-width: 0;
 }
 .sticker-pic {
   display: grid;
