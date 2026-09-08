@@ -266,6 +266,24 @@ export function drawLayers(
   }
 }
 
+/**
+ * Ask for pointer capture, and carry on without it if it is refused.
+ *
+ * Capture is what keeps a drag working when the pointer leaves the element it
+ * started on. It is an optimisation, not a requirement — but calling it throws
+ * rather than returning false when the browser has no active pointer with that
+ * id, and an exception here would abandon the gesture before it had recorded
+ * where it started. A drag that follows the pointer only while it stays over
+ * the handle is a poor drag; one that does nothing at all is a broken control.
+ */
+export function captureIfPossible(target: Element, pointerId: number): void {
+  try {
+    target.setPointerCapture(pointerId);
+  } catch {
+    // no active pointer with that id — the gesture still works, uncaptured
+  }
+}
+
 /* --- keeping things inside the picture ------------------------------------ */
 
 /**
