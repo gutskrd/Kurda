@@ -98,17 +98,21 @@ export function applyGrade(data: Uint8ClampedArray, width: number, height: numbe
  * kept — stretching a flag to the shape of the crop would be worse than not
  * having one.
  *
- * Nothing is drawn if the artwork has not loaded; the editor asks for it and
- * redraws when it arrives, and the export waits for it before composing.
+ * Returns whether it actually drew. That matters: the graded picture is cached,
+ * and caching one that is missing its overlay because the artwork had not
+ * arrived yet would freeze the gap in place — the next draw would hit the cache
+ * and hand back the same incomplete picture for ever.
  */
 export function drawOverlay(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   overlay: Overlay,
-): void {
+): boolean {
   const art = stickerImage(overlay.src);
-  if (!art || overlay.opacity <= 0 || art.naturalWidth === 0 || art.naturalHeight === 0) return;
+  if (!art || art.naturalWidth === 0 || art.naturalHeight === 0) return false;
+  // a fully transparent overlay is nothing to draw, but it is not unfinished
+  if (overlay.opacity <= 0) return true;
   const ratio = art.naturalHeight / art.naturalWidth;
   let w = width * overlay.widthShare;
   let h = w * ratio;
@@ -123,6 +127,7 @@ export function drawOverlay(
   ctx.globalAlpha = Math.min(1, overlay.opacity);
   ctx.drawImage(art, width - w, 0, w, h);
   ctx.restore();
+  return true;
 }
 
 /**
@@ -216,11 +221,12 @@ function gradedPhoto(
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(image, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height);
 
+  let complete = true;
   try {
     const pixels = ctx.getImageData(0, 0, width, height);
     applyGrade(pixels.data, width, height, grade);
     ctx.putImageData(pixels, 0, 0);
-    if (grade.overlay) drawOverlay(ctx, width, height, grade.overlay);
+    if (grade.overlay) complete = drawOverlay(ctx, width, height, grade.overlay);
   } catch {
     // reading pixels back is refused on a tainted canvas. Our source is the
     // person's own file so this should not happen, but an ungraded picture
@@ -229,7 +235,9 @@ function gradedPhoto(
     return null;
   }
 
-  graded = { key, canvas };
+  // only remember a finished picture. An unfinished one is handed back to be
+  // shown now and drawn again the moment its artwork arrives.
+  graded = complete ? { key, canvas } : null;
   return canvas;
 }
 

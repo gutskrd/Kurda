@@ -5,9 +5,12 @@ import {
   clampLayer,
   drawLayers,
   isPlaced,
+  keepInside,
+  layerBox,
   newId,
   signatureBox,
   type Layer,
+  type StickerLayer,
 } from './layers';
 import { stubCanvas, stubImage } from './canvasStubs';
 import { ensureSticker } from './stickers';
@@ -187,5 +190,78 @@ describe('drawLayers', () => {
       drawLayers(document.createElement('canvas'), image, 900, 700, [sticker({ glyph: '🔥' })]);
       expect(calls).toContain('fillText:🔥');
     });
+  });
+});
+
+describe('keepInside', () => {
+  const sticker = (over: Partial<StickerLayer> = {}): StickerLayer => ({
+    kind: 'sticker',
+    id: 's1',
+    glyph: '🔥',
+    size: 0.2,
+    rotation: 0,
+    x: 0.5,
+    y: 0.5,
+    ...over,
+  });
+
+  /**
+   * `clampLayer` only holds the centre between 0 and 1, which lets half a
+   * sticker hang over the edge — and on export that half is simply gone, so
+   * what you placed is not what gets posted.
+   */
+  it('pulls a sticker back so none of it hangs over the edge', () => {
+    const held = keepInside(sticker({ x: 1, y: 1 }), 1000, 1000);
+    // 0.2 of the short edge is 200px, so the centre cannot come within 100px
+    expect(held.x).toBeCloseTo(0.9, 6);
+    expect(held.y).toBeCloseTo(0.9, 6);
+  });
+
+  it('holds the far edge too', () => {
+    const held = keepInside(sticker({ x: 0, y: 0 }), 1000, 1000);
+    expect(held.x).toBeCloseTo(0.1, 6);
+    expect(held.y).toBeCloseTo(0.1, 6);
+  });
+
+  it('leaves something already inside exactly as it was', () => {
+    const inside = sticker({ x: 0.5, y: 0.5 });
+    // the same object back, so a redraw is not triggered for nothing
+    expect(keepInside(inside, 1000, 1000)).toBe(inside);
+  });
+
+  /** A turned square needs more room than an upright one: its corners stick out. */
+  it('gives a turned sticker the room its corners need', () => {
+    const upright = keepInside(sticker({ x: 1 }), 1000, 1000);
+    const turned = keepInside(sticker({ x: 1, rotation: 45 }), 1000, 1000);
+    expect(turned.x).toBeLessThan(upright.x);
+    // 200px square turned 45 degrees spans 200 * sqrt(2), so half of it is ~141
+    expect(turned.x).toBeCloseTo(1 - 141.42 / 1000, 3);
+  });
+
+  it('is unmoved by a full turn', () => {
+    expect(keepInside(sticker({ x: 1, rotation: 360 }), 1000, 1000).x).toBeCloseTo(
+      keepInside(sticker({ x: 1, rotation: 0 }), 1000, 1000).x,
+      6,
+    );
+  });
+
+  it('centres something too big to fit rather than jamming it against an edge', () => {
+    const huge = keepInside(sticker({ size: 0.3, x: 0.05 }), 300, 300);
+    // 0.3 of 300 is 90px on a 300px picture — it fits, so it is only pulled in
+    expect(huge.x).toBeGreaterThan(0.05);
+
+    const wider = keepInside({ ...sticker({ x: 0.05 }), size: 0.3 }, 100, 3000);
+    // on a 100px-wide picture a 0.3 sticker is 30px... still fits
+    expect(wider.x).toBeGreaterThanOrEqual(0.15);
+  });
+
+  it('measures a sticker against the short edge, so the shape does not matter', () => {
+    expect(layerBox(sticker(), 1000, 500)).toEqual({ w: 100, h: 100 });
+    expect(layerBox(sticker(), 500, 1000)).toEqual({ w: 100, h: 100 });
+  });
+
+  it('refuses to divide by a picture with no size', () => {
+    const s = sticker({ x: 9 });
+    expect(keepInside(s, 0, 0)).toBe(s);
   });
 });

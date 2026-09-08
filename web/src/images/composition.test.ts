@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { aspectOf, outputSize, UNTOUCHED, type Composition } from './composition';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { aspectOf, drawOverlay, outputSize, UNTOUCHED, type Composition } from './composition';
+import type { Overlay } from './filters';
+import { ensureSticker } from './stickers';
+import { stubImage } from './canvasStubs';
 import { MIN_EXPORT_EDGE, WHOLE_PICTURE, ZOOM_RANGE, cropRect, maxZoomFor } from './frame';
 import { MAX_EDGE } from './photoText';
 
@@ -102,5 +105,107 @@ describe('aspectOf', () => {
 
   it('survives a key that is no longer in the list', () => {
     expect(aspectOf({ ...UNTOUCHED, aspectKey: 'gone' }, 1000, 500)).toBeCloseTo(2, 6);
+  });
+});
+
+describe('drawOverlay', () => {
+  interface Drawn {
+    left: number;
+    top: number;
+    w: number;
+    h: number;
+    alpha: number;
+  }
+
+  function fakeCanvas(): { ctx: CanvasRenderingContext2D; drawn: Drawn[] } {
+    const drawn: Drawn[] = [];
+    const ctx = {
+      globalAlpha: 1,
+      save() {},
+      restore() {},
+      drawImage(_img: unknown, left: number, top: number, w: number, h: number) {
+        drawn.push({ left, top, w, h, alpha: (this as { globalAlpha: number }).globalAlpha });
+      },
+    };
+    return { ctx: ctx as unknown as CanvasRenderingContext2D, drawn };
+  }
+
+  const overlay = (over: Partial<Overlay> = {}): Overlay => ({
+    src: '/filters/test-flag.webp',
+    widthShare: 0.6,
+    maxHeightShare: 0.6,
+    opacity: 1,
+    ...over,
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * The bug this guards. The graded picture is cached, and the artwork loads
+   * asynchronously — so the first draw happens before the flag exists. If that
+   * counted as finished it would be cached, and every later draw would hit the
+   * cache and hand back the same flagless picture for ever. The flag could
+   * never appear, however long you waited.
+   */
+  it('reports itself unfinished when the artwork has not arrived', () => {
+    const { ctx, drawn } = fakeCanvas();
+    expect(drawOverlay(ctx, 800, 600, overlay())).toBe(false);
+    expect(drawn).toEqual([]);
+  });
+
+  it('draws, and reports itself finished, once the artwork is there', async () => {
+    stubImage({ width: 1000, height: 1000 });
+    await ensureSticker('/filters/test-flag.webp');
+    const { ctx, drawn } = fakeCanvas();
+
+    expect(drawOverlay(ctx, 800, 600, overlay())).toBe(true);
+    expect(drawn).toHaveLength(1);
+  });
+
+  it('counts a fully faded overlay as finished, not as missing', async () => {
+    stubImage();
+    await ensureSticker('/filters/test-flag.webp');
+    const { ctx, drawn } = fakeCanvas();
+    // strength turned to zero: there is nothing to draw, but nothing is pending
+    expect(drawOverlay(ctx, 800, 600, overlay({ opacity: 0 }))).toBe(true);
+    expect(drawn).toEqual([]);
+  });
+
+  it('anchors it to the top right corner', async () => {
+    stubImage({ width: 1000, height: 1000 });
+    await ensureSticker('/filters/test-flag.webp');
+    const { ctx, drawn } = fakeCanvas();
+    drawOverlay(ctx, 800, 600, overlay());
+    expect(drawn[0]!.top).toBe(0);
+    expect(drawn[0]!.left + drawn[0]!.w).toBeCloseTo(800, 6);
+  });
+
+  /**
+   * Sized by width alone, a nearly square artwork hangs off the bottom of a
+   * landscape crop — and a canvas clips that without saying so, which would
+   * quietly cost the flag its lower half on the shape most photographs are.
+   */
+  it('shrinks rather than overflowing a wide picture', async () => {
+    stubImage({ width: 1000, height: 1000 });
+    await ensureSticker('/filters/test-flag.webp');
+    const { ctx, drawn } = fakeCanvas();
+
+    // 0.6 of 800 is 480 wide, which on a square artwork would be 480 tall —
+    // taller than 0.6 of a 600px picture
+    drawOverlay(ctx, 800, 600, overlay());
+    expect(drawn[0]!.h).toBeLessThanOrEqual(600 * 0.6 + 0.001);
+    expect(drawn[0]!.w).toBeLessThan(800 * 0.6);
+    // and the proportions survive it
+    expect(drawn[0]!.w / drawn[0]!.h).toBeCloseTo(1, 6);
+  });
+
+  it('carries the strength through as opacity', async () => {
+    stubImage();
+    await ensureSticker('/filters/test-flag.webp');
+    const { ctx, drawn } = fakeCanvas();
+    drawOverlay(ctx, 400, 400, overlay({ opacity: 0.35 }));
+    expect(drawn[0]!.alpha).toBeCloseTo(0.35, 6);
   });
 });
