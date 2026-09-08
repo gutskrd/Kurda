@@ -1,0 +1,13 @@
+Emoji artwork in this directory is from Noto Color Emoji.
+
+  Source:    https://github.com/googlefonts/noto-emoji
+  Copyright: Google Inc.
+  Licence:   SIL Open Font License, Version 1.1
+             https://scripts.sil.org/OFL
+
+The images are PNG renderings from that project, resized and re-encoded as
+WebP for delivery. No changes were made to the artwork itself.
+
+Why not Apple's emoji: Apple Color Emoji is not licensed for use off Apple's
+own platforms, so it cannot be bundled with a web application. Noto is the
+closest freely redistributable set.

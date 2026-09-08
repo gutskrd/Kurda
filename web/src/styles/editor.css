@@ -194,3 +194,37 @@
   width: 100%;
   max-width: 260px;
 }
+
+/* ---- the sticker picker ------------------------------------------------- */
+
+/*
+ * Emoji are small and there are fifty-six of them, so they get a denser grid
+ * than the seven marks do, and a ceiling with a scrollbar rather than a panel
+ * that pushes the photograph off the screen.
+ */
+.sticker-grid-emoji {
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  max-height: 216px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+.sticker-grid-emoji .sticker-pic {
+  padding: 3px;
+  /* the chequer is there to keep a white mark visible; an emoji is never white
+     on transparent, and at this size it only makes the grid look noisy */
+  background: none;
+}
+.sticker-grid-emoji .sticker-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 560px) {
+  .sticker-grid-emoji {
+    grid-template-columns: repeat(6, 1fr);
+    max-height: 184px;
+  }
+}

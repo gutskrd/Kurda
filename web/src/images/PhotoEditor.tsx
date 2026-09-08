@@ -27,7 +27,7 @@ import {
   TextIcon,
   UndoIcon,
 } from '../components/icons';
-import { EMOJI_STICKERS, PICTURE_STICKERS, ensureSticker } from './stickers';
+import { EMOJI_STICKERS, PICTURE_STICKERS, emojiSrc, ensureSticker } from './stickers';
 
 type Mode = 'frame' | 'move' | 'draw';
 
@@ -78,6 +78,15 @@ export function PhotoEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>('frame');
   const [stickerTab, setStickerTab] = useState<'marks' | 'emoji'>('marks');
+  /**
+   * The sticker picker, and what choosing one will do.
+   *
+   * Adding a sticker used to drop a fixed one onto the picture and leave you to
+   * find the grid that changed it into the one you wanted — two steps, in the
+   * wrong order, with a wrong sticker on your photograph in between. Now the
+   * picker opens first and what you click is what you get.
+   */
+  const [picker, setPicker] = useState<null | { mode: 'add' } | { mode: 'replace'; id: string }>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [color, setColor] = useState('#ffffff');
   const [strokeWidth, setStrokeWidth] = useState(0.012);
@@ -102,6 +111,18 @@ export function PhotoEditor({
     if (layer.kind !== 'stroke') setSelectedId(layer.id);
     setMode('move');
   };
+  /** Put the chosen sticker where the picker was opened for. */
+  const chooseSticker = (src: string, glyph: string): void => {
+    const target = picker;
+    if (!target) return;
+    // decoded before it lands, so the first draw after it has something to draw
+    void ensureSticker(src).then(() => {
+      if (target.mode === 'replace') patch(target.id, { src, glyph });
+      else add({ kind: 'sticker', id: newId(), glyph, src, size: 0.18, rotation: 0, x: 0.5, y: 0.4 });
+      setPicker(null);
+    });
+  };
+
   const remove = (id: string): void => {
     setLayers(doc.layers.filter((l) => l.id !== id));
     setSelectedId(null);
@@ -321,13 +342,8 @@ export function PhotoEditor({
           <button
             type="button"
             className="editor-add"
-            onClick={() => {
-              // a mark by default, matching the tab the picker opens on
-              const first = PICTURE_STICKERS[0]!;
-              void ensureSticker(first.src).then(() =>
-                add({ kind: 'sticker', id: newId(), glyph: '❤️', src: first.src, size: 0.18, rotation: 0, x: 0.5, y: 0.4 }),
-              );
-            }}
+            aria-expanded={picker !== null}
+            onClick={() => setPicker({ mode: 'add' })}
           >
             <FeatherIcon size={16} /> Add a sticker
           </button>
@@ -336,6 +352,76 @@ export function PhotoEditor({
               <PhotoIcon size={16} /> Clear all
             </button>
           )}
+        </div>
+      )}
+
+      {mode === 'move' && picker && (
+        <div className="editor-panel">
+          <div className="editor-panel-head">
+            <span className="editor-panel-title">
+              {picker.mode === 'replace' ? 'Swap the sticker' : 'Pick a sticker'}
+            </span>
+            <button
+              type="button"
+              className="editor-remove"
+              onClick={() => setPicker(null)}
+              aria-label="Close the sticker picker"
+            >
+              <CloseIcon size={16} />
+            </button>
+          </div>
+
+          {/* two kinds, because fifty-six emoji would bury seven marks in one grid */}
+          <div className="seg seg-sub" role="group" aria-label="Sticker kind">
+            <button
+              type="button"
+              className={`seg-btn${stickerTab === 'marks' ? ' is-active' : ''}`}
+              aria-pressed={stickerTab === 'marks'}
+              onClick={() => setStickerTab('marks')}
+            >
+              Nîşan
+            </button>
+            <button
+              type="button"
+              className={`seg-btn${stickerTab === 'emoji' ? ' is-active' : ''}`}
+              aria-pressed={stickerTab === 'emoji'}
+              onClick={() => setStickerTab('emoji')}
+            >
+              Emoji
+            </button>
+          </div>
+
+          <div
+            className={`sticker-grid ${stickerTab === 'marks' ? 'sticker-grid-pics' : 'sticker-grid-emoji'}`}
+            role="group"
+            aria-label="Stickers"
+          >
+            {stickerTab === 'marks'
+              ? PICTURE_STICKERS.map((p) => (
+                  <button
+                    key={p.src}
+                    type="button"
+                    className="sticker sticker-pic"
+                    aria-label={p.name}
+                    title={p.name}
+                    onClick={() => chooseSticker(p.src, p.name)}
+                  >
+                    <img src={p.src} alt="" />
+                  </button>
+                ))
+              : EMOJI_STICKERS.map((e) => (
+                  <button
+                    key={e.key}
+                    type="button"
+                    className="sticker sticker-pic"
+                    aria-label={e.glyph}
+                    title={e.glyph}
+                    onClick={() => chooseSticker(emojiSrc(e.key), e.glyph)}
+                  >
+                    <img src={emojiSrc(e.key)} alt="" loading="lazy" />
+                  </button>
+                ))}
+          </div>
         </div>
       )}
 
@@ -356,7 +442,7 @@ export function PhotoEditor({
         </div>
       )}
 
-      {mode === 'move' && selected && (
+      {mode === 'move' && selected && !picker && (
         <div className="editor-panel">
           <div className="editor-panel-head">
             <span className="editor-panel-title">{selected.kind === 'text' ? 'Words' : 'Sticker'}</span>
@@ -402,65 +488,13 @@ export function PhotoEditor({
               </label>
             </>
           ) : (
-            <>
-              {/* two kinds of sticker, and a hundred emoji would bury seven
-                  marks if they shared one grid */}
-              <div className="seg seg-sub" role="group" aria-label="Sticker kind">
-                <button
-                  type="button"
-                  className={`seg-btn${stickerTab === 'marks' ? ' is-active' : ''}`}
-                  aria-pressed={stickerTab === 'marks'}
-                  onClick={() => setStickerTab('marks')}
-                >
-                  Nîşan
-                </button>
-                <button
-                  type="button"
-                  className={`seg-btn${stickerTab === 'emoji' ? ' is-active' : ''}`}
-                  aria-pressed={stickerTab === 'emoji'}
-                  onClick={() => setStickerTab('emoji')}
-                >
-                  Emoji
-                </button>
-              </div>
-
-              {stickerTab === 'marks' ? (
-                <div className="sticker-grid sticker-grid-pics" role="group" aria-label="Sticker">
-                  {PICTURE_STICKERS.map((s) => (
-                    <button
-                      key={s.src}
-                      type="button"
-                      className={`sticker sticker-pic${selected.src === s.src ? ' is-on' : ''}`}
-                      aria-label={s.name}
-                      title={s.name}
-                      aria-pressed={selected.src === s.src}
-                      onClick={() => {
-                        // load before selecting, so the first draw has something
-                        void ensureSticker(s.src).then(() => patch(selected.id, { src: s.src }));
-                      }}
-                    >
-                      <img src={s.src} alt="" />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="sticker-grid" role="group" aria-label="Sticker">
-                  {EMOJI_STICKERS.map((glyph) => (
-                    <button
-                      key={glyph}
-                      type="button"
-                      className={`sticker${selected.glyph === glyph && !selected.src ? ' is-on' : ''}`}
-                      aria-label={glyph}
-                      aria-pressed={selected.glyph === glyph && !selected.src}
-                      // clearing src is what turns a picture back into a character
-                      onClick={() => patch(selected.id, { glyph, src: undefined })}
-                    >
-                      {glyph}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
+            <button
+              type="button"
+              className="editor-add"
+              onClick={() => setPicker({ mode: 'replace', id: selected.id })}
+            >
+              <FeatherIcon size={16} /> Swap sticker
+            </button>
           )}
 
           <label className="tool-row">
