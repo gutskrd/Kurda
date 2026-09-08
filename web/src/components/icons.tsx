@@ -18,6 +18,8 @@
  */
 import { ArrowRight } from '@phosphor-icons/react/dist/icons/ArrowRight';
 import { ArrowUUpLeft } from '@phosphor-icons/react/dist/icons/ArrowUUpLeft';
+import { MagicWand } from '@phosphor-icons/react/dist/icons/MagicWand';
+import { SlidersHorizontal } from '@phosphor-icons/react/dist/icons/SlidersHorizontal';
 import { ArrowUUpRight } from '@phosphor-icons/react/dist/icons/ArrowUUpRight';
 import { Crop } from '@phosphor-icons/react/dist/icons/Crop';
 import { Pencil } from '@phosphor-icons/react/dist/icons/Pencil';
@@ -112,6 +114,9 @@ export const UndoIcon = named(ArrowUUpLeft, 18);
 export const RedoIcon = named(ArrowUUpRight, 18);
 /* deciding what part of a picture is the picture */
 export const CropIcon = named(Crop, 22);
+/* a look applied to the whole picture, and the dials behind it */
+export const FilterIcon = named(MagicWand, 22);
+export const SlidersIcon = named(SlidersHorizontal, 22);
 export const DrawIcon = named(Pencil, 22);
 export const BookmarkIcon = named(BookmarkSimple, 22);
 /** Something is waiting for you to look at it. */

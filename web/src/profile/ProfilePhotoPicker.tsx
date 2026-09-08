@@ -8,7 +8,7 @@ import { canvasToFile } from '../images/photoText';
 import { decodePicture, type DecodedPicture } from '../images/decode';
 import { ImageFramer } from '../images/ImageFramer';
 import { WHOLE_PICTURE, type Frame } from '../images/frame';
-import { UNTOUCHED, compose } from '../images/composition';
+import { UNTOUCHED, compose, forgetGraded } from '../images/composition';
 
 /**
  * An avatar is never shown larger than a hero portrait, and usually at 32px in
@@ -95,6 +95,7 @@ export function ProfilePhotoPicker({
     if (!picked) return;
     setMsg(null);
     setFrame(WHOLE_PICTURE);
+    forgetGraded();
     setFile(picked);
   }
 
