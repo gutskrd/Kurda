@@ -33,9 +33,13 @@ export interface Adjustments {
   saturation: number;
   /** saturation that leaves already-vivid colour, and skin, alone */
   vibrance: number;
-  /** milky blacks — the matte look, and the only one that only goes one way */
+  /** milky blacks — the matte look */
   fade: number;
   vignette: number;
+  /** film grain, as a texture that does not change with the output size */
+  grain: number;
+  /** block size, as a share of the short edge — applied before everything else */
+  pixelate: number;
 }
 
 export const NEUTRAL: Adjustments = {
@@ -48,6 +52,8 @@ export const NEUTRAL: Adjustments = {
   vibrance: 0,
   fade: 0,
   vignette: 0,
+  grain: 0,
+  pixelate: 0,
 };
 
 export const ADJUSTMENT_KEYS = Object.keys(NEUTRAL) as ReadonlyArray<keyof Adjustments>;
@@ -63,10 +69,12 @@ export const ADJUSTMENT_LABELS: Record<keyof Adjustments, string> = {
   vibrance: 'Vibrance',
   fade: 'Fade',
   vignette: 'Vignette',
+  grain: 'Grain',
+  pixelate: 'Pixelate',
 };
 
 /** Sliders that only make sense in one direction. */
-const ONE_WAY: ReadonlySet<keyof Adjustments> = new Set(['fade', 'vignette']);
+const ONE_WAY: ReadonlySet<keyof Adjustments> = new Set(['fade', 'vignette', 'grain', 'pixelate']);
 
 export function rangeFor(key: keyof Adjustments): { min: number; max: number } {
   return ONE_WAY.has(key) ? { min: 0, max: 100 } : { min: -100, max: 100 };
@@ -105,6 +113,124 @@ export function combine(a: Adjustments, b: Adjustments): Adjustments {
 }
 
 const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** A colour at a point along a ramp: where it sits (0–1), then r, g, b as bytes. */
+export type ColourStop = readonly [at: number, r: number, g: number, b: number];
+
+/**
+ * A gradient map: brightness in, colour out.
+ *
+ * This is the mechanism behind a thermal camera and behind real sepia, and it is
+ * a different kind of thing from the sliders. A slider moves the colours a
+ * picture already has; a gradient map throws them away and repaints the picture
+ * from its brightness alone. Nothing in the adjustment set can express that,
+ * which is why it is threaded through separately instead of being a tenth
+ * slider.
+ *
+ * `amount` mixes between the original and the mapped colour, so a filter built
+ * on one can still be turned down.
+ */
+export interface ToneMap {
+  /** 768 bytes: r, g, b for each of 256 brightness steps */
+  ramp: Uint8Array;
+  amount: number;
+}
+
+/** Build the 256-step ramp once, from a handful of stops. */
+export function buildRamp(stops: readonly ColourStop[]): Uint8Array {
+  const ramp = new Uint8Array(768);
+  if (stops.length === 0) return ramp;
+  const sorted = [...stops].sort((a, b) => a[0] - b[0]);
+
+  for (let v = 0; v < 256; v += 1) {
+    const t = v / 255;
+    let lo = sorted[0]!;
+    let hi = sorted[sorted.length - 1]!;
+    for (let i = 0; i < sorted.length - 1; i += 1) {
+      if (t >= sorted[i]![0] && t <= sorted[i + 1]![0]) {
+        lo = sorted[i]!;
+        hi = sorted[i + 1]!;
+        break;
+      }
+    }
+    const span = hi[0] - lo[0];
+    const k = span <= 0 ? 0 : (t - lo[0]) / span;
+    ramp[v * 3] = Math.round(lo[1] + (hi[1] - lo[1]) * k);
+    ramp[v * 3 + 1] = Math.round(lo[2] + (hi[2] - lo[2]) * k);
+    ramp[v * 3 + 2] = Math.round(lo[3] + (hi[3] - lo[3]) * k);
+  }
+  return ramp;
+}
+
+/**
+ * Grain, sampled from a fixed lattice rather than from the pixel grid.
+ *
+ * Noise per pixel would be a different texture at every size — coarse in a
+ * 720px preview, fine in a 1280px export — and the preview would stop being a
+ * preview of anything. Sampling a fixed grid mapped onto the picture keeps the
+ * grain the same *relative* texture whatever it is drawn at.
+ */
+const GRAIN_LATTICE = 1100;
+
+/** A deterministic -1..1 from two integers. Cheap, and film-like enough. */
+function noiseAt(gx: number, gy: number): number {
+  let h = Math.imul(gx, 374761393) + Math.imul(gy, 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h & 0xffff) / 32768 - 1;
+}
+
+/**
+ * Pixelate, by averaging square blocks.
+ *
+ * A separate pass because it is the one effect that is not a function of a
+ * pixel on its own: it needs the neighbours, which the main loop deliberately
+ * never looks at. It runs first, so everything else grades the blocks rather
+ * than grading detail that is about to be thrown away.
+ */
+export function pixelate(data: Uint8ClampedArray, width: number, height: number, block: number): void {
+  const size = Math.max(1, Math.round(block));
+  if (size <= 1) return;
+
+  for (let by = 0; by < height; by += size) {
+    const yEnd = Math.min(by + size, height);
+    for (let bx = 0; bx < width; bx += size) {
+      const xEnd = Math.min(bx + size, width);
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let n = 0;
+      for (let y = by; y < yEnd; y += 1) {
+        let i = (y * width + bx) * 4;
+        for (let x = bx; x < xEnd; x += 1, i += 4) {
+          r += data[i]!;
+          g += data[i + 1]!;
+          b += data[i + 2]!;
+          n += 1;
+        }
+      }
+      r /= n;
+      g /= n;
+      b /= n;
+      for (let y = by; y < yEnd; y += 1) {
+        let i = (y * width + bx) * 4;
+        for (let x = bx; x < xEnd; x += 1, i += 4) {
+          data[i] = r;
+          data[i + 1] = g;
+          data[i + 2] = b;
+        }
+      }
+    }
+  }
+}
+
+/** Block size in pixels for a 0–100 setting, relative to the picture's short edge. */
+export function blockSizeFor(amount: number, width: number, height: number): number {
+  if (amount <= 0) return 1;
+  const short = Math.min(width, height);
+  // at 100 a block is 6% of the short edge: chunky, still recognisable
+  return Math.max(2, Math.round((amount / 100) * short * 0.06));
+}
+
 
 /** Rec. 709 luminance — how bright a colour looks, not how big its numbers are. */
 const LUMA_R = 0.2126;
@@ -160,8 +286,10 @@ export function applyAdjustments(
   width: number,
   height: number,
   adj: Adjustments,
+  tone?: ToneMap | null,
 ): void {
-  if (isNeutral(adj)) return;
+  const toning = tone && tone.amount > 0 ? tone : null;
+  if (isNeutral(adj) && !toning) return;
 
   // two stops each way at the extremes
   const exposure = Math.pow(2, (adj.exposure / 100) * 2);
@@ -174,6 +302,8 @@ export function applyAdjustments(
   const vibrance = adj.vibrance / 100;
   const fade = adj.fade / 100;
   const vignette = adj.vignette / 100;
+  // 0.14 at full: any more and it stops reading as film and starts as noise
+  const grain = (adj.grain / 100) * 0.14;
 
   /*
    * White balance, exposure and contrast, for every value a byte can hold.
@@ -199,7 +329,7 @@ export function applyAdjustments(
   const lutG = table(warmth * 0.02);
   const lutB = table(warmth * -0.12);
 
-  const tone = highlights !== 0 || shadows !== 0;
+  const shapesTone = highlights !== 0 || shadows !== 0;
   const colour = saturation !== 0 || vibrance !== 0;
   const fadeLift = fade * 0.16;
 
@@ -213,7 +343,7 @@ export function applyAdjustments(
    */
   let hiK: Float32Array | null = null;
   let loAdd: Float32Array | null = null;
-  if (tone) {
+  if (shapesTone) {
     hiK = new Float32Array(256);
     loAdd = new Float32Array(256);
     for (let v = 0; v < 256; v += 1) {
@@ -246,9 +376,15 @@ export function applyAdjustments(
     }
   }
 
+  // the lattice is mapped onto the picture, so the grain is the same relative
+  // texture at preview size and at export size
+  const lattice = width > 0 ? GRAIN_LATTICE / width : 0;
+  const latticeY = height > 0 ? GRAIN_LATTICE / height : 0;
+
   for (let y = 0; y < height; y += 1) {
     const dy = y - halfH;
     const rowSq = dy * dy;
+    const gy = (y * latticeY) | 0;
     let i = y * width * 4;
 
     for (let x = 0; x < width; x += 1, i += 4) {
@@ -290,10 +426,32 @@ export function applyAdjustments(
         b = clamp01(lum + (b - lum) * k);
       }
 
+      if (toning) {
+        // brightness in, colour out: the picture is repainted from its own
+        // luminance, which is the only way to get a thermal palette or a real
+        // sepia rather than a desaturated approximation of one
+        const lum = LUMA_R * r + LUMA_G * g + LUMA_B * b;
+        const at = ((lum * 255) | 0) * 3;
+        const a = toning.amount;
+        const ramp = toning.ramp;
+        r += (ramp[at]! / 255 - r) * a;
+        g += (ramp[at + 1]! / 255 - g) * a;
+        b += (ramp[at + 2]! / 255 - b) * a;
+      }
+
       if (fadeLift !== 0) {
         r = fadeLift + r * (1 - fadeLift);
         g = fadeLift + g * (1 - fadeLift);
         b = fadeLift + b * (1 - fadeLift);
+      }
+
+      if (grain !== 0) {
+        // one value for all three channels, so it reads as luminance grain
+        // rather than as coloured speckle
+        const n = noiseAt((x * lattice) | 0, gy) * grain;
+        r += n;
+        g += n;
+        b += n;
       }
 
       if (colSq && vigK) {

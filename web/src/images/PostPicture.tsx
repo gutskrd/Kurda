@@ -10,6 +10,7 @@ import { PhotoEditor } from './PhotoEditor';
 import { UNTOUCHED, compose, forgetGraded, type Composition } from './composition';
 import { useHistory } from './useHistory';
 import { ensureStickersFor } from './stickers';
+import { overlaySources } from './filters';
 import { DIMEN_KINDS } from '../feed/postKinds';
 
 const MAX_CAPTION = 2_000;
@@ -132,7 +133,12 @@ export function PictureComposer({
     if (!rawOnly && imageRef.current && source) {
       // the export draws synchronously, so every picture sticker has to be
       // decoded first — otherwise one added a moment ago exports as nothing
-      await ensureStickersFor(history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)));
+      // every picture the draw will need, decoded first: the export draws
+      // synchronously, so anything still loading would export as nothing
+      await ensureStickersFor([
+        ...history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)),
+        ...overlaySources(),
+      ]);
       const canvas = document.createElement('canvas');
       // full size this time, not the preview's ceiling — this is the file
       compose(canvas, imageRef.current, source.w, source.h, history.present);
