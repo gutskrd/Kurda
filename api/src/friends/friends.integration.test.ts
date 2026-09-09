@@ -130,6 +130,120 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(await friends.areBlocked(id.a!, id.b!)).toBe(false);
   });
 
+  /**
+   * The blocklist. Its own users throughout: the a–e graph is mutated by the
+   * tests above and a list that has to be exhaustive cannot share it.
+   */
+  describe('the list of who you have blocked', () => {
+    let me = '';
+    let token = '';
+    let one = '';
+    let two = '';
+
+    beforeAll(async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: {
+          email: `fr_bl_me_${suffix}@it.kurda.app`,
+          username: `fr_bl_me_${suffix}`.slice(0, 30),
+          password: 'a-strong-password1',
+          acceptTerms: true,
+        },
+        remoteAddress: '10.81.30.1',
+      });
+      me = res.json().user.id as string;
+      token = res.json().tokens.accessToken as string;
+
+      one = await register('bl_1', '10.81.30.2');
+      two = await register('bl_2', '10.81.30.3');
+      await friends.block(me, one);
+      await friends.block(me, two);
+    });
+
+    it('lists everyone you blocked, most recent first', async () => {
+      const page = await friends.blocked(me);
+      expect(page.total).toBe(2);
+      expect(page.blocked.map((b) => b.userId)).toEqual([two, one]);
+      expect(page.blocked[0]!.username).toContain('bl_2');
+      expect(Date.parse(page.blocked[0]!.blockedAt)).toBeGreaterThan(0);
+    });
+
+    /**
+     * The one property that matters most here. A block is silent by design —
+     * `request` returns 'silent' rather than admitting it, and a blocked user's
+     * profile answers 404 — and all of that is undone if the list ever answers
+     * "who blocked me" as well as "who did I block".
+     */
+    it('never tells you who has blocked you', async () => {
+      expect((await friends.blocked(one)).blocked).toEqual([]);
+      expect((await friends.blocked(one)).total).toBe(0);
+      expect((await friends.blocked(two)).total).toBe(0);
+    });
+
+    it('drops someone the moment you unblock them', async () => {
+      await friends.unblock(me, one);
+      const page = await friends.blocked(me);
+      expect(page.total).toBe(1);
+      expect(page.blocked.map((b) => b.userId)).toEqual([two]);
+
+      await friends.block(me, one); // put it back for the tests below
+    });
+
+    it('pages without losing the count of the whole list', async () => {
+      const first = await friends.blocked(me, undefined, 1, 0);
+      const second = await friends.blocked(me, undefined, 1, 1);
+
+      expect(first.blocked).toHaveLength(1);
+      expect(second.blocked).toHaveLength(1);
+      expect(first.blocked[0]!.userId).not.toBe(second.blocked[0]!.userId);
+      // both pages still say how long the list actually is
+      expect(first.total).toBe(2);
+      expect(second.total).toBe(2);
+      // and past the end there is no row to carry the count, so it is counted
+      expect(await friends.blocked(me, undefined, 1, 50)).toEqual({ blocked: [], total: 2 });
+    });
+
+    it('leaves out an account that has since been deleted', async () => {
+      const gone = await register('bl_gone', '10.81.30.4');
+      await friends.block(me, gone);
+      expect((await friends.blocked(me)).total).toBe(3);
+
+      await pool.query(`UPDATE users SET deleted_at = now() WHERE id = $1`, [gone]);
+      const page = await friends.blocked(me);
+      expect(page.total).toBe(2);
+      expect(page.blocked.some((b) => b.userId === gone)).toBe(false);
+      // the block itself survives, so it still holds if that account comes back
+      expect(await friends.areBlocked(me, gone)).toBe(true);
+    });
+
+    it('serves the list over HTTP to the signed-in user and nobody else', async () => {
+      const anon = await app.inject({ method: 'GET', url: '/friends/blocks' });
+      expect(anon.statusCode).toBe(401);
+
+      const mine = await app.inject({
+        method: 'GET',
+        url: '/friends/blocks',
+        headers: { authorization: `Bearer ${token}` },
+        remoteAddress: '10.81.30.1',
+      });
+      expect(mine.statusCode).toBe(200);
+      // whoever the token belongs to, never a user id in the request
+      expect(mine.json().blocked.map((b: { userId: string }) => b.userId)).toContain(two);
+      expect(mine.json().total).toBe(2);
+    });
+
+    it('will not take a limit big enough to dump the whole table', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/friends/blocks?limit=100000',
+        headers: { authorization: `Bearer ${token}` },
+        remoteAddress: '10.81.30.1',
+      });
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
   it('rejects friending or blocking yourself', async () => {
     await expect(friends.request(id.a!, id.a!)).rejects.toThrow(/yourself/i);
     await expect(friends.block(id.a!, id.a!)).rejects.toThrow(/yourself/i);

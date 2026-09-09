@@ -134,6 +134,21 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
 
 export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';
 
+/**
+ * Someone you have blocked (GET /friends/blocks).
+ *
+ * No `online` field, unlike every other user summary: the server does not send
+ * one. Somebody you have blocked should not be getting a live signal about
+ * where you are, and the reverse holds too.
+ */
+export interface BlockedUser {
+  userId: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  blockedAt: string;
+}
+
 /** Another user's public profile (GET /users/:id — privacy/block gated). */
 export interface PublicProfile extends ProfileCosmetics {
   userId: string;

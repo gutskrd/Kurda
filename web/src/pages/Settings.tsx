@@ -6,6 +6,7 @@ import { useApiGet } from '../lib/useApi';
 import type { MeProfile } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
+import { BlockedUsers } from '../settings/BlockedUsers';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
@@ -48,6 +49,14 @@ export function Settings(): React.JSX.Element {
       </div>
 
       <Privacy current={data.user.profileVisibility} />
+
+      {/*
+        Directly under privacy, because it is the same question asked the other
+        way round: that setting says who may see you at all, this one says who
+        may not. It is also the only screen in the app that can undo a block —
+        everywhere else, a blocked person is already invisible to you.
+      */}
+      <BlockedUsers />
 
       <section className="card" style={{ marginTop: 20 }}>
         <h2 className="friend-heading" style={{ marginTop: 0 }}>Sessions</h2>

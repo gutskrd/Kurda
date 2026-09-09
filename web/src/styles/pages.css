@@ -632,6 +632,45 @@ a.rank-name:hover {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/*
+ * Block sits under the friend actions with a rule above it, so it reads as a
+ * different kind of decision rather than the last item in a list of them.
+ */
+.pcard-block {
+  margin-top: 4px;
+  color: var(--danger);
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding-top: 10px;
+}
+.pcard-block.is-armed {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* what replaces the actions once it is done: what happened, and the way back */
+.pcard-blocked {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+.pcard-blocked p {
+  margin: 0;
+  line-height: 1.45;
+}
+.pcard-blocked .link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 /* "● Online" line under the handle in the profile card */
 .pcard-online {
   display: flex;
@@ -4437,6 +4476,80 @@ a.mkp-activity-row:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* ---- the blocklist ------------------------------------------------------- */
+
+/*
+ * Close to .friend-row, deliberately different from it. A friend row is a
+ * button that opens somebody's card; these rows open nothing, because a
+ * blocked person's profile is a 404 to you — so no hover state, no pointer,
+ * nothing that offers a click the app cannot honour.
+ */
+.blocklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+/*
+ * min-width: 0 is load-bearing. A grid track is `auto`, which floors at the
+ * item's min-content — and this row's min-content is a `white-space: nowrap`
+ * handle that never wraps, so without this the row grows past the card and
+ * pushes Unblock off the side of a phone. `text-overflow: ellipsis` does not
+ * lower min-content; only this does.
+ */
+.blocklist-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+/* the name column is the one that gives way — never the Unblock button */
+.blocklist-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.blocklist-name {
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.blocklist-meta {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.blocklist-row .btn {
+  flex: none;
+}
+
+/*
+ * On a phone the handle and the date stop fitting beside a button, so the row
+ * becomes two lines rather than an ellipsis that hides the date entirely —
+ * which is the part that tells an old block from one placed by accident today.
+ */
+@media (max-width: 420px) {
+  .blocklist-row {
+    flex-wrap: wrap;
+  }
+  .blocklist-who {
+    flex-basis: calc(100% - 45px);
+  }
+  .blocklist-row .btn {
+    margin-left: auto;
+  }
 }
 
 /* ---- who gave them what they are wearing --------------------------------- */

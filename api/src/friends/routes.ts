@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
-import type { FriendService } from './service.js';
+import { BLOCKS_PAGE_MAX, type FriendService } from './service.js';
 
 const targetParam = z.object({ userId: z.uuid() });
 
@@ -9,8 +9,9 @@ const targetParam = z.object({ userId: z.uuid() });
 // harassment vector, and the friends-of-friends suggestion query is expensive.
 const REQUEST_LIMIT = { max: 20, windowMs: 60_000, per: 'user-or-ip' as const };
 const SUGGESTIONS_LIMIT = { max: 30, windowMs: 60_000, per: 'user-or-ip' as const };
+const BLOCKS_LIMIT = { max: 40, windowMs: 60_000, per: 'user-or-ip' as const };
 
-/** Friend system (KUR-081): request/accept/decline, block, list. */
+/** Friend system (KUR-081): request/accept/decline, block/unblock, and the lists of each. */
 export function registerFriendRoutes(app: FastifyInstance, friends: FriendService): void {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
 
@@ -70,6 +71,31 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
     async (req) => {
       await friends.unfriend(req.user!.id, (req.params as { userId: string }).userId);
       return { ok: true };
+    },
+  );
+
+  /**
+   * Who you have blocked.
+   *
+   * Yours alone — the service scopes it to `blocker_id`, so this can only ever
+   * answer "who did I block", never "who blocked me". Rate-limited a little
+   * tighter than the default because it joins and counts on every call.
+   */
+  app.get(
+    '/friends/blocks',
+    {
+      schema: {
+        querystring: z.object({
+          limit: z.coerce.number().int().min(1).max(BLOCKS_PAGE_MAX).optional(),
+          offset: z.coerce.number().int().min(0).max(10_000).optional(),
+        }),
+      },
+      config: { rateLimit: BLOCKS_LIMIT },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { limit, offset = 0 } = req.query as { limit?: number; offset?: number };
+      return friends.blocked(req.user!.id, publicUrl, limit, offset);
     },
   );
 

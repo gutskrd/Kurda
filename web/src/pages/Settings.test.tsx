@@ -39,6 +39,9 @@ describe('Settings page', () => {
     expect(screen.getByRole('button', { name: /log out everywhere/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /request data export/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^delete account$/i })).toBeInTheDocument();
+    // Settings is the only screen that can undo a block — a blocked person is
+    // already invisible everywhere else, so nowhere else could offer it
+    expect(screen.getByText('Blocked people')).toBeInTheDocument();
   });
 
   it('spells out what the chosen visibility actually exposes', async () => {

@@ -43,6 +43,28 @@ export interface SuggestedFriend extends FriendSummary {
   mutualCount: number;
 }
 
+/**
+ * Someone you have blocked.
+ *
+ * Deliberately not a `FriendSummary`: presence is the one field a blocked user
+ * would not want the person who blocked them to have. A block is meant to end
+ * the relationship in both directions, and "online now" is a live signal about
+ * somebody's whereabouts. Enough to recognise who you blocked and when, and
+ * nothing beyond that.
+ */
+export interface BlockedUser {
+  userId: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  /** when the block was placed, so an old one can be told from a new one */
+  blockedAt: string;
+}
+
+/** One page of a blocklist. Bounded because nothing caps how many you may block. */
+export const BLOCKS_PAGE_SIZE = 25;
+export const BLOCKS_PAGE_MAX = 100;
+
 interface EdgeRow {
   status: string;
   requested_by: string | null;
@@ -215,6 +237,75 @@ export class FriendService {
 
   async unblock(blocker: string, blocked: string): Promise<void> {
     await this.pool.query(`DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2`, [blocker, blocked]);
+  }
+
+  /**
+   * Who this user has blocked, newest first.
+   *
+   * The list has to exist for the block to be reversible at all: blocking hides
+   * the other person everywhere at once — out of search, off your friends list,
+   * and their profile answers 404 — so once it is done there is no surface left
+   * that could offer you an unblock. Without this, a block placed by accident
+   * or in a moment is permanent in practice.
+   *
+   * Strictly one-directional: `blocker_id = $1` and nothing else. Who has
+   * blocked *you* is not in here and must never be, or the silent block stops
+   * being silent — see `block`.
+   *
+   * Soft-deleted accounts drop out, as they do from every other list. The row
+   * in `blocks` stays: if that account ever comes back the block is still in
+   * force, which is the safe direction to fail in.
+   */
+  async blocked(
+    user: string,
+    publicUrl: PublicUrl = () => null,
+    limit = BLOCKS_PAGE_SIZE,
+    offset = 0,
+  ): Promise<{ blocked: BlockedUser[]; total: number }> {
+    const rows = await this.pool.query<{
+      id: string;
+      username: string;
+      display_name: string | null;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
+      blocked_at: Date;
+      total: number;
+    }>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key,
+              b.created_at AS blocked_at, count(*) OVER ()::int AS total
+         FROM blocks b
+         JOIN users u ON u.id = b.blocked_id
+        WHERE b.blocker_id = $1 AND u.deleted_at IS NULL
+        ORDER BY b.created_at DESC, u.username
+        LIMIT $2 OFFSET $3`,
+      [user, Math.min(Math.max(limit, 1), BLOCKS_PAGE_MAX), Math.max(offset, 0)],
+    );
+
+    // count(*) OVER () rides along with the page, so the heading costs no second
+    // query — except on an empty page past the end, where there is no row to
+    // carry it and a bare 0 would understate the list.
+    const total = rows.rows[0]?.total ?? (offset > 0 ? await this.blockedCount(user) : 0);
+
+    return {
+      total,
+      blocked: rows.rows.map((r) => ({
+        userId: r.id,
+        username: r.username,
+        displayName: r.display_name,
+        avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+        blockedAt: r.blocked_at.toISOString(),
+      })),
+    };
+  }
+
+  /** How many live accounts this user has blocked. */
+  private async blockedCount(user: string): Promise<number> {
+    const r = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM blocks b JOIN users u ON u.id = b.blocked_id
+        WHERE b.blocker_id = $1 AND u.deleted_at IS NULL`,
+      [user],
+    );
+    return r.rows[0]?.n ?? 0;
   }
 
   /** Accepted friends of `user` (blocked users can't be friends). */
