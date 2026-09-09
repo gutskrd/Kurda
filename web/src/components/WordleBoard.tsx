@@ -28,9 +28,16 @@ export const KURMANCI_KEYS_NARROW: string[][] = [
 /** Below this width the wide keyboard's 13-key row stops fitting. */
 const NARROW_KEYBOARD = '(max-width: 560px)';
 
-/** Cell size the board will not exceed, and the gap between cells (px). */
-const MAX_CELL = 54;
-const CELL_GAP = 6;
+/**
+ * How wide the board is allowed to get is a CSS question, not a JS one.
+ *
+ * It used to be a number here, written straight into an inline `max-width` —
+ * which no media query can reach, so a phone got the same 54px cells as a
+ * desktop and six rows of them pushed the keyboard below the fold. The row
+ * publishes its column count instead and the stylesheet does the arithmetic,
+ * which lets `--wordle-cell-max` shrink on a small screen.
+ */
+const COLS_VAR = '--wordle-cols';
 
 /** letters a–z plus the Kurdish diacritics, for physical-keyboard capture */
 export const KURMANCI_LETTER_RE = /^[a-zêîûçş]$/;
@@ -83,10 +90,12 @@ export function WordleBoard({
       <div
         className="wordle-row"
         key={r}
-        style={{
-          gridTemplateColumns: `repeat(${targetLength}, 1fr)`,
-          maxWidth: targetLength * MAX_CELL + (targetLength - 1) * CELL_GAP,
-        }}
+        style={
+          {
+            gridTemplateColumns: `repeat(${targetLength}, 1fr)`,
+            [COLS_VAR]: targetLength,
+          } as React.CSSProperties
+        }
       >
         {cells}
       </div>,

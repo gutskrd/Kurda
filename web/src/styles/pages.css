@@ -501,12 +501,31 @@ a.rank-name:hover {
     opacity: 0;
   }
 }
+/*
+ * The box the photo editor is posted from, among other things.
+ *
+ * Three things were wrong here at once, and all of them show up on a phone.
+ *
+ * `overflow: auto` scrolls BOTH axes, so anything a pixel too wide — a filter
+ * reel, a long word — turned the panel into something you could swipe sideways.
+ * A dialog has one direction, and it is down.
+ *
+ * `100vh` on a phone is the *large* viewport, measured as though the address
+ * bar were hidden. The panel was therefore allowed to be taller than the screen
+ * actually is, which put the Post button underneath the browser's own chrome.
+ * `dvh` is the height that is really there.
+ *
+ * And without `overscroll-behavior`, scrolling to the end of the panel carried
+ * on into the page behind it — the dialog moves, then the page moves under it.
+ */
 .modal-panel {
   position: relative;
   width: 100%;
   max-width: 430px;
-  max-height: calc(100vh - 48px);
-  overflow: auto;
+  max-height: calc(100dvh - 48px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 32px 30px 28px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
@@ -515,6 +534,16 @@ a.rank-name:hover {
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
   outline: none;
+}
+/*
+ * 60px of side padding is a comfortable margin on a desktop and a third of a
+ * phone. The photo editor is posted from inside this panel, so what the padding
+ * takes comes straight out of the picture and the controls under it.
+ */
+@media (max-width: 640px) {
+  .modal-panel {
+    padding: 26px 14px 20px;
+  }
 }
 .modal-close {
   position: absolute;
@@ -2233,6 +2262,10 @@ button.feature {
 /* a segmented control, the way iOS does one */
 .seg {
   display: inline-flex;
+  /* it is inline, so it sizes to its buttons — and would happily size past its
+     container. The editor's four-tool switcher did exactly that inside a modal
+     on a phone: 327px of buttons in 265px of panel, with Draw cut in half. */
+  max-width: 100%;
   padding: 3px;
   gap: 2px;
   background: var(--surface);
@@ -2240,6 +2273,11 @@ button.feature {
   border-radius: var(--r-pill);
 }
 .seg-btn {
+  /* shrink before overflowing: a cramped label beats an unreachable button */
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border: 0;
   background: transparent;
   color: var(--ink-3);
@@ -2249,6 +2287,13 @@ button.feature {
   border-radius: var(--r-pill);
   cursor: pointer;
   white-space: nowrap;
+}
+@media (max-width: 640px) {
+  /* buy the width back from the padding before the labels have to give any up */
+  .seg-btn {
+    padding: 6px 9px;
+    font-size: 0.8rem;
+  }
 }
 .seg-btn:hover {
   color: var(--ink);
@@ -2395,6 +2440,9 @@ button.feature {
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  /* a flick that runs off the end of the tabs stops there, rather than handing
+     the rest of the gesture to the page — or to the browser's back swipe */
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 10px;
@@ -2607,6 +2655,26 @@ a.mkp-activity-row:hover {
 }
 
 /* ---- Kurdish Wordle ---------------------------------------------------- */
+/*
+ * The frame every game sits in.
+ *
+ * Each of these pages used to carry `style={{ paddingTop: 40, paddingBottom: 72 }}`
+ * inline — which no media query can reach, so a phone spent 112px of a 660px
+ * screen on whitespace. That is most of the reason the Wordle keyboard sat
+ * below the fold: you had to scroll away from the board to type.
+ */
+.game-page {
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+@media (max-width: 640px) {
+  .game-page {
+    padding-top: 18px;
+    /* clear of the home indicator on a phone with no bezel */
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  }
+}
+
 .wordle-head {
   display: flex;
   align-items: center;
@@ -2620,20 +2688,26 @@ a.mkp-activity-row:hover {
   margin-bottom: 8px;
 }
 .wordle-board {
+  --wordle-cell-max: 54px;
+  --wordle-gap: 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--wordle-gap);
   align-items: center;
   margin: 20px 0 8px;
   width: 100%;
 }
 .wordle-row {
   display: grid;
-  gap: 6px;
-  /* fill what is available; the component caps it at the cells' natural size.
-     Fixed-width cells made an 8-letter row 402px wide, which hung off BOTH
-     sides of a 375px phone. */
+  gap: var(--wordle-gap);
+  /* fill what is available, then cap at the cells' natural size. Fixed-width
+     cells made an 8-letter row 402px wide, which hung off BOTH sides of a
+     375px phone. The column count comes from the component; the size a cell is
+     allowed to reach is set here, so it can shrink on a small screen. */
   width: 100%;
+  max-width: calc(
+    var(--wordle-cols, 5) * var(--wordle-cell-max) + (var(--wordle-cols, 5) - 1) * var(--wordle-gap)
+  );
 }
 .wordle-cell {
   min-width: 0;
@@ -2691,6 +2765,41 @@ a.mkp-activity-row:hover {
 .wordle-key:disabled {
   opacity: 0.55;
   cursor: default;
+}
+
+/*
+ * Wordle on a phone, where the game only works if the board and the keyboard
+ * are on screen together.
+ *
+ * At the desktop sizes it came to 802px of content — inside a 812px browser
+ * window, and well outside the ~660px a phone actually leaves you once its
+ * chrome is counted. You had to scroll away from the board to reach the letters
+ * and back again to read the result. Everything below is height being bought
+ * back: smaller cells, shorter keys, a tighter toolbar.
+ */
+@media (max-width: 640px) {
+  .wordle-board {
+    --wordle-cell-max: 46px;
+    margin: 12px 0 6px;
+  }
+  .wordle-toolbar {
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .wordle-toolbar .chip {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+  }
+  .wordle-head {
+    margin-bottom: 12px;
+  }
+  .wordle-keyboard {
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .wordle-key {
+    height: 44px;
+  }
 }
 /* feedback colors — defined after the base rules so they win on shared elements */
 .wordle-green {

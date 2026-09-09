@@ -264,4 +264,26 @@ describe('keepInside', () => {
     const s = sticker({ x: 9 });
     expect(keepInside(s, 0, 0)).toBe(s);
   });
+
+  /**
+   * "Add words" now puts an empty text layer down and focuses the box, so there
+   * is a moment before the first keystroke where the layer exists and paints
+   * nothing. Measured honestly that box is zero wide, and the selection outline
+   * would be a sliver — so an empty one is given room to show where the words
+   * are going to land.
+   */
+  it('gives words you have not typed yet somewhere to be', () => {
+    stubCanvas(); // or jsdom logs a "no getContext" error on every measurement
+    const empty = layerBox(text({ value: '' }), 1000, 800);
+    expect(empty.w).toBeGreaterThan(200);
+    expect(empty.h).toBeGreaterThan(0);
+
+    // whitespace alone is still nothing typed
+    expect(layerBox(text({ value: '   ' }), 1000, 800).w).toBe(empty.w);
+
+    // and one real character takes over from the placeholder size
+    const typed = layerBox(text({ value: 'W' }), 1000, 800);
+    expect(typed.w).toBeLessThan(empty.w);
+    expect(typed.w).toBeGreaterThan(0);
+  });
 });

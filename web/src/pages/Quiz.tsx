@@ -65,7 +65,7 @@ export function Quiz(): React.JSX.Element {
   useRealtimeEvent('match_timeout', onMatchTimeout);
 
   return (
-    <div className="container" style={{ paddingTop: 40, paddingBottom: 72 }}>
+    <div className="container game-page">
       <div className="wordle-head">
         <Link to="/app/games" className="chat-back" aria-label="Back to games">
           <ArrowIcon size={18} />

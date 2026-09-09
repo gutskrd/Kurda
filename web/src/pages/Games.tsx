@@ -76,7 +76,7 @@ export function Games(): React.JSX.Element {
   const [chooser, setChooser] = useState<GameCard | null>(null);
 
   return (
-    <div className="container" style={{ paddingTop: 48, paddingBottom: 72 }}>
+    <div className="container game-page">
       <div className="page-header">
         <span className="eyebrow">Yarî · Learn by playing</span>
         <h1 className="page-title">Games</h1>

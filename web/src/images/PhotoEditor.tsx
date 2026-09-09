@@ -108,6 +108,7 @@ export function PhotoEditor({
   /** bumped when overlay artwork finishes decoding, so the draws can catch up */
   const [artReady, setArtReady] = useState(0);
   const dragging = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
 
   const aspect = aspectOf(doc, iw, ih);
   const size = outputSize(iw, ih, aspect, doc.frame);
@@ -156,6 +157,22 @@ export function PhotoEditor({
   const remove = (id: string): void => {
     setLayers(doc.layers.filter((l) => l.id !== id));
     setSelectedId(null);
+  };
+
+  /**
+   * Select something else, and throw away words that were never typed.
+   *
+   * "Add words" now puts an empty text layer on the picture, which draws
+   * nothing — so if you change your mind and tap elsewhere, it would stay there
+   * forever: invisible, and still large enough to catch the next tap aimed at
+   * the photograph underneath it. Leaving is how you cancel.
+   */
+  const select = (id: string | null): void => {
+    const stray = doc.layers.find(
+      (l): l is PlacedLayer => isPlaced(l) && l.kind === 'text' && l.value.trim() === '' && l.id !== id,
+    );
+    if (stray) setLayers(doc.layers.filter((l) => l !== stray));
+    setSelectedId(id);
   };
 
   /**
@@ -217,8 +234,23 @@ export function PhotoEditor({
    * editor; reading these through a ref is what stops it from closing over the
    * selection as it was when the editor mounted.
    */
-  const latest = useRef({ selected, patch, remove });
-  latest.current = { selected, patch, remove };
+  const latest = useRef({ selected, patch, remove, select });
+  latest.current = { selected, patch, remove, select };
+
+  /**
+   * Words with nothing in them yet get the cursor.
+   *
+   * Pressing "Add words" is a request to write something, so the box should be
+   * ready for it — otherwise the next thing you do is hunt for the field you
+   * just asked for. Only when it is empty: reselecting words you have already
+   * written is usually a prelude to moving them, and stealing focus there would
+   * pull a phone's keyboard up over the picture for no reason.
+   */
+  useEffect(() => {
+    // the emptiness test is what makes this run once: the first keystroke ends
+    // it, and re-focusing a field that already has focus does nothing anyway
+    if (selected?.kind === 'text' && selected.value === '') textRef.current?.focus();
+  }, [selectedId, selected]);
 
   /**
    * Undo and redo from the keyboard, the way every other editor does it.
@@ -246,7 +278,7 @@ export function PhotoEditor({
       if (!target) return;
 
       if (e.key === 'Escape') {
-        setSelectedId(null);
+        latest.current.select(null);
         return;
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -296,10 +328,10 @@ export function PhotoEditor({
       .reverse()
       .find((l): l is PlacedLayer => isPlaced(l) && Math.hypot(l.x - p.x, l.y - p.y) < 0.12);
     if (hit) {
-      setSelectedId(hit.id);
+      select(hit.id);
       dragging.current = { id: hit.id, dx: hit.x - p.x, dy: hit.y - p.y };
     } else {
-      setSelectedId(null);
+      select(null);
     }
   }
 
@@ -414,7 +446,7 @@ export function PhotoEditor({
               aria-pressed={mode === m.key}
               onClick={() => {
                 setMode(m.key);
-                if (m.key !== 'move') setSelectedId(null);
+                if (m.key !== 'move') select(null);
               }}
             >
               {m.icon} {m.label}
@@ -522,6 +554,16 @@ export function PhotoEditor({
 
       {mode === 'move' && (
         <div className="editor-adds">
+          {/*
+            Words start empty and the box takes the focus.
+
+            This used to stamp "Gotina te" onto the photograph and then offer you
+            a box already full of it — so the first thing you did with your own
+            picture was select somebody else's placeholder and delete it. Now the
+            button opens the box, and what appears on the picture is what you
+            type. An empty one is thrown away when you look elsewhere, so
+            changing your mind leaves nothing behind.
+          */}
           <button
             type="button"
             className="editor-add"
@@ -529,7 +571,7 @@ export function PhotoEditor({
               add({
                 kind: 'text',
                 id: newId(),
-                value: 'Gotina te',
+                value: '',
                 font: 'sans',
                 size: 0.09,
                 color,
@@ -654,6 +696,28 @@ export function PhotoEditor({
             </button>
           </div>
 
+          {/*
+            For words, the box comes first — it is the thing you pressed the
+            button for. Arranging and restyling only mean anything once there
+            is something to arrange, and burying the field under three rows of
+            controls is what made "Add words" feel like opening a settings page.
+          */}
+          {selected.kind === 'text' && (
+            <textarea
+              ref={textRef}
+              className="input editor-words"
+              rows={2}
+              value={selected.value}
+              maxLength={280}
+              placeholder="Type your words…"
+              aria-label="Text on the picture"
+              // a whole sentence is one step; settling per keystroke would
+              // make undo behave like backspace
+              onChange={(e) => patch(selected.id, { value: e.target.value }, true)}
+              onBlur={history.settle}
+            />
+          )}
+
           {/* the list is the stacking order, so this is a swap with the neighbour */}
           <div className="layer-actions">
             <button
@@ -682,17 +746,6 @@ export function PhotoEditor({
 
           {selected.kind === 'text' ? (
             <>
-              <textarea
-                className="input"
-                rows={2}
-                value={selected.value}
-                maxLength={280}
-                aria-label="Text on the picture"
-                // a whole sentence is one step; settling per keystroke would
-                // make undo behave like backspace
-                onChange={(e) => patch(selected.id, { value: e.target.value }, true)}
-                onBlur={history.settle}
-              />
               <div className="seg" role="group" aria-label="Font">
                 {FONTS.map((f) => (
                   <button
