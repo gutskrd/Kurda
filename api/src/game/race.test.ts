@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { countCorrect, MIN_RACE_MS, raceXp, RACE_MAX_BONUS_XP, RACE_PARTICIPATION_XP, scoreRace } from './race.js';
+import {
+  countCorrect,
+  HUMAN_WPM_CEILING,
+  MIN_RACE_MS,
+  raceXp,
+  RACE_MAX_BONUS_XP,
+  RACE_PARTICIPATION_XP,
+  scoreRace,
+} from './race.js';
 
 describe('countCorrect', () => {
   it('counts characters that match in place', () => {
@@ -95,7 +103,54 @@ describe('raceXp', () => {
   });
 
   it('caps the bonus, so one enormous text cannot mint XP', () => {
-    const huge = scoreRace({ target: 'a'.repeat(5000), typed: 'a'.repeat(5000), elapsedMs: MIN_RACE_MS });
+    // 5000 characters at 200 wpm takes five minutes; typing them inside the
+    // clock floor would be a paste, which is scored separately below
+    const huge = scoreRace({ target: 'a'.repeat(5000), typed: 'a'.repeat(5000), elapsedMs: 300_000 });
+    expect(huge.implausible).toBe(false);
     expect(raceXp(huge)).toBe(RACE_PARTICIPATION_XP + RACE_MAX_BONUS_XP);
+  });
+});
+
+/**
+ * The browser will not let anyone paste into the race, but the browser is not
+ * the boundary — the finish endpoint takes whatever it is posted. This is where
+ * a pasted run stops being worth anything.
+ */
+describe('a speed no person reaches', () => {
+  const target = 'ez ji welatê xwe hez dikim';
+
+  it('lets a genuinely fast human through', () => {
+    // 26 characters in 1.6 seconds is about 195 wpm — near the world record,
+    // and it must still count, or the rule punishes the people it is for
+    const s = scoreRace({ target, typed: target, elapsedMs: 1600 });
+    expect(s.wpm).toBeGreaterThan(150);
+    expect(s.wpm).toBeLessThan(HUMAN_WPM_CEILING);
+    expect(s.implausible).toBe(false);
+    expect(s.score).toBeGreaterThan(0);
+    expect(raceXp(s)).toBeGreaterThan(0);
+  });
+
+  it('refuses to rank or pay a run nobody typed', () => {
+    // the whole text at once, inside the clock floor: about 1200 wpm
+    const pasted = scoreRace({ target: 'a'.repeat(200), typed: 'a'.repeat(200), elapsedMs: 500 });
+    expect(pasted.wpm).toBeGreaterThan(HUMAN_WPM_CEILING);
+    expect(pasted.implausible).toBe(true);
+    expect(pasted.score).toBe(0);
+    expect(raceXp(pasted)).toBe(0);
+    // and it is not celebrated as a flawless run either
+    expect(pasted.perfect).toBe(false);
+  });
+
+  it('still reports the reading, so the result can say what happened', () => {
+    const pasted = scoreRace({ target: 'a'.repeat(200), typed: 'a'.repeat(200), elapsedMs: 500 });
+    // accuracy and speed are unchanged; only what they are worth is zero
+    expect(pasted.accuracy).toBe(1);
+    expect(pasted.correctChars).toBe(200);
+    expect(pasted.wpm).toBeGreaterThan(1000);
+  });
+
+  it('does not fire on a slow run of any length', () => {
+    expect(scoreRace({ target, typed: target, elapsedMs: 60_000 }).implausible).toBe(false);
+    expect(scoreRace({ target, typed: '', elapsedMs: 500 }).implausible).toBe(false);
   });
 });

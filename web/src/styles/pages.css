@@ -3755,18 +3755,83 @@ a.mkp-activity-row:hover {
   background: var(--gold);
   transition: width 0.1s linear;
 }
-/* the text to copy: every character coloured as it is typed */
+/*
+ * The text and the field are one box.
+ *
+ * The visible layer is the text, coloured as it is typed; the field that takes
+ * the keystrokes is an invisible textarea stretched over it. Two separate boxes
+ * put the text on screen as ordinary prose next to an input — select, copy,
+ * paste, race over. Here there is nothing to select: `user-select: none` on the
+ * text, and the only thing under the pointer is the capture layer.
+ */
+.race-type {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: text;
+}
+.race-type.is-focused {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent);
+}
+.race-type.is-done {
+  cursor: default;
+  opacity: 0.75;
+}
 .race-text {
+  margin: 0;
   font-size: 1.15rem;
   line-height: 1.9;
   letter-spacing: 0.01em;
   padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
   color: var(--ink-3);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  /* nothing to select is the whole point; the caret is drawn, not native */
+  user-select: none;
+  -webkit-user-select: none;
+}
+/*
+ * The keystroke sink. Invisible rather than absent: it has to be a real,
+ * focusable field or a phone will never open its keyboard. Sized to the whole
+ * box so a tap anywhere on the text lands on it.
+ */
+.race-capture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 18px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font: inherit;
+  resize: none;
+  opacity: 0;
+}
+.race-capture:focus {
+  outline: none;
+}
+/* the box says what it is before it has focus; a phone gives no other clue */
+.race-tap {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  pointer-events: none;
+}
+.race-refused {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  color: var(--danger);
 }
 .race-char {
   border-radius: 2px;
@@ -3781,14 +3846,6 @@ a.mkp-activity-row:hover {
 /* where you are, so the eye does not have to search for it */
 .race-cursor {
   box-shadow: inset 2px 0 0 var(--ink);
-}
-.race-input {
-  height: auto;
-  margin-top: 14px;
-  padding: 12px 14px;
-  resize: vertical;
-  line-height: 1.6;
-  font-size: 1.02rem;
 }
 .race-actions {
   display: flex;

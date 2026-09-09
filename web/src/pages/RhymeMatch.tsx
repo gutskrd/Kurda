@@ -6,6 +6,7 @@ import type { RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
+import { useTypeOnly } from '../components/typeOnly';
 import { buildInviteUrl } from '../lib/gameInvites';
 
 type Dialect = 'kurmanci' | 'sorani';
@@ -106,6 +107,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [found, setFound] = useState<Array<{ word: string; quality: RhymeResult['quality']; points: number }>>([]);
+  const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly('No pasting — think of one.');
   const loadedOnce = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -269,6 +271,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
       {active ? (
         <form className="rhyme-compose" onSubmit={submit}>
+          {/* against another person, a pasted rhyme is somebody else's point */}
           <input
             ref={inputRef}
             className="input"
@@ -278,6 +281,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             maxLength={64}
             aria-label="Your rhyme"
             autoFocus
+            {...typeOnly}
           />
           <Button type="submit" disabled={busy || word.trim().length === 0}>{busy ? '…' : 'Submit'}</Button>
         </form>
@@ -285,7 +289,12 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
         <p className="muted" style={{ textAlign: 'center' }}>Time’s up — finishing the match…</p>
       )}
 
-      {notice && <div className="wordle-notice" role="status">{notice}</div>}
+      {/* one slot: a refused paste is the more urgent of the two to answer */}
+      {(pasteNotice ?? notice) && (
+        <div className="wordle-notice" role="status">
+          {pasteNotice ?? notice}
+        </div>
+      )}
 
       {found.length > 0 && (
         <ul className="rhyme-found" aria-label="Rhymes you found">

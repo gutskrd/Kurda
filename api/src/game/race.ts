@@ -13,6 +13,21 @@ const CHARS_PER_WORD = 5;
 /** Below this a race is not a race — it is a paste or a clock problem. */
 export const MIN_RACE_MS = 1000;
 
+/**
+ * Above this, nobody typed anything.
+ *
+ * The sustained world record is around 216 wpm and the fastest recorded burst
+ * is near 300, so 350 is well clear of any human and nowhere near a paste: a
+ * 200-character text dropped in at once reads as roughly 1200. The clamp above
+ * is not enough on its own — it only stops division by zero, and a pasted run
+ * still lands at a speed that would own the leaderboard permanently.
+ *
+ * The browser refuses to paste into the race, but the browser is not where this
+ * has to hold: anyone can post to the finish endpoint directly, so the rule
+ * lives here.
+ */
+export const HUMAN_WPM_CEILING = 350;
+
 export interface RaceScore {
   /** correctly typed characters, counted position by position */
   correctChars: number;
@@ -24,6 +39,8 @@ export interface RaceScore {
   score: number;
   /** every character of the target matched */
   perfect: boolean;
+  /** faster than a person can type — reported honestly, but worth nothing */
+  implausible: boolean;
 }
 
 /**
@@ -68,6 +85,7 @@ export function scoreRace({
   // reports no time at all would otherwise produce an infinite speed
   const minutes = Math.max(elapsedMs, MIN_RACE_MS) / 60_000;
   const wpm = correctChars / CHARS_PER_WORD / minutes;
+  const implausible = wpm > HUMAN_WPM_CEILING;
 
   return {
     correctChars,
@@ -75,9 +93,12 @@ export function scoreRace({
     // one decimal is as precise as this measurement deserves
     wpm: Math.round(wpm * 10) / 10,
     // speed alone rewards typing nonsense quickly; weighting by accuracy means
-    // the fastest CORRECT run wins, which is what a race is
-    score: Math.round(wpm * accuracy),
-    perfect: targetLength > 0 && correctChars === targetLength && [...typed].length === targetLength,
+    // the fastest CORRECT run wins, which is what a race is. A speed no person
+    // reaches ranks at nothing at all — the reading is still reported, so the
+    // result can say what happened rather than silently showing a zero.
+    score: implausible ? 0 : Math.round(wpm * accuracy),
+    perfect: !implausible && targetLength > 0 && correctChars === targetLength && [...typed].length === targetLength,
+    implausible,
   };
 }
 
@@ -87,6 +108,7 @@ export const RACE_MAX_BONUS_XP = 25;
 
 export function raceXp(score: RaceScore): number {
   if (score.correctChars === 0) return 0; // typing nothing is not playing
+  if (score.implausible) return 0; // nor is submitting a text nobody typed
   const bonus = Math.min(Math.round(score.score / 4), RACE_MAX_BONUS_XP);
   return RACE_PARTICIPATION_XP + bonus;
 }
