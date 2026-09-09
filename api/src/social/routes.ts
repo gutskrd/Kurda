@@ -12,11 +12,14 @@ import {
   type ActivityEntryWithMedia,
 } from './profile-activity.js';
 import { EngagementService, isEngagementKind, isTargetType } from './engagement-service.js';
+import { FriendService } from '../friends/service.js';
 
 /** User search + public profiles + privacy (KUR-082). */
 export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
   const activity = new ProfileActivityService(app.db);
   const engagement = new EngagementService(app.db);
+  const friends = new FriendService(app.db);
+  const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
   /** Username prefix search (rate-limited against scraping). */
   app.get(
@@ -54,6 +57,29 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
    * empty list rather than an error — the client should not be able to tell a
    * hidden section from an empty one.
    */
+  /**
+   * Who this person is friends with.
+   *
+   * A profile that shows a level, a country and what someone is wearing but
+   * not who they know is a profile of an account rather than of a person — and
+   * on a community app, who someone knows is most of what makes them findable.
+   *
+   * The privacy rules are the profile's own: the profile call already resolves
+   * blocks and the everyone/members/friends setting, so it is reused rather
+   * than reimplemented where the two could drift apart. A profile you may not
+   * see the detail of has no friend list either.
+   */
+  app.get(
+    '/users/:id/friends',
+    { schema: { params: z.object({ id: z.uuid() }) } },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const profile = await social.profile(req.user?.id ?? null, id);
+      if (profile.private) return { friends: [] };
+      return { friends: await friends.list(id, publicUrl) };
+    },
+  );
+
   app.get(
     '/users/:id/activity',
     {

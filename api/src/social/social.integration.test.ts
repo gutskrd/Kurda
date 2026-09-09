@@ -104,6 +104,34 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     expect(await social.profile(id.hidden!, id.hidden!)).toMatchObject({ private: false, friendStatus: 'self' });
   });
 
+  /**
+   * A profile that shows a level and a country but not who someone knows is a
+   * profile of an account rather than of a person. The list carries the
+   * profile's own privacy rules rather than rules of its own, so a profile you
+   * cannot see the detail of has no friend list either.
+   */
+  describe('who someone is friends with', () => {
+    const friendsOf = (id: string) => app.inject({ method: 'GET', url: `/users/${id}/friends`, remoteAddress: '10.82.9.9' });
+
+    it('lists them for a profile anyone may look at', async () => {
+      // 'friendly' accepted the viewer in the test above, so they are a pair.
+      // The viewer is the one asked about here, because 'friendly' is
+      // friends-only and this request carries no session at all.
+      await pool.query(`UPDATE users SET profile_visibility = 'everyone' WHERE id = $1`, [id.viewer!]);
+      const res = await friendsOf(id.viewer!);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().friends.map((f: { userId: string }) => f.userId)).toContain(id.friendly!);
+    });
+
+    it('says nothing for a profile whose detail is hidden', async () => {
+      const res = await friendsOf(id.hidden!);
+      expect(res.statusCode).toBe(200);
+      // not an error and not a refusal: the same empty answer a stranger gets
+      // for anything else on that profile, which reveals nothing either way
+      expect(res.json().friends).toEqual([]);
+    });
+  });
+
   it('a blocked user is a 404, never revealed', async () => {
     // viewer blocked "blocked" earlier
     await expect(social.profile(id.viewer!, id.blocked!)).rejects.toThrow(/no such user/i);

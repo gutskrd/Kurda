@@ -4470,3 +4470,97 @@ a.mkp-activity-row:hover {
   color: var(--ink-2);
   font-weight: 600;
 }
+
+/* ---- the community, on the home page ------------------------------------- */
+
+/*
+ * Home was a page of doors. A door tells you a room exists; it cannot tell you
+ * anything happened in it today, which is the whole point of a community. These
+ * are the wall's own cards, in a column narrow enough that home still reads as
+ * a home page rather than as the wall with a header on it.
+ */
+.home-civak {
+  margin-top: 40px;
+}
+.home-civak-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.home-civak-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+.home-civak-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 640px;
+}
+
+/* ---- who someone knows --------------------------------------------------- */
+
+/*
+ * A profile that shows a level and a country but not who someone knows is a
+ * profile of an account rather than of a person. Faces rather than a list:
+ * recognising someone is the point, and a name alone is not recognisable.
+ */
+.mkp-friends {
+  margin-bottom: 26px;
+}
+.mkp-friends-count {
+  margin-left: 6px;
+  color: var(--ink-3);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.mkp-friends-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mkp-friend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.mkp-friend:hover {
+  border-color: var(--gold-ink);
+  background: var(--surface-2);
+}
+.mkp-friend .avatar,
+.mkp-friend .friend-avatar {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+.mkp-friend-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mkp-friends-more {
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
