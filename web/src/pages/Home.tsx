@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from '../profile/ProfileModal';
 import { DailyReward } from '../components/DailyReward';
+import { CivakPreview } from '../feed/CivakPreview';
 import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, UserIcon, UsersIcon, ArrowIcon } from '../components/icons';
 
 /*
@@ -65,6 +66,9 @@ export function Home(): React.JSX.Element {
           <Tile icon={<UserIcon />} title="Profile" body="Your account & progress." />
         </button>
       </div>
+
+      {/* the community itself, not another door into it */}
+      <CivakPreview />
     </div>
   );
 }
