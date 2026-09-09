@@ -151,4 +151,59 @@ describe('ProfileModal', () => {
     await userEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  /**
+   * Blocking from the card is what makes a blocklist reachable at all. Before
+   * it, the only Block button in the app was on your own friends list — so a
+   * stranger in your replies could not be blocked, only someone you had already
+   * chosen to add.
+   */
+  describe('blocking someone from their card', () => {
+    const stub = (): ReturnType<typeof vi.fn> => {
+      const fetchMock = vi.fn(async (url: string) => {
+        if (String(url).includes('/friends/u2/block')) return jsonResponse(200, { ok: true });
+        return jsonResponse(200, {
+          userId: 'u2',
+          username: 'zana',
+          displayName: 'Zana K',
+          friendStatus: 'none',
+          private: false,
+        });
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    };
+
+    it('needs a second press, then says what happened and where to undo it', async () => {
+      const fetchMock = stub();
+      renderApp(<OpenUser />);
+      const user = userEvent.setup();
+      await user.click(screen.getByText('open-user'));
+
+      await user.click(await screen.findByRole('button', { name: /block this person/i }));
+      // armed, not sent — this is the one action on the card you cannot walk back
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/friends/u2/block'))).toBe(false);
+
+      await user.click(screen.getByRole('button', { name: /press again to confirm/i }));
+
+      expect(await screen.findByText(/they are not told/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /undo this in settings/i })).toBeInTheDocument();
+      // the friend actions are gone: nothing left here that pretends to work
+      expect(screen.queryByRole('button', { name: /^add friend$/i })).not.toBeInTheDocument();
+    });
+
+    it('does not offer to block yourself', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          jsonResponse(200, { userId: 'u2', username: 'ada', displayName: null, friendStatus: 'self', private: false }),
+        ),
+      );
+      renderApp(<OpenUser />);
+      await userEvent.click(screen.getByText('open-user'));
+
+      await screen.findByText('@ada');
+      expect(screen.queryByRole('button', { name: /block this person/i })).not.toBeInTheDocument();
+    });
+  });
 });

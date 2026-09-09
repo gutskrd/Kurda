@@ -14,6 +14,7 @@ import type {
 } from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
+import { ConfirmButton } from '../components/ConfirmButton';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
 import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
@@ -269,9 +270,12 @@ function OtherActions({
   onMessage: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
+  const { closeProfile } = useProfileModal();
+  const navigate = useNavigate();
   const [state, setState] = useState<FriendStatus>(status);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   async function addFriend(): Promise<void> {
     setBusy(true);
@@ -290,11 +294,50 @@ function OtherActions({
     else setErr(true);
   }
 
+  /**
+   * Blocking, from the one place you are certain to be standing when you need
+   * it: the card that opens off a post, a comment, a message or a search
+   * result. Before this, the only Block button in the app sat on your own
+   * friends list — so the person you could block was someone you had already
+   * chosen to add, and a stranger who turned up in your replies could not be
+   * blocked at all.
+   *
+   * The card does not disappear on success. It says what happened and where to
+   * undo it, because the moment this call returns, that profile answers 404 to
+   * you and this card is the last time you will see it.
+   */
+  async function blockUser(): Promise<void> {
+    setBusy(true);
+    setErr(false);
+    const res = await client.post(`/friends/${userId}/block`);
+    setBusy(false);
+    if (res.ok) setBlocked(true);
+    else setErr(true);
+  }
+
   const message = (
     <Button variant="secondary" size="sm" block onClick={onMessage}>
       Message
     </Button>
   );
+
+  if (blocked) {
+    return (
+      <div className="pcard-blocked" role="status">
+        <p>Blocked. They can no longer find you, message you or add you — and they are not told.</p>
+        <button
+          type="button"
+          className="link"
+          onClick={() => {
+            closeProfile();
+            navigate('/app/settings');
+          }}
+        >
+          Undo this in Settings
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -316,6 +359,22 @@ function OtherActions({
           </Button>
           {message}
         </>
+      )}
+      {/*
+        Last, quiet, and behind a confirm. It is the only action here that
+        cannot be walked back from this screen, so it should never be the one
+        a thumb finds by accident.
+      */}
+      {state !== 'self' && (
+        <ConfirmButton
+          className="btn btn-ghost btn-sm pcard-block"
+          label="Block"
+          confirmLabel="Block — are you sure?"
+          busyLabel="Blocking…"
+          title="Block this person"
+          disabled={busy}
+          onConfirm={blockUser}
+        />
       )}
       {err && <div className="msg msg-error" style={{ marginTop: 4 }}>Something went wrong. Please try again.</div>}
     </div>
