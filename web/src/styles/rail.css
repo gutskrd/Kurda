@@ -623,8 +623,42 @@
  * columns, so the friend row falls back to a link to the messages page and this
  * never renders.
  */
+/*
+ * The conversation you opened from the rail.
+ *
+ * Below the two-column breakpoint this used to be `display: none` — so the
+ * chat bubble on a phone was a button that did nothing at all. It was not a
+ * dead link or a slow one; it opened a panel the stylesheet then refused to
+ * draw. A narrow screen has no room for a floating dock beside anything, so
+ * here the conversation takes the whole screen, which is what a phone does
+ * with a conversation everywhere else.
+ */
 .rail-chat {
-  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  animation: rail-chat-full-in 0.16s ease-out;
+}
+/* room for the keyboard's own bar, and clear of the home indicator */
+.rail-chat .chat-compose {
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+.rail-chat .chat-messages {
+  flex: 1;
+  min-height: 0;
+}
+@keyframes rail-chat-full-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @media (min-width: 1180px) {
   /*
@@ -636,6 +670,10 @@
    */
   .rail-chat {
     position: fixed;
+    /* the base rule is a full-screen `inset: 0`; these two release the corners
+       it pinned, or the dock would stretch across the whole window */
+    top: auto;
+    left: auto;
     right: calc(var(--rail-w) + 10px);
     bottom: 12px;
     transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -701,14 +739,33 @@
   background: transparent;
   color: var(--ink-4);
   cursor: pointer;
-  /* quiet until the row is under the pointer, so a list of friends stays a list
-     of friends rather than a list of buttons */
+  /* quiet until the row is under the pointer, so a list of people stays a list
+     of people rather than a list of buttons */
   opacity: 0;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
-.rail-friend:hover .rail-friend-chat,
+/*
+ * Any row, not just a friend's.
+ *
+ * This was `.rail-friend:hover`, and a group's row is `.rail-group` — so the
+ * chat button on every group was in the page, took up space, and could be
+ * tabbed to, while being invisible to everyone who uses a mouse. It was not a
+ * missing button; it was a button nothing could ever reveal.
+ */
+.rail-row:hover .rail-friend-chat,
 .rail-friend-chat:focus-visible {
   opacity: 1;
+}
+/*
+ * A finger cannot hover. On a touch screen the reveal-on-hover rule above never
+ * fires at all, so every one of these buttons was invisible on every phone and
+ * tablet — the exact devices where the list is most likely to be tapped.
+ */
+@media (hover: none) {
+  .rail-friend-chat {
+    opacity: 1;
+    color: var(--ink-3);
+  }
 }
 .rail-friend-chat:hover {
   color: var(--gold-ink);

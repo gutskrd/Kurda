@@ -504,11 +504,13 @@ a.rank-name:hover {
 /*
  * The box the photo editor is posted from, among other things.
  *
- * Three things were wrong here at once, and all of them show up on a phone.
- *
- * `overflow: auto` scrolls BOTH axes, so anything a pixel too wide — a filter
- * reel, a long word — turned the panel into something you could swipe sideways.
- * A dialog has one direction, and it is down.
+ * It scrolls down and, in practice, only down — but deliberately not because
+ * anything here forbids sideways. `overflow-x: hidden` was tried and taken back
+ * out: it stops the swipe by cutting the content off, so a control that does
+ * not fit becomes a control you cannot see or reach, silently. The two things
+ * that actually did not fit are fixed at their source instead — `.seg` could
+ * not shrink, and the side padding was a third of a phone — and if something
+ * ever overflows again a scrollbar will say so out loud.
  *
  * `100vh` on a phone is the *large* viewport, measured as though the address
  * bar were hidden. The panel was therefore allowed to be taller than the screen
@@ -523,7 +525,6 @@ a.rank-name:hover {
   width: 100%;
   max-width: 430px;
   max-height: calc(100dvh - 48px);
-  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 32px 30px 28px;
