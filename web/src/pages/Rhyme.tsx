@@ -6,6 +6,7 @@ import type { RhymeGame, RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
+import { useTypeOnly } from '../components/typeOnly';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -36,6 +37,7 @@ export function Rhyme(): React.JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [busy, setBusy] = useState(false);
+  const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly('No pasting — think of one.');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const start = useCallback(async () => {
@@ -150,6 +152,7 @@ export function Rhyme(): React.JSX.Element {
 
           {active ? (
             <form className="rhyme-compose" onSubmit={submit}>
+              {/* a rhyme is a word you thought of; a dictionary tab is one paste away */}
               <input
                 ref={inputRef}
                 className="input"
@@ -159,6 +162,7 @@ export function Rhyme(): React.JSX.Element {
                 maxLength={64}
                 aria-label="Your rhyme"
                 autoFocus
+                {...typeOnly}
               />
               <Button type="submit" disabled={busy || word.trim().length === 0}>
                 {busy ? '…' : 'Submit'}
@@ -174,7 +178,12 @@ export function Rhyme(): React.JSX.Element {
             </div>
           )}
 
-          {notice && <div className="wordle-notice" role="status">{notice}</div>}
+          {/* one slot: a refused paste is the more urgent of the two to answer */}
+          {(pasteNotice ?? notice) && (
+            <div className="wordle-notice" role="status">
+              {pasteNotice ?? notice}
+            </div>
+          )}
 
           {found.length > 0 && (
             <ul className="rhyme-found" aria-label="Rhymes you found">

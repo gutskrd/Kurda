@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { ErrorState } from '../components/states';
 import { ArrowIcon } from '../components/icons';
+import { useTypeOnly } from '../components/typeOnly';
 
 /**
  * Typing race: reproduce a Kurdish text as fast and as accurately as you can.
@@ -28,7 +29,10 @@ interface RaceResult {
   perfect: boolean;
   elapsedMs: number;
   xpAwarded: number;
+  /** the server saw a speed no person types at, and scored the run at nothing */
+  implausible?: boolean;
 }
+
 
 const DIFFICULTY = [
   { value: 1, label: 'Short' },
@@ -45,8 +49,12 @@ export function Race(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [focused, setFocused] = useState(false);
+  // the text to copy is on this very screen, so the box takes keystrokes only
+  const { handlers: typeOnly, notice } = useTypeOnly('No pasting — this one you type.');
   const startedAt = useRef<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const cursorRef = useRef<HTMLSpanElement>(null);
 
   const target = game?.text.body ?? '';
 
@@ -61,13 +69,23 @@ export function Race(): React.JSX.Element {
       setGame(res.data);
       startedAt.current = Date.now();
       setElapsed(0);
-      // typing should begin the moment the text appears
-      setTimeout(() => inputRef.current?.focus(), 0);
     } else {
       setGame(null);
       setError(describeError(res.error));
     }
   }, [client, difficulty]);
+
+  /**
+   * Typing begins the moment the text appears, and the clock is already running.
+   *
+   * An effect rather than a timer after the fetch: the box does not exist yet
+   * when the response lands, so `setTimeout(…, 0)` was racing React's commit and
+   * usually losing — the race would start with nothing focused and the timer
+   * ticking. On a phone this is also what opens the keyboard.
+   */
+  useEffect(() => {
+    if (game && !result) inputRef.current?.focus();
+  }, [game, result]);
 
   // a running clock, for the racer — the score is timed server-side
   useEffect(() => {
@@ -95,7 +113,20 @@ export function Race(): React.JSX.Element {
 
   const chars = useMemo(() => [...target], [target]);
   const typedChars = useMemo(() => [...typed], [typed]);
-  const progress = target.length === 0 ? 0 : Math.min(typedChars.length / chars.length, 1);
+  const progress = chars.length === 0 ? 0 : Math.min(typedChars.length / chars.length, 1);
+
+  /**
+   * Keep the character you are on in view.
+   *
+   * A long text runs past the fold, and on a phone the keyboard takes half of
+   * what is left — without this you end up typing at a line you cannot see.
+   * `nearest` does nothing while the caret is already visible, so this is not a
+   * scroll on every keystroke.
+   */
+  useEffect(() => {
+    cursorRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [typed]);
+
 
   return (
     <div className="container container-narrow">
@@ -145,30 +176,53 @@ export function Race(): React.JSX.Element {
             <span className="muted">{game.text.title}</span>
           </div>
 
-          {/* every character coloured as you go, so a mistake is visible at once */}
-          <p className="race-text" aria-label="Text to type">
-            {chars.map((ch, i) => {
-              const t = typedChars[i];
-              const state = t === undefined ? '' : t === ch ? ' race-ok' : ' race-bad';
-              const cursor = i === typedChars.length ? ' race-cursor' : '';
-              return (
-                <span key={i} className={`race-char${state}${cursor}`}>
-                  {ch}
-                </span>
-              );
-            })}
-          </p>
+          {/*
+            The text and the box you type in are the same thing.
+            Two boxes meant the text sat there as ordinary selectable prose with
+            an input underneath it — an invitation to select it, copy it and win
+            the race with two keystrokes. There is nothing to select now: the
+            characters colour themselves as you go, the caret is drawn on the
+            character you are on, and the field that takes the keys is an
+            invisible layer over the top.
+          */}
+          <div
+            className={`race-type${focused ? ' is-focused' : ''}${result ? ' is-done' : ''}`}
+            onPointerDown={() => inputRef.current?.focus()}
+          >
+            <p className="race-text" id="race-target">
+              {chars.map((ch, i) => {
+                const t = typedChars[i];
+                const state = t === undefined ? '' : t === ch ? ' race-ok' : ' race-bad';
+                const here = i === typedChars.length;
+                return (
+                  <span key={i} ref={here ? cursorRef : undefined} className={`race-char${state}${here ? ' race-cursor' : ''}`}>
+                    {ch}
+                  </span>
+                );
+              })}
+            </p>
 
-          <textarea
-            ref={inputRef}
-            className="input race-input"
-            rows={3}
-            value={typed}
-            disabled={!!result}
-            onChange={(e) => setTyped(e.target.value)}
-            placeholder="Start typing…"
-            aria-label="Your typing"
-          />
+            <textarea
+              ref={inputRef}
+              className="race-capture"
+              value={typed}
+              disabled={!!result}
+              onChange={(e) => setTyped([...e.target.value].slice(0, chars.length).join(''))}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              {...typeOnly}
+              aria-label="Type the text"
+              aria-describedby="race-target"
+            />
+
+            {!focused && !result && <span className="race-tap">Tap here to type</span>}
+          </div>
+
+          {notice && (
+            <div className="wordle-notice" role="status">
+              {notice}
+            </div>
+          )}
 
           {!result && (
             <div className="race-actions">
@@ -180,7 +234,19 @@ export function Race(): React.JSX.Element {
 
           {result && (
             <div className="race-result">
-              <h2 className="section-heading">{result.perfect ? 'Perfect run!' : 'Race finished'}</h2>
+              <h2 className="section-heading">
+                {result.implausible ? 'Not scored' : result.perfect ? 'Perfect run!' : 'Race finished'}
+              </h2>
+              {/*
+                Said out loud rather than shown as a silent zero. Somebody who
+                hits this has almost certainly found a way around the typing box,
+                and a result that just reads 0 looks like the game is broken.
+              */}
+              {result.implausible && (
+                <p className="race-refused">
+                  That is faster than anyone types, so this run does not count towards your XP or the rankings.
+                </p>
+              )}
               <div className="race-figures">
                 <Figure value={result.wpm.toFixed(1)} label="WPM" />
                 <Figure value={`${Math.round(result.accuracy * 100)}%`} label="Accuracy" />
