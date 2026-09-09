@@ -42,6 +42,22 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
       remoteAddress: '10.77.5.5',
     });
 
+  /**
+   * Make a race look like somebody typed it.
+   *
+   * Injecting a start and a finish back to back is a run of a few milliseconds,
+   * which the scorer now rejects as faster than anyone types — correctly, since
+   * that is exactly the shape of a paste. Moving `started_at` back is the only
+   * honest way to fake elapsed time here, because elapsed time is the one thing
+   * the client cannot tell the server.
+   */
+  async function typedFor(gameId: string, seconds: number): Promise<void> {
+    await pool.query(`UPDATE race_games SET started_at = now() - ($2 || ' seconds')::interval WHERE id = $1`, [
+      gameId,
+      String(seconds),
+    ]);
+  }
+
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -98,9 +114,10 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   it('scores from the server clock, so a racer cannot claim their own time', async () => {
     const race = await call('POST', '/race', playerToken, { difficulty: 3 });
     const id = race.json().id as string;
+    await typedFor(id, 25);
 
-    // a perfect run, submitted immediately: the elapsed time is whatever the
-    // server measured, and nothing in the request could change it
+    // a perfect run: the elapsed time is whatever the server measured, and
+    // nothing in the request could change it
     const done = await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT });
     expect(done.statusCode).toBe(200);
     const result = done.json();
@@ -109,6 +126,32 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect(result.elapsedMs).toBeGreaterThan(0);
     expect(Number.isFinite(result.wpm)).toBe(true);
     expect(result.xpAwarded).toBeGreaterThan(0);
+    expect(result.implausible).toBe(false);
+  });
+
+  /**
+   * The typing box refuses a paste, but nothing here went through a typing box.
+   * This is the request a cheat actually sends: the whole text, at once, the
+   * instant the race is handed out.
+   */
+  it('will not rank or pay a run that arrives faster than anyone types', async () => {
+    const race = await call('POST', '/race', playerToken, { difficulty: 3 });
+    const id = race.json().id as string;
+
+    const done = await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT });
+    expect(done.statusCode).toBe(200);
+    const result = done.json();
+    expect(result.implausible).toBe(true);
+    expect(result.score).toBe(0);
+    expect(result.xpAwarded).toBe(0);
+    expect(result.perfect).toBe(false);
+    // the reading is still honest — only what it is worth is zero
+    expect(result.accuracy).toBe(1);
+    expect(result.wpm).toBeGreaterThan(350);
+
+    // and nothing was paid for it
+    const rows = await pool.query(`SELECT 1 FROM xp_ledger WHERE source = 'race' AND ref_id = $1`, [id]);
+    expect(rows.rowCount).toBe(0);
   });
 
   it('refuses to finish the same race twice', async () => {
@@ -138,6 +181,7 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     );
     const race = await call('POST', '/race', playerToken, { difficulty: 3 });
     const id = race.json().id as string;
+    await typedFor(id, 25); // a run that pays at all has to be one a person could type
     await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT });
     await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT }); // rejected
     const after = await pool.query<{ n: string }>(
