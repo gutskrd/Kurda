@@ -345,6 +345,17 @@ export function layerBox(layer: PlacedLayer, width: number, height: number): { w
     blockWidth = Math.min(width * 0.86, Math.max(...lines.map((l) => l.length)) * fontPx * 0.55);
   }
 
+  /*
+   * Words you have not typed yet still need somewhere to be.
+   *
+   * `drawText` paints nothing for an empty value, so the measured block is zero
+   * wide and the selection outline collapses to a sliver of padding — which is
+   * what you would be looking at for the whole moment between pressing "Add
+   * words" and typing the first letter. A placeholder-sized box shows where
+   * they are going to land instead.
+   */
+  if (layer.value.trim().length === 0) blockWidth = width * 0.3;
+
   const blockHeight = Math.max(1, lines.length) * lineHeight;
   // the plate is what you actually see the edge of, so it is what must fit
   return layer.plate

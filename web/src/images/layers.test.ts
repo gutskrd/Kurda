@@ -11,6 +11,7 @@ import {
   signatureBox,
   type Layer,
   type StickerLayer,
+  type TextLayerV2,
 } from './layers';
 import { stubCanvas, stubImage } from './canvasStubs';
 import { ensureSticker } from './stickers';
@@ -194,6 +195,20 @@ describe('drawLayers', () => {
 });
 
 describe('keepInside', () => {
+  /** typed narrowly, unlike the module-level helpers, so layerBox will take it */
+  const words = (value: string): TextLayerV2 => ({
+    kind: 'text',
+    id: 't1',
+    value,
+    font: 'sans',
+    size: 0.09,
+    color: '#ffffff',
+    plate: false,
+    rotation: 0,
+    x: 0.5,
+    y: 0.5,
+  });
+
   const sticker = (over: Partial<StickerLayer> = {}): StickerLayer => ({
     kind: 'sticker',
     id: 's1',
@@ -263,5 +278,27 @@ describe('keepInside', () => {
   it('refuses to divide by a picture with no size', () => {
     const s = sticker({ x: 9 });
     expect(keepInside(s, 0, 0)).toBe(s);
+  });
+
+  /**
+   * "Add words" now puts an empty text layer down and focuses the box, so there
+   * is a moment before the first keystroke where the layer exists and paints
+   * nothing. Measured honestly that box is zero wide, and the selection outline
+   * would be a sliver — so an empty one is given room to show where the words
+   * are going to land.
+   */
+  it('gives words you have not typed yet somewhere to be', () => {
+    stubCanvas(); // or jsdom logs a "no getContext" error on every measurement
+    const empty = layerBox(words(''), 1000, 800);
+    expect(empty.w).toBeGreaterThan(200);
+    expect(empty.h).toBeGreaterThan(0);
+
+    // whitespace alone is still nothing typed
+    expect(layerBox(words('   '), 1000, 800).w).toBe(empty.w);
+
+    // and one real character takes over from the placeholder size
+    const typed = layerBox(words('W'), 1000, 800);
+    expect(typed.w).toBeLessThan(empty.w);
+    expect(typed.w).toBeGreaterThan(0);
   });
 });

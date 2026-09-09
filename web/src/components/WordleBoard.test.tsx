@@ -67,13 +67,20 @@ describe('WordleKeyboard', () => {
 });
 
 describe('WordleBoard', () => {
-  it('caps a row at the cells natural size so it can shrink to fit', () => {
+  /**
+   * The cap used to be a number written straight into an inline `max-width`,
+   * which no media query could reach — so a phone got the same 54px cells as a
+   * desktop and six rows of them pushed the keyboard below the fold. The row
+   * publishes its column count and the stylesheet does the arithmetic, which is
+   * what lets the cell size shrink on a small screen.
+   */
+  it('publishes its column count so the stylesheet can size the cells', () => {
     render(<WordleBoard targetLength={8} guesses={[]} current="" totalRows={6} showCurrent />);
     const row = document.querySelector('.wordle-row') as HTMLElement;
-    // 8 cells of 54px plus 7 gaps of 6px. Below that the grid divides whatever
-    // width there is, instead of forcing 402px onto a 375px screen.
-    expect(row.style.maxWidth).toBe('474px');
+    expect(row.style.getPropertyValue('--wordle-cols')).toBe('8');
     expect(row.style.gridTemplateColumns).toBe('repeat(8, 1fr)');
+    // and nothing hard-codes a width any more
+    expect(row.style.maxWidth).toBe('');
   });
 
   it('renders one cell per letter for every row', () => {
