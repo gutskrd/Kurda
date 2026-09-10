@@ -1,3 +1,5 @@
+import type { MessageKey } from '../i18n/en';
+
 /**
  * Burning words into a picture.
  *
@@ -10,11 +12,11 @@
 
 /** The faces on offer, as CSS stacks that need no web font to download. */
 export const FONTS = [
-  { key: 'sans', label: 'Sans', stack: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
-  { key: 'serif', label: 'Serif', stack: 'Georgia, "Times New Roman", serif' },
-  { key: 'slab', label: 'Slab', stack: '"Rockwell", "Courier Bold", Georgia, serif' },
-  { key: 'mono', label: 'Mono', stack: '"SF Mono", "Consolas", "Courier New", monospace' },
-  { key: 'hand', label: 'Hand', stack: '"Segoe Script", "Bradley Hand", cursive' },
+  { key: 'sans', labelKey: 'photo.font.sans' as MessageKey, stack: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+  { key: 'serif', labelKey: 'photo.font.serif' as MessageKey, stack: 'Georgia, "Times New Roman", serif' },
+  { key: 'slab', labelKey: 'photo.font.slab' as MessageKey, stack: '"Rockwell", "Courier Bold", Georgia, serif' },
+  { key: 'mono', labelKey: 'photo.font.mono' as MessageKey, stack: '"SF Mono", "Consolas", "Courier New", monospace' },
+  { key: 'hand', labelKey: 'photo.font.hand' as MessageKey, stack: '"Segoe Script", "Bradley Hand", cursive' },
 ] as const;
 
 export type FontKey = (typeof FONTS)[number]['key'];

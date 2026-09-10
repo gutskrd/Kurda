@@ -1,3 +1,5 @@
+import type { MessageKey } from '../i18n/en';
+
 /**
  * The colour maths, done here rather than handed to the browser.
  *
@@ -59,18 +61,18 @@ export const NEUTRAL: Adjustments = {
 export const ADJUSTMENT_KEYS = Object.keys(NEUTRAL) as ReadonlyArray<keyof Adjustments>;
 
 /** In the order a photographer works: light, then tone, then colour, then look. */
-export const ADJUSTMENT_LABELS: Record<keyof Adjustments, string> = {
-  exposure: 'Exposure',
-  contrast: 'Contrast',
-  highlights: 'Highlights',
-  shadows: 'Shadows',
-  warmth: 'Warmth',
-  saturation: 'Saturation',
-  vibrance: 'Vibrance',
-  fade: 'Fade',
-  vignette: 'Vignette',
-  grain: 'Grain',
-  pixelate: 'Pixelate',
+export const ADJUSTMENT_LABEL_KEYS: Record<keyof Adjustments, MessageKey> = {
+  exposure: 'photo.adjust.exposure',
+  contrast: 'photo.adjust.contrast',
+  highlights: 'photo.adjust.highlights',
+  shadows: 'photo.adjust.shadows',
+  warmth: 'photo.adjust.warmth',
+  saturation: 'photo.adjust.saturation',
+  vibrance: 'photo.adjust.vibrance',
+  fade: 'photo.adjust.fade',
+  vignette: 'photo.adjust.vignette',
+  grain: 'photo.adjust.grain',
+  pixelate: 'photo.adjust.pixelate',
 };
 
 /** Sliders that only make sense in one direction. */

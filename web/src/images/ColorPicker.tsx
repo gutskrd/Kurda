@@ -11,6 +11,7 @@ import {
   rgbToHsv,
   toHex,
 } from './color';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Pick a colour: a gradient to point at, a hue to slide, and the three ways of
@@ -28,6 +29,7 @@ export function ColorPicker({
   value: string;
   onChange: (hex: string) => void;
 }): React.JSX.Element {
+  const t = useT();
   const rgb = parseHex(value) ?? { r: 255, g: 255, b: 255 };
   const hsv = rgbToHsv(rgb);
   const [hue, setHue] = useState(hsv.h);
@@ -66,7 +68,7 @@ export function ColorPicker({
         className="cpick-square"
         style={{ background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${hue} 100% 50%))` }}
         role="application"
-        aria-label="Colour gradient"
+        aria-label={t('photo.colour.gradient')}
         onPointerDown={onPointer}
         onPointerMove={onPointerMove}
       >
@@ -83,7 +85,7 @@ export function ColorPicker({
         min={0}
         max={360}
         value={Math.round(hue)}
-        aria-label="Hue"
+        aria-label={t('photo.colour.hue')}
         onChange={(e) => {
           const h = Number(e.target.value);
           setHue(h);

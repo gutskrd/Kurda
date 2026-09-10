@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { HandPeace } from '@phosphor-icons/react/dist/icons/HandPeace';
 import { ICON_WEIGHT } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 /**
  * The seven reactions a picture can get.
@@ -20,14 +22,14 @@ import { useAuth } from '../auth/AuthProvider';
 export const REACTIONS = ['love', 'peace', 'like', 'laugh', 'wow', 'sad', 'angry'] as const;
 export type Reaction = (typeof REACTIONS)[number];
 
-const LABELS: Record<Reaction, string> = {
-  love: 'Love',
-  peace: 'Peace',
-  like: 'Like',
-  laugh: 'Funny',
-  wow: 'Wow',
-  sad: 'Sad',
-  angry: 'Angry',
+const LABEL_KEYS: Record<Reaction, MessageKey> = {
+  love: 'react.love',
+  peace: 'react.peace',
+  like: 'react.like',
+  laugh: 'react.laugh',
+  wow: 'react.wow',
+  sad: 'react.sad',
+  angry: 'react.angry',
 };
 
 const face = (size: number) => ({
@@ -112,6 +114,7 @@ export interface ReactionSummary {
 
 export function Reactions({ postId, initial }: { postId: string; initial: ReactionSummary }): React.JSX.Element {
   const { client, status } = useAuth();
+  const t = useT();
   const [summary, setSummary] = useState<ReactionSummary>(initial);
   const [busy, setBusy] = useState(false);
   const signedIn = status === 'signedIn';
@@ -142,11 +145,11 @@ export function Reactions({ postId, initial }: { postId: string; initial: Reacti
             className={`reaction${mine ? ' is-mine' : ''}`}
             disabled={!signedIn || busy}
             aria-pressed={mine}
-            title={signedIn ? LABELS[r] : 'Sign in to react'}
+            title={signedIn ? t(LABEL_KEYS[r]) : t('react.signInToReact')}
             onClick={() => void choose(r)}
           >
             <ReactionGlyph kind={r} />
-            <span className="sr-only">{LABELS[r]}</span>
+            <span className="sr-only">{t(LABEL_KEYS[r])}</span>
             {count > 0 && <span className="reaction-count">{count}</span>}
           </button>
         );
