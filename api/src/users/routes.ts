@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { normalizeKurdish, stripControlChars } from '@kurda/shared';
+import { APP_LOCALE_CODES, normalizeKurdish, stripControlChars } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
@@ -63,7 +63,9 @@ export const patchMeBodySchema = z
   .object({
     displayName: z.string().min(1).max(60).optional(),
     bio: z.string().max(1_000).optional(),
-    locale: z.enum(['en', 'ku', 'de', 'tr', 'ar']).optional(),
+    /* every language the interface is offered in — one list, so the picker
+       cannot offer something the server would refuse */
+    locale: z.enum(APP_LOCALE_CODES).optional(),
     timezone: timezoneSchema.optional(),
     username: z.string().min(3).max(30).optional(),
     /** deny mic → speaking exercises skipped course-wide (KUR-036) */

@@ -1,0 +1,87 @@
+/**
+ * English — the language the interface is written in.
+ *
+ * This file is the source of truth twice over: it defines the key set every
+ * other language is typed against, and it is what an untranslated string falls
+ * back to. Nothing here may be missing, which is why it alone is a complete
+ * `Record` while the others are partial.
+ *
+ * Keys read as `area.thing`, and the English text is the key's documentation —
+ * a translator working from `settings.language.help` alone would guess wrong,
+ * so the value must be a full sentence rather than a fragment to be assembled.
+ * Nothing is built by concatenation for the same reason: word order is not the
+ * same in eight languages.
+ */
+export const en = {
+  // ---- the shell -----------------------------------------------------------
+  'nav.civak': 'Civak',
+  'nav.games': 'Games',
+  'nav.rankings': 'Rankings',
+  'nav.learn': 'Learn',
+  'nav.friends': 'Friends',
+  'nav.messages': 'Messages',
+  'nav.shop': 'Shop',
+  'nav.settings': 'Settings',
+  'nav.login': 'Log in',
+  'nav.register': 'Get started',
+  'nav.menu': 'Menu',
+  'nav.close': 'Close',
+  'nav.skipToContent': 'Skip to content',
+
+  // ---- things every screen uses -------------------------------------------
+  'common.loading': 'Loading…',
+  'common.retry': 'Try again',
+  'common.cancel': 'Cancel',
+  'common.save': 'Save',
+  'common.saved': 'Saved.',
+  'common.somethingWentWrong': 'Something went wrong. Please try again.',
+  'common.showMore': 'Show more',
+  'common.close': 'Close',
+
+  // ---- signing in and up ---------------------------------------------------
+  'auth.login.title': 'Welcome back',
+  'auth.login.subtitle': 'Sign in to keep learning.',
+  'auth.login.submit': 'Log in',
+  'auth.login.submitting': 'Signing in…',
+  'auth.login.noAccount': 'No account yet?',
+  'auth.login.forgot': 'Forgotten your password?',
+  'auth.register.title': 'Create your account',
+  'auth.register.subtitle': 'A few details, and you are in.',
+  'auth.register.submit': 'Create account',
+  'auth.register.submitting': 'Creating…',
+  'auth.register.haveAccount': 'Already have an account?',
+  'auth.email': 'Email',
+  'auth.username': 'Username',
+  'auth.password': 'Password',
+  'auth.showPassword': 'Show password',
+  'auth.hidePassword': 'Hide password',
+
+  // ---- choosing a language -------------------------------------------------
+  'language.label': 'Language',
+  'language.chooseHelp': 'You can change this at any time in Settings.',
+  'language.settingsTitle': 'Language',
+  'language.settingsHelp':
+    'What language MyKurda speaks to you in. It follows your account, so it is the same on every device you sign in on.',
+  'language.saving': 'Saving…',
+  'language.savedTo': 'MyKurda is now in {language}.',
+  'language.failed': 'That language could not be saved. Please try again.',
+  'language.partial':
+    'Some parts of MyKurda are still only in English. They will follow as they are translated.',
+
+  // ---- settings ------------------------------------------------------------
+  'settings.title': 'Settings',
+  'settings.eyebrow': 'Account',
+  'settings.privacy.title': 'Profile visibility',
+  'settings.privacy.help': 'Who can see your profile.',
+  'settings.sessions.title': 'Sessions',
+  'settings.sessions.help': 'Sign out here, or on every device at once.',
+  'settings.sessions.signOut': 'Sign out',
+  'settings.sessions.signOutEverywhere': 'Log out everywhere',
+  'settings.data.title': 'Your data',
+  'settings.blocked.title': 'Blocked people',
+} as const;
+
+export type MessageKey = keyof typeof en;
+
+/** Every other language fills in what it can; the rest falls back to English. */
+export type Catalogue = Partial<Record<MessageKey, string>>;

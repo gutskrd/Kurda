@@ -11,7 +11,7 @@ interface AuthContextValue {
   client: ApiClient;
   /** Resolve to an error message, or null on success. */
   login(email: string, password: string, remember: boolean): Promise<string | null>;
-  register(input: { email: string; username: string; password: string }): Promise<string | null>;
+  register(input: { email: string; username: string; password: string; locale?: string }): Promise<string | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
   /** Re-fetch the profile (e.g. after editing it elsewhere). */

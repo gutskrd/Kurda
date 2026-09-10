@@ -3,10 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
+import { useI18n, useT } from '../i18n/I18nProvider';
+import { LanguagePicker } from '../i18n/LanguagePicker';
 
 export function Register(): React.JSX.Element {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { locale, setLocale } = useI18n();
+  const t = useT();
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -18,7 +22,9 @@ export function Register(): React.JSX.Element {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const err = await register({ email, username, password });
+    // the language they chose here is the account's from the first moment,
+    // so the confirmation email and the next sign-in already speak it
+    const err = await register({ email, username, password, locale });
     setBusy(false);
     if (err) setError(err);
     else navigate('/app', { replace: true });
@@ -80,8 +86,17 @@ export function Register(): React.JSX.Element {
             <span className="field-hint">At least 8 characters, with a mix of letters and numbers.</span>
           </div>
 
+          {/*
+            Asked here rather than after signing up, and it takes effect while
+            you are still on this page — so the first thing a new account sees
+            is already in the language it chose, including its welcome email.
+          */}
+          <div className="field">
+            <LanguagePicker value={locale} onChange={setLocale} help={t('language.chooseHelp')} disabled={busy} />
+          </div>
+
           <Button type="submit" block disabled={busy}>
-            {busy ? 'Creating account…' : 'Create account'}
+            {busy ? t('auth.register.submitting') : t('auth.register.submit')}
           </Button>
 
           <p className="oauth-note">

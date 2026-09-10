@@ -3,14 +3,26 @@ import { render, type RenderResult } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthProvider';
 import { ProfileModalProvider } from '../profile/ProfileModal';
+import { I18nProvider } from '../i18n/I18nProvider';
 
-/** Render a tree wrapped in the auth context, router, and profile-modal context. */
+/**
+ * Render a tree wrapped in the contexts the real app always provides: auth, the
+ * router, the profile modal, and the interface language.
+ *
+ * The language belongs here rather than in each test because `useT` throws
+ * without it, exactly as `useAuth` does — a component that asks for a word is
+ * no more optional about its provider than one that asks who is signed in.
+ * Tests get English, since jsdom's navigator reports `en-US` and nothing has
+ * been stored.
+ */
 export function renderApp(ui: ReactNode, initialEntries: string[] = ['/']): RenderResult {
   return render(
     <AuthProvider>
-      <MemoryRouter initialEntries={initialEntries}>
-        <ProfileModalProvider>{ui}</ProfileModalProvider>
-      </MemoryRouter>
+      <I18nProvider>
+        <MemoryRouter initialEntries={initialEntries}>
+          <ProfileModalProvider>{ui}</ProfileModalProvider>
+        </MemoryRouter>
+      </I18nProvider>
     </AuthProvider>,
   );
 }
