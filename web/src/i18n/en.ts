@@ -146,6 +146,41 @@ export const en = {
   'post.picture.open': 'Post a picture',
   'post.caption': 'Caption',
   'post.captionPlaceholder': 'Say something about it (optional)…',
+
+  // ---- games ---------------------------------------------------------------
+  'games.title': 'Games',
+  'games.eyebrow': 'Learn by playing',
+  'games.subtitle':
+    'Practice that doesn’t feel like practice. Every game is scored on the server, so the leaderboards stay fair.',
+  'games.playable': 'Playable',
+  'games.signInToPlay': 'Sign in to play',
+  'games.chooseMode': 'Choose a mode',
+  'games.howToPlay': 'How do you want to play?',
+  'games.playAndScore': 'Play, and keep score',
+
+  'games.wordle.name': 'Kurdish Wordle',
+  'games.wordle.body': 'Guess the Kurdish word in six tries — on your own, or racing a friend.',
+  'games.wordle.solo': 'Today’s daily puzzle, plus unlimited practice rounds across three difficulties.',
+  'games.wordle.online': 'Create a battle, share the invite link, and race a friend to the same word.',
+
+  'games.rhyme.name': 'Rhyming Words',
+  'games.rhyme.body': 'Find as many Kurdish words as you can that rhyme with the prompt.',
+  'games.rhyme.solo': 'A timed solo round against the clock — good for building vocabulary fast.',
+  'games.rhyme.online': 'Head-to-head: share an invite link and out-rhyme a friend in one shared window.',
+
+  'games.race.name': 'Typing Race',
+  'games.race.body': 'Type a Kurdish text as fast and as accurately as you can — speed is measured server-side.',
+  'games.race.mode': 'Race the clock',
+  'games.race.blurb': 'Pick a length, type the text, and get your words per minute and accuracy.',
+
+  'games.quiz.name': 'Ranked Quiz',
+  'games.quiz.body': 'Fast 1-v-1 matches: answer Kurdish questions quicker and more accurately than your opponent.',
+  'games.quiz.online': 'Get matched with an opponent. Server-scored and rated — your rating moves.',
+
+  'games.mode.solo': 'Play solo',
+  'games.mode.online': 'Play online',
+  'games.mode.needsAccount': 'needs an account',
+  'games.play': 'Play',
 } as const;
 
 export type MessageKey = keyof typeof en;
