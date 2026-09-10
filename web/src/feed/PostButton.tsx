@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { Modal } from '../components/Modal';
+import { useT } from '../i18n/I18nProvider';
 import { FeatherIcon, PhotoIcon, PlusIcon } from '../components/icons';
 import { PostWords } from './PostWords';
 import { PictureComposer } from '../images/PostPicture';
@@ -17,6 +18,7 @@ type Choice = 'words' | 'picture' | null;
  */
 export function PostButton({ onPosted }: { onPosted: () => void }): React.JSX.Element {
   const { status, user } = useAuth();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<Choice>(null);
 
@@ -36,26 +38,26 @@ export function PostButton({ onPosted }: { onPosted: () => void }): React.JSX.El
 
   return (
     <>
-      <button type="button" className="post-plus" onClick={() => setOpen(true)} aria-label="Post something">
+      <button type="button" className="post-plus" onClick={() => setOpen(true)} aria-label={t('post.open')}>
         <PlusIcon size={18} weight="bold" />
         {/* the word carries it on a wide screen; the + carries it on a narrow one */}
-        <span className="post-plus-word">Post</span>
+        <span className="post-plus-word">{t('post.button')}</span>
       </button>
 
-      <Modal open={open} onClose={close} label="Post something">
+      <Modal open={open} onClose={close} label={t('post.open')}>
         {choice === null ? (
           <div className="post-choice">
-            <h2 className="friend-heading" style={{ marginTop: 0 }}>What are you posting?</h2>
+            <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('post.what')}</h2>
             <div className="post-choice-row">
               <button type="button" className="post-choice-card" onClick={() => setChoice('words')}>
                 <FeatherIcon size={26} />
                 <span className="post-choice-name">Gotin</span>
-                <span className="post-choice-sub">A saying, a story or a poem</span>
+                <span className="post-choice-sub">{t('post.words.sub')}</span>
               </button>
               <button type="button" className="post-choice-card" onClick={() => setChoice('picture')}>
                 <PhotoIcon size={26} />
                 <span className="post-choice-name">Dîmen</span>
-                <span className="post-choice-sub">A picture or a meme</span>
+                <span className="post-choice-sub">{t('post.picture.sub')}</span>
               </button>
             </div>
           </div>

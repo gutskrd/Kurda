@@ -174,6 +174,57 @@ describe('Civak', () => {
     expect(within(screen.getByRole('article')).getByText('Gotin')).toBeInTheDocument();
   });
 
+  /**
+   * The wall in another language.
+   *
+   * Two things at once, and the second is the point: the ordinary words change,
+   * and the community's own words do not. "Gotin", "Çîrok", "Helbest", "Wêne",
+   * "Dîmen" are what these things are called here — translating them would be
+   * like translating "Civak" — so a Spanish reader gets Spanish scaffolding
+   * around the same Kurdish vocabulary.
+   */
+  describe('in another language', () => {
+    it('translates the wall around the words the community uses', async () => {
+      localStorage.setItem('mykurda_locale', 'es');
+      feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      expect(await screen.findByText('Relatos, poemas e imágenes de todo el mundo.')).toBeInTheDocument();
+      // the filter that is ordinary words is translated…
+      expect(screen.getByRole('button', { name: 'Mostrar Todo' })).toBeInTheDocument();
+      // …and the two that are this community's own are not
+      expect(screen.getByRole('button', { name: 'Mostrar Gotin' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Mostrar Dîmen' })).toBeInTheDocument();
+    });
+
+    it('translates the controls on a card', async () => {
+      localStorage.setItem('mykurda_locale', 'de');
+      signIn();
+      feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      await screen.findByText('Çîroka min');
+      expect(screen.getByTitle('Gefällt mir')).toBeInTheDocument();
+      expect(screen.getByTitle('Speichern')).toBeInTheDocument();
+    });
+
+    it('offers to post in your language, without renaming what you can post', async () => {
+      localStorage.setItem('mykurda_locale', 'tr');
+      signIn();
+      feedFetch([]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Bir şey paylaş' }));
+      expect(screen.getByText('Ne paylaşıyorsun?')).toBeInTheDocument();
+      // the two things you can post keep their names; the description explains.
+      // Scoped to the dialog: 'Gotin' also names the section filter behind it
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText('Gotin')).toBeInTheDocument();
+      expect(within(dialog).getByText('Dîmen')).toBeInTheDocument();
+      expect(within(dialog).getByText('Bir söz, bir hikâye ya da bir şiir')).toBeInTheDocument();
+    });
+  });
+
   it('shows an unfamiliar kind rather than an empty badge', async () => {
     // CARD_LABEL is deliberately open: if the server ships a kind before the web
     // knows its name, the wall should still render it, not a blank chip
