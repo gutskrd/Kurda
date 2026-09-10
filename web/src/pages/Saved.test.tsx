@@ -118,6 +118,6 @@ describe('Saved', () => {
     renderApp(<Saved />, ['/app/saved']);
 
     expect(await screen.findByText(/Nothing saved yet/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Civak' })).toHaveAttribute('href', '/app/civak');
+    expect(screen.getByRole('link', { name: 'Community' })).toHaveAttribute('href', '/app/civak');
   });
 });

@@ -6,6 +6,7 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
+import { useT } from '../i18n/I18nProvider';
 import type { SuggestedFriend, UserSummary } from '../lib/types';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
@@ -28,6 +29,7 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
 
 export function Friends(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
   const sent = useApiGet<{ requests: UserSummary[] }>('/friends/requests/outgoing');
@@ -94,9 +96,9 @@ export function Friends(): React.JSX.Element {
   return (
     <div className="container container-narrow">
       <div className="page-header">
-        <span className="eyebrow">Heval · Community</span>
-        <h1 className="page-title">Friends</h1>
-        <p className="page-sub">Find other learners, send requests, and see who you’re learning alongside.</p>
+        <span className="eyebrow">{t('friends.eyebrow')}</span>
+        <h1 className="page-title">{t('friends.title')}</h1>
+        <p className="page-sub">{t('friends.subtitle')}</p>
       </div>
 
       {/* search */}
@@ -106,19 +108,19 @@ export function Friends(): React.JSX.Element {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by username…"
-          aria-label="Search users by username"
+          placeholder={t('friends.searchPlaceholder')}
+          aria-label={t('friends.searchLabel')}
         />
         <Button type="submit" disabled={searching}>
-          {searching ? 'Searching…' : 'Search'}
+          {searching ? t('friends.searching') : t('friends.search')}
         </Button>
       </form>
 
       {results !== null && (
         <section className="friend-section">
-          <h2 className="friend-heading">Search results</h2>
+          <h2 className="friend-heading">{t('friends.results')}</h2>
           {results.length === 0 ? (
-            <p className="muted" style={{ fontSize: '0.92rem' }}>No users found.</p>
+            <p className="muted" style={{ fontSize: '0.92rem' }}>{t('friends.noResults')}</p>
           ) : (
             <div className="post-list">
               {results.map((u) => (
@@ -132,7 +134,7 @@ export function Friends(): React.JSX.Element {
       {/* incoming requests */}
       {!requests.loading && (requests.data?.requests.length ?? 0) > 0 && (
         <section className="friend-section">
-          <h2 className="friend-heading">Requests</h2>
+          <h2 className="friend-heading">{t('friends.requests')}</h2>
           <div className="post-list">
             {requests.data!.requests.map((u) => (
               <Row
@@ -141,10 +143,10 @@ export function Friends(): React.JSX.Element {
                 actions={
                   <span className="friend-actions">
                     <Button size="sm" onClick={() => respond(u.userId, true)}>
-                      Accept
+                      {t('friends.accept')}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => respond(u.userId, false)}>
-                      Decline
+                      {t('friends.decline')}
                     </Button>
                   </span>
                 }
@@ -157,7 +159,7 @@ export function Friends(): React.JSX.Element {
       {/* requests you sent — otherwise a misfire is invisible and permanent */}
       {!sent.loading && (sent.data?.requests.length ?? 0) > 0 && (
         <section className="friend-section">
-          <h2 className="friend-heading">Sent</h2>
+          <h2 className="friend-heading">{t('friends.sent')}</h2>
           <div className="post-list">
             {sent.data!.requests.map((u) => (
               <Row
@@ -166,8 +168,8 @@ export function Friends(): React.JSX.Element {
                 actions={
                   <ConfirmButton
                     className="btn btn-ghost btn-sm"
-                    label="Cancel"
-                    title={`Cancel your request to ${u.displayName ?? u.username}`}
+                    label={t('friends.cancel')}
+                    title={t('friends.cancelRequest', { name: u.displayName ?? u.username })}
                     onConfirm={() => cancelRequest(u.userId)}
                   />
                 }
@@ -180,21 +182,21 @@ export function Friends(): React.JSX.Element {
       {/* people you may know */}
       {!suggestions.loading && (suggestions.data?.suggestions?.length ?? 0) > 0 && (
         <section className="friend-section">
-          <h2 className="friend-heading">People you may know</h2>
+          <h2 className="friend-heading">{t('friends.suggestions')}</h2>
           <div className="post-list">
             {suggestions.data!.suggestions.map((u) => (
               <Row
                 key={u.userId}
                 user={u}
-                meta={`${u.mutualCount} mutual friend${u.mutualCount === 1 ? '' : 's'}`}
+                meta={t('friends.mutual', { count: u.mutualCount })}
                 actions={
                   requested.has(u.userId) ? (
                     <Button size="sm" disabled>
-                      Requested
+                      {t('friends.requested')}
                     </Button>
                   ) : (
                     <Button size="sm" onClick={() => addFriend(u.userId)}>
-                      Add
+                      {t('friends.add')}
                     </Button>
                   )
                 }
@@ -206,13 +208,13 @@ export function Friends(): React.JSX.Element {
 
       {/* friends */}
       <section className="friend-section">
-        <h2 className="friend-heading">Your friends</h2>
+        <h2 className="friend-heading">{t('friends.yours')}</h2>
         {friends.loading ? (
           <Loading />
         ) : friends.error ? (
           <ErrorState message={friends.error} onRetry={friends.reload} />
         ) : (friends.data?.friends.length ?? 0) === 0 ? (
-          <EmptyState title="No friends yet" message="Search for a username above to send your first friend request." />
+          <EmptyState title={t('friends.noneTitle')} message={t('friends.noneBody')} />
         ) : (
           <div className="post-list">
             {friends.data!.friends.map((u) => (
@@ -223,14 +225,14 @@ export function Friends(): React.JSX.Element {
                   <>
                     <ConfirmButton
                       className="btn btn-secondary btn-sm"
-                      title={`Remove ${u.username} as a friend`}
-                      label="Remove"
+                      title={t('friends.removeWho', { name: u.username })}
+                      label={t('friends.remove')}
                       onConfirm={() => unfriend(u.userId)}
                     />
                     <ConfirmButton
                       className="btn btn-ghost btn-sm"
-                      title={`Block ${u.username}`}
-                      label="Block"
+                      title={t('friends.blockWho', { name: u.username })}
+                      label={t('friends.block')}
                       onConfirm={() => block(u.userId)}
                     />
                   </>

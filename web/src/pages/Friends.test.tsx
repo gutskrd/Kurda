@@ -27,6 +27,30 @@ function routedFetch(map: Record<string, unknown>) {
 }
 
 describe('Friends', () => {
+  /**
+   * Two labels here are built from a name — "Remove {name} as a friend" — and a
+   * placeholder that did not survive translation is a button reading
+   * "Retirer {name} de vos amis" with the braces still in it. Worth one test.
+   */
+  it('reads in the chosen language, names and all', async () => {
+    localStorage.setItem('mykurda_locale', 'fr');
+    vi.stubGlobal(
+      'fetch',
+      routedFetch({
+        '/friends/requests/outgoing': { requests: [] },
+        '/friends/requests': { requests: [] },
+        '/friends': { friends: [{ userId: 'u2', username: 'zana' }] },
+      }),
+    );
+    renderApp(<Friends />);
+
+    expect(await screen.findByRole('heading', { name: 'Amis', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rechercher' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Vos amis' })).toBeInTheDocument();
+    expect(screen.getByTitle('Retirer zana de vos amis')).toBeInTheDocument();
+    expect(screen.getByTitle('Bloquer zana')).toBeInTheDocument();
+  });
+
   it('lists your friends and hides requests when there are none', async () => {
     vi.stubGlobal(
       'fetch',

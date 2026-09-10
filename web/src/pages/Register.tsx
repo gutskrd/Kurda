@@ -34,8 +34,8 @@ export function Register(): React.JSX.Element {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-head">
-          <h1>Create your account</h1>
-          <p>Free to start. It takes under a minute.</p>
+          <h1>{t('auth.register.title')}</h1>
+          <p>{t('auth.register.freeToStart')}</p>
         </div>
 
         <form onSubmit={submit} noValidate>
@@ -73,7 +73,7 @@ export function Register(): React.JSX.Element {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              placeholder="How others will see you"
+              placeholder={t('auth.register.usernameHelp')}
               required
             />
           </div>
@@ -105,7 +105,7 @@ export function Register(): React.JSX.Element {
         </form>
 
         <p className="auth-alt">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to="/login">{t('auth.register.signIn')}</Link>
         </p>
       </div>
     </div>
