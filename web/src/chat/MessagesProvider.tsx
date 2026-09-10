@@ -14,6 +14,10 @@ import { useRealtimeEvent, useRealtimeRooms } from '../realtime/RealtimeProvider
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/types';
 import { messagePreview, truncate } from './messagePreview';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * App-wide message awareness: unread counts and arrival notifications.
@@ -70,12 +74,13 @@ const MAX_TOASTS = 3;
 const COUNT_POLL_MS = 60_000;
 
 /** What a banner shows: a game invite reads as an invite, not as its URL. */
-function preview(body: string): string {
-  return truncate(messagePreview(body), 90);
+function preview(body: string, t: Translate): string {
+  return truncate(messagePreview(body, t), 90);
 }
 
 export function MessagesProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { client, user, status } = useAuth();
+  const t = useT();
   const signedIn = status === 'signedIn';
   const location = useLocation();
   const [groups, setGroups] = useState<MyGroup[]>([]);
@@ -152,11 +157,11 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       push({
         id: ev.message.id,
         title: name,
-        body: preview(ev.message.body),
+        body: preview(ev.message.body, t),
         to: '/app/messages?to=' + ev.from + '&name=' + encodeURIComponent(name),
       });
     },
-    [push, refreshUnread],
+    [push, refreshUnread, t],
   );
   useRealtimeEvent('dm', onDm);
 
@@ -173,11 +178,11 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       push({
         id: ev.message.id,
         title: group ? ev.message.username + ' · ' + group.name : ev.message.username,
-        body: preview(ev.message.body),
+        body: preview(ev.message.body, t),
         to: '/app/messages?group=' + ev.groupId,
       });
     },
-    [push, refreshUnread, groups, user?.id],
+    [push, refreshUnread, groups, user?.id, t],
   );
   useRealtimeEvent('group_msg', onGroupMsg);
 

@@ -70,14 +70,28 @@ export function useT(): I18n['t'] {
   return ctx ? ctx.t : englishOnly;
 }
 
-/** The fallback lookup: English, with the same interpolation. */
-const englishOnly: I18n['t'] = (key, vars) => {
-  const template = en[key] ?? key;
-  if (!vars) return template;
-  return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    name in vars ? String(vars[name]) : whole,
-  );
-};
+/**
+ * A lookup over one catalogue.
+ *
+ * English is the source, so it is the fallback; the key itself is the last
+ * resort and is deliberately ugly, so a missing one is obvious on screen.
+ *
+ * Exported because things outside a React tree need one too — a test asserting
+ * on translated text should read it out of the real catalogue rather than out
+ * of a second, hand-written copy of this function.
+ */
+export function translator(catalogue: Catalogue): I18n['t'] {
+  return (key, vars) => {
+    const template = catalogue[key] ?? en[key] ?? key;
+    if (!vars) return template;
+    return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
+      name in vars ? String(vars[name]) : whole,
+    );
+  };
+}
+
+/** What `useT` answers with outside a provider. */
+export const englishOnly = translator(en);
 
 /**
  * What language the interface speaks, and how a string gets there.
@@ -121,22 +135,10 @@ export function I18nProvider({ children }: { children: ReactNode }): React.JSX.E
     root.dir = localeDir(locale);
   }, [locale]);
 
-  const value = useMemo<I18n>(() => {
-    const catalogue = CATALOGUES[locale];
-    return {
-      locale,
-      setLocale,
-      t: (key, vars) => {
-        // English is the source, so it is the fallback; the key itself is the
-        // last resort and is deliberately ugly, so a missing one is obvious
-        const template = catalogue[key] ?? en[key] ?? key;
-        if (!vars) return template;
-        return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
-          name in vars ? String(vars[name]) : whole,
-        );
-      },
-    };
-  }, [locale, setLocale]);
+  const value = useMemo<I18n>(
+    () => ({ locale, setLocale, t: translator(CATALOGUES[locale]) }),
+    [locale, setLocale],
+  );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

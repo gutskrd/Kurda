@@ -7,6 +7,8 @@ import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -17,17 +19,23 @@ interface Found {
   points: number;
 }
 
-const REJECT_COPY: Record<string, string> = {
-  'not-a-word': 'Not a word in the dictionary.',
-  'is-prompt': 'That’s the prompt itself — find a different word.',
-  'already-used': 'You already used that one.',
-  'no-rhyme': 'Doesn’t rhyme — try another.',
-  profane: 'Let’s keep it clean.',
+/**
+ * Why a word was refused. Keys rather than sentences: the reason comes back
+ * from the server as a code, and the words for it belong in the catalogues
+ * with everything else the player reads.
+ */
+const REJECT_KEY: Record<string, MessageKey> = {
+  'not-a-word': 'games.rhyme.reject.notAWord',
+  'is-prompt': 'games.rhyme.reject.isPrompt',
+  'already-used': 'games.rhyme.reject.alreadyUsed',
+  'no-rhyme': 'games.rhyme.reject.noRhyme',
+  profane: 'games.rhyme.reject.profane',
 };
 
 /** Solo Rhyming Words — a timed round; each rhyme is scored server-side. */
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [dialect, setDialect] = useState<Dialect>('kurmanci');
   const [game, setGame] = useState<RhymeGame | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -37,7 +45,7 @@ export function Rhyme(): React.JSX.Element {
   const [notice, setNotice] = useState<string | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [busy, setBusy] = useState(false);
-  const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly('No pasting — think of one.');
+  const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
   const inputRef = useRef<HTMLInputElement>(null);
 
   const start = useCallback(async () => {
@@ -97,11 +105,11 @@ export function Rhyme(): React.JSX.Element {
       if (result.accepted) {
         setFound((f) => [{ word: result.normalized, quality: result.quality, points: result.points }, ...f]);
       } else {
-        setNotice(REJECT_COPY[result.reason ?? ''] ?? 'Not accepted — try another.');
+        setNotice(t(REJECT_KEY[result.reason ?? ''] ?? 'games.rhyme.reject.other'));
       }
       inputRef.current?.focus();
     } else {
-      setNotice(res.error.code === 'GAME_OVER' ? 'Time’s up for this round.' : describeError(res.error));
+      setNotice(res.error.code === 'GAME_OVER' ? t('games.rhyme.timeUpRound') : describeError(res.error));
     }
   }
 
@@ -110,16 +118,16 @@ export function Rhyme(): React.JSX.Element {
   return (
     <div className="container game-page">
       <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label="Back to games">
+        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
           <ArrowIcon size={18} />
         </Link>
         <div>
-          <span className="eyebrow">Yarî · Rhyming Words</span>
-          <h1 className="page-title" style={{ margin: 0 }}>Rhyme</h1>
+          <span className="eyebrow">{t('nav.games')}</span>
+          <h1 className="page-title" style={{ margin: 0 }}>{t('games.rhyme.name')}</h1>
         </div>
       </div>
 
-      <div className="chat-tabs" role="tablist" aria-label="Dialect" style={{ marginBottom: 8 }}>
+      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')} style={{ marginBottom: 8 }}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
           <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => setDialect(d)}>
             {d === 'kurmanci' ? 'Kurmancî' : 'Soranî'}
@@ -128,7 +136,7 @@ export function Rhyme(): React.JSX.Element {
       </div>
 
       {emptyLexicon ? (
-        <div className="wordle-msg">No words available for play yet — check back soon.</div>
+        <div className="wordle-msg">{t('games.emptyPool')}</div>
       ) : loadError ? (
         <ErrorState message={loadError} onRetry={() => void start()} />
       ) : game === null ? (
@@ -137,15 +145,15 @@ export function Rhyme(): React.JSX.Element {
         <>
           <div className="rhyme-stage">
             <div className="rhyme-prompt-box">
-              <span className="rhyme-label">Rhyme with</span>
+              <span className="rhyme-label">{t('games.rhyme.rhymeWith')}</span>
               <span className="rhyme-prompt">{game.prompt}</span>
             </div>
             <div className="rhyme-meters">
-              <div className={`rhyme-timer${seconds <= 5 && active ? ' low' : ''}`} aria-label="Time left">
+              <div className={`rhyme-timer${seconds <= 5 && active ? ' low' : ''}`} aria-label={t('games.timeLeft')}>
                 {seconds}s
               </div>
-              <div className="rhyme-score" aria-label="Score">
-                {game.score} pts · {game.accepted} found
+              <div className="rhyme-score" aria-label={t('games.rhyme.score')}>
+                {t('games.rhyme.scoreLine', { score: game.score, count: game.accepted })}
               </div>
             </div>
           </div>
@@ -158,23 +166,23 @@ export function Rhyme(): React.JSX.Element {
                 className="input"
                 value={word}
                 onChange={(e) => setWord(e.target.value)}
-                placeholder={`A word that rhymes with “${game.prompt}”…`}
+                placeholder={t('games.rhyme.placeholder', { word: game.prompt })}
                 maxLength={64}
-                aria-label="Your rhyme"
+                aria-label={t('games.rhyme.yourRhyme')}
                 autoFocus
                 {...typeOnly}
               />
               <Button type="submit" disabled={busy || word.trim().length === 0}>
-                {busy ? '…' : 'Submit'}
+                {busy ? '…' : t('games.submit')}
               </Button>
             </form>
           ) : (
             <div className="wordle-result">
               <p className="wordle-result-title">
-                Round over — {game.score} points, {game.accepted} rhyme{game.accepted === 1 ? '' : 's'}.
+                {t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}
                 {game.xpAwarded ? <> +{game.xpAwarded} XP</> : null}
               </p>
-              <Button onClick={() => void start()}>Play again</Button>
+              <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
             </div>
           )}
 
@@ -186,7 +194,7 @@ export function Rhyme(): React.JSX.Element {
           )}
 
           {found.length > 0 && (
-            <ul className="rhyme-found" aria-label="Rhymes you found">
+            <ul className="rhyme-found" aria-label={t('games.rhyme.foundList')}>
               {found.map((f, i) => (
                 <li key={`${f.word}-${i}`} className={`rhyme-chip rhyme-${f.quality}`}>
                   <span>{f.word}</span>
@@ -199,7 +207,7 @@ export function Rhyme(): React.JSX.Element {
           {active && (
             <div className="rhyme-actions">
               <Button variant="ghost" size="sm" onClick={() => void end()}>
-                End round
+                {t('games.rhyme.endRound')}
               </Button>
             </div>
           )}

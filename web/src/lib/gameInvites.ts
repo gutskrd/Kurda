@@ -5,6 +5,8 @@
  * ever recognize our own game-lobby path shape, and act on it by routing inside
  * the app with the extracted id, so parsing arbitrary message text is safe.
  */
+import type { MessageKey } from '../i18n/en';
+
 export type GameInviteType = 'wordle-battle' | 'rhyme-match';
 
 export interface GameInvite {
@@ -12,22 +14,22 @@ export interface GameInvite {
   id: string;
 }
 
-const LABELS: Record<GameInviteType, string> = {
-  'wordle-battle': 'Wordle Battle',
-  'rhyme-match': 'Rhyme Match',
+/**
+ * What a lobby is called, and what it is, as catalogue keys.
+ *
+ * Keys rather than words: this module is plain TypeScript with no React in it,
+ * so it has nowhere to read the reader's language from. Whoever renders one of
+ * these has a `t` and does the looking up.
+ */
+export const INVITE_NAME_KEY: Record<GameInviteType, MessageKey> = {
+  'wordle-battle': 'games.battle.name',
+  'rhyme-match': 'games.rhymeMatch.name',
 };
 
-const BLURBS: Record<GameInviteType, string> = {
-  'wordle-battle': 'Race to guess the Kurdish word first.',
-  'rhyme-match': 'Go head-to-head finding rhymes.',
+export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
+  'wordle-battle': 'games.invite.blurb.battle',
+  'rhyme-match': 'games.invite.blurb.rhymeMatch',
 };
-
-export function inviteLabel(type: GameInviteType): string {
-  return LABELS[type];
-}
-export function inviteBlurb(type: GameInviteType): string {
-  return BLURBS[type];
-}
 
 /** The in-app route for a lobby (also the path segment used in a share link). */
 export function invitePath(invite: GameInvite): string {

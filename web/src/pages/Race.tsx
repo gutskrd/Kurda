@@ -6,6 +6,8 @@ import { Button } from '../components/Button';
 import { ErrorState } from '../components/states';
 import { ArrowIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 /**
  * Typing race: reproduce a Kurdish text as fast and as accurately as you can.
@@ -34,14 +36,15 @@ interface RaceResult {
 }
 
 
-const DIFFICULTY = [
-  { value: 1, label: 'Short' },
-  { value: 2, label: 'Medium' },
-  { value: 3, label: 'Long' },
+const DIFFICULTY: Array<{ value: number; labelKey: MessageKey }> = [
+  { value: 1, labelKey: 'games.race.short' },
+  { value: 2, labelKey: 'games.race.medium' },
+  { value: 3, labelKey: 'games.race.long' },
 ];
 
 export function Race(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [game, setGame] = useState<RaceGame | null>(null);
   const [difficulty, setDifficulty] = useState(1);
   const [typed, setTyped] = useState('');
@@ -51,7 +54,7 @@ export function Race(): React.JSX.Element {
   const [elapsed, setElapsed] = useState(0);
   const [focused, setFocused] = useState(false);
   // the text to copy is on this very screen, so the box takes keystrokes only
-  const { handlers: typeOnly, notice } = useTypeOnly('No pasting — this one you type.');
+  const { handlers: typeOnly, notice } = useTypeOnly(t('games.race.noPasting'));
   const startedAt = useRef<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
@@ -90,10 +93,10 @@ export function Race(): React.JSX.Element {
   // a running clock, for the racer — the score is timed server-side
   useEffect(() => {
     if (!game || result) return;
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (startedAt.current) setElapsed(Date.now() - startedAt.current);
     }, 100);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [game, result]);
 
   const finish = useCallback(async () => {
@@ -131,22 +134,19 @@ export function Race(): React.JSX.Element {
   return (
     <div className="container container-narrow">
       <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label="Back to games">
+        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
           <ArrowIcon size={18} />
         </Link>
         <div>
-          <span className="eyebrow">Pêşbaziya nivîsandinê · Race</span>
-          <h1 className="page-title">Typing Race</h1>
+          <span className="eyebrow">{t('nav.games')}</span>
+          <h1 className="page-title">{t('games.race.name')}</h1>
         </div>
       </div>
 
       {!game && (
         <div className="race-lobby">
-          <p className="page-sub">
-            Type the Kurdish text as fast and as accurately as you can. Your speed is measured by the server
-            from the moment the text appears.
-          </p>
-          <div className="chat-tabs" role="tablist" aria-label="Length">
+          <p className="page-sub">{t('games.race.intro')}</p>
+          <div className="chat-tabs" role="tablist" aria-label={t('games.race.length')}>
             {DIFFICULTY.map((d) => (
               <button
                 key={d.value}
@@ -155,12 +155,12 @@ export function Race(): React.JSX.Element {
                 className={`chip${difficulty === d.value ? ' active' : ''}`}
                 onClick={() => setDifficulty(d.value)}
               >
-                {d.label}
+                {t(d.labelKey)}
               </button>
             ))}
           </div>
           <Button onClick={() => void start()} disabled={busy}>
-            {busy ? 'Starting…' : 'Start race'}
+            {busy ? t('games.starting') : t('games.race.start')}
           </Button>
           {error && <ErrorState message={error} onRetry={() => void start()} />}
         </div>
@@ -211,11 +211,11 @@ export function Race(): React.JSX.Element {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               {...typeOnly}
-              aria-label="Type the text"
+              aria-label={t('games.race.typeTheText')}
               aria-describedby="race-target"
             />
 
-            {!focused && !result && <span className="race-tap">Tap here to type</span>}
+            {!focused && !result && <span className="race-tap">{t('games.race.tapToType')}</span>}
           </div>
 
           {notice && (
@@ -227,7 +227,7 @@ export function Race(): React.JSX.Element {
           {!result && (
             <div className="race-actions">
               <Button variant="ghost" onClick={() => void finish()} disabled={busy}>
-                {busy ? 'Scoring…' : 'Give up and score'}
+                {busy ? t('games.race.scoring') : t('games.race.giveUp')}
               </Button>
             </div>
           )}
@@ -235,7 +235,11 @@ export function Race(): React.JSX.Element {
           {result && (
             <div className="race-result">
               <h2 className="section-heading">
-                {result.implausible ? 'Not scored' : result.perfect ? 'Perfect run!' : 'Race finished'}
+                {result.implausible
+                  ? t('games.race.notScored')
+                  : result.perfect
+                    ? t('games.race.perfect')
+                    : t('games.race.finished')}
               </h2>
               {/*
                 Said out loud rather than shown as a silent zero. Somebody who
@@ -243,18 +247,16 @@ export function Race(): React.JSX.Element {
                 and a result that just reads 0 looks like the game is broken.
               */}
               {result.implausible && (
-                <p className="race-refused">
-                  That is faster than anyone types, so this run does not count towards your XP or the rankings.
-                </p>
+                <p className="race-refused">{t('games.race.refused')}</p>
               )}
               <div className="race-figures">
-                <Figure value={result.wpm.toFixed(1)} label="WPM" />
-                <Figure value={`${Math.round(result.accuracy * 100)}%`} label="Accuracy" />
-                <Figure value={(result.elapsedMs / 1000).toFixed(1) + 's'} label="Time" />
+                <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
+                <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
+                <Figure value={(result.elapsedMs / 1000).toFixed(1) + 's'} label={t('games.race.time')} />
                 <Figure value={`+${result.xpAwarded}`} label="XP" />
               </div>
               <Button onClick={() => void start()} disabled={busy}>
-                Race again
+                {t('games.race.again')}
               </Button>
             </div>
           )}

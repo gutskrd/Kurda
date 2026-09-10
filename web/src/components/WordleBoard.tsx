@@ -1,5 +1,6 @@
 import type { LetterFeedback } from '../lib/types';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Kurmancî (Hawar) alphabet laid out for an on-screen keyboard, so the special
@@ -62,6 +63,7 @@ export function WordleBoard({
   /** whether to render the typed-but-unsubmitted row */
   showCurrent: boolean;
 }): React.JSX.Element {
+  const t = useT();
   const currentLetters = Array.from(current);
   const rows: React.JSX.Element[] = [];
   for (let r = 0; r < totalRows; r++) {
@@ -79,7 +81,7 @@ export function WordleBoard({
         fb = letter ? 'typing' : 'empty';
       }
       cells.push(
-        <div key={c} className={`wordle-cell wordle-${fb}`} aria-label={letter || 'empty'}>
+        <div key={c} className={`wordle-cell wordle-${fb}`} aria-label={letter || t('games.wordle.emptyCell')}>
           {letter}
         </div>,
       );
@@ -102,7 +104,7 @@ export function WordleBoard({
     );
   }
   return (
-    <div className="wordle-board" aria-label="Guesses">
+    <div className="wordle-board" aria-label={t('games.wordle.guesses')}>
       {rows}
     </div>
   );
@@ -118,6 +120,7 @@ export function WordleKeyboard({
   onPress: (key: string) => void;
   disabled: boolean;
 }): React.JSX.Element {
+  const t = useT();
   const narrow = useMediaQuery(NARROW_KEYBOARD);
   const layout = narrow ? KURMANCI_KEYS_NARROW : KURMANCI_KEYS;
   return (
@@ -126,7 +129,7 @@ export function WordleKeyboard({
         <div className="wordle-krow" key={i}>
           {i === layout.length - 1 && (
             <button className="wordle-key wordle-key-wide" onClick={() => onPress('Enter')} disabled={disabled}>
-              Enter
+              {t('games.wordle.enter')}
             </button>
           )}
           {row.map((k) => (
@@ -135,7 +138,7 @@ export function WordleKeyboard({
             </button>
           ))}
           {i === layout.length - 1 && (
-            <button className="wordle-key wordle-key-wide" onClick={() => onPress('Backspace')} disabled={disabled} aria-label="Delete">
+            <button className="wordle-key wordle-key-wide" onClick={() => onPress('Backspace')} disabled={disabled} aria-label={t('games.wordle.backspace')}>
               ⌫
             </button>
           )}

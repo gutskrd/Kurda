@@ -153,9 +153,9 @@ export function Games(): React.JSX.Element {
       {!signedIn && (
         <div className="cta" style={{ marginTop: 40 }}>
           <h2 className="h-section">{t('games.playAndScore')}</h2>
-          <p>Create a free account to play, earn Zêr and climb the rankings across MyKurda.</p>
+          <p>{t('games.cta.body')}</p>
           <LinkButton to="/register" size="lg">
-            Create your account
+            {t('auth.register.title')}
           </LinkButton>
         </div>
       )}
