@@ -1,3 +1,4 @@
+import type { MessageKey } from '../i18n/en';
 import {
   ADJUSTMENT_KEYS,
   NEUTRAL,
@@ -43,9 +44,17 @@ export interface Overlay {
 
 export interface FilterPreset {
   key: string;
+  /**
+   * The filter's name, in Kurmancî, in every language.
+   *
+   * A filter's name is a name, the way Instagram's Clarendon is: it is what you
+   * call the look, not a description of it. Translating "Zêr" to "Gold" on a
+   * German screen would rename the thing rather than explain it — which is what
+   * `hintKey` is for.
+   */
   label: string;
-  /** what it means in English, for the tooltip — the names are not all obvious */
-  hint: string;
+  /** what it means, for the tooltip — the names are not all obvious */
+  hintKey: MessageKey;
   adjustments: Adjustments;
   /** repaint from brightness through a palette */
   tone?: { stops: readonly ColourStop[]; amount: number };
@@ -84,26 +93,26 @@ const SEPIA: readonly ColourStop[] = [
 const preset = (
   key: string,
   label: string,
-  hint: string,
+  hintKey: MessageKey,
   adjustments: Partial<Adjustments>,
   extra: Pick<FilterPreset, 'tone' | 'overlay'> = {},
-): FilterPreset => ({ key, label, hint, adjustments: { ...NEUTRAL, ...adjustments }, ...extra });
+): FilterPreset => ({ key, label, hintKey, adjustments: { ...NEUTRAL, ...adjustments }, ...extra });
 
 /** The one that does nothing. Always first, and where every picture starts. */
 export const NO_FILTER = 'orijinal';
 
 export const FILTERS: readonly FilterPreset[] = [
-  preset(NO_FILTER, 'Orîjînal', 'No filter', {}),
+  preset(NO_FILTER, 'Orîjînal', 'photo.filter.none', {}),
 
   preset(
     'ala',
     'Ala',
-    'The flag',
+    'photo.filter.flag',
     { warmth: 6, contrast: 6, vibrance: 10 },
     { overlay: { src: '/filters/kurdistan.webp', widthShare: 0.58, maxHeightShare: 0.6, opacity: 1 } },
   ),
 
-  preset('zer', 'Zêr', 'Gold', {
+  preset('zer', 'Zêr', 'photo.filter.gold', {
     warmth: 28,
     exposure: 4,
     contrast: 10,
@@ -112,7 +121,7 @@ export const FILTERS: readonly FilterPreset[] = [
     vignette: 12,
   }),
 
-  preset('rojava', 'Rojava', 'Sunset', {
+  preset('rojava', 'Rojava', 'photo.filter.sunset', {
     warmth: 40,
     exposure: 6,
     contrast: 14,
@@ -121,7 +130,7 @@ export const FILTERS: readonly FilterPreset[] = [
     vignette: 18,
   }),
 
-  preset('ciya', 'Çiya', 'Mountain', {
+  preset('ciya', 'Çiya', 'photo.filter.mountain', {
     warmth: -18,
     contrast: 26,
     highlights: -12,
@@ -129,7 +138,7 @@ export const FILTERS: readonly FilterPreset[] = [
     vibrance: 26,
   }),
 
-  preset('zelal', 'Zelal', 'Clear', {
+  preset('zelal', 'Zelal', 'photo.filter.clear', {
     exposure: 4,
     contrast: 18,
     highlights: -14,
@@ -137,7 +146,7 @@ export const FILTERS: readonly FilterPreset[] = [
     vibrance: 34,
   }),
 
-  preset('nerm', 'Nerm', 'Soft', {
+  preset('nerm', 'Nerm', 'photo.filter.soft', {
     warmth: 8,
     contrast: -10,
     highlights: -8,
@@ -146,7 +155,7 @@ export const FILTERS: readonly FilterPreset[] = [
     fade: 18,
   }),
 
-  preset('sev', 'Şev', 'Night', {
+  preset('sev', 'Şev', 'photo.filter.night', {
     exposure: -10,
     warmth: -26,
     contrast: 20,
@@ -155,7 +164,7 @@ export const FILTERS: readonly FilterPreset[] = [
     vignette: 34,
   }),
 
-  preset('kevn', 'Kevn', 'Faded', {
+  preset('kevn', 'Kevn', 'photo.filter.faded', {
     warmth: 22,
     contrast: -8,
     highlights: -10,
@@ -173,7 +182,7 @@ export const FILTERS: readonly FilterPreset[] = [
   preset(
     'kevnar',
     'Kevnar',
-    'Antique',
+    'photo.filter.antique',
     { contrast: 8, highlights: -14, saturation: -20, fade: 24, vignette: 52, grain: 62 },
     { tone: { stops: SEPIA, amount: 0.85 } },
   ),
@@ -181,26 +190,26 @@ export const FILTERS: readonly FilterPreset[] = [
   preset(
     'germi',
     'Germî',
-    'Heat camera',
+    'photo.filter.heat',
     // contrast first, so the brightness range is spread out before the palette
     // reads it — a flat picture maps to a flat band of one colour
     { contrast: 26 },
     { tone: { stops: THERMAL, amount: 1 } },
   ),
 
-  preset('piksel', 'Piksel', 'Pixelated', {
+  preset('piksel', 'Piksel', 'photo.filter.pixelated', {
     pixelate: 45,
     contrast: 8,
     saturation: 10,
   }),
 
-  preset('res-u-spi', 'Reş û Spî', 'Black and white', {
+  preset('res-u-spi', 'Reş û Spî', 'photo.filter.bw', {
     saturation: -100,
     contrast: 18,
     shadows: 6,
   }),
 
-  preset('noir', 'Noir', 'Deep black and white', {
+  preset('noir', 'Noir', 'photo.filter.noir', {
     saturation: -100,
     contrast: 42,
     highlights: -10,

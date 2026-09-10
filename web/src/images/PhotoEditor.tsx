@@ -22,7 +22,7 @@ import {
   outputSize,
   type Composition,
 } from './composition';
-import { ADJUSTMENT_KEYS, ADJUSTMENT_LABELS, NEUTRAL, isNeutral, rangeFor, type Adjustments } from './adjust';
+import { ADJUSTMENT_KEYS, ADJUSTMENT_LABEL_KEYS, NEUTRAL, isNeutral, rangeFor, type Adjustments } from './adjust';
 import { NO_FILTER, overlaySources } from './filters';
 import { FilterStrip } from './FilterStrip';
 import { LayerHandles } from './LayerHandles';
@@ -41,14 +41,16 @@ import {
   UndoIcon,
 } from '../components/icons';
 import { EMOJI_STICKERS, PICTURE_STICKERS, emojiSrc, ensureSticker, ensureStickersFor } from './stickers';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 type Mode = 'frame' | 'filter' | 'move' | 'draw';
 
-const MODES: ReadonlyArray<{ key: Mode; label: string; icon: React.ReactNode }> = [
-  { key: 'frame', label: 'Frame', icon: <CropIcon size={16} /> },
-  { key: 'filter', label: 'Filter', icon: <FilterIcon size={16} /> },
-  { key: 'move', label: 'Add', icon: <TextIcon size={16} /> },
-  { key: 'draw', label: 'Draw', icon: <DrawIcon size={16} /> },
+const MODES: ReadonlyArray<{ key: Mode; labelKey: MessageKey; icon: React.ReactNode }> = [
+  { key: 'frame', labelKey: 'photo.tab.frame', icon: <CropIcon size={16} /> },
+  { key: 'filter', labelKey: 'photo.tab.filter', icon: <FilterIcon size={16} /> },
+  { key: 'move', labelKey: 'photo.tab.add', icon: <TextIcon size={16} /> },
+  { key: 'draw', labelKey: 'photo.tab.draw', icon: <DrawIcon size={16} /> },
 ];
 
 /**
@@ -88,6 +90,7 @@ export function PhotoEditor({
   handle: string;
   history: History<Composition>;
 }): React.JSX.Element {
+  const t = useT();
   const doc = history.present;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>('frame');
@@ -424,20 +427,20 @@ export function PhotoEditor({
       )}
 
       <div className="editor-head">
-        <h3 className="editor-title">Edit your picture</h3>
+        <h3 className="editor-title">{t('photo.title')}</h3>
         {mode === 'frame' && (
-          <p className="editor-hint">Drag it to choose what’s in the frame, and pinch or scroll to zoom.</p>
+          <p className="editor-hint">{t('photo.hint.frame')}</p>
         )}
         {mode === 'filter' && (
-          <p className="editor-hint">Pick a look, then turn it down or tune it by hand.</p>
+          <p className="editor-hint">{t('photo.hint.filter')}</p>
         )}
         {(mode === 'move' || mode === 'draw') && doc.layers.length === 0 && (
-          <p className="editor-hint">Add words or a sticker, or draw on it — then drag to move.</p>
+          <p className="editor-hint">{t('photo.hint.add')}</p>
         )}
       </div>
 
       <div className="editor-modes">
-        <div className="seg" role="group" aria-label="Tool">
+        <div className="seg" role="group" aria-label={t('photo.tool')}>
           {MODES.map((m) => (
             <button
               key={m.key}
@@ -449,7 +452,7 @@ export function PhotoEditor({
                 if (m.key !== 'move') select(null);
               }}
             >
-              {m.icon} {m.label}
+              {m.icon} {t(m.labelKey)}
             </button>
           ))}
         </div>
@@ -461,8 +464,8 @@ export function PhotoEditor({
             className="editor-history-btn"
             onClick={history.undo}
             disabled={!history.canUndo}
-            aria-label="Undo"
-            title="Undo (Ctrl+Z)"
+            aria-label={t('photo.undo')}
+            title={t('photo.undoShortcut')}
           >
             <UndoIcon size={17} />
           </button>
@@ -471,8 +474,8 @@ export function PhotoEditor({
             className="editor-history-btn"
             onClick={history.redo}
             disabled={!history.canRedo}
-            aria-label="Redo"
-            title="Redo (Ctrl+Shift+Z)"
+            aria-label={t('photo.redo')}
+            title={t('photo.redoShortcut')}
           >
             <RedoIcon size={17} />
           </button>
@@ -490,7 +493,7 @@ export function PhotoEditor({
                 aria-pressed={doc.aspectKey === a.key}
                 onClick={() => history.set(reshaped(a.key))}
               >
-                {a.label}
+                {t(a.labelKey)}
               </button>
             ))}
           </div>
@@ -511,13 +514,13 @@ export function PhotoEditor({
 
           {doc.filterKey !== NO_FILTER && (
             <label className="tool-row">
-              <span className="tool-label">Strength</span>
+              <span className="tool-label">{t('photo.strength')}</span>
               <input
                 type="range"
                 min={0}
                 max={100}
                 value={Math.round(doc.strength * 100)}
-                aria-label="Filter strength"
+                aria-label={t('photo.filterStrength')}
                 onChange={(e) => history.preview({ ...doc, strength: Number(e.target.value) / 100 })}
                 onPointerUp={history.settle}
                 onKeyUp={history.settle}
@@ -527,14 +530,14 @@ export function PhotoEditor({
           )}
 
           <div className="editor-panel-head editor-adjust-head">
-            <span className="editor-panel-title">Adjust</span>
+            <span className="editor-panel-title">{t('photo.adjust')}</span>
             <button
               type="button"
               className="link-button"
               disabled={isNeutral(doc.adjustments)}
               onClick={() => history.set({ ...doc, adjustments: NEUTRAL })}
             >
-              Reset
+              {t('photo.reset')}
             </button>
           </div>
 
@@ -582,7 +585,7 @@ export function PhotoEditor({
               })
             }
           >
-            <TextIcon size={16} /> Add words
+            <TextIcon size={16} /> {t('photo.addWords')}
           </button>
           <button
             type="button"
@@ -590,11 +593,11 @@ export function PhotoEditor({
             aria-expanded={picker !== null}
             onClick={() => setPicker({ mode: 'add' })}
           >
-            <FeatherIcon size={16} /> Add a sticker
+            <FeatherIcon size={16} /> {t('photo.addSticker')}
           </button>
           {doc.layers.length > 0 && (
             <button type="button" className="editor-add" onClick={() => setLayers([])}>
-              <PhotoIcon size={16} /> Clear all
+              <PhotoIcon size={16} /> {t('photo.clearAll')}
             </button>
           )}
         </div>
@@ -604,27 +607,27 @@ export function PhotoEditor({
         <div className="editor-panel">
           <div className="editor-panel-head">
             <span className="editor-panel-title">
-              {picker.mode === 'replace' ? 'Swap the sticker' : 'Pick a sticker'}
+              {picker.mode === 'replace' ? t('photo.swapSticker') : t('photo.pickSticker')}
             </span>
             <button
               type="button"
               className="editor-remove"
               onClick={() => setPicker(null)}
-              aria-label="Close the sticker picker"
+              aria-label={t('photo.closeStickers')}
             >
               <CloseIcon size={16} />
             </button>
           </div>
 
           {/* two kinds, because fifty-six emoji would bury seven marks in one grid */}
-          <div className="seg seg-sub" role="group" aria-label="Sticker kind">
+          <div className="seg seg-sub" role="group" aria-label={t('photo.stickerKind')}>
             <button
               type="button"
               className={`seg-btn${stickerTab === 'marks' ? ' is-active' : ''}`}
               aria-pressed={stickerTab === 'marks'}
               onClick={() => setStickerTab('marks')}
             >
-              Nîşan
+              {t('photo.marks')}
             </button>
             <button
               type="button"
@@ -639,7 +642,7 @@ export function PhotoEditor({
           <div
             className={`sticker-grid ${stickerTab === 'marks' ? 'sticker-grid-pics' : 'sticker-grid-emoji'}`}
             role="group"
-            aria-label="Stickers"
+            aria-label={t('photo.stickers')}
           >
             {stickerTab === 'marks'
               ? PICTURE_STICKERS.map((p) => (
@@ -673,13 +676,13 @@ export function PhotoEditor({
       {mode === 'draw' && (
         <div className="editor-panel">
           <label className="tool-row">
-            <span className="tool-label">Brush</span>
+            <span className="tool-label">{t('photo.brush')}</span>
             <input
               type="range"
               min={STROKE_RANGE.min * 1000}
               max={STROKE_RANGE.max * 1000}
               value={Math.round(strokeWidth * 1000)}
-              aria-label="Brush size"
+              aria-label={t('photo.brushSize')}
               onChange={(e) => setStrokeWidth(Number(e.target.value) / 1000)}
             />
           </label>
@@ -690,8 +693,8 @@ export function PhotoEditor({
       {mode === 'move' && selected && !picker && (
         <div className="editor-panel">
           <div className="editor-panel-head">
-            <span className="editor-panel-title">{selected.kind === 'text' ? 'Words' : 'Sticker'}</span>
-            <button type="button" className="editor-remove" onClick={() => remove(selected.id)} aria-label="Remove this">
+            <span className="editor-panel-title">{selected.kind === 'text' ? t('photo.words') : t('photo.sticker')}</span>
+            <button type="button" className="editor-remove" onClick={() => remove(selected.id)} aria-label={t('photo.removeThis')}>
               <CloseIcon size={16} />
             </button>
           </div>
@@ -709,8 +712,8 @@ export function PhotoEditor({
               rows={2}
               value={selected.value}
               maxLength={280}
-              placeholder="Type your words…"
-              aria-label="Text on the picture"
+              placeholder={t('photo.typeYourWords')}
+              aria-label={t('photo.textOnPicture')}
               // a whole sentence is one step; settling per keystroke would
               // make undo behave like backspace
               onChange={(e) => patch(selected.id, { value: e.target.value }, true)}
@@ -726,7 +729,7 @@ export function PhotoEditor({
               disabled={selectedIndex >= doc.layers.length - 1}
               onClick={() => reorder(selected.id, 1)}
             >
-              Bring forward
+              {t('photo.bringForward')}
             </button>
             <button
               type="button"
@@ -734,19 +737,19 @@ export function PhotoEditor({
               disabled={selectedIndex <= 0}
               onClick={() => reorder(selected.id, -1)}
             >
-              Send back
+              {t('photo.sendBack')}
             </button>
             <button type="button" className="editor-add" onClick={() => duplicate(selected.id)}>
-              Duplicate
+              {t('photo.duplicate')}
             </button>
           </div>
           <p className="editor-hint">
-            Drag a corner to resize, the handle above it to turn. Arrow keys nudge, Delete removes.
+            {t('photo.layerHint')}
           </p>
 
           {selected.kind === 'text' ? (
             <>
-              <div className="seg" role="group" aria-label="Font">
+              <div className="seg" role="group" aria-label={t('photo.font')}>
                 {FONTS.map((f) => (
                   <button
                     key={f.key}
@@ -756,7 +759,7 @@ export function PhotoEditor({
                     style={{ fontFamily: f.stack }}
                     onClick={() => patch(selected.id, { font: f.key as FontKey })}
                   >
-                    {f.label}
+                    {t(f.labelKey)}
                   </button>
                 ))}
               </div>
@@ -766,7 +769,7 @@ export function PhotoEditor({
                   checked={selected.plate}
                   onChange={(e) => patch(selected.id, { plate: e.target.checked })}
                 />
-                <span>Dark backing behind the words</span>
+                <span>{t('photo.textBacking')}</span>
               </label>
             </>
           ) : (
@@ -775,18 +778,18 @@ export function PhotoEditor({
               className="editor-add"
               onClick={() => setPicker({ mode: 'replace', id: selected.id })}
             >
-              <FeatherIcon size={16} /> Swap sticker
+              <FeatherIcon size={16} /> {t('photo.swapStickerShort')}
             </button>
           )}
 
           <label className="tool-row">
-            <span className="tool-label">Size</span>
+            <span className="tool-label">{t('photo.size')}</span>
             <input
               type="range"
               min={SIZE_RANGE.min * 100}
               max={SIZE_RANGE.max * 100}
               value={Math.round(selected.size * 100)}
-              aria-label="Size"
+              aria-label={t('photo.size')}
               onChange={(e) => patch(selected.id, { size: Number(e.target.value) / 100 }, true)}
               onPointerUp={history.settle}
               onKeyUp={history.settle}
@@ -794,13 +797,13 @@ export function PhotoEditor({
           </label>
 
           <label className="tool-row">
-            <span className="tool-label">Turn</span>
+            <span className="tool-label">{t('photo.turn')}</span>
             <input
               type="range"
               min={ROTATION_RANGE.min}
               max={ROTATION_RANGE.max}
               value={Math.round(selected.rotation)}
-              aria-label="Turn"
+              aria-label={t('photo.turn')}
               onChange={(e) => patch(selected.id, { rotation: Number(e.target.value) }, true)}
               onPointerUp={history.settle}
               onKeyUp={history.settle}
@@ -842,16 +845,17 @@ function AdjustRow({
   onPreview: (value: number) => void;
   onSettle: () => void;
 }): React.JSX.Element {
+  const t = useT();
   const range = rangeFor(name);
   return (
     <label className={`tool-row${value !== 0 ? ' is-set' : ''}`}>
-      <span className="tool-label">{ADJUSTMENT_LABELS[name]}</span>
+      <span className="tool-label">{t(ADJUSTMENT_LABEL_KEYS[name])}</span>
       <input
         type="range"
         min={range.min}
         max={range.max}
         value={Math.round(value)}
-        aria-label={ADJUSTMENT_LABELS[name]}
+        aria-label={t(ADJUSTMENT_LABEL_KEYS[name])}
         onChange={(e) => onPreview(Number(e.target.value))}
         onPointerUp={onSettle}
         onKeyUp={onSettle}

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FILTERS, NO_FILTER, gradeOf, overlaySources, presetByKey } from './filters';
 import { ADJUSTMENT_KEYS, NEUTRAL, isNeutral, type Adjustments } from './adjust';
+import { translator } from '../i18n/I18nProvider';
+import { en } from '../i18n/en';
+import { de } from '../i18n/de';
+import { tr } from '../i18n/tr';
 
 const byHand = (over: Partial<Adjustments>): Adjustments => ({ ...NEUTRAL, ...over });
 
@@ -10,7 +14,24 @@ describe('the catalogue', () => {
     expect(new Set(keys).size).toBe(keys.length);
     for (const f of FILTERS) {
       expect(f.label.length).toBeGreaterThan(0);
-      expect(f.hint.length).toBeGreaterThan(0);
+      expect(f.hintKey.length).toBeGreaterThan(0);
+    }
+  });
+
+  /**
+   * A filter's name is a name — Zêr is called Zêr on a German screen, the way
+   * Instagram's Clarendon is called Clarendon everywhere. What a reader needs
+   * translating is the tooltip that says what the look actually is.
+   */
+  it('keeps its Kurmancî name in every language, and translates the hint', () => {
+    const zer = presetByKey('zer')!;
+    expect(zer.label).toBe('Zêr');
+    expect(translator(en)(zer.hintKey)).toBe('Gold');
+    expect(translator(de)(zer.hintKey)).toBe('Gold');
+    expect(translator(tr)(zer.hintKey)).toBe('Altın');
+    // and every hint resolves to something, in a language that is not English
+    for (const f of FILTERS) {
+      expect(translator(tr)(f.hintKey), f.key).not.toBe(f.hintKey);
     }
   });
 

@@ -3,6 +3,7 @@ import { FILTERS, gradeOf } from './filters';
 import { applyGrade, drawOverlay, gradeDoesNothing } from './composition';
 import { NEUTRAL } from './adjust';
 import type { CropRect } from './frame';
+import { useT } from '../i18n/I18nProvider';
 
 /** Drawn size of one thumbnail, in CSS pixels. */
 const THUMB = 62;
@@ -32,13 +33,14 @@ export function FilterStrip({
   artReady: number;
   onPick: (key: string) => void;
 }): React.JSX.Element {
+  const t = useT();
   // the middle square of the crop, so every thumbnail is the same shape
   const side = Math.min(crop.sw, crop.sh);
   const sx = crop.sx + (crop.sw - side) / 2;
   const sy = crop.sy + (crop.sh - side) / 2;
 
   return (
-    <div className="filter-strip" role="radiogroup" aria-label="Filter">
+    <div className="filter-strip" role="radiogroup" aria-label={t('photo.tab.filter')}>
       {FILTERS.map((preset) => (
         <button
           key={preset.key}
@@ -46,7 +48,7 @@ export function FilterStrip({
           role="radio"
           aria-checked={activeKey === preset.key}
           className={`filter-thumb${activeKey === preset.key ? ' is-on' : ''}`}
-          title={preset.hint}
+          title={t(preset.hintKey)}
           onClick={() => onPick(preset.key)}
         >
           <Thumb image={image} sx={sx} sy={sy} side={side} filterKey={preset.key} artReady={artReady} />

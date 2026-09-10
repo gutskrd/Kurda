@@ -148,7 +148,7 @@ export function PictureComposer({
     }
     if (!composed) {
       setBusy(false);
-      setError('That picture could not be prepared for upload.');
+      setError(t('picture.couldNotPrepare'));
       return;
     }
 
@@ -157,7 +157,7 @@ export function PictureComposer({
       setBusy(false);
       setError(
         up.error.code === 'MEDIA_UNAVAILABLE'
-          ? 'Picture storage isn’t switched on yet — try again once it is.'
+          ? t('picture.storageOff')
           : describeError(up.error, t),
       );
       return;
@@ -190,11 +190,11 @@ export function PictureComposer({
             className="picture-drop"
             onClick={() => fileRef.current?.click()}
             disabled={busy}
-            aria-label="Choose a picture"
+            aria-label={t('picture.choose')}
           >
             <span className="picture-drop-empty">
               <PhotoIcon size={30} />
-              <span>Choose a picture</span>
+              <span>{t('picture.choose')}</span>
             </span>
           </button>
           {error && <div className="msg msg-error" role="status">{error}</div>}
@@ -230,8 +230,11 @@ export function PictureComposer({
                 /* no promise that it will convert: HEIC needs a codec the server
                    may not carry, and it says so plainly if it cannot */
                 <p className="muted">
-                  Your browser can’t show {format ? `${format.toUpperCase()} pictures` : 'this kind of picture'},
-                  so there’s nothing to frame or add to — you can still post it as it is.
+                  {t('picture.browserCannotShow', {
+                    what: format
+                      ? t('picture.formatPictures', { format: format.toUpperCase() })
+                      : t('picture.thisKind'),
+                  })}
                 </p>
               )}
             </div>
@@ -242,9 +245,9 @@ export function PictureComposer({
             className="link-button"
             onClick={() => fileRef.current?.click()}
             disabled={busy}
-            aria-label="Choose a different picture"
+            aria-label={t('picture.chooseDifferent')}
           >
-            Choose a different picture
+            {t('picture.chooseDifferent')}
           </button>
 
           <div className="seg" role="group" aria-label={t('post.kind')} style={{ marginTop: 14 }}>
@@ -284,7 +287,7 @@ export function PictureComposer({
         </>
       )}
 
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={choose} aria-label="Picture file" />
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={choose} aria-label={t('picture.file')} />
     </div>
   );
 }

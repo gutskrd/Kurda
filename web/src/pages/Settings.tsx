@@ -9,6 +9,7 @@ import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
 import { useI18n, useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 import { LanguagePicker } from '../i18n/LanguagePicker';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
@@ -22,18 +23,18 @@ type Visibility = (typeof VISIBILITIES)[number];
  * labelled "Everyone" reads like "everyone here", which is what 'Members' is,
  * and nobody should learn the difference after the fact.
  */
-const VIS_LABEL: Record<Visibility, string> = {
-  everyone: 'Anyone on the web',
-  members: 'MyKurda members',
-  friends: 'Friends only',
-  nobody: 'Nobody',
+const VIS_LABEL_KEY: Record<Visibility, MessageKey> = {
+  everyone: 'settings.visibility.everyone',
+  members: 'settings.visibility.members',
+  friends: 'settings.visibility.friends',
+  nobody: 'settings.visibility.nobody',
 };
 
-const VIS_HINT: Record<Visibility, string> = {
-  everyone: 'Anyone at all, signed in or not — including search engines.',
-  members: 'Anyone signed in to MyKurda. Signed-out visitors see only your name.',
-  friends: 'Only people you have added as friends.',
-  nobody: 'Nobody but you. You stay out of search and off the rankings.',
+const VIS_HINT_KEY: Record<Visibility, MessageKey> = {
+  everyone: 'settings.visibility.everyoneHint',
+  members: 'settings.visibility.membersHint',
+  friends: 'settings.visibility.friendsHint',
+  nobody: 'settings.visibility.nobodyHint',
 };
 
 export function Settings(): React.JSX.Element {
@@ -206,11 +207,11 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
             aria-pressed={vis === v}
             onClick={() => change(v)}
           >
-            {VIS_LABEL[v]}
+            {t(VIS_LABEL_KEY[v])}
           </button>
         ))}
       </div>
-      <p className="field-hint" style={{ marginBottom: 0 }}>{VIS_HINT[vis]}</p>
+      <p className="field-hint" style={{ marginBottom: 0 }}>{t(VIS_HINT_KEY[vis])}</p>
       {msg && <span className="field-hint">{msg}</span>}
     </section>
   );

@@ -10,6 +10,7 @@ import {
   type Frame,
 } from './frame';
 import { captureIfPossible, drawLayers } from './layers';
+import { useT } from '../i18n/I18nProvider';
 
 /** How far one wheel notch moves the zoom. */
 const WHEEL_STEP = 0.0016;
@@ -55,6 +56,7 @@ export function ImageFramer({
   round?: boolean;
   busy?: boolean;
 }): React.JSX.Element {
+  const t = useT();
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -197,7 +199,7 @@ export function ImageFramer({
         onKeyDown={onKeyDown}
         role="application"
         tabIndex={0}
-        aria-label="Drag to move the picture. Arrow keys nudge it, plus and minus zoom."
+        aria-label={t('photo.framerHint')}
       >
         <canvas ref={canvasRef} className="framer-canvas" />
         {/* thirds, the way a camera shows them, and only while it is being moved */}
@@ -208,7 +210,7 @@ export function ImageFramer({
         <button
           type="button"
           className="framer-zoom-btn"
-          aria-label="Zoom out"
+          aria-label={t('photo.zoomOut')}
           disabled={busy || frame.zoom <= ZOOM_RANGE.min}
           onClick={() => {
             onChange(zoomFrame(iw, ih, aspect, frame, frame.zoom - 0.25));
@@ -223,7 +225,7 @@ export function ImageFramer({
           min={ZOOM_RANGE.min * 100}
           max={Math.round(maxZoom * 100)}
           value={Math.round(frame.zoom * 100)}
-          aria-label="Zoom"
+          aria-label={t('photo.zoom')}
           disabled={busy}
           onChange={(e) => onChange(zoomFrame(iw, ih, aspect, frame, Number(e.target.value) / 100))}
           onPointerUp={settle}
@@ -232,7 +234,7 @@ export function ImageFramer({
         <button
           type="button"
           className="framer-zoom-btn"
-          aria-label="Zoom in"
+          aria-label={t('photo.zoomIn')}
           disabled={busy || atCeiling}
           onClick={() => {
             onChange(zoomFrame(iw, ih, aspect, frame, frame.zoom + 0.25));

@@ -1,3 +1,5 @@
+import type { MessageKey } from '../i18n/en';
+
 /**
  * What part of a picture ends up in the picture.
  *
@@ -175,15 +177,16 @@ export function zoomFrame(
 /** The shapes a picture can be posted in. `null` keeps the picture's own. */
 export interface AspectChoice {
   key: string;
-  label: string;
+  /** a catalogue key: this module has no React, and no language of its own */
+  labelKey: MessageKey;
   ratio: number | null;
 }
 
 export const ASPECTS: readonly AspectChoice[] = [
-  { key: 'original', label: 'Original', ratio: null },
-  { key: 'square', label: 'Square', ratio: 1 },
-  { key: 'portrait', label: 'Portrait', ratio: 4 / 5 },
-  { key: 'wide', label: 'Wide', ratio: 16 / 9 },
+  { key: 'original', labelKey: 'photo.frame.original', ratio: null },
+  { key: 'square', labelKey: 'photo.frame.square', ratio: 1 },
+  { key: 'portrait', labelKey: 'photo.frame.portrait', ratio: 4 / 5 },
+  { key: 'wide', labelKey: 'photo.frame.wide', ratio: 16 / 9 },
 ];
 
 /** The ratio to frame at: the chosen shape, or the picture's own. */
