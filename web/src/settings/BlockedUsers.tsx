@@ -6,6 +6,7 @@ import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { Loading } from '../components/states';
 import type { BlockedUser } from '../lib/types';
+import { useT } from '../i18n/I18nProvider';
 
 /** Matches the server's page size, so "Show more" asks for exactly one more page. */
 const PAGE = 25;
@@ -40,6 +41,7 @@ interface Page {
  */
 export function BlockedUsers(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [list, setList] = useState<BlockedUser[]>([]);
   const [total, setTotal] = useState(0);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -109,7 +111,7 @@ export function BlockedUsers(): React.JSX.Element {
   return (
     <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>
-        Blocked people {total > 0 && <span className="mkp-friends-count">{total}</span>}
+        {t('settings.blocked.title')} {total > 0 && <span className="mkp-friends-count">{total}</span>}
       </h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
         Someone you block cannot find you, message you or send you a friend request, and you will not see them

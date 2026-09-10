@@ -181,7 +181,7 @@ export function PictureComposer({
 
   return (
     <div className="post-picture">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Post a picture</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('post.picture.open')}</h2>
 
       {!ready ? (
         <>

@@ -45,7 +45,7 @@ export function Login(): React.JSX.Element {
 
           <div className="field">
             <label className="field-label" htmlFor="email">
-              Email
+              {t('auth.email')}
             </label>
             <input
               id="email"
@@ -62,7 +62,7 @@ export function Login(): React.JSX.Element {
 
           <div className="field">
             <label className="field-label" htmlFor="password">
-              Password
+              {t('auth.password')}
             </label>
             <PasswordInput id="password" value={password} onChange={setPassword} />
           </div>
@@ -73,7 +73,7 @@ export function Login(): React.JSX.Element {
               <span>{t('auth.login.rememberMe')}</span>
             </label>
             <Link to="/forgot-password" className="link-btn" style={{ textDecoration: 'none' }}>
-              Forgot password?
+              {t('auth.login.forgot')}
             </Link>
           </div>
 
@@ -83,7 +83,7 @@ export function Login(): React.JSX.Element {
         </form>
 
         <p className="auth-alt">
-          New to MyKurda? <Link to="/register">{t('auth.login.createAccount')}</Link>
+          {t('auth.login.noAccount')} <Link to="/register">{t('auth.login.createAccount')}</Link>
         </p>
       </div>
     </div>

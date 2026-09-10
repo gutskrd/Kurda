@@ -41,16 +41,43 @@ interface I18n {
 
 const Ctx = createContext<I18n | null>(null);
 
+/**
+ * The whole context. Throws outside a provider, because `setLocale` cannot
+ * mean anything without one — a component asking to change the language and
+ * silently not changing it is worse than a crash in development.
+ */
 export function useI18n(): I18n {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useI18n must be used within I18nProvider');
   return ctx;
 }
 
-/** The common case: just the lookup function. */
+/**
+ * Just the lookup — and deliberately tolerant where `useI18n` is not.
+ *
+ * Reading a message has a defined answer without a provider: English, which is
+ * the source language and already what every untranslated key falls back to. So
+ * there is nothing to fail about, and two things break if this throws.
+ *
+ * `Loading` and `ErrorState` are leaf primitives used on nearly every screen.
+ * Requiring app context in a primitive makes it unusable in isolation — and,
+ * worse, an error boundary sitting *above* the provider would render an
+ * `ErrorState` that crashed for want of the very context whose failure it was
+ * trying to report. A crash handler must not need the thing that crashed.
+ */
 export function useT(): I18n['t'] {
-  return useI18n().t;
+  const ctx = useContext(Ctx);
+  return ctx ? ctx.t : englishOnly;
 }
+
+/** The fallback lookup: English, with the same interpolation. */
+const englishOnly: I18n['t'] = (key, vars) => {
+  const template = en[key] ?? key;
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
+    name in vars ? String(vars[name]) : whole,
+  );
+};
 
 /**
  * What language the interface speaks, and how a string gets there.

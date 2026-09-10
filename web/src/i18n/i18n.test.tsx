@@ -44,6 +44,35 @@ const show = (): void => {
   );
 };
 
+/**
+ * `Loading` and `ErrorState` are leaf primitives on nearly every screen, and an
+ * error boundary sitting above the provider renders an `ErrorState`. If reading
+ * a message needed the provider, that boundary would crash for want of the very
+ * context whose failure it was reporting.
+ */
+describe('reading a message without a provider', () => {
+  function Bare(): React.JSX.Element {
+    const t = useT();
+    return <span data-testid="bare">{t('common.retry')} · {t('language.savedTo', { language: 'X' })}</span>;
+  }
+
+  it('falls back to English rather than throwing', () => {
+    render(<Bare />);
+    expect(screen.getByTestId('bare')).toHaveTextContent('Try again · MyKurda is now in X.');
+  });
+
+  it('still refuses useI18n, which cannot mean anything without one', () => {
+    function NeedsContext(): React.JSX.Element {
+      useI18n();
+      return <span />;
+    }
+    // React logs the thrown error; the assertion is that it throws at all
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    expect(() => render(<NeedsContext />)).toThrow(/I18nProvider/);
+    quiet.mockRestore();
+  });
+});
+
 describe('the catalogues', () => {
   /**
    * English defines the key set and is what everything falls back to, so a key
