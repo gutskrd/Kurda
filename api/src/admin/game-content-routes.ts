@@ -55,6 +55,12 @@ const rhymeQuery = z.object({
   dialect: z.enum(['kurmanci', 'sorani']).default('kurmanci'),
 });
 
+const rebuildBody = z.object({
+  dialect: z.enum(['kurmanci', 'sorani']).default('kurmanci'),
+  /** preview the outcome without writing it */
+  dryRun: z.boolean().default(false),
+});
+
 interface WordRow {
   id: string;
   headword: string;
@@ -399,6 +405,79 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
 
     return { total: matched.length, poolSize: all.rows.length, usingFallback, words };
   });
+
+  /**
+   * Make every word that has something to rhyme with a base word.
+   *
+   * There is a cliff in how base words are chosen: a round falls back to the
+   * whole pool while NOTHING is marked, so marking the very first word silently
+   * takes every other word out of the game. Marking two words does not narrow
+   * the game a little — it narrows it to two. That is how a 159-word pool came
+   * to serve two prompts, and nothing in the admin page said so.
+   *
+   * This is the way back, and the way to a set that cannot bite: it marks every
+   * word that has at least one partner, so the curated set starts out as the
+   * whole playable pool and marking one more word after that adds to it rather
+   * than replacing it. Words with no rhyme are deliberately left unmarked —
+   * excluding those is what the flag was for.
+   *
+   * The count is computed exactly as `GET /admin/rhyme/prompts` computes it,
+   * overrides included, so the number here and the number on the page agree.
+   */
+  app.post(
+    '/admin/rhyme/prompts/rebuild',
+    { schema: { body: rebuildBody }, preHandler: canEdit },
+    async (req) => {
+      const { dialect, dryRun } = req.body as z.infer<typeof rebuildBody>;
+      const all = await app.db.query<WordRow>(
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries`,
+      );
+      const decided = await app.db.query<{ prompt_normalized: string; rhyme_normalized: string; quality: string }>(
+        `SELECT prompt_normalized, rhyme_normalized, quality FROM rhyme_overrides`,
+      );
+      const byPrompt = new Map<string, Map<string, string>>();
+      for (const d of decided.rows) {
+        const m = byPrompt.get(d.prompt_normalized) ?? new Map<string, string>();
+        m.set(d.rhyme_normalized, d.quality);
+        byPrompt.set(d.prompt_normalized, m);
+      }
+
+      const playable: string[] = [];
+      const unplayable: string[] = [];
+      for (const row of all.rows) {
+        const overrides = byPrompt.get(row.headword_normalized);
+        const hasPartner = all.rows.some((other) => {
+          if (other.headword_normalized === row.headword_normalized) return false;
+          const quality =
+            overrides?.get(other.headword_normalized) ??
+            classifyRhyme(row.headword, other.headword, dialect as Dialect);
+          return quality === 'perfect' || quality === 'near';
+        });
+        if (hasPartner) playable.push(row.id);
+        else unplayable.push(row.headword);
+      }
+
+      // how many this actually changes, so the response can say what it did
+      const willMark = new Set(playable);
+      const alreadyMarked = all.rows.filter((r) => r.is_rhyme_prompt).length;
+      const newlyMarked = all.rows.filter((r) => !r.is_rhyme_prompt && willMark.has(r.id)).length;
+
+      if (!dryRun && playable.length > 0) {
+        await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = true WHERE id = ANY($1)`, [playable]);
+      }
+
+      return {
+        dryRun,
+        poolSize: all.rows.length,
+        /** base words after this runs */
+        baseWords: playable.length,
+        newlyMarked,
+        alreadyMarked,
+        /** left out on purpose: a round on one of these could not be played */
+        withoutRhymes: unplayable.sort((a, b) => a.localeCompare(b)),
+      };
+    },
+  );
 
   /**
    * Decide a pair explicitly. 'perfect' / 'near' accept the word (and set what it
