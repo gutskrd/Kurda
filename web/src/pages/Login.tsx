@@ -3,10 +3,12 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
+import { useT } from '../i18n/I18nProvider';
 
 export function Login(): React.JSX.Element {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/app';
 
@@ -30,8 +32,8 @@ export function Login(): React.JSX.Element {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-head">
-          <h1>Welcome back</h1>
-          <p>Sign in to continue learning.</p>
+          <h1>{t('auth.login.title')}</h1>
+          <p>{t('auth.login.subtitle')}</p>
         </div>
 
         <form onSubmit={submit} noValidate>
@@ -68,7 +70,7 @@ export function Login(): React.JSX.Element {
           <div className="auth-row">
             <label className="check">
               <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-              <span>Remember me</span>
+              <span>{t('auth.login.rememberMe')}</span>
             </label>
             <Link to="/forgot-password" className="link-btn" style={{ textDecoration: 'none' }}>
               Forgot password?
@@ -76,12 +78,12 @@ export function Login(): React.JSX.Element {
           </div>
 
           <Button type="submit" block disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
+            {busy ? t('auth.login.submitting') : t('auth.login.submit')}
           </Button>
         </form>
 
         <p className="auth-alt">
-          New to MyKurda? <Link to="/register">Create an account</Link>
+          New to MyKurda? <Link to="/register">{t('auth.login.createAccount')}</Link>
         </p>
       </div>
     </div>

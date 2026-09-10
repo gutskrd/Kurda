@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
+import { useT } from '../i18n/I18nProvider';
 
 interface Entry {
   userId: string;
@@ -41,6 +42,7 @@ const SCOPES: { key: Scope; label: string }[] = [
 
 export function Rankings(): React.JSX.Element {
   const { client, user } = useAuth();
+  const t = useT();
   const [type, setType] = useState<BoardType>('weekly_xp');
   const [scope, setScope] = useState<Scope>('global');
   const [board, setBoard] = useState<Board | null>(null);
@@ -86,8 +88,8 @@ export function Rankings(): React.JSX.Element {
   return (
     <div className="container container-narrow">
       <div className="page-header">
-        <span className="eyebrow">Pilebendî · Leaderboards</span>
-        <h1 className="page-title">Rankings</h1>
+        <span className="eyebrow">{t('rankings.eyebrow')}</span>
+        <h1 className="page-title">{t('rankings.title')}</h1>
         <p className="page-sub">{meta.blurb}</p>
       </div>
 

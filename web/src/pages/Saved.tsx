@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { FeedCard } from '../feed/FeedCard';
+import { useT } from '../i18n/I18nProvider';
 import { BookmarkIcon } from '../components/icons';
 
 const PAGE = 20;
@@ -18,6 +19,7 @@ const PAGE = 20;
  */
 export function Saved(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -59,20 +61,20 @@ export function Saved(): React.JSX.Element {
     <div className="container container-feed">
       <div className="page-header">
         <span className="eyebrow">Tomarkirî · Saved</span>
-        <h1 className="page-title">Saved</h1>
-        <p className="page-sub">Posts you kept to come back to. Only you can see this.</p>
+        <h1 className="page-title">{t('saved.title')}</h1>
+        <p className="page-sub">{t('saved.subtitle')}</p>
       </div>
 
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}
 
       {items === null ? (
-        <Loading label="Loading your saved posts…" />
+        <Loading label={t('saved.loading')} />
       ) : items.length === 0 ? (
         <div className="saved-empty">
           <BookmarkIcon size={30} />
           <p className="muted">
             Nothing saved yet. Tap the bookmark on any post in{' '}
-            <Link to="/app/civak" className="link">Civak</Link> to keep it here.
+            <Link to="/app/civak" className="link">{t('saved.emptyLink')}</Link> to keep it here.
           </p>
         </div>
       ) : (

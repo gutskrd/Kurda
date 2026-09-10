@@ -26,7 +26,7 @@ describe('Login', () => {
     renderLogin();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
   });
 
   it('shows the server error message on a failed sign-in', async () => {
@@ -37,7 +37,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'wrongpass');
-    await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/invalid email or password/i);
   });
@@ -55,7 +55,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass');
-    await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
 
     await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
   });

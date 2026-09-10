@@ -181,6 +181,51 @@ export const en = {
   'games.mode.online': 'Play online',
   'games.mode.needsAccount': 'needs an account',
   'games.play': 'Play',
+
+  // ---- signing in, the rest of it ------------------------------------------
+  'auth.login.rememberMe': 'Remember me',
+  'auth.login.createAccount': 'Create an account',
+  'auth.register.freeToStart': 'Free to start. It takes under a minute.',
+  'auth.register.usernameHelp': 'How others will see you',
+  'auth.register.signIn': 'Sign in',
+
+  // ---- friends -------------------------------------------------------------
+  'friends.title': 'Friends',
+  'friends.eyebrow': 'Community',
+  'friends.subtitle': 'Find other learners, send requests, and see who you’re learning alongside.',
+  'friends.searchPlaceholder': 'Search by username…',
+  'friends.searchLabel': 'Search users by username',
+  'friends.search': 'Search',
+  'friends.searching': 'Searching…',
+  'friends.results': 'Search results',
+  'friends.noResults': 'No users found.',
+  'friends.requests': 'Requests',
+  'friends.accept': 'Accept',
+  'friends.decline': 'Decline',
+  'friends.sent': 'Sent',
+  'friends.cancel': 'Cancel',
+  'friends.cancelRequest': 'Cancel your request to {name}',
+  'friends.suggestions': 'People you may know',
+  'friends.mutual': '{count} mutual friends',
+  'friends.add': 'Add',
+  'friends.requested': 'Requested',
+  'friends.yours': 'Your friends',
+  'friends.noneTitle': 'No friends yet',
+  'friends.noneBody': 'Search for a username above to send your first friend request.',
+  'friends.remove': 'Remove',
+  'friends.removeWho': 'Remove {name} as a friend',
+  'friends.block': 'Block',
+  'friends.blockWho': 'Block {name}',
+
+  // ---- saved ---------------------------------------------------------------
+  'saved.title': 'Saved',
+  'saved.subtitle': 'Posts you kept to come back to. Only you can see this.',
+  'saved.loading': 'Loading your saved posts…',
+  'saved.emptyLink': 'Community',
+
+  // ---- rankings ------------------------------------------------------------
+  'rankings.title': 'Rankings',
+  'rankings.eyebrow': 'Where you stand',
 } as const;
 
 export type MessageKey = keyof typeof en;
