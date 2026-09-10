@@ -140,11 +140,21 @@ export function I18nProvider({ children }: { children: ReactNode }): React.JSX.E
    * `lang` is what a screen reader picks a voice from and what the browser
    * hyphenates by; `dir` is what puts Arabic the right way round. Neither is
    * cosmetic, and both have to change when the choice does.
+   *
+   * The title and description come from `index.html`, which is one static file
+   * served to everybody — so they were English on every screen, in the browser
+   * tab, in the bookmark, and in whatever a search engine had cached. They are
+   * set here for the same reason `lang` is: the choice is only known once this
+   * has mounted.
    */
   useEffect(() => {
     const root = document.documentElement;
     root.lang = locale;
     root.dir = localeDir(locale);
+
+    const t = translator(CATALOGUES[locale]);
+    document.title = t('app.documentTitle');
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t('app.description'));
   }, [locale]);
 
   const value = useMemo<I18n>(

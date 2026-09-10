@@ -868,4 +868,6 @@ export const tr: Catalogue = {
   'dimen.aPicture': 'Bir fotoğraf',
   'dimen.views': '{count} görüntülenme',
   'saved.eyebrow': 'Kaydedilenler',
+  'app.documentTitle': 'MyKurda — Kürtçe öğren',
+  'app.description': 'MyKurda, Kürtçe öğrenmenin güzel bir yolu — dersler, hikâyeler, şiirler, oyunlar ve bir topluluk.',
 };

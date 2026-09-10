@@ -175,6 +175,27 @@ describe('choosing a language', () => {
     expect(document.documentElement.dir).toBe('ltr');
   });
 
+  /**
+   * The title and the description live in `index.html`, one static file served
+   * to everybody — so they stayed English on every screen, in the browser tab,
+   * in the bookmark, and in whatever a search engine had cached. Found by
+   * looking at the running app rather than by any test.
+   */
+  it('renames the tab and the description too', async () => {
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', 'description');
+    document.head.appendChild(meta);
+
+    show();
+    expect(document.title).toBe('MyKurda — Learn Kurdish');
+
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'de');
+    expect(document.title).toBe('MyKurda — Kurdisch lernen');
+    expect(meta.getAttribute('content')).toContain('Kurdisch zu lernen');
+
+    meta.remove();
+  });
+
   /** A private window throws on the first read; that is not a reason to fail. */
   it('still works where storage is unavailable', async () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {

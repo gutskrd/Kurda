@@ -868,4 +868,6 @@ export const es: Catalogue = {
   'dimen.aPicture': 'Una imagen',
   'dimen.views': '{count} visualizaciones',
   'saved.eyebrow': 'Guardado',
+  'app.documentTitle': 'MyKurda — Aprende kurdo',
+  'app.description': 'MyKurda es una forma bonita de aprender kurdo: lecciones, relatos, poemas, juegos y una comunidad.',
 };

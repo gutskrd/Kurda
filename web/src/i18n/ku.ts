@@ -874,4 +874,6 @@ export const ku: Catalogue = {
   'dimen.aPicture': 'Wêneyek',
   'dimen.views': '{count} dîtin',
   'saved.eyebrow': 'Tomarkirî',
+  'app.documentTitle': 'MyKurda — Fêrî kurdî bibe',
+  'app.description': 'MyKurda rêyeke xweş e ji bo fêrbûna kurdî — ders, çîrok, helbest, lîstik û civakek.',
 };

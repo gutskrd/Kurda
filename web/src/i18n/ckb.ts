@@ -880,4 +880,6 @@ export const ckb: Catalogue = {
   'dimen.aPicture': 'وێنەیەک',
   'dimen.views': '{count} بینین',
   'saved.eyebrow': 'پاشەکەوتکراو',
+  'app.documentTitle': 'MyKurda — فێری کوردی ببە',
+  'app.description': 'MyKurda ڕێگایەکی جوانە بۆ فێربوونی کوردی — وانە، چیرۆک، شیعر، یاری و کۆمەڵگایەک.',
 };
