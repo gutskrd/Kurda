@@ -60,7 +60,7 @@ export function Saved(): React.JSX.Element {
   return (
     <div className="container container-feed">
       <div className="page-header">
-        <span className="eyebrow">Tomarkirî · Saved</span>
+        <span className="eyebrow">{t('saved.eyebrow')}</span>
         <h1 className="page-title">{t('saved.title')}</h1>
         <p className="page-sub">{t('saved.subtitle')}</p>
       </div>

@@ -354,7 +354,7 @@ function ChallengeCard({ who, onActed }: { who: RailFriend; onActed: () => void 
           Accept
         </button>
         <button type="button" className="rail-act" disabled={busy} onClick={() => void respond(false)}>
-          Decline
+          {t('rail.decline')}
         </button>
       </span>
     </div>
@@ -387,7 +387,7 @@ function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void })
           Accept
         </button>
         <button type="button" className="rail-act" disabled={busy} onClick={() => void respond(false)}>
-          Decline
+          {t('rail.decline')}
         </button>
       </span>
     </div>
@@ -452,7 +452,7 @@ function Notifications({
 
       {unread > 1 && (
         <button type="button" className="rail-note-clear" onClick={() => void dismissAll()}>
-          Dismiss all
+          {t('rail.dismissAll')}
         </button>
       )}
     </>

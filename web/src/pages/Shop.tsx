@@ -141,7 +141,7 @@ export function Shop(): React.JSX.Element {
       setZer(res.data.balance);
       setBought((prev) => new Set(prev).add(tile.sku));
       celebrate(tile.sku);
-      setMsg({ kind: 'ok', text: `${tile.name} is yours. Equip it from Edit Profile.` });
+      setMsg({ kind: 'ok', text: t('shop.isYours', { name: tile.name }) });
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
@@ -161,7 +161,7 @@ export function Shop(): React.JSX.Element {
     if (res.ok) {
       setZer(res.data.balance);
       celebrate(tile.sku);
-      setMsg({ kind: 'ok', text: `${tile.name} is on its way to ${to.username}.` });
+      setMsg({ kind: 'ok', text: t('shop.onItsWay', { name: tile.name, to: to.username }) });
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
     }

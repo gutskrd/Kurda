@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '../i18n/I18nProvider';
 
 /** How long the armed state waits before giving up on you. */
 const ARMED_MS = 4_000;
@@ -16,7 +17,7 @@ const ARMED_MS = 4_000;
  */
 export function ConfirmButton({
   label,
-  confirmLabel = 'Sure?',
+  confirmLabel,
   busyLabel,
   onConfirm,
   className = '',
@@ -32,6 +33,10 @@ export function ConfirmButton({
   /** the plain-words version, for the accessible name and the tooltip */
   title: string;
 }): React.JSX.Element {
+  const t = useT();
+  // resolved here rather than as a default argument: a default is evaluated
+  // before any hook has run
+  const confirm = confirmLabel ?? t('common.sure');
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,7 +74,7 @@ export function ConfirmButton({
       onBlur={() => setArmed(false)}
       onClick={() => void press()}
     >
-      {busy ? (busyLabel ?? '…') : armed ? confirmLabel : label}
+      {busy ? (busyLabel ?? '…') : armed ? confirm : label}
     </button>
   );
 }

@@ -83,7 +83,7 @@ export function Register(): React.JSX.Element {
               {t('auth.password')}
             </label>
             <PasswordInput id="password" value={password} onChange={setPassword} autoComplete="new-password" />
-            <span className="field-hint">At least 8 characters, with a mix of letters and numbers.</span>
+            <span className="field-hint">{t('auth.passwordHint')}</span>
           </div>
 
           {/*
