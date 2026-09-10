@@ -961,6 +961,8 @@ export const en = {
   'dimen.aPicture': 'A picture',
   'dimen.views': '{count} views',
   'saved.eyebrow': 'Saved',
+  'app.documentTitle': 'MyKurda — Learn Kurdish',
+  'app.description': 'MyKurda is a beautiful way to learn Kurdish — lessons, stories, poems, games and a community.',
 } as const;
 
 export type MessageKey = keyof typeof en;

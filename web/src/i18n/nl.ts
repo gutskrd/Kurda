@@ -868,4 +868,6 @@ export const nl: Catalogue = {
   'dimen.aPicture': 'Een foto',
   'dimen.views': '{count} keer bekeken',
   'saved.eyebrow': 'Bewaard',
+  'app.documentTitle': 'MyKurda — Leer Koerdisch',
+  'app.description': 'MyKurda is een mooie manier om Koerdisch te leren — lessen, verhalen, gedichten, spellen en een community.',
 };

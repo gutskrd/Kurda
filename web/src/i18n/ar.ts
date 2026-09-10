@@ -873,4 +873,6 @@ export const ar: Catalogue = {
   'dimen.aPicture': 'صورة',
   'dimen.views': '{count} مشاهدة',
   'saved.eyebrow': 'المحفوظات',
+  'app.documentTitle': 'MyKurda — تعلّم الكردية',
+  'app.description': 'MyKurda طريقة جميلة لتعلّم الكردية — دروس وقصص وقصائد وألعاب ومجتمع.',
 };

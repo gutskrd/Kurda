@@ -868,4 +868,6 @@ export const de: Catalogue = {
   'dimen.aPicture': 'Ein Bild',
   'dimen.views': '{count} Aufrufe',
   'saved.eyebrow': 'Gespeichert',
+  'app.documentTitle': 'MyKurda — Kurdisch lernen',
+  'app.description': 'MyKurda ist ein schöner Weg, Kurdisch zu lernen — Lektionen, Geschichten, Gedichte, Spiele und eine Gemeinschaft.',
 };
