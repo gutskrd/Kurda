@@ -106,6 +106,51 @@
   border-left: 1px solid var(--border);
   z-index: 40;
 }
+
+/*
+ * Over a profile's artwork, the rail all but disappears.
+ *
+ * A profile background is fixed to the viewport and runs the full width
+ * underneath everything — but the rail sat on top of it as a 296px panel, and
+ * at any alpha dark enough to read comfortably that panel is a black column
+ * bolted to the right of somebody's photograph. Lowering it everywhere is not
+ * the answer either: on every other page there is nothing behind the rail but
+ * the flat app colour, and a rail that reads as a faint smear there is worse
+ * than one that reads as a panel.
+ *
+ * So it is scoped to the page that actually has a picture behind it. `:has()`
+ * on `.app-main` with a sibling combinator, because the rail is a sibling of
+ * `<main>` rather than inside it.
+ *
+ * A very heavy blur is what keeps the text legible: blurred at 44px a
+ * photograph becomes a smooth wash of its own colours rather than detail, so
+ * near-white text on it holds up while the colour still clearly comes through.
+ * The profile's own scrim is already darkening what is underneath, which is the
+ * other half of the contrast.
+ */
+/*
+ * Wide screens only. Down there the rail is a drawer you deliberately opened
+ * over the page, not chrome standing beside it — something you asked to see
+ * should be solid enough to read without the page showing through it.
+ */
+@media (min-width: 1180px) {
+  .app-main:has(.mkp-has-bg) ~ .social-rail {
+    background: rgba(12, 14, 19, 0.4);
+    -webkit-backdrop-filter: blur(44px) saturate(1.35);
+    backdrop-filter: blur(44px) saturate(1.35);
+    border-left-color: rgba(255, 255, 255, 0.14);
+  }
+
+  /*
+   * Without blur the wash never happens, and 0.4 alpha would leave the rail's
+   * text sitting on raw photograph. Undone rather than half-applied.
+   */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .app-main:has(.mkp-has-bg) ~ .social-rail {
+      background: rgba(12, 14, 19, 0.9);
+    }
+  }
+}
 .rail-head {
   display: flex;
   align-items: center;
