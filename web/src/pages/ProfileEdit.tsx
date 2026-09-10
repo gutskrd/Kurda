@@ -36,28 +36,32 @@ export function ProfileEdit(): React.JSX.Element {
       const r = await client.get<{ user: MeProfile }>('/me');
       if (cancelled) return;
       if (r.ok && r.data?.user?.username) setMe(r.data.user);
-      else setError(r.ok ? 'Your profile could not be loaded.' : describeError(r.error, t));
+      else setError(r.ok ? t('profile.yoursNotLoaded') : describeError(r.error, t));
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, reloadKey]);
+  }, [client, reloadKey, t]);
 
   const changed = (): void => {
     setReloadKey((n) => n + 1);
     void refreshUser();
   };
 
-  if (loading) return <Loading label="Loading…" />;
-  if (error || !me) return <ErrorState title="Couldn’t load your profile" message={error ?? 'Unavailable.'} onRetry={() => setReloadKey((n) => n + 1)} />;
+  if (loading) return <Loading label={t('profile.loadingYours')} />;
+  if (error || !me) return <ErrorState
+          title={t('profile.loadFailedYours')}
+          message={error ?? t('profile.unavailable')}
+          onRetry={() => setReloadKey((n) => n + 1)}
+        />;
 
   return (
     <div className="container container-narrow">
       <div className="page-header">
-        <span className="eyebrow">Profîl · Edit profile</span>
-        <h1 className="page-title">Edit Profile</h1>
-        <p className="page-sub"><Link to="/app/profile" className="link">← Back to your profile</Link></p>
+        <span className="eyebrow">{t('edit.eyebrow')}</span>
+        <h1 className="page-title">{t('profile.edit')}</h1>
+        <p className="page-sub"><Link to="/app/profile" className="link">{t('edit.back')}</Link></p>
       </div>
 
       <ProfilePhotoPicker me={me} onChanged={changed} />
@@ -68,7 +72,7 @@ export function ProfileEdit(): React.JSX.Element {
       <SectionToggles me={me} />
 
       <div style={{ marginTop: 24 }}>
-        <Link to="/app/settings" className="btn btn-secondary">Account settings</Link>
+        <Link to="/app/settings" className="btn btn-secondary">{t('edit.accountSettings')}</Link>
       </div>
     </div>
   );
@@ -97,7 +101,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
     const res = await client.patch('/me', body);
     setBusy(false);
     if (res.ok) {
-      setMsg({ kind: 'ok', text: 'Profile updated.' });
+      setMsg({ kind: 'ok', text: t('edit.profileUpdated') });
       onSaved();
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
@@ -106,25 +110,25 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
 
   return (
     <form className="card" onSubmit={save} style={{ marginTop: 24 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Details</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('edit.details')}</h2>
       {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
       <div className="field">
-        <label className="field-label" htmlFor="displayName">Display name</label>
+        <label className="field-label" htmlFor="displayName">{t('edit.displayName')}</label>
         <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} placeholder={me.username} />
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="bio">Bio</label>
-        <textarea id="bio" className="input" style={{ height: 96, padding: '10px 14px', resize: 'vertical' }} value={bio} maxLength={1000} onChange={(e) => setBio(e.target.value)} placeholder="Tell others a little about you…" />
+        <label className="field-label" htmlFor="bio">{t('edit.bio')}</label>
+        <textarea id="bio" className="input" style={{ height: 96, padding: '10px 14px', resize: 'vertical' }} value={bio} maxLength={1000} onChange={(e) => setBio(e.target.value)} placeholder={t('edit.bioPlaceholder')} />
         <span className="field-hint">{bio.length}/1000</span>
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="country">Country</label>
+        <label className="field-label" htmlFor="country">{t('edit.country')}</label>
         <select id="country" className="input" value={country} onChange={(e) => setCountry(e.target.value)}>
-          <option value="">— None —</option>
+          <option value="">{t('edit.noCountry')}</option>
           {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
         </select>
       </div>
-      <Button type="submit" disabled={busy || !dirty}>{busy ? 'Saving…' : 'Save changes'}</Button>
+      <Button type="submit" disabled={busy || !dirty}>{busy ? t('edit.saving') : t('edit.saveChanges')}</Button>
     </form>
   );
 }
@@ -166,7 +170,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
     const res = await client.put<{ avatarKey: string | null }>('/me/cosmetics/avatar', { key });
     setBusy(null);
     if (res.ok) {
-      setMsg({ kind: 'ok', text: key ? 'Profile picture updated.' : 'Avatar cleared.' });
+      setMsg({ kind: 'ok', text: key ? t('edit.photoUpdated') : t('edit.avatarCleared') });
       onChanged();
     } else {
       setSelected(prev);
@@ -176,7 +180,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
 
   function onTile(a: AvatarOption, locked: boolean): void {
     if (locked) {
-      setMsg({ kind: 'err', text: 'This avatar is a Premium feature — upgrade to Premium to use it.' });
+      setMsg({ kind: 'err', text: t('edit.premiumAvatar') });
       return;
     }
     void pick(a.key);
@@ -184,21 +188,21 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
 
   return (
     <section className="card" style={{ marginTop: 24 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Avatar</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('edit.avatar')}</h2>
       {me.profilePhotoUrl && (
         <p className="field-hint" style={{ marginTop: 0 }}>
-          Your uploaded photo is shown on your profile. Remove it to display a default avatar.
+          {t('edit.photoShown')}
         </p>
       )}
       {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
 
-      <div className="avatar-grid" role="radiogroup" aria-label="Choose a default avatar">
+      <div className="avatar-grid" role="radiogroup" aria-label={t('edit.chooseAvatar')}>
         <button
           type="button"
           className={`avatar-tile avatar-tile-none${selected === null ? ' is-selected' : ''}`}
           role="radio"
           aria-checked={selected === null}
-          aria-label="No avatar"
+          aria-label={t('edit.noAvatar')}
           disabled={busy !== null}
           onClick={() => void pick(null)}
         >
@@ -214,7 +218,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
               role="radio"
               aria-checked={selected === a.key}
               aria-disabled={locked}
-              aria-label={`Avatar ${a.key}${locked ? ' (Premium — locked)' : ''}`}
+              aria-label={t('edit.avatarNamed', { name: a.key }) + (locked ? t('edit.premiumLocked') : '')}
               disabled={busy !== null}
               onClick={() => onTile(a, locked)}
             >

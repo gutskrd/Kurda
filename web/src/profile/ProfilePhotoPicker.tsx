@@ -120,7 +120,7 @@ export function ProfilePhotoPicker({
     }
     if (!out) {
       setBusy(null);
-      setMsg({ kind: 'err', text: 'That picture could not be prepared for upload.' });
+      setMsg({ kind: 'err', text: t('picture.couldNotPrepare') });
       return;
     }
 
@@ -130,7 +130,7 @@ export function ProfilePhotoPicker({
       setFile(null);
       onChanged();
     } else if (res.error.code === 'MEDIA_UNAVAILABLE') {
-      setMsg({ kind: 'err', text: 'Photo storage isn’t configured yet — try again once it’s enabled.' });
+      setMsg({ kind: 'err', text: t('edit.photo.storageOff') });
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
@@ -149,12 +149,12 @@ export function ProfilePhotoPicker({
 
   return (
     <section className="card">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Profile picture</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('edit.photo.title')}</h2>
 
       {framing ? (
         <div className="avatar-framing">
           <p className="field-hint" style={{ marginTop: 0 }}>
-            Drag your picture to choose what shows, and pinch or scroll to zoom.
+            {t('edit.photo.dragHint')}
           </p>
           <div className="avatar-framing-stage">
             <ImageFramer
@@ -170,25 +170,24 @@ export function ProfilePhotoPicker({
           </div>
           <div className="edit-photo-actions">
             <Button size="sm" onClick={() => void save()} disabled={busy !== null}>
-              {busy === 'upload' ? 'Saving…' : 'Use this picture'}
+              {busy === 'upload' ? t('edit.saving') : t('edit.photo.use')}
             </Button>
             <Button variant="ghost" size="sm" onClick={cancel} disabled={busy !== null}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </div>
       ) : file !== null && rawOnly ? (
         <div className="avatar-framing">
           <p className="field-hint" style={{ marginTop: 0 }}>
-            Your browser can’t open {file.name} to show you, so it can’t be framed here — but it can
-            still be uploaded as it is.
+            {t('edit.photo.cannotOpen', { name: file.name })}
           </p>
           <div className="edit-photo-actions">
             <Button size="sm" onClick={() => void save()} disabled={busy !== null}>
-              {busy === 'upload' ? 'Uploading…' : 'Upload it anyway'}
+              {busy === 'upload' ? t('edit.photo.uploading') : t('edit.photo.uploadAnyway')}
             </Button>
             <Button variant="ghost" size="sm" onClick={cancel} disabled={busy !== null}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </div>
@@ -203,11 +202,11 @@ export function ProfilePhotoPicker({
           </span>
           <div className="edit-photo-actions">
             <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={busy !== null}>
-              Upload your own
+              {t('edit.photo.uploadOwn')}
             </Button>
             {hasPhoto && (
               <Button variant="ghost" size="sm" onClick={() => void removePhoto()} disabled={busy !== null}>
-                {busy === 'remove' ? 'Removing…' : 'Remove'}
+                {busy === 'remove' ? t('edit.photo.removing') : t('groups.remove')}
               </Button>
             )}
           </div>
@@ -219,7 +218,7 @@ export function ProfilePhotoPicker({
           {msg.text}
         </div>
       )}
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={choose} aria-label="Upload profile photo" />
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={choose} aria-label={t('edit.photo.upload')} />
     </section>
   );
 }
