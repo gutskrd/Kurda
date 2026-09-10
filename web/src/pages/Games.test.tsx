@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Games } from './Games';
 import { TopNav } from '../components/TopNav';
@@ -81,6 +81,38 @@ describe('Games hub', () => {
     expect((await screen.findAllByText(/needs an account/)).length).toBeGreaterThan(0);
     // a game with no solo mode at all is the only one marked closed
     expect(screen.getAllByText('Sign in to play')).toHaveLength(1);
+  });
+
+  /**
+   * The catalogue holds keys, not text, and is built once when the module
+   * loads. A label baked in there would keep whichever language the app started
+   * in — so this checks the whole page in a language nobody defaulted to.
+   */
+  it('names the games in the chosen language', async () => {
+    localStorage.setItem('mykurda_locale', 'de');
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
+    renderApp(<Games />, ['/app/games']);
+
+    expect(await screen.findByRole('heading', { name: 'Spiele', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kurdisches Wordle' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Reimwörter' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();
+    // the mode hints under each box, and the badge
+    expect(screen.getAllByText('Allein spielen').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Spielbar').length).toBeGreaterThan(0);
+  });
+
+  it('translates the mode chooser too', async () => {
+    localStorage.setItem('mykurda_locale', 'tr');
+    signIn();
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
+    renderApp(<Games />, ['/app/games']);
+
+    const wordle = (await screen.findByRole('heading', { name: 'Kürtçe Wordle' })).closest('article')!;
+    await userEvent.click(within(wordle).getByRole('button', { name: 'Oyna' }));
+
+    expect(await screen.findByText('Nasıl oynamak istersin?')).toBeInTheDocument();
+    expect(screen.getByText('Günün bulmacası ve üç zorlukta sınırsız alıştırma turu.')).toBeInTheDocument();
   });
 });
 
