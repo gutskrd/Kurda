@@ -61,12 +61,74 @@ export const COUNTRIES: readonly Country[] = [
   { code: 'YE', name: 'Yemen' }, { code: 'ZM', name: 'Zambia' }, { code: 'ZW', name: 'Zimbabwe' },
 ];
 
+/**
+ * A code, in the reader's language.
+ *
+ * The names above are English, and 77 of them translated eight times would be
+ * 616 strings to keep in step with the world — while every browser already
+ * ships the whole list, in every language, as . So the
+ * catalogue above is now only the roster of which countries the picker offers,
+ * and what each one is CALLED comes from the platform.
+ *
+ * Kurdistan is the exception it has to be:  is not an ISO region, so no
+ *  implementation knows it. It carries its own translations, which is
+ * also the only honest place for them — nobody else is going to supply them.
+ *
+ * A locale the browser has no data for falls back to the English name, which
+ * is exactly what this function returned before.
+ */
+const KURDISTAN: Record<string, string> = {
+  en: 'Kurdistan',
+  ku: 'Kurdistan',
+  ckb: 'کوردستان',
+  nl: 'Koerdistan',
+  de: 'Kurdistan',
+  es: 'Kurdistán',
+  fr: 'Kurdistan',
+  tr: 'Kürdistan',
+  ar: 'كردستان',
+};
+
 const NAME_BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c.name]));
 
-/** Display name for a code (falls back to the code itself if unknown). */
-export function countryName(code?: string | null): string | null {
+/** One  per locale — building one is not cheap. */
+const displayNames = new Map<string, Intl.DisplayNames | null>();
+
+function namesFor(locale: string): Intl.DisplayNames | null {
+  if (!displayNames.has(locale)) {
+    try {
+      displayNames.set(locale, new Intl.DisplayNames([locale], { type: 'region', fallback: 'none' }));
+    } catch {
+      // an environment without the data, or a tag it will not parse
+      displayNames.set(locale, null);
+    }
+  }
+  return displayNames.get(locale) ?? null;
+}
+
+/**
+ * Display name for a code (falls back to English, then to the code itself).
+ *
+ * Only codes on the roster above are handed to `Intl`. A code this app does not
+ * offer — a retired one still saved on an old profile, say — shows as the code,
+ * which is what it did before and is more honest than CLDR's answer for `ZZ`:
+ * the words "Unknown Region", which tell the reader nothing and read like the
+ * name of a real place.
+ */
+export function countryName(code?: string | null, locale = 'en'): string | null {
   if (!code) return null;
-  return NAME_BY_CODE.get(code.toUpperCase()) ?? code.toUpperCase();
+  const upper = code.toUpperCase();
+  if (upper === 'KU') return KURDISTAN[locale] ?? KURDISTAN.en!;
+  const english = NAME_BY_CODE.get(upper);
+  if (!english) return upper;
+  return namesFor(locale)?.of(upper) ?? english;
+}
+
+/** The picker's list, named in one language and sorted the way it reads. */
+export function countriesIn(locale: string): Country[] {
+  return COUNTRIES.map((c) => ({ code: c.code, name: countryName(c.code, locale) ?? c.name })).sort((a, b) =>
+    a.name.localeCompare(b.name, locale),
+  );
 }
 
 /** A small cached flag image URL for a code (real flag on every platform). */

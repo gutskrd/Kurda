@@ -4,6 +4,7 @@ import { Loading, ErrorState } from '../components/states';
 import { PostAuthor, type Author } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
 import { ArrowIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 interface Post {
   id: string;
@@ -26,6 +27,7 @@ interface Post {
  * has supported all along, had nowhere to live.
  */
 export function LibraryPostPage(): React.JSX.Element {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { data: post, error, loading, reload } = useApiGet<Post>(`/library/posts/${id}`);
 
@@ -33,7 +35,7 @@ export function LibraryPostPage(): React.JSX.Element {
   if (error || !post) {
     return (
       <div className="container container-narrow">
-        <ErrorState message={error ?? 'That post could not be found.'} onRetry={reload} />
+        <ErrorState message={error ?? t('library.notFound')} onRetry={reload} />
       </div>
     );
   }
@@ -44,14 +46,14 @@ export function LibraryPostPage(): React.JSX.Element {
     <div className="container container-narrow">
       <Link to={backTo} className="back-link">
         <ArrowIcon size={16} />
-        {post.type === 'poem' ? 'All poems' : 'All stories'}
+        {post.type === 'poem' ? t('library.allPoems') : t('library.allStories')}
       </Link>
 
       <article className="post-full">
         <div className="post-meta">
-          <span className="badge">{post.type === 'poem' ? 'Poem' : 'Story'}</span>
-          {post.audioUrl && <span className="badge badge-gold">Audio</span>}
-          <span>{post.viewCount.toLocaleString()} reads</span>
+          <span className="badge">{post.type === 'poem' ? t('library.poem') : t('library.story')}</span>
+          {post.audioUrl && <span className="badge badge-gold">{t('library.audio')}</span>}
+          <span>{t('library.reads', { count: post.viewCount.toLocaleString() })}</span>
         </div>
 
         <h1 className="page-title">{post.title}</h1>

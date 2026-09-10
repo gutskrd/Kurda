@@ -5,7 +5,8 @@ import { describeError } from '../lib/api';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { Button } from '../components/Button';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 interface Entry {
   userId: string;
@@ -29,20 +30,31 @@ type Scope = 'global' | 'friends' | 'country';
 
 const PAGE = 25;
 
-const BOARDS: { key: BoardType; label: string; unit: string; blurb: string }[] = [
-  { key: 'weekly_xp', label: 'Weekly XP', unit: 'XP', blurb: 'This week’s top learners by experience earned.' },
-  { key: 'rating', label: 'Rating', unit: 'Rating', blurb: 'All-time skill rating from ranked matches.' },
+const BOARDS: { key: BoardType; labelKey: MessageKey; unitKey: MessageKey; blurbKey: MessageKey }[] = [
+  {
+    key: 'weekly_xp',
+    labelKey: 'rankings.board.weeklyXp',
+    unitKey: 'rankings.unit.xp',
+    blurbKey: 'rankings.board.weeklyXpBlurb',
+  },
+  {
+    key: 'rating',
+    labelKey: 'rankings.board.rating',
+    unitKey: 'rankings.board.rating',
+    blurbKey: 'rankings.board.ratingBlurb',
+  },
 ];
 
-const SCOPES: { key: Scope; label: string }[] = [
-  { key: 'global', label: 'Global' },
-  { key: 'friends', label: 'Friends' },
-  { key: 'country', label: 'My country' },
+const SCOPES: { key: Scope; labelKey: MessageKey }[] = [
+  { key: 'global', labelKey: 'rankings.scope.global' },
+  { key: 'friends', labelKey: 'nav.friends' },
+  { key: 'country', labelKey: 'rankings.scope.country' },
 ];
 
 export function Rankings(): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const [type, setType] = useState<BoardType>('weekly_xp');
   const [scope, setScope] = useState<Scope>('global');
   const [board, setBoard] = useState<Board | null>(null);
@@ -90,10 +102,10 @@ export function Rankings(): React.JSX.Element {
       <div className="page-header">
         <span className="eyebrow">{t('rankings.eyebrow')}</span>
         <h1 className="page-title">{t('rankings.title')}</h1>
-        <p className="page-sub">{meta.blurb}</p>
+        <p className="page-sub">{t(meta.blurbKey)}</p>
       </div>
 
-      <div className="toolbar" role="tablist" aria-label="Leaderboard">
+      <div className="toolbar" role="tablist" aria-label={t('rankings.leaderboard')}>
         {BOARDS.map((b) => (
           <button
             key={b.key}
@@ -102,12 +114,12 @@ export function Rankings(): React.JSX.Element {
             className={`chip${type === b.key ? ' active' : ''}`}
             onClick={() => setType(b.key)}
           >
-            {b.label}
+            {t(b.labelKey)}
           </button>
         ))}
       </div>
 
-      <div className="toolbar" role="tablist" aria-label="Who to compare with">
+      <div className="toolbar" role="tablist" aria-label={t('rankings.compareWith')}>
         {SCOPES.map((s) => (
           <button
             key={s.key}
@@ -116,7 +128,7 @@ export function Rankings(): React.JSX.Element {
             className={`chip${scope === s.key ? ' active' : ''}`}
             onClick={() => setScope(s.key)}
           >
-            {s.label}
+            {t(s.labelKey)}
           </button>
         ))}
       </div>
@@ -125,9 +137,9 @@ export function Rankings(): React.JSX.Element {
       {board?.me && !meInList && (
         <div className="rank-row rank-me" style={{ marginBottom: 16 }}>
           <span className="rank-pos">#{board.me.rank}</span>
-          <span className="rank-name">You</span>
+          <span className="rank-name">{t('games.you')}</span>
           <span className="rank-score">
-            {board.me.score.toLocaleString()} {meta.unit}
+            {board.me.score.toLocaleString()} {t(meta.unitKey)}
           </span>
         </div>
       )}
@@ -138,8 +150,8 @@ export function Rankings(): React.JSX.Element {
         <ErrorState message={error} onRetry={() => void load(0)} />
       ) : scope === 'country' && board?.country == null ? (
         <EmptyState
-          title="No country set"
-          message="Add a country to your profile to see how you rank against people there."
+          title={t('rankings.noCountry')}
+          message={t('rankings.noCountryBody')}
           action={
             <Link className="btn btn-primary btn-sm" to="/app/profile/edit">
               Edit profile
@@ -147,12 +159,12 @@ export function Rankings(): React.JSX.Element {
           }
         />
       ) : entries.length === 0 ? (
-        <EmptyState title={emptyTitle(scope)} message={emptyMessage(scope)} />
+        <EmptyState title={t(emptyTitleKey(scope))} message={t(emptyMessageKey(scope))} />
       ) : (
         <>
           {scope === 'country' && board?.country && (
             <p className="page-sub" style={{ marginTop: 0 }}>
-              Everyone in {countryName(board.country) ?? board.country}.
+              {t('rankings.everyoneIn', { country: countryName(board.country, locale) ?? board.country })}
             </p>
           )}
 
@@ -162,10 +174,10 @@ export function Rankings(): React.JSX.Element {
                 <span className="rank-pos">{medal(e.rank)}</span>
                 <Link className="rank-name" to={`/app/users/${e.userId}`}>
                   {e.username}
-                  {e.userId === user?.id && <span className="rank-you">you</span>}
+                  {e.userId === user?.id && <span className="rank-you">{t('rankings.youMarker')}</span>}
                 </Link>
                 <span className="rank-score">
-                  {e.score.toLocaleString()} {meta.unit}
+                  {e.score.toLocaleString()} {t(meta.unitKey)}
                 </span>
               </div>
             ))}
@@ -175,15 +187,17 @@ export function Rankings(): React.JSX.Element {
             {hasMore ? (
               <>
                 <Button variant="ghost" onClick={() => void load(shown)} disabled={loadingMore}>
-                  {loadingMore ? 'Loading…' : `Show ${Math.min(PAGE, board!.total - shown)} more`}
+                  {loadingMore
+                    ? t('common.loading')
+                    : t('rankings.showMore', { count: Math.min(PAGE, board!.total - shown) })}
                 </Button>
                 <span className="muted">
-                  {shown} of {board!.total}
+                  {t('rankings.shownOf', { shown, total: board!.total })}
                 </span>
               </>
             ) : (
               <span className="muted">
-                {board!.total === shown && shown > 0 ? `That’s everyone — ${board!.total} ranked.` : ''}
+                {board!.total === shown && shown > 0 ? t('rankings.thatsEveryone', { total: board!.total }) : ''}
               </span>
             )}
           </div>
@@ -198,14 +212,14 @@ function medal(rank: number): string {
   return rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
 }
 
-function emptyTitle(scope: Scope): string {
-  if (scope === 'friends') return 'No ranked friends yet';
-  if (scope === 'country') return 'Nobody ranked here yet';
-  return 'No rankings yet';
+function emptyTitleKey(scope: Scope): MessageKey {
+  if (scope === 'friends') return 'rankings.empty.friends';
+  if (scope === 'country') return 'rankings.empty.country';
+  return 'rankings.empty.global';
 }
 
-function emptyMessage(scope: Scope): string {
-  if (scope === 'friends') return 'Add friends and play a little — you will both show up here.';
-  if (scope === 'country') return 'Be the first from your country to earn points this week.';
-  return 'Once learners start earning points, the leaderboard will fill up here.';
+function emptyMessageKey(scope: Scope): MessageKey {
+  if (scope === 'friends') return 'rankings.empty.friendsBody';
+  if (scope === 'country') return 'rankings.empty.countryBody';
+  return 'rankings.empty.globalBody';
 }

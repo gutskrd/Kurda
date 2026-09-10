@@ -10,6 +10,7 @@ import { Avatar } from '../components/Avatar';
 import { CoinIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 /** A catalog tile: the item plus whether the viewer already owns it. */
 interface Tile {
@@ -38,17 +39,22 @@ interface ReceivedGift {
   seenAt: string | null;
 }
 
-/** Items can be priced in either currency, so never hardcode one on a label. */
-function currencyName(currency: 'zer' | 'gems'): string {
-  return currency === 'gems' ? 'Gems' : 'Zêr';
+/**
+ * Items can be priced in either currency, so never hardcode one on a label.
+ *
+ * Zêr is the app's own currency and keeps its Kurmancî name in every language,
+ * the way a currency does; gems are a common noun and get translated.
+ */
+function currencyName(currency: 'zer' | 'gems', t: (key: MessageKey) => string): string {
+  return currency === 'gems' ? t('shop.gems') : 'Zêr';
 }
 
 /** What the shop can be narrowed to. 'all' is first because it is the default. */
 const CATEGORIES = [
-  { key: 'all', label: 'Everything' },
-  { key: 'background', label: 'Backgrounds' },
-  { key: 'icon', label: 'Icons' },
-] as const;
+  { key: 'all', labelKey: 'shop.filter.all' },
+  { key: 'background', labelKey: 'shop.filter.backgrounds' },
+  { key: 'icon', labelKey: 'shop.filter.icons' },
+] as const satisfies ReadonlyArray<{ key: string; labelKey: MessageKey }>;
 type Category = (typeof CATEGORIES)[number]['key'];
 
 /**
@@ -161,16 +167,16 @@ export function Shop(): React.JSX.Element {
     }
   }
 
-  if (shop.loading) return <Loading label="Loading the shop…" />;
-  if (shop.error) return <ErrorState title="Couldn’t load the shop" message={shop.error} onRetry={shop.reload} />;
+  if (shop.loading) return <Loading label={t('shop.loading')} />;
+  if (shop.error) return <ErrorState title={t('shop.loadFailed')} message={shop.error} onRetry={shop.reload} />;
 
   return (
     <div className="container">
       <div className="page-header">
-        <span className="eyebrow">Bazar · Shop</span>
-        <h1 className="page-title">Shop</h1>
+        <span className="eyebrow">{t('shop.eyebrow')}</span>
+        <h1 className="page-title">{t('nav.shop')}</h1>
         <p className="page-sub">
-          Buy profile backgrounds and premium icons with Zêr — for yourself, or as a gift for a friend.{' '}
+          {t('shop.subtitle')}{' '}
           {balance !== null && <strong>{balance.toLocaleString()} Zêr</strong>}
         </p>
       </div>
@@ -186,7 +192,7 @@ export function Shop(): React.JSX.Element {
       {/* the catalogue only grows, and scrolling all of it to find one thing is
           not browsing — it is searching, badly */}
       <div className="shop-filters">
-        <div className="seg" role="group" aria-label="Show">
+        <div className="seg" role="group" aria-label={t('shop.show')}>
           {CATEGORIES.map((c) => (
             <button
               key={c.key}
@@ -195,7 +201,7 @@ export function Shop(): React.JSX.Element {
               aria-pressed={category === c.key}
               onClick={() => setCategory(c.key)}
             >
-              {c.label}
+              {t(c.labelKey)}
             </button>
           ))}
         </div>
@@ -204,24 +210,24 @@ export function Shop(): React.JSX.Element {
           type="search"
           className="input shop-search"
           value={query}
-          placeholder="Search by name…"
-          aria-label="Search the shop"
+          placeholder={t('shop.searchPlaceholder')}
+          aria-label={t('shop.searchLabel')}
           onChange={(e) => setQuery(e.target.value)}
         />
 
         <label className="shop-afford">
           <input type="checkbox" checked={affordable} onChange={(e) => setAffordable(e.target.checked)} />
-          Within my Zêr
+          {t('shop.withinMyZer')}
         </label>
       </div>
 
       {nothingMatches && (
-        <p className="muted">Nothing matches that. Try a different word, or clear the filters.</p>
+        <p className="muted">{t('shop.noMatches')}</p>
       )}
 
       {showing.background && (
         <ShopSection
-          title="Profile Backgrounds"
+          title={t('shop.profileBackgrounds')}
           cat="background"
           tiles={backgrounds}
           balance={balance}
@@ -233,7 +239,7 @@ export function Shop(): React.JSX.Element {
       )}
       {showing.icon && (
         <ShopSection
-          title="Premium Icons"
+          title={t('shop.premiumIcons')}
           cat="icon"
           tiles={icons}
           balance={balance}
@@ -244,7 +250,7 @@ export function Shop(): React.JSX.Element {
         />
       )}
 
-      <Modal open={gifting !== null} onClose={() => setGifting(null)} label="Send as a gift">
+      <Modal open={gifting !== null} onClose={() => setGifting(null)} label={t('shop.sendGift')}>
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}
       </Modal>
     </div>
@@ -261,6 +267,7 @@ export function Shop(): React.JSX.Element {
  */
 function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.Element | null {
   const { client } = useAuth();
+  const t = useT();
   const [gifts, setGifts] = useState<ReceivedGift[] | null>(null);
 
   useEffect(() => {
@@ -287,7 +294,7 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
 
   return (
     <section className="friend-section">
-      <h2 className="friend-heading">Your gifts</h2>
+      <h2 className="friend-heading">{t('shop.yourGifts')}</h2>
       <div className="shop-grid">
         {gifts.map((g) => (
           <figure className={`shop-tile shop-tile-${g.category} gift-tile${g.seenAt ? '' : ' gift-new'}`} key={g.id}>
@@ -298,7 +305,7 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
               {g.name}
             </figcaption>
             <span className="gift-from" onClick={onEquipHint}>
-              {g.from ? `from ${g.from.username}` : 'from a former member'}
+              {g.from ? t('shop.giftFrom', { name: g.from.username }) : t('shop.giftFromFormer')}
             </span>
           </figure>
         ))}
@@ -318,6 +325,7 @@ function GiftPicker({
   onPick: (friend: Friend) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [friends, setFriends] = useState<Friend[] | null>(null);
   const [q, setQ] = useState('');
 
@@ -333,26 +341,28 @@ function GiftPicker({
   return (
     <div>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>
-        Send {tile.name}
+        {t('shop.sendItem', { name: tile.name })}
       </h2>
       <p className="muted">
-        {tile.price.toLocaleString()} {currencyName(tile.currency)}, paid by you. They get the item, and a
-        notification saying it came from you.
+        {t('shop.giftPaidByYou', {
+          price: tile.price.toLocaleString(),
+          currency: currencyName(tile.currency, t),
+        })}
       </p>
 
       {friends === null ? (
         <Loading />
       ) : friends.length === 0 ? (
-        <p className="muted">You have no friends to gift to yet — gifts can only be sent to friends.</p>
+        <p className="muted">{t('shop.noFriendsToGift')}</p>
       ) : (
         <>
           {friends.length > 6 && (
             <input
               className="input"
-              placeholder="Search friends…"
+              placeholder={t('shop.searchFriends')}
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              aria-label="Search friends"
+              aria-label={t('shop.searchFriendsLabel')}
               style={{ marginBottom: 12 }}
             />
           )}
@@ -392,27 +402,28 @@ function ShopSection({
   onBuy: (tile: Tile) => void;
   onGift: (tile: Tile) => void;
 }): React.JSX.Element {
+  const t = useT();
   return (
     <section className="friend-section">
       <h2 className="friend-heading">{title}</h2>
       {tiles.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>Nothing here yet — check back soon.</p>
+        <p className="muted" style={{ margin: 0 }}>{t('shop.nothingYet')}</p>
       ) : (
         <div className="shop-grid">
-          {tiles.map((t) => {
-            const canAfford = balance !== null && balance >= t.price;
+          {tiles.map((tile) => {
+            const canAfford = balance !== null && balance >= tile.price;
             return (
               <figure
-                className={`shop-tile shop-tile-${cat}${celebrating === t.sku ? ' shop-tile-won' : ''}`}
-                key={t.sku}
+                className={`shop-tile shop-tile-${cat}${celebrating === tile.sku ? ' shop-tile-won' : ''}`}
+                key={tile.sku}
               >
                 <div className={`shop-thumb shop-thumb-${cat}`}>
-                  {t.assetUrl ? <img src={t.assetUrl} alt="" loading="lazy" /> : <span className="shop-thumb-empty" aria-hidden="true" />}
-                  {celebrating === t.sku && <span className="shop-shine" aria-hidden />}
+                  {tile.assetUrl ? <img src={tile.assetUrl} alt="" loading="lazy" /> : <span className="shop-thumb-empty" aria-hidden="true" />}
+                  {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
                 </div>
-                <figcaption className="shop-name" title={t.name}>{t.name}</figcaption>
-                {t.owned ? (
-                  <span className="shop-owned">Owned</span>
+                <figcaption className="shop-name" title={tile.name}>{tile.name}</figcaption>
+                {tile.owned ? (
+                  <span className="shop-owned">{t('shop.owned')}</span>
                 ) : (
                   <div className="shop-actions">
                     {/*
@@ -424,23 +435,23 @@ function ShopSection({
                     */}
                     <span className={`shop-price${canAfford ? '' : ' is-short'}`}>
                       <CoinIcon size={14} />
-                      {t.price.toLocaleString()} {currencyName(t.currency)}
+                      {tile.price.toLocaleString()} {currencyName(tile.currency, t)}
                       {!canAfford && balance !== null && (
                         <span className="shop-short">
-                          {(t.price - balance).toLocaleString()} more
+                          {t('shop.amountMore', { amount: (tile.price - balance).toLocaleString() })}
                         </span>
                       )}
                     </span>
-                    <Button size="sm" disabled={busy !== null || !canAfford} onClick={() => onBuy(t)}>
-                      Buy
+                    <Button size="sm" disabled={busy !== null || !canAfford} onClick={() => onBuy(tile)}>
+                      {t('shop.buy')}
                     </Button>
                     <button
                       type="button"
                       className="shop-gift-btn"
                       disabled={busy !== null || !canAfford}
-                      onClick={() => onGift(t)}
-                      title={`Gift ${t.name} to a friend`}
-                      aria-label={`Gift ${t.name} to a friend`}
+                      onClick={() => onGift(tile)}
+                      title={t('shop.giftTo', { name: tile.name })}
+                      aria-label={t('shop.giftTo', { name: tile.name })}
                     >
                       <GiftIcon size={17} />
                     </button>
