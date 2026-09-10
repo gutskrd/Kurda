@@ -891,6 +891,72 @@ a.rank-name:hover {
   background: rgba(10, 12, 16, 0.35);
 }
 
+/*
+ * With a background equipped, the card IS the panel.
+ *
+ * The artwork is absolutely positioned inside the card, and the card sits
+ * inside the panel's 32/30/28px padding — so the picture stopped 31px short on
+ * the left, 46px on the right and 33px at the top, and what showed in that
+ * frame was the panel's own near-black glass. A dark border drawn round
+ * somebody's background is not a border they chose.
+ *
+ * So the padding moves from the panel to the card. Nothing about the spacing
+ * changes — the content sits exactly where it did — but the artwork now starts
+ * at the panel's edge, and the panel's own radius and its scroll clip do the
+ * rounding, which is why the media gives its radius up.
+ */
+.modal-panel:has(.pcard-has-bg) {
+  padding: 0;
+}
+.modal-panel:has(.pcard-has-bg) .pcard-modal {
+  padding: 32px 30px 28px;
+}
+.modal-panel:has(.pcard-has-bg) .pcard-bg-media {
+  border-radius: 0;
+}
+@media (max-width: 640px) {
+  .modal-panel:has(.pcard-has-bg) .pcard-modal {
+    padding: 26px 14px 20px;
+  }
+}
+
+/*
+ * Over artwork, the card's surfaces go dark.
+ *
+ * Everywhere else in the app a raised surface is a light tint — white at 5–14%
+ * — which works because what is behind it is always near-black. On a card with
+ * a background it is behind nothing of the sort: measured against the artwork,
+ * white text on the plate came to 3.34:1 and on a secondary button 3.52:1, both
+ * under AA, and a light button on a light photograph is a button you cannot
+ * find. Dark glass on the same artwork measures 10.8:1 and 12.4:1.
+ *
+ * The rim stays light. That is what keeps them reading as glass laid on the
+ * picture rather than holes cut out of it.
+ */
+.pcard-has-bg .pcard-plate {
+  background: rgba(10, 12, 16, 0.55);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.pcard-has-bg .btn-secondary,
+.pcard-has-bg .user-actions-btn {
+  background: rgba(8, 10, 14, 0.62);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--ink);
+}
+.pcard-has-bg .btn-secondary:hover:not(:disabled),
+.pcard-has-bg .user-actions-btn:hover {
+  background: rgba(8, 10, 14, 0.78);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+/*
+ * The foot sits straight on the artwork with nothing behind it, so it gets a
+ * shadow rather than a plate: it is two short pieces of large text, and giving
+ * them a panel would put a fourth box on a card that is already three.
+ */
+.pcard-has-bg .pcard-foot {
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.75);
+}
+
 /* name + equipped icon + premium badge on one line */
 .pcard-name-row {
   display: flex;
@@ -2052,7 +2118,19 @@ button.feature {
   z-index: 0;
   pointer-events: none;
 }
+/*
+ * `width: 100%` is doing the work here, not `left: 0; right: 0`.
+ *
+ * Those two stretch a div — the scrim above is proof — but they do NOT stretch
+ * a REPLACED element. With `width: auto` an <img> or <video> takes its own
+ * intrinsic size, so pinning both edges is over-constrained and the browser
+ * drops `right`. The picture was drawn at (forced height x its own aspect
+ * ratio) and simply stopped: a 1200x676 background on a 1518px screen came out
+ * 1115px wide, leaving 387px of black down the right-hand side. `object-fit`
+ * never got a say, because the box was never the size the page needed.
+ */
 .mkp-bg {
+  width: 100%;
   object-fit: cover;
 }
 .mkp-scrim {

@@ -14,7 +14,7 @@ import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/Real
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { sendError } from './DmThread';
 import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
-import { Loading } from '../components/states';
+import { ThreadSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { ArrowIcon, CloseIcon } from '../components/icons';
@@ -189,7 +189,7 @@ export function GroupThread({
 
       <div className="chat-messages" ref={scrollRef}>
         {messages === null ? (
-          <Loading />
+          <ThreadSkeleton />
         ) : messages.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? t('chat.sayHelloGroup')}</p>
         ) : (

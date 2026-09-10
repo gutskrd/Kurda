@@ -134,8 +134,19 @@
  * should be solid enough to read without the page showing through it.
  */
 @media (min-width: 1180px) {
+  /*
+   * 0.58, not the 0.4 this started at.
+   *
+   * 0.4 was chosen while the artwork stopped short of the right-hand edge, so
+   * the rail was in practice always sitting over the app's own near-black
+   * background and light text was safe on it. Now that the picture runs the
+   * full width, the rail can land on a bright photograph — and against the
+   * brightest background in the set, the rail's muted text measured 2.83:1 at
+   * 0.4, which is below AA for any size of text. 0.58 measures 5:1 there and
+   * still lets the picture through: it reads as glass, not as a slab.
+   */
   .app-main:has(.mkp-has-bg) ~ .social-rail {
-    background: rgba(12, 14, 19, 0.4);
+    background: rgba(12, 14, 19, 0.58);
     -webkit-backdrop-filter: blur(44px) saturate(1.35);
     backdrop-filter: blur(44px) saturate(1.35);
     border-left-color: rgba(255, 255, 255, 0.14);

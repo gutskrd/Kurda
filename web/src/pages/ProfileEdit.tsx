@@ -10,7 +10,8 @@ import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { ProfilePhotoPicker } from '../profile/ProfilePhotoPicker';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { SectionToggles } from '../profile/SectionToggles';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -49,7 +50,12 @@ export function ProfileEdit(): React.JSX.Element {
     void refreshUser();
   };
 
-  if (loading) return <Loading label={t('profile.loadingYours')} />;
+  if (loading)
+    return (
+      <div className="container container-narrow">
+        <CardStackSkeleton count={4} label="profile.loadingYours" />
+      </div>
+    );
   if (error || !me) return <ErrorState
           title={t('profile.loadFailedYours')}
           message={error ?? t('profile.unavailable')}

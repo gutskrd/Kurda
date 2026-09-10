@@ -16,7 +16,7 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
-import { Loading } from '../components/states';
+import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, CloseIcon } from '../components/icons';
 
 // When the realtime socket is live it carries every message instantly, so polling
@@ -220,7 +220,7 @@ export function DmThread({
 
       <div className="chat-messages" ref={scrollRef}>
         {messages === null ? (
-          <Loading />
+          <ThreadSkeleton />
         ) : messages.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? t('chat.sayHello')}</p>
         ) : (

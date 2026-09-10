@@ -8,7 +8,8 @@ import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { BookmarkIcon } from '../components/icons';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
 /**
@@ -67,7 +68,7 @@ export function Profile(): React.JSX.Element {
     };
   }, [client, reloadKey, t]);
 
-  if (loading) return <Loading label={t('profile.loadingYours')} />;
+  if (loading) return <FullProfileSkeleton label="profile.loadingYours" />;
   if (error || !me) return <ErrorState title={t('profile.loadFailedYours')} message={error ?? t('profile.unavailable')} onRetry={() => setReloadKey((n) => n + 1)} />;
 
   const view: FullProfileView = {

@@ -4,7 +4,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useApiGet } from '../lib/useApi';
 import type { MeProfile } from '../lib/types';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
@@ -43,7 +44,12 @@ export function Settings(): React.JSX.Element {
   const navigate = useNavigate();
   const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me');
 
-  if (loading) return <Loading label={t('settings.loading')} />;
+  if (loading)
+    return (
+      <div className="container container-narrow">
+        <CardStackSkeleton count={4} label="settings.loading" />
+      </div>
+    );
   if (error || !data) return <ErrorState message={error ?? t('settings.unavailable')} onRetry={reload} />;
 
   return (

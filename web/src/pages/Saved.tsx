@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
 import { useT } from '../i18n/I18nProvider';
 import { BookmarkIcon } from '../components/icons';
@@ -68,7 +69,7 @@ export function Saved(): React.JSX.Element {
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}
 
       {items === null ? (
-        <Loading label={t('saved.loading')} />
+        <FeedSkeleton count={3} label="saved.loading" />
       ) : items.length === 0 ? (
         <div className="saved-empty">
           <BookmarkIcon size={30} />

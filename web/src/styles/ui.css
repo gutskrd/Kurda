@@ -260,18 +260,137 @@ input[type='password']::-ms-clear {
   }
 }
 
+/* ---- skeletons --------------------------------------------------------- */
+/*
+ * A placeholder block, and the light that travels across it.
+ *
+ * The sweep is a narrow bright band on a pseudo-element rather than an animated
+ * `background-position` on a wide gradient. A moving background-position paints
+ * on every frame; a transformed overlay is composited, so the ray runs on the
+ * GPU and costs nothing even with forty of these on a feed.
+ *
+ * It is skewed a little, which is what makes it read as a ray of light passing
+ * over the page rather than a grey bar sliding sideways. Every skeleton on a
+ * screen shares one duration and no delay, so the light crosses them together.
+ */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 37%, var(--surface) 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 12px;
   border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.06);
+  /* a box with nothing in it still has to hold its line height open */
+  flex-shrink: 0;
 }
-@keyframes shimmer {
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 60%;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05) 30%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.05) 70%,
+    transparent
+  );
+  animation: skeleton-ray 1.6s ease-in-out infinite;
+}
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+/*
+ * A bar that takes exactly one line of whatever it is standing in for.
+ *
+ * This is what keeps a skeleton honest. Picking heights by hand means picking
+ * them wrong: measured against a real feed card, a hand-numbered skeleton came
+ * out 72px short, so every card jumped up the moment it arrived — which is the
+ * one thing a skeleton exists to prevent.
+ *
+ * `lh` is one line box of the element's own inherited line-height. Put one of
+ * these inside the real `.fcard-name`, `.fcard-text` or `.rank-name` and the
+ * row is exactly as tall as it will be with words in it, because the height is
+ * coming from the same rule that will lay those words out. The bar itself is
+ * 0.6 of that with the rest split above and below, which is roughly where the
+ * ink of a line sits.
+ */
+/*
+ * The box is a whole line; the bar drawn inside it is not.
+ *
+ * The obvious way to do this is a 0.6lh box with 0.2lh margins above and below.
+ * It works inside a flex row and fails everywhere else: in normal flow those
+ * margins collapse straight out through the parent, so an `<h2>` holding one
+ * came out 13px tall instead of a line's 22px. Making the element itself a full
+ * line and insetting the paint has no margins to collapse.
+ */
+.skeleton-line {
+  height: 1lh;
+  background: transparent;
+}
+.skeleton-line::before {
+  content: '';
+  position: absolute;
+  inset: 20% 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.06);
+}
+/* the ray belongs to the bar, not to the line box around it */
+.skeleton-line::after {
+  top: 20%;
+  bottom: 20%;
+}
+/* lines of a paragraph, each one a line of the paragraph it replaces */
+.skeleton-lines {
+  display: block;
+  width: 100%;
+}
+/*
+ * A skeleton never inherits `white-space`.
+ *
+ * A post keeps the line breaks its author typed, so `.fcard-text` is
+ * `pre-wrap` — and a placeholder dropped inside one had every newline between
+ * its boxes turn into a real line of empty text. Two bars came out eight lines
+ * tall and the card measured 177px more than the card that replaced it. There
+ * is never anything to preserve inside one of these.
+ */
+.skeleton,
+.skeleton-lines {
+  white-space: normal;
+}
+
+@keyframes skeleton-ray {
   0% {
-    background-position: 100% 0;
+    left: -60%;
   }
+  /* it rests off the right edge before coming round again, so the ray reads as
+     one pass rather than a band bouncing back and forth */
+  70%,
   100% {
-    background-position: 0 0;
+    left: 130%;
+  }
+}
+
+/*
+ * Reduced motion takes the ray away, not the skeleton.
+ *
+ * The boxes are the useful half — they say what is coming and hold the layout
+ * still. The travelling light is decoration, and a repeating sweep is exactly
+ * the kind of motion this setting exists to stop.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+    left: 0;
+    width: 100%;
+    transform: none;
+    background: rgba(255, 255, 255, 0.04);
   }
 }
 
