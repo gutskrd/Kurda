@@ -1,11 +1,14 @@
 import { BellIcon, ChatsIcon, GameIcon, UsersIcon } from '../components/icons';
 import { badgeLabel } from './time';
 import type { SocialRailData } from './useSocialRail';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 /** One rung of the strip: what it stands for, and how many of it there are. */
 export interface Rung {
   key: string;
-  label: string;
+  /** a catalogue key: this is a pure function, with nowhere to read a language from */
+  labelKey: MessageKey;
   count: number;
   icon: React.JSX.Element;
   /** a count worth noticing gets the gold treatment; the rest stay quiet */
@@ -24,14 +27,14 @@ export function rungs(data: SocialRailData): Rung[] {
   return [
     {
       key: 'waiting',
-      label: 'Waiting on you',
+      labelKey: 'rail.waitingOnYou',
       count: data.challenges.length + data.requests.length,
       icon: <BellIcon size={20} />,
       urgent: true,
     },
-    { key: 'playing', label: 'In a game', count: playing, icon: <GameIcon size={20} /> },
-    { key: 'online', label: 'Friends online', count: online, icon: <UsersIcon size={20} /> },
-    { key: 'groups', label: 'Groups', count: data.unread.groups, icon: <ChatsIcon size={20} /> },
+    { key: 'playing', labelKey: 'rail.inAGame', count: playing, icon: <GameIcon size={20} /> },
+    { key: 'online', labelKey: 'rail.friendsOnline', count: online, icon: <UsersIcon size={20} /> },
+    { key: 'groups', labelKey: 'rail.groups', count: data.unread.groups, icon: <ChatsIcon size={20} /> },
   ];
 }
 
@@ -50,6 +53,7 @@ export function RailStrip({
   data: SocialRailData;
   onExpand: () => void;
 }): React.JSX.Element {
+  const t = useT();
   return (
     <div className="rail-strip">
       {rungs(data).map((r) => (
@@ -58,8 +62,8 @@ export function RailStrip({
           type="button"
           className={`rail-rung${r.count > 0 && r.urgent ? ' is-urgent' : ''}`}
           onClick={onExpand}
-          title={`${r.label}: ${r.count}`}
-          aria-label={`${r.label}: ${r.count}. Open the social panel`}
+          title={t('rail.rungTitle', { label: t(r.labelKey), count: r.count })}
+          aria-label={t('rail.rungOpen', { label: t(r.labelKey), count: r.count })}
         >
           {r.icon}
           {r.count > 0 && <span className="rail-badge rail-rung-count">{badgeLabel(r.count)}</span>}

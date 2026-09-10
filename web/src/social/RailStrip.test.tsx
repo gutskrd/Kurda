@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RailStrip, rungs } from './RailStrip';
 import type { SocialRailData } from './useSocialRail';
+import { I18nProvider } from '../i18n/I18nProvider';
 
 const person = (id: string, extra: Record<string, unknown> = {}) => ({
   userId: id,
@@ -84,6 +85,23 @@ describe('RailStrip', () => {
     const many = Array.from({ length: 120 }, (_, i) => person(String(i), { online: true }));
     render(<RailStrip data={data({ friends: many })} onExpand={() => undefined} />);
     expect(screen.getByRole('button', { name: /Friends online: 120/ }).textContent).toBe('99+');
+  });
+
+  /**
+   * The folded rail is nothing but icons and numbers, so the tooltip and the
+   * accessible name are the only words on it — and the only way a screen-reader
+   * user knows which number is which.
+   */
+  it('names its rungs in the reader’s language', () => {
+    localStorage.setItem('mykurda_locale', 'de');
+    render(
+      <I18nProvider>
+        <RailStrip data={data({ friends: [person('1', { online: true })] })} onExpand={() => undefined} />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button', { name: /Freunde online: 1/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Gruppen/ })).toBeInTheDocument();
+    localStorage.clear();
   });
 
   it('opens the rail when a rung is clicked', async () => {

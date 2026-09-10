@@ -10,6 +10,7 @@ import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * What the dock beside the rail is showing.
@@ -55,6 +56,7 @@ function bucket(friends: RailFriend[]): Buckets {
  */
 export function SocialRail(): React.JSX.Element | null {
   const { status } = useAuth();
+  const t = useT();
   const present = useRailPresent();
   const { data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed } = useRail();
   /** the conversation docked beside the rail — a person or a group, if any */
@@ -69,7 +71,7 @@ export function SocialRail(): React.JSX.Element | null {
 
       <aside
         className={`social-rail${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
-        aria-label="Social"
+        aria-label={t('rail.title')}
       >
         <div className="rail-head">
           {/* on a wide screen this collapses the column to the strip; the drawer
@@ -78,14 +80,14 @@ export function SocialRail(): React.JSX.Element | null {
             type="button"
             className="rail-fold"
             onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? 'Expand the social panel' : 'Collapse the social panel'}
+            aria-label={collapsed ? t('rail.expandPanel') : t('rail.collapsePanel')}
             aria-expanded={!collapsed}
-            title={collapsed ? 'Expand' : 'Collapse'}
+            title={collapsed ? t('rail.expand') : t('rail.collapse')}
           >
             <ChevronIcon size={16} className={collapsed ? 'rail-fold-arrow' : 'rail-fold-arrow is-open'} />
           </button>
-          <span className="rail-title">Social</span>
-          <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label="Close social panel">
+          <span className="rail-title">{t('rail.title')}</span>
+          <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label={t('rail.closePanel')}>
             <CloseIcon size={18} />
           </button>
         </div>
@@ -98,7 +100,7 @@ export function SocialRail(): React.JSX.Element | null {
           */}
         <RailStrip data={data} onExpand={() => setCollapsed(false)} />
         <div className="rail-body">
-          {loading ? <p className="rail-empty">Loading…</p> : <RailContent data={data} onActed={refresh} onChat={setDock} />}
+          {loading ? <p className="rail-empty">{t('common.loading')}</p> : <RailContent data={data} onActed={refresh} onChat={setDock} />}
         </div>
       </aside>
 
@@ -137,13 +139,14 @@ export function SocialRail(): React.JSX.Element | null {
 }
 
 function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (target: DockTarget) => void }): React.JSX.Element {
+  const t = useT();
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
   const hasWaiting = data.challenges.length > 0 || data.requests.length > 0;
 
   return (
     <>
       {hasWaiting && (
-        <Section title="Waiting on you" count={data.challenges.length + data.requests.length}>
+        <Section title={t('rail.waitingOnYou')} count={data.challenges.length + data.requests.length}>
           {data.challenges.map((c) => (
             <ChallengeCard key={c.userId} who={c} onActed={onActed} />
           ))}
@@ -153,27 +156,27 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
         </Section>
       )}
 
-      <Section title="In a game" count={buckets.playing.length} hideWhenEmpty>
+      <Section title={t('rail.inAGame')} count={buckets.playing.length} hideWhenEmpty>
         {buckets.playing.map((f) => (
           <FriendRow key={f.userId} friend={f} onChat={onChat} />
         ))}
       </Section>
 
-      <Section title="Online" count={buckets.online.length}>
+      <Section title={t('profile.online')} count={buckets.online.length}>
         {buckets.online.length === 0 ? (
-          <p className="rail-empty">Nobody right now.</p>
+          <p className="rail-empty">{t('rail.nobodyRightNow')}</p>
         ) : (
           buckets.online.map((f) => <FriendRow key={f.userId} friend={f} onChat={onChat} />)
         )}
       </Section>
 
-      <Section title="Offline" count={buckets.offline.length} collapsible defaultOpen={false} hideWhenEmpty>
+      <Section title={t('rail.offline')} count={buckets.offline.length} collapsible defaultOpen={false} hideWhenEmpty>
         {buckets.offline.map((f) => (
           <FriendRow key={f.userId} friend={f} onChat={onChat} />
         ))}
       </Section>
 
-      <Section title="Groups" count={data.groups.length} hideWhenEmpty>
+      <Section title={t('rail.groups')} count={data.groups.length} hideWhenEmpty>
         {data.groups.map((g) => (
           <div key={g.id} className="rail-row rail-group">
             {/* the name goes to the page, for when you want the whole roster and
@@ -182,7 +185,7 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
               <span className="rail-group-mark" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
               <span className="rail-row-text">
                 <span className="rail-row-name">{g.name}</span>
-                <span className="rail-row-sub">{g.memberCount.toLocaleString()} members</span>
+                <span className="rail-row-sub">{t('rail.members', { count: g.memberCount.toLocaleString() })}</span>
               </span>
             </Link>
             {g.unread > 0 && <span className="rail-badge">{badgeLabel(g.unread)}</span>}
@@ -190,8 +193,8 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
               <button
                 type="button"
                 className="rail-friend-chat"
-                aria-label={`Message ${g.name}`}
-                title={`Message ${g.name}`}
+                aria-label={t('rail.messageWho', { name: g.name })}
+                title={t('rail.messageWho', { name: g.name })}
                 onClick={() => onChat({ kind: 'group', id: g.id, name: g.name })}
               >
                 <ChatsIcon size={16} />
@@ -201,13 +204,13 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
         ))}
       </Section>
 
-      <Section title="Recent" count={data.notifications.length} collapsible defaultOpen={false} hideWhenEmpty>
+      <Section title={t('rail.recent')} count={data.notifications.length} collapsible defaultOpen={false} hideWhenEmpty>
         <Notifications items={data.notifications} onActed={onActed} />
       </Section>
 
       {data.friends.length === 0 && (
         <p className="rail-empty">
-          No friends yet. <Link to="/app/friends" className="link">Find people</Link>
+          {t('rail.noFriendsYet')} <Link to="/app/friends" className="link">{t('rail.findPeople')}</Link>
         </p>
       )}
     </>
@@ -258,19 +261,20 @@ function Section({
 function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   // a live game needs a clock that moves; a static "4m" that never changes reads
   // as stale within a minute of looking at it
+  const t = useT();
   const [, tick] = useState(0);
   useEffect(() => {
     if (!friend.activity) return;
-    const t = setInterval(() => tick((n) => n + 1), 30_000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => tick((n) => n + 1), 30_000);
+    return () => clearInterval(timer);
   }, [friend.activity]);
 
   const state = friend.activity ? 'playing' : friend.online ? 'online' : 'offline';
   const sub = friend.activity
-    ? `${friend.activity.game} · ${elapsed(friend.activity.since)}`
+    ? `${friend.activity.game} · ${elapsed(friend.activity.since, t)}`
     : friend.online
-      ? 'Online'
-      : lastSeen(friend.lastSeenAt);
+      ? t('profile.online')
+      : lastSeen(friend.lastSeenAt, t);
 
   const name = friend.displayName || friend.username;
 
@@ -300,8 +304,8 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
           type="button"
           className="rail-friend-chat"
           onClick={() => onChat({ kind: 'dm', id: friend.userId, name })}
-          aria-label={`Message ${name}`}
-          title={`Message ${name}`}
+          aria-label={t('rail.messageWho', { name })}
+          title={t('rail.messageWho', { name })}
         >
           <ChatsIcon size={16} />
         </button>
@@ -309,8 +313,8 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
         <Link
           to={`/app/messages?to=${friend.userId}&name=${encodeURIComponent(friend.username)}`}
           className="rail-friend-chat"
-          aria-label={`Message ${name}`}
-          title={`Message ${name}`}
+          aria-label={t('rail.messageWho', { name })}
+          title={t('rail.messageWho', { name })}
         >
           <ChatsIcon size={16} />
         </Link>
@@ -322,6 +326,7 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
 /** A game invite, which expires — so it leads with Accept. */
 function ChallengeCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
@@ -342,7 +347,7 @@ function ChallengeCard({ who, onActed }: { who: RailFriend; onActed: () => void 
       </span>
       <span className="rail-row-text">
         <span className="rail-row-name">{who.displayName || who.username}</span>
-        <span className="rail-row-sub">Invited you to play</span>
+        <span className="rail-row-sub">{t('rail.invitedYouToPlay')}</span>
       </span>
       <span className="rail-card-actions">
         <button type="button" className="rail-act is-yes" disabled={busy} onClick={() => void respond(true)}>
@@ -358,6 +363,7 @@ function ChallengeCard({ who, onActed }: { who: RailFriend; onActed: () => void 
 
 function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [busy, setBusy] = useState(false);
 
   async function respond(accept: boolean): Promise<void> {
@@ -374,7 +380,7 @@ function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void })
       </span>
       <span className="rail-row-text">
         <span className="rail-row-name">{who.displayName || who.username}</span>
-        <span className="rail-row-sub">Wants to be friends</span>
+        <span className="rail-row-sub">{t('rail.wantsToBeFriends')}</span>
       </span>
       <span className="rail-card-actions">
         <button type="button" className="rail-act is-yes" disabled={busy} onClick={() => void respond(true)}>
@@ -404,6 +410,7 @@ function Notifications({
   onActed: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [going, setGoing] = useState<Set<string>>(new Set());
   const unread = items.filter((n) => n.readAt === null).length;
 
@@ -428,12 +435,12 @@ function Notifications({
           <span className="rail-note-title">{n.title}</span>
           {n.body && <span className="rail-note-body">{n.body}</span>}
           <span className="rail-note-foot">
-            <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt)}</time>
+            <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt, t)}</time>
             {n.readAt === null && !going.has(n.id) && (
               <button
                 type="button"
                 className="rail-note-dismiss"
-                aria-label={`Dismiss: ${n.title}`}
+                aria-label={t('rail.dismissWhat', { what: n.title })}
                 onClick={() => void dismiss(n.id)}
               >
                 <CloseIcon size={13} />

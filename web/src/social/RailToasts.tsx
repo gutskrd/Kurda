@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Avatar } from '../components/Avatar';
 import { CloseIcon, GameIcon, UserIcon, SparkIcon } from '../components/icons';
 import type { Arrival } from './useSocialRail';
+import { useT } from '../i18n/I18nProvider';
 
 /** How long a toast stays before it takes itself away. */
 const LINGER_MS = 8_000;
@@ -42,9 +43,10 @@ function Toast({
   onDismiss: () => void;
   onOpen: () => void;
 }): React.JSX.Element {
+  const t = useT();
   useEffect(() => {
-    const t = setTimeout(onDismiss, LINGER_MS);
-    return () => clearTimeout(t);
+    const timer = setTimeout(onDismiss, LINGER_MS);
+    return () => clearTimeout(timer);
   }, [onDismiss]);
 
   return (
@@ -72,7 +74,7 @@ function Toast({
           {arrival.body && <span className="rail-toast-body">{arrival.body}</span>}
         </span>
       </button>
-      <button type="button" className="rail-toast-x" onClick={onDismiss} aria-label="Dismiss">
+      <button type="button" className="rail-toast-x" onClick={onDismiss} aria-label={t('rail.dismiss')}>
         <CloseIcon size={14} />
       </button>
       {/* a bar that drains, so the toast's remaining time is visible rather than
