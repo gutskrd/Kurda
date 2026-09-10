@@ -8,6 +8,8 @@ import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
 import { buildInviteUrl } from '../lib/gameInvites';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -34,27 +36,28 @@ interface MatchResults {
   ranking: Array<{ userId: string; rank: number; score: number; accepted: number; xpAwarded: number | null }>;
 }
 
-const REJECT_COPY: Record<string, string> = {
-  'not-a-word': 'Not a word in the dictionary.',
-  'is-prompt': 'That’s the prompt itself.',
-  'already-used': 'You already used that one.',
-  'no-rhyme': 'Doesn’t rhyme — try another.',
-  profane: 'Let’s keep it clean.',
+const REJECT_KEY: Record<string, MessageKey> = {
+  'not-a-word': 'games.rhyme.reject.notAWord',
+  'is-prompt': 'games.rhyme.reject.isPromptShort',
+  'already-used': 'games.rhyme.reject.alreadyUsed',
+  'no-rhyme': 'games.rhyme.reject.noRhyme',
+  profane: 'games.rhyme.reject.profane',
 };
 
 /** Rhyme Match (KUR-299): head-to-head timed rhyming. Create → share → play. */
 export function RhymeMatch(): React.JSX.Element {
   const [params] = useSearchParams();
+  const t = useT();
   const id = params.get('id');
   return (
     <div className="container game-page">
       <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label="Back to games">
+        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
           <ArrowIcon size={18} />
         </Link>
         <div>
-          <span className="eyebrow">Yarî · Rhyme Match</span>
-          <h1 className="page-title" style={{ margin: 0 }}>Rhyme Match</h1>
+          <span className="eyebrow">{t('nav.games')}</span>
+          <h1 className="page-title" style={{ margin: 0 }}>{t('games.rhymeMatch.name')}</h1>
         </div>
       </div>
       {id ? <MatchRoom key={id} id={id} /> : <CreateMatch />}
@@ -64,6 +67,7 @@ export function RhymeMatch(): React.JSX.Element {
 
 function CreateMatch(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [dialect, setDialect] = useState<Dialect>('kurmanci');
   const [busy, setBusy] = useState(false);
@@ -75,14 +79,14 @@ function CreateMatch(): React.JSX.Element {
     const res = await client.post<MatchState>('/rhyme/matches', { dialect });
     setBusy(false);
     if (res.ok) navigate(`/app/games/rhyme-match?id=${res.data.id}`);
-    else setErr(res.error.code === 'EMPTY_LEXICON' ? 'No words available for play yet — check back soon.' : describeError(res.error));
+    else setErr(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error));
   }
 
   return (
     <div className="quiz-lobby">
-      <p className="page-sub">Create a match, share the invite link, and race a friend to find the most rhymes for one prompt before the clock runs out.</p>
+      <p className="page-sub">{t('games.rhymeMatch.intro')}</p>
       {err && <div className="wordle-notice">{err}</div>}
-      <div className="chat-tabs" role="tablist" aria-label="Dialect">
+      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
           <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => setDialect(d)}>
             {d === 'kurmanci' ? 'Kurmancî' : 'Soranî'}
@@ -90,7 +94,7 @@ function CreateMatch(): React.JSX.Element {
         ))}
       </div>
       <Button size="lg" disabled={busy} onClick={() => void create()}>
-        {busy ? 'Creating…' : 'Create match'}
+        {busy ? t('games.creating') : t('games.rhymeMatch.create')}
       </Button>
     </div>
   );
@@ -98,6 +102,7 @@ function CreateMatch(): React.JSX.Element {
 
 function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const { client, user } = useAuth();
+  const t = useT();
   const [match, setMatch] = useState<MatchState | null>(null);
   const [results, setResults] = useState<MatchResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +112,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [found, setFound] = useState<Array<{ word: string; quality: RhymeResult['quality']; points: number }>>([]);
-  const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly('No pasting — think of one.');
+  const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
   const loadedOnce = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -124,10 +129,10 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
   useEffect(() => {
     void load();
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (match?.status !== 'finished') void load();
     }, 1500);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [load, match?.status]);
 
   useEffect(() => {
@@ -143,8 +148,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   useEffect(() => {
     if (match?.status !== 'active') return;
     if (remaining <= 0) return;
-    const t = setTimeout(() => setRemaining((ms) => Math.max(0, ms - 200)), 200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setRemaining((ms) => Math.max(0, ms - 200)), 200);
+    return () => clearTimeout(timer);
   }, [remaining, match?.status]);
 
   async function submit(e: React.FormEvent): Promise<void> {
@@ -161,10 +166,10 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       setWord('');
       const { result } = res.data;
       if (result.accepted) setFound((f) => [{ word: result.normalized, quality: result.quality, points: result.points }, ...f]);
-      else setNotice(REJECT_COPY[result.reason ?? ''] ?? 'Not accepted — try another.');
+      else setNotice(t(REJECT_KEY[result.reason ?? ''] ?? 'games.rhyme.reject.other'));
       inputRef.current?.focus();
     } else {
-      setNotice(res.error.code === 'NOT_ACTIVE' ? 'Time’s up for this match.' : describeError(res.error));
+      setNotice(res.error.code === 'NOT_ACTIVE' ? t('games.rhymeMatch.timeUpMatch') : describeError(res.error));
     }
   }
 
@@ -174,7 +179,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setNotice('Couldn’t copy — long-press the link to share it.');
+      setNotice(t('games.copyFailed'));
     }
   }
 
@@ -203,21 +208,23 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   if (match.status === 'lobby') {
     return (
       <div className="quiz-lobby">
-        <p>Waiting in the lobby — {playerCount} player{playerCount === 1 ? '' : 's'} joined.</p>
+        <p>{t('games.lobbyWaiting', { count: playerCount })}</p>
         <div className="battle-invite">
-          <span className="battle-invite-label">Invite link</span>
+          <span className="battle-invite-label">{t('games.inviteLink')}</span>
           <code className="battle-invite-url">{buildInviteUrl('rhyme-match', id)}</code>
-          <Button size="sm" onClick={() => void copyLink()}>{copied ? 'Copied!' : 'Copy link'}</Button>
+          <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
         </div>
         {notice && <div className="wordle-notice">{notice}</div>}
         {match.me == null ? (
-          <Button size="lg" disabled={busy} onClick={() => void join()}>{busy ? 'Joining…' : 'Join match'}</Button>
+          <Button size="lg" disabled={busy} onClick={() => void join()}>
+            {busy ? t('games.joining') : t('games.rhymeMatch.join')}
+          </Button>
         ) : isHost ? (
           <Button size="lg" disabled={busy || playerCount < 2} onClick={() => void start()}>
-            {playerCount < 2 ? 'Waiting for a second player…' : busy ? 'Starting…' : 'Start match'}
+            {playerCount < 2 ? t('games.waitingForPlayer') : busy ? t('games.starting') : t('games.rhymeMatch.start')}
           </Button>
         ) : (
-          <p className="muted">Waiting for the host to start…</p>
+          <p className="muted">{t('games.waitingForHost')}</p>
         )}
       </div>
     );
@@ -227,23 +234,23 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
       <div className="quiz-results">
-        <h2 className="quiz-verdict">{mine?.rank === 1 ? '🏆 You won!' : 'Match over.'}</h2>
+        <h2 className="quiz-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
         {results && (
           <>
-            <p className="muted">Prompt was <strong>{results.prompt}</strong>.</p>
+            <p className="muted">{t('games.rhymeMatch.promptWas', { word: results.prompt })}</p>
             <ol className="quiz-scoreboard">
               {results.ranking.map((r) => (
                 <li key={r.userId} className={`quiz-scoreline${r.userId === user?.id ? ' me' : ''}`}>
                   <span className="quiz-rank">{r.rank}</span>
-                  <span className="quiz-name">{r.userId === user?.id ? 'You' : 'Opponent'}</span>
-                  <span className="quiz-pts">{r.score} pts · {r.accepted} rhymes</span>
+                  <span className="quiz-name">{r.userId === user?.id ? t('games.you') : t('games.opponent')}</span>
+                  <span className="quiz-pts">{t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}</span>
                   {r.xpAwarded ? <span className="quiz-xp">+{r.xpAwarded} XP</span> : null}
                 </li>
               ))}
             </ol>
           </>
         )}
-        <Link to="/app/games/rhyme-match" className="btn btn-primary">New match</Link>
+        <Link to="/app/games/rhyme-match" className="btn btn-primary">{t('games.rhymeMatch.new')}</Link>
       </div>
     );
   }
@@ -253,18 +260,18 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     <div className="quiz-match">
       <div className="rhyme-stage">
         <div className="rhyme-prompt-box">
-          <span className="rhyme-label">Rhyme with</span>
+          <span className="rhyme-label">{t('games.rhyme.rhymeWith')}</span>
           <span className="rhyme-prompt">{match.prompt}</span>
         </div>
         <div className="rhyme-meters">
-          <div className={`rhyme-timer${seconds <= 5 && active ? ' low' : ''}`} aria-label="Time left">{seconds}s</div>
+          <div className={`rhyme-timer${seconds <= 5 && active ? ' low' : ''}`} aria-label={t('games.timeLeft')}>{seconds}s</div>
         </div>
       </div>
 
       <div className="quiz-live-score">
         {match.scoreboard.map((s) => (
           <span key={s.userId} className={s.userId === user?.id ? 'me' : ''}>
-            {s.userId === user?.id ? 'You' : 'Opponent'}: {s.score}
+            {s.userId === user?.id ? t('games.you') : t('games.opponent')}: {s.score}
           </span>
         ))}
       </div>
@@ -277,16 +284,16 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             className="input"
             value={word}
             onChange={(e) => setWord(e.target.value)}
-            placeholder={`A word that rhymes with “${match.prompt}”…`}
+            placeholder={t('games.rhyme.placeholder', { word: match.prompt ?? '' })}
             maxLength={64}
-            aria-label="Your rhyme"
+            aria-label={t('games.rhyme.yourRhyme')}
             autoFocus
             {...typeOnly}
           />
-          <Button type="submit" disabled={busy || word.trim().length === 0}>{busy ? '…' : 'Submit'}</Button>
+          <Button type="submit" disabled={busy || word.trim().length === 0}>{busy ? '…' : t('games.submit')}</Button>
         </form>
       ) : (
-        <p className="muted" style={{ textAlign: 'center' }}>Time’s up — finishing the match…</p>
+        <p className="muted" style={{ textAlign: 'center' }}>{t('games.rhymeMatch.timeUpFinishing')}</p>
       )}
 
       {/* one slot: a refused paste is the more urgent of the two to answer */}
@@ -297,7 +304,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       )}
 
       {found.length > 0 && (
-        <ul className="rhyme-found" aria-label="Rhymes you found">
+        <ul className="rhyme-found" aria-label={t('games.rhyme.foundList')}>
           {found.map((f, i) => (
             <li key={`${f.word}-${i}`} className={`rhyme-chip rhyme-${f.quality}`}>
               <span>{f.word}</span>

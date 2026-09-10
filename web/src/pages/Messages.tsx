@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { Conversation, Group, MyGroup } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
+import { useT } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
@@ -86,6 +87,7 @@ export function Messages(): React.JSX.Element {
 /** The list of 1:1 conversations. */
 function DirectList({ activeId, refreshKey }: { activeId: string | null; refreshKey: number }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const { state } = useRealtime();
   const [convos, setConvos] = useState<Conversation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,8 +105,8 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
 
   useEffect(() => {
     void loadConvos();
-    const t = setInterval(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
-    return () => clearInterval(t);
+    const timer = setInterval(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
+    return () => clearInterval(timer);
   }, [loadConvos, refreshKey, state]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
@@ -131,7 +133,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
             </span>
             <span className="chat-convo-last">
               {c.lastFromMe ? 'You: ' : ''}
-              {messagePreview(c.lastMessage)}
+              {messagePreview(c.lastMessage, t)}
             </span>
           </span>
         </Link>

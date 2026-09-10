@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
-  inviteBlurb,
-  inviteLabel,
+  INVITE_BLURB_KEY,
+  INVITE_NAME_KEY,
   inviteLinkPattern,
   invitePath,
   parseInvite,
@@ -9,6 +9,7 @@ import {
   type GameInviteType,
 } from '../lib/gameInvites';
 import { ChevronIcon, TilesIcon, WaveformIcon } from './icons';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Renders a chat message body: if it carries a MyKurda game-invite link, show a
@@ -48,17 +49,18 @@ const ICONS: Record<GameInviteType, (props: { size?: number }) => React.JSX.Elem
  * bubble is white in this theme and a translucent card disappeared into it.
  */
 export function GameInviteCard({ invite }: { invite: GameInvite }): React.JSX.Element {
-  const label = inviteLabel(invite.type);
+  const t = useT();
+  const label = t(INVITE_NAME_KEY[invite.type]);
   const Icon = ICONS[invite.type];
   return (
-    <Link to={invitePath(invite)} className="invite-card" aria-label={`Join a ${label} game`}>
+    <Link to={invitePath(invite)} className="invite-card" aria-label={t('games.invite.join', { game: label })}>
       <span className="invite-card-art" aria-hidden>
         <Icon size={21} />
       </span>
       <span className="invite-card-text">
-        <span className="invite-card-eyebrow">Game invite</span>
+        <span className="invite-card-eyebrow">{t('games.invite.eyebrow')}</span>
         <span className="invite-card-title">{label}</span>
-        <span className="invite-card-blurb">{inviteBlurb(invite.type)}</span>
+        <span className="invite-card-blurb">{t(INVITE_BLURB_KEY[invite.type])}</span>
       </span>
       <ChevronIcon size={17} className="invite-card-chevron" />
     </Link>

@@ -61,7 +61,7 @@ describe('WordleKeyboard', () => {
     // û is on the wide layout's overflowing top row — the key that fell off
     await userEvent.click(screen.getByRole('button', { name: 'û' }));
     await userEvent.click(screen.getByRole('button', { name: 'p' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Backspace' }));
     expect(onPress.mock.calls.map(([k]) => k)).toEqual(['û', 'p', 'Backspace']);
   });
 });

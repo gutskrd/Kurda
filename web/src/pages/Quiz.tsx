@@ -7,6 +7,7 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 /** Matchmaking → live 1v1 ranked quiz (KUR-051/61). Server-timed; the client
  *  only sends `ready` and `answer`, and renders the events the server pushes. */
@@ -22,6 +23,7 @@ interface Opponent {
 
 export function Quiz(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [screen, setScreen] = useState<'idle' | 'searching' | 'match'>('idle');
   const [roomId, setRoomId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -60,28 +62,28 @@ export function Quiz(): React.JSX.Element {
 
   const onMatchTimeout = useCallback(() => {
     setScreen('idle');
-    setNotice('No opponent found right now — try again in a moment.');
-  }, []);
+    setNotice(t('games.quiz.noOpponent'));
+  }, [t]);
   useRealtimeEvent('match_timeout', onMatchTimeout);
 
   return (
     <div className="container game-page">
       <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label="Back to games">
+        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
           <ArrowIcon size={18} />
         </Link>
         <div>
-          <span className="eyebrow">Yarî · Ranked quiz</span>
-          <h1 className="page-title" style={{ margin: 0 }}>Quiz match</h1>
+          <span className="eyebrow">{t('nav.games')}</span>
+          <h1 className="page-title" style={{ margin: 0 }}>{t('games.quiz.name')}</h1>
         </div>
       </div>
 
       {screen === 'idle' && (
         <div className="quiz-lobby">
-          <p className="page-sub">A fast 1-v-1: answer Kurdish questions quicker and more accurately than your opponent. Every match is scored on the server and moves your rating.</p>
+          <p className="page-sub">{t('games.quiz.intro')}</p>
           {notice && <div className="wordle-notice" role="status">{notice}</div>}
           <Button size="lg" disabled={busy} onClick={() => void find()}>
-            {busy ? 'Finding…' : 'Find a match'}
+            {busy ? t('games.quiz.finding') : t('games.quiz.find')}
           </Button>
         </div>
       )}
@@ -90,10 +92,10 @@ export function Quiz(): React.JSX.Element {
         <div className="quiz-lobby">
           <div className="quiz-searching">
             <span className="quiz-spinner" aria-hidden />
-            <p>Searching for an opponent…</p>
+            <p>{t('games.quiz.searching')}</p>
           </div>
           <Button variant="ghost" onClick={() => void cancel()}>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       )}
@@ -141,6 +143,7 @@ interface ScoreLine {
 
 function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
+  const t = useT();
   const send = useRealtimeSend();
   useRealtimeRoom(roomId); // join to receive the match events
 
@@ -158,8 +161,8 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
   // one clock for countdown + question timers
   useEffect(() => {
     if (phase !== 'question' && phase !== 'countdown') return;
-    const t = setInterval(() => setNow(Date.now()), 200);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(timer);
   }, [phase]);
 
   const sendReady = useCallback(() => {
@@ -261,13 +264,15 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
     const won = mine?.rank === 1;
     return (
       <div className="quiz-results">
-        <h2 className="quiz-verdict">{won ? '🏆 You won!' : results.length > 1 ? 'Good game.' : 'Match over.'}</h2>
+        <h2 className="quiz-verdict">
+          {won ? t('games.youWon') : results.length > 1 ? t('games.quiz.goodGame') : t('games.quiz.matchOver')}
+        </h2>
         <ol className="quiz-scoreboard">
           {results.map((s) => (
             <li key={s.userId} className={`quiz-scoreline${s.userId === user?.id ? ' me' : ''}`}>
               <span className="quiz-rank">{s.rank}</span>
               <span className="quiz-name">{s.username}</span>
-              <span className="quiz-pts">{s.points} pts · {s.correct} correct</span>
+              <span className="quiz-pts">{t('games.quiz.playerScore', { points: s.points, correct: s.correct })}</span>
               {typeof s.ratingDelta === 'number' && s.ratingDelta !== 0 && (
                 <span className={`quiz-delta${s.ratingDelta > 0 ? ' up' : ' down'}`}>
                   {s.ratingDelta > 0 ? '+' : ''}{s.ratingDelta}
@@ -277,7 +282,7 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
             </li>
           ))}
         </ol>
-        <Button onClick={onLeave}>Back to matchmaking</Button>
+        <Button onClick={onLeave}>{t('games.quiz.backToMatchmaking')}</Button>
       </div>
     );
   }
@@ -288,9 +293,9 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
   return (
     <div className="quiz-match">
       <div className="quiz-players">
-        <span className="quiz-player me">{me?.username ?? 'You'}</span>
-        <span className="quiz-vs">vs</span>
-        <span className={`quiz-player${opponent?.ready ? ' ready' : ''}`}>{opponent?.username ?? 'Opponent'}</span>
+        <span className="quiz-player me">{me?.username ?? t('games.you')}</span>
+        <span className="quiz-vs">{t('games.quiz.vs')}</span>
+        <span className={`quiz-player${opponent?.ready ? ' ready' : ''}`}>{opponent?.username ?? t('games.opponent')}</span>
       </div>
 
       {scores.length > 0 && phase !== 'lobby' && (
@@ -305,21 +310,21 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
 
       {phase === 'lobby' && (
         <div className="quiz-lobby">
-          <p>Match found{opponent ? <> against <strong>{opponent.username}</strong></> : null}. Getting ready…</p>
+          <p>{opponent ? t('games.quiz.matchFoundAgainst', { name: opponent.username }) : t('games.quiz.matchFound')}</p>
           <Loading />
         </div>
       )}
 
       {phase === 'countdown' && (
         <div className="quiz-countdown">
-          <span className="quiz-count">{countdownLeft || 'Go!'}</span>
+          <span className="quiz-count">{countdownLeft || t('games.quiz.go')}</span>
         </div>
       )}
 
       {(phase === 'question' || phase === 'reveal') && question && (
         <div className="quiz-question">
           <div className="quiz-qmeta">
-            <span>Question {question.index + 1} of {question.total}</span>
+            <span>{t('games.quiz.questionOf', { index: question.index + 1, total: question.total })}</span>
             {phase === 'question' && <span className="quiz-timer">{Math.ceil(remaining / 1000)}s</span>}
           </div>
           <h2 className="quiz-prompt">{question.prompt}</h2>
@@ -349,7 +354,9 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
               );
             })}
           </div>
-          {phase === 'question' && myChoice !== null && <p className="muted quiz-locked">Answer locked — waiting for the reveal…</p>}
+          {phase === 'question' && myChoice !== null && (
+            <p className="muted quiz-locked">{t('games.quiz.answerLocked')}</p>
+          )}
         </div>
       )}
     </div>

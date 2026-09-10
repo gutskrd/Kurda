@@ -8,8 +8,16 @@ import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, KURMANCI_LETTER_RE } from '../components/WordleBoard';
 import { buildInviteUrl } from '../lib/gameInvites';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
+
+const DIFFICULTY_KEY: Record<Difficulty, MessageKey> = {
+  easy: 'games.difficulty.easy',
+  medium: 'games.difficulty.medium',
+  hard: 'games.difficulty.hard',
+};
 type GameStatus = 'playing' | 'won' | 'lost';
 
 interface OpponentView {
@@ -44,12 +52,12 @@ interface BattleResults {
   ranking: Array<{ userId: string; rank: number; solved: boolean; guessCount: number; progress: number; xpAwarded: number | null }>;
 }
 
-function guessMsg(err: ApiError): string {
+function guessMsg(err: ApiError, t: (key: MessageKey) => string): string {
   switch (err.code) {
     case 'WRONG_LENGTH':
-      return 'That guess is the wrong length.';
+      return t('games.wordle.wrongLength');
     case 'NOT_A_WORD':
-      return 'Not a word in the dictionary — try another.';
+      return t('games.wordle.notAWord');
     default:
       return describeError(err);
   }
@@ -58,16 +66,17 @@ function guessMsg(err: ApiError): string {
 /** Wordle Battle (KUR-306): race the same word. Create → share link → play. */
 export function WordleBattle(): React.JSX.Element {
   const [params] = useSearchParams();
+  const t = useT();
   const id = params.get('id');
   return (
     <div className="container game-page">
       <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label="Back to games">
+        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
           <ArrowIcon size={18} />
         </Link>
         <div>
-          <span className="eyebrow">Yarî · Wordle Battle</span>
-          <h1 className="page-title" style={{ margin: 0 }}>Wordle Battle</h1>
+          <span className="eyebrow">{t('nav.games')}</span>
+          <h1 className="page-title" style={{ margin: 0 }}>{t('games.battle.name')}</h1>
         </div>
       </div>
       {id ? <BattleRoom key={id} id={id} /> : <CreateBattle />}
@@ -77,6 +86,7 @@ export function WordleBattle(): React.JSX.Element {
 
 function CreateBattle(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [busy, setBusy] = useState(false);
@@ -88,22 +98,22 @@ function CreateBattle(): React.JSX.Element {
     const res = await client.post<BattleState>('/wordle/battles', { difficulty });
     setBusy(false);
     if (res.ok) navigate(`/app/games/wordle-battle?id=${res.data.id}`);
-    else setErr(res.error.code === 'EMPTY_POOL' ? 'No words available for play yet — check back soon.' : describeError(res.error));
+    else setErr(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error));
   }
 
   return (
     <div className="quiz-lobby">
-      <p className="page-sub">Create a battle, share the invite link with a friend, and race to guess the same Kurdish word first.</p>
+      <p className="page-sub">{t('games.battle.intro')}</p>
       {err && <div className="wordle-notice">{err}</div>}
-      <div className="chat-tabs" role="tablist" aria-label="Difficulty">
+      <div className="chat-tabs" role="tablist" aria-label={t('games.difficulty')}>
         {(['easy', 'medium', 'hard'] as const).map((d) => (
           <button key={d} role="tab" aria-selected={difficulty === d} className={`chip${difficulty === d ? ' active' : ''}`} onClick={() => setDifficulty(d)}>
-            {d.charAt(0).toUpperCase() + d.slice(1)}
+            {t(DIFFICULTY_KEY[d])}
           </button>
         ))}
       </div>
       <Button size="lg" disabled={busy} onClick={() => void create()}>
-        {busy ? 'Creating…' : 'Create battle'}
+        {busy ? t('games.creating') : t('games.battle.create')}
       </Button>
     </div>
   );
@@ -111,6 +121,7 @@ function CreateBattle(): React.JSX.Element {
 
 function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const { client, user } = useAuth();
+  const t = useT();
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [results, setResults] = useState<BattleResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,10 +145,10 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   // an optional extra the backend may add later on top of these same endpoints
   useEffect(() => {
     void load();
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (battle?.status !== 'finished') void load();
     }, 1800);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [load, battle?.status]);
 
   useEffect(() => {
@@ -154,7 +165,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     if (!battle?.me || !active || busy) return;
     const letters = Array.from(current);
     if (letters.length !== battle.targetLength) {
-      setNotice(`Enter ${battle.targetLength} letters.`);
+      setNotice(t('games.wordle.enterLetters', { count: battle.targetLength }));
       return;
     }
     setBusy(true);
@@ -165,9 +176,9 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
       setBattle(res.data);
       setCurrent('');
     } else {
-      setNotice(guessMsg(res.error));
+      setNotice(guessMsg(res.error, t));
     }
-  }, [client, id, battle, active, busy, current]);
+  }, [client, id, battle, active, busy, current, t]);
 
   const press = useCallback(
     (key: string) => {
@@ -199,7 +210,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setNotice('Couldn’t copy — long-press the link to share it.');
+      setNotice(t('games.copyFailed'));
     }
   }
 
@@ -229,21 +240,23 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   if (battle.status === 'lobby') {
     return (
       <div className="quiz-lobby">
-        <p>Waiting in the lobby — {playerCount} player{playerCount === 1 ? '' : 's'} joined.</p>
+        <p>{t('games.lobbyWaiting', { count: playerCount })}</p>
         <div className="battle-invite">
-          <span className="battle-invite-label">Invite link</span>
+          <span className="battle-invite-label">{t('games.inviteLink')}</span>
           <code className="battle-invite-url">{buildInviteUrl('wordle-battle', id)}</code>
-          <Button size="sm" onClick={() => void copyLink()}>{copied ? 'Copied!' : 'Copy link'}</Button>
+          <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
         </div>
         {notice && <div className="wordle-notice">{notice}</div>}
         {battle.me == null ? (
-          <Button size="lg" disabled={busy} onClick={() => void join()}>{busy ? 'Joining…' : 'Join battle'}</Button>
+          <Button size="lg" disabled={busy} onClick={() => void join()}>
+            {busy ? t('games.joining') : t('games.battle.join')}
+          </Button>
         ) : isHost ? (
           <Button size="lg" disabled={busy || playerCount < 2} onClick={() => void start()}>
-            {playerCount < 2 ? 'Waiting for a second player…' : busy ? 'Starting…' : 'Start battle'}
+            {playerCount < 2 ? t('games.waitingForPlayer') : busy ? t('games.starting') : t('games.battle.start')}
           </Button>
         ) : (
-          <p className="muted">Waiting for the host to start…</p>
+          <p className="muted">{t('games.waitingForHost')}</p>
         )}
       </div>
     );
@@ -254,23 +267,29 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
       <div className="quiz-results">
-        <h2 className="quiz-verdict">{mine?.rank === 1 ? '🏆 You won!' : mine?.solved ? 'Solved it!' : 'Battle over.'}</h2>
+        <h2 className="quiz-verdict">
+          {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
+        </h2>
         {results && (
           <>
-            <p className="muted">The word was <strong>{results.target}</strong>.</p>
+            <p className="muted">{t('games.wordle.theWordWas', { word: results.target })}</p>
             <ol className="quiz-scoreboard">
               {results.ranking.map((r) => (
                 <li key={r.userId} className={`quiz-scoreline${r.userId === user?.id ? ' me' : ''}`}>
                   <span className="quiz-rank">{r.rank}</span>
-                  <span className="quiz-name">{r.userId === user?.id ? 'You' : 'Opponent'}</span>
-                  <span className="quiz-pts">{r.solved ? `solved in ${r.guessCount}` : `${r.progress}/${results.target.length} letters`}</span>
+                  <span className="quiz-name">{r.userId === user?.id ? t('games.you') : t('games.opponent')}</span>
+                  <span className="quiz-pts">
+                    {r.solved
+                      ? t('games.battle.solvedIn', { count: r.guessCount })
+                      : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
+                  </span>
                   {r.xpAwarded ? <span className="quiz-xp">+{r.xpAwarded} XP</span> : null}
                 </li>
               ))}
             </ol>
           </>
         )}
-        <Link to="/app/games/wordle-battle" className="btn btn-primary">New battle</Link>
+        <Link to="/app/games/wordle-battle" className="btn btn-primary">{t('games.battle.new')}</Link>
       </div>
     );
   }
@@ -283,11 +302,19 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
         <div className="battle-opponents">
           {battle.opponents.map((o, i) => (
             <div className="battle-opp" key={o.userId}>
-              <span className="battle-opp-name">Opponent {battle.opponents.length > 1 ? i + 1 : ''}</span>
-              <div className="battle-bar" aria-label="Opponent progress">
+              <span className="battle-opp-name">
+                {battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent')}
+              </span>
+              <div className="battle-bar" aria-label={t('games.battle.opponentProgress')}>
                 <div className="battle-bar-fill" style={{ width: `${Math.round((o.progress / battle.targetLength) * 100)}%` }} />
               </div>
-              <span className="battle-opp-status">{o.solved ? '✓ solved' : o.finished ? 'done' : `${o.guessCount} guesses`}</span>
+              <span className="battle-opp-status">
+                {o.solved
+                  ? t('games.battle.opponentSolved')
+                  : o.finished
+                    ? t('games.battle.opponentDone')
+                    : t('games.battle.opponentGuesses', { count: o.guessCount })}
+              </span>
             </div>
           ))}
         </div>
@@ -306,7 +333,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           {!active && (
             <div className="wordle-result">
               <p className="wordle-result-title">
-                {me.solved ? '🎉 You solved it! Waiting for the others…' : 'No tries left — waiting for the battle to finish…'}
+                {me.solved ? t('games.battle.youSolvedWaiting') : t('games.battle.noTriesWaiting')}
               </p>
             </div>
           )}

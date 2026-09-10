@@ -7,18 +7,27 @@ import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, KURMANCI_LETTER_RE } from '../components/WordleBoard';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
-function guessError(err: ApiError): string {
+const DIFFICULTY_KEY: Record<Difficulty, MessageKey> = {
+  easy: 'games.difficulty.easy',
+  medium: 'games.difficulty.medium',
+  hard: 'games.difficulty.hard',
+};
+
+/** A refusal from the server, in the reader's language. */
+function guessError(err: ApiError, t: (key: MessageKey) => string): string {
   switch (err.code) {
     case 'WRONG_LENGTH':
-      return 'That guess is the wrong length.';
+      return t('games.wordle.wrongLength');
     case 'NOT_A_WORD':
-      return 'Not a word in the dictionary — try another.';
+      return t('games.wordle.notAWord');
     case 'GAME_OVER':
-      return 'This game is already finished.';
+      return t('games.wordle.alreadyFinished');
     default:
       return describeError(err);
   }
@@ -27,6 +36,7 @@ function guessError(err: ApiError): string {
 /** A single-player Kurdish Wordle — server-scored, answer withheld until it ends. */
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [mode, setMode] = useState<Mode>('daily');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [game, setGame] = useState<WordleGame | null>(null);
@@ -59,7 +69,7 @@ export function Wordle(): React.JSX.Element {
     const letters = Array.from(current);
     if (letters.length === 0) return;
     if (letters.length !== game.targetLength) {
-      setNotice(`Enter ${game.targetLength} letters.`);
+      setNotice(t('games.wordle.enterLetters', { count: game.targetLength }));
       return;
     }
     setSubmitting(true);
@@ -70,9 +80,9 @@ export function Wordle(): React.JSX.Element {
       setGame(res.data);
       setCurrent('');
     } else {
-      setNotice(guessError(res.error));
+      setNotice(guessError(res.error, t));
     }
-  }, [client, game, playing, submitting, current]);
+  }, [client, game, playing, submitting, current, t]);
 
   const press = useCallback(
     (key: string) => {
@@ -102,34 +112,34 @@ export function Wordle(): React.JSX.Element {
   return (
     <div className="container game-page">
       <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label="Back to games">
+        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
           <ArrowIcon size={18} />
         </Link>
         <div>
-          <span className="eyebrow">Yarî · Kurdish Wordle</span>
-          <h1 className="page-title" style={{ margin: 0 }}>Wordle</h1>
+          <span className="eyebrow">{t('nav.games')}</span>
+          <h1 className="page-title" style={{ margin: 0 }}>{t('games.wordle.name')}</h1>
         </div>
       </div>
 
-      <div className="toolbar wordle-toolbar" role="group" aria-label="Game options">
-        <div className="chat-tabs" role="tablist" aria-label="Mode">
+      <div className="toolbar wordle-toolbar" role="group" aria-label={t('games.options')}>
+        <div className="chat-tabs" role="tablist" aria-label={t('games.wordle.mode')}>
           {(['daily', 'practice'] as const).map((m) => (
             <button key={m} role="tab" aria-selected={mode === m} className={`chip${mode === m ? ' active' : ''}`} onClick={() => setMode(m)}>
-              {m === 'daily' ? 'Daily' : 'Practice'}
+              {m === 'daily' ? t('games.wordle.daily') : t('games.wordle.practice')}
             </button>
           ))}
         </div>
-        <div className="chat-tabs" role="tablist" aria-label="Difficulty">
+        <div className="chat-tabs" role="tablist" aria-label={t('games.difficulty')}>
           {(['easy', 'medium', 'hard'] as const).map((d) => (
             <button key={d} role="tab" aria-selected={difficulty === d} className={`chip${difficulty === d ? ' active' : ''}`} onClick={() => setDifficulty(d)}>
-              {d.charAt(0).toUpperCase() + d.slice(1)}
+              {t(DIFFICULTY_KEY[d])}
             </button>
           ))}
         </div>
       </div>
 
       {emptyPool ? (
-        <div className="wordle-msg">No puzzles available yet for this difficulty — check back soon.</div>
+        <div className="wordle-msg">{t('games.wordle.emptyDifficulty')}</div>
       ) : loadError ? (
         <ErrorState message={loadError} onRetry={() => void start()} />
       ) : game === null ? (
@@ -147,14 +157,14 @@ export function Wordle(): React.JSX.Element {
           {game.status !== 'playing' && (
             <div className="wordle-result">
               <p className="wordle-result-title">
-                {game.status === 'won' ? '🎉 Solved it!' : 'Out of tries.'}
-                {game.target && game.status === 'lost' && <> The word was <strong>{game.target}</strong>.</>}
+                {game.status === 'won' ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
+                {game.target && game.status === 'lost' && <> {t('games.wordle.theWordWas', { word: game.target })}</>}
                 {game.xpAwarded ? <> +{game.xpAwarded} XP</> : null}
               </p>
               {mode === 'practice' ? (
-                <Button onClick={() => void start()}>Play again</Button>
+                <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
               ) : (
-                <p className="muted">Come back tomorrow for a new daily word — or switch to Practice for unlimited rounds.</p>
+                <p className="muted">{t('games.wordle.comeBackTomorrow')}</p>
               )}
             </div>
           )}
