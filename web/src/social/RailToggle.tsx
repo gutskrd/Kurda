@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { UsersIcon } from '../components/icons';
 import { badgeLabel } from './time';
 import { useRail, useRailPresent } from './RailProvider';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * The nav's way into the rail, and its badge.
@@ -12,6 +13,7 @@ import { useRail, useRailPresent } from './RailProvider';
  */
 export function RailToggle(): React.JSX.Element | null {
   const { status } = useAuth();
+  const t = useT();
   const present = useRailPresent();
   const { open, setOpen, total } = useRail();
 
@@ -30,7 +32,7 @@ export function RailToggle(): React.JSX.Element | null {
     <button
       type="button"
       className={`rail-toggle${total > 0 ? ' has-unread' : ''}`}
-      aria-label={total > 0 ? `Social — ${total} waiting` : 'Social'}
+      aria-label={total > 0 ? t('rail.titleWaiting', { count: total }) : t('rail.title')}
       aria-expanded={open}
       onClick={() => setOpen(!open)}
     >

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 export interface LiveActivity {
   game: string;
@@ -100,6 +104,7 @@ export function useSocialRail(): {
   refresh: () => void;
 } {
   const { client, status } = useAuth();
+  const t = useT();
   const signedIn = status === 'signedIn';
   const [data, setData] = useState<SocialRailData>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -119,7 +124,7 @@ export function useSocialRail(): {
       setData(next);
       setLoading(false);
 
-      const keys = arrivalKeys(next);
+      const keys = arrivalKeys(next, t);
       if (seen.current === null) {
         // first answer: adopt it silently
         seen.current = new Set(keys.map((a) => a.key));
@@ -129,7 +134,7 @@ export function useSocialRail(): {
       seen.current = new Set(keys.map((a) => a.key));
       if (fresh.length > 0) setArrivals((prev) => [...prev, ...fresh].slice(-3));
     })();
-  }, [client, signedIn]);
+  }, [client, signedIn, t]);
 
   useEffect(() => {
     if (!signedIn) {
@@ -160,21 +165,21 @@ export function useSocialRail(): {
 }
 
 /** Everything in this answer that could be announced, with a stable key each. */
-function arrivalKeys(data: SocialRailData): Arrival[] {
+function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
   const name = (f: RailFriend): string => f.displayName || f.username;
   return [
     ...data.challenges.map((c) => ({
       key: `challenge:${c.userId}`,
       kind: 'challenge' as const,
-      title: 'Game invite',
-      body: `${name(c)} wants to play`,
+      title: t('rail.gameInvite'),
+      body: t('rail.wantsToPlay', { name: name(c) }),
       who: c,
     })),
     ...data.requests.map((r) => ({
       key: `request:${r.userId}`,
       kind: 'request' as const,
-      title: 'Friend request',
-      body: `${name(r)} wants to be friends`,
+      title: t('rail.friendRequest'),
+      body: t('rail.wantsToBeFriendsWith', { name: name(r) }),
       who: r,
     })),
     ...data.notifications
