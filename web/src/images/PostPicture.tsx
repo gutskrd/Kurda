@@ -11,6 +11,7 @@ import { UNTOUCHED, compose, forgetGraded, type Composition } from './compositio
 import { useHistory } from './useHistory';
 import { ensureStickersFor } from './stickers';
 import { overlaySources } from './filters';
+import { useT } from '../i18n/I18nProvider';
 import { DIMEN_KINDS } from '../feed/postKinds';
 
 const MAX_CAPTION = 2_000;
@@ -42,6 +43,7 @@ export function PictureComposer({
   onDone: (post: ImagePost) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<CanvasImageSource | null>(null);
 
@@ -245,7 +247,7 @@ export function PictureComposer({
             Choose a different picture
           </button>
 
-          <div className="seg" role="group" aria-label="Kind" style={{ marginTop: 14 }}>
+          <div className="seg" role="group" aria-label={t('post.kind')} style={{ marginTop: 14 }}>
             {DIMEN_KINDS.map((k) => (
               <button
                 key={k.key}
@@ -255,7 +257,7 @@ export function PictureComposer({
                 disabled={busy}
                 onClick={() => setPostAs(k.postAs)}
               >
-                {k.label}
+                {t(k.labelKey)}
               </button>
             ))}
           </div>
@@ -265,8 +267,8 @@ export function PictureComposer({
             rows={2}
             value={caption}
             maxLength={MAX_CAPTION}
-            placeholder="Say something about it (optional)…"
-            aria-label="Caption"
+            placeholder={t('post.captionPlaceholder')}
+            aria-label={t('post.caption')}
             disabled={busy}
             onChange={(e) => setCaption(e.target.value)}
             style={{ marginTop: 12 }}
@@ -276,7 +278,7 @@ export function PictureComposer({
 
           <div className="comment-form-actions">
             <Button size="sm" onClick={() => void submit()} disabled={busy}>
-              {busy ? 'Posting…' : 'Post'}
+              {busy ? t('post.submitting') : t('post.submit')}
             </Button>
           </div>
         </>

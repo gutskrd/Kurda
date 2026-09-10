@@ -51,12 +51,12 @@ export function PostButton({ onPosted }: { onPosted: () => void }): React.JSX.El
             <div className="post-choice-row">
               <button type="button" className="post-choice-card" onClick={() => setChoice('words')}>
                 <FeatherIcon size={26} />
-                <span className="post-choice-name">Gotin</span>
+                <span className="post-choice-name">{t('civak.section.writing')}</span>
                 <span className="post-choice-sub">{t('post.words.sub')}</span>
               </button>
               <button type="button" className="post-choice-card" onClick={() => setChoice('picture')}>
                 <PhotoIcon size={26} />
-                <span className="post-choice-name">Dîmen</span>
+                <span className="post-choice-name">{t('civak.section.pictures')}</span>
                 <span className="post-choice-sub">{t('post.picture.sub')}</span>
               </button>
             </div>

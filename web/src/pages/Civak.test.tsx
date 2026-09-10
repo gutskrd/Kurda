@@ -82,9 +82,9 @@ describe('Civak', () => {
 
     // the kinds appear only once a half is chosen — Helbest is not a thing you
     // can ask for from the top level
-    expect(screen.queryByRole('button', { name: 'Only Helbest' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Show Gotin' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Only Helbest' }));
+    expect(screen.queryByRole('button', { name: 'Only Poem' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show Writing' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Only Poem' }));
 
     await waitFor(() =>
       expect(queries.some((q) => q.includes('section=gotin') && q.includes('kind=helbest'))).toBe(true),
@@ -96,8 +96,8 @@ describe('Civak', () => {
     // so /app/poems can simply redirect here and land somewhere meaningful
     renderApp(<Civak />, ['/app/civak?section=gotin&kind=helbest']);
     await waitFor(() => expect(queries[0]).toContain('kind=helbest'));
-    expect(screen.getByRole('button', { name: 'Show Gotin' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Only Helbest' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Show Writing' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Only Poem' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('drops a kind that does not belong to the half it is asked with', async () => {
@@ -170,31 +170,50 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
 
     expect(await screen.findByText('Jiyan bi kurdî xweştire.')).toBeInTheDocument();
-    // scoped to the card: 'Gotin' is also the name of the section filter above it
-    expect(within(screen.getByRole('article')).getByText('Gotin')).toBeInTheDocument();
+    // scoped to the card: 'Saying' also names a filter chip above it
+    expect(within(screen.getByRole('article')).getByText('Saying')).toBeInTheDocument();
   });
 
   /**
-   * The wall in another language.
+   * The wall in another language, section names and all.
    *
-   * Two things at once, and the second is the point: the ordinary words change,
-   * and the community's own words do not. "Gotin", "Çîrok", "Helbest", "Wêne",
-   * "Dîmen" are what these things are called here — translating them would be
-   * like translating "Civak" — so a Spanish reader gets Spanish scaffolding
-   * around the same Kurdish vocabulary.
+   * Civak, Gotin, Dîmen, Çîrok, Helbest, Wêne and Mîm are Kurdish words, and
+   * Kurdish is one of the eight languages this app is read in rather than a
+   * layer on top of the others. Somebody who chose Spanish gets Spanish;
+   * leaving the sections in a language they do not read would make the app
+   * harder to use, not more authentic.
    */
   describe('in another language', () => {
-    it('translates the wall around the words the community uses', async () => {
+    it('translates the sections, not only the words around them', async () => {
       localStorage.setItem('mykurda_locale', 'es');
       feedFetch([item('library:s1')]);
       renderApp(<Civak />, ['/app/civak']);
 
       expect(await screen.findByText('Relatos, poemas e imágenes de todo el mundo.')).toBeInTheDocument();
-      // the filter that is ordinary words is translated…
+      expect(screen.getByRole('heading', { name: 'Comunidad', level: 1 })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Mostrar Todo' })).toBeInTheDocument();
-      // …and the two that are this community's own are not
-      expect(screen.getByRole('button', { name: 'Mostrar Gotin' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Mostrar Dîmen' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Mostrar Escritos' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Mostrar Imágenes' })).toBeInTheDocument();
+    });
+
+    /** In Kurmancî those words ARE the translation, so they come back. */
+    it('keeps the Kurdish words for someone reading in Kurdish', async () => {
+      localStorage.setItem('mykurda_locale', 'ku');
+      feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      expect(await screen.findByRole('heading', { name: 'Civak', level: 1 })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Gotin nîşan bide' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Dîmen nîşan bide' })).toBeInTheDocument();
+    });
+
+    it('translates the badge on a card', async () => {
+      localStorage.setItem('mykurda_locale', 'fr');
+      feedFetch([item('library:p1', { kind: 'poem' })]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      await screen.findByText('Çîroka min');
+      expect(within(screen.getByRole('article')).getByText('Poème')).toBeInTheDocument();
     });
 
     it('translates the controls on a card', async () => {
@@ -216,11 +235,10 @@ describe('Civak', () => {
 
       await userEvent.click(await screen.findByRole('button', { name: 'Bir şey paylaş' }));
       expect(screen.getByText('Ne paylaşıyorsun?')).toBeInTheDocument();
-      // the two things you can post keep their names; the description explains.
-      // Scoped to the dialog: 'Gotin' also names the section filter behind it
+      // scoped to the dialog: the same two words also name the filters behind it
       const dialog = screen.getByRole('dialog');
-      expect(within(dialog).getByText('Gotin')).toBeInTheDocument();
-      expect(within(dialog).getByText('Dîmen')).toBeInTheDocument();
+      expect(within(dialog).getByText('Yazılar')).toBeInTheDocument();
+      expect(within(dialog).getByText('Görseller')).toBeInTheDocument();
       expect(within(dialog).getByText('Bir söz, bir hikâye ya da bir şiir')).toBeInTheDocument();
     });
   });

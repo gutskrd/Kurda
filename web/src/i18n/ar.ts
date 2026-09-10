@@ -7,7 +7,7 @@ import type { Catalogue } from './en';
  * file needs to know about direction; it is text like any other catalogue.
  */
 export const ar: Catalogue = {
-  'nav.civak': 'Civak',
+  'nav.civak': 'المجتمع',
   'nav.games': 'الألعاب',
   'nav.rankings': 'الترتيب',
   'nav.learn': 'تعلّم',
@@ -67,10 +67,7 @@ export const ar: Catalogue = {
   'settings.sessions.signOut': 'تسجيل الخروج',
   'settings.sessions.signOutEverywhere': 'تسجيل الخروج من كل مكان',
   'settings.data.title': 'بياناتك',
-  'settings.blocked.title': 'الأشخاص المحظورون',
-
-  'civak.eyebrow': 'المجتمع',
-  'civak.subtitle': 'قصص وقصائد وصور من الجميع.',
+  'settings.blocked.title': 'الأشخاص المحظورون',  'civak.subtitle': 'قصص وقصائد وصور من الجميع.',
   'civak.loading': 'جارٍ تحميل الحائط…',
   'civak.empty': 'لا يوجد شيء هنا بعد.',
   'civak.filter.show': 'عرض',
@@ -109,4 +106,14 @@ export const ar: Catalogue = {
   'post.submit': 'نشر',
   'post.submitting': 'جارٍ النشر…',
   'post.picture.open': 'انشر صورة',
+  'civak.title': 'المجتمع',
+  'civak.section.writing': 'كتابات',
+  'civak.section.pictures': 'صور',
+  'civak.kind.saying': 'قول',
+  'civak.kind.story': 'قصة',
+  'civak.kind.poem': 'قصيدة',
+  'civak.kind.photo': 'صورة',
+  'civak.kind.meme': 'ميم',
+  'post.caption': 'التعليق',
+  'post.captionPlaceholder': 'قل شيئاً عنها (اختياري)…',
 };

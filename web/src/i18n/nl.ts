@@ -2,7 +2,7 @@ import type { Catalogue } from './en';
 
 /** Dutch. */
 export const nl: Catalogue = {
-  'nav.civak': 'Civak',
+  'nav.civak': 'Gemeenschap',
   'nav.games': 'Spellen',
   'nav.rankings': 'Ranglijst',
   'nav.learn': 'Leren',
@@ -62,10 +62,7 @@ export const nl: Catalogue = {
   'settings.sessions.signOut': 'Uitloggen',
   'settings.sessions.signOutEverywhere': 'Overal uitloggen',
   'settings.data.title': 'Jouw gegevens',
-  'settings.blocked.title': 'Geblokkeerde personen',
-
-  'civak.eyebrow': 'Gemeenschap',
-  'civak.subtitle': 'Verhalen, gedichten en foto’s van iedereen.',
+  'settings.blocked.title': 'Geblokkeerde personen',  'civak.subtitle': 'Verhalen, gedichten en foto’s van iedereen.',
   'civak.loading': 'De muur wordt geladen…',
   'civak.empty': 'Hier is nog niets.',
   'civak.filter.show': 'Tonen',
@@ -104,4 +101,14 @@ export const nl: Catalogue = {
   'post.submit': 'Plaatsen',
   'post.submitting': 'Bezig met plaatsen…',
   'post.picture.open': 'Een foto plaatsen',
+  'civak.title': 'Gemeenschap',
+  'civak.section.writing': 'Teksten',
+  'civak.section.pictures': 'Beelden',
+  'civak.kind.saying': 'Gezegde',
+  'civak.kind.story': 'Verhaal',
+  'civak.kind.poem': 'Gedicht',
+  'civak.kind.photo': 'Foto',
+  'civak.kind.meme': 'Meme',
+  'post.caption': 'Bijschrift',
+  'post.captionPlaceholder': 'Zeg er iets over (optioneel)…',
 };

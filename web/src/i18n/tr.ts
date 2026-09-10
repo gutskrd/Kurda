@@ -2,7 +2,7 @@ import type { Catalogue } from './en';
 
 /** Turkish. */
 export const tr: Catalogue = {
-  'nav.civak': 'Civak',
+  'nav.civak': 'Topluluk',
   'nav.games': 'Oyunlar',
   'nav.rankings': 'Sıralama',
   'nav.learn': 'Öğren',
@@ -62,10 +62,7 @@ export const tr: Catalogue = {
   'settings.sessions.signOut': 'Çıkış yap',
   'settings.sessions.signOutEverywhere': 'Her yerde çıkış yap',
   'settings.data.title': 'Verilerin',
-  'settings.blocked.title': 'Engellenen kişiler',
-
-  'civak.eyebrow': 'Topluluk',
-  'civak.subtitle': 'Herkesten hikâyeler, şiirler ve resimler.',
+  'settings.blocked.title': 'Engellenen kişiler',  'civak.subtitle': 'Herkesten hikâyeler, şiirler ve resimler.',
   'civak.loading': 'Duvar yükleniyor…',
   'civak.empty': 'Burada henüz bir şey yok.',
   'civak.filter.show': 'Göster',
@@ -104,4 +101,14 @@ export const tr: Catalogue = {
   'post.submit': 'Paylaş',
   'post.submitting': 'Paylaşılıyor…',
   'post.picture.open': 'Bir resim paylaş',
+  'civak.title': 'Topluluk',
+  'civak.section.writing': 'Yazılar',
+  'civak.section.pictures': 'Görseller',
+  'civak.kind.saying': 'Söz',
+  'civak.kind.story': 'Hikâye',
+  'civak.kind.poem': 'Şiir',
+  'civak.kind.photo': 'Fotoğraf',
+  'civak.kind.meme': 'Caps',
+  'post.caption': 'Açıklama',
+  'post.captionPlaceholder': 'Bunun hakkında bir şey söyle (isteğe bağlı)…',
 };

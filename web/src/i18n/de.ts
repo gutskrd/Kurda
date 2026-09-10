@@ -2,7 +2,7 @@ import type { Catalogue } from './en';
 
 /** German. */
 export const de: Catalogue = {
-  'nav.civak': 'Civak',
+  'nav.civak': 'Gemeinschaft',
   'nav.games': 'Spiele',
   'nav.rankings': 'Rangliste',
   'nav.learn': 'Lernen',
@@ -62,10 +62,7 @@ export const de: Catalogue = {
   'settings.sessions.signOut': 'Abmelden',
   'settings.sessions.signOutEverywhere': 'Überall abmelden',
   'settings.data.title': 'Deine Daten',
-  'settings.blocked.title': 'Blockierte Personen',
-
-  'civak.eyebrow': 'Gemeinschaft',
-  'civak.subtitle': 'Geschichten, Gedichte und Bilder von allen.',
+  'settings.blocked.title': 'Blockierte Personen',  'civak.subtitle': 'Geschichten, Gedichte und Bilder von allen.',
   'civak.loading': 'Die Wand wird geladen…',
   'civak.empty': 'Hier ist noch nichts.',
   'civak.filter.show': 'Zeigen',
@@ -104,4 +101,14 @@ export const de: Catalogue = {
   'post.submit': 'Posten',
   'post.submitting': 'Wird gepostet…',
   'post.picture.open': 'Ein Bild posten',
+  'civak.title': 'Gemeinschaft',
+  'civak.section.writing': 'Texte',
+  'civak.section.pictures': 'Bilder',
+  'civak.kind.saying': 'Spruch',
+  'civak.kind.story': 'Geschichte',
+  'civak.kind.poem': 'Gedicht',
+  'civak.kind.photo': 'Foto',
+  'civak.kind.meme': 'Meme',
+  'post.caption': 'Bildunterschrift',
+  'post.captionPlaceholder': 'Sag etwas dazu (optional)…',
 };
