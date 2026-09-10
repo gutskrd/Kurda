@@ -64,7 +64,7 @@ function failureReason(path: string, res: ApiResult<unknown>, t: (key: MessageKe
   }
   const { kind, status, code, requestId } = res.error;
   console.error(`[profile] ${path} failed`, { kind, status, code, requestId });
-  return describeError(res.error);
+  return describeError(res.error, t);
 }
 
 /** Card body: fetches /me for your own profile, /users/:id for others. */

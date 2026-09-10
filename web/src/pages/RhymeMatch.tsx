@@ -79,7 +79,7 @@ function CreateMatch(): React.JSX.Element {
     const res = await client.post<MatchState>('/rhyme/matches', { dialect });
     setBusy(false);
     if (res.ok) navigate(`/app/games/rhyme-match?id=${res.data.id}`);
-    else setErr(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error));
+    else setErr(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error, t));
   }
 
   return (
@@ -123,7 +123,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       setRemaining(res.data.remainingMs);
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }, [client, id]);
 
@@ -169,7 +169,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       else setNotice(t(REJECT_KEY[result.reason ?? ''] ?? 'games.rhyme.reject.other'));
       inputRef.current?.focus();
     } else {
-      setNotice(res.error.code === 'NOT_ACTIVE' ? t('games.rhymeMatch.timeUpMatch') : describeError(res.error));
+      setNotice(res.error.code === 'NOT_ACTIVE' ? t('games.rhymeMatch.timeUpMatch') : describeError(res.error, t));
     }
   }
 
@@ -188,14 +188,14 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const res = await client.post<MatchState>(`/rhyme/matches/${id}/join`);
     setBusy(false);
     if (res.ok) setMatch(res.data);
-    else setNotice(describeError(res.error));
+    else setNotice(describeError(res.error, t));
   }
   async function start(): Promise<void> {
     setBusy(true);
     const res = await client.post<MatchState>(`/rhyme/matches/${id}/start`);
     setBusy(false);
     if (res.ok) setMatch(res.data);
-    else setNotice(describeError(res.error));
+    else setNotice(describeError(res.error, t));
   }
 
   if (error && !match) return <ErrorState message={error} onRetry={() => void load()} />;

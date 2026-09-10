@@ -9,6 +9,7 @@ import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { CoinIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
+import { useT } from '../i18n/I18nProvider';
 
 /** A catalog tile: the item plus whether the viewer already owns it. */
 interface Tile {
@@ -84,6 +85,7 @@ function tilesFor(cat: string, shop: ShopItem[], owned: Set<string>): Tile[] {
  */
 export function Shop(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const shop = useApiGet<{ items: ShopItem[] }>('/shop');
   const inventory = useApiGet<{ items: InventoryItem[] }>('/me/inventory');
   const wallet = useApiGet<{ balances: { zer: number } }>('/me/wallet');
@@ -119,43 +121,43 @@ export function Shop(): React.JSX.Element {
     setTimeout(() => setCelebrating((c) => (c === sku ? null : c)), 1100);
   }, []);
 
-  async function buy(t: Tile): Promise<void> {
-    if (busy || t.owned) return;
-    setBusy(t.sku);
+  async function buy(tile: Tile): Promise<void> {
+    if (busy || tile.owned) return;
+    setBusy(tile.sku);
     setMsg(null);
     const res = await client.post<PurchaseResult>('/shop/purchase', {
-      sku: t.sku,
+      sku: tile.sku,
       idempotencyKey: requestId(),
-      expectedPrice: t.price,
+      expectedPrice: tile.price,
     });
     setBusy(null);
     if (res.ok) {
       setZer(res.data.balance);
-      setBought((prev) => new Set(prev).add(t.sku));
-      celebrate(t.sku);
-      setMsg({ kind: 'ok', text: `${t.name} is yours. Equip it from Edit Profile.` });
+      setBought((prev) => new Set(prev).add(tile.sku));
+      celebrate(tile.sku);
+      setMsg({ kind: 'ok', text: `${tile.name} is yours. Equip it from Edit Profile.` });
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
-  async function gift(t: Tile, to: Friend): Promise<void> {
-    setBusy(t.sku);
+  async function gift(tile: Tile, to: Friend): Promise<void> {
+    setBusy(tile.sku);
     setMsg(null);
     const res = await client.post<{ balance: number }>('/shop/gift', {
-      sku: t.sku,
+      sku: tile.sku,
       toUserId: to.id,
       idempotencyKey: requestId(),
-      expectedPrice: t.price,
+      expectedPrice: tile.price,
     });
     setBusy(null);
     setGifting(null);
     if (res.ok) {
       setZer(res.data.balance);
-      celebrate(t.sku);
-      setMsg({ kind: 'ok', text: `${t.name} is on its way to ${to.username}.` });
+      celebrate(tile.sku);
+      setMsg({ kind: 'ok', text: `${tile.name} is on its way to ${to.username}.` });
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 

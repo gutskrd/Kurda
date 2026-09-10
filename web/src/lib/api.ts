@@ -1,6 +1,10 @@
 import { API_URL } from './config';
 import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
+import type { MessageKey } from '../i18n/en';
+
+/** Just enough of the i18n contract to write a sentence; no React in here. */
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * Browser API client for MyKurda. It follows the same protocol the mobile
@@ -205,25 +209,33 @@ export class ApiClient {
   }
 }
 
-/** Friendly, human copy for an ApiError — used by forms and error states. */
-export function describeError(error: ApiError): string {
+/**
+ * Friendly, human copy for an ApiError — used by forms and error states.
+ *
+ * `t` is required rather than optional on purpose. An optional one would leave
+ * every call site that forgot it quietly in English, which is exactly the kind
+ * of gap this is meant to close; required, the compiler names them all.
+ *
+ * The server's own message still comes through untranslated where it is more
+ * specific than anything here — a bad login says why. That is a gap the API
+ * would have to close, not this function.
+ */
+export function describeError(error: ApiError, t: Translate): string {
   switch (error.kind) {
     case 'network':
-      return 'Can’t reach MyKurda right now. Check your connection and try again.';
+      return t('error.offline');
     case 'rate_limited':
       return error.retryAfterSec
-        ? `Too many attempts. Try again in ${error.retryAfterSec}s.`
-        : 'Too many attempts. Please wait a moment and try again.';
+        ? t('error.tooManyRetryIn', { seconds: error.retryAfterSec })
+        : t('error.tooMany');
     case 'unauthorized':
       // a bad login carries the server's own message; only mid-session
       // refresh-failures fall back to the generic session-expired copy
-      return error.message && error.message !== 'session expired'
-        ? error.message
-        : 'Your session has expired. Please sign in again.';
+      return error.message && error.message !== 'session expired' ? error.message : t('error.sessionExpired');
     case 'server':
-      return 'Something went wrong on our end. Please try again shortly.';
+      return t('error.server');
     default:
-      return error.message || 'Something went wrong.';
+      return error.message || t('error.generic');
   }
 }
 

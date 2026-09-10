@@ -74,7 +74,7 @@ export function Race(): React.JSX.Element {
       setElapsed(0);
     } else {
       setGame(null);
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }, [client, difficulty]);
 
@@ -105,7 +105,7 @@ export function Race(): React.JSX.Element {
     const res = await client.post<RaceResult>(`/race/${game.id}/finish`, { typed });
     setBusy(false);
     if (res.ok) setResult(res.data);
-    else setError(describeError(res.error));
+    else setError(describeError(res.error, t));
   }, [client, game, typed]);
 
   // finishing the text ends the race on its own; nobody should have to notice

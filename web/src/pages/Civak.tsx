@@ -49,7 +49,7 @@ export function Civak(): React.JSX.Element {
       if (kind) query.set('kind', kind);
       const res = await client.get<{ items: FeedItem[] }>(`/feed?${query}`);
       if (!res.ok) {
-        setError(describeError(res.error));
+        setError(describeError(res.error, t));
         setItems([]);
         return;
       }

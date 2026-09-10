@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FavoriteRef, LibraryPost, MeProfile } from '../lib/types';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Favorite poem/story picker: browse the published library and pin one of each to
@@ -10,11 +11,12 @@ import type { FavoriteRef, LibraryPost, MeProfile } from '../lib/types';
  * published, so the client only sends a post id.
  */
 export function FavoritesPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
+  const t = useT();
   return (
     <section className="card" style={{ marginTop: 24 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Favorites</h2>
-      <FavoriteKind kind="poem" label="Favorite poem" initial={me.favoritePoem ?? null} onChanged={onChanged} />
-      <FavoriteKind kind="story" label="Favorite story" initial={me.favoriteStory ?? null} onChanged={onChanged} />
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('favorites.title')}</h2>
+      <FavoriteKind kind="poem" label={t('profile.favoritePoem')} initial={me.favoritePoem ?? null} onChanged={onChanged} />
+      <FavoriteKind kind="story" label={t('profile.favoriteStory')} initial={me.favoriteStory ?? null} onChanged={onChanged} />
     </section>
   );
 }
@@ -30,6 +32,7 @@ function FavoriteKind({
   initial: FavoriteRef | null;
   onChanged: () => void;
 }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [current, setCurrent] = useState<FavoriteRef | null>(initial);
   const [open, setOpen] = useState(false);
@@ -47,7 +50,7 @@ function FavoriteKind({
       const res = await client.get<{ posts: LibraryPost[] }>(`/library/posts?type=${kind}&limit=50`);
       setLoading(false);
       if (res.ok) setList(res.data.posts ?? []);
-      else setMsg({ kind: 'err', text: describeError(res.error) });
+      else setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
@@ -62,7 +65,7 @@ function FavoriteKind({
       setOpen(false);
       onChanged();
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
@@ -76,7 +79,7 @@ function FavoriteKind({
       setCurrent(null);
       onChanged();
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
@@ -85,16 +88,16 @@ function FavoriteKind({
       <div className="fav-row">
         <div className="fav-current">
           <span className="fav-label">{label}</span>
-          <span className="fav-value">{current ? current.title : <span className="muted">None</span>}</span>
+          <span className="fav-value">{current ? current.title : <span className="muted">{t('favorites.none')}</span>}</span>
         </div>
         <div className="fav-actions">
           {current && (
             <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void remove()}>
-              Remove
+              {t('groups.remove')}
             </button>
           )}
           <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void toggleBrowse()}>
-            {open ? 'Cancel' : 'Change'}
+            {open ? t('common.cancel') : t('favorites.change')}
           </button>
         </div>
       </div>
@@ -104,7 +107,9 @@ function FavoriteKind({
       {open && (
         <div className="fav-browse">
           {loading ? (
-            <p className="muted" style={{ margin: 0 }}>Loading {kind}s…</p>
+            <p className="muted" style={{ margin: 0 }}>
+              {kind === 'poem' ? t('favorites.loadingPoems') : t('favorites.loadingStories')}
+            </p>
           ) : list && list.length > 0 ? (
             <ul className="fav-options">
               {list.map((p) => (
@@ -121,7 +126,9 @@ function FavoriteKind({
               ))}
             </ul>
           ) : (
-            <p className="muted" style={{ margin: 0 }}>No published {kind}s yet.</p>
+            <p className="muted" style={{ margin: 0 }}>
+              {kind === 'poem' ? t('favorites.noPoems') : t('favorites.noStories')}
+            </p>
           )}
         </div>
       )}

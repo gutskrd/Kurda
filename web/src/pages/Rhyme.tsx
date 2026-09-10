@@ -62,7 +62,7 @@ export function Rhyme(): React.JSX.Element {
     } else if (res.error.code === 'EMPTY_LEXICON') {
       setEmptyLexicon(true);
     } else {
-      setLoadError(describeError(res.error));
+      setLoadError(describeError(res.error, t));
     }
   }, [client, dialect]);
 
@@ -109,7 +109,7 @@ export function Rhyme(): React.JSX.Element {
       }
       inputRef.current?.focus();
     } else {
-      setNotice(res.error.code === 'GAME_OVER' ? t('games.rhyme.timeUpRound') : describeError(res.error));
+      setNotice(res.error.code === 'GAME_OVER' ? t('games.rhyme.timeUpRound') : describeError(res.error, t));
     }
   }
 

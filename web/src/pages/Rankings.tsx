@@ -66,7 +66,7 @@ export function Rankings(): React.JSX.Element {
         // append on a later page; replace when the board or scope changed
         setEntries((prev) => (first ? res.data.top : [...prev, ...res.data.top]));
       } else {
-        setError(describeError(res.error));
+        setError(describeError(res.error, t));
       }
       setLoading(false);
       setLoadingMore(false);

@@ -30,7 +30,7 @@ export function UserProfile(): React.JSX.Element {
       const r = await client.get<PublicProfile>(`/users/${id}`);
       if (cancelled) return;
       if (r.ok && r.data?.username) setProfile(r.data);
-      else setError(r.ok ? t('profile.notLoaded') : describeError(r.error));
+      else setError(r.ok ? t('profile.notLoaded') : describeError(r.error, t));
       setLoading(false);
     })();
     return () => {

@@ -29,7 +29,7 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
     case 'GAME_OVER':
       return t('games.wordle.alreadyFinished');
     default:
-      return describeError(err);
+      return describeError(err, t);
   }
 }
 
@@ -55,7 +55,7 @@ export function Wordle(): React.JSX.Element {
     const res = await client.post<WordleGame>(`/wordle/${mode}`, { difficulty });
     if (res.ok) setGame(res.data);
     else if (res.error.code === 'EMPTY_POOL') setEmptyPool(true);
-    else setLoadError(describeError(res.error));
+    else setLoadError(describeError(res.error, t));
   }, [client, mode, difficulty]);
 
   useEffect(() => {

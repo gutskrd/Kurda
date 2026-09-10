@@ -158,7 +158,7 @@ export function PictureComposer({
       setError(
         up.error.code === 'MEDIA_UNAVAILABLE'
           ? 'Picture storage isn’t switched on yet — try again once it is.'
-          : describeError(up.error),
+          : describeError(up.error, t),
       );
       return;
     }
@@ -172,7 +172,7 @@ export function PictureComposer({
     if (made.ok) onDone(made.data);
     // the bytes are stored either way; only the post failed, so saying so beats
     // silently dropping them
-    else setError(describeError(made.error));
+    else setError(describeError(made.error, t));
   }
 
   const editable = file !== null && source !== null && imageRef.current !== null;

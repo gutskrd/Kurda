@@ -35,7 +35,7 @@ export function Quiz(): React.JSX.Element {
     const res = await client.post<MatchmakingResult>('/matchmaking/queue');
     setBusy(false);
     if (!res.ok) {
-      setNotice(describeError(res.error));
+      setNotice(describeError(res.error, t));
       return;
     }
     if (res.data.status === 'matched') {

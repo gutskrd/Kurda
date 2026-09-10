@@ -4,6 +4,7 @@ import { describeError } from '../lib/api';
 import type { ClaimResult, DailyRewardStatus, WalletBalances } from '../lib/types';
 import { Button } from './Button';
 import { CoinIcon } from './icons';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Daily Zêr reward — mirrors the mobile daily claim. Shows the Zêr balance and,
@@ -11,6 +12,7 @@ import { CoinIcon } from './icons';
  * server-authoritative — the client never sets the amount).
  */
 export function DailyReward(): React.JSX.Element | null {
+  const t = useT();
   const { client } = useAuth();
   const [status, setStatus] = useState<DailyRewardStatus | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -47,7 +49,7 @@ export function DailyReward(): React.JSX.Element | null {
       setStatus((s) => (s ? { ...s, canClaim: false, alreadyClaimedToday: true } : s));
       setMsg(`+${res.data.reward} Zêr claimed!`);
     } else {
-      setMsg(describeError(res.error));
+      setMsg(describeError(res.error, t));
     }
   }
 

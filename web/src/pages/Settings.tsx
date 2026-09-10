@@ -42,8 +42,8 @@ export function Settings(): React.JSX.Element {
   const navigate = useNavigate();
   const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me');
 
-  if (loading) return <Loading label="Loading settings…" />;
-  if (error || !data) return <ErrorState message={error ?? 'Unavailable.'} onRetry={reload} />;
+  if (loading) return <Loading label={t('settings.loading')} />;
+  if (error || !data) return <ErrorState message={error ?? t('settings.unavailable')} onRetry={reload} />;
 
   return (
     <div className="container container-narrow">
@@ -188,7 +188,7 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
     if (res.ok) setMsg(t('common.saved'));
     else {
       setVis(current);
-      setMsg(describeError(res.error));
+      setMsg(describeError(res.error, t));
     }
   }
 
@@ -225,10 +225,10 @@ function ExportData(): React.JSX.Element {
     <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.data.title')}</h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-        Request a copy of your MyKurda data. We’ll prepare it and email you when it’s ready.
+        {t('settings.data.help')}
       </p>
       {state === 'done' ? (
-        <div className="msg msg-success">Export requested — you’ll be notified when it’s ready.</div>
+        <div className="msg msg-success">{t('settings.data.requested')}</div>
       ) : (
         <Button
           variant="secondary"
@@ -238,16 +238,17 @@ function ExportData(): React.JSX.Element {
             void client.post('/me/export').then((r) => setState(r.ok ? 'done' : 'error'));
           }}
         >
-          {state === 'sending' ? 'Requesting…' : 'Request data export'}
+          {state === 'sending' ? t('settings.data.requesting') : t('settings.data.request')}
         </Button>
       )}
-      {state === 'error' && <div className="msg msg-error" style={{ marginTop: 10 }}>Couldn’t request the export.</div>}
+      {state === 'error' && <div className="msg msg-error" style={{ marginTop: 10 }}>{t('settings.data.failed')}</div>}
     </section>
   );
 }
 
 function DangerZone({ onDeleted }: { onDeleted: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -258,26 +259,26 @@ function DangerZone({ onDeleted }: { onDeleted: () => void }): React.JSX.Element
     const res = await client.delete<{ deletionScheduled: boolean; graceDays: number }>('/me');
     setBusy(false);
     if (res.ok) onDeleted();
-    else setError(describeError(res.error));
+    else setError(describeError(res.error, t));
   }
 
   return (
     <section className="card danger-card" style={{ marginTop: 20 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0, color: 'var(--danger)' }}>Delete account</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0, color: 'var(--danger)' }}>{t('settings.delete.title')}</h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-        Schedules your account for deletion after a grace period. Signing back in during that window cancels it.
+        {t('settings.delete.help')}
       </p>
       {error && <div className="msg msg-error">{error}</div>}
       {confirming ? (
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>Cancel</Button>
+          <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>{t('common.cancel')}</Button>
           <button type="button" className="btn btn-sm" style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }} onClick={del} disabled={busy}>
-            {busy ? 'Deleting…' : 'Yes, delete my account'}
+            {busy ? t('settings.delete.deleting') : t('settings.delete.confirm')}
           </button>
         </div>
       ) : (
         <button type="button" className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'color-mix(in srgb, var(--danger) 45%, var(--border-strong))' }} onClick={() => setConfirming(true)}>
-          Delete account
+          {t('settings.delete.title')}
         </button>
       )}
     </section>
