@@ -9,7 +9,7 @@ import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { BookmarkIcon } from '../components/icons';
 import { Loading, ErrorState } from '../components/states';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 
 /**
  * The signed-in user's own full profile — a read-only, MyKurda showcase. All
@@ -19,6 +19,7 @@ import { useT } from '../i18n/I18nProvider';
 export function Profile(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [zer, setZer] = useState<number | null>(null);
   const [friends, setFriends] = useState<UserSummary[]>([]);
@@ -83,7 +84,7 @@ export function Profile(): React.JSX.Element {
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
     online: true, // viewing your own profile → you're online
-    country: me.country ? { code: me.country, name: countryName(me.country) ?? me.country } : null,
+    country: me.country ? { code: me.country, name: countryName(me.country, locale) ?? me.country } : null,
   };
 
   return (

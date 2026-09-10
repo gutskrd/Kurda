@@ -93,9 +93,9 @@ export function Comments({
   }, [load]);
 
   return (
-    <section className="comments" aria-label="Comments">
+    <section className="comments" aria-label={t('comments.title')}>
       <h2 className="section-heading">
-        {count === 1 ? '1 comment' : `${count.toLocaleString()} comments`}
+        {count === 1 ? t('comments.countOne') : t('comments.count', { count: count.toLocaleString() })}
       </h2>
 
       {status === 'signedIn' ? (
@@ -104,10 +104,10 @@ export function Comments({
           surface={surface}
           onDone={load}
           onAdded={() => setCount((n) => n + 1)}
-          placeholder="Add a comment…"
+          placeholder={t('comments.add')}
         />
       ) : (
-        <p className="muted">Sign in to join the conversation.</p>
+        <p className="muted">{t('comments.signInToJoin')}</p>
       )}
 
       {error && <ErrorState message={error} onRetry={() => void load()} />}
@@ -115,7 +115,7 @@ export function Comments({
       {comments === null ? (
         <Loading />
       ) : comments.length === 0 ? (
-        <p className="muted comments-empty">No comments yet. Be the first to say something.</p>
+        <p className="muted comments-empty">{t('comments.empty')}</p>
       ) : (
         <ul className="comment-list">
           {comments.map((c) => (
@@ -149,6 +149,7 @@ function CommentNode({
   /** +1 for a comment added anywhere in this branch, -1 for one removed */
   onCountChange: (delta: number) => void;
 }): React.JSX.Element {
+  const t = useT();
   const { client, user, status } = useAuth();
   const [replying, setReplying] = useState(false);
   const [replies, setReplies] = useState<Comment[] | null>(null);
@@ -170,20 +171,20 @@ function CommentNode({
       <PostAuthor author={comment.author} at={comment.createdAt} size="sm" />
 
       <div className="comment-body">
-        {removed ? <em className="muted">This comment was removed.</em> : comment.body}
+        {removed ? <em className="muted">{t('comments.removed')}</em> : comment.body}
       </div>
 
       <div className="comment-actions">
         {status === 'signedIn' && !removed && (
           <button type="button" className="link-button" onClick={() => setReplying((v) => !v)}>
-            {replying ? 'Cancel' : 'Reply'}
+            {replying ? t('common.cancel') : t('comments.reply')}
           </button>
         )}
         {mine && !removed && (
           <ConfirmButton
             className="link-button danger"
-            label="Delete"
-            title="Delete this comment"
+            label={t('comments.delete')}
+            title={t('comments.deleteThis')}
             onConfirm={async () => {
               const res = await client.delete(ROUTES[surface].one(comment.id));
               if (res.ok) onCountChange(-1);
@@ -195,8 +196,10 @@ function CommentNode({
         {comment.replyCount > 0 && replies === null && (
           <button type="button" className="link-button" onClick={() => void loadReplies()} disabled={loading}>
             {loading
-              ? 'Loading…'
-              : `Show ${comment.replyCount} ${comment.replyCount === 1 ? 'reply' : 'replies'}`}
+              ? t('common.loading')
+              : comment.replyCount === 1
+                ? t('comments.showOneReply')
+                : t('comments.showReplies', { count: comment.replyCount })}
           </button>
         )}
       </div>
@@ -207,7 +210,7 @@ function CommentNode({
           surface={surface}
           parentId={comment.id}
           onAdded={() => onCountChange(1)}
-          placeholder={`Reply to ${comment.author.username}…`}
+          placeholder={t('comments.replyTo', { name: comment.author.username })}
           onDone={async () => {
             setReplying(false);
             // show the branch this reply just joined, rather than leaving the
@@ -293,7 +296,7 @@ function CommentForm({
       {error && <div className="msg msg-error">{error}</div>}
       <div className="comment-form-actions">
         <Button type="submit" size="sm" disabled={busy || body.trim().length === 0}>
-          {busy ? 'Posting…' : parentId ? 'Reply' : 'Comment'}
+          {busy ? t('comments.posting') : parentId ? t('comments.reply') : t('comments.submit')}
         </Button>
       </div>
     </form>

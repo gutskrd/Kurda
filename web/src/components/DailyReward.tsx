@@ -47,7 +47,7 @@ export function DailyReward(): React.JSX.Element | null {
     if (res.ok) {
       setBalance(res.data.balance);
       setStatus((s) => (s ? { ...s, canClaim: false, alreadyClaimedToday: true } : s));
-      setMsg(`+${res.data.reward} Zêr claimed!`);
+      setMsg(t('daily.claimed', { amount: res.data.reward }));
     } else {
       setMsg(describeError(res.error, t));
     }
@@ -70,18 +70,18 @@ export function DailyReward(): React.JSX.Element | null {
           </div>
           <div className="zer-sub">
             {canClaim
-              ? `Day ${status?.claimableDay} reward: +${status?.reward} Zêr`
-              : 'Come back tomorrow for more Zêr.'}
+              ? t('daily.dayReward', { day: status?.claimableDay ?? 1, amount: status?.reward ?? 0 })
+              : t('daily.comeBack')}
           </div>
         </div>
       </div>
       <div className="zer-action">
         {canClaim ? (
           <Button onClick={claim} disabled={busy}>
-            {busy ? 'Claiming…' : 'Claim daily Zêr'}
+            {busy ? t('daily.claiming') : t('daily.claim')}
           </Button>
         ) : (
-          <span className="badge badge-gold">Claimed today</span>
+          <span className="badge badge-gold">{t('daily.claimedToday')}</span>
         )}
       </div>
       {msg && (

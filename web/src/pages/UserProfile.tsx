@@ -10,13 +10,14 @@ import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 
 /** Another user's full MyKurda profile (/app/users/:id), privacy-gated. */
 export function UserProfile(): React.JSX.Element {
   const { id = '' } = useParams();
   const { client } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,9 @@ export function UserProfile(): React.JSX.Element {
     favPoem: profile.favoritePoem ?? null,
     favStory: profile.favoriteStory ?? null,
     online: profile.online ?? false,
-    country: profile.country ? { code: profile.country, name: countryName(profile.country) ?? profile.country } : null,
+    country: profile.country
+      ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country }
+      : null,
   };
 
   return (

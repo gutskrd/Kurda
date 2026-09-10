@@ -5,7 +5,7 @@ import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import type { AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
-import { COUNTRIES } from '../lib/countries';
+import { countriesIn } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { ProfilePhotoPicker } from '../profile/ProfilePhotoPicker';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
@@ -13,7 +13,7 @@ import { SectionToggles } from '../profile/SectionToggles';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 
 /**
  * Dedicated Edit Profile page (/app/profile/edit). ALL profile customization
@@ -81,6 +81,7 @@ export function ProfileEdit(): React.JSX.Element {
 /** Display name + bio. */
 function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => void }): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const { client } = useAuth();
   const [displayName, setDisplayName] = useState(me.displayName ?? '');
   const [bio, setBio] = useState(me.bio ?? '');
@@ -125,7 +126,11 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
         <label className="field-label" htmlFor="country">{t('edit.country')}</label>
         <select id="country" className="input" value={country} onChange={(e) => setCountry(e.target.value)}>
           <option value="">{t('edit.noCountry')}</option>
-          {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+          {countriesIn(locale).map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
         </select>
       </div>
       <Button type="submit" disabled={busy || !dirty}>{busy ? t('edit.saving') : t('edit.saveChanges')}</Button>

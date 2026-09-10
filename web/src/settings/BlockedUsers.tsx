@@ -121,10 +121,10 @@ export function BlockedUsers(): React.JSX.Element {
       {error && <div className="msg msg-error" style={{ marginBottom: 12 }}>{error}</div>}
 
       {state === 'loading' ? (
-        <Loading label="Loading your blocklist…" />
+        <Loading label={t('settings.blocked.loading')} />
       ) : state === 'error' ? (
         <Button variant="secondary" size="sm" onClick={() => void load(0)}>
-          Try again
+          {t('common.retry')}
         </Button>
       ) : list.length === 0 ? (
         <p className="field-hint" style={{ marginBottom: 0 }}>
@@ -144,9 +144,9 @@ export function BlockedUsers(): React.JSX.Element {
                 </span>
                 <ConfirmButton
                   className="btn btn-secondary btn-sm"
-                  label="Unblock"
-                  busyLabel="Unblocking…"
-                  title={`Unblock ${u.displayName || u.username}`}
+                  label={t('settings.blocked.unblock')}
+                  busyLabel={t('settings.blocked.unblocking')}
+                  title={t('settings.blocked.unblockWho', { name: u.displayName || u.username })}
                   onConfirm={() => unblock(u)}
                 />
               </li>
@@ -156,7 +156,7 @@ export function BlockedUsers(): React.JSX.Element {
           {list.length < total && (
             <div style={{ marginTop: 12 }}>
               <Button variant="secondary" size="sm" disabled={loadingMore} onClick={() => void more()}>
-                {loadingMore ? 'Loading…' : `Show more (${total - list.length})`}
+                {loadingMore ? t('common.loading') : t('common.showMoreCount', { count: total - list.length })}
               </Button>
             </div>
           )}
