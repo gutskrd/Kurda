@@ -10,6 +10,7 @@ import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
 import { requireAuth } from '../plugins/auth.js';
+import { APP_LOCALE_CODES } from '@kurda/shared';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
 function assertPasswordPolicy(password: string): void {
@@ -31,7 +32,9 @@ export const registerBodySchema = z.object({
   username: z.string().min(3).max(30),
   password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
   displayName: z.string().min(1).max(60).optional(),
-  locale: z.enum(['en', 'ku', 'de', 'tr', 'ar']).optional(),
+  /* every language the interface is offered in — one list, so the picker
+       cannot offer something the server would refuse */
+    locale: z.enum(APP_LOCALE_CODES).optional(),
   timezone: z.string().max(50).optional(),
   deviceName: z.string().max(80).optional(),
   captchaToken: z.string().max(3_000).optional(),

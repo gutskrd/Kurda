@@ -36,6 +36,8 @@ import { NotFound } from './pages/NotFound';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
+import { I18nProvider } from './i18n/I18nProvider';
+import { AccountLocale } from './i18n/AccountLocale';
 
 /** Keep signed-in users out of the sign-in / sign-up pages. */
 function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -64,6 +66,11 @@ function CivakMoved(): React.JSX.Element {
 export function App(): React.JSX.Element {
   return (
     <AuthProvider>
+      {/* outside the router and above everything: what language the buttons are
+          in is not a property of which page you are on */}
+      <I18nProvider>
+      {/* inside the auth provider, because it reads the signed-in account */}
+      <AccountLocale />
       <RealtimeProvider>
       <BrowserRouter>
         <ProfileModalProvider>
@@ -170,6 +177,7 @@ export function App(): React.JSX.Element {
         </ProfileModalProvider>
       </BrowserRouter>
       </RealtimeProvider>
+      </I18nProvider>
     </AuthProvider>
   );
 }

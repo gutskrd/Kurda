@@ -1,0 +1,73 @@
+import type { Catalogue } from './en';
+
+/**
+ * Kurmancî (Latin script).
+ *
+ * The app's own language, and the one where the wording matters most — these
+ * are the words the community uses for these things, not translations of
+ * English ones. "Civak" and "Yarî" were already in the interface before it was
+ * translated at all.
+ */
+export const ku: Catalogue = {
+  'nav.civak': 'Civak',
+  'nav.games': 'Yarî',
+  'nav.rankings': 'Rêzbendî',
+  'nav.learn': 'Fêrbûn',
+  'nav.friends': 'Heval',
+  'nav.messages': 'Peyam',
+  'nav.shop': 'Firoşgeh',
+  'nav.settings': 'Mîheng',
+  'nav.login': 'Têkeve',
+  'nav.register': 'Dest pê bike',
+  'nav.menu': 'Menû',
+  'nav.close': 'Bigire',
+  'nav.skipToContent': 'Biçe naverokê',
+
+  'common.loading': 'Tê barkirin…',
+  'common.retry': 'Dîsa biceribîne',
+  'common.cancel': 'Betal bike',
+  'common.save': 'Tomar bike',
+  'common.saved': 'Hate tomarkirin.',
+  'common.somethingWentWrong': 'Tiştek çewt çû. Ji kerema xwe dîsa biceribîne.',
+  'common.showMore': 'Bêtir nîşan bide',
+  'common.close': 'Bigire',
+
+  'auth.login.title': 'Bi xêr hatî',
+  'auth.login.subtitle': 'Têkeve da ku fêrbûnê bidomînî.',
+  'auth.login.submit': 'Têkeve',
+  'auth.login.submitting': 'Tê ketin…',
+  'auth.login.noAccount': 'Hîn ajimêrê te tune?',
+  'auth.login.forgot': 'Şîfreya xwe ji bîr kir?',
+  'auth.register.title': 'Ajimêrê xwe çêke',
+  'auth.register.subtitle': 'Çend agahî, û tu tê de yî.',
+  'auth.register.submit': 'Ajimêr çêke',
+  'auth.register.submitting': 'Tê çêkirin…',
+  'auth.register.haveAccount': 'Berê ajimêrê te heye?',
+  'auth.email': 'E-name',
+  'auth.username': 'Navê bikarhêner',
+  'auth.password': 'Şîfre',
+  'auth.showPassword': 'Şîfreyê nîşan bide',
+  'auth.hidePassword': 'Şîfreyê veşêre',
+
+  'language.label': 'Ziman',
+  'language.chooseHelp': 'Tu dikarî vê her dem di Mîhengan de biguherînî.',
+  'language.settingsTitle': 'Ziman',
+  'language.settingsHelp':
+    'MyKurda bi kîjan zimanî bi te re dipeyive. Ew bi ajimêrê te ve girêdayî ye, loma li ser her cîhazê wek hev e.',
+  'language.saving': 'Tê tomarkirin…',
+  'language.savedTo': 'MyKurda niha bi {language} e.',
+  'language.failed': 'Ew ziman nehate tomarkirin. Ji kerema xwe dîsa biceribîne.',
+  'language.partial':
+    'Hin beşên MyKurda hîn tenê bi Îngilîzî ne. Ew jî dê werin wergerandin.',
+
+  'settings.title': 'Mîheng',
+  'settings.eyebrow': 'Ajimêr',
+  'settings.privacy.title': 'Xuyabûna profîlê',
+  'settings.privacy.help': 'Kî dikare profîla te bibîne.',
+  'settings.sessions.title': 'Danişîn',
+  'settings.sessions.help': 'Li vir derkeve, an jî li ser hemû cîhazan bi carekê.',
+  'settings.sessions.signOut': 'Derkeve',
+  'settings.sessions.signOutEverywhere': 'Li her derê derkeve',
+  'settings.data.title': 'Daneyên te',
+  'settings.blocked.title': 'Kesên astengkirî',
+};

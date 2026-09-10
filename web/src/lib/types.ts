@@ -32,6 +32,8 @@ export interface SessionUser {
   emailVerified: boolean;
   /** resolved avatar (populated by /me; absent right after login until refresh) */
   avatarUrl?: string | null;
+  /** the interface language this account chose; absent on older responses */
+  locale?: string | null;
 }
 
 export interface AuthPayload {

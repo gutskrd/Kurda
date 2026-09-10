@@ -7,6 +7,9 @@ import type { MeProfile } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
+import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
+import { useI18n, useT } from '../i18n/I18nProvider';
+import { LanguagePicker } from '../i18n/LanguagePicker';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
@@ -47,6 +50,10 @@ export function Settings(): React.JSX.Element {
         <span className="eyebrow">Mîheng · Account</span>
         <h1 className="page-title">Settings</h1>
       </div>
+
+      {/* first, because it is the setting that decides how everything else on
+          this page reads */}
+      <Language current={data.user.locale} />
 
       <Privacy current={data.user.profileVisibility} />
 
@@ -95,6 +102,72 @@ export function Settings(): React.JSX.Element {
         }}
       />
     </div>
+  );
+}
+
+/**
+ * The language MyKurda speaks to you in.
+ *
+ * Applied the moment it is chosen and saved to the account in the background,
+ * rather than the other way round: waiting for a round trip before the buttons
+ * change would make choosing a language feel broken on a slow connection, and
+ * the change is trivially reversible if the save fails.
+ *
+ * It is stored on the account rather than only in this browser so that it
+ * follows you — signing in on a borrowed laptop should not mean choosing again.
+ */
+function Language({ current }: { current?: string | null }): React.JSX.Element {
+  const { client, refreshUser } = useAuth();
+  const { locale, setLocale } = useI18n();
+  const t = useT();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const chosen = isAppLocale(current) ? current : locale;
+
+  async function change(next: AppLocale): Promise<void> {
+    const previous = locale;
+    setLocale(next);
+    setBusy(true);
+    setFailed(false);
+    const res = await client.request('PATCH', '/me', { body: { locale: next } });
+    setBusy(false);
+    if (res.ok) {
+      // so /me carries the new value if this page is revisited
+      await refreshUser();
+      return;
+    }
+    // put it back rather than leaving the interface in a language the account
+    // does not actually have — the next reload would undo it anyway
+    setLocale(previous);
+    setFailed(true);
+  }
+
+  const name = APP_LOCALES.find((l) => l.code === locale)?.nativeName ?? locale;
+
+  return (
+    <section className="card">
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>
+        {t('language.settingsTitle')}
+      </h2>
+      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+        {t('language.settingsHelp')}
+      </p>
+      <LanguagePicker value={chosen} onChange={(next) => void change(next)} busy={busy} />
+      {failed ? (
+        <div className="msg msg-error" style={{ marginTop: 10 }}>
+          {t('language.failed')}
+        </div>
+      ) : (
+        !busy && <p className="field-hint">{t('language.savedTo', { language: name })}</p>
+      )}
+      {/*
+        Said plainly rather than discovered. Only part of the interface is
+        translated so far, and a person who picks Kurdish and then meets an
+        English screen should know that is a gap being filled, not a bug.
+      */}
+      {locale !== 'en' && <p className="field-hint">{t('language.partial')}</p>}
+    </section>
   );
 }
 

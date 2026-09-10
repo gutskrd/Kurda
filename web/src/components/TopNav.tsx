@@ -11,6 +11,7 @@ import { Avatar } from './Avatar';
 import { LevelRing } from '../profile/LevelRing';
 import { useProfileModal } from '../profile/ProfileModal';
 import { RailToggle } from '../social/RailToggle';
+import { useT } from '../i18n/I18nProvider';
 
 export interface NavItem {
   label: string;
@@ -51,6 +52,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   const { status } = useAuth();
   const [open, setOpen] = useState(false);
   const { unreadTotal } = useMessages();
+  const t = useT();
   const unopenedGifts = useUnseenGifts();
   const signedIn = status === 'signedIn';
 
@@ -93,13 +95,13 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
             <li className="nav-mobile-actions">
               {signedIn ? (
                 <>
-                  <NavLink to={SHOP} className="nav-link" onClick={close}>Shop</NavLink>
-                  <NavLink to="/app/settings" className="nav-link" onClick={close}>Settings</NavLink>
+                  <NavLink to={SHOP} className="nav-link" onClick={close}>{t('nav.shop')}</NavLink>
+                  <NavLink to="/app/settings" className="nav-link" onClick={close}>{t('nav.settings')}</NavLink>
                 </>
               ) : (
                 <>
-                  <NavLink to="/login" className="nav-link" onClick={close}>Log in</NavLink>
-                  <NavLink to="/register" className="nav-link" onClick={close}>Get started</NavLink>
+                  <NavLink to="/login" className="nav-link" onClick={close}>{t('nav.login')}</NavLink>
+                  <NavLink to="/register" className="nav-link" onClick={close}>{t('nav.register')}</NavLink>
                 </>
               )}
             </li>

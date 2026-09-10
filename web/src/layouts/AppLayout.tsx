@@ -4,6 +4,21 @@ import { TopNav, type NavItem } from '../components/TopNav';
 import { BookIcon, ChatsIcon, GameIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
+
+/**
+ * A nav entry before it has words.
+ *
+ * The label is a key, resolved at render time rather than stored: these arrays
+ * are built once when the module loads, so a label baked in here would keep the
+ * language the app happened to start in even after somebody changed it.
+ */
+interface NavEntry {
+  key: MessageKey;
+  to: string;
+  icon: React.ReactNode;
+}
 
 /**
  * What anyone can reach, signed in or not.
@@ -12,17 +27,17 @@ import { RailProvider } from '../social/RailProvider';
  * same room: Home was a page of tiles, one of which said "Civak", above a
  * preview of Civak. The wall is the front page now, so this is the front page.
  */
-const OPEN_LINKS: NavItem[] = [
-  { label: 'Civak', to: '/app', icon: <WallIcon size={18} /> },
-  { label: 'Games', to: '/app/games', icon: <GameIcon size={18} /> },
-  { label: 'Rankings', to: '/app/rankings', icon: <TrophyIcon size={18} /> },
+const OPEN_LINKS: NavEntry[] = [
+  { key: 'nav.civak', to: '/app', icon: <WallIcon size={18} /> },
+  { key: 'nav.games', to: '/app/games', icon: <GameIcon size={18} /> },
+  { key: 'nav.rankings', to: '/app/rankings', icon: <TrophyIcon size={18} /> },
 ];
 
 /** What only an account can. */
-const MEMBER_LINKS: NavItem[] = [
-  { label: 'Learn', to: '/app/learn', icon: <BookIcon size={18} /> },
-  { label: 'Friends', to: '/app/friends', icon: <UsersIcon size={18} /> },
-  { label: 'Messages', to: '/app/messages', icon: <ChatsIcon size={18} /> },
+const MEMBER_LINKS: NavEntry[] = [
+  { key: 'nav.learn', to: '/app/learn', icon: <BookIcon size={18} /> },
+  { key: 'nav.friends', to: '/app/friends', icon: <UsersIcon size={18} /> },
+  { key: 'nav.messages', to: '/app/messages', icon: <ChatsIcon size={18} /> },
 ];
 
 /**
@@ -34,12 +49,14 @@ const MEMBER_LINKS: NavItem[] = [
  */
 export function AppLayout(): React.JSX.Element {
   const { status } = useAuth();
-  const links = status === 'signedIn' ? [...OPEN_LINKS, ...MEMBER_LINKS] : OPEN_LINKS;
+  const t = useT();
+  const entries = status === 'signedIn' ? [...OPEN_LINKS, ...MEMBER_LINKS] : OPEN_LINKS;
+  const links: NavItem[] = entries.map((e) => ({ label: t(e.key), to: e.to, icon: e.icon }));
 
   return (
     <RailProvider>
       <a href="#main" className="skip-link">
-        Skip to content
+        {t('nav.skipToContent')}
       </a>
       <TopNav links={links} />
       <main id="main" className="app-main">
