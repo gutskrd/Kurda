@@ -14,7 +14,20 @@
  * language is looking for the word they call it, not the English name for it.
  */
 export const APP_LOCALES = [
-  { code: 'ku', nativeName: 'Kurdî', englishName: 'Kurdish', dir: 'ltr' },
+  /*
+   * Both Kurdish varieties, together at the top, because they are two ways of
+   * writing the same language rather than one language and a dialect of it:
+   * Kurmancî in Latin script, Soranî in Arabic script and right to left. A
+   * Soranî reader offered only Kurmancî is being offered a script they may not
+   * read at all.
+   *
+   * `ku` is Kurmancî here rather than the macrolanguage, because that is what
+   * the accounts that already carry it chose; Soranî takes its own ISO code
+   * rather than displacing them. Each is labelled with the variety as well as
+   * the language, or the two rows read as the same choice twice.
+   */
+  { code: 'ku', nativeName: 'Kurdî (Kurmancî)', englishName: 'Kurdish (Kurmanji)', dir: 'ltr' },
+  { code: 'ckb', nativeName: 'کوردی (سۆرانی)', englishName: 'Kurdish (Sorani)', dir: 'rtl' },
   { code: 'en', nativeName: 'English', englishName: 'English', dir: 'ltr' },
   { code: 'nl', nativeName: 'Nederlands', englishName: 'Dutch', dir: 'ltr' },
   { code: 'de', nativeName: 'Deutsch', englishName: 'German', dir: 'ltr' },

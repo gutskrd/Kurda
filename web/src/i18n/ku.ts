@@ -5,12 +5,11 @@ import type { Catalogue } from './en';
  *
  * The app's own language, and the one where the wording matters most — these
  * are the words the community uses for these things, not translations of
- * English ones. "Civak" and "Yarî" were already in the interface before it was
- * translated at all.
+ * English ones.
  */
 export const ku: Catalogue = {
   'nav.civak': 'Civak',
-  'nav.games': 'Yarî',
+  'nav.games': 'Lîstik',
   'nav.rankings': 'Rêzbendî',
   'nav.learn': 'Fêrbûn',
   'nav.friends': 'Heval',
@@ -118,7 +117,7 @@ export const ku: Catalogue = {
   'civak.kind.meme': 'Mîm',
   'post.caption': 'Şirove',
   'post.captionPlaceholder': 'Tiştek li ser bibêje (bijarte)…',
-  'games.title': 'Yarî',
+  'games.title': 'Lîstik',
   'games.eyebrow': 'Bi lîstinê fêr bibe',
   'games.subtitle': 'Temrîna ku wek temrînê nayê hîskirin. Her yarî li ser rajekar tê hesibandin, loma rêzbendî dadperwer dimîne.',
   'games.playable': 'Tê lîstin',

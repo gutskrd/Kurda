@@ -6,6 +6,7 @@ import { I18nProvider, useI18n, useT } from './I18nProvider';
 import { LanguagePicker } from './LanguagePicker';
 import { en } from './en';
 import { ku } from './ku';
+import { ckb } from './ckb';
 import { nl } from './nl';
 import { de } from './de';
 import { es } from './es';
@@ -20,7 +21,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const CATALOGUES = { ku, nl, de, es, fr, tr, ar };
+const CATALOGUES = { ku, ckb, nl, de, es, fr, tr, ar };
 
 function Probe(): React.JSX.Element {
   const { locale, setLocale } = useI18n();
@@ -112,7 +113,7 @@ describe('choosing a language', () => {
     show();
     await userEvent.selectOptions(screen.getByRole('combobox'), 'ku');
 
-    expect(screen.getByTestId('games')).toHaveTextContent('Yarî');
+    expect(screen.getByTestId('games')).toHaveTextContent('Lîstik');
     expect(screen.getByTestId('vars')).toHaveTextContent('MyKurda niha bi Kurdî e.');
     expect(localStorage.getItem('mykurda_locale')).toBe('ku');
   });
@@ -162,6 +163,44 @@ describe('choosing a language', () => {
     });
     // it applies for this session even though it cannot be remembered
     expect(screen.getByTestId('games')).toHaveTextContent('Spellen');
+  });
+
+  /**
+   * Kurdish is offered twice, and it has to be: Kurmancî is written in Latin
+   * script and Soranî in Arabic, so a Soranî reader offered only Kurmancî is
+   * being offered a script they may not read at all. They sit together at the
+   * top of the list, and each says which variety it is — two rows both reading
+   * "Kurdî" would be the same choice twice.
+   */
+  it('offers both Kurdish varieties, together, at the top', () => {
+    show();
+    const options = screen.getAllByRole('option') as HTMLOptionElement[];
+
+    expect(options[0]!.value).toBe('ku');
+    expect(options[1]!.value).toBe('ckb');
+    expect(options[0]).toHaveTextContent('Kurmancî');
+    expect(options[1]).toHaveTextContent('سۆرانی');
+  });
+
+  it('runs Soranî right to left and Kurmancî left to right', async () => {
+    show();
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'ckb');
+    expect(document.documentElement.lang).toBe('ckb');
+    expect(document.documentElement.dir).toBe('rtl');
+
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'ku');
+    expect(document.documentElement.lang).toBe('ku');
+    expect(document.documentElement.dir).toBe('ltr');
+  });
+
+  /** They are two languages here, not one with a switch: different words. */
+  it('gives the two varieties their own words', async () => {
+    show();
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'ku');
+    expect(screen.getByTestId('games')).toHaveTextContent('Lîstik');
+
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'ckb');
+    expect(screen.getByTestId('games')).toHaveTextContent('یاری');
   });
 
   it('names each language in its own language, and says so to a screen reader', () => {
