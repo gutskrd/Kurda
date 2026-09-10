@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { typingLabel, useTypingSignal, useTypingWatch } from './useTyping';
+import { englishOnly as t, translator } from '../i18n/I18nProvider';
+import { de } from '../i18n/de';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -87,9 +89,21 @@ describe('useTypingWatch', () => {
 
 describe('typingLabel', () => {
   it('reads naturally for one, two, or a crowd', () => {
-    expect(typingLabel([])).toBe('');
-    expect(typingLabel(['zana'])).toBe('zana is typing…');
-    expect(typingLabel(['zana', 'rojîn'])).toBe('zana and rojîn are typing…');
-    expect(typingLabel(['zana', 'rojîn', 'şevîn'])).toBe('3 people are typing…');
+    expect(typingLabel([], t)).toBe('');
+    expect(typingLabel(['zana'], t)).toBe('zana is typing…');
+    expect(typingLabel(['zana', 'rojîn'], t)).toBe('zana and rojîn are typing…');
+    expect(typingLabel(['zana', 'rojîn', 'şevîn'], t)).toBe('3 people are typing…');
+  });
+
+  /**
+   * Each shape is a whole sentence in the catalogue rather than a name with
+   * " is typing…" stuck on the end, because where "and" goes and how the verb
+   * agrees are not the same question in every language.
+   */
+  it('reads naturally in another language too', () => {
+    const german = translator(de);
+    expect(typingLabel(['zana'], german)).toBe('zana schreibt…');
+    expect(typingLabel(['zana', 'rojîn'], german)).toBe('zana und rojîn schreiben…');
+    expect(typingLabel(['zana', 'rojîn', 'şevîn'], german)).toBe('3 Leute schreiben…');
   });
 });

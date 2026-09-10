@@ -73,6 +73,8 @@ export interface DayLabelWords {
   locale?: string;
   today?: string;
   yesterday?: string;
+  /** the heading for a message whose timestamp will not parse */
+  earlier?: string;
 }
 
 export function dayLabel(date: Date, now = new Date(), words: DayLabelWords = {}): string {
@@ -89,11 +91,17 @@ export function dayLabel(date: Date, now = new Date(), words: DayLabelWords = {}
   });
 }
 
-/** Clock time on a message, e.g. "14:05" — locale decides 12h vs 24h. */
-export function timeLabel(iso: string): string {
+/**
+ * Clock time on a message, e.g. "14:05" — the locale decides 12h vs 24h.
+ *
+ * `undefined` means the browser's own, which is the right answer only for a
+ * caller that has no language of its own to offer: an app set to German should
+ * show 14:05 even in a browser configured for American English.
+ */
+export function timeLabel(iso: string, locale?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 /**
@@ -104,7 +112,11 @@ export function timeLabel(iso: string): string {
  * into a neighbouring run — better a stray single bubble than a message silently
  * filed under the wrong day.
  */
-export function groupMessages<T extends Groupable>(messages: readonly T[], now = new Date()): DaySection<T>[] {
+export function groupMessages<T extends Groupable>(
+  messages: readonly T[],
+  now = new Date(),
+  words: DayLabelWords = {},
+): DaySection<T>[] {
   const sections: DaySection<T>[] = [];
   let lastAt: number | null = null;
 
@@ -115,7 +127,7 @@ export function groupMessages<T extends Groupable>(messages: readonly T[], now =
 
     let section = sections[sections.length - 1];
     if (!section || section.day !== day) {
-      section = { day, label: valid ? dayLabel(at, now) : 'Earlier', runs: [] };
+      section = { day, label: valid ? dayLabel(at, now, words) : (words.earlier ?? 'Earlier'), runs: [] };
       sections.push(section);
       lastAt = null; // a new day always starts a new run
     }

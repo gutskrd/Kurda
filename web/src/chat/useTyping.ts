@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MessageKey } from '../i18n/en';
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * The two halves of a typing indicator.
@@ -65,10 +68,17 @@ export function useTypingWatch(): { typing: string[]; note: (name: string) => vo
   return { typing, note };
 }
 
-/** "zana is typing…", "zana and rojîn are typing…", "3 people are typing…" */
-export function typingLabel(names: readonly string[]): string {
+/**
+ * "zana is typing…", "zana and rojîn are typing…", "3 people are typing…"
+ *
+ * Three whole sentences rather than one built from parts: "and" sits between
+ * the two names in English and after both of them in some languages, and the
+ * verb agrees with the count. A sentence assembled from fragments here could
+ * not survive translation, so each shape is its own key.
+ */
+export function typingLabel(names: readonly string[], t: Translate): string {
   if (names.length === 0) return '';
-  if (names.length === 1) return `${names[0]} is typing…`;
-  if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
-  return `${names.length} people are typing…`;
+  if (names.length === 1) return t('chat.typing.one', { name: names[0]! });
+  if (names.length === 2) return t('chat.typing.two', { first: names[0]!, second: names[1]! });
+  return t('chat.typing.many', { count: names.length });
 }

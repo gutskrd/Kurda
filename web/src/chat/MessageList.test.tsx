@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MessageList } from './MessageList';
+import { I18nProvider } from '../i18n/I18nProvider';
 
 /** Local-time ISO, so the test does not depend on the runner's timezone. */
 const at = (h: number, m: number): string => {
@@ -120,6 +121,33 @@ describe('MessageList', () => {
     );
     expect(screen.getByText('Yesterday')).toBeInTheDocument();
     expect(screen.getByText('Today')).toBeInTheDocument();
+  });
+
+  /**
+   * The day separators are the only words this component owns, and the month
+   * and weekday names beside them come from `toLocaleDateString` — which takes
+   * the browser's language, not the one the reader chose, unless it is told.
+   */
+  it('separates days in the reader’s language', () => {
+    localStorage.setItem('mykurda_locale', 'de');
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(22, 0, 0, 0);
+    render(
+      <MemoryRouter>
+        <I18nProvider>
+          <MessageList
+            messages={[msg('1', 'u2', 'alt', yesterday.toISOString()), msg('2', 'me', 'neu', at(9, 0))]}
+            myId="me"
+          />
+        </I18nProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Gestern')).toBeInTheDocument();
+    expect(screen.getByText('Heute')).toBeInTheDocument();
+    // and the run label, which is the other word it owns
+    expect(screen.getByText('Du')).toBeInTheDocument();
+    localStorage.clear();
   });
 
   it('renders a deleted group message as a tombstone, not its body', () => {
