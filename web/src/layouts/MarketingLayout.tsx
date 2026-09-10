@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { TopNav, type NavItem } from '../components/TopNav';
 import { Footer } from '../components/Footer';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * One way in.
@@ -10,16 +11,18 @@ import { Footer } from '../components/Footer';
  * read, so the landing page points at it rather than keeping a second, thinner
  * copy of the same content behind its own nav.
  */
-const LINKS: NavItem[] = [{ label: 'Civak', to: '/app/civak' }];
-
 /** The landing page's shell: nav + page + footer. */
 export function MarketingLayout(): React.JSX.Element {
+  const t = useT();
+  // built here rather than at module scope: the label is a word, and a word
+  // chosen once at import time cannot follow the language the reader picks
+  const links: NavItem[] = [{ label: t('nav.civak'), to: '/app/civak' }];
   return (
     <>
       <a href="#main" className="skip-link">
-        Skip to content
+        {t('nav.skipToContent')}
       </a>
-      <TopNav links={LINKS} />
+      <TopNav links={links} />
       <main id="main">
         <Outlet />
       </main>

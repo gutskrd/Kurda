@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EyeIcon } from './icons';
+import { useT } from '../i18n/I18nProvider';
 
 export function PasswordInput({
   value,
@@ -14,6 +15,7 @@ export function PasswordInput({
   placeholder?: string;
   id?: string;
 }): React.JSX.Element {
+  const t = useT();
   const [show, setShow] = useState(false);
   return (
     <div className="input-wrap">
@@ -30,7 +32,7 @@ export function PasswordInput({
       <button
         type="button"
         className="input-affix"
-        aria-label={show ? 'Hide password' : 'Show password'}
+        aria-label={show ? t('auth.hidePassword') : t('auth.showPassword')}
         aria-pressed={show}
         onClick={() => setShow((v) => !v)}
       >
