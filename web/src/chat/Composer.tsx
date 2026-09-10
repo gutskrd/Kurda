@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '../components/Button';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * The message box, shared by the direct and group threads.
@@ -28,6 +29,7 @@ export function Composer({
   placeholder: string;
   maxLength?: number;
 }): React.JSX.Element {
+  const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
 
   // Re-measure on every change: reset to auto first, or the height only ever
@@ -66,10 +68,10 @@ export function Composer({
         }}
         placeholder={placeholder}
         maxLength={maxLength}
-        aria-label="Message"
+        aria-label={t('chat.message')}
       />
       <Button type="submit" disabled={sending || empty}>
-        {sending ? 'Sending…' : 'Send'}
+        {sending ? t('chat.sending') : t('chat.send')}
       </Button>
     </form>
   );

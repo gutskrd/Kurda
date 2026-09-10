@@ -2,6 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { Avatar } from '../components/Avatar';
 import { MessageBody } from '../components/GameInviteCard';
 import { groupMessages, timeLabel, type Groupable } from './messageGroups';
+import { useLocale, useT } from '../i18n/I18nProvider';
 
 /**
  * A chat thread rendered the way one should read: day separators, consecutive
@@ -40,7 +41,17 @@ export function MessageList<T extends ChatMessage>({
   /** open a sender's profile — makes the avatar and name the way in */
   onOpenProfile?: (userId: string, username: string) => void;
 }): React.JSX.Element {
-  const sections = groupMessages(messages);
+  const locale = useLocale();
+  const t = useT();
+  // the day separators are the only words this component owns; `locale` is what
+  // names the weekday and the month, which `toLocaleDateString` otherwise takes
+  // from the browser rather than from the language the reader chose
+  const sections = groupMessages(messages, new Date(), {
+    locale,
+    today: t('chat.day.today'),
+    yesterday: t('chat.day.yesterday'),
+    earlier: t('chat.day.earlier'),
+  });
 
   return (
     <>
@@ -54,7 +65,7 @@ export function MessageList<T extends ChatMessage>({
             const mine = run.senderId === myId;
             const first = run.messages[0]!;
             const last = run.messages[run.messages.length - 1]!;
-            const name = mine ? 'You' : (first.username ?? 'Someone');
+            const name = mine ? t('chat.you') : (first.username ?? t('chat.someone'));
 
             return (
               <div key={first.id} className={`chat-run${mine ? ' mine' : ''}`}>
@@ -85,13 +96,13 @@ export function MessageList<T extends ChatMessage>({
                         i === run.messages.length - 1 ? ' bubble-tail' : ''
                       }`}
                     >
-                      {m.deleted ? <em className="muted">message deleted</em> : <MessageBody body={m.body} />}
+                      {m.deleted ? <em className="muted">{t('chat.messageDeleted')}</em> : <MessageBody body={m.body} />}
                     </div>
                   ))}
 
                   {/* one timestamp per burst — on every bubble it becomes noise */}
                   <div className="chat-run-meta">
-                    <time dateTime={last.createdAt}>{timeLabel(last.createdAt)}</time>
+                    <time dateTime={last.createdAt}>{timeLabel(last.createdAt, locale)}</time>
                     {mine && renderStatus?.(last)}
                   </div>
                 </div>

@@ -153,7 +153,7 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       if (!ev.from || !ev.message?.id) return;
       refreshUnread();
       if (openRef.current.dm === ev.from) return; // you are already reading it
-      const name = ev.fromUsername ?? 'New message';
+      const name = ev.fromUsername ?? t('chat.newMessage');
       push({
         id: ev.message.id,
         title: name,
@@ -214,28 +214,29 @@ export function useMessages(): MessagesContextValue {
 /** The stack of arrival banners. Rendered once, by the provider. */
 function MessageToasts(): React.JSX.Element | null {
   const { toasts, dismissToast } = useMessages();
+  const t = useT();
   const navigate = useNavigate();
   if (toasts.length === 0) return null;
   return (
-    <div className="msg-toasts" role="region" aria-label="New messages">
-      {toasts.map((t) => (
-        <div key={t.id} className="msg-toast" role="status">
+    <div className="msg-toasts" role="region" aria-label={t('chat.newMessages')}>
+      {toasts.map((toast) => (
+        <div key={toast.id} className="msg-toast" role="status">
           <button
             type="button"
             className="msg-toast-open"
             onClick={() => {
-              dismissToast(t.id);
-              navigate(t.to);
+              dismissToast(toast.id);
+              navigate(toast.to);
             }}
           >
-            <span className="msg-toast-title">{t.title}</span>
-            <span className="msg-toast-body">{t.body}</span>
+            <span className="msg-toast-title">{toast.title}</span>
+            <span className="msg-toast-body">{toast.body}</span>
           </button>
           <button
             type="button"
             className="msg-toast-close"
-            aria-label={'Dismiss message from ' + t.title}
-            onClick={() => dismissToast(t.id)}
+            aria-label={t('chat.dismissFrom', { name: toast.title })}
+            onClick={() => dismissToast(toast.id)}
           >
             ×
           </button>

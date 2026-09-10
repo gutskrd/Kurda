@@ -22,6 +22,7 @@ const CONVO_POLL_FALLBACK = 5000;
 
 
 export function Messages(): React.JSX.Element {
+  const t = useT();
   const [params] = useSearchParams();
   const activeId = params.get('to');
   const activeName = params.get('name') ?? undefined;
@@ -41,20 +42,20 @@ export function Messages(): React.JSX.Element {
   return (
     <div className={`container chat-page${activeId || activeGroup ? ' chat-active' : ''}`}>
       <div className="page-header">
-        <span className="eyebrow">Peyam · Messages</span>
-        <h1 className="page-title">Messages</h1>
+        <span className="eyebrow">{t('nav.messages')}</span>
+        <h1 className="page-title">{t('chat.title')}</h1>
       </div>
 
       <div className={`chat-layout${activeId || activeGroup ? ' has-active' : ''}`}>
-        <aside className="chat-list" aria-label="Conversations">
-          <div className="chat-tabs" role="tablist" aria-label="Chat type">
+        <aside className="chat-list" aria-label={t('chat.conversations')}>
+          <div className="chat-tabs" role="tablist" aria-label={t('chat.type')}>
             <button
               role="tab"
               aria-selected={tab === 'direct'}
               className={`chip${tab === 'direct' ? ' active' : ''}`}
               onClick={() => setTab('direct')}
             >
-              Direct
+              {t('chat.direct')}
             </button>
             <button
               role="tab"
@@ -62,7 +63,7 @@ export function Messages(): React.JSX.Element {
               className={`chip${tab === 'groups' ? ' active' : ''}`}
               onClick={() => setTab('groups')}
             >
-              Groups
+              {t('rail.groups')}
             </button>
           </div>
           {tab === 'direct' ? <DirectList activeId={activeId} refreshKey={dmRefresh} /> : <GroupsList activeGroup={activeGroup} />}
@@ -75,7 +76,7 @@ export function Messages(): React.JSX.Element {
             <DmThread key={activeId} otherId={activeId} otherName={activeName} onSent={onDmSent} />
           ) : (
             <div className="chat-empty">
-              <p className="muted">Select a conversation to start chatting.</p>
+              <p className="muted">{t('chat.pickAConversation')}</p>
             </div>
           )}
         </section>
@@ -116,7 +117,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
   if (error && convos === null) return <ErrorState message={error} onRetry={() => void loadConvos()} />;
   if (convos === null) return <Loading />;
   if (convos.length === 0)
-    return <EmptyState title="No messages yet" message="Message a friend from their profile to start a conversation." />;
+    return <EmptyState title={t('chat.noMessagesYet')} message={t('chat.noMessagesBody')} />;
   return (
     <>
       {convos.map((c) => (
@@ -132,7 +133,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
               {c.unread > 0 && <span className="chat-unread">{c.unread}</span>}
             </span>
             <span className="chat-convo-last">
-              {c.lastFromMe ? 'You: ' : ''}
+              {c.lastFromMe ? t('chat.youPrefix') : ''}
               {messagePreview(c.lastMessage, t)}
             </span>
           </span>
@@ -144,6 +145,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
 
 /** The list of the caller's groups + a way to make or discover one. */
 function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [mine, setMine] = useState<MyGroup[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -173,10 +175,10 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
     <>
       <div className="chat-list-actions">
         <Button size="sm" onClick={() => setCreating(true)}>
-          New group
+          {t('groups.new')}
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setDiscovering(true)}>
-          Discover
+          {t('groups.discover')}
         </Button>
       </div>
 
@@ -185,7 +187,7 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
       ) : mine === null ? (
         <Loading />
       ) : mine.length === 0 ? (
-        <EmptyState title="No groups yet" message="Create a group or discover an open one to start a group chat." />
+        <EmptyState title={t('groups.noGroupsYet')} message={t('groups.noGroupsBody')} />
       ) : (
         mine.map((g) => (
           <Link
@@ -201,15 +203,15 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
                 <span className="chat-convo-name">{g.name}</span>
               </span>
               <span className="chat-convo-last">
-                {g.memberCount} member{g.memberCount === 1 ? '' : 's'}
-                {g.privacy === 'invite' ? ' · invite-only' : ''}
+                {t('groups.memberCount', { count: g.memberCount })}
+                {g.privacy === 'invite' ? ` · ${t('groups.inviteOnly')}` : ''}
               </span>
             </span>
           </Link>
         ))
       )}
 
-      <Modal open={creating} onClose={() => setCreating(false)} label="New group">
+      <Modal open={creating} onClose={() => setCreating(false)} label={t('groups.new')}>
         <CreateGroupForm
           onDone={() => {
             setCreating(false);
@@ -217,7 +219,7 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
           }}
         />
       </Modal>
-      <Modal open={discovering} onClose={() => setDiscovering(false)} label="Discover groups">
+      <Modal open={discovering} onClose={() => setDiscovering(false)} label={t('groups.discover')}>
         <DiscoverGroups
           mineIds={new Set((mine ?? []).map((g) => g.id))}
           onJoined={() => {
@@ -232,6 +234,7 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
 
 /** Create a new group; the creator becomes owner and lands in its chat. */
 function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -255,41 +258,42 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
       onDone();
       navigate(`/app/messages?group=${res.data.id}`);
     } else {
-      setErr(res.error.code === 'TRUST_VELOCITY' ? 'New accounts can create fewer groups — this lifts as your account ages.' : describeError(res.error));
+      setErr(res.error.code === 'TRUST_VELOCITY' ? t('groups.newAccountLimit') : describeError(res.error));
     }
   }
 
   return (
     <form className="compose" onSubmit={submit}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>New group</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('groups.new')}</h2>
       {err && <div className="msg msg-error">{err}</div>}
       <div className="field">
-        <label className="field-label" htmlFor="g-name">Name</label>
-        <input id="g-name" className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kurmancî learners" />
+        <label className="field-label" htmlFor="g-name">{t('groups.name')}</label>
+        <input id="g-name" className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={t('groups.namePlaceholder')} />
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="g-desc">Description <span className="muted">(optional)</span></label>
-        <input id="g-desc" className="input" value={description} maxLength={300} onChange={(e) => setDescription(e.target.value)} placeholder="What's this group about?" />
+        <label className="field-label" htmlFor="g-desc">{t('groups.description')} <span className="muted">{t('groups.optional')}</span></label>
+        <input id="g-desc" className="input" value={description} maxLength={300} onChange={(e) => setDescription(e.target.value)} placeholder={t('groups.descriptionPlaceholder')} />
       </div>
       <div className="field">
-        <span className="field-label">Privacy</span>
+        <span className="field-label">{t('groups.privacy')}</span>
         <div className="chat-tabs">
           <button type="button" className={`chip${privacy === 'open' ? ' active' : ''}`} onClick={() => setPrivacy('open')}>
-            Open
+            {t('groups.open')}
           </button>
           <button type="button" className={`chip${privacy === 'invite' ? ' active' : ''}`} onClick={() => setPrivacy('invite')}>
-            Invite-only
+            {t('groups.inviteOnlyOption')}
           </button>
         </div>
-        <span className="field-hint">{privacy === 'open' ? 'Anyone can find and join.' : 'People join only when a member invites them.'}</span>
+        <span className="field-hint">{privacy === 'open' ? t('groups.privacy.openHint') : t('groups.privacy.inviteHint')}</span>
       </div>
-      <Button type="submit" disabled={busy || name.trim().length < 2}>{busy ? 'Creating…' : 'Create group'}</Button>
+      <Button type="submit" disabled={busy || name.trim().length < 2}>{busy ? t('groups.creating') : t('groups.create')}</Button>
     </form>
   );
 }
 
 /** Browse open groups and join one. */
 function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined: () => void }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [groups, setGroups] = useState<Group[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -319,7 +323,7 @@ function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined:
   // show open groups AND the caller's own (marked as already-in), rather than hiding them
   const open = groups.filter((g) => g.privacy === 'open' || mineIds.has(g.id));
   if (open.length === 0)
-    return <EmptyState title="Nothing here yet" message="No groups to discover right now. Create your own to get started!" />;
+    return <EmptyState title={t('groups.nothingHereYet')} message={t('groups.nothingToDiscover')} />;
 
   return (
     <div className="group-discover">
@@ -332,17 +336,19 @@ function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined:
             <span className="chat-convo-body">
               <span className="chat-convo-name">
                 {g.name}
-                {joined && <span className="group-joined-badge">Joined</span>}
+                {joined && <span className="group-joined-badge">{t('groups.joined')}</span>}
               </span>
-              <span className="chat-convo-last">{g.description || `${g.memberCount} member${g.memberCount === 1 ? '' : 's'}`}</span>
+              <span className="chat-convo-last">
+                {g.description || t('groups.memberCount', { count: g.memberCount })}
+              </span>
             </span>
             {joined ? (
               <Link to={`/app/messages?group=${g.id}`} className="btn btn-secondary btn-sm" onClick={onJoined}>
-                Open
+                {t('groups.openIt')}
               </Link>
             ) : (
               <Button size="sm" disabled={joining === g.id} onClick={() => void join(g.id)}>
-                {joining === g.id ? 'Joining…' : 'Join'}
+                {joining === g.id ? t('groups.joining') : t('groups.join')}
               </Button>
             )}
           </div>

@@ -18,6 +18,7 @@ import { Loading } from '../components/states';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { ArrowIcon, CloseIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 import { Avatar } from '../components/Avatar';
 
 /**
@@ -41,8 +42,9 @@ export function GroupThread({
 }): React.JSX.Element {
   const navigateAway = useNavigate();
   const { client, user } = useAuth();
+  const t = useT();
   const { state } = useRealtime();
-  const [name, setName] = useState<string>('Group');
+  const [name, setName] = useState<string>(t('groups.title'));
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [showMembers, setShowMembers] = useState(false);
   const [messages, setMessages] = useState<GroupMessage[] | null>(null);
@@ -91,8 +93,8 @@ export function GroupThread({
     void load();
     void loadDetail();
     void markRead();
-    const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
-    return () => clearInterval(t);
+    const timer = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
+    return () => clearInterval(timer);
   }, [load, loadDetail, markRead, state]);
 
   const onGroupMsg = useCallback(
@@ -147,7 +149,7 @@ export function GroupThread({
       });
       scrollToBottom('smooth');
     } else {
-      setSendMsg(sendError(res.error));
+      setSendMsg(sendError(res.error, t));
     }
   }
 
@@ -156,7 +158,7 @@ export function GroupThread({
       <header className="chat-thread-head">
         {/* a page goes back to the list; a dock has no list to go back to */}
         {!onClose && (
-          <Link to="/app/messages?group=" className="chat-back" aria-label="Back to groups">
+          <Link to="/app/messages?group=" className="chat-back" aria-label={t('chat.backToGroups')}>
             <ArrowIcon size={18} />
           </Link>
         )}
@@ -164,16 +166,16 @@ export function GroupThread({
           {name}
         </span>
         <button type="button" className="chat-members-btn" onClick={() => setShowMembers(true)}>
-          {detail?.members ? `${detail.members.length} members` : 'Members'}
+          {detail?.members ? t('groups.memberCount', { count: detail.members.length }) : t('groups.members')}
         </button>
         {onClose && (
-          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={`Close the chat with ${name}`}>
+          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={t('chat.closeWith', { name })}>
             <CloseIcon size={16} />
           </button>
         )}
       </header>
 
-      <Modal open={showMembers} onClose={() => setShowMembers(false)} label="Group members">
+      <Modal open={showMembers} onClose={() => setShowMembers(false)} label={t('groups.membersOf')}>
         {detail?.members && (
           <GroupMembers
             detail={detail}
@@ -189,7 +191,7 @@ export function GroupThread({
         {messages === null ? (
           <Loading />
         ) : messages.length === 0 ? (
-          <p className="muted chat-hint">{loadError ?? 'No messages yet. Say hello to the group!'}</p>
+          <p className="muted chat-hint">{loadError ?? t('chat.sayHelloGroup')}</p>
         ) : (
           <MessageList
             messages={messages}
@@ -206,13 +208,13 @@ export function GroupThread({
             <i />
             <i />
           </span>
-          {typingLabel(typing)}
+          {typingLabel(typing, t)}
         </div>
       )}
 
       {!atBottom && messages !== null && messages.length > 0 && (
         <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
-          Jump to latest ↓
+          {t('chat.jumpToLatest')}
         </button>
       )}
 
@@ -225,7 +227,7 @@ export function GroupThread({
         }}
         onSubmit={() => void send()}
         sending={sending}
-        placeholder="Message the group…"
+        placeholder={t('chat.messageTheGroup')}
       />
     </div>
   );
@@ -252,6 +254,7 @@ function GroupMembers({
   onLeft: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
+  const t = useT();
   const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -277,7 +280,7 @@ function GroupMembers({
     const res = await run();
     setBusy(null);
     if (res.ok) await onChanged();
-    else setError(res.error ? describeError(res.error) : 'That did not work.');
+    else setError(res.error ? describeError(res.error) : t('chat.thatDidNotWork'));
   }
 
   const setRole = (m: GroupMember, role: 'moderator' | 'member'): Promise<void> =>
@@ -301,7 +304,7 @@ function GroupMembers({
     const res = await client.post(`/groups/${detail.id}/leave`);
     setBusy(null);
     if (res.ok) onLeft();
-    else setError(res.error ? describeError(res.error) : 'That did not work.');
+    else setError(res.error ? describeError(res.error) : t('chat.thatDidNotWork'));
   }
 
   const ordered = [...detail.members].sort(
@@ -312,8 +315,13 @@ function GroupMembers({
     <div className="group-members">
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{detail.name}</h2>
       <p className="muted">
-        {detail.members.length} member{detail.members.length === 1 ? '' : 's'}
-        {myRole && <> · you are {myRole === 'owner' ? 'the owner' : `a ${myRole}`}</>}
+        {t('groups.memberCount', { count: detail.members.length })}
+        {myRole && (
+          <>
+            {' · '}
+            {myRole === 'owner' ? t('groups.youAreTheOwner') : t('groups.youAreAnAdmin')}
+          </>
+        )}
       </p>
       {error && <div className="msg msg-error">{error}</div>}
 
@@ -331,11 +339,11 @@ function GroupMembers({
               <span className="chat-convo-body">
                 <span className="chat-convo-name">
                   {m.username}
-                  {m.userId === user?.id && <span className="group-joined-badge">You</span>}
+                  {m.userId === user?.id && <span className="group-joined-badge">{t('chat.you')}</span>}
                 </span>
                 <span className="chat-convo-last">
                   <span className={`member-role member-role-${m.role}`}>
-                    {m.role === 'owner' ? 'Owner' : m.role === 'moderator' ? 'Admin' : 'Member'}
+                    {m.role === 'owner' ? t('groups.role.owner') : m.role === 'moderator' ? t('groups.role.admin') : t('groups.role.member')}
                   </span>
                 </span>
               </span>
@@ -343,29 +351,29 @@ function GroupMembers({
             <span className="group-member-actions">
               {canSetRole && m.role === 'member' && m.userId !== user?.id && (
                 <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'moderator')}>
-                  Make admin
+                  {t('groups.makeAdmin')}
                 </Button>
               )}
               {canSetRole && m.role === 'moderator' && (
                 <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'member')}>
-                  Remove admin
+                  {t('groups.removeAdmin')}
                 </Button>
               )}
               {canSetRole && m.role === 'moderator' && (
                 <ConfirmButton
                   className="btn btn-ghost btn-sm"
-                  label="Make owner"
+                  label={t('groups.makeOwner')}
                   disabled={busy !== null}
-                  title={`Make ${m.username} the owner — you become a moderator and cannot undo this yourself`}
+                  title={t('groups.makeOwnerWarning', { name: m.username })}
                   onConfirm={() => transfer(m)}
                 />
               )}
               {canManage(m) && (
                 <ConfirmButton
                   className="btn btn-ghost btn-sm"
-                  label="Remove"
+                  label={t('groups.remove')}
                   disabled={busy !== null}
-                  title={`Remove ${m.username} from ${detail.name}`}
+                  title={t('groups.removeFrom', { name: m.username, group: detail.name })}
                   onConfirm={() => remove(m)}
                 />
               )}
@@ -376,16 +384,16 @@ function GroupMembers({
 
       {myRole === 'owner' ? (
         <p className="muted group-leave-note">
-          You own {detail.name}. To leave, make someone else the owner first.
+          {t('groups.ownerCannotLeave', { group: detail.name })}
         </p>
       ) : (
         myRole !== null && (
           <div className="group-leave">
             <ConfirmButton
               className="btn btn-ghost btn-sm danger"
-              label={`Leave ${detail.name}`}
+              label={t('groups.leave', { group: detail.name })}
               disabled={busy !== null}
-              title={`Leave ${detail.name}`}
+              title={t('groups.leave', { group: detail.name })}
               onConfirm={leave}
             />
           </div>

@@ -94,6 +94,18 @@ export function translator(catalogue: Catalogue): I18n['t'] {
 export const englishOnly = translator(en);
 
 /**
+ * Which language is in force — for the things a catalogue cannot hold.
+ *
+ * Month and weekday names, and 12- versus 24-hour clocks, come from
+ * `Intl`/`toLocale*` rather than from a translation, and those need a BCP-47
+ * tag. Tolerant for the same reason as `useT`: this has a defined answer
+ * without a provider, and a component that only reads should not need one.
+ */
+export function useLocale(): AppLocale {
+  return useContext(Ctx)?.locale ?? DEFAULT_LOCALE;
+}
+
+/**
  * What language the interface speaks, and how a string gets there.
  *
  * The order of preference is deliberate: an explicit choice beats a guess, and

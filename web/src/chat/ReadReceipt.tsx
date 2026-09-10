@@ -1,4 +1,5 @@
 import type { DmMessage } from '../lib/types';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Whether your last message got there, and whether it was read.
@@ -12,8 +13,10 @@ import type { DmMessage } from '../lib/types';
  * bubble is noise, since a read receipt implies everything before it.
  */
 export function ReadReceipt({ message }: { message: DmMessage }): React.JSX.Element {
+  const t = useT();
   const state = message.readAt ? 'read' : message.deliveredAt ? 'delivered' : 'sent';
-  const label = state === 'read' ? 'Read' : state === 'delivered' ? 'Delivered' : 'Sent';
+  const label =
+    state === 'read' ? t('chat.receipt.read') : state === 'delivered' ? t('chat.receipt.delivered') : t('chat.receipt.sent');
   return (
     <span className={`chat-receipt chat-receipt-${state}`} title={label} aria-label={label}>
       {state === 'sent' ? '✓' : '✓✓'}

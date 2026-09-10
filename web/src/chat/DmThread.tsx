@@ -10,6 +10,10 @@ import { Composer } from './Composer';
 import { useStickyScroll } from './useStickyScroll';
 import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
 import { ReadReceipt } from './ReadReceipt';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading } from '../components/states';
@@ -34,18 +38,18 @@ function byTime<T extends { createdAt: string }>(msgs: readonly T[] | undefined 
 }
 
 /** Map moderation/anti-bot server codes to human copy (server stays authoritative). */
-export function sendError(err: ApiError): string {
+export function sendError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'TRUST_VELOCITY':
-      return 'You’re sending messages too fast — please slow down.';
+      return t('chat.error.tooFast');
     case 'AUTO_MODERATED':
-      return 'Your account has been restricted for spam-like activity.';
+      return t('chat.error.restricted');
     case 'CHAT_MUTED':
-      return 'You’re muted from chat.';
+      return t('chat.error.muted');
     case 'CONTENT_BLOCKED':
-      return 'That message was blocked by moderation.';
+      return t('chat.error.blocked');
     case 'NOT_FRIENDS':
-      return 'You can only message people you’re friends with.';
+      return t('chat.error.notFriends');
     default:
       return describeError(err);
   }
@@ -77,6 +81,7 @@ export function DmThread({
   className?: string;
 }): React.JSX.Element {
   const { client, user } = useAuth();
+  const t = useT();
   const { state } = useRealtime();
   const { openProfile } = useProfileModal();
   const { refreshUnread } = useMessages();
@@ -166,9 +171,9 @@ export function DmThread({
   const onTyping = useCallback(
     (env: RealtimeEventEnvelope) => {
       if ((env.event as { from?: string }).from !== otherId) return;
-      note(otherName ?? 'They');
+      note(otherName ?? t('chat.they'));
     },
-    [otherId, otherName, note],
+    [otherId, otherName, note, t],
   );
   useRealtimeEvent('dm_typing', onTyping);
 
@@ -185,7 +190,7 @@ export function DmThread({
       scrollToBottom('smooth'); // your own message always brings you back down
       onSent();
     } else {
-      setSendMsg(sendError(res.error));
+      setSendMsg(sendError(res.error, t));
     }
   }
 
@@ -195,7 +200,7 @@ export function DmThread({
         {/* a page goes back; a dock closes, and the two do not belong in the
             same corner — a × on the left reads as "back" and gets missed */}
         {!onClose && (
-          <Link to="/app/messages" className="chat-back" aria-label="Back to conversations">
+          <Link to="/app/messages" className="chat-back" aria-label={t('chat.backToConversations')}>
             <ArrowIcon size={18} />
           </Link>
         )}
@@ -204,10 +209,10 @@ export function DmThread({
           className="chat-thread-title"
           onClick={() => openProfile({ kind: 'user', userId: otherId, username: otherName })}
         >
-          {otherName ?? 'Conversation'}
+          {otherName ?? t('chat.conversation')}
         </button>
         {onClose && (
-          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={`Close the chat with ${otherName ?? 'this person'}`}>
+          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={t('chat.closeWith', { name: otherName ?? t('chat.thisPerson') })}>
             <CloseIcon size={16} />
           </button>
         )}
@@ -217,7 +222,7 @@ export function DmThread({
         {messages === null ? (
           <Loading />
         ) : messages.length === 0 ? (
-          <p className="muted chat-hint">{loadError ?? 'No messages yet. Say hello!'}</p>
+          <p className="muted chat-hint">{loadError ?? t('chat.sayHello')}</p>
         ) : (
           <MessageList
             messages={messages}
@@ -235,7 +240,7 @@ export function DmThread({
             <i />
             <i />
           </span>
-          {typingLabel(typing)}
+          {typingLabel(typing, t)}
         </div>
       )}
 
@@ -254,7 +259,7 @@ export function DmThread({
         }}
         onSubmit={() => void send()}
         sending={sending}
-        placeholder="Write a message…"
+        placeholder={t('chat.writeAMessage')}
       />
     </div>
   );
