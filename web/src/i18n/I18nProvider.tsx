@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { APP_LOCALES, DEFAULT_LOCALE, isAppLocale, localeDir, localeFromTag, type AppLocale } from '@kurda/shared';
 import { en, type Catalogue, type MessageKey } from './en';
 import { ku } from './ku';
+import { ckb } from './ckb';
 import { nl } from './nl';
 import { de } from './de';
 import { es } from './es';
@@ -9,7 +10,7 @@ import { fr } from './fr';
 import { tr } from './tr';
 import { ar } from './ar';
 
-const CATALOGUES: Record<AppLocale, Catalogue> = { en, ku, nl, de, es, fr, tr, ar };
+const CATALOGUES: Record<AppLocale, Catalogue> = { en, ku, ckb, nl, de, es, fr, tr, ar };
 
 /**
  * Where a signed-out visitor's choice lives.
