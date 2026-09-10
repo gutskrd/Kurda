@@ -1,5 +1,6 @@
 import type { LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { GiftIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Shared cosmetic render parts used by both the profile popup and the full
@@ -47,9 +48,10 @@ export function LevelBar({ level }: { level: LevelInfo }): React.JSX.Element {
 
 /** A gold "Premium" pill. */
 export function PremiumPill(): React.JSX.Element {
+  const t = useT();
   return (
-    <span className="pcard-premium" title="Premium member">
-      Premium
+    <span className="pcard-premium" title={t('profile.premiumMember')}>
+      {t('profile.premium')}
     </span>
   );
 }
@@ -62,13 +64,14 @@ export function PremiumPill(): React.JSX.Element {
  * avatar — never baked into the avatar image.
  */
 export function IconOverlay({ icon }: { icon: ProfileIcon }): React.JSX.Element {
+  const t = useT();
   return (
     <img
       className="cosmetic-icon-overlay"
       src={icon.url}
       alt=""
       role="img"
-      aria-label="Premium profile icon"
+      aria-label={t('profile.premiumIcon')}
     />
   );
 }
@@ -91,19 +94,21 @@ export function GiftedNote({
   background?: ProfileBackground | null;
   icon?: ProfileIcon | null;
 }): React.JSX.Element | null {
-  const notes: Array<{ what: string; from: string }> = [];
-  if (background?.giftedBy) notes.push({ what: 'Background', from: background.giftedBy.username });
-  if (icon?.giftedBy) notes.push({ what: 'Icon', from: icon.giftedBy.username });
+  const t = useT();
+  // whole sentences rather than a noun plus " gifted by ": which word order
+  // that takes, and whether the noun changes shape, is not the same everywhere
+  const notes: Array<{ key: string; text: string }> = [];
+  if (background?.giftedBy)
+    notes.push({ key: 'background', text: t('profile.backgroundGiftedBy', { name: background.giftedBy.username }) });
+  if (icon?.giftedBy) notes.push({ key: 'icon', text: t('profile.iconGiftedBy', { name: icon.giftedBy.username }) });
   if (notes.length === 0) return null;
 
   return (
     <ul className="gifted-notes">
       {notes.map((n) => (
-        <li key={n.what} className="gifted-note">
+        <li key={n.key} className="gifted-note">
           <GiftIcon size={14} />
-          <span>
-            {n.what} gifted by <strong>@{n.from}</strong>
-          </span>
+          <span>{n.text}</span>
         </li>
       ))}
     </ul>

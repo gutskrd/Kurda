@@ -164,9 +164,10 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
         !busy && <p className="field-hint">{t('language.savedTo', { language: name })}</p>
       )}
       {/*
-        Said plainly rather than discovered. Only part of the interface is
-        translated so far, and a person who picks Kurdish and then meets an
-        English screen should know that is a gap being filled, not a bug.
+        Said plainly rather than discovered. The screens are translated now, so
+        this no longer warns about them — but emails still render in English
+        whatever the account is set to, and somebody who picks Kurdish and then
+        gets an English email should know that is a gap being filled, not a bug.
       */}
       {locale !== 'en' && <p className="field-hint">{t('language.partial')}</p>}
     </section>

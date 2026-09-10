@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { CloseIcon } from './icons';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Accessible modal dialog: closes on Escape / backdrop click, traps initial
@@ -16,6 +17,7 @@ export function Modal({
   label: string;
   children: React.ReactNode;
 }): React.JSX.Element | null {
+  const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
@@ -50,7 +52,7 @@ export function Modal({
         ref={panelRef}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <button type="button" className="modal-close" aria-label="Close" onClick={onClose}>
+        <button type="button" className="modal-close" aria-label={t('common.close')} onClick={onClose}>
           <CloseIcon size={18} />
         </button>
         {children}

@@ -484,7 +484,7 @@ export function PhotoEditor({
 
       {mode === 'frame' && (
         <div className="editor-panel">
-          <div className="seg seg-sub" role="group" aria-label="Shape">
+          <div className="seg seg-sub" role="group" aria-label={t('photo.shape')}>
             {ASPECTS.map((a) => (
               <button
                 key={a.key}

@@ -73,7 +73,7 @@ export function FeedCard({
     // a signed-out reader is invited to do the thing, never to undo it — they
     // cannot have done it, and "sign in to unlike" is nonsense whatever the
     // server happened to say about who liked what
-    if (!signedIn) return `Sign in to ${verb.toLowerCase()}`;
+    if (!signedIn) return t('feed.signInTo', { verb: verb.toLowerCase() });
     const label = undo;
     return count ? `${label} (${count})` : label;
   };

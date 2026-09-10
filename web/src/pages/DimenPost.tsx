@@ -8,6 +8,7 @@ import { PostAuthor } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
 import { Reactions, type ReactionSummary } from '../images/Reactions';
 import { ArrowIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 const NO_REACTIONS: ReactionSummary = { counts: {}, total: 0, mine: null };
 
@@ -21,6 +22,7 @@ const NO_REACTIONS: ReactionSummary = { counts: {}, total: 0, mine: null };
  * the same shape, and a second copy of the reply tree would drift.
  */
 export function DimenPost(): React.JSX.Element {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { client } = useAuth();
   const { data: post, error, loading, reload } = useApiGet<ImagePost>(`/images/${id}`);
@@ -44,7 +46,7 @@ export function DimenPost(): React.JSX.Element {
   if (error || !post) {
     return (
       <div className="container container-narrow">
-        <ErrorState message={error ?? 'That picture could not be found.'} onRetry={reload} />
+        <ErrorState message={error ?? t('dimen.notFound')} onRetry={reload} />
       </div>
     );
   }
@@ -53,17 +55,17 @@ export function DimenPost(): React.JSX.Element {
     <div className="container container-narrow">
       <Link to="/app/dimen" className="back-link">
         <ArrowIcon size={16} />
-        All pictures
+        {t('dimen.allPictures')}
       </Link>
 
       <article className="dimen-full">
         <div className="post-meta">
-          <span className="badge">{post.category === 'meme' ? 'Meme' : 'Photo'}</span>
-          <span>{post.viewCount.toLocaleString()} views</span>
+          <span className="badge">{post.category === 'meme' ? t('civak.kind.meme') : t('dimen.photo')}</span>
+          <span>{t('dimen.views', { count: post.viewCount.toLocaleString() })}</span>
         </div>
 
         {post.imageUrl ? (
-          <img className="dimen-full-img" src={post.imageUrl} alt={post.caption ?? 'A picture'} />
+          <img className="dimen-full-img" src={post.imageUrl} alt={post.caption ?? t('dimen.aPicture')} />
         ) : (
           <div className="dimen-full-img dimen-thumb-empty" aria-hidden="true" />
         )}

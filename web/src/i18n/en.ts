@@ -32,7 +32,6 @@ export const en = {
   'common.loading': 'Loading…',
   'common.retry': 'Try again',
   'common.cancel': 'Cancel',
-  'common.save': 'Save',
   'common.saved': 'Saved.',
   'common.somethingWentWrong': 'Something went wrong. Please try again.',
   'common.showMore': 'Show more',
@@ -46,7 +45,6 @@ export const en = {
   'auth.login.noAccount': 'No account yet?',
   'auth.login.forgot': 'Forgotten your password?',
   'auth.register.title': 'Create your account',
-  'auth.register.subtitle': 'A few details, and you are in.',
   'auth.register.submit': 'Create account',
   'auth.register.submitting': 'Creating…',
   'auth.register.haveAccount': 'Already have an account?',
@@ -65,8 +63,7 @@ export const en = {
   'language.saving': 'Saving…',
   'language.savedTo': 'MyKurda is now in {language}.',
   'language.failed': 'That language could not be saved. Please try again.',
-  'language.partial':
-    'Some parts of MyKurda are still only in English. They will follow as they are translated.',
+  'language.partial': 'Emails from MyKurda still come in English. The app itself is in your language.',
 
   // ---- settings ------------------------------------------------------------
   'settings.title': 'Settings',
@@ -787,7 +784,6 @@ export const en = {
   'auth.verify.didntGetIt': 'Didn’t get it? Check your spam folder, then',
   'auth.verify.wrongAddress': 'Wrong address?',
   'auth.verify.startOver': 'Sign out and start over',
-  'auth.confirmPassword': 'Confirm password',
   'auth.newPassword': 'New password',
   'auth.reset.requestNewLink': 'Request a new link',
   'auth.reset.goToSignIn': 'Go to sign in',
@@ -946,6 +942,25 @@ export const en = {
   'daily.dayReward': 'Day {day} reward: +{amount} Zêr',
   'library.reads': '{count} reads',
   'rankings.everyoneIn': 'Everyone in {country}.',
+
+  // ---- the last of it ------------------------------------------------
+  'notFound.title': 'Page not found',
+  'notFound.body': 'The page you’re looking for doesn’t exist or has moved.',
+  'notFound.backHome': 'Back home',
+  'brand.home': 'MyKurda home',
+  'common.sure': 'Sure?',
+  'auth.passwordHint': 'At least 8 characters, with a mix of letters and numbers.',
+  'feed.signInTo': 'Sign in to {verb}',
+  'profile.premiumMember': 'Premium member',
+  'profile.premiumIcon': 'Premium profile icon',
+  'profile.backgroundGiftedBy': 'Background gifted by @{name}',
+  'profile.iconGiftedBy': 'Icon gifted by @{name}',
+  'dimen.notFound': 'That picture could not be found.',
+  'dimen.allPictures': 'All pictures',
+  'dimen.photo': 'Photo',
+  'dimen.aPicture': 'A picture',
+  'dimen.views': '{count} views',
+  'saved.eyebrow': 'Saved',
 } as const;
 
 export type MessageKey = keyof typeof en;

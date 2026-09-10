@@ -79,7 +79,7 @@ export function VerifyEmail(): React.JSX.Element {
       e.preventDefault();
       const digits = code.replace(/\D/g, '');
       if (digits.length !== CODE_LENGTH) {
-        setError(`Enter the ${CODE_LENGTH}-digit code from your email.`);
+        setError(t('auth.verify.enterCode', { digits: CODE_LENGTH }));
         return;
       }
       setBusy(true);
