@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { SocialService } from './service.js';
 import { FriendService } from '../friends/service.js';
+import { ModerationQueueService } from '../moderation/queue-service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -129,6 +130,140 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       // not an error and not a refusal: the same empty answer a stranger gets
       // for anything else on that profile, which reveals nothing either way
       expect(res.json().friends).toEqual([]);
+    });
+  });
+
+  /**
+   * Reporting a person, which is the half of "make this stop" that a block
+   * cannot do: a block ends it for you and tells nobody, so somebody doing the
+   * same thing to twenty people looked exactly like somebody nobody had
+   * blocked.
+   */
+  describe('reporting a person', () => {
+    const token = async (tag: string, ip: string): Promise<string> => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: {
+          email: `soc_${tag}_${suffix}@it.kurda.app`,
+          username: `${tag}${suffix}`.slice(0, 30),
+          password: 'a-strong-password1',
+          acceptTerms: true,
+        },
+        remoteAddress: ip,
+      });
+      return res.json().tokens.accessToken as string;
+    };
+
+    const send = (auth: string, target: string, body: unknown) =>
+      app.inject({
+        method: 'POST',
+        url: `/users/${target}/report`,
+        headers: { authorization: `Bearer ${auth}` },
+        payload: body as object,
+        remoteAddress: '10.82.9.9',
+      });
+
+    /*
+     * Two accounts, because the endpoint allows five reports an hour per user
+     * and these tests would otherwise spend them and start getting 429s. `a`
+     * files the real report and the duplicate of it; `b` takes every rejection
+     * case, none of which need to be the same person.
+     */
+    let a = '';
+    let aId = '';
+    let b = '';
+    let bId = '';
+
+    const idOf = async (tag: string): Promise<string> => {
+      const row = await pool.query<{ id: string }>(`SELECT id FROM users WHERE username = $1`, [
+        `${tag}${suffix}`.slice(0, 30),
+      ]);
+      return row.rows[0]!.id;
+    };
+
+    beforeAll(async () => {
+      a = await token('repa', '10.82.9.1');
+      b = await token('repb', '10.82.9.2');
+      aId = await idOf('repa');
+      bId = await idOf('repb');
+    });
+
+    it('needs an account', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/users/${id.diacritic}/report`,
+        payload: { category: 'spam', reason: 'a perfectly long enough reason' },
+      });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('records a report with its category and words', async () => {
+      const res = await send(a, id.diacritic!, {
+        category: 'harassment',
+        reason: 'Sending the same insult every day after being asked to stop.',
+      });
+      expect(res.statusCode).toBe(200);
+
+      const row = await pool.query<{ category: string; reason: string; status: string }>(
+        `SELECT category, reason, status FROM user_reports WHERE reporter_id = $1 AND reported_user_id = $2`,
+        [aId, id.diacritic],
+      );
+      expect(row.rows[0]).toMatchObject({ category: 'harassment', status: 'open' });
+      expect(row.rows[0]!.reason).toContain('asked to stop');
+    });
+
+    it('refuses one with nothing in it, because the words are the whole case', async () => {
+      const res = await send(b, id.friendly!, { category: 'spam', reason: 'bad' });
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('refuses a category it does not recognise', async () => {
+      const res = await send(b, id.friendly!, { category: 'because-i-say-so', reason: 'a long enough reason here' });
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('will not let you report yourself', async () => {
+      const res = await send(b, bId, { category: 'spam', reason: 'a long enough reason here' });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().code).toBe('SELF_REPORT');
+    });
+
+    /**
+     * The same answer for a duplicate and for an id that does not exist. Any
+     * difference between them is an endpoint that tells you which user ids are
+     * real, and whether an account has been reported before.
+     */
+    it('says the same thing to a second report and to a stranger', async () => {
+      const again = await send(a, id.diacritic!, { category: 'spam', reason: 'reporting them a second time' });
+      expect(again.statusCode).toBe(200);
+      const nobody = await send(b, '00000000-0000-4000-8000-000000000000', {
+        category: 'spam',
+        reason: 'nobody is behind this id at all',
+      });
+      expect(nobody.statusCode).toBe(200);
+
+      // and the second one changed nothing: one row, still the first reason
+      const rows = await pool.query<{ reason: string }>(
+        `SELECT reason FROM user_reports WHERE reporter_id = $1 AND reported_user_id = $2`,
+        [aId, id.diacritic],
+      );
+      expect(rows.rowCount).toBe(1);
+      expect(rows.rows[0]!.reason).toContain('asked to stop');
+    });
+
+    it('reaches the moderation queue as one case for the person', async () => {
+      const queue = new ModerationQueueService(pool);
+      await queue.sync();
+      const row = await pool.query<{ source: string; summary: string; evidence: { reports: number } }>(
+        `SELECT source, summary, evidence FROM moderation_cases
+          WHERE source = 'user_report' AND source_ref = $1`,
+        [`user:${id.diacritic}`],
+      );
+      expect(row.rowCount).toBe(1);
+      expect(row.rows[0]!.summary).toMatch(/Reported by 1/);
+      // with no post attached, what the reporter wrote IS the case
+      expect(JSON.stringify(row.rows[0]!.evidence)).toContain('asked to stop');
     });
   });
 

@@ -1,6 +1,13 @@
 import type pg from 'pg';
 
-export type CaseSource = 'chat_report' | 'anti_cheat' | 'text_flag' | 'image_flag' | 'library_report' | 'image_report';
+export type CaseSource =
+  | 'chat_report'
+  | 'anti_cheat'
+  | 'text_flag'
+  | 'image_flag'
+  | 'library_report'
+  | 'image_report'
+  | 'user_report';
 export type CaseResolution = 'dismiss' | 'warn' | 'mute' | 'ban' | 'remove';
 
 export interface QueueCase {
@@ -113,6 +120,38 @@ export class ModerationQueueService {
        WHERE r.target_type = 'image_comment' AND r.status = 'open' AND c.status <> 'removed'
        GROUP BY r.target_id, c.author_id, c.post_id`,
       'image_report',
+    );
+    /*
+     * Reports about a person (#user-reports) — one case per reported account,
+     * keyed 'user:<id>', so twenty people reporting the same account is one
+     * case rather than twenty.
+     *
+     * Severity climbs with the number of distinct reporters instead of being a
+     * constant: one complaint is a complaint, and ten independent ones about
+     * the same account is the signal that separates a difficult conversation
+     * from somebody working their way through the community. Capped at 85 so a
+     * pile-on still sorts below CSAM and the anti-cheat shadow flag, which are
+     * machine-certain rather than crowd-sourced.
+     *
+     * The categories and the reasons both ride along: with no post attached,
+     * what the reporters wrote IS the case.
+     */
+    added += await this.ingest(
+      `SELECT 'user:' || r.reported_user_id AS ref, r.reported_user_id AS subject,
+              least(45 + count(*) * 10, 85) AS severity,
+              'Reported by ' || count(*) || ' — ' || string_agg(DISTINCT r.category, ', ') AS summary,
+              jsonb_build_object(
+                'targetType','user',
+                'reports', count(*),
+                'categories', array_agg(DISTINCT r.category),
+                'reasons', jsonb_agg(jsonb_build_object('category', r.category, 'reason', r.reason, 'at', r.created_at)
+                                     ORDER BY r.created_at DESC)
+              ) AS evidence,
+              min(r.created_at) AS created_at
+       FROM user_reports r JOIN users u ON u.id = r.reported_user_id
+       WHERE r.status = 'open' AND u.deleted_at IS NULL
+       GROUP BY r.reported_user_id`,
+      'user_report',
     );
     return added;
   }
@@ -261,6 +300,21 @@ export class ModerationQueueService {
           await client.query(
             `UPDATE library_reports SET status = 'resolved' WHERE target_type = $1 AND target_id = $2 AND status = 'open'`,
             [parsed.type, parsed.id],
+          );
+        }
+        break;
+      }
+      case 'user_report': {
+        /*
+         * Every open report about this person closes together, because the case
+         * was all of them — leaving any open would rebuild the same case on the
+         * next sync and put it straight back in the queue.
+         */
+        const userId = ref.startsWith('user:') ? ref.slice('user:'.length) : null;
+        if (userId) {
+          await client.query(
+            `UPDATE user_reports SET status = 'resolved' WHERE reported_user_id = $1::uuid AND status = 'open'`,
+            [userId],
           );
         }
         break;

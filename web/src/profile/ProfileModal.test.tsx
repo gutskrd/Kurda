@@ -174,17 +174,38 @@ describe('ProfileModal', () => {
       return fetchMock;
     };
 
-    it('needs a second press, then says what happened and where to undo it', async () => {
+    /**
+     * Block is no longer a button in the open. It was one thumb-width from
+     * "Message" and it is the only action on this card that cannot be walked
+     * back from it, so it sits behind a ⋯ with Report.
+     */
+    it('is not offered in the open — it lives behind the menu', async () => {
+      stub();
+      renderApp(<OpenUser />);
+      const user = userEvent.setup();
+      await user.click(screen.getByText('open-user'));
+
+      await screen.findByText('@zana');
+      expect(screen.queryByRole('button', { name: /^block$/i })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /more about zana/i }));
+      expect(screen.getByRole('menuitem', { name: /block/i })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /report/i })).toBeInTheDocument();
+    });
+
+    it('asks before it blocks, then says where to undo it', async () => {
       const fetchMock = stub();
       renderApp(<OpenUser />);
       const user = userEvent.setup();
       await user.click(screen.getByText('open-user'));
 
-      await user.click(await screen.findByRole('button', { name: /block this person/i }));
-      // armed, not sent — this is the one action on the card you cannot walk back
+      await user.click(await screen.findByRole('button', { name: /more about zana/i }));
+      await user.click(screen.getByRole('menuitem', { name: /block/i }));
+
+      // opening the confirmation is not blocking anybody yet
       expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/friends/u2/block'))).toBe(false);
 
-      await user.click(screen.getByRole('button', { name: /press again to confirm/i }));
+      await user.click(screen.getByRole('button', { name: /^block$/i }));
 
       expect(await screen.findByText(/they are not told/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /undo this in settings/i })).toBeInTheDocument();
@@ -192,7 +213,37 @@ describe('ProfileModal', () => {
       expect(screen.queryByRole('button', { name: /^add friend$/i })).not.toBeInTheDocument();
     });
 
-    it('does not offer to block yourself', async () => {
+    /**
+     * A report about a person carries no post for a moderator to look at, so
+     * what the reporter writes is the whole case — the server rejects a short
+     * one, and the form should not let it get that far.
+     */
+    it('will not send a report without a reason', async () => {
+      const fetchMock = stub();
+      renderApp(<OpenUser />);
+      const user = userEvent.setup();
+      await user.click(screen.getByText('open-user'));
+
+      await user.click(await screen.findByRole('button', { name: /more about zana/i }));
+      await user.click(screen.getByRole('menuitem', { name: /report/i }));
+
+      expect(screen.getByRole('button', { name: /send report/i })).toBeDisabled();
+      await user.type(screen.getByLabelText(/what should a moderator know/i), 'too short');
+      expect(screen.getByRole('button', { name: /send report/i })).toBeDisabled();
+
+      await user.type(screen.getByLabelText(/what should a moderator know/i), ' — and this is the rest of it');
+      const send = screen.getByRole('button', { name: /send report/i });
+      expect(send).toBeEnabled();
+
+      await user.click(send);
+      const call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/users/u2/report'));
+      expect(call).toBeTruthy();
+      expect(JSON.parse((call![1] as RequestInit).body as string)).toMatchObject({ category: 'harassment' });
+      // it never promises an outcome, only that somebody will look
+      expect(await screen.findByText(/a moderator will look at this/i)).toBeInTheDocument();
+    });
+
+    it('offers neither on your own profile', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn(async () =>
@@ -203,7 +254,7 @@ describe('ProfileModal', () => {
       await userEvent.click(screen.getByText('open-user'));
 
       await screen.findByText('@ada');
-      expect(screen.queryByRole('button', { name: /block this person/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /more about/i })).not.toBeInTheDocument();
     });
   });
 });
