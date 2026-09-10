@@ -3,6 +3,7 @@ import type { FavoriteRef, ProfileBackground, ProfileIcon } from '../lib/types';
 import { flagUrl } from '../lib/countries';
 import { CosmeticBackground, GiftedNote, IconOverlay } from './cosmetic-parts';
 import { PersonGlyph } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 /** Normalized data a MyKurda profile renders (self or another user). */
 export interface FullProfileView {
@@ -41,6 +42,7 @@ export function FullProfile({
   /** what they have posted and played — below the showcases, above the fold on mobile */
   activity?: React.ReactNode;
 }): React.JSX.Element {
+  const t = useT();
   const online = view.online ?? false;
   return (
     <div className={`mkp-page${view.background ? ' mkp-has-bg' : ''}`}>
@@ -67,7 +69,7 @@ export function FullProfile({
           <div className="mkp-id-text">
             <div className="mkp-name">
               {view.name}
-              {view.premium && <span className="mkp-premium">Premium</span>}
+              {view.premium && <span className="mkp-premium">{t('profile.premium')}</span>}
             </div>
             <div className="mkp-sub">@{view.username}</div>
             {view.country && (
@@ -80,13 +82,13 @@ export function FullProfile({
           </div>
 
           <div className="mkp-level-col">
-            <div className="mkp-level-line">Level <span className="mkp-hex">{view.level}</span></div>
+            <div className="mkp-level-line">{t('profile.stat.level')} <span className="mkp-hex">{view.level}</span></div>
             <div className="mkp-featured">
               <span className="mkp-featured-badge">
                 {view.icon ? <img src={view.icon.url} alt="" /> : <PersonGlyph size={26} />}
               </span>
               <span className="mkp-featured-text">
-                <span className="mkp-featured-title">Level {view.level}</span>
+                <span className="mkp-featured-title">{t('profile.levelN', { level: view.level })}</span>
                 <span className="mkp-featured-sub">{view.xp.toLocaleString()} XP</span>
               </span>
             </div>
@@ -97,15 +99,15 @@ export function FullProfile({
         <div className="mkp-body">
           <main className="mkp-main">
             <div className="mkp-showcase-block">
-              <div className="mkp-showcase-label">About</div>
+              <div className="mkp-showcase-label">{t('profile.about')}</div>
               <div className="mkp-showcase">
-                {view.bio ? <p className="mkp-bio">{view.bio}</p> : <p className="mkp-bio muted">No bio yet.</p>}
+                {view.bio ? <p className="mkp-bio">{view.bio}</p> : <p className="mkp-bio muted">{t('profile.noBio')}</p>}
               </div>
             </div>
 
             {view.favPoem && (
               <div className="mkp-showcase-block">
-                <div className="mkp-showcase-label">Favorite Poem</div>
+                <div className="mkp-showcase-label">{t('profile.favoritePoem')}</div>
                 <div className="mkp-showcase">
                   <Link to="/poems" className="mkp-fav">
                     <span className="mkp-fav-thumb" aria-hidden="true">✒️</span>
@@ -117,7 +119,7 @@ export function FullProfile({
 
             {view.favStory && (
               <div className="mkp-showcase-block">
-                <div className="mkp-showcase-label">Favorite Story</div>
+                <div className="mkp-showcase-label">{t('profile.favoriteStory')}</div>
                 <div className="mkp-showcase">
                   <Link to="/stories" className="mkp-fav">
                     <span className="mkp-fav-thumb" aria-hidden="true">📖</span>
@@ -131,12 +133,12 @@ export function FullProfile({
 
           <aside className="mkp-side">
             <div className="mkp-online">
-              <div className={`mkp-online-title${online ? '' : ' is-offline'}`}>{online ? 'Currently Online' : 'Offline'}</div>
+              <div className={`mkp-online-title${online ? '' : ' is-offline'}`}>{online ? t('profile.currentlyOnline') : t('profile.offline')}</div>
               <div className="mkp-online-sub">@{view.username}</div>
 
-              <div className="mkp-info-row"><span className="l">Level</span><span className="n">{view.level}</span></div>
+              <div className="mkp-info-row"><span className="l">{t('profile.stat.level')}</span><span className="n">{view.level}</span></div>
               <div className="mkp-info-row"><span className="l">XP</span><span className="n">{view.xp.toLocaleString()}</span></div>
-              <div className="mkp-info-row"><span className="l">Streak</span><span className="n">{view.streakDays}</span></div>
+              <div className="mkp-info-row"><span className="l">{t('profile.stat.streak')}</span><span className="n">{view.streakDays}</span></div>
 
               {sidebarExtra}
             </div>

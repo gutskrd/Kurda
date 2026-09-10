@@ -9,6 +9,7 @@ import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { BookmarkIcon } from '../components/icons';
 import { Loading, ErrorState } from '../components/states';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * The signed-in user's own full profile — a read-only, MyKurda showcase. All
@@ -17,6 +18,7 @@ import { Loading, ErrorState } from '../components/states';
  */
 export function Profile(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [zer, setZer] = useState<number | null>(null);
   const [friends, setFriends] = useState<UserSummary[]>([]);
@@ -41,7 +43,7 @@ export function Profile(): React.JSX.Element {
       ]);
       if (cancelled) return;
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
-      else setError(m.ok ? 'Your profile could not be loaded.' : describeError(m.error));
+      else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error));
       if (w.ok) setZer(w.data.balances.zer);
       if (f.ok) setFriends(f.data.friends ?? []);
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
@@ -62,10 +64,10 @@ export function Profile(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [client, reloadKey]);
+  }, [client, reloadKey, t]);
 
-  if (loading) return <Loading label="Loading profile…" />;
-  if (error || !me) return <ErrorState title="Couldn’t load your profile" message={error ?? 'Unavailable.'} onRetry={() => setReloadKey((n) => n + 1)} />;
+  if (loading) return <Loading label={t('profile.loadingYours')} />;
+  if (error || !me) return <ErrorState title={t('profile.loadFailedYours')} message={error ?? t('profile.unavailable')} onRetry={() => setReloadKey((n) => n + 1)} />;
 
   const view: FullProfileView = {
     name: me.displayName || me.username,
@@ -87,7 +89,7 @@ export function Profile(): React.JSX.Element {
   return (
     <FullProfile
       view={view}
-      headerAction={<Link to="/app/profile/edit" className="mkp-edit">Edit Profile</Link>}
+      headerAction={<Link to="/app/profile/edit" className="mkp-edit">{t('profile.edit')}</Link>}
       activity={<ProfileActivity userId={me.id} sections={sections} own />}
       sidebarExtra={
         <>
@@ -95,20 +97,20 @@ export function Profile(): React.JSX.Element {
           {/* only once ranked games have been played */}
           {rank != null && (
             <div className="mkp-info-row">
-              <span className="l">Rank</span>
+              <span className="l">{t('profile.stat.rank')}</span>
               <span className="n">#{rank.toLocaleString()}</span>
             </div>
           )}
 
           {icons.length > 0 && (
             <div className="mkp-collection">
-              <div className="mkp-collection-head"><span className="l">Icons</span><span className="n">{icons.length}</span></div>
+              <div className="mkp-collection-head"><span className="l">{t('profile.stat.icons')}</span><span className="n">{icons.length}</span></div>
               <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
             </div>
           )}
 
           <Link className="mkp-collection mkp-collection-link" to="/app/friends">
-            <div className="mkp-collection-head"><span className="l">Friends</span><span className="n">{friends.length}</span></div>
+            <div className="mkp-collection-head"><span className="l">{t('nav.friends')}</span><span className="n">{friends.length}</span></div>
             {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
           </Link>
 
@@ -116,7 +118,7 @@ export function Profile(): React.JSX.Element {
               the social panel — that panel is other people */}
           <Link className="mkp-collection mkp-collection-link" to="/app/saved">
             <div className="mkp-collection-head">
-              <span className="l">Saved</span>
+              <span className="l">{t('saved.title')}</span>
               <BookmarkIcon size={17} />
             </div>
           </Link>

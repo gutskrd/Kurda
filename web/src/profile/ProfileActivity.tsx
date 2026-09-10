@@ -5,15 +5,17 @@ import { describeError } from '../lib/api';
 import type { ActivityEntry, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
 import { BookmarkIcon, GameIcon, HeartIcon, WallIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 const PAGE = 12;
 
 /** What each tab is called, and the icon that stands in for an empty one. */
-const LABELS: Record<ProfileSection, string> = {
-  posts: 'Posts',
-  games: 'Games',
-  likes: 'Likes',
-  saved: 'Saved',
+const LABEL_KEY: Record<ProfileSection, MessageKey> = {
+  posts: 'profile.tab.posts',
+  games: 'nav.games',
+  likes: 'profile.tab.likes',
+  saved: 'saved.title',
 };
 
 function SectionGlyph({ kind, size = 22 }: { kind: ProfileSection; size?: number }): React.JSX.Element {
@@ -53,6 +55,7 @@ export function ProfileActivity({
   /** viewing your own profile: show hidden sections too, labelled */
   own?: boolean;
 }): React.JSX.Element | null {
+  const t = useT();
   const shown = PROFILE_SECTIONS.filter((s) => own || sections?.[s] !== false);
   const [tab, setTab] = useState<ProfileSection | null>(null);
 
@@ -64,9 +67,9 @@ export function ProfileActivity({
 
   return (
     <div className="mkp-showcase-block">
-      <div className="mkp-showcase-label">Activity</div>
+      <div className="mkp-showcase-label">{t('profile.activity')}</div>
       <div className="mkp-showcase mkp-activity">
-        <div className="mkp-tabs" role="tablist" aria-label="Profile activity">
+        <div className="mkp-tabs" role="tablist" aria-label={t('profile.activityOf')}>
           {shown.map((s) => (
             <button
               key={s}
@@ -79,8 +82,8 @@ export function ProfileActivity({
               onClick={() => setTab(s)}
             >
               <SectionGlyph kind={s} size={16} />
-              <span>{LABELS[s]}</span>
-              {sections[s] === false && <span className="mkp-tab-hidden">Hidden</span>}
+              <span>{t(LABEL_KEY[s])}</span>
+              {sections[s] === false && <span className="mkp-tab-hidden">{t('profile.hidden')}</span>}
             </button>
           ))}
         </div>
@@ -96,6 +99,7 @@ export function ProfileActivity({
 /** One tab's list, paged with a Show more button. */
 function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -131,10 +135,10 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
     };
   }, [load]);
 
-  if (state === 'loading') return <p className="muted mkp-activity-note">Loading…</p>;
+  if (state === 'loading') return <p className="muted mkp-activity-note">{t('common.loading')}</p>;
   if (state === 'error') return <p className="muted mkp-activity-note">{error}</p>;
   if (entries.length === 0) {
-    return <p className="muted mkp-activity-note">Nothing here yet.</p>;
+    return <p className="muted mkp-activity-note">{t('profile.nothingHere')}</p>;
   }
 
   return (
