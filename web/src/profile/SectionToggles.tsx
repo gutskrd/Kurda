@@ -4,12 +4,13 @@ import { describeError } from '../lib/api';
 import type { MeProfile, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
-const COPY: Record<ProfileSection, { label: string; hint: string }> = {
-  posts: { label: 'Posts', hint: 'Everything you have posted — gotin, çîrok, helbest, wêne and mîm.' },
-  games: { label: 'Games', hint: 'How your recent games went.' },
-  likes: { label: 'Likes', hint: 'Posts you have liked.' },
-  saved: { label: 'Saved', hint: 'Posts you have saved.' },
+const COPY: Record<ProfileSection, { labelKey: MessageKey; hintKey: MessageKey }> = {
+  posts: { labelKey: 'profile.tab.posts', hintKey: 'edit.sections.posts' },
+  games: { labelKey: 'nav.games', hintKey: 'edit.sections.games' },
+  likes: { labelKey: 'profile.tab.likes', hintKey: 'edit.sections.likes' },
+  saved: { labelKey: 'saved.title', hintKey: 'edit.sections.saved' },
 };
 
 /**
@@ -35,12 +36,12 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
       const res = await client.get<{ sections?: ProfileSections | null }>(`/users/${me.id}`);
       if (cancelled) return;
       if (res.ok && res.data.sections) setSections(res.data.sections);
-      else setError(res.ok ? 'Could not read your profile sections.' : describeError(res.error, t));
+      else setError(res.ok ? t('edit.sections.failed') : describeError(res.error, t));
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, me.id]);
+  }, [client, me.id, t]);
 
   async function toggle(key: ProfileSection, next: boolean): Promise<void> {
     if (!sections) return;
@@ -56,16 +57,15 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
 
   return (
     <section className="card" style={{ marginTop: 24 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>What your profile shows</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('edit.sections.title')}</h2>
       <p className="muted" style={{ marginTop: 0 }}>
-        Turn a section off and it disappears from your profile for everyone else. Nothing is deleted — you can turn
-        it back on whenever you like.
+        {t('edit.sections.help')}
       </p>
 
       {error && <div className="msg msg-error" role="status">{error}</div>}
 
       {sections === null ? (
-        <p className="muted">Loading…</p>
+        <p className="muted">{t('common.loading')}</p>
       ) : (
         <ul className="section-toggles">
           {PROFILE_SECTIONS.map((key) => (
@@ -78,8 +78,8 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
                   onChange={(e) => void toggle(key, e.target.checked)}
                 />
                 <span className="section-toggle-text">
-                  <span className="section-toggle-label">{COPY[key].label}</span>
-                  <span className="section-toggle-hint">{COPY[key].hint}</span>
+                  <span className="section-toggle-label">{t(COPY[key].labelKey)}</span>
+                  <span className="section-toggle-hint">{t(COPY[key].hintKey)}</span>
                 </span>
               </label>
             </li>

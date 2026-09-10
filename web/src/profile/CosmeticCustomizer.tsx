@@ -88,7 +88,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     const res = await client.put<{ backgroundSku?: string | null; iconSku?: string | null }>(`/me/cosmetics/${cat}`, { sku });
     setBusy(null);
     if (res.ok) {
-      setMsg({ kind: 'ok', text: sku ? 'Equipped.' : 'Removed.' });
+      setMsg({ kind: 'ok', text: sku ? t('edit.equippedMsg') : t('edit.removedMsg') });
       onChanged();
     } else {
       setEquipped((e) => ({ ...e, [cat]: prev }));
@@ -108,7 +108,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     if (res.ok) {
       setZer(res.data.balance);
       await load(); // the item is now owned → becomes equippable
-      setMsg({ kind: 'ok', text: `Purchased ${tile.name}.` });
+      setMsg({ kind: 'ok', text: t('edit.purchased', { name: tile.name }) });
       onChanged();
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
@@ -116,19 +116,19 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     setBusy(null);
   }
 
-  if (loading) return <section className="card" style={{ marginTop: 24 }}><p className="muted">Loading cosmetics…</p></section>;
+  if (loading) return <section className="card" style={{ marginTop: 24 }}><p className="muted">{t('edit.loadingCosmetics')}</p></section>;
   if (error) return <section className="card" style={{ marginTop: 24 }}><div className="msg msg-error">{error}</div></section>;
 
   return (
     <section className="card" style={{ marginTop: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-        <h2 className="friend-heading" style={{ marginTop: 0 }}>Cosmetics</h2>
-        <span className="field-hint">{zer === null ? '' : `${zer.toLocaleString()} Zêr`}</span>
+        <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('edit.cosmetics')}</h2>
+        <span className="field-hint">{zer === null ? '' : t('edit.zerAmount', { amount: zer.toLocaleString() })}</span>
       </div>
       {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
 
       <CosmeticSection
-        title="Background"
+        title={t('edit.background')}
         cat="background"
         tiles={mergeCategory('background', shop, inventory)}
         premium={me.premium ?? false}
@@ -139,7 +139,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
         onBuy={(t) => void buy(t)}
       />
       <CosmeticSection
-        title="Icon"
+        title={t('edit.icon')}
         cat="icon"
         tiles={mergeCategory('icon', shop, inventory)}
         premium={me.premium ?? false}
@@ -158,7 +158,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
             disabled={busy !== null}
             onChange={(e) => void toggleIconVisibility(e.target.checked)}
           />
-          <span>Show premium icon on my profile</span>
+          <span>{t('edit.showPremiumIcon')}</span>
         </label>
       )}
     </section>
@@ -199,46 +199,49 @@ function CosmeticSection({
   onEquip: (sku: string | null) => void;
   onBuy: (tile: Tile) => void;
 }): React.JSX.Element {
+  const t = useT();
   return (
     <div className="cosmetic-section">
       <div className="cosmetic-section-head">
         <h3 className="cosmetic-section-title">{title}</h3>
         {equippedSku && (
           <button type="button" className="btn btn-secondary btn-sm" disabled={busy !== null} onClick={() => onEquip(null)}>
-            Remove
+            {t('groups.remove')}
           </button>
         )}
       </div>
 
       {tiles.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>No {cat}s available yet.</p>
+        <p className="muted" style={{ margin: 0 }}>
+            {cat === 'background' ? t('edit.noBackgrounds') : t('edit.noIcons')}
+          </p>
       ) : (
         <div className="cosmetic-grid">
-          {tiles.map((t) => {
-            const equipped = equippedSku === t.sku;
-            const equippable = t.owned || (t.premiumOnly && premium);
-            const buyable = !t.owned && t.price != null && t.price > 0;
-            const canAfford = zer != null && t.price != null && zer >= t.price;
+          {tiles.map((tile) => {
+            const equipped = equippedSku === tile.sku;
+            const equippable = tile.owned || (tile.premiumOnly && premium);
+            const buyable = !tile.owned && tile.price != null && tile.price > 0;
+            const canAfford = zer != null && tile.price != null && zer >= tile.price;
             const disabled = busy !== null;
             return (
-              <figure className={`cosmetic-tile${equipped ? ' is-equipped' : ''}`} key={t.sku}>
+              <figure className={`cosmetic-tile${equipped ? ' is-equipped' : ''}`} key={tile.sku}>
                 <div className={`cosmetic-thumb cosmetic-thumb-${cat}`}>
-                  {t.assetUrl ? <img src={t.assetUrl} alt="" loading="lazy" /> : <span className="cosmetic-thumb-empty" aria-hidden="true" />}
-                  {t.premiumOnly && <span className="cosmetic-badge" title="Premium">★</span>}
+                  {tile.assetUrl ? <img src={tile.assetUrl} alt="" loading="lazy" /> : <span className="cosmetic-thumb-empty" aria-hidden="true" />}
+                  {tile.premiumOnly && <span className="cosmetic-badge" title={t('profile.premium')}>★</span>}
                 </div>
-                <figcaption className="cosmetic-name" title={t.name}>{t.name}</figcaption>
+                <figcaption className="cosmetic-name" title={tile.name}>{tile.name}</figcaption>
                 {equipped ? (
-                  <span className="cosmetic-equipped">Equipped</span>
+                  <span className="cosmetic-equipped">{t('edit.equipped')}</span>
                 ) : equippable ? (
-                  <button type="button" className="btn btn-sm" disabled={disabled} onClick={() => onEquip(t.sku)}>
-                    Equip
+                  <button type="button" className="btn btn-sm" disabled={disabled} onClick={() => onEquip(tile.sku)}>
+                    {t('edit.equip')}
                   </button>
                 ) : buyable ? (
-                  <button type="button" className="btn btn-sm" disabled={disabled || !canAfford} onClick={() => onBuy(t)}>
-                    {canAfford ? `Buy · ${t.price!.toLocaleString()} Zêr` : 'Not enough Zêr'}
+                  <button type="button" className="btn btn-sm" disabled={disabled || !canAfford} onClick={() => onBuy(tile)}>
+                    {canAfford ? t('edit.buyFor', { price: tile.price!.toLocaleString() }) : t('edit.notEnoughZer')}
                   </button>
                 ) : (
-                  <span className="cosmetic-locked">Premium</span>
+                  <span className="cosmetic-locked">{t('profile.premium')}</span>
                 )}
               </figure>
             );
