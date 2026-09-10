@@ -697,6 +697,20 @@ a.rank-name:hover {
  * card's footer, so a menu dropping downward would open past the bottom of the
  * card — and inside a modal, past the modal.
  */
+/*
+ * A menu has to be opaque.
+ *
+ * This used `var(--surface-2)`, which is `rgba(255,255,255,0.11)` — eleven per
+ * cent white. That is a *tint*, and it is the right thing for a card sitting in
+ * the page flow, where whatever shows through is the page's own background. A
+ * menu floats over content: at eleven per cent, the profile and the buttons
+ * underneath read straight through the options, and you cannot tell the words
+ * you can click from the words you cannot.
+ *
+ * Near-solid rather than fully so, with a blur behind it, so it still belongs
+ * to the same glass as the rest of the app — but nothing legible survives
+ * behind it.
+ */
 .user-menu {
   position: absolute;
   right: 0;
@@ -709,7 +723,9 @@ a.rank-name:hover {
   padding: 6px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: var(--surface-2);
+  background: rgba(18, 21, 27, 0.98);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
   text-align: left;
 }
@@ -787,6 +803,7 @@ a.rank-name:hover {
   width: 100%;
   font-size: 0.9rem;
 }
+/* floats over the page like the menu did, so it is opaque for the same reason */
 .user-actions-done {
   position: absolute;
   right: 0;
@@ -796,8 +813,10 @@ a.rank-name:hover {
   margin: 0;
   padding: 8px 10px;
   border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: rgba(18, 21, 27, 0.98);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--border-strong);
   font-size: 0.8rem;
   color: var(--ink-2);
 }
