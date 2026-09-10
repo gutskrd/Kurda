@@ -47,7 +47,7 @@ export function Register(): React.JSX.Element {
 
           <div className="field">
             <label className="field-label" htmlFor="email">
-              Email
+              {t('auth.email')}
             </label>
             <input
               id="email"
@@ -64,7 +64,7 @@ export function Register(): React.JSX.Element {
 
           <div className="field">
             <label className="field-label" htmlFor="username">
-              Username
+              {t('auth.username')}
             </label>
             <input
               id="username"
@@ -80,7 +80,7 @@ export function Register(): React.JSX.Element {
 
           <div className="field">
             <label className="field-label" htmlFor="password">
-              Password
+              {t('auth.password')}
             </label>
             <PasswordInput id="password" value={password} onChange={setPassword} autoComplete="new-password" />
             <span className="field-hint">At least 8 characters, with a mix of letters and numbers.</span>
@@ -105,7 +105,7 @@ export function Register(): React.JSX.Element {
         </form>
 
         <p className="auth-alt">
-          Already have an account? <Link to="/login">{t('auth.register.signIn')}</Link>
+          {t('auth.register.haveAccount')} <Link to="/login">{t('auth.register.signIn')}</Link>
         </p>
       </div>
     </div>

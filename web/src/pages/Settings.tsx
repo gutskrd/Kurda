@@ -38,6 +38,7 @@ const VIS_HINT: Record<Visibility, string> = {
 
 export function Settings(): React.JSX.Element {
   const { client, logout } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me');
 
@@ -47,8 +48,8 @@ export function Settings(): React.JSX.Element {
   return (
     <div className="container container-narrow">
       <div className="page-header">
-        <span className="eyebrow">Mîheng · Account</span>
-        <h1 className="page-title">Settings</h1>
+        <span className="eyebrow">{t('settings.eyebrow')}</span>
+        <h1 className="page-title">{t('settings.title')}</h1>
       </div>
 
       {/* first, because it is the setting that decides how everything else on
@@ -66,9 +67,9 @@ export function Settings(): React.JSX.Element {
       <BlockedUsers />
 
       <section className="card" style={{ marginTop: 20 }}>
-        <h2 className="friend-heading" style={{ marginTop: 0 }}>Sessions</h2>
+        <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.sessions.title')}</h2>
         <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-          Sign out here, or on every device at once.
+          {t('settings.sessions.help')}
         </p>
         {/*
           Signing out lives here now rather than in the nav, where it sat one slip
@@ -81,7 +82,7 @@ export function Settings(): React.JSX.Element {
               void logout().then(() => navigate('/'));
             }}
           >
-            Sign out
+            {t('settings.sessions.signOut')}
           </Button>
           <Button
             variant="secondary"
@@ -89,7 +90,7 @@ export function Settings(): React.JSX.Element {
               void client.delete('/me/sessions').then(() => logout()).then(() => navigate('/'));
             }}
           >
-            Log out everywhere
+            {t('settings.sessions.signOutEverywhere')}
           </Button>
         </div>
       </section>
@@ -173,6 +174,7 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
 
 function Privacy({ current }: { current: Visibility }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [vis, setVis] = useState<Visibility>(current);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -183,7 +185,7 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
     setMsg(null);
     const res = await client.request('PUT', '/me/privacy', { body: { visibility: next } });
     setBusy(false);
-    if (res.ok) setMsg('Saved.');
+    if (res.ok) setMsg(t('common.saved'));
     else {
       setVis(current);
       setMsg(describeError(res.error));
@@ -192,9 +194,9 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
 
   return (
     <section className="card">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Profile visibility</h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>Who can see your profile.</p>
-      <div className="toolbar" style={{ marginBottom: 8 }} role="group" aria-label="Profile visibility">
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.privacy.title')}</h2>
+      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>{t('settings.privacy.help')}</p>
+      <div className="toolbar" style={{ marginBottom: 8 }} role="group" aria-label={t('settings.privacy.title')}>
         {VISIBILITIES.map((v) => (
           <button
             key={v}
@@ -216,11 +218,12 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
 
 function ExportData(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
 
   return (
     <section className="card" style={{ marginTop: 20 }}>
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Your data</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.data.title')}</h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
         Request a copy of your MyKurda data. We’ll prepare it and email you when it’s ready.
       </p>

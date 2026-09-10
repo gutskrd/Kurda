@@ -141,7 +141,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
           <button
             type="button"
             className="nav-toggle"
-            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-label={open ? t('nav.close') : t('nav.menu')}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
