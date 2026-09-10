@@ -18,6 +18,8 @@ import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
 import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
 import { UserActions } from './UserActions';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -35,6 +37,7 @@ export function useProfileModal(): Ctx {
 }
 
 export function ProfileModalProvider({ children }: { children: ReactNode }): React.JSX.Element {
+  const t = useT();
   const [target, setTarget] = useState<Target | null>(null);
   const openProfile = useCallback((t: Target) => setTarget(t), []);
   const close = useCallback(() => setTarget(null), []);
@@ -42,7 +45,7 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
   return (
     <ProfileCtx.Provider value={{ openProfile, closeProfile: close }}>
       {children}
-      <Modal open={target !== null} onClose={close} label="Profile">
+      <Modal open={target !== null} onClose={close} label={t('profile.title')}>
         {target && <ProfileContent target={target} />}
       </Modal>
     </ProfileCtx.Provider>
@@ -54,10 +57,10 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
  * log the technical detail for debugging. Never logs the auth token or any
  * response body — only the transport-level error metadata.
  */
-function failureReason(path: string, res: ApiResult<unknown>): string {
+function failureReason(path: string, res: ApiResult<unknown>, t: (key: MessageKey) => string): string {
   if (res.ok) {
     console.error(`[profile] ${path} returned 200 but no usable profile in the body`);
-    return 'We couldn’t read this profile. Please try again.';
+    return t('profile.unreadable');
   }
   const { kind, status, code, requestId } = res.error;
   console.error(`[profile] ${path} failed`, { kind, status, code, requestId });
@@ -67,6 +70,7 @@ function failureReason(path: string, res: ApiResult<unknown>): string {
 /** Card body: fetches /me for your own profile, /users/:id for others. */
 function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const { closeProfile } = useProfileModal();
   const navigate = useNavigate();
   const [me, setMe] = useState<MeProfile | null>(null);
@@ -95,12 +99,12 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         // A successful response with no usable user is still a failure — never
         // fall through to a blank card. (Guards a shape mismatch / empty body.)
         if (r.ok && r.data?.user?.username) setMe(r.data.user);
-        else setError(failureReason('/me', r));
+        else setError(failureReason('/me', r, t));
       } else {
         const r = await client.get<PublicProfile>(`/users/${target.userId}`);
         if (cancelled) return;
         if (r.ok && r.data?.username) setOther(r.data);
-        else setError(failureReason(`/users/${target.userId}`, r));
+        else setError(failureReason(`/users/${target.userId}`, r, t));
       }
       if (!cancelled) setLoading(false);
     })();
@@ -110,8 +114,8 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     };
   }, [client, target, attempt]);
 
-  if (loading) return <Loading label="Loading profile…" />;
-  if (error) return <ErrorState title="Couldn’t load this profile" message={error} onRetry={() => setAttempt((n) => n + 1)} />;
+  if (loading) return <Loading label={t('profile.loading')} />;
+  if (error) return <ErrorState title={t('profile.loadFailed')} message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
   // One normalized view drives a shared card shell for both own + others.
   let name = '';
@@ -127,7 +131,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   let favStory: FavoriteRef | null = null;
   const stats: Array<{ label: string; value: string; cap?: boolean }> = [];
   let actions: React.JSX.Element | null = null;
-  const unavailable = <ErrorState title="Couldn’t load this profile" message="Profile unavailable." onRetry={() => setAttempt((n) => n + 1)} />;
+  const unavailable = <ErrorState title={t('profile.loadFailed')} message={t('profile.unavailable')} onRetry={() => setAttempt((n) => n + 1)} />;
 
   if (target.kind === 'me') {
     if (!me) return unavailable;
@@ -145,7 +149,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favPoem = me.favoritePoem ?? null;
     favStory = me.favoriteStory ?? null;
     stats.push({ label: 'XP', value: me.xp.toLocaleString() });
-    stats.push({ label: 'Streak', value: `${me.streak.current} day${me.streak.current === 1 ? '' : 's'}` });
+    stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: me.streak.current }) });
   } else {
     if (!other) return unavailable;
     name = other.displayName || other.username;
@@ -160,13 +164,13 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favPoem = other.favoritePoem ?? null;
     favStory = other.favoriteStory ?? null;
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
-    if (other.streak !== undefined) stats.push({ label: 'Streak', value: `${other.streak} day${other.streak === 1 ? '' : 's'}` });
-    if (other.tier) stats.push({ label: 'League', value: other.tier, cap: true });
-    if (other.rating !== undefined) stats.push({ label: 'Rating', value: `${other.rating}` });
-    if (other.achievements !== undefined) stats.push({ label: 'Achievements', value: `${other.achievements}` });
+    if (other.streak !== undefined) stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: other.streak }) });
+    if (other.tier) stats.push({ label: t('profile.stat.league'), value: other.tier, cap: true });
+    if (other.rating !== undefined) stats.push({ label: t('profile.stat.rating'), value: `${other.rating}` });
+    if (other.achievements !== undefined) stats.push({ label: t('profile.stat.achievements'), value: `${other.achievements}` });
     actions = blocked ? (
       <div className="pcard-blocked" role="status">
-        <p>Blocked. They can no longer find you, message you or add you — and they are not told.</p>
+        <p>{t('profile.blockedNote')}</p>
         <button
           type="button"
           className="link"
@@ -175,7 +179,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
             navigate('/app/settings');
           }}
         >
-          Undo this in Settings
+          {t('profile.undoInSettings')}
         </button>
       </div>
     ) : (
@@ -217,7 +221,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         <div className="pcard-handle">@{username}</div>
         <GiftedNote background={background} icon={icon} />
         {online && (
-          <div className="pcard-online"><span className="presence-dot presence-dot-inline" /> Online</div>
+          <div className="pcard-online"><span className="presence-dot presence-dot-inline" /> {t('profile.online')}</div>
         )}
 
         {level && <LevelBar level={level} />}
@@ -239,13 +243,13 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           <dl className="pcard-rows pcard-favorites">
             {favPoem && (
               <div className="pcard-row" key="fav-poem">
-                <dt>Favorite poem</dt>
+                <dt>{t('profile.favoritePoem')}</dt>
                 <dd>{favPoem.title}</dd>
               </div>
             )}
             {favStory && (
               <div className="pcard-row" key="fav-story">
-                <dt>Favorite story</dt>
+                <dt>{t('profile.favoriteStory')}</dt>
                 <dd>{favStory.title}</dd>
               </div>
             )}
@@ -256,7 +260,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
       </div>
 
       <div className="pcard-foot">
-        <span className="pcard-label">{target.kind === 'me' ? 'Profile' : name}</span>
+        <span className="pcard-label">{target.kind === 'me' ? t('profile.title') : name}</span>
         <span className="pcard-logo">
           <img src="/logo.png" alt="" aria-hidden="true" />
           MyKurda
@@ -272,7 +276,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
             navigate(target.kind === 'me' ? '/app/profile' : `/app/users/${target.userId}`);
           }}
         >
-          View full profile
+          {t('profile.viewFull')}
         </Button>
         {/*
           Block and Report live in here rather than on the card itself. Block
@@ -305,6 +309,7 @@ function OtherActions({
   onMessage: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [state, setState] = useState<FriendStatus>(status);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
@@ -328,7 +333,7 @@ function OtherActions({
 
   const message = (
     <Button variant="secondary" size="sm" block onClick={onMessage}>
-      Message
+      {t('profile.message')}
     </Button>
   );
 
@@ -337,23 +342,23 @@ function OtherActions({
       {state === 'friends' && message}
       {state === 'none' && (
         <Button size="sm" block onClick={addFriend} disabled={busy}>
-          {busy ? 'Sending…' : 'Add friend'}
+          {busy ? t('profile.sending') : t('profile.addFriend')}
         </Button>
       )}
       {state === 'pending_out' && (
         <Button size="sm" block disabled>
-          Request sent
+          {t('profile.requestSent')}
         </Button>
       )}
       {state === 'pending_in' && (
         <>
           <Button size="sm" block onClick={accept} disabled={busy}>
-            {busy ? 'Accepting…' : 'Accept request'}
+            {busy ? t('profile.accepting') : t('profile.acceptRequest')}
           </Button>
           {message}
         </>
       )}
-      {err && <div className="msg msg-error" style={{ marginTop: 4 }}>Something went wrong. Please try again.</div>}
+      {err && <div className="msg msg-error" style={{ marginTop: 4 }}>{t('common.somethingWentWrong')}</div>}
     </div>
   );
 }

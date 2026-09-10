@@ -3,16 +3,18 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { BlockIcon, CloseIcon, FlagIcon, MoreIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
 /** What a reporter says the problem is. Matches the server's enum exactly. */
-const CATEGORIES = [
-  { key: 'harassment', label: 'Harassment or bullying' },
-  { key: 'spam', label: 'Spam or scams' },
-  { key: 'impersonation', label: 'Pretending to be someone else' },
-  { key: 'hate', label: 'Hate or slurs' },
-  { key: 'self_harm', label: 'Self-harm or someone in danger' },
-  { key: 'other', label: 'Something else' },
-] as const;
+const CATEGORIES: Array<{ key: string; labelKey: MessageKey }> = [
+  { key: 'harassment', labelKey: 'moderation.category.harassment' },
+  { key: 'spam', labelKey: 'moderation.category.spam' },
+  { key: 'impersonation', labelKey: 'moderation.category.impersonation' },
+  { key: 'hate', labelKey: 'moderation.category.hate' },
+  { key: 'self_harm', labelKey: 'moderation.category.selfHarm' },
+  { key: 'other', labelKey: 'moderation.category.other' },
+];
 
 /** The server refuses anything shorter; saying so up front beats a rejection. */
 const MIN_REASON = 10;
@@ -47,6 +49,7 @@ export function UserActions({
   className?: string;
 }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +117,7 @@ export function UserActions({
     setReason('');
     // the server tells nobody anything either way, so this note is the only
     // acknowledgement there is — and it must not promise an outcome
-    setDone('Thank you. A moderator will look at this.');
+    setDone(t('moderation.reportThanks'));
   }
 
   const short = reason.trim().length < MIN_REASON;
@@ -127,8 +130,8 @@ export function UserActions({
         className="user-actions-btn"
         aria-haspopup="menu"
         aria-expanded={panel !== null}
-        aria-label={`More about ${name}`}
-        title="More"
+        aria-label={t('moderation.moreAbout', { name })}
+        title={t('moderation.more')}
         onClick={() => setPanel(panel ? null : 'menu')}
       >
         <MoreIcon size={18} />
@@ -137,49 +140,46 @@ export function UserActions({
       {panel === 'menu' && (
         <div className="user-menu" role="menu">
           <button type="button" role="menuitem" className="user-menu-item" onClick={() => open('report')}>
-            <FlagIcon size={16} /> Report
+            <FlagIcon size={16} /> {t('moderation.report')}
           </button>
           <button type="button" role="menuitem" className="user-menu-item is-danger" onClick={() => open('block')}>
-            <BlockIcon size={16} /> Block
+            <BlockIcon size={16} /> {t('friends.block')}
           </button>
         </div>
       )}
 
       {panel === 'block' && (
-        <div className="user-menu user-menu-wide" role="dialog" aria-label={`Block ${name}`}>
+        <div className="user-menu user-menu-wide" role="dialog" aria-label={t('friends.blockWho', { name })}>
           <div className="user-menu-head">
-            <strong>Block {name}?</strong>
-            <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label="Close">
+            <strong>{t('moderation.blockWhoTitle', { name })}</strong>
+            <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label={t('common.close')}>
               <CloseIcon size={15} />
             </button>
           </div>
-          <p className="user-menu-note">
-            They will not be able to find you, message you or add you, and you will not see them anywhere. They
-            are not told. You can undo this in Settings.
-          </p>
+          <p className="user-menu-note">{t('moderation.blockNote')}</p>
           {error && <div className="msg msg-error">{error}</div>}
           <div className="user-menu-actions">
             <Button variant="secondary" size="sm" onClick={() => setPanel(null)} disabled={busy}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <button type="button" className="btn btn-sm user-menu-danger" onClick={() => void block()} disabled={busy}>
-              {busy ? 'Blocking…' : 'Block'}
+              {busy ? t('moderation.blocking') : t('friends.block')}
             </button>
           </div>
         </div>
       )}
 
       {panel === 'report' && (
-        <form className="user-menu user-menu-wide" onSubmit={report} aria-label={`Report ${name}`}>
+        <form className="user-menu user-menu-wide" onSubmit={report} aria-label={t('moderation.reportWho', { name })}>
           <div className="user-menu-head">
-            <strong>Report {name}</strong>
-            <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label="Close">
+            <strong>{t('moderation.reportWho', { name })}</strong>
+            <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label={t('common.close')}>
               <CloseIcon size={15} />
             </button>
           </div>
 
           <label className="user-menu-label" htmlFor="report-category">
-            What is happening?
+            {t('moderation.whatIsHappening')}
           </label>
           <select
             id="report-category"
@@ -189,13 +189,13 @@ export function UserActions({
           >
             {CATEGORIES.map((c) => (
               <option key={c.key} value={c.key}>
-                {c.label}
+                {t(c.labelKey)}
               </option>
             ))}
           </select>
 
           <label className="user-menu-label" htmlFor="report-reason">
-            What should a moderator know?
+            {t('moderation.whatShouldModKnow')}
           </label>
           {/*
             Required, unlike reporting a post. There is no post attached to a
@@ -209,22 +209,22 @@ export function UserActions({
             value={reason}
             maxLength={MAX_REASON}
             required
-            placeholder="What they did, and where. Enough for someone who has not seen it."
+            placeholder={t('moderation.reasonPlaceholder')}
             onChange={(e) => setReason(e.target.value)}
           />
           <p className="user-menu-note">
             {short
-              ? `A few more words — at least ${MIN_REASON} characters.`
-              : `${MAX_REASON - reason.trim().length} characters left. They are not told you reported them.`}
+              ? t('moderation.reasonTooShort', { min: MIN_REASON })
+              : t('moderation.charactersLeft', { count: MAX_REASON - reason.trim().length })}
           </p>
 
           {error && <div className="msg msg-error">{error}</div>}
           <div className="user-menu-actions">
             <Button variant="secondary" size="sm" onClick={() => setPanel(null)} disabled={busy}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button size="sm" type="submit" disabled={busy || short}>
-              {busy ? 'Sending…' : 'Send report'}
+              {busy ? t('profile.sending') : t('moderation.sendReport')}
             </Button>
           </div>
         </form>

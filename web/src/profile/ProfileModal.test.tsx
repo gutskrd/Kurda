@@ -193,6 +193,23 @@ describe('ProfileModal', () => {
       expect(screen.getByRole('menuitem', { name: /report/i })).toBeInTheDocument();
     });
 
+    /**
+     * The ⋯ menu is where a person reports harassment. It is the last place in
+     * the app that should still be in English for someone who chose Kurmancî —
+     * they have to understand what they are about to do, and to whom.
+     */
+    it('speaks the language the reader chose', async () => {
+      localStorage.setItem('mykurda_locale', 'ku');
+      stub();
+      renderApp(<OpenUser />);
+      const user = userEvent.setup();
+      await user.click(screen.getByText('open-user'));
+
+      await user.click(await screen.findByRole('button', { name: 'Bêtir derbarê Zana K de' }));
+      expect(screen.getByRole('menuitem', { name: /ragihîne/i })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /asteng bike/i })).toBeInTheDocument();
+    });
+
     it('asks before it blocks, then says where to undo it', async () => {
       const fetchMock = stub();
       renderApp(<OpenUser />);

@@ -10,11 +10,13 @@ import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
+import { useT } from '../i18n/I18nProvider';
 
 /** Another user's full MyKurda profile (/app/users/:id), privacy-gated. */
 export function UserProfile(): React.JSX.Element {
   const { id = '' } = useParams();
   const { client } = useAuth();
+  const t = useT();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,16 +30,16 @@ export function UserProfile(): React.JSX.Element {
       const r = await client.get<PublicProfile>(`/users/${id}`);
       if (cancelled) return;
       if (r.ok && r.data?.username) setProfile(r.data);
-      else setError(r.ok ? 'This profile could not be loaded.' : describeError(r.error));
+      else setError(r.ok ? t('profile.notLoaded') : describeError(r.error));
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, id, attempt]);
+  }, [client, id, attempt, t]);
 
-  if (loading) return <Loading label="Loading profile…" />;
-  if (error || !profile) return <ErrorState title="Couldn’t load this profile" message={error ?? 'Unavailable.'} onRetry={() => setAttempt((n) => n + 1)} />;
+  if (loading) return <Loading label={t('profile.loading')} />;
+  if (error || !profile) return <ErrorState title={t('profile.loadFailed')} message={error ?? t('profile.unavailable')} onRetry={() => setAttempt((n) => n + 1)} />;
 
   const name = profile.displayName || profile.username;
 
@@ -47,7 +49,7 @@ export function UserProfile(): React.JSX.Element {
       <div className="container container-narrow">
         <div className="card" style={{ marginTop: 24, textAlign: 'center' }}>
           <h1 className="page-title" style={{ marginTop: 0 }}>{name}</h1>
-          <p className="page-sub" style={{ margin: '8px auto 18px' }}>This profile is private.</p>
+          <p className="page-sub" style={{ margin: '8px auto 18px' }}>{t('profile.private')}</p>
           <FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />
         </div>
       </div>
@@ -83,17 +85,17 @@ export function UserProfile(): React.JSX.Element {
       }
       sidebarExtra={
         <>
-          {profile.tier && <div className="mkp-info-row"><span className="l">League</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
-          {profile.rating !== undefined && <div className="mkp-info-row"><span className="l">Rating</span><span className="n">{profile.rating}</span></div>}
+          {profile.tier && <div className="mkp-info-row"><span className="l">{t('profile.stat.league')}</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
+          {profile.rating !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.rating')}</span><span className="n">{profile.rating}</span></div>}
           {/* only once they have actually played ranked — a place beside a
               default rating would read as a standing they have not earned */}
           {profile.rank != null && (
             <div className="mkp-info-row">
-              <span className="l">Rank</span>
+              <span className="l">{t('profile.stat.rank')}</span>
               <span className="n">#{profile.rank.toLocaleString()}</span>
             </div>
           )}
-          {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">Achievements</span><span className="n">{profile.achievements}</span></div>}
+          {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.achievements')}</span><span className="n">{profile.achievements}</span></div>}
         </>
       }
     />
@@ -103,6 +105,7 @@ export function UserProfile(): React.JSX.Element {
 /** Message + friend-request controls for another user (drives off friendStatus). */
 function FriendActions({ userId, username, status }: { userId: string; username: string; status: FriendStatus }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [state, setState] = useState<FriendStatus>(status);
   const [busy, setBusy] = useState(false);
@@ -122,19 +125,19 @@ function FriendActions({ userId, username, status }: { userId: string; username:
 
   const message = (
     <Button variant="secondary" size="sm" onClick={() => navigate(`/app/messages?to=${userId}&name=${encodeURIComponent(username)}`)}>
-      Message
+      {t('profile.message')}
     </Button>
   );
 
   return (
     <div className="mkp-actions">
-      {state === 'self' && <Link to="/app/profile" className="mkp-edit">Your profile</Link>}
+      {state === 'self' && <Link to="/app/profile" className="mkp-edit">{t('profile.yours')}</Link>}
       {state === 'friends' && message}
-      {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? 'Sending…' : 'Add friend'}</Button>}
-      {state === 'pending_out' && <Button size="sm" disabled>Request sent</Button>}
+      {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? t('profile.sending') : t('profile.addFriend')}</Button>}
+      {state === 'pending_out' && <Button size="sm" disabled>{t('profile.requestSent')}</Button>}
       {state === 'pending_in' && (
         <>
-          <Button size="sm" onClick={() => void accept()} disabled={busy}>{busy ? 'Accepting…' : 'Accept request'}</Button>
+          <Button size="sm" onClick={() => void accept()} disabled={busy}>{busy ? t('profile.accepting') : t('profile.acceptRequest')}</Button>
           {message}
         </>
       )}
