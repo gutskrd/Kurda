@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import type { ImagePost } from '../lib/types';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { PostSkeleton } from '../components/skeletons';
 import { PostAuthor } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
 import { Reactions, type ReactionSummary } from '../images/Reactions';
@@ -42,7 +43,7 @@ export function DimenPost(): React.JSX.Element {
     };
   }, [client, id]);
 
-  if (loading) return <div className="container container-narrow"><Loading /></div>;
+  if (loading) return <div className="container container-narrow"><PostSkeleton withImage /></div>;
   if (error || !post) {
     return (
       <div className="container container-narrow">

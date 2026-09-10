@@ -3,7 +3,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
 import { useProfileModal } from '../profile/ProfileModal';
-import { Loading, ErrorState, EmptyState } from '../components/states';
+import { ErrorState, EmptyState } from '../components/states';
+import { FriendListSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { useT } from '../i18n/I18nProvider';
@@ -210,7 +211,7 @@ export function Friends(): React.JSX.Element {
       <section className="friend-section">
         <h2 className="friend-heading">{t('friends.yours')}</h2>
         {friends.loading ? (
-          <Loading />
+          <FriendListSkeleton />
         ) : friends.error ? (
           <ErrorState message={friends.error} onRetry={friends.reload} />
         ) : (friends.data?.friends.length ?? 0) === 0 ? (

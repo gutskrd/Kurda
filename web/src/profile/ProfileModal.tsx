@@ -14,7 +14,8 @@ import type {
 } from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { ProfileCardSkeleton } from '../components/skeletons';
 import { PersonGlyph } from '../components/icons';
 import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
 import { UserActions } from './UserActions';
@@ -114,7 +115,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     };
   }, [client, target, attempt]);
 
-  if (loading) return <Loading label={t('profile.loading')} />;
+  if (loading) return <ProfileCardSkeleton />;
   if (error) return <ErrorState title={t('profile.loadFailed')} message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
   // One normalized view drives a shared card shell for both own + others.

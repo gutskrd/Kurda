@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
 import { PostButton } from '../feed/PostButton';
 import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
@@ -143,7 +144,7 @@ export function Civak(): React.JSX.Element {
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}
 
       {items === null ? (
-        <Loading label={t('civak.loading')} />
+        <FeedSkeleton label="civak.loading" />
       ) : items.length === 0 ? (
         <p className="muted">{t('civak.empty')}</p>
       ) : (

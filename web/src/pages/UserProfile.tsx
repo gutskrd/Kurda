@@ -8,7 +8,8 @@ import { ProfileFriends } from '../profile/ProfileFriends';
 import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { FullProfileSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
@@ -39,7 +40,7 @@ export function UserProfile(): React.JSX.Element {
     };
   }, [client, id, attempt, t]);
 
-  if (loading) return <Loading label={t('profile.loading')} />;
+  if (loading) return <FullProfileSkeleton />;
   if (error || !profile) return <ErrorState title={t('profile.loadFailed')} message={error ?? t('profile.unavailable')} onRetry={() => setAttempt((n) => n + 1)} />;
 
   const name = profile.displayName || profile.username;

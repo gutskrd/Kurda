@@ -1,5 +1,6 @@
 import { useApiGet } from '../lib/useApi';
-import { Loading, ErrorState, EmptyState } from '../components/states';
+import { ErrorState, EmptyState } from '../components/states';
+import { CourseGridSkeleton } from '../components/skeletons';
 import { BookIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
@@ -29,7 +30,7 @@ export function Learn(): React.JSX.Element {
       </div>
 
       {loading ? (
-        <Loading />
+        <CourseGridSkeleton />
       ) : error ? (
         <ErrorState message={error} onRetry={reload} />
       ) : courses.length === 0 ? (

@@ -3,7 +3,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { CommentsSkeleton } from '../components/skeletons';
 import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
 
@@ -113,7 +114,7 @@ export function Comments({
       {error && <ErrorState message={error} onRetry={() => void load()} />}
 
       {comments === null ? (
-        <Loading />
+        <CommentsSkeleton />
       ) : comments.length === 0 ? (
         <p className="muted comments-empty">{t('comments.empty')}</p>
       ) : (

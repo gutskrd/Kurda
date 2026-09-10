@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { countryName } from '../lib/countries';
-import { Loading, ErrorState, EmptyState } from '../components/states';
+import { ErrorState, EmptyState } from '../components/states';
+import { RankingsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -145,7 +146,7 @@ export function Rankings(): React.JSX.Element {
       )}
 
       {loading ? (
-        <Loading />
+        <RankingsSkeleton />
       ) : error ? (
         <ErrorState message={error} onRetry={() => void load(0)} />
       ) : scope === 'country' && board?.country == null ? (

@@ -8,7 +8,8 @@ import { useT } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
-import { Loading, ErrorState, EmptyState } from '../components/states';
+import { ErrorState, EmptyState } from '../components/states';
+import { ConversationsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
@@ -115,7 +116,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
   useRealtimeEvent('dm_read', onDm);
 
   if (error && convos === null) return <ErrorState message={error} onRetry={() => void loadConvos()} />;
-  if (convos === null) return <Loading />;
+  if (convos === null) return <ConversationsSkeleton />;
   if (convos.length === 0)
     return <EmptyState title={t('chat.noMessagesYet')} message={t('chat.noMessagesBody')} />;
   return (
@@ -185,7 +186,7 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
       {error && mine === null ? (
         <ErrorState message={error} onRetry={() => void load()} />
       ) : mine === null ? (
-        <Loading />
+        <ConversationsSkeleton count={4} />
       ) : mine.length === 0 ? (
         <EmptyState title={t('groups.noGroupsYet')} message={t('groups.noGroupsBody')} />
       ) : (
@@ -319,7 +320,7 @@ function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined:
   }
 
   if (error && groups === null) return <ErrorState message={error} onRetry={() => void load()} />;
-  if (groups === null) return <Loading />;
+  if (groups === null) return <ConversationsSkeleton count={4} />;
   // show open groups AND the caller's own (marked as already-in), rather than hiding them
   const open = groups.filter((g) => g.privacy === 'open' || mineIds.has(g.id));
   if (open.length === 0)

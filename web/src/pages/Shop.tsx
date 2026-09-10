@@ -3,7 +3,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError, requestId } from '../lib/api';
 import type { InventoryItem, PurchaseResult, ShopItem } from '../lib/types';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { FriendListSkeleton, TileGridSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
@@ -167,7 +168,12 @@ export function Shop(): React.JSX.Element {
     }
   }
 
-  if (shop.loading) return <Loading label={t('shop.loading')} />;
+  if (shop.loading)
+    return (
+      <div className="container">
+        <TileGridSkeleton label="shop.loading" />
+      </div>
+    );
   if (shop.error) return <ErrorState title={t('shop.loadFailed')} message={shop.error} onRetry={shop.reload} />;
 
   return (
@@ -351,7 +357,7 @@ function GiftPicker({
       </p>
 
       {friends === null ? (
-        <Loading />
+        <FriendListSkeleton count={4} />
       ) : friends.length === 0 ? (
         <p className="muted">{t('shop.noFriendsToGift')}</p>
       ) : (

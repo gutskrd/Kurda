@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useApiGet } from '../lib/useApi';
-import { Loading, ErrorState } from '../components/states';
+import { ErrorState } from '../components/states';
+import { PostSkeleton } from '../components/skeletons';
 import { PostAuthor, type Author } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
 import { ArrowIcon } from '../components/icons';
@@ -31,7 +32,7 @@ export function LibraryPostPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>();
   const { data: post, error, loading, reload } = useApiGet<Post>(`/library/posts/${id}`);
 
-  if (loading) return <div className="container container-narrow"><Loading /></div>;
+  if (loading) return <div className="container container-narrow"><PostSkeleton /></div>;
   if (error || !post) {
     return (
       <div className="container container-narrow">
