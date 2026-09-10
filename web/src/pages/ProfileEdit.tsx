@@ -13,6 +13,7 @@ import { SectionToggles } from '../profile/SectionToggles';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Dedicated Edit Profile page (/app/profile/edit). ALL profile customization
@@ -20,6 +21,7 @@ import { PersonGlyph } from '../components/icons';
  * the Shop; here you equip what you own and edit your details.
  */
 export function ProfileEdit(): React.JSX.Element {
+  const t = useT();
   const { client, refreshUser } = useAuth();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function ProfileEdit(): React.JSX.Element {
       const r = await client.get<{ user: MeProfile }>('/me');
       if (cancelled) return;
       if (r.ok && r.data?.user?.username) setMe(r.data.user);
-      else setError(r.ok ? 'Your profile could not be loaded.' : describeError(r.error));
+      else setError(r.ok ? 'Your profile could not be loaded.' : describeError(r.error, t));
       setLoading(false);
     })();
     return () => {
@@ -74,6 +76,7 @@ export function ProfileEdit(): React.JSX.Element {
 
 /** Display name + bio. */
 function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => void }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [displayName, setDisplayName] = useState(me.displayName ?? '');
   const [bio, setBio] = useState(me.bio ?? '');
@@ -97,7 +100,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
       setMsg({ kind: 'ok', text: 'Profile updated.' });
       onSaved();
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
@@ -128,6 +131,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
 
 /** Pick a default avatar (premium ones locked for non-premium users). */
 function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [selected, setSelected] = useState<string | null>(me.selectedAvatarKey ?? null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -155,7 +159,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
       if (!del.ok) {
         setBusy(null);
         setSelected(prev);
-        setMsg({ kind: 'err', text: describeError(del.error) });
+        setMsg({ kind: 'err', text: describeError(del.error, t) });
         return;
       }
     }
@@ -166,7 +170,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
       onChanged();
     } else {
       setSelected(prev);
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 

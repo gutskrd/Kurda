@@ -4,12 +4,16 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
+
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const CODE_LENGTH = 6;
 /** Matches the server's per-IP resend limit (4/hour) — don't invite a 429. */
 const RESEND_COOLDOWN_SEC = 60;
 
-function verifyError(err: ApiError): string {
+function verifyError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'INVALID_CODE':
       return 'That code isn’t correct. Check the digits and try again.';
@@ -18,7 +22,7 @@ function verifyError(err: ApiError): string {
     case 'TOO_MANY_ATTEMPTS':
       return 'Too many attempts. Request a new code to continue.';
     default:
-      return describeError(err);
+      return describeError(err, t);
   }
 }
 
@@ -29,6 +33,7 @@ function verifyError(err: ApiError): string {
  */
 export function VerifyEmail(): React.JSX.Element {
   const { client, user, logout, refreshUser } = useAuth();
+  const t = useT();
   const navigate = useNavigate();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -89,7 +94,7 @@ export function VerifyEmail(): React.JSX.Element {
         return;
       }
       setBusy(false);
-      setError(verifyError(res.error));
+      setError(verifyError(res.error, t));
     },
     [client, code, refreshUser, navigate],
   );
@@ -104,7 +109,7 @@ export function VerifyEmail(): React.JSX.Element {
       setNotice('We sent a new code. It can take a minute to arrive.');
       setCooldown(RESEND_COOLDOWN_SEC);
     } else {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }
 

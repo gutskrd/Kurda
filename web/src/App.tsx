@@ -63,13 +63,21 @@ function CivakMoved(): React.JSX.Element {
   return <Navigate to={{ pathname: '/app', search }} replace />;
 }
 
+/**
+ * Language is the outermost thing in the app, above auth.
+ *
+ * It used to sit inside `AuthProvider`, which meant the auth provider itself
+ * had no translator above it — so the one message a signed-out visitor is most
+ * likely to see, the reason their login was refused, was the one that could not
+ * be translated. Nothing in `I18nProvider` reads the account: the choice comes
+ * from this device or the browser, and `AccountLocale` layers the account's own
+ * choice on top once there is an account to read.
+ */
 export function App(): React.JSX.Element {
   return (
+    <I18nProvider>
     <AuthProvider>
-      {/* outside the router and above everything: what language the buttons are
-          in is not a property of which page you are on */}
-      <I18nProvider>
-      {/* inside the auth provider, because it reads the signed-in account */}
+      {/* inside both: it reads the signed-in account and sets the language */}
       <AccountLocale />
       <RealtimeProvider>
       <BrowserRouter>
@@ -132,11 +140,11 @@ export function App(): React.JSX.Element {
             }
           >
             <Route index element={<Civak />} />
-            <Route path="learn" element={<RequireAccount what="follow the course"><Learn /></RequireAccount>} />
+            <Route path="learn" element={<RequireAccount what="gate.what.course"><Learn /></RequireAccount>} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
             <Route path="civak" element={<CivakMoved />} />
-            <Route path="saved" element={<RequireAccount what="keep posts"><Saved /></RequireAccount>} />
+            <Route path="saved" element={<RequireAccount what="gate.what.savePosts"><Saved /></RequireAccount>} />
             {/* the three old walls now point at the one that replaced them, each
                 landing on its own filter so a bookmark still means something */}
             <Route path="stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
@@ -149,35 +157,35 @@ export function App(): React.JSX.Element {
             <Route path="games/race" element={<Race />} />
             <Route
               path="games/quiz"
-              element={<RequireAccount what="play against other people"><Quiz /></RequireAccount>}
+              element={<RequireAccount what="gate.what.playOthers"><Quiz /></RequireAccount>}
             />
             {/* the two games played against other people */}
             <Route
               path="games/wordle-battle"
-              element={<RequireAccount what="play against other people"><WordleBattle /></RequireAccount>}
+              element={<RequireAccount what="gate.what.playOthers"><WordleBattle /></RequireAccount>}
             />
             <Route
               path="games/rhyme-match"
-              element={<RequireAccount what="play against other people"><RhymeMatch /></RequireAccount>}
+              element={<RequireAccount what="gate.what.playOthers"><RhymeMatch /></RequireAccount>}
             />
             <Route path="rankings" element={<Rankings />} />
-            <Route path="friends" element={<RequireAccount what="add friends"><Friends /></RequireAccount>} />
-            <Route path="messages" element={<RequireAccount what="send messages"><Messages /></RequireAccount>} />
-            <Route path="shop" element={<RequireAccount what="buy anything"><Shop /></RequireAccount>} />
-            <Route path="profile" element={<RequireAccount what="have a profile"><Profile /></RequireAccount>} />
+            <Route path="friends" element={<RequireAccount what="gate.what.addFriends"><Friends /></RequireAccount>} />
+            <Route path="messages" element={<RequireAccount what="gate.what.sendMessages"><Messages /></RequireAccount>} />
+            <Route path="shop" element={<RequireAccount what="gate.what.buy"><Shop /></RequireAccount>} />
+            <Route path="profile" element={<RequireAccount what="gate.what.profile"><Profile /></RequireAccount>} />
             <Route
               path="profile/edit"
-              element={<RequireAccount what="have a profile"><ProfileEdit /></RequireAccount>}
+              element={<RequireAccount what="gate.what.profile"><ProfileEdit /></RequireAccount>}
             />
             <Route path="users/:id" element={<UserProfile />} />
-            <Route path="settings" element={<RequireAccount what="change your settings"><Settings /></RequireAccount>} />
+            <Route path="settings" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
           </Route>
         </Routes>
         </MessagesProvider>
         </ProfileModalProvider>
       </BrowserRouter>
       </RealtimeProvider>
-      </I18nProvider>
     </AuthProvider>
+    </I18nProvider>
   );
 }

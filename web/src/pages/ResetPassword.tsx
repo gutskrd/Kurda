@@ -4,15 +4,19 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
+import { useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
 
-function resetError(err: ApiError): string {
+type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+
+function resetError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'INVALID_TOKEN':
       return 'This reset link is invalid or has expired. Request a new one below.';
     case 'WEAK_PASSWORD':
       return err.message;
     default:
-      return describeError(err);
+      return describeError(err, t);
   }
 }
 
@@ -23,6 +27,7 @@ function resetError(err: ApiError): string {
  */
 export function ResetPassword(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get('token') ?? '';
@@ -44,7 +49,7 @@ export function ResetPassword(): React.JSX.Element {
     const res = await client.post('/auth/reset-password', { token, password });
     setBusy(false);
     if (res.ok) setDone(true);
-    else setError(resetError(res.error));
+    else setError(resetError(res.error, t));
   }
 
   // A link without a token can't do anything — say so instead of showing a form

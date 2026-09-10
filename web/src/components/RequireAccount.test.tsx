@@ -27,13 +27,13 @@ const inside = <p>the protected thing</p>;
 describe('RequireAccount', () => {
   it('lets a member through', async () => {
     member();
-    renderApp(<RequireAccount what="send messages">{inside}</RequireAccount>, ['/app/messages']);
+    renderApp(<RequireAccount what="gate.what.sendMessages">{inside}</RequireAccount>, ['/app/messages']);
     expect(await screen.findByText('the protected thing')).toBeInTheDocument();
   });
 
   it('asks a visitor rather than bouncing them to a login form', async () => {
     guest();
-    renderApp(<RequireAccount what="send messages">{inside}</RequireAccount>, ['/app/messages']);
+    renderApp(<RequireAccount what="gate.what.sendMessages">{inside}</RequireAccount>, ['/app/messages']);
 
     // being redirected with no explanation and no way back is how you lose
     // someone who was only curious
@@ -43,22 +43,22 @@ describe('RequireAccount', () => {
 
   it('says what the page is for, so the ask makes sense', async () => {
     guest();
-    renderApp(<RequireAccount what="play against other people">{inside}</RequireAccount>, ['/app/games/quiz']);
+    renderApp(<RequireAccount what="gate.what.playOthers">{inside}</RequireAccount>, ['/app/games/quiz']);
     expect(await screen.findByText(/to play against other people you have to sign in/i)).toBeInTheDocument();
   });
 
   it('offers both doors and a way back to what is open', async () => {
     guest();
-    renderApp(<RequireAccount what="keep posts">{inside}</RequireAccount>, ['/app/saved']);
+    renderApp(<RequireAccount what="gate.what.savePosts">{inside}</RequireAccount>, ['/app/saved']);
 
     expect(await screen.findByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
-    expect(screen.getByRole('link', { name: 'Back to Civak' })).toHaveAttribute('href', '/app/civak');
+    expect(screen.getByRole('link', { name: 'Back to Community' })).toHaveAttribute('href', '/app/civak');
   });
 
   it('still holds an unverified account away from the page', async () => {
     member(false);
-    const { container } = renderApp(<RequireAccount what="send messages">{inside}</RequireAccount>, ['/app/messages']);
+    const { container } = renderApp(<RequireAccount what="gate.what.sendMessages">{inside}</RequireAccount>, ['/app/messages']);
 
     // opening the app to guests must not become a way around email
     // verification. This test mounts the component alone, so the redirect has

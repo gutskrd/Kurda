@@ -95,7 +95,7 @@ export function UserActions({
     const res = await client.post(`/friends/${userId}/block`);
     setBusy(false);
     if (!res.ok) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
       return;
     }
     setPanel(null);
@@ -110,7 +110,7 @@ export function UserActions({
     const res = await client.post(`/users/${userId}/report`, { category, reason: reason.trim() });
     setBusy(false);
     if (!res.ok) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
       return;
     }
     setPanel(null);

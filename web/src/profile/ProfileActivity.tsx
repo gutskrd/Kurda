@@ -111,7 +111,7 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
         `/users/${userId}/activity?kind=${kind}&limit=${PAGE}&offset=${offset}`,
       );
       if (!res.ok) {
-        setError(describeError(res.error));
+        setError(describeError(res.error, t));
         setState('error');
         return;
       }

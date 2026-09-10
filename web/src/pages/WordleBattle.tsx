@@ -59,7 +59,7 @@ function guessMsg(err: ApiError, t: (key: MessageKey) => string): string {
     case 'NOT_A_WORD':
       return t('games.wordle.notAWord');
     default:
-      return describeError(err);
+      return describeError(err, t);
   }
 }
 
@@ -98,7 +98,7 @@ function CreateBattle(): React.JSX.Element {
     const res = await client.post<BattleState>('/wordle/battles', { difficulty });
     setBusy(false);
     if (res.ok) navigate(`/app/games/wordle-battle?id=${res.data.id}`);
-    else setErr(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error));
+    else setErr(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error, t));
   }
 
   return (
@@ -137,7 +137,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
       setBattle(res.data);
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }, [client, id]);
 
@@ -219,7 +219,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     const res = await client.post<BattleState>(`/wordle/battles/${id}/join`);
     setBusy(false);
     if (res.ok) setBattle(res.data);
-    else setNotice(describeError(res.error));
+    else setNotice(describeError(res.error, t));
   }
 
   async function start(): Promise<void> {
@@ -227,7 +227,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     const res = await client.post<BattleState>(`/wordle/battles/${id}/start`);
     setBusy(false);
     if (res.ok) setBattle(res.data);
-    else setNotice(describeError(res.error));
+    else setNotice(describeError(res.error, t));
   }
 
   if (error && !battle) return <ErrorState message={error} onRetry={() => void load()} />;

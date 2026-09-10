@@ -100,7 +100,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
       setConvos(res.data.conversations ?? []);
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }, [client]);
 
@@ -159,7 +159,7 @@ function GroupsList({ activeGroup }: { activeGroup: string | null }): React.JSX.
       setMine(res.data.groups);
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }, [client]);
 
@@ -258,7 +258,7 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
       onDone();
       navigate(`/app/messages?group=${res.data.id}`);
     } else {
-      setErr(res.error.code === 'TRUST_VELOCITY' ? t('groups.newAccountLimit') : describeError(res.error));
+      setErr(res.error.code === 'TRUST_VELOCITY' ? t('groups.newAccountLimit') : describeError(res.error, t));
     }
   }
 
@@ -303,7 +303,7 @@ function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined:
     setError(null);
     const res = await client.get<{ groups: Group[] }>('/groups');
     if (res.ok) setGroups(res.data.groups);
-    else setError(describeError(res.error));
+    else setError(describeError(res.error, t));
   }, [client]);
 
   useEffect(() => {
@@ -315,7 +315,7 @@ function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined:
     const res = await client.post(`/groups/${id}/join`);
     setJoining(null);
     if (res.ok) onJoined();
-    else setError(describeError(res.error));
+    else setError(describeError(res.error, t));
   }
 
   if (error && groups === null) return <ErrorState message={error} onRetry={() => void load()} />;

@@ -65,7 +65,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
             landing on the marketing site (which has its own nav) */}
         <Brand to={signedIn ? '/app' : '/'} />
 
-        <nav aria-label="Primary">
+        <nav aria-label={t('nav.primary')}>
           <ul className={`nav-links${open ? ' open' : ''}`}>
             {links.map((l) => (
               <li key={l.to}>
@@ -83,7 +83,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                   {/* a link carries its own waiting count, so something arriving is
                       visible from anywhere without opening the page to check */}
                   {l.to === '/app/messages' && unreadTotal > 0 && (
-                    <span className="nav-badge" aria-label={`${unreadTotal} unread`}>
+                    <span className="nav-badge" aria-label={t('nav.unreadCount', { count: unreadTotal })}>
                       {unreadTotal > 99 ? '99+' : unreadTotal}
                     </span>
                   )}
@@ -117,8 +117,10 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
               <Link
                 to={SHOP}
                 className="nav-shop nav-desktop-only"
-                aria-label={unopenedGifts > 0 ? `Shop — ${unopenedGifts} gift${unopenedGifts === 1 ? '' : 's'} waiting` : 'Shop'}
-                title="Shop"
+                aria-label={
+                  unopenedGifts > 0 ? t('nav.shopGiftsWaiting', { count: unopenedGifts }) : t('nav.shop')
+                }
+                title={t('nav.shop')}
               >
                 <ShopIcon size={20} />
                 {unopenedGifts > 0 && <span className="nav-badge">{unopenedGifts > 99 ? '99+' : unopenedGifts}</span>}
@@ -131,10 +133,10 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
           ) : (
             <>
               <LinkButton to="/login" variant="ghost" size="sm" className="nav-desktop-only">
-                Log in
+                {t('nav.login')}
               </LinkButton>
               <LinkButton to="/register" variant="primary" size="sm" className="nav-desktop-only">
-                Get started
+                {t('nav.register')}
               </LinkButton>
             </>
           )}
@@ -164,6 +166,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
  * is yours.
  */
 function NavProfile(): React.JSX.Element | null {
+  const t = useT();
   const { data } = useRail();
   const { openProfile } = useProfileModal();
   const you = data.you;
@@ -174,8 +177,8 @@ function NavProfile(): React.JSX.Element | null {
       type="button"
       className="nav-profile nav-desktop-only"
       onClick={() => openProfile({ kind: 'me' })}
-      aria-label={`Your profile — level ${you.level.level}`}
-      title="Your profile"
+      aria-label={t('nav.yourProfileLevel', { level: you.level.level })}
+      title={t('nav.yourProfile')}
     >
       <LevelRing progress={you.level.progress} />
       <Avatar url={you.avatarUrl} glyphSize={18} />
@@ -196,12 +199,13 @@ function NavProfile(): React.JSX.Element | null {
  * turns into 13,880 is worse than a moment of nothing.
  */
 function Purse(): React.JSX.Element | null {
+  const t = useT();
   const { data } = useRail();
   const you = data.you;
   if (!you) return null;
 
   return (
-    <Link to={SHOP} className="purse nav-desktop-only" title="Your Zêr and gems">
+    <Link to={SHOP} className="purse nav-desktop-only" title={t('nav.yourPurse')}>
       <span className="purse-row">
         <CoinIcon size={15} />
         <span className="purse-amount">{you.balances.zer.toLocaleString()}</span>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
 import type { AuthPayload, SessionUser } from '../lib/types';
+import { useT } from '../i18n/I18nProvider';
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
@@ -21,6 +22,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
+  const t = useT();
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
 
@@ -81,13 +83,13 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     client,
     login: async (email, password, remember) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
-      if (!res.ok) return describeError(res.error);
+      if (!res.ok) return describeError(res.error, t);
       applyAuth(res.data, remember);
       return null;
     },
     register: async (input) => {
       const res = await client.post<AuthPayload>('/auth/register', { ...input, acceptTerms: true });
-      if (!res.ok) return describeError(res.error);
+      if (!res.ok) return describeError(res.error, t);
       applyAuth(res.data, true);
       return null;
     },

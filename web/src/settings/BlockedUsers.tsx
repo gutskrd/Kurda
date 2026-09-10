@@ -64,7 +64,7 @@ export function BlockedUsers(): React.JSX.Element {
       const res = await client.get<Page>(`/friends/blocks?limit=${PAGE}&offset=${offset}`);
       if (!alive.current) return;
       if (!res.ok) {
-        setError(describeError(res.error));
+        setError(describeError(res.error, t));
         if (offset === 0) setState('error');
         return;
       }
@@ -94,7 +94,7 @@ export function BlockedUsers(): React.JSX.Element {
   async function unblock(user: BlockedUser): Promise<void> {
     const res = await client.delete(`/friends/${user.userId}/block`);
     if (!res.ok) {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
       return;
     }
     setError(null);

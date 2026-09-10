@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { Loading, ErrorState } from '../components/states';
 import { PostAuthor, type Author } from './PostAuthor';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * Threaded comments on a post.
@@ -63,6 +64,7 @@ export function Comments({
   commentCount: number;
   surface?: CommentSurface;
 }): React.JSX.Element {
+  const t = useT();
   const { client, status } = useAuth();
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function Comments({
     if (res.ok) setComments(res.data.comments);
     else {
       setComments([]);
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }, [client, postId, surface]);
 
@@ -251,6 +253,7 @@ function CommentForm({
   /** fired once the server has actually taken it */
   onAdded: () => void;
 }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
@@ -272,7 +275,7 @@ function CommentForm({
       onAdded();
       await onDone();
     } else {
-      setError(describeError(res.error));
+      setError(describeError(res.error, t));
     }
   }
 

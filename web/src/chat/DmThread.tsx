@@ -51,7 +51,7 @@ export function sendError(err: ApiError, t: Translate): string {
     case 'NOT_FRIENDS':
       return t('chat.error.notFriends');
     default:
-      return describeError(err);
+      return describeError(err, t);
   }
 }
 
@@ -103,7 +103,7 @@ export function DmThread({
       setMessages(byTime(res.data?.messages));
     } else {
       setMessages((m) => m ?? []);
-      setLoadError(describeError(res.error));
+      setLoadError(describeError(res.error, t));
     }
   }, [client, otherId]);
 

@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { MeProfile, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
+import { useT } from '../i18n/I18nProvider';
 
 const COPY: Record<ProfileSection, { label: string; hint: string }> = {
   posts: { label: 'Posts', hint: 'Everything you have posted — gotin, çîrok, helbest, wêne and mîm.' },
@@ -22,6 +23,7 @@ const COPY: Record<ProfileSection, { label: string; hint: string }> = {
  * merges one key at a time so two quick toggles cannot overwrite each other.
  */
 export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const [sections, setSections] = useState<ProfileSections | null>(null);
   const [busy, setBusy] = useState<ProfileSection | null>(null);
@@ -33,7 +35,7 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
       const res = await client.get<{ sections?: ProfileSections | null }>(`/users/${me.id}`);
       if (cancelled) return;
       if (res.ok && res.data.sections) setSections(res.data.sections);
-      else setError(res.ok ? 'Could not read your profile sections.' : describeError(res.error));
+      else setError(res.ok ? 'Could not read your profile sections.' : describeError(res.error, t));
     })();
     return () => {
       cancelled = true;
@@ -49,7 +51,7 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
     // trust the server's answer rather than the optimistic guess — it is the
     // one the profile will actually be rendered from
     if (res.ok) setSections(res.data.sections);
-    else setError(describeError(res.error));
+    else setError(describeError(res.error, t));
   }
 
   return (

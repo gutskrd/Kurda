@@ -75,7 +75,7 @@ export function GroupThread({
     if (res.ok) setMessages(byTime(res.data.messages));
     else {
       setMessages((m) => m ?? []);
-      setLoadError(describeError(res.error));
+      setLoadError(describeError(res.error, t));
     }
   }, [client, groupId]);
 
@@ -280,7 +280,7 @@ function GroupMembers({
     const res = await run();
     setBusy(null);
     if (res.ok) await onChanged();
-    else setError(res.error ? describeError(res.error) : t('chat.thatDidNotWork'));
+    else setError(res.error ? describeError(res.error, t) : t('chat.thatDidNotWork'));
   }
 
   const setRole = (m: GroupMember, role: 'moderator' | 'member'): Promise<void> =>
@@ -304,7 +304,7 @@ function GroupMembers({
     const res = await client.post(`/groups/${detail.id}/leave`);
     setBusy(null);
     if (res.ok) onLeft();
-    else setError(res.error ? describeError(res.error) : t('chat.thatDidNotWork'));
+    else setError(res.error ? describeError(res.error, t) : t('chat.thatDidNotWork'));
   }
 
   const ordered = [...detail.members].sort(

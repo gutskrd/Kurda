@@ -28,7 +28,7 @@ export function Saved(): React.JSX.Element {
     async (offset: number): Promise<void> => {
       const res = await client.get<{ items: FeedItem[] }>(`/me/saved?limit=${PAGE}&offset=${offset}`);
       if (!res.ok) {
-        setError(describeError(res.error));
+        setError(describeError(res.error, t));
         setItems([]);
         return;
       }

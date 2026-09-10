@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ApiClient, describeError } from './api';
 import { createTokenStorage } from './tokenStorage';
+import { englishOnly as t, translator } from '../i18n/I18nProvider';
+import { fr } from '../i18n/fr';
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -17,10 +19,33 @@ afterEach(() => {
 
 describe('describeError', () => {
   it('gives friendly copy per error kind', () => {
-    expect(describeError({ kind: 'network', message: 'x' })).toMatch(/connection/i);
-    expect(describeError({ kind: 'server', message: 'x' })).toMatch(/our end/i);
-    expect(describeError({ kind: 'rate_limited', message: 'x', retryAfterSec: 5 })).toMatch(/5s/);
-    expect(describeError({ kind: 'client', message: 'Email already taken' })).toBe('Email already taken');
+    expect(describeError({ kind: 'network', message: 'x' }, t)).toMatch(/connection/i);
+    expect(describeError({ kind: 'server', message: 'x' }, t)).toMatch(/our end/i);
+    expect(describeError({ kind: 'rate_limited', message: 'x', retryAfterSec: 5 }, t)).toMatch(/5s/);
+    expect(describeError({ kind: 'client', message: 'Email already taken' }, t)).toBe('Email already taken');
+  });
+
+  /**
+   * These are the sentences a person sees when something breaks, which is the
+   * worst moment to be handed a language they do not read.
+   */
+  it('says it in the reader’s language', () => {
+    const french = translator(fr);
+    expect(describeError({ kind: 'network', message: 'x' }, french)).toMatch(/connexion/i);
+    expect(describeError({ kind: 'server', message: 'x' }, french)).toMatch(/de notre côté/i);
+    expect(describeError({ kind: 'rate_limited', message: 'x', retryAfterSec: 5 }, french)).toMatch(/5 s/);
+  });
+
+  /**
+   * The server's own message is more specific than anything here — "Email
+   * already taken" beats "Something went wrong" — so it still comes through as
+   * it arrived. That it arrives in English is a gap in the API, not one this
+   * function can close by discarding what it knows.
+   */
+  it('still prefers the server’s own message over a generic translated one', () => {
+    expect(describeError({ kind: 'client', message: 'Email already taken' }, translator(fr))).toBe(
+      'Email already taken',
+    );
   });
 });
 

@@ -9,6 +9,7 @@ import { decodePicture, type DecodedPicture } from '../images/decode';
 import { ImageFramer } from '../images/ImageFramer';
 import { WHOLE_PICTURE, type Frame } from '../images/frame';
 import { UNTOUCHED, compose, forgetGraded } from '../images/composition';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * An avatar is never shown larger than a hero portrait, and usually at 32px in
@@ -37,6 +38,7 @@ export function ProfilePhotoPicker({
   me: MeProfile;
   onChanged: () => void;
 }): React.JSX.Element {
+  const t = useT();
   const { client } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<CanvasImageSource | null>(null);
@@ -130,7 +132,7 @@ export function ProfilePhotoPicker({
     } else if (res.error.code === 'MEDIA_UNAVAILABLE') {
       setMsg({ kind: 'err', text: 'Photo storage isn’t configured yet — try again once it’s enabled.' });
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
@@ -140,7 +142,7 @@ export function ProfilePhotoPicker({
     const res = await client.delete('/me/profile-picture');
     setBusy(null);
     if (res.ok) onChanged();
-    else setMsg({ kind: 'err', text: describeError(res.error) });
+    else setMsg({ kind: 'err', text: describeError(res.error, t) });
   }
 
   const framing = file !== null && source !== null && imageRef.current !== null;

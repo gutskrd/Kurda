@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError, requestId } from '../lib/api';
 import type { InventoryItem, MeProfile, PurchaseResult, ShopItem } from '../lib/types';
+import { useT } from '../i18n/I18nProvider';
 
 /** A category's merged view: owned items + buyable catalog items, deduped. */
 interface Tile {
@@ -38,6 +39,7 @@ function mergeCategory(cat: Category, shop: ShopItem[], inventory: InventoryItem
  */
 export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [shop, setShop] = useState<ShopItem[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [zer, setZer] = useState<number | null>(null);
@@ -60,7 +62,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     if (s.ok) setShop(s.data.items ?? []);
     if (inv.ok) setInventory(inv.data.items ?? []);
     if (w.ok) setZer(w.data.balances?.zer ?? null);
-    if (!s.ok && !inv.ok) setError(describeError(s.ok ? inv.error : s.error));
+    if (!s.ok && !inv.ok) setError(describeError(s.ok ? inv.error : s.error, t));
   }
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
       onChanged();
     } else {
       setEquipped((e) => ({ ...e, [cat]: prev }));
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 
@@ -109,7 +111,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
       setMsg({ kind: 'ok', text: `Purchased ${tile.name}.` });
       onChanged();
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
     setBusy(null);
   }
@@ -171,7 +173,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
       onChanged();
     } else {
       setIconEnabled(prev);
-      setMsg({ kind: 'err', text: describeError(res.error) });
+      setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
   }
 }

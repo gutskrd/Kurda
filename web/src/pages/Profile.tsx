@@ -43,7 +43,7 @@ export function Profile(): React.JSX.Element {
       ]);
       if (cancelled) return;
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
-      else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error));
+      else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error, t));
       if (w.ok) setZer(w.data.balances.zer);
       if (f.ok) setFriends(f.data.friends ?? []);
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));

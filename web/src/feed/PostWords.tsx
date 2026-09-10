@@ -42,7 +42,7 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
     });
     setBusy(false);
     if (res.ok) onPosted();
-    else setError(describeError(res.error));
+    else setError(describeError(res.error, t));
   }
 
   return (

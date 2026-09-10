@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from './api';
+import { useT } from '../i18n/I18nProvider';
 
 interface State<T> {
   data: T | null;
@@ -14,6 +15,7 @@ interface State<T> {
  */
 export function useApiGet<T>(path: string): State<T> & { reload: () => void } {
   const { client } = useAuth();
+  const t = useT();
   const [state, setState] = useState<State<T>>({ data: null, error: null, loading: true });
   const [nonce, setNonce] = useState(0);
 
@@ -25,12 +27,12 @@ export function useApiGet<T>(path: string): State<T> & { reload: () => void } {
     void client.get<T>(path).then((res) => {
       if (cancelled) return;
       if (res.ok) setState({ data: res.data, error: null, loading: false });
-      else setState({ data: null, error: describeError(res.error), loading: false });
+      else setState({ data: null, error: describeError(res.error, t), loading: false });
     });
     return () => {
       cancelled = true;
     };
-  }, [client, path, nonce]);
+  }, [client, path, nonce, t]);
 
   return { ...state, reload };
 }
