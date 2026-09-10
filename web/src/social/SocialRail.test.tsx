@@ -207,6 +207,34 @@ describe('SocialRail', () => {
     expect(within(dock as HTMLElement).getByRole('button', { name: /Close the chat with/ })).toBeInTheDocument();
   });
 
+  /**
+   * The rule that reveals a chat button on hover is scoped to `.rail-row`, so a
+   * row that is not one hides its own button — which is exactly what happened:
+   * the rule said `.rail-friend` and a group's row is `.rail-group`, leaving
+   * every group's button in the page, tabbable, and invisible.
+   *
+   * jsdom loads no stylesheets and cannot see that. What it can see is the
+   * invariant underneath it: whatever kind of row a conversation is opened
+   * from, the button lives inside the class the reveal is written against.
+   */
+  it('puts every chat button inside a row the reveal rule can reach', async () => {
+    signIn();
+    railFetch([
+      rail({
+        friends: [person('u2', 'zana', { online: true })],
+        groups: [{ id: 'g7', name: 'Amedspor', memberCount: 12, unread: 0 }],
+      }),
+    ]);
+    show();
+
+    await screen.findByText('Amedspor');
+    const buttons = screen.getAllByRole('button', { name: /^Message / });
+    expect(buttons.length).toBeGreaterThanOrEqual(2); // at least the person and the group
+    for (const button of buttons) {
+      expect(button.closest('.rail-row'), `${button.getAttribute('aria-label')} is not inside a .rail-row`).not.toBeNull();
+    }
+  });
+
   it('keeps one dock, so a group replaces a person rather than overlapping it', async () => {
     signIn();
     railFetch([
