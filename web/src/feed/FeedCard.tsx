@@ -9,7 +9,7 @@ import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
 
-import { CARD_LABEL } from './postKinds';
+import { CARD_LABEL_KEY } from './postKinds';
 
 /**
  * One post on the wall.
@@ -94,7 +94,7 @@ export function FeedCard({
             </span>
           </span>
         </button>
-        <span className={`fcard-kind fcard-kind-${item.kind}`}>{CARD_LABEL[item.kind] ?? item.kind}</span>
+        <span className={`fcard-kind fcard-kind-${item.kind}`}>{CARD_LABEL_KEY[item.kind] ? t(CARD_LABEL_KEY[item.kind]!) : item.kind}</span>
       </header>
 
       <Link to={item.href} className="fcard-body">

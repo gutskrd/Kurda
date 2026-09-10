@@ -14,42 +14,42 @@ export type FeedSection = 'all' | 'gotin' | 'dimen';
 export interface KindOption {
   /** what the API is asked for */
   key: string;
-  label: string;
+  /** looked up at render time, so it follows the chosen language */
+  labelKey: MessageKey;
   /** what the database calls it, for posting */
   postAs: string;
 }
 
 /** Written posts. A gotin is a saying and needs no title; the others do. */
 export const GOTIN_KINDS: readonly KindOption[] = [
-  { key: 'gotin', label: 'Gotin', postAs: 'gotin' },
-  { key: 'cirok', label: 'Çîrok', postAs: 'story' },
-  { key: 'helbest', label: 'Helbest', postAs: 'poem' },
+  { key: 'gotin', labelKey: 'civak.kind.saying', postAs: 'gotin' },
+  { key: 'cirok', labelKey: 'civak.kind.story', postAs: 'story' },
+  { key: 'helbest', labelKey: 'civak.kind.poem', postAs: 'poem' },
 ];
 
 /** Pictures. */
 export const DIMEN_KINDS: readonly KindOption[] = [
-  { key: 'wene', label: 'Wêne', postAs: 'image' },
-  { key: 'mim', label: 'Mîm', postAs: 'meme' },
+  { key: 'wene', labelKey: 'civak.kind.photo', postAs: 'image' },
+  { key: 'mim', labelKey: 'civak.kind.meme', postAs: 'meme' },
 ];
 
 /**
  * The two halves, plus everything.
  *
- * "Gotin" and "Dîmen" are the words this community uses for these things and
- * stay as they are in every language, exactly as "Civak" does in the
- * navigation. "Everything" is not one of those words — it is an ordinary
- * English label — so it carries a key instead and gets translated.
+ * Nothing here carries its own words. Gotin and Dîmen are Kurdish, and Kurdish
+ * is one of the eight languages this app is read in rather than a layer on top
+ * of the others — somebody reading in Spanish gets "Escritos" and "Imágenes",
+ * and somebody reading in Kurmancî gets "Gotin" and "Dîmen", because there that
+ * IS the translation.
  */
 export const SECTIONS: ReadonlyArray<{
   key: FeedSection;
-  label: string;
-  /** set when the label is ordinary words rather than the community's own */
-  labelKey?: MessageKey;
+  labelKey: MessageKey;
   kinds: readonly KindOption[];
 }> = [
-  { key: 'all', label: 'Everything', labelKey: 'civak.filter.everything', kinds: [] },
-  { key: 'gotin', label: 'Gotin', kinds: GOTIN_KINDS },
-  { key: 'dimen', label: 'Dîmen', kinds: DIMEN_KINDS },
+  { key: 'all', labelKey: 'civak.filter.everything', kinds: [] },
+  { key: 'gotin', labelKey: 'civak.section.writing', kinds: GOTIN_KINDS },
+  { key: 'dimen', labelKey: 'civak.section.pictures', kinds: DIMEN_KINDS },
 ];
 
 /** Only a gotin may go without a title. */
@@ -57,13 +57,20 @@ export function titleRequired(postAs: string): boolean {
   return postAs !== 'gotin';
 }
 
-/** What a card's badge says, keyed by what the API sends back. */
-export const CARD_LABEL: Record<string, string> = {
-  gotin: 'Gotin',
-  story: 'Çîrok',
-  poem: 'Helbest',
-  image: 'Wêne',
-  meme: 'Mîm',
+/**
+ * What a card's badge says, keyed by what the API sends back.
+ *
+ * Deliberately open: a kind the server ships before the web knows its name has
+ * no entry here, and the card falls back to printing the raw kind rather than
+ * an empty chip. That is why this maps to keys that may be absent instead of
+ * being a closed `Record<Kind, …>`.
+ */
+export const CARD_LABEL_KEY: Record<string, MessageKey> = {
+  gotin: 'civak.kind.saying',
+  story: 'civak.kind.story',
+  poem: 'civak.kind.poem',
+  image: 'civak.kind.photo',
+  meme: 'civak.kind.meme',
 };
 
 export function asSection(value: string | null): FeedSection {

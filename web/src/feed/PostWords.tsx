@@ -59,7 +59,7 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
             disabled={busy}
             onClick={() => setPostAs(k.postAs)}
           >
-            {k.label}
+            {t(k.labelKey)}
           </button>
         ))}
       </div>

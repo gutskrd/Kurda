@@ -2,7 +2,7 @@ import type { Catalogue } from './en';
 
 /** French. */
 export const fr: Catalogue = {
-  'nav.civak': 'Civak',
+  'nav.civak': 'Communauté',
   'nav.games': 'Jeux',
   'nav.rankings': 'Classement',
   'nav.learn': 'Apprendre',
@@ -62,10 +62,7 @@ export const fr: Catalogue = {
   'settings.sessions.signOut': 'Se déconnecter',
   'settings.sessions.signOutEverywhere': 'Se déconnecter partout',
   'settings.data.title': 'Vos données',
-  'settings.blocked.title': 'Personnes bloquées',
-
-  'civak.eyebrow': 'Communauté',
-  'civak.subtitle': 'Récits, poèmes et images de tout le monde.',
+  'settings.blocked.title': 'Personnes bloquées',  'civak.subtitle': 'Récits, poèmes et images de tout le monde.',
   'civak.loading': 'Chargement du mur…',
   'civak.empty': 'Il n’y a encore rien ici.',
   'civak.filter.show': 'Afficher',
@@ -104,4 +101,14 @@ export const fr: Catalogue = {
   'post.submit': 'Publier',
   'post.submitting': 'Publication…',
   'post.picture.open': 'Publier une image',
+  'civak.title': 'Communauté',
+  'civak.section.writing': 'Écrits',
+  'civak.section.pictures': 'Images',
+  'civak.kind.saying': 'Dicton',
+  'civak.kind.story': 'Récit',
+  'civak.kind.poem': 'Poème',
+  'civak.kind.photo': 'Photo',
+  'civak.kind.meme': 'Mème',
+  'post.caption': 'Légende',
+  'post.captionPlaceholder': 'Dites-en un mot (facultatif)…',
 };

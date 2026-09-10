@@ -79,8 +79,7 @@ export function Civak(): React.JSX.Element {
   return (
     <div className="container container-feed">
       <div className="page-header">
-        <span className="eyebrow">Civak · {t('civak.eyebrow')}</span>
-        <h1 className="page-title">Civak</h1>
+        <h1 className="page-title">{t('civak.title')}</h1>
         <p className="page-sub">{t('civak.subtitle')}</p>
       </div>
 
@@ -103,10 +102,10 @@ export function Civak(): React.JSX.Element {
               aria-pressed={section === sct.key}
               /* "Gotin" is both a half and a kind within it, so each says which
                  it is — two identical buttons side by side is a coin toss */
-              aria-label={t('civak.filter.showSection', { section: sct.labelKey ? t(sct.labelKey) : sct.label })}
+              aria-label={t('civak.filter.showSection', { section: t(sct.labelKey) })}
               onClick={() => choose(sct.key, null)}
             >
-              {sct.labelKey ? t(sct.labelKey) : sct.label}
+              {t(sct.labelKey)}
             </button>
           ))}
         </div>
@@ -129,10 +128,10 @@ export function Civak(): React.JSX.Element {
                 type="button"
                 className={`seg-btn${kind === k.key ? ' is-active' : ''}`}
                 aria-pressed={kind === k.key}
-                aria-label={t('civak.filter.onlyKind', { kind: k.label })}
+                aria-label={t('civak.filter.onlyKind', { kind: t(k.labelKey) })}
                 onClick={() => choose(section, k.key)}
               >
-                {k.label}
+                {t(k.labelKey)}
               </button>
             ))}
           </div>

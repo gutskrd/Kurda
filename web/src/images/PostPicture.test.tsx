@@ -82,7 +82,7 @@ describe('PictureComposer', () => {
     show();
 
     await pick();
-    await userEvent.click(screen.getByRole('button', { name: 'Mîm' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Meme' }));
     await userEvent.click(screen.getByRole('button', { name: 'Post' }));
 
     await waitFor(() => expect(steps).toHaveLength(2));

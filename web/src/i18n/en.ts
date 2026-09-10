@@ -14,7 +14,7 @@
  */
 export const en = {
   // ---- the shell -----------------------------------------------------------
-  'nav.civak': 'Civak',
+  'nav.civak': 'Community',
   'nav.games': 'Games',
   'nav.rankings': 'Rankings',
   'nav.learn': 'Learn',
@@ -82,13 +82,18 @@ export const en = {
 
   // ---- the wall ------------------------------------------------------------
   /*
-   * Gotin, Çîrok, Helbest, Wêne, Mîm and Dîmen are NOT translated, in any
-   * language. They are what this community calls these things — the same reason
-   * "Civak" stays "Civak" in the navigation. What is translated is everything
-   * around them, and the descriptions that say what each one means, so somebody
-   * meeting the word for the first time is not left guessing.
+   * Civak, Gotin, Dîmen, Çîrok, Helbest, Wêne and Mîm are Kurdish words, and
+   * they are translated like any other. Somebody reading the app in Spanish
+   * chose Spanish; leaving the section names in a language they do not read
+   * makes the app harder to use, not more authentic. Kurmancî keeps the
+   * original words, because in Kurmancî they ARE the translation.
+   *
+   * One consequence worth knowing: in Kurdish, the "Gotin" section contains a
+   * "Gotin" kind, which reads as the same word twice. Every other language gets
+   * the distinction for free — "Writing" containing "Saying" — so the awkward
+   * pair only survives where it is the community's own vocabulary.
    */
-  'civak.eyebrow': 'Community',
+  'civak.title': 'Community',
   'civak.subtitle': 'Stories, poems and pictures from everyone.',
   'civak.loading': 'Loading the wall…',
   'civak.empty': 'Nothing here yet.',
@@ -99,6 +104,16 @@ export const en = {
   'civak.filter.showSection': 'Show {section}',
   'civak.filter.onlyKind': 'Only {kind}',
   'civak.filter.onlyEverything': 'Everything in this section',
+
+  /* the two halves of the wall */
+  'civak.section.writing': 'Writing',
+  'civak.section.pictures': 'Pictures',
+  /* what a post is, used both as a filter and as the badge on a card */
+  'civak.kind.saying': 'Saying',
+  'civak.kind.story': 'Story',
+  'civak.kind.poem': 'Poem',
+  'civak.kind.photo': 'Photo',
+  'civak.kind.meme': 'Meme',
 
   'feed.picture': 'A picture',
   'feed.comments': '{count} comments',
@@ -129,6 +144,8 @@ export const en = {
   'post.submit': 'Post',
   'post.submitting': 'Posting…',
   'post.picture.open': 'Post a picture',
+  'post.caption': 'Caption',
+  'post.captionPlaceholder': 'Say something about it (optional)…',
 } as const;
 
 export type MessageKey = keyof typeof en;
