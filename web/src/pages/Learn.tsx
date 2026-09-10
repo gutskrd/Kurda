@@ -1,6 +1,7 @@
 import { useApiGet } from '../lib/useApi';
 import { Loading, ErrorState, EmptyState } from '../components/states';
 import { BookIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
 
 interface CourseSummary {
   id: string;
@@ -15,18 +16,16 @@ const DIALECT_LABEL: Record<string, string> = {
 };
 
 export function Learn(): React.JSX.Element {
+  const t = useT();
   const { data, error, loading, reload } = useApiGet<{ courses: CourseSummary[] }>('/courses');
   const courses = data?.courses ?? [];
 
   return (
     <div className="container">
       <div className="page-header">
-        <span className="eyebrow">Fêrbûn · Your path</span>
-        <h1 className="page-title">Learn Kurdish</h1>
-        <p className="page-sub">
-          Work through a structured course — each one is a map of skills you unlock step by step. Pick
-          a course to begin; your progress syncs with the MyKurda app.
-        </p>
+        <span className="eyebrow">{t('learn.eyebrow')}</span>
+        <h1 className="page-title">{t('learn.title')}</h1>
+        <p className="page-sub">{t('learn.subtitle')}</p>
       </div>
 
       {loading ? (
@@ -35,8 +34,8 @@ export function Learn(): React.JSX.Element {
         <ErrorState message={error} onRetry={reload} />
       ) : courses.length === 0 ? (
         <EmptyState
-          title="No courses available yet"
-          message="New courses are being prepared. Check back soon — they’ll appear here as soon as they’re published."
+          title={t('learn.noCourses')}
+          message={t('learn.noCoursesBody')}
         />
       ) : (
         <div className="grid grid-2">
@@ -49,7 +48,7 @@ export function Learn(): React.JSX.Element {
                 <h3 style={{ margin: 0 }}>{c.title}</h3>
                 <span className="badge">{DIALECT_LABEL[c.dialect] ?? c.dialect}</span>
               </div>
-              <p>A guided skill tree — vocabulary, grammar and listening, unlocked as you go.</p>
+              <p>{t('learn.skillTree')}</p>
             </article>
           ))}
         </div>

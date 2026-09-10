@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Loading } from './states';
 import { VERIFY_PATH } from './ProtectedRoute';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * The door to the app, which is open.
@@ -17,10 +18,11 @@ import { VERIFY_PATH } from './ProtectedRoute';
  * pointless.
  */
 export function AppGate({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const t = useT();
   const { status, user } = useAuth();
   const location = useLocation();
 
-  if (status === 'restoring') return <Loading label="Restoring your session…" />;
+  if (status === 'restoring') return <Loading label={t('auth.restoring')} />;
   if (status === 'signedIn' && user && !user.emailVerified && location.pathname !== VERIFY_PATH) {
     return <Navigate to={VERIFY_PATH} replace />;
   }

@@ -12,7 +12,7 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
 function resetError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'INVALID_TOKEN':
-      return 'This reset link is invalid or has expired. Request a new one below.';
+      return t('auth.reset.invalidLink');
     case 'WEAK_PASSWORD':
       return err.message;
     default:
@@ -41,7 +41,7 @@ export function ResetPassword(): React.JSX.Element {
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     if (password !== confirm) {
-      setError('Those passwords don’t match.');
+      setError(t('auth.reset.mismatch'));
       return;
     }
     setBusy(true);
@@ -59,11 +59,11 @@ export function ResetPassword(): React.JSX.Element {
       <div className="auth-wrap">
         <div className="auth-card">
           <div className="auth-head">
-            <h1>Reset password</h1>
-            <p>This link is missing its reset code, so it can’t be used.</p>
+            <h1>{t('auth.reset.title')}</h1>
+            <p>{t('auth.reset.missingCode')}</p>
           </div>
           <Link to="/forgot-password" className="btn btn-primary btn-block">
-            Request a new link
+            {t('auth.reset.requestNewLink')}
           </Link>
         </div>
       </div>
@@ -75,11 +75,11 @@ export function ResetPassword(): React.JSX.Element {
       <div className="auth-wrap">
         <div className="auth-card">
           <div className="auth-head">
-            <h1>Password updated</h1>
-            <p>You can now sign in with your new password.</p>
+            <h1>{t('auth.reset.updated')}</h1>
+            <p>{t('auth.reset.updatedBody')}</p>
           </div>
           <Button block onClick={() => navigate('/login', { replace: true })}>
-            Go to sign in
+            {t('auth.reset.goToSignIn')}
           </Button>
         </div>
       </div>
@@ -90,8 +90,8 @@ export function ResetPassword(): React.JSX.Element {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-head">
-          <h1>Choose a new password</h1>
-          <p>Pick something you haven’t used before.</p>
+          <h1>{t('auth.reset.choose')}</h1>
+          <p>{t('auth.reset.chooseHelp')}</p>
         </div>
 
         {error && <div className="msg msg-error">{error}</div>}
@@ -99,7 +99,7 @@ export function ResetPassword(): React.JSX.Element {
         <form onSubmit={(e) => void submit(e)} noValidate>
           <div className="field">
             <label className="field-label" htmlFor="new-password">
-              New password
+              {t('auth.newPassword')}
             </label>
             <input
               id="new-password"
@@ -113,7 +113,7 @@ export function ResetPassword(): React.JSX.Element {
           </div>
           <div className="field">
             <label className="field-label" htmlFor="confirm-password">
-              Confirm new password
+              {t('auth.reset.confirmNew')}
             </label>
             <input
               id="confirm-password"
@@ -127,12 +127,12 @@ export function ResetPassword(): React.JSX.Element {
           </div>
 
           <Button type="submit" block disabled={busy || password.length === 0 || confirm.length === 0}>
-            {busy ? 'Updating…' : 'Update password'}
+            {busy ? t('auth.reset.submitting') : t('auth.reset.submit')}
           </Button>
         </form>
 
         <div className="auth-alt">
-          Link expired? <Link to="/forgot-password">Request a new one</Link>.
+          {t('auth.reset.linkExpired')} <Link to="/forgot-password">{t('auth.reset.requestNew')}</Link>.
         </div>
       </div>
     </div>

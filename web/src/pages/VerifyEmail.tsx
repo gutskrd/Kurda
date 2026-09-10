@@ -16,11 +16,11 @@ const RESEND_COOLDOWN_SEC = 60;
 function verifyError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'INVALID_CODE':
-      return 'That code isn’t correct. Check the digits and try again.';
+      return t('auth.verify.badCode');
     case 'CODE_EXPIRED':
-      return 'That code has expired. Send yourself a new one below.';
+      return t('auth.verify.codeExpired');
     case 'TOO_MANY_ATTEMPTS':
-      return 'Too many attempts. Request a new code to continue.';
+      return t('auth.verify.tooManyAttempts');
     default:
       return describeError(err, t);
   }
@@ -61,13 +61,13 @@ export function VerifyEmail(): React.JSX.Element {
         await refreshUser();
         navigate('/app', { replace: true });
       } else {
-        setError('That confirmation link is invalid or has expired — enter the code below instead.');
+        setError(t('auth.verify.badLink'));
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [linkToken, client, refreshUser, navigate]);
+  }, [linkToken, client, refreshUser, navigate, t]);
 
   // already verified (e.g. confirmed elsewhere) → don't strand them here
   useEffect(() => {
@@ -106,7 +106,7 @@ export function VerifyEmail(): React.JSX.Element {
     const res = await client.post('/auth/resend-verification-code');
     setBusy(false);
     if (res.ok) {
-      setNotice('We sent a new code. It can take a minute to arrive.');
+      setNotice(t('auth.verify.sentNew'));
       setCooldown(RESEND_COOLDOWN_SEC);
     } else {
       setError(describeError(res.error, t));
@@ -117,11 +117,8 @@ export function VerifyEmail(): React.JSX.Element {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-head">
-          <h1>Confirm your email</h1>
-          <p>
-            We sent a {CODE_LENGTH}-digit code to <strong>{user?.email}</strong>. Enter it below to finish
-            setting up your account.
-          </p>
+          <h1>{t('auth.verify.title')}</h1>
+          <p>{t('auth.verify.sentTo', { digits: CODE_LENGTH, email: user?.email ?? '' })}</p>
         </div>
 
         {error && <div className="msg msg-error">{error}</div>}
@@ -130,7 +127,7 @@ export function VerifyEmail(): React.JSX.Element {
         <form onSubmit={(e) => void submit(e)}>
           <div className="field">
             <label className="field-label" htmlFor="verify-code">
-              Verification code
+              {t('auth.verify.codeLabel')}
             </label>
             <input
               id="verify-code"
@@ -143,24 +140,24 @@ export function VerifyEmail(): React.JSX.Element {
               maxLength={CODE_LENGTH}
               autoFocus
             />
-            <span className="field-hint">The code expires 15 minutes after it was sent.</span>
+            <span className="field-hint">{t('auth.verify.expiresIn15')}</span>
           </div>
 
           <Button type="submit" block disabled={busy || code.replace(/\D/g, '').length !== CODE_LENGTH}>
-            {busy ? 'Confirming…' : 'Confirm email'}
+            {busy ? t('auth.verify.submitting') : t('auth.verify.submit')}
           </Button>
         </form>
 
         <div className="auth-alt">
-          Didn’t get it? Check your spam folder, then{' '}
+          {t('auth.verify.didntGetIt')}{' '}
           <button type="button" className="link-btn" onClick={() => void resend()} disabled={busy || cooldown > 0}>
-            {cooldown > 0 ? `send a new code (${cooldown}s)` : 'send a new code'}
+            {cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}
           </button>
           .
           <div style={{ marginTop: 12 }}>
-            Wrong address?{' '}
+            {t('auth.verify.wrongAddress')}{' '}
             <button type="button" className="link-btn" onClick={() => void logout().then(() => navigate('/register'))}>
-              Sign out and start over
+              {t('auth.verify.startOver')}
             </button>
             .
           </div>
