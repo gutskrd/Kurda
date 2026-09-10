@@ -663,20 +663,143 @@ a.rank-name:hover {
   overflow-wrap: anywhere;
 }
 
+/* ---- what you can do about another person -------------------------------- */
+
 /*
- * Block sits under the friend actions with a rule above it, so it reads as a
- * different kind of decision rather than the last item in a list of them.
+ * Block and Report, behind a ⋯.
+ *
+ * Block used to be a button sitting in the open on the profile card, one
+ * thumb-width from "Message", and it is the only action there that cannot be
+ * walked back from that screen. A menu costs a deliberate second press.
  */
-.pcard-block {
-  margin-top: 4px;
-  color: var(--danger);
-  border-top: 1px solid var(--border);
-  border-radius: 0;
-  padding-top: 10px;
+.user-actions {
+  position: relative;
+  display: inline-flex;
 }
-.pcard-block.is-armed {
+.user-actions-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.user-actions-btn:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+/*
+ * Anchored to the right edge of the button and opening upward: this sits in a
+ * card's footer, so a menu dropping downward would open past the bottom of the
+ * card — and inside a modal, past the modal.
+ */
+.user-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  min-width: 176px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+}
+.user-menu-wide {
+  width: min(320px, 78vw);
+  gap: 8px;
+  padding: 14px;
+}
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+.user-menu-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.user-menu-item.is-danger {
   color: var(--danger);
+}
+.user-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+.user-menu-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.user-menu-x:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.07);
+}
+.user-menu-label {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+.user-menu-note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+.user-menu-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.user-menu-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
   font-weight: 600;
+}
+.user-menu textarea.input,
+.user-menu select.input {
+  width: 100%;
+  font-size: 0.9rem;
+}
+.user-actions-done {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: 260px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--ink-2);
 }
 
 /* what replaces the actions once it is done: what happened, and the way back */

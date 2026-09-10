@@ -1,15 +1,19 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { TopNav, type NavItem } from '../components/TopNav';
-import { BookIcon, ChatsIcon, GameIcon, HomeIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
+import { BookIcon, ChatsIcon, GameIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
 
-/** What anyone can reach, signed in or not. */
+/**
+ * What anyone can reach, signed in or not.
+ *
+ * One entry for the wall, not two. Home and Civak were separate links to the
+ * same room: Home was a page of tiles, one of which said "Civak", above a
+ * preview of Civak. The wall is the front page now, so this is the front page.
+ */
 const OPEN_LINKS: NavItem[] = [
-  { label: 'Home', to: '/app', icon: <HomeIcon size={18} /> },
-  // one wall replaces the three pages that were the same page three times
-  { label: 'Civak', to: '/app/civak', icon: <WallIcon size={18} /> },
+  { label: 'Civak', to: '/app', icon: <WallIcon size={18} /> },
   { label: 'Games', to: '/app/games', icon: <GameIcon size={18} /> },
   { label: 'Rankings', to: '/app/rankings', icon: <TrophyIcon size={18} /> },
 ];

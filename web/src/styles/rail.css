@@ -79,6 +79,18 @@
 }
 
 /* ---- the panel ---------------------------------------------------------- */
+/*
+ * Glass, not a wall.
+ *
+ * The rail floats over the page rather than pushing it, and on a profile the
+ * page is a full-bleed photograph. At 0.92 alpha this panel was opaque enough
+ * to read as a black column bolted to the right of the screen — the background
+ * looked like it stopped short, when in fact it runs the full width underneath.
+ *
+ * Lowering it costs nothing anywhere else: every other page has the flat app
+ * colour behind this, and a blur of a flat colour is that colour. Only a
+ * profile's artwork is actually there to come through.
+ */
 .social-rail {
   position: fixed;
   top: var(--nav-h);
@@ -87,9 +99,10 @@
   width: var(--rail-w);
   display: flex;
   flex-direction: column;
-  background: rgba(16, 19, 25, 0.92);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  backdrop-filter: blur(18px) saturate(1.2);
+  background: rgba(16, 19, 25, 0.72);
+  /* more blur than before: it is now doing the legibility work the alpha was */
+  -webkit-backdrop-filter: blur(26px) saturate(1.25);
+  backdrop-filter: blur(26px) saturate(1.25);
   border-left: 1px solid var(--border);
   z-index: 40;
 }
@@ -481,14 +494,22 @@
     display: block;
   }
   /*
-   * The page reserves the strip's width and nothing more.
+   * The page reserves the strip's width on BOTH sides.
    *
    * The strip is always there and never changes size, so the gutter is a
    * constant — and the expanded panel floats over the page instead of pushing
    * it. Opening the rail used to reflow everything you were reading, which is a
    * high price for a glance at who is online.
+   *
+   * Reserving it only on the right is what made the app look untucked: the page
+   * was then centred inside `window - 76px` while the navigation bar above it
+   * was centred inside the whole window, so the two sat on axes 38px apart at
+   * 1440px. Padding both sides costs nothing — the content is capped well
+   * inside either figure — and puts the column back on the window's own centre
+   * line, with the strip still clear of it.
    */
   .app-main {
+    padding-left: calc(var(--rail-strip-w) + 16px);
     padding-right: calc(var(--rail-strip-w) + 16px);
   }
   .social-rail {

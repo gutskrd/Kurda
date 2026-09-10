@@ -14,10 +14,10 @@ import type {
 } from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
-import { ConfirmButton } from '../components/ConfirmButton';
 import { Loading, ErrorState } from '../components/states';
 import { PersonGlyph } from '../components/icons';
 import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
+import { UserActions } from './UserActions';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -74,6 +74,12 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0); // bump to retry
+  /**
+   * Held here rather than inside the actions, because blocking changes the
+   * whole card: once it lands this profile answers 404 to you, so this is the
+   * last time you will see it and it has to say so.
+   */
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,7 +164,21 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     if (other.tier) stats.push({ label: 'League', value: other.tier, cap: true });
     if (other.rating !== undefined) stats.push({ label: 'Rating', value: `${other.rating}` });
     if (other.achievements !== undefined) stats.push({ label: 'Achievements', value: `${other.achievements}` });
-    actions = (
+    actions = blocked ? (
+      <div className="pcard-blocked" role="status">
+        <p>Blocked. They can no longer find you, message you or add you — and they are not told.</p>
+        <button
+          type="button"
+          className="link"
+          onClick={() => {
+            closeProfile();
+            navigate('/app/settings');
+          }}
+        >
+          Undo this in Settings
+        </button>
+      </div>
+    ) : (
       <OtherActions
         userId={other.userId}
         status={other.friendStatus}
@@ -254,6 +274,21 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         >
           View full profile
         </Button>
+        {/*
+          Block and Report live in here rather than on the card itself. Block
+          used to be a button in the open, a thumb-width from "Message", and it
+          is the one action on this card that cannot be undone from it — the
+          moment it lands the profile answers 404 to you.
+        */}
+        {/*
+          `target.kind` alone is not enough: your own profile can be opened by
+          id — from your own post, or your own name in a list — and that is
+          still kind 'user'. The server refuses to block or report yourself
+          either way, but offering it at all is the wrong answer.
+        */}
+        {other && other.friendStatus !== 'self' && !blocked && (
+          <UserActions userId={other.userId} name={name} onBlocked={() => setBlocked(true)} />
+        )}
       </div>
     </article>
   );
@@ -270,12 +305,9 @@ function OtherActions({
   onMessage: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
-  const { closeProfile } = useProfileModal();
-  const navigate = useNavigate();
   const [state, setState] = useState<FriendStatus>(status);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
-  const [blocked, setBlocked] = useState(false);
 
   async function addFriend(): Promise<void> {
     setBusy(true);
@@ -294,50 +326,11 @@ function OtherActions({
     else setErr(true);
   }
 
-  /**
-   * Blocking, from the one place you are certain to be standing when you need
-   * it: the card that opens off a post, a comment, a message or a search
-   * result. Before this, the only Block button in the app sat on your own
-   * friends list — so the person you could block was someone you had already
-   * chosen to add, and a stranger who turned up in your replies could not be
-   * blocked at all.
-   *
-   * The card does not disappear on success. It says what happened and where to
-   * undo it, because the moment this call returns, that profile answers 404 to
-   * you and this card is the last time you will see it.
-   */
-  async function blockUser(): Promise<void> {
-    setBusy(true);
-    setErr(false);
-    const res = await client.post(`/friends/${userId}/block`);
-    setBusy(false);
-    if (res.ok) setBlocked(true);
-    else setErr(true);
-  }
-
   const message = (
     <Button variant="secondary" size="sm" block onClick={onMessage}>
       Message
     </Button>
   );
-
-  if (blocked) {
-    return (
-      <div className="pcard-blocked" role="status">
-        <p>Blocked. They can no longer find you, message you or add you — and they are not told.</p>
-        <button
-          type="button"
-          className="link"
-          onClick={() => {
-            closeProfile();
-            navigate('/app/settings');
-          }}
-        >
-          Undo this in Settings
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -359,22 +352,6 @@ function OtherActions({
           </Button>
           {message}
         </>
-      )}
-      {/*
-        Last, quiet, and behind a confirm. It is the only action here that
-        cannot be walked back from this screen, so it should never be the one
-        a thumb finds by accident.
-      */}
-      {state !== 'self' && (
-        <ConfirmButton
-          className="btn btn-ghost btn-sm pcard-block"
-          label="Block"
-          confirmLabel="Block — are you sure?"
-          busyLabel="Blocking…"
-          title="Block this person"
-          disabled={busy}
-          onConfirm={blockUser}
-        />
       )}
       {err && <div className="msg msg-error" style={{ marginTop: 4 }}>Something went wrong. Please try again.</div>}
     </div>

@@ -7,6 +7,7 @@ import { Loading, ErrorState } from '../components/states';
 import { FeedCard } from '../feed/FeedCard';
 import { PostButton } from '../feed/PostButton';
 import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
+import { DailyReward } from '../components/DailyReward';
 
 const PAGE = 20;
 
@@ -80,6 +81,14 @@ export function Civak(): React.JSX.Element {
         <h1 className="page-title">Civak</h1>
         <p className="page-sub">Stories, poems and pictures from everyone.</p>
       </div>
+
+      {/*
+        The claim used to sit on a separate page of tiles that was the first
+        thing you saw. That page is gone — this wall is home now — so the one
+        thing on it that was not a door comes with it. It renders nothing at all
+        for a visitor without an account, and nothing once today is claimed.
+      */}
+      <DailyReward />
 
       {/* the + belongs with the wall it adds to, not adrift under the heading */}
       <div className="feed-filters">

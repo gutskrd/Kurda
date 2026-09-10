@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import type { FriendStatus, PublicProfile } from '../lib/types';
 import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileFriends } from '../profile/ProfileFriends';
+import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { countryName } from '../lib/countries';
 import { Loading, ErrorState } from '../components/states';
@@ -136,6 +137,22 @@ function FriendActions({ userId, username, status }: { userId: string; username:
           <Button size="sm" onClick={() => void accept()} disabled={busy}>{busy ? 'Accepting…' : 'Accept request'}</Button>
           {message}
         </>
+      )}
+      {/*
+        The same menu as the profile card, for the same reasons — and it has to
+        be the same component, or blocking and reporting would end up with two
+        sets of wording and two sets of rules about what happens next.
+      */}
+      {state !== 'self' && (
+        <UserActions
+          userId={userId}
+          name={username}
+          onBlocked={() => {
+            // their profile answers 404 to you from here on, so staying on it
+            // would show an error where a person used to be
+            navigate('/app');
+          }}
+        />
       )}
     </div>
   );

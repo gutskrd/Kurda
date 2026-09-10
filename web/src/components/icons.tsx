@@ -37,6 +37,9 @@ import { House } from '@phosphor-icons/react/dist/icons/House';
 import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
 import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
 import { DiamondsFour } from '@phosphor-icons/react/dist/icons/DiamondsFour';
+import { DotsThree } from '@phosphor-icons/react/dist/icons/DotsThree';
+import { Prohibit } from '@phosphor-icons/react/dist/icons/Prohibit';
+import { Flag } from '@phosphor-icons/react/dist/icons/Flag';
 import { SignOut } from '@phosphor-icons/react/dist/icons/SignOut';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
 import { Gift } from '@phosphor-icons/react/dist/icons/Gift';
@@ -138,6 +141,10 @@ export const ShopIcon = named(Storefront, 22);
 /** Gems, the harder currency; Zêr is the CoinIcon above. */
 export const GemIcon = named(DiamondsFour, 22);
 export const SignOutIcon = named(SignOut, 22);
+/* the quiet menu on somebody else's profile: block, report */
+export const MoreIcon = named(DotsThree, 22);
+export const BlockIcon = named(Prohibit, 22);
+export const FlagIcon = named(Flag, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

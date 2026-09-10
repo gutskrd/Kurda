@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { MarketingLayout } from './layouts/MarketingLayout';
 import { AppLayout } from './layouts/AppLayout';
@@ -23,7 +23,6 @@ import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { VerifyEmail } from './pages/VerifyEmail';
 import { ResetPassword } from './pages/ResetPassword';
-import { Home } from './pages/Home';
 import { Learn } from './pages/Learn';
 import { Rankings } from './pages/Rankings';
 import { Friends } from './pages/Friends';
@@ -46,15 +45,20 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JS
 }
 
 /**
- * What /app opens to.
+ * Home is the community.
  *
- * Home greets you by name and offers your daily Zêr, which is nothing to a
- * signed-out reader — they get the wall instead, which is what they came for.
+ * It used to be a page of six tiles above the wall — six doors to places the
+ * navigation bar directly above them already listed, and one of those doors led
+ * to Civak, which was then shown underneath it anyway. A door tells you a room
+ * exists; it does not tell you anything happened in it. Signed-out visitors
+ * were already sent straight to the wall, so this only makes everyone's front
+ * page the same page.
  */
-function AppHome(): React.JSX.Element {
-  const { status } = useAuth();
-  if (status === 'signedOut') return <Navigate to="/app/civak" replace />;
-  return <Home />;
+function CivakMoved(): React.JSX.Element {
+  // the old address keeps working, and keeps its filter: /app/stories and
+  // /app/poems still redirect through here carrying ?section= and ?kind=
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: '/app', search }} replace />;
 }
 
 export function App(): React.JSX.Element {
@@ -120,11 +124,11 @@ export function App(): React.JSX.Element {
               </AppGate>
             }
           >
-            <Route index element={<AppHome />} />
+            <Route index element={<Civak />} />
             <Route path="learn" element={<RequireAccount what="follow the course"><Learn /></RequireAccount>} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
-            <Route path="civak" element={<Civak />} />
+            <Route path="civak" element={<CivakMoved />} />
             <Route path="saved" element={<RequireAccount what="keep posts"><Saved /></RequireAccount>} />
             {/* the three old walls now point at the one that replaced them, each
                 landing on its own filter so a bookmark still means something */}

@@ -13,12 +13,20 @@ import {
 } from './profile-activity.js';
 import { EngagementService, isEngagementKind, isTargetType } from './engagement-service.js';
 import { FriendService } from '../friends/service.js';
+import {
+  MAX_REASON_LEN,
+  MIN_REASON_LEN,
+  REPORT_CATEGORIES,
+  UserReportService,
+  type ReportCategory,
+} from './report-service.js';
 
 /** User search + public profiles + privacy (KUR-082). */
 export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
   const activity = new ProfileActivityService(app.db);
   const engagement = new EngagementService(app.db);
   const friends = new FriendService(app.db);
+  const reports = new UserReportService(app.db);
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
   /** Username prefix search (rate-limited against scraping). */
@@ -118,6 +126,57 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
 
       const rows = await activity.allPosts(id, limit, offset);
       return { entries: rows.map(withImageUrl) };
+    },
+  );
+
+  /**
+   * Report a person to the moderators.
+   *
+   * Blocking already ends it privately, but a block tells nobody — so somebody
+   * doing the same thing to twenty people looked exactly like somebody nobody
+   * had blocked. This is the half that reaches a moderator, and the profile
+   * card offers both, because most people want to stop seeing someone *and*
+   * have somebody look at them.
+   *
+   * Deliberately says almost nothing back. It answers the same way whether the
+   * report is new, a duplicate of one you already filed, or about an account
+   * that does not exist — the alternative is an endpoint that reveals which
+   * user ids are real and whether an account has been reported before, and a
+   * reporter needs neither.
+   *
+   * The one exception is your own reason being too short, which is about what
+   * *you* typed and has to be fixable.
+   *
+   * Rate-limited hard, per hour rather than per minute: a report costs a
+   * moderator's attention, so filing them in bulk is itself a way to attack
+   * somebody.
+   */
+  app.post(
+    '/users/:id/report',
+    {
+      schema: {
+        params: z.object({ id: z.uuid() }),
+        body: z.object({
+          category: z.enum(REPORT_CATEGORIES),
+          reason: z.string().min(MIN_REASON_LEN).max(MAX_REASON_LEN),
+        }),
+      },
+      config: { rateLimit: { max: 5, windowMs: 60 * 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const { category, reason } = req.body as { category: ReportCategory; reason: string };
+      const res = await reports.report(req.user!.id, id, category, reason);
+
+      if (!res.ok && res.reason === 'reason-too-short') {
+        throw new AppError('REASON_TOO_SHORT', 400, `say a little more — at least ${MIN_REASON_LEN} characters`);
+      }
+      if (!res.ok && res.reason === 'self') {
+        throw new AppError('SELF_REPORT', 400, 'you cannot report yourself');
+      }
+      // 'not-found' and a duplicate both land here on purpose
+      return { ok: true };
     },
   );
 
