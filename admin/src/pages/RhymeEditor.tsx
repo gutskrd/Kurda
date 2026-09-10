@@ -26,6 +26,16 @@ interface PromptList {
   words: PromptWord[];
 }
 
+/** What `POST /admin/rhyme/prompts/rebuild` reports, dry run or not. */
+interface RebuildResult {
+  dryRun: boolean;
+  poolSize: number;
+  baseWords: number;
+  newlyMarked: number;
+  alreadyMarked: number;
+  withoutRhymes: string[];
+}
+
 interface RhymeRow {
   word: string;
   quality: Quality;
@@ -102,6 +112,49 @@ export function RhymeEditor(): React.JSX.Element {
     }
   }
 
+  /**
+   * Put every playable word back in the game.
+   *
+   * The one action that undoes the cliff below: it marks every pool word that
+   * has something to rhyme against, so the base words become the whole playable
+   * pool again and marking one more word afterwards adds to it rather than
+   * replacing it.
+   *
+   * Asks first, and says exactly what it will do, because it is a bulk write —
+   * the dry run is what produces those numbers, so the confirmation is the real
+   * outcome rather than an estimate.
+   */
+  async function useEveryPlayableWord(): Promise<void> {
+    setBusy('rebuild');
+    try {
+      const preview = await api<RebuildResult>('/admin/rhyme/prompts/rebuild', {
+        method: 'POST',
+        body: { dialect, dryRun: true },
+      });
+      const left = preview.withoutRhymes.length;
+      const ok = confirm(
+        `Use every word that has a rhyme as a base word?\n\n` +
+          `Base words: ${preview.alreadyMarked} → ${preview.baseWords} of ${preview.poolSize} in the pool.\n` +
+          (left > 0
+            ? `${left} word${left === 1 ? '' : 's'} left out because nothing rhymes with ${left === 1 ? 'it' : 'them'}: ` +
+              `${preview.withoutRhymes.slice(0, 8).join(', ')}${left > 8 ? '…' : ''}\n\n`
+            : '\n') +
+          'Nothing is deleted, and you can stop using any of them afterwards.',
+      );
+      if (!ok) return;
+      const done = await api<RebuildResult>('/admin/rhyme/prompts/rebuild', {
+        method: 'POST',
+        body: { dialect },
+      });
+      await loadList();
+      alert(`${done.baseWords} base words — rounds can now open with any of them.`);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function rename(w: PromptWord): Promise<void> {
     const next = prompt(`Rename “${w.headword}” to:`, w.headword);
     if (!next || next.trim() === w.headword) return;
@@ -166,7 +219,44 @@ export function RhymeEditor(): React.JSX.Element {
           <div className="subtle">
             While nothing is marked, a round can open with <strong>any</strong> of the {list.poolSize} words in
             the pool — including ones with nothing to rhyme against, which makes the round unplayable. The list
-            below is therefore the whole pool. Add or mark a few words to take control of it.
+            below is therefore the whole pool.
+            {/*
+              Marking one word does not narrow this a little: it narrows it to
+              that word. Saying so here is the whole warning — the banner
+              disappears the instant it stops being true, which is exactly when
+              it becomes worth reading.
+            */}{' '}
+            <strong>
+              The moment you mark one word, rounds will open with that word only, until you mark more.
+            </strong>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button disabled={busy === 'rebuild'} onClick={() => void useEveryPlayableWord()}>
+              {busy === 'rebuild' ? 'Working…' : 'Use every word that has a rhyme'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/*
+        A curated set that is smaller than the pool is a restriction, and the
+        header alone ("2 of 159 pool words") reads like progress rather than
+        like a limit. This says what the game will actually do, and stays until
+        it is no longer surprising.
+      */}
+      {list && !list.usingFallback && list.total < list.poolSize && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="section-title" style={{ marginTop: 0 }}>
+            Rounds open with {list.total} of {list.poolSize} words
+          </div>
+          <div className="subtle">
+            The other {list.poolSize - list.total} are still in the pool — guesses of them count and Wordle
+            still uses them — but no round will start on one.
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <button disabled={busy === 'rebuild'} onClick={() => void useEveryPlayableWord()}>
+              {busy === 'rebuild' ? 'Working…' : 'Use every word that has a rhyme'}
+            </button>
           </div>
         </div>
       )}

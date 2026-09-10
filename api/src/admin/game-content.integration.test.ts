@@ -320,6 +320,125 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(pool2.json().words.map((w: { headword: string }) => w.headword)).toContain(fresh);
   });
 
+  /**
+   * The cliff these exist for: a round falls back to the whole pool while
+   * NOTHING is marked, so marking the first word silently takes every other
+   * word out of the game. Two marked words is not a narrower game, it is a
+   * two-word game — which is what happened in production to a 159-word pool.
+   *
+   * These share one dictionary with every other suite, so the write test puts
+   * the flags back exactly as it found them.
+   */
+  describe('putting the base words back', () => {
+    const snapshot = async (): Promise<Array<{ id: string; is_rhyme_prompt: boolean }>> =>
+      (await pool.query<{ id: string; is_rhyme_prompt: boolean }>(`SELECT id, is_rhyme_prompt FROM dict_entries`))
+        .rows;
+
+    const restore = async (rows: Array<{ id: string; is_rhyme_prompt: boolean }>): Promise<void> => {
+      const on = rows.filter((r) => r.is_rhyme_prompt).map((r) => r.id);
+      const off = rows.filter((r) => !r.is_rhyme_prompt).map((r) => r.id);
+      if (on.length) await pool.query(`UPDATE dict_entries SET is_rhyme_prompt = true WHERE id = ANY($1)`, [on]);
+      if (off.length) await pool.query(`UPDATE dict_entries SET is_rhyme_prompt = false WHERE id = ANY($1)`, [off]);
+    };
+
+    it('is refused to someone without the role', async () => {
+      const res = await authed('POST', '/admin/rhyme/prompts/rebuild', userToken, {});
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('says what it would do without doing it', async () => {
+      // its own rhyming pair, so the numbers below do not depend on what any
+      // earlier test happened to leave in the shared dictionary
+      await seed(`stêrk${suffix}`);
+      await seed(`pêrk${suffix}`);
+      const before = await snapshot();
+
+      const res = await authed('POST', '/admin/rhyme/prompts/rebuild', editorToken, { dryRun: true });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.dryRun).toBe(true);
+      expect(body.poolSize).toBeGreaterThan(0);
+      expect(body.baseWords).toBeGreaterThan(0);
+      // a preview that wrote something would be a trap, not a preview
+      expect(await snapshot()).toEqual(before);
+    });
+
+    /**
+     * The guarantee the flag exists to give: a round can always be played.
+     *
+     * Asserted as an invariant over the result rather than against a word
+     * invented to have no rhyme — every word this suite seeds carries the same
+     * `suffix`, so they all rhyme with each other and no such word can be
+     * built here.
+     */
+    it('leaves no base word that a round could not be played on', async () => {
+      const a = `bilind${suffix}`;
+      const b = `kilind${suffix}`;
+      await seed(a);
+      await seed(b);
+      // after seeding, so restoring also puts these back as they started
+      const before = await snapshot();
+
+      try {
+        const res = await authed('POST', '/admin/rhyme/prompts/rebuild', editorToken, {});
+        expect(res.statusCode).toBe(200);
+        const body = res.json();
+
+        // every word is either usable as a prompt or explicitly set aside
+        expect(body.baseWords + body.withoutRhymes.length).toBe(body.poolSize);
+
+        const marked = await pool.query<{ is_rhyme_prompt: boolean }>(
+          `SELECT is_rhyme_prompt FROM dict_entries WHERE headword = ANY($1)`,
+          [[a, b]],
+        );
+        expect(marked.rows.every((r) => r.is_rhyme_prompt)).toBe(true);
+
+        // and the page agrees: nothing offered as a base word has nothing to
+        // rhyme against, which is what made a round unplayable
+        const view = await authed('GET', '/admin/rhyme/prompts?limit=100', editorToken);
+        for (const w of view.json().words as Array<{ headword: string; perfect: number; near: number }>) {
+          expect(w.perfect + w.near, `${w.headword} is a base word with nothing to rhyme with`).toBeGreaterThan(0);
+        }
+      } finally {
+        await restore(before);
+      }
+    });
+
+    /**
+     * The whole point, end to end: from a pool serving two prompts back to one
+     * serving all of them.
+     */
+    it('takes a two-word game back to the whole playable pool', async () => {
+      const a = `çirûsk${suffix}`;
+      const b = `birûsk${suffix}`;
+      const c = `hirûsk${suffix}`;
+      await seed(a);
+      await seed(b);
+      await seed(c); // a third that rhymes, so "wider than two" cannot be a fluke
+      const before = await snapshot();
+
+      try {
+        // exactly the state that broke: everything off, then two marked
+        await pool.query(`UPDATE dict_entries SET is_rhyme_prompt = false`);
+        await pool.query(`UPDATE dict_entries SET is_rhyme_prompt = true WHERE headword = ANY($1)`, [[a, b]]);
+
+        const narrowed = await authed('GET', '/admin/rhyme/prompts?limit=100', editorToken);
+        expect(narrowed.json().total).toBe(2);
+        expect(narrowed.json().usingFallback).toBe(false);
+
+        const res = await authed('POST', '/admin/rhyme/prompts/rebuild', editorToken, {});
+        expect(res.json().newlyMarked).toBeGreaterThan(0);
+
+        const widened = await authed('GET', '/admin/rhyme/prompts?limit=100', editorToken);
+        expect(widened.json().total).toBeGreaterThan(2);
+        expect(widened.json().total).toBe(res.json().baseWords);
+      } finally {
+        await restore(before);
+      }
+    });
+  });
+
   it('separates accepted rhymes from ones a curator ruled out', async () => {
     const base = `zarok${suffix}`;
     const mate = `kanok${suffix}`;
