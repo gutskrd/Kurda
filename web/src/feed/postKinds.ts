@@ -1,3 +1,5 @@
+import type { MessageKey } from '../i18n/en';
+
 /**
  * What the wall is made of, in the words the app uses for it.
  *
@@ -30,8 +32,22 @@ export const DIMEN_KINDS: readonly KindOption[] = [
   { key: 'mim', label: 'Mîm', postAs: 'meme' },
 ];
 
-export const SECTIONS: ReadonlyArray<{ key: FeedSection; label: string; kinds: readonly KindOption[] }> = [
-  { key: 'all', label: 'Everything', kinds: [] },
+/**
+ * The two halves, plus everything.
+ *
+ * "Gotin" and "Dîmen" are the words this community uses for these things and
+ * stay as they are in every language, exactly as "Civak" does in the
+ * navigation. "Everything" is not one of those words — it is an ordinary
+ * English label — so it carries a key instead and gets translated.
+ */
+export const SECTIONS: ReadonlyArray<{
+  key: FeedSection;
+  label: string;
+  /** set when the label is ordinary words rather than the community's own */
+  labelKey?: MessageKey;
+  kinds: readonly KindOption[];
+}> = [
+  { key: 'all', label: 'Everything', labelKey: 'civak.filter.everything', kinds: [] },
   { key: 'gotin', label: 'Gotin', kinds: GOTIN_KINDS },
   { key: 'dimen', label: 'Dîmen', kinds: DIMEN_KINDS },
 ];

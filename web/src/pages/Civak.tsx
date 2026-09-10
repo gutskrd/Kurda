@@ -8,6 +8,7 @@ import { FeedCard } from '../feed/FeedCard';
 import { PostButton } from '../feed/PostButton';
 import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
 import { DailyReward } from '../components/DailyReward';
+import { useT } from '../i18n/I18nProvider';
 
 const PAGE = 20;
 
@@ -23,6 +24,7 @@ const PAGE = 20;
  */
 export function Civak(): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [params, setParams] = useSearchParams();
   const section = asSection(params.get('section'));
   // a kind belongs to a half; one left over from the other half is dropped
@@ -77,9 +79,9 @@ export function Civak(): React.JSX.Element {
   return (
     <div className="container container-feed">
       <div className="page-header">
-        <span className="eyebrow">Civak · Community</span>
+        <span className="eyebrow">Civak · {t('civak.eyebrow')}</span>
         <h1 className="page-title">Civak</h1>
-        <p className="page-sub">Stories, poems and pictures from everyone.</p>
+        <p className="page-sub">{t('civak.subtitle')}</p>
       </div>
 
       {/*
@@ -92,7 +94,7 @@ export function Civak(): React.JSX.Element {
 
       {/* the + belongs with the wall it adds to, not adrift under the heading */}
       <div className="feed-filters">
-        <div className="seg" role="group" aria-label="Show">
+        <div className="seg" role="group" aria-label={t('civak.filter.show')}>
           {SECTIONS.map((sct) => (
             <button
               key={sct.key}
@@ -101,25 +103,25 @@ export function Civak(): React.JSX.Element {
               aria-pressed={section === sct.key}
               /* "Gotin" is both a half and a kind within it, so each says which
                  it is — two identical buttons side by side is a coin toss */
-              aria-label={`Show ${sct.label}`}
+              aria-label={t('civak.filter.showSection', { section: sct.labelKey ? t(sct.labelKey) : sct.label })}
               onClick={() => choose(sct.key, null)}
             >
-              {sct.label}
+              {sct.labelKey ? t(sct.labelKey) : sct.label}
             </button>
           ))}
         </div>
 
         {/* the second level appears only once there is a half to narrow */}
         {kinds.length > 0 && (
-          <div className="seg seg-sub" role="group" aria-label="Narrow">
+          <div className="seg seg-sub" role="group" aria-label={t('civak.filter.narrow')}>
             <button
               type="button"
               className={`seg-btn${kind === null ? ' is-active' : ''}`}
               aria-pressed={kind === null}
-              aria-label="Only: everything"
+              aria-label={t('civak.filter.onlyEverything')}
               onClick={() => choose(section, null)}
             >
-              Hemû
+              {t('civak.filter.allKinds')}
             </button>
             {kinds.map((k) => (
               <button
@@ -127,7 +129,7 @@ export function Civak(): React.JSX.Element {
                 type="button"
                 className={`seg-btn${kind === k.key ? ' is-active' : ''}`}
                 aria-pressed={kind === k.key}
-                aria-label={`Only ${k.label}`}
+                aria-label={t('civak.filter.onlyKind', { kind: k.label })}
                 onClick={() => choose(section, k.key)}
               >
                 {k.label}
@@ -142,9 +144,9 @@ export function Civak(): React.JSX.Element {
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}
 
       {items === null ? (
-        <Loading label="Loading the wall…" />
+        <Loading label={t('civak.loading')} />
       ) : items.length === 0 ? (
-        <p className="muted">Nothing here yet.</p>
+        <p className="muted">{t('civak.empty')}</p>
       ) : (
         <>
           <div className="feed">
@@ -154,7 +156,7 @@ export function Civak(): React.JSX.Element {
           </div>
           {more && (
             <button type="button" className="mkp-more" onClick={() => void load(items.length)}>
-              Show more
+              {t('common.showMore')}
             </button>
           )}
         </>

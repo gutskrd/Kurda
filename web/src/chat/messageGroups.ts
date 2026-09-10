@@ -60,13 +60,29 @@ function daysApart(a: Date, b: Date): number {
  * Recent days get a name because that is how people refer to them; anything
  * older gets a date, since "Tuesday" stops being useful past a week.
  */
-export function dayLabel(date: Date, now = new Date()): string {
+/**
+ * What language the date is in, and what the two special days are called.
+ *
+ * Passing these rather than reading a context keeps this function pure and
+ * testable. `undefined` for the locale is what `toLocaleDateString` already
+ * meant — the browser's own — which is the right default for a caller that has
+ * not been translated yet, and wrong for one that has: an app set to Spanish
+ * should not name its months in English because the browser is.
+ */
+export interface DayLabelWords {
+  locale?: string;
+  today?: string;
+  yesterday?: string;
+}
+
+export function dayLabel(date: Date, now = new Date(), words: DayLabelWords = {}): string {
+  const { locale, today = 'Today', yesterday = 'Yesterday' } = words;
   const diff = daysApart(date, now);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Yesterday';
-  if (diff > 1 && diff < 7) return date.toLocaleDateString(undefined, { weekday: 'long' });
+  if (diff === 0) return today;
+  if (diff === 1) return yesterday;
+  if (diff > 1 && diff < 7) return date.toLocaleDateString(locale, { weekday: 'long' });
   const sameYear = date.getFullYear() === now.getFullYear();
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     ...(sameYear ? {} : { year: 'numeric' }),

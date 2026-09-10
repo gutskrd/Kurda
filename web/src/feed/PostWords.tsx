@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
+import { useT } from '../i18n/I18nProvider';
 import { GOTIN_KINDS, titleRequired } from './postKinds';
 
 const MAX_TITLE = 200;
@@ -20,6 +21,7 @@ const MAX_BODY = 50_000;
  */
 export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const t = useT();
   const [postAs, setPostAs] = useState('gotin');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -45,9 +47,9 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
 
   return (
     <div className="post-words">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>Write something</h2>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('post.words.title')}</h2>
 
-      <div className="seg" role="group" aria-label="Kind">
+      <div className="seg" role="group" aria-label={t('post.kind')}>
         {GOTIN_KINDS.map((k) => (
           <button
             key={k.key}
@@ -67,8 +69,8 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
           className="input"
           value={title}
           maxLength={MAX_TITLE}
-          placeholder="Title"
-          aria-label="Title"
+          placeholder={t('post.titlePlaceholder')}
+          aria-label={t('post.title')}
           disabled={busy}
           onChange={(e) => setTitle(e.target.value)}
           style={{ marginTop: 12 }}
@@ -80,8 +82,8 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
         rows={postAs === 'gotin' ? 3 : 8}
         value={body}
         maxLength={MAX_BODY}
-        placeholder={postAs === 'gotin' ? 'What do you want to say?' : 'Write it here…'}
-        aria-label="Words"
+        placeholder={postAs === 'gotin' ? t('post.bodyPrompt') : t('post.bodyPlaceholder')}
+        aria-label={t('post.body')}
         disabled={busy}
         onChange={(e) => setBody(e.target.value)}
         style={{ marginTop: 12 }}
@@ -91,7 +93,7 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
 
       <div className="comment-form-actions">
         <Button size="sm" onClick={() => void submit()} disabled={!ready || busy}>
-          {busy ? 'Posting…' : 'Post'}
+          {busy ? t('post.submitting') : t('post.submit')}
         </Button>
       </div>
     </div>

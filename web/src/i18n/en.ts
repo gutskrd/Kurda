@@ -79,6 +79,56 @@ export const en = {
   'settings.sessions.signOutEverywhere': 'Log out everywhere',
   'settings.data.title': 'Your data',
   'settings.blocked.title': 'Blocked people',
+
+  // ---- the wall ------------------------------------------------------------
+  /*
+   * Gotin, Çîrok, Helbest, Wêne, Mîm and Dîmen are NOT translated, in any
+   * language. They are what this community calls these things — the same reason
+   * "Civak" stays "Civak" in the navigation. What is translated is everything
+   * around them, and the descriptions that say what each one means, so somebody
+   * meeting the word for the first time is not left guessing.
+   */
+  'civak.eyebrow': 'Community',
+  'civak.subtitle': 'Stories, poems and pictures from everyone.',
+  'civak.loading': 'Loading the wall…',
+  'civak.empty': 'Nothing here yet.',
+  'civak.filter.show': 'Show',
+  'civak.filter.narrow': 'Narrow',
+  'civak.filter.everything': 'Everything',
+  'civak.filter.allKinds': 'All',
+  'civak.filter.showSection': 'Show {section}',
+  'civak.filter.onlyKind': 'Only {kind}',
+  'civak.filter.onlyEverything': 'Everything in this section',
+
+  'feed.picture': 'A picture',
+  'feed.comments': '{count} comments',
+  'feed.like': 'Like',
+  'feed.unlike': 'Unlike',
+  'feed.signInToLike': 'Sign in to like',
+  'feed.save': 'Save',
+  'feed.removeFromSaved': 'Remove from saved',
+  'feed.signInToSave': 'Sign in to save',
+  'feed.delete': 'Delete this post',
+  'feed.deleteConfirm': 'Delete?',
+  'feed.today': 'Today',
+  'feed.yesterday': 'Yesterday',
+
+  // ---- posting -------------------------------------------------------------
+  'post.open': 'Post something',
+  'post.button': 'Post',
+  'post.what': 'What are you posting?',
+  'post.words.sub': 'A saying, a story or a poem',
+  'post.picture.sub': 'A picture or a meme',
+  'post.words.title': 'Write something',
+  'post.kind': 'Kind',
+  'post.title': 'Title',
+  'post.titlePlaceholder': 'Give it a title',
+  'post.body': 'Words',
+  'post.bodyPrompt': 'What do you want to say?',
+  'post.bodyPlaceholder': 'Write it here…',
+  'post.submit': 'Post',
+  'post.submitting': 'Posting…',
+  'post.picture.open': 'Post a picture',
 } as const;
 
 export type MessageKey = keyof typeof en;
