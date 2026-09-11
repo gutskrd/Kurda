@@ -138,10 +138,12 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       // stranger's tab never arrives pre-liked
       const shared = { limit, offset, publicUrl, viewerId };
 
-      if (kind === 'likes' || kind === 'saved') {
-        // 'saved' is the word the app uses; the engagement table still calls the
-        // row a bookmark, and renaming a stored value is not worth a migration
-        const engagementKind = kind === 'likes' ? 'like' : 'bookmark';
+      // Three tabs are the same question with a different verb, so they are one
+      // call. 'saved' is the word the app uses; the engagement table still calls
+      // the row a bookmark, and renaming a stored value is not worth a migration.
+      const ENGAGEMENT_TAB = { likes: 'like', saved: 'bookmark', reposts: 'repost' } as const;
+      const engagementKind = ENGAGEMENT_TAB[kind as keyof typeof ENGAGEMENT_TAB];
+      if (engagementKind) {
         return { ...nothing, items: await feed.engagedBy(id, engagementKind, shared) };
       }
       return { ...nothing, items: await feed.byAuthor(id, shared) };

@@ -889,4 +889,11 @@ export const ar: Catalogue = {
   'share.searchFriends': 'ابحث عن الأصدقاء',
   'share.sendFailed': 'لم تُرسل الرسالة. حاول مرة أخرى.',
   'share.signInToSend': 'سجّل الدخول لإرسال هذا إلى صديق.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'إعادة النشر',
+  'repost.undo': 'التراجع عن إعادة النشر',
+  'repost.tab': 'المعاد نشرها',
+  'repost.sectionHint': 'المنشورات التي أعدت نشرها على ملفك الشخصي.',
+  'repost.signIn': 'سجّل الدخول لإعادة النشر',
 };

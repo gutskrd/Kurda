@@ -884,4 +884,11 @@ export const fr: Catalogue = {
   'share.searchFriends': 'Rechercher des amis',
   'share.sendFailed': 'Ce message n’a pas été envoyé. Réessayez.',
   'share.signInToSend': 'Connectez-vous pour l’envoyer à un ami.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'Republier',
+  'repost.undo': 'Annuler la republication',
+  'repost.tab': 'Republiés',
+  'repost.sectionHint': 'Les publications que vous avez republiées sur votre profil.',
+  'repost.signIn': 'Connectez-vous pour republier',
 };

@@ -23,7 +23,7 @@ const item: FeedItem = {
   href: '/app/library/p1',
   viewCount: 0,
   commentCount: 0,
-  engagement: { likes: 0, liked: false, bookmarks: 0, bookmarked: false },
+  engagement: { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false },
   at: '2026-09-01T10:00:00.000Z',
 };
 

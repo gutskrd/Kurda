@@ -189,6 +189,48 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     expect(theirs.map((c) => c.engagement.likes)).toEqual(mine.map((c) => c.engagement.likes));
   });
 
+  it('counts a repost as a repost, not as a bookmark', async () => {
+    /*
+     * The count query used to assign by if/else — like, else bookmark. The day
+     * a third kind existed, every repost became a bookmark on every card that
+     * rendered, silently and everywhere. So this checks the three totals move
+     * independently rather than only that reposting works.
+     */
+    const before = (await engagement.forPosts(ids.me!, 'library', [storyId])).get(storyId)!;
+
+    const on = await call('POST', `/posts/library/${storyId}/repost`, tokens.me!);
+    expect(on.statusCode).toBe(200);
+    expect(on.json().on).toBe(true);
+
+    const after = on.json().engagement as {
+      likes: number; bookmarks: number; reposts: number;
+      liked: boolean; bookmarked: boolean; reposted: boolean;
+    };
+    expect(after.reposts).toBe(before.reposts + 1);
+    expect(after.reposted).toBe(true);
+    // the other two are untouched
+    expect(after.likes).toBe(before.likes);
+    expect(after.bookmarks).toBe(before.bookmarks);
+    expect(after.liked).toBe(before.liked);
+    expect(after.bookmarked).toBe(before.bookmarked);
+  });
+
+  it('shows what you reposted, as whole posts, and lets you take it back', async () => {
+    const listed = await call('GET', `/users/${ids.me}/activity?kind=reposts`, tokens.me!);
+    expect(listed.statusCode).toBe(200);
+    const items = listed.json().items as Array<{ id: string; engagement: { reposted: boolean } }>;
+    expect(items.map((i) => i.id)).toContain(storyId);
+    expect(items.every((i) => i.engagement.reposted)).toBe(true);
+
+    // a second press is how you take it back, and the server decides
+    const off = await call('POST', `/posts/library/${storyId}/repost`, tokens.me!);
+    expect(off.json().on).toBe(false);
+    expect(off.json().engagement.reposted).toBe(false);
+
+    const gone = await call('GET', `/users/${ids.me}/activity?kind=reposts`, tokens.me!);
+    expect(gone.json().items.map((i: { id: string }) => i.id)).not.toContain(storyId);
+  });
+
   it('lets you hide what you have liked without unliking it', async () => {
     expect((await call('PATCH', '/me/profile/sections', tokens.me!, { likes: false })).statusCode).toBe(200);
 

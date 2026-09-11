@@ -884,4 +884,11 @@ export const nl: Catalogue = {
   'share.searchFriends': 'Vrienden zoeken',
   'share.sendFailed': 'Dat bericht is niet verstuurd. Probeer het opnieuw.',
   'share.signInToSend': 'Log in om dit naar een vriend te sturen.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'Opnieuw plaatsen',
+  'repost.undo': 'Opnieuw plaatsen ongedaan maken',
+  'repost.tab': 'Opnieuw geplaatst',
+  'repost.sectionHint': 'Berichten die je op je eigen profiel opnieuw hebt geplaatst.',
+  'repost.signIn': 'Log in om opnieuw te plaatsen',
 };

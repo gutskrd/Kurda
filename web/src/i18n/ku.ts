@@ -890,4 +890,11 @@ export const ku: Catalogue = {
   'share.searchFriends': 'Li hevalan bigere',
   'share.sendFailed': 'Ew peyam nehat şandin. Dîsa biceribîne.',
   'share.signInToSend': 'Têkeve da ku vê ji hevalekî re bişînî.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'Ji nû ve biweşîne',
+  'repost.undo': 'Ji nû ve weşandinê rake',
+  'repost.tab': 'Ji nû ve weşandin',
+  'repost.sectionHint': 'Şandiyên ku te ji nû ve li ser profîla xwe weşandine.',
+  'repost.signIn': 'Ji bo ji nû ve weşandinê têkeve',
 };

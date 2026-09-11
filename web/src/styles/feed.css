@@ -165,6 +165,20 @@
   background: rgba(255, 143, 163, 0.12);
   color: #ff8fa3;
 }
+/*
+ * Reposted, in green.
+ *
+ * A colour of its own rather than the heart’s pink or the bookmark’s gold:
+ * three buttons sit in a row and the only way to read them at a glance is for
+ * the on-state of each to be a different colour.
+ */
+.fcard-repost.is-on {
+  color: var(--success);
+}
+.fcard-repost.is-on:hover:not(:disabled) {
+  background: var(--success-soft);
+  color: var(--success);
+}
 .fcard-save.is-on {
   color: var(--gold-ink);
 }
@@ -174,6 +188,7 @@
 }
 /* the fill lands rather than appears, so a tap feels answered */
 .fcard-like.is-on svg,
+.fcard-repost.is-on svg,
 .fcard-save.is-on svg {
   animation: fcard-pop 0.28s cubic-bezier(0.2, 1.5, 0.4, 1);
 }

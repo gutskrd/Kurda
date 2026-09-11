@@ -19,7 +19,7 @@ import { EngagementService, type EngagementKind } from './engagement-service.js'
  * were one thing split three ways. 'saved' is what the app calls it everywhere
  * else, so the profile calls it that too.
  */
-export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'saved'] as const;
+export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'reposts', 'saved'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 
 export function isProfileSection(value: string): value is ProfileSection {

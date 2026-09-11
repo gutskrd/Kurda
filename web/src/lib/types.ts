@@ -199,8 +199,10 @@ export interface ImagePost {
 export interface PostEngagement {
   likes: number;
   bookmarks: number;
+  reposts: number;
   liked: boolean;
   bookmarked: boolean;
+  reposted: boolean;
 }
 
 /** One card on the community wall (GET /feed). */
@@ -229,7 +231,7 @@ export interface FeedItem {
 }
 
 /** The activity sections a profile can show, in the order they appear. */
-export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'saved'] as const;
+export const PROFILE_SECTIONS = ['posts', 'games', 'likes', 'reposts', 'saved'] as const;
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 export type ProfileSections = Record<ProfileSection, boolean>;
 

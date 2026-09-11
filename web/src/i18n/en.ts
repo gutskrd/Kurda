@@ -977,6 +977,13 @@ export const en = {
   'share.searchFriends': 'Search friends',
   'share.sendFailed': 'That message did not send. Try again.',
   'share.signInToSend': 'Sign in to send this to a friend.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'Repost',
+  'repost.undo': 'Undo repost',
+  'repost.tab': 'Reposts',
+  'repost.sectionHint': 'Posts you have reposted onto your own profile.',
+  'repost.signIn': 'Sign in to repost',
 } as const;
 
 export type MessageKey = keyof typeof en;
