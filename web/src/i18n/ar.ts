@@ -875,4 +875,18 @@ export const ar: Catalogue = {
   'saved.eyebrow': 'المحفوظات',
   'app.documentTitle': 'MyKurda — تعلّم الكردية',
   'app.description': 'MyKurda طريقة جميلة لتعلّم الكردية — دروس وقصص وقصائد وألعاب ومجتمع.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'شارك هذا المنشور',
+  'share.title': 'مشاركة',
+  'share.shareOut': 'مشاركة…',
+  'share.copy': 'نسخ الرابط',
+  'share.copied': 'تم النسخ',
+  'share.linkLabel': 'رابط هذا المنشور',
+  'share.orSendHere': 'أو أرسله إلى صديق من هنا',
+  'share.sentTo': 'أُرسل إلى {name}.',
+  'share.noFriendsYet': 'أضف صديقًا لتتمكن من إرسال المنشورات إليه من هنا.',
+  'share.searchFriends': 'ابحث عن الأصدقاء',
+  'share.sendFailed': 'لم تُرسل الرسالة. حاول مرة أخرى.',
+  'share.signInToSend': 'سجّل الدخول لإرسال هذا إلى صديق.',
 };

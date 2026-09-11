@@ -8,6 +8,8 @@ coverage/
 .idea/
 .vscode/
 .vs/
+# wrangler’s local build + dev-server cache
+.wrangler/
 .DS_Store
 .expo/
 

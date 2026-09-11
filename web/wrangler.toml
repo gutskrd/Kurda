@@ -1,17 +1,32 @@
-# Cloudflare Worker (static assets only) for the MyKurda web app → mykurda.com.
+# Cloudflare Worker for the MyKurda web app → mykurda.com.
 #
-# This deploys the built Vite output in ./dist as static assets. There is NO
-# Worker script (no `main`) — the platform serves the files directly, so no
-# server code runs and nothing about the app changes. SPA deep links are served
-# index.html via `not_found_handling`. The API stays on Render; this is not it.
+# This deploys the built Vite output in ./dist as static assets, with one small
+# Worker script in front of them. SPA deep links are served index.html via
+# `not_found_handling`. The API stays on Render; this is not it.
+#
+# The script exists for one reason: a link to a post, pasted anywhere that
+# unfurls links, used to show the same grey "MyKurda — Learn Kurdish" card
+# whichever post it was — nothing that unfurls a link runs the JavaScript that
+# would set the title. `src/worker.ts` writes the post's own title, author,
+# opening lines and picture into the head before the page leaves the edge.
+# Everything else is passed through untouched.
 #
 # `name` must match your existing Cloudflare Worker ("mykurda") so a deploy
 # updates that Worker instead of creating a new one.
 name = "mykurda"
+main = "src/worker.ts"
 compatibility_date = "2024-11-01"
+# AbortSignal.timeout, used to stop a slow API holding a page up
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
 # relative to this file → web/dist (produced by `vite build`)
 directory = "./dist"
 # client-side routing: serve index.html (200) for any non-asset path
 not_found_handling = "single-page-application"
+# the script needs to be able to ask for an asset itself
+binding = "ASSETS"
+
+[vars]
+# Where post previews are read from. Keep in step with VITE_API_URL.
+API_ORIGIN = "https://kurda-api.onrender.com"

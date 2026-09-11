@@ -882,4 +882,18 @@ export const ckb: Catalogue = {
   'saved.eyebrow': 'پاشەکەوتکراو',
   'app.documentTitle': 'MyKurda — فێری کوردی ببە',
   'app.description': 'MyKurda ڕێگایەکی جوانە بۆ فێربوونی کوردی — وانە، چیرۆک، شیعر، یاری و کۆمەڵگایەک.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'ئەم بابەتە هاوبەش بکە',
+  'share.title': 'هاوبەشکردن',
+  'share.shareOut': 'هاوبەشی بکە…',
+  'share.copy': 'لەبەرگرتنەوەی بەستەر',
+  'share.copied': 'لەبەرگیرایەوە',
+  'share.linkLabel': 'بەستەری ئەم بابەتە',
+  'share.orSendHere': 'یان لێرە بۆ هاوڕێیەکی بنێرە',
+  'share.sentTo': 'بۆ {name} نێردرا.',
+  'share.noFriendsYet': 'هاوڕێیەک زیاد بکە، ئەوسا دەتوانیت بابەتیان بۆ بنێریت.',
+  'share.searchFriends': 'گەڕان بەدوای هاوڕێکان',
+  'share.sendFailed': 'ئەو نامەیە نەنێردرا. دووبارە هەوڵ بدە.',
+  'share.signInToSend': 'بچۆ ژوورەوە بۆ ناردنی ئەمە بۆ هاوڕێیەک.',
 };

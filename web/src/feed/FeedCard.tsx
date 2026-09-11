@@ -5,6 +5,7 @@ import { Avatar } from '../components/Avatar';
 import { BookmarkIcon, CommentIcon, HeartIcon, TrashIcon } from '../components/icons';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useProfileModal } from '../profile/ProfileModal';
+import { SharePost } from './SharePost';
 import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
@@ -136,6 +137,8 @@ export function FeedCard({
             onConfirm={remove}
           />
         )}
+
+        <SharePost item={item} />
 
         <button
           type="button"

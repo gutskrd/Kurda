@@ -870,4 +870,18 @@ export const nl: Catalogue = {
   'saved.eyebrow': 'Bewaard',
   'app.documentTitle': 'MyKurda — Leer Koerdisch',
   'app.description': 'MyKurda is een mooie manier om Koerdisch te leren — lessen, verhalen, gedichten, spellen en een community.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Deel dit bericht',
+  'share.title': 'Delen',
+  'share.shareOut': 'Delen…',
+  'share.copy': 'Link kopiëren',
+  'share.copied': 'Gekopieerd',
+  'share.linkLabel': 'Link naar dit bericht',
+  'share.orSendHere': 'of stuur het hier naar een vriend',
+  'share.sentTo': 'Verstuurd naar {name}.',
+  'share.noFriendsYet': 'Voeg een vriend toe en je kunt berichten naar hen sturen.',
+  'share.searchFriends': 'Vrienden zoeken',
+  'share.sendFailed': 'Dat bericht is niet verstuurd. Probeer het opnieuw.',
+  'share.signInToSend': 'Log in om dit naar een vriend te sturen.',
 };

@@ -870,4 +870,18 @@ export const es: Catalogue = {
   'saved.eyebrow': 'Guardado',
   'app.documentTitle': 'MyKurda — Aprende kurdo',
   'app.description': 'MyKurda es una forma bonita de aprender kurdo: lecciones, relatos, poemas, juegos y una comunidad.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Compartir esta publicación',
+  'share.title': 'Compartir',
+  'share.shareOut': 'Compartir…',
+  'share.copy': 'Copiar enlace',
+  'share.copied': 'Copiado',
+  'share.linkLabel': 'Enlace a esta publicación',
+  'share.orSendHere': 'o envíalo a un amigo desde aquí',
+  'share.sentTo': 'Enviado a {name}.',
+  'share.noFriendsYet': 'Añade un amigo y podrás enviarle publicaciones desde aquí.',
+  'share.searchFriends': 'Buscar amigos',
+  'share.sendFailed': 'Ese mensaje no se envió. Inténtalo de nuevo.',
+  'share.signInToSend': 'Inicia sesión para enviárselo a un amigo.',
 };

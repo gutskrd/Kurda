@@ -870,4 +870,18 @@ export const tr: Catalogue = {
   'saved.eyebrow': 'Kaydedilenler',
   'app.documentTitle': 'MyKurda — Kürtçe öğren',
   'app.description': 'MyKurda, Kürtçe öğrenmenin güzel bir yolu — dersler, hikâyeler, şiirler, oyunlar ve bir topluluk.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Bu gönderiyi paylaş',
+  'share.title': 'Paylaş',
+  'share.shareOut': 'Paylaş…',
+  'share.copy': 'Bağlantıyı kopyala',
+  'share.copied': 'Kopyalandı',
+  'share.linkLabel': 'Bu gönderinin bağlantısı',
+  'share.orSendHere': 'ya da buradan bir arkadaşına gönder',
+  'share.sentTo': '{name} kişisine gönderildi.',
+  'share.noFriendsYet': 'Bir arkadaş ekle, sonra ona buradan gönderi yollayabilirsin.',
+  'share.searchFriends': 'Arkadaş ara',
+  'share.sendFailed': 'Mesaj gönderilemedi. Tekrar dene.',
+  'share.signInToSend': 'Bunu bir arkadaşına göndermek için giriş yap.',
 };

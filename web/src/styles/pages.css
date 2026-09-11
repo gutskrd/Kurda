@@ -5108,3 +5108,82 @@ a.mkp-activity-row:hover {
   margin-top: 8px;
   font-size: 0.85rem;
 }
+
+/* ---- passing a post on ------------------------------------------------- */
+/*
+ * The share sheet.
+ *
+ * Reuses the gift picker's friend list rather than growing a second one: both
+ * are "choose a friend and send them a thing", and two lists that looked nearly
+ * the same would drift.
+ */
+.share-sheet {
+  display: grid;
+  gap: 14px;
+}
+.share-primary {
+  gap: 9px;
+}
+/*
+ * The link and the button that copies it.
+ *
+ * `minmax(0, 1fr)` rather than `1fr`: a grid column is min-content by default,
+ * and a long post URL in a readonly input would push the button off the edge on
+ * a phone. Below 420px they stack, because a URL and a button side by side in
+ * 320px leaves no room for either.
+ */
+.share-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.share-link .input {
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.share-link .btn {
+  gap: 7px;
+  white-space: nowrap;
+}
+.share-link .btn.is-done {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  color: var(--success);
+}
+@media (max-width: 420px) {
+  .share-link {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* a rule with the reason for it written on the line */
+.share-divider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+.share-divider::before,
+.share-divider::after {
+  content: '';
+  height: 1px;
+  background: var(--border);
+}
+.share-note {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.share-sent {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 0.9rem;
+}
+.share-friends-block {
+  display: grid;
+  gap: 12px;
+}

@@ -963,6 +963,20 @@ export const en = {
   'saved.eyebrow': 'Saved',
   'app.documentTitle': 'MyKurda — Learn Kurdish',
   'app.description': 'MyKurda is a beautiful way to learn Kurdish — lessons, stories, poems, games and a community.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Share this post',
+  'share.title': 'Share',
+  'share.shareOut': 'Share…',
+  'share.copy': 'Copy link',
+  'share.copied': 'Copied',
+  'share.linkLabel': 'Link to this post',
+  'share.orSendHere': 'or send it to a friend here',
+  'share.sentTo': 'Sent to {name}.',
+  'share.noFriendsYet': 'Add a friend and you can send posts to them here.',
+  'share.searchFriends': 'Search friends',
+  'share.sendFailed': 'That message did not send. Try again.',
+  'share.signInToSend': 'Sign in to send this to a friend.',
 } as const;
 
 export type MessageKey = keyof typeof en;
