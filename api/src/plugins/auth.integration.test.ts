@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { passAdmin2fa } from '../admin/testing.js';
+import { pass2fa } from '../test/admin-2fa.js';
 import { requireAuth, requireRoles } from './auth.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -106,7 +106,7 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
     expect(beforeCode.statusCode).toBe(403);
     expect(beforeCode.json().code).toBe('TOTP_ENROLLMENT_REQUIRED');
 
-    await passAdmin2fa(app, accessToken);
+    await pass2fa(app, accessToken);
     const allowed = await call('/admin-only', accessToken);
     expect(allowed.statusCode).toBe(200);
     expect(allowed.json().secret).toBe(true);

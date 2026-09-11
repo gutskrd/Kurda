@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { passAdmin2fa } from '../admin/testing.js';
+import { pass2fa } from '../test/admin-2fa.js';
 import { ShopService } from './service.js';
 import { WalletService } from '../wallet/service.js';
 
@@ -61,7 +61,7 @@ describe.skipIf(!DATABASE_URL)('shop catalog (integration)', () => {
     adminToken = admin.token;
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [admin.id]);
     // pricing the catalogue is staff surface; it needs a second factor
-    await passAdmin2fa(app, adminToken);
+    await pass2fa(app, adminToken);
 
     for (const body of [
       { sku: uniqueSku, name: 'Gold Frame', category: 'cosmetic', currency: 'zer', price: 100, isUnique: true },
