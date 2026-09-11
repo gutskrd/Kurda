@@ -643,7 +643,7 @@ export const nl: Catalogue = {
   'landing.eyebrow': 'Leer Koerdisch',
   'landing.noCreditCard': 'Geen creditcard nodig. Werkt in je browser en op iOS en Android.',
   'landing.everythingTitle': 'Alles op één plek',
-  'landing.everythingSub': 'Een complete manier om te leren — niet alleen flashcards.',
+  'landing.everythingSub': 'Een complete manier om te leren.',
   'landing.readyTitle': 'Klaar om te beginnen?',
   'landing.readyBody': 'Maak een gratis account en ga verder waar nieuwsgierigheid ophoudt. Het kost minder dan een minuut.',
   'landing.feature.lessons': 'Gestructureerde lessen',

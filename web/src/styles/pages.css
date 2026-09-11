@@ -2708,6 +2708,50 @@ button.feature {
 .mkp-activity-note {
   margin: 10px 2px 4px;
 }
+
+/*
+ * Whole posts inside the profile panel.
+ *
+ * The panel is already a card on a card, so the posts inside it drop their own
+ * frame and separate with a rule instead — three nested boxes with three
+ * borders and three shadows reads as clutter at any width, and on a phone it
+ * costs padding the words need.
+ *
+ * `min-width: 0` on the cards is load-bearing: a flex/grid child defaults to
+ * min-content, so one long unbroken word in a post — a URL, a hashtag — would
+ * push the card wider than the panel and take the page's horizontal scrollbar
+ * with it.
+ */
+.mkp-activity-feed {
+  display: grid;
+  gap: 0;
+}
+.mkp-activity-feed .fcard {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding-inline: 2px;
+}
+.mkp-activity-feed .fcard + .fcard {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mkp-activity-feed .fcard:hover {
+  transform: none;
+}
+/* a picture in a profile tab is a preview, not the page's centrepiece */
+.mkp-activity-feed .fcard-shot img {
+  max-height: 340px;
+}
+@media (max-width: 560px) {
+  .mkp-activity-feed .fcard {
+    padding-inline: 0;
+  }
+}
+
 .mkp-activity-list {
   list-style: none;
   margin: 0;

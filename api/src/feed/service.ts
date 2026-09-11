@@ -1,7 +1,13 @@
 import type pg from 'pg';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
-import { EngagementService, NO_ENGAGEMENT, type Engagement, type TargetType } from '../social/engagement-service.js';
+import {
+  EngagementService,
+  NO_ENGAGEMENT,
+  type Engagement,
+  type EngagementKind,
+  type TargetType,
+} from '../social/engagement-service.js';
 
 /**
  * One wall for everything the community writes and posts.
@@ -137,6 +143,29 @@ const BY_IDS_SQL = `
      WHERE i.status = 'published' AND i.id = ANY($2)
   ) AS chosen`;
 
+/**
+ * Everything one person published, newest first.
+ *
+ * Ordered and paged in SQL across both tables, so "their tenth post" means the
+ * tenth of everything they wrote rather than the tenth of whichever table it
+ * happened to come from.
+ */
+const BY_AUTHOR_SQL = `
+  SELECT source, id, author_id, subtype, title, body, media, at, view_count, comment_count FROM (
+    SELECT 'library' AS source, l.id, l.author_id, l.type AS subtype, l.title, l.body,
+           NULL::text AS media, COALESCE(l.published_at, l.created_at) AS at,
+           l.view_count, l.comment_count
+      FROM library_posts l
+     WHERE l.status = 'published' AND l.author_id = $1
+    UNION ALL
+    SELECT 'image', i.id, i.author_id, i.category, NULL, i.caption,
+           i.image_media_id, i.created_at, i.view_count, i.comment_count
+      FROM image_posts i
+     WHERE i.status = 'published' AND i.author_id = $1
+  ) AS mine
+  ORDER BY at DESC, id DESC
+  LIMIT $2 OFFSET $3`;
+
 /** Enough of a post to fill a card; the rest is on the post's own page. */
 const EXCERPT_CHARS = 240;
 
@@ -175,11 +204,32 @@ export class FeedService {
     userId: string,
     opts: { limit?: number; offset?: number; publicUrl?: PublicUrl } = {},
   ): Promise<FeedItem[]> {
+    return this.engagedBy(userId, 'bookmark', { ...opts, viewerId: userId });
+  }
+
+  /**
+   * The posts one person liked, or saved — as whole posts.
+   *
+   * A profile used to show these as a line of text with a thumbnail beside it,
+   * which meant a picture arrived as a 40px square and a poem as an icon. The
+   * thing somebody liked is a post, so this returns the post.
+   *
+   * `viewerId` is who is *looking*, which is not the same person as `userId`
+   * when this fills somebody else's profile tab. Engagement is resolved for the
+   * viewer, so the heart on a card in your friend's likes tab reflects whether
+   * **you** liked it — passing the owner's id would paint every card as already
+   * liked and let a stranger act on it by mistake.
+   */
+  async engagedBy(
+    userId: string,
+    kind: EngagementKind,
+    opts: { limit?: number; offset?: number; publicUrl?: PublicUrl; viewerId?: string | null } = {},
+  ): Promise<FeedItem[]> {
     const limit = Math.min(50, Math.max(1, opts.limit ?? 20));
     const offset = Math.max(0, opts.offset ?? 0);
     const publicUrl = opts.publicUrl ?? (() => null);
 
-    const refs = await this.engagement.listFor(userId, 'bookmark', limit, offset);
+    const refs = await this.engagement.listFor(userId, kind, limit, offset);
     if (refs.length === 0) return [];
 
     const rows = await this.pool.query<FeedRow>(BY_IDS_SQL, [
@@ -187,12 +237,25 @@ export class FeedService {
       refs.filter((r) => r.targetType === 'image').map((r) => r.targetId),
     ]);
 
-    const items = await this.hydrate(rows.rows, userId, publicUrl);
+    const items = await this.hydrate(rows.rows, opts.viewerId ?? null, publicUrl);
     // the database cannot order by when you saved something, so the pointers do
     const byKey = new Map(items.map((i) => [i.key, i]));
     return refs
       .map((r) => byKey.get(`${r.targetType}:${r.targetId}`))
       .filter((i): i is FeedItem => i !== undefined);
+  }
+
+  /** Everything one person has published, newest first — as whole posts. */
+  async byAuthor(
+    authorId: string,
+    opts: { limit?: number; offset?: number; publicUrl?: PublicUrl; viewerId?: string | null } = {},
+  ): Promise<FeedItem[]> {
+    const limit = Math.min(50, Math.max(1, opts.limit ?? 20));
+    const offset = Math.max(0, opts.offset ?? 0);
+    const publicUrl = opts.publicUrl ?? (() => null);
+
+    const rows = await this.pool.query<FeedRow>(BY_AUTHOR_SQL, [authorId, limit, offset]);
+    return this.hydrate(rows.rows, opts.viewerId ?? null, publicUrl);
   }
 
   /** Attach authors and engagement to a page of rows, in three lookups. */

@@ -105,11 +105,11 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
     const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
     expect(res.statusCode).toBe(200);
 
-    const titles = res.json().entries.map((e: { title: string }) => e.title);
+    const titles = res.json().items.map((i: { title: string }) => i.title);
     expect(titles).toContain(`Story ${suffix}`);
     expect(titles).toContain(`Poem ${suffix}`);
-    // and every entry says which section it belongs to
-    expect(res.json().entries.every((e: { kind: string }) => e.kind === 'posts')).toBe(true);
+    // a post's kind is what it IS now, not which tab it came from
+    expect(res.json().items.every((i: { kind: string }) => ['story', 'poem', 'image', 'meme'].includes(i.kind))).toBe(true);
   });
 
   it('interleaves finished games from every mode, newest first', async () => {
@@ -144,17 +144,17 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
     // an empty list, not an error: a viewer should not be able to tell a hidden
     // section from one that simply has nothing in it
     expect(res.statusCode).toBe(200);
-    expect(res.json().entries).toEqual([]);
+    expect(res.json().items).toEqual([]);
 
     // …but the person who wrote them still sees their own
     const own = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.owner!);
-    expect(own.json().entries.length).toBeGreaterThan(0);
+    expect(own.json().items.length).toBeGreaterThan(0);
 
     // and the profile stops advertising the tab
     expect((await call('GET', `/users/${ids.owner}`, tokens.viewer!)).json().sections.posts).toBe(false);
     // turning it back on restores it
     await call('PATCH', '/me/profile/sections', tokens.owner!, { posts: true });
-    expect((await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!)).json().entries.length)
+    expect((await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!)).json().items.length)
       .toBeGreaterThan(0);
   });
 
@@ -168,10 +168,10 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
   it('a private profile has no public activity either', async () => {
     await call('PUT', '/me/privacy', tokens.owner!, { visibility: 'nobody' });
     const res = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.viewer!);
-    expect(res.json().entries).toEqual([]);
+    expect(res.json().items).toEqual([]);
     // …but the owner still sees their own
     const own = await call('GET', `/users/${ids.owner}/activity?kind=posts`, tokens.owner!);
-    expect(own.json().entries.length).toBeGreaterThan(0);
+    expect(own.json().items.length).toBeGreaterThan(0);
     await call('PUT', '/me/privacy', tokens.owner!, { visibility: 'everyone' });
   });
 

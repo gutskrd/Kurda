@@ -120,13 +120,13 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
   it('gets no activity from a profile that is not public', async () => {
     const res = await guest(`/users/${ids.shy}/activity?kind=posts`);
     expect(res.statusCode).toBe(200);
-    expect(res.json().entries).toEqual([]);
+    expect(res.json().items).toEqual([]);
   });
 
   it('reads what a public profile has posted', async () => {
     const res = await guest(`/users/${ids.open}/activity?kind=posts`);
     expect(res.statusCode).toBe(200);
-    expect(res.json().entries.map((e: { title: string }) => e.title)).toContain(`Story ${suffix}`);
+    expect(res.json().items.map((i: { title: string }) => i.title)).toContain(`Story ${suffix}`);
   });
 
   it('reads the global leaderboard, with no place of its own on it', async () => {

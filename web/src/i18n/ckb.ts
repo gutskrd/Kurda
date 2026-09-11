@@ -655,7 +655,7 @@ export const ckb: Catalogue = {
   'landing.eyebrow': 'فێری کوردی ببە',
   'landing.noCreditCard': 'بێ کارتی کرێدیت. لە وێبگەڕەکەت و لەسەر iOS و ئەندرۆید کاردەکات.',
   'landing.everythingTitle': 'هەموو شتێک لە یەک شوێندا',
-  'landing.everythingSub': 'ڕێگایەکی تەواو بۆ فێربوون — تەنها کارتی بیرهێنانەوە نییە.',
+  'landing.everythingSub': 'ڕێگایەکی تەواو بۆ فێربوون.',
   'landing.readyTitle': 'ئامادەیت دەست پێبکەیت؟',
   'landing.readyBody': 'هەژمارێکی بەخۆڕایی دروست بکە و لەوێوە دەست پێبکە کە حەز کۆتایی دێت. لە خولەکێک کەمتر دەخایەنێت.',
   'landing.feature.lessons': 'وانەی ڕێکخراو',

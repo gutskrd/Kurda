@@ -648,7 +648,7 @@ export const ar: Catalogue = {
   'landing.eyebrow': 'تعلّم الكردية',
   'landing.noCreditCard': 'بدون بطاقة ائتمان. يعمل في متصفحك وعلى iOS وأندرويد.',
   'landing.everythingTitle': 'كل شيء في مكان واحد',
-  'landing.everythingSub': 'طريقة كاملة للتعلّم — لا مجرد بطاقات.',
+  'landing.everythingSub': 'طريقة كاملة للتعلّم.',
   'landing.readyTitle': 'مستعد للبدء؟',
   'landing.readyBody': 'أنشئ حسابًا مجانيًا وواصل من حيث ينتهي الفضول. يستغرق أقل من دقيقة.',
   'landing.feature.lessons': 'دروس منظّمة',

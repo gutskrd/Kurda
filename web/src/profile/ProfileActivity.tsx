@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ActivityEntry, ProfileSection, ProfileSections } from '../lib/types';
+import type { ActivityEntry, FeedItem, ProfileSection, ProfileSections } from '../lib/types';
+import { FeedCard } from '../feed/FeedCard';
+import { FeedSkeleton } from '../components/skeletons';
 import { PROFILE_SECTIONS } from '../lib/types';
 import { BookmarkIcon, GameIcon, HeartIcon, WallIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
@@ -96,18 +98,28 @@ export function ProfileActivity({
   );
 }
 
-/** One tab's list, paged with a Show more button. */
+/**
+ * One tab's list, paged with a Show more button.
+ *
+ * Posts, likes and saved come back as whole posts and are drawn as the card the
+ * wall draws. They used to be a line of text with a 40px thumbnail beside it,
+ * which turned a picture into a stamp and a poem into an icon — a list *about*
+ * what somebody posted rather than the posts. Games stay a row, because a game
+ * result is a line in a history and there is no card for it.
+ */
 function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [items, setItems] = useState<FeedItem[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  const asCards = kind !== 'games';
 
   const load = useCallback(
     async (offset: number): Promise<void> => {
-      const res = await client.get<{ entries: ActivityEntry[] }>(
+      const res = await client.get<{ entries?: ActivityEntry[]; items?: FeedItem[] }>(
         `/users/${userId}/activity?kind=${kind}&limit=${PAGE}&offset=${offset}`,
       );
       if (!res.ok) {
@@ -115,10 +127,12 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
         setState('error');
         return;
       }
-      const batch = res.data.entries ?? [];
-      setEntries((prev) => (offset === 0 ? batch : [...prev, ...batch]));
+      const rows = res.data.entries ?? [];
+      const posts = res.data.items ?? [];
+      setEntries((prev) => (offset === 0 ? rows : [...prev, ...rows]));
+      setItems((prev) => (offset === 0 ? posts : [...prev, ...posts]));
       // a short page means the end; asking again would return nothing
-      setMore(batch.length === PAGE);
+      setMore((rows.length || posts.length) === PAGE);
       setState('ready');
     },
     [client, userId, kind],
@@ -135,31 +149,47 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
     };
   }, [load]);
 
-  if (state === 'loading') return <p className="muted mkp-activity-note">{t('common.loading')}</p>;
-  if (state === 'error') return <p className="muted mkp-activity-note">{error}</p>;
-  if (entries.length === 0) {
-    return <p className="muted mkp-activity-note">{t('profile.nothingHere')}</p>;
+  /** Keep a card's own list in step when its like or bookmark is toggled. */
+  const changed = useCallback((next: FeedItem): void => {
+    setItems((prev) => prev.map((i) => (i.key === next.key ? next : i)));
+  }, []);
+  const removed = useCallback((gone: FeedItem): void => {
+    setItems((prev) => prev.filter((i) => i.key !== gone.key));
+  }, []);
+
+  const shown = asCards ? items.length : entries.length;
+
+  if (state === 'loading') {
+    return asCards ? (
+      <FeedSkeleton count={2} />
+    ) : (
+      <p className="muted mkp-activity-note">{t('common.loading')}</p>
+    );
   }
+  if (state === 'error') return <p className="muted mkp-activity-note">{error}</p>;
+  if (shown === 0) return <p className="muted mkp-activity-note">{t('profile.nothingHere')}</p>;
 
   return (
     <div id={`mkp-panel-${kind}`} role="tabpanel" aria-labelledby={`mkp-tab-${kind}`}>
-      {/*
-        One list for everything, rather than a gallery for pictures and a list
-        for words. Posts is now both at once, and a row carries its own
-        thumbnail when it has one — which a gallery could not do for a saying,
-        and a plain list could not do for a picture.
-      */}
-      <ul className="mkp-activity-list">
-        {entries.map((e) => (
-          <li key={e.id}>
-            <ActivityRow entry={e} />
-          </li>
-        ))}
-      </ul>
+      {asCards ? (
+        <div className="feed mkp-activity-feed">
+          {items.map((item) => (
+            <FeedCard key={item.key} item={item} onChanged={changed} onRemoved={removed} />
+          ))}
+        </div>
+      ) : (
+        <ul className="mkp-activity-list">
+          {entries.map((e) => (
+            <li key={e.id}>
+              <ActivityRow entry={e} />
+            </li>
+          ))}
+        </ul>
+      )}
 
       {more && (
-        <button type="button" className="mkp-more" onClick={() => void load(entries.length)}>
-          Show more
+        <button type="button" className="mkp-more" onClick={() => void load(shown)}>
+          {t('common.showMore')}
         </button>
       )}
     </div>

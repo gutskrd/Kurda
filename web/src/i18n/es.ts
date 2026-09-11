@@ -643,7 +643,7 @@ export const es: Catalogue = {
   'landing.eyebrow': 'Aprende kurdo',
   'landing.noCreditCard': 'Sin tarjeta de crédito. Funciona en tu navegador y en iOS y Android.',
   'landing.everythingTitle': 'Todo en un solo lugar',
-  'landing.everythingSub': 'Una forma completa de aprender, no solo tarjetas.',
+  'landing.everythingSub': 'Una forma completa de aprender.',
   'landing.readyTitle': '¿Listo para empezar?',
   'landing.readyBody': 'Crea una cuenta gratuita y sigue donde acaba la curiosidad. Se tarda menos de un minuto.',
   'landing.feature.lessons': 'Lecciones estructuradas',

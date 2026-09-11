@@ -649,7 +649,7 @@ export const ku: Catalogue = {
   'landing.eyebrow': 'Fêrî kurdî bibe',
   'landing.noCreditCard': 'Bê qerta krediyê. Di geroka te de û li ser iOS û Android dixebite.',
   'landing.everythingTitle': 'Her tişt li cihekî',
-  'landing.everythingSub': 'Rêyeke temam ji bo fêrbûnê — ne tenê kartên bîrkirinê.',
+  'landing.everythingSub': 'Rêyeke temam ji bo fêrbûnê.',
   'landing.readyTitle': 'Amade yî ku dest pê bikî?',
   'landing.readyBody': 'Hesabeke belaş çêke û ji cihê ku meraq diqede dest pê bike. Ji xulekekê kêmtir digire.',
   'landing.feature.lessons': 'Dersên birêkûpêk',

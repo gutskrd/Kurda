@@ -724,7 +724,7 @@ export const en = {
   'landing.eyebrow': 'Learn Kurdish',
   'landing.noCreditCard': 'No credit card. Works in your browser and on iOS & Android.',
   'landing.everythingTitle': 'Everything in one place',
-  'landing.everythingSub': 'A complete way to learn — not just flashcards.',
+  'landing.everythingSub': 'A complete way to learn.',
   'landing.readyTitle': 'Ready to begin?',
   'landing.readyBody': 'Create a free account and pick up where curiosity leaves off. It takes under a minute.',
   'landing.feature.lessons': 'Structured lessons',

@@ -643,7 +643,7 @@ export const tr: Catalogue = {
   'landing.eyebrow': 'Kürtçe öğren',
   'landing.noCreditCard': 'Kredi kartı gerekmez. Tarayıcında ve iOS ile Android’de çalışır.',
   'landing.everythingTitle': 'Her şey tek yerde',
-  'landing.everythingSub': 'Öğrenmenin eksiksiz bir yolu — yalnızca kart değil.',
+  'landing.everythingSub': 'Öğrenmenin eksiksiz bir yolu.',
   'landing.readyTitle': 'Başlamaya hazır mısın?',
   'landing.readyBody': 'Ücretsiz bir hesap oluştur ve merakın bittiği yerden devam et. Bir dakikadan kısa sürer.',
   'landing.feature.lessons': 'Yapılandırılmış dersler',

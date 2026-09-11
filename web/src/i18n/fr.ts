@@ -643,7 +643,7 @@ export const fr: Catalogue = {
   'landing.eyebrow': 'Apprendre le kurde',
   'landing.noCreditCard': 'Sans carte bancaire. Fonctionne dans ton navigateur et sur iOS et Android.',
   'landing.everythingTitle': 'Tout au même endroit',
-  'landing.everythingSub': 'Une façon complète d’apprendre — pas seulement des cartes mémoire.',
+  'landing.everythingSub': 'Une façon complète d’apprendre.',
   'landing.readyTitle': 'Prêt à commencer ?',
   'landing.readyBody': 'Crée un compte gratuit et continue là où la curiosité s’arrête. Cela prend moins d’une minute.',
   'landing.feature.lessons': 'Des leçons structurées',
