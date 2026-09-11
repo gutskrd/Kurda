@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import { sendEmailJob } from '../jobs/email.js';
+import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
@@ -21,10 +22,10 @@ export class GdprService {
 
   /** Starts the 14-day grace period; logging in again cancels it. */
   async requestDeletion(userId: string): Promise<void> {
-    const result = await this.pool.query<{ email: string; username: string }>(
+    const result = await this.pool.query<{ email: string; username: string; locale: string }>(
       `UPDATE users SET deletion_requested_at = now()
        WHERE id = $1 AND deletion_requested_at IS NULL AND deleted_at IS NULL
-       RETURNING email, username`,
+       RETURNING email, username, locale`,
       [userId],
     );
     const user = result.rows[0];
@@ -34,6 +35,7 @@ export class GdprService {
           to: user.email,
           template: 'deletion-notice',
           vars: { username: user.username, graceDays: String(DELETION_GRACE_DAYS) },
+          locale: emailLocaleFor(user.locale),
         })
         .catch(() => undefined);
     }

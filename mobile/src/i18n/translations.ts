@@ -86,7 +86,7 @@ const ku: Catalog = {
   'settings.eventThemes': 'Temayên bûyeran',
   'profile.logout': 'Derkeve',
   'profile.league': 'Lîg',
-  'profile.shop': 'Firotgeh',
+  'profile.shop': 'Firoşgeh',
 };
 
 const de: Catalog = {
@@ -207,12 +207,12 @@ const ckb: Catalog = {
   'events.bannerSubtitle': 'ئەرک و خەڵات — بۆ یاریکردن دەستی لێبدە',
   'events.claim': 'وەرگرتن',
   'events.claimed': 'وەرگیرا',
-  'events.inProgress': 'لە جێبەجێکردندایە',
+  'events.inProgress': 'بەردەوامە',
   'events.endsIn': 'لە {time} کۆتایی دێت',
   'settings.language': 'زمان',
   'settings.eventThemes': 'ڕووکارەکانی بۆنە',
   'profile.logout': 'دەرچوون',
-  'profile.league': 'خول',
+  'profile.league': 'لیگ',
   'profile.shop': 'فرۆشگا',
 };
 

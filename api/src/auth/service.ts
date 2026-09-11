@@ -11,6 +11,7 @@ import {
   type UserRow,
 } from '../users/repository.js';
 import { sendEmailJob } from '../jobs/email.js';
+import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { CURRENT_POLICY_VERSION, isRestrictedAge } from '../gdpr/consent.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
@@ -109,7 +110,12 @@ export class AuthService {
   }
 
   /** Legacy link-based verification, still served by /auth/resend-verification. */
-  private async sendVerificationEmail(user: { id: string; email: string; username: string }) {
+  private async sendVerificationEmail(user: {
+    id: string;
+    email: string;
+    username: string;
+    locale?: string;
+  }) {
     try {
       const token = await createEmailToken(this.pool, user.id, 'verify_email');
       if (this.deps.jobs) {
@@ -117,6 +123,7 @@ export class AuthService {
           to: user.email,
           template: 'verify-email',
           vars: { link: this.emailLink('/verify-email', token), username: user.username },
+          locale: emailLocaleFor(user.locale),
         });
       }
     } catch (err) {
@@ -133,6 +140,7 @@ export class AuthService {
     id: string;
     email: string;
     username: string;
+    locale?: string;
   }): Promise<string | null> {
     try {
       const code = await createVerificationCode(this.pool, user.id);
@@ -141,6 +149,7 @@ export class AuthService {
           to: user.email,
           template: 'verify-email-code',
           vars: { code, username: user.username },
+          locale: emailLocaleFor(user.locale),
         });
       } else {
         // no queue configured → the mail is silently dropped, which looks to the
@@ -162,13 +171,23 @@ export class AuthService {
    * No-ops silently if the account is already verified.
    */
   async resendVerificationCode(userId: string): Promise<void> {
-    const res = await this.pool.query<{ email: string; username: string; email_verified_at: Date | null }>(
-      `SELECT email, username, email_verified_at FROM users WHERE id = $1 AND deleted_at IS NULL`,
+    const res = await this.pool.query<{
+      email: string;
+      username: string;
+      locale: string;
+      email_verified_at: Date | null;
+    }>(
+      `SELECT email, username, locale, email_verified_at FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [userId],
     );
     const user = res.rows[0];
     if (!user || user.email_verified_at) return;
-    await this.sendVerificationCode({ id: userId, email: user.email, username: user.username });
+    await this.sendVerificationCode({
+      id: userId,
+      email: user.email,
+      username: user.username,
+      locale: user.locale,
+    });
   }
 
   /**
@@ -221,6 +240,7 @@ export class AuthService {
             to: user.email,
             template: 'oauth-no-password',
             vars: { link: this.emailLink('/reset-password', setToken), username: user.username },
+            locale: emailLocaleFor(user.locale),
           });
         }
         return;
@@ -231,6 +251,7 @@ export class AuthService {
           to: user.email,
           template: 'password-reset',
           vars: { link: this.emailLink('/reset-password', token), username: user.username },
+          locale: emailLocaleFor(user.locale),
         });
       } else {
         // no queue configured → the mail is silently dropped, which looks to the
@@ -253,10 +274,10 @@ export class AuthService {
     const passwordHash = await hashPassword(newPassword);
     // token_version bump invalidates every outstanding access token;
     // revoking refresh tokens kills all sessions (KUR-016 semantics)
-    const updated = await this.pool.query<{ email: string; username: string }>(
+    const updated = await this.pool.query<{ email: string; username: string; locale: string }>(
       `UPDATE users SET password_hash = $2, token_version = token_version + 1
        WHERE id = $1 AND deleted_at IS NULL
-       RETURNING email, username`,
+       RETURNING email, username, locale`,
       [userId, passwordHash],
     );
     await this.pool.query(
@@ -270,6 +291,7 @@ export class AuthService {
           to: user.email,
           template: 'password-changed',
           vars: { username: user.username },
+          locale: emailLocaleFor(user.locale),
         })
         .catch(() => undefined);
     }
