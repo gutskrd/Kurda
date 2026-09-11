@@ -884,4 +884,11 @@ export const de: Catalogue = {
   'share.searchFriends': 'Freunde suchen',
   'share.sendFailed': 'Die Nachricht wurde nicht gesendet. Versuch es noch einmal.',
   'share.signInToSend': 'Melde dich an, um das an Freunde zu schicken.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'Teilen',
+  'repost.undo': 'Teilen zurücknehmen',
+  'repost.tab': 'Geteilt',
+  'repost.sectionHint': 'Beiträge, die du auf dein eigenes Profil geteilt hast.',
+  'repost.signIn': 'Melde dich an, um zu teilen',
 };

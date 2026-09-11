@@ -6,7 +6,7 @@ import type { ActivityEntry, FeedItem, ProfileSection, ProfileSections } from '.
 import { FeedCard } from '../feed/FeedCard';
 import { FeedSkeleton } from '../components/skeletons';
 import { PROFILE_SECTIONS } from '../lib/types';
-import { BookmarkIcon, GameIcon, HeartIcon, WallIcon } from '../components/icons';
+import { BookmarkIcon, GameIcon, HeartIcon, RepostIcon, WallIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -17,12 +17,14 @@ const LABEL_KEY: Record<ProfileSection, MessageKey> = {
   posts: 'profile.tab.posts',
   games: 'nav.games',
   likes: 'profile.tab.likes',
+  reposts: 'repost.tab',
   saved: 'saved.title',
 };
 
 function SectionGlyph({ kind, size = 22 }: { kind: ProfileSection; size?: number }): React.JSX.Element {
   if (kind === 'posts') return <WallIcon size={size} />;
   if (kind === 'likes') return <HeartIcon size={size} />;
+  if (kind === 'reposts') return <RepostIcon size={size} />;
   if (kind === 'saved') return <BookmarkIcon size={size} />;
   return <GameIcon size={size} />;
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { BookmarkIcon, CommentIcon, HeartIcon, TrashIcon } from '../components/icons';
+import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon, TrashIcon } from '../components/icons';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useProfileModal } from '../profile/ProfileModal';
 import { SharePost } from './SharePost';
@@ -35,12 +35,12 @@ export function FeedCard({
 }): React.JSX.Element {
   const { client, status, user } = useAuth();
   const { openProfile } = useProfileModal();
-  const [busy, setBusy] = useState<'like' | 'bookmark' | null>(null);
+  const [busy, setBusy] = useState<'like' | 'bookmark' | 'repost' | null>(null);
   const signedIn = status === 'signedIn';
   const { locale } = useI18n();
   const t = useT();
 
-  async function toggle(kind: 'like' | 'bookmark'): Promise<void> {
+  async function toggle(kind: 'like' | 'bookmark' | 'repost'): Promise<void> {
     if (!signedIn || busy) return;
     setBusy(kind);
     const res = await client.post<{ on: boolean; engagement: FeedItem['engagement'] }>(
@@ -137,6 +137,28 @@ export function FeedCard({
             onConfirm={remove}
           />
         )}
+
+        {/*
+          Putting it on your own profile.
+
+          A toggle like the heart, and for the same reason: a second press is
+          how somebody takes it back, and the server decides what the state
+          actually was. Your own post is repostable too — it is the one way to
+          bring something old back up, and forbidding it would only be a rule
+          to explain.
+        */}
+        <button
+          type="button"
+          className={`fcard-act fcard-repost${e.reposted ? ' is-on' : ''}`}
+          disabled={!signedIn || busy !== null}
+          aria-pressed={e.reposted}
+          aria-label={actionLabel(t('repost.do'), e.reposted ? t('repost.undo') : t('repost.do'), e.reposts)}
+          title={signedIn ? (e.reposted ? t('repost.undo') : t('repost.do')) : t('repost.signIn')}
+          onClick={() => void toggle('repost')}
+        >
+          <RepostIcon size={18} />
+          {e.reposts > 0 && <span>{e.reposts.toLocaleString()}</span>}
+        </button>
 
         <SharePost item={item} />
 

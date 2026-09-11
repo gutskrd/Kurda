@@ -896,4 +896,11 @@ export const ckb: Catalogue = {
   'share.searchFriends': 'گەڕان بەدوای هاوڕێکان',
   'share.sendFailed': 'ئەو نامەیە نەنێردرا. دووبارە هەوڵ بدە.',
   'share.signInToSend': 'بچۆ ژوورەوە بۆ ناردنی ئەمە بۆ هاوڕێیەک.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'دووبارە بڵاوکردنەوە',
+  'repost.undo': 'لابردنی دووبارە بڵاوکردنەوە',
+  'repost.tab': 'دووبارە بڵاوکراوەکان',
+  'repost.sectionHint': 'ئەو بابەتانەی لەسەر پرۆفایلی خۆت دووبارە بڵاوت کردوونەتەوە.',
+  'repost.signIn': 'بچۆ ژوورەوە بۆ دووبارە بڵاوکردنەوە',
 };

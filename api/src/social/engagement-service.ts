@@ -1,18 +1,22 @@
 import type pg from 'pg';
 
 /**
- * Liking and saving a post, whatever kind of post it is.
+ * Liking, saving and reposting a post, whatever kind of post it is.
  *
- * Stories, poems and pictures share one feed, so they share one heart and one
- * bookmark. Everything here works in (type, id) pairs rather than knowing which
- * table a post came from — the feed already knows that, and teaching this
- * service too would mean two of everything.
+ * Stories, poems and pictures share one feed, so they share one heart, one
+ * bookmark and one repost. Everything here works in (type, id) pairs rather
+ * than knowing which table a post came from — the feed already knows that, and
+ * teaching this service too would mean two of everything.
+ *
+ * A repost is the third kind rather than a table of its own: one per person
+ * per post, counted on the post, listed newest-first for whoever made it. That
+ * is a like, with a different name and a different meaning to a reader.
  */
 
 export const TARGET_TYPES = ['library', 'image'] as const;
 export type TargetType = (typeof TARGET_TYPES)[number];
 
-export const ENGAGEMENT_KINDS = ['like', 'bookmark'] as const;
+export const ENGAGEMENT_KINDS = ['like', 'bookmark', 'repost'] as const;
 export type EngagementKind = (typeof ENGAGEMENT_KINDS)[number];
 
 export function isTargetType(v: string): v is TargetType {
@@ -26,11 +30,20 @@ export function isEngagementKind(v: string): v is EngagementKind {
 export interface Engagement {
   likes: number;
   bookmarks: number;
+  reposts: number;
   liked: boolean;
   bookmarked: boolean;
+  reposted: boolean;
 }
 
-export const NO_ENGAGEMENT: Engagement = { likes: 0, bookmarks: 0, liked: false, bookmarked: false };
+export const NO_ENGAGEMENT: Engagement = {
+  likes: 0,
+  bookmarks: 0,
+  reposts: 0,
+  liked: false,
+  bookmarked: false,
+  reposted: false,
+};
 
 /** A post someone liked or saved, as a pointer for the feed to hydrate. */
 export interface EngagedRef {
@@ -104,12 +117,17 @@ export class EngagementService {
 
     for (const r of rows.rows) {
       const e = out.get(r.target_id)!;
+      // named rather than if/else: an `else` branch counted a repost as a
+      // bookmark the moment 'repost' existed, silently and on every card
       if (r.kind === 'like') {
         e.likes = r.n;
         e.liked = r.mine;
-      } else {
+      } else if (r.kind === 'bookmark') {
         e.bookmarks = r.n;
         e.bookmarked = r.mine;
+      } else if (r.kind === 'repost') {
+        e.reposts = r.n;
+        e.reposted = r.mine;
       }
     }
     return out;

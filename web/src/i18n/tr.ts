@@ -884,4 +884,11 @@ export const tr: Catalogue = {
   'share.searchFriends': 'Arkadaş ara',
   'share.sendFailed': 'Mesaj gönderilemedi. Tekrar dene.',
   'share.signInToSend': 'Bunu bir arkadaşına göndermek için giriş yap.',
+
+  /* putting somebody else's post on your own profile */
+  'repost.do': 'Yeniden paylaş',
+  'repost.undo': 'Yeniden paylaşmayı geri al',
+  'repost.tab': 'Yeniden paylaşılanlar',
+  'repost.sectionHint': 'Kendi profiline yeniden paylaştığın gönderiler.',
+  'repost.signIn': 'Yeniden paylaşmak için giriş yap',
 };

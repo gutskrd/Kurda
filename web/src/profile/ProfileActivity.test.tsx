@@ -9,7 +9,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-const ALL = { posts: true, games: true, likes: true, saved: true };
+const ALL = { posts: true, games: true, likes: true, reposts: true, saved: true };
 
 /** A game result: still a row, because there is no card for one. */
 const entry = (id: string, kind: string, title: string, extra: Record<string, unknown> = {}) => ({
@@ -42,7 +42,7 @@ const post = (id: string, title: string, extra: Record<string, unknown> = {}) =>
   href: `/app/library/${id}`,
   viewCount: 0,
   commentCount: 0,
-  engagement: { likes: 0, liked: false, bookmarked: false },
+  engagement: { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false },
   at: '2026-09-01T10:00:00.000Z',
   ...extra,
 });
@@ -158,7 +158,7 @@ describe('ProfileActivity', () => {
     expect(screen.getByRole('tab', { name: /Posts/ }).textContent).not.toContain('Hidden');
   });
 
-  it('offers exactly four sections: posts, games, likes, saved', async () => {
+  it('offers exactly five sections: posts, games, likes, reposts, saved', async () => {
     const { fetch } = activityFetch({ posts: [] });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
@@ -166,7 +166,7 @@ describe('ProfileActivity', () => {
     // stories, poems and Dîmen were three tabs for one thing, the same split
     // the community wall stopped making
     const tabs = (await screen.findAllByRole('tab')).map((t) => t.textContent?.replace('Hidden', '').trim());
-    expect(tabs).toEqual(['Posts', 'Games', 'Likes', 'Saved']);
+    expect(tabs).toEqual(['Posts', 'Games', 'Likes', 'Reposts', 'Saved']);
   });
 
   it('shows a picture at the size the card shows it, not as a thumbnail', async () => {

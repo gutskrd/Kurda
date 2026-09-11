@@ -11,8 +11,8 @@ const DATABASE_URL = process.env.DATABASE_URL;
 describe('resolveSections', () => {
   it('shows every section when nothing has been chosen', () => {
     // an existing account should not need a backfill to look normal
-    expect(resolveSections({})).toEqual({ posts: true, games: true, likes: true, saved: true });
-    expect(resolveSections(null)).toEqual({ posts: true, games: true, likes: true, saved: true });
+    expect(resolveSections({})).toEqual({ posts: true, games: true, likes: true, reposts: true, saved: true });
+    expect(resolveSections(null)).toEqual({ posts: true, games: true, likes: true, reposts: true, saved: true });
   });
 
   it('honours an explicit false and nothing else', () => {
@@ -134,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
 
   it('the profile says which sections it shows', async () => {
     const res = await call('GET', `/users/${ids.owner}`, tokens.viewer!);
-    expect(res.json().sections).toEqual({ posts: true, games: true, likes: true, saved: true });
+    expect(res.json().sections).toEqual({ posts: true, games: true, likes: true, reposts: true, saved: true });
   });
 
   it('a hidden section returns nothing, and says nothing about being hidden', async () => {

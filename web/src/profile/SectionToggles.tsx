@@ -10,6 +10,8 @@ const COPY: Record<ProfileSection, { labelKey: MessageKey; hintKey: MessageKey }
   posts: { labelKey: 'profile.tab.posts', hintKey: 'edit.sections.posts' },
   games: { labelKey: 'nav.games', hintKey: 'edit.sections.games' },
   likes: { labelKey: 'profile.tab.likes', hintKey: 'edit.sections.likes' },
+
+  reposts: { labelKey: 'repost.tab', hintKey: 'repost.sectionHint' },
   saved: { labelKey: 'saved.title', hintKey: 'edit.sections.saved' },
 };
 
