@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
 import { sniffAudioType } from './mimeSniff.js';
@@ -29,6 +30,29 @@ const reject = (status: number, code: string, message: string, reason: string): 
   message,
   reason,
 });
+
+/** The content types a client may POST raw audio bytes under. */
+export const AUDIO_CONTENT_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/webm'] as const;
+
+/**
+ * Install the raw-audio body parser, once.
+ *
+ * Two routes take audio bytes — a voice note and a speaking-practice recording
+ * — and Fastify throws if the same content type is claimed twice, so whichever
+ * registers first installs it for both. The `bodyLimit` is what makes an
+ * oversized upload a 413 before the server has buffered it, rather than after.
+ *
+ * The declared content type only decides whether the body is read at all; what
+ * the file actually is comes from `sniffAudioType` further down.
+ */
+export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number): void {
+  if (app.hasContentTypeParser(AUDIO_CONTENT_TYPES[0])) return;
+  app.addContentTypeParser(
+    [...AUDIO_CONTENT_TYPES],
+    { parseAs: 'buffer', bodyLimit: maxUploadBytes + 1024 },
+    (_req, body, done) => done(null, body),
+  );
+}
 
 /**
  * Store a user-supplied voice note cost-safely and return its confirmed media key

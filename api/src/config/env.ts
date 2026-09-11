@@ -96,7 +96,7 @@ const envSchema = z.object({
   MEDIA_AUDIO_MAX_UPLOAD_MB: z.coerce.number().positive().default(3),
   /** Advisory max recording length (client-enforced); the server caps by size. */
   MEDIA_AUDIO_MAX_SECONDS: z.coerce.number().int().positive().default(120),
-  MEDIA_AUDIO_ALLOWED_TYPES: z.string().default('audio/mpeg,audio/mp4'),
+  MEDIA_AUDIO_ALLOWED_TYPES: z.string().default('audio/mpeg,audio/mp4,audio/webm'),
   MEDIA_AUDIO_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),
   MEDIA_AUDIO_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** HMAC secret for access tokens. MUST be overridden in production. */

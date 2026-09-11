@@ -1,45 +1,28 @@
 import type pg from 'pg';
-import type { MediaStorage, UploadTicket } from './storage.js';
+import type { MediaStorage } from './storage.js';
 
 export const ORPHAN_AGE_HOURS = 24;
 
 /**
- * Upload lifecycle (KUR-013): request → client PUTs to the signed URL →
- * the consuming feature confirms the key when it stores a reference.
- * Never-confirmed keys are cleaned up by the orphan job.
+ * What happens to a stored object that nothing ended up referencing.
+ *
+ * Every upload path writes a `media_uploads` row before it writes to storage
+ * and confirms the row only once the object is safe to serve — an image that
+ * moderation gates, or audio whose PUT failed, is left unconfirmed on purpose.
+ * The orphan sweep is what stops those from accumulating.
+ *
+ * There used to be a `requestUpload` here that handed the client a signed URL
+ * and a `confirmUpload` for whoever referenced the key afterwards. Nothing ever
+ * called the second one outside a test, so every object uploaded that way sat
+ * unconfirmed until this sweep deleted it — and in the meantime it was bytes
+ * the server had never looked at, sitting in the public bucket. Both are gone;
+ * uploads go through the server, which confirms them itself.
  */
 export class MediaService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly storage: MediaStorage,
   ) {}
-
-  async requestUpload(input: {
-    kind: string;
-    contentType: string;
-    contentLength: number;
-    sha256Hex: string;
-  }): Promise<UploadTicket> {
-    const ticket = await this.storage.createUploadUrl(input);
-    // same content re-uploaded (same hash) refreshes the pending row
-    await this.pool.query(
-      `INSERT INTO media_uploads (key, content_type, content_length)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (key) DO UPDATE SET created_at = now()
-       WHERE media_uploads.confirmed_at IS NULL`,
-      [ticket.key, input.contentType, input.contentLength],
-    );
-    return ticket;
-  }
-
-  /** Called by consuming features once the key is referenced. */
-  async confirmUpload(key: string): Promise<boolean> {
-    const result = await this.pool.query(
-      `UPDATE media_uploads SET confirmed_at = now() WHERE key = $1 AND confirmed_at IS NULL`,
-      [key],
-    );
-    return (result.rowCount ?? 0) > 0;
-  }
 
   /** Deletes unconfirmed uploads older than the orphan window. */
   async cleanupOrphans(now = new Date()): Promise<number> {
