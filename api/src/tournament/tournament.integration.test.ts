@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { passAdmin2fa } from '../admin/testing.js';
+import { pass2fa } from '../test/admin-2fa.js';
 import { TournamentService } from './service.js';
 import { WalletService } from '../wallet/service.js';
 
@@ -47,7 +47,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [admin.id]);
     // scheduling a tournament and declaring its winner is staff surface, so it
     // needs a second factor like the rest of the panel
-    await passAdmin2fa(app, adminToken);
+    await pass2fa(app, adminToken);
     for (const tag of ['p1', 'p2', 'p3', 'p4']) players.push(await register(tag));
   });
 
