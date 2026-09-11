@@ -88,6 +88,11 @@ endpoint risk/cost: login, register, password reset, email/code verification,
 username changes, OAuth, and other sensitive endpoints each have their own budget.
 Progressive lockout backs the auth flow.
 
+Those IP-keyed budgets are only as good as `req.ip`, which behind a proxy has to
+be derived from X-Forwarded-For — see `TRUST_PROXY` in DEPLOY.md. Set wrong, every
+per-IP limit collapses onto the proxy's address and becomes one shared budget for
+the whole internet.
+
 ## 8. Data exposure & error handling
 
 - Responses are explicit DTOs — password hashes, tokens, private email, and
@@ -129,9 +134,23 @@ characters and Unicode confusables (`api/src/users/username.ts`,
 
 ## 12. File uploads (`api/src/media/`)
 
-Presigned direct-to-storage (R2/S3) uploads with size + MIME limits, randomized
-object keys (never the client filename), per-user upload rate limits, and access
-control. Uploads cannot become server-executable code.
+Uploads go **through the server**. Bytes are read, the real type is taken from
+the magic bytes (never the declared content type or the filename), images are
+re-encoded to WebP — which is what makes a polyglot harmless, since nothing of
+the original file survives — and only then stored, under a key that is a hash of
+the stored bytes with a prefix the route chooses rather than the caller. Size
+caps, a storage ceiling, an operation ceiling and per-user rate limits all apply
+on the way in; an image must clear moderation before its row is confirmed and
+the object becomes servable.
+
+This section used to describe **presigned direct-to-storage** uploads with
+"size + MIME limits". That was the shape of the hole rather than a defence: with
+the client PUTting straight to the bucket, those limits were numbers the client
+declared about bytes the server never saw, and a ticket asking for an image
+would happily store a script. Wording like that is part of why it lasted — a
+reviewer reads it and stops looking. The presigned path is gone;
+`createUploadUrl` remains for server-side use only, where the bytes are the
+server's own.
 
 ## 13. Privacy & GDPR (`api/src/gdpr/`)
 
