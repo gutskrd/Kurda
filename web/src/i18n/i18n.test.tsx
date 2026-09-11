@@ -110,6 +110,43 @@ describe('the catalogues', () => {
     }
   });
 
+  /**
+   * The two Kurdish catalogues are the reason this app exists, so the words in
+   * them are the product rather than a translation of it. These are the ones
+   * that were wrong, and the shape of the mistake in each case is easy to make
+   * again: a bare noun where a negation was needed, and two different words for
+   * one thing sitting next to each other in the same screen.
+   */
+  describe('Kurdish', () => {
+    it('says nobody, not a person', () => {
+      // "Kes" and "کەس" on their own are "a person" — in a list that also offers
+      // "Her kes" (anyone), reading one as the other inverts what the setting does
+      expect(ku['settings.visibility.nobody']).toBe('Ne kes');
+      expect(ckb['settings.visibility.nobody']).toBe('هیچ کەس');
+      expect(ku['settings.visibility.everyone']).toContain('Her kes');
+    });
+
+    it('turns a section off to hide it, not on', () => {
+      // this said "veke" — turn it ON — for the sentence that explains how to
+      // hide a section, which is the opposite of what the switch does
+      expect(ku['edit.sections.help']).toContain('bigire');
+      expect(ku['edit.sections.help']).not.toContain('Beşekê veke');
+    });
+
+    it('uses one word per thing', () => {
+      // each of these had two words for one idea, in screens a reader sees together
+      const kuText = Object.values(ku).join(String.fromCharCode(10));
+      for (const [wrong, why] of [
+        ['ajimêr', 'account is hesab everywhere else'],
+        ['hevqafiye', 'rhyme is serwa everywhere else'],
+        ['pesinand', 'like is ecibandin everywhere else'],
+        ['Negirêdayî', 'offline is derhêl, the pair of serhêl'],
+        ['şirove', 'the spelling is şîrove'],
+      ] as const) {
+        expect(kuText.includes(wrong), `ku still has "${wrong}" — ${why}`).toBe(false);
+      }
+    });
+  });
   it('offer a native name for every language on the list', () => {
     for (const l of APP_LOCALES) {
       expect(l.nativeName.length, l.code).toBeGreaterThan(0);
