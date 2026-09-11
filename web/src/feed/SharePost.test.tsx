@@ -108,7 +108,9 @@ describe('sharing a post', () => {
 
   it('sends it to a friend as a message they can reply to', async () => {
     signedIn();
-    const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+    // the second arg is unused here but gives the mock a 2-tuple, so the
+    // assertion below can read the request body off fetch.mock.calls
+    const fetch = vi.fn(async (url: string, _init?: RequestInit) => {
       if (url.includes('/friends')) {
         return jsonResponse(200, { friends: [{ userId: 'f1', username: 'zana', avatarUrl: null }] });
       }
