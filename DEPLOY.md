@@ -71,6 +71,37 @@ Native apps don't send an `Origin`, so they're unaffected by CORS. If you also
 run the browser build, set `CORS_ORIGINS` on the **kurda-api** service to the
 web origin (e.g. `http://localhost:8081`).
 
+## Checking `TRUST_PROXY` after a deploy
+
+`req.ip` is what the rate limiter on `/auth/login` counts against, what the
+captcha is told the caller's address is, and what signup and login risk scoring
+reasons about. Behind a proxy it has to be worked out from `X-Forwarded-For`,
+and `TRUST_PROXY` is how far to walk back along that header from the connection.
+
+The default is `1`, which is safe everywhere: proxies append to the header, so
+anything a client writes ends up furthest to the left, and counting from the
+right can only ever reach an address a proxy wrote. Counting **too far** is the
+dangerous direction — it reaches the client's own text — so production refuses
+`TRUST_PROXY=true` outright.
+
+To confirm the number is right for this deployment, read the first log line the
+API writes after a restart:
+
+```
+proxy chain as seen on the first request — set TRUST_PROXY to the number of
+addresses a proxy wrote
+  trustProxy: "1"
+  socket: "10.x.x.x"
+  forwardedFor: "203.0.113.9, 172.71.x.x"
+  resolvedIp: "172.71.x.x"
+```
+
+Count the addresses in `forwardedFor` that a proxy wrote — every one of them
+unless a leading entry is obviously a reader's own invention — and set
+`TRUST_PROXY` to that. In the example above the answer is `2`, and `resolvedIp`
+would then be `203.0.113.9`. If the API is reached directly with no proxy in
+front of it, set `false`.
+
 ## Media storage — profile photos (Cloudflare R2 or S3)
 
 Profile-photo upload (KUR-177/180) needs an S3-compatible bucket. Without it

@@ -142,7 +142,42 @@ const envSchema = z.object({
    * Origin so they're unaffected. Empty = no cross-origin browser access.
    */
   CORS_ORIGINS: z.string().default(''),
+  /**
+   * How many proxies sit in front of this server.
+   *
+   * Everything that asks "who is this" reads `req.ip` — the rate limiter on
+   * /auth/login, the captcha's own remote-IP check, the signup and login risk
+   * scoring. Behind a proxy with no setting at all, `req.ip` is the proxy's
+   * address, so every one of those was looking at the same handful of values
+   * for the whole internet: five login attempts a minute shared by everybody,
+   * and abuse that cannot be attributed to anyone.
+   *
+   * The count is how far to walk back along X-Forwarded-For from the connection,
+   * and it is the whole safety property: the header is appended to by each hop,
+   * so anything a client writes ends up furthest to the LEFT. Counting from the
+   * right can only ever reach addresses a proxy wrote. Counting too far reaches
+   * the client's own text — which is why this is a number and not `true`, and
+   * why `true` is refused in production below.
+   *
+   * 1 is the safe default and is never worse than no setting at all. Whether it
+   * is exactly right depends on the deployment, and the log line the server
+   * writes on its first request says what the real chain looks like.
+   */
+  TRUST_PROXY: z
+    .string()
+    .default('1')
+    .refine(
+      (v) => v === 'false' || v === 'true' || /^\d+$/.test(v) || v.includes('.') || v.includes(':'),
+      'must be false, a hop count, or a comma-separated list of proxy IPs/CIDRs',
+    ),
 });
+
+/** `TRUST_PROXY` in the shape Fastify wants. */
+export function trustProxyOption(value: string): boolean | number | string {
+  if (value === 'false') return false;
+  if (value === 'true') return true;
+  return /^\d+$/.test(value) ? Number(value) : value;
+}
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
 
@@ -174,6 +209,15 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     }
     if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
       problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");
+    }
+    // `true` trusts the whole X-Forwarded-For header, including the part the
+    // client wrote. Anyone could then pick their own address and get a private
+    // rate-limit bucket, a clean risk score, and somebody else's name in the
+    // logs. A hop count can only ever reach addresses a proxy appended.
+    if (config.TRUST_PROXY === 'true') {
+      problems.push(
+        "  TRUST_PROXY: 'true' trusts a client-supplied X-Forwarded-For and is not allowed in production — use a hop count, or a list of proxy IPs",
+      );
     }
     // APP_BASE_URL is the base of every emailed link; a trailing slash or an
     // http:// origin would produce broken or downgraded reset links.

@@ -9,13 +9,14 @@ import { createStorage, type MediaStorage } from './media/storage.js';
 import { registerImageUploadParser } from './media/uploadParser.js';
 import { mediaLimits } from './media/mediaLimits.js';
 import { createRedis, redisHealthCheck } from './cache/redis.js';
-import type { AppConfig } from './config/env.js';
+import { trustProxyOption, type AppConfig } from './config/env.js';
 import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
 import { setupMetrics } from './observability/metrics.js';
 import { setupAuth } from './plugins/auth.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupSecurityHeaders } from './plugins/security-headers.js';
+import { logProxyChainOnce } from './plugins/proxy-chain.js';
 import { setupCachePolicy } from './plugins/cache-policy.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
@@ -195,7 +196,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     },
     // trust an upstream-provided request id (gateway/LB) or generate one
     requestIdHeader: 'x-request-id',
+    // who the client is, when there is a proxy in between — see TRUST_PROXY
+    trustProxy: trustProxyOption(config.TRUST_PROXY),
   });
+
+  logProxyChainOnce(app, config);
 
   setupCors(app, config);
   setupValidation(app);
