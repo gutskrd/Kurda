@@ -170,6 +170,15 @@ const envSchema = z.object({
       (v) => v === 'false' || v === 'true' || /^\d+$/.test(v) || v.includes('.') || v.includes(':'),
       'must be false, a hop count, or a comma-separated list of proxy IPs/CIDRs',
     ),
+  /**
+   * Bearer token a Prometheus scraper must present at /metrics.
+   *
+   * Unset, the endpoint is not served at all in production — the registry names
+   * the Node version, the process's memory and uptime, and every route with its
+   * traffic and error rates, which is a scrape a stranger should not be able to
+   * ask for. It stays open in development, where the process is a laptop.
+   */
+  METRICS_TOKEN: z.string().min(16, 'must be at least 16 characters').optional(),
 });
 
 /** `TRUST_PROXY` in the shape Fastify wants. */

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import { sendEmailJob } from '../jobs/email.js';
 import type { JobQueue } from '../jobs/queue.js';
-import type { MediaStorage } from '../media/storage.js';
+import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 
 export const DELETION_GRACE_DAYS = 14;
@@ -146,21 +146,22 @@ export class GdprService {
 
     const body = Buffer.from(JSON.stringify(await this.buildExport(record.user_id), null, 2));
     const sha256Hex = createHash('sha256').update(body).digest('hex');
-    const ticket = await this.deps.storage.createUploadUrl({
-      kind: 'user-export',
-      contentType: 'application/json',
-      contentLength: body.length,
-      sha256Hex,
-    });
-    const put = await fetch(ticket.uploadUrl, {
-      method: 'PUT',
-      headers: ticket.requiredHeaders,
-      body,
-    });
-    if (!put.ok) throw new Error(`export upload failed (${put.status})`);
+    const key = mediaKey('user-export', sha256Hex, 'application/json');
+    /*
+     * Written with private, no-store headers and straight from here.
+     *
+     * This used to take a signed upload URL and PUT to it over the network —
+     * the server fetching a URL it had just signed for itself, to reach a
+     * bucket it holds the credentials for. The round trip bought nothing, and
+     * it went through the path that stamps `public, max-age=31536000,
+     * immutable` on what it stores, because everything else that path stores is
+     * a picture. So a file holding one person's account, sessions and linked
+     * identities was a public object with a year-long cache directive.
+     */
+    await this.deps.storage.putPrivate(key, body, 'application/json');
     await this.pool.query(
       `UPDATE user_exports SET storage_key = $2, completed_at = now() WHERE id = $1`,
-      [exportId, ticket.key],
+      [exportId, key],
     );
   }
 

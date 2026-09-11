@@ -35,6 +35,23 @@ export interface ProcessOptions {
   allowedTypes: ReadonlySet<string>;
 }
 
+/**
+ * How many pixels an upload may decode to.
+ *
+ * The byte limit does not bound this. Compression is the whole point of an
+ * image format, and a few kilobytes of PNG can describe a canvas of tens of
+ * thousands of pixels a side — which sharp will happily allocate four bytes per
+ * pixel for. sharp's own default already stops the extreme case at 268
+ * megapixels, but 268 MP is about a gigabyte of resident memory for one
+ * request, and the API runs on a small instance where that is the whole box.
+ *
+ * 50 MP is roughly an 8000×6000 photograph — larger than anything a phone or a
+ * full-frame camera produces, and the output is being resized to 1280 px on its
+ * longest edge regardless. Over the limit sharp refuses to decode, which the
+ * caller already reports as a malformed image.
+ */
+const MAX_INPUT_PIXELS = 50_000_000;
+
 // Descending WebP qualities tried until the output fits under the size cap.
 const QUALITY_LADDER = [82, 72, 62, 52, 42, 32];
 
@@ -56,7 +73,7 @@ export async function processImage(input: Buffer, opts: ProcessOptions): Promise
 
   let base: Sharp;
   try {
-    base = sharp(input, { failOn: 'error' })
+    base = sharp(input, { failOn: 'error', limitInputPixels: MAX_INPUT_PIXELS })
       .rotate() // apply EXIF orientation, then drop it
       .resize(opts.maxDimension, opts.maxDimension, { fit: 'inside', withoutEnlargement: true });
     // force a decode now so a malformed image is caught here, not later
