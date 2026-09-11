@@ -480,7 +480,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       6 * 60 * 60 * 1000,
     );
     app.addHook('onClose', async () => clearInterval(seasonSweep));
-    registerMediaRoutes(app);
+    registerMediaRoutes(app, config);
     // cost-safe through-server voice-note upload (KUR-282)
     registerVoiceRoutes(app, config);
     registerPlacementRoutes(app);

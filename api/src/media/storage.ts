@@ -12,6 +12,8 @@ import type { AppConfig } from '../config/env.js';
 export const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   'audio/mpeg': 'mp3',
   'audio/mp4': 'm4a',
+  // what a browser's MediaRecorder produces on Chrome and Firefox
+  'audio/webm': 'webm',
   'image/png': 'png',
   'image/jpeg': 'jpg',
   'image/webp': 'webp',

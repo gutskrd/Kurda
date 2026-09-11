@@ -61,4 +61,19 @@ describe('sniffAudioType', () => {
     expect(sniffAudioType(bytes(0xff))).toBeNull(); // truncated frame sync
     expect(sniffAudioType(new Uint8Array())).toBeNull();
   });
+
+  it('recognises the WebM a browser records, and not a Matroska video', () => {
+    // MediaRecorder produces WebM on Chrome and Firefox; the speaking exercise
+    // used to relabel it as m4a on the way out and nothing checked.
+    const ebml = [0x1a, 0x45, 0xdf, 0xa3];
+    const webm = Uint8Array.from([...ebml, 0x42, 0x82, 0x84, ...Buffer.from('webm'), 0, 0, 0, 0]);
+    expect(sniffAudioType(webm)).toBe('audio/webm');
+
+    // same container, different DocType — a video file, which is not audio
+    const mkv = Uint8Array.from([...ebml, 0x42, 0x82, 0x88, ...Buffer.from('matroska'), 0, 0]);
+    expect(sniffAudioType(mkv)).toBe(null);
+
+    // EBML magic with no DocType at all is not enough
+    expect(sniffAudioType(Uint8Array.from([...ebml, 0, 0, 0, 0]))).toBe(null);
+  });
 });

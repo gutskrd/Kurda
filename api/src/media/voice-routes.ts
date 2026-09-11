@@ -4,7 +4,7 @@ import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import { audioLimits } from './mediaLimits.js';
 import { MediaUsageService } from './mediaUsage.js';
-import { storeAudioMedia } from './audioMedia.js';
+import { registerAudioParser, storeAudioMedia } from './audioMedia.js';
 
 const VOICE_KIND = 'voice-note';
 
@@ -19,11 +19,7 @@ export function registerVoiceRoutes(app: FastifyInstance, config: AppConfig): vo
   const limits = audioLimits(config);
   const usage = new MediaUsageService(app.db, app.redis ?? null);
 
-  app.addContentTypeParser(
-    ['audio/mpeg', 'audio/mp4'],
-    { parseAs: 'buffer', bodyLimit: limits.maxUploadBytes + 1024 },
-    (_req, body, done) => done(null, body),
-  );
+  registerAudioParser(app, limits.maxUploadBytes);
 
   app.post(
     '/media/voice',

@@ -26,6 +26,15 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 
 interface RequestOptions {
   body?: unknown;
+  /**
+   * Send these bytes as the body verbatim, instead of JSON.
+   *
+   * For endpoints that take a file rather than a document — a recording, a
+   * picture. The caller sets `content-type` itself, because the server reads it
+   * to decide how to parse the body (and then checks the bytes to decide what
+   * they actually are).
+   */
+  rawBody?: ArrayBuffer;
   headers?: Record<string, string>;
 }
 
@@ -102,6 +111,10 @@ export class ApiClient {
   get<T>(path: string, options?: RequestOptions): Promise<ApiResult<T>> {
     return this.request('GET', path, options);
   }
+  /** POST a file's bytes as the body — the server sniffs what they really are. */
+  postRaw<T>(path: string, bytes: ArrayBuffer, contentType: string): Promise<ApiResult<T>> {
+    return this.request('POST', path, { rawBody: bytes, headers: { 'content-type': contentType } });
+  }
   post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<ApiResult<T>> {
     return this.request('POST', path, { ...options, body });
   }
@@ -117,7 +130,10 @@ export class ApiClient {
 
   async request<T>(method: string, path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
     const headers: Record<string, string> = { ...options.headers };
-    if (options.body !== undefined) headers['content-type'] = 'application/json';
+    // a raw body brings its own content-type; JSON is the default for everything else
+    if (options.body !== undefined && options.rawBody === undefined) {
+      headers['content-type'] = 'application/json';
+    }
     if (MUTATING.has(method)) headers['idempotency-key'] = this.idGenerator();
 
     const attempt = async (): Promise<ApiResult<T> | 'unauthorized'> => {
@@ -131,7 +147,12 @@ export class ApiClient {
         res = await this.timedFetch(`${this.opts.baseUrl}${path}`, {
           method,
           headers: withAuth,
-          body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+          body:
+            options.rawBody !== undefined
+              ? options.rawBody
+              : options.body !== undefined
+                ? JSON.stringify(options.body)
+                : undefined,
         });
       } catch {
         return {

@@ -1,6 +1,11 @@
 /**
  * End-to-end media flow against real Postgres + MinIO (CI integration
  * job). Skipped unless both DATABASE_URL and S3_ENDPOINT are set.
+ *
+ * This used to drive the signed-URL flow — ask the service for a ticket, PUT
+ * the bytes straight to the bucket. That flow is gone: it let a client store
+ * bytes the server never saw. What is left is the part that still matters,
+ * which is what happens to an object nothing ends up referencing.
  */
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -8,7 +13,7 @@ import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import pg from 'pg';
 import { loadConfig } from '../config/env.js';
 import { MediaService } from './service.js';
-import { IMMUTABLE_CACHE_CONTROL, createStorage, type MediaStorage } from './storage.js';
+import { IMMUTABLE_CACHE_CONTROL, createStorage, mediaKey, type MediaStorage } from './storage.js';
 
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
 
@@ -20,6 +25,25 @@ describe.skipIf(!ready)('media pipeline (integration)', () => {
 
   const body = Buffer.from(`kurda-media-test-${Date.now()}`);
   const sha256Hex = createHash('sha256').update(body).digest('hex');
+
+  /**
+   * Store an object the way every real upload path does: write the row, write
+   * the bytes, and confirm only once it is safe to serve.
+   */
+  async function store(kind: string, contentType: string, confirm: boolean): Promise<string> {
+    const key = mediaKey(kind, sha256Hex, contentType);
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length`,
+      [key, contentType, body.length],
+    );
+    await storage.put(key, body, contentType);
+    if (confirm) {
+      await pool.query(`UPDATE media_uploads SET confirmed_at = now() WHERE key = $1`, [key]);
+    }
+    return key;
+  }
 
   beforeAll(async () => {
     const s3 = new S3Client({
@@ -42,54 +66,27 @@ describe.skipIf(!ready)('media pipeline (integration)', () => {
     await pool.end();
   });
 
-  it('signed PUT uploads land in the bucket with immutable cache headers', async () => {
-    const ticket = await service.requestUpload({
-      kind: 'it-audio',
-      contentType: 'audio/mpeg',
-      contentLength: body.length,
-      sha256Hex,
-    });
+  it('stored objects land in the bucket with immutable cache headers', async () => {
+    const key = await store('it-audio', 'audio/mpeg', true);
 
-    const put = await fetch(ticket.uploadUrl, {
-      method: 'PUT',
-      headers: ticket.requiredHeaders,
-      body,
-    });
-    expect(put.status).toBe(200);
-
-    expect(await storage.exists(ticket.key)).toBe(true);
-    const meta = await storage.headMetadata(ticket.key);
+    expect(await storage.exists(key)).toBe(true);
+    const meta = await storage.headMetadata(key);
     expect(meta?.cacheControl).toBe(IMMUTABLE_CACHE_CONTROL);
     expect(meta?.contentType).toBe('audio/mpeg');
   });
 
   it('confirmed uploads survive cleanup; orphans are removed', async () => {
-    const confirmed = await service.requestUpload({
-      kind: 'it-keep',
-      contentType: 'image/png',
-      contentLength: body.length,
-      sha256Hex,
-    });
-    const orphan = await service.requestUpload({
-      kind: 'it-orphan',
-      contentType: 'image/png',
-      contentLength: body.length,
-      sha256Hex,
-    });
-    for (const t of [confirmed, orphan]) {
-      const res = await fetch(t.uploadUrl, { method: 'PUT', headers: t.requiredHeaders, body });
-      expect(res.status).toBe(200);
-    }
-    expect(await service.confirmUpload(confirmed.key)).toBe(true);
+    const confirmed = await store('it-keep', 'image/png', true);
+    const orphan = await store('it-orphan', 'image/png', false);
 
     // pretend 25h passed
     const future = new Date(Date.now() + 25 * 3_600_000);
     const cleaned = await service.cleanupOrphans(future);
     expect(cleaned).toBeGreaterThanOrEqual(1);
 
-    expect(await storage.exists(confirmed.key)).toBe(true);
-    expect(await storage.exists(orphan.key)).toBe(false);
-    const row = await pool.query(`SELECT 1 FROM media_uploads WHERE key = $1`, [orphan.key]);
+    expect(await storage.exists(confirmed)).toBe(true);
+    expect(await storage.exists(orphan)).toBe(false);
+    const row = await pool.query(`SELECT 1 FROM media_uploads WHERE key = $1`, [orphan]);
     expect(row.rowCount).toBe(0);
   });
 });
