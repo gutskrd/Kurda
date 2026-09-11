@@ -2708,6 +2708,50 @@ button.feature {
 .mkp-activity-note {
   margin: 10px 2px 4px;
 }
+
+/*
+ * Whole posts inside the profile panel.
+ *
+ * The panel is already a card on a card, so the posts inside it drop their own
+ * frame and separate with a rule instead — three nested boxes with three
+ * borders and three shadows reads as clutter at any width, and on a phone it
+ * costs padding the words need.
+ *
+ * `min-width: 0` on the cards is load-bearing: a flex/grid child defaults to
+ * min-content, so one long unbroken word in a post — a URL, a hashtag — would
+ * push the card wider than the panel and take the page's horizontal scrollbar
+ * with it.
+ */
+.mkp-activity-feed {
+  display: grid;
+  gap: 0;
+}
+.mkp-activity-feed .fcard {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  padding-inline: 2px;
+}
+.mkp-activity-feed .fcard + .fcard {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mkp-activity-feed .fcard:hover {
+  transform: none;
+}
+/* a picture in a profile tab is a preview, not the page's centrepiece */
+.mkp-activity-feed .fcard-shot img {
+  max-height: 340px;
+}
+@media (max-width: 560px) {
+  .mkp-activity-feed .fcard {
+    padding-inline: 0;
+  }
+}
+
 .mkp-activity-list {
   list-style: none;
   margin: 0;
@@ -5063,4 +5107,83 @@ a.mkp-activity-row:hover {
 .mkp-friends-more {
   margin-top: 8px;
   font-size: 0.85rem;
+}
+
+/* ---- passing a post on ------------------------------------------------- */
+/*
+ * The share sheet.
+ *
+ * Reuses the gift picker's friend list rather than growing a second one: both
+ * are "choose a friend and send them a thing", and two lists that looked nearly
+ * the same would drift.
+ */
+.share-sheet {
+  display: grid;
+  gap: 14px;
+}
+.share-primary {
+  gap: 9px;
+}
+/*
+ * The link and the button that copies it.
+ *
+ * `minmax(0, 1fr)` rather than `1fr`: a grid column is min-content by default,
+ * and a long post URL in a readonly input would push the button off the edge on
+ * a phone. Below 420px they stack, because a URL and a button side by side in
+ * 320px leaves no room for either.
+ */
+.share-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.share-link .input {
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.share-link .btn {
+  gap: 7px;
+  white-space: nowrap;
+}
+.share-link .btn.is-done {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  color: var(--success);
+}
+@media (max-width: 420px) {
+  .share-link {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* a rule with the reason for it written on the line */
+.share-divider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+.share-divider::before,
+.share-divider::after {
+  content: '';
+  height: 1px;
+  background: var(--border);
+}
+.share-note {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.share-sent {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 0.9rem;
+}
+.share-friends-block {
+  display: grid;
+  gap: 12px;
 }

@@ -9,10 +9,10 @@ import {
   isProfileSection,
   ProfileActivityService,
   type ActivityEntry,
-  type ActivityEntryWithMedia,
 } from './profile-activity.js';
 import { EngagementService, isEngagementKind, isTargetType } from './engagement-service.js';
 import { FriendService } from '../friends/service.js';
+import { FeedService, type FeedItem } from '../feed/service.js';
 import {
   MAX_REASON_LEN,
   MIN_REASON_LEN,
@@ -24,6 +24,7 @@ import {
 /** User search + public profiles + privacy (KUR-082). */
 export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
   const activity = new ProfileActivityService(app.db);
+  const feed = new FeedService(app.db);
   const engagement = new EngagementService(app.db);
   const friends = new FriendService(app.db);
   const reports = new UserReportService(app.db);
@@ -105,27 +106,45 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       const { kind, limit = 12, offset = 0 } = req.query as { kind: string; limit?: number; offset?: number };
       if (!isProfileSection(kind)) throw new AppError('BAD_SECTION', 400, 'unknown profile section');
 
+      /*
+       * A game result is a line in a history; a post is a post.
+       *
+       * Only games stay a row. The other three come back as whole cards — the
+       * same ones the wall shows — because a profile that reduced a picture to a
+       * 40px square and a poem to an icon was showing a list *about* posts
+       * rather than the posts themselves.
+       *
+       * That means two response shapes from one route, so both keys are always
+       * present and the unused one is empty. The refusals below then do not have
+       * to know which kind was asked for.
+       */
+      const nothing = { entries: [] as ActivityEntry[], items: [] as FeedItem[] };
+
       // the profile call enforces privacy and blocks; reuse it rather than
       // reimplementing the rules where they could drift apart
       const viewerId = req.user?.id ?? null;
       const profile = await social.profile(viewerId, id);
-      if (profile.private) return { entries: [] };
+      if (profile.private) return nothing;
 
       // hiding a section hides it from other people, not from the person who
       // wrote it — their own profile still shows it, marked as hidden
       const visible = await activity.sections(id);
-      if (!visible[kind] && viewerId !== id) return { entries: [] };
+      if (!visible[kind] && viewerId !== id) return nothing;
 
-      if (kind === 'games') return { entries: await activity.games(id, limit, offset) };
+      if (kind === 'games') return { ...nothing, entries: await activity.games(id, limit, offset) };
+
+      // engagement resolves for whoever is LOOKING, not whose profile this is:
+      // the heart on a card in someone else's likes tab is about you, so a
+      // stranger's tab never arrives pre-liked
+      const shared = { limit, offset, publicUrl, viewerId };
+
       if (kind === 'likes' || kind === 'saved') {
         // 'saved' is the word the app uses; the engagement table still calls the
         // row a bookmark, and renaming a stored value is not worth a migration
-        const engaged = await activity.engaged(id, kind === 'likes' ? 'like' : 'bookmark', limit, offset);
-        return { entries: engaged.map(withImageUrl) };
+        const engagementKind = kind === 'likes' ? 'like' : 'bookmark';
+        return { ...nothing, items: await feed.engagedBy(id, engagementKind, shared) };
       }
-
-      const rows = await activity.allPosts(id, limit, offset);
-      return { entries: rows.map(withImageUrl) };
+      return { ...nothing, items: await feed.byAuthor(id, shared) };
     },
   );
 
@@ -205,14 +224,6 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
   );
 
 
-  /**
-   * A picture's media key becomes a URL here rather than in the service: the
-   * service does not know how media is served, and the route already holds the
-   * storage handle.
-   */
-  function withImageUrl({ mediaId, ...rest }: ActivityEntryWithMedia): ActivityEntry {
-    return { ...rest, imageUrl: mediaId && app.storage ? app.storage.publicUrl(mediaId) : null };
-  }
 
   /**
    * Like or save a post — one button, one endpoint, and the server decides.

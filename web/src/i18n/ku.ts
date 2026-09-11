@@ -649,7 +649,7 @@ export const ku: Catalogue = {
   'landing.eyebrow': 'Fêrî kurdî bibe',
   'landing.noCreditCard': 'Bê qerta krediyê. Di geroka te de û li ser iOS û Android dixebite.',
   'landing.everythingTitle': 'Her tişt li cihekî',
-  'landing.everythingSub': 'Rêyeke temam ji bo fêrbûnê — ne tenê kartên bîrkirinê.',
+  'landing.everythingSub': 'Rêyeke temam ji bo fêrbûnê.',
   'landing.readyTitle': 'Amade yî ku dest pê bikî?',
   'landing.readyBody': 'Hesabeke belaş çêke û ji cihê ku meraq diqede dest pê bike. Ji xulekekê kêmtir digire.',
   'landing.feature.lessons': 'Dersên birêkûpêk',
@@ -876,4 +876,18 @@ export const ku: Catalogue = {
   'saved.eyebrow': 'Tomarkirî',
   'app.documentTitle': 'MyKurda — Fêrî kurdî bibe',
   'app.description': 'MyKurda rêyeke xweş e ji bo fêrbûna kurdî — ders, çîrok, helbest, lîstik û civakek.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Vê şandiyê parve bike',
+  'share.title': 'Parve bike',
+  'share.shareOut': 'Parve bike…',
+  'share.copy': 'Girêdanê kopî bike',
+  'share.copied': 'Hat kopîkirin',
+  'share.linkLabel': 'Girêdana vê şandiyê',
+  'share.orSendHere': 'an jî li vir ji hevalekî re bişîne',
+  'share.sentTo': 'Ji {name} re hat şandin.',
+  'share.noFriendsYet': 'Hevalekî lê zêde bike, paşê tu dikarî şandiyan ji wî re bişînî.',
+  'share.searchFriends': 'Li hevalan bigere',
+  'share.sendFailed': 'Ew peyam nehat şandin. Dîsa biceribîne.',
+  'share.signInToSend': 'Têkeve da ku vê ji hevalekî re bişînî.',
 };

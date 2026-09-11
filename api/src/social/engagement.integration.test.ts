@@ -151,26 +151,56 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     expect(likes.statusCode).toBe(200);
     // a liked picture and a liked story are both posts you liked; the row shows
     // a thumbnail when there is one rather than living in a separate tab
-    const titles = likes.json().entries.map((e: { title: string }) => e.title);
+    const titles = likes.json().items.map((i: { title: string }) => i.title);
     expect(titles).toHaveLength(2);
-    expect(likes.json().entries.every((e: { kind: string }) => e.kind === 'posts')).toBe(true);
+    // whole posts now, so kind is the post's own kind
+    expect(likes.json().items.every((i: { kind: string }) => ['story', 'poem', 'image', 'meme'].includes(i.kind))).toBe(true);
+    // and each carries what a card needs
+    expect(likes.json().items.every((i: { author?: unknown; engagement?: unknown }) => i.author && i.engagement)).toBe(true);
 
     const saved = await call('GET', `/users/${ids.me}/activity?kind=saved`, tokens.mate!);
-    expect(saved.json().entries).toHaveLength(1);
+    expect(saved.json().items).toHaveLength(1);
+  });
+
+  it('shows a stranger MY likes, with THEIR heart on them', async () => {
+    /*
+     * The tab is "what this person liked"; the heart on each card is "did you".
+     *
+     * Now that these arrive as whole cards, each one carries engagement — and it
+     * has to be resolved for whoever is looking. Resolving it for the profile's
+     * owner would paint every card in the tab as already liked for a visitor who
+     * has liked none of them, and invite them to un-like something on a tap.
+     */
+    type Card = { targetType: 'library' | 'image'; id: string; engagement: { liked: boolean; likes: number } };
+
+    const mine: Card[] = (await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.me!)).json().items;
+    // it is my likes tab, so every card in it is one I liked
+    expect(mine.every((c) => c.engagement.liked)).toBe(true);
+
+    const theirs: Card[] = (await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.mate!)).json().items;
+    expect(theirs).toHaveLength(mine.length);
+
+    // each heart matches what the visitor has actually done — not what I did
+    for (const card of theirs) {
+      const truth = await engagement.forPosts(ids.mate!, card.targetType, [card.id]);
+      expect(card.engagement.liked, `${card.targetType}:${card.id}`).toBe(truth.get(card.id)!.liked);
+    }
+    // and the totals are the post's own, so they read the same either way
+    expect(theirs.map((c) => c.engagement.likes)).toEqual(mine.map((c) => c.engagement.likes));
   });
 
   it('lets you hide what you have liked without unliking it', async () => {
     expect((await call('PATCH', '/me/profile/sections', tokens.me!, { likes: false })).statusCode).toBe(200);
 
     const hidden = await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.mate!);
-    expect(hidden.json().entries).toEqual([]);
+    expect(hidden.json().items).toEqual([]);
     // still yours, still counted on the post
     const counts = await engagement.forPosts(ids.me!, 'library', [storyId]);
     expect(counts.get(storyId)!.liked).toBe(true);
 
     // and you can still see your own
     const own = await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.me!);
-    expect(own.json().entries.length).toBeGreaterThan(0);
+    expect(own.json().items.length).toBeGreaterThan(0);
 
     await call('PATCH', '/me/profile/sections', tokens.me!, { likes: true });
   });
@@ -184,10 +214,10 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
       )
     ).rows[0]!.id;
     await call('POST', `/posts/library/${doomed}/like`, tokens.me!);
-    expect((await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.me!)).json().entries.map((e: { title: string }) => e.title)).toContain(`Doomed ${suffix}`);
+    expect((await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.me!)).json().items.map((i: { title: string }) => i.title)).toContain(`Doomed ${suffix}`);
 
     await pool.query(`UPDATE library_posts SET status = 'removed' WHERE id = $1`, [doomed]);
     const after = await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.me!);
-    expect(after.json().entries.map((e: { title: string }) => e.title)).not.toContain(`Doomed ${suffix}`);
+    expect(after.json().items.map((i: { title: string }) => i.title)).not.toContain(`Doomed ${suffix}`);
   });
 });

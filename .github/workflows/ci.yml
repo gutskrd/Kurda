@@ -146,9 +146,13 @@ jobs:
           fetch-depth: 0
       - name: Start MinIO (S3-compatible storage for media tests)
         run: |
+          # quay.io, not Docker Hub: `docker pull minio/minio` started answering
+          # "pull access denied … repository does not exist" on 2026-09-11, which
+          # is MinIO restricting their Docker Hub images rather than a rate limit
+          # (that says "toomanyrequests"). quay.io is where they publish.
           docker run -d --name minio -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-            minio/minio server /data
+            quay.io/minio/minio server /data
           for i in $(seq 1 20); do
             curl -sf http://localhost:9000/minio/health/live && break
             sleep 1

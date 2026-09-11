@@ -643,7 +643,7 @@ export const tr: Catalogue = {
   'landing.eyebrow': 'Kürtçe öğren',
   'landing.noCreditCard': 'Kredi kartı gerekmez. Tarayıcında ve iOS ile Android’de çalışır.',
   'landing.everythingTitle': 'Her şey tek yerde',
-  'landing.everythingSub': 'Öğrenmenin eksiksiz bir yolu — yalnızca kart değil.',
+  'landing.everythingSub': 'Öğrenmenin eksiksiz bir yolu.',
   'landing.readyTitle': 'Başlamaya hazır mısın?',
   'landing.readyBody': 'Ücretsiz bir hesap oluştur ve merakın bittiği yerden devam et. Bir dakikadan kısa sürer.',
   'landing.feature.lessons': 'Yapılandırılmış dersler',
@@ -870,4 +870,18 @@ export const tr: Catalogue = {
   'saved.eyebrow': 'Kaydedilenler',
   'app.documentTitle': 'MyKurda — Kürtçe öğren',
   'app.description': 'MyKurda, Kürtçe öğrenmenin güzel bir yolu — dersler, hikâyeler, şiirler, oyunlar ve bir topluluk.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Bu gönderiyi paylaş',
+  'share.title': 'Paylaş',
+  'share.shareOut': 'Paylaş…',
+  'share.copy': 'Bağlantıyı kopyala',
+  'share.copied': 'Kopyalandı',
+  'share.linkLabel': 'Bu gönderinin bağlantısı',
+  'share.orSendHere': 'ya da buradan bir arkadaşına gönder',
+  'share.sentTo': '{name} kişisine gönderildi.',
+  'share.noFriendsYet': 'Bir arkadaş ekle, sonra ona buradan gönderi yollayabilirsin.',
+  'share.searchFriends': 'Arkadaş ara',
+  'share.sendFailed': 'Mesaj gönderilemedi. Tekrar dene.',
+  'share.signInToSend': 'Bunu bir arkadaşına göndermek için giriş yap.',
 };

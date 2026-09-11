@@ -643,7 +643,7 @@ export const de: Catalogue = {
   'landing.eyebrow': 'Kurdisch lernen',
   'landing.noCreditCard': 'Keine Kreditkarte. Läuft im Browser und auf iOS und Android.',
   'landing.everythingTitle': 'Alles an einem Ort',
-  'landing.everythingSub': 'Ein vollständiger Weg zu lernen — nicht nur Karteikarten.',
+  'landing.everythingSub': 'Ein vollständiger Weg zu lernen.',
   'landing.readyTitle': 'Bereit anzufangen?',
   'landing.readyBody': 'Erstelle ein kostenloses Konto und mach dort weiter, wo die Neugier aufhört. Es dauert keine Minute.',
   'landing.feature.lessons': 'Strukturierte Lektionen',
@@ -870,4 +870,18 @@ export const de: Catalogue = {
   'saved.eyebrow': 'Gespeichert',
   'app.documentTitle': 'MyKurda — Kurdisch lernen',
   'app.description': 'MyKurda ist ein schöner Weg, Kurdisch zu lernen — Lektionen, Geschichten, Gedichte, Spiele und eine Gemeinschaft.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Diesen Beitrag teilen',
+  'share.title': 'Teilen',
+  'share.shareOut': 'Teilen…',
+  'share.copy': 'Link kopieren',
+  'share.copied': 'Kopiert',
+  'share.linkLabel': 'Link zu diesem Beitrag',
+  'share.orSendHere': 'oder schick ihn hier an Freunde',
+  'share.sentTo': 'An {name} gesendet.',
+  'share.noFriendsYet': 'Füge Freunde hinzu, dann kannst du ihnen Beiträge schicken.',
+  'share.searchFriends': 'Freunde suchen',
+  'share.sendFailed': 'Die Nachricht wurde nicht gesendet. Versuch es noch einmal.',
+  'share.signInToSend': 'Melde dich an, um das an Freunde zu schicken.',
 };

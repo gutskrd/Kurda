@@ -43,6 +43,10 @@ import { Flag } from '@phosphor-icons/react/dist/icons/Flag';
 import { SignOut } from '@phosphor-icons/react/dist/icons/SignOut';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
 import { Gift } from '@phosphor-icons/react/dist/icons/Gift';
+import { ShareNetwork } from '@phosphor-icons/react/dist/icons/ShareNetwork';
+import { LinkSimple } from '@phosphor-icons/react/dist/icons/LinkSimple';
+import { PaperPlaneTilt } from '@phosphor-icons/react/dist/icons/PaperPlaneTilt';
+import { Repeat } from '@phosphor-icons/react/dist/icons/Repeat';
 import { Heart } from '@phosphor-icons/react/dist/icons/Heart';
 import { Image as ImageGlyph } from '@phosphor-icons/react/dist/icons/Image';
 import { List } from '@phosphor-icons/react/dist/icons/List';
@@ -106,6 +110,15 @@ export const TilesIcon = named(SquaresFour, 22);
 export const WaveformIcon = named(Waveform, 22);
 export const ChevronIcon = named(CaretRight, 18);
 export const GiftIcon = named(Gift, 22);
+/** Passing a post on — the network glyph, not the iOS box-and-arrow, which
+ *  means "share" on one platform and nothing on the others. */
+export const ShareIcon = named(ShareNetwork, 22);
+/** The address of a thing, for copying. */
+export const LinkIcon = named(LinkSimple, 22);
+/** Sending, to a person. */
+export const SendIcon = named(PaperPlaneTilt, 22);
+/** Posting it again, onto your own wall. */
+export const RepostIcon = named(Repeat, 22);
 export const MenuIcon = named(List, 22);
 export const CloseIcon = named(X, 22);
 export const SunIcon = named(Sun, 20);

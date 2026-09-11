@@ -648,7 +648,7 @@ export const ar: Catalogue = {
   'landing.eyebrow': 'تعلّم الكردية',
   'landing.noCreditCard': 'بدون بطاقة ائتمان. يعمل في متصفحك وعلى iOS وأندرويد.',
   'landing.everythingTitle': 'كل شيء في مكان واحد',
-  'landing.everythingSub': 'طريقة كاملة للتعلّم — لا مجرد بطاقات.',
+  'landing.everythingSub': 'طريقة كاملة للتعلّم.',
   'landing.readyTitle': 'مستعد للبدء؟',
   'landing.readyBody': 'أنشئ حسابًا مجانيًا وواصل من حيث ينتهي الفضول. يستغرق أقل من دقيقة.',
   'landing.feature.lessons': 'دروس منظّمة',
@@ -875,4 +875,18 @@ export const ar: Catalogue = {
   'saved.eyebrow': 'المحفوظات',
   'app.documentTitle': 'MyKurda — تعلّم الكردية',
   'app.description': 'MyKurda طريقة جميلة لتعلّم الكردية — دروس وقصص وقصائد وألعاب ومجتمع.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'شارك هذا المنشور',
+  'share.title': 'مشاركة',
+  'share.shareOut': 'مشاركة…',
+  'share.copy': 'نسخ الرابط',
+  'share.copied': 'تم النسخ',
+  'share.linkLabel': 'رابط هذا المنشور',
+  'share.orSendHere': 'أو أرسله إلى صديق من هنا',
+  'share.sentTo': 'أُرسل إلى {name}.',
+  'share.noFriendsYet': 'أضف صديقًا لتتمكن من إرسال المنشورات إليه من هنا.',
+  'share.searchFriends': 'ابحث عن الأصدقاء',
+  'share.sendFailed': 'لم تُرسل الرسالة. حاول مرة أخرى.',
+  'share.signInToSend': 'سجّل الدخول لإرسال هذا إلى صديق.',
 };

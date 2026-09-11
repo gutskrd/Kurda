@@ -643,7 +643,7 @@ export const fr: Catalogue = {
   'landing.eyebrow': 'Apprendre le kurde',
   'landing.noCreditCard': 'Sans carte bancaire. Fonctionne dans ton navigateur et sur iOS et Android.',
   'landing.everythingTitle': 'Tout au même endroit',
-  'landing.everythingSub': 'Une façon complète d’apprendre — pas seulement des cartes mémoire.',
+  'landing.everythingSub': 'Une façon complète d’apprendre.',
   'landing.readyTitle': 'Prêt à commencer ?',
   'landing.readyBody': 'Crée un compte gratuit et continue là où la curiosité s’arrête. Cela prend moins d’une minute.',
   'landing.feature.lessons': 'Des leçons structurées',
@@ -870,4 +870,18 @@ export const fr: Catalogue = {
   'saved.eyebrow': 'Enregistré',
   'app.documentTitle': 'MyKurda — Apprendre le kurde',
   'app.description': 'MyKurda est une belle façon d’apprendre le kurde — leçons, histoires, poèmes, jeux et une communauté.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Partager cette publication',
+  'share.title': 'Partager',
+  'share.shareOut': 'Partager…',
+  'share.copy': 'Copier le lien',
+  'share.copied': 'Copié',
+  'share.linkLabel': 'Lien vers cette publication',
+  'share.orSendHere': 'ou envoyez-la à un ami ici',
+  'share.sentTo': 'Envoyé à {name}.',
+  'share.noFriendsYet': 'Ajoutez un ami et vous pourrez lui envoyer des publications ici.',
+  'share.searchFriends': 'Rechercher des amis',
+  'share.sendFailed': 'Ce message n’a pas été envoyé. Réessayez.',
+  'share.signInToSend': 'Connectez-vous pour l’envoyer à un ami.',
 };

@@ -724,7 +724,7 @@ export const en = {
   'landing.eyebrow': 'Learn Kurdish',
   'landing.noCreditCard': 'No credit card. Works in your browser and on iOS & Android.',
   'landing.everythingTitle': 'Everything in one place',
-  'landing.everythingSub': 'A complete way to learn — not just flashcards.',
+  'landing.everythingSub': 'A complete way to learn.',
   'landing.readyTitle': 'Ready to begin?',
   'landing.readyBody': 'Create a free account and pick up where curiosity leaves off. It takes under a minute.',
   'landing.feature.lessons': 'Structured lessons',
@@ -963,6 +963,20 @@ export const en = {
   'saved.eyebrow': 'Saved',
   'app.documentTitle': 'MyKurda — Learn Kurdish',
   'app.description': 'MyKurda is a beautiful way to learn Kurdish — lessons, stories, poems, games and a community.',
+
+  /* passing a post on, here or anywhere else */
+  'share.post': 'Share this post',
+  'share.title': 'Share',
+  'share.shareOut': 'Share…',
+  'share.copy': 'Copy link',
+  'share.copied': 'Copied',
+  'share.linkLabel': 'Link to this post',
+  'share.orSendHere': 'or send it to a friend here',
+  'share.sentTo': 'Sent to {name}.',
+  'share.noFriendsYet': 'Add a friend and you can send posts to them here.',
+  'share.searchFriends': 'Search friends',
+  'share.sendFailed': 'That message did not send. Try again.',
+  'share.signInToSend': 'Sign in to send this to a friend.',
 } as const;
 
 export type MessageKey = keyof typeof en;

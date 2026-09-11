@@ -11,6 +11,7 @@ afterEach(() => {
 
 const ALL = { posts: true, games: true, likes: true, saved: true };
 
+/** A game result: still a row, because there is no card for one. */
 const entry = (id: string, kind: string, title: string, extra: Record<string, unknown> = {}) => ({
   id,
   kind,
@@ -22,20 +23,51 @@ const entry = (id: string, kind: string, title: string, extra: Record<string, un
   ...extra,
 });
 
-/** Answer /users/:id/activity per `kind`, and record which kinds were asked for. */
+/**
+ * A post, as the wall draws it.
+ *
+ * Posts, likes and saved come back as whole posts now — they used to be a line
+ * of text with a 40px thumbnail, which turned a picture into a stamp and a poem
+ * into an icon.
+ */
+const post = (id: string, title: string, extra: Record<string, unknown> = {}) => ({
+  key: `library:${id}`,
+  targetType: 'library',
+  id,
+  kind: 'story',
+  author: { id: 'u1', username: 'nivîskar', avatarUrl: null },
+  title,
+  excerpt: 'A body long enough to fill a card.',
+  imageUrl: null,
+  href: `/app/library/${id}`,
+  viewCount: 0,
+  commentCount: 0,
+  engagement: { likes: 0, liked: false, bookmarked: false },
+  at: '2026-09-01T10:00:00.000Z',
+  ...extra,
+});
+
+/**
+ * Answer /users/:id/activity per `kind`, and record which kinds were asked for.
+ *
+ * The route returns both keys and leaves the unused one empty — games are rows
+ * under `entries`, everything else is whole posts under `items` — so the stub
+ * answers the same way.
+ */
 function activityFetch(byKind: Record<string, unknown[]>): { fetch: ReturnType<typeof vi.fn>; asked: string[] } {
   const asked: string[] = [];
   const fetch = vi.fn(async (url: string) => {
     const kind = /kind=(\w+)/.exec(url)?.[1] ?? '';
     asked.push(kind);
-    return jsonResponse(200, { entries: byKind[kind] ?? [] });
+    const rows = byKind[kind] ?? [];
+    return jsonResponse(200, kind === 'games' ? { entries: rows, items: [] } : { entries: [], items: rows });
   });
   return { fetch, asked };
 }
 
 describe('ProfileActivity', () => {
   it('shows only the sections the profile advertises', async () => {
-    const { fetch } = activityFetch({ posts: [entry('s1', 'posts', 'Çîroka min')] });
+    const { fetch } = activityFetch({ posts: [post('s1', 'Çîroka min')] });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={{ ...ALL, likes: false, saved: false }} />);
 
@@ -55,7 +87,7 @@ describe('ProfileActivity', () => {
 
   it('loads only the open tab, and the next one only when it is opened', async () => {
     const { fetch, asked } = activityFetch({
-      posts: [entry('s1', 'posts', 'Çîroka min')],
+      posts: [post('s1', 'Çîroka min')],
       games: [entry('g1', 'games', 'Wordle', { detail: 'Won · easy' })],
     });
     vi.stubGlobal('fetch', fetch);
@@ -75,7 +107,7 @@ describe('ProfileActivity', () => {
 
   it('links a post to its page, and leaves a game result unlinked', async () => {
     const { fetch } = activityFetch({
-      posts: [entry('s1', 'posts', 'Çîroka min', { href: '/app/library/s1' })],
+      posts: [post('s1', 'Çîroka min')],
       games: [entry('g1', 'games', 'Wordle')],
     });
     vi.stubGlobal('fetch', fetch);
@@ -97,10 +129,10 @@ describe('ProfileActivity', () => {
 
   it('offers Show more only on a full page, and appends the next one', async () => {
     const page = (from: number, n: number) =>
-      Array.from({ length: n }, (_, i) => entry(`s${from + i}`, 'posts', `Story ${from + i}`));
+      Array.from({ length: n }, (_, i) => post(`s${from + i}`, `Story ${from + i}`));
     const fetch = vi.fn(async (url: string) => {
       const offset = Number(/offset=(\d+)/.exec(url)?.[1] ?? 0);
-      return jsonResponse(200, { entries: offset === 0 ? page(0, 12) : page(12, 3) });
+      return jsonResponse(200, { entries: [], items: offset === 0 ? page(0, 12) : page(12, 3) });
     });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
@@ -115,7 +147,7 @@ describe('ProfileActivity', () => {
   });
 
   it('marks your own hidden sections instead of dropping them', async () => {
-    const { fetch } = activityFetch({ likes: [entry('l1', 'posts', 'Helbesta min')] });
+    const { fetch } = activityFetch({ likes: [post('l1', 'Helbesta min')] });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={{ ...ALL, likes: false }} own />);
 
@@ -137,16 +169,31 @@ describe('ProfileActivity', () => {
     expect(tabs).toEqual(['Posts', 'Games', 'Likes', 'Saved']);
   });
 
-  it('shows a picture in the row that has one', async () => {
+  it('shows a picture at the size the card shows it, not as a thumbnail', async () => {
     const { fetch } = activityFetch({
-      posts: [entry('i1', 'posts', 'Çiya', { imageUrl: 'https://cdn.test/a.webp' })],
+      posts: [post('i1', 'Çiya', { imageUrl: 'https://cdn.test/a.webp' })],
     });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
 
-    // one list holds both words and pictures now, so a row carries its own
-    // thumbnail rather than there being a gallery tab and a list tab
+    // the picture belongs to the card now — the 40px .mkp-activity-shot square
+    // is what this replaced
     await screen.findByText('Çiya');
-    expect(document.querySelector('.mkp-activity-shot')).toHaveAttribute('src', 'https://cdn.test/a.webp');
+    expect(document.querySelector('.fcard-shot img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
+    expect(document.querySelector('.mkp-activity-shot')).toBeNull();
+  });
+
+  it('draws a post as the whole card, byline and actions and all', async () => {
+    const { fetch } = activityFetch({ posts: [post('s1', 'Çîroka min')] });
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<ProfileActivity userId="u1" sections={ALL} />);
+
+    await screen.findByText('Çîroka min');
+    const card = document.querySelector('.mkp-activity-feed .fcard');
+    expect(card, 'a post should be a card').not.toBeNull();
+    // who wrote it, what it says, and the things you can do with it
+    expect(card!.querySelector('.fcard-name')?.textContent).toBe('nivîskar');
+    expect(card!.querySelector('.fcard-text')?.textContent).toContain('fill a card');
+    expect(card!.querySelectorAll('.fcard-act').length).toBeGreaterThan(1);
   });
 });
