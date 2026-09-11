@@ -10,7 +10,7 @@
     {
       "name": "api",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx", "--env-file=api/.env", "api/src/server.ts"],
+      "runtimeArgs": ["tsx", "--env-file-if-exists=api/.env", "api/src/server.ts"],
       "port": 3000
     },
     {
