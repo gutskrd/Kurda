@@ -89,6 +89,40 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
     }
   });
 
+  it('blocks the staff routes that do not live under /admin either', async () => {
+    // These six were the hole. Each asks for an admin role and none of their
+    // URLs starts with /admin, so the prefix gate never saw them: a stolen
+    // password could price the shop, mint real-money gem packs, and decide who
+    // won a tournament, with no second factor anywhere.
+    //
+    // Validation runs before preHandler hooks, so every payload here has to be
+    // valid — otherwise a 400 would answer first and the test would pass while
+    // proving nothing.
+    const uuid = '11111111-2222-4333-8444-555555555555';
+    const cases: [ "GET" | "POST", string, unknown?][] = [
+      ['POST', '/shop/items', { sku: 'gate-probe', name: 'Gate probe', currency: 'zer', price: 1 }],
+      ['POST', '/iap/packs', { platform: 'apple', productId: 'gate.probe', gems: 1 }],
+      ['POST', '/tournaments', { name: 'Gate probe', capacity: 8, startsAt: '2030-01-01T00:00:00.000Z' }],
+      ['POST', `/tournaments/${uuid}/start`],
+      ['POST', `/tournaments/${uuid}/matches/${uuid}/result`, { winnerId: uuid }],
+    ];
+    for (const [method, url, payload] of cases) {
+      const res = await call(method, url, adminToken, payload);
+      expect(res.statusCode, `${url} should be gated`).toBe(403);
+      expect(res.json().code, `${url} should say why`).toBe('TOTP_ENROLLMENT_REQUIRED');
+    }
+
+    // PATCH is not one of `call`’s verbs, so it goes direct
+    const stock = await app.inject({
+      method: 'PATCH',
+      url: '/shop/items/gate-probe/stock',
+      headers: { authorization: `Bearer ${adminToken}` },
+      payload: { inStock: false },
+      remoteAddress: '10.99.7.7',
+    });
+    expect(stock.statusCode).toBe(403);
+    expect(stock.json().code).toBe('TOTP_ENROLLMENT_REQUIRED');
+  });
   it('reports what the panel should show before letting anything through', async () => {
     const res = await call('GET', '/admin/session', adminToken);
     expect(res.statusCode).toBe(200);
