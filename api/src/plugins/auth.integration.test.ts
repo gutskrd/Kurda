@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { passAdmin2fa } from '../admin/testing.js';
 import { requireAuth, requireRoles } from './auth.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -96,6 +97,16 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
     expect(denied.json().code).toBe('FORBIDDEN');
 
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [userId]);
+
+    // /admin-only is registered right here in the test, at a URL that has
+    // nothing to do with the panel — and asking for a role is now enough on its
+    // own to make a route staff surface, so the 2FA gate covers it too. That is
+    // the property being relied on: the gate follows the guard, not the prefix.
+    const beforeCode = await call('/admin-only', accessToken);
+    expect(beforeCode.statusCode).toBe(403);
+    expect(beforeCode.json().code).toBe('TOTP_ENROLLMENT_REQUIRED');
+
+    await passAdmin2fa(app, accessToken);
     const allowed = await call('/admin-only', accessToken);
     expect(allowed.statusCode).toBe(200);
     expect(allowed.json().secret).toBe(true);

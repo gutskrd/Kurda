@@ -294,11 +294,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   if (config.DATABASE_URL) {
     setupAuth(app, config);
 
-    // Mandatory 2FA on everything under /admin: one prefix hook rather than a
-    // guard on each of forty routes, so a new admin route is covered the day it
-    // is written. Installed HERE, before any route is registered, because a
-    // Fastify hook only applies to routes added after it — placing it further
-    // down would silently leave the earlier admin routes ungated.
+    // Mandatory 2FA on every staff-only route: one hook rather than a guard on
+    // each of forty routes, so a new one is covered the day it is written. It
+    // reads the route table to find them, so it must be installed HERE, before
+    // any route is registered — a Fastify hook only applies to routes added
+    // after it, and placing this further down would silently leave every
+    // earlier staff route ungated.
     adminTotp = new AdminTotpService(app.db);
     installAdminGate(app, adminTotp);
   }

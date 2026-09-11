@@ -76,9 +76,41 @@ export async function requireAuth(req: FastifyRequest, reply: FastifyReply): Pro
   }
 }
 
+/**
+ * A guard that has been marked as gating staff-only surface.
+ *
+ * The admin 2FA gate needs to know which routes are staff surface. It worked
+ * that out from the URL — "anything under /admin" — and six routes every bit as
+ * privileged were sitting somewhere else: creating shop items, defining gem
+ * packs, declaring the winner of a tournament. A password alone reached all of
+ * them, because none of their URLs began with /admin.
+ *
+ * A prefix cannot know what a route is for. The guard can: a route that asks
+ * for a role IS staff surface, wherever its URL happens to live. So the guard
+ * says so and the gate reads it back off the route — which covers the next
+ * staff route the day it is written rather than the day somebody notices.
+ */
+export const PRIVILEGED_GUARD = Symbol.for('kurda.privilegedGuard');
+
+type Guard = (req: FastifyRequest, reply: FastifyReply) => Promise<void>;
+
+/** Stamp a guard as gating staff-only surface. */
+export function markPrivileged<T extends Guard>(guard: T): T {
+  Object.defineProperty(guard, PRIVILEGED_GUARD, { value: true });
+  return guard;
+}
+
+/** True if any preHandler on this route was marked with `markPrivileged`. */
+export function routeIsPrivileged(preHandler: unknown): boolean {
+  const chain = Array.isArray(preHandler) ? preHandler : [preHandler];
+  return chain.some(
+    (h) => typeof h === 'function' && (h as Record<symbol, unknown>)[PRIVILEGED_GUARD] === true,
+  );
+}
+
 /** preHandler guard factory: requireAuth + role membership. */
 export function requireRoles(...roles: string[]) {
-  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  return markPrivileged(async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (!req.user) {
       await reject(req, reply);
       return;
@@ -90,5 +122,5 @@ export function requireRoles(...roles: string[]) {
         requestId: req.id,
       });
     }
-  };
+  });
 }

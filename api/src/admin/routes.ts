@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAuth, requireRoles, markPrivileged } from '../plugins/auth.js';
 import { capabilitiesFor, isAdmin, isAdminRole, PRIVILEGED_ROLES, type AdminRole } from './roles.js';
 import type { AdminTotpService } from './totp-service.js';
 
@@ -17,7 +17,7 @@ function forbid(reply: FastifyReply, req: FastifyRequest, code: string, message:
  * access on their very next call (no cached authority).
  */
 export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
-  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  return markPrivileged(async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const userRoles = req.user?.roles ?? [];
     const roleOk = roles.length > 0 ? roles.some((r) => userRoles.includes(r)) : isAdmin(userRoles);
     if (!req.user || !roleOk) {
@@ -27,7 +27,7 @@ export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
     if (!(await totp.isConfirmed(req.user.id))) {
       forbid(reply, req, 'TOTP_REQUIRED', 'admin 2FA enrollment required');
     }
-  };
+  });
 }
 
 /** Admin auth: TOTP enrollment + login 2FA + an identity probe (KUR-099). */
