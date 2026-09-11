@@ -41,6 +41,12 @@ export async function verifyAccessToken(
     const { payload } = await jwtVerify(token, secretKey(config), {
       issuer: 'kurda-api',
       clockTolerance: CLOCK_SKEW_SECONDS,
+      // Name the algorithm rather than letting the token's own header choose it.
+      // jose will not verify an HMAC token against anything but an HMAC key, so
+      // this is not closing an open door — but "the attacker picks the algorithm"
+      // is how algorithm confusion starts, and the cost of saying which one is
+      // one line.
+      algorithms: ['HS256'],
     });
     if (!payload.sub || typeof payload.ver !== 'number') return null;
     return {

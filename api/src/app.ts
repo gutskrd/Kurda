@@ -207,7 +207,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   setupErrorHandling(app, config);
   setupSecurityHeaders(app);
   setupCachePolicy(app);
-  const metricsRegistry = setupMetrics(app);
+  const metricsRegistry = setupMetrics(app, config);
 
 
   const health = new HealthRegistry();

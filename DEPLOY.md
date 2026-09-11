@@ -71,6 +71,17 @@ Native apps don't send an `Origin`, so they're unaffected by CORS. If you also
 run the browser build, set `CORS_ORIGINS` on the **kurda-api** service to the
 web origin (e.g. `http://localhost:8081`).
 
+## Scraping metrics (`METRICS_TOKEN`)
+
+`/metrics` is not served in production unless `METRICS_TOKEN` is set, and a
+scraper must then present it as `Authorization: Bearer <token>`. The registry
+names the Node version, the process's memory and uptime, and every route with
+its traffic and error rates — worth having, not worth handing to strangers.
+
+Set a long random value on the **kurda-api** service and give the same value to
+whatever scrapes it. Without one nothing is exposed and nothing breaks; the
+endpoint stays open in local development.
+
 ## Checking `TRUST_PROXY` after a deploy
 
 `req.ip` is what the rate limiter on `/auth/login` counts against, what the
@@ -157,7 +168,7 @@ so only Cloudflare can see them.**
 | `MEDIA_IMAGE_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user image/meme upload rate limit |
 | `MEDIA_AUDIO_MAX_UPLOAD_MB` | 3 | hard cap on a voice note (stored as-is, no transcode) |
 | `MEDIA_AUDIO_MAX_SECONDS` | 120 | advisory max recording length (client-enforced) |
-| `MEDIA_AUDIO_ALLOWED_TYPES` | mpeg,mp4 | accepted audio types (sniffed, not declared) |
+| `MEDIA_AUDIO_ALLOWED_TYPES` | mpeg,mp4,webm | accepted audio types (sniffed, not declared; webm is what a browser records) |
 | `MEDIA_AUDIO_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user voice-note upload rate limit |
 
 Image/meme posts (KUR-291) upload the same way as avatars — `POST /images/upload`

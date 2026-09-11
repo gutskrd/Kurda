@@ -131,6 +131,37 @@ export class MediaStorage {
       }),
     );
   }
+
+  /**
+   * Store something that is one person's, and must not be cached as if it were
+   * everyone's.
+   *
+   * The GDPR export is a JSON file containing a reader's account, their
+   * sessions and their linked identities, and it was being written through the
+   * ordinary upload path — which stamps `public, max-age=31536000, immutable`
+   * on everything, because everything else it stores is a picture. The bucket
+   * is public-read, since that is how images are served, so the export was a
+   * public object with a year-long cache directive, in a fixed `user-export/`
+   * prefix, sitting behind nothing but the unguessability of its key. The code
+   * that handed out a signed download URL was the only part treating it as
+   * private.
+   *
+   * `private, no-store` tells the CDN and every proxy in between not to keep a
+   * copy. The right long-term answer is a second bucket that is not public at
+   * all; this is the part that does not need one.
+   */
+  async putPrivate(key: string, body: Buffer, contentType: string): Promise<void> {
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        ContentLength: body.length,
+        CacheControl: 'private, no-store, max-age=0',
+      }),
+    );
+  }
 }
 
 export function createStorage(config: AppConfig): MediaStorage | null {
