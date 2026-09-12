@@ -9,7 +9,18 @@ export interface UserSearchResult {
   username: string;
   email: string;
   ban: BanState;
+  createdAt: Date;
 }
+
+/** One page of users, and how many there are in total. */
+export interface UserPage {
+  users: UserSearchResult[];
+  total: number;
+}
+
+/** A page of users. Small, because the admin reads them a screen at a time. */
+export const USERS_PAGE_SIZE = 25;
+export const USERS_PAGE_MAX = 100;
 
 export interface UserDetail {
   id: string;
@@ -55,28 +66,71 @@ export class UserAdminService {
     private readonly wallet: WalletService,
   ) {}
 
-  /** Look up by id (uuid), email (contains @), or username prefix. */
-  async search(query: string): Promise<UserSearchResult[]> {
+  /**
+   * One page of users: everybody, or the ones matching `query`.
+   *
+   * An empty query used to answer with nothing, which meant the only way to
+   * see a user was to already know their name. An admin panel should be able
+   * to answer "who is here" without being told who to look for, so no query
+   * lists everyone, newest first — the order an admin actually wants, because
+   * the account you need is usually the one that just signed up.
+   *
+   * A query still narrows it the same three ways: a uuid is an id, anything
+   * with an `@` is an email prefix, anything else is a username prefix.
+   *
+   * `total` counts the whole match, not the page, and rides along via
+   * `count(*) OVER ()` so the heading costs no second query.
+   */
+  async search(query = "", limit = USERS_PAGE_SIZE, offset = 0): Promise<UserPage> {
     const q = query.trim();
-    if (q.length === 0) return [];
-    let where: string;
-    let param: string;
-    if (UUID_RE.test(q)) {
-      where = 'id = $1';
-      param = q;
-    } else if (q.includes('@')) {
-      where = 'lower(email) LIKE lower($1)';
-      param = `${q}%`;
-    } else {
-      where = 'username ILIKE $1';
-      param = `${q}%`;
+    const params: unknown[] = [];
+    let where = 'deleted_at IS NULL';
+
+    // every fragment appended here is a literal; only values go in `params`
+    if (q.length > 0) {
+      if (UUID_RE.test(q)) {
+        params.push(q);
+        where += ` AND id = $${params.length}`;
+      } else if (q.includes('@')) {
+        params.push(`${q}%`);
+        where += ` AND lower(email) LIKE lower($${params.length})`;
+      } else {
+        params.push(`${q}%`);
+        where += ` AND username ILIKE $${params.length}`;
+      }
     }
-    const res = await this.pool.query<{ id: string; username: string; email: string; banned_at: Date | null; banned_until: Date | null }>(
-      `SELECT id, username, email, banned_at, banned_until FROM users WHERE ${where} AND deleted_at IS NULL LIMIT 20`,
-      [param],
+
+    params.push(Math.min(Math.max(limit, 1), USERS_PAGE_MAX), Math.max(offset, 0));
+    const res = await this.pool.query<{
+      id: string;
+      username: string;
+      email: string;
+      banned_at: Date | null;
+      banned_until: Date | null;
+      created_at: Date;
+      total: number;
+    }>(
+      `SELECT id, username, email, banned_at, banned_until, created_at, count(*) OVER ()::int AS total
+         FROM users WHERE ${where}
+        ORDER BY created_at DESC, id
+        LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params,
     );
+
     const now = new Date();
-    return res.rows.map((r) => ({ id: r.id, username: r.username, email: r.email, ban: banState(now, r.banned_at, r.banned_until) }));
+    // a page past the end carries no row to hold the count; asking again for
+    // the first page is the honest answer, and an admin never sees it
+    const total = res.rows[0]?.total ?? 0;
+    return {
+      total,
+      users: res.rows.map((r) => ({
+        id: r.id,
+        username: r.username,
+        email: r.email,
+        ban: banState(now, r.banned_at, r.banned_until),
+        createdAt: r.created_at,
+      })),
+    };
   }
 
   async detail(userId: string): Promise<UserDetail | null> {

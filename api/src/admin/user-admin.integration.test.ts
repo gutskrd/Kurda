@@ -52,9 +52,49 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     await app.close();
   });
 
+  /**
+   * The panel used to answer nothing until you typed a name, which meant the
+   * only way to find an account was to already know it. These are the two
+   * things that had to become true: no query lists everybody, and the count is
+   * of everybody rather than of the page you happen to be holding.
+   */
+  it('lists everyone when asked nothing, newest first, and counts them all', async () => {
+    const all = await svc.search();
+    expect(all.users.length).toBeGreaterThanOrEqual(2);
+    expect(all.total).toBeGreaterThanOrEqual(all.users.length);
+    expect(all.users.some((u) => u.id === targetId)).toBe(true);
+
+    // newest first: the target registered after the admin did
+    const ids = all.users.map((u) => u.id);
+    expect(ids.indexOf(targetId)).toBeLessThan(ids.indexOf(adminId));
+  });
+
+  it('pages without losing anybody or repeating them', async () => {
+    const first = await svc.search(undefined, 1, 0);
+    const second = await svc.search(undefined, 1, 1);
+    expect(first.users).toHaveLength(1);
+    expect(second.users).toHaveLength(1);
+    expect(first.users[0]!.id).not.toBe(second.users[0]!.id);
+    // the count does not shrink to the size of the page
+    expect(first.total).toBe(second.total);
+    expect(first.total).toBeGreaterThanOrEqual(2);
+
+    // and nobody can ask for more than a page at a time
+    const greedy = await svc.search(undefined, 10_000);
+    expect(greedy.users.length).toBeLessThanOrEqual(100);
+  });
+
+  it('still narrows to a match, and counts the match rather than the world', async () => {
+    const everyone = await svc.search();
+    const narrowed = await svc.search(username.slice(0, 6));
+    expect(narrowed.users.every((u) => u.username.startsWith(username.slice(0, 6)))).toBe(true);
+    expect(narrowed.total).toBeLessThan(everyone.total);
+  });
+
   it('searches by username prefix and returns a detail view', async () => {
     const results = await svc.search(username.slice(0, 6));
-    expect(results.some((r) => r.id === targetId)).toBe(true);
+    expect(results.users.some((r) => r.id === targetId)).toBe(true);
+    expect(results.total).toBeGreaterThanOrEqual(1);
 
     const detail = (await svc.detail(targetId))!;
     expect(detail.username).toBe(username);
