@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
+import { RouteFallback } from '../components/RouteFallback';
 import { TopNav, type NavItem } from '../components/TopNav';
 import { Footer } from '../components/Footer';
 import { useT } from '../i18n/I18nProvider';
@@ -24,7 +26,9 @@ export function MarketingLayout(): React.JSX.Element {
       </a>
       <TopNav links={links} />
       <main id="main">
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
     </>

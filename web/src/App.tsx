@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { MarketingLayout } from './layouts/MarketingLayout';
@@ -7,32 +8,49 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppGate } from './components/AppGate';
 import { RequireAccount } from './components/RequireAccount';
 import { Landing } from './pages/Landing';
-import { LibraryPostPage } from './pages/LibraryPostPage';
 import { Civak } from './pages/Civak';
-import { Saved } from './pages/Saved';
-import { DimenPost } from './pages/DimenPost';
-import { Games } from './pages/Games';
-import { Wordle } from './pages/Wordle';
-import { Rhyme } from './pages/Rhyme';
-import { Race } from './pages/Race';
-import { Quiz } from './pages/Quiz';
-import { WordleBattle } from './pages/WordleBattle';
-import { RhymeMatch } from './pages/RhymeMatch';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { ForgotPassword } from './pages/ForgotPassword';
-import { VerifyEmail } from './pages/VerifyEmail';
-import { ResetPassword } from './pages/ResetPassword';
-import { Learn } from './pages/Learn';
-import { Rankings } from './pages/Rankings';
-import { Friends } from './pages/Friends';
-import { Profile } from './pages/Profile';
-import { ProfileEdit } from './pages/ProfileEdit';
-import { UserProfile } from './pages/UserProfile';
-import { Settings } from './pages/Settings';
-import { Messages } from './pages/Messages';
-import { Shop } from './pages/Shop';
 import { NotFound } from './pages/NotFound';
+
+/*
+ * Every other page is fetched when somebody first goes to it.
+ *
+ * Thirty-eight routes were imported here statically, so the first visit to
+ * mykurda.com downloaded the photo editor, both multiplayer games, the shop
+ * and the settings screen before it could draw the landing page. The three
+ * above keep their static import because they are what somebody sees first —
+ * the landing page, the wall behind /app, and the not-found page, which is
+ * small and is the one route that cannot afford to go looking for a chunk.
+ *
+ * `then(m => ({ default: m.X }))` is the dance `lazy` requires of a module
+ * that exports its component by name instead of by default. Written out
+ * rather than wrapped in a helper: a helper would have to be generic over
+ * the export name to stay type-safe, and the import specifier has to stay a
+ * literal for the bundler to see it at all.
+ */
+const LibraryPostPage = lazy(() => import('./pages/LibraryPostPage').then((m) => ({ default: m.LibraryPostPage })));
+const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved })));
+const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
+const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
+const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
+const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
+const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
+const Quiz = lazy(() => import('./pages/Quiz').then((m) => ({ default: m.Quiz })));
+const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
+const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
+const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
+const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
+const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
+const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
+const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
+const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
+const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
+const ProfileEdit = lazy(() => import('./pages/ProfileEdit').then((m) => ({ default: m.ProfileEdit })));
+const UserProfile = lazy(() => import('./pages/UserProfile').then((m) => ({ default: m.UserProfile })));
+const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
+const Messages = lazy(() => import('./pages/Messages').then((m) => ({ default: m.Messages })));
+const Shop = lazy(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';

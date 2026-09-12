@@ -3,6 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { APP_LOCALES } from '@kurda/shared';
 import { I18nProvider, useI18n, useT } from './I18nProvider';
+import { preloadCatalogue } from './catalogues';
 import { LanguagePicker } from './LanguagePicker';
 import { en } from './en';
 import { ku } from './ku';
@@ -163,8 +164,10 @@ describe('choosing a language', () => {
   });
 
   /** `de-AT` and `de-CH` are German as far as an interface is concerned. */
-  it('takes the browser up on a language it speaks, region and all', () => {
+  it('takes the browser up on a language it speaks, region and all', async () => {
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('de-AT');
+    // what main.tsx does before it renders: fetch the one language in play
+    await preloadCatalogue();
     show();
     expect(screen.getByTestId('games')).toHaveTextContent('Spiele');
   });
@@ -184,8 +187,9 @@ describe('choosing a language', () => {
     expect(localStorage.getItem('mykurda_locale')).toBe('ku');
   });
 
-  it('picks up what this device chose last', () => {
+  it('picks up what this device chose last', async () => {
     localStorage.setItem('mykurda_locale', 'tr');
+    await preloadCatalogue();
     show();
     expect(screen.getByTestId('games')).toHaveTextContent('Oyunlar');
   });
@@ -243,6 +247,7 @@ describe('choosing a language', () => {
     });
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('es');
 
+    await preloadCatalogue();
     show();
     expect(screen.getByTestId('games')).toHaveTextContent('Juegos');
     await act(async () => {

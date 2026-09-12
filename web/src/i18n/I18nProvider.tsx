@@ -1,35 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { APP_LOCALES, DEFAULT_LOCALE, isAppLocale, localeDir, localeFromTag, type AppLocale } from '@kurda/shared';
+import { APP_LOCALES, DEFAULT_LOCALE, localeDir, type AppLocale } from '@kurda/shared';
 import { en, type Catalogue, type MessageKey } from './en';
-import { ku } from './ku';
-import { ckb } from './ckb';
-import { nl } from './nl';
-import { de } from './de';
-import { es } from './es';
-import { fr } from './fr';
-import { tr } from './tr';
-import { ar } from './ar';
-
-const CATALOGUES: Record<AppLocale, Catalogue> = { en, ku, ckb, nl, de, es, fr, tr, ar };
-
-/**
- * Where a signed-out visitor's choice lives.
- *
- * A signed-in account keeps the choice on the server, so it follows them to
- * another device. Somebody reading without an account has nowhere else to put
- * it, and it would be rude to ask them to choose again on every visit.
- */
-const STORAGE_KEY = 'mykurda_locale';
-
-function readStored(): AppLocale | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return isAppLocale(raw) ? raw : null;
-  } catch {
-    // a private window, or site data blocked: not knowing is fine
-    return null;
-  }
-}
+import { LOCALE_STORAGE_KEY, loadCatalogue, readyCatalogue, resolveLocale } from './catalogues';
 
 interface I18n {
   locale: AppLocale;
@@ -116,19 +88,43 @@ export function useLocale(): AppLocale {
  *   2. what the browser says the person reads
  *   3. English
  *
- * Every language is bundled rather than fetched. There are eight of them and
- * they are a few kilobytes each — a network round trip to find out what the
- * buttons say would mean the first paint has no words on it.
+ * The chosen language is fetched rather than bundled — see `catalogues.ts`
+ * for why, and for `preloadCatalogue`, which `main.tsx` awaits so the first
+ * paint still has the right words on it. English is always here, so a
+ * language that has not arrived yet reads in English rather than in keys.
  */
 export function I18nProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const [locale, setLocaleState] = useState<AppLocale>(
-    () => readStored() ?? localeFromTag(typeof navigator === 'undefined' ? null : navigator.language) ?? DEFAULT_LOCALE,
-  );
+  const [locale, setLocaleState] = useState<AppLocale>(resolveLocale);
+  const [catalogue, setCatalogue] = useState<Catalogue>(() => readyCatalogue(resolveLocale()) ?? en);
+
+  /**
+   * Keep the catalogue level with the choice.
+   *
+   * Synchronous when the language is already here, which is every render
+   * after the first and the first one too, because `main.tsx` fetched it
+   * before mounting. The await is for the other case: somebody changing
+   * language in Settings, where a few tens of milliseconds between the click
+   * and the new words is what a language pack costs.
+   */
+  useEffect(() => {
+    const here = readyCatalogue(locale);
+    if (here) {
+      setCatalogue(here);
+      return;
+    }
+    let cancelled = false;
+    void loadCatalogue(locale).then((next) => {
+      if (!cancelled) setCatalogue(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   const setLocale = useCallback((next: AppLocale) => {
     setLocaleState(next);
     try {
-      localStorage.setItem(STORAGE_KEY, next);
+      localStorage.setItem(LOCALE_STORAGE_KEY, next);
     } catch {
       // it still applies for this session; only the memory of it is lost
     }
@@ -152,14 +148,14 @@ export function I18nProvider({ children }: { children: ReactNode }): React.JSX.E
     root.lang = locale;
     root.dir = localeDir(locale);
 
-    const t = translator(CATALOGUES[locale]);
+    const t = translator(catalogue);
     document.title = t('app.documentTitle');
     document.querySelector('meta[name="description"]')?.setAttribute('content', t('app.description'));
-  }, [locale]);
+  }, [locale, catalogue]);
 
   const value = useMemo<I18n>(
-    () => ({ locale, setLocale, t: translator(CATALOGUES[locale]) }),
-    [locale, setLocale],
+    () => ({ locale, setLocale, t: translator(catalogue) }),
+    [locale, catalogue, setLocale],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
