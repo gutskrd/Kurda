@@ -45,7 +45,13 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   // Connection diagnostic (KUR-008): show which API the build actually points at
   // and whether the device can reach it, so a "nothing happens" sign-in has an
   // obvious cause (wrong URL baked in / unreachable) instead of a silent hang.
+  //
+  // Development only, like the readout it feeds. A release build showed nobody
+  // the answer and still asked the question on every launch — a health probe
+  // against the API from every phone that opened the app, for a line that was
+  // not rendered.
   useEffect(() => {
+    if (!__DEV__) return;
     let active = true;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 20000);
@@ -161,19 +167,30 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         <Text style={[styles.linkText, { color: colors.primary }]}>I already have an account</Text>
       </Pressable>
 
-      <View style={styles.diag}>
-        <Text style={[styles.diagText, { color: colors.textSecondary }]} numberOfLines={1}>
-          API: {baseUrl.replace(/^https?:\/\//, '')}
-        </Text>
-        <Text
-          style={[
-            styles.diagText,
-            { color: conn === 'ok' ? colors.success : conn === 'fail' ? colors.danger : colors.textSecondary },
-          ]}
-        >
-          {conn === 'checking' ? 'checking connection…' : conn === 'ok' ? 'reachable ✓' : 'unreachable ✗'}
-        </Text>
-      </View>
+      {/*
+        Which API this build talks to, and whether it answers.
+
+        Development only. It is genuinely useful while pointing a simulator at
+        localhost or a staging host — and it has no business on the first screen
+        of a release build, where it is a debug readout under the sign-in
+        buttons that names the backend to anyone who opens the app. Nobody needs
+        to be told that, and nobody outside development was ever meant to see it.
+      */}
+      {__DEV__ ? (
+        <View style={styles.diag}>
+          <Text style={[styles.diagText, { color: colors.textSecondary }]} numberOfLines={1}>
+            API: {baseUrl.replace(/^https?:\/\//, '')}
+          </Text>
+          <Text
+            style={[
+              styles.diagText,
+              { color: conn === 'ok' ? colors.success : conn === 'fail' ? colors.danger : colors.textSecondary },
+            ]}
+          >
+            {conn === 'checking' ? 'checking connection…' : conn === 'ok' ? 'reachable ✓' : 'unreachable ✗'}
+          </Text>
+        </View>
+      ) : null}
     </AuthScreenShell>
   );
 }

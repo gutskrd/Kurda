@@ -19,11 +19,40 @@
  *
  * Runs inside `npm run lint --workspace @kurda/web`, beside the other check.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname, relative, sep } from 'node:path';
 
-const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'src');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Which app to read. `node check-hardcoded-english.mjs mobile` checks the phone.
+ *
+ * One gate rather than a copy per workspace: the phone had the same problem in
+ * larger numbers and nothing was watching for it, and a second copy of this
+ * file would have drifted from the first the way the locale lists did.
+ */
+const WORKSPACE = process.argv[2] ?? 'web';
+const SRC = join(ROOT, WORKSPACE, 'src');
+
+/**
+ * Copy that is known, tolerated, and being worked through.
+ *
+ * A ratchet, not an amnesty. Anything listed here is English that is already in
+ * the tree; anything *not* listed fails the build, so the debt cannot grow
+ * while it is being paid down. And an entry that no longer matches anything is
+ * itself an error — a line that has been fixed must leave the list, or the file
+ * quietly becomes a list of things that used to be true.
+ */
+const DEBT_FILE = join(ROOT, 'scripts', 'i18n-debt', `${WORKSPACE}.txt`);
+const debt = existsSync(DEBT_FILE)
+  ? new Set(
+      readFileSync(DEBT_FILE, 'utf8')
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#')),
+    )
+  : new Set();
 
 /**
  * Words that are the same in every language MyKurda speaks, or are not words.
@@ -49,8 +78,15 @@ const NOT_COPY = new Set([
   'Premium',
 ]);
 
-/** Props whose value a reader or a screen reader is given. */
-const READER_FACING = /\b(placeholder|aria-label|alt|title)=(["'])((?:(?!\2).)*)\2/g;
+/**
+ * Props whose value a reader or a screen reader is given.
+ *
+ * The last two are React Native's: the phone has no `aria-label`, it has
+ * `accessibilityLabel`, and leaving them out would have let this gate report
+ * "clean" over a screen whose every button announced itself in English.
+ */
+const READER_FACING =
+  /\b(placeholder|aria-label|alt|title|accessibilityLabel|accessibilityHint)=(["'])((?:(?!\2).)*)\2/g;
 
 function sources(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -139,17 +175,34 @@ for (const file of sources(SRC)) {
     const value = m[1];
     if (!isCopy(value)) continue;
     const line = src.slice(0, m.index).split(/\r?\n/).length;
-    problems.push({ file, line, what: value.replace(/\s+/g, ' ').trim().slice(0, 80) });
+    // trimmed *after* the cut, not before: slicing a trimmed string can end on
+    // a space, and a reported line that ends in whitespace is one nobody can
+    // paste into the debt list and have match
+    problems.push({ file, line, what: value.replace(/\s+/g, ' ').slice(0, 80).trim() });
   }
 }
 
-if (problems.length > 0) {
-  console.error(`\n${problems.length} piece(s) of English written into the JSX:\n`);
-  for (const p of problems) {
-    console.error(`  ${relative(join(SRC, '..', '..'), p.file).split(sep).join('/')}:${p.line}  ${p.what}`);
+/** How a line is written in the debt file: path, then the copy itself. */
+const entry = (p) => `${relative(ROOT, p.file).split(sep).join('/')}  ${p.what}`;
+
+const fresh = problems.filter((p) => !debt.has(entry(p)));
+const paid = [...debt].filter((d) => !problems.some((p) => entry(p) === d));
+
+if (fresh.length > 0) {
+  console.error(`\n${fresh.length} piece(s) of English written into the JSX:\n`);
+  for (const p of fresh) {
+    console.error(`  ${relative(ROOT, p.file).split(sep).join('/')}:${p.line}  ${p.what}`);
   }
-  console.error('\nPut it in en.ts, translate it in the other eight, and render it with t().\n');
+  console.error('\nPut it in the catalogue, translate it, and render it with t().\n');
   process.exit(1);
 }
 
-console.log('i18n: no English left in the JSX.');
+if (paid.length > 0) {
+  console.error(`\n${paid.length} line(s) in ${relative(ROOT, DEBT_FILE)} no longer exist:\n`);
+  for (const d of paid) console.error(`  ${d}`);
+  console.error('\nThey have been fixed — delete them, so the list stays true.\n');
+  process.exit(1);
+}
+
+const owed = debt.size > 0 ? ` (${debt.size} known, being paid down)` : '';
+console.log(`i18n: no new English in the ${WORKSPACE} JSX${owed}.`);
