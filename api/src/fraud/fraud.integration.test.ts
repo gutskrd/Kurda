@@ -9,6 +9,7 @@ import { StubReceiptVerifier } from '../iap/verifier.js';
 import { WalletService } from '../wallet/service.js';
 import { FraudService } from './service.js';
 import { VELOCITY_MAX_PER_HOUR } from './rules.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -35,6 +36,7 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
       },
       remoteAddress: '10.73.0.1',
     });
+    await activate(app, pool, res);
     return res.json().user.id as string;
   };
   const receipt = (n: string, ownershipType?: string): string =>

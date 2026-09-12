@@ -47,6 +47,23 @@ describe('describeError', () => {
       'Email already taken',
     );
   });
+
+  /**
+   * The exception to the rule above. An unconfirmed account is refused every
+   * write by the server now, and its reply is a sentence in English telling
+   * you what to do about it — which is the one kind of message that is worse
+   * in a language the reader does not have.
+   */
+  it('translates the not-activated refusal rather than passing it through', () => {
+    const notActivated = {
+      kind: 'client' as const,
+      code: 'ACCOUNT_NOT_ACTIVATED',
+      message: 'confirm your email address to use MyKurda',
+      status: 403,
+    };
+    expect(describeError(notActivated, t)).toMatch(/activated/i);
+    expect(describeError(notActivated, translator(fr))).toMatch(/activé/i);
+  });
 });
 
 describe('ApiClient', () => {

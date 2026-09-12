@@ -489,6 +489,7 @@ export const nl: Catalogue = {
   'error.sessionExpired': 'Je sessie is verlopen. Log opnieuw in.',
   'error.server': 'Er is iets misgegaan aan onze kant. Probeer het zo meteen opnieuw.',
   'error.generic': 'Er is iets misgegaan.',
+  'error.notActivated': 'Je account is nog niet geactiveerd. Bevestig je e-mailadres om verder te gaan.',
   'gate.title': 'Hiervoor heb je een account nodig',
   'gate.body': 'Je kunt hier alles lezen zonder account — maar om {what} moet je inloggen.',
   'gate.backToCivak': 'Terug naar de community',

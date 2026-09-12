@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { EconomyService } from './service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -50,6 +51,7 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
       },
       remoteAddress: '10.74.0.1',
     });
+    await activate(app, pool, res);
     userId = res.json().user.id;
 
     // D3: +300 faucet, −100 sink, +9999 excluded (admin adjustment)

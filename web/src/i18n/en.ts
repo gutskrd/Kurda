@@ -560,6 +560,7 @@ export const en = {
   'error.sessionExpired': 'Your session has expired. Please sign in again.',
   'error.server': 'Something went wrong on our end. Please try again shortly.',
   'error.generic': 'Something went wrong.',
+  'error.notActivated': 'Your account isn’t activated yet. Confirm your email address to continue.',
   'gate.title': 'You need an account for this',
   'gate.body': 'You can read everything here without one — but to {what} you have to sign in.',
   'gate.backToCivak': 'Back to Community',

@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { EngagementService } from './engagement-service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -31,6 +32,7 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
       },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     ids[tag] = res.json().user.id;
     tokens[tag] = res.json().tokens.accessToken;
   }

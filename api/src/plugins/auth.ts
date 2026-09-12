@@ -34,8 +34,10 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       deleted_at: Date | null;
       banned_at: Date | null;
       banned_until: Date | null;
+      email_verified_at: Date | null;
     }>(
-      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until FROM users WHERE id = $1`,
+      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at
+         FROM users WHERE id = $1`,
       [claims.sub],
     );
     const user = result.rows[0];
@@ -50,7 +52,12 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       req.authFailure = 'account_disabled';
       return;
     }
-    req.user = { id: user.id, roles: user.roles, familyId: claims.fam };
+    req.user = {
+      id: user.id,
+      roles: user.roles,
+      familyId: claims.fam,
+      emailVerified: user.email_verified_at !== null,
+    };
   });
 }
 

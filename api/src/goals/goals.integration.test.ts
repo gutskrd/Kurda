@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -26,6 +27,7 @@ describe.skipIf(!DATABASE_URL)('daily goals (integration)', () => {
       },
       remoteAddress: `10.40.0.${ip}`,
     });
+    await activate(app, pool, reg);
     const id = reg.json().user.id as string;
     userIds.push(id);
     return { id, token: reg.json().tokens.accessToken };

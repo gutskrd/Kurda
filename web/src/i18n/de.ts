@@ -489,6 +489,7 @@ export const de: Catalogue = {
   'error.sessionExpired': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
   'error.server': 'Auf unserer Seite ist etwas schiefgegangen. Bitte versuch es gleich noch einmal.',
   'error.generic': 'Etwas ist schiefgegangen.',
+  'error.notActivated': 'Dein Konto ist noch nicht aktiviert. Bestätige deine E-Mail-Adresse, um fortzufahren.',
   'gate.title': 'Dafür brauchst du ein Konto',
   'gate.body': 'Lesen kannst du hier alles ohne Konto — aber um {what}, musst du dich anmelden.',
   'gate.backToCivak': 'Zurück zur Gemeinschaft',

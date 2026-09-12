@@ -5,6 +5,7 @@ import pg from 'pg';
 import WebSocket from 'ws';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -58,6 +59,7 @@ describe.skipIf(!DATABASE_URL)('matchmaking (integration)', () => {
       },
       remoteAddress: `10.21.0.${Math.floor(Math.random() * 200) + 1}`,
     });
+    await activate(app, pool, res);
     const id = res.json().user.id as string;
     await pool.query(`UPDATE users SET rating = $2 WHERE id = $1`, [id, rating]);
     return { id, token: res.json().tokens.accessToken, username: res.json().user.username };

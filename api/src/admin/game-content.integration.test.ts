@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { normalizeWord } from '../game/rhyme.js';
 import { pass2fa } from '../test/admin-2fa.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -30,6 +31,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
       },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 

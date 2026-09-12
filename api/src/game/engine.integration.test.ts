@@ -6,6 +6,7 @@ import WebSocket from 'ws';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { selectQuestions } from './question-bank.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -89,6 +90,7 @@ describe.skipIf(!DATABASE_URL)('game session engine (integration)', () => {
       },
       remoteAddress: `10.22.0.${Math.floor(Math.random() * 200) + 1}`,
     });
+    await activate(app, pool, res);
     const token = res.json().tokens.accessToken as string;
     const ticket = await app.inject({
       method: 'POST',

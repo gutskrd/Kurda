@@ -17,6 +17,7 @@ import { MediaUsageService } from '../media/mediaUsage.js';
 import { imagePostLimits, type MediaLimits } from '../media/mediaLimits.js';
 import { storeImageMedia, type ImageMediaDeps } from '../media/imageMedia.js';
 import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import { activate } from '../test/activate.js';
 
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
 const KIND = 'image-post';
@@ -126,6 +127,7 @@ describe.skipIf(!ready)('image/meme upload cost-safety (integration)', () => {
       payload: { email: `imgup_${suffix}@it.kurda.app`, username: `imgup_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.61.0.9',
     });
+    await activate(app, pool, reg);
     const token = reg.json().tokens.accessToken as string;
     userIds.push(reg.json().user.id);
 
@@ -158,6 +160,7 @@ describe.skipIf(!ready)('image/meme upload cost-safety (integration)', () => {
       payload: { email: `imgrl_${suffix}@it.kurda.app`, username: `imgrl_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.61.0.7',
     });
+    await activate(app, pool, reg);
     const token = reg.json().tokens.accessToken as string;
     userIds.push(reg.json().user.id);
 

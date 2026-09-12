@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { SocialService } from './service.js';
 import { FriendService } from '../friends/service.js';
 import { ModerationQueueService } from '../moderation/queue-service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -38,6 +39,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     return res.json().user.id as string;
   };
   const found = (list: Array<{ userId: string }>, uid: string): boolean => list.some((x) => x.userId === uid);
@@ -152,6 +154,7 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
         },
         remoteAddress: ip,
       });
+      await activate(app, pool, res);
       return res.json().tokens.accessToken as string;
     };
 

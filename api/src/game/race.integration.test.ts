@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -30,6 +31,7 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
       },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 

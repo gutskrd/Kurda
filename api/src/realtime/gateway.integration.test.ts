@@ -6,6 +6,7 @@ import WebSocket from 'ws';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { CLOSE_BAD_TICKET, CLOSE_CONNECTED_ELSEWHERE } from './gateway.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -68,6 +69,7 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
       },
       remoteAddress: `10.20.0.${Math.floor(Math.random() * 200) + 1}`,
     });
+    await activate(app, pool, res);
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 

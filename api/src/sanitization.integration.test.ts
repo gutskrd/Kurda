@@ -11,6 +11,7 @@ import pg from 'pg';
 import { buildApp } from './app.js';
 import { loadConfig } from './config/env.js';
 import { GroupService } from './groups/service.js';
+import { activate } from './test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 // C0 controls + DEL + a C1 control (none are TAB/LF, which stripControlChars keeps)
@@ -38,6 +39,7 @@ describe.skipIf(!DATABASE_URL)('input sanitization (integration)', () => {
       payload: { email: `san_${suffix}@it.kurda.app`, username: `san_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.108.0.1',
     });
+    await activate(app, pool, res);
     token = res.json().tokens.accessToken;
     userId = res.json().user.id;
   });

@@ -14,6 +14,7 @@ import { createPool, dbHealthCheck } from './db/pool.js';
 import { HealthRegistry, notConfigured } from './health/registry.js';
 import { setupMetrics } from './observability/metrics.js';
 import { setupAuth } from './plugins/auth.js';
+import { installActivationGate } from './plugins/activation.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupSecurityHeaders } from './plugins/security-headers.js';
 import { logProxyChainOnce } from './plugins/proxy-chain.js';
@@ -298,6 +299,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   let adminTotp: AdminTotpService | undefined;
   if (config.DATABASE_URL) {
     setupAuth(app, config);
+    // An unverified account cannot write anything. Installed here for the same
+    // reason as the gate below: a preHandler hook only applies to routes added
+    // after it, so this has to come before every route.
+    installActivationGate(app);
 
     // Mandatory 2FA on every staff-only route: one hook rather than a guard on
     // each of forty routes, so a new one is covered the day it is written. It
@@ -722,7 +727,7 @@ declare module 'fastify' {
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
-    user?: { id: string; roles: string[]; familyId?: string };
+    user?: { id: string; roles: string[]; familyId?: string; emailVerified: boolean };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;
   }

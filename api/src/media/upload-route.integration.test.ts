@@ -12,6 +12,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 /**
@@ -69,6 +70,7 @@ describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
       },
       remoteAddress: '10.77.0.1',
     });
+    await activate(app, pool, res);
     token = res.json().tokens.accessToken;
   });
 

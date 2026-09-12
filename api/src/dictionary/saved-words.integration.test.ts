@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { DictionaryRepository } from './repository.js';
 import { NEW_WORDS_PER_DAY, dictItemId } from './saved-words-service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -40,6 +41,7 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
       payload: { email: `sw_${suffix}@it.kurda.app`, username: `sw_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.96.0.2',
     });
+    await activate(app, pool, reg);
     token = reg.json().tokens.accessToken;
     userId = reg.json().user.id;
   });

@@ -489,6 +489,7 @@ export const es: Catalogue = {
   'error.sessionExpired': 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
   'error.server': 'Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento.',
   'error.generic': 'Algo ha salido mal.',
+  'error.notActivated': 'Tu cuenta aún no está activada. Confirma tu correo electrónico para continuar.',
   'gate.title': 'Para esto necesitas una cuenta',
   'gate.body': 'Puedes leerlo todo aquí sin cuenta, pero para {what} tienes que iniciar sesión.',
   'gate.backToCivak': 'Volver a la comunidad',

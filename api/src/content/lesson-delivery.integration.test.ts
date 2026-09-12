@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -65,6 +66,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
       },
       remoteAddress: '10.30.0.2',
     });
+    await activate(app, pool, reg);
     token = reg.json().tokens.accessToken;
     userId = reg.json().user.id;
   });

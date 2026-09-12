@@ -489,6 +489,7 @@ export const fr: Catalogue = {
   'error.sessionExpired': 'Ta session a expiré. Reconnecte-toi.',
   'error.server': 'Quelque chose s’est mal passé de notre côté. Réessaie dans un instant.',
   'error.generic': 'Quelque chose s’est mal passé.',
+  'error.notActivated': 'Ton compte n’est pas encore activé. Confirme ton adresse e-mail pour continuer.',
   'gate.title': 'Il te faut un compte pour cela',
   'gate.body': 'Tu peux tout lire ici sans compte — mais pour {what}, tu dois te connecter.',
   'gate.backToCivak': 'Retour à la communauté',
