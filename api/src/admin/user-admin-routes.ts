@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
+import { USERS_PAGE_MAX } from './user-admin-service.js';
 import type { UserAdminService } from './user-admin-service.js';
 
 const idParam = z.object({ id: z.uuid() });
@@ -34,8 +35,22 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
 
   app.get(
     '/admin/users',
-    { schema: { querystring: z.object({ q: z.string().min(1).max(200) }) }, preHandler: canView },
-    async (req) => ({ users: await users.search((req.query as { q: string }).q) }),
+    {
+      schema: {
+        querystring: z.object({
+          // optional: no query lists everyone, which is what an admin panel
+          // should be able to answer without being told who to look for
+          q: z.string().min(1).max(200).optional(),
+          limit: z.coerce.number().int().min(1).max(USERS_PAGE_MAX).optional(),
+          offset: z.coerce.number().int().min(0).max(1_000_000).optional(),
+        }),
+      },
+      preHandler: canView,
+    },
+    async (req) => {
+      const { q, limit, offset } = req.query as { q?: string; limit?: number; offset?: number };
+      return users.search(q, limit, offset);
+    },
   );
 
   app.get('/admin/users/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: canView }, async (req, reply) => {

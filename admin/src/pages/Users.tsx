@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import { ItemActions, WalletActions } from './UserEconomy';
 
@@ -9,7 +9,11 @@ interface SearchResult {
   username: string;
   email: string;
   ban: BanState;
+  createdAt: string;
 }
+
+/** How many rows a page of the list holds. Matches the API default. */
+const PAGE = 25;
 interface UserDetail {
   id: string;
   username: string;
@@ -32,13 +36,26 @@ const BAN_LABEL: Record<BanState, { text: string; cls: string }> = {
   perm_banned: { text: 'banned', cls: 'hi' },
 };
 
-/** Admin user management (KUR-101) — search, inspect, moderate. 2FA-gated. */
+/**
+ * Admin user management (KUR-101) — list, search, inspect, moderate. 2FA-gated.
+ *
+ * The list loads itself. It used to answer nothing at all until somebody typed
+ * a name, so the only way to find an account was to already know which one you
+ * wanted — no way to see how many people there are, or who signed up this
+ * morning. Now the first page arrives on its own, newest first, with the real
+ * total in the heading and a button for the next page. The search box narrows
+ * that list rather than being the only door to it.
+ */
 export function Users(): React.JSX.Element {
   const [q, setQ] = useState('');
+  /** the query the rows on screen belong to, so paging keeps the right filter */
+  const [applied, setApplied] = useState('');
   const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<UserDetail | null>(null);
   const [needs2fa, setNeeds2fa] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function handleErr(err: unknown): void {
@@ -49,20 +66,41 @@ export function Users(): React.JSX.Element {
     setError(err instanceof ApiError ? err.message : 'Something went wrong');
   }
 
-  async function search(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (!q.trim()) return;
-    setSearching(true);
+  /** One page. `offset` 0 replaces what is on screen; anything else appends. */
+  const load = useCallback(async (query: string, offset: number): Promise<void> => {
+    const params = new URLSearchParams({ limit: String(PAGE), offset: String(offset) });
+    if (query) params.set('q', query);
+    if (offset === 0) setSearching(true);
+    else setLoadingMore(true);
     setError(null);
-    setSelected(null);
     try {
-      const res = await api<{ users: SearchResult[] }>(`/admin/users?q=${encodeURIComponent(q.trim())}`);
-      setResults(res.users);
+      const res = await api<{ users: SearchResult[]; total: number }>(`/admin/users?${params}`);
+      setResults((prev) => (offset === 0 || !prev ? res.users : [...prev, ...res.users]));
+      setTotal(res.total);
+      setApplied(query);
     } catch (err) {
       handleErr(err);
     } finally {
       setSearching(false);
+      setLoadingMore(false);
     }
+  }, []);
+
+  // the first page, without being asked
+  useEffect(() => {
+    void load('', 0);
+  }, [load]);
+
+  function search(e: React.FormEvent): void {
+    e.preventDefault();
+    setSelected(null);
+    void load(q.trim(), 0);
+  }
+
+  function clearSearch(): void {
+    setQ('');
+    setSelected(null);
+    void load('', 0);
   }
 
   async function open(id: string): Promise<void> {
@@ -97,7 +135,13 @@ export function Users(): React.JSX.Element {
       <div className="toolbar">
         <div>
           <h1>Users</h1>
-          <div className="subtle">Search by id, email, or username</div>
+          <div className="subtle">
+            {results === null
+              ? 'Loading…'
+              : applied
+                ? `${total.toLocaleString()} matching “${applied}”`
+                : `${total.toLocaleString()} ${total === 1 ? 'account' : 'accounts'}, newest first`}
+          </div>
         </div>
         <div className="spacer" />
         <form onSubmit={search} className="row" style={{ gap: 8, width: 'auto' }}>
@@ -107,9 +151,14 @@ export function Users(): React.JSX.Element {
             placeholder="username, email or uuid"
             style={{ width: 260 }}
           />
-          <button className="primary" type="submit" disabled={searching || !q.trim()}>
+          <button className="primary" type="submit" disabled={searching}>
             {searching ? 'Searching…' : 'Search'}
           </button>
+          {applied && (
+            <button type="button" onClick={clearSearch} disabled={searching}>
+              Show all
+            </button>
+          )}
         </form>
       </div>
 
@@ -118,7 +167,9 @@ export function Users(): React.JSX.Element {
       {results && (
         <div className="card" style={{ padding: 0, marginBottom: 16 }}>
           {results.length === 0 ? (
-            <div className="empty">No users match “{q}”.</div>
+            <div className="empty">
+              {applied ? `No users match “${applied}”.` : 'No accounts yet.'}
+            </div>
           ) : (
             <div className="tablewrap">
               <table>
@@ -126,6 +177,7 @@ export function Users(): React.JSX.Element {
                   <tr>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>Joined</th>
                     <th>Status</th>
                     <th></th>
                   </tr>
@@ -137,6 +189,7 @@ export function Users(): React.JSX.Element {
                       <tr key={u.id}>
                         <td>{u.username}</td>
                         <td className="subtle">{u.email}</td>
+                        <td className="subtle">{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td>
                           <span className={`badge ${b.cls}`}>{b.text}</span>
                         </td>
@@ -148,6 +201,17 @@ export function Users(): React.JSX.Element {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+          {results.length > 0 && results.length < total && (
+            <div style={{ padding: 12, borderTop: '1px solid var(--separator)' }}>
+              <button
+                type="button"
+                onClick={() => void load(applied, results.length)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Loading…' : `Show more (${(total - results.length).toLocaleString()} left)`}
+              </button>
             </div>
           )}
         </div>
