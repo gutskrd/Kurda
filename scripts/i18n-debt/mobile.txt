@@ -1,0 +1,127 @@
+# English still written into the phone's components, line by line.
+#
+# A ratchet, not an amnesty. Everything here is copy that predates the gate;
+# anything NOT here fails the build, so this list can only get shorter. An
+# entry that stops matching is also an error, so a fixed line has to leave.
+#
+# Written as: <path>  <the copy, as the checker reports it>
+#
+# Paid down in tranches. The words go in mobile/src/i18n/translations.ts —
+# lift them from web/src/i18n/*.ts wherever the browser already says the same
+# thing, rather than translating it a second time.
+
+mobile/src/chat/ChatListScreen.tsx  No conversations yet. Message a friend from their profile.
+mobile/src/chat/ChatScreen.tsx  Say hello
+mobile/src/dictionary/EntryDetail.tsx  accessibilityLabel="Back to search"
+mobile/src/dictionary/EntryDetail.tsx  accessibilityLabel="Play pronunciation"
+mobile/src/dictionary/WordOfDayCard.tsx  Word of the day
+mobile/src/grammar/GrammarTips.tsx  accessibilityLabel="Close tips"
+mobile/src/leagues/LeagueScreen.tsx  Add friends to race them here.
+mobile/src/leagues/LeagueScreen.tsx  Do a lesson to enter this week’s race!
+mobile/src/leagues/LeagueScreen.tsx  Friends leaderboards are coming soon.
+mobile/src/leagues/LeagueScreen.tsx  No board yet.
+mobile/src/leagues/LeagueScreen.tsx  No league yet.
+mobile/src/leagues/LeagueScreen.tsx  Nobody ranked yet.
+mobile/src/lesson/LessonPlayerScreen.tsx  Couldn’t load the lesson.
+mobile/src/lesson/LessonPlayerScreen.tsx  accessibilityLabel="Grammar tips"
+mobile/src/lesson/LessonPlayerScreen.tsx  accessibilityLabel="Quit lesson"
+mobile/src/lesson/components/ListeningExercise.tsx  Can’t listen now — skip
+mobile/src/lesson/components/ListeningExercise.tsx  Listen and type what you hear
+mobile/src/lesson/components/ListeningExercise.tsx  accessibilityLabel="Play at slow speed"
+mobile/src/lesson/components/ListeningExercise.tsx  accessibilityLabel="Play audio"
+mobile/src/lesson/components/ListeningExercise.tsx  accessibilityLabel="What you heard"
+mobile/src/lesson/components/MatchPairsExercise.tsx  Match the pairs
+mobile/src/lesson/components/SpeakingExercise.tsx  Can’t do this now — skip
+mobile/src/lesson/components/SpeakingExercise.tsx  Recording isn’t available on this device.
+mobile/src/lesson/components/SpeakingExercise.tsx  Say it aloud
+mobile/src/lesson/components/SpeakingExercise.tsx  accessibilityLabel="Start recording"
+mobile/src/lesson/components/SpeakingExercise.tsx  accessibilityLabel="Stop recording"
+mobile/src/lesson/components/TranslateExercise.tsx  accessibilityLabel="Your translation"
+mobile/src/lesson/components/WritingExercise.tsx  Write your answer
+mobile/src/lesson/components/WritingExercise.tsx  accessibilityLabel="Your written answer"
+mobile/src/library/LibraryComposeScreen.tsx  Optional narration
+mobile/src/library/LibraryPostScreen.tsx  No comments yet.
+mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Post comment"
+mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Report this comment"
+mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Report this post"
+mobile/src/library/LibraryScreen.tsx  Nothing here yet — write the first!
+mobile/src/library/VoiceRecorder.tsx  accessibilityLabel="Remove recording"
+mobile/src/library/VoiceRecorder.tsx  accessibilityLabel="Stop recording"
+mobile/src/memes/MemeDetailScreen.tsx  No comments yet.
+mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Post comment"
+mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Report this comment"
+mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Report this post"
+mobile/src/memes/MemeFeedScreen.tsx  No posts yet — be the first!
+mobile/src/net/AsyncBoundary.tsx  Check your connection — your content will load when you’re back.
+mobile/src/net/AsyncBoundary.tsx  Try again
+mobile/src/net/AsyncBoundary.tsx  You’re offline
+mobile/src/net/AsyncBoundary.tsx  accessibilityLabel="Try again"
+mobile/src/net/OfflineBanner.tsx  No internet connection
+mobile/src/notifications/NotificationCenterScreen.tsx  Mark all read
+mobile/src/notifications/NotificationsScreen.tsx  Enable quiet hours
+mobile/src/notifications/NotificationsScreen.tsx  No notifications are sent during this window.
+mobile/src/notifications/NotificationsScreen.tsx  Quiet hours
+mobile/src/onboarding/OnboardingScreen.tsx  A Kurdish story every day
+mobile/src/onboarding/OnboardingScreen.tsx  Choose your language
+mobile/src/onboarding/OnboardingScreen.tsx  Turn on notifications so you never miss one. One a day, in your language, never
+mobile/src/onboarding/OnboardingScreen.tsx  You can change this any time in Settings.
+mobile/src/onboarding/OnboardingScreen.tsx  You can turn them on later in Profile.
+mobile/src/practice/PracticeScreen.tsx  Couldn’t start practice.
+mobile/src/practice/PracticeScreen.tsx  Finish a lesson to start building your review deck.
+mobile/src/practice/PracticeScreen.tsx  Nothing to review yet
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Finish now
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyme with
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Time’s up!
+mobile/src/rhyme/RhymeTrainingScreen.tsx  You’ll get a Kurdish word — find as many real words that rhyme with it as you c
+mobile/src/screens/AppearanceScreen.tsx  Choose light, dark, or follow your device.
+mobile/src/screens/AppearanceScreen.tsx  Currently showing the
+mobile/src/screens/AppearanceScreen.tsx  Frosted surfaces float over a spatial gradient with a soft catch-light and a ha
+mobile/src/screens/AppearanceScreen.tsx  Liquid glass
+mobile/src/screens/DictionaryScreen.tsx  No exact match — showing closest words
+mobile/src/screens/DictionaryScreen.tsx  accessibilityLabel="Dictionary search"
+mobile/src/screens/GameScreen.tsx  Practice missed words
+mobile/src/screens/GameScreen.tsx  Rematch offer expired
+mobile/src/screens/GameScreen.tsx  Too late — answer not counted
+mobile/src/screens/LearnScreen.tsx  No course content yet.
+mobile/src/screens/PlayScreen.tsx  Find Kurdish words that rhyme, against the clock — solo.
+mobile/src/screens/PlayScreen.tsx  Guess the daily word in six tries — solo.
+mobile/src/screens/PlayScreen.tsx  Head-to-head Kurdish quiz — fastest correct answers win.
+mobile/src/screens/PlayScreen.tsx  Kurdish Wordle
+mobile/src/screens/PlayScreen.tsx  Rhyming Words
+mobile/src/screens/ProfileScreen.tsx  accessibilityLabel="Change profile photo"
+mobile/src/screens/SettingsScreen.tsx  Who can see my profile
+mobile/src/screens/SettingsScreen.tsx  title="Appearance & preview"
+mobile/src/screens/SettingsScreen.tsx  title="Delete account"
+mobile/src/screens/SettingsScreen.tsx  title="Notification center"
+mobile/src/screens/SettingsScreen.tsx  title="Notification settings"
+mobile/src/screens/auth/ForgotPasswordScreen.tsx  If an account exists for this email, a reset link is on its way.
+mobile/src/screens/auth/ForgotPasswordScreen.tsx  title="Reset password"
+mobile/src/screens/auth/LoginScreen.tsx  title="Log in"
+mobile/src/screens/auth/RegisterScreen.tsx  By creating an account you accept the Terms of Use and Privacy Policy.
+mobile/src/screens/auth/RegisterScreen.tsx  title="Sign up"
+mobile/src/screens/auth/VerifyEmailScreen.tsx  Wrong email? Sign out
+mobile/src/screens/auth/VerifyEmailScreen.tsx  accessibilityLabel="Verification code"
+mobile/src/screens/auth/VerifyEmailScreen.tsx  title="Verify your email"
+mobile/src/screens/auth/WelcomeScreen.tsx  Apple, Google or email — your choice. You can always sign in later.
+mobile/src/screens/auth/WelcomeScreen.tsx  I already have an account
+mobile/src/screens/auth/WelcomeScreen.tsx  title="Sign in or create an account"
+mobile/src/shop/ShopScreen.tsx  The shop is empty right now — check back soon.
+mobile/src/social/PublicProfileScreen.tsx  Challenge to 1v1
+mobile/src/social/PublicProfileScreen.tsx  This profile is private.
+mobile/src/social/PublicProfileScreen.tsx  This profile isn’t available.
+mobile/src/social/SocialScreen.tsx  No users found.
+mobile/src/social/SocialScreen.tsx  Search for friends to get started.
+mobile/src/tags/TagsScreen.tsx  Add a tag
+mobile/src/tags/TagsScreen.tsx  I consent to showing this sensitive tag. It’s optional and can be removed anyti
+mobile/src/tags/TagsScreen.tsx  Main tag
+mobile/src/tags/TagsScreen.tsx  No main tag yet.
+mobile/src/tags/TagsScreen.tsx  Tags & badges
+mobile/src/tags/TagsScreen.tsx  You haven’t added any tags yet.
+mobile/src/tags/TagsScreen.tsx  Your tags
+mobile/src/theme/glass.tsx  Couldn’t load
+mobile/src/username/ChangeUsernameScreen.tsx  New username
+mobile/src/wordle/WordleScreen.tsx  Guess the Kurdish word in six tries. Green is right, yellow is close.
+mobile/src/wordle/WordleScreen.tsx  Kurdish Wordle
+mobile/src/wordle/WordleScreen.tsx  The word was
+mobile/src/wordle/WordleScreen.tsx  accessibilityLabel="Kurdish keyboard"
