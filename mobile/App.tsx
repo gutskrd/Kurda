@@ -13,6 +13,7 @@ import type { RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
+import { CivakScreen } from './src/feed/CivakScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
@@ -77,7 +78,9 @@ function SignedInTabs() {
       {TABS.map((tab) => (
         <Tab.Screen key={tab.name} name={tab.name}>
           {() =>
-            tab.name === 'Profile' ? (
+            tab.name === 'Civak' ? (
+              <CivakScreen />
+            ) : tab.name === 'Profile' ? (
               <ProfileScreen />
             ) : tab.name === 'Learn' ? (
               <LearnScreen />

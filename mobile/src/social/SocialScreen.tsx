@@ -7,6 +7,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n/I18nContext';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -22,6 +23,8 @@ export function SocialScreen() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+
+  const { t } = useI18n();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -95,16 +98,11 @@ export function SocialScreen() {
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: colors.primary }]}>Social</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('nav.friends')}</Text>
+          {/* Library and Memes used to be two links here, into two screens
+              showing halves of the same wall. Both now live on the Civak tab,
+              together, which is what this tab stopped being about. */}
           <View style={styles.headerLinks}>
-            <Pressable onPress={() => navigation.navigate('Library')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Community library">
-              <Icon name="book" size={18} tone="primary" />
-              <Text style={[styles.messages, { color: colors.primary }]}>Library</Text>
-            </Pressable>
-            <Pressable onPress={() => navigation.navigate('Memes')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Meme feed">
-              <Icon name="flame" size={18} tone="primary" />
-              <Text style={[styles.messages, { color: colors.primary }]}>Memes</Text>
-            </Pressable>
             <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Messages">
               <Icon name="chat" size={18} tone="primary" />
               <Text style={[styles.messages, { color: colors.primary }]}>Messages</Text>
