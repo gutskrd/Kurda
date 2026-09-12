@@ -72,6 +72,7 @@ mobile/src/practice/PracticeScreen.tsx  Nothing to review yet
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Finish now
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyme with
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Time’s up!
 mobile/src/rhyme/RhymeTrainingScreen.tsx  You’ll get a Kurdish word — find as many real words that rhyme with it as you c
 mobile/src/screens/AppearanceScreen.tsx  Choose light, dark, or follow your device.
@@ -95,17 +96,6 @@ mobile/src/screens/SettingsScreen.tsx  title="Appearance & preview"
 mobile/src/screens/SettingsScreen.tsx  title="Delete account"
 mobile/src/screens/SettingsScreen.tsx  title="Notification center"
 mobile/src/screens/SettingsScreen.tsx  title="Notification settings"
-mobile/src/screens/auth/ForgotPasswordScreen.tsx  If an account exists for this email, a reset link is on its way.
-mobile/src/screens/auth/ForgotPasswordScreen.tsx  title="Reset password"
-mobile/src/screens/auth/LoginScreen.tsx  title="Log in"
-mobile/src/screens/auth/RegisterScreen.tsx  By creating an account you accept the Terms of Use and Privacy Policy.
-mobile/src/screens/auth/RegisterScreen.tsx  title="Sign up"
-mobile/src/screens/auth/VerifyEmailScreen.tsx  Wrong email? Sign out
-mobile/src/screens/auth/VerifyEmailScreen.tsx  accessibilityLabel="Verification code"
-mobile/src/screens/auth/VerifyEmailScreen.tsx  title="Verify your email"
-mobile/src/screens/auth/WelcomeScreen.tsx  Apple, Google or email — your choice. You can always sign in later.
-mobile/src/screens/auth/WelcomeScreen.tsx  I already have an account
-mobile/src/screens/auth/WelcomeScreen.tsx  title="Sign in or create an account"
 mobile/src/shop/ShopScreen.tsx  The shop is empty right now — check back soon.
 mobile/src/social/PublicProfileScreen.tsx  Challenge to 1v1
 mobile/src/social/PublicProfileScreen.tsx  This profile is private.

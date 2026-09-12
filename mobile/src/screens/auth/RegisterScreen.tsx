@@ -13,6 +13,7 @@ import {
 } from '../../auth/validators';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './AuthForm';
+import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -25,6 +26,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [errors, setErrors] = useState<Record<string, string | null | undefined>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { t } = useI18n();
 
   const submit = async () => {
     const emailError = validateEmail(email);
@@ -49,10 +51,10 @@ export function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Sign up" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
+    <AuthScreenShell title={t('auth.register.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
       <FormError message={formError} />
       <Field
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
         error={errors.email}
@@ -60,14 +62,14 @@ export function RegisterScreen({ navigation }: Props) {
         testID="email"
       />
       <Field
-        label="Username"
+        label={t('auth.username')}
         value={username}
         onChangeText={setUsername}
         error={errors.username}
         testID="username"
       />
       <Field
-        label="Password"
+        label={t('auth.password')}
         value={password}
         onChangeText={setPassword}
         error={errors.password}
@@ -77,11 +79,12 @@ export function RegisterScreen({ navigation }: Props) {
       {!errors.password ? (
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{PASSWORD_RULES_TEXT}</Text>
       ) : null}
-      <SubmitButton label="Sign up" busy={busy} onPress={submit} />
-      <Text style={[styles.terms, { color: colors.textSecondary }]}>
-        By creating an account you accept the Terms of Use and Privacy Policy.
-      </Text>
-      <LinkText label="Have an account? Log in" onPress={() => navigation.navigate('Login')} />
+      <SubmitButton label={t('auth.register.submit')} busy={busy} onPress={submit} />
+      <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('auth.register.terms')}</Text>
+      <LinkText
+        label={`${t('auth.register.haveAccount')} ${t('auth.register.signIn')}`}
+        onPress={() => navigation.navigate('Login')}
+      />
     </AuthScreenShell>
   );
 }

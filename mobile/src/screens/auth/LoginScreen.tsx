@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { FIELD_ERROR_COPY, validateEmail, validatePassword } from '../../auth/validators';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './AuthForm';
+import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -14,6 +15,7 @@ export function LoginScreen({ navigation }: Props) {
   const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { t } = useI18n();
 
   const submit = async () => {
     const emailError = validateEmail(email);
@@ -32,10 +34,10 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Log in" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
+    <AuthScreenShell title={t('nav.login')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
       <FormError message={formError} />
       <Field
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
         error={errors.email}
@@ -43,20 +45,20 @@ export function LoginScreen({ navigation }: Props) {
         testID="email"
       />
       <Field
-        label="Password"
+        label={t('auth.password')}
         value={password}
         onChangeText={setPassword}
         error={errors.password}
         secure
         testID="password"
       />
-      <SubmitButton label="Log in" busy={busy} onPress={submit} />
+      <SubmitButton label={t('auth.login.submit')} busy={busy} onPress={submit} />
       <LinkText
-        label="Forgot password?"
+        label={t('auth.login.forgot')}
         onPress={() => navigation.navigate('ForgotPassword')}
       />
       <LinkText
-        label="Create an account"
+        label={t('auth.login.createAccount')}
         onPress={() => navigation.navigate('Register')}
       />
     </AuthScreenShell>

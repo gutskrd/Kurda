@@ -7,6 +7,7 @@ import type { AuthStackParamList } from '../../navigation/authStack';
 import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AuthScreenShell, Field, LinkText, SubmitButton } from './AuthForm';
+import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -16,6 +17,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { t } = useI18n();
   const [sent, setSent] = useState(false);
 
   const submit = async () => {
@@ -29,7 +31,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title="Reset password" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
+    <AuthScreenShell title={t('auth.reset.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
       {sent ? (
         <Text
           style={{
@@ -39,22 +41,22 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             textAlign: 'center',
           }}
         >
-          If an account exists for this email, a reset link is on its way.
+          {t('auth.reset.sent')}
         </Text>
       ) : (
         <>
           <Field
-            label="Email"
+            label={t('auth.email')}
             value={email}
             onChangeText={setEmail}
             error={error}
             keyboardType="email-address"
             testID="email"
           />
-          <SubmitButton label="Send" busy={busy} onPress={submit} />
+          <SubmitButton label={t('auth.reset.sendLink')} busy={busy} onPress={submit} />
         </>
       )}
-      <LinkText label="Back to log in" onPress={() => navigation.navigate('Login')} />
+      <LinkText label={t('auth.reset.backToLogin')} onPress={() => navigation.navigate('Login')} />
     </AuthScreenShell>
   );
 }

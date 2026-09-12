@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { AuthScreenShell, FormError, SubmitButton } from './AuthForm';
+import { useI18n } from '../../i18n/I18nContext';
 
 const RESEND_COOLDOWN_SEC = 45;
 
@@ -18,6 +19,7 @@ export function VerifyEmailScreen() {
   const { colors } = useTheme();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -30,7 +32,7 @@ export function VerifyEmailScreen() {
 
   const onVerify = async () => {
     if (code.length !== 6) {
-      setError('Enter the 6-digit code from your email');
+      setError(t('auth.verify.enterCode6'));
       return;
     }
     setBusy(true);
@@ -51,12 +53,12 @@ export function VerifyEmailScreen() {
       setError(err);
       return;
     }
-    setNotice('We sent a new code.');
+    setNotice(t('auth.verify.sentNew'));
     setCooldown(RESEND_COOLDOWN_SEC);
   };
 
   return (
-    <AuthScreenShell title="Verify your email" hero="mail">
+    <AuthScreenShell title={t('auth.verify.title')} hero="mail">
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
         We emailed a 6-digit code to {user?.email ?? 'your inbox'}. Enter it below to finish setting up your account.
       </Text>
@@ -77,20 +79,20 @@ export function VerifyEmailScreen() {
         autoComplete="one-time-code"
         placeholder="000000"
         placeholderTextColor={colors.textSecondary}
-        accessibilityLabel="Verification code"
+        accessibilityLabel={t('auth.verify.codeLabel')}
         testID="code"
       />
 
-      <SubmitButton label="Verify" busy={busy} onPress={onVerify} />
+      <SubmitButton label={t('auth.verify.submit')} busy={busy} onPress={onVerify} />
 
       <View style={styles.actions}>
         <Pressable onPress={onResend} disabled={cooldown > 0} accessibilityRole="button">
           <Text style={[styles.link, { color: cooldown > 0 ? colors.textSecondary : colors.primary }]}>
-            {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+            {cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}
           </Text>
         </Pressable>
         <Pressable onPress={() => void logout()} accessibilityRole="button">
-          <Text style={[styles.link, { color: colors.textSecondary }]}>Wrong email? Sign out</Text>
+          <Text style={[styles.link, { color: colors.textSecondary }]}>{t('auth.verify.startOver')}</Text>
         </Pressable>
       </View>
     </AuthScreenShell>
