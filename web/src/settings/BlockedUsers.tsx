@@ -114,8 +114,7 @@ export function BlockedUsers(): React.JSX.Element {
         {t('settings.blocked.title')} {total > 0 && <span className="mkp-friends-count">{total}</span>}
       </h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-        Someone you block cannot find you, message you or send you a friend request, and you will not see them
-        anywhere either. They are never told.
+        {t('settings.blocked.help')}
       </p>
 
       {error && <div className="msg msg-error" style={{ marginBottom: 12 }}>{error}</div>}
@@ -128,7 +127,7 @@ export function BlockedUsers(): React.JSX.Element {
         </Button>
       ) : list.length === 0 ? (
         <p className="field-hint" style={{ marginBottom: 0 }}>
-          You haven’t blocked anyone. You can block someone from their profile, or from your friends list.
+          {t('settings.blocked.none')}
         </p>
       ) : (
         <>
@@ -167,8 +166,7 @@ export function BlockedUsers(): React.JSX.Element {
             does put you back within reach of someone you chose to get away from.
           */}
           <p className="field-hint" style={{ marginBottom: 0, marginTop: 14 }}>
-            Unblocking lets that person find you and contact you again. It does not make you friends again, and they
-            are not told either way.
+            {t('settings.blocked.unblockHint')}
           </p>
         </>
       )}

@@ -219,11 +219,10 @@ export function PictureComposer({
                       saying it is would send someone converting a file that is
                       already fine */}
                   <p className="muted">
-                    This {format!.toUpperCase()} should have opened here and didn’t. Try again — or
-                    post it as it is, which still works.
+                    {t('picture.decodeFailed', { format: format!.toUpperCase() })}
                   </p>
                   <Button size="sm" variant="secondary" onClick={() => { setRawOnly(false); setAttempt((n) => n + 1); }}>
-                    Try again
+                    {t('common.retry')}
                   </Button>
                 </>
               ) : (

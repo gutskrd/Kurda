@@ -984,6 +984,18 @@ export const en = {
   'repost.tab': 'Reposts',
   'repost.sectionHint': 'Posts you have reposted onto your own profile.',
   'repost.signIn': 'Sign in to repost',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 'and {count} more',
+  'settings.blocked.help': 'Someone you block cannot find you, message you or send you a friend request, and you will not see them anywhere either. They are never told.',
+  'settings.blocked.none': 'You haven’t blocked anyone. You can block someone from their profile, or from your friends list.',
+  'settings.blocked.unblockHint': 'Unblocking lets that person find you and contact you again. It does not make you friends again, and they are not told either way.',
+  'saved.emptyLead': 'Nothing saved yet. Tap the bookmark on any post in',
+  'saved.emptyTail': 'to keep it here.',
+  'auth.register.terms': 'By creating an account you agree to the MyKurda Terms and Privacy Policy.',
+  'post.audioUnsupported': 'Your browser cannot play this recording.',
+  'images.reactions': 'Reactions',
+  'picture.decodeFailed': 'This {format} should have opened here and didn’t. Try again — or post it as it is, which still works.',
 } as const;
 
 export type MessageKey = keyof typeof en;

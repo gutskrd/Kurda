@@ -891,4 +891,16 @@ export const tr: Catalogue = {
   'repost.tab': 'Yeniden paylaşılanlar',
   'repost.sectionHint': 'Kendi profiline yeniden paylaştığın gönderiler.',
   'repost.signIn': 'Yeniden paylaşmak için giriş yap',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 've {count} kişi daha',
+  'settings.blocked.help': 'Engellediğin kişi seni bulamaz, sana mesaj atamaz ve arkadaşlık isteği gönderemez; sen de onu hiçbir yerde görmezsin. Kendisine asla bildirilmez.',
+  'settings.blocked.none': 'Kimseyi engellemedin. Birini profilinden ya da arkadaş listenden engelleyebilirsin.',
+  'settings.blocked.unblockHint': 'Engeli kaldırmak o kişinin seni yeniden bulmasına ve sana ulaşmasına izin verir. Sizi tekrar arkadaş yapmaz ve ona hiçbir şekilde bildirilmez.',
+  'saved.emptyLead': 'Henüz bir şey kaydedilmedi.',
+  'saved.emptyTail': 'içindeki herhangi bir gönderide yer imine dokunarak burada tut.',
+  'auth.register.terms': 'Hesap oluşturarak MyKurda Koşulları’nı ve Gizlilik Politikası’nı kabul etmiş olursun.',
+  'post.audioUnsupported': 'Tarayıcın bu kaydı oynatamıyor.',
+  'images.reactions': 'Tepkiler',
+  'picture.decodeFailed': 'Bu {format} burada açılmalıydı ama açılmadı. Tekrar dene — ya da olduğu gibi paylaş, o da çalışır.',
 };

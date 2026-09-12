@@ -155,7 +155,7 @@ export function Rankings(): React.JSX.Element {
           message={t('rankings.noCountryBody')}
           action={
             <Link className="btn btn-primary btn-sm" to="/app/profile/edit">
-              Edit profile
+              {t('profile.edit')}
             </Link>
           }
         />

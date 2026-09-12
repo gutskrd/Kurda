@@ -2,16 +2,25 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from './ProfileModal';
 import { Avatar } from '../components/Avatar';
+import { useT } from '../i18n/I18nProvider';
+import type { UserSummary } from '../lib/types';
 
 /** Enough to show who someone knows without turning a profile into a directory. */
 const SHOW = 12;
 
-interface FriendOf {
-  id: string;
-  username: string;
-  displayName?: string | null;
-  avatarUrl?: string | null;
-}
+/**
+ * A friend, as `GET /users/:id/friends` actually returns one.
+ *
+ * This said `id`, and the endpoint has always said `userId`. So every face in
+ * this list opened `/users/undefined` and the card came back "Couldn't load this
+ * profile — request validation failed": the one thing the list is for did not
+ * work, and nothing in the types noticed, because the shape was declared here
+ * by hand instead of being the one the client already has.
+ *
+ * `UserSummary` is that shape. Using it means the next change to the endpoint
+ * is a type error here rather than a dead link.
+ */
+type FriendOf = UserSummary;
 
 /**
  * Who this person knows.
@@ -31,6 +40,7 @@ interface FriendOf {
 export function ProfileFriends({ userId }: { userId: string }): React.JSX.Element | null {
   const { client } = useAuth();
   const { openProfile } = useProfileModal();
+  const t = useT();
   const [friends, setFriends] = useState<FriendOf[] | null>(null);
 
   useEffect(() => {
@@ -52,15 +62,15 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
   return (
     <section className="mkp-friends">
       <h2 className="friend-heading">
-        Friends <span className="mkp-friends-count">{friends.length}</span>
+        {t('nav.friends')} <span className="mkp-friends-count">{friends.length}</span>
       </h2>
       <ul className="mkp-friends-list">
         {shown.map((f) => (
-          <li key={f.id}>
+          <li key={f.userId}>
             <button
               type="button"
               className="mkp-friend"
-              onClick={() => openProfile({ kind: 'user', userId: f.id })}
+              onClick={() => openProfile({ kind: 'user', userId: f.userId, username: f.username })}
               title={f.displayName || f.username}
             >
               <Avatar url={f.avatarUrl ?? null} glyphSize={20} />
@@ -70,7 +80,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
         ))}
       </ul>
       {friends.length > shown.length && (
-        <p className="muted mkp-friends-more">and {friends.length - shown.length} more</p>
+        <p className="muted mkp-friends-more">{t('profile.friendsMore', { count: friends.length - shown.length })}</p>
       )}
     </section>
   );

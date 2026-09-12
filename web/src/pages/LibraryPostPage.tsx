@@ -62,7 +62,7 @@ export function LibraryPostPage(): React.JSX.Element {
 
         {post.audioUrl && (
           <audio className="post-audio" controls src={post.audioUrl}>
-            Your browser cannot play this recording.
+            {t('post.audioUnsupported')}
           </audio>
         )}
 
