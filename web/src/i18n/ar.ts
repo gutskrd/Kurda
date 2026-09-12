@@ -896,4 +896,16 @@ export const ar: Catalogue = {
   'repost.tab': 'المعاد نشرها',
   'repost.sectionHint': 'المنشورات التي أعدت نشرها على ملفك الشخصي.',
   'repost.signIn': 'سجّل الدخول لإعادة النشر',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 'و{count} آخرين',
+  'settings.blocked.help': 'من تحظره لا يمكنه العثور عليك أو مراسلتك أو إرسال طلب صداقة إليك، ولن تراه أنت في أي مكان أيضًا. ولا يُبلَّغ بذلك أبدًا.',
+  'settings.blocked.none': 'لم تحظر أحدًا. يمكنك حظر شخص من ملفه الشخصي أو من قائمة أصدقائك.',
+  'settings.blocked.unblockHint': 'إلغاء الحظر يتيح لذلك الشخص العثور عليك والتواصل معك من جديد. وهو لا يعيدكما صديقين، ولا يُبلَّغ بذلك بأي حال.',
+  'saved.emptyLead': 'لم تحفظ شيئًا بعد. اضغط على علامة الحفظ في أي منشور في',
+  'saved.emptyTail': 'للاحتفاظ به هنا.',
+  'auth.register.terms': 'بإنشاء حساب فإنك توافق على شروط MyKurda وسياسة الخصوصية.',
+  'post.audioUnsupported': 'متصفحك لا يستطيع تشغيل هذا التسجيل.',
+  'images.reactions': 'التفاعلات',
+  'picture.decodeFailed': 'كان من المفترض أن يُفتح هذا الـ{format} هنا لكنه لم يُفتح. حاول مرة أخرى — أو انشره كما هو، فهذا يعمل أيضًا.',
 };

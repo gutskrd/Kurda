@@ -897,4 +897,16 @@ export const ku: Catalogue = {
   'repost.tab': 'Ji nû ve weşandin',
   'repost.sectionHint': 'Şandiyên ku te ji nû ve li ser profîla xwe weşandine.',
   'repost.signIn': 'Ji bo ji nû ve weşandinê têkeve',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 'û {count} din',
+  'settings.blocked.help': 'Kesê ku te asteng kiriye nikare te bibîne, peyamê ji te re bişîne an daxwaza hevaltiyê bişîne, û tu jî wî li tu derê nabînî. Qet jê re nayê gotin.',
+  'settings.blocked.none': 'Te kes asteng nekiriye. Tu dikarî kesekî ji profîla wî, an ji lîsteya hevalên xwe asteng bikî.',
+  'settings.blocked.unblockHint': 'Rakirina astengiyê dihêle ku ew kes dîsa te bibîne û bi te re têkilî deyne. Ew we ne dîsa dike heval, û jê re bi tu awayî nayê gotin.',
+  'saved.emptyLead': 'Hê tiştek nehatiye tomarkirin. Li',
+  'saved.emptyTail': 'li ser her şandiyekê bişkoka tomarkirinê bitikîne da ku li vir bimîne.',
+  'auth.register.terms': 'Bi çêkirina hesabekî tu Mercên MyKurda û Politîkaya Nihêniyê qebûl dikî.',
+  'post.audioUnsupported': 'Geroka te nikare vê dengê lê bide.',
+  'images.reactions': 'Berteka',
+  'picture.decodeFailed': 'Divê ev {format} li vir vebûya lê venebû. Dîsa biceribîne — an wê wek xwe biweşîne, ku hîn jî dixebite.',
 };

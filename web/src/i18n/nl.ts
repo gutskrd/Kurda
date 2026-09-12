@@ -891,4 +891,16 @@ export const nl: Catalogue = {
   'repost.tab': 'Opnieuw geplaatst',
   'repost.sectionHint': 'Berichten die je op je eigen profiel opnieuw hebt geplaatst.',
   'repost.signIn': 'Log in om opnieuw te plaatsen',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 'en nog {count}',
+  'settings.blocked.help': 'Iemand die je blokkeert kan je niet vinden, je geen bericht sturen en geen vriendschapsverzoek doen, en jij ziet hen nergens meer. Ze horen het nooit.',
+  'settings.blocked.none': 'Je hebt niemand geblokkeerd. Je kunt iemand blokkeren vanaf hun profiel of vanuit je vriendenlijst.',
+  'settings.blocked.unblockHint': 'Deblokkeren laat die persoon je weer vinden en contact opnemen. Je wordt er geen vrienden meer door, en ze horen er niets over.',
+  'saved.emptyLead': 'Nog niets bewaard. Tik op de bladwijzer bij een bericht in',
+  'saved.emptyTail': 'om het hier te bewaren.',
+  'auth.register.terms': 'Door een account aan te maken ga je akkoord met de Voorwaarden en het Privacybeleid van MyKurda.',
+  'post.audioUnsupported': 'Je browser kan deze opname niet afspelen.',
+  'images.reactions': 'Reacties',
+  'picture.decodeFailed': 'Deze {format} had hier moeten openen, maar deed dat niet. Probeer het opnieuw — of plaats hem zoals hij is, dat werkt ook.',
 };

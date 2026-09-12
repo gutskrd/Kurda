@@ -891,4 +891,16 @@ export const de: Catalogue = {
   'repost.tab': 'Geteilt',
   'repost.sectionHint': 'Beiträge, die du auf dein eigenes Profil geteilt hast.',
   'repost.signIn': 'Melde dich an, um zu teilen',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 'und {count} weitere',
+  'settings.blocked.help': 'Wen du blockierst, kann dich nicht finden, dir nicht schreiben und dir keine Freundschaftsanfrage schicken, und du siehst die Person nirgends mehr. Sie erfährt es nie.',
+  'settings.blocked.none': 'Du hast niemanden blockiert. Du kannst jemanden über sein Profil oder deine Freundesliste blockieren.',
+  'settings.blocked.unblockHint': 'Die Blockierung aufzuheben lässt die Person dich wieder finden und kontaktieren. Ihr werdet dadurch keine Freunde, und sie erfährt nichts davon.',
+  'saved.emptyLead': 'Noch nichts gespeichert. Tippe bei einem Beitrag in',
+  'saved.emptyTail': 'auf das Lesezeichen, damit er hier landet.',
+  'auth.register.terms': 'Mit dem Erstellen eines Kontos stimmst du den Bedingungen und der Datenschutzerklärung von MyKurda zu.',
+  'post.audioUnsupported': 'Dein Browser kann diese Aufnahme nicht abspielen.',
+  'images.reactions': 'Reaktionen',
+  'picture.decodeFailed': 'Dieses {format} hätte sich hier öffnen sollen, hat es aber nicht. Versuch es noch einmal — oder poste es so, wie es ist, das geht auch.',
 };

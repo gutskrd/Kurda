@@ -546,24 +546,48 @@ a.rank-name:hover {
     padding: 26px 14px 20px;
   }
 }
+/*
+ * The close button, on top of whatever the dialog holds.
+ *
+ * Two things were wrong with it on a profile that has a background equipped.
+ *
+ * It could not be clicked. The panel drops its padding when there is a
+ * background, so the card fills the panel corner to corner — and the card comes
+ * after this button in the DOM with nothing to say otherwise, so it painted
+ * over it. `document.elementFromPoint` at the middle of the X returned
+ * `.pcard-modal`, not the button. A z-index puts it back on top; it is the one
+ * control that has to work whatever else is in the dialog.
+ *
+ * And it was pale-on-pale: white ink on a 11%-white fill, which on a bright
+ * photograph is a smudge. Dark glass instead, the same as the other buttons on
+ * that card — a dark chip reads on light artwork AND on the dark panel, which a
+ * light one does not.
+ */
 .modal-close {
   position: absolute;
   top: 12px;
   right: 12px;
+  z-index: 3;
   width: 34px;
   height: 34px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink-2);
+  background: rgba(8, 10, 14, 0.62);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  color: var(--ink);
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 .modal-close:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(8, 10, 14, 0.82);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* profile card inside the modal: the panel provides the glass, so the card

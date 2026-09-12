@@ -100,7 +100,7 @@ export function Register(): React.JSX.Element {
           </Button>
 
           <p className="oauth-note">
-            By creating an account you agree to the MyKurda Terms and Privacy Policy.
+            {t('auth.register.terms')}
           </p>
         </form>
 

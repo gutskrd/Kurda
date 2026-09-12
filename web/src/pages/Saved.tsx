@@ -74,8 +74,9 @@ export function Saved(): React.JSX.Element {
         <div className="saved-empty">
           <BookmarkIcon size={30} />
           <p className="muted">
-            Nothing saved yet. Tap the bookmark on any post in{' '}
-            <Link to="/app/civak" className="link">{t('saved.emptyLink')}</Link> to keep it here.
+            {t('saved.emptyLead')}{' '}
+            <Link to="/app/civak" className="link">{t('saved.emptyLink')}</Link>{' '}
+            {t('saved.emptyTail')}
           </p>
         </div>
       ) : (
@@ -87,7 +88,7 @@ export function Saved(): React.JSX.Element {
           </div>
           {more && (
             <button type="button" className="mkp-more" onClick={() => void load(items.length)}>
-              Show more
+              {t('common.showMore')}
             </button>
           )}
         </>

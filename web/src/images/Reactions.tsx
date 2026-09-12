@@ -134,7 +134,7 @@ export function Reactions({ postId, initial }: { postId: string; initial: Reacti
   }
 
   return (
-    <div className="reactions" role="group" aria-label="Reactions">
+    <div className="reactions" role="group" aria-label={t('images.reactions')}>
       {REACTIONS.map((r) => {
         const count = summary.counts[r] ?? 0;
         const mine = summary.mine === r;

@@ -891,4 +891,16 @@ export const fr: Catalogue = {
   'repost.tab': 'Republiés',
   'repost.sectionHint': 'Les publications que vous avez republiées sur votre profil.',
   'repost.signIn': 'Connectez-vous pour republier',
+
+  /* copy that used to sit in the JSX in English */
+  'profile.friendsMore': 'et {count} de plus',
+  'settings.blocked.help': 'Une personne que vous bloquez ne peut plus vous trouver, vous écrire ni vous envoyer une demande d’ami, et vous ne la verrez plus nulle part. Elle n’en est jamais informée.',
+  'settings.blocked.none': 'Vous n’avez bloqué personne. Vous pouvez bloquer quelqu’un depuis son profil ou depuis votre liste d’amis.',
+  'settings.blocked.unblockHint': 'Débloquer permet à cette personne de vous retrouver et de vous contacter à nouveau. Cela ne vous rend pas amis, et elle n’en est pas informée.',
+  'saved.emptyLead': 'Rien d’enregistré pour l’instant. Touchez le marque-page sur une publication dans',
+  'saved.emptyTail': 'pour la garder ici.',
+  'auth.register.terms': 'En créant un compte, vous acceptez les Conditions et la Politique de confidentialité de MyKurda.',
+  'post.audioUnsupported': 'Votre navigateur ne peut pas lire cet enregistrement.',
+  'images.reactions': 'Réactions',
+  'picture.decodeFailed': 'Ce {format} aurait dû s’ouvrir ici et ne l’a pas fait. Réessaie — ou publie-le tel quel, ça marche aussi.',
 };
