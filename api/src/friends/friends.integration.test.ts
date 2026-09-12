@@ -54,15 +54,15 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(await friends.request(id.a!, id.b!)).toBe('requested');
     expect(has(await friends.incomingRequests(id.b!), id.a!)).toBe(true);
     expect(await friends.respond(id.b!, id.a!, true)).toBe('accepted');
-    expect(has(await friends.list(id.a!), id.b!)).toBe(true);
-    expect(has(await friends.list(id.b!), id.a!)).toBe(true);
+    expect(has((await friends.list(id.a!)).friends, id.b!)).toBe(true);
+    expect(has((await friends.list(id.b!)).friends, id.a!)).toBe(true);
   });
 
   it('decline leaves no friendship', async () => {
     await friends.request(id.a!, id.c!);
     expect(await friends.respond(id.c!, id.a!, false)).toBe('declined');
     expect(has(await friends.incomingRequests(id.c!), id.a!)).toBe(false);
-    expect(has(await friends.list(id.a!), id.c!)).toBe(false);
+    expect(has((await friends.list(id.a!)).friends, id.c!)).toBe(false);
   });
 
   it('shows a sent request to the sender, and to nobody else as sent', async () => {
@@ -102,7 +102,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   it('a mutual request auto-accepts', async () => {
     await friends.request(id.a!, id.d!);
     expect(await friends.request(id.d!, id.a!)).toBe('accepted');
-    expect(has(await friends.list(id.a!), id.d!)).toBe(true);
+    expect(has((await friends.list(id.a!)).friends, id.d!)).toBe(true);
   });
 
   it('blocking cancels a pending request silently and hides the requester', async () => {
@@ -121,8 +121,8 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   it('blocking removes an existing friendship and hides both users', async () => {
     // A and B are friends from the first test
     await friends.block(id.a!, id.b!);
-    expect(has(await friends.list(id.a!), id.b!)).toBe(false);
-    expect(has(await friends.list(id.b!), id.a!)).toBe(false);
+    expect(has((await friends.list(id.a!)).friends, id.b!)).toBe(false);
+    expect(has((await friends.list(id.b!)).friends, id.a!)).toBe(false);
     expect(await friends.areBlocked(id.b!, id.a!)).toBe(true);
     // A can't re-add B until unblocking
     await expect(friends.request(id.a!, id.b!)).rejects.toThrow(/unblock/i);
@@ -267,6 +267,59 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(has(forX, x)).toBe(false); // never yourself
   });
 
+  /**
+   * The list is paged so that a profile drawing eight avatars can ask for
+   * eight instead of five hundred. What has to hold is that the count keeps
+   * telling the truth while the page gets shorter — a heading that says "8
+   * friends" over a list of eight, when there are forty, is worse than the
+   * over-fetch it replaced.
+   */
+  it('pages the list without lying about how long it is', async () => {
+    const hub = await register('hub', '10.81.30.1');
+    const others: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const other = await register(`pal${i}`, `10.81.31.${i + 1}`);
+      await friends.request(hub, other);
+      await friends.respond(other, hub, true);
+      others.push(other);
+    }
+
+    const all = await friends.list(hub);
+    expect(all.friends).toHaveLength(4);
+    expect(all.total).toBe(4);
+
+    const firstTwo = await friends.list(hub, undefined, 2);
+    expect(firstTwo.friends).toHaveLength(2);
+    expect(firstTwo.total).toBe(4);
+
+    // the pages join back up, in the same order, with nobody twice
+    const nextTwo = await friends.list(hub, undefined, 2, 2);
+    expect(nextTwo.friends).toHaveLength(2);
+    expect([...firstTwo.friends, ...nextTwo.friends].map((f) => f.userId)).toEqual(
+      all.friends.map((f) => f.userId),
+    );
+
+    // past the end there is no row to carry count(*) OVER (), and answering 0
+    // would read as "no friends" rather than "no more friends"
+    const past = await friends.list(hub, undefined, 2, 10);
+    expect(past.friends).toEqual([]);
+    expect(past.total).toBe(4);
+
+    // and nobody can ask for more than the cap allows
+    const greedy = await friends.list(hub, undefined, 10_000);
+    expect(greedy.friends).toHaveLength(4);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[hub, ...others]]);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
+  });
+
   it('reflects online presence from last_seen_at', async () => {
     const p = await register('pon', '10.81.20.1');
     const q = await register('pof', '10.81.20.2');
@@ -276,8 +329,8 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     await pool.query(`UPDATE users SET last_seen_at = now() WHERE id = $1`, [q]);
 
     const forP = await friends.list(p);
-    expect(forP.find((x) => x.userId === q)?.online).toBe(true);
+    expect(forP.friends.find((x) => x.userId === q)?.online).toBe(true);
     const forQ = await friends.list(q);
-    expect(forQ.find((x) => x.userId === p)?.online).toBe(false);
+    expect(forQ.friends.find((x) => x.userId === p)?.online).toBe(false);
   });
 });

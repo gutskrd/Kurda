@@ -30,7 +30,7 @@ describe('Profile view (full, read-only)', () => {
       vi.fn(
         routedFetch({
           '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] },
-          '/friends': { friends: [{ userId: 'a', username: 'x' }, { userId: 'b', username: 'y' }] },
+          '/friends': { friends: [{ userId: 'a', username: 'x' }, { userId: 'b', username: 'y' }], total: 2 },
           '/me': { user: meUser },
         }),
       ),
@@ -66,7 +66,7 @@ describe('Profile view (full, read-only)', () => {
       vi.fn(
         routedFetch({
           '/me/wallet': { balances: { zer: 0, gems: 0 } },
-          '/friends': { friends: [] },
+          '/friends': { friends: [], total: 0 },
           '/me': { user: enriched },
         }),
       ),

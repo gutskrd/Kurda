@@ -12,6 +12,9 @@ import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
+/** Faces in the friend stack. AvatarStack draws three; the rest is a number. */
+const FRIEND_FACES = 3;
+
 /**
  * The signed-in user's own full profile — a read-only, MyKurda showcase. All
  * editing lives on /app/profile/edit (reached from the Edit Profile button). The
@@ -23,7 +26,10 @@ export function Profile(): React.JSX.Element {
   const locale = useLocale();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [zer, setZer] = useState<number | null>(null);
+  // three faces and a number is the whole of what this draws, so it asks for
+  // three; `friendCount` is the real total, which arrives with them
   const [friends, setFriends] = useState<UserSummary[]>([]);
+  const [friendCount, setFriendCount] = useState(0);
   const [icons, setIcons] = useState<InventoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,14 +46,17 @@ export function Profile(): React.JSX.Element {
       const [m, w, f, inv] = await Promise.all([
         client.get<{ user: MeProfile }>('/me'),
         client.get<{ balances: WalletBalances }>('/me/wallet'),
-        client.get<{ friends: UserSummary[] }>('/friends'),
+        client.get<{ friends: UserSummary[]; total: number }>(`/friends?limit=${FRIEND_FACES}`),
         client.get<{ items: InventoryItem[] }>('/me/inventory'),
       ]);
       if (cancelled) return;
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
       else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error, t));
       if (w.ok) setZer(w.data.balances.zer);
-      if (f.ok) setFriends(f.data.friends ?? []);
+      if (f.ok) {
+        setFriends(f.data.friends ?? []);
+        setFriendCount(f.data.total ?? 0);
+      }
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
 
@@ -112,8 +121,8 @@ export function Profile(): React.JSX.Element {
           )}
 
           <Link className="mkp-collection mkp-collection-link" to="/app/friends">
-            <div className="mkp-collection-head"><span className="l">{t('nav.friends')}</span><span className="n">{friends.length}</span></div>
-            {friends.length > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friends.length} />}
+            <div className="mkp-collection-head"><span className="l">{t('nav.friends')}</span><span className="n">{friendCount}</span></div>
+            {friendCount > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friendCount} />}
           </Link>
 
           {/* Saved lives here, with the rest of what is yours, rather than in
