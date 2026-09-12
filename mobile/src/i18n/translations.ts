@@ -1,29 +1,32 @@
 /**
- * UI string catalogs (KUR-093 / KUR-184) for the Kurdish diaspora, in 8
- * languages: English, German, French, Dutch, Kurmancî (Northern Kurdish),
- * Soranî (Central Kurdish), Arabic, Turkish. Each language is shown in its own
- * native name. Strings live here, never hardcoded in components — `t(key)` reads
- * the active locale and falls back to English then the key itself, so a missing
- * translation degrades gracefully. Arabic and Soranî (Arabic script) are RTL.
+ * UI string catalogs (KUR-093 / KUR-184) for the Kurdish diaspora. Strings live
+ * here, never hardcoded in components — `t(key)` reads the active locale and
+ * falls back to English then the key itself, so a missing translation degrades
+ * gracefully.
+ *
+ * Which languages there are is not decided here. `shared/src/locales.ts` is the
+ * one list, and the web app has always read it; this file kept a second copy,
+ * which is exactly how the phone came to be missing Spanish while the browser
+ * offered it — nothing could tell the two lists had drifted apart, because
+ * nothing compared them. Derived now, so adding a tenth language to the shared
+ * list makes the key-set test here fail until its catalogue is written, which
+ * is the failure you want.
  */
+import { APP_LOCALES, localeDir, type AppLocale } from '@kurda/shared';
 
-export const LOCALES = ['en', 'de', 'fr', 'nl', 'ku', 'ckb', 'ar', 'tr'] as const;
-export type Locale = (typeof LOCALES)[number];
+export type Locale = AppLocale;
+
+export const LOCALES: readonly Locale[] = APP_LOCALES.map((l) => l.code);
 
 /** Each language shown in its own native name (used by Settings + onboarding). */
-export const LOCALE_LABEL: Record<Locale, string> = {
-  en: 'English',
-  de: 'Deutsch',
-  fr: 'Français',
-  nl: 'Nederlands',
-  ku: 'Kurmancî',
-  ckb: 'Soranî',
-  ar: 'العربية',
-  tr: 'Türkçe',
-};
+export const LOCALE_LABEL: Record<Locale, string> = Object.fromEntries(
+  APP_LOCALES.map((l) => [l.code, l.nativeName]),
+) as Record<Locale, string>;
 
-/** Locales that render right-to-left (Arabic + Soranî, which uses Arabic script). */
-export const RTL_LOCALES: readonly Locale[] = ['ar', 'ckb'];
+/** Locales that render right to left (Arabic, and Soranî, which uses its script). */
+export const RTL_LOCALES: readonly Locale[] = APP_LOCALES.filter((l) => localeDir(l.code) === 'rtl').map(
+  (l) => l.code,
+);
 
 export type TranslationKey =
   | 'common.back'
@@ -232,6 +235,58 @@ const de: Catalog = {
   'saved.subtitle': 'Beiträge, die du dir aufgehoben hast. Nur du siehst das.',
   'saved.emptyLead': 'Noch nichts gespeichert. Tippe bei einem Beitrag in',
   'saved.emptyTail': 'auf das Lesezeichen, damit er hier landet.',
+};
+
+const es: Catalog = {
+  'common.back': 'Atrás',
+  'nav.learn': 'Aprender',
+  'nav.play': 'Jugar',
+  'nav.dictionary': 'Diccionario',
+  'nav.social': 'Social',
+  'nav.friends': 'Amigos',
+  'nav.civak': 'Comunidad',
+  'nav.profile': 'Perfil',
+  'events.title': 'Eventos',
+  'events.none': 'No hay eventos ahora mismo. ¡Vuelve pronto!',
+  'events.bannerSubtitle': 'Misiones y recompensas — toca para jugar',
+  'events.claim': 'Reclamar',
+  'events.claimed': 'Reclamado',
+  'events.inProgress': 'En curso',
+  'events.endsIn': 'Termina en {time}',
+  'settings.language': 'Idioma',
+  'settings.eventThemes': 'Temas de eventos',
+  'profile.logout': 'Cerrar sesión',
+  'profile.league': 'Liga',
+  'profile.shop': 'Tienda',
+  'civak.title': 'Comunidad',
+  'civak.subtitle': 'Relatos, poemas e imágenes de todo el mundo.',
+  'civak.loading': 'Cargando el muro…',
+  'civak.empty': 'Aquí todavía no hay nada.',
+  'civak.filter.everything': 'Todo',
+  'civak.filter.allKinds': 'Todos',
+  'civak.section.writing': 'Escritos',
+  'civak.section.pictures': 'Imágenes',
+  'civak.kind.saying': 'Dicho',
+  'civak.kind.story': 'Relato',
+  'civak.kind.poem': 'Poema',
+  'civak.kind.photo': 'Foto',
+  'civak.kind.meme': 'Meme',
+  'common.showMore': 'Mostrar más',
+  'feed.like': 'Me gusta',
+  'feed.unlike': 'Ya no me gusta',
+  'feed.save': 'Guardar',
+  'feed.removeFromSaved': 'Quitar de guardados',
+  'feed.comments': '{count} comentarios',
+  'feed.signInToLike': 'Inicia sesión para dar me gusta',
+  'feed.signInToSave': 'Inicia sesión para guardar',
+  'repost.do': 'Republicar',
+  'repost.undo': 'Deshacer republicación',
+  'repost.signIn': 'Inicia sesión para republicar',
+  'share.post': 'Compartir esta publicación',
+  'saved.title': 'Guardado',
+  'saved.subtitle': 'Publicaciones que has guardado para volver a ellas. Solo tú lo ves.',
+  'saved.emptyLead': 'Aún no has guardado nada. Toca el marcador en cualquier publicación de',
+  'saved.emptyTail': 'para guardarla aquí.',
 };
 
 const tr: Catalog = {
@@ -495,4 +550,4 @@ const ckb: Catalog = {
   'saved.emptyTail': 'لەسەر هەر بابەتێک دەست بە نیشانەی پاشەکەوت بدە تا لێرە بمێنێتەوە.',
 };
 
-export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, fr, nl, ku, ckb, ar, tr };
+export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
