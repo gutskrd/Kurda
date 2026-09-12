@@ -2,7 +2,7 @@ import { useCallback, useEffect, useReducer, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n/I18nContext';
-import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale } from '../i18n/translations';
+import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale, type TranslationKey } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { BreathingIcon } from '../theme/Icon';
@@ -67,11 +67,13 @@ export function useOnboarding(): {
   return { ready, needsOnboarding, reopenStep, complete, reopen };
 }
 
-const VALUE_PROPS = [
-  'Learn Kurdish a little every day',
-  'Play live quiz games with friends',
-  'Read stories & poems from the community',
-  'Keep your streak and climb the leagues',
+/** What the app is, one line to a slide. Keys, so the intro speaks the
+ *  language chosen on the slide before it. */
+const VALUE_PROPS: readonly TranslationKey[] = [
+  'onboarding.prop.learn',
+  'onboarding.prop.play',
+  'onboarding.prop.read',
+  'onboarding.prop.streak',
 ];
 
 /**
@@ -87,6 +89,7 @@ export function OnboardingScreen({
   initialStep?: OnboardingStep | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [state, dispatch] = useReducer(onboardingReducer, initialStep, (start) => {
     const base = initOnboardingState();
@@ -126,7 +129,7 @@ export function OnboardingScreen({
           </View>
           {!isLastStep(state) ? (
             <Pressable onPress={() => end('skipped')} accessibilityRole="button" hitSlop={8}>
-              <Text style={[styles.skip, { color: colors.textSecondary }]}>Skip</Text>
+              <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
             </Pressable>
           ) : (
             <View style={{ width: 40 }} />
@@ -142,15 +145,15 @@ export function OnboardingScreen({
         <View style={styles.nav}>
           {!isFirstStep(state) ? (
             <Pressable onPress={() => dispatch({ type: 'back' })} accessibilityRole="button" style={styles.back}>
-              <Text style={[styles.backText, { color: colors.textSecondary }]}>Back</Text>
+              <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('common.back')}</Text>
             </Pressable>
           ) : (
             <View style={{ flex: 1 }} />
           )}
           {isLastStep(state) ? (
-            <ClayButton label="Get started" tone="primary" onPress={() => end('finished')} style={styles.next} />
+            <ClayButton label={t('nav.register')} tone="primary" onPress={() => end('finished')} style={styles.next} />
           ) : (
-            <ClayButton label="Continue" tone="primary" onPress={() => dispatch({ type: 'next' })} style={styles.next} />
+            <ClayButton label={t('common.continue')} tone="primary" onPress={() => dispatch({ type: 'next' })} style={styles.next} />
           )}
         </View>
       </View>
@@ -160,11 +163,12 @@ export function OnboardingScreen({
 
 function LanguageSlide({ selected, onSelect }: { selected: string | null; onSelect: (l: Locale) => void }): React.JSX.Element {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <View style={styles.slide}>
       <View style={styles.slideIcon}><BreathingIcon name="globe" size={52} tone="primary" /></View>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Choose your language</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>You can change this any time in Settings.</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('onboarding.language.title')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.language.help')}</Text>
       <ScrollView style={styles.langList} contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.sm }}>
         {LOCALES.map((locale) => {
           const active = selected === locale;
@@ -194,6 +198,7 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
 
 function WelcomeSlide(): React.JSX.Element {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -216,7 +221,7 @@ function WelcomeSlide(): React.JSX.Element {
           ))}
         </View>
       ) : (
-        <Text style={[styles.propRotating, { color: colors.textSecondary }]}>{VALUE_PROPS[i]}</Text>
+        <Text style={[styles.propRotating, { color: colors.textSecondary }]}>{t(VALUE_PROPS[i]!)}</Text>
       )}
     </View>
   );
@@ -226,14 +231,13 @@ function WelcomeSlide(): React.JSX.Element {
  *  prompt here; the actual permission lives in Profile → Notification settings. */
 function NotificationsSlide(): React.JSX.Element {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <View style={[styles.slide, styles.centered]}>
       <BreathingIcon name="bell" size={64} tone="primary" />
-      <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>A Kurdish story every day</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Turn on notifications so you never miss one. One a day, in your language, never more.
-      </Text>
-      <Text style={[styles.notifHint, { color: colors.textSecondary }]}>You can turn them on later in Profile.</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>{t('onboarding.notify.title')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.notify.body')}</Text>
+      <Text style={[styles.notifHint, { color: colors.textSecondary }]}>{t('onboarding.notify.later')}</Text>
     </View>
   );
 }

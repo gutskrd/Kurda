@@ -112,8 +112,20 @@ export type TranslationKey =
   | 'auth.reset.backToLogin'
   | 'auth.verify.enterCode6'
   | 'auth.register.submit'
-  | 'auth.verify.sendNewIn'
-  | 'nav.login';
+  | 'auth.verify.sendNewIn'
+  | 'nav.login'
+  | 'onboarding.language.title'
+  | 'onboarding.language.help'
+  | 'onboarding.prop.learn'
+  | 'onboarding.prop.play'
+  | 'onboarding.prop.read'
+  | 'onboarding.prop.streak'
+  | 'onboarding.notify.title'
+  | 'onboarding.notify.body'
+  | 'onboarding.notify.later'
+  | 'common.continue'
+  | 'common.skip'
+  | 'nav.register';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -203,6 +215,18 @@ const en: Catalog = {
   'auth.register.submit': 'Create account',
   'auth.verify.sendNewIn': 'send a new code ({seconds}s)',
   'nav.login': 'Log in',
+  'onboarding.language.title': 'Choose your language',
+  'onboarding.language.help': 'You can change this any time in Settings.',
+  'onboarding.prop.learn': 'Learn Kurdish a little every day',
+  'onboarding.prop.play': 'Play live quiz games with friends',
+  'onboarding.prop.read': 'Read stories & poems from the community',
+  'onboarding.prop.streak': 'Keep your streak and climb the leagues',
+  'onboarding.notify.title': 'A Kurdish story every day',
+  'onboarding.notify.body': 'Turn on notifications so you never miss one. One a day, in your language, never more.',
+  'onboarding.notify.later': 'You can turn them on later in Profile.',
+  'common.continue': 'Continue',
+  'common.skip': 'Skip',
+  'nav.register': 'Get started',
 };
 
 const ku: Catalog = {
@@ -291,6 +315,18 @@ const ku: Catalog = {
   'auth.register.submit': 'Hesab çêke',
   'auth.verify.sendNewIn': 'kodeke nû bişîne ({seconds}ç)',
   'nav.login': 'Têkeve',
+  'onboarding.language.title': 'Zimanê xwe hilbijêre',
+  'onboarding.language.help': 'Tu dikarî vê her dem di Mîhengan de biguherînî.',
+  'onboarding.prop.learn': 'Her roj hinekî kurdî fêr bibe',
+  'onboarding.prop.play': 'Bi hevalan re lîstikên pirsê yên zindî bilîze',
+  'onboarding.prop.read': 'Çîrok û helbestên civakê bixwîne',
+  'onboarding.prop.streak': 'Rêzeya xwe biparêze û di lîgan de hilkişe',
+  'onboarding.notify.title': 'Her roj çîrokek kurdî',
+  'onboarding.notify.body': 'Agahdariyan veke da ku tu yekê ji dest nedî. Rojê yek, bi zimanê te, ne zêdetir.',
+  'onboarding.notify.later': 'Tu dikarî paşê di Profîlê de vebî.',
+  'common.continue': 'Berdewam bike',
+  'common.skip': 'Bibihurîne',
+  'nav.register': 'Dest pê bike',
 };
 
 const de: Catalog = {
@@ -379,6 +415,18 @@ const de: Catalog = {
   'auth.register.submit': 'Konto erstellen',
   'auth.verify.sendNewIn': 'einen neuen Code senden ({seconds} s)',
   'nav.login': 'Anmelden',
+  'onboarding.language.title': 'Wähle deine Sprache',
+  'onboarding.language.help': 'Du kannst das jederzeit in den Einstellungen ändern.',
+  'onboarding.prop.learn': 'Lerne jeden Tag ein bisschen Kurdisch',
+  'onboarding.prop.play': 'Spiele Live-Quizspiele mit Freunden',
+  'onboarding.prop.read': 'Lies Geschichten und Gedichte aus der Gemeinschaft',
+  'onboarding.prop.streak': 'Halte deine Serie und steig in den Ligen auf',
+  'onboarding.notify.title': 'Jeden Tag eine kurdische Geschichte',
+  'onboarding.notify.body': 'Schalte Mitteilungen ein, damit du keine verpasst. Eine pro Tag, in deiner Sprache, nie mehr.',
+  'onboarding.notify.later': 'Du kannst sie später im Profil einschalten.',
+  'common.continue': 'Weiter',
+  'common.skip': 'Überspringen',
+  'nav.register': 'Loslegen',
 };
 
 const es: Catalog = {
@@ -467,6 +515,18 @@ const es: Catalog = {
   'auth.register.submit': 'Crear cuenta',
   'auth.verify.sendNewIn': 'enviar un código nuevo ({seconds} s)',
   'nav.login': 'Iniciar sesión',
+  'onboarding.language.title': 'Elige tu idioma',
+  'onboarding.language.help': 'Puedes cambiarlo cuando quieras en Ajustes.',
+  'onboarding.prop.learn': 'Aprende kurdo un poco cada día',
+  'onboarding.prop.play': 'Juega concursos en directo con amigos',
+  'onboarding.prop.read': 'Lee relatos y poemas de la comunidad',
+  'onboarding.prop.streak': 'Mantén tu racha y sube de liga',
+  'onboarding.notify.title': 'Un relato kurdo cada día',
+  'onboarding.notify.body': 'Activa las notificaciones para no perderte ninguno. Uno al día, en tu idioma, nunca más.',
+  'onboarding.notify.later': 'Puedes activarlas más tarde en Perfil.',
+  'common.continue': 'Continuar',
+  'common.skip': 'Omitir',
+  'nav.register': 'Empezar',
 };
 
 const tr: Catalog = {
@@ -555,6 +615,18 @@ const tr: Catalog = {
   'auth.register.submit': 'Hesap oluştur',
   'auth.verify.sendNewIn': 'yeni bir kod gönder ({seconds} sn)',
   'nav.login': 'Giriş yap',
+  'onboarding.language.title': 'Dilini seç',
+  'onboarding.language.help': 'Bunu istediğin zaman Ayarlar’dan değiştirebilirsin.',
+  'onboarding.prop.learn': 'Her gün biraz Kürtçe öğren',
+  'onboarding.prop.play': 'Arkadaşlarınla canlı bilgi yarışmaları oyna',
+  'onboarding.prop.read': 'Topluluğun öykü ve şiirlerini oku',
+  'onboarding.prop.streak': 'Serini koru ve liglerde yüksel',
+  'onboarding.notify.title': 'Her gün bir Kürtçe öykü',
+  'onboarding.notify.body': 'Hiçbirini kaçırmamak için bildirimleri aç. Günde bir tane, kendi dilinde, daha fazlası değil.',
+  'onboarding.notify.later': 'Bunları daha sonra Profil’den açabilirsin.',
+  'common.continue': 'Devam et',
+  'common.skip': 'Atla',
+  'nav.register': 'Başla',
 };
 
 const ar: Catalog = {
@@ -643,6 +715,18 @@ const ar: Catalog = {
   'auth.register.submit': 'إنشاء حساب',
   'auth.verify.sendNewIn': 'أرسل رمزًا جديدًا ({seconds} ثانية)',
   'nav.login': 'تسجيل الدخول',
+  'onboarding.language.title': 'اختر لغتك',
+  'onboarding.language.help': 'يمكنك تغيير ذلك في أي وقت من الإعدادات.',
+  'onboarding.prop.learn': 'تعلّم الكردية قليلًا كل يوم',
+  'onboarding.prop.play': 'العب مسابقات مباشرة مع الأصدقاء',
+  'onboarding.prop.read': 'اقرأ قصص المجتمع وقصائده',
+  'onboarding.prop.streak': 'حافظ على سلسلتك وتقدّم في الدوريات',
+  'onboarding.notify.title': 'قصة كردية كل يوم',
+  'onboarding.notify.body': 'فعّل الإشعارات لئلّا تفوتك واحدة. واحدة يوميًا، بلغتك، ولا أكثر.',
+  'onboarding.notify.later': 'يمكنك تفعيلها لاحقًا من الملف الشخصي.',
+  'common.continue': 'متابعة',
+  'common.skip': 'تخطٍّ',
+  'nav.register': 'ابدأ الآن',
 };
 
 const fr: Catalog = {
@@ -731,6 +815,18 @@ const fr: Catalog = {
   'auth.register.submit': 'Créer un compte',
   'auth.verify.sendNewIn': 'envoyer un nouveau code ({seconds} s)',
   'nav.login': 'Se connecter',
+  'onboarding.language.title': 'Choisissez votre langue',
+  'onboarding.language.help': 'Vous pouvez le changer à tout moment dans les Réglages.',
+  'onboarding.prop.learn': 'Apprenez le kurde un peu chaque jour',
+  'onboarding.prop.play': 'Jouez à des quiz en direct avec vos amis',
+  'onboarding.prop.read': 'Lisez les récits et poèmes de la communauté',
+  'onboarding.prop.streak': 'Gardez votre série et grimpez dans les ligues',
+  'onboarding.notify.title': 'Un récit kurde chaque jour',
+  'onboarding.notify.body': 'Activez les notifications pour n’en manquer aucun. Un par jour, dans votre langue, jamais plus.',
+  'onboarding.notify.later': 'Vous pourrez les activer plus tard dans Profil.',
+  'common.continue': 'Continuer',
+  'common.skip': 'Passer',
+  'nav.register': 'Commencer',
 };
 
 const nl: Catalog = {
@@ -819,6 +915,18 @@ const nl: Catalog = {
   'auth.register.submit': 'Account aanmaken',
   'auth.verify.sendNewIn': 'stuur een nieuwe code ({seconds}s)',
   'nav.login': 'Inloggen',
+  'onboarding.language.title': 'Kies je taal',
+  'onboarding.language.help': 'Je kunt dit altijd wijzigen in Instellingen.',
+  'onboarding.prop.learn': 'Leer elke dag een beetje Koerdisch',
+  'onboarding.prop.play': 'Speel live quizspellen met vrienden',
+  'onboarding.prop.read': 'Lees verhalen en gedichten uit de gemeenschap',
+  'onboarding.prop.streak': 'Houd je reeks vast en klim in de competities',
+  'onboarding.notify.title': 'Elke dag een Koerdisch verhaal',
+  'onboarding.notify.body': 'Zet meldingen aan zodat je er geen mist. Eén per dag, in jouw taal, nooit meer.',
+  'onboarding.notify.later': 'Je kunt ze later aanzetten in Profiel.',
+  'common.continue': 'Doorgaan',
+  'common.skip': 'Overslaan',
+  'nav.register': 'Aan de slag',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -908,6 +1016,18 @@ const ckb: Catalog = {
   'auth.register.submit': 'هەژمار دروست بکە',
   'auth.verify.sendNewIn': 'کۆدێکی نوێ بنێرە ({seconds}چ)',
   'nav.login': 'چوونەژوورەوە',
+  'onboarding.language.title': 'زمانەکەت هەڵبژێرە',
+  'onboarding.language.help': 'هەر کاتێک دەتوانیت لە ڕێکخستنەکان بیگۆڕیت.',
+  'onboarding.prop.learn': 'هەموو ڕۆژێک کەمێک کوردی فێربە',
+  'onboarding.prop.play': 'یاری پرسیاری ڕاستەوخۆ لەگەڵ هاوڕێکانت بکە',
+  'onboarding.prop.read': 'چیرۆک و شیعری کۆمەڵگا بخوێنەوە',
+  'onboarding.prop.streak': 'زنجیرەکەت بپارێزە و لە لیگەکاندا سەربکەوە',
+  'onboarding.notify.title': 'هەموو ڕۆژێک چیرۆکێکی کوردی',
+  'onboarding.notify.body': 'ئاگادارکردنەوەکان بکەرەوە تا هیچیان لەدەست نەدەیت. ڕۆژی یەکێک، بە زمانی خۆت، نە زیاتر.',
+  'onboarding.notify.later': 'دەتوانیت دواتر لە پرۆفایلدا بیانکەیتەوە.',
+  'common.continue': 'بەردەوام بە',
+  'common.skip': 'تێپەڕاندن',
+  'nav.register': 'دەست پێ بکە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

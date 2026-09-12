@@ -61,11 +61,6 @@ mobile/src/notifications/NotificationCenterScreen.tsx  Mark all read
 mobile/src/notifications/NotificationsScreen.tsx  Enable quiet hours
 mobile/src/notifications/NotificationsScreen.tsx  No notifications are sent during this window.
 mobile/src/notifications/NotificationsScreen.tsx  Quiet hours
-mobile/src/onboarding/OnboardingScreen.tsx  A Kurdish story every day
-mobile/src/onboarding/OnboardingScreen.tsx  Choose your language
-mobile/src/onboarding/OnboardingScreen.tsx  Turn on notifications so you never miss one. One a day, in your language, never
-mobile/src/onboarding/OnboardingScreen.tsx  You can change this any time in Settings.
-mobile/src/onboarding/OnboardingScreen.tsx  You can turn them on later in Profile.
 mobile/src/practice/PracticeScreen.tsx  Couldn’t start practice.
 mobile/src/practice/PracticeScreen.tsx  Finish a lesson to start building your review deck.
 mobile/src/practice/PracticeScreen.tsx  Nothing to review yet
