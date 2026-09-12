@@ -45,6 +45,21 @@ export type TranslationKey =
   | 'profile.league'
   | 'profile.shop'
   | 'nav.civak'
+  | 'feed.like'
+  | 'feed.unlike'
+  | 'feed.save'
+  | 'feed.removeFromSaved'
+  | 'feed.comments'
+  | 'feed.signInToLike'
+  | 'feed.signInToSave'
+  | 'repost.do'
+  | 'repost.undo'
+  | 'repost.signIn'
+  | 'share.post'
+  | 'saved.title'
+  | 'saved.subtitle'
+  | 'saved.emptyLead'
+  | 'saved.emptyTail'
   | 'nav.friends'
   | 'civak.title'
   | 'civak.subtitle'
@@ -98,6 +113,21 @@ const en: Catalog = {
   'civak.kind.photo': 'Photo',
   'civak.kind.meme': 'Meme',
   'common.showMore': 'Show more',
+  'feed.like': 'Like',
+  'feed.unlike': 'Unlike',
+  'feed.save': 'Save',
+  'feed.removeFromSaved': 'Remove from saved',
+  'feed.comments': '{count} comments',
+  'feed.signInToLike': 'Sign in to like',
+  'feed.signInToSave': 'Sign in to save',
+  'repost.do': 'Repost',
+  'repost.undo': 'Undo repost',
+  'repost.signIn': 'Sign in to repost',
+  'share.post': 'Share this post',
+  'saved.title': 'Saved',
+  'saved.subtitle': 'Posts you kept to come back to. Only you can see this.',
+  'saved.emptyLead': 'Nothing saved yet. Tap the bookmark on any post in',
+  'saved.emptyTail': 'to keep it here.',
 };
 
 const ku: Catalog = {
@@ -135,6 +165,21 @@ const ku: Catalog = {
   'civak.kind.photo': 'Wêne',
   'civak.kind.meme': 'Mîm',
   'common.showMore': 'Bêtir nîşan bide',
+  'feed.like': 'Biecibîne',
+  'feed.unlike': 'Ecibandinê rake',
+  'feed.save': 'Tomar bike',
+  'feed.removeFromSaved': 'Ji tomarkiriyan rake',
+  'feed.comments': '{count} şîrove',
+  'feed.signInToLike': 'Ji bo ecibandinê têkeve',
+  'feed.signInToSave': 'Ji bo tomarkirinê têkeve',
+  'repost.do': 'Ji nû ve biweşîne',
+  'repost.undo': 'Ji nû ve weşandinê rake',
+  'repost.signIn': 'Ji bo ji nû ve weşandinê têkeve',
+  'share.post': 'Vê şandiyê parve bike',
+  'saved.title': 'Tomarkirî',
+  'saved.subtitle': 'Şandiyên ku te ji bo paşê hilanîn. Tenê tu dikarî vê bibînî.',
+  'saved.emptyLead': 'Hê tiştek nehatiye tomarkirin. Li',
+  'saved.emptyTail': 'li ser her şandiyekê bişkoka tomarkirinê bitikîne da ku li vir bimîne.',
 };
 
 const de: Catalog = {
@@ -172,6 +217,21 @@ const de: Catalog = {
   'civak.kind.photo': 'Foto',
   'civak.kind.meme': 'Meme',
   'common.showMore': 'Mehr anzeigen',
+  'feed.like': 'Gefällt mir',
+  'feed.unlike': 'Gefällt mir nicht mehr',
+  'feed.save': 'Speichern',
+  'feed.removeFromSaved': 'Aus Gespeichertem entfernen',
+  'feed.comments': '{count} Kommentare',
+  'feed.signInToLike': 'Melde dich an, um das zu mögen',
+  'feed.signInToSave': 'Melde dich an, um zu speichern',
+  'repost.do': 'Teilen',
+  'repost.undo': 'Teilen zurücknehmen',
+  'repost.signIn': 'Melde dich an, um zu teilen',
+  'share.post': 'Diesen Beitrag teilen',
+  'saved.title': 'Gespeichert',
+  'saved.subtitle': 'Beiträge, die du dir aufgehoben hast. Nur du siehst das.',
+  'saved.emptyLead': 'Noch nichts gespeichert. Tippe bei einem Beitrag in',
+  'saved.emptyTail': 'auf das Lesezeichen, damit er hier landet.',
 };
 
 const tr: Catalog = {
@@ -209,6 +269,21 @@ const tr: Catalog = {
   'civak.kind.photo': 'Fotoğraf',
   'civak.kind.meme': 'Caps',
   'common.showMore': 'Daha fazla göster',
+  'feed.like': 'Beğen',
+  'feed.unlike': 'Beğenmekten vazgeç',
+  'feed.save': 'Kaydet',
+  'feed.removeFromSaved': 'Kaydedilenlerden çıkar',
+  'feed.comments': '{count} yorum',
+  'feed.signInToLike': 'Beğenmek için giriş yap',
+  'feed.signInToSave': 'Kaydetmek için giriş yap',
+  'repost.do': 'Yeniden paylaş',
+  'repost.undo': 'Yeniden paylaşmayı geri al',
+  'repost.signIn': 'Yeniden paylaşmak için giriş yap',
+  'share.post': 'Bu gönderiyi paylaş',
+  'saved.title': 'Kaydedilenler',
+  'saved.subtitle': 'Sonra dönmek için sakladığın gönderiler. Bunu yalnızca sen görürsün.',
+  'saved.emptyLead': 'Henüz bir şey kaydedilmedi.',
+  'saved.emptyTail': 'içindeki herhangi bir gönderide yer imine dokunarak burada tut.',
 };
 
 const ar: Catalog = {
@@ -246,6 +321,21 @@ const ar: Catalog = {
   'civak.kind.photo': 'صورة',
   'civak.kind.meme': 'ميم',
   'common.showMore': 'عرض المزيد',
+  'feed.like': 'إعجاب',
+  'feed.unlike': 'إلغاء الإعجاب',
+  'feed.save': 'حفظ',
+  'feed.removeFromSaved': 'إزالة من المحفوظات',
+  'feed.comments': '{count} تعليقات',
+  'feed.signInToLike': 'سجّل الدخول للإعجاب',
+  'feed.signInToSave': 'سجّل الدخول للحفظ',
+  'repost.do': 'إعادة النشر',
+  'repost.undo': 'التراجع عن إعادة النشر',
+  'repost.signIn': 'سجّل الدخول لإعادة النشر',
+  'share.post': 'شارك هذا المنشور',
+  'saved.title': 'المحفوظات',
+  'saved.subtitle': 'منشورات احتفظت بها للعودة إليها. أنت وحدك من يراها.',
+  'saved.emptyLead': 'لم تحفظ شيئًا بعد. اضغط على علامة الحفظ في أي منشور في',
+  'saved.emptyTail': 'للاحتفاظ به هنا.',
 };
 
 const fr: Catalog = {
@@ -283,6 +373,21 @@ const fr: Catalog = {
   'civak.kind.photo': 'Photo',
   'civak.kind.meme': 'Mème',
   'common.showMore': 'Afficher plus',
+  'feed.like': 'J’aime',
+  'feed.unlike': 'Je n’aime plus',
+  'feed.save': 'Enregistrer',
+  'feed.removeFromSaved': 'Retirer des enregistrements',
+  'feed.comments': '{count} commentaires',
+  'feed.signInToLike': 'Connectez-vous pour aimer',
+  'feed.signInToSave': 'Connectez-vous pour enregistrer',
+  'repost.do': 'Republier',
+  'repost.undo': 'Annuler la republication',
+  'repost.signIn': 'Connectez-vous pour republier',
+  'share.post': 'Partager cette publication',
+  'saved.title': 'Enregistré',
+  'saved.subtitle': 'Les publications que vous avez gardées. Vous seul les voyez.',
+  'saved.emptyLead': 'Rien d’enregistré pour l’instant. Touchez le marque-page sur une publication dans',
+  'saved.emptyTail': 'pour la garder ici.',
 };
 
 const nl: Catalog = {
@@ -320,6 +425,21 @@ const nl: Catalog = {
   'civak.kind.photo': 'Foto',
   'civak.kind.meme': 'Meme',
   'common.showMore': 'Meer tonen',
+  'feed.like': 'Leuk',
+  'feed.unlike': 'Niet meer leuk',
+  'feed.save': 'Bewaren',
+  'feed.removeFromSaved': 'Uit bewaard verwijderen',
+  'feed.comments': '{count} reacties',
+  'feed.signInToLike': 'Log in om dit leuk te vinden',
+  'feed.signInToSave': 'Log in om te bewaren',
+  'repost.do': 'Opnieuw plaatsen',
+  'repost.undo': 'Opnieuw plaatsen ongedaan maken',
+  'repost.signIn': 'Log in om opnieuw te plaatsen',
+  'share.post': 'Deel dit bericht',
+  'saved.title': 'Bewaard',
+  'saved.subtitle': 'Berichten die je hebt bewaard. Alleen jij ziet dit.',
+  'saved.emptyLead': 'Nog niets bewaard. Tik op de bladwijzer bij een bericht in',
+  'saved.emptyTail': 'om het hier te bewaren.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -358,6 +478,21 @@ const ckb: Catalog = {
   'civak.kind.photo': 'وێنە',
   'civak.kind.meme': 'میم',
   'common.showMore': 'زیاتر پیشان بدە',
+  'feed.like': 'بەدڵمە',
+  'feed.unlike': 'بەدڵم نییە',
+  'feed.save': 'پاشەکەوت',
+  'feed.removeFromSaved': 'لە پاشەکەوتکراوەکان لابە',
+  'feed.comments': '{count} لێدوان',
+  'feed.signInToLike': 'بچۆ ژوورەوە بۆ بەدڵبوون',
+  'feed.signInToSave': 'بچۆ ژوورەوە بۆ پاشەکەوتکردن',
+  'repost.do': 'دووبارە بڵاوکردنەوە',
+  'repost.undo': 'لابردنی دووبارە بڵاوکردنەوە',
+  'repost.signIn': 'بچۆ ژوورەوە بۆ دووبارە بڵاوکردنەوە',
+  'share.post': 'ئەم بابەتە هاوبەش بکە',
+  'saved.title': 'پاشەکەوتکراو',
+  'saved.subtitle': 'ئەو بابەتانەی بۆ دواتر هێشتتەوە. تەنها تۆ دەیبینیت.',
+  'saved.emptyLead': 'هێشتا هیچ پاشەکەوت نەکراوە. لە',
+  'saved.emptyTail': 'لەسەر هەر بابەتێک دەست بە نیشانەی پاشەکەوت بدە تا لێرە بمێنێتەوە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, fr, nl, ku, ckb, ar, tr };

@@ -14,6 +14,7 @@ import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
 import { CivakScreen } from './src/feed/CivakScreen';
+import { SavedScreen } from './src/feed/SavedScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
@@ -205,6 +206,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="MemeDetail" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
+        {({ navigation }) => <SavedScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Tags" options={{ presentation: 'card' }}>
         {({ navigation }) => <TagsScreen onExit={() => navigation.goBack()} />}

@@ -93,6 +93,19 @@ export interface FeedAuthor {
   avatarUrl: string | null;
 }
 
+/** What the wall has done with a post, and whether you are one of them. */
+export interface PostEngagement {
+  likes: number;
+  bookmarks: number;
+  reposts: number;
+  liked: boolean;
+  bookmarked: boolean;
+  reposted: boolean;
+}
+
+/** The three things a post can be done to. */
+export type EngagementKind = 'like' | 'bookmark' | 'repost';
+
 /** One card on the wall (GET /feed). */
 export interface FeedItem {
   /** unique across both source tables */
@@ -107,5 +120,6 @@ export interface FeedItem {
   href: string;
   viewCount: number;
   commentCount: number;
+  engagement: PostEngagement;
   at: string;
 }
