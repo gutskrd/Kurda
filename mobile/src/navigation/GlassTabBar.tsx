@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n/I18nContext';
 import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './tabBarLayout';
 import { TABS } from './tabs';
 
@@ -21,6 +22,7 @@ const PILL_INSET_X = 6;
  */
 export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element {
   const { scheme, colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const [barWidth, setBarWidth] = useState(0);
@@ -67,7 +69,9 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
             ) : null}
 
             {state.routes.map((route, i) => {
-              const tab = TABS.find((t) => t.name === route.name);
+              const tab = TABS.find((x) => x.name === route.name);
+              // the bar speaks the reader's language like everything behind it
+              const label = tab ? t(tab.labelKey) : route.name;
               const focused = state.index === i;
               const color = focused ? activeText : inactiveText;
               const onPress = () => {
@@ -80,12 +84,12 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                   onPress={onPress}
                   accessibilityRole="button"
                   accessibilityState={{ selected: focused }}
-                  accessibilityLabel={tab?.title}
+                  accessibilityLabel={label}
                   style={styles.item}
                 >
                   <Icon name={(tab?.icon ?? 'home') as IconName} size={22} color={color} />
                   <Text numberOfLines={1} style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
-                    {tab?.title}
+                    {label}
                   </Text>
                 </Pressable>
               );

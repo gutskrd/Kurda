@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { TabDef } from '../navigation/tabs';
+import { useI18n } from '../i18n/I18nContext';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -11,11 +12,12 @@ import { spacing, typography } from '../theme/tokens';
  */
 export function TabScreen({ tab }: { tab: TabDef }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <GradientBackground>
       <View style={styles.container}>
         <Icon name={tab.icon} size={56} tone="primary" />
-        <Text style={[styles.title, { color: colors.primary }]}>{tab.title}</Text>
+        <Text style={[styles.title, { color: colors.primary }]}>{t(tab.labelKey)}</Text>
       </View>
     </GradientBackground>
   );
