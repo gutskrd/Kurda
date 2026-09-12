@@ -1,60 +1,48 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
-import { GradientBackground, Segmented } from '../theme/glass';
+import { GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
-import { getFeed } from './api';
+import { getSaved } from './api';
 import { FeedCard } from './FeedCard';
-import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
+import type { FeedItem } from './types';
 
 const PAGE = 20;
 
 /**
- * Civak — everything the community has written and posted, on one wall.
+ * The posts you kept.
  *
- * The same wall the web app opens on, reading the same `/feed`. Before this the
- * phone had Library and Memes as two separate screens behind two links in the
- * Social tab, which meant a poem posted this morning was invisible to anyone
- * looking at pictures — the exact split the web app removed. One wall, one
- * card, and a filter for when you do want just one kind.
+ * The bookmark on a card had nowhere to lead on the phone — you could save
+ * something and never find it again. This is where it goes, the same list the
+ * web app shows, scoped to you by the server.
+ *
+ * Unsaving from here removes the card, because a list of saved posts with an
+ * unsaved one still sitting in it is a lie that survives until the next reload.
  */
-export function CivakScreen(): React.JSX.Element {
+export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
 
-  const [section, setSection] = useState<FeedSection>('all');
-  const [kind, setKind] = useState<string | null>(null);
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [end, setEnd] = useState(false);
 
-  const kinds = SECTIONS.find((s) => s.key === section)?.kinds ?? [];
-
-  /** Changing half drops a kind that belonged to the other one. */
-  const chooseSection = useCallback((next: FeedSection) => {
-    setSection(next);
-    setKind((prev) => kindWithin(next, prev));
-  }, []);
-
-  const fetchPage = useCallback(
-    (offset: number) => getFeed(client, { section, kind, limit: PAGE, offset }),
-    [client, section, kind],
-  );
+  const fetchPage = useCallback((offset: number) => getSaved(client, { limit: PAGE, offset }), [client]);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      setItems(null);
       void (async () => {
         const res = await fetchPage(0);
         if (!active) return;
@@ -95,41 +83,29 @@ export function CivakScreen(): React.JSX.Element {
     setLoadingMore(false);
   }, [fetchPage, loadingMore, end, items]);
 
-  /** Replace one card in place, so a like does not reload the wall. */
-  const replace = useCallback((next: FeedItem) => {
-    setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
+  /** Keep the totals, but drop anything that has just been unsaved. */
+  const changed = useCallback((next: FeedItem) => {
+    setItems((prev) =>
+      (prev ?? []).flatMap((i) => (i.key !== next.key ? [i] : next.engagement.bookmarked ? [next] : [])),
+    );
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: FeedItem }) => <FeedCard item={item} onChanged={replace} />,
-    [replace],
+    ({ item }: { item: FeedItem }) => <FeedCard item={item} onChanged={changed} />,
+    [changed],
   );
 
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        <Text style={[styles.title, { color: colors.primary }]}>{t('civak.title')}</Text>
-        <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
-
-        <View style={styles.filters}>
-          <Segmented
-            options={SECTIONS.map((s) => s.key)}
-            value={section}
-            onChange={chooseSection}
-            labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
-          />
-          {/* the second level appears only once there is a half to narrow */}
-          {kinds.length > 0 && (
-            <Segmented
-              options={['all', ...kinds.map((k) => k.key)]}
-              value={kind ?? 'all'}
-              onChange={(next) => setKind(next === 'all' ? null : next)}
-              labelOf={(key) =>
-                key === 'all' ? t('civak.filter.allKinds') : t(kinds.find((k) => k.key === key)!.labelKey)
-              }
-            />
-          )}
+        <View style={styles.titleRow}>
+          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+            <Icon name="chevron-left" size={24} color={colors.textSecondary} />
+          </Pressable>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('saved.title')}</Text>
+          <View style={{ width: 24 }} />
         </View>
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
 
         <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()}>
           <FlatList
@@ -140,7 +116,11 @@ export function CivakScreen(): React.JSX.Element {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('civak.empty')}</Text>}
+            ListEmptyComponent={
+              <Text style={[styles.empty, { color: colors.textSecondary }]}>
+                {`${t('saved.emptyLead')} ${t('nav.civak')} ${t('saved.emptyTail')}`}
+              </Text>
+            }
             ListFooterComponent={
               loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null
             }
@@ -153,9 +133,9 @@ export function CivakScreen(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
-  filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },
 });
