@@ -37,7 +37,9 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
     const me = req.user!.id;
 
     const [friends, requests, groups, unreadGroups, notifications, unreadNotifications] = await Promise.all([
-      deps.friends.list(me, publicUrl),
+      // the rail needs every friend: it asks who is live and who has
+      // challenged you, and both answers are over the whole list
+      deps.friends.list(me, publicUrl).then((page) => page.friends),
       deps.friends.incomingRequests(me, publicUrl),
       deps.groups.myGroups(me),
       deps.groupChat.unread(me),

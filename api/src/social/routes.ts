@@ -11,7 +11,7 @@ import {
   type ActivityEntry,
 } from './profile-activity.js';
 import { EngagementService, isEngagementKind, isTargetType } from './engagement-service.js';
-import { FriendService } from '../friends/service.js';
+import { FriendService, FRIENDS_PAGE_MAX } from '../friends/service.js';
 import { FeedService, type FeedItem } from '../feed/service.js';
 import {
   MAX_REASON_LEN,
@@ -80,12 +80,21 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
    */
   app.get(
     '/users/:id/friends',
-    { schema: { params: z.object({ id: z.uuid() }) } },
+    {
+      schema: {
+        params: z.object({ id: z.uuid() }),
+        querystring: z.object({
+          limit: z.coerce.number().int().min(1).max(FRIENDS_PAGE_MAX).optional(),
+          offset: z.coerce.number().int().min(0).max(FRIENDS_PAGE_MAX).optional(),
+        }),
+      },
+    },
     async (req) => {
       const { id } = req.params as { id: string };
+      const { limit, offset } = req.query as { limit?: number; offset?: number };
       const profile = await social.profile(req.user?.id ?? null, id);
-      if (profile.private) return { friends: [] };
-      return { friends: await friends.list(id, publicUrl) };
+      if (profile.private) return { friends: [], total: 0 };
+      return friends.list(id, publicUrl, limit, offset);
     },
   );
 

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
-import { BLOCKS_PAGE_MAX, type FriendService } from './service.js';
+import { BLOCKS_PAGE_MAX, FRIENDS_PAGE_MAX, type FriendService } from './service.js';
 
 const targetParam = z.object({ userId: z.uuid() });
 
@@ -15,8 +15,23 @@ const BLOCKS_LIMIT = { max: 40, windowMs: 60_000, per: 'user-or-ip' as const };
 export function registerFriendRoutes(app: FastifyInstance, friends: FriendService): void {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
 
-  /** Accepted friends. */
-  app.get('/friends', { preHandler: requireAuth }, async (req) => ({ friends: await friends.list(req.user!.id, publicUrl) }));
+  /** Accepted friends — all of them, unless asked for fewer. */
+  app.get(
+    '/friends',
+    {
+      schema: {
+        querystring: z.object({
+          limit: z.coerce.number().int().min(1).max(FRIENDS_PAGE_MAX).optional(),
+          offset: z.coerce.number().int().min(0).max(FRIENDS_PAGE_MAX).optional(),
+        }),
+      },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { limit, offset } = req.query as { limit?: number; offset?: number };
+      return friends.list(req.user!.id, publicUrl, limit, offset);
+    },
+  );
 
   /** Incoming pending requests. */
   app.get('/friends/requests', { preHandler: requireAuth }, async (req) => ({

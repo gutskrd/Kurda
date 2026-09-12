@@ -65,6 +65,17 @@ export interface BlockedUser {
 export const BLOCKS_PAGE_SIZE = 25;
 export const BLOCKS_PAGE_MAX = 100;
 
+/**
+ * The most friends one request will answer with.
+ *
+ * `FRIEND_CAP` rather than something smaller on purpose: 500 is already the
+ * most friends anyone can have, so asking for that many is asking for all of
+ * them, and no caller is ever silently cut short — not the friends page, not
+ * a picker, not a copy of the phone app that shipped before this did. What
+ * changes is that a caller drawing eight avatars can now say eight.
+ */
+export const FRIENDS_PAGE_MAX = FRIEND_CAP;
+
 interface EdgeRow {
   status: string;
   requested_by: string | null;
@@ -308,17 +319,58 @@ export class FriendService {
     return r.rows[0]?.n ?? 0;
   }
 
-  /** Accepted friends of `user` (blocked users can't be friends). */
-  async list(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
-    const rows = await this.pool.query<FriendRow>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at FROM friendships f
+  /**
+   * One page of `user`'s accepted friends, by username. Blocked users cannot
+   * be friends, so there is nothing to filter out here.
+   *
+   * Paged because all but one caller draws a handful and was being sent the
+   * lot: a profile puts eight avatars in a stack, the list on somebody else's
+   * profile shows twelve. Up to five hundred rows of username, display name,
+   * avatar key and presence crossed the wire to do that, on the most-visited
+   * screen there is.
+   *
+   * `total` rides along on the page through `count(*) OVER ()`, so "and 328
+   * more" costs no second query and is the true number rather than the length
+   * of whatever happened to arrive.
+   */
+  async list(
+    user: string,
+    publicUrl: PublicUrl = () => null,
+    limit: number = FRIENDS_PAGE_MAX,
+    offset = 0,
+  ): Promise<{ total: number; friends: FriendSummary[] }> {
+    const rows = await this.pool.query<FriendRow & { total: number }>(
+      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at,
+              count(*) OVER ()::int AS total FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
-        ORDER BY u.username`,
-      [user],
+        ORDER BY u.username
+        LIMIT $2 OFFSET $3`,
+      [user, Math.min(Math.max(limit, 1), FRIENDS_PAGE_MAX), Math.max(offset, 0)],
     );
     const now = new Date();
-    return rows.rows.map((r) => toFriendSummary(r, publicUrl, now));
+    // a page past the end carries no row to hold the count, and a bare 0 there
+    // would say the list is empty when it is only finished
+    const total = rows.rows[0]?.total ?? (offset > 0 ? await this.activeFriendCount(user) : 0);
+    return { total, friends: rows.rows.map((r) => toFriendSummary(r, publicUrl, now)) };
+  }
+
+  /**
+   * Friends who still have an account — exactly the set `list` pages over.
+   *
+   * Not `friendCount`, which counts friendship rows without joining `users`:
+   * that one guards the 500 cap, where an account that has since been deleted
+   * still occupying a slot is the answer you want. This one has to agree with
+   * a page, or the heading contradicts the list underneath it.
+   */
+  private async activeFriendCount(user: string): Promise<number> {
+    const r = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM friendships f
+         JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
+        WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL`,
+      [user],
+    );
+    return r.rows[0]!.n;
   }
 
   /** Incoming pending requests (not expired, requester not since blocked). */

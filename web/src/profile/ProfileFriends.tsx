@@ -42,14 +42,21 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
   const { openProfile } = useProfileModal();
   const t = useT();
   const [friends, setFriends] = useState<FriendOf[] | null>(null);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setFriends(null);
     void (async () => {
-      const res = await client.get<{ friends: FriendOf[] }>(`/users/${userId}/friends`);
+      // ask for the twelve this draws, not all five hundred somebody may
+      // have; `total` is what the line underneath needs, and it comes back
+      // with the page
+      const res = await client.get<{ friends: FriendOf[]; total: number }>(
+        `/users/${userId}/friends?limit=${SHOW}`,
+      );
       if (cancelled) return;
       setFriends(res.ok ? (res.data.friends ?? []) : []);
+      setTotal(res.ok ? (res.data.total ?? 0) : 0);
     })();
     return () => {
       cancelled = true;
@@ -57,15 +64,14 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
   }, [client, userId]);
 
   if (!friends || friends.length === 0) return null;
-  const shown = friends.slice(0, SHOW);
 
   return (
     <section className="mkp-friends">
       <h2 className="friend-heading">
-        {t('nav.friends')} <span className="mkp-friends-count">{friends.length}</span>
+        {t('nav.friends')} <span className="mkp-friends-count">{total}</span>
       </h2>
       <ul className="mkp-friends-list">
-        {shown.map((f) => (
+        {friends.map((f) => (
           <li key={f.userId}>
             <button
               type="button"
@@ -79,8 +85,8 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
           </li>
         ))}
       </ul>
-      {friends.length > shown.length && (
-        <p className="muted mkp-friends-more">{t('profile.friendsMore', { count: friends.length - shown.length })}</p>
+      {total > friends.length && (
+        <p className="muted mkp-friends-more">{t('profile.friendsMore', { count: total - friends.length })}</p>
       )}
     </section>
   );
