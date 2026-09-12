@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { APP_LOCALES } from '@kurda/shared';
 import { LOCALES, LOCALE_LABEL, TRANSLATIONS } from './translations.js';
 
 describe('translation catalogs', () => {
@@ -22,17 +23,14 @@ describe('translation catalogs', () => {
     for (const locale of LOCALES) expect(LOCALE_LABEL[locale]).toBeTruthy();
   });
 
-  it('ships the 8 supported languages, each labelled in its own native name (KUR-184)', () => {
-    expect([...LOCALES].sort()).toEqual(['ar', 'ckb', 'de', 'en', 'fr', 'ku', 'nl', 'tr']);
-    expect(LOCALE_LABEL).toMatchObject({
-      en: 'English',
-      de: 'Deutsch',
-      fr: 'Français',
-      nl: 'Nederlands',
-      ku: 'Kurmancî',
-      ckb: 'Soranî',
-      ar: 'العربية',
-      tr: 'Türkçe',
-    });
+  /**
+   * The phone offered eight languages while the browser offered nine, and
+   * nothing noticed, because each kept its own list. There is one list now:
+   * this asserts the phone has not started keeping a second.
+   */
+  it('speaks every language the shared list declares, in its own native name', () => {
+    expect([...LOCALES].sort()).toEqual(APP_LOCALES.map((l) => l.code).sort());
+    expect(LOCALES).toContain('es');
+    for (const { code, nativeName } of APP_LOCALES) expect(LOCALE_LABEL[code]).toBe(nativeName);
   });
 });
