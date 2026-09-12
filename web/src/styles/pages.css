@@ -2434,15 +2434,22 @@ button.feature {
   color: var(--gold-ink);
 }
 
-/* overlapping thumbnail stack + "+N" chip */
+/*
+ * Thumbnail stack + "+N" chip.
+ *
+ * Spaced rather than overlapped. Overlapping is the usual way to say "these
+ * are a group", but these are a list of things you own and people you know,
+ * and each one hid a third of the one behind it — on a sidebar that has the
+ * room to simply show them.
+ */
 .avatar-stack {
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 .avatar-stack-item {
   width: 34px;
   height: 34px;
-  margin-left: -8px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--surface-2);
@@ -2450,9 +2457,6 @@ button.feature {
   display: grid;
   place-items: center;
   color: var(--ink-3);
-}
-.avatar-stack-item:first-child {
-  margin-left: 0;
 }
 .avatar-stack-item img {
   width: 100%;
@@ -2467,7 +2471,7 @@ button.feature {
   padding: 3px;
 }
 .avatar-stack-more {
-  margin-left: 8px;
+  margin-left: 2px;
   font-size: 0.85rem;
   color: var(--ink-3);
 }

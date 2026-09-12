@@ -55,8 +55,10 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
         `/users/${userId}/friends?limit=${SHOW}`,
       );
       if (cancelled) return;
-      setFriends(res.ok ? (res.data.friends ?? []) : []);
-      setTotal(res.ok ? (res.data.total ?? 0) : 0);
+      const list = res.ok ? (res.data.friends ?? []) : [];
+      setFriends(list);
+      // an API that predates paging sends no total, and sent every friend
+      setTotal(res.ok ? (res.data.total ?? list.length) : 0);
     })();
     return () => {
       cancelled = true;

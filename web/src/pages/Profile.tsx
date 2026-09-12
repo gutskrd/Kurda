@@ -54,8 +54,11 @@ export function Profile(): React.JSX.Element {
       else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error, t));
       if (w.ok) setZer(w.data.balances.zer);
       if (f.ok) {
-        setFriends(f.data.friends ?? []);
-        setFriendCount(f.data.total ?? 0);
+        const list = f.data.friends ?? [];
+        setFriends(list);
+        // an API that predates paging sends no total and no limit — it sent
+        // the whole list, so its length IS the total
+        setFriendCount(f.data.total ?? list.length);
       }
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
