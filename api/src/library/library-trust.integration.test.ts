@@ -9,6 +9,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -32,6 +33,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('library trust enforcement (integra
       },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     const id = res.json().user.id;
     userIds.push(id);
     return res.json().tokens.accessToken;

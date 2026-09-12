@@ -14,6 +14,7 @@ import { createStorage, type MediaStorage } from './storage.js';
 import { MediaUsageService } from './mediaUsage.js';
 import { audioLimits, type AudioLimits } from './mediaLimits.js';
 import { storeAudioMedia, type AudioMediaDeps } from './audioMedia.js';
+import { activate } from '../test/activate.js';
 
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
 const KIND = 'voice-note';
@@ -114,6 +115,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
       payload: { email: `voice_${suffix}@it.kurda.app`, username: `voice_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.64.0.9',
     });
+    await activate(app, pool, reg);
     const token = reg.json().tokens.accessToken as string;
     userIds.push(reg.json().user.id);
 
