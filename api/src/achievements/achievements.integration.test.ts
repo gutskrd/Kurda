@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ACHIEVEMENTS, AchievementsService } from './service.js';
+import { activate } from '../test/activate.js';
 
 describe('achievement definitions (unit)', () => {
   it('are named Kurdish-first with unique ids', () => {
@@ -41,6 +42,7 @@ describe.skipIf(!DATABASE_URL)('achievement awards (integration)', () => {
       },
       remoteAddress: '10.18.0.1',
     });
+    await activate(app, pool, res);
     token = res.json().tokens.accessToken;
     userId = res.json().user.id;
   });

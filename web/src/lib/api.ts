@@ -221,6 +221,10 @@ export class ApiClient {
  * would have to close, not this function.
  */
 export function describeError(error: ApiError, t: Translate): string {
+  // The one server code worth saying in the reader’s own language: it is a
+  // 403 like any other to this function, but it is not a refusal — it is an
+  // instruction, and the account is one confirmed email away from working.
+  if (error.code === 'ACCOUNT_NOT_ACTIVATED') return t('error.notActivated');
   switch (error.kind) {
     case 'network':
       return t('error.offline');

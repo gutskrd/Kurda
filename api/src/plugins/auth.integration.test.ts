@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { requireAuth, requireRoles } from './auth.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -37,6 +38,7 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
       },
       remoteAddress: '10.5.0.1',
     });
+    await activate(app, pool, res);
     userId = res.json().user.id;
     accessToken = res.json().tokens.accessToken;
   });

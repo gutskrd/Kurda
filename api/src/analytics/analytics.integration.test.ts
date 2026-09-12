@@ -6,6 +6,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { AnalyticsService } from './service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -26,6 +27,7 @@ describe.skipIf(!DATABASE_URL)('analytics ingest (integration)', () => {
       payload: { email: `analytics_${suffix}@it.kurda.app`, username: `analytics_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.105.0.1',
     });
+    await activate(app, pool, res);
     userId = res.json().user.id;
   });
 

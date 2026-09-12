@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { sanitizeBio } from './routes.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -53,6 +54,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
       },
       remoteAddress: '10.10.0.2',
     });
+    await activate(app, pool, res);
     token = res.json().tokens.accessToken;
     userId = res.json().user.id;
   });
@@ -68,7 +70,9 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     expect(res.statusCode).toBe(200);
     const user = res.json().user;
     expect(user.id).toBe(userId);
-    expect(user.emailVerified).toBe(false);
+    // the suite confirms its account, the way a person does before using
+    // anything; what matters here is that the DTO carries the real state
+    expect(user.emailVerified).toBe(true);
     expect(user.roles).toEqual([]);
     expect((await me('GET', undefined, '')).statusCode).toBe(401);
   });
@@ -90,6 +94,10 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
   });
 
   it('ignores unknown/privileged fields on PATCH /me (no mass assignment)', async () => {
+    const before = await pool.query<{ email_verified_at: Date | null }>(
+      `SELECT email_verified_at FROM users WHERE id = $1`,
+      [userId],
+    );
     const res = await me('PATCH', {
       displayName: 'Legit Name',
       // attacker-supplied privileged fields — must never be written
@@ -108,7 +116,10 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     );
     expect(row.rows[0]!.xp).toBe(0);
     expect(row.rows[0]!.roles).toEqual([]);
-    expect(row.rows[0]!.email_verified_at).toBeNull();
+    // unchanged rather than null: what an attacker must not be able to do
+    // is *move* this column, and "it was null and still is" stops proving
+    // that the moment the account is a confirmed one
+    expect(row.rows[0]!.email_verified_at).toEqual(before.rows[0]!.email_verified_at);
   });
 
   it('rejects invalid timezones and empty patches', async () => {
@@ -187,6 +198,7 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
         payload: { email: `${tag}_${suffix}@it.kurda.app`, username: `${tag}_${suffix}`.slice(0, 28), password: 'a-strong-password1', acceptTerms: true },
         remoteAddress: ip,
       });
+      await activate(app, pool, r);
       return { token: r.json().tokens.accessToken as string, id: r.json().user.id as string };
     };
     const a = await register('rcx', '10.10.9.1');

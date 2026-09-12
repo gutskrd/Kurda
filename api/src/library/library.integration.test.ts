@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -22,6 +23,7 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
       payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     const id = res.json().user.id;
     userIds.push(id);
     return { token: res.json().tokens.accessToken, id };

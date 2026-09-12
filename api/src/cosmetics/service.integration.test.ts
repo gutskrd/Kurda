@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { CosmeticsService } from './service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -28,6 +29,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
       payload: { email: `cos_${tag}_${s}@it.kurda.app`, username: `cos${tag}${s}`, password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     const body = res.json();
     return { id: body.user.id as string, token: body.tokens.accessToken as string };
   };

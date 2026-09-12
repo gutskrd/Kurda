@@ -495,6 +495,7 @@ export const ku: Catalogue = {
   'error.sessionExpired': 'Danişîna te qediya. Ji kerema xwe dîsa têkeve.',
   'error.server': 'Li aliyê me tiştek xelet çû. Ji kerema xwe piştî demekê dîsa biceribîne.',
   'error.generic': 'Tiştek xelet çû.',
+  'error.notActivated': 'Hesabê te hê nehatiye çalakkirin. Ji bo berdewamiyê e-nameya xwe piştrast bike.',
   'gate.title': 'Ji bo vê yekê hesabek pêwîst e',
   'gate.body': 'Tu dikarî her tiştî li vir bêyî hesab bixwînî — lê ji bo ku {what} divê tu têkevî.',
   'gate.backToCivak': 'Vegere Civakê',

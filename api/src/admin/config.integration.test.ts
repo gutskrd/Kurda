@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -23,6 +24,7 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
       payload: { email: `cfg_${tag}_${suffix}@it.kurda.app`, username: `cfg_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
+    await activate(app, pool, r);
     const id = r.json().user.id;
     userIds.push(id);
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [id]);

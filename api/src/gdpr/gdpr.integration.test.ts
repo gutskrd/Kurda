@@ -7,6 +7,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { createStorage } from '../media/storage.js';
 import { GdprService, DELETION_GRACE_DAYS } from './service.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const S3_READY = Boolean(process.env.S3_ENDPOINT);
@@ -29,6 +30,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       },
       remoteAddress: `10.13.0.${Math.floor(Math.random() * 200) + 1}`,
     });
+    await activate(app, pool, res);
     return {
       id: res.json().user.id as string,
       token: res.json().tokens.accessToken as string,

@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -27,6 +28,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
       },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     ids[tag] = res.json().user.id;
     tokens[tag] = res.json().tokens.accessToken;
   }

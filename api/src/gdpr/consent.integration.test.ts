@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ageOn, CURRENT_POLICY_VERSION, isRestrictedAge } from './consent.js';
+import { activate } from '../test/activate.js';
 
 describe('age math (unit)', () => {
   it('computes age respecting the birthday boundary', () => {
@@ -27,13 +28,18 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
   let pool: pg.Pool;
   const suffix = Date.now().toString(36);
 
-  const register = (body: Record<string, unknown>, ip: string) =>
-    app.inject({
+  const register = async (body: Record<string, unknown>, ip: string) => {
+    const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { password: 'a-strong-password1', acceptTerms: true, ...body },
       remoteAddress: ip,
     });
+    // the tests below re-consent and toggle analytics, which an unconfirmed
+    // account cannot do; the invalid-signup cases never get this far
+    if (res.statusCode === 201) await activate(app, pool, res);
+    return res;
+  };
 
   beforeAll(async () => {
     app = buildApp(config);

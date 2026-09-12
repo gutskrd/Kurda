@@ -10,6 +10,7 @@ import pg from 'pg';
 import { escapeHtml, normalizeKurdish, XSS_PAYLOADS } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -33,6 +34,7 @@ describe.skipIf(!DATABASE_URL)('XSS corpus vs. profile bio (integration)', () =>
       payload: { email: `xss_${suffix}@it.kurda.app`, username: `xss_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: '10.108.0.1',
     });
+    await activate(app, pool, res);
     token = res.json().tokens.accessToken;
   });
 

@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -23,6 +24,7 @@ describe.skipIf(!DATABASE_URL)('private rooms (integration)', () => {
       payload: { email, username: `room_${suffix}_${tag}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: `10.23.0.${(emails.length % 250) + 1}`,
     });
+    await activate(app, pool, reg);
     return { id: reg.json().user.id, token: reg.json().tokens.accessToken };
   }
 

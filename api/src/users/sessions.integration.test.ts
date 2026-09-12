@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -48,6 +49,7 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
       },
       remoteAddress: '10.11.0.2',
     });
+    await activate(app, pool, reg);
     userId = reg.json().user.id;
     phoneTokens = reg.json().tokens;
     const login = await app.inject({

@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { AuditService } from './audit-service.js';
 import { totpCode } from './totp.js';
+import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -41,6 +42,7 @@ describe.skipIf(!DATABASE_URL)('admin audit log (integration)', () => {
       payload: { email: `${name}_${suffix}@it.kurda.app`, username: name.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
       remoteAddress: ip,
     });
+    await activate(app, pool, res);
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 
