@@ -9,6 +9,7 @@ import { Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { AuthScreenShell } from './AuthForm';
+import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
   /** re-open the intro (language / welcome / notifications slides) — from the app root */
@@ -32,6 +33,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors, scheme } = useTheme();
   const { oauthSignIn, baseUrl } = useAuth();
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const { t } = useI18n();
   const [conn, setConn] = useState<'checking' | 'ok' | 'fail'>('checking');
 
   useEffect(() => {
@@ -86,24 +88,27 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     } catch (e) {
       const code = (e as { code?: string }).code;
       if (code === 'ERR_REQUEST_CANCELED') return; // user tapped Cancel — not an error
-      Alert.alert('Sign in with Apple failed', `${(e as Error).message ?? 'Unknown error'}${code ? `\n(${code})` : ''}`);
+      Alert.alert(
+        t('welcome.appleFailed'),
+        `${(e as Error).message ?? t('common.unknownError')}${code ? `\n(${code})` : ''}`,
+      );
       return;
     }
     if (!cred.identityToken) {
-      Alert.alert('Sign in with Apple failed', 'Apple didn’t return an identity token. Please try again.');
+      Alert.alert(t('welcome.appleFailed'), t('welcome.appleNoToken'));
       return;
     }
     try {
       const err = await oauthSignIn('apple', cred.identityToken);
-      if (err) Alert.alert('Could not sign in', err);
+      if (err) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch (e) {
       // never let a post-Apple failure die silently — surface it
-      Alert.alert('Sign-in error', (e as Error)?.message ?? String(e));
+      Alert.alert(t('welcome.signInError'), (e as Error)?.message ?? String(e));
     }
   };
 
   const soon = (provider: string) =>
-    Alert.alert(`${provider} sign-in is coming soon`, 'For now, continue with email — it takes a few seconds.');
+    Alert.alert(`${provider} sign-in is coming soon`, t('welcome.emailInstead'));
 
   const onGoogle = async () => {
     // The native sheet and the backend exchange are separate failure domains.
@@ -115,22 +120,20 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       return;
     }
     if (res.kind === 'error') {
-      Alert.alert('Google sign-in failed', res.message);
+      Alert.alert(t('welcome.googleFailed'), res.message);
       return;
     }
     try {
       const err = await oauthSignIn('google', res.idToken);
-      if (err) Alert.alert('Could not sign in', err);
+      if (err) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch (e) {
-      Alert.alert('Sign-in error', (e as Error)?.message ?? String(e));
+      Alert.alert(t('welcome.signInError'), (e as Error)?.message ?? String(e));
     }
   };
 
   return (
-    <AuthScreenShell title="Sign in or create an account" onBack={onBack} hero="person">
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Apple, Google or email — your choice. You can always sign in later.
-      </Text>
+    <AuthScreenShell title={t('welcome.title')} onBack={onBack} hero="person">
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('welcome.subtitle')}</Text>
 
       <View style={styles.methods}>
         {appleAvailable ? (
@@ -148,7 +151,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         ) : null}
         <MethodButton
           icon="google"
-          label="Continue with Google"
+          label={t('welcome.google')}
           onPress={onGoogle}
           background={colors.controlTrack}
           foreground={colors.textPrimary}
@@ -156,7 +159,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         />
         <MethodButton
           icon="mail"
-          label="Continue with email"
+          label={t('welcome.email')}
           onPress={() => navigation.navigate('Register')}
           background={colors.primary}
           foreground={colors.textOnPrimary}
@@ -164,7 +167,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       </View>
 
       <Pressable onPress={() => navigation.navigate('Login')} style={styles.link} accessibilityRole="button">
-        <Text style={[styles.linkText, { color: colors.primary }]}>I already have an account</Text>
+        <Text style={[styles.linkText, { color: colors.primary }]}>{t('welcome.haveAccount')}</Text>
       </Pressable>
 
       {/*
