@@ -6,6 +6,7 @@ import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function AuthScreenShell({
   title,
@@ -19,7 +20,9 @@ export function AuthScreenShell({
   /** optional breathing hero glyph shown above the title (sign-in choice) */
   hero?: IconName;
 }) {
-  const { colors } = useTheme();
+  const { colors } = useTheme();
+
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   return (
     <GradientBackground>
@@ -31,7 +34,7 @@ export function AuthScreenShell({
           hitSlop={10}
           style={[styles.back, { top: insets.top + spacing.sm }]}
         >
-          <Text style={[styles.backText, { color: colors.primary }]}>‹ Back</Text>
+          <Text style={[styles.backText, { color: colors.primary }]}>{`‹ ${t('common.back')}`}</Text>
         </Pressable>
       ) : null}
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
