@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
+import { RouteFallback } from '../components/RouteFallback';
 import { useAuth } from '../auth/AuthProvider';
 import { TopNav, type NavItem } from '../components/TopNav';
 import { BookIcon, ChatsIcon, GameIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
@@ -60,7 +62,19 @@ export function AppLayout(): React.JSX.Element {
       </a>
       <TopNav links={links} />
       <main id="main" className="app-main">
-        <Outlet />
+        {/*
+         * The page waits here, and nothing else does.
+         *
+         * Routes are loaded on demand, so React needs a boundary to hold the
+         * gap. Above the route table it would take the navigation down with
+         * the page and put it back a moment later, which reads as the whole
+         * app blinking on a first visit to a screen. Inside `main`, the bars
+         * stay where they are and only the page is missing — which is the
+         * truth of what is happening.
+         */}
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />

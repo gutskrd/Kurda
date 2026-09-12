@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { preloadCatalogue } from '../i18n/catalogues';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Civak } from './Civak';
@@ -186,6 +187,7 @@ describe('Civak', () => {
   describe('in another language', () => {
     it('translates the sections, not only the words around them', async () => {
       localStorage.setItem('mykurda_locale', 'es');
+      await preloadCatalogue();
       feedFetch([item('library:s1')]);
       renderApp(<Civak />, ['/app/civak']);
 
@@ -199,6 +201,7 @@ describe('Civak', () => {
     /** In Kurmancî those words ARE the translation, so they come back. */
     it('keeps the Kurdish words for someone reading in Kurdish', async () => {
       localStorage.setItem('mykurda_locale', 'ku');
+      await preloadCatalogue();
       feedFetch([item('library:s1')]);
       renderApp(<Civak />, ['/app/civak']);
 
@@ -209,6 +212,7 @@ describe('Civak', () => {
 
     it('translates the badge on a card', async () => {
       localStorage.setItem('mykurda_locale', 'fr');
+      await preloadCatalogue();
       feedFetch([item('library:p1', { kind: 'poem' })]);
       renderApp(<Civak />, ['/app/civak']);
 
@@ -218,6 +222,7 @@ describe('Civak', () => {
 
     it('translates the controls on a card', async () => {
       localStorage.setItem('mykurda_locale', 'de');
+      await preloadCatalogue();
       signIn();
       feedFetch([item('library:s1')]);
       renderApp(<Civak />, ['/app/civak']);
@@ -229,6 +234,7 @@ describe('Civak', () => {
 
     it('offers to post in your language, without renaming what you can post', async () => {
       localStorage.setItem('mykurda_locale', 'tr');
+      await preloadCatalogue();
       signIn();
       feedFetch([]);
       renderApp(<Civak />, ['/app/civak']);

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { RailStrip, rungs } from './RailStrip';
 import type { SocialRailData } from './useSocialRail';
 import { I18nProvider } from '../i18n/I18nProvider';
+import { preloadCatalogue } from '../i18n/catalogues';
 
 const person = (id: string, extra: Record<string, unknown> = {}) => ({
   userId: id,
@@ -92,8 +93,9 @@ describe('RailStrip', () => {
    * accessible name are the only words on it — and the only way a screen-reader
    * user knows which number is which.
    */
-  it('names its rungs in the reader’s language', () => {
+  it('names its rungs in the reader’s language', async () => {
     localStorage.setItem('mykurda_locale', 'de');
+    await preloadCatalogue();
     render(
       <I18nProvider>
         <RailStrip data={data({ friends: [person('1', { online: true })] })} onExpand={() => undefined} />

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MessageList } from './MessageList';
 import { I18nProvider } from '../i18n/I18nProvider';
+import { preloadCatalogue } from '../i18n/catalogues';
 
 /** Local-time ISO, so the test does not depend on the runner's timezone. */
 const at = (h: number, m: number): string => {
@@ -128,8 +129,9 @@ describe('MessageList', () => {
    * and weekday names beside them come from `toLocaleDateString` — which takes
    * the browser's language, not the one the reader chose, unless it is told.
    */
-  it('separates days in the reader’s language', () => {
+  it('separates days in the reader’s language', async () => {
     localStorage.setItem('mykurda_locale', 'de');
+    await preloadCatalogue();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(22, 0, 0, 0);
