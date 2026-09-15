@@ -32,6 +32,17 @@ export function invitePath(invite: GameInvite): string {
   return `/app/games/${invite.type}?id=${encodeURIComponent(invite.id)}`;
 }
 
+/**
+ * The same path as a route pattern, with no leading slash and no query.
+ *
+ * React Navigation's linking config wants exactly this shape, and it must be
+ * the same path `invitePath` builds or the phone will not recognise the link
+ * the phone itself sent. Derived from one place so it cannot be two.
+ */
+export function inviteRoutePath(type: GameInviteType): string {
+  return invitePath({ type, id: 'x' }).replace(/^\//, '').split('?')[0]!;
+}
+
 /** An absolute, shareable URL. `origin` lets the browser use the current deploy. */
 export function buildInviteUrl(type: GameInviteType, id: string, origin = 'https://mykurda.com'): string {
   return `${origin}${invitePath({ type, id })}`;
