@@ -120,7 +120,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       return;
     }
     if (res.kind === 'error') {
-      Alert.alert(t('welcome.googleFailed'), res.message);
+      Alert.alert(t(res.messageKey), res.message ?? '');
       return;
     }
     try {

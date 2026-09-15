@@ -55,7 +55,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
       <Centered>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.startFailed')}</Text>
         <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text>
-        {retryable ? <Primary label="Try again" onPress={() => setReloadKey((k) => k + 1)} /> : null}
+        {retryable ? <Primary label={t('common.retry')} onPress={() => setReloadKey((k) => k + 1)} /> : null}
         <Primary label="Back" onPress={onExit} />
       </Centered>
     );

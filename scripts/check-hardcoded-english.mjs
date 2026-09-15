@@ -86,6 +86,10 @@ const NOT_COPY = new Set([
   'Premium',
   // a football club, on a sticker, beside Kurdistan and Zilan
   'Amed Spor',
+  // the header on a shared Wordle grid. A share text is pasted into somebody
+  // else's chat, where the sharer's language is not the reader's, so it stays
+  // one recognisable name — the grid underneath is the content.
+  'MyKurda Wordle',
 ]);
 
 /**

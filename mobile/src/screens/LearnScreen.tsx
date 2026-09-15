@@ -82,10 +82,11 @@ export function LearnScreen() {
       if (isLaunchable(node) && node.firstLessonId) {
         navigation.navigate('Lesson', { lessonId: node.firstLessonId });
       } else {
-        Alert.alert(node.title, stateHint(node.state) ?? 'Not available yet.');
+        const hint = stateHint(node.state);
+        Alert.alert(node.title, hint ? t(hint) : t('learn.notAvailableYet'));
       }
     },
-    [navigation],
+    [navigation, t],
   );
 
   const header = (

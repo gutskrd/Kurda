@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { bodyPreview, clock, commentText, type LibraryComment } from './types';
+import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
+import { interpolate } from '../i18n/format';
+
+/** The real catalogue: a stub that echoes the key would hide a missing one. */
+const tr =
+  (locale: 'en' | 'ku') =>
+  (key: TranslationKey, vars?: Record<string, string | number>): string =>
+    interpolate(TRANSLATIONS[locale][key], vars);
+const t = tr('en');
 
 describe('clock', () => {
   it('formats seconds as mm:ss and floors, guarding junk', () => {
@@ -25,8 +34,11 @@ describe('commentText', () => {
     body: 'hello', audioMediaId: null, audioUrl: null, status: 'visible', replyCount: 0, createdAt: '', updatedAt: '',
   };
   it('shows body, voice placeholder, or removed placeholder', () => {
-    expect(commentText(base)).toBe('hello');
-    expect(commentText({ ...base, body: null, audioMediaId: 'k' })).toBe('🔊 Voice comment');
-    expect(commentText({ ...base, status: 'removed', body: null })).toBe('This comment was removed.');
+    expect(commentText(base, t)).toBe('hello');
+    expect(commentText({ ...base, body: null, audioMediaId: 'k' }, t)).toBe(TRANSLATIONS.en['comments.voice']);
+    expect(commentText({ ...base, status: 'removed', body: null }, t)).toBe(TRANSLATIONS.en['comments.removed']);
+    // the placeholder follows the reader; the body never does
+    expect(commentText({ ...base, status: 'removed', body: null }, tr('ku'))).toBe(TRANSLATIONS.ku['comments.removed']);
+    expect(commentText(base, tr('ku'))).toBe('hello');
   });
 });

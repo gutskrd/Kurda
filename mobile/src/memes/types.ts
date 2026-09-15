@@ -1,6 +1,8 @@
 /** Shared types + pure helpers for the meme/image feed (KUR-291). Native-free so
  *  the helpers are unit-testable. */
 
+import type { Translate } from '../api/errors';
+
 export type Reaction = 'like' | 'laugh' | 'love' | 'wow' | 'sad' | 'angry';
 export type Category = 'meme' | 'image';
 export type AuthorRole = 'user' | 'admin' | 'founder';
@@ -78,8 +80,13 @@ export function topReactionEmojis(summary: ReactionSummary, max = 3): string[] {
     .map(([r]) => REACTION_EMOJI[r]);
 }
 
-/** A tombstoned comment renders as a placeholder rather than empty. */
-export function commentText(c: Comment): string {
-  if (c.status === 'removed') return 'This comment was removed.';
+/**
+ * A tombstoned comment renders as a placeholder rather than empty.
+ *
+ * Takes a translator because the other case passes through: the body is
+ * whatever the commenter wrote, in whatever language they wrote it.
+ */
+export function commentText(c: Comment, t: Translate): string {
+  if (c.status === 'removed') return t('comments.removed');
   return c.body ?? '';
 }

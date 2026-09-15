@@ -6,10 +6,11 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
 import {
   FIELD_ERROR_COPY,
-  PASSWORD_RULES_TEXT,
+  PASSWORD_RULES_KEY,
   validateEmail,
   validatePassword,
   validateUsername,
+  FIELD_ERROR_VARS,
 } from '../../auth/validators';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './AuthForm';
@@ -33,9 +34,9 @@ export function RegisterScreen({ navigation }: Props) {
     const usernameError = validateUsername(username);
     const passwordError = validatePassword(password);
     setErrors({
-      email: emailError && FIELD_ERROR_COPY[emailError],
-      username: usernameError && FIELD_ERROR_COPY[usernameError],
-      password: passwordError && FIELD_ERROR_COPY[passwordError],
+      email: emailError ? t(FIELD_ERROR_COPY[emailError], FIELD_ERROR_VARS) : null,
+      username: usernameError ? t(FIELD_ERROR_COPY[usernameError], FIELD_ERROR_VARS) : null,
+      password: passwordError ? t(FIELD_ERROR_COPY[passwordError], FIELD_ERROR_VARS) : null,
     });
     if (emailError || usernameError || passwordError) return;
 
@@ -77,7 +78,7 @@ export function RegisterScreen({ navigation }: Props) {
         testID="password"
       />
       {!errors.password ? (
-        <Text style={[styles.hint, { color: colors.textSecondary }]}>{PASSWORD_RULES_TEXT}</Text>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(PASSWORD_RULES_KEY, FIELD_ERROR_VARS)}</Text>
       ) : null}
       <SubmitButton label={t('auth.register.submit')} busy={busy} onPress={submit} />
       <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('auth.register.terms')}</Text>

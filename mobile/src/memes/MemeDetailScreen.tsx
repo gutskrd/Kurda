@@ -170,7 +170,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                     <View style={styles.commentMain}>
                       <Text style={[styles.commentAge, { color: colors.textSecondary }]}>{relativeTime(c.createdAt)}</Text>
                       <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
-                        {commentText(c)}
+                        {commentText(c, t)}
                       </Text>
                       <View style={styles.commentFoot}>
                         {c.replyCount > 0 ? (

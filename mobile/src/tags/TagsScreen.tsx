@@ -210,7 +210,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             ) : null}
             <View style={styles.sheetActions}>
               <ClayButton label="Cancel" tone="neutral" onPress={() => setClaiming(null)} style={styles.flex} />
-              <ClayButton label={busy ? 'Adding…' : 'Add tag'} tone="primary" onPress={submitClaim} style={styles.flex} />
+              <ClayButton label={busy ? t('tags.adding') : t('tags.add')} tone="primary" onPress={submitClaim} style={styles.flex} />
             </View>
           </View>
         ) : null}

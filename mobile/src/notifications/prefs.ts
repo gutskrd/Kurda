@@ -4,11 +4,11 @@ export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 export const CATEGORY_LABEL: Record<NotificationCategory, string> = {
-  streak: 'Streak reminders',
-  friends: 'Friend activity',
-  games: 'Game invites & results',
+  streak: 'notifications.pref.streak',
+  friends: 'notifications.pref.friends',
+  games: 'notifications.pref.games',
   events: 'Events',
-  marketing: 'News & offers',
+  marketing: 'notifications.pref.news',
 };
 
 export interface NotificationPrefs {

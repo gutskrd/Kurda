@@ -34,7 +34,7 @@ export async function signInWithGoogle(): Promise<GoogleResult> {
     sdk = await import('@react-native-google-signin/google-signin');
   } catch {
     // native module absent (build predates it) — degrade instead of crashing
-    return { kind: 'error', message: 'Google sign-in isn’t available in this build yet.' };
+    return { kind: 'error', messageKey: 'welcome.googleUnavailable' };
   }
   const { GoogleSignin, isSuccessResponse, isErrorWithCode, statusCodes } = sdk;
 
@@ -48,7 +48,7 @@ export async function signInWithGoogle(): Promise<GoogleResult> {
     const response = await GoogleSignin.signIn();
     if (isSuccessResponse(response)) {
       const idToken = response.data.idToken;
-      if (!idToken) return { kind: 'error', message: 'Google didn’t return an ID token. Please try again.' };
+      if (!idToken) return { kind: 'error', messageKey: 'welcome.googleNoToken' };
       return { kind: 'success', idToken };
     }
     // the only non-success outcome of the interactive flow is cancellation
@@ -57,6 +57,6 @@ export async function signInWithGoogle(): Promise<GoogleResult> {
     if (isErrorWithCode(err) && err.code === statusCodes.SIGN_IN_CANCELLED) {
       return { kind: 'cancelled' };
     }
-    return { kind: 'error', message: (err as Error)?.message ?? 'Google sign-in failed' };
+    return { kind: 'error', message: (err as Error)?.message, messageKey: 'welcome.googleFailed' };
   }
 }
