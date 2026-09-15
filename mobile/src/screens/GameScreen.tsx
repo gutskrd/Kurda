@@ -8,6 +8,7 @@ import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { useI18n } from '../i18n/I18nContext';
 
 interface GameScreenProps {
   roomId: string;
@@ -24,6 +25,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
   const { state, answer, forfeit } = useGameSocket(roomId, selfId);
   const rematch = useRematch(roomId);
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [now, setNow] = useState(() => Date.now());
 
@@ -100,7 +102,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
 
             {onPractice ? (
               <Pressable onPress={onPractice} style={[styles.secondary, { borderColor: colors.primary }]}>
-                <Text style={[styles.secondaryText, { color: colors.primary }]}>Practice missed words</Text>
+                <Text style={[styles.secondaryText, { color: colors.primary }]}>{t('game.practiceMissed')}</Text>
               </Pressable>
             ) : null}
 
@@ -111,7 +113,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
                   <Text style={[styles.dim, { color: colors.textSecondary }]}>Waiting for opponent…</Text>
                 </View>
               ) : expired ? (
-                <Text style={[styles.dim, { color: colors.textSecondary }]}>Rematch offer expired</Text>
+                <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('game.rematchExpired')}</Text>
               ) : (
                 <Pressable onPress={rematch.accept} style={[styles.primary, { backgroundColor: colors.primary }]}>
                   <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>Rematch</Text>
@@ -170,7 +172,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
               ? 'Opponent answered ✓'
               : 'Opponent is thinking…'}
         </Text>
-        {state.rejected ? <Text style={[styles.rejected, { color: colors.danger }]}>Too late — answer not counted</Text> : null}
+        {state.rejected ? <Text style={[styles.rejected, { color: colors.danger }]}>{t('game.tooLate')}</Text> : null}
       </View>
     </GradientBackground>
   );

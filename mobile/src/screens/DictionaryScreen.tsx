@@ -11,6 +11,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
@@ -20,6 +21,7 @@ import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 export function DictionaryScreen() {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -98,10 +100,10 @@ export function DictionaryScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-          accessibilityLabel="Dictionary search"
+          accessibilityLabel={t('dictionary.searchLabel')}
         />
 
-        {result?.fuzzy ? <Text style={[styles.banner, { color: colors.textSecondary }]}>No exact match — showing closest words</Text> : null}
+        {result?.fuzzy ? <Text style={[styles.banner, { color: colors.textSecondary }]}>{t('dictionary.noExactMatch')}</Text> : null}
 
         {showRecents ? (
           <View style={styles.recents}>

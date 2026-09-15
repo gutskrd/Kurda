@@ -9,6 +9,7 @@ import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Play tab (KUR-054): find a 1v1 match. Queuing returns a room once an
@@ -18,6 +19,7 @@ export function PlayScreen() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
   const [searching, setSearching] = useState(false);
@@ -45,7 +47,7 @@ export function PlayScreen() {
         <GlassCard style={styles.card}>
           <Icon name="play" size={56} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>Play</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Head-to-head Kurdish quiz — fastest correct answers win.</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.quiz.body')}</Text>
 
           {searching ? (
             <View style={styles.searching}>
@@ -60,15 +62,15 @@ export function PlayScreen() {
 
         <GlassCard style={styles.card}>
           <Icon name="sparkle" size={40} tone="primary" />
-          <Text style={[styles.title, { color: colors.primary }]}>Kurdish Wordle</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Guess the daily word in six tries — solo.</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.wordle.name')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.wordle.solo')}</Text>
           <ClayButton label="Play Wordle" tone="neutral" onPress={() => navigation.navigate('Wordle')} style={styles.button} />
         </GlassCard>
 
         <GlassCard style={styles.card}>
           <Icon name="chat" size={40} tone="primary" />
-          <Text style={[styles.title, { color: colors.primary }]}>Rhyming Words</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Find Kurdish words that rhyme, against the clock — solo.</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhyme.name')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.solo')}</Text>
           <ClayButton label="Play Rhymes" tone="neutral" onPress={() => navigation.navigate('Rhyme')} style={styles.button} />
         </GlassCard>
       </ScrollView>

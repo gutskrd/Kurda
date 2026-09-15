@@ -154,8 +154,29 @@ export type TranslationKey =
   | 'lesson.listen.playShort'
   | 'lesson.translate.prompt'
   | 'lesson.speak.reRecord'
-  | 'lesson.speak.uploading'
-  | 'error.offline';
+  | 'lesson.speak.uploading'
+  | 'error.offline'
+  | 'games.wordle.name'
+  | 'games.wordle.solo'
+  | 'games.rhyme.name'
+  | 'games.rhyme.solo'
+  | 'games.quiz.body'
+  | 'settings.privacy.title'
+  | 'settings.delete.title'
+  | 'learn.noCourses'
+  | 'appearance.help'
+  | 'appearance.currently'
+  | 'appearance.glass.name'
+  | 'appearance.glass.help'
+  | 'dictionary.searchLabel'
+  | 'dictionary.noExactMatch'
+  | 'game.practiceMissed'
+  | 'game.rematchExpired'
+  | 'game.tooLate'
+  | 'settings.appearance'
+  | 'settings.notifications'
+  | 'settings.notificationCenter'
+  | 'profile.changePhoto';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -287,6 +308,27 @@ const en: Catalog = {
   'lesson.speak.reRecord': 'Re-record',
   'lesson.speak.uploading': 'Uploading…',
   'error.offline': 'Can’t reach MyKurda right now. Check your connection and try again.',
+  'games.wordle.name': 'Kurdish Wordle',
+  'games.wordle.solo': 'Today’s daily puzzle, plus unlimited practice rounds across three difficulties.',
+  'games.rhyme.name': 'Rhyming Words',
+  'games.rhyme.solo': 'A timed solo round against the clock — good for building vocabulary fast.',
+  'games.quiz.body': 'Fast 1-v-1 matches: answer Kurdish questions quicker and more accurately than your opponent.',
+  'settings.privacy.title': 'Profile visibility',
+  'settings.delete.title': 'Delete account',
+  'learn.noCourses': 'No courses available yet',
+  'appearance.help': 'Choose light, dark, or follow your device.',
+  'appearance.currently': 'Currently showing the',
+  'appearance.glass.name': 'Liquid glass',
+  'appearance.glass.help': 'Frosted surfaces float over a spatial gradient with a soft catch-light and a hairline edge.',
+  'dictionary.searchLabel': 'Dictionary search',
+  'dictionary.noExactMatch': 'No exact match — showing closest words',
+  'game.practiceMissed': 'Practice missed words',
+  'game.rematchExpired': 'Rematch offer expired',
+  'game.tooLate': 'Too late — answer not counted',
+  'settings.appearance': 'Appearance & preview',
+  'settings.notifications': 'Notification settings',
+  'settings.notificationCenter': 'Notification center',
+  'profile.changePhoto': 'Change profile photo',
 };
 
 const ku: Catalog = {
@@ -417,6 +459,27 @@ const ku: Catalog = {
   'lesson.speak.reRecord': 'Dîsa tomar bike',
   'lesson.speak.uploading': 'Tê barkirin…',
   'error.offline': 'Niha em nagihîjin MyKurda. Girêdana xwe kontrol bike û dîsa biceribîne.',
+  'games.wordle.name': 'Wordle ya kurdî',
+  'games.wordle.solo': 'Mamikê îro, û bêsînor temrîn di sê astan de.',
+  'games.rhyme.name': 'Peyvên hevserwa',
+  'games.rhyme.solo': 'Dorek bi tenê li hember demjimêrê — ji bo bilezkirina peyvsaziyê baş e.',
+  'games.quiz.body': 'Maçên bilez 1-li-1: bi lez û rastî bersiva pirsên kurdî bide, berî hevrikê xwe.',
+  'settings.privacy.title': 'Xuyabûna profîlê',
+  'settings.delete.title': 'Hesabê xwe jê bibe',
+  'learn.noCourses': 'Hê kurs tune ne',
+  'appearance.help': 'Ronahî, tarî, an li gorî amûra xwe hilbijêre.',
+  'appearance.currently': 'Niha ev tê nîşandan:',
+  'appearance.glass.name': 'Şûşeya herikbar',
+  'appearance.glass.help': 'Rûyên qeşagirtî li ser derecereng û bi ronahiyek nerm û kêlekek zirav diherikin.',
+  'dictionary.searchLabel': 'Lêgerîna ferhengê',
+  'dictionary.noExactMatch': 'Tam li hev nayê — peyvên herî nêzîk têne nîşandan',
+  'game.practiceMissed': 'Peyvên ji dest çûyî pratîk bike',
+  'game.rematchExpired': 'Pêşniyara lîstika nû qediya',
+  'game.tooLate': 'Pir dereng — bersiv nehat hesibandin',
+  'settings.appearance': 'Xuyang û pêşdîtin',
+  'settings.notifications': 'Mîhengên agahdariyan',
+  'settings.notificationCenter': 'Navenda agahdariyan',
+  'profile.changePhoto': 'Wêneyê profîlê biguherîne',
 };
 
 const de: Catalog = {
@@ -547,6 +610,27 @@ const de: Catalog = {
   'lesson.speak.reRecord': 'Neu aufnehmen',
   'lesson.speak.uploading': 'Wird hochgeladen…',
   'error.offline': 'MyKurda ist gerade nicht erreichbar. Prüfe deine Verbindung und versuch es erneut.',
+  'games.wordle.name': 'Kurdisches Wordle',
+  'games.wordle.solo': 'Das Rätsel des Tages, dazu unbegrenzte Übungsrunden in drei Schwierigkeitsgraden.',
+  'games.rhyme.name': 'Reimwörter',
+  'games.rhyme.solo': 'Eine Runde gegen die Uhr — gut, um schnell Wortschatz aufzubauen.',
+  'games.quiz.body': 'Schnelle 1-gegen-1-Partien: Beantworte kurdische Fragen schneller und genauer als dein Gegner.',
+  'settings.privacy.title': 'Sichtbarkeit des Profils',
+  'settings.delete.title': 'Konto löschen',
+  'learn.noCourses': 'Noch keine Kurse verfügbar',
+  'appearance.help': 'Wähle hell, dunkel oder folge deinem Gerät.',
+  'appearance.currently': 'Aktuell angezeigt:',
+  'appearance.glass.name': 'Flüssiges Glas',
+  'appearance.glass.help': 'Matte Flächen schweben über einem räumlichen Verlauf, mit sanftem Lichtreflex und haarfeiner Kante.',
+  'dictionary.searchLabel': 'Wörterbuchsuche',
+  'dictionary.noExactMatch': 'Keine genaue Übereinstimmung — die nächstliegenden Wörter werden gezeigt',
+  'game.practiceMissed': 'Verpasste Wörter üben',
+  'game.rematchExpired': 'Das Revanche-Angebot ist abgelaufen',
+  'game.tooLate': 'Zu spät — die Antwort zählt nicht',
+  'settings.appearance': 'Darstellung & Vorschau',
+  'settings.notifications': 'Mitteilungseinstellungen',
+  'settings.notificationCenter': 'Mitteilungszentrale',
+  'profile.changePhoto': 'Profilbild ändern',
 };
 
 const es: Catalog = {
@@ -677,6 +761,27 @@ const es: Catalog = {
   'lesson.speak.reRecord': 'Grabar otra vez',
   'lesson.speak.uploading': 'Subiendo…',
   'error.offline': 'Ahora mismo no se puede conectar con MyKurda. Comprueba tu conexión e inténtalo de nuevo.',
+  'games.wordle.name': 'Wordle kurdo',
+  'games.wordle.solo': 'El reto diario, más rondas de práctica ilimitadas en tres dificultades.',
+  'games.rhyme.name': 'Palabras que riman',
+  'games.rhyme.solo': 'Una ronda a contrarreloj: ideal para ampliar vocabulario rápido.',
+  'games.quiz.body': 'Partidas rápidas 1 contra 1: responde preguntas kurdas más rápido y mejor que tu rival.',
+  'settings.privacy.title': 'Visibilidad del perfil',
+  'settings.delete.title': 'Eliminar la cuenta',
+  'learn.noCourses': 'Todavía no hay cursos disponibles',
+  'appearance.help': 'Elige claro, oscuro o seguir tu dispositivo.',
+  'appearance.currently': 'Ahora se muestra:',
+  'appearance.glass.name': 'Cristal líquido',
+  'appearance.glass.help': 'Superficies esmeriladas flotan sobre un degradado espacial, con un brillo suave y un borde finísimo.',
+  'dictionary.searchLabel': 'Búsqueda en el diccionario',
+  'dictionary.noExactMatch': 'Sin coincidencia exacta — mostrando las palabras más cercanas',
+  'game.practiceMissed': 'Practica las palabras falladas',
+  'game.rematchExpired': 'La oferta de revancha ha caducado',
+  'game.tooLate': 'Demasiado tarde — la respuesta no cuenta',
+  'settings.appearance': 'Apariencia y vista previa',
+  'settings.notifications': 'Ajustes de notificaciones',
+  'settings.notificationCenter': 'Centro de notificaciones',
+  'profile.changePhoto': 'Cambiar la foto de perfil',
 };
 
 const tr: Catalog = {
@@ -807,6 +912,27 @@ const tr: Catalog = {
   'lesson.speak.reRecord': 'Yeniden kaydet',
   'lesson.speak.uploading': 'Yükleniyor…',
   'error.offline': 'Şu anda MyKurda’ya ulaşılamıyor. Bağlantını kontrol edip tekrar dene.',
+  'games.wordle.name': 'Kürtçe Wordle',
+  'games.wordle.solo': 'Günün bulmacası ve üç zorlukta sınırsız alıştırma turu.',
+  'games.rhyme.name': 'Kafiyeli kelimeler',
+  'games.rhyme.solo': 'Saate karşı tek kişilik bir tur — kelime dağarcığını hızla büyütmek için birebir.',
+  'games.quiz.body': 'Hızlı birebir maçlar: Kürtçe soruları rakibinden daha hızlı ve daha doğru yanıtla.',
+  'settings.privacy.title': 'Profil görünürlüğü',
+  'settings.delete.title': 'Hesabı sil',
+  'learn.noCourses': 'Henüz kurs yok',
+  'appearance.help': 'Açık, koyu ya da cihazını takip et.',
+  'appearance.currently': 'Şu anda gösteriliyor:',
+  'appearance.glass.name': 'Akışkan cam',
+  'appearance.glass.help': 'Buzlu yüzeyler, yumuşak bir ışık yansıması ve kıl inceliğinde bir kenarla uzamsal bir geçişin üzerinde süzülür.',
+  'dictionary.searchLabel': 'Sözlükte ara',
+  'dictionary.noExactMatch': 'Tam eşleşme yok — en yakın kelimeler gösteriliyor',
+  'game.practiceMissed': 'Kaçırdığın kelimeleri çalış',
+  'game.rematchExpired': 'Rövanş teklifinin süresi doldu',
+  'game.tooLate': 'Çok geç — cevap sayılmadı',
+  'settings.appearance': 'Görünüm ve önizleme',
+  'settings.notifications': 'Bildirim ayarları',
+  'settings.notificationCenter': 'Bildirim merkezi',
+  'profile.changePhoto': 'Profil fotoğrafını değiştir',
 };
 
 const ar: Catalog = {
@@ -937,6 +1063,27 @@ const ar: Catalog = {
   'lesson.speak.reRecord': 'إعادة التسجيل',
   'lesson.speak.uploading': 'جارٍ الرفع…',
   'error.offline': 'تعذّر الوصول إلى MyKurda الآن. تحقق من اتصالك وحاول مرة أخرى.',
+  'games.wordle.name': 'وردل الكردية',
+  'games.wordle.solo': 'لغز اليوم، مع جولات تدريب بلا حدود على ثلاثة مستويات.',
+  'games.rhyme.name': 'كلمات مقفّاة',
+  'games.rhyme.solo': 'جولة فردية بسباق مع الوقت — مناسبة لبناء المفردات بسرعة.',
+  'games.quiz.body': 'مباريات سريعة واحد ضد واحد: أجب عن الأسئلة الكردية أسرع وأدق من خصمك.',
+  'settings.privacy.title': 'ظهور الملف الشخصي',
+  'settings.delete.title': 'حذف الحساب',
+  'learn.noCourses': 'لا توجد دورات متاحة بعد',
+  'appearance.help': 'اختر الفاتح أو الداكن أو اتّبع جهازك.',
+  'appearance.currently': 'يُعرض حاليًا:',
+  'appearance.glass.name': 'زجاج سائل',
+  'appearance.glass.help': 'أسطح ضبابية تطفو فوق تدرّج مكاني، بلمعة ناعمة وحافة رفيعة للغاية.',
+  'dictionary.searchLabel': 'البحث في القاموس',
+  'dictionary.noExactMatch': 'لا تطابق تام — تُعرض أقرب الكلمات',
+  'game.practiceMissed': 'تدرّب على الكلمات الفائتة',
+  'game.rematchExpired': 'انتهت صلاحية عرض إعادة المباراة',
+  'game.tooLate': 'متأخر جدًا — لم تُحتسب الإجابة',
+  'settings.appearance': 'المظهر والمعاينة',
+  'settings.notifications': 'إعدادات الإشعارات',
+  'settings.notificationCenter': 'مركز الإشعارات',
+  'profile.changePhoto': 'تغيير صورة الملف الشخصي',
 };
 
 const fr: Catalog = {
@@ -1067,6 +1214,27 @@ const fr: Catalog = {
   'lesson.speak.reRecord': 'Réenregistrer',
   'lesson.speak.uploading': 'Envoi…',
   'error.offline': 'Impossible de joindre MyKurda pour l’instant. Vérifie ta connexion et réessaie.',
+  'games.wordle.name': 'Wordle kurde',
+  'games.wordle.solo': 'L’énigme du jour, plus des entraînements illimités sur trois niveaux.',
+  'games.rhyme.name': 'Mots qui riment',
+  'games.rhyme.solo': 'Une manche contre la montre — idéale pour enrichir vite son vocabulaire.',
+  'games.quiz.body': 'Duels rapides en 1 contre 1 : répondez aux questions kurdes plus vite et mieux que votre adversaire.',
+  'settings.privacy.title': 'Visibilité du profil',
+  'settings.delete.title': 'Supprimer le compte',
+  'learn.noCourses': 'Aucun cours disponible pour l’instant',
+  'appearance.help': 'Choisissez clair, sombre, ou suivez votre appareil.',
+  'appearance.currently': 'Actuellement affiché :',
+  'appearance.glass.name': 'Verre liquide',
+  'appearance.glass.help': 'Des surfaces dépolies flottent sur un dégradé spatial, avec un reflet doux et un liseré très fin.',
+  'dictionary.searchLabel': 'Recherche dans le dictionnaire',
+  'dictionary.noExactMatch': 'Aucune correspondance exacte — voici les mots les plus proches',
+  'game.practiceMissed': 'Revoir les mots manqués',
+  'game.rematchExpired': 'L’offre de revanche a expiré',
+  'game.tooLate': 'Trop tard — la réponse n’est pas comptée',
+  'settings.appearance': 'Apparence et aperçu',
+  'settings.notifications': 'Réglages des notifications',
+  'settings.notificationCenter': 'Centre de notifications',
+  'profile.changePhoto': 'Changer la photo de profil',
 };
 
 const nl: Catalog = {
@@ -1197,6 +1365,27 @@ const nl: Catalog = {
   'lesson.speak.reRecord': 'Opnieuw opnemen',
   'lesson.speak.uploading': 'Uploaden…',
   'error.offline': 'MyKurda is nu niet bereikbaar. Controleer je verbinding en probeer het opnieuw.',
+  'games.wordle.name': 'Koerdische Wordle',
+  'games.wordle.solo': 'De puzzel van vandaag, plus onbeperkt oefenen in drie moeilijkheidsgraden.',
+  'games.rhyme.name': 'Rijmende woorden',
+  'games.rhyme.solo': 'Een ronde tegen de klok — goed om snel woordenschat op te bouwen.',
+  'games.quiz.body': 'Snelle 1-tegen-1-duels: beantwoord Koerdische vragen sneller en beter dan je tegenstander.',
+  'settings.privacy.title': 'Zichtbaarheid van je profiel',
+  'settings.delete.title': 'Account verwijderen',
+  'learn.noCourses': 'Nog geen cursussen beschikbaar',
+  'appearance.help': 'Kies licht, donker of volg je apparaat.',
+  'appearance.currently': 'Nu wordt getoond:',
+  'appearance.glass.name': 'Vloeiend glas',
+  'appearance.glass.help': 'Matte vlakken zweven over een ruimtelijk verloop met een zacht lichtpunt en een haarfijne rand.',
+  'dictionary.searchLabel': 'Woordenboek zoeken',
+  'dictionary.noExactMatch': 'Geen exacte match — dichtstbijzijnde woorden worden getoond',
+  'game.practiceMissed': 'Oefen gemiste woorden',
+  'game.rematchExpired': 'Aanbod voor een rematch is verlopen',
+  'game.tooLate': 'Te laat — antwoord telt niet mee',
+  'settings.appearance': 'Weergave en voorbeeld',
+  'settings.notifications': 'Meldingsinstellingen',
+  'settings.notificationCenter': 'Meldingencentrum',
+  'profile.changePhoto': 'Profielfoto wijzigen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -1328,6 +1517,27 @@ const ckb: Catalog = {
   'lesson.speak.reRecord': 'دووبارە تۆمار بکە',
   'lesson.speak.uploading': 'بارکردن…',
   'error.offline': 'ئێستا ناتوانرێت بگات بە MyKurda. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدە.',
+  'games.wordle.name': 'وۆردڵی کوردی',
+  'games.wordle.solo': 'مەتەڵی ئەمڕۆ، لەگەڵ ڕاهێنانی بێسنوور لە سێ ئاستدا.',
+  'games.rhyme.name': 'وشە هاوسەروا',
+  'games.rhyme.solo': 'خولێکی تاکە کەسی لە دژی کات — باشە بۆ زیادکردنی خێرای وشەدانی.',
+  'games.quiz.body': 'یارییە خێراکانی یەک بە یەک: خێراتر و وردتر لە بەرامبەرەکەت وەڵامی پرسیارە کوردییەکان بدەرەوە.',
+  'settings.privacy.title': 'دەرکەوتنی پرۆفایل',
+  'settings.delete.title': 'هەژمارە بسڕەوە',
+  'learn.noCourses': 'هێشتا خول بەردەست نییە',
+  'appearance.help': 'ڕووناک، تاریک، یان بەدوای ئامێرەکەت بکەوە.',
+  'appearance.currently': 'ئێستا ئەمە پیشان دەدرێت:',
+  'appearance.glass.name': 'شووشەی ڕەوان',
+  'appearance.glass.help': 'ڕووە شەختەکان لەسەر ڕەنگاوڕەنگێکی مەودایی دەسوڕێنەوە، بە ڕووناکییەکی نەرم و لێوارێکی تەنک.',
+  'dictionary.searchLabel': 'گەڕانی فەرهەنگ',
+  'dictionary.noExactMatch': 'هیچ هاوتایەکی تەواو نییە — نزیکترین وشەکان پیشان دەدرێن',
+  'game.practiceMissed': 'ڕاهێنان بە وشە لەدەستچووەکان',
+  'game.rematchExpired': 'پێشنیاری یارییەکەی دووبارە بەسەرچوو',
+  'game.tooLate': 'زۆر درەنگ — وەڵامەکە نەژمێردرا',
+  'settings.appearance': 'ڕووخسار و پێشبینین',
+  'settings.notifications': 'ڕێکخستنی ئاگادارکردنەوەکان',
+  'settings.notificationCenter': 'ناوەندی ئاگادارکردنەوەکان',
+  'profile.changePhoto': 'وێنەی پرۆفایل بگۆڕە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

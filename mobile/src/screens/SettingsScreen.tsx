@@ -119,7 +119,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             labelOf={(p) => PREFERENCE_LABEL[p]}
             onChange={setPreference}
           />
-          <GlassRow icon="sparkle" title="Appearance & preview" onPress={() => navigation.navigate('Appearance')} />
+          <GlassRow icon="sparkle" title={t('settings.appearance')} onPress={() => navigation.navigate('Appearance')} />
           <GlassRow
             icon="star"
             title={t('settings.eventThemes')}
@@ -129,13 +129,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Notifications</Text>
         <GlassCard padding="tight">
-          <GlassRow first icon="gear" title="Notification settings" onPress={() => navigation.navigate('Notifications')} />
-          <GlassRow icon="bell" title="Notification center" onPress={() => navigation.navigate('NotificationCenter')} />
+          <GlassRow first icon="gear" title={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
+          <GlassRow icon="bell" title={t('settings.notificationCenter')} onPress={() => navigation.navigate('NotificationCenter')} />
         </GlassCard>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>Privacy</Text>
         <GlassCard>
-          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Who can see my profile</Text>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.privacy.title')}</Text>
           <View style={styles.pillRow}>
             {(['everyone', 'friends', 'nobody'] as Visibility[]).map((v) => (
               <Pill key={v} label={VISIBILITY_LABEL[v]} active={visibility === v} onPress={() => changeVisibility(v)} />
@@ -147,7 +147,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <GlassCard padding="tight">
           <GlassRow first icon="person" title="Username" value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
           <GlassRow icon="person" title={t('profile.logout')} onPress={logout} destructive />
-          <GlassRow icon="close" iconColor={colors.textSecondary} title="Delete account" destructive onPress={confirmDelete} />
+          <GlassRow icon="close" iconColor={colors.textSecondary} title={t('settings.delete.title')} destructive onPress={confirmDelete} />
         </GlassCard>
       </ScrollView>
     </GradientBackground>
