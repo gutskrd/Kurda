@@ -20,6 +20,8 @@ export type RootStackParamList = {
   Appearance: undefined;
   Settings: undefined;
   Wordle: undefined;
+  /** An id when an invite link opened it; nothing when you came to make one. */
+  WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
   Memes: undefined;
   MemeDetail: { postId: string };

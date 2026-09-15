@@ -73,7 +73,10 @@ const styles = StyleSheet.create({
   keyboard: { gap: spacing.xs, marginTop: spacing.lg },
   keyRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
   key: {
-    minWidth: 26,
+    // no minWidth: the Kurmancî top row is thirteen keys wide, and a floor of
+    // 26px made it 342px of content in a 298px row — Q and P were cut off the
+    // sides of anything narrower than a 390px phone. Letting the keys shrink
+    // costs a couple of points of width and keeps the whole alphabet reachable.
     flex: 1,
     maxWidth: 34,
     height: 46,

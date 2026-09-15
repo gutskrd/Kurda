@@ -3,6 +3,14 @@ export { escapeHtml, stripControlChars, hasHtmlSpecialChars } from './sanitize.j
 export { XSS_PAYLOADS } from './xss-corpus.js';
 export { COUNTRIES, countriesIn, countryName, type Country } from './countries.js';
 export {
+  buildInviteUrl,
+  invitePath,
+  inviteLinkPattern,
+  parseInvite,
+  type GameInvite,
+  type GameInviteType,
+} from './game-invites.js';
+export {
   APP_LOCALES,
   APP_LOCALE_CODES,
   DEFAULT_LOCALE,

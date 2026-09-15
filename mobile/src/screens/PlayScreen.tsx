@@ -34,7 +34,7 @@ export function PlayScreen() {
       navigation.navigate('Game', { roomId: res.data.roomId });
     } else if (res.ok) {
       // queued, waiting for an opponent — the room arrives via matchmaking
-      setNote('Searching for an opponent…');
+      setNote(t('games.quiz.searching'));
     } else {
       setSearching(false);
       setNote(describeError(res.error).message);
@@ -46,16 +46,16 @@ export function PlayScreen() {
       <ScrollView contentContainerStyle={[styles.screen, { paddingTop: topInset, paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
         <GlassCard style={styles.card}>
           <Icon name="play" size={56} tone="primary" />
-          <Text style={[styles.title, { color: colors.primary }]}>Play</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.quiz.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.quiz.body')}</Text>
 
           {searching ? (
             <View style={styles.searching}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={[styles.note, { color: colors.textSecondary }]}>{note ?? 'Finding a match…'}</Text>
+              <Text style={[styles.note, { color: colors.textSecondary }]}>{note ?? t('games.quiz.finding')}</Text>
             </View>
           ) : (
-            <ClayButton label="Find 1v1 match" tone="primary" onPress={findMatch} style={styles.button} />
+            <ClayButton label={t('games.quiz.find')} tone="primary" onPress={findMatch} style={styles.button} />
           )}
           {!searching && note ? <Text style={[styles.note, { color: colors.textSecondary }]}>{note}</Text> : null}
         </GlassCard>
@@ -64,14 +64,26 @@ export function PlayScreen() {
           <Icon name="sparkle" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.wordle.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.wordle.solo')}</Text>
-          <ClayButton label="Play Wordle" tone="neutral" onPress={() => navigation.navigate('Wordle')} style={styles.button} />
+          <ClayButton label={t('games.play')} tone="neutral" onPress={() => navigation.navigate('Wordle')} style={styles.button} />
+        </GlassCard>
+
+        <GlassCard style={styles.card}>
+          <Icon name="trophy" size={40} tone="primary" />
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.battle.name')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.wordle.online')}</Text>
+          <ClayButton
+            label={t('games.play')}
+            tone="neutral"
+            onPress={() => navigation.navigate('WordleBattle')}
+            style={styles.button}
+          />
         </GlassCard>
 
         <GlassCard style={styles.card}>
           <Icon name="chat" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhyme.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.solo')}</Text>
-          <ClayButton label="Play Rhymes" tone="neutral" onPress={() => navigation.navigate('Rhyme')} style={styles.button} />
+          <ClayButton label={t('games.play')} tone="neutral" onPress={() => navigation.navigate('Rhyme')} style={styles.button} />
         </GlassCard>
       </ScrollView>
     </GradientBackground>
