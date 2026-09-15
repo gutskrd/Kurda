@@ -103,7 +103,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     if (uploading) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert(t('memes.photoNeeded'), t('memes.photoHelp'));
+      Alert.alert(t('photo.accessNeeded'), t('photo.helpPost'));
       return;
     }
     const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });

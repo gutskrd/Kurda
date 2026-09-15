@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { friendActionLabel, isActionable, VISIBILITY_LABEL } from './format';
+import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
 describe('friendActionLabel', () => {
   it('labels each relationship state', () => {
-    expect(friendActionLabel('none')).toBe('Add friend');
-    expect(friendActionLabel('pending_out')).toBe('Requested');
-    expect(friendActionLabel('pending_in')).toBe('Accept request');
-    expect(friendActionLabel('friends')).toBe('Friends ✓');
+    expect(friendActionLabel('none')).toBe('profile.addFriend');
+    expect(friendActionLabel('pending_out')).toBe('friends.requested');
+    expect(friendActionLabel('pending_in')).toBe('profile.acceptRequest');
+    expect(friendActionLabel('friends')).toBe('profile.friends');
+    expect(friendActionLabel('blocked')).toBe('profile.blocked');
     expect(friendActionLabel('self')).toBeNull();
+  });
+
+  // a key with nothing behind it renders as the key, which the type cannot catch
+  it('names a key every language actually has', () => {
+    for (const status of ['none', 'pending_out', 'pending_in', 'friends', 'blocked'] as const) {
+      const key = friendActionLabel(status)!;
+      for (const loc of LOCALES) expect(TRANSLATIONS[loc][key], `${loc} ${key}`).toBeTruthy();
+    }
   });
 });
 
@@ -22,8 +32,14 @@ describe('isActionable', () => {
 
 describe('VISIBILITY_LABEL', () => {
   it('maps every visibility option', () => {
-    expect(VISIBILITY_LABEL.everyone).toBe('Everyone');
-    expect(VISIBILITY_LABEL.friends).toBe('Friends only');
-    expect(VISIBILITY_LABEL.nobody).toBe('Nobody');
+    expect(VISIBILITY_LABEL.everyone).toBe('settings.visibility.everyone');
+    expect(VISIBILITY_LABEL.friends).toBe('settings.visibility.friends');
+    expect(VISIBILITY_LABEL.nobody).toBe('settings.visibility.nobody');
+  });
+
+  it('names a key every language actually has', () => {
+    for (const key of Object.values(VISIBILITY_LABEL)) {
+      for (const loc of LOCALES) expect(TRANSLATIONS[loc][key], `${loc} ${key}`).toBeTruthy();
+    }
   });
 });

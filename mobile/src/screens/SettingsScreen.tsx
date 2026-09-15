@@ -55,16 +55,16 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   // grace window — signing back in cancels it — so we warn, then sign out.
   const confirmDelete = () => {
     Alert.alert(
-      'Delete account?',
-      'Your account and all your data will be permanently deleted after 14 days. Sign in again before then to cancel.',
+      t('settings.delete.confirmTitle'),
+      t('settings.delete.warning'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('settings.delete.confirm'),
           style: 'destructive',
           onPress: () => {
             void deleteAccount().then((err) => {
-              if (err) Alert.alert('Could not delete account', err);
+              if (err) Alert.alert(t('settings.delete.failed'), err);
             });
           },
         },
@@ -138,7 +138,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.privacy.title')}</Text>
           <View style={styles.pillRow}>
             {(['everyone', 'friends', 'nobody'] as Visibility[]).map((v) => (
-              <Pill key={v} label={VISIBILITY_LABEL[v]} active={visibility === v} onPress={() => changeVisibility(v)} />
+              <Pill key={v} label={t(VISIBILITY_LABEL[v])} active={visibility === v} onPress={() => changeVisibility(v)} />
             ))}
           </View>
         </GlassCard>

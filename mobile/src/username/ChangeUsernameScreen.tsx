@@ -6,7 +6,7 @@ import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
-import { checkUsername, USERNAME_MAX } from './validate';
+import { checkUsername, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -50,7 +50,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
       return;
     }
     // the server's message is already user-facing (taken / reserved / cooldown date)
-    setServerError(res.error.message ?? 'Couldn’t update your username. Please try again.');
+    setServerError(res.error.message ?? t('username.updateFailed'));
   }, [check, saving, client, onExit]);
 
   // inline hint under the field: a client rule, a server error, or an all-clear
@@ -59,10 +59,10 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
     : !touched
       ? null
       : !check.ok
-        ? { text: check.message, tone: 'error' }
+        ? { text: t(check.message, USERNAME_RULE_VARS), tone: 'error' }
         : !changed
-          ? { text: 'That’s already your username.', tone: 'error' }
-          : { text: 'Looks good — tap Save to check availability.', tone: 'ok' };
+          ? { text: t('username.alreadyYours'), tone: 'error' }
+          : { text: t('username.looksGood'), tone: 'ok' };
 
   return (
     <GradientBackground>
@@ -113,7 +113,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
           </GlassCard>
 
           <ClayButton
-            label={done ? 'Saved ✓' : saving ? 'Saving…' : 'Save username'}
+            label={done ? t('username.saved') : saving ? t('username.saving') : t('username.save')}
             tone="primary"
             onPress={submit}
             style={[styles.save, !canSubmit && !done && styles.saveDisabled]}

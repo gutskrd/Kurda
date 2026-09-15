@@ -1,3 +1,4 @@
+import type { TranslationKey } from '../i18n/translations';
 import { normalizeKurdish } from '@kurda/shared';
 
 /**
@@ -18,21 +19,34 @@ export type UsernameIssue =
   | 'numbers-only'
   | 'no-letter';
 
-export type UsernameCheck = { ok: true; value: string } | { ok: false; issue: UsernameIssue; message: string };
+export type UsernameCheck =
+  | { ok: true; value: string }
+  /** `message` is a catalogue key; interpolate it with USERNAME_RULE_VARS. */
+  | { ok: false; issue: UsernameIssue; message: TranslationKey };
 
 const CHARSET = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]+$/;
 const HAS_LETTER = /[A-Za-zêîûçşÊÎÛÇŞ]/;
 const ONLY_DIGITS = /^[0-9]+$/;
 
-const MESSAGE: Record<UsernameIssue, string> = {
-  'too-short': `At least ${USERNAME_MIN} characters.`,
-  'too-long': `At most ${USERNAME_MAX} characters.`,
-  'invalid-chars': 'Only letters, numbers and _ (Kurdish letters allowed).',
-  'edge-underscore': 'Can’t start or end with _.',
-  'consecutive-underscore': 'No two underscores in a row.',
-  'numbers-only': 'Can’t be only numbers.',
-  'no-letter': 'Must contain at least one letter.',
+/**
+ * Why a username was refused, as catalogue keys.
+ *
+ * The two length rules carry the limits as `{min}`/`{max}` rather than being
+ * built with a template: a sentence assembled around a number reads in English
+ * and in nothing else, and the limits are this module's to supply.
+ */
+const MESSAGE: Record<UsernameIssue, TranslationKey> = {
+  'too-short': 'username.rule.tooShort',
+  'too-long': 'username.rule.tooLong',
+  'invalid-chars': 'username.rule.invalidChars',
+  'edge-underscore': 'username.rule.edgeUnderscore',
+  'consecutive-underscore': 'username.rule.consecutiveUnderscore',
+  'numbers-only': 'username.rule.numbersOnly',
+  'no-letter': 'username.rule.noLetter',
 };
+
+/** The values the length rules interpolate, so a caller never invents them. */
+export const USERNAME_RULE_VARS = { min: USERNAME_MIN, max: USERNAME_MAX } as const;
 
 const fail = (issue: UsernameIssue): UsernameCheck => ({ ok: false, issue, message: MESSAGE[issue] });
 

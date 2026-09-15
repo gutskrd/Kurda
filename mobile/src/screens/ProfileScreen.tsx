@@ -49,7 +49,7 @@ export function ProfileScreen() {
     if (uploading) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Photo access needed', 'Allow photo access in Settings to set a profile picture.');
+      Alert.alert(t('photo.accessNeeded'), t('photo.helpProfile'));
       return;
     }
     const picked = await ImagePicker.launchImageLibraryAsync({
@@ -64,7 +64,7 @@ export function ProfileScreen() {
     const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t);
     setUploading(false);
     if (res.ok) setPhotoUrl(res.url);
-    else Alert.alert('Couldn’t update photo', res.error);
+    else Alert.alert(t('profile.photoFailed'), res.error);
   }, [client, uploading]);
 
   return (
@@ -102,7 +102,7 @@ export function ProfileScreen() {
           <ClayButton label={t('profile.shop')} icon="cart" tone="primary" onPress={() => navigation.navigate('Shop')} />
           <ClayButton label={t('profile.edit')} icon="person" tone="neutral" onPress={() => navigation.navigate('EditProfile')} />
           <ClayButton label={t('saved.title')} icon="star-outline" tone="neutral" onPress={() => navigation.navigate('Saved')} />
-          <ClayButton label="Tags & badges" icon="star" tone="neutral" onPress={() => navigation.navigate('Tags')} />
+          <ClayButton label={t('tags.title')} icon="star" tone="neutral" onPress={() => navigation.navigate('Tags')} />
           <NotificationBell />
           <ClayButton label="Settings" icon="gear" tone="neutral" onPress={() => navigation.navigate('Settings')} />
         </View>
