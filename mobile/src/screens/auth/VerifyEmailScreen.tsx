@@ -6,6 +6,9 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { AuthScreenShell, FormError, SubmitButton } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
+/** The server issues six digits; the sentence says so, so it comes from here. */
+const CODE_LENGTH = 6;
+
 const RESEND_COOLDOWN_SEC = 45;
 
 /**
@@ -31,7 +34,7 @@ export function VerifyEmailScreen() {
   }, [cooldown]);
 
   const onVerify = async () => {
-    if (code.length !== 6) {
+    if (code.length !== CODE_LENGTH) {
       setError(t('auth.verify.enterCode6'));
       return;
     }
@@ -59,9 +62,25 @@ export function VerifyEmailScreen() {
 
   return (
     <AuthScreenShell title={t('auth.verify.title')} hero="mail">
+      {/*
+        Two whole sentences, not one built around the address. The address is a
+        value; the sentence around it moves word by word between languages, and
+        this one slipped every gate precisely because the `{email}` in the
+        middle left the JSX text with no closing tag to match against.
+      */}
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        We emailed a 6-digit code to {user?.email ?? 'your inbox'}. Enter it below to finish setting up your account.
+        {t('auth.verify.enterCode', { digits: CODE_LENGTH })}
       </Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('auth.verify.expiresIn15')}</Text>
+      {/*
+        The address on its own line, not inside a sentence. The browser does not
+        show it at all, but this is the screen you land on straight after typing
+        it, and a typo is only ever caught by seeing it back. A value beside the
+        sentences translates; a value inside one does not.
+      */}
+      {user?.email ? (
+        <Text style={[styles.address, { color: colors.textPrimary }]}>{user.email}</Text>
+      ) : null}
 
       <FormError message={error} />
       {notice ? <Text style={[styles.notice, { color: colors.success }]}>{notice}</Text> : null}
@@ -72,9 +91,11 @@ export function VerifyEmailScreen() {
           { backgroundColor: colors.controlTrack, borderColor: error ? colors.danger : colors.glassBorder, color: colors.textPrimary },
         ]}
         value={code}
-        onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
+        // `v`, not `t`: the translator is in scope, and shadowing it is a bug
+        // this codebase has already had to fix more than once
+        onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, CODE_LENGTH))}
         keyboardType="number-pad"
-        maxLength={6}
+        maxLength={CODE_LENGTH}
         textContentType="oneTimeCode"
         autoComplete="one-time-code"
         placeholder="000000"
@@ -100,6 +121,7 @@ export function VerifyEmailScreen() {
 }
 
 const styles = StyleSheet.create({
+  address: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center', marginBottom: spacing.sm },
   subtitle: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   notice: { fontSize: typography.sizes.sm, marginBottom: spacing.sm, textAlign: 'center' },
   codeInput: {

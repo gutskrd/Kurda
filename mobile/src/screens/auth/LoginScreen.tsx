@@ -34,7 +34,11 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title={t('nav.login')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
+    <AuthScreenShell
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
+      onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+    >
       <FormError message={formError} />
       <Field
         label={t('auth.email')}
@@ -42,6 +46,8 @@ export function LoginScreen({ navigation }: Props) {
         onChangeText={setEmail}
         error={errors.email}
         keyboardType="email-address"
+        placeholder="you@example.com"
+        complete="email"
         testID="email"
       />
       <Field
@@ -50,15 +56,17 @@ export function LoginScreen({ navigation }: Props) {
         onChangeText={setPassword}
         error={errors.password}
         secure
+        complete="current-password"
         testID="password"
       />
-      <SubmitButton label={t('auth.login.submit')} busy={busy} onPress={submit} />
+      <SubmitButton label={busy ? t('auth.login.submitting') : t('auth.login.submit')} busy={busy} onPress={submit} />
       <LinkText
         label={t('auth.login.forgot')}
         onPress={() => navigation.navigate('ForgotPassword')}
       />
+      {/* one sentence with the action in it, the way the browser asks */}
       <LinkText
-        label={t('auth.login.createAccount')}
+        label={`${t('auth.login.noAccount')} ${t('auth.login.createAccount')}`}
         onPress={() => navigation.navigate('Register')}
       />
     </AuthScreenShell>
