@@ -21,10 +21,14 @@ jobs:
         id: filter
         with:
           # Root config changes affect every package, so each filter
-          # includes the shared toolchain files.
+          # includes the shared toolchain files. scripts/ is in there because
+          # the lint gates live in it — web and mobile both run
+          # check-hardcoded-english.mjs — and a change to a gate that does not
+          # run the gate is a change nothing checked.
           filters: |
             shared: &root
               - 'shared/**'
+              - 'scripts/**'
               - 'package.json'
               - 'package-lock.json'
               - 'tsconfig.base.json'

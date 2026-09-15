@@ -1,0 +1,94 @@
+# English the phone still renders, and is working through.
+#
+# Seeded when the gate learned to read two things it had been blind to: the
+# copy React Native passes as a `label` prop, and the copy that lives inside a
+# JSX expression — `{won ? 'Correct!' : 'Out of tries'}`. Both were invisible
+# to a check that only read a tag's text, which is how this file came to be
+# deleted as "paid off" while 83 pieces of English were still on screen.
+#
+# The rule has not changed: nothing here may grow, an entry that stops matching
+# is an error, and the file is finished when it is empty — this time for real.
+
+mobile/src/dictionary/EntryDetail.tsx  Bookmark word
+mobile/src/dictionary/EntryDetail.tsx  Remove bookmark
+mobile/src/lesson/LessonPlayerScreen.tsx  You’re offline — tap to retry
+mobile/src/lesson/components/FeedbackFooter.tsx  Almost — typo accepted
+mobile/src/lesson/components/FeedbackFooter.tsx  Not quite
+mobile/src/lesson/components/LessonResults.tsx  Lesson complete!
+mobile/src/lesson/components/LessonResults.tsx  Out of hearts
+mobile/src/lesson/components/SpeakingExercise.tsx  Upload failed — please try again.
+mobile/src/library/AudioPlayer.tsx  Pause narration
+mobile/src/library/AudioPlayer.tsx  Play narration
+mobile/src/library/LibraryComposeScreen.tsx  Couldn’t save
+mobile/src/library/LibraryComposeScreen.tsx  Couldn’t upload narration
+mobile/src/library/LibraryComposeScreen.tsx  Missing content
+mobile/src/library/LibraryComposeScreen.tsx  label="Save draft"
+mobile/src/library/LibraryPostScreen.tsx  Couldn’t comment
+mobile/src/library/LibraryPostScreen.tsx  Couldn’t upload voice comment
+mobile/src/library/VoiceRecorder.tsx  Allow microphone access in Settings to record a voice note.
+mobile/src/library/VoiceRecorder.tsx  Could not save the recording. Please try again.
+mobile/src/library/VoiceRecorder.tsx  Could not start recording. Please try again.
+mobile/src/library/VoiceRecorder.tsx  Microphone needed
+mobile/src/library/VoiceRecorder.tsx  Recording failed
+mobile/src/memes/MemeDetailScreen.tsx  Couldn’t comment
+mobile/src/memes/MemeFeedScreen.tsx  Allow photo access in Settings to post an image.
+mobile/src/memes/MemeFeedScreen.tsx  Couldn’t post
+mobile/src/memes/MemeFeedScreen.tsx  Couldn’t upload
+mobile/src/memes/MemeFeedScreen.tsx  Photo access needed
+mobile/src/memes/MemeFeedScreen.tsx  Your image uploaded but the post failed. Please try again.
+mobile/src/net/AsyncBoundary.tsx  Nothing here yet.
+mobile/src/notifications/NotificationCenterScreen.tsx  You're all caught up.
+mobile/src/practice/PracticeScreen.tsx  label="Try again"
+mobile/src/rewards/DailyRewardCard.tsx  Come back tomorrow
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Already found
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Doesn’t rhyme
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Not a Kurdish word
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Not allowed
+mobile/src/rhyme/RhymeTrainingScreen.tsx  That’s the prompt word
+mobile/src/rhyme/RhymeTrainingScreen.tsx  Try another word
+mobile/src/rhyme/RhymeTrainingScreen.tsx  label="Play again"
+mobile/src/rhyme/RhymeTrainingScreen.tsx  label="Start training"
+mobile/src/screens/DictionaryScreen.tsx  message="Couldn’t search right now. Check your connection and try again."
+mobile/src/screens/GameScreen.tsx  Forfeit match?
+mobile/src/screens/GameScreen.tsx  Good game
+mobile/src/screens/GameScreen.tsx  Keep playing
+mobile/src/screens/GameScreen.tsx  You win!
+mobile/src/screens/GameScreen.tsx  Your opponent will win.
+mobile/src/screens/LearnScreen.tsx  Not available yet.
+mobile/src/screens/ProfileScreen.tsx  Add photo
+mobile/src/screens/ProfileScreen.tsx  Allow photo access in Settings to set a profile picture.
+mobile/src/screens/ProfileScreen.tsx  Change photo
+mobile/src/screens/ProfileScreen.tsx  Couldn’t update photo
+mobile/src/screens/ProfileScreen.tsx  Photo access needed
+mobile/src/screens/ProfileScreen.tsx  label="Tags & badges"
+mobile/src/screens/SettingsScreen.tsx  Could not delete account
+mobile/src/screens/SettingsScreen.tsx  Delete account?
+mobile/src/screens/SettingsScreen.tsx  Your account and all your data will be permanently deleted after 14 days. Sign i
+mobile/src/shop/ShopScreen.tsx  Confirm purchase
+mobile/src/shop/ShopScreen.tsx  Gem packs are coming soon.
+mobile/src/shop/ShopScreen.tsx  Play and learn to earn more!
+mobile/src/shop/ShopScreen.tsx  Price changed
+mobile/src/shop/ShopScreen.tsx  Purchase failed
+mobile/src/shop/ShopScreen.tsx  This item’s price changed. Please review and try again.
+mobile/src/social/PublicProfileScreen.tsx  Block user?
+mobile/src/social/PublicProfileScreen.tsx  Challenge sent
+mobile/src/social/PublicProfileScreen.tsx  Could not challenge
+mobile/src/social/PublicProfileScreen.tsx  They won’t be able to see you or contact you.
+mobile/src/tags/TagsScreen.tsx  Add tag
+mobile/src/tags/TagsScreen.tsx  Consent needed
+mobile/src/tags/TagsScreen.tsx  Couldn’t add tag
+mobile/src/tags/TagsScreen.tsx  Please try again.
+mobile/src/tags/TagsScreen.tsx  Remove tag
+mobile/src/tags/TagsScreen.tsx  Sensitive tags are optional. Tick consent to add this tag.
+mobile/src/username/ChangeUsernameScreen.tsx  Couldn’t update your username. Please try again.
+mobile/src/username/ChangeUsernameScreen.tsx  Looks good — tap Save to check availability.
+mobile/src/username/ChangeUsernameScreen.tsx  Save username
+mobile/src/username/ChangeUsernameScreen.tsx  That’s already your username.
+mobile/src/wordle/WordleScreen.tsx  Not a Kurdish word
+mobile/src/wordle/WordleScreen.tsx  Not enough letters
+mobile/src/wordle/WordleScreen.tsx  Out of tries
+mobile/src/wordle/WordleScreen.tsx  Save to vocabulary
+mobile/src/wordle/WordleScreen.tsx  Saved to vocabulary
+mobile/src/wordle/WordleScreen.tsx  Wrong length
+mobile/src/wordle/WordleScreen.tsx  label="Daily puzzle"
+mobile/src/wordle/WordleScreen.tsx  label="Win %"
