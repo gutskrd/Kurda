@@ -24,6 +24,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { createPost, listPosts, uploadMemeImage } from './api';
 import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 const PAGE = 20;
 
@@ -37,6 +38,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [category, setCategory] = useState<Category>('meme');
@@ -179,7 +181,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>No posts yet — be the first!</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('memes.empty')}</Text>}
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>

@@ -16,6 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { useChatSocket } from './useChatSocket';
+import { useI18n } from '../i18n/I18nContext';
 
 interface Message {
   id: string;
@@ -31,6 +32,7 @@ const MAX_LEN = 2000;
 export function ChatScreen({ userId, username, onExit }: { userId: string; username: string; onExit: () => void }) {
   const { client, user } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const me = user?.id ?? '';
   const [messages, setMessages] = useState<Message[]>([]);
@@ -123,7 +125,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
                 </View>
               );
             }}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Say hello</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('chat.sayHello')}</Text>}
           />
         )}
 

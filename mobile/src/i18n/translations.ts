@@ -175,8 +175,33 @@ export type TranslationKey =
   | 'game.tooLate'
   | 'settings.appearance'
   | 'settings.notifications'
-  | 'settings.notificationCenter'
-  | 'profile.changePhoto';
+  | 'settings.notificationCenter'
+  | 'profile.changePhoto'
+  | 'profile.private'
+  | 'friends.noResults'
+  | 'comments.empty'
+  | 'chat.sayHello'
+  | 'chat.noMessagesBody'
+  | 'moderation.report'
+  | 'dictionary.backToSearch'
+  | 'dictionary.playPronunciation'
+  | 'dictionary.wordOfDay'
+  | 'grammar.closeTips'
+  | 'library.optionalNarration'
+  | 'library.empty'
+  | 'comments.post'
+  | 'moderation.reportPost'
+  | 'moderation.reportComment'
+  | 'recorder.remove'
+  | 'memes.empty'
+  | 'notifications.markAllRead'
+  | 'notifications.quietHours'
+  | 'notifications.enableQuietHours'
+  | 'notifications.quietHoursHelp'
+  | 'profile.challenge1v1'
+  | 'profile.unavailable'
+  | 'friends.searchToStart'
+  | 'username.new';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -329,6 +354,31 @@ const en: Catalog = {
   'settings.notifications': 'Notification settings',
   'settings.notificationCenter': 'Notification center',
   'profile.changePhoto': 'Change profile photo',
+  'profile.private': 'This profile is private.',
+  'friends.noResults': 'No users found.',
+  'comments.empty': 'No comments yet. Be the first to say something.',
+  'chat.sayHello': 'No messages yet. Say hello!',
+  'chat.noMessagesBody': 'Message a friend from their profile to start a conversation.',
+  'moderation.report': 'Report',
+  'dictionary.backToSearch': 'Back to search',
+  'dictionary.playPronunciation': 'Play pronunciation',
+  'dictionary.wordOfDay': 'Word of the day',
+  'grammar.closeTips': 'Close tips',
+  'library.optionalNarration': 'Optional narration',
+  'library.empty': 'Nothing here yet — write the first!',
+  'comments.post': 'Post comment',
+  'moderation.reportPost': 'Report this post',
+  'moderation.reportComment': 'Report this comment',
+  'recorder.remove': 'Remove recording',
+  'memes.empty': 'No posts yet — be the first!',
+  'notifications.markAllRead': 'Mark all read',
+  'notifications.quietHours': 'Quiet hours',
+  'notifications.enableQuietHours': 'Enable quiet hours',
+  'notifications.quietHoursHelp': 'No notifications are sent during this window.',
+  'profile.challenge1v1': 'Challenge to 1v1',
+  'profile.unavailable': 'This profile isn’t available.',
+  'friends.searchToStart': 'Search for friends to get started.',
+  'username.new': 'New username',
 };
 
 const ku: Catalog = {
@@ -480,6 +530,31 @@ const ku: Catalog = {
   'settings.notifications': 'Mîhengên agahdariyan',
   'settings.notificationCenter': 'Navenda agahdariyan',
   'profile.changePhoto': 'Wêneyê profîlê biguherîne',
+  'profile.private': 'Ev profîl taybet e.',
+  'friends.noResults': 'Tu bikarhêner nehat dîtin.',
+  'comments.empty': 'Hê şîrove tune. Bibe yekem kes ku tiştekî bibêje.',
+  'chat.sayHello': 'Hê peyam tune. Silavê bide!',
+  'chat.noMessagesBody': 'Ji profîla hevalekî peyamekê bişîne da ku suhbetek dest pê bike.',
+  'moderation.report': 'Ragihîne',
+  'dictionary.backToSearch': 'Vegere lêgerînê',
+  'dictionary.playPronunciation': 'Bilêvkirinê lêxe',
+  'dictionary.wordOfDay': 'Peyva rojê',
+  'grammar.closeTips': 'Şîretan bigire',
+  'library.optionalNarration': 'Vegotin, bijarte',
+  'library.empty': 'Hê tiştek li vir tune — ya yekem binivîse!',
+  'comments.post': 'Şîroveyê bişîne',
+  'moderation.reportPost': 'Vê şandiyê ragihîne',
+  'moderation.reportComment': 'Vê şîroveyê ragihîne',
+  'recorder.remove': 'Tomarê rake',
+  'memes.empty': 'Hê şandî tune — bibe yê yekem!',
+  'notifications.markAllRead': 'Hemûyan wek xwendî nîşan bide',
+  'notifications.quietHours': 'Demên bêdeng',
+  'notifications.enableQuietHours': 'Demên bêdeng veke',
+  'notifications.quietHoursHelp': 'Di vê demê de tu agahdarî nayê şandin.',
+  'profile.challenge1v1': 'Bang bike 1v1',
+  'profile.unavailable': 'Ev profîl nayê dîtin.',
+  'friends.searchToStart': 'Ji bo destpêkê li hevalan bigere.',
+  'username.new': 'Navê bikarhêner ê nû',
 };
 
 const de: Catalog = {
@@ -631,6 +706,31 @@ const de: Catalog = {
   'settings.notifications': 'Mitteilungseinstellungen',
   'settings.notificationCenter': 'Mitteilungszentrale',
   'profile.changePhoto': 'Profilbild ändern',
+  'profile.private': 'Dieses Profil ist privat.',
+  'friends.noResults': 'Keine Benutzer gefunden.',
+  'comments.empty': 'Noch keine Kommentare. Sag als Erste oder Erster etwas.',
+  'chat.sayHello': 'Noch keine Nachrichten. Sag Hallo!',
+  'chat.noMessagesBody': 'Schreib einem Freund von seinem Profil aus, um eine Unterhaltung zu beginnen.',
+  'moderation.report': 'Melden',
+  'dictionary.backToSearch': 'Zurück zur Suche',
+  'dictionary.playPronunciation': 'Aussprache abspielen',
+  'dictionary.wordOfDay': 'Wort des Tages',
+  'grammar.closeTips': 'Tipps schließen',
+  'library.optionalNarration': 'Erzählung, optional',
+  'library.empty': 'Noch nichts hier — schreib das Erste!',
+  'comments.post': 'Kommentar senden',
+  'moderation.reportPost': 'Diesen Beitrag melden',
+  'moderation.reportComment': 'Diesen Kommentar melden',
+  'recorder.remove': 'Aufnahme entfernen',
+  'memes.empty': 'Noch keine Beiträge — sei die Erste!',
+  'notifications.markAllRead': 'Alle als gelesen markieren',
+  'notifications.quietHours': 'Ruhezeiten',
+  'notifications.enableQuietHours': 'Ruhezeiten einschalten',
+  'notifications.quietHoursHelp': 'In diesem Zeitraum werden keine Mitteilungen gesendet.',
+  'profile.challenge1v1': 'Zu einem 1-gegen-1 herausfordern',
+  'profile.unavailable': 'Dieses Profil ist nicht verfügbar.',
+  'friends.searchToStart': 'Such nach Freunden, um loszulegen.',
+  'username.new': 'Neuer Benutzername',
 };
 
 const es: Catalog = {
@@ -782,6 +882,31 @@ const es: Catalog = {
   'settings.notifications': 'Ajustes de notificaciones',
   'settings.notificationCenter': 'Centro de notificaciones',
   'profile.changePhoto': 'Cambiar la foto de perfil',
+  'profile.private': 'Este perfil es privado.',
+  'friends.noResults': 'No se han encontrado usuarios.',
+  'comments.empty': 'Todavía no hay comentarios. Sé el primero en decir algo.',
+  'chat.sayHello': 'Todavía no hay mensajes. ¡Saluda!',
+  'chat.noMessagesBody': 'Escribe a un amigo desde su perfil para empezar una conversación.',
+  'moderation.report': 'Denunciar',
+  'dictionary.backToSearch': 'Volver a la búsqueda',
+  'dictionary.playPronunciation': 'Reproducir la pronunciación',
+  'dictionary.wordOfDay': 'Palabra del día',
+  'grammar.closeTips': 'Cerrar los consejos',
+  'library.optionalNarration': 'Narración opcional',
+  'library.empty': 'Aquí no hay nada aún — ¡escribe lo primero!',
+  'comments.post': 'Publicar el comentario',
+  'moderation.reportPost': 'Denunciar esta publicación',
+  'moderation.reportComment': 'Denunciar este comentario',
+  'recorder.remove': 'Quitar la grabación',
+  'memes.empty': 'Aún no hay publicaciones — ¡sé el primero!',
+  'notifications.markAllRead': 'Marcar todo como leído',
+  'notifications.quietHours': 'Horas de silencio',
+  'notifications.enableQuietHours': 'Activar las horas de silencio',
+  'notifications.quietHoursHelp': 'No se envían notificaciones durante este intervalo.',
+  'profile.challenge1v1': 'Retar a un 1 contra 1',
+  'profile.unavailable': 'Este perfil no está disponible.',
+  'friends.searchToStart': 'Busca amigos para empezar.',
+  'username.new': 'Nuevo nombre de usuario',
 };
 
 const tr: Catalog = {
@@ -933,6 +1058,31 @@ const tr: Catalog = {
   'settings.notifications': 'Bildirim ayarları',
   'settings.notificationCenter': 'Bildirim merkezi',
   'profile.changePhoto': 'Profil fotoğrafını değiştir',
+  'profile.private': 'Bu profil gizli.',
+  'friends.noResults': 'Kullanıcı bulunamadı.',
+  'comments.empty': 'Henüz yorum yok. İlk sözü sen söyle.',
+  'chat.sayHello': 'Henüz mesaj yok. Merhaba de!',
+  'chat.noMessagesBody': 'Bir konuşma başlatmak için bir arkadaşına profilinden mesaj gönder.',
+  'moderation.report': 'Bildir',
+  'dictionary.backToSearch': 'Aramaya dön',
+  'dictionary.playPronunciation': 'Telaffuzu oynat',
+  'dictionary.wordOfDay': 'Günün kelimesi',
+  'grammar.closeTips': 'İpuçlarını kapat',
+  'library.optionalNarration': 'İsteğe bağlı seslendirme',
+  'library.empty': 'Burada henüz bir şey yok — ilkini sen yaz!',
+  'comments.post': 'Yorumu gönder',
+  'moderation.reportPost': 'Bu gönderiyi bildir',
+  'moderation.reportComment': 'Bu yorumu bildir',
+  'recorder.remove': 'Kaydı kaldır',
+  'memes.empty': 'Henüz gönderi yok — ilk sen ol!',
+  'notifications.markAllRead': 'Tümünü okundu işaretle',
+  'notifications.quietHours': 'Sessiz saatler',
+  'notifications.enableQuietHours': 'Sessiz saatleri aç',
+  'notifications.quietHoursHelp': 'Bu aralıkta hiçbir bildirim gönderilmez.',
+  'profile.challenge1v1': '1v1’e davet et',
+  'profile.unavailable': 'Bu profil kullanılamıyor.',
+  'friends.searchToStart': 'Başlamak için arkadaş ara.',
+  'username.new': 'Yeni kullanıcı adı',
 };
 
 const ar: Catalog = {
@@ -1084,6 +1234,31 @@ const ar: Catalog = {
   'settings.notifications': 'إعدادات الإشعارات',
   'settings.notificationCenter': 'مركز الإشعارات',
   'profile.changePhoto': 'تغيير صورة الملف الشخصي',
+  'profile.private': 'هذا الملف الشخصي خاص.',
+  'friends.noResults': 'لم يُعثر على مستخدمين.',
+  'comments.empty': 'لا تعليقات بعد. كن أول من يقول شيئًا.',
+  'chat.sayHello': 'لا رسائل بعد. ألقِ التحية!',
+  'chat.noMessagesBody': 'راسل صديقًا من ملفه الشخصي لبدء محادثة.',
+  'moderation.report': 'إبلاغ',
+  'dictionary.backToSearch': 'العودة إلى البحث',
+  'dictionary.playPronunciation': 'تشغيل النطق',
+  'dictionary.wordOfDay': 'كلمة اليوم',
+  'grammar.closeTips': 'إغلاق النصائح',
+  'library.optionalNarration': 'سرد اختياري',
+  'library.empty': 'لا شيء هنا بعد — اكتب أول واحد!',
+  'comments.post': 'نشر التعليق',
+  'moderation.reportPost': 'الإبلاغ عن هذا المنشور',
+  'moderation.reportComment': 'الإبلاغ عن هذا التعليق',
+  'recorder.remove': 'إزالة التسجيل',
+  'memes.empty': 'لا منشورات بعد — كن أول من ينشر!',
+  'notifications.markAllRead': 'تعليم الكل كمقروء',
+  'notifications.quietHours': 'ساعات الهدوء',
+  'notifications.enableQuietHours': 'تفعيل ساعات الهدوء',
+  'notifications.quietHoursHelp': 'لا تُرسَل أي إشعارات خلال هذه الفترة.',
+  'profile.challenge1v1': 'تحدٍّ فردي',
+  'profile.unavailable': 'هذا الملف الشخصي غير متاح.',
+  'friends.searchToStart': 'ابحث عن أصدقاء للبدء.',
+  'username.new': 'اسم مستخدم جديد',
 };
 
 const fr: Catalog = {
@@ -1235,6 +1410,31 @@ const fr: Catalog = {
   'settings.notifications': 'Réglages des notifications',
   'settings.notificationCenter': 'Centre de notifications',
   'profile.changePhoto': 'Changer la photo de profil',
+  'profile.private': 'Ce profil est privé.',
+  'friends.noResults': 'Aucun utilisateur trouvé.',
+  'comments.empty': 'Pas encore de commentaires. Sois le premier à dire quelque chose.',
+  'chat.sayHello': 'Pas encore de messages. Dis bonjour !',
+  'chat.noMessagesBody': 'Écris à un ami depuis son profil pour lancer une conversation.',
+  'moderation.report': 'Signaler',
+  'dictionary.backToSearch': 'Retour à la recherche',
+  'dictionary.playPronunciation': 'Écouter la prononciation',
+  'dictionary.wordOfDay': 'Mot du jour',
+  'grammar.closeTips': 'Fermer les conseils',
+  'library.optionalNarration': 'Narration facultative',
+  'library.empty': 'Rien ici pour l’instant — écrivez le premier !',
+  'comments.post': 'Publier le commentaire',
+  'moderation.reportPost': 'Signaler cette publication',
+  'moderation.reportComment': 'Signaler ce commentaire',
+  'recorder.remove': 'Supprimer l’enregistrement',
+  'memes.empty': 'Aucune publication pour l’instant — soyez le premier !',
+  'notifications.markAllRead': 'Tout marquer comme lu',
+  'notifications.quietHours': 'Heures silencieuses',
+  'notifications.enableQuietHours': 'Activer les heures silencieuses',
+  'notifications.quietHoursHelp': 'Aucune notification n’est envoyée pendant cette plage.',
+  'profile.challenge1v1': 'Défier en 1 contre 1',
+  'profile.unavailable': 'Ce profil n’est pas disponible.',
+  'friends.searchToStart': 'Cherchez des amis pour commencer.',
+  'username.new': 'Nouveau nom d’utilisateur',
 };
 
 const nl: Catalog = {
@@ -1386,6 +1586,31 @@ const nl: Catalog = {
   'settings.notifications': 'Meldingsinstellingen',
   'settings.notificationCenter': 'Meldingencentrum',
   'profile.changePhoto': 'Profielfoto wijzigen',
+  'profile.private': 'Dit profiel is privé.',
+  'friends.noResults': 'Geen gebruikers gevonden.',
+  'comments.empty': 'Nog geen reacties. Wees de eerste die iets zegt.',
+  'chat.sayHello': 'Nog geen berichten. Zeg hallo!',
+  'chat.noMessagesBody': 'Stuur een vriend een bericht vanaf hun profiel om een gesprek te beginnen.',
+  'moderation.report': 'Melden',
+  'dictionary.backToSearch': 'Terug naar zoeken',
+  'dictionary.playPronunciation': 'Uitspraak afspelen',
+  'dictionary.wordOfDay': 'Woord van de dag',
+  'grammar.closeTips': 'Tips sluiten',
+  'library.optionalNarration': 'Optionele vertelling',
+  'library.empty': 'Nog niets hier — schrijf de eerste!',
+  'comments.post': 'Reactie plaatsen',
+  'moderation.reportPost': 'Dit bericht melden',
+  'moderation.reportComment': 'Deze reactie melden',
+  'recorder.remove': 'Opname verwijderen',
+  'memes.empty': 'Nog geen berichten — wees de eerste!',
+  'notifications.markAllRead': 'Alles als gelezen markeren',
+  'notifications.quietHours': 'Stille uren',
+  'notifications.enableQuietHours': 'Stille uren inschakelen',
+  'notifications.quietHoursHelp': 'Tijdens dit venster worden geen meldingen verstuurd.',
+  'profile.challenge1v1': 'Uitdagen voor 1-tegen-1',
+  'profile.unavailable': 'Dit profiel is niet beschikbaar.',
+  'friends.searchToStart': 'Zoek naar vrienden om te beginnen.',
+  'username.new': 'Nieuwe gebruikersnaam',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -1538,6 +1763,31 @@ const ckb: Catalog = {
   'settings.notifications': 'ڕێکخستنی ئاگادارکردنەوەکان',
   'settings.notificationCenter': 'ناوەندی ئاگادارکردنەوەکان',
   'profile.changePhoto': 'وێنەی پرۆفایل بگۆڕە',
+  'profile.private': 'ئەم پرۆفایلە تایبەتە.',
+  'friends.noResults': 'هیچ بەکارهێنەرێک نەدۆزرایەوە.',
+  'comments.empty': 'هێشتا لێدوان نییە. یەکەم کەس بە کە شتێک دەڵێت.',
+  'chat.sayHello': 'هێشتا نامە نییە. سڵاو بکە!',
+  'chat.noMessagesBody': 'لە پرۆفایلی هاوڕێیەکەوە نامەیەکی بۆ بنێرە بۆ دەستپێکردنی گفتوگۆ.',
+  'moderation.report': 'ڕاپۆرت',
+  'dictionary.backToSearch': 'گەڕانەوە بۆ گەڕان',
+  'dictionary.playPronunciation': 'دەربڕین لێبدە',
+  'dictionary.wordOfDay': 'وشەی ڕۆژ',
+  'grammar.closeTips': 'ئامۆژگارییەکان دابخە',
+  'library.optionalNarration': 'گێڕانەوە، ئارەزوومەندانە',
+  'library.empty': 'هێشتا هیچ لێرە نییە — یەکەمیان بنووسە!',
+  'comments.post': 'لێدوان بنێرە',
+  'moderation.reportPost': 'ئەم پۆستە ڕاپۆرت بکە',
+  'moderation.reportComment': 'ئەم لێدوانە ڕاپۆرت بکە',
+  'recorder.remove': 'تۆمارەکە لابە',
+  'memes.empty': 'هێشتا هیچ پۆستێک نییە — یەکەم کەس بە!',
+  'notifications.markAllRead': 'هەمووی وەک خوێندراوە دیاری بکە',
+  'notifications.quietHours': 'کاتژمێرە بێدەنگەکان',
+  'notifications.enableQuietHours': 'کاتژمێرە بێدەنگەکان چالاک بکە',
+  'notifications.quietHoursHelp': 'لەم ماوەیەدا هیچ ئاگادارکردنەوەیەک نانێردرێت.',
+  'profile.challenge1v1': 'بانگهێشت بۆ ١ بە ١',
+  'profile.unavailable': 'ئەم پرۆفایلە بەردەست نییە.',
+  'friends.searchToStart': 'بۆ دەستپێکردن بەدوای هاوڕێدا بگەڕێ.',
+  'username.new': 'ناوی بەکارهێنەری نوێ',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

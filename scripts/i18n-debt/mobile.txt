@@ -10,35 +10,12 @@
 # lift them from web/src/i18n/*.ts wherever the browser already says the same
 # thing, rather than translating it a second time.
 
-mobile/src/chat/ChatListScreen.tsx  No conversations yet. Message a friend from their profile.
-mobile/src/chat/ChatScreen.tsx  Say hello
-mobile/src/dictionary/EntryDetail.tsx  accessibilityLabel="Back to search"
-mobile/src/dictionary/EntryDetail.tsx  accessibilityLabel="Play pronunciation"
-mobile/src/dictionary/WordOfDayCard.tsx  Word of the day
-mobile/src/grammar/GrammarTips.tsx  accessibilityLabel="Close tips"
 mobile/src/leagues/LeagueScreen.tsx  Add friends to race them here.
 mobile/src/leagues/LeagueScreen.tsx  Do a lesson to enter this week’s race!
 mobile/src/leagues/LeagueScreen.tsx  Friends leaderboards are coming soon.
 mobile/src/leagues/LeagueScreen.tsx  No board yet.
 mobile/src/leagues/LeagueScreen.tsx  No league yet.
 mobile/src/leagues/LeagueScreen.tsx  Nobody ranked yet.
-mobile/src/library/LibraryComposeScreen.tsx  Optional narration
-mobile/src/library/LibraryPostScreen.tsx  No comments yet.
-mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Post comment"
-mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Report this comment"
-mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Report this post"
-mobile/src/library/LibraryScreen.tsx  Nothing here yet — write the first!
-mobile/src/library/VoiceRecorder.tsx  accessibilityLabel="Remove recording"
-mobile/src/library/VoiceRecorder.tsx  accessibilityLabel="Stop recording"
-mobile/src/memes/MemeDetailScreen.tsx  No comments yet.
-mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Post comment"
-mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Report this comment"
-mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Report this post"
-mobile/src/memes/MemeFeedScreen.tsx  No posts yet — be the first!
-mobile/src/notifications/NotificationCenterScreen.tsx  Mark all read
-mobile/src/notifications/NotificationsScreen.tsx  Enable quiet hours
-mobile/src/notifications/NotificationsScreen.tsx  No notifications are sent during this window.
-mobile/src/notifications/NotificationsScreen.tsx  Quiet hours
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Finish now
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyme with
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
@@ -46,11 +23,6 @@ mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Time’s up!
 mobile/src/rhyme/RhymeTrainingScreen.tsx  You’ll get a Kurdish word — find as many real words that rhyme with it as you c
 mobile/src/shop/ShopScreen.tsx  The shop is empty right now — check back soon.
-mobile/src/social/PublicProfileScreen.tsx  Challenge to 1v1
-mobile/src/social/PublicProfileScreen.tsx  This profile is private.
-mobile/src/social/PublicProfileScreen.tsx  This profile isn’t available.
-mobile/src/social/SocialScreen.tsx  No users found.
-mobile/src/social/SocialScreen.tsx  Search for friends to get started.
 mobile/src/tags/TagsScreen.tsx  Add a tag
 mobile/src/tags/TagsScreen.tsx  I consent to showing this sensitive tag. It’s optional and can be removed anyti
 mobile/src/tags/TagsScreen.tsx  Main tag
@@ -58,7 +30,6 @@ mobile/src/tags/TagsScreen.tsx  No main tag yet.
 mobile/src/tags/TagsScreen.tsx  Tags & badges
 mobile/src/tags/TagsScreen.tsx  You haven’t added any tags yet.
 mobile/src/tags/TagsScreen.tsx  Your tags
-mobile/src/username/ChangeUsernameScreen.tsx  New username
 mobile/src/wordle/WordleScreen.tsx  Guess the Kurdish word in six tries. Green is right, yellow is close.
 mobile/src/wordle/WordleScreen.tsx  Kurdish Wordle
 mobile/src/wordle/WordleScreen.tsx  The word was

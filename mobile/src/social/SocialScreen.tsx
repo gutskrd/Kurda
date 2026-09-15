@@ -128,7 +128,7 @@ export function SocialScreen() {
               searching ? (
                 <SkeletonList count={5} style={{ marginTop: spacing.sm }} />
               ) : (
-                <Text style={[styles.empty, { color: colors.textSecondary }]}>No users found.</Text>
+                <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.noResults')}</Text>
               )
             }
           />
@@ -173,7 +173,7 @@ export function SocialScreen() {
               )
             }
             renderItem={({ item }) => row(item)}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Search for friends to get started.</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text>}
           />
         )}
       </View>

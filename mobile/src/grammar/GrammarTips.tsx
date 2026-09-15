@@ -4,6 +4,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { MarkdownView } from './MarkdownView';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Grammar "Tips" sheet (KUR-038). Rendered inside a Modal so opening it
@@ -11,13 +12,14 @@ import { MarkdownView } from './MarkdownView';
  */
 export function GrammarTips({ source, onClose }: { source: string; onClose: () => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   return (
     <GradientBackground>
       <View style={styles.screen}>
         <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>Tips</Text>
-          <Pressable onPress={onClose} accessibilityLabel="Close tips" hitSlop={12}>
+          <Pressable onPress={onClose} accessibilityLabel={t('grammar.closeTips')} hitSlop={12}>
             <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>
         </View>

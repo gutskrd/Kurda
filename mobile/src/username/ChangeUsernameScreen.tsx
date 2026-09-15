@@ -7,6 +7,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { checkUsername, USERNAME_MAX } from './validate';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Change username (KUR-004). Shows the current name, validates the new one live
@@ -17,6 +18,7 @@ import { checkUsername, USERNAME_MAX } from './validate';
 export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [current, setCurrent] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
             <Text style={[styles.label, { color: colors.textSecondary }]}>Current</Text>
             <Text style={[styles.current, { color: colors.textPrimary }]}>{current ?? '…'}</Text>
 
-            <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>New username</Text>
+            <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>{t('username.new')}</Text>
             <View
               style={[
                 styles.inputWrap,

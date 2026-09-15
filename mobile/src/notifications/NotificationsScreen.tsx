@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
@@ -24,6 +25,7 @@ const DEFAULT_QUIET = { start: 22 * 60, end: 7 * 60 };
 export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
@@ -70,9 +72,9 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
             </View>
           ))}
 
-          <Text style={[styles.section, { color: colors.textSecondary }]}>Quiet hours</Text>
+          <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.quietHours')}</Text>
           <View style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Enable quiet hours</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('notifications.enableQuietHours')}</Text>
             <Switch
               value={quiet}
               onValueChange={(on) =>
@@ -93,7 +95,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
                 minute={prefs.quietEndMin!}
                 onStep={(dir) => save({ quietEndMin: stepMinute(prefs.quietEndMin!, dir) })}
               />
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>No notifications are sent during this window.</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('notifications.quietHoursHelp')}</Text>
             </>
           ) : null}
         </ScrollView>
