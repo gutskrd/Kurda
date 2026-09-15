@@ -33,7 +33,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
   const submit = async (publish: boolean) => {
     if (saving) return;
     if (!title.trim() || !body.trim()) {
-      Alert.alert('Missing content', 'A title and some text are required.');
+      Alert.alert(t('library.missingContent'), t('library.titleAndBodyRequired'));
       return;
     }
     setSaving(true);
@@ -43,7 +43,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
       const up = await uploadVoiceNote(client, { uri: voiceUri });
       if (!up.ok) {
         setSaving(false);
-        Alert.alert('Couldn’t upload narration', up.error);
+        Alert.alert(t('library.narrationFailed'), up.error);
         return;
       }
       audioMediaId = up.audioMediaId;
@@ -51,7 +51,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
     const res = await createPost(client, { type, title: title.trim(), body: body.trim(), publish, audioMediaId });
     setSaving(false);
     if (!res.ok) {
-      Alert.alert('Couldn’t save', describeError(res.error).message);
+      Alert.alert(t('library.saveFailed'), describeError(res.error).message);
       return;
     }
     onExit();
@@ -94,7 +94,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
           </ScrollView>
 
           <View style={styles.actions}>
-            <ClayButton label="Save draft" tone="neutral" onPress={() => void submit(false)} style={styles.flex} />
+            <ClayButton label={t('library.saveDraft')} tone="neutral" onPress={() => void submit(false)} style={styles.flex} />
             <ClayButton label={saving ? 'Publishing…' : 'Publish'} tone="primary" onPress={() => void submit(true)} style={styles.flex} />
           </View>
         </View>

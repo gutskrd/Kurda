@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useChallengeSocket } from './useChallengeSocket';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * App-wide challenge handler (KUR-088). Prompts on an incoming challenge and
@@ -13,6 +14,7 @@ import { useChallengeSocket } from './useChallengeSocket';
 export function ChallengeListener() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
+  const { t } = useI18n();
 
   useChallengeSocket(
     useCallback(
@@ -21,10 +23,10 @@ export function ChallengeListener() {
           navigation.navigate('Game', { roomId: ev.roomId });
         } else if (ev.type === 'challenge_invite' && ev.from) {
           const from = ev.from;
-          Alert.alert('Challenge! ⚔️', 'A friend challenged you to a 1v1.', [
-            { text: 'Decline', style: 'cancel', onPress: () => void client.post(`/challenges/${from}/decline`) },
+          Alert.alert(t('challenge.title'), t('challenge.received'), [
+            { text: t('friends.decline'), style: 'cancel', onPress: () => void client.post(`/challenges/${from}/decline`) },
             {
-              text: 'Accept',
+              text: t('friends.accept'),
               onPress: () =>
                 void client.post<{ roomId: string }>(`/challenges/${from}/accept`).then((res) => {
                   if (res.ok) navigation.navigate('Game', { roomId: res.data.roomId });
@@ -33,7 +35,7 @@ export function ChallengeListener() {
           ]);
         }
       },
-      [client, navigation],
+      [client, navigation, t],
     ),
   );
 

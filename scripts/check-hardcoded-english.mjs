@@ -106,11 +106,16 @@ const READER_FACING =
  * Values that read like a phrase but are not one.
  *
  * SVG path data is the whole list so far, and it is unmistakable: a path
- * command letter followed by coordinates. The icon set is one file of it, and
- * without this the gate would report every icon in the app as untranslated
- * English.
+ * command letter followed by an actual coordinate. The icon set is one file of
+ * it, and without this the gate would report every icon in the app as
+ * untranslated English.
+ *
+ * The number matters. A first draft accepted any separator after the command
+ * letter, which made "A title and some text are required." an SVG path — `A`,
+ * then a space — and quietly excused every sentence that opens with the
+ * article "A ".
  */
-const NOT_LITERAL = [/^[MmLlHhVvCcSsQqTtAaZz][\d\s.,-]/];
+const NOT_LITERAL = [/^[MmLlHhVvCcSsQqTtAaZz]\s*-?[\d.]/];
 
 /**
  * Where a capitalised phrase is code rather than copy.
