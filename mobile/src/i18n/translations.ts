@@ -259,8 +259,14 @@ export type TranslationKey =
   | 'edit.noAvatar'
   | 'edit.premiumAvatar'
   | 'edit.profileUpdated'
-  | 'edit.photoUpdated'
-  | 'edit.avatarCleared';
+  | 'edit.photoUpdated'
+  | 'edit.avatarCleared'
+  | 'games.wordle.enter'
+  | 'games.wordle.backspace'
+  | 'games.wordle.emptyCell'
+  | 'games.wordle.letterCorrect'
+  | 'games.wordle.letterPresent'
+  | 'games.wordle.letterAbsent';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -497,6 +503,12 @@ const en: Catalog = {
   'edit.profileUpdated': 'Profile updated.',
   'edit.photoUpdated': 'Profile picture updated.',
   'edit.avatarCleared': 'Avatar cleared.',
+  'games.wordle.enter': 'Enter',
+  'games.wordle.backspace': 'Backspace',
+  'games.wordle.emptyCell': 'empty',
+  'games.wordle.letterCorrect': 'correct',
+  'games.wordle.letterPresent': 'present',
+  'games.wordle.letterAbsent': 'absent',
 };
 
 const ku: Catalog = {
@@ -732,6 +744,12 @@ const ku: Catalog = {
   'edit.profileUpdated': 'Profîl hat nûkirin.',
   'edit.photoUpdated': 'Wêneyê profîlê hat nûkirin.',
   'edit.avatarCleared': 'Avatar hat rakirin.',
+  'games.wordle.enter': 'Enter',
+  'games.wordle.backspace': 'Paşve',
+  'games.wordle.emptyCell': 'vala',
+  'games.wordle.letterCorrect': 'rast',
+  'games.wordle.letterPresent': 'heye',
+  'games.wordle.letterAbsent': 'tune',
 };
 
 const de: Catalog = {
@@ -967,6 +985,12 @@ const de: Catalog = {
   'edit.profileUpdated': 'Profil aktualisiert.',
   'edit.photoUpdated': 'Profilbild aktualisiert.',
   'edit.avatarCleared': 'Avatar entfernt.',
+  'games.wordle.enter': 'Enter',
+  'games.wordle.backspace': 'Rücktaste',
+  'games.wordle.emptyCell': 'leer',
+  'games.wordle.letterCorrect': 'richtig',
+  'games.wordle.letterPresent': 'enthalten',
+  'games.wordle.letterAbsent': 'nicht enthalten',
 };
 
 const es: Catalog = {
@@ -1202,6 +1226,12 @@ const es: Catalog = {
   'edit.profileUpdated': 'Perfil actualizado.',
   'edit.photoUpdated': 'Foto de perfil actualizada.',
   'edit.avatarCleared': 'Avatar quitado.',
+  'games.wordle.enter': 'Intro',
+  'games.wordle.backspace': 'Retroceso',
+  'games.wordle.emptyCell': 'vacía',
+  'games.wordle.letterCorrect': 'correcta',
+  'games.wordle.letterPresent': 'presente',
+  'games.wordle.letterAbsent': 'ausente',
 };
 
 const tr: Catalog = {
@@ -1437,6 +1467,12 @@ const tr: Catalog = {
   'edit.profileUpdated': 'Profil güncellendi.',
   'edit.photoUpdated': 'Profil fotoğrafı güncellendi.',
   'edit.avatarCleared': 'Avatar kaldırıldı.',
+  'games.wordle.enter': 'Enter',
+  'games.wordle.backspace': 'Geri sil',
+  'games.wordle.emptyCell': 'boş',
+  'games.wordle.letterCorrect': 'doğru',
+  'games.wordle.letterPresent': 'var',
+  'games.wordle.letterAbsent': 'yok',
 };
 
 const ar: Catalog = {
@@ -1672,6 +1708,12 @@ const ar: Catalog = {
   'edit.profileUpdated': 'تم تحديث الملف الشخصي.',
   'edit.photoUpdated': 'تم تحديث صورة الملف الشخصي.',
   'edit.avatarCleared': 'أُزيلت الصورة الرمزية.',
+  'games.wordle.enter': 'إدخال',
+  'games.wordle.backspace': 'مسح',
+  'games.wordle.emptyCell': 'فارغة',
+  'games.wordle.letterCorrect': 'صحيح',
+  'games.wordle.letterPresent': 'موجود',
+  'games.wordle.letterAbsent': 'غير موجود',
 };
 
 const fr: Catalog = {
@@ -1907,6 +1949,12 @@ const fr: Catalog = {
   'edit.profileUpdated': 'Profil mis à jour.',
   'edit.photoUpdated': 'Photo de profil mise à jour.',
   'edit.avatarCleared': 'Avatar retiré.',
+  'games.wordle.enter': 'Entrée',
+  'games.wordle.backspace': 'Retour arrière',
+  'games.wordle.emptyCell': 'vide',
+  'games.wordle.letterCorrect': 'correcte',
+  'games.wordle.letterPresent': 'présente',
+  'games.wordle.letterAbsent': 'absente',
 };
 
 const nl: Catalog = {
@@ -2142,6 +2190,12 @@ const nl: Catalog = {
   'edit.profileUpdated': 'Profiel bijgewerkt.',
   'edit.photoUpdated': 'Profielfoto bijgewerkt.',
   'edit.avatarCleared': 'Avatar verwijderd.',
+  'games.wordle.enter': 'Enter',
+  'games.wordle.backspace': 'Backspace',
+  'games.wordle.emptyCell': 'leeg',
+  'games.wordle.letterCorrect': 'goed',
+  'games.wordle.letterPresent': 'aanwezig',
+  'games.wordle.letterAbsent': 'afwezig',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -2378,6 +2432,12 @@ const ckb: Catalog = {
   'edit.profileUpdated': 'پرۆفایل نوێ کرایەوە.',
   'edit.photoUpdated': 'وێنەی پرۆفایل نوێ کرایەوە.',
   'edit.avatarCleared': 'ئەڤاتار لابرا.',
+  'games.wordle.enter': 'Enter',
+  'games.wordle.backspace': 'سڕینەوە',
+  'games.wordle.emptyCell': 'بەتاڵ',
+  'games.wordle.letterCorrect': 'ڕاست',
+  'games.wordle.letterPresent': 'هەیە',
+  'games.wordle.letterAbsent': 'نییە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
