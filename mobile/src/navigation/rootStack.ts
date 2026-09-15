@@ -23,6 +23,7 @@ export type RootStackParamList = {
   /** An id when an invite link opened it; nothing when you came to make one. */
   WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
+  Race: undefined;
   /** An id when an invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
   Memes: undefined;

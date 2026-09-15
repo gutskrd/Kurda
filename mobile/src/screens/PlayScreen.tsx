@@ -87,6 +87,18 @@ export function PlayScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
+          <Icon name="bolt" size={40} tone="primary" />
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.race.name')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.race.blurb')}</Text>
+          <ClayButton
+            label={t('games.play')}
+            tone="neutral"
+            onPress={() => navigation.navigate('Race')}
+            style={styles.button}
+          />
+        </GlassCard>
+
+        <GlassCard style={styles.card}>
           <Icon name="trophy" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhymeMatch.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.online')}</Text>
