@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildInviteUrl, inviteLinkPattern, invitePath, parseInvite } from './game-invites.js';
+import { buildInviteUrl, inviteLinkPattern, invitePath, inviteRoutePath, parseInvite } from './game-invites.js';
 
 /**
  * The contract these tests exist for: a link made in one app opens in the other.
@@ -54,6 +54,18 @@ describe('game invites', () => {
     const body = 'https://mykurda.com/app/games/wordle-battle?id=aaa111';
     expect(body.replace(inviteLinkPattern(), '')).toBe('');
     expect(body.replace(inviteLinkPattern(), '')).toBe('');
+  });
+
+  /**
+   * The phone's linking config is built from this, so a drift here is a link
+   * the app itself sent and then failed to recognise.
+   */
+  it('gives the phone a route pattern that is the same path it builds', () => {
+    for (const type of ['wordle-battle', 'rhyme-match'] as const) {
+      const pattern = inviteRoutePath(type);
+      expect(pattern).toBe(`app/games/${type}`);
+      expect(invitePath({ type, id: 'abc123' })).toBe(`/${pattern}?id=abc123`);
+    }
   });
 
   it('escapes an id so it cannot break out of the query string', () => {

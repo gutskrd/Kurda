@@ -7,6 +7,7 @@ export {
   invitePath,
   inviteLinkPattern,
   parseInvite,
+  inviteRoutePath,
   type GameInvite,
   type GameInviteType,
 } from './game-invites.js';

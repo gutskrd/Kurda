@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
+import { inviteRoutePath } from '@kurda/shared';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
@@ -62,13 +63,33 @@ const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
+/**
+ * Where a link opened from outside the app lands.
+ *
+ * The game routes are the ones somebody else sends you. Their paths come from
+ * `inviteRoutePath` rather than being written here, because the string has to
+ * be the same one `buildInviteUrl` puts in the message — a link the app sent
+ * and then failed to recognise is the failure nobody tests, since it only
+ * happens on the *other* person's phone.
+ *
+ * `?id=…` needs no `:param`: React Navigation passes query parameters through
+ * as route params, which is why both screens take an optional `id`.
+ *
+ * mykurda.com is listed so the web invite URL matches, but a browser will not
+ * hand it over until the two association files exist — apple-app-site-association
+ * (needs the Apple team id) and assetlinks.json (needs the signing certificate's
+ * SHA-256), both served from the site's /.well-known/. Until then a tapped link
+ * opens the website and `kurda://` still works.
+ */
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [Linking.createURL('/'), 'kurda://'],
+  prefixes: [Linking.createURL('/'), 'kurda://', 'https://mykurda.com'],
   config: {
     screens: {
       Tabs: { screens: linkingScreens() },
       Lesson: 'lesson/:lessonId',
       Practice: 'practice',
+      WordleBattle: inviteRoutePath('wordle-battle'),
+      RhymeMatch: inviteRoutePath('rhyme-match'),
     },
   },
 };
