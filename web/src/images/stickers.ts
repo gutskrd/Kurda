@@ -17,17 +17,26 @@
  * picture being posted, not just fail to appear.
  */
 
+import type { MessageKey } from '../i18n/en';
+
 export interface PictureSticker {
   src: string;
+  /**
+   * A stable identifier, carried onto the layer as its glyph. Never displayed
+   * for a picture sticker — the image is — so it stays the same in every
+   * language, which is what makes a saved picture portable.
+   */
   name: string;
+  /** What the picker announces, when the name is a description and not a noun. */
+  labelKey?: MessageKey;
 }
 
 /** Kurdish marks and emblems, kept short — a picker of thousands is a search box. */
 export const PICTURE_STICKERS: readonly PictureSticker[] = [
   { src: '/stickers/kurdistan_badge.webp', name: 'Kurdistan' },
-  { src: '/stickers/yellow_sun.webp', name: 'Yellow sun' },
-  { src: '/stickers/white_sun.webp', name: 'White sun' },
-  { src: '/stickers/black_sun.webp', name: 'Black sun' },
+  { src: '/stickers/yellow_sun.webp', name: 'yellow-sun', labelKey: 'photo.sticker.yellowSun' },
+  { src: '/stickers/white_sun.webp', name: 'white-sun', labelKey: 'photo.sticker.whiteSun' },
+  { src: '/stickers/black_sun.webp', name: 'black-sun', labelKey: 'photo.sticker.blackSun' },
   { src: '/stickers/zilan.webp', name: 'Zilan' },
   { src: '/stickers/amed_spor.webp', name: 'Amed Spor' },
   { src: '/stickers/logo.webp', name: 'MyKurda' },

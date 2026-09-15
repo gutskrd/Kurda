@@ -8,18 +8,64 @@
 #
 # The rule has not changed: nothing here may grow, an entry that stops matching
 # is an error, and the file is finished when it is empty — this time for real.
+#
+# Extended when the gate learned to read plain .ts modules as well as .tsx:
+# an error map, a validator and a label table are read by the same person as
+# a component is, and that is where fifty more sentences were sitting.
 
+mobile/src/api/errors.ts  Something went wrong on our end. Please try again in a moment.
+mobile/src/api/errors.ts  That didn’t work. Please try again.
+mobile/src/api/errors.ts  You appear to be offline. Check your connection and try again.
+mobile/src/api/errors.ts  You’re doing that too fast. Please try again shortly.
+mobile/src/auth/google.ts  Google sign-in failed
+mobile/src/auth/google.ts  Google sign-in isn’t available in this build yet.
+mobile/src/auth/validators.ts  Enter a valid email address
+mobile/src/auth/validators.ts  Password must include at least one letter
+mobile/src/coursemap/node.ts  Complete the previous skill to unlock this one.
+mobile/src/coursemap/node.ts  This skill is getting rusty — practice to restore it.
 mobile/src/dictionary/EntryDetail.tsx  Bookmark word
 mobile/src/dictionary/EntryDetail.tsx  Remove bookmark
+mobile/src/events/quests.ts  Complete lessons
+mobile/src/events/quests.ts  Earn XP
+mobile/src/events/quests.ts  Win games
 mobile/src/lesson/LessonPlayerScreen.tsx  You’re offline — tap to retry
 mobile/src/lesson/components/FeedbackFooter.tsx  Almost — typo accepted
 mobile/src/lesson/components/FeedbackFooter.tsx  Not quite
 mobile/src/lesson/components/LessonResults.tsx  Lesson complete!
 mobile/src/lesson/components/LessonResults.tsx  Out of hearts
 mobile/src/lesson/components/SpeakingExercise.tsx  Upload failed — please try again.
+mobile/src/lesson/recording.ts  Too short — hold to record a little longer.
+mobile/src/lesson/recording.ts  We couldn’t hear anything — try again.
+mobile/src/library/types.ts  This comment was removed.
+mobile/src/library/voiceUpload.ts  Could not upload the recording.
+mobile/src/library/voiceUpload.ts  The upload finished but no audio was returned. Please try again.
+mobile/src/library/voiceUpload.ts  Your session expired. Please sign in again.
+mobile/src/memes/api.ts  Could not upload the image.
+mobile/src/memes/api.ts  The upload finished but no image was returned. Please try again.
+mobile/src/memes/api.ts  Your session expired. Please sign in again.
+mobile/src/memes/types.ts  This comment was removed.
+mobile/src/moderation/report.ts  Couldn’t report
+mobile/src/moderation/report.ts  Our moderators will review it.
+mobile/src/moderation/report.ts  Thanks — this has been sent for review.
 mobile/src/net/AsyncBoundary.tsx  Nothing here yet.
 mobile/src/notifications/NotificationCenterScreen.tsx  You're all caught up.
+mobile/src/notifications/prefs.ts  Friend activity
+mobile/src/notifications/prefs.ts  Game invites & results
+mobile/src/notifications/prefs.ts  News & offers
+mobile/src/notifications/prefs.ts  Streak reminders
 mobile/src/practice/PracticeScreen.tsx  label="Try again"
+mobile/src/profile/photoUpload.ts  Could not upload the photo.
+mobile/src/profile/photoUpload.ts  The upload finished but no photo was returned. Please try again.
+mobile/src/profile/photoUpload.ts  Your session expired. Please sign in again.
+mobile/src/profile/photoUploadResult.ts  Photo uploads are temporarily unavailable. Please try again later.
+mobile/src/profile/photoUploadResult.ts  That file isn't a supported image. Please pick a JPEG, PNG, or WebP.
+mobile/src/profile/photoUploadResult.ts  That image can't be used as a profile photo.
+mobile/src/profile/photoUploadResult.ts  That image couldn't be read. Please try a different photo.
+mobile/src/profile/photoUploadResult.ts  That photo is too detailed to fit the size limit. Try a simpler or smaller image
+mobile/src/profile/photoUploadResult.ts  That photo is too large. Please pick a smaller one.
+mobile/src/profile/photoUploadResult.ts  The photo couldn't be saved. Please try again.
+mobile/src/profile/photoUploadResult.ts  You're changing your photo too often. Please wait a moment and try again.
+mobile/src/profile/photoUploadResult.ts  Your session expired. Please sign in again.
 mobile/src/rewards/DailyRewardCard.tsx  Come back tomorrow
 mobile/src/screens/DictionaryScreen.tsx  message="Couldn’t search right now. Check your connection and try again."
 mobile/src/screens/GameScreen.tsx  Forfeit match?
@@ -43,10 +89,14 @@ mobile/src/shop/ShopScreen.tsx  Play and learn to earn more!
 mobile/src/shop/ShopScreen.tsx  Price changed
 mobile/src/shop/ShopScreen.tsx  Purchase failed
 mobile/src/shop/ShopScreen.tsx  This item’s price changed. Please review and try again.
+mobile/src/shop/format.ts  Streak Freezes
 mobile/src/social/PublicProfileScreen.tsx  Block user?
 mobile/src/social/PublicProfileScreen.tsx  Challenge sent
 mobile/src/social/PublicProfileScreen.tsx  Could not challenge
 mobile/src/social/PublicProfileScreen.tsx  They won’t be able to see you or contact you.
+mobile/src/social/format.ts  Accept request
+mobile/src/social/format.ts  Add friend
+mobile/src/social/format.ts  Friends only
 mobile/src/tags/TagsScreen.tsx  Add tag
 mobile/src/tags/TagsScreen.tsx  Consent needed
 mobile/src/tags/TagsScreen.tsx  Couldn’t add tag
@@ -57,3 +107,7 @@ mobile/src/username/ChangeUsernameScreen.tsx  Couldn’t update your username. P
 mobile/src/username/ChangeUsernameScreen.tsx  Looks good — tap Save to check availability.
 mobile/src/username/ChangeUsernameScreen.tsx  Save username
 mobile/src/username/ChangeUsernameScreen.tsx  That’s already your username.
+mobile/src/username/validate.ts  Can’t be only numbers.
+mobile/src/username/validate.ts  Must contain at least one letter.
+mobile/src/username/validate.ts  No two underscores in a row.
+mobile/src/wordle/share.ts  Kurda Wordle

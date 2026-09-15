@@ -31,7 +31,12 @@ export const TYPE_ONLY_ATTRS = {
  * stopped, because the endpoints take whatever they are posted. It sits
  * alongside the server-side rules, it does not replace them.
  */
-export function useTypeOnly(message = 'No pasting — type it.'): {
+/**
+ * `message` is required rather than defaulted. A default would be one English
+ * sentence with no catalogue behind it, waiting for the first caller who
+ * forgets — and all three callers already pass a translated one.
+ */
+export function useTypeOnly(message: string): {
   /** spread onto the input or textarea */
   handlers: {
     onPaste: (e: React.ClipboardEvent) => void;
