@@ -103,9 +103,9 @@ export function SocialScreen() {
               showing halves of the same wall. Both now live on the Civak tab,
               together, which is what this tab stopped being about. */}
           <View style={styles.headerLinks}>
-            <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel="Messages">
+            <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel={t('nav.messages')}>
               <Icon name="chat" size={18} tone="primary" />
-              <Text style={[styles.messages, { color: colors.primary }]}>Messages</Text>
+              <Text style={[styles.messages, { color: colors.primary }]}>{t('nav.messages')}</Text>
             </Pressable>
           </View>
         </View>

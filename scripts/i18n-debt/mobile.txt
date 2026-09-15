@@ -47,14 +47,7 @@ mobile/src/screens/GameScreen.tsx  You win!
 mobile/src/screens/GameScreen.tsx  Your opponent will win.
 mobile/src/screens/LearnScreen.tsx  Not available yet.
 mobile/src/screens/ProfileScreen.tsx  Add photo
-mobile/src/screens/ProfileScreen.tsx  Allow photo access in Settings to set a profile picture.
 mobile/src/screens/ProfileScreen.tsx  Change photo
-mobile/src/screens/ProfileScreen.tsx  Couldn’t update photo
-mobile/src/screens/ProfileScreen.tsx  Photo access needed
-mobile/src/screens/ProfileScreen.tsx  label="Tags & badges"
-mobile/src/screens/SettingsScreen.tsx  Could not delete account
-mobile/src/screens/SettingsScreen.tsx  Delete account?
-mobile/src/screens/SettingsScreen.tsx  Your account and all your data will be permanently deleted after 14 days. Sign i
 mobile/src/shop/ShopScreen.tsx  Confirm purchase
 mobile/src/shop/ShopScreen.tsx  Gem packs are coming soon.
 mobile/src/shop/ShopScreen.tsx  Play and learn to earn more!
@@ -62,24 +55,10 @@ mobile/src/shop/ShopScreen.tsx  Price changed
 mobile/src/shop/ShopScreen.tsx  Purchase failed
 mobile/src/shop/ShopScreen.tsx  This item’s price changed. Please review and try again.
 mobile/src/shop/format.ts  Streak Freezes
-mobile/src/social/PublicProfileScreen.tsx  Block user?
-mobile/src/social/PublicProfileScreen.tsx  Challenge sent
-mobile/src/social/PublicProfileScreen.tsx  Could not challenge
-mobile/src/social/PublicProfileScreen.tsx  They won’t be able to see you or contact you.
-mobile/src/social/format.ts  Accept request
-mobile/src/social/format.ts  Add friend
-mobile/src/social/format.ts  Friends only
 mobile/src/tags/TagsScreen.tsx  Add tag
 mobile/src/tags/TagsScreen.tsx  Consent needed
 mobile/src/tags/TagsScreen.tsx  Couldn’t add tag
 mobile/src/tags/TagsScreen.tsx  Please try again.
 mobile/src/tags/TagsScreen.tsx  Remove tag
 mobile/src/tags/TagsScreen.tsx  Sensitive tags are optional. Tick consent to add this tag.
-mobile/src/username/ChangeUsernameScreen.tsx  Couldn’t update your username. Please try again.
-mobile/src/username/ChangeUsernameScreen.tsx  Looks good — tap Save to check availability.
-mobile/src/username/ChangeUsernameScreen.tsx  Save username
-mobile/src/username/ChangeUsernameScreen.tsx  That’s already your username.
-mobile/src/username/validate.ts  Can’t be only numbers.
-mobile/src/username/validate.ts  Must contain at least one letter.
-mobile/src/username/validate.ts  No two underscores in a row.
 mobile/src/wordle/share.ts  Kurda Wordle

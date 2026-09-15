@@ -67,10 +67,10 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 
   const block = useCallback(() => {
-    Alert.alert('Block user?', 'They won’t be able to see you or contact you.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('moderation.blockWhoTitle', { name: profile?.username ?? '' }), t('moderation.blockNote'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Block',
+        text: t('moderation.block'),
         style: 'destructive',
         onPress: () => {
           void client.post(`/friends/${userId}/block`).then(onExit);
@@ -96,7 +96,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load}>
           {() => {
             if (!profile) return null;
-            const label = friendActionLabel(profile.friendStatus);
+            const labelKey = friendActionLabel(profile.friendStatus);
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
           <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} />
@@ -122,13 +122,13 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
                     style={[styles.primary, { backgroundColor: colors.primary }]}
                   >
-                    <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>Message</Text>
+                    <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{t('profile.message')}</Text>
                   </Pressable>
                   <Pressable
                     onPress={() =>
                       void client.post('/challenges', { userId: profile.userId }).then((res) => {
-                        if (res.ok) Alert.alert('Challenge sent', 'Waiting for them to accept…');
-                        else Alert.alert('Could not challenge', describeError(res.error, t));
+                        if (res.ok) Alert.alert(t('profile.challengeSent'), t('profile.challengeWaiting'));
+                        else Alert.alert(t('profile.challengeFailed'), describeError(res.error, t));
                       })
                     }
                     style={[styles.secondary, { borderColor: colors.accent }]}
@@ -138,16 +138,16 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   </Pressable>
                 </>
               ) : null}
-              {label ? (
+              {labelKey ? (
                 <Pressable
                   onPress={() => isActionable(profile.friendStatus) && act(profile.friendStatus)}
                   disabled={busy || !isActionable(profile.friendStatus)}
                   style={[styles.primary, { backgroundColor: isActionable(profile.friendStatus) ? colors.primary : colors.controlTrack }]}
                 >
-                  {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{label}</Text>}
+                  {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{labelKey ? t(labelKey) : null}</Text>}
                 </Pressable>
               ) : null}
-              <Pressable onPress={block} style={styles.block}><Text style={[styles.blockText, { color: colors.danger }]}>Block</Text></Pressable>
+              <Pressable onPress={block} style={styles.block}><Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text></Pressable>
             </View>
           ) : null}
         </View>
