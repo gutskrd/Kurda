@@ -10,12 +10,14 @@ import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { relativeTime, resolveDeepLink, type InboxItem } from './inbox.js';
+import { useI18n } from '../i18n/I18nContext';
 
 /** In-app notification center: list, mark-read, deep links (KUR-097). */
 export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -68,7 +70,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           <Text style={[styles.heading, { color: colors.textPrimary }]}>Notifications</Text>
           {hasUnread ? (
             <Pressable onPress={markAll} hitSlop={8}>
-              <Text style={[styles.markAll, { color: colors.primary }]}>Mark all read</Text>
+              <Text style={[styles.markAll, { color: colors.primary }]}>{t('notifications.markAllRead')}</Text>
             </Pressable>
           ) : (
             <View style={{ width: 1 }} />

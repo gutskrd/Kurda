@@ -12,6 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { listPosts } from './api';
 import { bodyPreview, type LibraryPost, type PostType } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 const PAGE = 20;
 
@@ -24,6 +25,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [type, setType] = useState<PostType>('story');
@@ -132,7 +134,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Nothing here yet — write the first!</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('library.empty')}</Text>}
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>

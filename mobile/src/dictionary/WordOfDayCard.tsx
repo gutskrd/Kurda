@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { EntryDetail } from './EntryDetail';
+import { useI18n } from '../i18n/I18nContext';
 
 interface WordOfDay {
   entryId: string;
@@ -16,6 +17,7 @@ interface WordOfDay {
 export function WordOfDayCard() {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [word, setWord] = useState<WordOfDay | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -34,7 +36,7 @@ export function WordOfDayCard() {
   return (
     <>
       <Pressable onPress={() => setOpen(true)} style={[styles.card, { backgroundColor: colors.primary }]} accessibilityRole="button">
-        <Text style={[styles.label, { color: colors.textOnPrimary }]}>Word of the day</Text>
+        <Text style={[styles.label, { color: colors.textOnPrimary }]}>{t('dictionary.wordOfDay')}</Text>
         <Text style={[styles.headword, { color: colors.textOnPrimary }]}>{word.headword}</Text>
         <Text style={[styles.def, { color: colors.textOnPrimary }]} numberOfLines={1}>
           {word.pos ? `${word.pos} · ` : ''}

@@ -8,6 +8,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useI18n } from '../i18n/I18nContext';
 
 interface Conversation {
   userId: string;
@@ -22,6 +23,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [convos, setConvos] = useState<Conversation[]>([]);
 
@@ -62,7 +64,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
               ) : null}
             </Pressable>
           )}
-          ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>No conversations yet. Message a friend from their profile.</Text>}
+          ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('chat.noMessagesBody')}</Text>}
         />
       </View>
     </GradientBackground>

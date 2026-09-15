@@ -14,6 +14,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useI18n } from '../i18n/I18nContext';
 
 interface Profile {
   userId: string;
@@ -33,6 +34,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -82,7 +84,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       <GradientBackground>
         <View style={styles.screen}>
           <Header onExit={onExit} />
-          <View style={styles.centered}><Text style={[styles.dim, { color: colors.textSecondary }]}>This profile isn’t available.</Text></View>
+          <View style={styles.centered}><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.unavailable')}</Text></View>
         </View>
       </GradientBackground>
     );
@@ -102,7 +104,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
 
           {profile.private ? (
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>This profile is private.</Text>
+            <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
           ) : (
             <View style={styles.stats}>
               <Stat label="Streak" value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
@@ -132,7 +134,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     style={[styles.secondary, { borderColor: colors.accent }]}
                   >
                     <Icon name="play" size={18} color={colors.accent} />
-                    <Text style={[styles.secondaryText, { color: colors.accent }]}>Challenge to 1v1</Text>
+                    <Text style={[styles.secondaryText, { color: colors.accent }]}>{t('profile.challenge1v1')}</Text>
                   </Pressable>
                 </>
               ) : null}

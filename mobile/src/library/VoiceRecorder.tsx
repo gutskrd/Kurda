@@ -11,6 +11,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { AudioPlayer } from './AudioPlayer';
 import { clock } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Record a voice note (KUR-282): request mic permission → record (auto-stops at
@@ -30,6 +31,7 @@ export function VoiceRecorder({
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const state = useAudioRecorderState(recorder);
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
 
   const stop = useCallback(async () => {
@@ -74,7 +76,7 @@ export function VoiceRecorder({
         <View style={styles.player}>
           <AudioPlayer url={value} />
         </View>
-        <Pressable onPress={() => onChange(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Remove recording">
+        <Pressable onPress={() => onChange(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('recorder.remove')}>
           <Text style={[styles.action, { color: colors.danger }]}>Remove</Text>
         </Pressable>
       </View>
@@ -87,7 +89,7 @@ export function VoiceRecorder({
         onPress={() => void stop()}
         style={[styles.pill, { backgroundColor: colors.dangerFill, borderColor: colors.danger }]}
         accessibilityRole="button"
-        accessibilityLabel="Stop recording"
+        accessibilityLabel={t('lesson.speak.stop')}
       >
         <View style={[styles.dot, { backgroundColor: colors.danger }]} />
         <Text style={[styles.pillText, { color: colors.danger }]}>Recording {clock(state.durationMillis / 1000)} · tap to stop</Text>

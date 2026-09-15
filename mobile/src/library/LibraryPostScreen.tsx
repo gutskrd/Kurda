@@ -25,6 +25,7 @@ import { addComment, getPost, listComments, reportComment, reportPost } from './
 import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
 import { commentText, type LibraryComment, type LibraryPost } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -33,6 +34,7 @@ import { commentText, type LibraryComment, type LibraryPost } from './types';
 export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [post, setPost] = useState<LibraryPost | null>(null);
@@ -123,7 +125,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                 onPress={() => confirmReport('post', () => reportPost(client, post.id))}
                 hitSlop={6}
                 accessibilityRole="button"
-                accessibilityLabel="Report this post"
+                accessibilityLabel={t('moderation.reportPost')}
               >
                 <Text style={[styles.report, { color: colors.textSecondary }]}>⚐ Report post</Text>
               </Pressable>
@@ -134,7 +136,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
               ) : comments.length === 0 ? (
-                <Text style={[styles.empty, { color: colors.textSecondary }]}>No comments yet.</Text>
+                <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
               ) : (
                 comments.map((c) => (
                   <View key={c.id} style={[styles.comment, { borderColor: colors.glassBorder }]}>
@@ -153,7 +155,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                           </Text>
                         ) : null}
                         {c.status !== 'removed' ? (
-                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel="Report this comment">
+                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>⚐ Report</Text>
                           </Pressable>
                         ) : null}
@@ -182,7 +184,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                 disabled={(!draft.trim() && !voiceUri) || posting}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Post comment"
+                accessibilityLabel={t('comments.post')}
                 style={{ opacity: (!draft.trim() && !voiceUri) || posting ? 0.4 : 1 }}
               >
                 <Icon name="chevron-right" size={24} tone="primary" />

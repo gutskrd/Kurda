@@ -11,6 +11,7 @@ import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { SenseSection } from './SenseSection';
 import type { Entry } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 /** Senses beyond this start collapsed so long entries stay scannable (KUR-045). */
 const COLLAPSE_AFTER = 8;
@@ -18,6 +19,7 @@ const COLLAPSE_AFTER = 8;
 export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
   const [entry, setEntry] = useState<Entry | null>(null);
@@ -48,7 +50,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
     <GradientBackground>
       <View style={styles.screen}>
         <View style={[styles.topBar, { paddingTop: topInset }]}>
-          <Pressable onPress={onBack} accessibilityLabel="Back to search" hitSlop={12}>
+          <Pressable onPress={onBack} accessibilityLabel={t('dictionary.backToSearch')} hitSlop={12}>
             <Text style={[styles.back, { color: colors.primary }]}>‹ Back</Text>
           </Pressable>
         </View>
@@ -65,7 +67,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
               {entry.audio.length > 0 && audio.supported ? (
                 <Pressable
                   onPress={() => audio.play(1)}
-                  accessibilityLabel="Play pronunciation"
+                  accessibilityLabel={t('dictionary.playPronunciation')}
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
                 >
                   <Icon name="speaker" size={22} tone="primary" />

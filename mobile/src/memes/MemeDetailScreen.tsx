@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import {
   Alert,
   Image,
@@ -41,6 +42,7 @@ import {
 export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [post, setPost] = useState<ImagePost | null>(null);
@@ -126,7 +128,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 onPress={() => confirmReport('post', () => reportPost(client, post.id))}
                 hitSlop={6}
                 accessibilityRole="button"
-                accessibilityLabel="Report this post"
+                accessibilityLabel={t('moderation.reportPost')}
               >
                 <Text style={[styles.report, { color: colors.textSecondary }]}>⚐ Report post</Text>
               </Pressable>
@@ -160,7 +162,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
               ) : comments.length === 0 ? (
-                <Text style={[styles.empty, { color: colors.textSecondary }]}>No comments yet.</Text>
+                <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
               ) : (
                 comments.map((c) => (
                   <View key={c.id} style={[styles.comment, { borderColor: colors.glassBorder }]}>
@@ -177,7 +179,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                           </Text>
                         ) : null}
                         {c.status !== 'removed' ? (
-                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel="Report this comment">
+                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>⚐ Report</Text>
                           </Pressable>
                         ) : null}
@@ -204,7 +206,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
               disabled={!draft.trim() || posting}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Post comment"
+              accessibilityLabel={t('comments.post')}
               style={{ opacity: !draft.trim() || posting ? 0.4 : 1 }}
             >
               <Icon name="chevron-right" size={24} tone="primary" />

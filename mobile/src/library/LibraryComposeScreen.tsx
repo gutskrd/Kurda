@@ -11,6 +11,7 @@ import { createPost } from './api';
 import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
 import type { PostType } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Author a library post (KUR-284): pick story/poem, write a title + body, and
@@ -20,6 +21,7 @@ import type { PostType } from './types';
 export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [type, setType] = useState<PostType>('story');
@@ -87,7 +89,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
               textAlignVertical="top"
               maxLength={50000}
             />
-            <Text style={[styles.narrationLabel, { color: colors.textSecondary }]}>Optional narration</Text>
+            <Text style={[styles.narrationLabel, { color: colors.textSecondary }]}>{t('library.optionalNarration')}</Text>
             <VoiceRecorder value={voiceUri} onChange={setVoiceUri} />
           </ScrollView>
 
