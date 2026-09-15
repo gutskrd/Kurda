@@ -41,7 +41,7 @@ export function VoiceRecorder({
       await setAudioModeAsync({ allowsRecording: false });
       onChange(recorder.uri ?? null);
     } catch {
-      Alert.alert('Recording failed', 'Could not save the recording. Please try again.');
+      Alert.alert(t('recorder.failed'), t('recorder.couldNotSave'));
     } finally {
       setBusy(false);
     }
@@ -50,7 +50,7 @@ export function VoiceRecorder({
   const start = useCallback(async () => {
     const perm = await requestRecordingPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Microphone needed', 'Allow microphone access in Settings to record a voice note.');
+      Alert.alert(t('recorder.micNeeded'), t('recorder.micHelp'));
       return;
     }
     setBusy(true);
@@ -59,7 +59,7 @@ export function VoiceRecorder({
       await recorder.prepareToRecordAsync();
       recorder.record();
     } catch {
-      Alert.alert('Recording failed', 'Could not start recording. Please try again.');
+      Alert.alert(t('recorder.failed'), t('recorder.couldNotStart'));
     } finally {
       setBusy(false);
     }

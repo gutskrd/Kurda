@@ -103,7 +103,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     if (uploading) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Photo access needed', 'Allow photo access in Settings to post an image.');
+      Alert.alert(t('memes.photoNeeded'), t('memes.photoHelp'));
       return;
     }
     const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
@@ -113,13 +113,13 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     const up = await uploadMemeImage(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' });
     if (!up.ok) {
       setUploading(false);
-      Alert.alert('Couldn’t upload', up.error);
+      Alert.alert(t('memes.uploadFailed'), up.error);
       return;
     }
     const created = await createPost(client, { imageMediaId: up.imageMediaId, category });
     setUploading(false);
     if (!created.ok) {
-      Alert.alert('Couldn’t post', 'Your image uploaded but the post failed. Please try again.');
+      Alert.alert(t('memes.postFailed'), t('memes.postFailedHelp'));
       return;
     }
     setPosts((prev) => (prev ? [created.data, ...prev] : [created.data]));

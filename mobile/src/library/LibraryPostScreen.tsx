@@ -68,7 +68,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
       const up = await uploadVoiceNote(client, { uri: voiceUri });
       if (!up.ok) {
         setPosting(false);
-        Alert.alert('Couldn’t upload voice comment', up.error);
+        Alert.alert(t('library.voiceCommentFailed'), up.error);
         return;
       }
       audioMediaId = up.audioMediaId;
@@ -76,7 +76,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
     setPosting(false);
     if (!res.ok) {
-      Alert.alert('Couldn’t comment', describeError(res.error).message);
+      Alert.alert(t('comment.failed'), describeError(res.error).message);
       return;
     }
     setDraft('');

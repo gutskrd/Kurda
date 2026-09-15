@@ -89,7 +89,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
     const res = await addComment(client, postId, body);
     setPosting(false);
     if (!res.ok) {
-      Alert.alert('Couldn’t comment', describeError(res.error).message);
+      Alert.alert(t('comment.failed'), describeError(res.error).message);
       return;
     }
     setDraft('');

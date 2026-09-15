@@ -339,7 +339,31 @@ export type TranslationKey =
   | 'games.rhyme.start'
   | 'games.rhyme.add'
   | 'games.rhyme.quality.perfect'
-  | 'games.rhyme.quality.near';
+  | 'games.rhyme.quality.near'
+  | 'recorder.play'
+  | 'recorder.pause'
+  | 'recorder.failed'
+  | 'recorder.couldNotSave'
+  | 'recorder.couldNotStart'
+  | 'recorder.micNeeded'
+  | 'recorder.micHelp'
+  | 'library.saveDraft'
+  | 'library.missingContent'
+  | 'library.titleAndBodyRequired'
+  | 'library.narrationFailed'
+  | 'library.saveFailed'
+  | 'library.voiceCommentFailed'
+  | 'comment.failed'
+  | 'memes.photoNeeded'
+  | 'memes.photoHelp'
+  | 'memes.uploadFailed'
+  | 'memes.postFailed'
+  | 'memes.postFailedHelp'
+  | 'challenge.received'
+  | 'common.loading'
+  | 'friends.accept'
+  | 'friends.decline'
+  | 'challenge.title';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -655,6 +679,30 @@ const en: Catalog = {
   'games.rhyme.add': 'Add',
   'games.rhyme.quality.perfect': 'perfect',
   'games.rhyme.quality.near': 'near',
+  'recorder.play': 'Play narration',
+  'recorder.pause': 'Pause narration',
+  'recorder.failed': 'Recording failed',
+  'recorder.couldNotSave': 'Could not save the recording. Please try again.',
+  'recorder.couldNotStart': 'Could not start recording. Please try again.',
+  'recorder.micNeeded': 'Microphone needed',
+  'recorder.micHelp': 'Allow microphone access in Settings to record a voice note.',
+  'library.saveDraft': 'Save draft',
+  'library.missingContent': 'Missing content',
+  'library.titleAndBodyRequired': 'A title and some text are required.',
+  'library.narrationFailed': 'Couldn’t upload narration',
+  'library.saveFailed': 'Couldn’t save',
+  'library.voiceCommentFailed': 'Couldn’t upload voice comment',
+  'comment.failed': 'Couldn’t comment',
+  'memes.photoNeeded': 'Photo access needed',
+  'memes.photoHelp': 'Allow photo access in Settings to post an image.',
+  'memes.uploadFailed': 'Couldn’t upload',
+  'memes.postFailed': 'Couldn’t post',
+  'memes.postFailedHelp': 'Your image uploaded but the post failed. Please try again.',
+  'challenge.received': 'A friend challenged you to a 1v1.',
+  'common.loading': 'Loading…',
+  'friends.accept': 'Accept',
+  'friends.decline': 'Decline',
+  'challenge.title': 'Challenge! ⚔️',
 };
 
 const ku: Catalog = {
@@ -969,6 +1017,30 @@ const ku: Catalog = {
   'games.rhyme.add': 'Zêde bike',
   'games.rhyme.quality.perfect': 'bêkêmasî',
   'games.rhyme.quality.near': 'nêzîk',
+  'recorder.play': 'Vegotinê lêxe',
+  'recorder.pause': 'Vegotinê rawestîne',
+  'recorder.failed': 'Tomarkirin bi ser neket',
+  'recorder.couldNotSave': 'Tomar nehate tomarkirin. Ji kerema xwe dîsa biceribîne.',
+  'recorder.couldNotStart': 'Tomarkirin nehate destpêkirin. Ji kerema xwe dîsa biceribîne.',
+  'recorder.micNeeded': 'Mîkrofon pêwîst e',
+  'recorder.micHelp': 'Ji bo tomarkirina notek dengî, di Sazkariyan de destûra mîkrofonê bide.',
+  'library.saveDraft': 'Reşnivîsê tomar bike',
+  'library.missingContent': 'Naverok kêm e',
+  'library.titleAndBodyRequired': 'Sernav û hinek nivîs pêwîst in.',
+  'library.narrationFailed': 'Vegotin nehate barkirin',
+  'library.saveFailed': 'Nehate tomarkirin',
+  'library.voiceCommentFailed': 'Şîroveya dengî nehate barkirin',
+  'comment.failed': 'Şîrove nehate kirin',
+  'memes.photoNeeded': 'Destûra wêneyan pêwîst e',
+  'memes.photoHelp': 'Ji bo şandina wêneyekî, di Sazkariyan de destûra wêneyan bide.',
+  'memes.uploadFailed': 'Nehate barkirin',
+  'memes.postFailed': 'Nehate şandin',
+  'memes.postFailedHelp': 'Wêneyê te hate barkirin lê şandin bi ser neket. Ji kerema xwe dîsa biceribîne.',
+  'challenge.received': 'Hevalekî te ji bo 1-li-1 vexwendiye.',
+  'common.loading': 'Tê barkirin…',
+  'friends.accept': 'Qebûl bike',
+  'friends.decline': 'Red bike',
+  'challenge.title': 'Hevrikî! ⚔️',
 };
 
 const de: Catalog = {
@@ -1283,6 +1355,30 @@ const de: Catalog = {
   'games.rhyme.add': 'Hinzufügen',
   'games.rhyme.quality.perfect': 'perfekt',
   'games.rhyme.quality.near': 'fast',
+  'recorder.play': 'Erzählung abspielen',
+  'recorder.pause': 'Erzählung pausieren',
+  'recorder.failed': 'Aufnahme fehlgeschlagen',
+  'recorder.couldNotSave': 'Die Aufnahme konnte nicht gespeichert werden. Bitte versuche es erneut.',
+  'recorder.couldNotStart': 'Die Aufnahme konnte nicht gestartet werden. Bitte versuche es erneut.',
+  'recorder.micNeeded': 'Mikrofon erforderlich',
+  'recorder.micHelp': 'Erlaube den Mikrofonzugriff in den Einstellungen, um eine Sprachnotiz aufzunehmen.',
+  'library.saveDraft': 'Entwurf speichern',
+  'library.missingContent': 'Inhalt fehlt',
+  'library.titleAndBodyRequired': 'Ein Titel und etwas Text sind erforderlich.',
+  'library.narrationFailed': 'Erzählung konnte nicht hochgeladen werden',
+  'library.saveFailed': 'Konnte nicht gespeichert werden',
+  'library.voiceCommentFailed': 'Sprachkommentar konnte nicht hochgeladen werden',
+  'comment.failed': 'Kommentieren fehlgeschlagen',
+  'memes.photoNeeded': 'Zugriff auf Fotos erforderlich',
+  'memes.photoHelp': 'Erlaube den Fotozugriff in den Einstellungen, um ein Bild zu posten.',
+  'memes.uploadFailed': 'Hochladen fehlgeschlagen',
+  'memes.postFailed': 'Posten fehlgeschlagen',
+  'memes.postFailedHelp': 'Dein Bild wurde hochgeladen, aber der Beitrag ist fehlgeschlagen. Bitte versuche es erneut.',
+  'challenge.received': 'Ein Freund hat dich zu einem 1-gegen-1 herausgefordert.',
+  'common.loading': 'Wird geladen…',
+  'friends.accept': 'Annehmen',
+  'friends.decline': 'Ablehnen',
+  'challenge.title': 'Herausforderung! ⚔️',
 };
 
 const es: Catalog = {
@@ -1597,6 +1693,30 @@ const es: Catalog = {
   'games.rhyme.add': 'Añadir',
   'games.rhyme.quality.perfect': 'perfecta',
   'games.rhyme.quality.near': 'cercana',
+  'recorder.play': 'Reproducir la narración',
+  'recorder.pause': 'Pausar la narración',
+  'recorder.failed': 'No se pudo grabar',
+  'recorder.couldNotSave': 'No se pudo guardar la grabación. Inténtalo de nuevo.',
+  'recorder.couldNotStart': 'No se pudo iniciar la grabación. Inténtalo de nuevo.',
+  'recorder.micNeeded': 'Se necesita el micrófono',
+  'recorder.micHelp': 'Permite el acceso al micrófono en Ajustes para grabar una nota de voz.',
+  'library.saveDraft': 'Guardar borrador',
+  'library.missingContent': 'Falta contenido',
+  'library.titleAndBodyRequired': 'Hacen falta un título y algo de texto.',
+  'library.narrationFailed': 'No se pudo subir la narración',
+  'library.saveFailed': 'No se pudo guardar',
+  'library.voiceCommentFailed': 'No se pudo subir el comentario de voz',
+  'comment.failed': 'No se pudo comentar',
+  'memes.photoNeeded': 'Se necesita acceso a las fotos',
+  'memes.photoHelp': 'Permite el acceso a las fotos en Ajustes para publicar una imagen.',
+  'memes.uploadFailed': 'No se pudo subir',
+  'memes.postFailed': 'No se pudo publicar',
+  'memes.postFailedHelp': 'Tu imagen se subió, pero la publicación falló. Inténtalo de nuevo.',
+  'challenge.received': 'Un amigo te ha retado a un 1 contra 1.',
+  'common.loading': 'Cargando…',
+  'friends.accept': 'Aceptar',
+  'friends.decline': 'Rechazar',
+  'challenge.title': '¡Un reto! ⚔️',
 };
 
 const tr: Catalog = {
@@ -1911,6 +2031,30 @@ const tr: Catalog = {
   'games.rhyme.add': 'Ekle',
   'games.rhyme.quality.perfect': 'tam',
   'games.rhyme.quality.near': 'yakın',
+  'recorder.play': 'Anlatımı çal',
+  'recorder.pause': 'Anlatımı duraklat',
+  'recorder.failed': 'Kayıt başarısız oldu',
+  'recorder.couldNotSave': 'Kayıt kaydedilemedi. Lütfen tekrar deneyin.',
+  'recorder.couldNotStart': 'Kayıt başlatılamadı. Lütfen tekrar deneyin.',
+  'recorder.micNeeded': 'Mikrofon gerekli',
+  'recorder.micHelp': 'Sesli not kaydetmek için Ayarlar’dan mikrofon erişimine izin ver.',
+  'library.saveDraft': 'Taslağı kaydet',
+  'library.missingContent': 'İçerik eksik',
+  'library.titleAndBodyRequired': 'Bir başlık ve biraz metin gerekli.',
+  'library.narrationFailed': 'Anlatım yüklenemedi',
+  'library.saveFailed': 'Kaydedilemedi',
+  'library.voiceCommentFailed': 'Sesli yorum yüklenemedi',
+  'comment.failed': 'Yorum yapılamadı',
+  'memes.photoNeeded': 'Fotoğraf erişimi gerekli',
+  'memes.photoHelp': 'Görsel paylaşmak için Ayarlar’dan fotoğraf erişimine izin ver.',
+  'memes.uploadFailed': 'Yüklenemedi',
+  'memes.postFailed': 'Paylaşılamadı',
+  'memes.postFailedHelp': 'Görselin yüklendi ama paylaşım başarısız oldu. Lütfen tekrar deneyin.',
+  'challenge.received': 'Bir arkadaşın seni 1’e 1’e davet etti.',
+  'common.loading': 'Yükleniyor…',
+  'friends.accept': 'Kabul et',
+  'friends.decline': 'Reddet',
+  'challenge.title': 'Meydan okuma! ⚔️',
 };
 
 const ar: Catalog = {
@@ -2225,6 +2369,30 @@ const ar: Catalog = {
   'games.rhyme.add': 'إضافة',
   'games.rhyme.quality.perfect': 'تام',
   'games.rhyme.quality.near': 'قريب',
+  'recorder.play': 'تشغيل السرد',
+  'recorder.pause': 'إيقاف السرد مؤقتًا',
+  'recorder.failed': 'فشل التسجيل',
+  'recorder.couldNotSave': 'تعذّر حفظ التسجيل. يُرجى المحاولة مرة أخرى.',
+  'recorder.couldNotStart': 'تعذّر بدء التسجيل. يُرجى المحاولة مرة أخرى.',
+  'recorder.micNeeded': 'الميكروفون مطلوب',
+  'recorder.micHelp': 'اسمح بالوصول إلى الميكروفون من الإعدادات لتسجيل ملاحظة صوتية.',
+  'library.saveDraft': 'حفظ المسودة',
+  'library.missingContent': 'المحتوى ناقص',
+  'library.titleAndBodyRequired': 'العنوان وبعض النص مطلوبان.',
+  'library.narrationFailed': 'تعذّر رفع السرد',
+  'library.saveFailed': 'تعذّر الحفظ',
+  'library.voiceCommentFailed': 'تعذّر رفع التعليق الصوتي',
+  'comment.failed': 'تعذّر التعليق',
+  'memes.photoNeeded': 'الوصول إلى الصور مطلوب',
+  'memes.photoHelp': 'اسمح بالوصول إلى الصور من الإعدادات لنشر صورة.',
+  'memes.uploadFailed': 'تعذّر الرفع',
+  'memes.postFailed': 'تعذّر النشر',
+  'memes.postFailedHelp': 'تم رفع صورتك لكن النشر فشل. يُرجى المحاولة مرة أخرى.',
+  'challenge.received': 'تحدّاك أحد الأصدقاء في مباراة فردية.',
+  'common.loading': 'جارٍ التحميل…',
+  'friends.accept': 'قبول',
+  'friends.decline': 'رفض',
+  'challenge.title': 'تحدٍّ! ⚔️',
 };
 
 const fr: Catalog = {
@@ -2539,6 +2707,30 @@ const fr: Catalog = {
   'games.rhyme.add': 'Ajouter',
   'games.rhyme.quality.perfect': 'parfaite',
   'games.rhyme.quality.near': 'proche',
+  'recorder.play': 'Lire la narration',
+  'recorder.pause': 'Mettre la narration en pause',
+  'recorder.failed': 'Échec de l’enregistrement',
+  'recorder.couldNotSave': 'L’enregistrement n’a pas pu être sauvegardé. Réessaie.',
+  'recorder.couldNotStart': 'L’enregistrement n’a pas pu démarrer. Réessaie.',
+  'recorder.micNeeded': 'Microphone requis',
+  'recorder.micHelp': 'Autorise l’accès au microphone dans les Réglages pour enregistrer une note vocale.',
+  'library.saveDraft': 'Enregistrer le brouillon',
+  'library.missingContent': 'Contenu manquant',
+  'library.titleAndBodyRequired': 'Un titre et un peu de texte sont requis.',
+  'library.narrationFailed': 'Impossible d’envoyer la narration',
+  'library.saveFailed': 'Impossible d’enregistrer',
+  'library.voiceCommentFailed': 'Impossible d’envoyer le commentaire vocal',
+  'comment.failed': 'Impossible de commenter',
+  'memes.photoNeeded': 'Accès aux photos requis',
+  'memes.photoHelp': 'Autorise l’accès aux photos dans les Réglages pour publier une image.',
+  'memes.uploadFailed': 'Échec de l’envoi',
+  'memes.postFailed': 'Échec de la publication',
+  'memes.postFailedHelp': 'Ton image a été envoyée mais la publication a échoué. Réessaie.',
+  'challenge.received': 'Un ami t’a défié en 1 contre 1.',
+  'common.loading': 'Chargement…',
+  'friends.accept': 'Accepter',
+  'friends.decline': 'Refuser',
+  'challenge.title': 'Défi ! ⚔️',
 };
 
 const nl: Catalog = {
@@ -2853,6 +3045,30 @@ const nl: Catalog = {
   'games.rhyme.add': 'Toevoegen',
   'games.rhyme.quality.perfect': 'perfect',
   'games.rhyme.quality.near': 'bijna',
+  'recorder.play': 'Vertelling afspelen',
+  'recorder.pause': 'Vertelling pauzeren',
+  'recorder.failed': 'Opnemen is mislukt',
+  'recorder.couldNotSave': 'De opname kon niet worden opgeslagen. Probeer het opnieuw.',
+  'recorder.couldNotStart': 'De opname kon niet worden gestart. Probeer het opnieuw.',
+  'recorder.micNeeded': 'Microfoon nodig',
+  'recorder.micHelp': 'Geef in Instellingen toegang tot de microfoon om een spraaknotitie op te nemen.',
+  'library.saveDraft': 'Concept opslaan',
+  'library.missingContent': 'Inhoud ontbreekt',
+  'library.titleAndBodyRequired': 'Een titel en wat tekst zijn verplicht.',
+  'library.narrationFailed': 'Vertelling uploaden is mislukt',
+  'library.saveFailed': 'Opslaan is mislukt',
+  'library.voiceCommentFailed': 'Spraakreactie uploaden is mislukt',
+  'comment.failed': 'Reageren is mislukt',
+  'memes.photoNeeded': 'Toegang tot foto’s nodig',
+  'memes.photoHelp': 'Geef in Instellingen toegang tot foto’s om een afbeelding te plaatsen.',
+  'memes.uploadFailed': 'Uploaden is mislukt',
+  'memes.postFailed': 'Plaatsen is mislukt',
+  'memes.postFailedHelp': 'Je afbeelding is geüpload, maar plaatsen is mislukt. Probeer het opnieuw.',
+  'challenge.received': 'Een vriend daagt je uit voor een 1-tegen-1.',
+  'common.loading': 'Laden…',
+  'friends.accept': 'Accepteren',
+  'friends.decline': 'Afwijzen',
+  'challenge.title': 'Uitdaging! ⚔️',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -3168,6 +3384,30 @@ const ckb: Catalog = {
   'games.rhyme.add': 'زیادکردن',
   'games.rhyme.quality.perfect': 'تەواو',
   'games.rhyme.quality.near': 'نزیک',
+  'recorder.play': 'گێڕانەوەکە لێبدە',
+  'recorder.pause': 'گێڕانەوەکە بوەستێنە',
+  'recorder.failed': 'تۆمارکردن سەرکەوتوو نەبوو',
+  'recorder.couldNotSave': 'نەتوانرا تۆمارەکە پاشەکەوت بکرێت. تکایە دووبارە هەوڵ بدەوە.',
+  'recorder.couldNotStart': 'نەتوانرا تۆمارکردن دەست پێ بکات. تکایە دووبارە هەوڵ بدەوە.',
+  'recorder.micNeeded': 'مایکرۆفۆن پێویستە',
+  'recorder.micHelp': 'لە ڕێکخستنەکان ڕێگە بە دەستگەیشتن بە مایکرۆفۆن بدە بۆ تۆمارکردنی تێبینییەکی دەنگی.',
+  'library.saveDraft': 'ڕەشنووسەکە پاشەکەوت بکە',
+  'library.missingContent': 'ناوەڕۆک کەمە',
+  'library.titleAndBodyRequired': 'ناونیشان و هەندێک دەق پێویستن.',
+  'library.narrationFailed': 'نەتوانرا گێڕانەوەکە بار بکرێت',
+  'library.saveFailed': 'نەتوانرا پاشەکەوت بکرێت',
+  'library.voiceCommentFailed': 'نەتوانرا لێدوانە دەنگییەکە بار بکرێت',
+  'comment.failed': 'نەتوانرا لێدوان بنووسرێت',
+  'memes.photoNeeded': 'دەستگەیشتن بە وێنەکان پێویستە',
+  'memes.photoHelp': 'لە ڕێکخستنەکان ڕێگە بە دەستگەیشتن بە وێنەکان بدە بۆ بڵاوکردنەوەی وێنە.',
+  'memes.uploadFailed': 'نەتوانرا بار بکرێت',
+  'memes.postFailed': 'نەتوانرا بڵاو بکرێتەوە',
+  'memes.postFailedHelp': 'وێنەکەت بار کرا بەڵام بڵاوکردنەوەکە سەرکەوتوو نەبوو. تکایە دووبارە هەوڵ بدەوە.',
+  'challenge.received': 'هاوڕێیەک بانگهێشتی کردیت بۆ ١ بە ١.',
+  'common.loading': 'بارکردن…',
+  'friends.accept': 'پەسەندکردن',
+  'friends.decline': 'ڕەتکردنەوە',
+  'challenge.title': 'بانگهێشت! ⚔️',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

@@ -17,25 +17,6 @@ mobile/src/lesson/components/FeedbackFooter.tsx  Not quite
 mobile/src/lesson/components/LessonResults.tsx  Lesson complete!
 mobile/src/lesson/components/LessonResults.tsx  Out of hearts
 mobile/src/lesson/components/SpeakingExercise.tsx  Upload failed — please try again.
-mobile/src/library/AudioPlayer.tsx  Pause narration
-mobile/src/library/AudioPlayer.tsx  Play narration
-mobile/src/library/LibraryComposeScreen.tsx  Couldn’t save
-mobile/src/library/LibraryComposeScreen.tsx  Couldn’t upload narration
-mobile/src/library/LibraryComposeScreen.tsx  Missing content
-mobile/src/library/LibraryComposeScreen.tsx  label="Save draft"
-mobile/src/library/LibraryPostScreen.tsx  Couldn’t comment
-mobile/src/library/LibraryPostScreen.tsx  Couldn’t upload voice comment
-mobile/src/library/VoiceRecorder.tsx  Allow microphone access in Settings to record a voice note.
-mobile/src/library/VoiceRecorder.tsx  Could not save the recording. Please try again.
-mobile/src/library/VoiceRecorder.tsx  Could not start recording. Please try again.
-mobile/src/library/VoiceRecorder.tsx  Microphone needed
-mobile/src/library/VoiceRecorder.tsx  Recording failed
-mobile/src/memes/MemeDetailScreen.tsx  Couldn’t comment
-mobile/src/memes/MemeFeedScreen.tsx  Allow photo access in Settings to post an image.
-mobile/src/memes/MemeFeedScreen.tsx  Couldn’t post
-mobile/src/memes/MemeFeedScreen.tsx  Couldn’t upload
-mobile/src/memes/MemeFeedScreen.tsx  Photo access needed
-mobile/src/memes/MemeFeedScreen.tsx  Your image uploaded but the post failed. Please try again.
 mobile/src/net/AsyncBoundary.tsx  Nothing here yet.
 mobile/src/notifications/NotificationCenterScreen.tsx  You're all caught up.
 mobile/src/practice/PracticeScreen.tsx  label="Try again"
