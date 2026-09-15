@@ -73,13 +73,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       if (res.ok) {
         setSelected(null);
         load();
-        Alert.alert('Purchased', `${item.name} is yours!`);
+        Alert.alert(t('shop.purchased'), t('shop.itemIsYours', { name: item.name }));
       } else if (res.error.code === 'PRICE_CHANGED') {
         setSelected(null);
         load(); // pull fresh prices
-        Alert.alert('Price changed', 'This item’s price changed. Please review and try again.');
+        Alert.alert(t('shop.priceChanged'), t('shop.priceChangedBody'));
       } else {
-        Alert.alert('Purchase failed', describeError(res.error, t));
+        Alert.alert(t('shop.purchaseFailed'), describeError(res.error, t));
       }
     },
     [client, load],
@@ -88,10 +88,14 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const confirmBuy = useCallback(
     (item: ShopItem) => {
       if (needsConfirmation(item)) {
-        Alert.alert('Confirm purchase', `Spend ${item.price} ${currencyLabel(item.currency)} on ${item.name}?`, [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Buy', onPress: () => void buy(item) },
-        ]);
+        Alert.alert(
+          t('shop.confirmPurchase'),
+          t('shop.spendOn', { price: item.price, currency: currencyLabel(item.currency), name: item.name }),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('shop.buy'), onPress: () => void buy(item) },
+          ],
+        );
       } else {
         void buy(item);
       }
@@ -172,6 +176,7 @@ function ItemDetail({
   onEarnMore: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const affordable = canAfford(item, balances);
   return (
     <View style={styles.detail}>
@@ -194,12 +199,12 @@ function ItemDetail({
       ) : (
         <View style={styles.insufficient}>
           <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
-            Not enough {currencyLabel(item.currency)}.
-            {item.currency === 'zer' ? ' Play and learn to earn more!' : ' Gem packs are coming soon.'}
+            {t('shop.notEnough', { currency: currencyLabel(item.currency) })}{' '}
+            {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.gemPacksSoon')}
           </Text>
           {item.currency === 'zer' ? (
             <Pressable style={[styles.earn, { backgroundColor: colors.accent }]} onPress={onEarnMore}>
-              <Text style={[styles.earnText, { color: colors.textOnPrimary }]}>Earn Zêr</Text>
+              <Text style={[styles.earnText, { color: colors.textOnPrimary }]}>{t('shop.earnZer')}</Text>
             </Pressable>
           ) : null}
         </View>

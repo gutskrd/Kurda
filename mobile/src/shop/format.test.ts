@@ -35,7 +35,7 @@ describe('groupByCategory', () => {
 
 describe('categoryLabel', () => {
   it('maps known categories and passes through unknown ones', () => {
-    expect(categoryLabel('freeze')).toBe('Streak Freezes');
+    expect(categoryLabel('freeze')).toBe('shop.category.freeze');
     expect(categoryLabel('weird')).toBe('weird');
   });
 });

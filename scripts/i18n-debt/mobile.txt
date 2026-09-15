@@ -21,9 +21,6 @@ mobile/src/coursemap/node.ts  Complete the previous skill to unlock this one.
 mobile/src/coursemap/node.ts  This skill is getting rusty — practice to restore it.
 mobile/src/dictionary/EntryDetail.tsx  Bookmark word
 mobile/src/dictionary/EntryDetail.tsx  Remove bookmark
-mobile/src/events/quests.ts  Complete lessons
-mobile/src/events/quests.ts  Earn XP
-mobile/src/events/quests.ts  Win games
 mobile/src/lesson/LessonPlayerScreen.tsx  You’re offline — tap to retry
 mobile/src/lesson/components/FeedbackFooter.tsx  Almost — typo accepted
 mobile/src/lesson/components/FeedbackFooter.tsx  Not quite
@@ -38,27 +35,9 @@ mobile/src/notifications/prefs.ts  Game invites & results
 mobile/src/notifications/prefs.ts  News & offers
 mobile/src/notifications/prefs.ts  Streak reminders
 mobile/src/practice/PracticeScreen.tsx  label="Try again"
-mobile/src/rewards/DailyRewardCard.tsx  Come back tomorrow
 mobile/src/screens/DictionaryScreen.tsx  message="Couldn’t search right now. Check your connection and try again."
-mobile/src/screens/GameScreen.tsx  Forfeit match?
-mobile/src/screens/GameScreen.tsx  Good game
-mobile/src/screens/GameScreen.tsx  Keep playing
-mobile/src/screens/GameScreen.tsx  You win!
-mobile/src/screens/GameScreen.tsx  Your opponent will win.
 mobile/src/screens/LearnScreen.tsx  Not available yet.
 mobile/src/screens/ProfileScreen.tsx  Add photo
 mobile/src/screens/ProfileScreen.tsx  Change photo
-mobile/src/shop/ShopScreen.tsx  Confirm purchase
-mobile/src/shop/ShopScreen.tsx  Gem packs are coming soon.
-mobile/src/shop/ShopScreen.tsx  Play and learn to earn more!
-mobile/src/shop/ShopScreen.tsx  Price changed
-mobile/src/shop/ShopScreen.tsx  Purchase failed
-mobile/src/shop/ShopScreen.tsx  This item’s price changed. Please review and try again.
-mobile/src/shop/format.ts  Streak Freezes
 mobile/src/tags/TagsScreen.tsx  Add tag
-mobile/src/tags/TagsScreen.tsx  Consent needed
-mobile/src/tags/TagsScreen.tsx  Couldn’t add tag
-mobile/src/tags/TagsScreen.tsx  Please try again.
-mobile/src/tags/TagsScreen.tsx  Remove tag
-mobile/src/tags/TagsScreen.tsx  Sensitive tags are optional. Tick consent to add this tag.
 mobile/src/wordle/share.ts  Kurda Wordle

@@ -61,14 +61,14 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const submitClaim = useCallback(async () => {
     if (!claiming || busy) return;
     if (claiming.sensitive && !consent) {
-      Alert.alert('Consent needed', 'Sensitive tags are optional. Tick consent to add this tag.');
+      Alert.alert(t('tags.consentNeeded'), t('tags.consentHelp'));
       return;
     }
     setBusy(true);
     const res = await claimTag(client, { key: claiming.key, value: value.trim() || undefined, consent: claiming.sensitive ? true : undefined });
     setBusy(false);
     if (!res.ok) {
-      Alert.alert('Couldn’t add tag', 'Please try again.');
+      Alert.alert(t('tags.addFailed'), t('common.tryAgain'));
       return;
     }
     setClaiming(null);
@@ -86,10 +86,10 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   const revoke = useCallback(
     (tag: ClaimedTag) => {
-      Alert.alert('Remove tag', `Remove “${tag.label}” from your profile? This deletes any value you entered.`, [
-        { text: 'Cancel', style: 'cancel' },
+      Alert.alert(t('tags.remove'), t('tags.removeConfirm', { label: tag.label }), [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: async () => {
             const res = await unclaimTag(client, tag.key);

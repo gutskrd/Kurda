@@ -1,5 +1,8 @@
 /** Pure event-quest view helpers (KUR-091) — no React Native. */
 
+import type { TranslationKey } from '../i18n/translations';
+import type { Translate } from '../api/errors';
+
 export type QuestType = 'earn_xp' | 'win_games' | 'complete_lessons';
 
 export interface QuestReward {
@@ -30,10 +33,11 @@ export interface EventQuestsView {
 
 export type ClaimState = 'claimed' | 'claimable' | 'locked';
 
-const DEFAULT_TITLE: Record<QuestType, string> = {
-  earn_xp: 'Earn XP',
-  win_games: 'Win games',
-  complete_lessons: 'Complete lessons',
+/** A key per quest type; the server may send its own title instead. */
+const DEFAULT_TITLE: Record<QuestType, TranslationKey> = {
+  earn_xp: 'events.quest.earnXp',
+  win_games: 'events.quest.winGames',
+  complete_lessons: 'events.quest.completeLessons',
 };
 
 /** Fraction complete in [0, 1]. */
@@ -43,8 +47,14 @@ export function progressPct(q: Pick<QuestView, 'current' | 'target'>): number {
 }
 
 /** Display title, falling back to a per-type default. */
-export function questTitle(q: QuestView): string {
-  return q.titleEn ?? DEFAULT_TITLE[q.type];
+/**
+ * What a quest is called.
+ *
+ * An event's own title comes from the server and is English, because the API
+ * has no locale to write it in yet; the fallbacks are ours and are translated.
+ */
+export function questTitle(q: QuestView, t: Translate): string {
+  return q.titleEn ?? t(DEFAULT_TITLE[q.type]);
 }
 
 /** e.g. "🪙 200 · 💎 30" — empty string when there is no reward. */

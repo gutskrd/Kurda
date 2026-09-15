@@ -1,5 +1,7 @@
 /** Pure shop view helpers (KUR-070) — no React Native, so unit-testable. */
 
+import type { TranslationKey } from '../i18n/translations';
+
 export type Currency = 'zer' | 'gems';
 
 export interface ShopItem {
@@ -21,14 +23,15 @@ export interface Balances {
 /** Purchases above this many Zêr ask for explicit confirmation (KUR-070). */
 export const CONFIRM_THRESHOLD_ZER = 500;
 
-export const CATEGORY_LABELS: Record<string, string> = {
-  cosmetic: 'Cosmetics',
-  powerup: 'Power-ups',
-  freeze: 'Streak Freezes',
-  misc: 'Other',
+/** A key per category; an unknown one falls back to the server's own word. */
+export const CATEGORY_LABELS: Record<string, TranslationKey> = {
+  cosmetic: 'shop.category.cosmetic',
+  powerup: 'shop.category.powerup',
+  freeze: 'shop.category.freeze',
+  misc: 'shop.category.misc',
 };
 
-export function categoryLabel(category: string): string {
+export function categoryLabel(category: string): TranslationKey | string {
   return CATEGORY_LABELS[category] ?? category;
 }
 

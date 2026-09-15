@@ -119,7 +119,7 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
   return (
     <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
       <View style={styles.rowTop}>
-        <Text style={[styles.questTitle, { color: colors.textPrimary }]}>{questTitle(quest)}</Text>
+        <Text style={[styles.questTitle, { color: colors.textPrimary }]}>{questTitle(quest, t)}</Text>
         {reward ? <Text style={[styles.reward, { color: colors.textSecondary }]}>{reward}</Text> : null}
       </View>
       <View style={[styles.track, { backgroundColor: colors.glassBorder }]}>
