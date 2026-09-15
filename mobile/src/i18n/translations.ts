@@ -539,7 +539,18 @@ export type TranslationKey =
   | 'games.race.accuracy'
   | 'games.race.time'
   | 'games.race.again'
-  | 'games.race.emptyPool';
+  | 'games.race.emptyPool'
+  | 'auth.login.title'
+  | 'auth.login.subtitle'
+  | 'auth.register.freeToStart'
+  | 'auth.showPassword'
+  | 'auth.hidePassword'
+  | 'auth.register.usernameHelp'
+  | 'auth.login.noAccount'
+  | 'auth.login.submitting'
+  | 'auth.register.submitting'
+  | 'auth.verify.enterCode'
+  | 'auth.verify.expiresIn15';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1055,6 +1066,17 @@ const en: Catalog = {
   'games.race.time': 'Time',
   'games.race.again': 'Race again',
   'games.race.emptyPool': 'No race texts have been added yet — check back soon.',
+  'auth.login.title': 'Welcome back',
+  'auth.login.subtitle': 'Sign in to keep learning.',
+  'auth.register.freeToStart': 'Free to start. It takes under a minute.',
+  'auth.showPassword': 'Show password',
+  'auth.hidePassword': 'Hide password',
+  'auth.register.usernameHelp': 'How others will see you',
+  'auth.login.noAccount': 'No account yet?',
+  'auth.login.submitting': 'Signing in…',
+  'auth.register.submitting': 'Creating…',
+  'auth.verify.enterCode': 'Enter the {digits}-digit code from your email.',
+  'auth.verify.expiresIn15': 'The code expires 15 minutes after it was sent.',
 };
 
 const ku: Catalog = {
@@ -1569,6 +1591,17 @@ const ku: Catalog = {
   'games.race.time': 'Wext',
   'games.race.again': 'Dîsa pêşbaziyê bike',
   'games.race.emptyPool': 'Hê tu nivîsên pêşbaziyê nehatine zêdekirin — di demek nêz de dîsa binihêre.',
+  'auth.login.title': 'Bi xêr hatî',
+  'auth.login.subtitle': 'Têkeve da ku fêrbûnê bidomînî.',
+  'auth.register.freeToStart': 'Destpêk belaş e. Kêmtir ji xulekekê digire.',
+  'auth.showPassword': 'Şîfreyê nîşan bide',
+  'auth.hidePassword': 'Şîfreyê veşêre',
+  'auth.register.usernameHelp': 'Yên din te çawa dibînin',
+  'auth.login.noAccount': 'Hîn hesabê te tune?',
+  'auth.login.submitting': 'Tê ketin…',
+  'auth.register.submitting': 'Tê çêkirin…',
+  'auth.verify.enterCode': 'Koda {digits}-hejmarî ya di e-nameya te de binivîse.',
+  'auth.verify.expiresIn15': 'Kod 15 xulek piştî şandinê diqede.',
 };
 
 const de: Catalog = {
@@ -2083,6 +2116,17 @@ const de: Catalog = {
   'games.race.time': 'Zeit',
   'games.race.again': 'Noch ein Rennen',
   'games.race.emptyPool': 'Es wurden noch keine Renntexte hinzugefügt — schau bald wieder vorbei.',
+  'auth.login.title': 'Willkommen zurück',
+  'auth.login.subtitle': 'Melde dich an, um weiterzulernen.',
+  'auth.register.freeToStart': 'Der Start ist kostenlos. Es dauert unter einer Minute.',
+  'auth.showPassword': 'Passwort anzeigen',
+  'auth.hidePassword': 'Passwort verbergen',
+  'auth.register.usernameHelp': 'Wie andere dich sehen',
+  'auth.login.noAccount': 'Noch kein Konto?',
+  'auth.login.submitting': 'Anmeldung läuft…',
+  'auth.register.submitting': 'Wird erstellt…',
+  'auth.verify.enterCode': 'Gib den {digits}-stelligen Code aus deiner E-Mail ein.',
+  'auth.verify.expiresIn15': 'Der Code läuft 15 Minuten nach dem Versand ab.',
 };
 
 const es: Catalog = {
@@ -2597,6 +2641,17 @@ const es: Catalog = {
   'games.race.time': 'Tiempo',
   'games.race.again': 'Correr otra vez',
   'games.race.emptyPool': 'Todavía no se han añadido textos de carrera: vuelve pronto.',
+  'auth.login.title': 'Bienvenido de nuevo',
+  'auth.login.subtitle': 'Inicia sesión para seguir aprendiendo.',
+  'auth.register.freeToStart': 'Empezar es gratis. Se tarda menos de un minuto.',
+  'auth.showPassword': 'Mostrar contraseña',
+  'auth.hidePassword': 'Ocultar contraseña',
+  'auth.register.usernameHelp': 'Cómo te verán los demás',
+  'auth.login.noAccount': '¿Aún no tienes cuenta?',
+  'auth.login.submitting': 'Iniciando sesión…',
+  'auth.register.submitting': 'Creando…',
+  'auth.verify.enterCode': 'Escribe el código de {digits} dígitos de tu correo.',
+  'auth.verify.expiresIn15': 'El código caduca 15 minutos después de enviarse.',
 };
 
 const tr: Catalog = {
@@ -3111,6 +3166,17 @@ const tr: Catalog = {
   'games.race.time': 'Süre',
   'games.race.again': 'Tekrar yarış',
   'games.race.emptyPool': 'Henüz yarış metni eklenmedi — yakında tekrar bak.',
+  'auth.login.title': 'Tekrar hoş geldin',
+  'auth.login.subtitle': 'Öğrenmeye devam etmek için giriş yap.',
+  'auth.register.freeToStart': 'Başlaması ücretsiz. Bir dakikadan kısa sürer.',
+  'auth.showPassword': 'Şifreyi göster',
+  'auth.hidePassword': 'Şifreyi gizle',
+  'auth.register.usernameHelp': 'Başkaları seni nasıl görecek',
+  'auth.login.noAccount': 'Henüz hesabın yok mu?',
+  'auth.login.submitting': 'Giriş yapılıyor…',
+  'auth.register.submitting': 'Oluşturuluyor…',
+  'auth.verify.enterCode': 'E-postandaki {digits} haneli kodu gir.',
+  'auth.verify.expiresIn15': 'Kod, gönderildikten 15 dakika sonra geçersiz olur.',
 };
 
 const ar: Catalog = {
@@ -3625,6 +3691,17 @@ const ar: Catalog = {
   'games.race.time': 'الوقت',
   'games.race.again': 'سباق آخر',
   'games.race.emptyPool': 'لم تُضَف نصوص للسباق بعد — عُد قريبًا.',
+  'auth.login.title': 'أهلاً بعودتك',
+  'auth.login.subtitle': 'سجّل الدخول لتتابع التعلّم.',
+  'auth.register.freeToStart': 'البدء مجاني. يستغرق أقل من دقيقة.',
+  'auth.showPassword': 'إظهار كلمة المرور',
+  'auth.hidePassword': 'إخفاء كلمة المرور',
+  'auth.register.usernameHelp': 'كيف سيراك الآخرون',
+  'auth.login.noAccount': 'ليس لديك حساب بعد؟',
+  'auth.login.submitting': 'جارٍ تسجيل الدخول…',
+  'auth.register.submitting': 'جارٍ الإنشاء…',
+  'auth.verify.enterCode': 'أدخل الرمز المكوّن من {digits} أرقام من بريدك.',
+  'auth.verify.expiresIn15': 'ينتهي الرمز بعد ١٥ دقيقة من إرساله.',
 };
 
 const fr: Catalog = {
@@ -4139,6 +4216,17 @@ const fr: Catalog = {
   'games.race.time': 'Temps',
   'games.race.again': 'Refaire une course',
   'games.race.emptyPool': 'Aucun texte de course n’a encore été ajouté — reviens bientôt.',
+  'auth.login.title': 'Bon retour',
+  'auth.login.subtitle': 'Connectez-vous pour continuer à apprendre.',
+  'auth.register.freeToStart': 'Gratuit pour commencer. Cela prend moins d’une minute.',
+  'auth.showPassword': 'Afficher le mot de passe',
+  'auth.hidePassword': 'Masquer le mot de passe',
+  'auth.register.usernameHelp': 'Comment les autres vous verront',
+  'auth.login.noAccount': 'Pas encore de compte ?',
+  'auth.login.submitting': 'Connexion…',
+  'auth.register.submitting': 'Création…',
+  'auth.verify.enterCode': 'Saisis le code à {digits} chiffres reçu par e-mail.',
+  'auth.verify.expiresIn15': 'Le code expire 15 minutes après son envoi.',
 };
 
 const nl: Catalog = {
@@ -4653,6 +4741,17 @@ const nl: Catalog = {
   'games.race.time': 'Tijd',
   'games.race.again': 'Opnieuw racen',
   'games.race.emptyPool': 'Er zijn nog geen raceteksten toegevoegd — kom snel terug.',
+  'auth.login.title': 'Welkom terug',
+  'auth.login.subtitle': 'Log in om verder te leren.',
+  'auth.register.freeToStart': 'Gratis om te beginnen. Het duurt minder dan een minuut.',
+  'auth.showPassword': 'Wachtwoord tonen',
+  'auth.hidePassword': 'Wachtwoord verbergen',
+  'auth.register.usernameHelp': 'Hoe anderen je zien',
+  'auth.login.noAccount': 'Nog geen account?',
+  'auth.login.submitting': 'Bezig met inloggen…',
+  'auth.register.submitting': 'Bezig met aanmaken…',
+  'auth.verify.enterCode': 'Voer de {digits}-cijferige code uit je e-mail in.',
+  'auth.verify.expiresIn15': 'De code verloopt 15 minuten nadat hij is verstuurd.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5168,6 +5267,17 @@ const ckb: Catalog = {
   'games.race.time': 'کات',
   'games.race.again': 'دووبارە پێشبڕکێ بکە',
   'games.race.emptyPool': 'هێشتا هیچ دەقێکی پێشبڕکێ زیاد نەکراوە — بەم زووانە بگەڕێوە.',
+  'auth.login.title': 'بەخێربێیتەوە',
+  'auth.login.subtitle': 'بچۆ ژوورەوە بۆ ئەوەی بە فێربوون بەردەوام بیت.',
+  'auth.register.freeToStart': 'دەستپێکردن بەخۆڕاییە. کەمتر لە خولەکێک دەخایەنێت.',
+  'auth.showPassword': 'وشەی تێپەڕ پیشان بدە',
+  'auth.hidePassword': 'وشەی تێپەڕ بشارەوە',
+  'auth.register.usernameHelp': 'ئەوانی تر چۆن دەتبینن',
+  'auth.login.noAccount': 'هێشتا هەژمارت نییە؟',
+  'auth.login.submitting': 'چوونەژوورەوە…',
+  'auth.register.submitting': 'دروستکردن…',
+  'auth.verify.enterCode': 'کۆدی {digits} ژمارەیی ناو ئیمەیڵەکەت بنووسە.',
+  'auth.verify.expiresIn15': 'کۆدەکە ١٥ خولەک دوای ناردنی بەسەردەچێت.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

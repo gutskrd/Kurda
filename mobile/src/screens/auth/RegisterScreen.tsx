@@ -27,7 +27,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [errors, setErrors] = useState<Record<string, string | null | undefined>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const submit = async () => {
     const emailError = validateEmail(email);
@@ -46,13 +46,22 @@ export function RegisterScreen({ navigation }: Props) {
       email: email.trim(),
       username: username.normalize('NFC').trim(),
       password,
+      // the language chosen in the intro is the account's from the first
+      // moment, so the confirmation email and a later sign-in on the web
+      // already speak it. The browser has always sent this; the phone asked
+      // the question, remembered the answer locally, and never told the server
+      locale,
     });
     setBusy(false);
     if (error) setFormError(error);
   };
 
   return (
-    <AuthScreenShell title={t('auth.register.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
+    <AuthScreenShell
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.freeToStart')}
+      onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+    >
       <FormError message={formError} />
       <Field
         label={t('auth.email')}
@@ -60,6 +69,8 @@ export function RegisterScreen({ navigation }: Props) {
         onChangeText={setEmail}
         error={errors.email}
         keyboardType="email-address"
+        placeholder="you@example.com"
+        complete="email"
         testID="email"
       />
       <Field
@@ -67,6 +78,8 @@ export function RegisterScreen({ navigation }: Props) {
         value={username}
         onChangeText={setUsername}
         error={errors.username}
+        placeholder={t('auth.register.usernameHelp')}
+        complete="username"
         testID="username"
       />
       <Field
@@ -75,12 +88,13 @@ export function RegisterScreen({ navigation }: Props) {
         onChangeText={setPassword}
         error={errors.password}
         secure
+        complete="new-password"
         testID="password"
       />
       {!errors.password ? (
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(PASSWORD_RULES_KEY, FIELD_ERROR_VARS)}</Text>
       ) : null}
-      <SubmitButton label={t('auth.register.submit')} busy={busy} onPress={submit} />
+      <SubmitButton label={busy ? t('auth.register.submitting') : t('auth.register.submit')} busy={busy} onPress={submit} />
       <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('auth.register.terms')}</Text>
       <LinkText
         label={`${t('auth.register.haveAccount')} ${t('auth.register.signIn')}`}

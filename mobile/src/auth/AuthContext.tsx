@@ -4,6 +4,7 @@ import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
 import { describeError } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
+import type { Locale } from '../i18n/translations';
 import { createTokenStorage } from './storage';
 
 export interface SessionUser {
@@ -28,6 +29,15 @@ interface AuthContextValue {
     email: string;
     username: string;
     password: string;
+    /**
+     * The language the account is created in.
+     *
+     * Not cosmetic: it is stored on the user and is what the confirmation
+     * email is written in, so leaving it off meant somebody who picked
+     * Kurmancî in the intro was emailed in English and signed in to English
+     * on the web. The browser has always sent it.
+     */
+    locale?: Locale;
   }): Promise<string | null>;
   /**
    * Sign in (or create an account) with a provider identity token (KUR-276).
