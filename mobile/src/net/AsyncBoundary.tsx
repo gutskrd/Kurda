@@ -7,6 +7,7 @@ import { SkeletonList } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useIsOnline } from './useNetworkStatus';
 import { deriveAsyncState } from './asyncState';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * One place that renders a data screen's loading / offline / error+retry / empty /
@@ -38,6 +39,7 @@ export function AsyncBoundary({
 }): React.JSX.Element {
   const online = useIsOnline();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const state = deriveAsyncState({ loading, online, error: error ?? null, isEmpty });
 
   switch (state.kind) {
@@ -47,11 +49,11 @@ export function AsyncBoundary({
     case 'offline':
       return (
         <View style={styles.center}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>You’re offline</Text>
-          <Text style={[styles.body, { color: colors.textSecondary }]}>Check your connection — your content will load when you’re back.</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('net.offline.title')}</Text>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>{t('net.offline.body')}</Text>
           {onRetry ? (
-            <Pressable onPress={onRetry} style={[styles.retry, { borderColor: colors.glassBorder }]} accessibilityRole="button" accessibilityLabel="Try again">
-              <Text style={[styles.retryText, { color: colors.primary }]}>Try again</Text>
+            <Pressable onPress={onRetry} style={[styles.retry, { borderColor: colors.glassBorder }]} accessibilityRole="button" accessibilityLabel={t('common.retry')}>
+              <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.retry')}</Text>
             </Pressable>
           ) : null}
         </View>

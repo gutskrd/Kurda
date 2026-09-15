@@ -124,8 +124,38 @@ export type TranslationKey =
   | 'onboarding.notify.body'
   | 'onboarding.notify.later'
   | 'common.continue'
-  | 'common.skip'
-  | 'nav.register';
+  | 'common.skip'
+  | 'nav.register'
+  | 'lesson.loadFailed'
+  | 'lesson.grammarTips'
+  | 'lesson.quit'
+  | 'lesson.listen.prompt'
+  | 'lesson.listen.play'
+  | 'lesson.listen.playSlow'
+  | 'lesson.listen.answerLabel'
+  | 'lesson.listen.skip'
+  | 'lesson.match.prompt'
+  | 'lesson.speak.prompt'
+  | 'lesson.speak.unavailable'
+  | 'lesson.speak.start'
+  | 'lesson.speak.stop'
+  | 'lesson.speak.skip'
+  | 'lesson.translate.answerLabel'
+  | 'lesson.write.prompt'
+  | 'lesson.write.answerLabel'
+  | 'net.offline.title'
+  | 'net.offline.body'
+  | 'net.offline.banner'
+  | 'net.loadFailed'
+  | 'practice.startFailed'
+  | 'practice.empty.title'
+  | 'practice.empty.body'
+  | 'common.retry'
+  | 'lesson.listen.playShort'
+  | 'lesson.translate.prompt'
+  | 'lesson.speak.reRecord'
+  | 'lesson.speak.uploading'
+  | 'error.offline';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -227,6 +257,36 @@ const en: Catalog = {
   'common.continue': 'Continue',
   'common.skip': 'Skip',
   'nav.register': 'Get started',
+  'lesson.loadFailed': 'Couldn’t load the lesson.',
+  'lesson.grammarTips': 'Grammar tips',
+  'lesson.quit': 'Quit lesson',
+  'lesson.listen.prompt': 'Listen and type what you hear',
+  'lesson.listen.play': 'Play audio',
+  'lesson.listen.playSlow': 'Play at slow speed',
+  'lesson.listen.answerLabel': 'What you heard',
+  'lesson.listen.skip': 'Can’t listen now — skip',
+  'lesson.match.prompt': 'Match the pairs',
+  'lesson.speak.prompt': 'Say it aloud',
+  'lesson.speak.unavailable': 'Recording isn’t available on this device.',
+  'lesson.speak.start': 'Start recording',
+  'lesson.speak.stop': 'Stop recording',
+  'lesson.speak.skip': 'Can’t do this now — skip',
+  'lesson.translate.answerLabel': 'Your translation',
+  'lesson.write.prompt': 'Write your answer',
+  'lesson.write.answerLabel': 'Your written answer',
+  'net.offline.title': 'You’re offline',
+  'net.offline.body': 'Check your connection — your content will load when you’re back.',
+  'net.offline.banner': 'No internet connection',
+  'net.loadFailed': 'Couldn’t load',
+  'practice.startFailed': 'Couldn’t start practice.',
+  'practice.empty.title': 'Nothing to review yet',
+  'practice.empty.body': 'Finish a lesson to start building your review deck.',
+  'common.retry': 'Try again',
+  'lesson.listen.playShort': 'Play',
+  'lesson.translate.prompt': 'Translate',
+  'lesson.speak.reRecord': 'Re-record',
+  'lesson.speak.uploading': 'Uploading…',
+  'error.offline': 'Can’t reach MyKurda right now. Check your connection and try again.',
 };
 
 const ku: Catalog = {
@@ -327,6 +387,36 @@ const ku: Catalog = {
   'common.continue': 'Berdewam bike',
   'common.skip': 'Bibihurîne',
   'nav.register': 'Dest pê bike',
+  'lesson.loadFailed': 'Ders nehat barkirin.',
+  'lesson.grammarTips': 'Şîretên rêzimanê',
+  'lesson.quit': 'Ji dersê derkeve',
+  'lesson.listen.prompt': 'Guhdarî bike û ya ku dibihîzî binivîse',
+  'lesson.listen.play': 'Dengê lêxe',
+  'lesson.listen.playSlow': 'Hêdî lêxe',
+  'lesson.listen.answerLabel': 'Ya ku te bihîst',
+  'lesson.listen.skip': 'Nikarim niha guhdarî bikim — bibihurîne',
+  'lesson.match.prompt': 'Cotan li hev bîne',
+  'lesson.speak.prompt': 'Bi dengekî bilind bêje',
+  'lesson.speak.unavailable': 'Tomarkirin li vê amûrê nayê bikaranîn.',
+  'lesson.speak.start': 'Dest bi tomarkirinê bike',
+  'lesson.speak.stop': 'Tomarkirinê rawestîne',
+  'lesson.speak.skip': 'Nikarim niha vê bikim — bibihurîne',
+  'lesson.translate.answerLabel': 'Wergera te',
+  'lesson.write.prompt': 'Bersiva xwe binivîse',
+  'lesson.write.answerLabel': 'Bersiva te ya nivîskî',
+  'net.offline.title': 'Tu negirêdayî yî',
+  'net.offline.body': 'Girêdana xwe kontrol bike — dema vegerî naverok dê bar bibe.',
+  'net.offline.banner': 'Girêdana înternetê tune',
+  'net.loadFailed': 'Nehat barkirin',
+  'practice.startFailed': 'Pratîk nehat destpêkirin.',
+  'practice.empty.title': 'Hê tiştek ji bo dubarekirinê tune',
+  'practice.empty.body': 'Dersekê temam bike da ku destê xwe bi komkirina dubarekirinê bikî.',
+  'common.retry': 'Dîsa biceribîne',
+  'lesson.listen.playShort': 'Lêxe',
+  'lesson.translate.prompt': 'Wergerîne',
+  'lesson.speak.reRecord': 'Dîsa tomar bike',
+  'lesson.speak.uploading': 'Tê barkirin…',
+  'error.offline': 'Niha em nagihîjin MyKurda. Girêdana xwe kontrol bike û dîsa biceribîne.',
 };
 
 const de: Catalog = {
@@ -427,6 +517,36 @@ const de: Catalog = {
   'common.continue': 'Weiter',
   'common.skip': 'Überspringen',
   'nav.register': 'Loslegen',
+  'lesson.loadFailed': 'Die Lektion konnte nicht geladen werden.',
+  'lesson.grammarTips': 'Grammatiktipps',
+  'lesson.quit': 'Lektion verlassen',
+  'lesson.listen.prompt': 'Hör zu und tippe, was du hörst',
+  'lesson.listen.play': 'Audio abspielen',
+  'lesson.listen.playSlow': 'Langsam abspielen',
+  'lesson.listen.answerLabel': 'Was du gehört hast',
+  'lesson.listen.skip': 'Kann gerade nicht hören — überspringen',
+  'lesson.match.prompt': 'Finde die Paare',
+  'lesson.speak.prompt': 'Sag es laut',
+  'lesson.speak.unavailable': 'Aufnehmen ist auf diesem Gerät nicht verfügbar.',
+  'lesson.speak.start': 'Aufnahme starten',
+  'lesson.speak.stop': 'Aufnahme stoppen',
+  'lesson.speak.skip': 'Geht gerade nicht — überspringen',
+  'lesson.translate.answerLabel': 'Deine Übersetzung',
+  'lesson.write.prompt': 'Schreibe deine Antwort',
+  'lesson.write.answerLabel': 'Deine geschriebene Antwort',
+  'net.offline.title': 'Du bist offline',
+  'net.offline.body': 'Prüfe deine Verbindung — deine Inhalte laden, sobald du wieder da bist.',
+  'net.offline.banner': 'Keine Internetverbindung',
+  'net.loadFailed': 'Konnte nicht geladen werden',
+  'practice.startFailed': 'Das Üben konnte nicht gestartet werden.',
+  'practice.empty.title': 'Noch nichts zum Wiederholen',
+  'practice.empty.body': 'Schließe eine Lektion ab, um dein Wiederholungsdeck aufzubauen.',
+  'common.retry': 'Erneut versuchen',
+  'lesson.listen.playShort': 'Abspielen',
+  'lesson.translate.prompt': 'Übersetze',
+  'lesson.speak.reRecord': 'Neu aufnehmen',
+  'lesson.speak.uploading': 'Wird hochgeladen…',
+  'error.offline': 'MyKurda ist gerade nicht erreichbar. Prüfe deine Verbindung und versuch es erneut.',
 };
 
 const es: Catalog = {
@@ -527,6 +647,36 @@ const es: Catalog = {
   'common.continue': 'Continuar',
   'common.skip': 'Omitir',
   'nav.register': 'Empezar',
+  'lesson.loadFailed': 'No se pudo cargar la lección.',
+  'lesson.grammarTips': 'Consejos de gramática',
+  'lesson.quit': 'Salir de la lección',
+  'lesson.listen.prompt': 'Escucha y escribe lo que oyes',
+  'lesson.listen.play': 'Reproducir el audio',
+  'lesson.listen.playSlow': 'Reproducir despacio',
+  'lesson.listen.answerLabel': 'Lo que has oído',
+  'lesson.listen.skip': 'Ahora no puedo escuchar — omitir',
+  'lesson.match.prompt': 'Empareja las parejas',
+  'lesson.speak.prompt': 'Dilo en voz alta',
+  'lesson.speak.unavailable': 'La grabación no está disponible en este dispositivo.',
+  'lesson.speak.start': 'Empezar a grabar',
+  'lesson.speak.stop': 'Detener la grabación',
+  'lesson.speak.skip': 'Ahora no puedo hacerlo — omitir',
+  'lesson.translate.answerLabel': 'Tu traducción',
+  'lesson.write.prompt': 'Escribe tu respuesta',
+  'lesson.write.answerLabel': 'Tu respuesta escrita',
+  'net.offline.title': 'Estás sin conexión',
+  'net.offline.body': 'Comprueba tu conexión — tu contenido se cargará cuando vuelvas.',
+  'net.offline.banner': 'Sin conexión a internet',
+  'net.loadFailed': 'No se pudo cargar',
+  'practice.startFailed': 'No se pudo empezar la práctica.',
+  'practice.empty.title': 'Todavía no hay nada que repasar',
+  'practice.empty.body': 'Termina una lección para empezar a formar tu mazo de repaso.',
+  'common.retry': 'Reintentar',
+  'lesson.listen.playShort': 'Reproducir',
+  'lesson.translate.prompt': 'Traduce',
+  'lesson.speak.reRecord': 'Grabar otra vez',
+  'lesson.speak.uploading': 'Subiendo…',
+  'error.offline': 'Ahora mismo no se puede conectar con MyKurda. Comprueba tu conexión e inténtalo de nuevo.',
 };
 
 const tr: Catalog = {
@@ -627,6 +777,36 @@ const tr: Catalog = {
   'common.continue': 'Devam et',
   'common.skip': 'Atla',
   'nav.register': 'Başla',
+  'lesson.loadFailed': 'Ders yüklenemedi.',
+  'lesson.grammarTips': 'Dil bilgisi ipuçları',
+  'lesson.quit': 'Dersten çık',
+  'lesson.listen.prompt': 'Dinle ve duyduğunu yaz',
+  'lesson.listen.play': 'Sesi oynat',
+  'lesson.listen.playSlow': 'Yavaş oynat',
+  'lesson.listen.answerLabel': 'Duyduğun şey',
+  'lesson.listen.skip': 'Şimdi dinleyemiyorum — atla',
+  'lesson.match.prompt': 'Eşleri eşleştir',
+  'lesson.speak.prompt': 'Yüksek sesle söyle',
+  'lesson.speak.unavailable': 'Bu cihazda kayıt kullanılamıyor.',
+  'lesson.speak.start': 'Kaydı başlat',
+  'lesson.speak.stop': 'Kaydı durdur',
+  'lesson.speak.skip': 'Şimdi yapamıyorum — atla',
+  'lesson.translate.answerLabel': 'Çevirin',
+  'lesson.write.prompt': 'Cevabını yaz',
+  'lesson.write.answerLabel': 'Yazdığın cevap',
+  'net.offline.title': 'Çevrimdışısın',
+  'net.offline.body': 'Bağlantını kontrol et — geri döndüğünde içeriğin yüklenecek.',
+  'net.offline.banner': 'İnternet bağlantısı yok',
+  'net.loadFailed': 'Yüklenemedi',
+  'practice.startFailed': 'Alıştırma başlatılamadı.',
+  'practice.empty.title': 'Henüz tekrar edilecek bir şey yok',
+  'practice.empty.body': 'Tekrar destesini oluşturmaya başlamak için bir dersi bitir.',
+  'common.retry': 'Tekrar dene',
+  'lesson.listen.playShort': 'Oynat',
+  'lesson.translate.prompt': 'Çevir',
+  'lesson.speak.reRecord': 'Yeniden kaydet',
+  'lesson.speak.uploading': 'Yükleniyor…',
+  'error.offline': 'Şu anda MyKurda’ya ulaşılamıyor. Bağlantını kontrol edip tekrar dene.',
 };
 
 const ar: Catalog = {
@@ -727,6 +907,36 @@ const ar: Catalog = {
   'common.continue': 'متابعة',
   'common.skip': 'تخطٍّ',
   'nav.register': 'ابدأ الآن',
+  'lesson.loadFailed': 'تعذّر تحميل الدرس.',
+  'lesson.grammarTips': 'نصائح نحوية',
+  'lesson.quit': 'إنهاء الدرس',
+  'lesson.listen.prompt': 'استمع واكتب ما تسمعه',
+  'lesson.listen.play': 'تشغيل الصوت',
+  'lesson.listen.playSlow': 'تشغيل ببطء',
+  'lesson.listen.answerLabel': 'ما سمعته',
+  'lesson.listen.skip': 'لا أستطيع الاستماع الآن — تخطٍّ',
+  'lesson.match.prompt': 'طابِق الأزواج',
+  'lesson.speak.prompt': 'قُلها بصوت عالٍ',
+  'lesson.speak.unavailable': 'التسجيل غير متاح على هذا الجهاز.',
+  'lesson.speak.start': 'بدء التسجيل',
+  'lesson.speak.stop': 'إيقاف التسجيل',
+  'lesson.speak.skip': 'لا أستطيع الآن — تخطٍّ',
+  'lesson.translate.answerLabel': 'ترجمتك',
+  'lesson.write.prompt': 'اكتب إجابتك',
+  'lesson.write.answerLabel': 'إجابتك المكتوبة',
+  'net.offline.title': 'أنت غير متصل',
+  'net.offline.body': 'تحقّق من اتصالك — سيُحمَّل المحتوى عند عودتك.',
+  'net.offline.banner': 'لا يوجد اتصال بالإنترنت',
+  'net.loadFailed': 'تعذّر التحميل',
+  'practice.startFailed': 'تعذّر بدء التمرين.',
+  'practice.empty.title': 'لا شيء للمراجعة بعد',
+  'practice.empty.body': 'أكمل درسًا لتبدأ ببناء مجموعة المراجعة.',
+  'common.retry': 'حاول مرة أخرى',
+  'lesson.listen.playShort': 'تشغيل',
+  'lesson.translate.prompt': 'تَرجِم',
+  'lesson.speak.reRecord': 'إعادة التسجيل',
+  'lesson.speak.uploading': 'جارٍ الرفع…',
+  'error.offline': 'تعذّر الوصول إلى MyKurda الآن. تحقق من اتصالك وحاول مرة أخرى.',
 };
 
 const fr: Catalog = {
@@ -827,6 +1037,36 @@ const fr: Catalog = {
   'common.continue': 'Continuer',
   'common.skip': 'Passer',
   'nav.register': 'Commencer',
+  'lesson.loadFailed': 'Impossible de charger la leçon.',
+  'lesson.grammarTips': 'Conseils de grammaire',
+  'lesson.quit': 'Quitter la leçon',
+  'lesson.listen.prompt': 'Écoutez et tapez ce que vous entendez',
+  'lesson.listen.play': 'Lire l’audio',
+  'lesson.listen.playSlow': 'Lire au ralenti',
+  'lesson.listen.answerLabel': 'Ce que vous avez entendu',
+  'lesson.listen.skip': 'Impossible d’écouter maintenant — passer',
+  'lesson.match.prompt': 'Associez les paires',
+  'lesson.speak.prompt': 'Dites-le à voix haute',
+  'lesson.speak.unavailable': 'L’enregistrement n’est pas disponible sur cet appareil.',
+  'lesson.speak.start': 'Démarrer l’enregistrement',
+  'lesson.speak.stop': 'Arrêter l’enregistrement',
+  'lesson.speak.skip': 'Impossible pour le moment — passer',
+  'lesson.translate.answerLabel': 'Votre traduction',
+  'lesson.write.prompt': 'Écrivez votre réponse',
+  'lesson.write.answerLabel': 'Votre réponse écrite',
+  'net.offline.title': 'Vous êtes hors ligne',
+  'net.offline.body': 'Vérifiez votre connexion — votre contenu se chargera à votre retour.',
+  'net.offline.banner': 'Aucune connexion Internet',
+  'net.loadFailed': 'Chargement impossible',
+  'practice.startFailed': 'Impossible de démarrer l’entraînement.',
+  'practice.empty.title': 'Rien à réviser pour l’instant',
+  'practice.empty.body': 'Terminez une leçon pour commencer à constituer votre paquet de révision.',
+  'common.retry': 'Réessayer',
+  'lesson.listen.playShort': 'Lire',
+  'lesson.translate.prompt': 'Traduisez',
+  'lesson.speak.reRecord': 'Réenregistrer',
+  'lesson.speak.uploading': 'Envoi…',
+  'error.offline': 'Impossible de joindre MyKurda pour l’instant. Vérifie ta connexion et réessaie.',
 };
 
 const nl: Catalog = {
@@ -927,6 +1167,36 @@ const nl: Catalog = {
   'common.continue': 'Doorgaan',
   'common.skip': 'Overslaan',
   'nav.register': 'Aan de slag',
+  'lesson.loadFailed': 'De les kon niet worden geladen.',
+  'lesson.grammarTips': 'Grammaticatips',
+  'lesson.quit': 'Les verlaten',
+  'lesson.listen.prompt': 'Luister en typ wat je hoort',
+  'lesson.listen.play': 'Audio afspelen',
+  'lesson.listen.playSlow': 'Langzaam afspelen',
+  'lesson.listen.answerLabel': 'Wat je hoorde',
+  'lesson.listen.skip': 'Kan nu niet luisteren — overslaan',
+  'lesson.match.prompt': 'Zoek de paren',
+  'lesson.speak.prompt': 'Zeg het hardop',
+  'lesson.speak.unavailable': 'Opnemen is niet beschikbaar op dit apparaat.',
+  'lesson.speak.start': 'Opname starten',
+  'lesson.speak.stop': 'Opname stoppen',
+  'lesson.speak.skip': 'Kan dit nu niet doen — overslaan',
+  'lesson.translate.answerLabel': 'Jouw vertaling',
+  'lesson.write.prompt': 'Schrijf je antwoord',
+  'lesson.write.answerLabel': 'Je geschreven antwoord',
+  'net.offline.title': 'Je bent offline',
+  'net.offline.body': 'Controleer je verbinding — je inhoud laadt zodra je weer online bent.',
+  'net.offline.banner': 'Geen internetverbinding',
+  'net.loadFailed': 'Kon niet laden',
+  'practice.startFailed': 'Oefenen kon niet worden gestart.',
+  'practice.empty.title': 'Nog niets om te herhalen',
+  'practice.empty.body': 'Rond een les af om je herhaalstapel op te bouwen.',
+  'common.retry': 'Opnieuw proberen',
+  'lesson.listen.playShort': 'Afspelen',
+  'lesson.translate.prompt': 'Vertaal',
+  'lesson.speak.reRecord': 'Opnieuw opnemen',
+  'lesson.speak.uploading': 'Uploaden…',
+  'error.offline': 'MyKurda is nu niet bereikbaar. Controleer je verbinding en probeer het opnieuw.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -1028,6 +1298,36 @@ const ckb: Catalog = {
   'common.continue': 'بەردەوام بە',
   'common.skip': 'تێپەڕاندن',
   'nav.register': 'دەست پێ بکە',
+  'lesson.loadFailed': 'وانەکە بار نەکرا.',
+  'lesson.grammarTips': 'ئامۆژگاری ڕێزمان',
+  'lesson.quit': 'وازهێنان لە وانەکە',
+  'lesson.listen.prompt': 'گوێ بگرە و ئەوەی دەیبیستیت بینووسە',
+  'lesson.listen.play': 'دەنگەکە لێبدە',
+  'lesson.listen.playSlow': 'بە هێواشی لێبدە',
+  'lesson.listen.answerLabel': 'ئەوەی بیستت',
+  'lesson.listen.skip': 'ئێستا ناتوانم گوێ بگرم — تێپەڕێنە',
+  'lesson.match.prompt': 'جووتەکان بگونجێنە',
+  'lesson.speak.prompt': 'بە دەنگی بەرز بیڵێ',
+  'lesson.speak.unavailable': 'تۆمارکردن لەم ئامێرەدا بەردەست نییە.',
+  'lesson.speak.start': 'دەست بە تۆمارکردن بکە',
+  'lesson.speak.stop': 'تۆمارکردن بوەستێنە',
+  'lesson.speak.skip': 'ئێستا ناتوانم ئەمە بکەم — تێپەڕێنە',
+  'lesson.translate.answerLabel': 'وەرگێڕانەکەت',
+  'lesson.write.prompt': 'وەڵامەکەت بنووسە',
+  'lesson.write.answerLabel': 'وەڵامە نووسراوەکەت',
+  'net.offline.title': 'تۆ دەرهێڵیت',
+  'net.offline.body': 'پەیوەندییەکەت بپشکنە — کاتێک گەڕایتەوە ناوەڕۆکەکەت بار دەبێت.',
+  'net.offline.banner': 'پەیوەندی ئینتەرنێت نییە',
+  'net.loadFailed': 'بار نەکرا',
+  'practice.startFailed': 'ڕاهێنان دەستی پێ نەکرد.',
+  'practice.empty.title': 'هێشتا هیچ شتێک بۆ پێداچوونەوە نییە',
+  'practice.empty.body': 'وانەیەک تەواو بکە تا دەستەی پێداچوونەوەکەت دروست بێت.',
+  'common.retry': 'دووبارە هەوڵ بدەرەوە',
+  'lesson.listen.playShort': 'لێبدە',
+  'lesson.translate.prompt': 'وەربگێڕە',
+  'lesson.speak.reRecord': 'دووبارە تۆمار بکە',
+  'lesson.speak.uploading': 'بارکردن…',
+  'error.offline': 'ئێستا ناتوانرێت بگات بە MyKurda. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

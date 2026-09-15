@@ -31,6 +31,7 @@ import {
 } from './player';
 import { AnswerQueue } from './queue';
 import type { AnswerResult, SessionResults, SessionView } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
 export interface SessionPaths {
@@ -53,6 +54,7 @@ const LESSON_PATHS: SessionPaths = {
 export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [view, setView] = useState<SessionView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
     return (
       <GradientBackground>
         <View style={styles.centered}>
-          <Text style={[styles.errorText, { color: colors.textPrimary }]}>Couldn’t load the lesson.</Text>
+          <Text style={[styles.errorText, { color: colors.textPrimary }]}>{t('lesson.loadFailed')}</Text>
           <Text style={[styles.errorDetail, { color: colors.textSecondary }]}>{loadError}</Text>
           <Pressable onPress={onExit} style={styles.exitButton}>
             <Text style={[styles.exitText, { color: colors.primary }]}>Back</Text>
@@ -111,6 +113,7 @@ export function SessionPlayer({
 }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
@@ -258,14 +261,14 @@ export function SessionPlayer({
     <GradientBackground>
       <View style={styles.screen}>
         <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} accessibilityLabel="Quit lesson">
+          <Pressable onPress={onExit} accessibilityLabel={t('lesson.quit')}>
             <Text style={[styles.quit, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>
           <View style={styles.progressWrap}>
             <ProgressBar value={progress(state)} />
           </View>
           {view.grammarMd ? (
-            <Pressable onPress={() => setShowTips(true)} accessibilityLabel="Grammar tips" hitSlop={8}>
+            <Pressable onPress={() => setShowTips(true)} accessibilityLabel={t('lesson.grammarTips')} hitSlop={8}>
               <Icon name="sparkle" size={22} color={colors.gold} />
             </Pressable>
           ) : null}

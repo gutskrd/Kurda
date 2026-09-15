@@ -11,6 +11,7 @@ import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
+import { useI18n } from '../i18n/I18nContext';
 
 const PRACTICE_PATHS: SessionPaths = {
   answers: (id) => `/practice/sessions/${id}/answers`,
@@ -28,6 +29,7 @@ interface PracticeStart {
 export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigation; onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [start, setStart] = useState<PracticeStart | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -50,7 +52,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
     const { message, retryable } = describeError(error);
     return (
       <Centered>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Couldn’t start practice.</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.startFailed')}</Text>
         <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text>
         {retryable ? <Primary label="Try again" onPress={() => setReloadKey((k) => k + 1)} /> : null}
         <Primary label="Back" onPress={onExit} />
@@ -74,8 +76,8 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
     return (
       <Centered>
         <Icon name="sparkle" size={56} color={colors.gold} />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Nothing to review yet</Text>
-        <Text style={[styles.detail, { color: colors.textSecondary }]}>Finish a lesson to start building your review deck.</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.empty.title')}</Text>
+        <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('practice.empty.body')}</Text>
         {start.suggestion ? (
           <Primary
             label={`Start: ${start.suggestion.title}`}

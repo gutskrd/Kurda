@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useIsOnline } from './useNetworkStatus';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * A slim banner that slides in at the top while the device is offline (KUR-278).
@@ -13,6 +14,7 @@ import { useIsOnline } from './useNetworkStatus';
 export function OfflineBanner(): React.JSX.Element {
   const online = useIsOnline();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const anim = useRef(new Animated.Value(0)).current; // 0 = hidden, 1 = shown
 
@@ -33,7 +35,7 @@ export function OfflineBanner(): React.JSX.Element {
       style={[styles.wrap, { top: insets.top + spacing.sm, opacity: anim, transform: [{ translateY }] }]}
     >
       <View style={[styles.banner, { backgroundColor: colors.danger }]}>
-        <Text style={[styles.text, { color: colors.textOnPrimary }]}>No internet connection</Text>
+        <Text style={[styles.text, { color: colors.textOnPrimary }]}>{t('net.offline.banner')}</Text>
       </View>
     </Animated.View>
   );

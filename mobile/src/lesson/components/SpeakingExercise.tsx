@@ -7,6 +7,7 @@ import { recordingRejection } from '../recording';
 import type { Exercise } from '../types';
 import { uploadRecording } from '../upload';
 import { useRecorder } from '../useRecorder';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface Props {
   exercise: Exercise;
@@ -22,6 +23,7 @@ interface Props {
 export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, onSkip, disabled }: Props) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const recorder = useRecorder();
   const [status, setStatus] = useState<'idle' | 'uploading' | 'ready' | 'rejected' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
@@ -62,11 +64,11 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Say it aloud</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.speak.prompt')}</Text>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {!recorder.supported ? (
-        <Text style={[styles.detail, { color: colors.textSecondary }]}>Recording isn’t available on this device.</Text>
+        <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('lesson.speak.unavailable')}</Text>
       ) : recorder.recording ? (
         <View style={styles.recordingBox}>
           <View style={styles.waveform}>
@@ -75,20 +77,20 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
             ))}
           </View>
           <Text style={[styles.dur, { color: colors.textPrimary }]}>{(recorder.durationMs / 1000).toFixed(1)}s</Text>
-          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityLabel="Stop recording">
+          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityLabel={t('lesson.speak.stop')}>
             <Text style={[styles.stopText, { color: colors.background }]}>■ Stop</Text>
           </Pressable>
         </View>
       ) : status === 'uploading' ? (
         <View style={styles.recordingBox}>
           <ActivityIndicator color={colors.primary} />
-          <Text style={[styles.detail, { color: colors.textSecondary }]}>Uploading…</Text>
+          <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('lesson.speak.uploading')}</Text>
         </View>
       ) : status === 'ready' ? (
         <View style={styles.recordingBox}>
           <Text style={[styles.ready, { color: colors.success }]}>✓ Recorded</Text>
           <Pressable onPress={() => recorder.start()} disabled={disabled} style={[styles.reRecord, { borderColor: colors.primary }]}>
-            <Text style={[styles.reRecordText, { color: colors.primary }]}>Re-record</Text>
+            <Text style={[styles.reRecordText, { color: colors.primary }]}>{t('lesson.speak.reRecord')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -96,7 +98,7 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
           onPress={() => recorder.start()}
           disabled={disabled}
           style={[styles.record, { backgroundColor: colors.danger }, disabled && styles.dim]}
-          accessibilityLabel="Start recording"
+          accessibilityLabel={t('lesson.speak.start')}
         >
           <Text style={[styles.recordText, { color: colors.textOnPrimary }]}>● Record</Text>
         </Pressable>
@@ -105,7 +107,7 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
       {message ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text> : null}
 
       <Pressable disabled={disabled} onPress={onSkip} style={styles.skip}>
-        <Text style={[styles.skipText, { color: colors.textSecondary }]}>Can’t do this now — skip</Text>
+        <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.speak.skip')}</Text>
       </Pressable>
     </View>
   );

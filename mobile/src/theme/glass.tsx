@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
+import { useI18n } from '../i18n/I18nContext';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -168,14 +169,15 @@ export function ErrorRetry({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <View style={[styles.errorWrap, style]}>
       <Icon name="close" size={28} color={colors.danger} />
-      <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>Couldn’t load</Text>
+      <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>{t('net.loadFailed')}</Text>
       <Text style={[styles.errorMsg, { color: colors.textSecondary }]}>
-        {message ?? 'Something went wrong. Check your connection and try again.'}
+        {message ?? t('error.offline')}
       </Text>
-      <ClayButton label="Try again" tone="primary" onPress={onRetry} style={styles.errorButton} />
+      <ClayButton label={t('common.retry')} tone="primary" onPress={onRetry} style={styles.errorButton} />
     </View>
   );
 }
