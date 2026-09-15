@@ -243,8 +243,24 @@ export type TranslationKey =
   | 'rankings.empty.globalBody'
   | 'rankings.unit.xp'
   | 'rankings.everyoneIn'
-  | 'games.you'
-  | 'profile.edit';
+  | 'games.you'
+  | 'profile.edit'
+  | 'edit.eyebrow'
+  | 'edit.details'
+  | 'edit.displayName'
+  | 'edit.bio'
+  | 'edit.bioPlaceholder'
+  | 'edit.country'
+  | 'edit.noCountry'
+  | 'edit.saveChanges'
+  | 'edit.saving'
+  | 'edit.avatar'
+  | 'edit.chooseAvatar'
+  | 'edit.noAvatar'
+  | 'edit.premiumAvatar'
+  | 'edit.profileUpdated'
+  | 'edit.photoUpdated'
+  | 'edit.avatarCleared';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -465,6 +481,22 @@ const en: Catalog = {
   'rankings.everyoneIn': 'Everyone in {country}.',
   'games.you': 'You',
   'profile.edit': 'Edit Profile',
+  'edit.eyebrow': 'Profile',
+  'edit.details': 'Details',
+  'edit.displayName': 'Display name',
+  'edit.bio': 'Bio',
+  'edit.bioPlaceholder': 'Tell others a little about you…',
+  'edit.country': 'Country',
+  'edit.noCountry': '— None —',
+  'edit.saveChanges': 'Save changes',
+  'edit.saving': 'Saving…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Choose a default avatar',
+  'edit.noAvatar': 'No avatar',
+  'edit.premiumAvatar': 'This avatar is a Premium feature — upgrade to Premium to use it.',
+  'edit.profileUpdated': 'Profile updated.',
+  'edit.photoUpdated': 'Profile picture updated.',
+  'edit.avatarCleared': 'Avatar cleared.',
 };
 
 const ku: Catalog = {
@@ -684,6 +716,22 @@ const ku: Catalog = {
   'rankings.everyoneIn': 'Hemû kesên li {country}.',
   'games.you': 'Tu',
   'profile.edit': 'Profîlê biguherîne',
+  'edit.eyebrow': 'Profîl',
+  'edit.details': 'Hûrgilî',
+  'edit.displayName': 'Navê xuyayî',
+  'edit.bio': 'Derbarê te',
+  'edit.bioPlaceholder': 'Hinekî derbarê xwe de ji yên din re bibêje…',
+  'edit.country': 'Welat',
+  'edit.noCountry': '— Tune —',
+  'edit.saveChanges': 'Guhertinan tomar bike',
+  'edit.saving': 'Tê tomarkirin…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Avatareke standard hilbijêre',
+  'edit.noAvatar': 'Bê avatar',
+  'edit.premiumAvatar': 'Ev avatar taybetmendiyeke Premium e — ji bo bikaranîna wê derbasî Premium bibe.',
+  'edit.profileUpdated': 'Profîl hat nûkirin.',
+  'edit.photoUpdated': 'Wêneyê profîlê hat nûkirin.',
+  'edit.avatarCleared': 'Avatar hat rakirin.',
 };
 
 const de: Catalog = {
@@ -903,6 +951,22 @@ const de: Catalog = {
   'rankings.everyoneIn': 'Alle in {country}.',
   'games.you': 'Du',
   'profile.edit': 'Profil bearbeiten',
+  'edit.eyebrow': 'Profil',
+  'edit.details': 'Angaben',
+  'edit.displayName': 'Anzeigename',
+  'edit.bio': 'Über dich',
+  'edit.bioPlaceholder': 'Erzähl anderen ein wenig über dich…',
+  'edit.country': 'Land',
+  'edit.noCountry': '— Keins —',
+  'edit.saveChanges': 'Änderungen speichern',
+  'edit.saving': 'Wird gespeichert…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Standard-Avatar wählen',
+  'edit.noAvatar': 'Kein Avatar',
+  'edit.premiumAvatar': 'Dieser Avatar ist eine Premium-Funktion — wechsle zu Premium, um ihn zu nutzen.',
+  'edit.profileUpdated': 'Profil aktualisiert.',
+  'edit.photoUpdated': 'Profilbild aktualisiert.',
+  'edit.avatarCleared': 'Avatar entfernt.',
 };
 
 const es: Catalog = {
@@ -1122,6 +1186,22 @@ const es: Catalog = {
   'rankings.everyoneIn': 'Todo el mundo en {country}.',
   'games.you': 'Tú',
   'profile.edit': 'Editar perfil',
+  'edit.eyebrow': 'Perfil',
+  'edit.details': 'Datos',
+  'edit.displayName': 'Nombre visible',
+  'edit.bio': 'Biografía',
+  'edit.bioPlaceholder': 'Cuenta un poco sobre ti…',
+  'edit.country': 'País',
+  'edit.noCountry': '— Ninguno —',
+  'edit.saveChanges': 'Guardar los cambios',
+  'edit.saving': 'Guardando…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Elige un avatar predeterminado',
+  'edit.noAvatar': 'Sin avatar',
+  'edit.premiumAvatar': 'Este avatar es una función Premium: pásate a Premium para usarlo.',
+  'edit.profileUpdated': 'Perfil actualizado.',
+  'edit.photoUpdated': 'Foto de perfil actualizada.',
+  'edit.avatarCleared': 'Avatar quitado.',
 };
 
 const tr: Catalog = {
@@ -1341,6 +1421,22 @@ const tr: Catalog = {
   'rankings.everyoneIn': '{country} içindeki herkes.',
   'games.you': 'Sen',
   'profile.edit': 'Profili düzenle',
+  'edit.eyebrow': 'Profil',
+  'edit.details': 'Bilgiler',
+  'edit.displayName': 'Görünen ad',
+  'edit.bio': 'Hakkında',
+  'edit.bioPlaceholder': 'Kendinden biraz bahset…',
+  'edit.country': 'Ülke',
+  'edit.noCountry': '— Yok —',
+  'edit.saveChanges': 'Değişiklikleri kaydet',
+  'edit.saving': 'Kaydediliyor…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Varsayılan bir avatar seç',
+  'edit.noAvatar': 'Avatar yok',
+  'edit.premiumAvatar': 'Bu avatar bir Premium özelliğidir — kullanmak için Premium’a geç.',
+  'edit.profileUpdated': 'Profil güncellendi.',
+  'edit.photoUpdated': 'Profil fotoğrafı güncellendi.',
+  'edit.avatarCleared': 'Avatar kaldırıldı.',
 };
 
 const ar: Catalog = {
@@ -1560,6 +1656,22 @@ const ar: Catalog = {
   'rankings.everyoneIn': 'الجميع في {country}.',
   'games.you': 'أنت',
   'profile.edit': 'تعديل الملف الشخصي',
+  'edit.eyebrow': 'الملف الشخصي',
+  'edit.details': 'التفاصيل',
+  'edit.displayName': 'الاسم الظاهر',
+  'edit.bio': 'نبذة',
+  'edit.bioPlaceholder': 'أخبر الآخرين قليلًا عنك…',
+  'edit.country': 'البلد',
+  'edit.noCountry': '— لا شيء —',
+  'edit.saveChanges': 'حفظ التغييرات',
+  'edit.saving': 'جارٍ الحفظ…',
+  'edit.avatar': 'الصورة الرمزية',
+  'edit.chooseAvatar': 'اختر صورة رمزية افتراضية',
+  'edit.noAvatar': 'بلا صورة رمزية',
+  'edit.premiumAvatar': 'هذه الصورة الرمزية ميزة بريميوم — ارتقِ إلى بريميوم لاستخدامها.',
+  'edit.profileUpdated': 'تم تحديث الملف الشخصي.',
+  'edit.photoUpdated': 'تم تحديث صورة الملف الشخصي.',
+  'edit.avatarCleared': 'أُزيلت الصورة الرمزية.',
 };
 
 const fr: Catalog = {
@@ -1779,6 +1891,22 @@ const fr: Catalog = {
   'rankings.everyoneIn': 'Tout le monde en {country}.',
   'games.you': 'Toi',
   'profile.edit': 'Modifier le profil',
+  'edit.eyebrow': 'Profil',
+  'edit.details': 'Informations',
+  'edit.displayName': 'Nom affiché',
+  'edit.bio': 'Bio',
+  'edit.bioPlaceholder': 'Dis-en un peu sur toi…',
+  'edit.country': 'Pays',
+  'edit.noCountry': '— Aucun —',
+  'edit.saveChanges': 'Enregistrer les modifications',
+  'edit.saving': 'Enregistrement…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Choisis un avatar par défaut',
+  'edit.noAvatar': 'Aucun avatar',
+  'edit.premiumAvatar': 'Cet avatar est une fonctionnalité Premium — passe à Premium pour l’utiliser.',
+  'edit.profileUpdated': 'Profil mis à jour.',
+  'edit.photoUpdated': 'Photo de profil mise à jour.',
+  'edit.avatarCleared': 'Avatar retiré.',
 };
 
 const nl: Catalog = {
@@ -1998,6 +2126,22 @@ const nl: Catalog = {
   'rankings.everyoneIn': 'Iedereen in {country}.',
   'games.you': 'Jij',
   'profile.edit': 'Profiel bewerken',
+  'edit.eyebrow': 'Profiel',
+  'edit.details': 'Gegevens',
+  'edit.displayName': 'Weergavenaam',
+  'edit.bio': 'Bio',
+  'edit.bioPlaceholder': 'Vertel anderen iets over jezelf…',
+  'edit.country': 'Land',
+  'edit.noCountry': '— Geen —',
+  'edit.saveChanges': 'Wijzigingen opslaan',
+  'edit.saving': 'Opslaan…',
+  'edit.avatar': 'Avatar',
+  'edit.chooseAvatar': 'Kies een standaardavatar',
+  'edit.noAvatar': 'Geen avatar',
+  'edit.premiumAvatar': 'Deze avatar is een Premium-functie — stap over op Premium om hem te gebruiken.',
+  'edit.profileUpdated': 'Profiel bijgewerkt.',
+  'edit.photoUpdated': 'Profielfoto bijgewerkt.',
+  'edit.avatarCleared': 'Avatar verwijderd.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -2218,6 +2362,22 @@ const ckb: Catalog = {
   'rankings.everyoneIn': 'هەموو کەسێک لە {country}.',
   'games.you': 'تۆ',
   'profile.edit': 'دەستکاری پرۆفایل',
+  'edit.eyebrow': 'پرۆفایل',
+  'edit.details': 'وردەکارییەکان',
+  'edit.displayName': 'ناوی پیشاندان',
+  'edit.bio': 'کورتەیەک',
+  'edit.bioPlaceholder': 'کەمێک دەربارەی خۆت بۆ ئەوانی تر بڵێ…',
+  'edit.country': 'وڵات',
+  'edit.noCountry': '— هیچ —',
+  'edit.saveChanges': 'گۆڕانکارییەکان پاشەکەوت بکە',
+  'edit.saving': 'پاشەکەوت دەکرێت…',
+  'edit.avatar': 'ئەڤاتار',
+  'edit.chooseAvatar': 'ئەڤاتارێکی بنەڕەت هەڵبژێرە',
+  'edit.noAvatar': 'بێ ئەڤاتار',
+  'edit.premiumAvatar': 'ئەم ئەڤاتارە تایبەتمەندییەکی پریمیۆمە — بۆ بەکارهێنانی بەرەو پریمیۆم بڕۆ.',
+  'edit.profileUpdated': 'پرۆفایل نوێ کرایەوە.',
+  'edit.photoUpdated': 'وێنەی پرۆفایل نوێ کرایەوە.',
+  'edit.avatarCleared': 'ئەڤاتار لابرا.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
