@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -38,12 +39,12 @@ interface Found {
   points: number;
 }
 
-const REJECT_MESSAGE: Record<Reject, string> = {
-  'not-a-word': 'Not a Kurdish word',
-  'is-prompt': 'That’s the prompt word',
-  'already-used': 'Already found',
-  'no-rhyme': 'Doesn’t rhyme',
-  profane: 'Not allowed',
+const REJECT_KEY: Record<Reject, TranslationKey> = {
+  'not-a-word': 'games.rhyme.reject.notAWord',
+  'is-prompt': 'games.rhyme.reject.isPromptShort',
+  'already-used': 'games.rhyme.reject.alreadyUsed',
+  'no-rhyme': 'games.rhyme.reject.noRhyme',
+  profane: 'games.rhyme.reject.profane',
 };
 
 function clock(ms: number): string {
@@ -137,7 +138,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
       setInput('');
       setNote(`+${r.points}`);
     } else {
-      setNote(r.reason ? REJECT_MESSAGE[r.reason] : 'Try another word');
+      setNote(t(r.reason ? REJECT_KEY[r.reason] : 'games.rhyme.reject.other'));
       runShake();
     }
   };
@@ -148,12 +149,11 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     <GradientBackground>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset }]} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10} style={styles.backBtn}>
+          <Pressable onPress={onExit} accessibilityRole="button" accessibilityLabel={t('common.back')} hitSlop={10}>
             <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-            <Text style={[styles.back, { color: colors.textSecondary }]}>Back</Text>
           </Pressable>
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhyme.name')}</Text>
-          <View style={{ width: 64 }} />
+          <View style={{ width: 22 }} />
         </View>
 
         {!game ? (
@@ -166,7 +166,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
             {starting ? (
               <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
             ) : (
-              <ClayButton label="Start training" icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.lg }} />
+              <ClayButton label={t('games.rhyme.start')} icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.lg }} />
             )}
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
           </GlassCard>
@@ -174,11 +174,11 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
           <GlassCard style={styles.resultCard}>
             <Text style={[styles.resultTitle, { color: colors.primary }]}>{t('games.rhyme.timeUpRound')}</Text>
             <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-              {game.accepted} {game.accepted === 1 ? 'rhyme' : 'rhymes'} · {game.score} points
+              {t('games.rhyme.scoreLine', { score: game.score, count: game.accepted })}
               {game.xpAwarded ? ` · +${game.xpAwarded} XP` : ''}
             </Text>
-            <ClayButton label="Play again" icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.md }} />
-            <ClayButton label="Done" tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
+            <ClayButton label={t('games.playAgain')} icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.md }} />
+            <ClayButton label={t('common.done')} tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
           </GlassCard>
         ) : (
           <>
@@ -197,7 +197,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               <View style={styles.inputRow}>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-                  placeholder="Type a rhyme…"
+                  placeholder={t('games.rhyme.placeholder', { word: game.prompt })}
                   placeholderTextColor={colors.textSecondary}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -210,7 +210,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
                   returnKeyType="send"
                   editable={!submitting}
                 />
-                <ClayButton label="Add" tone="primary" onPress={submit} style={styles.addBtn} />
+                <ClayButton label={t('games.rhyme.add')} tone="primary" onPress={submit} style={styles.addBtn} />
               </View>
             </Animated.View>
             {note ? <Text style={[styles.note, { color: note.startsWith('+') ? colors.success : colors.danger }]}>{note}</Text> : null}
@@ -220,7 +220,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
                 <View key={`${f.word}-${i}`} style={[styles.foundRow, { borderColor: colors.glassBorder }]}>
                   <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
                   <View style={styles.foundMeta}>
-                    <Text style={[styles.foundQuality, { color: qualityColor(f.quality) }]}>{f.quality}</Text>
+                    <Text style={[styles.foundQuality, { color: qualityColor(f.quality) }]}>{t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}</Text>
                     <Text style={[styles.foundPoints, { color: colors.textSecondary }]}>+{f.points}</Text>
                   </View>
                 </View>
@@ -240,9 +240,10 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  backBtn: { flexDirection: 'row', alignItems: 'center', width: 64 },
-  back: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  // flex + centre so a long translated name shares the row with the back
+  // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
+  // kurdî" is three
+  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
   startTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

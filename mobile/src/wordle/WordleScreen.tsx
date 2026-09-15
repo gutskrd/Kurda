@@ -31,6 +31,7 @@ import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
 import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -75,7 +76,12 @@ interface EduEntry {
 }
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
-const DIFFICULTY_LABEL: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+
+const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
+  easy: 'games.difficulty.easy',
+  medium: 'games.difficulty.medium',
+  hard: 'games.difficulty.hard',
+};
 
 /**
  * Kurdish Wordle (KUR-305). Server-authoritative: the screen never holds the
@@ -153,7 +159,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const submit = useCallback(async () => {
     if (!game || game.status !== 'playing' || submitting) return;
     if (draft.length !== game.targetLength) {
-      setNote('Not enough letters');
+      setNote(t('games.wordle.enterLetters', { count: game.targetLength }));
       runShake();
       return;
     }
@@ -171,10 +177,16 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     } else {
       // a rejected guess consumes no attempt — keep the draft, explain inline
       const code = res.error.code;
-      setNote(code === 'NOT_A_WORD' ? 'Not a Kurdish word' : code === 'WRONG_LENGTH' ? 'Wrong length' : describeError(res.error).message);
+      setNote(
+        code === 'NOT_A_WORD'
+          ? t('games.wordle.notAWord')
+          : code === 'WRONG_LENGTH'
+            ? t('games.wordle.wrongLength')
+            : describeError(res.error).message,
+      );
       runShake();
     }
-  }, [client, game, draft, submitting, loadStats, fetchEducation]);
+  }, [client, game, draft, submitting, loadStats, fetchEducation, t]);
 
   const onKey = useCallback(
     (key: string) => {
@@ -220,12 +232,11 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     <GradientBackground>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset }]} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10} style={styles.backBtn}>
+          <Pressable onPress={onExit} accessibilityRole="button" accessibilityLabel={t('common.back')} hitSlop={10}>
             <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-            <Text style={[styles.back, { color: colors.textSecondary }]}>Back</Text>
           </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>Wordle</Text>
-          <View style={{ width: 64 }} />
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.wordle.name')}</Text>
+          <View style={{ width: 22 }} />
         </View>
 
         {!game ? (
@@ -236,20 +247,24 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               {t('games.wordle.rules')}
             </Text>
             <View style={{ alignSelf: 'stretch', marginTop: spacing.md }}>
-              <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => DIFFICULTY_LABEL[d]} />
+              <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => t(DIFFICULTY_KEY[d])} />
             </View>
             {starting ? (
               <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
             ) : (
               <View style={styles.startActions}>
-                <ClayButton label="Daily puzzle" icon="star" tone="primary" onPress={() => start('daily')} style={{ alignSelf: 'stretch' }} />
-                <ClayButton label="Practice" icon="bolt" tone="neutral" onPress={() => start('practice')} style={{ alignSelf: 'stretch' }} />
+                <ClayButton label={t('games.wordle.daily')} icon="star" tone="primary" onPress={() => start('daily')} style={{ alignSelf: 'stretch' }} />
+                <ClayButton label={t('games.wordle.practice')} icon="bolt" tone="neutral" onPress={() => start('practice')} style={{ alignSelf: 'stretch' }} />
               </View>
             )}
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
             {stats && stats.played > 0 ? (
               <Text style={[styles.startStats, { color: colors.textSecondary }]}>
-                {stats.played} played · {stats.winPercentage}% won · streak {stats.currentStreak}
+                {t('games.wordle.statsLine', {
+                  played: stats.played,
+                  percent: stats.winPercentage,
+                  streak: stats.currentStreak,
+                })}
               </Text>
             ) : null}
           </GlassCard>
@@ -307,11 +322,11 @@ function ResultPanel({
     <View style={styles.result}>
       <GlassCard style={styles.resultCard}>
         <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
-          {won ? 'Correct!' : 'Out of tries'}
+          {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
         </Text>
         {won ? (
           <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-            Solved in {game.guesses.length}/{MAX_ATTEMPTS}
+            {t('games.wordle.solvedIn', { count: game.guesses.length, max: MAX_ATTEMPTS })}
             {game.xpAwarded ? ` · +${game.xpAwarded} XP` : ''}
           </Text>
         ) : (
@@ -330,27 +345,30 @@ function ResultPanel({
             {edu.definitionEn ? <Text style={[styles.eduDef, { color: colors.textSecondary }]}>{edu.definitionEn}</Text> : null}
             <Pressable onPress={onSave} accessibilityRole="button" style={styles.saveRow} disabled={savedWord}>
               <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
-              <Text style={[styles.saveText, { color: colors.primary }]}>{savedWord ? 'Saved to vocabulary' : 'Save to vocabulary'}</Text>
+              <Text style={[styles.saveText, { color: colors.primary }]}>
+                {savedWord ? t('dictionary.savedWord') : t('dictionary.saveWord')}
+              </Text>
             </Pressable>
           </View>
         ) : null}
 
         <View style={styles.resultActions}>
-          <ClayButton label="Share" icon="chat" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
-          <ClayButton label="Practice" icon="bolt" tone="primary" onPress={onPractice} style={{ flex: 1 }} />
+          <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
+          <ClayButton label={t('games.wordle.practice')} icon="bolt" tone="primary" onPress={onPractice} style={{ flex: 1 }} />
         </View>
-        <ClayButton label="Daily puzzle" icon="star" tone="neutral" onPress={onDaily} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
+        <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
       </GlassCard>
 
       {stats ? (
         <GlassCard style={styles.statsCard}>
-          <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>Statistics</Text>
+          <Text style={[styles.statsTitle, { color: colors.textSecondary }]}>{t('games.wordle.statistics')}</Text>
           <View style={styles.statsGrid}>
-            <Stat label="Played" value={String(stats.played)} />
-            <Stat label="Win %" value={String(stats.winPercentage)} />
-            <Stat label="Streak" value={String(stats.currentStreak)} />
-            <Stat label="Best" value={String(stats.longestStreak)} />
-            <Stat label="Avg" value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
+            <Stat label={t('games.wordle.stat.played')} value={String(stats.played)} />
+            <Stat label={t('games.wordle.stat.winPct')} value={String(stats.winPercentage)} />
+            <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
+            <Stat label={t('games.wordle.stat.best')} value={String(stats.longestStreak)} />
+            <Stat label={t('games.wordle.stat.average')} value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
+            {/* XP is the app's own unit and reads the same in every language */}
             <Stat label="XP" value={String(stats.totalXp)} />
           </View>
         </GlassCard>
@@ -372,9 +390,10 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  backBtn: { flexDirection: 'row', alignItems: 'center', width: 64 },
-  back: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  // flex + centre so a long translated name shares the row with the back
+  // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
+  // kurdî" is three
+  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
   startTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

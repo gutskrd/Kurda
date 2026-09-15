@@ -308,7 +308,38 @@ export type TranslationKey =
   | 'games.youWon'
   | 'games.battle.solvedIt'
   | 'share.title'
-  | 'games.quiz.name';
+  | 'games.quiz.name'
+  | 'games.wordle.outOfTries'
+  | 'games.wordle.solved'
+  | 'games.wordle.daily'
+  | 'games.wordle.practice'
+  | 'games.wordle.guesses'
+  | 'games.rhyme.reject.notAWord'
+  | 'games.rhyme.reject.isPromptShort'
+  | 'games.rhyme.reject.alreadyUsed'
+  | 'games.rhyme.reject.noRhyme'
+  | 'games.rhyme.reject.profane'
+  | 'games.rhyme.reject.other'
+  | 'games.rhyme.placeholder'
+  | 'games.playAgain'
+  | 'common.cancel'
+  | 'games.rhyme.scoreLine'
+  | 'games.rhyme.yourRhyme'
+  | 'common.done'
+  | 'games.wordle.statistics'
+  | 'games.wordle.statsLine'
+  | 'games.wordle.solvedIn'
+  | 'games.wordle.stat.played'
+  | 'games.wordle.stat.winPct'
+  | 'games.wordle.stat.streak'
+  | 'games.wordle.stat.best'
+  | 'games.wordle.stat.average'
+  | 'dictionary.saveWord'
+  | 'dictionary.savedWord'
+  | 'games.rhyme.start'
+  | 'games.rhyme.add'
+  | 'games.rhyme.quality.perfect'
+  | 'games.rhyme.quality.near';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -593,6 +624,37 @@ const en: Catalog = {
   'games.battle.solvedIt': 'Solved it!',
   'share.title': 'Share',
   'games.quiz.name': 'Ranked Quiz',
+  'games.wordle.outOfTries': 'Out of tries.',
+  'games.wordle.solved': '🎉 Solved it!',
+  'games.wordle.daily': 'Daily',
+  'games.wordle.practice': 'Practice',
+  'games.wordle.guesses': 'Guesses',
+  'games.rhyme.reject.notAWord': 'Not a word in the dictionary.',
+  'games.rhyme.reject.isPromptShort': 'That’s the prompt itself.',
+  'games.rhyme.reject.alreadyUsed': 'You already used that one.',
+  'games.rhyme.reject.noRhyme': 'Doesn’t rhyme — try another.',
+  'games.rhyme.reject.profane': 'Let’s keep it clean.',
+  'games.rhyme.reject.other': 'Not accepted — try another.',
+  'games.rhyme.placeholder': 'A word that rhymes with “{word}”…',
+  'games.playAgain': 'Play again',
+  'common.cancel': 'Cancel',
+  'games.rhyme.scoreLine': '{score} pts · {count} found',
+  'games.rhyme.yourRhyme': 'Your rhyme',
+  'common.done': 'Done',
+  'games.wordle.statistics': 'Statistics',
+  'games.wordle.statsLine': '{played} played · {percent}% won · streak {streak}',
+  'games.wordle.solvedIn': 'Solved in {count}/{max}',
+  'games.wordle.stat.played': 'Played',
+  'games.wordle.stat.winPct': 'Win %',
+  'games.wordle.stat.streak': 'Streak',
+  'games.wordle.stat.best': 'Best',
+  'games.wordle.stat.average': 'Avg',
+  'dictionary.saveWord': 'Save to vocabulary',
+  'dictionary.savedWord': 'Saved to vocabulary',
+  'games.rhyme.start': 'Start training',
+  'games.rhyme.add': 'Add',
+  'games.rhyme.quality.perfect': 'perfect',
+  'games.rhyme.quality.near': 'near',
 };
 
 const ku: Catalog = {
@@ -876,6 +938,37 @@ const ku: Catalog = {
   'games.battle.solvedIt': 'Te çareser kir!',
   'share.title': 'Parve bike',
   'games.quiz.name': 'Pirsyariya rêzbendî',
+  'games.wordle.outOfTries': 'Hewldan qediyan.',
+  'games.wordle.solved': '🎉 Te çareser kir!',
+  'games.wordle.daily': 'Rojane',
+  'games.wordle.practice': 'Temrîn',
+  'games.wordle.guesses': 'Texmîn',
+  'games.rhyme.reject.notAWord': 'Ev di ferhengê de peyv nîne.',
+  'games.rhyme.reject.isPromptShort': 'Ev bi xwe peyva pêşkêşkirî ye.',
+  'games.rhyme.reject.alreadyUsed': 'Te ew jixwe bi kar anî.',
+  'games.rhyme.reject.noRhyme': 'Serwa nabe — yeke din biceribîne.',
+  'games.rhyme.reject.profane': 'Werin em paqij bimînin.',
+  'games.rhyme.reject.other': 'Nehat qebûlkirin — yeke din biceribîne.',
+  'games.rhyme.placeholder': 'Peyveke ku bi “{word}” re serwa dibe…',
+  'games.playAgain': 'Dîsa bilîze',
+  'common.cancel': 'Betal bike',
+  'games.rhyme.scoreLine': '{score} xal · {count} hat dîtin',
+  'games.rhyme.yourRhyme': 'Serwaya te',
+  'common.done': 'Temam',
+  'games.wordle.statistics': 'Amar',
+  'games.wordle.statsLine': '{played} lîstin · {percent}% serkeftin · rêz {streak}',
+  'games.wordle.solvedIn': 'Bi {count}/{max} hate çareserkirin',
+  'games.wordle.stat.played': 'Lîstin',
+  'games.wordle.stat.winPct': '% Serkeftin',
+  'games.wordle.stat.streak': 'Rêz',
+  'games.wordle.stat.best': 'Çêtirîn',
+  'games.wordle.stat.average': 'Navîn',
+  'dictionary.saveWord': 'Li ferhengokê zêde bike',
+  'dictionary.savedWord': 'Li ferhengokê hate zêdekirin',
+  'games.rhyme.start': 'Dest bi perwerdeyê bike',
+  'games.rhyme.add': 'Zêde bike',
+  'games.rhyme.quality.perfect': 'bêkêmasî',
+  'games.rhyme.quality.near': 'nêzîk',
 };
 
 const de: Catalog = {
@@ -1159,6 +1252,37 @@ const de: Catalog = {
   'games.battle.solvedIt': 'Gelöst!',
   'share.title': 'Teilen',
   'games.quiz.name': 'Ranglisten-Quiz',
+  'games.wordle.outOfTries': 'Keine Versuche mehr.',
+  'games.wordle.solved': '🎉 Gelöst!',
+  'games.wordle.daily': 'Täglich',
+  'games.wordle.practice': 'Übung',
+  'games.wordle.guesses': 'Versuche',
+  'games.rhyme.reject.notAWord': 'Dieses Wort steht nicht im Wörterbuch.',
+  'games.rhyme.reject.isPromptShort': 'Das ist das vorgegebene Wort selbst.',
+  'games.rhyme.reject.alreadyUsed': 'Das hast du schon benutzt.',
+  'games.rhyme.reject.noRhyme': 'Reimt sich nicht — versuch ein anderes.',
+  'games.rhyme.reject.profane': 'Bleiben wir sauber.',
+  'games.rhyme.reject.other': 'Nicht angenommen — versuch ein anderes.',
+  'games.rhyme.placeholder': 'Ein Wort, das sich auf „{word}“ reimt…',
+  'games.playAgain': 'Nochmal spielen',
+  'common.cancel': 'Abbrechen',
+  'games.rhyme.scoreLine': '{score} Pkt. · {count} gefunden',
+  'games.rhyme.yourRhyme': 'Dein Reim',
+  'common.done': 'Fertig',
+  'games.wordle.statistics': 'Statistik',
+  'games.wordle.statsLine': '{played} gespielt · {percent}% gewonnen · Serie {streak}',
+  'games.wordle.solvedIn': 'Gelöst in {count}/{max}',
+  'games.wordle.stat.played': 'Gespielt',
+  'games.wordle.stat.winPct': 'Siege %',
+  'games.wordle.stat.streak': 'Serie',
+  'games.wordle.stat.best': 'Beste',
+  'games.wordle.stat.average': 'Schnitt',
+  'dictionary.saveWord': 'Zum Wortschatz hinzufügen',
+  'dictionary.savedWord': 'Zum Wortschatz hinzugefügt',
+  'games.rhyme.start': 'Training starten',
+  'games.rhyme.add': 'Hinzufügen',
+  'games.rhyme.quality.perfect': 'perfekt',
+  'games.rhyme.quality.near': 'fast',
 };
 
 const es: Catalog = {
@@ -1442,6 +1566,37 @@ const es: Catalog = {
   'games.battle.solvedIt': '¡Resuelto!',
   'share.title': 'Compartir',
   'games.quiz.name': 'Concurso clasificatorio',
+  'games.wordle.outOfTries': 'Se acabaron los intentos.',
+  'games.wordle.solved': '🎉 ¡Lo has resuelto!',
+  'games.wordle.daily': 'Diario',
+  'games.wordle.practice': 'Práctica',
+  'games.wordle.guesses': 'Intentos',
+  'games.rhyme.reject.notAWord': 'Esa palabra no está en el diccionario.',
+  'games.rhyme.reject.isPromptShort': 'Esa es la palabra propuesta.',
+  'games.rhyme.reject.alreadyUsed': 'Esa ya la has usado.',
+  'games.rhyme.reject.noRhyme': 'No rima: prueba con otra.',
+  'games.rhyme.reject.profane': 'Mantengámoslo limpio.',
+  'games.rhyme.reject.other': 'No se aceptó: prueba con otra.',
+  'games.rhyme.placeholder': 'Una palabra que rime con «{word}»…',
+  'games.playAgain': 'Jugar otra vez',
+  'common.cancel': 'Cancelar',
+  'games.rhyme.scoreLine': '{score} pts · {count} encontradas',
+  'games.rhyme.yourRhyme': 'Tu rima',
+  'common.done': 'Listo',
+  'games.wordle.statistics': 'Estadísticas',
+  'games.wordle.statsLine': '{played} jugadas · {percent}% ganadas · racha {streak}',
+  'games.wordle.solvedIn': 'Resuelto en {count}/{max}',
+  'games.wordle.stat.played': 'Jugadas',
+  'games.wordle.stat.winPct': '% victorias',
+  'games.wordle.stat.streak': 'Racha',
+  'games.wordle.stat.best': 'Mejor',
+  'games.wordle.stat.average': 'Media',
+  'dictionary.saveWord': 'Guardar en mi vocabulario',
+  'dictionary.savedWord': 'Guardado en tu vocabulario',
+  'games.rhyme.start': 'Empezar a practicar',
+  'games.rhyme.add': 'Añadir',
+  'games.rhyme.quality.perfect': 'perfecta',
+  'games.rhyme.quality.near': 'cercana',
 };
 
 const tr: Catalog = {
@@ -1725,6 +1880,37 @@ const tr: Catalog = {
   'games.battle.solvedIt': 'Bildin!',
   'share.title': 'Paylaş',
   'games.quiz.name': 'Dereceli bilgi yarışması',
+  'games.wordle.outOfTries': 'Deneme hakkın bitti.',
+  'games.wordle.solved': '🎉 Bildin!',
+  'games.wordle.daily': 'Günlük',
+  'games.wordle.practice': 'Alıştırma',
+  'games.wordle.guesses': 'Tahminler',
+  'games.rhyme.reject.notAWord': 'Bu kelime sözlükte yok.',
+  'games.rhyme.reject.isPromptShort': 'Bu zaten verilen kelimenin kendisi.',
+  'games.rhyme.reject.alreadyUsed': 'Bunu zaten kullandın.',
+  'games.rhyme.reject.noRhyme': 'Kafiyeli değil — başkasını dene.',
+  'games.rhyme.reject.profane': 'Kibar olalım.',
+  'games.rhyme.reject.other': 'Kabul edilmedi — başkasını dene.',
+  'games.rhyme.placeholder': '“{word}” ile kafiyeli bir kelime…',
+  'games.playAgain': 'Tekrar oyna',
+  'common.cancel': 'Vazgeç',
+  'games.rhyme.scoreLine': '{score} puan · {count} bulundu',
+  'games.rhyme.yourRhyme': 'Kafiyen',
+  'common.done': 'Tamam',
+  'games.wordle.statistics': 'İstatistikler',
+  'games.wordle.statsLine': '{played} oynandı · %{percent} kazanıldı · seri {streak}',
+  'games.wordle.solvedIn': '{count}/{max} denemede çözüldü',
+  'games.wordle.stat.played': 'Oynanan',
+  'games.wordle.stat.winPct': 'Kazanma %',
+  'games.wordle.stat.streak': 'Seri',
+  'games.wordle.stat.best': 'En iyi',
+  'games.wordle.stat.average': 'Ort.',
+  'dictionary.saveWord': 'Kelime dağarcığına ekle',
+  'dictionary.savedWord': 'Kelime dağarcığına eklendi',
+  'games.rhyme.start': 'Antrenmana başla',
+  'games.rhyme.add': 'Ekle',
+  'games.rhyme.quality.perfect': 'tam',
+  'games.rhyme.quality.near': 'yakın',
 };
 
 const ar: Catalog = {
@@ -2008,6 +2194,37 @@ const ar: Catalog = {
   'games.battle.solvedIt': 'لقد حللتها!',
   'share.title': 'مشاركة',
   'games.quiz.name': 'مسابقة مصنّفة',
+  'games.wordle.outOfTries': 'انتهت المحاولات.',
+  'games.wordle.solved': '🎉 لقد حللتها!',
+  'games.wordle.daily': 'اليومي',
+  'games.wordle.practice': 'تدريب',
+  'games.wordle.guesses': 'المحاولات',
+  'games.rhyme.reject.notAWord': 'هذه الكلمة ليست في القاموس.',
+  'games.rhyme.reject.isPromptShort': 'هذه هي الكلمة المطلوبة نفسها.',
+  'games.rhyme.reject.alreadyUsed': 'لقد استخدمتها من قبل.',
+  'games.rhyme.reject.noRhyme': 'لا تُقفّي — جرّب كلمة أخرى.',
+  'games.rhyme.reject.profane': 'لِنُبقِ الكلام لائقًا.',
+  'games.rhyme.reject.other': 'لم تُقبل — جرّب كلمة أخرى.',
+  'games.rhyme.placeholder': 'كلمة تُقفّي مع «{word}»…',
+  'games.playAgain': 'العب مرة أخرى',
+  'common.cancel': 'إلغاء',
+  'games.rhyme.scoreLine': '{score} نقطة · {count} كلمة',
+  'games.rhyme.yourRhyme': 'قافيتك',
+  'common.done': 'تم',
+  'games.wordle.statistics': 'الإحصائيات',
+  'games.wordle.statsLine': '{played} لعبة · {percent}٪ فوز · سلسلة {streak}',
+  'games.wordle.solvedIn': 'حُلّت في {count}/{max}',
+  'games.wordle.stat.played': 'لُعبت',
+  'games.wordle.stat.winPct': 'نسبة الفوز',
+  'games.wordle.stat.streak': 'سلسلة',
+  'games.wordle.stat.best': 'الأفضل',
+  'games.wordle.stat.average': 'المعدل',
+  'dictionary.saveWord': 'أضِف إلى مفرداتي',
+  'dictionary.savedWord': 'أُضيفت إلى مفرداتك',
+  'games.rhyme.start': 'ابدأ التدريب',
+  'games.rhyme.add': 'إضافة',
+  'games.rhyme.quality.perfect': 'تام',
+  'games.rhyme.quality.near': 'قريب',
 };
 
 const fr: Catalog = {
@@ -2291,6 +2508,37 @@ const fr: Catalog = {
   'games.battle.solvedIt': 'Trouvé !',
   'share.title': 'Partager',
   'games.quiz.name': 'Quiz classé',
+  'games.wordle.outOfTries': 'Plus d’essais.',
+  'games.wordle.solved': '🎉 Trouvé !',
+  'games.wordle.daily': 'Quotidien',
+  'games.wordle.practice': 'Entraînement',
+  'games.wordle.guesses': 'Propositions',
+  'games.rhyme.reject.notAWord': 'Ce mot n’est pas dans le dictionnaire.',
+  'games.rhyme.reject.isPromptShort': 'C’est le mot proposé lui-même.',
+  'games.rhyme.reject.alreadyUsed': 'Tu l’as déjà utilisé.',
+  'games.rhyme.reject.noRhyme': 'Ça ne rime pas — essaie autre chose.',
+  'games.rhyme.reject.profane': 'Restons corrects.',
+  'games.rhyme.reject.other': 'Refusé — essaie autre chose.',
+  'games.rhyme.placeholder': 'Un mot qui rime avec « {word} »…',
+  'games.playAgain': 'Rejouer',
+  'common.cancel': 'Annuler',
+  'games.rhyme.scoreLine': '{score} pts · {count} trouvées',
+  'games.rhyme.yourRhyme': 'Ta rime',
+  'common.done': 'Terminé',
+  'games.wordle.statistics': 'Statistiques',
+  'games.wordle.statsLine': '{played} parties · {percent}% gagnées · série {streak}',
+  'games.wordle.solvedIn': 'Trouvé en {count}/{max}',
+  'games.wordle.stat.played': 'Parties',
+  'games.wordle.stat.winPct': '% victoires',
+  'games.wordle.stat.streak': 'Série',
+  'games.wordle.stat.best': 'Record',
+  'games.wordle.stat.average': 'Moy.',
+  'dictionary.saveWord': 'Ajouter à mon vocabulaire',
+  'dictionary.savedWord': 'Ajouté à votre vocabulaire',
+  'games.rhyme.start': 'Commencer l’entraînement',
+  'games.rhyme.add': 'Ajouter',
+  'games.rhyme.quality.perfect': 'parfaite',
+  'games.rhyme.quality.near': 'proche',
 };
 
 const nl: Catalog = {
@@ -2574,6 +2822,37 @@ const nl: Catalog = {
   'games.battle.solvedIt': 'Opgelost!',
   'share.title': 'Delen',
   'games.quiz.name': 'Ranglijstquiz',
+  'games.wordle.outOfTries': 'Geen pogingen meer.',
+  'games.wordle.solved': '🎉 Opgelost!',
+  'games.wordle.daily': 'Dagelijks',
+  'games.wordle.practice': 'Oefenen',
+  'games.wordle.guesses': 'Pogingen',
+  'games.rhyme.reject.notAWord': 'Dit woord staat niet in het woordenboek.',
+  'games.rhyme.reject.isPromptShort': 'Dat is het opgegeven woord zelf.',
+  'games.rhyme.reject.alreadyUsed': 'Die heb je al gebruikt.',
+  'games.rhyme.reject.noRhyme': 'Dat rijmt niet — probeer een andere.',
+  'games.rhyme.reject.profane': 'Even netjes blijven.',
+  'games.rhyme.reject.other': 'Niet geaccepteerd — probeer een andere.',
+  'games.rhyme.placeholder': 'Een woord dat rijmt op “{word}”…',
+  'games.playAgain': 'Opnieuw spelen',
+  'common.cancel': 'Annuleren',
+  'games.rhyme.scoreLine': '{score} ptn · {count} gevonden',
+  'games.rhyme.yourRhyme': 'Jouw rijmwoord',
+  'common.done': 'Klaar',
+  'games.wordle.statistics': 'Statistieken',
+  'games.wordle.statsLine': '{played} gespeeld · {percent}% gewonnen · reeks {streak}',
+  'games.wordle.solvedIn': 'Opgelost in {count}/{max}',
+  'games.wordle.stat.played': 'Gespeeld',
+  'games.wordle.stat.winPct': 'Winst %',
+  'games.wordle.stat.streak': 'Reeks',
+  'games.wordle.stat.best': 'Beste',
+  'games.wordle.stat.average': 'Gem.',
+  'dictionary.saveWord': 'Aan woordenschat toevoegen',
+  'dictionary.savedWord': 'Toegevoegd aan je woordenschat',
+  'games.rhyme.start': 'Training starten',
+  'games.rhyme.add': 'Toevoegen',
+  'games.rhyme.quality.perfect': 'perfect',
+  'games.rhyme.quality.near': 'bijna',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -2858,6 +3137,37 @@ const ckb: Catalog = {
   'games.battle.solvedIt': 'چارەسەرت کرد!',
   'share.title': 'هاوبەشکردن',
   'games.quiz.name': 'پرسیاری ڕیزبەندی',
+  'games.wordle.outOfTries': 'هەوڵەکان تەواو بوون.',
+  'games.wordle.solved': '🎉 چارەسەرت کرد!',
+  'games.wordle.daily': 'ڕۆژانە',
+  'games.wordle.practice': 'ڕاهێنان',
+  'games.wordle.guesses': 'پێشبینییەکان',
+  'games.rhyme.reject.notAWord': 'لە فەرهەنگدا وشە نییە.',
+  'games.rhyme.reject.isPromptShort': 'ئەمە خودی وشەکەیە.',
+  'games.rhyme.reject.alreadyUsed': 'پێشتر ئەوەت بەکارهێناوە.',
+  'games.rhyme.reject.noRhyme': 'سەروا نابێت — یەکێکی تر تاقی بکەرەوە.',
+  'games.rhyme.reject.profane': 'با پاک بیهێڵینەوە.',
+  'games.rhyme.reject.other': 'وەرنەگیرا — یەکێکی تر تاقی بکەرەوە.',
+  'games.rhyme.placeholder': 'وشەیەک کە لەگەڵ «{word}» سەروا بێت…',
+  'games.playAgain': 'دووبارە یاری بکە',
+  'common.cancel': 'پاشگەزبوونەوە',
+  'games.rhyme.scoreLine': '{score} خاڵ · {count} دۆزرایەوە',
+  'games.rhyme.yourRhyme': 'سەرواکەت',
+  'common.done': 'تەواو',
+  'games.wordle.statistics': 'ئامارەکان',
+  'games.wordle.statsLine': '{played} یاری · {percent}٪ بردنەوە · زنجیرە {streak}',
+  'games.wordle.solvedIn': 'بە {count}/{max} چارەسەر کرا',
+  'games.wordle.stat.played': 'یاریکراو',
+  'games.wordle.stat.winPct': 'ڕێژەی بردنەوە',
+  'games.wordle.stat.streak': 'زنجیرە',
+  'games.wordle.stat.best': 'باشترین',
+  'games.wordle.stat.average': 'تێکڕا',
+  'dictionary.saveWord': 'زیادی بکە بۆ وشەکانم',
+  'dictionary.savedWord': 'زیادکرا بۆ وشەکانت',
+  'games.rhyme.start': 'ڕاهێنان دەست پێ بکە',
+  'games.rhyme.add': 'زیادکردن',
+  'games.rhyme.quality.perfect': 'تەواو',
+  'games.rhyme.quality.near': 'نزیک',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
