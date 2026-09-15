@@ -517,7 +517,29 @@ export type TranslationKey =
   | 'games.timeLeft'
   | 'games.submit'
   | 'games.rhyme.foundList'
-  | 'games.rhyme.online';
+  | 'games.rhyme.online'
+  | 'games.race.name'
+  | 'games.race.body'
+  | 'games.race.blurb'
+  | 'games.race.intro'
+  | 'games.race.length'
+  | 'games.race.short'
+  | 'games.race.medium'
+  | 'games.race.long'
+  | 'games.race.start'
+  | 'games.race.typeTheText'
+  | 'games.race.tapToType'
+  | 'games.race.scoring'
+  | 'games.race.giveUp'
+  | 'games.race.notScored'
+  | 'games.race.perfect'
+  | 'games.race.finished'
+  | 'games.race.refused'
+  | 'games.race.wpm'
+  | 'games.race.accuracy'
+  | 'games.race.time'
+  | 'games.race.again'
+  | 'games.race.emptyPool';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1011,6 +1033,28 @@ const en: Catalog = {
   'games.submit': 'Submit',
   'games.rhyme.foundList': 'Rhymes you found',
   'games.rhyme.online': 'Head-to-head: share an invite link and out-rhyme a friend in one shared window.',
+  'games.race.name': 'Typing Race',
+  'games.race.body': 'Type a Kurdish text as fast and as accurately as you can — speed is measured server-side.',
+  'games.race.blurb': 'Pick a length, type the text, and get your words per minute and accuracy.',
+  'games.race.intro': 'Type the Kurdish text as fast and as accurately as you can. Your speed is measured by the server from the moment the text appears.',
+  'games.race.length': 'Length',
+  'games.race.short': 'Short',
+  'games.race.medium': 'Medium',
+  'games.race.long': 'Long',
+  'games.race.start': 'Start race',
+  'games.race.typeTheText': 'Type the text',
+  'games.race.tapToType': 'Tap here to type',
+  'games.race.scoring': 'Scoring…',
+  'games.race.giveUp': 'Give up and score',
+  'games.race.notScored': 'Not scored',
+  'games.race.perfect': 'Perfect run!',
+  'games.race.finished': 'Race finished',
+  'games.race.refused': 'That is faster than anyone types, so this run does not count towards your XP or the rankings.',
+  'games.race.wpm': 'WPM',
+  'games.race.accuracy': 'Accuracy',
+  'games.race.time': 'Time',
+  'games.race.again': 'Race again',
+  'games.race.emptyPool': 'No race texts have been added yet — check back soon.',
 };
 
 const ku: Catalog = {
@@ -1503,6 +1547,28 @@ const ku: Catalog = {
   'games.submit': 'Bişîne',
   'games.rhyme.foundList': 'Serwayên ku te dîtin',
   'games.rhyme.online': 'Rû bi rû: girêdanekê parve bike û bi hevalekî re di heman paceyê de pêşbaz be.',
+  'games.race.name': 'Pêşbaziya nivîsandinê',
+  'games.race.body': 'Nivîsek kurdî bi lez û rastî binivîse — lez li ser rajekar tê pîvandin.',
+  'games.race.blurb': 'Dirêjiyekê hilbijêre, nivîsê binivîse, û peyv-di-xulekê û rastiya xwe bibîne.',
+  'games.race.intro': 'Nivîsa kurdî bi qasî ku tu dikarî bilez û rast binivîse. Leza te ji kêliya ku nivîs xuya dibe ve li ser rajekar tê pîvandin.',
+  'games.race.length': 'Dirêjahî',
+  'games.race.short': 'Kurt',
+  'games.race.medium': 'Navîn',
+  'games.race.long': 'Dirêj',
+  'games.race.start': 'Pêşbaziyê dest pê bike',
+  'games.race.typeTheText': 'Nivîsê binivîse',
+  'games.race.tapToType': 'Ji bo nivîsandinê li vir bitepîne',
+  'games.race.scoring': 'Tê hesibandin…',
+  'games.race.giveUp': 'Dev jê berde û bihesibîne',
+  'games.race.notScored': 'Nehat hesibandin',
+  'games.race.perfect': 'Bêkêmasî!',
+  'games.race.finished': 'Pêşbazî qediya',
+  'games.race.refused': 'Ev ji leza her kesî zûtir e, loma ev hewldan ne ji bo XP-ya te ne jî ji bo rêzbendiyê tê hesibandin.',
+  'games.race.wpm': 'Peyv/xulek',
+  'games.race.accuracy': 'Rastî',
+  'games.race.time': 'Wext',
+  'games.race.again': 'Dîsa pêşbaziyê bike',
+  'games.race.emptyPool': 'Hê tu nivîsên pêşbaziyê nehatine zêdekirin — di demek nêz de dîsa binihêre.',
 };
 
 const de: Catalog = {
@@ -1995,6 +2061,28 @@ const de: Catalog = {
   'games.submit': 'Absenden',
   'games.rhyme.foundList': 'Deine gefundenen Reime',
   'games.rhyme.online': 'Kopf an Kopf: Teile einen Einladungslink und reime besser als dein Freund.',
+  'games.race.name': 'Schreibwettlauf',
+  'games.race.body': 'Tippe einen kurdischen Text so schnell und genau wie möglich — die Geschwindigkeit misst der Server.',
+  'games.race.blurb': 'Wähle eine Länge, tippe den Text und sieh deine Wörter pro Minute und deine Genauigkeit.',
+  'games.race.intro': 'Tippe den kurdischen Text so schnell und so genau wie möglich. Deine Geschwindigkeit wird vom Server ab dem Moment gemessen, in dem der Text erscheint.',
+  'games.race.length': 'Länge',
+  'games.race.short': 'Kurz',
+  'games.race.medium': 'Mittel',
+  'games.race.long': 'Lang',
+  'games.race.start': 'Rennen starten',
+  'games.race.typeTheText': 'Text tippen',
+  'games.race.tapToType': 'Zum Tippen hier antippen',
+  'games.race.scoring': 'Wird ausgewertet…',
+  'games.race.giveUp': 'Aufgeben und werten',
+  'games.race.notScored': 'Nicht gewertet',
+  'games.race.perfect': 'Fehlerfrei!',
+  'games.race.finished': 'Rennen beendet',
+  'games.race.refused': 'Das ist schneller, als irgendjemand tippt, deshalb zählt dieser Lauf weder für deine XP noch für die Rangliste.',
+  'games.race.wpm': 'Wörter/Min',
+  'games.race.accuracy': 'Genauigkeit',
+  'games.race.time': 'Zeit',
+  'games.race.again': 'Noch ein Rennen',
+  'games.race.emptyPool': 'Es wurden noch keine Renntexte hinzugefügt — schau bald wieder vorbei.',
 };
 
 const es: Catalog = {
@@ -2487,6 +2575,28 @@ const es: Catalog = {
   'games.submit': 'Enviar',
   'games.rhyme.foundList': 'Rimas que encontraste',
   'games.rhyme.online': 'Cara a cara: comparte un enlace y supera a un amigo en la misma ventana.',
+  'games.race.name': 'Carrera de escritura',
+  'games.race.body': 'Escribe un texto kurdo lo más rápido y preciso que puedas; la velocidad se mide en el servidor.',
+  'games.race.blurb': 'Elige una longitud, escribe el texto y descubre tus palabras por minuto y tu precisión.',
+  'games.race.intro': 'Escribe el texto en kurdo lo más rápido y con la mayor precisión que puedas. El servidor mide tu velocidad desde el momento en que aparece el texto.',
+  'games.race.length': 'Longitud',
+  'games.race.short': 'Corto',
+  'games.race.medium': 'Medio',
+  'games.race.long': 'Largo',
+  'games.race.start': 'Empezar la carrera',
+  'games.race.typeTheText': 'Escribe el texto',
+  'games.race.tapToType': 'Toca aquí para escribir',
+  'games.race.scoring': 'Puntuando…',
+  'games.race.giveUp': 'Rendirse y puntuar',
+  'games.race.notScored': 'Sin puntuar',
+  'games.race.perfect': '¡Sin fallos!',
+  'games.race.finished': 'Carrera terminada',
+  'games.race.refused': 'Eso es más rápido de lo que escribe nadie, así que este intento no cuenta para tu XP ni para la clasificación.',
+  'games.race.wpm': 'PPM',
+  'games.race.accuracy': 'Precisión',
+  'games.race.time': 'Tiempo',
+  'games.race.again': 'Correr otra vez',
+  'games.race.emptyPool': 'Todavía no se han añadido textos de carrera: vuelve pronto.',
 };
 
 const tr: Catalog = {
@@ -2979,6 +3089,28 @@ const tr: Catalog = {
   'games.submit': 'Gönder',
   'games.rhyme.foundList': 'Bulduğun kafiyeler',
   'games.rhyme.online': 'Karşılıklı: bir davet bağlantısı paylaş ve aynı pencerede arkadaşını geç.',
+  'games.race.name': 'Yazma yarışı',
+  'games.race.body': 'Bir Kürtçe metni olabildiğince hızlı ve doğru yaz — hız sunucuda ölçülür.',
+  'games.race.blurb': 'Bir uzunluk seç, metni yaz ve dakikadaki kelime sayınla doğruluğunu gör.',
+  'games.race.intro': 'Kürtçe metni olabildiğince hızlı ve doğru yaz. Hızın, metin göründüğü andan itibaren sunucuda ölçülür.',
+  'games.race.length': 'Uzunluk',
+  'games.race.short': 'Kısa',
+  'games.race.medium': 'Orta',
+  'games.race.long': 'Uzun',
+  'games.race.start': 'Yarışı başlat',
+  'games.race.typeTheText': 'Metni yaz',
+  'games.race.tapToType': 'Yazmak için buraya dokun',
+  'games.race.scoring': 'Puanlanıyor…',
+  'games.race.giveUp': 'Bırak ve puanla',
+  'games.race.notScored': 'Puanlanmadı',
+  'games.race.perfect': 'Kusursuz!',
+  'games.race.finished': 'Yarış bitti',
+  'games.race.refused': 'Bu, kimsenin yazamayacağı kadar hızlı; bu yüzden bu deneme XP’ne de sıralamaya da sayılmaz.',
+  'games.race.wpm': 'Kelime/dk',
+  'games.race.accuracy': 'Doğruluk',
+  'games.race.time': 'Süre',
+  'games.race.again': 'Tekrar yarış',
+  'games.race.emptyPool': 'Henüz yarış metni eklenmedi — yakında tekrar bak.',
 };
 
 const ar: Catalog = {
@@ -3471,6 +3603,28 @@ const ar: Catalog = {
   'games.submit': 'إرسال',
   'games.rhyme.foundList': 'القوافي التي وجدتها',
   'games.rhyme.online': 'وجهاً لوجه: شارك رابط دعوة وتفوّق على صديقك في النافذة نفسها.',
+  'games.race.name': 'سباق الكتابة',
+  'games.race.body': 'اكتب نصاً كردياً بأسرع وأدق ما تستطيع — تُقاس السرعة على الخادم.',
+  'games.race.blurb': 'اختر طولاً، اكتب النص، واعرف عدد كلماتك في الدقيقة ودقتك.',
+  'games.race.intro': 'اكتب النص الكردي بأسرع وأدقّ ما تستطيع. تُقاس سرعتك على الخادم منذ لحظة ظهور النص.',
+  'games.race.length': 'الطول',
+  'games.race.short': 'قصير',
+  'games.race.medium': 'متوسط',
+  'games.race.long': 'طويل',
+  'games.race.start': 'ابدأ السباق',
+  'games.race.typeTheText': 'اكتب النص',
+  'games.race.tapToType': 'انقر هنا للكتابة',
+  'games.race.scoring': 'جارٍ الاحتساب…',
+  'games.race.giveUp': 'استسلم واحسب النتيجة',
+  'games.race.notScored': 'لم تُحتسب',
+  'games.race.perfect': 'أداء مثالي!',
+  'games.race.finished': 'انتهى السباق',
+  'games.race.refused': 'هذه سرعة لا يبلغها أحد في الكتابة، لذا لا تُحتسب هذه المحاولة ضمن نقاط خبرتك ولا في الترتيب.',
+  'games.race.wpm': 'كلمة/دقيقة',
+  'games.race.accuracy': 'الدقة',
+  'games.race.time': 'الوقت',
+  'games.race.again': 'سباق آخر',
+  'games.race.emptyPool': 'لم تُضَف نصوص للسباق بعد — عُد قريبًا.',
 };
 
 const fr: Catalog = {
@@ -3963,6 +4117,28 @@ const fr: Catalog = {
   'games.submit': 'Envoyer',
   'games.rhyme.foundList': 'Les rimes que tu as trouvées',
   'games.rhyme.online': 'En face à face : partagez un lien et rimez mieux qu’un ami dans la même fenêtre.',
+  'games.race.name': 'Course de frappe',
+  'games.race.body': 'Tapez un texte kurde le plus vite et le plus juste possible — la vitesse est mesurée côté serveur.',
+  'games.race.blurb': 'Choisissez une longueur, tapez le texte, et découvrez vos mots par minute et votre précision.',
+  'games.race.intro': 'Tape le texte kurde aussi vite et aussi précisément que possible. Ta vitesse est mesurée par le serveur dès que le texte apparaît.',
+  'games.race.length': 'Longueur',
+  'games.race.short': 'Court',
+  'games.race.medium': 'Moyen',
+  'games.race.long': 'Long',
+  'games.race.start': 'Lancer la course',
+  'games.race.typeTheText': 'Tape le texte',
+  'games.race.tapToType': 'Touche ici pour écrire',
+  'games.race.scoring': 'Calcul du score…',
+  'games.race.giveUp': 'Abandonner et marquer',
+  'games.race.notScored': 'Non comptabilisé',
+  'games.race.perfect': 'Sans faute !',
+  'games.race.finished': 'Course terminée',
+  'games.race.refused': 'C’est plus rapide que ce que quiconque tape, donc cet essai ne compte ni pour ton XP ni pour le classement.',
+  'games.race.wpm': 'Mots/min',
+  'games.race.accuracy': 'Précision',
+  'games.race.time': 'Temps',
+  'games.race.again': 'Refaire une course',
+  'games.race.emptyPool': 'Aucun texte de course n’a encore été ajouté — reviens bientôt.',
 };
 
 const nl: Catalog = {
@@ -4455,6 +4631,28 @@ const nl: Catalog = {
   'games.submit': 'Versturen',
   'games.rhyme.foundList': 'Rijmwoorden die je vond',
   'games.rhyme.online': 'Tegen elkaar: deel een uitnodigingslink en rijm een vriend voorbij in hetzelfde venster.',
+  'games.race.name': 'Typerace',
+  'games.race.body': 'Typ een Koerdische tekst zo snel en nauwkeurig mogelijk — de snelheid wordt op de server gemeten.',
+  'games.race.blurb': 'Kies een lengte, typ de tekst en zie je aanslagen per minuut en je nauwkeurigheid.',
+  'games.race.intro': 'Typ de Koerdische tekst zo snel en zo nauwkeurig mogelijk. Je snelheid wordt door de server gemeten vanaf het moment dat de tekst verschijnt.',
+  'games.race.length': 'Lengte',
+  'games.race.short': 'Kort',
+  'games.race.medium': 'Middel',
+  'games.race.long': 'Lang',
+  'games.race.start': 'Race starten',
+  'games.race.typeTheText': 'Typ de tekst',
+  'games.race.tapToType': 'Tik hier om te typen',
+  'games.race.scoring': 'Berekenen…',
+  'games.race.giveUp': 'Opgeven en scoren',
+  'games.race.notScored': 'Niet gescoord',
+  'games.race.perfect': 'Foutloos!',
+  'games.race.finished': 'Race afgelopen',
+  'games.race.refused': 'Dat is sneller dan iemand typt, dus deze poging telt niet mee voor je XP of de ranglijst.',
+  'games.race.wpm': 'WPM',
+  'games.race.accuracy': 'Nauwkeurigheid',
+  'games.race.time': 'Tijd',
+  'games.race.again': 'Opnieuw racen',
+  'games.race.emptyPool': 'Er zijn nog geen raceteksten toegevoegd — kom snel terug.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -4948,6 +5146,28 @@ const ckb: Catalog = {
   'games.submit': 'ناردن',
   'games.rhyme.foundList': 'ئەو سەروایانەی دۆزیتەوە',
   'games.rhyme.online': 'ڕوو بە ڕوو: بەستەرێک هاوبەش بکە و لە هەمان پەنجەرەدا لە هاوڕێیەکت پێشبکەویت.',
+  'games.race.name': 'پێشبڕکێی نووسین',
+  'games.race.body': 'دەقێکی کوردی بە خێراترین و وردترین شێوە بنووسە — خێرایی لەسەر ڕاژە دەپێورێت.',
+  'games.race.blurb': 'درێژییەک هەڵبژێرە، دەقەکە بنووسە، و وشە لە خولەکێک و وردییەکەت ببینە.',
+  'games.race.intro': 'دەقە کوردییەکە بە خێراترین و وردترین شێوە بنووسە. خێراییەکەت لەو ساتەوە کە دەقەکە دەردەکەوێت لەسەر ڕاژە دەپێورێت.',
+  'games.race.length': 'درێژی',
+  'games.race.short': 'کورت',
+  'games.race.medium': 'ناوەند',
+  'games.race.long': 'درێژ',
+  'games.race.start': 'پێشبڕکێ دەست پێبکە',
+  'games.race.typeTheText': 'دەقەکە بنووسە',
+  'games.race.tapToType': 'بۆ نووسین لێرە دەست لێبدە',
+  'games.race.scoring': 'هەڵدەسەنگێنرێت…',
+  'games.race.giveUp': 'واز بهێنە و هەڵبسەنگێنە',
+  'games.race.notScored': 'هەڵنەسەنگێنرا',
+  'games.race.perfect': 'بێ کەموکوڕی!',
+  'games.race.finished': 'پێشبڕکێ تەواو بوو',
+  'games.race.refused': 'ئەمە خێراترە لەوەی هەرکەسێک بنووسێت، بۆیە ئەم هەوڵە بۆ XP یان ڕیزبەندی ژمار ناکرێت.',
+  'games.race.wpm': 'وشە/خولەک',
+  'games.race.accuracy': 'وردی',
+  'games.race.time': 'کات',
+  'games.race.again': 'دووبارە پێشبڕکێ بکە',
+  'games.race.emptyPool': 'هێشتا هیچ دەقێکی پێشبڕکێ زیاد نەکراوە — بەم زووانە بگەڕێوە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
