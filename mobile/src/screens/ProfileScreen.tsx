@@ -61,7 +61,7 @@ export function ProfileScreen() {
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
     setUploading(true);
-    const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' });
+    const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t);
     setUploading(false);
     if (res.ok) setPhotoUrl(res.url);
     else Alert.alert('Couldn’t update photo', res.error);

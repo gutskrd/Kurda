@@ -40,7 +40,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
     // upload the optional narration first so the post references a confirmed key
     let audioMediaId: string | undefined;
     if (voiceUri) {
-      const up = await uploadVoiceNote(client, { uri: voiceUri });
+      const up = await uploadVoiceNote(client, { uri: voiceUri }, t);
       if (!up.ok) {
         setSaving(false);
         Alert.alert(t('library.narrationFailed'), up.error);

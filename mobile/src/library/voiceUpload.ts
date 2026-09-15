@@ -1,3 +1,4 @@
+import type { Translate } from '../api/errors';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import { describeUploadFailure } from '../profile/photoUploadResult';
@@ -18,10 +19,11 @@ export type VoiceUploadResult = { ok: true; audioMediaId: string; url: string } 
 export async function uploadVoiceNote(
   client: ApiClient,
   audio: { uri: string; contentType?: string },
+  t: Translate,
 ): Promise<VoiceUploadResult> {
   try {
     const token = await client.getAccessToken();
-    if (!token) return { ok: false, error: 'Your session expired. Please sign in again.' };
+    if (!token) return { ok: false, error: t('upload.sessionExpired') };
 
     const res = await FileSystem.uploadAsync(`${client.baseUrl}/media/voice`, audio.uri, {
       httpMethod: 'POST',
@@ -35,10 +37,10 @@ export async function uploadVoiceNote(
       } catch {
         // fall through
       }
-      return { ok: false, error: 'The upload finished but no audio was returned. Please try again.' };
+      return { ok: false, error: t('upload.noAudioReturned') };
     }
-    return { ok: false, error: describeUploadFailure(res.status, res.body) };
+    return { ok: false, error: describeUploadFailure(res.status, res.body, t) };
   } catch (e) {
-    return { ok: false, error: (e as Error)?.message ?? 'Could not upload the recording.' };
+    return { ok: false, error: (e as Error)?.message ?? t('upload.audioFailed') };
   }
 }

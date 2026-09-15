@@ -372,7 +372,26 @@ export type TranslationKey =
   | 'error.notActivated'
   | 'moderation.reportThanks'
   | 'moderation.reviewNote'
-  | 'moderation.reportFailed';
+  | 'moderation.reportFailed'
+  | 'upload.sessionExpired'
+  | 'upload.noPhotoReturned'
+  | 'upload.noAudioReturned'
+  | 'upload.noImageReturned'
+  | 'upload.photoFailed'
+  | 'upload.audioFailed'
+  | 'upload.imageFailed'
+  | 'upload.failedWithStatus'
+  | 'upload.notSupportedImage'
+  | 'upload.unreadableImage'
+  | 'upload.tooDetailed'
+  | 'upload.tooLarge'
+  | 'upload.photoRejected'
+  | 'upload.temporarilyUnavailable'
+  | 'upload.notSaved'
+  | 'upload.tooOften'
+  | 'recorder.tooShort'
+  | 'recorder.silent'
+  | 'lesson.speak.uploadFailed';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -721,6 +740,25 @@ const en: Catalog = {
   'moderation.reportThanks': 'Thank you. A moderator will look at this.',
   'moderation.reviewNote': 'Our moderators will review it.',
   'moderation.reportFailed': 'Couldn’t report',
+  'upload.sessionExpired': 'Your session expired. Please sign in again.',
+  'upload.noPhotoReturned': 'The upload finished but no photo was returned. Please try again.',
+  'upload.noAudioReturned': 'The upload finished but no audio was returned. Please try again.',
+  'upload.noImageReturned': 'The upload finished but no image was returned. Please try again.',
+  'upload.photoFailed': 'Could not upload the photo.',
+  'upload.audioFailed': 'Could not upload the recording.',
+  'upload.imageFailed': 'Could not upload the image.',
+  'upload.failedWithStatus': 'Upload failed ({status}). Please try again.',
+  'upload.notSupportedImage': 'That file isn’t a supported image. Please pick a JPEG, PNG, or WebP.',
+  'upload.unreadableImage': 'That image couldn’t be read. Please try a different photo.',
+  'upload.tooDetailed': 'That photo is too detailed to fit the size limit. Try a simpler or smaller image.',
+  'upload.tooLarge': 'That photo is too large. Please pick a smaller one.',
+  'upload.photoRejected': 'That image can’t be used as a profile photo.',
+  'upload.temporarilyUnavailable': 'Photo uploads are temporarily unavailable. Please try again later.',
+  'upload.notSaved': 'The photo couldn’t be saved. Please try again.',
+  'upload.tooOften': 'You’re changing your photo too often. Please wait a moment and try again.',
+  'recorder.tooShort': 'Too short — hold to record a little longer.',
+  'recorder.silent': 'We couldn’t hear anything — try again.',
+  'lesson.speak.uploadFailed': 'Upload failed — please try again.',
 };
 
 const ku: Catalog = {
@@ -1068,6 +1106,25 @@ const ku: Catalog = {
   'moderation.reportThanks': 'Spas. Moderatorek dê lê binêre.',
   'moderation.reviewNote': 'Çavdêrên me dê lê binihêrin.',
   'moderation.reportFailed': 'Gilî nehate şandin',
+  'upload.sessionExpired': 'Danişîna te qediya. Ji kerema xwe dîsa têkeve.',
+  'upload.noPhotoReturned': 'Barkirin qediya lê tu wêne venegeriya. Ji kerema xwe dîsa biceribîne.',
+  'upload.noAudioReturned': 'Barkirin qediya lê tu deng venegeriya. Ji kerema xwe dîsa biceribîne.',
+  'upload.noImageReturned': 'Barkirin qediya lê tu wêne venegeriya. Ji kerema xwe dîsa biceribîne.',
+  'upload.photoFailed': 'Wêne nehate barkirin.',
+  'upload.audioFailed': 'Tomar nehate barkirin.',
+  'upload.imageFailed': 'Wêne nehate barkirin.',
+  'upload.failedWithStatus': 'Barkirin bi ser neket ({status}). Ji kerema xwe dîsa biceribîne.',
+  'upload.notSupportedImage': 'Ew pel ne wêneyekî desteksekirî ye. Ji kerema xwe JPEG, PNG an WebP hilbijêre.',
+  'upload.unreadableImage': 'Ew wêne nehate xwendin. Ji kerema xwe wêneyekî din biceribîne.',
+  'upload.tooDetailed': 'Ew wêne pir hûrgilî ye ji bo sînorê mezinahiyê. Wêneyekî sadetir an biçûktir biceribîne.',
+  'upload.tooLarge': 'Ew wêne pir mezin e. Ji kerema xwe yekî biçûktir hilbijêre.',
+  'upload.photoRejected': 'Ew wêne wekî wêneyê profîlê nayê bikaranîn.',
+  'upload.temporarilyUnavailable': 'Barkirina wêneyan demkî ne gengaz e. Ji kerema xwe paşê dîsa biceribîne.',
+  'upload.notSaved': 'Wêne nehate tomarkirin. Ji kerema xwe dîsa biceribîne.',
+  'upload.tooOften': 'Tu pir caran wêneyê xwe diguherînî. Ji kerema xwe hinekî bisekine û dîsa biceribîne.',
+  'recorder.tooShort': 'Pir kurt e — hinekî dirêjtir bigire û tomar bike.',
+  'recorder.silent': 'Me tiştek nebihîst — dîsa biceribîne.',
+  'lesson.speak.uploadFailed': 'Barkirin bi ser neket — ji kerema xwe dîsa biceribîne.',
 };
 
 const de: Catalog = {
@@ -1415,6 +1472,25 @@ const de: Catalog = {
   'moderation.reportThanks': 'Danke. Jemand aus der Moderation sieht sich das an.',
   'moderation.reviewNote': 'Unsere Moderatoren sehen es sich an.',
   'moderation.reportFailed': 'Melden fehlgeschlagen',
+  'upload.sessionExpired': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
+  'upload.noPhotoReturned': 'Der Upload ist fertig, aber es kam kein Foto zurück. Bitte versuche es erneut.',
+  'upload.noAudioReturned': 'Der Upload ist fertig, aber es kam kein Ton zurück. Bitte versuche es erneut.',
+  'upload.noImageReturned': 'Der Upload ist fertig, aber es kam kein Bild zurück. Bitte versuche es erneut.',
+  'upload.photoFailed': 'Das Foto konnte nicht hochgeladen werden.',
+  'upload.audioFailed': 'Die Aufnahme konnte nicht hochgeladen werden.',
+  'upload.imageFailed': 'Das Bild konnte nicht hochgeladen werden.',
+  'upload.failedWithStatus': 'Upload fehlgeschlagen ({status}). Bitte versuche es erneut.',
+  'upload.notSupportedImage': 'Diese Datei ist kein unterstütztes Bild. Bitte wähle JPEG, PNG oder WebP.',
+  'upload.unreadableImage': 'Dieses Bild konnte nicht gelesen werden. Bitte versuche ein anderes Foto.',
+  'upload.tooDetailed': 'Dieses Foto ist zu detailreich für das Größenlimit. Versuche ein einfacheres oder kleineres Bild.',
+  'upload.tooLarge': 'Dieses Foto ist zu groß. Bitte wähle ein kleineres.',
+  'upload.photoRejected': 'Dieses Bild kann nicht als Profilfoto verwendet werden.',
+  'upload.temporarilyUnavailable': 'Foto-Uploads sind vorübergehend nicht möglich. Bitte versuche es später erneut.',
+  'upload.notSaved': 'Das Foto konnte nicht gespeichert werden. Bitte versuche es erneut.',
+  'upload.tooOften': 'Du änderst dein Foto zu oft. Bitte warte einen Moment und versuche es erneut.',
+  'recorder.tooShort': 'Zu kurz — halte etwas länger gedrückt.',
+  'recorder.silent': 'Wir haben nichts gehört — versuche es erneut.',
+  'lesson.speak.uploadFailed': 'Upload fehlgeschlagen — bitte versuche es erneut.',
 };
 
 const es: Catalog = {
@@ -1762,6 +1838,25 @@ const es: Catalog = {
   'moderation.reportThanks': 'Gracias. Una persona moderadora lo revisará.',
   'moderation.reviewNote': 'Nuestros moderadores lo revisarán.',
   'moderation.reportFailed': 'No se pudo denunciar',
+  'upload.sessionExpired': 'Tu sesión ha caducado. Inicia sesión de nuevo.',
+  'upload.noPhotoReturned': 'La subida terminó pero no se devolvió ninguna foto. Inténtalo de nuevo.',
+  'upload.noAudioReturned': 'La subida terminó pero no se devolvió ningún audio. Inténtalo de nuevo.',
+  'upload.noImageReturned': 'La subida terminó pero no se devolvió ninguna imagen. Inténtalo de nuevo.',
+  'upload.photoFailed': 'No se pudo subir la foto.',
+  'upload.audioFailed': 'No se pudo subir la grabación.',
+  'upload.imageFailed': 'No se pudo subir la imagen.',
+  'upload.failedWithStatus': 'La subida falló ({status}). Inténtalo de nuevo.',
+  'upload.notSupportedImage': 'Ese archivo no es una imagen compatible. Elige un JPEG, PNG o WebP.',
+  'upload.unreadableImage': 'No se pudo leer esa imagen. Prueba con otra foto.',
+  'upload.tooDetailed': 'Esa foto tiene demasiado detalle para el límite de tamaño. Prueba una imagen más simple o más pequeña.',
+  'upload.tooLarge': 'Esa foto es demasiado grande. Elige una más pequeña.',
+  'upload.photoRejected': 'Esa imagen no puede usarse como foto de perfil.',
+  'upload.temporarilyUnavailable': 'La subida de fotos no está disponible temporalmente. Inténtalo más tarde.',
+  'upload.notSaved': 'No se pudo guardar la foto. Inténtalo de nuevo.',
+  'upload.tooOften': 'Estás cambiando tu foto demasiado a menudo. Espera un momento e inténtalo de nuevo.',
+  'recorder.tooShort': 'Demasiado corto: mantén pulsado un poco más.',
+  'recorder.silent': 'No hemos oído nada: inténtalo de nuevo.',
+  'lesson.speak.uploadFailed': 'La subida falló: inténtalo de nuevo.',
 };
 
 const tr: Catalog = {
@@ -2109,6 +2204,25 @@ const tr: Catalog = {
   'moderation.reportThanks': 'Teşekkürler. Bir moderatör buna bakacak.',
   'moderation.reviewNote': 'Moderatörlerimiz inceleyecek.',
   'moderation.reportFailed': 'Bildirilemedi',
+  'upload.sessionExpired': 'Oturumun sona erdi. Lütfen tekrar giriş yap.',
+  'upload.noPhotoReturned': 'Yükleme bitti ama hiçbir fotoğraf dönmedi. Lütfen tekrar deneyin.',
+  'upload.noAudioReturned': 'Yükleme bitti ama hiçbir ses dönmedi. Lütfen tekrar deneyin.',
+  'upload.noImageReturned': 'Yükleme bitti ama hiçbir görsel dönmedi. Lütfen tekrar deneyin.',
+  'upload.photoFailed': 'Fotoğraf yüklenemedi.',
+  'upload.audioFailed': 'Kayıt yüklenemedi.',
+  'upload.imageFailed': 'Görsel yüklenemedi.',
+  'upload.failedWithStatus': 'Yükleme başarısız oldu ({status}). Lütfen tekrar deneyin.',
+  'upload.notSupportedImage': 'Bu dosya desteklenen bir görsel değil. Lütfen JPEG, PNG veya WebP seç.',
+  'upload.unreadableImage': 'Bu görsel okunamadı. Lütfen başka bir fotoğraf dene.',
+  'upload.tooDetailed': 'Bu fotoğraf boyut sınırı için fazla detaylı. Daha sade veya daha küçük bir görsel dene.',
+  'upload.tooLarge': 'Bu fotoğraf çok büyük. Lütfen daha küçük birini seç.',
+  'upload.photoRejected': 'Bu görsel profil fotoğrafı olarak kullanılamaz.',
+  'upload.temporarilyUnavailable': 'Fotoğraf yükleme geçici olarak kullanılamıyor. Lütfen daha sonra tekrar dene.',
+  'upload.notSaved': 'Fotoğraf kaydedilemedi. Lütfen tekrar deneyin.',
+  'upload.tooOften': 'Fotoğrafını çok sık değiştiriyorsun. Lütfen biraz bekleyip tekrar dene.',
+  'recorder.tooShort': 'Çok kısa — biraz daha uzun basılı tut.',
+  'recorder.silent': 'Hiçbir şey duyamadık — tekrar dene.',
+  'lesson.speak.uploadFailed': 'Yükleme başarısız oldu — lütfen tekrar dene.',
 };
 
 const ar: Catalog = {
@@ -2456,6 +2570,25 @@ const ar: Catalog = {
   'moderation.reportThanks': 'شكرًا لك. سيطّلع أحد المشرفين على ذلك.',
   'moderation.reviewNote': 'سيراجعه المشرفون لدينا.',
   'moderation.reportFailed': 'تعذّر الإبلاغ',
+  'upload.sessionExpired': 'انتهت جلستك. يُرجى تسجيل الدخول مرة أخرى.',
+  'upload.noPhotoReturned': 'اكتمل الرفع لكن لم تُرجَع أي صورة. يُرجى المحاولة مرة أخرى.',
+  'upload.noAudioReturned': 'اكتمل الرفع لكن لم يُرجَع أي صوت. يُرجى المحاولة مرة أخرى.',
+  'upload.noImageReturned': 'اكتمل الرفع لكن لم تُرجَع أي صورة. يُرجى المحاولة مرة أخرى.',
+  'upload.photoFailed': 'تعذّر رفع الصورة.',
+  'upload.audioFailed': 'تعذّر رفع التسجيل.',
+  'upload.imageFailed': 'تعذّر رفع الصورة.',
+  'upload.failedWithStatus': 'فشل الرفع ({status}). يُرجى المحاولة مرة أخرى.',
+  'upload.notSupportedImage': 'هذا الملف ليس صورة مدعومة. يُرجى اختيار JPEG أو PNG أو WebP.',
+  'upload.unreadableImage': 'تعذّرت قراءة هذه الصورة. جرّب صورة أخرى.',
+  'upload.tooDetailed': 'هذه الصورة مفصّلة أكثر من حد الحجم. جرّب صورة أبسط أو أصغر.',
+  'upload.tooLarge': 'هذه الصورة كبيرة جدًا. يُرجى اختيار صورة أصغر.',
+  'upload.photoRejected': 'لا يمكن استخدام هذه الصورة كصورة شخصية.',
+  'upload.temporarilyUnavailable': 'رفع الصور غير متاح مؤقتًا. يُرجى المحاولة لاحقًا.',
+  'upload.notSaved': 'تعذّر حفظ الصورة. يُرجى المحاولة مرة أخرى.',
+  'upload.tooOften': 'أنت تغيّر صورتك كثيرًا. يُرجى الانتظار قليلًا ثم المحاولة مرة أخرى.',
+  'recorder.tooShort': 'قصير جدًا — استمر بالضغط قليلًا أطول.',
+  'recorder.silent': 'لم نسمع شيئًا — حاول مرة أخرى.',
+  'lesson.speak.uploadFailed': 'فشل الرفع — يُرجى المحاولة مرة أخرى.',
 };
 
 const fr: Catalog = {
@@ -2803,6 +2936,25 @@ const fr: Catalog = {
   'moderation.reportThanks': 'Merci. Un modérateur va examiner cela.',
   'moderation.reviewNote': 'Nos modérateurs l’examineront.',
   'moderation.reportFailed': 'Impossible de signaler',
+  'upload.sessionExpired': 'Ta session a expiré. Reconnecte-toi.',
+  'upload.noPhotoReturned': 'L’envoi est terminé mais aucune photo n’est revenue. Réessaie.',
+  'upload.noAudioReturned': 'L’envoi est terminé mais aucun audio n’est revenu. Réessaie.',
+  'upload.noImageReturned': 'L’envoi est terminé mais aucune image n’est revenue. Réessaie.',
+  'upload.photoFailed': 'La photo n’a pas pu être envoyée.',
+  'upload.audioFailed': 'L’enregistrement n’a pas pu être envoyé.',
+  'upload.imageFailed': 'L’image n’a pas pu être envoyée.',
+  'upload.failedWithStatus': 'Échec de l’envoi ({status}). Réessaie.',
+  'upload.notSupportedImage': 'Ce fichier n’est pas une image prise en charge. Choisis un JPEG, PNG ou WebP.',
+  'upload.unreadableImage': 'Cette image n’a pas pu être lue. Essaie une autre photo.',
+  'upload.tooDetailed': 'Cette photo est trop détaillée pour la limite de taille. Essaie une image plus simple ou plus petite.',
+  'upload.tooLarge': 'Cette photo est trop grande. Choisis-en une plus petite.',
+  'upload.photoRejected': 'Cette image ne peut pas servir de photo de profil.',
+  'upload.temporarilyUnavailable': 'L’envoi de photos est momentanément indisponible. Réessaie plus tard.',
+  'upload.notSaved': 'La photo n’a pas pu être enregistrée. Réessaie.',
+  'upload.tooOften': 'Tu changes ta photo trop souvent. Attends un instant et réessaie.',
+  'recorder.tooShort': 'Trop court — maintiens un peu plus longtemps.',
+  'recorder.silent': 'Nous n’avons rien entendu — réessaie.',
+  'lesson.speak.uploadFailed': 'Échec de l’envoi — réessaie.',
 };
 
 const nl: Catalog = {
@@ -3150,6 +3302,25 @@ const nl: Catalog = {
   'moderation.reportThanks': 'Bedankt. Een moderator kijkt hiernaar.',
   'moderation.reviewNote': 'Onze moderators bekijken het.',
   'moderation.reportFailed': 'Melden is mislukt',
+  'upload.sessionExpired': 'Je sessie is verlopen. Log opnieuw in.',
+  'upload.noPhotoReturned': 'Het uploaden is klaar maar er kwam geen foto terug. Probeer het opnieuw.',
+  'upload.noAudioReturned': 'Het uploaden is klaar maar er kwam geen audio terug. Probeer het opnieuw.',
+  'upload.noImageReturned': 'Het uploaden is klaar maar er kwam geen afbeelding terug. Probeer het opnieuw.',
+  'upload.photoFailed': 'De foto kon niet worden geüpload.',
+  'upload.audioFailed': 'De opname kon niet worden geüpload.',
+  'upload.imageFailed': 'De afbeelding kon niet worden geüpload.',
+  'upload.failedWithStatus': 'Uploaden is mislukt ({status}). Probeer het opnieuw.',
+  'upload.notSupportedImage': 'Dat bestand is geen ondersteunde afbeelding. Kies een JPEG, PNG of WebP.',
+  'upload.unreadableImage': 'Die afbeelding kon niet worden gelezen. Probeer een andere foto.',
+  'upload.tooDetailed': 'Die foto is te gedetailleerd voor de groottelimiet. Probeer een eenvoudiger of kleinere afbeelding.',
+  'upload.tooLarge': 'Die foto is te groot. Kies een kleinere.',
+  'upload.photoRejected': 'Die afbeelding kan niet als profielfoto worden gebruikt.',
+  'upload.temporarilyUnavailable': 'Foto’s uploaden is tijdelijk niet beschikbaar. Probeer het later opnieuw.',
+  'upload.notSaved': 'De foto kon niet worden opgeslagen. Probeer het opnieuw.',
+  'upload.tooOften': 'Je verandert je foto te vaak. Wacht even en probeer het opnieuw.',
+  'recorder.tooShort': 'Te kort — houd iets langer ingedrukt.',
+  'recorder.silent': 'We hoorden niets — probeer het opnieuw.',
+  'lesson.speak.uploadFailed': 'Uploaden is mislukt — probeer het opnieuw.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -3498,6 +3669,25 @@ const ckb: Catalog = {
   'moderation.reportThanks': 'سوپاس. چاودێرێک سەیری دەکات.',
   'moderation.reviewNote': 'چاودێرەکانمان پێداچوونەوەی بۆ دەکەن.',
   'moderation.reportFailed': 'نەتوانرا ڕاپۆرت بکرێت',
+  'upload.sessionExpired': 'دانیشتنەکەت کۆتایی هات. تکایە دووبارە بچۆ ژوورەوە.',
+  'upload.noPhotoReturned': 'بارکردنەکە تەواو بوو بەڵام هیچ وێنەیەک نەگەڕایەوە. تکایە دووبارە هەوڵ بدەوە.',
+  'upload.noAudioReturned': 'بارکردنەکە تەواو بوو بەڵام هیچ دەنگێک نەگەڕایەوە. تکایە دووبارە هەوڵ بدەوە.',
+  'upload.noImageReturned': 'بارکردنەکە تەواو بوو بەڵام هیچ وێنەیەک نەگەڕایەوە. تکایە دووبارە هەوڵ بدەوە.',
+  'upload.photoFailed': 'نەتوانرا وێنەکە بار بکرێت.',
+  'upload.audioFailed': 'نەتوانرا تۆمارەکە بار بکرێت.',
+  'upload.imageFailed': 'نەتوانرا وێنەکە بار بکرێت.',
+  'upload.failedWithStatus': 'بارکردن سەرکەوتوو نەبوو ({status}). تکایە دووبارە هەوڵ بدەوە.',
+  'upload.notSupportedImage': 'ئەم فایلە وێنەیەکی پشتگیریکراو نییە. تکایە JPEG یان PNG یان WebP هەڵبژێرە.',
+  'upload.unreadableImage': 'نەتوانرا ئەم وێنەیە بخوێنرێتەوە. تکایە وێنەیەکی تر تاقی بکەرەوە.',
+  'upload.tooDetailed': 'ئەم وێنەیە زۆر وردەکارییە بۆ سنووری قەبارە. وێنەیەکی سادەتر یان بچووکتر تاقی بکەرەوە.',
+  'upload.tooLarge': 'ئەم وێنەیە زۆر گەورەیە. تکایە یەکێکی بچووکتر هەڵبژێرە.',
+  'upload.photoRejected': 'ناتوانرێت ئەم وێنەیە وەک وێنەی پرۆفایل بەکاربهێنرێت.',
+  'upload.temporarilyUnavailable': 'بارکردنی وێنە بۆ ماوەیەک بەردەست نییە. تکایە دواتر هەوڵ بدەوە.',
+  'upload.notSaved': 'نەتوانرا وێنەکە پاشەکەوت بکرێت. تکایە دووبارە هەوڵ بدەوە.',
+  'upload.tooOften': 'زۆر جار وێنەکەت دەگۆڕیت. تکایە کەمێک چاوەڕێ بکە و دووبارە هەوڵ بدەوە.',
+  'recorder.tooShort': 'زۆر کورتە — کەمێک زیاتر دایبگرە.',
+  'recorder.silent': 'هیچمان نەبیست — دووبارە هەوڵ بدەوە.',
+  'lesson.speak.uploadFailed': 'بارکردن سەرکەوتوو نەبوو — تکایە دووبارە هەوڵ بدەوە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

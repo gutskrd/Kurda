@@ -4,6 +4,8 @@
  * `photoUpload.ts`, which can't be imported under vitest (it drags in react-native).
  */
 
+import type { Translate } from '../api/errors';
+
 export type UploadResult = { ok: true; url: string } | { ok: false; error: string };
 
 /** Content-types the API's body parser routes to the image handler. Anything else
@@ -21,7 +23,7 @@ export function normalizeContentType(declared: string | undefined): string {
  * server's error `code` from `setProfilePhoto`; falls back to the server message,
  * then a status-based default. Never leaks the raw code or internal cost details.
  */
-export function describeUploadFailure(status: number, body: string): string {
+export function describeUploadFailure(status: number, body: string, t: Translate): string {
   let code: string | undefined;
   let message: string | undefined;
   try {
@@ -34,27 +36,29 @@ export function describeUploadFailure(status: number, body: string): string {
 
   switch (code) {
     case 'INVALID_IMAGE':
-      return "That file isn't a supported image. Please pick a JPEG, PNG, or WebP.";
+      return t('upload.notSupportedImage');
     case 'MALFORMED_IMAGE':
-      return "That image couldn't be read. Please try a different photo.";
+      return t('upload.unreadableImage');
     case 'IMAGE_TOO_LARGE':
-      return 'That photo is too detailed to fit the size limit. Try a simpler or smaller image.';
+      return t('upload.tooDetailed');
     case 'UPLOAD_TOO_LARGE':
-      return 'That photo is too large. Please pick a smaller one.';
+      return t('upload.tooLarge');
     case 'PHOTO_REJECTED':
-      return "That image can't be used as a profile photo.";
+      return t('upload.photoRejected');
     case 'MEDIA_STORAGE_LIMIT_REACHED':
     case 'MEDIA_OP_LIMIT_REACHED':
     case 'MEDIA_UNAVAILABLE':
-      return 'Photo uploads are temporarily unavailable. Please try again later.';
+      return t('upload.temporarilyUnavailable');
     case 'MEDIA_UPLOAD_FAILED':
-      return "The photo couldn't be saved. Please try again.";
+      return t('upload.notSaved');
     default:
       break;
   }
 
-  if (status === 429) return "You're changing your photo too often. Please wait a moment and try again.";
-  if (status === 401) return 'Your session expired. Please sign in again.';
+  if (status === 429) return t('upload.tooOften');
+  if (status === 401) return t('upload.sessionExpired');
+  // the server's own message, which is more specific than anything generic —
+  // and still English, until the API is given a locale of its own
   if (message) return message;
-  return `Upload failed (${status}). Please try again.`;
+  return t('upload.failedWithStatus', { status });
 }
