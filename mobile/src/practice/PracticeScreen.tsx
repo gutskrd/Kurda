@@ -5,7 +5,7 @@ import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import type { ApiError } from '../api/types';
-import { describeError } from '../api/errors';
+import { describeError, isRetryable } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -49,7 +49,8 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
   }, [client, reloadKey]);
 
   if (error) {
-    const { message, retryable } = describeError(error);
+    const message = describeError(error, t);
+    const retryable = isRetryable(error);
     return (
       <Centered>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.startFailed')}</Text>

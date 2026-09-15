@@ -83,7 +83,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
     const res = await createBattle(client, difficulty);
     setBusy(false);
     if (res.ok) onEnter(res.data.id);
-    else setError(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error).message);
+    else setError(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error, t));
   };
 
   /* A pasted invite link or the bare id inside it — people send both. */
@@ -157,7 +157,7 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
       // a later poll failing is a blip; the first one failing is the whole screen
-      setError(describeError(res.error).message);
+      setError(describeError(res.error, t));
     }
   }, [client, id]);
 
@@ -215,7 +215,7 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
     const res = await work();
     setBusy(false);
     if (res.ok) setBattle(res.data);
-    else setNotice(describeError(res.error).message);
+    else setNotice(describeError(res.error, t));
   };
 
   const share = (): void => {
@@ -379,7 +379,7 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
 function guessMessage(error: ApiError, t: (key: TranslationKey) => string): string {
   if (error.code === 'WRONG_LENGTH') return t('games.wordle.wrongLength');
   if (error.code === 'NOT_A_WORD') return t('games.wordle.notAWord');
-  return describeError(error).message;
+  return describeError(error, t);
 }
 
 /** The screen's frame: back, title, and a scroller that clears the notch. */

@@ -363,7 +363,16 @@ export type TranslationKey =
   | 'common.loading'
   | 'friends.accept'
   | 'friends.decline'
-  | 'challenge.title';
+  | 'challenge.title'
+  | 'error.tooManyRetryIn'
+  | 'error.tooMany'
+  | 'error.sessionExpired'
+  | 'error.server'
+  | 'error.generic'
+  | 'error.notActivated'
+  | 'moderation.reportThanks'
+  | 'moderation.reviewNote'
+  | 'moderation.reportFailed';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -703,6 +712,15 @@ const en: Catalog = {
   'friends.accept': 'Accept',
   'friends.decline': 'Decline',
   'challenge.title': 'Challenge! ⚔️',
+  'error.tooManyRetryIn': 'Too many attempts. Try again in {seconds}s.',
+  'error.tooMany': 'Too many attempts. Please wait a moment and try again.',
+  'error.sessionExpired': 'Your session has expired. Please sign in again.',
+  'error.server': 'Something went wrong on our end. Please try again shortly.',
+  'error.generic': 'Something went wrong.',
+  'error.notActivated': 'Your account isn’t activated yet. Confirm your email address to continue.',
+  'moderation.reportThanks': 'Thank you. A moderator will look at this.',
+  'moderation.reviewNote': 'Our moderators will review it.',
+  'moderation.reportFailed': 'Couldn’t report',
 };
 
 const ku: Catalog = {
@@ -1041,6 +1059,15 @@ const ku: Catalog = {
   'friends.accept': 'Qebûl bike',
   'friends.decline': 'Red bike',
   'challenge.title': 'Hevrikî! ⚔️',
+  'error.tooManyRetryIn': 'Pir hewldan. Piştî {seconds} çirkeyan dîsa biceribîne.',
+  'error.tooMany': 'Pir hewldan. Ji kerema xwe hinekî bisekine û dîsa biceribîne.',
+  'error.sessionExpired': 'Danişîna te qediya. Ji kerema xwe dîsa têkeve.',
+  'error.server': 'Li aliyê me tiştek xelet çû. Ji kerema xwe piştî demekê dîsa biceribîne.',
+  'error.generic': 'Tiştek xelet çû.',
+  'error.notActivated': 'Hesabê te hê nehatiye çalakkirin. Ji bo berdewamiyê e-nameya xwe piştrast bike.',
+  'moderation.reportThanks': 'Spas. Moderatorek dê lê binêre.',
+  'moderation.reviewNote': 'Çavdêrên me dê lê binihêrin.',
+  'moderation.reportFailed': 'Gilî nehate şandin',
 };
 
 const de: Catalog = {
@@ -1379,6 +1406,15 @@ const de: Catalog = {
   'friends.accept': 'Annehmen',
   'friends.decline': 'Ablehnen',
   'challenge.title': 'Herausforderung! ⚔️',
+  'error.tooManyRetryIn': 'Zu viele Versuche. Versuch es in {seconds} s erneut.',
+  'error.tooMany': 'Zu viele Versuche. Warte einen Moment und versuch es erneut.',
+  'error.sessionExpired': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
+  'error.server': 'Auf unserer Seite ist etwas schiefgegangen. Bitte versuch es gleich noch einmal.',
+  'error.generic': 'Etwas ist schiefgegangen.',
+  'error.notActivated': 'Dein Konto ist noch nicht aktiviert. Bestätige deine E-Mail-Adresse, um fortzufahren.',
+  'moderation.reportThanks': 'Danke. Jemand aus der Moderation sieht sich das an.',
+  'moderation.reviewNote': 'Unsere Moderatoren sehen es sich an.',
+  'moderation.reportFailed': 'Melden fehlgeschlagen',
 };
 
 const es: Catalog = {
@@ -1717,6 +1753,15 @@ const es: Catalog = {
   'friends.accept': 'Aceptar',
   'friends.decline': 'Rechazar',
   'challenge.title': '¡Un reto! ⚔️',
+  'error.tooManyRetryIn': 'Demasiados intentos. Vuelve a intentarlo en {seconds} s.',
+  'error.tooMany': 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+  'error.sessionExpired': 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
+  'error.server': 'Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento.',
+  'error.generic': 'Algo ha salido mal.',
+  'error.notActivated': 'Tu cuenta aún no está activada. Confirma tu correo electrónico para continuar.',
+  'moderation.reportThanks': 'Gracias. Una persona moderadora lo revisará.',
+  'moderation.reviewNote': 'Nuestros moderadores lo revisarán.',
+  'moderation.reportFailed': 'No se pudo denunciar',
 };
 
 const tr: Catalog = {
@@ -2055,6 +2100,15 @@ const tr: Catalog = {
   'friends.accept': 'Kabul et',
   'friends.decline': 'Reddet',
   'challenge.title': 'Meydan okuma! ⚔️',
+  'error.tooManyRetryIn': 'Çok fazla deneme. {seconds} sn sonra tekrar dene.',
+  'error.tooMany': 'Çok fazla deneme. Lütfen biraz bekleyip tekrar dene.',
+  'error.sessionExpired': 'Oturumun sona erdi. Lütfen tekrar giriş yap.',
+  'error.server': 'Bizim tarafımızda bir şeyler ters gitti. Lütfen az sonra tekrar dene.',
+  'error.generic': 'Bir şeyler ters gitti.',
+  'error.notActivated': 'Hesabın henüz etkinleştirilmedi. Devam etmek için e-posta adresini onayla.',
+  'moderation.reportThanks': 'Teşekkürler. Bir moderatör buna bakacak.',
+  'moderation.reviewNote': 'Moderatörlerimiz inceleyecek.',
+  'moderation.reportFailed': 'Bildirilemedi',
 };
 
 const ar: Catalog = {
@@ -2393,6 +2447,15 @@ const ar: Catalog = {
   'friends.accept': 'قبول',
   'friends.decline': 'رفض',
   'challenge.title': 'تحدٍّ! ⚔️',
+  'error.tooManyRetryIn': 'محاولات كثيرة. حاول مرة أخرى بعد {seconds} ثانية.',
+  'error.tooMany': 'محاولات كثيرة. من فضلك انتظر قليلًا ثم حاول مرة أخرى.',
+  'error.sessionExpired': 'انتهت جلستك. من فضلك سجّل الدخول مرة أخرى.',
+  'error.server': 'حدث خطأ من جهتنا. من فضلك حاول مرة أخرى بعد قليل.',
+  'error.generic': 'حدث خطأ ما.',
+  'error.notActivated': 'لم يُفعَّل حسابك بعد. أكّد بريدك الإلكتروني للمتابعة.',
+  'moderation.reportThanks': 'شكرًا لك. سيطّلع أحد المشرفين على ذلك.',
+  'moderation.reviewNote': 'سيراجعه المشرفون لدينا.',
+  'moderation.reportFailed': 'تعذّر الإبلاغ',
 };
 
 const fr: Catalog = {
@@ -2731,6 +2794,15 @@ const fr: Catalog = {
   'friends.accept': 'Accepter',
   'friends.decline': 'Refuser',
   'challenge.title': 'Défi ! ⚔️',
+  'error.tooManyRetryIn': 'Trop de tentatives. Réessaie dans {seconds} s.',
+  'error.tooMany': 'Trop de tentatives. Patiente un instant et réessaie.',
+  'error.sessionExpired': 'Ta session a expiré. Reconnecte-toi.',
+  'error.server': 'Quelque chose s’est mal passé de notre côté. Réessaie dans un instant.',
+  'error.generic': 'Quelque chose s’est mal passé.',
+  'error.notActivated': 'Ton compte n’est pas encore activé. Confirme ton adresse e-mail pour continuer.',
+  'moderation.reportThanks': 'Merci. Un modérateur va examiner cela.',
+  'moderation.reviewNote': 'Nos modérateurs l’examineront.',
+  'moderation.reportFailed': 'Impossible de signaler',
 };
 
 const nl: Catalog = {
@@ -3069,6 +3141,15 @@ const nl: Catalog = {
   'friends.accept': 'Accepteren',
   'friends.decline': 'Afwijzen',
   'challenge.title': 'Uitdaging! ⚔️',
+  'error.tooManyRetryIn': 'Te veel pogingen. Probeer het over {seconds}s opnieuw.',
+  'error.tooMany': 'Te veel pogingen. Wacht even en probeer het opnieuw.',
+  'error.sessionExpired': 'Je sessie is verlopen. Log opnieuw in.',
+  'error.server': 'Er is iets misgegaan aan onze kant. Probeer het zo meteen opnieuw.',
+  'error.generic': 'Er is iets misgegaan.',
+  'error.notActivated': 'Je account is nog niet geactiveerd. Bevestig je e-mailadres om verder te gaan.',
+  'moderation.reportThanks': 'Bedankt. Een moderator kijkt hiernaar.',
+  'moderation.reviewNote': 'Onze moderators bekijken het.',
+  'moderation.reportFailed': 'Melden is mislukt',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -3408,6 +3489,15 @@ const ckb: Catalog = {
   'friends.accept': 'پەسەندکردن',
   'friends.decline': 'ڕەتکردنەوە',
   'challenge.title': 'بانگهێشت! ⚔️',
+  'error.tooManyRetryIn': 'هەوڵی زۆر. دوای {seconds} چرکە دووبارە هەوڵ بدە.',
+  'error.tooMany': 'هەوڵی زۆر. تکایە کەمێک چاوەڕێ بکە و دووبارە هەوڵ بدە.',
+  'error.sessionExpired': 'دانیشتنەکەت بەسەرچوو. تکایە دووبارە بچۆ ژوورەوە.',
+  'error.server': 'لەلای ئێمە شتێک هەڵە بوو. تکایە دوای کەمێک دووبارە هەوڵ بدە.',
+  'error.generic': 'شتێک هەڵە بوو.',
+  'error.notActivated': 'هێsتا هەژمارەکەت چالاک نەکراوە. بۆ بەردەوامبوون ئیمەیڵەکەت پشتڕاست بکەرەوە.',
+  'moderation.reportThanks': 'سوپاس. چاودێرێک سەیری دەکات.',
+  'moderation.reviewNote': 'چاودێرەکانمان پێداچوونەوەی بۆ دەکەن.',
+  'moderation.reportFailed': 'نەتوانرا ڕاپۆرت بکرێت',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

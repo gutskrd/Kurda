@@ -128,7 +128,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     onPress={() =>
                       void client.post('/challenges', { userId: profile.userId }).then((res) => {
                         if (res.ok) Alert.alert('Challenge sent', 'Waiting for them to accept…');
-                        else Alert.alert('Could not challenge', describeError(res.error).message);
+                        else Alert.alert('Could not challenge', describeError(res.error, t));
                       })
                     }
                     style={[styles.secondary, { borderColor: colors.accent }]}

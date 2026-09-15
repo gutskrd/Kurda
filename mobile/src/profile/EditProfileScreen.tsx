@@ -98,7 +98,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
       setMe(res.data.user);
       setNotice({ ok: true, text: t('edit.profileUpdated') });
     } else {
-      setNotice({ ok: false, text: describeError(res.error).message });
+      setNotice({ ok: false, text: describeError(res.error, t) });
     }
   }, [me, busy, dirty, client, displayName, bio, country, t]);
 
@@ -121,7 +121,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
         if (!removed.ok) {
           setBusy(false);
           setSelected(previous);
-          setNotice({ ok: false, text: describeError(removed.error).message });
+          setNotice({ ok: false, text: describeError(removed.error, t) });
           return;
         }
       }
@@ -132,7 +132,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
         setNotice({ ok: true, text: key ? t('edit.photoUpdated') : t('edit.avatarCleared') });
       } else {
         setSelected(previous);
-        setNotice({ ok: false, text: describeError(res.error).message });
+        setNotice({ ok: false, text: describeError(res.error, t) });
       }
     },
     [me, busy, selected, client, t],

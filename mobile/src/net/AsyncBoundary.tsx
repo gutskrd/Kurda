@@ -40,7 +40,7 @@ export function AsyncBoundary({
   const online = useIsOnline();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const state = deriveAsyncState({ loading, online, error: error ?? null, isEmpty });
+  const state = deriveAsyncState({ loading, online, error: error ?? null, isEmpty, t });
 
   switch (state.kind) {
     case 'loading':
