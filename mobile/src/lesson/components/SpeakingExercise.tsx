@@ -43,7 +43,7 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
     const reject = recordingRejection({ durationMs: r.durationMs, byteSize: r.blob.size });
     if (reject) {
       setStatus('rejected');
-      setMessage(reject);
+      setMessage(t(reject));
       onSetAudioKey(null);
       recorder.reset();
       return;
@@ -57,7 +57,7 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
         setMessage(null);
       } else {
         setStatus('error');
-        setMessage('Upload failed — please try again.');
+        setMessage(t('lesson.speak.uploadFailed'));
       }
     });
   }, [recorder, client, onSetAudioKey]);

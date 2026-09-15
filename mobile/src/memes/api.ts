@@ -1,3 +1,4 @@
+import type { Translate } from '../api/errors';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
@@ -77,10 +78,11 @@ export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } |
 export async function uploadMemeImage(
   client: ApiClient,
   photo: { uri: string; contentType: string },
+  t: Translate,
 ): Promise<MemeUploadResult> {
   try {
     const token = await client.getAccessToken();
-    if (!token) return { ok: false, error: 'Your session expired. Please sign in again.' };
+    if (!token) return { ok: false, error: t('upload.sessionExpired') };
 
     const res = await FileSystem.uploadAsync(`${client.baseUrl}/images/upload`, photo.uri, {
       httpMethod: 'POST',
@@ -94,10 +96,10 @@ export async function uploadMemeImage(
       } catch {
         // fall through
       }
-      return { ok: false, error: 'The upload finished but no image was returned. Please try again.' };
+      return { ok: false, error: t('upload.noImageReturned') };
     }
-    return { ok: false, error: describeUploadFailure(res.status, res.body) };
+    return { ok: false, error: describeUploadFailure(res.status, res.body, t) };
   } catch (e) {
-    return { ok: false, error: (e as Error)?.message ?? 'Could not upload the image.' };
+    return { ok: false, error: (e as Error)?.message ?? t('upload.imageFailed') };
   }
 }

@@ -1,4 +1,5 @@
 /** Speaking-recording validation (KUR-036). Pure, so it's unit-testable. */
+import type { TranslationKey } from '../i18n/translations';
 
 /** Recordings shorter than this are almost certainly accidental. */
 export const MIN_RECORDING_MS = 1000;
@@ -18,9 +19,14 @@ export function isRecordingUsable({ durationMs, byteSize }: RecordingMeta): bool
   return durationMs >= MIN_RECORDING_MS && byteSize >= MIN_RECORDING_BYTES;
 }
 
-/** Human-friendly reason a recording was rejected, or null if it's fine. */
-export function recordingRejection(meta: RecordingMeta): string | null {
-  if (meta.durationMs < MIN_RECORDING_MS) return 'Too short — hold to record a little longer.';
-  if (meta.byteSize < MIN_RECORDING_BYTES) return 'We couldn’t hear anything — try again.';
+/**
+ * Why a recording was rejected, or null if it's fine.
+ *
+ * A key rather than a sentence: there is nothing to pass through here, so the
+ * module stays pure and the screen that has a translator does the looking up.
+ */
+export function recordingRejection(meta: RecordingMeta): TranslationKey | null {
+  if (meta.durationMs < MIN_RECORDING_MS) return 'recorder.tooShort';
+  if (meta.byteSize < MIN_RECORDING_BYTES) return 'recorder.silent';
   return null;
 }

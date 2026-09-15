@@ -29,16 +29,7 @@ mobile/src/lesson/components/FeedbackFooter.tsx  Almost — typo accepted
 mobile/src/lesson/components/FeedbackFooter.tsx  Not quite
 mobile/src/lesson/components/LessonResults.tsx  Lesson complete!
 mobile/src/lesson/components/LessonResults.tsx  Out of hearts
-mobile/src/lesson/components/SpeakingExercise.tsx  Upload failed — please try again.
-mobile/src/lesson/recording.ts  Too short — hold to record a little longer.
-mobile/src/lesson/recording.ts  We couldn’t hear anything — try again.
 mobile/src/library/types.ts  This comment was removed.
-mobile/src/library/voiceUpload.ts  Could not upload the recording.
-mobile/src/library/voiceUpload.ts  The upload finished but no audio was returned. Please try again.
-mobile/src/library/voiceUpload.ts  Your session expired. Please sign in again.
-mobile/src/memes/api.ts  Could not upload the image.
-mobile/src/memes/api.ts  The upload finished but no image was returned. Please try again.
-mobile/src/memes/api.ts  Your session expired. Please sign in again.
 mobile/src/memes/types.ts  This comment was removed.
 mobile/src/net/AsyncBoundary.tsx  Nothing here yet.
 mobile/src/notifications/NotificationCenterScreen.tsx  You're all caught up.
@@ -47,18 +38,6 @@ mobile/src/notifications/prefs.ts  Game invites & results
 mobile/src/notifications/prefs.ts  News & offers
 mobile/src/notifications/prefs.ts  Streak reminders
 mobile/src/practice/PracticeScreen.tsx  label="Try again"
-mobile/src/profile/photoUpload.ts  Could not upload the photo.
-mobile/src/profile/photoUpload.ts  The upload finished but no photo was returned. Please try again.
-mobile/src/profile/photoUpload.ts  Your session expired. Please sign in again.
-mobile/src/profile/photoUploadResult.ts  Photo uploads are temporarily unavailable. Please try again later.
-mobile/src/profile/photoUploadResult.ts  That file isn't a supported image. Please pick a JPEG, PNG, or WebP.
-mobile/src/profile/photoUploadResult.ts  That image can't be used as a profile photo.
-mobile/src/profile/photoUploadResult.ts  That image couldn't be read. Please try a different photo.
-mobile/src/profile/photoUploadResult.ts  That photo is too detailed to fit the size limit. Try a simpler or smaller image
-mobile/src/profile/photoUploadResult.ts  That photo is too large. Please pick a smaller one.
-mobile/src/profile/photoUploadResult.ts  The photo couldn't be saved. Please try again.
-mobile/src/profile/photoUploadResult.ts  You're changing your photo too often. Please wait a moment and try again.
-mobile/src/profile/photoUploadResult.ts  Your session expired. Please sign in again.
 mobile/src/rewards/DailyRewardCard.tsx  Come back tomorrow
 mobile/src/screens/DictionaryScreen.tsx  message="Couldn’t search right now. Check your connection and try again."
 mobile/src/screens/GameScreen.tsx  Forfeit match?

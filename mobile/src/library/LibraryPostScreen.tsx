@@ -65,7 +65,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     setPosting(true);
     let audioMediaId: string | undefined;
     if (voiceUri) {
-      const up = await uploadVoiceNote(client, { uri: voiceUri });
+      const up = await uploadVoiceNote(client, { uri: voiceUri }, t);
       if (!up.ok) {
         setPosting(false);
         Alert.alert(t('library.voiceCommentFailed'), up.error);

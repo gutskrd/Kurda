@@ -110,7 +110,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
     setUploading(true);
-    const up = await uploadMemeImage(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' });
+    const up = await uploadMemeImage(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t);
     if (!up.ok) {
       setUploading(false);
       Alert.alert(t('memes.uploadFailed'), up.error);

@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { describeUploadFailure, normalizeContentType } from './photoUploadResult';
+import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
+import { interpolate } from '../i18n/format';
+
+/**
+ * The real catalogue rather than a stub: a stub that echoes the key would pass
+ * while every sentence was missing, which is the failure this maps against.
+ */
+const tr =
+  (locale: 'en' | 'ku') =>
+  (key: TranslationKey, vars?: Record<string, string | number>): string => {
+    const value = TRANSLATIONS[locale][key];
+    expect(value, `missing ${locale} ${key}`).toBeTruthy();
+    return interpolate(value, vars);
+  };
+const t = tr('en');
 
 describe('normalizeContentType', () => {
   it('passes through the types the API parser accepts', () => {
@@ -31,7 +46,7 @@ describe('describeUploadFailure', () => {
       [502, 'MEDIA_UPLOAD_FAILED'],
     ];
     for (const [status, code] of cases) {
-      const msg = describeUploadFailure(status, body(code));
+      const msg = describeUploadFailure(status, body(code), t);
       // never leaks the raw code or server message; always a real sentence
       expect(msg).not.toContain(code);
       expect(msg).not.toContain('server message');
@@ -41,25 +56,31 @@ describe('describeUploadFailure', () => {
   });
 
   it('groups capacity limits into one "try later" message (no cost details leaked)', () => {
-    const storage = describeUploadFailure(507, body('MEDIA_STORAGE_LIMIT_REACHED'));
-    const op = describeUploadFailure(503, body('MEDIA_OP_LIMIT_REACHED'));
+    const storage = describeUploadFailure(507, body('MEDIA_STORAGE_LIMIT_REACHED'), t);
+    const op = describeUploadFailure(503, body('MEDIA_OP_LIMIT_REACHED'), t);
     expect(storage).toBe(op);
     expect(storage.toLowerCase()).toContain('later');
   });
 
   it('explains rate-limiting on a 429 even without a body code', () => {
-    expect(describeUploadFailure(429, '').toLowerCase()).toContain('wait');
+    expect(describeUploadFailure(429, '', t).toLowerCase()).toContain('wait');
   });
 
   it('prompts re-auth on 401', () => {
-    expect(describeUploadFailure(401, '').toLowerCase()).toContain('sign in');
+    expect(describeUploadFailure(401, '', t).toLowerCase()).toContain('sign in');
   });
 
   it('falls back to the server message for an unknown code', () => {
-    expect(describeUploadFailure(400, JSON.stringify({ code: 'WAT', message: 'specific detail' }))).toBe('specific detail');
+    expect(describeUploadFailure(400, JSON.stringify({ code: 'WAT', message: 'specific detail' }), t)).toBe('specific detail');
   });
 
   it('falls back to a status-based message when the body is not JSON', () => {
-    expect(describeUploadFailure(502, '<html>Bad Gateway</html>')).toBe('Upload failed (502). Please try again.');
+    expect(describeUploadFailure(502, '<html>Bad Gateway</html>', t)).toBe(
+      interpolate(TRANSLATIONS.en['upload.failedWithStatus'], { status: 502 }),
+    );
+    // and in another language, because that is the point of the change
+    expect(describeUploadFailure(502, '<html>Bad Gateway</html>', tr('ku'))).toBe(
+      interpolate(TRANSLATIONS.ku['upload.failedWithStatus'], { status: 502 }),
+    );
   });
 });
