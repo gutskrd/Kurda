@@ -27,6 +27,7 @@ import {
   type Balances,
   type ShopItem,
 } from './format';
+import { useI18n } from '../i18n/I18nContext';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -37,6 +38,7 @@ function attemptKey(sku: string): string {
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
@@ -139,7 +141,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 </View>
               </Pressable>
             )}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>The shop is empty right now — check back soon.</Text>}
+            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('shop.empty')}</Text>}
             stickySectionHeadersEnabled={false}
           />
         </AsyncBoundary>

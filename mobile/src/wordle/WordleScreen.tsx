@@ -30,6 +30,7 @@ import {
 } from './board';
 import { buildShareText } from './share';
 import type { SearchResult } from '../dictionary/types';
+import { useI18n } from '../i18n/I18nContext';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -86,6 +87,7 @@ const DIFFICULTY_LABEL: Record<Difficulty, string> = { easy: 'Easy', medium: 'Me
 export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const reduceMotion = useReducedMotion();
 
@@ -235,9 +237,9 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
         {!game ? (
           <GlassCard style={styles.startCard}>
             <Icon name="sparkle" size={44} tone="primary" />
-            <Text style={[styles.startTitle, { color: colors.textPrimary }]}>Kurdish Wordle</Text>
+            <Text style={[styles.startTitle, { color: colors.textPrimary }]}>{t('games.wordle.name')}</Text>
             <Text style={[styles.startHint, { color: colors.textSecondary }]}>
-              Guess the Kurdish word in six tries. Green is right, yellow is close.
+              {t('games.wordle.rules')}
             </Text>
             <View style={{ alignSelf: 'stretch', marginTop: spacing.md }}>
               <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => DIFFICULTY_LABEL[d]} />
@@ -312,7 +314,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 stats={stats}
               />
             ) : (
-              <View style={styles.keyboard} accessibilityLabel="Kurdish keyboard">
+              <View style={styles.keyboard} accessibilityLabel={t('games.wordle.keyboard')}>
                 {KEYBOARD_ROWS.map((krow, ri) => (
                   <View key={ri} style={styles.keyRow}>
                     {krow.map((key) => {
@@ -371,6 +373,7 @@ function ResultPanel({
   stats: WordleStats | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const won = game.status === 'won';
   return (
     <View style={styles.result}>
@@ -385,7 +388,7 @@ function ResultPanel({
           </Text>
         ) : (
           <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-            The word was <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
+            {t('games.wordle.theWordWas')} <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
           </Text>
         )}
 

@@ -200,8 +200,29 @@ export type TranslationKey =
   | 'notifications.quietHoursHelp'
   | 'profile.challenge1v1'
   | 'profile.unavailable'
-  | 'friends.searchToStart'
-  | 'username.new';
+  | 'friends.searchToStart'
+  | 'username.new'
+  | 'games.rhyme.rhymeWith'
+  | 'games.rhyme.endRound'
+  | 'games.rhyme.timeUpRound'
+  | 'leagues.noLeague'
+  | 'leagues.noBoard'
+  | 'leagues.nobodyRanked'
+  | 'leagues.doALesson'
+  | 'leagues.addFriends'
+  | 'leagues.friendsSoon'
+  | 'games.wordle.rules'
+  | 'games.wordle.theWordWas'
+  | 'games.wordle.keyboard'
+  | 'games.rhyme.rules'
+  | 'shop.empty'
+  | 'tags.title'
+  | 'tags.main'
+  | 'tags.noMain'
+  | 'tags.yours'
+  | 'tags.none'
+  | 'tags.add'
+  | 'tags.sensitiveConsent';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -379,6 +400,27 @@ const en: Catalog = {
   'profile.unavailable': 'This profile isn’t available.',
   'friends.searchToStart': 'Search for friends to get started.',
   'username.new': 'New username',
+  'games.rhyme.rhymeWith': 'Rhyme with',
+  'games.rhyme.endRound': 'End round',
+  'games.rhyme.timeUpRound': 'Time’s up for this round.',
+  'leagues.noLeague': 'No league yet.',
+  'leagues.noBoard': 'No board yet.',
+  'leagues.nobodyRanked': 'Nobody ranked yet.',
+  'leagues.doALesson': 'Do a lesson to enter this week’s race!',
+  'leagues.addFriends': 'Add friends to race them here.',
+  'leagues.friendsSoon': 'Friends leaderboards are coming soon.',
+  'games.wordle.rules': 'Guess the Kurdish word in six tries. Green is right, yellow is close.',
+  'games.wordle.theWordWas': 'The word was',
+  'games.wordle.keyboard': 'Kurdish keyboard',
+  'games.rhyme.rules': 'You’ll get a Kurdish word — find as many real words that rhyme with it as you can.',
+  'shop.empty': 'The shop is empty right now — check back soon.',
+  'tags.title': 'Tags & badges',
+  'tags.main': 'Main tag',
+  'tags.noMain': 'No main tag yet.',
+  'tags.yours': 'Your tags',
+  'tags.none': 'You haven’t added any tags yet.',
+  'tags.add': 'Add a tag',
+  'tags.sensitiveConsent': 'I consent to showing this sensitive tag. It’s optional and can be removed anytime.',
 };
 
 const ku: Catalog = {
@@ -555,6 +597,27 @@ const ku: Catalog = {
   'profile.unavailable': 'Ev profîl nayê dîtin.',
   'friends.searchToStart': 'Ji bo destpêkê li hevalan bigere.',
   'username.new': 'Navê bikarhêner ê nû',
+  'games.rhyme.rhymeWith': 'Bi vê re serwa bibîne',
+  'games.rhyme.endRound': 'Dorê biqedîne',
+  'games.rhyme.timeUpRound': 'Wexta vê dorê qediya.',
+  'leagues.noLeague': 'Hê lîg tune.',
+  'leagues.noBoard': 'Hê tablo tune.',
+  'leagues.nobodyRanked': 'Hê kes di rêzê de tune.',
+  'leagues.doALesson': 'Dersekê bike da ku tu têkevî pêşbaziya vê hefteyê!',
+  'leagues.addFriends': 'Hevalan zêde bike da ku li vir bi wan re pêşbazî bikî.',
+  'leagues.friendsSoon': 'Tabloyên hevalan di rê de ne.',
+  'games.wordle.rules': 'Peyva kurdî di şeş ceribandinan de texmîn bike. Kesk rast e, zer nêzîk e.',
+  'games.wordle.theWordWas': 'Peyv ev bû',
+  'games.wordle.keyboard': 'Klavyeya kurdî',
+  'games.rhyme.rules': 'Peyvek kurdî dê were dayîn — çiqas peyvên rastîn ên ku pê re qafiye dibin bibînî.',
+  'shop.empty': 'Dikan niha vala ye — paşê dîsa lê binêre.',
+  'tags.title': 'Nîşan û taybetmendî',
+  'tags.main': 'Nîşana sereke',
+  'tags.noMain': 'Hê nîşana sereke tune.',
+  'tags.yours': 'Nîşanên te',
+  'tags.none': 'Te hê tu nîşan zêde nekiriye.',
+  'tags.add': 'Nîşanekê zêde bike',
+  'tags.sensitiveConsent': 'Ez razî me ku ev nîşana hesas bê nîşandan. Bijarte ye û her dem tê rakirin.',
 };
 
 const de: Catalog = {
@@ -731,6 +794,27 @@ const de: Catalog = {
   'profile.unavailable': 'Dieses Profil ist nicht verfügbar.',
   'friends.searchToStart': 'Such nach Freunden, um loszulegen.',
   'username.new': 'Neuer Benutzername',
+  'games.rhyme.rhymeWith': 'Reimt sich auf',
+  'games.rhyme.endRound': 'Runde beenden',
+  'games.rhyme.timeUpRound': 'Die Zeit für diese Runde ist um.',
+  'leagues.noLeague': 'Noch keine Liga.',
+  'leagues.noBoard': 'Noch keine Tabelle.',
+  'leagues.nobodyRanked': 'Noch niemand platziert.',
+  'leagues.doALesson': 'Mach eine Lektion, um beim Rennen dieser Woche mitzumachen!',
+  'leagues.addFriends': 'Füge Freunde hinzu, um hier gegen sie anzutreten.',
+  'leagues.friendsSoon': 'Freunde-Bestenlisten kommen bald.',
+  'games.wordle.rules': 'Errate das kurdische Wort in sechs Versuchen. Grün ist richtig, Gelb ist nah dran.',
+  'games.wordle.theWordWas': 'Das Wort war',
+  'games.wordle.keyboard': 'Kurdische Tastatur',
+  'games.rhyme.rules': 'Du bekommst ein kurdisches Wort — finde so viele echte Wörter, die sich darauf reimen, wie du kannst.',
+  'shop.empty': 'Der Shop ist gerade leer — schau bald wieder vorbei.',
+  'tags.title': 'Tags & Abzeichen',
+  'tags.main': 'Haupt-Tag',
+  'tags.noMain': 'Noch kein Haupt-Tag.',
+  'tags.yours': 'Deine Tags',
+  'tags.none': 'Du hast noch keine Tags hinzugefügt.',
+  'tags.add': 'Tag hinzufügen',
+  'tags.sensitiveConsent': 'Ich stimme zu, dass dieser sensible Tag gezeigt wird. Er ist freiwillig und jederzeit entfernbar.',
 };
 
 const es: Catalog = {
@@ -907,6 +991,27 @@ const es: Catalog = {
   'profile.unavailable': 'Este perfil no está disponible.',
   'friends.searchToStart': 'Busca amigos para empezar.',
   'username.new': 'Nuevo nombre de usuario',
+  'games.rhyme.rhymeWith': 'Rima con',
+  'games.rhyme.endRound': 'Terminar la ronda',
+  'games.rhyme.timeUpRound': 'Se acabó el tiempo de esta ronda.',
+  'leagues.noLeague': 'Todavía no hay liga.',
+  'leagues.noBoard': 'Todavía no hay tabla.',
+  'leagues.nobodyRanked': 'Todavía no hay nadie clasificado.',
+  'leagues.doALesson': '¡Haz una lección para entrar en la carrera de esta semana!',
+  'leagues.addFriends': 'Añade amigos para competir con ellos aquí.',
+  'leagues.friendsSoon': 'Las tablas de amigos llegarán pronto.',
+  'games.wordle.rules': 'Adivina la palabra kurda en seis intentos. Verde es correcto, amarillo está cerca.',
+  'games.wordle.theWordWas': 'La palabra era',
+  'games.wordle.keyboard': 'Teclado kurdo',
+  'games.rhyme.rules': 'Recibirás una palabra kurda — encuentra tantas palabras reales que rimen con ella como puedas.',
+  'shop.empty': 'La tienda está vacía ahora mismo — vuelve pronto.',
+  'tags.title': 'Etiquetas e insignias',
+  'tags.main': 'Etiqueta principal',
+  'tags.noMain': 'Todavía no hay etiqueta principal.',
+  'tags.yours': 'Tus etiquetas',
+  'tags.none': 'Aún no has añadido ninguna etiqueta.',
+  'tags.add': 'Añadir una etiqueta',
+  'tags.sensitiveConsent': 'Doy mi consentimiento para mostrar esta etiqueta sensible. Es opcional y se puede quitar cuando quieras.',
 };
 
 const tr: Catalog = {
@@ -1083,6 +1188,27 @@ const tr: Catalog = {
   'profile.unavailable': 'Bu profil kullanılamıyor.',
   'friends.searchToStart': 'Başlamak için arkadaş ara.',
   'username.new': 'Yeni kullanıcı adı',
+  'games.rhyme.rhymeWith': 'Şununla kafiyeli',
+  'games.rhyme.endRound': 'Turu bitir',
+  'games.rhyme.timeUpRound': 'Bu turun süresi doldu.',
+  'leagues.noLeague': 'Henüz lig yok.',
+  'leagues.noBoard': 'Henüz tablo yok.',
+  'leagues.nobodyRanked': 'Henüz sıralamada kimse yok.',
+  'leagues.doALesson': 'Bu haftanın yarışına katılmak için bir ders yap!',
+  'leagues.addFriends': 'Burada yarışmak için arkadaş ekle.',
+  'leagues.friendsSoon': 'Arkadaş sıralamaları yakında geliyor.',
+  'games.wordle.rules': 'Kürtçe kelimeyi altı denemede bul. Yeşil doğru, sarı yakın.',
+  'games.wordle.theWordWas': 'Kelime şuydu',
+  'games.wordle.keyboard': 'Kürtçe klavye',
+  'games.rhyme.rules': 'Sana bir Kürtçe kelime verilecek — onunla kafiyeli olabildiğince çok gerçek kelime bul.',
+  'shop.empty': 'Mağaza şu anda boş — yakında tekrar bak.',
+  'tags.title': 'Etiketler ve rozetler',
+  'tags.main': 'Ana etiket',
+  'tags.noMain': 'Henüz ana etiket yok.',
+  'tags.yours': 'Etiketlerin',
+  'tags.none': 'Henüz etiket eklemedin.',
+  'tags.add': 'Etiket ekle',
+  'tags.sensitiveConsent': 'Bu hassas etiketin gösterilmesine izin veriyorum. İsteğe bağlıdır ve istediğin zaman kaldırılabilir.',
 };
 
 const ar: Catalog = {
@@ -1259,6 +1385,27 @@ const ar: Catalog = {
   'profile.unavailable': 'هذا الملف الشخصي غير متاح.',
   'friends.searchToStart': 'ابحث عن أصدقاء للبدء.',
   'username.new': 'اسم مستخدم جديد',
+  'games.rhyme.rhymeWith': 'قافية مع',
+  'games.rhyme.endRound': 'إنهاء الجولة',
+  'games.rhyme.timeUpRound': 'انتهى وقت هذه الجولة.',
+  'leagues.noLeague': 'لا يوجد دوري بعد.',
+  'leagues.noBoard': 'لا يوجد جدول بعد.',
+  'leagues.nobodyRanked': 'لا أحد في الترتيب بعد.',
+  'leagues.doALesson': 'أنجز درسًا لتدخل سباق هذا الأسبوع!',
+  'leagues.addFriends': 'أضف أصدقاء لتتسابق معهم هنا.',
+  'leagues.friendsSoon': 'لوحات ترتيب الأصدقاء قادمة قريبًا.',
+  'games.wordle.rules': 'خمّن الكلمة الكردية في ست محاولات. الأخضر صحيح والأصفر قريب.',
+  'games.wordle.theWordWas': 'كانت الكلمة',
+  'games.wordle.keyboard': 'لوحة مفاتيح كردية',
+  'games.rhyme.rules': 'ستحصل على كلمة كردية — اعثر على أكبر عدد ممكن من الكلمات الحقيقية التي تقفّيها.',
+  'shop.empty': 'المتجر فارغ الآن — عُد قريبًا.',
+  'tags.title': 'الوسوم والشارات',
+  'tags.main': 'الوسم الرئيسي',
+  'tags.noMain': 'لا يوجد وسم رئيسي بعد.',
+  'tags.yours': 'وسومك',
+  'tags.none': 'لم تُضف أي وسم بعد.',
+  'tags.add': 'إضافة وسم',
+  'tags.sensitiveConsent': 'أوافق على إظهار هذا الوسم الحسّاس. وهو اختياري ويمكن إزالته في أي وقت.',
 };
 
 const fr: Catalog = {
@@ -1435,6 +1582,27 @@ const fr: Catalog = {
   'profile.unavailable': 'Ce profil n’est pas disponible.',
   'friends.searchToStart': 'Cherchez des amis pour commencer.',
   'username.new': 'Nouveau nom d’utilisateur',
+  'games.rhyme.rhymeWith': 'Rime avec',
+  'games.rhyme.endRound': 'Terminer la manche',
+  'games.rhyme.timeUpRound': 'Le temps de cette manche est écoulé.',
+  'leagues.noLeague': 'Pas encore de ligue.',
+  'leagues.noBoard': 'Pas encore de classement.',
+  'leagues.nobodyRanked': 'Personne n’est encore classé.',
+  'leagues.doALesson': 'Faites une leçon pour entrer dans la course de cette semaine !',
+  'leagues.addFriends': 'Ajoutez des amis pour les affronter ici.',
+  'leagues.friendsSoon': 'Les classements entre amis arrivent bientôt.',
+  'games.wordle.rules': 'Devinez le mot kurde en six essais. Vert, c’est juste ; jaune, c’est proche.',
+  'games.wordle.theWordWas': 'Le mot était',
+  'games.wordle.keyboard': 'Clavier kurde',
+  'games.rhyme.rules': 'Vous recevrez un mot kurde — trouvez autant de vrais mots qui riment avec lui que possible.',
+  'shop.empty': 'La boutique est vide pour le moment — revenez bientôt.',
+  'tags.title': 'Étiquettes et badges',
+  'tags.main': 'Étiquette principale',
+  'tags.noMain': 'Pas encore d’étiquette principale.',
+  'tags.yours': 'Vos étiquettes',
+  'tags.none': 'Vous n’avez pas encore ajouté d’étiquette.',
+  'tags.add': 'Ajouter une étiquette',
+  'tags.sensitiveConsent': 'J’accepte d’afficher cette étiquette sensible. Elle est facultative et peut être retirée à tout moment.',
 };
 
 const nl: Catalog = {
@@ -1611,6 +1779,27 @@ const nl: Catalog = {
   'profile.unavailable': 'Dit profiel is niet beschikbaar.',
   'friends.searchToStart': 'Zoek naar vrienden om te beginnen.',
   'username.new': 'Nieuwe gebruikersnaam',
+  'games.rhyme.rhymeWith': 'Rijm op',
+  'games.rhyme.endRound': 'Ronde beëindigen',
+  'games.rhyme.timeUpRound': 'De tijd voor deze ronde is om.',
+  'leagues.noLeague': 'Nog geen competitie.',
+  'leagues.noBoard': 'Nog geen ranglijst.',
+  'leagues.nobodyRanked': 'Nog niemand op de ranglijst.',
+  'leagues.doALesson': 'Doe een les om mee te doen aan de race van deze week!',
+  'leagues.addFriends': 'Voeg vrienden toe om hier tegen ze te racen.',
+  'leagues.friendsSoon': 'Ranglijsten voor vrienden komen eraan.',
+  'games.wordle.rules': 'Raad het Koerdische woord in zes pogingen. Groen is goed, geel is dichtbij.',
+  'games.wordle.theWordWas': 'Het woord was',
+  'games.wordle.keyboard': 'Koerdisch toetsenbord',
+  'games.rhyme.rules': 'Je krijgt een Koerdisch woord — vind zo veel mogelijk echte woorden die erop rijmen.',
+  'shop.empty': 'De winkel is nu leeg — kom snel terug.',
+  'tags.title': 'Tags en badges',
+  'tags.main': 'Hoofdtag',
+  'tags.noMain': 'Nog geen hoofdtag.',
+  'tags.yours': 'Jouw tags',
+  'tags.none': 'Je hebt nog geen tags toegevoegd.',
+  'tags.add': 'Tag toevoegen',
+  'tags.sensitiveConsent': 'Ik geef toestemming om deze gevoelige tag te tonen. Dit is optioneel en altijd te verwijderen.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -1788,6 +1977,27 @@ const ckb: Catalog = {
   'profile.unavailable': 'ئەم پرۆفایلە بەردەست نییە.',
   'friends.searchToStart': 'بۆ دەستپێکردن بەدوای هاوڕێدا بگەڕێ.',
   'username.new': 'ناوی بەکارهێنەری نوێ',
+  'games.rhyme.rhymeWith': 'سەروا لەگەڵ ئەمە بدۆزەرەوە',
+  'games.rhyme.endRound': 'کۆتایی بە خولەکە بهێنە',
+  'games.rhyme.timeUpRound': 'کاتی ئەم خولە تەواو بوو.',
+  'leagues.noLeague': 'هێشتا لیگ نییە.',
+  'leagues.noBoard': 'هێشتا تابلۆ نییە.',
+  'leagues.nobodyRanked': 'هێشتا کەس پلەی نییە.',
+  'leagues.doALesson': 'وانەیەک بکە تا بچیتە پێشبڕکێی ئەم هەفتەیە!',
+  'leagues.addFriends': 'هاوڕێ زیاد بکە تا لێرە لەگەڵیان پێشبڕکێ بکەیت.',
+  'leagues.friendsSoon': 'تابلۆی هاوڕێکان بەم زووانە دێت.',
+  'games.wordle.rules': 'وشە کوردییەکە بە شەش هەوڵ بدۆزەرەوە. سەوز ڕاستە، زەرد نزیکە.',
+  'games.wordle.theWordWas': 'وشەکە ئەمە بوو',
+  'games.wordle.keyboard': 'تەختەکلیلی کوردی',
+  'games.rhyme.rules': 'وشەیەکی کوردیت پێدەدرێت — هەرچەندە وشەی ڕاستەقینەی هاوقافیەی پێ بدۆزەرەوە.',
+  'shop.empty': 'دوکانەکە ئێستا بەتاڵە — بەم زووانە سەردانی بکەرەوە.',
+  'tags.title': 'تاگ و نیشانەکان',
+  'tags.main': 'تاگی سەرەکی',
+  'tags.noMain': 'هێشتا تاگی سەرەکی نییە.',
+  'tags.yours': 'تاگەکانت',
+  'tags.none': 'هێشتا هیچ تاگێکت زیاد نەکردووە.',
+  'tags.add': 'تاگێک زیاد بکە',
+  'tags.sensitiveConsent': 'ڕازیم ئەم تاگە هەستیارە پیشان بدرێت. ئارەزوومەندانەیە و هەر کاتێک دەتوانرێت لابردرێت.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
