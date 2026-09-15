@@ -109,6 +109,23 @@ describe.skipIf(!DATABASE_URL)('account activation (integration)', () => {
     expect((await call('DELETE', '/me/sessions', unverified)).statusCode).toBe(200);
   });
 
+  /**
+   * The exemption used to be the prefix `/auth/`, which made this a 200.
+   *
+   * Sending an SMS is filed under authentication and costs real money at a real
+   * carrier. An account one request old, which has not shown it owns the email
+   * address it signed up with, has no business spending it — and with the stub
+   * sender the bill was zero, so nothing ever said so.
+   */
+  it('refuses an SMS to an account that has not confirmed its email', async () => {
+    // its own account: the shared `unverified` token has been signed out by the
+    // time this runs, and a 401 would pass for the wrong reason
+    const cold = await register('sms', '10.88.0.4');
+    const res = await call('POST', '/auth/phone/send', cold.token, { phone: '+9647500000000' });
+    expect(res.statusCode).toBe(403);
+    expect(res.json().code).toBe('ACCOUNT_NOT_ACTIVATED');
+  });
+
   it('does not stand in a confirmed account’s way', async () => {
     const liked = await call('POST', `/posts/library/${postId}/like`, verified);
     expect(liked.statusCode).toBe(200);

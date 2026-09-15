@@ -48,4 +48,37 @@ describe('blockedBeforeActivation', () => {
     expect(blockedBeforeActivation('POST', '/authors')).toBe(true);
     expect(blockedBeforeActivation('POST', '/me/heartbeats')).toBe(true);
   });
+
+  /**
+   * The exemption used to be the prefix `/auth/`, and these are the routes
+   * that shows to be wrong. Sending an SMS is filed under authentication and
+   * costs money; an account that has not proved it owns its email address has
+   * no business spending it.
+   */
+  it('refuses the auth routes that are not the way through the gate', () => {
+    expect(blockedBeforeActivation('POST', '/auth/phone/send')).toBe(true);
+    expect(blockedBeforeActivation('POST', '/auth/phone/verify')).toBe(true);
+    expect(blockedBeforeActivation('DELETE', '/auth/phone')).toBe(true);
+  });
+
+  it('refuses an /auth/ route nobody has thought about yet', () => {
+    expect(blockedBeforeActivation('POST', '/auth/whatever-ships-next-year')).toBe(true);
+  });
+
+  it('still lets every step of signing up and signing in through', () => {
+    for (const path of [
+      '/auth/register',
+      '/auth/login',
+      '/auth/refresh',
+      '/auth/oauth',
+      '/auth/verify-email',
+      '/auth/verify-email-code',
+      '/auth/resend-verification',
+      '/auth/resend-verification-code',
+      '/auth/request-password-reset',
+      '/auth/reset-password',
+    ]) {
+      expect(blockedBeforeActivation('POST', path), path).toBe(false);
+    }
+  });
 });
