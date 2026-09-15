@@ -1,58 +1,89 @@
 import { describe, expect, it } from 'vitest';
 import type { ApiError } from './types';
-import { describeError, formatDuration } from './errors';
+import { describeError, isOffline, isRetryable } from './errors';
+import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
+import { interpolate } from '../i18n/format';
 
 const err = (e: Partial<ApiError> & Pick<ApiError, 'kind'>): ApiError => ({ message: 'raw technical detail', ...e });
 
-describe('formatDuration', () => {
-  it('formats sub-minute waits in seconds', () => {
-    expect(formatDuration(1)).toBe('1 second');
-    expect(formatDuration(45)).toBe('45 seconds');
-    expect(formatDuration(59)).toBe('59 seconds');
-  });
-  it('formats minute-scale waits in minutes', () => {
-    expect(formatDuration(60)).toBe('1 minute');
-    expect(formatDuration(150)).toBe('3 minutes'); // rounds
-  });
-  it('never shows zero/negative', () => {
-    expect(formatDuration(0)).toBe('1 second');
-    expect(formatDuration(-5)).toBe('1 second');
-  });
-});
+/**
+ * A real translator over the real catalogue, not a stub.
+ *
+ * A stub that answers with the key would pass while every sentence was
+ * missing — which is the failure this whole module exists to prevent. Reading
+ * the catalogue means a key that is not there fails the test.
+ */
+const translator =
+  (locale: 'en' | 'ku') =>
+  (key: TranslationKey, vars?: Record<string, string | number>): string => {
+    const value = TRANSLATIONS[locale][key];
+    expect(value, `missing ${locale} ${key}`).toBeTruthy();
+    return interpolate(value, vars);
+  };
+
+const t = translator('en');
 
 describe('describeError', () => {
-  it('rewrites a network error as an offline, retryable message', () => {
-    const d = describeError(err({ kind: 'network' }));
-    expect(d.offline).toBe(true);
-    expect(d.retryable).toBe(true);
-    expect(d.message).not.toContain('raw technical detail');
-    expect(d.message.toLowerCase()).toContain('offline');
+  it('rewrites a network error as an offline message, in the reader’s language', () => {
+    expect(describeError(err({ kind: 'network' }), t)).not.toContain('raw technical detail');
+    expect(describeError(err({ kind: 'network' }), t)).toBe(TRANSLATIONS.en['error.offline']);
+    expect(describeError(err({ kind: 'network' }), translator('ku'))).toBe(TRANSLATIONS.ku['error.offline']);
   });
 
-  it('rewrites a 5xx as a retryable, non-offline "our end" message', () => {
-    const d = describeError(err({ kind: 'server', status: 500 }));
-    expect(d).toMatchObject({ retryable: true, offline: false });
-    expect(d.message).not.toContain('raw technical detail');
+  it('rewrites a 5xx as an "our end" message rather than the raw one', () => {
+    const message = describeError(err({ kind: 'server', status: 500 }), t);
+    expect(message).toBe(TRANSLATIONS.en['error.server']);
+    expect(message).not.toContain('raw technical detail');
   });
 
-  it('includes the retry-after hint for rate limits', () => {
-    expect(describeError(err({ kind: 'rate_limited', retryAfterSec: 60 })).message).toContain('1 minute');
-    expect(describeError(err({ kind: 'rate_limited', retryAfterSec: 30 })).message).toContain('30 seconds');
-    expect(describeError(err({ kind: 'rate_limited' })).retryable).toBe(true);
+  it('includes the retry-after hint for rate limits, and rounds up', () => {
+    expect(describeError(err({ kind: 'rate_limited', retryAfterSec: 30 }), t)).toContain('30');
+    expect(describeError(err({ kind: 'rate_limited', retryAfterSec: 0.2 }), t)).toContain('1');
+    expect(describeError(err({ kind: 'rate_limited' }), t)).toBe(TRANSLATIONS.en['error.tooMany']);
   });
 
-  it('passes the server message through for client errors (not retryable)', () => {
-    const d = describeError(err({ kind: 'client', status: 422, message: 'title and body are required' }));
-    expect(d).toEqual({ message: 'title and body are required', retryable: false, offline: false });
+  it('passes the server message through for client errors', () => {
+    expect(describeError(err({ kind: 'client', status: 422, message: 'title and body are required' }), t)).toBe(
+      'title and body are required',
+    );
   });
 
   it('passes the server message through for unauthorized (so a bad login is not "session expired")', () => {
-    const d = describeError(err({ kind: 'unauthorized', status: 401, message: 'incorrect email or password' }));
-    expect(d.message).toBe('incorrect email or password');
-    expect(d.retryable).toBe(false);
+    expect(describeError(err({ kind: 'unauthorized', status: 401, message: 'incorrect email or password' }), t)).toBe(
+      'incorrect email or password',
+    );
+  });
+
+  it('falls back to session-expired only when the server says nothing useful', () => {
+    expect(describeError(err({ kind: 'unauthorized', message: 'session expired' }), t)).toBe(
+      TRANSLATIONS.en['error.sessionExpired'],
+    );
   });
 
   it('falls back to a generic message when the server sends none', () => {
-    expect(describeError({ kind: 'client', message: '' }).message).toBeTruthy();
+    expect(describeError({ kind: 'client', message: '' }, t)).toBe(TRANSLATIONS.en['error.generic']);
+  });
+
+  it('says an unactivated account is an instruction, not a refusal', () => {
+    const e = err({ kind: 'client', status: 403, code: 'ACCOUNT_NOT_ACTIVATED' });
+    expect(describeError(e, t)).toBe(TRANSLATIONS.en['error.notActivated']);
+  });
+});
+
+describe('isOffline / isRetryable', () => {
+  it('treats only a network failure as offline', () => {
+    expect(isOffline(err({ kind: 'network' }))).toBe(true);
+    for (const kind of ['server', 'rate_limited', 'client', 'unauthorized'] as const) {
+      expect(isOffline(err({ kind }))).toBe(false);
+    }
+  });
+
+  it('retries the infrastructure kinds and nothing else', () => {
+    for (const kind of ['network', 'server', 'rate_limited'] as const) {
+      expect(isRetryable(err({ kind }))).toBe(true);
+    }
+    for (const kind of ['client', 'unauthorized'] as const) {
+      expect(isRetryable(err({ kind }))).toBe(false);
+    }
   });
 });

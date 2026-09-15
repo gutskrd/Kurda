@@ -76,7 +76,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
     setPosting(false);
     if (!res.ok) {
-      Alert.alert(t('comment.failed'), describeError(res.error).message);
+      Alert.alert(t('comment.failed'), describeError(res.error, t));
       return;
     }
     setDraft('');
@@ -122,7 +122,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
               <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text>
               <Pressable
-                onPress={() => confirmReport('post', () => reportPost(client, post.id))}
+                onPress={() => confirmReport(t, 'post', () => reportPost(client, post.id))}
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel={t('moderation.reportPost')}
@@ -155,7 +155,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                           </Text>
                         ) : null}
                         {c.status !== 'removed' ? (
-                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
+                          <Pressable onPress={() => confirmReport(t, 'comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>⚐ Report</Text>
                           </Pressable>
                         ) : null}

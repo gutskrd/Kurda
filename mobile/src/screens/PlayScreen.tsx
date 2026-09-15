@@ -37,7 +37,7 @@ export function PlayScreen() {
       setNote(t('games.quiz.searching'));
     } else {
       setSearching(false);
-      setNote(describeError(res.error).message);
+      setNote(describeError(res.error, t));
     }
   };
 

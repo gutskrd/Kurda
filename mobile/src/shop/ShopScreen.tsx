@@ -79,7 +79,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         load(); // pull fresh prices
         Alert.alert('Price changed', 'This item’s price changed. Please review and try again.');
       } else {
-        Alert.alert('Purchase failed', describeError(res.error).message);
+        Alert.alert('Purchase failed', describeError(res.error, t));
       }
     },
     [client, load],

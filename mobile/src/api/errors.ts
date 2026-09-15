@@ -1,50 +1,55 @@
 /**
  * User-facing error mapping (KUR-278). Turns an {@link ApiError} into a short,
- * friendly message plus retry/offline flags, so screens stop showing raw
+ * friendly sentence in the reader's own language, so screens stop showing raw
  * technical strings ("request failed (500)") and duplicating `kind` checks.
  *
- * Only the infrastructure kinds (network / server / rate_limited) get a rewritten
- * message — for `client` and `unauthorized` the server's own message is usually
- * the actionable one (validation errors, wrong credentials, …), so it passes
- * through. That keeps a failed login reading "incorrect password", not a generic
- * "session expired".
+ * Only the infrastructure kinds (network / server / rate_limited) get a
+ * rewritten message — for `client` and `unauthorized` the server's own message
+ * is usually the actionable one (validation errors, wrong credentials, …), so
+ * it passes through. That keeps a failed login reading "incorrect password",
+ * not a generic "session expired". Those pass-through messages are the API's
+ * and are still English; translating them means giving the server a locale,
+ * which is its own piece of work.
+ *
+ * The translator is a parameter rather than a hook because this is a plain
+ * module with no React in it — the same shape the browser's `describeError`
+ * has, so the two apps answer the same failure with the same sentence.
  */
+import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
 
-export interface ErrorDescription {
-  /** A short, user-facing sentence — never server/technical detail. */
-  message: string;
-  /** The same action can be meaningfully retried. */
-  retryable: boolean;
-  /** The failure looks like lost connectivity (drives the offline banner). */
-  offline: boolean;
-}
+export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
-/** "45 seconds" / "1 minute" / "3 minutes" — for rate-limit wait hints. */
-export function formatDuration(seconds: number): string {
-  const s = Math.max(1, Math.ceil(seconds));
-  if (s < 60) return `${s} second${s === 1 ? '' : 's'}`;
-  const m = Math.round(s / 60);
-  return `${m} minute${m === 1 ? '' : 's'}`;
-}
-
-function rateLimitMessage(retryAfterSec?: number): string {
-  return retryAfterSec && retryAfterSec > 0
-    ? `You’re doing that too fast — try again in ${formatDuration(retryAfterSec)}.`
-    : 'You’re doing that too fast. Please try again shortly.';
-}
-
-export function describeError(error: ApiError): ErrorDescription {
+export function describeError(error: ApiError, t: Translate): string {
+  // The one server code worth saying in the reader's own language: it is a 403
+  // like any other to this function, but it is not a refusal — it is an
+  // instruction, and the account is one confirmed email away from working.
+  if (error.code === 'ACCOUNT_NOT_ACTIVATED') return t('error.notActivated');
   switch (error.kind) {
     case 'network':
-      return { message: 'You appear to be offline. Check your connection and try again.', retryable: true, offline: true };
+      return t('error.offline');
     case 'server':
-      return { message: 'Something went wrong on our end. Please try again in a moment.', retryable: true, offline: false };
+      return t('error.server');
     case 'rate_limited':
-      return { message: rateLimitMessage(error.retryAfterSec), retryable: true, offline: false };
+      return error.retryAfterSec && error.retryAfterSec > 0
+        ? t('error.tooManyRetryIn', { seconds: Math.max(1, Math.ceil(error.retryAfterSec)) })
+        : t('error.tooMany');
     case 'unauthorized':
+      // a bad login carries the server's own message; only mid-session
+      // refresh-failures fall back to the generic session-expired copy
+      return error.message && error.message !== 'session expired' ? error.message : t('error.sessionExpired');
     case 'client':
     default:
-      return { message: error.message || 'That didn’t work. Please try again.', retryable: false, offline: false };
+      return error.message || t('error.generic');
   }
+}
+
+/** Does this failure look like lost connectivity? Drives the offline banner. */
+export function isOffline(error: ApiError): boolean {
+  return error.kind === 'network';
+}
+
+/** Can the same action be meaningfully retried? */
+export function isRetryable(error: ApiError): boolean {
+  return error.kind === 'network' || error.kind === 'server' || error.kind === 'rate_limited';
 }

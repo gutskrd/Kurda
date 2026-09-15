@@ -3,6 +3,7 @@ import { ApiClient } from '../api/client';
 import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
 import { describeError } from '../api/errors';
+import { useI18n } from '../i18n/I18nContext';
 import { createTokenStorage } from './storage';
 
 export interface SessionUser {
@@ -80,6 +81,7 @@ export function AuthProvider({
     () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl(),
   );
 
+  const { t } = useI18n();
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
 
@@ -136,7 +138,7 @@ export function AuthProvider({
     baseUrl,
     login: async (email, password) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
-      if (!res.ok) return describeError(res.error).message;
+      if (!res.ok) return describeError(res.error, t);
       await applyAuth(res.data);
       return null;
     },
@@ -147,7 +149,7 @@ export function AuthProvider({
         ...input,
         acceptTerms: true,
       });
-      if (!res.ok) return describeError(res.error).message;
+      if (!res.ok) return describeError(res.error, t);
       await applyAuth(res.data);
       return null;
     },
@@ -157,7 +159,7 @@ export function AuthProvider({
         // Append the server's own error code (e.g. OAUTH_NOT_CONFIGURED,
         // INVALID_OAUTH_TOKEN) when present — it names the actual cause, which
         // the friendly copy alone hides for 5xx/401 responses.
-        const friendly = describeError(res.error).message;
+        const friendly = describeError(res.error, t);
         return res.error.code ? `${friendly} (${res.error.code})` : friendly;
       }
       await applyAuth(res.data);
@@ -165,13 +167,13 @@ export function AuthProvider({
     },
     verifyEmailCode: async (code) => {
       const res = await client.post<{ verified: boolean }>('/auth/verify-email-code', { code });
-      if (!res.ok) return describeError(res.error).message;
+      if (!res.ok) return describeError(res.error, t);
       setUser((prev) => (prev ? { ...prev, emailVerified: true } : prev));
       return null;
     },
     resendVerificationCode: async () => {
       const res = await client.post<{ sent: boolean }>('/auth/resend-verification-code', {});
-      if (!res.ok) return describeError(res.error).message;
+      if (!res.ok) return describeError(res.error, t);
       return null;
     },
     requestPasswordReset: async (email) => {
@@ -184,7 +186,7 @@ export function AuthProvider({
     },
     deleteAccount: async () => {
       const res = await client.delete<{ deletionScheduled: boolean; graceDays: number }>('/me');
-      if (!res.ok) return describeError(res.error).message;
+      if (!res.ok) return describeError(res.error, t);
       await storage.clear();
       setUser(null);
       setStatus('signedOut');

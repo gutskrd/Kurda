@@ -51,7 +51,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
     const res = await createPost(client, { type, title: title.trim(), body: body.trim(), publish, audioMediaId });
     setSaving(false);
     if (!res.ok) {
-      Alert.alert(t('library.saveFailed'), describeError(res.error).message);
+      Alert.alert(t('library.saveFailed'), describeError(res.error, t));
       return;
     }
     onExit();

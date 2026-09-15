@@ -129,7 +129,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       setGame(res.data);
       if (res.data.status !== 'playing') void fetchEducation(res.data.target);
     } else {
-      setNote(describeError(res.error).message);
+      setNote(describeError(res.error, t));
     }
   };
 
@@ -182,7 +182,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           ? t('games.wordle.notAWord')
           : code === 'WRONG_LENGTH'
             ? t('games.wordle.wrongLength')
-            : describeError(res.error).message,
+            : describeError(res.error, t),
       );
       runShake();
     }

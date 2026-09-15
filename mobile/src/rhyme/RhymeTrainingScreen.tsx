@@ -113,7 +113,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
       setGame(res.data);
       setRemaining(res.data.remainingMs);
     } else {
-      setNote(describeError(res.error).message);
+      setNote(describeError(res.error, t));
     }
   };
 
@@ -127,7 +127,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     );
     setSubmitting(false);
     if (!res.ok) {
-      setNote(describeError(res.error).message);
+      setNote(describeError(res.error, t));
       runShake();
       return;
     }

@@ -63,7 +63,7 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
     void client.get<SessionView>(`/lessons/${lessonId}/session`).then((res) => {
       if (!active) return;
       if (res.ok) setView(res.data);
-      else setLoadError(describeError(res.error).message);
+      else setLoadError(describeError(res.error, t));
     });
     return () => {
       active = false;

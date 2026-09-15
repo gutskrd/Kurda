@@ -89,7 +89,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
     const res = await addComment(client, postId, body);
     setPosting(false);
     if (!res.ok) {
-      Alert.alert(t('comment.failed'), describeError(res.error).message);
+      Alert.alert(t('comment.failed'), describeError(res.error, t));
       return;
     }
     setDraft('');
@@ -125,7 +125,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
               ) : null}
               {post.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{post.caption}</Text> : null}
               <Pressable
-                onPress={() => confirmReport('post', () => reportPost(client, post.id))}
+                onPress={() => confirmReport(t, 'post', () => reportPost(client, post.id))}
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel={t('moderation.reportPost')}
@@ -179,7 +179,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                           </Text>
                         ) : null}
                         {c.status !== 'removed' ? (
-                          <Pressable onPress={() => confirmReport('comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
+                          <Pressable onPress={() => confirmReport(t, 'comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>⚐ Report</Text>
                           </Pressable>
                         ) : null}
