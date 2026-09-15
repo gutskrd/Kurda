@@ -12,10 +12,18 @@
  * a heading that was properly translated, which is exactly what this misses
  * when only the key side is checked.
  *
- * What counts as copy: a run of words inside JSX, and the string props a reader
- * or a screen reader is given — placeholder, title, aria-label, alt. What does
- * not: code, comments, single tokens, and the short list of deliberate
- * exceptions below, each of which has to say why.
+ * What counts as copy: a run of words inside JSX, the string props a reader or
+ * a screen reader is given — placeholder, title, aria-label, alt, and a React
+ * Native button's `label` — and a quoted phrase anywhere in a component file,
+ * because `{won ? 'Correct!' : 'Out of tries'}` is copy that no amount of
+ * reading tag text will ever find. What does not: code, comments, single
+ * tokens, and the short list of deliberate exceptions below, each of which has
+ * to say why.
+ *
+ * Those last two were added after this reported the phone clean enough to
+ * delete its debt file, over a Wordle screen still offering "Daily puzzle" and
+ * "Out of tries" to nine languages. A gate is only worth the blind spots it
+ * does not have.
  *
  * Runs inside `npm run lint --workspace @kurda/web`, beside the other check.
  */
@@ -81,12 +89,37 @@ const NOT_COPY = new Set([
 /**
  * Props whose value a reader or a screen reader is given.
  *
- * The last two are React Native's: the phone has no `aria-label`, it has
- * `accessibilityLabel`, and leaving them out would have let this gate report
- * "clean" over a screen whose every button announced itself in English.
+ * `accessibilityLabel` and `accessibilityHint` are React Native's: the phone has
+ * no `aria-label`, and leaving them out would have let this gate report "clean"
+ * over a screen whose every button announced itself in English.
+ *
+ * The last five are this codebase's own components. A React Native button has no
+ * children — its copy arrives as `label="Daily puzzle"` — so a list that stopped
+ * at the HTML and accessibility props read the phone's Wordle screen as clean
+ * while it offered "Daily puzzle", "Out of tries" and "Save to vocabulary" to
+ * nine languages. A prop that a person reads belongs here whoever defined it.
  */
 const READER_FACING =
-  /\b(placeholder|aria-label|alt|title|accessibilityLabel|accessibilityHint)=(["'])((?:(?!\2).)*)\2/g;
+  /\b(placeholder|aria-label|alt|title|accessibilityLabel|accessibilityHint|label|heading|message|caption|hint)=(["'])((?:(?!\2).)*)\2/g;
+
+/**
+ * Values that read like a phrase but are not one.
+ *
+ * SVG path data is the whole list so far, and it is unmistakable: a path
+ * command letter followed by coordinates. The icon set is one file of it, and
+ * without this the gate would report every icon in the app as untranslated
+ * English.
+ */
+const NOT_LITERAL = [/^[MmLlHhVvCcSsQqTtAaZz][\d\s.,-]/];
+
+/**
+ * Where a capitalised phrase is code rather than copy.
+ *
+ * A module specifier, a comparison against a literal, and a catalogue key —
+ * `t('Something')` is the fix, not the problem. Each is matched on the 24
+ * characters in front of the string, which is enough for all three and cheap.
+ */
+const NOT_COPY_CONTEXT = [/(from|import|require\()\s*$/, /[=!]==?\s*$/, /\bt\(\s*$/];
 
 function sources(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -153,12 +186,18 @@ const problems = [];
 for (const file of sources(SRC)) {
   const src = withoutComments(readFileSync(file, 'utf8'));
   const lines = src.split(/\r?\n/);
+  const asProp = new Set();
 
   lines.forEach((line, index) => {
     let m;
     READER_FACING.lastIndex = 0;
     while ((m = READER_FACING.exec(line))) {
-      if (isCopy(m[3])) problems.push({ file, line: index + 1, what: `${m[1]}="${m[3]}"` });
+      if (isCopy(m[3])) {
+        problems.push({ file, line: index + 1, what: `${m[1]}="${m[3]}"` });
+        // so the literal pass below does not report the same words a second
+        // time, under a second spelling that also has to be paid off
+        asProp.add(`${index + 1}|${m[3]}`);
+      }
     }
   });
 
@@ -178,6 +217,32 @@ for (const file of sources(SRC)) {
     // trimmed *after* the cut, not before: slicing a trimmed string can end on
     // a space, and a reported line that ends in whitespace is one nobody can
     // paste into the debt list and have match
+    problems.push({ file, line, what: value.replace(/\s+/g, ' ').slice(0, 80).trim() });
+  }
+
+  /*
+   * Copy inside an expression, which is where the rest of it turned out to be.
+   *
+   * The two checks above read a tag's text and a tag's props. Neither can see
+   * `{won ? 'Correct!' : 'Out of tries'}` or `{note ?? 'Finding a match…'}`,
+   * because the JSX-text pattern deliberately stops at `{`. That is where most
+   * of the phone's remaining English was hiding while its debt file sat empty
+   * and the app claimed to speak nine languages.
+   *
+   * So: every quoted literal in the file, judged as copy, minus the contexts
+   * where a capitalised phrase is not something anybody reads. Reading the
+   * whole file rather than only the JSX is deliberate — a string handed to
+   * `setError` three functions up is read by exactly the same person.
+   */
+  const literal = /(['"])((?:(?!\1)[^\\]|\\.)*)\1/g;
+  let lit;
+  while ((lit = literal.exec(src))) {
+    const value = lit[2];
+    if (!isCopy(value) || NOT_LITERAL.some((re) => re.test(value))) continue;
+    const before = src.slice(Math.max(0, lit.index - 24), lit.index);
+    if (NOT_COPY_CONTEXT.some((re) => re.test(before))) continue;
+    const line = src.slice(0, lit.index).split(/\r?\n/).length;
+    if (asProp.has(`${line}|${value}`)) continue;
     problems.push({ file, line, what: value.replace(/\s+/g, ' ').slice(0, 80).trim() });
   }
 }
