@@ -126,6 +126,41 @@ unless a leading entry is obviously a reader's own invention — and set
 would then be `203.0.113.9`. If the API is reached directly with no proxy in
 front of it, set `false`.
 
+## Store listing — category and developer name
+
+**Neither lives in this repo.** Both stores read them from their own dashboard,
+and a build will not change either one:
+
+| what | where | note |
+| --- | --- | --- |
+| App Store category | App Store Connect → your app → **App Information** → Category | primary + optional secondary |
+| Play Store category | Play Console → **Grow** → Store presence → Main store listing → Category | |
+| Developer / seller name | Apple: Developer account **Membership** details. Google: Play Console → **Settings → Developer account → Developer name** | |
+
+The developer name is the one that catches people out. An Apple **Individual**
+account publishes under the account holder's legal name and cannot simply be
+renamed to the app's name — showing a brand there means an **Organization**
+account, which needs a D-U-N-S number and is a migration, not a setting. Google
+lets a personal account set any developer name.
+
+`app.json` does declare the intent, so the repo and the listing agree and the
+binary carries it:
+
+```jsonc
+"ios": { "infoPlist": { "LSApplicationCategoryType": "public.app-category.entertainment" } }
+```
+
+That key is a hint used by system surfaces, **not** what the App Store lists the
+app under — App Store Connect wins. Android has no equivalent worth setting:
+`android:appCategory` has no "entertainment" value (its list is accessibility,
+game, audio, video, image, social, news, maps, productivity) and it drives
+system grouping like Digital Wellbeing rather than the Play listing.
+
+> Entertainment is a choice, not a default. A language-learning app is a natural
+> fit for **Education** too, and the categories are not interchangeable at
+> review time — Education invites questions about younger users and the Kids
+> category rules. Worth knowing which argument you would rather have.
+
 ## Media storage — profile photos (Cloudflare R2 or S3)
 
 Profile-photo upload (KUR-177/180) needs an S3-compatible bucket. Without it
