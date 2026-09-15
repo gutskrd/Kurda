@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/I18nContext';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -20,6 +21,7 @@ type CellState = 'claimed' | 'today' | 'upcoming';
 export function DailyRewardCard() {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [justEarned, setJustEarned] = useState<number | null>(null);
@@ -92,12 +94,12 @@ export function DailyRewardCard() {
           {claiming ? (
             <ActivityIndicator color={colors.textOnPrimary} />
           ) : (
-            <Text style={[styles.claimText, { color: colors.textOnPrimary }]}>Claim {status.reward} Zêr</Text>
+            <Text style={[styles.claimText, { color: colors.textOnPrimary }]}>{t('rewards.claimZer', { amount: status.reward })}</Text>
           )}
         </Pressable>
       ) : (
         <Text style={[styles.done, { color: colors.textSecondary }]}>
-          {justEarned != null ? `+${justEarned} Zêr claimed!` : 'Come back tomorrow'}
+          {justEarned != null ? t('rewards.claimedZer', { amount: justEarned }) : t('rewards.comeBackTomorrow')}
         </Text>
       )}
     </View>

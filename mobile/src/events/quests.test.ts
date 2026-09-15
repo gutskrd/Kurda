@@ -7,6 +7,15 @@ import {
   sortQuests,
   type QuestView,
 } from './quests.js';
+import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
+import { interpolate } from '../i18n/format';
+
+/** The real catalogue: a stub that echoes the key would hide a missing one. */
+const tr =
+  (locale: 'en' | 'ku') =>
+  (key: TranslationKey, vars?: Record<string, string | number>): string =>
+    interpolate(TRANSLATIONS[locale][key], vars);
+const t = tr('en');
 
 function q(over: Partial<QuestView>): QuestView {
   return {
@@ -33,8 +42,12 @@ describe('progressPct', () => {
 
 describe('questTitle', () => {
   it('prefers titleEn, falls back per type', () => {
-    expect(questTitle(q({ titleEn: 'Welcome spring' }))).toBe('Welcome spring');
-    expect(questTitle(q({ type: 'win_games', titleEn: undefined }))).toBe('Win games');
+    // the server's own title passes through untranslated; ours does not
+    expect(questTitle(q({ titleEn: 'Welcome spring' }), t)).toBe('Welcome spring');
+    expect(questTitle(q({ type: 'win_games', titleEn: undefined }), t)).toBe(TRANSLATIONS.en['events.quest.winGames']);
+    expect(questTitle(q({ type: 'win_games', titleEn: undefined }), tr('ku'))).toBe(
+      TRANSLATIONS.ku['events.quest.winGames'],
+    );
   });
 });
 

@@ -42,29 +42,29 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
   }, [state.phase]);
 
   const confirmForfeit = () =>
-    Alert.alert('Forfeit match?', 'Your opponent will win.', [
-      { text: 'Keep playing', style: 'cancel' },
-      { text: 'Forfeit', style: 'destructive', onPress: () => { forfeit(); onExit(); } },
+    Alert.alert(t('game.forfeitTitle'), t('game.forfeitBody'), [
+      { text: t('game.keepPlaying'), style: 'cancel' },
+      { text: t('game.forfeit'), style: 'destructive', onPress: () => { forfeit(); onExit(); } },
     ]);
 
   const header = (
     <View style={[styles.header, { paddingTop: topInset }]}>
-      <Pressable onPress={confirmForfeit} accessibilityLabel="Forfeit" hitSlop={10}>
-        <Text style={[styles.forfeit, { color: colors.danger }]}>Forfeit</Text>
+      <Pressable onPress={confirmForfeit} accessibilityLabel={t('game.forfeit')} hitSlop={10}>
+        <Text style={[styles.forfeit, { color: colors.danger }]}>{t('game.forfeit')}</Text>
       </Pressable>
       <ScoreStrip state={state} />
     </View>
   );
 
   if (state.phase === 'connecting') {
-    return <Centered><ActivityIndicator size="large" color={colors.primary} /><Text style={[styles.dim, { color: colors.textSecondary }]}>Connecting…</Text></Centered>;
+    return <Centered><ActivityIndicator size="large" color={colors.primary} /><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('game.connecting')}</Text></Centered>;
   }
 
   if (state.phase === 'countdown') {
     return (
       <GradientBackground>
         <View style={styles.screen}>{header}
-          <View style={styles.centered}><Text style={[styles.big, { color: colors.textPrimary }]}>Get ready…</Text></View>
+          <View style={styles.centered}><Text style={[styles.big, { color: colors.textPrimary }]}>{t('game.getReady')}</Text></View>
         </View>
       </GradientBackground>
     );
@@ -83,20 +83,22 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
         <View style={styles.screen}>
           <View style={styles.centered}>
             {won ? <Icon name="trophy" size={56} color={colors.gold} /> : null}
-            <Text style={[styles.big, { color: colors.textPrimary }]}>{won ? 'You win!' : 'Good game'}</Text>
+            <Text style={[styles.big, { color: colors.textPrimary }]}>{won ? t('games.youWon') : t('games.quiz.goodGame')}</Text>
 
             {!provisional && xp > 0 ? (
               <View style={styles.rewardRow}>
                 <Text style={[styles.xp, { color: colors.accent }]}>+{xp} XP</Text>
                 {ratingDelta !== 0 ? (
-                  <Text style={[styles.rating, { color: colors.textSecondary }]}>{ratingDelta > 0 ? '+' : ''}{ratingDelta} rating</Text>
+                  <Text style={[styles.rating, { color: colors.textSecondary }]}>
+                    {t('game.ratingDelta', { delta: `${ratingDelta > 0 ? '+' : ''}${ratingDelta}` })}
+                  </Text>
                 ) : null}
               </View>
             ) : null}
 
             {state.results?.scores.map((s) => (
               <Text key={s.userId} style={[styles.resultLine, { color: s.userId === selfId ? colors.textPrimary : colors.textSecondary }, s.userId === selfId && styles.resultSelf]}>
-                #{s.rank} {s.username} — {s.points} pts ({s.correct} correct)
+                {t('game.scoreLine', { rank: s.rank, name: s.username, points: s.points, correct: s.correct })}
               </Text>
             ))}
 
@@ -110,18 +112,18 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
               waiting ? (
                 <View style={styles.rematchWait}>
                   <ActivityIndicator color={colors.primary} />
-                  <Text style={[styles.dim, { color: colors.textSecondary }]}>Waiting for opponent…</Text>
+                  <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('game.waitingForOpponent')}</Text>
                 </View>
               ) : expired ? (
                 <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('game.rematchExpired')}</Text>
               ) : (
                 <Pressable onPress={rematch.accept} style={[styles.primary, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>Rematch</Text>
+                  <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{t('game.rematch')}</Text>
                 </Pressable>
               )
             ) : null}
 
-            <Pressable onPress={onExit} style={styles.done}><Text style={[styles.doneText, { color: colors.textSecondary }]}>Done</Text></Pressable>
+            <Pressable onPress={onExit} style={styles.done}><Text style={[styles.doneText, { color: colors.textSecondary }]}>{t('common.done')}</Text></Pressable>
           </View>
         </View>
       </GradientBackground>
@@ -141,7 +143,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
         <View style={[styles.timerTrack, { backgroundColor: colors.glassBorder }]}>
           <View style={[styles.timerFill, { width: `${Math.round(remainingFrac * 100)}%`, backgroundColor: colors.accent }]} />
         </View>
-        <Text style={[styles.progress, { color: colors.textSecondary }]}>Question {q.index + 1} / {q.total}</Text>
+        <Text style={[styles.progress, { color: colors.textSecondary }]}>{t('games.quiz.questionOf', { index: q.index + 1, total: q.total })}</Text>
         <Text style={[styles.prompt, { color: colors.textPrimary }]}>{q.prompt}</Text>
 
         <View style={styles.options}>
@@ -167,10 +169,10 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
 
         <Text style={[styles.opponent, { color: colors.textSecondary }]}>
           {state.phase === 'reveal'
-            ? 'Reveal'
+            ? t('game.reveal')
             : opponentAnswered(state)
-              ? 'Opponent answered ✓'
-              : 'Opponent is thinking…'}
+              ? t('game.opponentAnswered')
+              : t('game.opponentThinking')}
         </Text>
         {state.rejected ? <Text style={[styles.rejected, { color: colors.danger }]}>{t('game.tooLate')}</Text> : null}
       </View>
