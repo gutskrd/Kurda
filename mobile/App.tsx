@@ -45,6 +45,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { WordleScreen } from './src/wordle/WordleScreen';
 import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
+import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
@@ -207,6 +208,11 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Rhyme" options={{ presentation: 'card' }}>
         {({ navigation }) => <RhymeTrainingScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="RhymeMatch" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <RhymeMatchScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+        )}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}

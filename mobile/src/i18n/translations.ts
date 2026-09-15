@@ -501,7 +501,23 @@ export type TranslationKey =
   | 'notifications.pref.news'
   | 'learn.notAvailableYet'
   | 'tags.adding'
-  | 'comments.voice';
+  | 'comments.voice'
+  | 'games.rhymeMatch.name'
+  | 'games.rhymeMatch.intro'
+  | 'games.rhymeMatch.create'
+  | 'games.rhymeMatch.join'
+  | 'games.rhymeMatch.start'
+  | 'games.rhymeMatch.new'
+  | 'games.rhymeMatch.over'
+  | 'games.rhymeMatch.promptWas'
+  | 'games.rhymeMatch.timeUpFinishing'
+  | 'games.rhymeMatch.timeUpMatch'
+  | 'games.rhymeMatch.playerScore'
+  | 'games.dialect'
+  | 'games.timeLeft'
+  | 'games.submit'
+  | 'games.rhyme.foundList'
+  | 'games.rhyme.online';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -979,6 +995,22 @@ const en: Catalog = {
   'learn.notAvailableYet': 'Not available yet.',
   'tags.adding': 'Adding…',
   'comments.voice': '🔊 Voice comment',
+  'games.rhymeMatch.name': 'Rhyme Match',
+  'games.rhymeMatch.intro': 'Create a match, share the invite link, and race a friend to find the most rhymes for one prompt before the clock runs out.',
+  'games.rhymeMatch.create': 'Create match',
+  'games.rhymeMatch.join': 'Join match',
+  'games.rhymeMatch.start': 'Start match',
+  'games.rhymeMatch.new': 'New match',
+  'games.rhymeMatch.over': 'Match over.',
+  'games.rhymeMatch.promptWas': 'The prompt was {word}.',
+  'games.rhymeMatch.timeUpFinishing': 'Time’s up — finishing the match…',
+  'games.rhymeMatch.timeUpMatch': 'Time’s up for this match.',
+  'games.rhymeMatch.playerScore': '{score} pts · {count} rhymes',
+  'games.dialect': 'Dialect',
+  'games.timeLeft': 'Time left',
+  'games.submit': 'Submit',
+  'games.rhyme.foundList': 'Rhymes you found',
+  'games.rhyme.online': 'Head-to-head: share an invite link and out-rhyme a friend in one shared window.',
 };
 
 const ku: Catalog = {
@@ -1455,6 +1487,22 @@ const ku: Catalog = {
   'learn.notAvailableYet': 'Hê ne gengaz e.',
   'tags.adding': 'Tê zêdekirin…',
   'comments.voice': '🔊 Şîroveya dengî',
+  'games.rhymeMatch.name': 'Pêşbaziya Serwayan',
+  'games.rhymeMatch.intro': 'Pêşbaziyekê çêke, girêdana vexwendinê parve bike û bi hevalekî re pêşbaziyê bike ka kî ji bo peyvekê bêtir serwayan dibîne berî ku wext biqede.',
+  'games.rhymeMatch.create': 'Pêşbaziyê çêke',
+  'games.rhymeMatch.join': 'Beşdarî pêşbaziyê bibe',
+  'games.rhymeMatch.start': 'Pêşbaziyê dest pê bike',
+  'games.rhymeMatch.new': 'Pêşbaziyeke nû',
+  'games.rhymeMatch.over': 'Pêşbazî qediya.',
+  'games.rhymeMatch.promptWas': 'Peyv {word} bû.',
+  'games.rhymeMatch.timeUpFinishing': 'Wext qediya — pêşbazî tê temamkirin…',
+  'games.rhymeMatch.timeUpMatch': 'Wexta vê pêşbaziyê qediya.',
+  'games.rhymeMatch.playerScore': '{score} xal · {count} serwa',
+  'games.dialect': 'Zarava',
+  'games.timeLeft': 'Wexta mayî',
+  'games.submit': 'Bişîne',
+  'games.rhyme.foundList': 'Serwayên ku te dîtin',
+  'games.rhyme.online': 'Rû bi rû: girêdanekê parve bike û bi hevalekî re di heman paceyê de pêşbaz be.',
 };
 
 const de: Catalog = {
@@ -1931,6 +1979,22 @@ const de: Catalog = {
   'learn.notAvailableYet': 'Noch nicht verfügbar.',
   'tags.adding': 'Wird hinzugefügt…',
   'comments.voice': '🔊 Sprachkommentar',
+  'games.rhymeMatch.name': 'Reim-Duell',
+  'games.rhymeMatch.intro': 'Erstelle ein Duell, teile den Einladungslink und finde mit einem Freund um die Wette die meisten Reime auf ein Wort, bevor die Zeit abläuft.',
+  'games.rhymeMatch.create': 'Duell erstellen',
+  'games.rhymeMatch.join': 'Duell beitreten',
+  'games.rhymeMatch.start': 'Duell starten',
+  'games.rhymeMatch.new': 'Neues Duell',
+  'games.rhymeMatch.over': 'Duell vorbei.',
+  'games.rhymeMatch.promptWas': 'Das Wort war {word}.',
+  'games.rhymeMatch.timeUpFinishing': 'Die Zeit ist um — das Duell wird beendet…',
+  'games.rhymeMatch.timeUpMatch': 'Die Zeit für dieses Duell ist um.',
+  'games.rhymeMatch.playerScore': '{score} Pkt. · {count} Reime',
+  'games.dialect': 'Dialekt',
+  'games.timeLeft': 'Restzeit',
+  'games.submit': 'Absenden',
+  'games.rhyme.foundList': 'Deine gefundenen Reime',
+  'games.rhyme.online': 'Kopf an Kopf: Teile einen Einladungslink und reime besser als dein Freund.',
 };
 
 const es: Catalog = {
@@ -2407,6 +2471,22 @@ const es: Catalog = {
   'learn.notAvailableYet': 'Aún no disponible.',
   'tags.adding': 'Añadiendo…',
   'comments.voice': '🔊 Comentario de voz',
+  'games.rhymeMatch.name': 'Duelo de rimas',
+  'games.rhymeMatch.intro': 'Crea un duelo, comparte el enlace de invitación y compite con un amigo para encontrar el mayor número de rimas de una palabra antes de que se acabe el tiempo.',
+  'games.rhymeMatch.create': 'Crear duelo',
+  'games.rhymeMatch.join': 'Unirse al duelo',
+  'games.rhymeMatch.start': 'Empezar el duelo',
+  'games.rhymeMatch.new': 'Nuevo duelo',
+  'games.rhymeMatch.over': 'Duelo terminado.',
+  'games.rhymeMatch.promptWas': 'La palabra era {word}.',
+  'games.rhymeMatch.timeUpFinishing': 'Se acabó el tiempo: terminando el duelo…',
+  'games.rhymeMatch.timeUpMatch': 'Se acabó el tiempo de este duelo.',
+  'games.rhymeMatch.playerScore': '{score} pts · {count} rimas',
+  'games.dialect': 'Dialecto',
+  'games.timeLeft': 'Tiempo restante',
+  'games.submit': 'Enviar',
+  'games.rhyme.foundList': 'Rimas que encontraste',
+  'games.rhyme.online': 'Cara a cara: comparte un enlace y supera a un amigo en la misma ventana.',
 };
 
 const tr: Catalog = {
@@ -2883,6 +2963,22 @@ const tr: Catalog = {
   'learn.notAvailableYet': 'Henüz kullanılamıyor.',
   'tags.adding': 'Ekleniyor…',
   'comments.voice': '🔊 Sesli yorum',
+  'games.rhymeMatch.name': 'Kafiye Düellosu',
+  'games.rhymeMatch.intro': 'Bir düello oluştur, davet bağlantısını paylaş ve süre dolmadan tek bir kelimeye en çok kafiyeyi bulmak için bir arkadaşınla yarış.',
+  'games.rhymeMatch.create': 'Düello oluştur',
+  'games.rhymeMatch.join': 'Düelloya katıl',
+  'games.rhymeMatch.start': 'Düelloyu başlat',
+  'games.rhymeMatch.new': 'Yeni düello',
+  'games.rhymeMatch.over': 'Düello bitti.',
+  'games.rhymeMatch.promptWas': 'Kelime {word} idi.',
+  'games.rhymeMatch.timeUpFinishing': 'Süre doldu — düello tamamlanıyor…',
+  'games.rhymeMatch.timeUpMatch': 'Bu düellonun süresi doldu.',
+  'games.rhymeMatch.playerScore': '{score} puan · {count} kafiye',
+  'games.dialect': 'Lehçe',
+  'games.timeLeft': 'Kalan süre',
+  'games.submit': 'Gönder',
+  'games.rhyme.foundList': 'Bulduğun kafiyeler',
+  'games.rhyme.online': 'Karşılıklı: bir davet bağlantısı paylaş ve aynı pencerede arkadaşını geç.',
 };
 
 const ar: Catalog = {
@@ -3359,6 +3455,22 @@ const ar: Catalog = {
   'learn.notAvailableYet': 'غير متاح بعد.',
   'tags.adding': 'جارٍ الإضافة…',
   'comments.voice': '🔊 تعليق صوتي',
+  'games.rhymeMatch.name': 'مباراة القوافي',
+  'games.rhymeMatch.intro': 'أنشئ مباراة، وشارك رابط الدعوة، وتسابق مع صديق لإيجاد أكبر عدد من القوافي لكلمة واحدة قبل انتهاء الوقت.',
+  'games.rhymeMatch.create': 'إنشاء مباراة',
+  'games.rhymeMatch.join': 'الانضمام إلى المباراة',
+  'games.rhymeMatch.start': 'بدء المباراة',
+  'games.rhymeMatch.new': 'مباراة جديدة',
+  'games.rhymeMatch.over': 'انتهت المباراة.',
+  'games.rhymeMatch.promptWas': 'كانت الكلمة {word}.',
+  'games.rhymeMatch.timeUpFinishing': 'انتهى الوقت — يجري إنهاء المباراة…',
+  'games.rhymeMatch.timeUpMatch': 'انتهى وقت هذه المباراة.',
+  'games.rhymeMatch.playerScore': '{score} نقطة · {count} قافية',
+  'games.dialect': 'اللهجة',
+  'games.timeLeft': 'الوقت المتبقي',
+  'games.submit': 'إرسال',
+  'games.rhyme.foundList': 'القوافي التي وجدتها',
+  'games.rhyme.online': 'وجهاً لوجه: شارك رابط دعوة وتفوّق على صديقك في النافذة نفسها.',
 };
 
 const fr: Catalog = {
@@ -3835,6 +3947,22 @@ const fr: Catalog = {
   'learn.notAvailableYet': 'Pas encore disponible.',
   'tags.adding': 'Ajout…',
   'comments.voice': '🔊 Commentaire vocal',
+  'games.rhymeMatch.name': 'Duel de rimes',
+  'games.rhymeMatch.intro': 'Crée un duel, partage le lien d’invitation et affronte un ami pour trouver le plus de rimes sur un même mot avant la fin du chrono.',
+  'games.rhymeMatch.create': 'Créer le duel',
+  'games.rhymeMatch.join': 'Rejoindre le duel',
+  'games.rhymeMatch.start': 'Lancer le duel',
+  'games.rhymeMatch.new': 'Nouveau duel',
+  'games.rhymeMatch.over': 'Duel terminé.',
+  'games.rhymeMatch.promptWas': 'Le mot était {word}.',
+  'games.rhymeMatch.timeUpFinishing': 'Le temps est écoulé — le duel se termine…',
+  'games.rhymeMatch.timeUpMatch': 'Le temps de ce duel est écoulé.',
+  'games.rhymeMatch.playerScore': '{score} pts · {count} rimes',
+  'games.dialect': 'Dialecte',
+  'games.timeLeft': 'Temps restant',
+  'games.submit': 'Envoyer',
+  'games.rhyme.foundList': 'Les rimes que tu as trouvées',
+  'games.rhyme.online': 'En face à face : partagez un lien et rimez mieux qu’un ami dans la même fenêtre.',
 };
 
 const nl: Catalog = {
@@ -4311,6 +4439,22 @@ const nl: Catalog = {
   'learn.notAvailableYet': 'Nog niet beschikbaar.',
   'tags.adding': 'Toevoegen…',
   'comments.voice': '🔊 Spraakreactie',
+  'games.rhymeMatch.name': 'Rijmduel',
+  'games.rhymeMatch.intro': 'Maak een duel aan, deel de uitnodigingslink en zoek samen met een vriend zo veel mogelijk rijmwoorden op één woord voordat de tijd om is.',
+  'games.rhymeMatch.create': 'Duel aanmaken',
+  'games.rhymeMatch.join': 'Meedoen aan duel',
+  'games.rhymeMatch.start': 'Duel starten',
+  'games.rhymeMatch.new': 'Nieuw duel',
+  'games.rhymeMatch.over': 'Duel voorbij.',
+  'games.rhymeMatch.promptWas': 'Het woord was {word}.',
+  'games.rhymeMatch.timeUpFinishing': 'De tijd is om — het duel wordt afgerond…',
+  'games.rhymeMatch.timeUpMatch': 'De tijd voor dit duel is om.',
+  'games.rhymeMatch.playerScore': '{score} ptn · {count} rijmwoorden',
+  'games.dialect': 'Dialect',
+  'games.timeLeft': 'Resterende tijd',
+  'games.submit': 'Versturen',
+  'games.rhyme.foundList': 'Rijmwoorden die je vond',
+  'games.rhyme.online': 'Tegen elkaar: deel een uitnodigingslink en rijm een vriend voorbij in hetzelfde venster.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -4788,6 +4932,22 @@ const ckb: Catalog = {
   'learn.notAvailableYet': 'هێشتا بەردەست نییە.',
   'tags.adding': 'زیاد دەکرێت…',
   'comments.voice': '🔊 لێدوانی دەنگی',
+  'games.rhymeMatch.name': 'پێشبڕکێی سەروا',
+  'games.rhymeMatch.intro': 'پێشبڕکێیەک دروست بکە، بەستەری بانگهێشت هاوبەش بکە، و لەگەڵ هاوڕێیەکدا پێشبڕکێ بکە بۆ دۆزینەوەی زۆرترین سەروا بۆ یەک وشە پێش تەواوبوونی کات.',
+  'games.rhymeMatch.create': 'پێشبڕکێ دروست بکە',
+  'games.rhymeMatch.join': 'بەشداری پێشبڕکێ بکە',
+  'games.rhymeMatch.start': 'پێشبڕکێ دەست پێبکە',
+  'games.rhymeMatch.new': 'پێشبڕکێی نوێ',
+  'games.rhymeMatch.over': 'پێشبڕکێ تەواو بوو.',
+  'games.rhymeMatch.promptWas': 'وشەکە {word} بوو.',
+  'games.rhymeMatch.timeUpFinishing': 'کات تەواو بوو — پێشبڕکێ تەواو دەکرێت…',
+  'games.rhymeMatch.timeUpMatch': 'کاتی ئەم پێشبڕکێیە تەواو بوو.',
+  'games.rhymeMatch.playerScore': '{score} خاڵ · {count} سەروا',
+  'games.dialect': 'زاراوە',
+  'games.timeLeft': 'کاتی ماوە',
+  'games.submit': 'ناردن',
+  'games.rhyme.foundList': 'ئەو سەروایانەی دۆزیتەوە',
+  'games.rhyme.online': 'ڕوو بە ڕوو: بەستەرێک هاوبەش بکە و لە هەمان پەنجەرەدا لە هاوڕێیەکت پێشبکەویت.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
