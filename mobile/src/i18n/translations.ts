@@ -221,8 +221,30 @@ export type TranslationKey =
   | 'tags.noMain'
   | 'tags.yours'
   | 'tags.none'
-  | 'tags.add'
-  | 'tags.sensitiveConsent';
+  | 'tags.add'
+  | 'tags.sensitiveConsent'
+  | 'rankings.title'
+  | 'rankings.board.weeklyXp'
+  | 'rankings.board.weeklyXpBlurb'
+  | 'rankings.board.rating'
+  | 'rankings.board.ratingBlurb'
+  | 'rankings.scope.global'
+  | 'rankings.scope.country'
+  | 'rankings.leaderboard'
+  | 'rankings.compareWith'
+  | 'rankings.noCountry'
+  | 'rankings.noCountryBody'
+  | 'rankings.showMore'
+  | 'rankings.empty.friends'
+  | 'rankings.empty.friendsBody'
+  | 'rankings.empty.country'
+  | 'rankings.empty.countryBody'
+  | 'rankings.empty.global'
+  | 'rankings.empty.globalBody'
+  | 'rankings.unit.xp'
+  | 'rankings.everyoneIn'
+  | 'games.you'
+  | 'profile.edit';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -421,6 +443,28 @@ const en: Catalog = {
   'tags.none': 'You haven’t added any tags yet.',
   'tags.add': 'Add a tag',
   'tags.sensitiveConsent': 'I consent to showing this sensitive tag. It’s optional and can be removed anytime.',
+  'rankings.title': 'Rankings',
+  'rankings.board.weeklyXp': 'Weekly XP',
+  'rankings.board.weeklyXpBlurb': 'This week’s top learners by experience earned.',
+  'rankings.board.rating': 'Rating',
+  'rankings.board.ratingBlurb': 'All-time skill rating from ranked matches.',
+  'rankings.scope.global': 'Global',
+  'rankings.scope.country': 'My country',
+  'rankings.leaderboard': 'Leaderboard',
+  'rankings.compareWith': 'Who to compare with',
+  'rankings.noCountry': 'No country set',
+  'rankings.noCountryBody': 'Add a country to your profile to see how you rank against people there.',
+  'rankings.showMore': 'Show {count} more',
+  'rankings.empty.friends': 'No ranked friends yet',
+  'rankings.empty.friendsBody': 'Add friends and play a little — you will both show up here.',
+  'rankings.empty.country': 'Nobody ranked here yet',
+  'rankings.empty.countryBody': 'Be the first from your country to earn points this week.',
+  'rankings.empty.global': 'No rankings yet',
+  'rankings.empty.globalBody': 'Once learners start earning points, the leaderboard will fill up here.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'Everyone in {country}.',
+  'games.you': 'You',
+  'profile.edit': 'Edit Profile',
 };
 
 const ku: Catalog = {
@@ -618,6 +662,28 @@ const ku: Catalog = {
   'tags.none': 'Te hê tu nîşan zêde nekiriye.',
   'tags.add': 'Nîşanekê zêde bike',
   'tags.sensitiveConsent': 'Ez razî me ku ev nîşana hesas bê nîşandan. Bijarte ye û her dem tê rakirin.',
+  'rankings.title': 'Rêzbendî',
+  'rankings.board.weeklyXp': 'XP-ya heftane',
+  'rankings.board.weeklyXpBlurb': 'Fêrbûyerên herî serkeftî yên vê hefteyê li gorî ezmûna qezenckirî.',
+  'rankings.board.rating': 'Puan',
+  'rankings.board.ratingBlurb': 'Puana jêhatîbûnê ya hemû deman ji pêşbaziyên rêzbendî.',
+  'rankings.scope.global': 'Cîhanî',
+  'rankings.scope.country': 'Welatê min',
+  'rankings.leaderboard': 'Lîsteya pêşeng',
+  'rankings.compareWith': 'Bi kê re bidî ber hev',
+  'rankings.noCountry': 'Welat nehatiye danîn',
+  'rankings.noCountryBody': 'Welatekî li profîla xwe zêde bike da ku bibînî tu li hember mirovên wir li ku yî.',
+  'rankings.showMore': '{count} bêtir nîşan bide',
+  'rankings.empty.friends': 'Hê hevalên rêzbendî tune ne',
+  'rankings.empty.friendsBody': 'Hevalan lê zêde bike û hinekî bilîze — hûn ê herdu jî li vir xuya bibin.',
+  'rankings.empty.country': 'Hê kes li vir di rêzbendiyê de nîne',
+  'rankings.empty.countryBody': 'Bibe yekem kes ji welatê xwe ku vê hefteyê xalan qezenc bike.',
+  'rankings.empty.global': 'Hê rêzbendî tune',
+  'rankings.empty.globalBody': 'Gava fêrbûyer dest bi qezenckirina xalan bikin, lîsteya pêşeng dê li vir tije bibe.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'Hemû kesên li {country}.',
+  'games.you': 'Tu',
+  'profile.edit': 'Profîlê biguherîne',
 };
 
 const de: Catalog = {
@@ -815,6 +881,28 @@ const de: Catalog = {
   'tags.none': 'Du hast noch keine Tags hinzugefügt.',
   'tags.add': 'Tag hinzufügen',
   'tags.sensitiveConsent': 'Ich stimme zu, dass dieser sensible Tag gezeigt wird. Er ist freiwillig und jederzeit entfernbar.',
+  'rankings.title': 'Rangliste',
+  'rankings.board.weeklyXp': 'Wöchentliche XP',
+  'rankings.board.weeklyXpBlurb': 'Die besten Lernenden dieser Woche nach verdienter Erfahrung.',
+  'rankings.board.rating': 'Wertung',
+  'rankings.board.ratingBlurb': 'Allzeit-Können aus gewerteten Partien.',
+  'rankings.scope.global': 'Weltweit',
+  'rankings.scope.country': 'Mein Land',
+  'rankings.leaderboard': 'Bestenliste',
+  'rankings.compareWith': 'Womit vergleichen',
+  'rankings.noCountry': 'Kein Land festgelegt',
+  'rankings.noCountryBody': 'Füge deinem Profil ein Land hinzu, um zu sehen, wie du dort stehst.',
+  'rankings.showMore': '{count} weitere anzeigen',
+  'rankings.empty.friends': 'Noch keine gewerteten Freunde',
+  'rankings.empty.friendsBody': 'Füg Freunde hinzu und spiel ein wenig — ihr taucht hier beide auf.',
+  'rankings.empty.country': 'Hier ist noch niemand gewertet',
+  'rankings.empty.countryBody': 'Sei die erste Person aus deinem Land, die diese Woche Punkte holt.',
+  'rankings.empty.global': 'Noch keine Rangliste',
+  'rankings.empty.globalBody': 'Sobald Lernende Punkte sammeln, füllt sich hier die Bestenliste.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'Alle in {country}.',
+  'games.you': 'Du',
+  'profile.edit': 'Profil bearbeiten',
 };
 
 const es: Catalog = {
@@ -1012,6 +1100,28 @@ const es: Catalog = {
   'tags.none': 'Aún no has añadido ninguna etiqueta.',
   'tags.add': 'Añadir una etiqueta',
   'tags.sensitiveConsent': 'Doy mi consentimiento para mostrar esta etiqueta sensible. Es opcional y se puede quitar cuando quieras.',
+  'rankings.title': 'Clasificación',
+  'rankings.board.weeklyXp': 'XP semanal',
+  'rankings.board.weeklyXpBlurb': 'Quienes más han aprendido esta semana según la experiencia ganada.',
+  'rankings.board.rating': 'Clasificación',
+  'rankings.board.ratingBlurb': 'Clasificación histórica de habilidad en partidas puntuadas.',
+  'rankings.scope.global': 'Global',
+  'rankings.scope.country': 'Mi país',
+  'rankings.leaderboard': 'Tabla de clasificación',
+  'rankings.compareWith': 'Con quién compararte',
+  'rankings.noCountry': 'No has puesto un país',
+  'rankings.noCountryBody': 'Añade un país a tu perfil para ver cómo te sitúas frente a la gente de allí.',
+  'rankings.showMore': 'Mostrar {count} más',
+  'rankings.empty.friends': 'Todavía no hay amigos clasificados',
+  'rankings.empty.friendsBody': 'Añade amigos y juega un poco: apareceréis los dos aquí.',
+  'rankings.empty.country': 'Todavía no hay nadie clasificado aquí',
+  'rankings.empty.countryBody': 'Sé la primera persona de tu país en ganar puntos esta semana.',
+  'rankings.empty.global': 'Todavía no hay clasificación',
+  'rankings.empty.globalBody': 'En cuanto la gente empiece a ganar puntos, la clasificación se llenará aquí.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'Todo el mundo en {country}.',
+  'games.you': 'Tú',
+  'profile.edit': 'Editar perfil',
 };
 
 const tr: Catalog = {
@@ -1209,6 +1319,28 @@ const tr: Catalog = {
   'tags.none': 'Henüz etiket eklemedin.',
   'tags.add': 'Etiket ekle',
   'tags.sensitiveConsent': 'Bu hassas etiketin gösterilmesine izin veriyorum. İsteğe bağlıdır ve istediğin zaman kaldırılabilir.',
+  'rankings.title': 'Sıralama',
+  'rankings.board.weeklyXp': 'Haftalık XP',
+  'rankings.board.weeklyXpBlurb': 'Bu haftanın kazanılan deneyime göre en iyi öğrenenleri.',
+  'rankings.board.rating': 'Puan',
+  'rankings.board.ratingBlurb': 'Dereceli maçlardan gelen tüm zamanların beceri puanı.',
+  'rankings.scope.global': 'Küresel',
+  'rankings.scope.country': 'Ülkem',
+  'rankings.leaderboard': 'Sıralama tablosu',
+  'rankings.compareWith': 'Kiminle karşılaştırılsın',
+  'rankings.noCountry': 'Ülke belirlenmemiş',
+  'rankings.noCountryBody': 'Oradaki insanlara karşı sıralamanı görmek için profiline bir ülke ekle.',
+  'rankings.showMore': '{count} tane daha göster',
+  'rankings.empty.friends': 'Henüz sıralamada arkadaş yok',
+  'rankings.empty.friendsBody': 'Arkadaş ekle ve biraz oyna — ikiniz de burada görüneceksiniz.',
+  'rankings.empty.country': 'Burada henüz sıralamada kimse yok',
+  'rankings.empty.countryBody': 'Bu hafta ülkenden puan kazanan ilk kişi ol.',
+  'rankings.empty.global': 'Henüz sıralama yok',
+  'rankings.empty.globalBody': 'Öğrenenler puan kazanmaya başlayınca sıralama burada dolacak.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': '{country} içindeki herkes.',
+  'games.you': 'Sen',
+  'profile.edit': 'Profili düzenle',
 };
 
 const ar: Catalog = {
@@ -1406,6 +1538,28 @@ const ar: Catalog = {
   'tags.none': 'لم تُضف أي وسم بعد.',
   'tags.add': 'إضافة وسم',
   'tags.sensitiveConsent': 'أوافق على إظهار هذا الوسم الحسّاس. وهو اختياري ويمكن إزالته في أي وقت.',
+  'rankings.title': 'الترتيب',
+  'rankings.board.weeklyXp': 'خبرة الأسبوع',
+  'rankings.board.weeklyXpBlurb': 'أفضل المتعلّمين هذا الأسبوع حسب الخبرة المكتسبة.',
+  'rankings.board.rating': 'التصنيف',
+  'rankings.board.ratingBlurb': 'تصنيف المهارة عبر كل الأوقات من المباريات المصنّفة.',
+  'rankings.scope.global': 'عالمي',
+  'rankings.scope.country': 'بلدي',
+  'rankings.leaderboard': 'لوحة الصدارة',
+  'rankings.compareWith': 'مع من تقارن',
+  'rankings.noCountry': 'لم تحدد بلدًا',
+  'rankings.noCountryBody': 'أضف بلدًا إلى ملفك الشخصي لترى ترتيبك بين أهله.',
+  'rankings.showMore': 'عرض {count} إضافية',
+  'rankings.empty.friends': 'لا أصدقاء مصنّفين بعد',
+  'rankings.empty.friendsBody': 'أضف أصدقاء والعب قليلًا — ستظهران هنا معًا.',
+  'rankings.empty.country': 'لا أحد مصنّف هنا بعد',
+  'rankings.empty.countryBody': 'كن أول من يكسب نقاطًا من بلدك هذا الأسبوع.',
+  'rankings.empty.global': 'لا ترتيب بعد',
+  'rankings.empty.globalBody': 'ما إن يبدأ المتعلّمون بكسب النقاط حتى تمتلئ لوحة الصدارة هنا.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'الجميع في {country}.',
+  'games.you': 'أنت',
+  'profile.edit': 'تعديل الملف الشخصي',
 };
 
 const fr: Catalog = {
@@ -1603,6 +1757,28 @@ const fr: Catalog = {
   'tags.none': 'Vous n’avez pas encore ajouté d’étiquette.',
   'tags.add': 'Ajouter une étiquette',
   'tags.sensitiveConsent': 'J’accepte d’afficher cette étiquette sensible. Elle est facultative et peut être retirée à tout moment.',
+  'rankings.title': 'Classement',
+  'rankings.board.weeklyXp': 'XP hebdomadaire',
+  'rankings.board.weeklyXpBlurb': 'Les meilleurs apprenants de la semaine selon l’expérience gagnée.',
+  'rankings.board.rating': 'Classement',
+  'rankings.board.ratingBlurb': 'Classement de compétence de toujours, issu des parties classées.',
+  'rankings.scope.global': 'Mondial',
+  'rankings.scope.country': 'Mon pays',
+  'rankings.leaderboard': 'Classement',
+  'rankings.compareWith': 'Avec qui te comparer',
+  'rankings.noCountry': 'Aucun pays défini',
+  'rankings.noCountryBody': 'Ajoute un pays à ton profil pour voir où tu te situes face aux gens de là-bas.',
+  'rankings.showMore': 'Afficher {count} de plus',
+  'rankings.empty.friends': 'Aucun ami classé pour l’instant',
+  'rankings.empty.friendsBody': 'Ajoute des amis et joue un peu — vous apparaîtrez tous les deux ici.',
+  'rankings.empty.country': 'Personne n’est encore classé ici',
+  'rankings.empty.countryBody': 'Sois la première personne de ton pays à gagner des points cette semaine.',
+  'rankings.empty.global': 'Pas encore de classement',
+  'rankings.empty.globalBody': 'Dès que les apprenants gagneront des points, le classement se remplira ici.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'Tout le monde en {country}.',
+  'games.you': 'Toi',
+  'profile.edit': 'Modifier le profil',
 };
 
 const nl: Catalog = {
@@ -1800,6 +1976,28 @@ const nl: Catalog = {
   'tags.none': 'Je hebt nog geen tags toegevoegd.',
   'tags.add': 'Tag toevoegen',
   'tags.sensitiveConsent': 'Ik geef toestemming om deze gevoelige tag te tonen. Dit is optioneel en altijd te verwijderen.',
+  'rankings.title': 'Ranglijst',
+  'rankings.board.weeklyXp': 'Wekelijkse XP',
+  'rankings.board.weeklyXpBlurb': 'De beste leerlingen van deze week op basis van verdiende ervaring.',
+  'rankings.board.rating': 'Rating',
+  'rankings.board.ratingBlurb': 'Vaardigheidsrating aller tijden uit gerangschikte wedstrijden.',
+  'rankings.scope.global': 'Wereldwijd',
+  'rankings.scope.country': 'Mijn land',
+  'rankings.leaderboard': 'Ranglijst',
+  'rankings.compareWith': 'Met wie vergelijken',
+  'rankings.noCountry': 'Geen land ingesteld',
+  'rankings.noCountryBody': 'Voeg een land toe aan je profiel om te zien hoe je daar scoort.',
+  'rankings.showMore': 'Toon {count} meer',
+  'rankings.empty.friends': 'Nog geen vrienden in de ranglijst',
+  'rankings.empty.friendsBody': 'Voeg vrienden toe en speel een beetje — jullie verschijnen hier allebei.',
+  'rankings.empty.country': 'Hier staat nog niemand in de ranglijst',
+  'rankings.empty.countryBody': 'Wees de eerste uit jouw land die deze week punten verdient.',
+  'rankings.empty.global': 'Nog geen ranglijst',
+  'rankings.empty.globalBody': 'Zodra leerlingen punten gaan verdienen, vult de ranglijst zich hier.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'Iedereen in {country}.',
+  'games.you': 'Jij',
+  'profile.edit': 'Profiel bewerken',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -1998,6 +2196,28 @@ const ckb: Catalog = {
   'tags.none': 'هێشتا هیچ تاگێکت زیاد نەکردووە.',
   'tags.add': 'تاگێک زیاد بکە',
   'tags.sensitiveConsent': 'ڕازیم ئەم تاگە هەستیارە پیشان بدرێت. ئارەزوومەندانەیە و هەر کاتێک دەتوانرێت لابردرێت.',
+  'rankings.title': 'ڕیزبەندی',
+  'rankings.board.weeklyXp': 'XPی هەفتانە',
+  'rankings.board.weeklyXpBlurb': 'باشترین فێرخوازانی ئەم هەفتەیە بەپێی ئەزموونی بەدەستهاتوو.',
+  'rankings.board.rating': 'پلە',
+  'rankings.board.ratingBlurb': 'پلەی شارەزایی هەمووکات لە یارییە پلەداراکانەوە.',
+  'rankings.scope.global': 'جیهانی',
+  'rankings.scope.country': 'وڵاتەکەم',
+  'rankings.leaderboard': 'خشتەی پێشەنگان',
+  'rankings.compareWith': 'لەگەڵ کێ بەراورد بکرێت',
+  'rankings.noCountry': 'وڵات دانەنراوە',
+  'rankings.noCountryBody': 'وڵاتێک بۆ پرۆفایلەکەت زیاد بکە بۆ ئەوەی بزانیت لە بەرامبەر خەڵکی ئەوێ لە چ پلەیەکدایت.',
+  'rankings.showMore': '{count} زیاتر پیشان بدە',
+  'rankings.empty.friends': 'هێشتا هاوڕێی پلەدار نییە',
+  'rankings.empty.friendsBody': 'هاوڕێ زیاد بکە و کەمێک یاری بکە — هەردووکتان لێرە دەردەکەون.',
+  'rankings.empty.country': 'هێشتا کەس لێرە پلەدار نییە',
+  'rankings.empty.countryBody': 'بەیەکەم کەس بە لە وڵاتەکەتەوە کە ئەم هەفتەیە خاڵ بەدەست دەهێنێت.',
+  'rankings.empty.global': 'هێشتا ڕیزبەندی نییە',
+  'rankings.empty.globalBody': 'کاتێک فێرخوازان دەست بە بەدەستهێنانی خاڵ بکەن، خشتەی پێشەنگان لێرە پڕ دەبێت.',
+  'rankings.unit.xp': 'XP',
+  'rankings.everyoneIn': 'هەموو کەسێک لە {country}.',
+  'games.you': 'تۆ',
+  'profile.edit': 'دەستکاری پرۆفایل',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

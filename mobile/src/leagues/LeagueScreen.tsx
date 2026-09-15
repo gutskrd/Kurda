@@ -5,13 +5,14 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import type { Palette } from '../theme/palette';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 import { formatCompact } from '../i18n/format';
 import { countdown, tierMeta, zoneFor, type Zone } from './format';
 
@@ -38,10 +39,38 @@ interface BoardEntry {
 }
 interface Board {
   top: BoardEntry[];
+  total: number;
   me: { rank: number; score: number } | null;
+  /** country scope only; null when the profile has no country set */
+  country?: string | null;
 }
 
-type Tab = 'league' | 'global' | 'friends';
+type Tab = 'league' | 'rankings';
+
+/**
+ * The same two boards and three scopes the browser offers.
+ *
+ * The phone showed one board (rating, global) and told you friends
+ * leaderboards were "coming soon" — which the API had supported all along:
+ * `/leaderboards/:type?scope=friends` puts you on your own friends board and
+ * has since KUR-064. It was not unbuilt, it was unasked for.
+ */
+type BoardType = 'weekly_xp' | 'rating';
+type Scope = 'global' | 'friends' | 'country';
+
+const BOARDS: { key: BoardType; labelKey: TranslationKey; unitKey: TranslationKey; blurbKey: TranslationKey }[] = [
+  { key: 'weekly_xp', labelKey: 'rankings.board.weeklyXp', unitKey: 'rankings.unit.xp', blurbKey: 'rankings.board.weeklyXpBlurb' },
+  { key: 'rating', labelKey: 'rankings.board.rating', unitKey: 'rankings.board.rating', blurbKey: 'rankings.board.ratingBlurb' },
+];
+
+const SCOPES: { key: Scope; labelKey: TranslationKey }[] = [
+  { key: 'global', labelKey: 'rankings.scope.global' },
+  { key: 'friends', labelKey: 'nav.friends' },
+  { key: 'country', labelKey: 'rankings.scope.country' },
+];
+
+/** One page of a board. The browser uses the same size. */
+const PAGE = 25;
 
 const zoneColor = (colors: Palette): Record<Zone, string> => ({
   promotion: colors.success,
@@ -56,27 +85,50 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [tab, setTab] = useState<Tab>('league');
+  const [type, setType] = useState<BoardType>('weekly_xp');
+  const [scope, setScope] = useState<Scope>('global');
   const [league, setLeague] = useState<LeagueView | null>(null);
-  const [global, setGlobal] = useState<Board | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [entries, setEntries] = useState<BoardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [, setTick] = useState(0);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    void Promise.all([
-      client.get<LeagueView>('/me/league'),
-      client.get<Board>('/leaderboards/rating'),
-    ]).then(([lg, gl]) => {
-      if (lg.ok) setLeague(lg.data);
-      if (gl.ok) setGlobal(gl.data);
-      // only a hard error (both requests failed) surfaces as an error/offline state
-      setError(!lg.ok && !gl.ok ? lg.error : null);
-      setLoading(false);
-    });
-  }, [client]);
+  const meta = BOARDS.find((b) => b.key === type)!;
 
-  useFocusEffect(useCallback(() => load(), [load]));
+  /**
+   * One page of the chosen board. `offset` 0 replaces, anything else appends.
+   *
+   * The league standings come along on the first page only — they do not
+   * change with the board you are looking at.
+   */
+  const load = useCallback(
+    (offset: number) => {
+      if (offset === 0) setLoading(true);
+      else setLoadingMore(true);
+      const query = `scope=${scope}&limit=${PAGE}&offset=${offset}`;
+      void Promise.all([
+        offset === 0 ? client.get<LeagueView>('/me/league') : Promise.resolve(null),
+        client.get<Board>(`/leaderboards/${type}?${query}`),
+      ]).then(([lg, bd]) => {
+        if (lg?.ok) setLeague(lg.data);
+        if (bd.ok) {
+          setBoard(bd.data);
+          const batch = bd.data.top ?? [];
+          setEntries((prev) => (offset === 0 ? batch : [...prev, ...batch]));
+        }
+        // only a hard failure of the board itself is worth an error state;
+        // the league is a second panel and can be missing on its own
+        setError(bd.ok ? null : bd.error);
+        setLoading(false);
+        setLoadingMore(false);
+      });
+    },
+    [client, type, scope],
+  );
+
+  useFocusEffect(useCallback(() => load(0), [load]));
   // live countdown
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60_000);
@@ -86,23 +138,23 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const header = (
     <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text></Pressable>
-      <Text style={[styles.title, { color: colors.primary }]}>League</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{t('rankings.title')}</Text>
       <View style={{ width: 20 }} />
     </View>
   );
 
   const tabs = (
     <View style={styles.tabs}>
-      {(['league', 'global', 'friends'] as Tab[]).map((t) => {
-        const active = tab === t;
+      {([['league', 'profile.league'], ['rankings', 'rankings.leaderboard']] as const).map(([key, labelKey]) => {
+        const active = tab === key;
         return (
           <Pressable
-            key={t}
-            onPress={() => setTab(t)}
+            key={key}
+            onPress={() => setTab(key)}
             style={[styles.tab, { backgroundColor: active ? colors.primary : colors.controlTrack }]}
           >
             <Text style={[styles.tabText, { color: active ? colors.textOnPrimary : colors.textSecondary }]}>
-              {t === 'league' ? 'League' : t === 'global' ? 'Global' : 'Friends'}
+              {t(labelKey)}
             </Text>
           </Pressable>
         );
@@ -115,17 +167,46 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
       <View style={styles.screen}>
         {header}
         {tabs}
-        <AsyncBoundary loading={loading && !league && !global} error={!league && !global ? error : null} onRetry={load}>
+        {tab === 'rankings' ? (
+          <View style={styles.choosers}>
+            <Segmented
+              options={BOARDS.map((b) => b.key)}
+              value={type}
+              onChange={setType}
+              labelOf={(key) => t(BOARDS.find((b) => b.key === key)!.labelKey)}
+            />
+            <Segmented
+              options={SCOPES.map((sc) => sc.key)}
+              value={scope}
+              onChange={setScope}
+              labelOf={(key) => t(SCOPES.find((sc) => sc.key === key)!.labelKey)}
+            />
+            <Text style={[styles.dim, { color: colors.textSecondary }]}>{t(meta.blurbKey)}</Text>
+          </View>
+        ) : null}
+
+        <AsyncBoundary
+          loading={loading && !league && !board}
+          error={!league && !board ? error : null}
+          onRetry={() => load(0)}
+        >
           {tab === 'league' ? (
             <LeagueTab league={league} />
-          ) : tab === 'global' ? (
-            <BoardTab board={global} unit="rating" />
-          ) : (
+          ) : scope === 'country' && board?.country == null ? (
             <Centered>
-              <Icon name="people" size={48} tone="secondary" />
-              <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t('leagues.addFriends')}</Text>
-              <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.friendsSoon')}</Text>
+              <Icon name="globe" size={48} tone="secondary" />
+              <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t('rankings.noCountry')}</Text>
+              <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('rankings.noCountryBody')}</Text>
             </Centered>
+          ) : (
+            <BoardTab
+              board={board}
+              entries={entries}
+              unit={t(meta.unitKey)}
+              scope={scope}
+              loadingMore={loadingMore}
+              onMore={() => load(entries.length)}
+            />
           )}
         </AsyncBoundary>
       </View>
@@ -179,18 +260,48 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
   );
 }
 
-function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
-  const { locale } = useI18n();
+/**
+ * One board, one page at a time.
+ *
+ * The empty state names the scope, because "nobody ranked yet" means three
+ * different things: nobody at all, none of your friends, or nobody from your
+ * country — and only one of those is something you can do anything about.
+ */
+function BoardTab({
+  board,
+  entries,
+  unit,
+  scope,
+  loadingMore,
+  onMore,
+}: {
+  board: Board | null;
+  entries: BoardEntry[];
+  unit: string;
+  scope: Scope;
+  loadingMore: boolean;
+  onMore: () => void;
+}) {
+  const { locale, t } = useI18n();
   const { colors } = useTheme();
-  const { t } = useI18n();
   if (!board) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.noBoard')}</Text></Centered>;
+  const empty =
+    scope === 'friends'
+      ? (['rankings.empty.friends', 'rankings.empty.friendsBody'] as const)
+      : scope === 'country'
+        ? (['rankings.empty.country', 'rankings.empty.countryBody'] as const)
+        : (['rankings.empty.global', 'rankings.empty.globalBody'] as const);
   return (
     <FlatList
-      data={board.top}
+      data={entries}
       keyExtractor={(e) => e.userId}
       contentContainerStyle={styles.list}
       ListHeaderComponent={
-        board.me ? <Text style={[styles.myRank, { color: colors.textPrimary }]}>You’re #{board.me.rank} · {formatCompact(board.me.score, locale)} {unit}</Text> : null
+        board.me ? (
+          <Text style={[styles.myRank, { color: colors.textPrimary }]}>
+            {t('games.you')} · #{board.me.rank} · {formatCompact(board.me.score, locale)} {unit}
+          </Text>
+        ) : null
       }
       renderItem={({ item }) => (
         <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
@@ -200,7 +311,21 @@ function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
           <Text style={[styles.score, { color: colors.textPrimary }]}>{formatCompact(item.score, locale)}</Text>
         </View>
       )}
-      ListEmptyComponent={<Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.nobodyRanked')}</Text></Centered>}
+      ListEmptyComponent={
+        <Centered>
+          <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t(empty[0])}</Text>
+          <Text style={[styles.dim, { color: colors.textSecondary }]}>{t(empty[1])}</Text>
+        </Centered>
+      }
+      ListFooterComponent={
+        entries.length > 0 && entries.length < board.total ? (
+          <Pressable onPress={onMore} disabled={loadingMore} style={styles.more}>
+            <Text style={[styles.moreText, { color: colors.primary }]}>
+              {t('rankings.showMore', { count: board.total - entries.length })}
+            </Text>
+          </Pressable>
+        ) : null
+      }
     />
   );
 }
@@ -211,6 +336,9 @@ function Centered({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  choosers: { paddingHorizontal: spacing.lg, gap: spacing.sm, marginBottom: spacing.md },
+  more: { alignItems: 'center', paddingVertical: spacing.md },
+  moreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md },
   close: { fontSize: typography.sizes.lg },
