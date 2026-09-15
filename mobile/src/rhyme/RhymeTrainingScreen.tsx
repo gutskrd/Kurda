@@ -8,6 +8,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { useI18n } from '../i18n/I18nContext';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -59,6 +60,7 @@ function clock(ms: number): string {
 export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const reduceMotion = useReducedMotion();
 
@@ -150,16 +152,16 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
             <Icon name="chevron-left" size={22} color={colors.textSecondary} />
             <Text style={[styles.back, { color: colors.textSecondary }]}>Back</Text>
           </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>Rhyming Words</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhyme.name')}</Text>
           <View style={{ width: 64 }} />
         </View>
 
         {!game ? (
           <GlassCard style={styles.startCard}>
             <Icon name="sparkle" size={44} tone="primary" />
-            <Text style={[styles.startTitle, { color: colors.textPrimary }]}>Rhyming Words</Text>
+            <Text style={[styles.startTitle, { color: colors.textPrimary }]}>{t('games.rhyme.name')}</Text>
             <Text style={[styles.startHint, { color: colors.textSecondary }]}>
-              You’ll get a Kurdish word — find as many real words that rhyme with it as you can before the timer runs out.
+              {t('games.rhyme.rules')}
             </Text>
             {starting ? (
               <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
@@ -170,7 +172,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
           </GlassCard>
         ) : finished ? (
           <GlassCard style={styles.resultCard}>
-            <Text style={[styles.resultTitle, { color: colors.primary }]}>Time’s up!</Text>
+            <Text style={[styles.resultTitle, { color: colors.primary }]}>{t('games.rhyme.timeUpRound')}</Text>
             <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
               {game.accepted} {game.accepted === 1 ? 'rhyme' : 'rhymes'} · {game.score} points
               {game.xpAwarded ? ` · +${game.xpAwarded} XP` : ''}
@@ -182,7 +184,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
           <>
             <View style={styles.promptRow}>
               <View>
-                <Text style={[styles.promptLabel, { color: colors.textSecondary }]}>Rhyme with</Text>
+                <Text style={[styles.promptLabel, { color: colors.textSecondary }]}>{t('games.rhyme.rhymeWith')}</Text>
                 <Text style={[styles.prompt, { color: colors.textPrimary }]}>{game.prompt}</Text>
               </View>
               <View style={styles.metaCol}>
@@ -226,7 +228,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
             </View>
 
             <Pressable onPress={() => void end()} accessibilityRole="button" style={styles.finish}>
-              <Text style={[styles.finishText, { color: colors.textSecondary }]}>Finish now</Text>
+              <Text style={[styles.finishText, { color: colors.textSecondary }]}>{t('games.rhyme.endRound')}</Text>
             </Pressable>
           </>
         )}

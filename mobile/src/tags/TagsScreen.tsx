@@ -13,6 +13,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { claimTag, myClaimedTags, myTags, setTagDisplayed, tagCatalog, unclaimTag } from './api';
 import { TagBadge } from './TagBadge';
 import { claimableCatalog, purchasableTags, tagLabel, type ClaimedTag, type ProfileTags, type TagRow } from './types';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Tags & badges management (KUR-287): shows the user's effective main tag +
@@ -24,6 +25,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
 
   const [profile, setProfile] = useState<ProfileTags | null>(null);
@@ -104,7 +106,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
       <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back">
         <Icon name="chevron-left" size={24} color={colors.textSecondary} />
       </Pressable>
-      <Text style={[styles.title, { color: colors.primary }]}>Tags & badges</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{t('tags.title')}</Text>
       <View style={{ width: 24 }} />
     </View>
   );
@@ -121,13 +123,13 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
           {() => profile == null ? null : (
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             {/* main tag */}
-            <Text style={[styles.section, { color: colors.textSecondary }]}>Main tag</Text>
+            <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.main')}</Text>
             {profile.main ? (
               <View style={styles.chips}>
                 <TagBadge label={profile.main.label} tone="main" />
               </View>
             ) : (
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>No main tag yet.</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.noMain')}</Text>
             )}
             {toBuy.map((t) => (
               <ClayButton key={t.key} label={`Get the ${t.label} tag`} tone="primary" onPress={() => navigation.navigate('Shop')} style={styles.buyBtn} />
@@ -146,9 +148,9 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             ) : null}
 
             {/* my claimed tags */}
-            <Text style={[styles.section, { color: colors.textSecondary }]}>Your tags</Text>
+            <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.yours')}</Text>
             {claimed.length === 0 ? (
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>You haven’t added any tags yet.</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.none')}</Text>
             ) : (
               claimed.map((t) => (
                 <View key={t.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
@@ -170,7 +172,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {/* claim new */}
             {toClaim.length > 0 ? (
               <>
-                <Text style={[styles.section, { color: colors.textSecondary }]}>Add a tag</Text>
+                <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.add')}</Text>
                 {toClaim.map((t) => (
                   <View key={t.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
                     <Text style={[styles.claimLabel, { color: colors.textPrimary }]}>
@@ -202,7 +204,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <View style={styles.consentRow}>
                 <Switch value={consent} onValueChange={setConsent} />
                 <Text style={[styles.consentText, { color: colors.textSecondary }]}>
-                  I consent to showing this sensitive tag. It’s optional and can be removed anytime.
+                  {t('tags.sensitiveConsent')}
                 </Text>
               </View>
             ) : null}

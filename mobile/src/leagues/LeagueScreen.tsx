@@ -53,6 +53,7 @@ const zoneColor = (colors: Palette): Record<Zone, string> => ({
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [tab, setTab] = useState<Tab>('league');
   const [league, setLeague] = useState<LeagueView | null>(null);
@@ -122,8 +123,8 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
           ) : (
             <Centered>
               <Icon name="people" size={48} tone="secondary" />
-              <Text style={[styles.ctaText, { color: colors.textPrimary }]}>Add friends to race them here.</Text>
-              <Text style={[styles.dim, { color: colors.textSecondary }]}>Friends leaderboards are coming soon.</Text>
+              <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t('leagues.addFriends')}</Text>
+              <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.friendsSoon')}</Text>
             </Centered>
           )}
         </AsyncBoundary>
@@ -135,7 +136,8 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
 function LeagueTab({ league }: { league: LeagueView | null }) {
   const { locale } = useI18n();
   const { colors } = useTheme();
-  if (!league) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>No league yet.</Text></Centered>;
+  const { t } = useI18n();
+  if (!league) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.noLeague')}</Text></Centered>;
   const meta = tierMeta(league.tier);
   const total = league.standings.length;
   const self = league.standings.find((s) => s.isSelf);
@@ -152,7 +154,7 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
           <Text style={[styles.tierName, { color: meta.color }]}>{meta.emoji} {meta.label} League</Text>
           <Text style={[styles.countdown, { color: colors.textSecondary }]}>Ends in {countdown(league.weekKey)} · UTC</Text>
           {notStarted ? (
-            <Text style={[styles.cta, { color: colors.accent }]}>Do a lesson to enter this week’s race!</Text>
+            <Text style={[styles.cta, { color: colors.accent }]}>{t('leagues.doALesson')}</Text>
           ) : null}
         </View>
       }
@@ -180,7 +182,8 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
 function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
   const { locale } = useI18n();
   const { colors } = useTheme();
-  if (!board) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>No board yet.</Text></Centered>;
+  const { t } = useI18n();
+  if (!board) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.noBoard')}</Text></Centered>;
   return (
     <FlatList
       data={board.top}
@@ -197,7 +200,7 @@ function BoardTab({ board, unit }: { board: Board | null; unit: string }) {
           <Text style={[styles.score, { color: colors.textPrimary }]}>{formatCompact(item.score, locale)}</Text>
         </View>
       )}
-      ListEmptyComponent={<Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>Nobody ranked yet.</Text></Centered>}
+      ListEmptyComponent={<Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.nobodyRanked')}</Text></Centered>}
     />
   );
 }
