@@ -85,6 +85,18 @@ export function PlayScreen() {
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.solo')}</Text>
           <ClayButton label={t('games.play')} tone="neutral" onPress={() => navigation.navigate('Rhyme')} style={styles.button} />
         </GlassCard>
+
+        <GlassCard style={styles.card}>
+          <Icon name="trophy" size={40} tone="primary" />
+          <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhymeMatch.name')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.online')}</Text>
+          <ClayButton
+            label={t('games.play')}
+            tone="neutral"
+            onPress={() => navigation.navigate('RhymeMatch')}
+            style={styles.button}
+          />
+        </GlassCard>
       </ScrollView>
     </GradientBackground>
   );
