@@ -22,13 +22,13 @@ import {
   buildBoard,
   DEL,
   ENTER,
-  KEYBOARD_ROWS,
-  keyFeedback,
   MAX_ATTEMPTS,
   typeLetter,
   type Feedback,
 } from './board';
 import { buildShareText } from './share';
+import { WordleBoard, cellSizeFor } from './WordleBoard';
+import { WordleKeyboard } from './WordleKeyboard';
 import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -47,6 +47,7 @@ interface WordleGameView {
   status: GameStatus;
   targetLength: number;
   guesses: GuessRow[];
+  /** best status seen per letter across all guesses (upgrade-only) */
   keyboard: Record<string, Feedback>;
   remainingAttempts: number;
   target: string | null;
@@ -109,13 +110,6 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   useEffect(() => loadStats(), [loadStats]);
 
-  const feedbackColor = (f: Feedback | null): string => {
-    if (f === 'green') return colors.success;
-    if (f === 'yellow') return colors.gold;
-    if (f === 'gray') return colors.textSecondary;
-    return 'transparent';
-  };
-  const feedbackWord: Record<Feedback, string> = { green: 'correct', yellow: 'present', gray: 'absent' };
 
   const start = async (mode: 'daily' | 'practice') => {
     setStarting(true);
@@ -220,7 +214,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   const finished = game != null && game.status !== 'playing';
   const board = game ? buildBoard(game.guesses, game.targetLength, draft, { finished }) : [];
-  const cellSize = game ? Math.min(56, Math.floor(300 / Math.max(5, game.targetLength))) : 48;
+  const cellSize = game ? cellSizeFor(game.targetLength) : 48;
 
   return (
     <GradientBackground>
@@ -261,44 +255,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           </GlassCard>
         ) : (
           <>
-            <Animated.View
-              style={[
-                styles.board,
-                { transform: [{ translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) }] },
-              ]}
-            >
-              {board.map((row, ri) => (
-                <View key={ri} style={styles.boardRow}>
-                  {row.cells.map((cell, ci) => {
-                    const bg = feedbackColor(cell.feedback);
-                    const label = cell.letter
-                      ? cell.feedback
-                        ? `${cell.letter}, ${feedbackWord[cell.feedback]}`
-                        : cell.letter
-                      : 'empty';
-                    return (
-                      <View
-                        key={ci}
-                        accessibilityLabel={label}
-                        style={[
-                          styles.cell,
-                          {
-                            width: cellSize,
-                            height: cellSize,
-                            backgroundColor: cell.feedback ? bg : 'transparent',
-                            borderColor: cell.letter && !cell.feedback ? colors.primary : colors.glassBorder,
-                          },
-                        ]}
-                      >
-                        <Text style={[styles.cellText, { color: cell.feedback ? colors.textOnPrimary : colors.textPrimary, fontSize: cellSize * 0.42 }]}>
-                          {cell.letter.toUpperCase()}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              ))}
-            </Animated.View>
+            <WordleBoard board={board} cellSize={cellSize} shake={shake} />
 
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
 
@@ -314,36 +271,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 stats={stats}
               />
             ) : (
-              <View style={styles.keyboard} accessibilityLabel={t('games.wordle.keyboard')}>
-                {KEYBOARD_ROWS.map((krow, ri) => (
-                  <View key={ri} style={styles.keyRow}>
-                    {krow.map((key) => {
-                      const fb = keyFeedback(game.keyboard, key);
-                      const control = key === ENTER || key === DEL;
-                      const kbBg = fb ? feedbackColor(fb) : colors.controlTrack;
-                      const kbLabel = control ? (key === ENTER ? 'Enter' : 'Backspace') : fb ? `${key}, ${feedbackWord[fb]}` : key;
-                      return (
-                        <Pressable
-                          key={key}
-                          onPress={() => onKey(key)}
-                          accessibilityRole="button"
-                          accessibilityLabel={kbLabel}
-                          disabled={submitting}
-                          style={[styles.key, control && styles.keyWide, { backgroundColor: kbBg, borderColor: colors.glassBorder }]}
-                        >
-                          {key === DEL ? (
-                            <Icon name="close" size={16} color={colors.textPrimary} />
-                          ) : (
-                            <Text style={[styles.keyText, { color: fb ? colors.textOnPrimary : colors.textPrimary }]}>
-                              {control ? '↵' : key.toUpperCase()}
-                            </Text>
-                          )}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                ))}
-              </View>
+              <WordleKeyboard keyboard={game.keyboard} onKey={onKey} disabled={submitting} />
             )}
           </>
         )}
@@ -452,16 +380,7 @@ const styles = StyleSheet.create({
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   startActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
   startStats: { fontSize: typography.sizes.sm, marginTop: spacing.md },
-  board: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.md },
-  boardRow: { flexDirection: 'row', gap: spacing.xs },
-  cell: { borderRadius: radii.sm, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  cellText: { fontWeight: typography.weights.bold },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
-  keyboard: { gap: spacing.xs, marginTop: spacing.lg },
-  keyRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
-  key: { minWidth: 26, flex: 1, maxWidth: 34, height: 46, borderRadius: radii.sm, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center' },
-  keyWide: { maxWidth: 48, flex: 1.4 },
-  keyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   result: { gap: spacing.md, marginTop: spacing.md },
   resultCard: { gap: spacing.sm },
   resultTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
