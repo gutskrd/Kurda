@@ -18,7 +18,8 @@
       "bundleIdentifier": "app.kurda.mobile",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationCategoryType": "public.app-category.entertainment"
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
