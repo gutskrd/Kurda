@@ -73,7 +73,7 @@ export function ProfileScreen() {
         <Pressable
           onPress={changePhoto}
           accessibilityRole="button"
-          accessibilityLabel="Change profile photo"
+          accessibilityLabel={t('profile.changePhoto')}
           style={styles.avatarWrap}
         >
           <InitialsAvatar

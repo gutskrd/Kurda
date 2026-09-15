@@ -17,6 +17,7 @@ import { flattenMap, isLaunchable, stateHint, type MapRow } from '../coursemap/n
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Learn tab (KUR-040): the daily-goal ring + a scrollable skill-tree map of
@@ -27,6 +28,7 @@ export function LearnScreen() {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
@@ -133,7 +135,7 @@ export function LearnScreen() {
           loading ? (
             <SkeletonList style={{ marginTop: spacing.md }} />
           ) : (
-            <Text style={[styles.empty, { color: colors.textSecondary }]}>No course content yet.</Text>
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('learn.noCourses')}</Text>
           )
         }
         // virtualization tuning for large courses (100+ nodes)

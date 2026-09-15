@@ -45,27 +45,6 @@ mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Time’s up!
 mobile/src/rhyme/RhymeTrainingScreen.tsx  You’ll get a Kurdish word — find as many real words that rhyme with it as you c
-mobile/src/screens/AppearanceScreen.tsx  Choose light, dark, or follow your device.
-mobile/src/screens/AppearanceScreen.tsx  Currently showing the
-mobile/src/screens/AppearanceScreen.tsx  Frosted surfaces float over a spatial gradient with a soft catch-light and a ha
-mobile/src/screens/AppearanceScreen.tsx  Liquid glass
-mobile/src/screens/DictionaryScreen.tsx  No exact match — showing closest words
-mobile/src/screens/DictionaryScreen.tsx  accessibilityLabel="Dictionary search"
-mobile/src/screens/GameScreen.tsx  Practice missed words
-mobile/src/screens/GameScreen.tsx  Rematch offer expired
-mobile/src/screens/GameScreen.tsx  Too late — answer not counted
-mobile/src/screens/LearnScreen.tsx  No course content yet.
-mobile/src/screens/PlayScreen.tsx  Find Kurdish words that rhyme, against the clock — solo.
-mobile/src/screens/PlayScreen.tsx  Guess the daily word in six tries — solo.
-mobile/src/screens/PlayScreen.tsx  Head-to-head Kurdish quiz — fastest correct answers win.
-mobile/src/screens/PlayScreen.tsx  Kurdish Wordle
-mobile/src/screens/PlayScreen.tsx  Rhyming Words
-mobile/src/screens/ProfileScreen.tsx  accessibilityLabel="Change profile photo"
-mobile/src/screens/SettingsScreen.tsx  Who can see my profile
-mobile/src/screens/SettingsScreen.tsx  title="Appearance & preview"
-mobile/src/screens/SettingsScreen.tsx  title="Delete account"
-mobile/src/screens/SettingsScreen.tsx  title="Notification center"
-mobile/src/screens/SettingsScreen.tsx  title="Notification settings"
 mobile/src/shop/ShopScreen.tsx  The shop is empty right now — check back soon.
 mobile/src/social/PublicProfileScreen.tsx  Challenge to 1v1
 mobile/src/social/PublicProfileScreen.tsx  This profile is private.

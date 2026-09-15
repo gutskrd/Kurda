@@ -3,6 +3,7 @@ import { THEME_PREFERENCES, PREFERENCE_LABEL, type ThemePreference } from '../th
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Appearance settings + live design showcase (KUR-268 / KUR-270). Picks
@@ -11,6 +12,7 @@ import { radii, spacing, typography } from '../theme/tokens';
  */
 export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { colors, scheme, preference, setPreference } = useTheme();
+  const { t } = useI18n();
 
   return (
     <GradientBackground>
@@ -26,7 +28,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
         <GlassCard>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Theme</Text>
           <Text style={[styles.cardHint, { color: colors.textSecondary }]}>
-            Choose light, dark, or follow your device.
+            {t('appearance.help')}
           </Text>
           <View style={{ marginTop: spacing.md }}>
             <Segmented<ThemePreference>
@@ -37,7 +39,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
             />
           </View>
           <Text style={[styles.activeNote, { color: colors.textSecondary }]}>
-            Currently showing the <Text style={{ color: colors.primary, fontWeight: typography.weights.bold }}>{scheme}</Text> theme.
+            {t('appearance.currently')} <Text style={{ color: colors.primary, fontWeight: typography.weights.bold }}>{scheme}</Text> theme.
           </Text>
         </GlassCard>
 
@@ -46,10 +48,10 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
         <GlassCard>
           <View style={styles.previewHead}>
             <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Liquid glass</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('appearance.glass.name')}</Text>
           </View>
           <Text style={[styles.cardHint, { color: colors.textSecondary }]}>
-            Frosted surfaces float over a spatial gradient with a soft catch-light and a hairline edge.
+            {t('appearance.glass.help')}
           </Text>
 
           <View style={styles.tiles}>
