@@ -419,7 +419,10 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   headerSpacer: { width: 22 },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  // flex + centre so a long translated name shares the row with the back
+  // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
+  // kurdî" is three
+  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

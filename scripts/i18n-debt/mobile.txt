@@ -40,14 +40,6 @@ mobile/src/net/AsyncBoundary.tsx  Nothing here yet.
 mobile/src/notifications/NotificationCenterScreen.tsx  You're all caught up.
 mobile/src/practice/PracticeScreen.tsx  label="Try again"
 mobile/src/rewards/DailyRewardCard.tsx  Come back tomorrow
-mobile/src/rhyme/RhymeTrainingScreen.tsx  Already found
-mobile/src/rhyme/RhymeTrainingScreen.tsx  Doesn’t rhyme
-mobile/src/rhyme/RhymeTrainingScreen.tsx  Not a Kurdish word
-mobile/src/rhyme/RhymeTrainingScreen.tsx  Not allowed
-mobile/src/rhyme/RhymeTrainingScreen.tsx  That’s the prompt word
-mobile/src/rhyme/RhymeTrainingScreen.tsx  Try another word
-mobile/src/rhyme/RhymeTrainingScreen.tsx  label="Play again"
-mobile/src/rhyme/RhymeTrainingScreen.tsx  label="Start training"
 mobile/src/screens/DictionaryScreen.tsx  message="Couldn’t search right now. Check your connection and try again."
 mobile/src/screens/GameScreen.tsx  Forfeit match?
 mobile/src/screens/GameScreen.tsx  Good game
@@ -84,11 +76,3 @@ mobile/src/username/ChangeUsernameScreen.tsx  Couldn’t update your username. P
 mobile/src/username/ChangeUsernameScreen.tsx  Looks good — tap Save to check availability.
 mobile/src/username/ChangeUsernameScreen.tsx  Save username
 mobile/src/username/ChangeUsernameScreen.tsx  That’s already your username.
-mobile/src/wordle/WordleScreen.tsx  Not a Kurdish word
-mobile/src/wordle/WordleScreen.tsx  Not enough letters
-mobile/src/wordle/WordleScreen.tsx  Out of tries
-mobile/src/wordle/WordleScreen.tsx  Save to vocabulary
-mobile/src/wordle/WordleScreen.tsx  Saved to vocabulary
-mobile/src/wordle/WordleScreen.tsx  Wrong length
-mobile/src/wordle/WordleScreen.tsx  label="Daily puzzle"
-mobile/src/wordle/WordleScreen.tsx  label="Win %"
