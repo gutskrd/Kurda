@@ -12,6 +12,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { KURDISH_KEYS, insertAtSelection } from '../kurdishKeys';
 import type { Exercise } from '../types';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface Props {
   exercise: Exercise;
@@ -23,6 +24,7 @@ interface Props {
 /** Free-text writing with a Kurdish special-character hint bar (KUR-037). */
 export function WritingExercise({ exercise, text, onChangeText, disabled }: Props) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   const onSelectionChange = (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) =>
@@ -36,7 +38,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Write your answer</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.write.prompt')}</Text>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {/* Kurdish keyboard hint bar */}
@@ -66,7 +68,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
         autoCapitalize="none"
         autoCorrect={false}
         style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
-        accessibilityLabel="Your written answer"
+        accessibilityLabel={t('lesson.write.answerLabel')}
       />
     </View>
   );

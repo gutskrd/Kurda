@@ -5,6 +5,7 @@ import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useAudio } from '../useAudio';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface Props {
   exercise: Exercise;
@@ -17,6 +18,7 @@ interface Props {
 
 export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabled }: Props) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const audio = useAudio(exercise.audioUrl);
   const skippedRef = useRef(false);
 
@@ -31,22 +33,22 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Listen and type what you hear</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.listen.prompt')}</Text>
 
       <View style={styles.controls}>
         <Pressable
           disabled={disabled || cannotPlay}
           onPress={() => audio.play(1)}
-          accessibilityLabel="Play audio"
+          accessibilityLabel={t('lesson.listen.play')}
           style={[styles.playButton, { backgroundColor: colors.primary }, (disabled || cannotPlay) && styles.dim]}
         >
           <Icon name="speaker" size={20} color={colors.textOnPrimary} />
-          <Text style={[styles.playText, { color: colors.textOnPrimary }]}>Play</Text>
+          <Text style={[styles.playText, { color: colors.textOnPrimary }]}>{t('lesson.listen.playShort')}</Text>
         </Pressable>
         <Pressable
           disabled={disabled || cannotPlay}
           onPress={() => audio.play(0.75)}
-          accessibilityLabel="Play at slow speed"
+          accessibilityLabel={t('lesson.listen.playSlow')}
           style={[styles.slowButton, { borderColor: colors.primary }, (disabled || cannotPlay) && styles.dim]}
         >
           <Text style={[styles.slowText, { color: colors.primary }]}>0.75×</Text>
@@ -64,11 +66,11 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         autoCapitalize="none"
         autoCorrect={false}
         style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
-        accessibilityLabel="What you heard"
+        accessibilityLabel={t('lesson.listen.answerLabel')}
       />
 
       <Pressable disabled={disabled} onPress={onSkip} accessibilityRole="button" style={styles.skip}>
-        <Text style={[styles.skipText, { color: colors.textSecondary }]}>Can’t listen now — skip</Text>
+        <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.listen.skip')}</Text>
       </Pressable>
     </View>
   );

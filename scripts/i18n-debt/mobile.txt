@@ -22,23 +22,6 @@ mobile/src/leagues/LeagueScreen.tsx  Friends leaderboards are coming soon.
 mobile/src/leagues/LeagueScreen.tsx  No board yet.
 mobile/src/leagues/LeagueScreen.tsx  No league yet.
 mobile/src/leagues/LeagueScreen.tsx  Nobody ranked yet.
-mobile/src/lesson/LessonPlayerScreen.tsx  Couldn’t load the lesson.
-mobile/src/lesson/LessonPlayerScreen.tsx  accessibilityLabel="Grammar tips"
-mobile/src/lesson/LessonPlayerScreen.tsx  accessibilityLabel="Quit lesson"
-mobile/src/lesson/components/ListeningExercise.tsx  Can’t listen now — skip
-mobile/src/lesson/components/ListeningExercise.tsx  Listen and type what you hear
-mobile/src/lesson/components/ListeningExercise.tsx  accessibilityLabel="Play at slow speed"
-mobile/src/lesson/components/ListeningExercise.tsx  accessibilityLabel="Play audio"
-mobile/src/lesson/components/ListeningExercise.tsx  accessibilityLabel="What you heard"
-mobile/src/lesson/components/MatchPairsExercise.tsx  Match the pairs
-mobile/src/lesson/components/SpeakingExercise.tsx  Can’t do this now — skip
-mobile/src/lesson/components/SpeakingExercise.tsx  Recording isn’t available on this device.
-mobile/src/lesson/components/SpeakingExercise.tsx  Say it aloud
-mobile/src/lesson/components/SpeakingExercise.tsx  accessibilityLabel="Start recording"
-mobile/src/lesson/components/SpeakingExercise.tsx  accessibilityLabel="Stop recording"
-mobile/src/lesson/components/TranslateExercise.tsx  accessibilityLabel="Your translation"
-mobile/src/lesson/components/WritingExercise.tsx  Write your answer
-mobile/src/lesson/components/WritingExercise.tsx  accessibilityLabel="Your written answer"
 mobile/src/library/LibraryComposeScreen.tsx  Optional narration
 mobile/src/library/LibraryPostScreen.tsx  No comments yet.
 mobile/src/library/LibraryPostScreen.tsx  accessibilityLabel="Post comment"
@@ -52,18 +35,10 @@ mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Post comment"
 mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Report this comment"
 mobile/src/memes/MemeDetailScreen.tsx  accessibilityLabel="Report this post"
 mobile/src/memes/MemeFeedScreen.tsx  No posts yet — be the first!
-mobile/src/net/AsyncBoundary.tsx  Check your connection — your content will load when you’re back.
-mobile/src/net/AsyncBoundary.tsx  Try again
-mobile/src/net/AsyncBoundary.tsx  You’re offline
-mobile/src/net/AsyncBoundary.tsx  accessibilityLabel="Try again"
-mobile/src/net/OfflineBanner.tsx  No internet connection
 mobile/src/notifications/NotificationCenterScreen.tsx  Mark all read
 mobile/src/notifications/NotificationsScreen.tsx  Enable quiet hours
 mobile/src/notifications/NotificationsScreen.tsx  No notifications are sent during this window.
 mobile/src/notifications/NotificationsScreen.tsx  Quiet hours
-mobile/src/practice/PracticeScreen.tsx  Couldn’t start practice.
-mobile/src/practice/PracticeScreen.tsx  Finish a lesson to start building your review deck.
-mobile/src/practice/PracticeScreen.tsx  Nothing to review yet
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Finish now
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyme with
 mobile/src/rhyme/RhymeTrainingScreen.tsx  Rhyming Words
@@ -104,7 +79,6 @@ mobile/src/tags/TagsScreen.tsx  No main tag yet.
 mobile/src/tags/TagsScreen.tsx  Tags & badges
 mobile/src/tags/TagsScreen.tsx  You haven’t added any tags yet.
 mobile/src/tags/TagsScreen.tsx  Your tags
-mobile/src/theme/glass.tsx  Couldn’t load
 mobile/src/username/ChangeUsernameScreen.tsx  New username
 mobile/src/wordle/WordleScreen.tsx  Guess the Kurdish word in six tries. Green is right, yellow is close.
 mobile/src/wordle/WordleScreen.tsx  Kurdish Wordle

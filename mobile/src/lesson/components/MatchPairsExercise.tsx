@@ -9,6 +9,7 @@ import {
   type MatchState,
 } from '../match';
 import type { Exercise } from '../types';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface Props {
   exercise: Exercise;
@@ -19,6 +20,7 @@ interface Props {
 
 export function MatchPairsExercise({ exercise, state, onChange, disabled }: Props) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const token = (
     label: string,
     matched: boolean,
@@ -45,7 +47,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled }: Prop
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Match the pairs</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.match.prompt')}</Text>
       <View style={styles.columns}>
         <View style={styles.column}>
           {(exercise.lefts ?? []).map((left) =>

@@ -2,6 +2,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface Props {
   exercise: Exercise;
@@ -12,9 +13,10 @@ interface Props {
 
 export function TranslateExercise({ exercise, text, onChangeText, disabled }: Props) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Translate</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.translate.prompt')}</Text>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
       <TextInput
         value={text}
@@ -25,7 +27,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled }: Pr
         autoCapitalize="none"
         autoCorrect={false}
         style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
-        accessibilityLabel="Your translation"
+        accessibilityLabel={t('lesson.translate.answerLabel')}
       />
     </View>
   );
