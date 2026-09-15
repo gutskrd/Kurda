@@ -84,6 +84,8 @@ const NOT_COPY = new Set([
   'Slab',
   'Mono',
   'Premium',
+  // a football club, on a sticker, beside Kurdistan and Zilan
+  'Amed Spor',
 ]);
 
 /**
@@ -115,7 +117,24 @@ const READER_FACING =
  * then a space — and quietly excused every sentence that opens with the
  * article "A ".
  */
-const NOT_LITERAL = [/^[MmLlHhVvCcSsQqTtAaZz]\s*-?[\d.]/];
+const NOT_LITERAL = [
+  /^[MmLlHhVvCcSsQqTtAaZz]\s*-?[\d.]/,
+  // a CSS font stack. "Georgia, "Times New Roman", serif" reads like a phrase
+  // and is a machine instruction; the generic family at the end, or the word
+  // Emoji in a system font's name, is what gives it away
+  /(^|,\s*)(serif|sans-serif|monospace|cursive|fantasy|system-ui)$/,
+  /\bEmoji$/,
+];
+
+/**
+ * Files whose strings have no reader whose language we know.
+ *
+ * The Cloudflare Worker renders link previews for crawlers and chat apps. It
+ * runs before anyone signs in, has no account to read a locale from, and its
+ * output is consumed by Slack and WhatsApp rather than by the app. Translating
+ * it would mean guessing, so it says one thing in English on purpose.
+ */
+const NOT_READER_FACING = [/[\\/]worker\.ts$/];
 
 /**
  * Where a capitalised phrase is code rather than copy.
@@ -132,7 +151,7 @@ function sources(dir, out = []) {
     if (entry.isDirectory()) {
       if (entry.name === 'i18n' || entry.name === 'test') continue;
       sources(p, out);
-    } else if (/\.tsx$/.test(entry.name) && !/\.test\.tsx$/.test(entry.name)) {
+    } else if (/\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) {
       out.push(p);
     }
   }
@@ -189,6 +208,7 @@ function isCopy(value) {
 const problems = [];
 
 for (const file of sources(SRC)) {
+  if (NOT_READER_FACING.some((re) => re.test(file))) continue;
   const src = withoutComments(readFileSync(file, 'utf8'));
   const lines = src.split(/\r?\n/);
   const asProp = new Set();

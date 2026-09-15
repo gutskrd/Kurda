@@ -650,8 +650,8 @@ export function PhotoEditor({
                     key={p.src}
                     type="button"
                     className="sticker sticker-pic"
-                    aria-label={p.name}
-                    title={p.name}
+                    aria-label={p.labelKey ? t(p.labelKey) : p.name}
+                    title={p.labelKey ? t(p.labelKey) : p.name}
                     onClick={() => chooseSticker(p.src, p.name)}
                   >
                     <img src={p.src} alt="" />
