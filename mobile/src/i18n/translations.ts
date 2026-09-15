@@ -472,7 +472,36 @@ export type TranslationKey =
   | 'rewards.comeBackTomorrow'
   | 'shop.buy'
   | 'games.quiz.goodGame'
-  | 'games.quiz.questionOf';
+  | 'games.quiz.questionOf'
+  | 'comments.removed'
+  | 'welcome.googleUnavailable'
+  | 'welcome.googleNoToken'
+  | 'field.required'
+  | 'field.invalidEmail'
+  | 'field.passwordTooShort'
+  | 'field.passwordTooLong'
+  | 'field.passwordNeedsLetter'
+  | 'field.passwordNeedsNumber'
+  | 'field.invalidUsername'
+  | 'field.passwordRules'
+  | 'coursemap.locked'
+  | 'coursemap.rusty'
+  | 'dictionary.bookmark'
+  | 'dictionary.removeBookmark'
+  | 'dictionary.searchFailed'
+  | 'lesson.offlineRetry'
+  | 'lesson.almostTypo'
+  | 'lesson.notQuite'
+  | 'lesson.complete'
+  | 'lesson.outOfHearts'
+  | 'notifications.allCaughtUp'
+  | 'notifications.pref.streak'
+  | 'notifications.pref.friends'
+  | 'notifications.pref.games'
+  | 'notifications.pref.news'
+  | 'learn.notAvailableYet'
+  | 'tags.adding'
+  | 'comments.voice';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -921,6 +950,35 @@ const en: Catalog = {
   'shop.buy': 'Buy',
   'games.quiz.goodGame': 'Good game.',
   'games.quiz.questionOf': 'Question {index} of {total}',
+  'comments.removed': 'This comment was removed.',
+  'welcome.googleUnavailable': 'Google sign-in isn’t available in this build yet.',
+  'welcome.googleNoToken': 'Google didn’t return an ID token. Please try again.',
+  'field.required': 'Required',
+  'field.invalidEmail': 'Enter a valid email address',
+  'field.passwordTooShort': 'Password must be at least {min} characters',
+  'field.passwordTooLong': 'Password must be at most {max} characters',
+  'field.passwordNeedsLetter': 'Password must include at least one letter',
+  'field.passwordNeedsNumber': 'Password must include at least one number',
+  'field.invalidUsername': 'Username must be {usernameMin}–{usernameMax} characters (letters, digits or _)',
+  'field.passwordRules': 'At least {min} characters, including a letter and a number.',
+  'coursemap.locked': 'Complete the previous skill to unlock this one.',
+  'coursemap.rusty': 'This skill is getting rusty — practice to restore it.',
+  'dictionary.bookmark': 'Bookmark word',
+  'dictionary.removeBookmark': 'Remove bookmark',
+  'dictionary.searchFailed': 'Couldn’t search right now. Check your connection and try again.',
+  'lesson.offlineRetry': 'You’re offline — tap to retry',
+  'lesson.almostTypo': 'Almost — typo accepted',
+  'lesson.notQuite': 'Not quite',
+  'lesson.complete': 'Lesson complete!',
+  'lesson.outOfHearts': 'Out of hearts',
+  'notifications.allCaughtUp': 'You’re all caught up.',
+  'notifications.pref.streak': 'Streak reminders',
+  'notifications.pref.friends': 'Friend activity',
+  'notifications.pref.games': 'Game invites & results',
+  'notifications.pref.news': 'News & offers',
+  'learn.notAvailableYet': 'Not available yet.',
+  'tags.adding': 'Adding…',
+  'comments.voice': '🔊 Voice comment',
 };
 
 const ku: Catalog = {
@@ -1368,6 +1426,35 @@ const ku: Catalog = {
   'shop.buy': 'Bikire',
   'games.quiz.goodGame': 'Lîstikeke baş.',
   'games.quiz.questionOf': 'Pirsa {index} ji {total}',
+  'comments.removed': 'Ev şîrove hat rakirin.',
+  'welcome.googleUnavailable': 'Têketina bi Google di vê guhertoyê de hê ne gengaz e.',
+  'welcome.googleNoToken': 'Google tokenek nasnameyê venegerand. Ji kerema xwe dîsa biceribîne.',
+  'field.required': 'Pêwîst e',
+  'field.invalidEmail': 'Navnîşaneke e-nameyê ya derbasdar binivîse',
+  'field.passwordTooShort': 'Divê şîfre herî kêm {min} tîp be',
+  'field.passwordTooLong': 'Divê şîfre herî zêde {max} tîp be',
+  'field.passwordNeedsLetter': 'Divê di şîfreyê de herî kêm tîpek hebe',
+  'field.passwordNeedsNumber': 'Divê di şîfreyê de herî kêm hejmarek hebe',
+  'field.invalidUsername': 'Divê navê bikarhêner {usernameMin}–{usernameMax} tîp be (tîp, hejmar an _)',
+  'field.passwordRules': 'Herî kêm {min} tîp, tê de tîpek û hejmarek.',
+  'coursemap.locked': 'Ji bo vekirina vê, jêhatiya berê biqedîne.',
+  'coursemap.rusty': 'Ev jêhatî zeng digire — temrîn bike da ku vegere.',
+  'dictionary.bookmark': 'Peyvê nîşan bike',
+  'dictionary.removeBookmark': 'Nîşankirinê rake',
+  'dictionary.searchFailed': 'Niha lêgerîn nabe. Girêdana xwe kontrol bike û dîsa biceribîne.',
+  'lesson.offlineRetry': 'Tu negirêdayî yî — ji bo dubarekirinê bitikîne',
+  'lesson.almostTypo': 'Hema hema — çewtiya nivîsê hate qebûlkirin',
+  'lesson.notQuite': 'Ne bi temamî',
+  'lesson.complete': 'Ders qediya!',
+  'lesson.outOfHearts': 'Dil neman',
+  'notifications.allCaughtUp': 'Her tişt xwendî ye.',
+  'notifications.pref.streak': 'Bîrxistinên rêzê',
+  'notifications.pref.friends': 'Çalakiya hevalan',
+  'notifications.pref.games': 'Vexwendin û encamên lîstikan',
+  'notifications.pref.news': 'Nûçe û pêşniyar',
+  'learn.notAvailableYet': 'Hê ne gengaz e.',
+  'tags.adding': 'Tê zêdekirin…',
+  'comments.voice': '🔊 Şîroveya dengî',
 };
 
 const de: Catalog = {
@@ -1815,6 +1902,35 @@ const de: Catalog = {
   'shop.buy': 'Kaufen',
   'games.quiz.goodGame': 'Gutes Spiel.',
   'games.quiz.questionOf': 'Frage {index} von {total}',
+  'comments.removed': 'Dieser Kommentar wurde entfernt.',
+  'welcome.googleUnavailable': 'Google-Anmeldung ist in dieser Version noch nicht verfügbar.',
+  'welcome.googleNoToken': 'Google hat kein ID-Token zurückgegeben. Bitte versuche es erneut.',
+  'field.required': 'Erforderlich',
+  'field.invalidEmail': 'Gib eine gültige E-Mail-Adresse ein',
+  'field.passwordTooShort': 'Das Passwort muss mindestens {min} Zeichen haben',
+  'field.passwordTooLong': 'Das Passwort darf höchstens {max} Zeichen haben',
+  'field.passwordNeedsLetter': 'Das Passwort muss mindestens einen Buchstaben enthalten',
+  'field.passwordNeedsNumber': 'Das Passwort muss mindestens eine Zahl enthalten',
+  'field.invalidUsername': 'Der Benutzername muss {usernameMin}–{usernameMax} Zeichen haben (Buchstaben, Ziffern oder _)',
+  'field.passwordRules': 'Mindestens {min} Zeichen, davon ein Buchstabe und eine Zahl.',
+  'coursemap.locked': 'Schließe die vorherige Fähigkeit ab, um diese freizuschalten.',
+  'coursemap.rusty': 'Diese Fähigkeit rostet ein — übe, um sie aufzufrischen.',
+  'dictionary.bookmark': 'Wort merken',
+  'dictionary.removeBookmark': 'Merkzeichen entfernen',
+  'dictionary.searchFailed': 'Suche gerade nicht möglich. Prüfe deine Verbindung und versuche es erneut.',
+  'lesson.offlineRetry': 'Du bist offline — zum Wiederholen tippen',
+  'lesson.almostTypo': 'Fast — Tippfehler akzeptiert',
+  'lesson.notQuite': 'Nicht ganz',
+  'lesson.complete': 'Lektion abgeschlossen!',
+  'lesson.outOfHearts': 'Keine Herzen mehr',
+  'notifications.allCaughtUp': 'Du bist auf dem neuesten Stand.',
+  'notifications.pref.streak': 'Serien-Erinnerungen',
+  'notifications.pref.friends': 'Freunde-Aktivität',
+  'notifications.pref.games': 'Spieleinladungen & Ergebnisse',
+  'notifications.pref.news': 'Neuigkeiten & Angebote',
+  'learn.notAvailableYet': 'Noch nicht verfügbar.',
+  'tags.adding': 'Wird hinzugefügt…',
+  'comments.voice': '🔊 Sprachkommentar',
 };
 
 const es: Catalog = {
@@ -2262,6 +2378,35 @@ const es: Catalog = {
   'shop.buy': 'Comprar',
   'games.quiz.goodGame': 'Buena partida.',
   'games.quiz.questionOf': 'Pregunta {index} de {total}',
+  'comments.removed': 'Este comentario se ha eliminado.',
+  'welcome.googleUnavailable': 'El inicio de sesión con Google aún no está disponible en esta versión.',
+  'welcome.googleNoToken': 'Google no ha devuelto un token de identidad. Inténtalo de nuevo.',
+  'field.required': 'Obligatorio',
+  'field.invalidEmail': 'Introduce una dirección de correo válida',
+  'field.passwordTooShort': 'La contraseña debe tener al menos {min} caracteres',
+  'field.passwordTooLong': 'La contraseña debe tener como máximo {max} caracteres',
+  'field.passwordNeedsLetter': 'La contraseña debe incluir al menos una letra',
+  'field.passwordNeedsNumber': 'La contraseña debe incluir al menos un número',
+  'field.invalidUsername': 'El nombre de usuario debe tener entre {usernameMin} y {usernameMax} caracteres (letras, números o _)',
+  'field.passwordRules': 'Al menos {min} caracteres, incluyendo una letra y un número.',
+  'coursemap.locked': 'Completa la habilidad anterior para desbloquear esta.',
+  'coursemap.rusty': 'Esta habilidad se está oxidando: practica para recuperarla.',
+  'dictionary.bookmark': 'Guardar la palabra',
+  'dictionary.removeBookmark': 'Quitar de guardados',
+  'dictionary.searchFailed': 'No se puede buscar ahora. Comprueba tu conexión e inténtalo de nuevo.',
+  'lesson.offlineRetry': 'Estás sin conexión: toca para reintentar',
+  'lesson.almostTypo': 'Casi: se acepta la errata',
+  'lesson.notQuite': 'No del todo',
+  'lesson.complete': '¡Lección completada!',
+  'lesson.outOfHearts': 'Sin corazones',
+  'notifications.allCaughtUp': 'Estás al día.',
+  'notifications.pref.streak': 'Recordatorios de racha',
+  'notifications.pref.friends': 'Actividad de amigos',
+  'notifications.pref.games': 'Invitaciones y resultados de partidas',
+  'notifications.pref.news': 'Novedades y ofertas',
+  'learn.notAvailableYet': 'Aún no disponible.',
+  'tags.adding': 'Añadiendo…',
+  'comments.voice': '🔊 Comentario de voz',
 };
 
 const tr: Catalog = {
@@ -2709,6 +2854,35 @@ const tr: Catalog = {
   'shop.buy': 'Satın al',
   'games.quiz.goodGame': 'İyi oyundu.',
   'games.quiz.questionOf': '{total} sorudan {index}. soru',
+  'comments.removed': 'Bu yorum kaldırıldı.',
+  'welcome.googleUnavailable': 'Google ile giriş bu sürümde henüz kullanılamıyor.',
+  'welcome.googleNoToken': 'Google bir kimlik jetonu döndürmedi. Lütfen tekrar deneyin.',
+  'field.required': 'Zorunlu',
+  'field.invalidEmail': 'Geçerli bir e-posta adresi gir',
+  'field.passwordTooShort': 'Şifre en az {min} karakter olmalı',
+  'field.passwordTooLong': 'Şifre en fazla {max} karakter olmalı',
+  'field.passwordNeedsLetter': 'Şifre en az bir harf içermeli',
+  'field.passwordNeedsNumber': 'Şifre en az bir rakam içermeli',
+  'field.invalidUsername': 'Kullanıcı adı {usernameMin}–{usernameMax} karakter olmalı (harf, rakam veya _)',
+  'field.passwordRules': 'En az {min} karakter; bir harf ve bir rakam içermeli.',
+  'coursemap.locked': 'Bunu açmak için önceki beceriyi tamamla.',
+  'coursemap.rusty': 'Bu beceri paslanıyor — geri kazanmak için alıştırma yap.',
+  'dictionary.bookmark': 'Kelimeyi kaydet',
+  'dictionary.removeBookmark': 'Kaydı kaldır',
+  'dictionary.searchFailed': 'Şu anda arama yapılamıyor. Bağlantını kontrol edip tekrar dene.',
+  'lesson.offlineRetry': 'Çevrimdışısın — yeniden denemek için dokun',
+  'lesson.almostTypo': 'Neredeyse — yazım hatası kabul edildi',
+  'lesson.notQuite': 'Tam değil',
+  'lesson.complete': 'Ders tamamlandı!',
+  'lesson.outOfHearts': 'Kalp kalmadı',
+  'notifications.allCaughtUp': 'Her şeyi gördün.',
+  'notifications.pref.streak': 'Seri hatırlatmaları',
+  'notifications.pref.friends': 'Arkadaş etkinliği',
+  'notifications.pref.games': 'Oyun davetleri ve sonuçları',
+  'notifications.pref.news': 'Haberler ve teklifler',
+  'learn.notAvailableYet': 'Henüz kullanılamıyor.',
+  'tags.adding': 'Ekleniyor…',
+  'comments.voice': '🔊 Sesli yorum',
 };
 
 const ar: Catalog = {
@@ -3156,6 +3330,35 @@ const ar: Catalog = {
   'shop.buy': 'اشترِ',
   'games.quiz.goodGame': 'مباراة جيدة.',
   'games.quiz.questionOf': 'السؤال {index} من {total}',
+  'comments.removed': 'أُزيل هذا التعليق.',
+  'welcome.googleUnavailable': 'تسجيل الدخول عبر Google غير متاح في هذه النسخة بعد.',
+  'welcome.googleNoToken': 'لم تُرجِع Google رمز هوية. يُرجى المحاولة مرة أخرى.',
+  'field.required': 'مطلوب',
+  'field.invalidEmail': 'أدخل عنوان بريد إلكتروني صالح',
+  'field.passwordTooShort': 'يجب ألا تقل كلمة المرور عن {min} أحرف',
+  'field.passwordTooLong': 'يجب ألا تزيد كلمة المرور عن {max} حرفًا',
+  'field.passwordNeedsLetter': 'يجب أن تتضمّن كلمة المرور حرفًا واحدًا على الأقل',
+  'field.passwordNeedsNumber': 'يجب أن تتضمّن كلمة المرور رقمًا واحدًا على الأقل',
+  'field.invalidUsername': 'يجب أن يكون اسم المستخدم بين {usernameMin} و{usernameMax} حرفًا (أحرف أو أرقام أو _)',
+  'field.passwordRules': '{min} أحرف على الأقل، تتضمّن حرفًا ورقمًا.',
+  'coursemap.locked': 'أكمل المهارة السابقة لفتح هذه.',
+  'coursemap.rusty': 'هذه المهارة تصدأ — تدرّب لاستعادتها.',
+  'dictionary.bookmark': 'احفظ الكلمة',
+  'dictionary.removeBookmark': 'إزالة الحفظ',
+  'dictionary.searchFailed': 'تعذّر البحث الآن. تحقّق من اتصالك وحاول مرة أخرى.',
+  'lesson.offlineRetry': 'أنت غير متصل — اضغط لإعادة المحاولة',
+  'lesson.almostTypo': 'تقريبًا — قُبل الخطأ المطبعي',
+  'lesson.notQuite': 'ليس تمامًا',
+  'lesson.complete': 'اكتمل الدرس!',
+  'lesson.outOfHearts': 'نفدت القلوب',
+  'notifications.allCaughtUp': 'لقد اطّلعت على كل شيء.',
+  'notifications.pref.streak': 'تذكيرات السلسلة',
+  'notifications.pref.friends': 'نشاط الأصدقاء',
+  'notifications.pref.games': 'دعوات المباريات ونتائجها',
+  'notifications.pref.news': 'الأخبار والعروض',
+  'learn.notAvailableYet': 'غير متاح بعد.',
+  'tags.adding': 'جارٍ الإضافة…',
+  'comments.voice': '🔊 تعليق صوتي',
 };
 
 const fr: Catalog = {
@@ -3603,6 +3806,35 @@ const fr: Catalog = {
   'shop.buy': 'Acheter',
   'games.quiz.goodGame': 'Belle partie.',
   'games.quiz.questionOf': 'Question {index} sur {total}',
+  'comments.removed': 'Ce commentaire a été supprimé.',
+  'welcome.googleUnavailable': 'La connexion Google n’est pas encore disponible dans cette version.',
+  'welcome.googleNoToken': 'Google n’a pas renvoyé de jeton d’identité. Réessaie.',
+  'field.required': 'Obligatoire',
+  'field.invalidEmail': 'Saisis une adresse e-mail valide',
+  'field.passwordTooShort': 'Le mot de passe doit faire au moins {min} caractères',
+  'field.passwordTooLong': 'Le mot de passe doit faire au plus {max} caractères',
+  'field.passwordNeedsLetter': 'Le mot de passe doit contenir au moins une lettre',
+  'field.passwordNeedsNumber': 'Le mot de passe doit contenir au moins un chiffre',
+  'field.invalidUsername': 'Le nom d’utilisateur doit faire {usernameMin}–{usernameMax} caractères (lettres, chiffres ou _)',
+  'field.passwordRules': 'Au moins {min} caractères, dont une lettre et un chiffre.',
+  'coursemap.locked': 'Termine la compétence précédente pour débloquer celle-ci.',
+  'coursemap.rusty': 'Cette compétence rouille — entraîne-toi pour la retrouver.',
+  'dictionary.bookmark': 'Marquer le mot',
+  'dictionary.removeBookmark': 'Retirer le marque-page',
+  'dictionary.searchFailed': 'Recherche impossible pour l’instant. Vérifie ta connexion et réessaie.',
+  'lesson.offlineRetry': 'Tu es hors ligne — appuie pour réessayer',
+  'lesson.almostTypo': 'Presque — faute de frappe acceptée',
+  'lesson.notQuite': 'Pas tout à fait',
+  'lesson.complete': 'Leçon terminée !',
+  'lesson.outOfHearts': 'Plus de cœurs',
+  'notifications.allCaughtUp': 'Tu es à jour.',
+  'notifications.pref.streak': 'Rappels de série',
+  'notifications.pref.friends': 'Activité des amis',
+  'notifications.pref.games': 'Invitations et résultats de parties',
+  'notifications.pref.news': 'Actualités et offres',
+  'learn.notAvailableYet': 'Pas encore disponible.',
+  'tags.adding': 'Ajout…',
+  'comments.voice': '🔊 Commentaire vocal',
 };
 
 const nl: Catalog = {
@@ -4050,6 +4282,35 @@ const nl: Catalog = {
   'shop.buy': 'Kopen',
   'games.quiz.goodGame': 'Goed gespeeld.',
   'games.quiz.questionOf': 'Vraag {index} van {total}',
+  'comments.removed': 'Deze reactie is verwijderd.',
+  'welcome.googleUnavailable': 'Inloggen met Google is in deze versie nog niet beschikbaar.',
+  'welcome.googleNoToken': 'Google gaf geen ID-token terug. Probeer het opnieuw.',
+  'field.required': 'Verplicht',
+  'field.invalidEmail': 'Voer een geldig e-mailadres in',
+  'field.passwordTooShort': 'Het wachtwoord moet minstens {min} tekens hebben',
+  'field.passwordTooLong': 'Het wachtwoord mag hoogstens {max} tekens hebben',
+  'field.passwordNeedsLetter': 'Het wachtwoord moet minstens één letter bevatten',
+  'field.passwordNeedsNumber': 'Het wachtwoord moet minstens één cijfer bevatten',
+  'field.invalidUsername': 'De gebruikersnaam moet {usernameMin}–{usernameMax} tekens zijn (letters, cijfers of _)',
+  'field.passwordRules': 'Minstens {min} tekens, met een letter en een cijfer.',
+  'coursemap.locked': 'Rond de vorige vaardigheid af om deze te ontgrendelen.',
+  'coursemap.rusty': 'Deze vaardigheid roest weg — oefen om hem terug te krijgen.',
+  'dictionary.bookmark': 'Woord bewaren',
+  'dictionary.removeBookmark': 'Bewaren ongedaan maken',
+  'dictionary.searchFailed': 'Zoeken lukt nu niet. Controleer je verbinding en probeer het opnieuw.',
+  'lesson.offlineRetry': 'Je bent offline — tik om opnieuw te proberen',
+  'lesson.almostTypo': 'Bijna — typfout geaccepteerd',
+  'lesson.notQuite': 'Niet helemaal',
+  'lesson.complete': 'Les afgerond!',
+  'lesson.outOfHearts': 'Geen harten meer',
+  'notifications.allCaughtUp': 'Je bent helemaal bij.',
+  'notifications.pref.streak': 'Reeksherinneringen',
+  'notifications.pref.friends': 'Vriendenactiviteit',
+  'notifications.pref.games': 'Spel­uitnodigingen en resultaten',
+  'notifications.pref.news': 'Nieuws en aanbiedingen',
+  'learn.notAvailableYet': 'Nog niet beschikbaar.',
+  'tags.adding': 'Toevoegen…',
+  'comments.voice': '🔊 Spraakreactie',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -4498,6 +4759,35 @@ const ckb: Catalog = {
   'shop.buy': 'بکڕە',
   'games.quiz.goodGame': 'یارییەکی باش.',
   'games.quiz.questionOf': 'پرسیاری {index} لە {total}',
+  'comments.removed': 'ئەم لێدوانە لابرا.',
+  'welcome.googleUnavailable': 'چوونەژوورەوە بە Google لەم وەشانەدا هێشتا بەردەست نییە.',
+  'welcome.googleNoToken': 'Google هیچ تۆکنێکی ناسنامەی نەگەڕاندەوە. تکایە دووبارە هەوڵ بدەوە.',
+  'field.required': 'پێویستە',
+  'field.invalidEmail': 'ناونیشانێکی ئیمەیڵی دروست بنووسە',
+  'field.passwordTooShort': 'وشەی تێپەڕبوون دەبێت لانیکەم {min} پیت بێت',
+  'field.passwordTooLong': 'وشەی تێپەڕبوون دەبێت زۆرترین {max} پیت بێت',
+  'field.passwordNeedsLetter': 'وشەی تێپەڕبوون دەبێت لانیکەم یەک پیتی تێدابێت',
+  'field.passwordNeedsNumber': 'وشەی تێپەڕبوون دەبێت لانیکەم یەک ژمارەی تێدابێت',
+  'field.invalidUsername': 'ناوی بەکارهێنەر دەبێت {usernameMin}–{usernameMax} پیت بێت (پیت، ژمارە یان _)',
+  'field.passwordRules': 'لانیکەم {min} پیت، لەگەڵ پیتێک و ژمارەیەک.',
+  'coursemap.locked': 'شارەزایی پێشوو تەواو بکە بۆ کردنەوەی ئەمە.',
+  'coursemap.rusty': 'ئەم شارەزاییە ژەنگ دەگرێت — ڕاهێنان بکە بۆ گەڕاندنەوەی.',
+  'dictionary.bookmark': 'وشەکە دیاری بکە',
+  'dictionary.removeBookmark': 'دیارییەکە لابە',
+  'dictionary.searchFailed': 'ئێستا ناتوانرێت بگەڕێیت. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدەوە.',
+  'lesson.offlineRetry': 'دەرهێڵیت — دەست لێبدە بۆ هەوڵدانەوە',
+  'lesson.almostTypo': 'نزیک بوو — هەڵەی نووسین وەرگیرا',
+  'lesson.notQuite': 'تەواو نییە',
+  'lesson.complete': 'وانەکە تەواو بوو!',
+  'lesson.outOfHearts': 'دڵەکان تەواو بوون',
+  'notifications.allCaughtUp': 'هەموو شتێکت بینیوە.',
+  'notifications.pref.streak': 'بیرخستنەوەی زنجیرە',
+  'notifications.pref.friends': 'چالاکی هاوڕێکان',
+  'notifications.pref.games': 'بانگهێشت و ئەنجامی یارییەکان',
+  'notifications.pref.news': 'هەواڵ و پێشنیارەکان',
+  'learn.notAvailableYet': 'هێشتا بەردەست نییە.',
+  'tags.adding': 'زیاد دەکرێت…',
+  'comments.voice': '🔊 لێدوانی دەنگی',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

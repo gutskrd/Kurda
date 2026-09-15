@@ -82,7 +82,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           error={items === null ? error : null}
           isEmpty={items?.length === 0}
           onRetry={load}
-          emptyText="You're all caught up."
+          emptyText={t('notifications.allCaughtUp')}
         >
           <FlatList
             data={items ?? []}

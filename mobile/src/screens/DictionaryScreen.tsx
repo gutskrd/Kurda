@@ -144,7 +144,7 @@ export function DictionaryScreen() {
 
         {failed && !loading ? (
           <ErrorRetry
-            message="Couldn’t search right now. Check your connection and try again."
+            message={t('dictionary.searchFailed')}
             onRetry={() => setRetryKey((k) => k + 1)}
           />
         ) : query.trim().length > 0 && !loading && results.length === 0 ? (

@@ -2,6 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useI18n } from '../../i18n/I18nContext';
 import { StreakBadge } from '../../streak/StreakBadge';
 import type { Exercise, SessionResults } from '../types';
 
@@ -15,13 +16,14 @@ interface Props {
 /** End-of-lesson summary: XP, accuracy, streak, and a mistakes review. */
 export function LessonResults({ results, exercises, failed, onDone }: Props) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const pct = Math.round(results.accuracy * 100);
   const promptFor = (id: string) => exercises.find((e) => e.id === id)?.prompt ?? id;
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <Icon name={failed ? 'heart' : 'sparkle'} size={64} color={failed ? colors.danger : colors.gold} />
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{failed ? 'Out of hearts' : 'Lesson complete!'}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{failed ? t('lesson.outOfHearts') : t('lesson.complete')}</Text>
 
       <View style={styles.stats}>
         <Stat label="XP" value={`+${results.xpAwarded}`} tone="accent" />

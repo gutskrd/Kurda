@@ -1,5 +1,7 @@
 /** Community library (stories & poems, KUR-281/284) — types + native-free helpers. */
 
+import type { Translate } from '../api/errors';
+
 export type PostType = 'story' | 'poem';
 export type AuthorRole = 'user' | 'admin';
 
@@ -50,8 +52,13 @@ export function bodyPreview(body: string, max = 140): string {
   return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
 }
 
-/** A tombstoned comment renders as a placeholder rather than empty. */
-export function commentText(c: LibraryComment): string {
-  if (c.status === 'removed') return 'This comment was removed.';
-  return c.body ?? (c.audioMediaId ? '🔊 Voice comment' : '');
+/**
+ * A tombstoned comment renders as a placeholder rather than empty.
+ *
+ * Takes a translator because the middle case passes through: the body is
+ * whatever the commenter wrote, in whatever language they wrote it.
+ */
+export function commentText(c: LibraryComment, t: Translate): string {
+  if (c.status === 'removed') return t('comments.removed');
+  return c.body ?? (c.audioMediaId ? t('comments.voice') : '');
 }

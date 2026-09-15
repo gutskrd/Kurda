@@ -21,7 +21,7 @@ export function AsyncBoundary({
   error,
   isEmpty,
   onRetry,
-  emptyText = 'Nothing here yet.',
+  emptyText,
   skeleton,
   children,
 }: {
@@ -29,6 +29,7 @@ export function AsyncBoundary({
   error?: ApiError | null;
   isEmpty?: boolean;
   onRetry?: () => void;
+  /** Defaults to "nothing here yet" in the reader's language. */
   emptyText?: string;
   /** Loading placeholder. Defaults to a generic list skeleton; pass a screen-shaped
    *  skeleton for a closer match to the content that's coming. */
@@ -71,7 +72,7 @@ export function AsyncBoundary({
     case 'empty':
       return (
         <View style={styles.center}>
-          <Text style={[styles.body, { color: colors.textSecondary }]}>{emptyText}</Text>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>{emptyText ?? t('civak.empty')}</Text>
         </View>
       );
 

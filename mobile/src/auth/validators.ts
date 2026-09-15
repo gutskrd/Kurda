@@ -4,13 +4,16 @@
  * feedback before a request is made.
  */
 
-export const USERNAME_PATTERN = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]{3,30}$/;
+import type { TranslationKey } from '../i18n/translations';
+
+export const USERNAME_PATTERN = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]{3,30}$/; // 3–30, per USERNAME_MIN/MAX below
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 128;
 /** Shown under the password field so the rules are clear before submitting. */
-export const PASSWORD_RULES_TEXT = `At least ${PASSWORD_MIN} characters, including a letter and a number.`;
+/** Shown under the password field; interpolate with FIELD_ERROR_VARS. */
+export const PASSWORD_RULES_KEY: TranslationKey = 'field.passwordRules';
 
 export type FieldError =
   | 'required'
@@ -43,15 +46,36 @@ export function validateUsername(value: string): FieldError | null {
 }
 
 /**
- * English UI copy — learners don't read Kurdish yet, so English is the
- * default app language. Language selection ships with the i18n issue.
+ * Why a field was refused, as catalogue keys.
+ *
+ * The limits travel as `{min}`/`{max}` in FIELD_ERROR_VARS rather than being
+ * baked in with a template: a sentence built around a number reads in English
+ * and in nothing else. The comment that used to sit here said the app was
+ * English "until the i18n issue ships" — it shipped.
  */
-export const FIELD_ERROR_COPY: Record<FieldError, string> = {
-  required: 'Required',
-  invalid_email: 'Enter a valid email address',
-  password_too_short: `Password must be at least ${PASSWORD_MIN} characters`,
-  password_too_long: `Password must be at most ${PASSWORD_MAX} characters`,
-  password_needs_letter: 'Password must include at least one letter',
-  password_needs_number: 'Password must include at least one number',
-  invalid_username: 'Username must be 3–30 characters (letters, digits or _)',
+export const FIELD_ERROR_COPY: Record<FieldError, TranslationKey> = {
+  required: 'field.required',
+  invalid_email: 'field.invalidEmail',
+  password_too_short: 'field.passwordTooShort',
+  password_too_long: 'field.passwordTooLong',
+  password_needs_letter: 'field.passwordNeedsLetter',
+  password_needs_number: 'field.passwordNeedsNumber',
+  invalid_username: 'field.invalidUsername',
 };
+
+export const USERNAME_MIN = 3;
+export const USERNAME_MAX = 30;
+
+/**
+ * Everything the field messages interpolate, so no caller invents a limit.
+ *
+ * The username bounds have their own names on purpose. Sharing {min}/{max}
+ * with the password put "8–128 characters" under the username field, which
+ * typechecks, reads fluently, and is wrong.
+ */
+export const FIELD_ERROR_VARS = {
+  min: PASSWORD_MIN,
+  max: PASSWORD_MAX,
+  usernameMin: USERNAME_MIN,
+  usernameMax: USERNAME_MAX,
+} as const;

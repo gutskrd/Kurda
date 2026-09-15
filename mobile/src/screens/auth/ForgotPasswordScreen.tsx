@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../auth/AuthContext';
-import { FIELD_ERROR_COPY, validateEmail } from '../../auth/validators';
+import { FIELD_ERROR_COPY, validateEmail, FIELD_ERROR_VARS } from '../../auth/validators';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -22,7 +22,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
   const submit = async () => {
     const emailError = validateEmail(email);
-    setError(emailError && FIELD_ERROR_COPY[emailError]);
+    setError(emailError ? t(FIELD_ERROR_COPY[emailError], FIELD_ERROR_VARS) : null);
     if (emailError) return;
     setBusy(true);
     await requestPasswordReset(email.trim());

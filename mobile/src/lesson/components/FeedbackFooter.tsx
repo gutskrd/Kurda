@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useI18n } from '../../i18n/I18nContext';
 import type { Feedback } from '../player';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
  */
 export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue }: Props) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
   }
 
   const good = feedback.accepted;
-  const title = feedback.verdict === 'typo' ? 'Almost — typo accepted' : good ? 'Correct!' : 'Not quite';
+  const title = feedback.verdict === 'typo' ? t('lesson.almostTypo') : good ? 'Correct!' : t('lesson.notQuite');
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
   return (

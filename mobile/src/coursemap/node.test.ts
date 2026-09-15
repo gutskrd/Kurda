@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { flattenMap, isLaunchable, stateHint, stateIcon } from './node';
 import type { CourseMap, SkillNode } from './types';
+import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
 const node = (over: Partial<SkillNode> = {}): SkillNode => ({
   skillId: 's1', level: 1, title: 'Skill', state: 'unlocked', strength: 50, hasGrammar: false, firstLessonId: 'l1', ...over,
@@ -39,8 +40,13 @@ describe('stateIcon / stateHint', () => {
     expect(stateIcon('unlocked')).toBe('');
   });
   it('hints only for locked and decayed', () => {
-    expect(stateHint('locked')).toMatch(/unlock/i);
-    expect(stateHint('decayed')).toMatch(/practice/i);
+    expect(stateHint('locked')).toBe('coursemap.locked');
+    expect(stateHint('decayed')).toBe('coursemap.rusty');
     expect(stateHint('gold')).toBeNull();
+    // a key with nothing behind it renders as itself, which the type allows
+    for (const state of ['locked', 'decayed'] as const) {
+      const key = stateHint(state)!;
+      for (const loc of LOCALES) expect(TRANSLATIONS[loc][key], `${loc} ${key}`).toBeTruthy();
+    }
   });
 });

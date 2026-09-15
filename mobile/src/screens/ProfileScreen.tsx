@@ -89,7 +89,7 @@ export function ProfileScreen() {
           ) : null}
         </Pressable>
         <Pressable onPress={changePhoto} accessibilityRole="button" hitSlop={8}>
-          <Text style={[styles.changePhoto, { color: colors.primary }]}>{photoUrl ? 'Change photo' : 'Add photo'}</Text>
+          <Text style={[styles.changePhoto, { color: colors.primary }]}>{photoUrl ? t('profile.editPhoto') : t('profile.addPhoto')}</Text>
         </Pressable>
 
         <Text style={[styles.username, { color: colors.textPrimary }]}>{user?.username}</Text>

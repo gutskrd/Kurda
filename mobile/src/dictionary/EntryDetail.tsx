@@ -75,7 +75,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
               ) : null}
               <Pressable
                 onPress={toggleSave}
-                accessibilityLabel={saved ? 'Remove bookmark' : 'Bookmark word'}
+                accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
                 accessibilityState={{ selected: saved }}
                 style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
               >

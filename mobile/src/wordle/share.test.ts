@@ -51,21 +51,21 @@ describe('shareHeader', () => {
   const base: ShareInput = { rows: win, solved: true, maxAttempts: 6, mode: 'daily' };
 
   it('formats a solved daily with the puzzle number and guess count', () => {
-    expect(shareHeader({ ...base, dayNumber: 123 })).toBe('Kurda Wordle #123 3/6');
+    expect(shareHeader({ ...base, dayNumber: 123 })).toBe('MyKurda Wordle #123 3/6');
   });
 
   it('includes a difficulty tag when given', () => {
     expect(shareHeader({ ...base, dayNumber: 123, difficulty: 'hard' })).toBe(
-      'Kurda Wordle #123 (Hard) 3/6',
+      'MyKurda Wordle #123 (Hard) 3/6',
     );
   });
 
   it('marks practice games and omits the puzzle number', () => {
-    expect(shareHeader({ ...base, mode: 'practice', dayNumber: 123 })).toBe('Kurda Wordle Practice 3/6');
+    expect(shareHeader({ ...base, mode: 'practice', dayNumber: 123 })).toBe('MyKurda Wordle Practice 3/6');
   });
 
   it('shows X/max for a loss', () => {
-    expect(shareHeader({ ...base, solved: false, dayNumber: 123 })).toBe('Kurda Wordle #123 X/6');
+    expect(shareHeader({ ...base, solved: false, dayNumber: 123 })).toBe('MyKurda Wordle #123 X/6');
   });
 });
 
@@ -73,7 +73,7 @@ describe('buildShareText', () => {
   it('is header + blank line + grid', () => {
     const text = buildShareText({ rows: win, solved: true, maxAttempts: 6, mode: 'daily', dayNumber: 7 });
     const [header, blank, ...gridLines] = text.split('\n');
-    expect(header).toBe('Kurda Wordle #7 3/6');
+    expect(header).toBe('MyKurda Wordle #7 3/6');
     expect(blank).toBe('');
     expect(gridLines).toHaveLength(3);
   });

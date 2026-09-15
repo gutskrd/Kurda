@@ -56,12 +56,12 @@ const DIFFICULTY_LABEL: Record<ShareDifficulty, string> = {
 };
 
 /**
- * The header line, e.g. `Kurda Wordle #123 (Hard) 4/6` for a solved daily, or
- * `Kurda Wordle Practice X/6` for a failed practice game. The guess count is
+ * The header line, e.g. `MyKurda Wordle #123 (Hard) 4/6` for a solved daily, or
+ * `MyKurda Wordle Practice X/6` for a failed practice game. The guess count is
  * the number of rows on a win, or `X` on a loss.
  */
 export function shareHeader(input: ShareInput): string {
-  const parts = ['Kurda Wordle'];
+  const parts = ['MyKurda Wordle'];
   if (input.mode === 'practice') parts.push('Practice');
   else if (input.dayNumber !== undefined) parts.push(`#${input.dayNumber}`);
   if (input.difficulty) parts.push(`(${DIFFICULTY_LABEL[input.difficulty]})`);

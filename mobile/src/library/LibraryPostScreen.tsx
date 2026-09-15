@@ -145,7 +145,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                       {c.status !== 'removed' && c.audioUrl ? <AudioPlayer url={c.audioUrl} /> : null}
                       {c.body || c.status === 'removed' || !c.audioUrl ? (
                         <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
-                          {commentText(c)}
+                          {commentText(c, t)}
                         </Text>
                       ) : null}
                       <View style={styles.commentFoot}>

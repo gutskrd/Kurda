@@ -1,4 +1,5 @@
 import type { CourseMap, SkillNode, SkillState } from './types';
+import type { TranslationKey } from '../i18n/translations';
 
 /** A flattened map row for a virtualized list: a unit header or a skill node. */
 export type MapRow =
@@ -36,13 +37,16 @@ export function stateIcon(state: SkillState): string {
   }
 }
 
-/** Short explanation for why a node is in its state (locked/decayed nudges). */
-export function stateHint(state: SkillState): string | null {
+/**
+ * Why a node is in its state (locked/decayed nudges), as a catalogue key —
+ * this module is pure, so the screen that has a translator looks it up.
+ */
+export function stateHint(state: SkillState): TranslationKey | null {
   switch (state) {
     case 'locked':
-      return 'Complete the previous skill to unlock this one.';
+      return 'coursemap.locked';
     case 'decayed':
-      return 'This skill is getting rusty — practice to restore it.';
+      return 'coursemap.rusty';
     default:
       return null;
   }
