@@ -9,21 +9,24 @@
 #      https://kurda-api-XXXX.onrender.com — that URL goes into the mobile
 #      build's EXPO_PUBLIC_API_URL.
 #
-# Plans are set to `free` so you can bring it up at no cost. Free web services
-# sleep after ~15 min idle (first request after is slow) and free Postgres is
-# time-limited — bump the three `plan:` lines to `starter` for an always-on,
-# durable setup once you're ready to ship.
+# Plans are `starter`: always-on API, durable Postgres, no idle sleep and no
+# time limit. They were `free` while this was a trial deploy; the free Postgres
+# was time-limited and would have been deleted.
+#
+# Keep these in step with the dashboard. A blueprint that still said `free`
+# would try to move a paid database back down the next time it is applied, and
+# that is not a change anybody makes on purpose.
 
 databases:
   - name: kurda-db
-    plan: free
+    plan: starter
     databaseName: kurda
 
 services:
   # ---- Redis / Key Value (rate limiting, cache, realtime, job queue) --------
   - type: keyvalue
     name: kurda-redis
-    plan: free
+    plan: starter
     ipAllowList: [] # internal-only; no public access
 
   # ---- API (HTTP) -----------------------------------------------------------
@@ -32,10 +35,13 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: free
+    plan: starter
     healthCheckPath: /health
-    # Free web services don't support `preDeployCommand`, so migrations run at
-    # container startup via api/start.sh (migrate, then exec the server). We run
+    # Migrations run at container startup via api/start.sh (migrate, then exec
+    # the server). That began as a free-tier necessity — free web services have
+    # no `preDeployCommand` — and is kept because it works and is idempotent:
+    # moving it now would be a change to how deploys apply schema, for nothing.
+    # We run
     # a script rather than an inline `sh -c "... && ..."` chain because Render
     # misparses the chain no matter how it's quoted — a single script path has
     # no shell metacharacters to mangle. node-pg-migrate is idempotent, so the
@@ -84,10 +90,21 @@ services:
       #   sync: false            # public r2.dev URL or custom domain
 
   # ---- Background worker (notifications, schedulers, queues) -----------------
-  # Render's free plan doesn't offer background workers, so this is disabled for
-  # the free-tier deploy. Sign-in and the core API don't need it — it only runs
-  # background jobs (push notifications, streak reminders, scheduled rollups,
-  # queue processing). Re-enable it (uncomment) when moving to paid hosting.
+  # Optional, and off. It was off because the free plan has no workers; it stays
+  # off because the API already does this job — app.ts runs a worker in-process
+  # unless RUN_WORKER_IN_API=false, so the queue has a consumer and verification
+  # mail is delivered by the single service.
+  #
+  # Split it out when job volume starts competing with request latency: push
+  # fan-out, GDPR exports and the rollups are the heavy ones. Two things have to
+  # happen together, or it is worse than leaving it alone:
+  #
+  #   1. set RUN_WORKER_IN_API=false on kurda-api, or both consume the same
+  #      queue and the schedulers are registered twice
+  #   2. put the EMAIL credentials on the WORKER, not just the API. The worker
+  #      builds its own provider (jobs/worker.ts → createEmailProvider), so
+  #      without them it sends through the stub: jobs succeed, nothing arrives,
+  #      and the API's startup warning does not fire because the API is fine.
   # - type: worker
   #   name: kurda-worker
   #   runtime: docker
@@ -113,3 +130,8 @@ services:
   #         type: web
   #         name: kurda-api
   #         envVarKey: JWT_SECRET
+  #     # the worker is what actually sends mail once it exists — see above
+  #     - key: RESEND_API_KEY
+  #       sync: false          # or SMTP_URL / SMTP_HOST instead
+  #     - key: EMAIL_FROM
+  #       value: MyKurda <no-reply@mykurda.com>

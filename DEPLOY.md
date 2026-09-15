@@ -24,21 +24,34 @@ Railway and Fly.io are fine alternatives; the env vars below are the same.)
 `APPLE_CLIENT_IDS=app.kurda.mobile` and a generated `JWT_SECRET` are already set
 by the Blueprint — nothing else is required for sign-in to work.
 
-> **Free-tier notes:** free web services sleep after ~15 min idle (the next
-> request wakes them, slowly) and free Postgres is time-limited. For an
-> always-on, durable App Store backend, bump the `plan: free` lines in
-> `render.yaml` to `starter` and re-apply.
+> **The blueprint is on `starter`** — always-on API, durable Postgres, no idle
+> sleep and no time limit. Keep it in step with the dashboard: a blueprint that
+> still said `free` would try to move a paid database back down the next time it
+> is applied.
 >
-> The dedicated background **worker service is disabled** on free tier (Render
-> offers no free workers). The API therefore processes queued jobs **in-process**
-> by default, which is what actually delivers email — the API only *enqueues*, so
-> without a consumer, verification and password-reset mail sits in Redis forever
-> and signup cannot be completed. This needs `REDIS_URL` (the Blueprint provisions
-> it) plus an email provider (`RESEND_API_KEY`, or SMTP).
+> **Email is what signup actually depends on.** The API enqueues the verification
+> code and a worker sends it. There is a worker either way — `app.ts` runs one
+> in-process unless `RUN_WORKER_IN_API=false` — so the queue has a consumer on a
+> single-service deploy. What it does *not* have without configuration is a way
+> to send: with no `RESEND_API_KEY` (or `SMTP_URL` / `SMTP_HOST`) the provider is
+> a stub that delivers nothing, and **nobody can finish signing up**, because an
+> unconfirmed account is refused every write.
 >
-> If you move to paid hosting and uncomment the `kurda-worker` block in
-> `render.yaml`, set `RUN_WORKER_IN_API=false` on the API so only the dedicated
-> worker runs the recurring schedules.
+> The API says so at boot, loudly, in production:
+>
+> ```
+> EMAIL IS NOT CONFIGURED: set RESEND_API_KEY (or SMTP_URL / SMTP_HOST).
+> ```
+>
+> That one log line is worth reading after any deploy. It also tells you what the
+> API decided about `TRUST_PROXY`, which matters because rate limits are per-IP
+> and behind Render's proxy everyone shares one address if it is wrong.
+>
+> The **dedicated worker service stays commented out**, on purpose — the
+> in-process one already does the work. Split it out when job volume starts
+> competing with request latency, and read the note above the block in
+> `render.yaml` first: it has to be done together with `RUN_WORKER_IN_API=false`
+> *and* the mail credentials, or mail silently stops.
 
 ## 2. Point the mobile app at that URL
 
