@@ -100,6 +100,7 @@ export function ProfileScreen() {
         <View style={styles.actions}>
           <ClayButton label={t('profile.league')} icon="trophy" tone="primary" onPress={() => navigation.navigate('League')} />
           <ClayButton label={t('profile.shop')} icon="cart" tone="primary" onPress={() => navigation.navigate('Shop')} />
+          <ClayButton label={t('profile.edit')} icon="person" tone="neutral" onPress={() => navigation.navigate('EditProfile')} />
           <ClayButton label={t('saved.title')} icon="star-outline" tone="neutral" onPress={() => navigation.navigate('Saved')} />
           <ClayButton label="Tags & badges" icon="star" tone="neutral" onPress={() => navigation.navigate('Tags')} />
           <NotificationBell />
