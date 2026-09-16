@@ -174,7 +174,28 @@ function withoutComments(src) {
   let i = 0;
   const blank = (s) => s.replace(/[^\n]/g, ' ');
   while (i < src.length) {
-    if (src.startsWith('//', i)) {
+    // A string first, copied out whole. Without this the // in a URL starts
+    // a comment, the comment eats the closing quote, and every literal after
+    // it in the file pairs with the wrong neighbour — which is how
+    // 'http://localhost:3000' was reported as the phrase "http: staging:".
+    const q = src[i];
+    if (q === "'" || q === '"' || q === '`') {
+      let j = i + 1;
+      while (j < src.length) {
+        if (src[j] === '\\') {
+          j += 2;
+          continue;
+        }
+        if (src[j] === q) {
+          j++;
+          break;
+        }
+        if (q !== '`' && src[j] === '\n') break; // unterminated; leave it be
+        j++;
+      }
+      out += src.slice(i, j);
+      i = j;
+    } else if (src.startsWith('//', i)) {
       const end = src.indexOf('\n', i);
       const stop = end === -1 ? src.length : end;
       out += blank(src.slice(i, stop));
@@ -223,6 +244,29 @@ function isCopy(value, minWords = 2) {
   return true;
 }
 
+/**
+ * The stripper is the one piece of this file that can fail silently: when it
+ * mistook the // in a URL for a comment it ate the closing quote and every
+ * literal after it in the file paired with the wrong neighbour. Nothing went
+ * red — the gate just stopped seeing that file, and did so in 29 of them.
+ *
+ * There is no test runner in scripts/, so the check lives here and runs on
+ * every invocation. Three strings is cheaper than the silence was.
+ */
+function selfTest() {
+  const cases = [
+    ['const a = \'http://x.dev\'; const b = \'Hello there\';', 'Hello there'],
+    ['// just a comment\nconst b = \'Hello there\';', 'Hello there'],
+    ['const u = `https://x.dev/${id}`; const b = \'Hello there\';', 'Hello there'],
+  ];
+  for (const [src, expected] of cases) {
+    if (!withoutComments(src).includes(expected)) {
+      throw new Error(`withoutComments lost ${JSON.stringify(expected)} in ${JSON.stringify(src)}`);
+    }
+  }
+  if (withoutComments('// gone\n').trim() !== '') throw new Error('withoutComments stopped stripping comments');
+}
+selfTest();
 const problems = [];
 
 for (const file of sources(SRC)) {
