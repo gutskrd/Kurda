@@ -493,6 +493,7 @@ export const ku: Catalogue = {
   'groups.youAreAnAdmin': 'tu rêvebir î',
   'error.offline': 'Niha em nagihîjin MyKurda. Girêdana xwe kontrol bike û dîsa biceribîne.',
   'error.tooManyRetryIn': 'Pir hewldan. Piştî {seconds} çirkeyan dîsa biceribîne.',
+  'error.tooManyRetryInMin': 'Pir ceriband. Piştî {minutes} deqîqeyan dîsa biceribîne.',
   'error.tooMany': 'Pir hewldan. Ji kerema xwe hinekî bisekine û dîsa biceribîne.',
   'error.sessionExpired': 'Danişîna te qediya. Ji kerema xwe dîsa têkeve.',
   'error.server': 'Li aliyê me tiştek xelet çû. Ji kerema xwe piştî demekê dîsa biceribîne.',

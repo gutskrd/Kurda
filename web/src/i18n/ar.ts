@@ -492,6 +492,7 @@ export const ar: Catalogue = {
   'groups.youAreAnAdmin': 'أنت مشرف',
   'error.offline': 'تعذّر الوصول إلى MyKurda الآن. تحقق من اتصالك وحاول مرة أخرى.',
   'error.tooManyRetryIn': 'محاولات كثيرة. حاول مرة أخرى بعد {seconds} ثانية.',
+  'error.tooManyRetryInMin': 'محاولات كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.',
   'error.tooMany': 'محاولات كثيرة. من فضلك انتظر قليلًا ثم حاول مرة أخرى.',
   'error.sessionExpired': 'انتهت جلستك. من فضلك سجّل الدخول مرة أخرى.',
   'error.server': 'حدث خطأ من جهتنا. من فضلك حاول مرة أخرى بعد قليل.',

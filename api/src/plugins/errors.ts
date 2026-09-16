@@ -19,6 +19,18 @@ export class AppError extends Error {
 }
 
 /**
+ * An AppError's details may carry `retryAfterSec`. Seconds, whole, at least
+ * one — a Retry-After of 0 reads as "immediately", which is never what a
+ * lockout means.
+ */
+function retryAfterOf(details: unknown): number | null {
+  if (typeof details !== 'object' || details === null) return null;
+  const value = (details as { retryAfterSec?: unknown }).retryAfterSec;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null;
+  return Math.max(1, Math.ceil(value));
+}
+
+/**
  * Standard error envelope: { code, message, details?, requestId }.
  *
  * - AppError            → its own status/code/message
@@ -52,6 +64,12 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
     }
 
     if (err instanceof AppError) {
+      // An error that knows how long to wait should say so where a client can
+      // see it. LOCKED works the number out exactly and puts it in details;
+      // both apps read the header and render a countdown from it, so without
+      // this the lockout is reported as a flat "try again later".
+      const retryAfterSec = retryAfterOf(err.details);
+      if (retryAfterSec !== null) reply.header('retry-after', String(retryAfterSec));
       return reply.code(err.statusCode).send({
         code: err.code,
         message: err.message,

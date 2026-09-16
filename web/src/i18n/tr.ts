@@ -487,6 +487,7 @@ export const tr: Catalogue = {
   'groups.youAreAnAdmin': 'yöneticisin',
   'error.offline': 'Şu anda MyKurda’ya ulaşılamıyor. Bağlantını kontrol edip tekrar dene.',
   'error.tooManyRetryIn': 'Çok fazla deneme. {seconds} sn sonra tekrar dene.',
+  'error.tooManyRetryInMin': 'Çok fazla deneme. {minutes} dk. sonra tekrar dene.',
   'error.tooMany': 'Çok fazla deneme. Lütfen biraz bekleyip tekrar dene.',
   'error.sessionExpired': 'Oturumun sona erdi. Lütfen tekrar giriş yap.',
   'error.server': 'Bizim tarafımızda bir şeyler ters gitti. Lütfen az sonra tekrar dene.',

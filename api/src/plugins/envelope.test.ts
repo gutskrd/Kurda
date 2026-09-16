@@ -148,3 +148,40 @@ describe('error envelope', () => {
     expect(res.json().requestId).toBeDefined();
   });
 });
+
+describe('retry-after', () => {
+  /**
+   * LOCKED works out exactly how long the lockout has left and puts it in
+   * details, where nothing looked. Both apps read the header and render a
+   * countdown from it, so until this the lockout was reported as a flat "try
+   * again later" — the number and the thing that wanted it never met.
+   */
+  it('sends the header when an AppError carries retryAfterSec', async () => {
+    const a = testApp();
+    a.get('/locked', async () => {
+      throw new AppError('LOCKED', 429, 'too many failed attempts — try again later', { retryAfterSec: 42 });
+    });
+    const res = await a.inject({ method: 'GET', url: '/locked' });
+    expect(res.statusCode).toBe(429);
+    expect(res.headers['retry-after']).toBe('42');
+    expect(res.json().code).toBe('LOCKED');
+  });
+
+  it('rounds a fractional wait up, because 0 would read as immediately', async () => {
+    const a = testApp();
+    a.get('/locked', async () => {
+      throw new AppError('LOCKED', 429, 'wait', { retryAfterSec: 0.2 });
+    });
+    const res = await a.inject({ method: 'GET', url: '/locked' });
+    expect(res.headers['retry-after']).toBe('1');
+  });
+
+  it('sends no header for an error that has nothing to say about waiting', async () => {
+    const a = testApp();
+    a.get('/nope', async () => {
+      throw new AppError('NOT_FOUND', 404, 'no such word');
+    });
+    const res = await a.inject({ method: 'GET', url: '/nope' });
+    expect(res.headers['retry-after']).toBeUndefined();
+  });
+});

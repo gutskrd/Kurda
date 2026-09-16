@@ -48,7 +48,12 @@ export function describeError(error: ApiError, t: Translate): string {
   // retry-after header — so that branch is waiting for an API fix rather than
   // being unreachable.
   if (error.kind === 'rate_limited' && error.retryAfterSec && error.retryAfterSec > 0) {
-    return t('error.tooManyRetryIn', { seconds: Math.max(1, Math.ceil(error.retryAfterSec)) });
+    // A lockout is minutes. The copy that only ever saw a rate limiter said
+    // seconds, and a real lockout came back as 792 of them.
+    const wait = Math.max(1, Math.ceil(error.retryAfterSec));
+    return wait >= 90
+      ? t('error.tooManyRetryInMin', { minutes: Math.ceil(wait / 60) })
+      : t('error.tooManyRetryIn', { seconds: wait });
   }
 
   // Otherwise a precise code beats the kind: the difference between "something

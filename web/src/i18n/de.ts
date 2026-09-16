@@ -487,6 +487,7 @@ export const de: Catalogue = {
   'groups.youAreAnAdmin': 'du bist Admin',
   'error.offline': 'MyKurda ist gerade nicht erreichbar. Prüfe deine Verbindung und versuch es erneut.',
   'error.tooManyRetryIn': 'Zu viele Versuche. Versuch es in {seconds} s erneut.',
+  'error.tooManyRetryInMin': 'Zu viele Versuche. Versuche es in {minutes} Min. erneut.',
   'error.tooMany': 'Zu viele Versuche. Warte einen Moment und versuch es erneut.',
   'error.sessionExpired': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
   'error.server': 'Auf unserer Seite ist etwas schiefgegangen. Bitte versuch es gleich noch einmal.',

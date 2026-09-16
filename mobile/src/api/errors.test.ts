@@ -119,6 +119,18 @@ describe('CODE_COPY', () => {
     expect(describeError(err({ kind: 'client', code: 'BAD_ROSTER', status: 409 }), t)).toBe('raw technical detail');
   });
 
+  /**
+   * 792 seconds is what a real lockout came back as, and "try again in 792s"
+   * is accurate and unreadable.
+   */
+  it('counts a long wait in minutes and a short one in seconds', () => {
+    const locked = (retryAfterSec: number) => err({ kind: 'rate_limited', code: 'LOCKED', retryAfterSec, status: 429 });
+    expect(describeError(locked(792), t)).toBe(
+      interpolate(TRANSLATIONS.en['error.tooManyRetryInMin'], { minutes: 14 }),
+    );
+    expect(describeError(locked(45), t)).toBe(interpolate(TRANSLATIONS.en['error.tooManyRetryIn'], { seconds: 45 }));
+  });
+
   it('prefers a countdown to a sentence when the server sent one', () => {
     const limited = err({ kind: 'rate_limited', code: 'LOCKED', retryAfterSec: 30, status: 429 });
     expect(describeError(limited, t)).toBe(interpolate(TRANSLATIONS.en['error.tooManyRetryIn'], { seconds: 30 }));

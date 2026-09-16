@@ -654,7 +654,8 @@ export type TranslationKey =
   | 'error.code.locked'
   | 'error.code.invalidLink'
   | 'error.code.usernameTaken'
-  | 'error.code.signupRejected';
+  | 'error.code.signupRejected'
+  | 'error.tooManyRetryInMin';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1285,6 +1286,7 @@ const en: Catalog = {
   'error.code.invalidLink': 'This link is invalid or has expired.',
   'error.code.usernameTaken': 'That username is already taken.',
   'error.code.signupRejected': 'Registration could not be completed.',
+  'error.tooManyRetryInMin': 'Too many attempts. Try again in {minutes} min.',
 };
 
 const ku: Catalog = {
@@ -1914,6 +1916,7 @@ const ku: Catalog = {
   'error.code.invalidLink': 'Ev girêdan nederbasdar e an dema wê qediya.',
   'error.code.usernameTaken': 'Ew navê bikarhêner jixwe hatiye girtin.',
   'error.code.signupRejected': 'Tomarkirin nehate temamkirin.',
+  'error.tooManyRetryInMin': 'Pir ceriband. Piştî {minutes} deqîqeyan dîsa biceribîne.',
 };
 
 const de: Catalog = {
@@ -2543,6 +2546,7 @@ const de: Catalog = {
   'error.code.invalidLink': 'Dieser Link ist ungültig oder abgelaufen.',
   'error.code.usernameTaken': 'Dieser Benutzername ist bereits vergeben.',
   'error.code.signupRejected': 'Die Registrierung konnte nicht abgeschlossen werden.',
+  'error.tooManyRetryInMin': 'Zu viele Versuche. Versuche es in {minutes} Min. erneut.',
 };
 
 const es: Catalog = {
@@ -3172,6 +3176,7 @@ const es: Catalog = {
   'error.code.invalidLink': 'Este enlace no es válido o ha caducado.',
   'error.code.usernameTaken': 'Ese nombre de usuario ya está en uso.',
   'error.code.signupRejected': 'No se ha podido completar el registro.',
+  'error.tooManyRetryInMin': 'Demasiados intentos. Inténtalo de nuevo en {minutes} min.',
 };
 
 const tr: Catalog = {
@@ -3801,6 +3806,7 @@ const tr: Catalog = {
   'error.code.invalidLink': 'Bu bağlantı geçersiz veya süresi dolmuş.',
   'error.code.usernameTaken': 'Bu kullanıcı adı zaten alınmış.',
   'error.code.signupRejected': 'Kayıt tamamlanamadı.',
+  'error.tooManyRetryInMin': 'Çok fazla deneme. {minutes} dk. sonra tekrar dene.',
 };
 
 const ar: Catalog = {
@@ -4430,6 +4436,7 @@ const ar: Catalog = {
   'error.code.invalidLink': 'هذا الرابط غير صالح أو انتهت صلاحيته.',
   'error.code.usernameTaken': 'اسم المستخدم هذا مستخدَم بالفعل.',
   'error.code.signupRejected': 'تعذّر إكمال التسجيل.',
+  'error.tooManyRetryInMin': 'محاولات كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.',
 };
 
 const fr: Catalog = {
@@ -5059,6 +5066,7 @@ const fr: Catalog = {
   'error.code.invalidLink': 'Ce lien est invalide ou a expiré.',
   'error.code.usernameTaken': 'Ce nom d’utilisateur est déjà pris.',
   'error.code.signupRejected': 'L’inscription n’a pas pu être finalisée.',
+  'error.tooManyRetryInMin': 'Trop de tentatives. Réessaie dans {minutes} min.',
 };
 
 const nl: Catalog = {
@@ -5688,6 +5696,7 @@ const nl: Catalog = {
   'error.code.invalidLink': 'Deze link is ongeldig of verlopen.',
   'error.code.usernameTaken': 'Die gebruikersnaam is al bezet.',
   'error.code.signupRejected': 'Registratie kon niet worden voltooid.',
+  'error.tooManyRetryInMin': 'Te veel pogingen. Probeer het over {minutes} min. opnieuw.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6318,6 +6327,7 @@ const ckb: Catalog = {
   'error.code.invalidLink': 'ئەم بەستەرە نادروستە یان ماوەکەی بەسەرچووە.',
   'error.code.usernameTaken': 'ئەم ناوی بەکارهێنەرە پێشتر وەرگیراوە.',
   'error.code.signupRejected': 'تۆمارکردن تەواو نەبوو.',
+  'error.tooManyRetryInMin': 'هەوڵی زۆر. دوای {minutes} خولەک دووبارە هەوڵ بدەرەوە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
