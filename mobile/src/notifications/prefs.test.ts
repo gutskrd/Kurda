@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatMinute, quietEnabled, stepMinute, type NotificationPrefs } from './prefs.js';
+import { CATEGORY_LABEL, NOTIFICATION_CATEGORIES, formatMinute, quietEnabled, stepMinute, type NotificationPrefs } from './prefs.js';
+import { LOCALES, TRANSLATIONS } from '../i18n/translations.js';
 
 describe('formatMinute', () => {
   it('formats minute-of-day as HH:MM', () => {
@@ -25,5 +26,24 @@ describe('quietEnabled', () => {
     };
     expect(quietEnabled(base)).toBe(false);
     expect(quietEnabled({ ...base, quietStartMin: 1320, quietEndMin: 420 })).toBe(true);
+  });
+});
+
+/**
+ * Four of these five labels were shown to users as their own key names —
+ * the literal text notifications.pref.streak — because the map held keys but
+ * was typed Record<…, string>, and the screen printed it without t(). The
+ * fifth held the bare English word Events. The type stops it recurring; this
+ * stops a label being added that no language can answer.
+ */
+describe('notification category labels', () => {
+  it('every category resolves to real copy in all nine languages', () => {
+    for (const category of NOTIFICATION_CATEGORIES) {
+      for (const locale of LOCALES) {
+        const copy = TRANSLATIONS[locale][CATEGORY_LABEL[category]];
+        expect(copy, `${locale}.${category}`).toBeTruthy();
+        expect(copy, `${locale}.${category} still reads as its own key`).not.toBe(CATEGORY_LABEL[category]);
+      }
+    }
   });
 });

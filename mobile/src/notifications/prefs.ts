@@ -1,13 +1,22 @@
 /** Pure notification-preference view helpers (KUR-095) — no React Native. */
 
+import type { TranslationKey } from '../i18n/translations.js';
+
 export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'marketing'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
-export const CATEGORY_LABEL: Record<NotificationCategory, string> = {
+/**
+ * TranslationKey, not string. These were keys typed as strings, and the screen
+ * printed them straight out: users read the literal words
+ * notifications.pref.streak on the settings screen, in all nine languages,
+ * because a key drops into a string slot without the compiler saying a word.
+ * The type is what stops it happening again.
+ */
+export const CATEGORY_LABEL: Record<NotificationCategory, TranslationKey> = {
   streak: 'notifications.pref.streak',
   friends: 'notifications.pref.friends',
   games: 'notifications.pref.games',
-  events: 'Events',
+  events: 'notifications.pref.events',
   marketing: 'notifications.pref.news',
 };
 

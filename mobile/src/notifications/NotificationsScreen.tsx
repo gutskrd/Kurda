@@ -63,7 +63,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
           <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.categories')}</Text>
           {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
             <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
-              <Text style={[styles.label, { color: colors.textPrimary }]}>{CATEGORY_LABEL[cat]}</Text>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>{t(CATEGORY_LABEL[cat])}</Text>
               <Switch
                 value={prefs[cat]}
                 onValueChange={(on) => save({ [cat]: on } as Partial<NotificationPrefs>)}
