@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Brand } from '../components/Brand';
 import { warmApi } from '../lib/warmup';
 
@@ -22,9 +23,11 @@ export function AuthLayout(): React.JSX.Element {
         </div>
       </header>
       <main id="main">
-        <Suspense fallback={<RouteFallback />}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </>
   );
