@@ -623,6 +623,7 @@ export const nl: Catalogue = {
   'photo.clearAll': 'Alles wissen',
   'photo.stickerKind': 'Soort sticker',
   'photo.marks': 'Symbolen',
+  'photo.emoji': 'Emoji',
   'photo.bringForward': 'Naar voren halen',
   'photo.sendBack': 'Naar achteren sturen',
   'photo.duplicate': 'Dupliceren',

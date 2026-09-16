@@ -35,7 +35,7 @@ export function LessonResults({ results, exercises, failed, onDone }: Props) {
 
       {results.mistakes.length > 0 ? (
         <View style={[styles.mistakes, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
-          <Text style={[styles.mistakesTitle, { color: colors.textPrimary }]}>Review</Text>
+          <Text style={[styles.mistakesTitle, { color: colors.textPrimary }]}>{t('lesson.review')}</Text>
           {results.mistakes.map((m) => (
             <View key={m.exerciseId} style={styles.mistakeRow}>
               <Text style={[styles.mistakePrompt, { color: colors.textPrimary }]}>{promptFor(m.exerciseId)}</Text>
@@ -46,7 +46,7 @@ export function LessonResults({ results, exercises, failed, onDone }: Props) {
       ) : null}
 
       <Pressable onPress={onDone} style={[styles.done, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.doneText, { color: colors.textOnPrimary }]}>Done</Text>
+        <Text style={[styles.doneText, { color: colors.textOnPrimary }]}>{t('common.done')}</Text>
       </Pressable>
     </ScrollView>
   );

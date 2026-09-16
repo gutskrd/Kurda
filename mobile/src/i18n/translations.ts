@@ -564,7 +564,31 @@ export type TranslationKey =
   | 'library.notePlaceholder'
   | 'dictionary.searchPlaceholder'
   | 'comments.add'
-  | 'friends.searchPlaceholder';
+  | 'friends.searchPlaceholder'
+  | 'chat.receipt.read'
+  | 'chat.send'
+  | 'dictionary.related'
+  | 'dictionary.recent'
+  | 'grammar.title'
+  | 'lesson.answer'
+  | 'lesson.review'
+  | 'library.title'
+  | 'library.write'
+  | 'memes.post'
+  | 'memes.title'
+  | 'notifications.title'
+  | 'notifications.categories'
+  | 'appearance.title'
+  | 'appearance.theme'
+  | 'appearance.preview'
+  | 'settings.title'
+  | 'settings.group.preferences'
+  | 'settings.group.notifications'
+  | 'settings.group.privacy'
+  | 'settings.group.account'
+  | 'tags.automatic'
+  | 'username.current'
+  | 'coursemap.lockedBadge';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1105,6 +1129,30 @@ const en: Catalog = {
   'dictionary.searchPlaceholder': 'Search Kurdish or English…',
   'comments.add': 'Add a comment…',
   'friends.searchPlaceholder': 'Search by username…',
+  'chat.receipt.read': 'Read',
+  'chat.send': 'Send',
+  'dictionary.related': 'Related',
+  'dictionary.recent': 'Recent',
+  'grammar.title': 'Tips',
+  'lesson.answer': 'Answer:',
+  'lesson.review': 'Review',
+  'library.title': 'Library',
+  'library.write': 'Write',
+  'memes.post': 'Post',
+  'memes.title': 'Memes',
+  'notifications.title': 'Notifications',
+  'notifications.categories': 'Categories',
+  'appearance.title': 'Appearance',
+  'appearance.theme': 'Theme',
+  'appearance.preview': 'Preview',
+  'settings.title': 'Settings',
+  'settings.group.preferences': 'Preferences',
+  'settings.group.notifications': 'Notifications',
+  'settings.group.privacy': 'Privacy',
+  'settings.group.account': 'Account',
+  'tags.automatic': 'Automatic',
+  'username.current': 'Current',
+  'coursemap.lockedBadge': 'Locked',
 };
 
 const ku: Catalog = {
@@ -1644,6 +1692,30 @@ const ku: Catalog = {
   'dictionary.searchPlaceholder': 'Bi kurdî an îngilîzî bigere…',
   'comments.add': 'Şîroveyekê lê zêde bike…',
   'friends.searchPlaceholder': 'Li gorî navê bikarhêner bigere…',
+  'chat.receipt.read': 'Xwendî',
+  'chat.send': 'Bişîne',
+  'dictionary.related': 'Peywendîdar',
+  'dictionary.recent': 'Dawî',
+  'grammar.title': 'Serişte',
+  'lesson.answer': 'Bersiv:',
+  'lesson.review': 'Dubare',
+  'library.title': 'Pirtûkxane',
+  'library.write': 'Binivîse',
+  'memes.post': 'Şandî',
+  'memes.title': 'Mem',
+  'notifications.title': 'Agahdarî',
+  'notifications.categories': 'Kategorî',
+  'appearance.title': 'Xuyang',
+  'appearance.theme': 'Tema',
+  'appearance.preview': 'Pêşdîtin',
+  'settings.title': 'Sazkarî',
+  'settings.group.preferences': 'Tercîh',
+  'settings.group.notifications': 'Agahdarî',
+  'settings.group.privacy': 'Nihêniyet',
+  'settings.group.account': 'Hesab',
+  'tags.automatic': 'Otomatîk',
+  'username.current': 'Niha',
+  'coursemap.lockedBadge': 'Girtî',
 };
 
 const de: Catalog = {
@@ -2183,6 +2255,30 @@ const de: Catalog = {
   'dictionary.searchPlaceholder': 'Auf Kurdisch oder Englisch suchen…',
   'comments.add': 'Kommentar hinzufügen…',
   'friends.searchPlaceholder': 'Nach Benutzernamen suchen…',
+  'chat.receipt.read': 'Gelesen',
+  'chat.send': 'Senden',
+  'dictionary.related': 'Verwandt',
+  'dictionary.recent': 'Zuletzt',
+  'grammar.title': 'Tipps',
+  'lesson.answer': 'Antwort:',
+  'lesson.review': 'Wiederholen',
+  'library.title': 'Bibliothek',
+  'library.write': 'Schreiben',
+  'memes.post': 'Beitrag',
+  'memes.title': 'Memes',
+  'notifications.title': 'Mitteilungen',
+  'notifications.categories': 'Kategorien',
+  'appearance.title': 'Darstellung',
+  'appearance.theme': 'Design',
+  'appearance.preview': 'Vorschau',
+  'settings.title': 'Einstellungen',
+  'settings.group.preferences': 'Voreinstellungen',
+  'settings.group.notifications': 'Mitteilungen',
+  'settings.group.privacy': 'Privatsphäre',
+  'settings.group.account': 'Konto',
+  'tags.automatic': 'Automatisch',
+  'username.current': 'Aktuell',
+  'coursemap.lockedBadge': 'Gesperrt',
 };
 
 const es: Catalog = {
@@ -2722,6 +2818,30 @@ const es: Catalog = {
   'dictionary.searchPlaceholder': 'Busca en kurdo o inglés…',
   'comments.add': 'Añade un comentario…',
   'friends.searchPlaceholder': 'Busca por nombre de usuario…',
+  'chat.receipt.read': 'Leído',
+  'chat.send': 'Enviar',
+  'dictionary.related': 'Relacionado',
+  'dictionary.recent': 'Recientes',
+  'grammar.title': 'Consejos',
+  'lesson.answer': 'Respuesta:',
+  'lesson.review': 'Repasar',
+  'library.title': 'Biblioteca',
+  'library.write': 'Escribir',
+  'memes.post': 'Publicación',
+  'memes.title': 'Memes',
+  'notifications.title': 'Notificaciones',
+  'notifications.categories': 'Categorías',
+  'appearance.title': 'Apariencia',
+  'appearance.theme': 'Tema',
+  'appearance.preview': 'Vista previa',
+  'settings.title': 'Ajustes',
+  'settings.group.preferences': 'Preferencias',
+  'settings.group.notifications': 'Notificaciones',
+  'settings.group.privacy': 'Privacidad',
+  'settings.group.account': 'Cuenta',
+  'tags.automatic': 'Automático',
+  'username.current': 'Actual',
+  'coursemap.lockedBadge': 'Bloqueado',
 };
 
 const tr: Catalog = {
@@ -3261,6 +3381,30 @@ const tr: Catalog = {
   'dictionary.searchPlaceholder': 'Kürtçe veya İngilizce ara…',
   'comments.add': 'Bir yorum ekle…',
   'friends.searchPlaceholder': 'Kullanıcı adına göre ara…',
+  'chat.receipt.read': 'Okundu',
+  'chat.send': 'Gönder',
+  'dictionary.related': 'İlgili',
+  'dictionary.recent': 'Son',
+  'grammar.title': 'İpuçları',
+  'lesson.answer': 'Cevap:',
+  'lesson.review': 'Gözden geçir',
+  'library.title': 'Kütüphane',
+  'library.write': 'Yaz',
+  'memes.post': 'Gönderi',
+  'memes.title': 'Memeler',
+  'notifications.title': 'Bildirimler',
+  'notifications.categories': 'Kategoriler',
+  'appearance.title': 'Görünüm',
+  'appearance.theme': 'Tema',
+  'appearance.preview': 'Önizleme',
+  'settings.title': 'Ayarlar',
+  'settings.group.preferences': 'Tercihler',
+  'settings.group.notifications': 'Bildirimler',
+  'settings.group.privacy': 'Gizlilik',
+  'settings.group.account': 'Hesap',
+  'tags.automatic': 'Otomatik',
+  'username.current': 'Mevcut',
+  'coursemap.lockedBadge': 'Kilitli',
 };
 
 const ar: Catalog = {
@@ -3800,6 +3944,30 @@ const ar: Catalog = {
   'dictionary.searchPlaceholder': 'ابحث بالكردية أو الإنجليزية…',
   'comments.add': 'أضف تعليقًا…',
   'friends.searchPlaceholder': 'ابحث باسم المستخدم…',
+  'chat.receipt.read': 'مقروء',
+  'chat.send': 'إرسال',
+  'dictionary.related': 'ذات صلة',
+  'dictionary.recent': 'الأخيرة',
+  'grammar.title': 'نصائح',
+  'lesson.answer': 'الإجابة:',
+  'lesson.review': 'مراجعة',
+  'library.title': 'المكتبة',
+  'library.write': 'اكتب',
+  'memes.post': 'منشور',
+  'memes.title': 'ميمز',
+  'notifications.title': 'الإشعارات',
+  'notifications.categories': 'الفئات',
+  'appearance.title': 'المظهر',
+  'appearance.theme': 'السمة',
+  'appearance.preview': 'معاينة',
+  'settings.title': 'الإعدادات',
+  'settings.group.preferences': 'التفضيلات',
+  'settings.group.notifications': 'الإشعارات',
+  'settings.group.privacy': 'الخصوصية',
+  'settings.group.account': 'الحساب',
+  'tags.automatic': 'تلقائي',
+  'username.current': 'الحالي',
+  'coursemap.lockedBadge': 'مقفل',
 };
 
 const fr: Catalog = {
@@ -4339,6 +4507,30 @@ const fr: Catalog = {
   'dictionary.searchPlaceholder': 'Cherche en kurde ou en anglais…',
   'comments.add': 'Ajoute un commentaire…',
   'friends.searchPlaceholder': 'Rechercher par nom d’utilisateur…',
+  'chat.receipt.read': 'Lu',
+  'chat.send': 'Envoyer',
+  'dictionary.related': 'Associés',
+  'dictionary.recent': 'Récents',
+  'grammar.title': 'Astuces',
+  'lesson.answer': 'Réponse :',
+  'lesson.review': 'Réviser',
+  'library.title': 'Bibliothèque',
+  'library.write': 'Écrire',
+  'memes.post': 'Publication',
+  'memes.title': 'Mèmes',
+  'notifications.title': 'Notifications',
+  'notifications.categories': 'Catégories',
+  'appearance.title': 'Apparence',
+  'appearance.theme': 'Thème',
+  'appearance.preview': 'Aperçu',
+  'settings.title': 'Réglages',
+  'settings.group.preferences': 'Préférences',
+  'settings.group.notifications': 'Notifications',
+  'settings.group.privacy': 'Confidentialité',
+  'settings.group.account': 'Compte',
+  'tags.automatic': 'Automatique',
+  'username.current': 'Actuel',
+  'coursemap.lockedBadge': 'Verrouillé',
 };
 
 const nl: Catalog = {
@@ -4878,6 +5070,30 @@ const nl: Catalog = {
   'dictionary.searchPlaceholder': 'Zoek in het Koerdisch of Engels…',
   'comments.add': 'Voeg een reactie toe…',
   'friends.searchPlaceholder': 'Zoek op gebruikersnaam…',
+  'chat.receipt.read': 'Gelezen',
+  'chat.send': 'Versturen',
+  'dictionary.related': 'Gerelateerd',
+  'dictionary.recent': 'Recent',
+  'grammar.title': 'Tips',
+  'lesson.answer': 'Antwoord:',
+  'lesson.review': 'Herhalen',
+  'library.title': 'Bibliotheek',
+  'library.write': 'Schrijven',
+  'memes.post': 'Bericht',
+  'memes.title': 'Memes',
+  'notifications.title': 'Meldingen',
+  'notifications.categories': 'Categorieën',
+  'appearance.title': 'Weergave',
+  'appearance.theme': 'Thema',
+  'appearance.preview': 'Voorbeeld',
+  'settings.title': 'Instellingen',
+  'settings.group.preferences': 'Voorkeuren',
+  'settings.group.notifications': 'Meldingen',
+  'settings.group.privacy': 'Privacy',
+  'settings.group.account': 'Account',
+  'tags.automatic': 'Automatisch',
+  'username.current': 'Huidig',
+  'coursemap.lockedBadge': 'Vergrendeld',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5418,6 +5634,30 @@ const ckb: Catalog = {
   'dictionary.searchPlaceholder': 'بە کوردی یان ئینگلیزی بگەڕێ…',
   'comments.add': 'لێدوانێک زیاد بکە…',
   'friends.searchPlaceholder': 'بەپێی ناوی بەکارهێنەر بگەڕێ…',
+  'chat.receipt.read': 'خوێندراوە',
+  'chat.send': 'بنێرە',
+  'dictionary.related': 'پەیوەندیدار',
+  'dictionary.recent': 'دواییەکان',
+  'grammar.title': 'ئامۆژگاری',
+  'lesson.answer': 'وەڵام:',
+  'lesson.review': 'پێداچوونەوە',
+  'library.title': 'کتێبخانە',
+  'library.write': 'بنووسە',
+  'memes.post': 'پۆست',
+  'memes.title': 'میم',
+  'notifications.title': 'ئاگادارکردنەوەکان',
+  'notifications.categories': 'پۆلەکان',
+  'appearance.title': 'ڕووکار',
+  'appearance.theme': 'تێما',
+  'appearance.preview': 'پێشبینین',
+  'settings.title': 'ڕێکخستنەکان',
+  'settings.group.preferences': 'هەڵبژاردەکان',
+  'settings.group.notifications': 'ئاگادارکردنەوەکان',
+  'settings.group.privacy': 'تایبەتێتی',
+  'settings.group.account': 'هەژمار',
+  'tags.automatic': 'خۆکار',
+  'username.current': 'ئێستا',
+  'coursemap.lockedBadge': 'داخراو',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

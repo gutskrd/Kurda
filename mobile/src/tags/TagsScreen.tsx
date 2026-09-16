@@ -138,7 +138,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {/* auto tags */}
             {autos.length > 0 ? (
               <>
-                <Text style={[styles.section, { color: colors.textSecondary }]}>Automatic</Text>
+                <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.automatic')}</Text>
                 <View style={styles.chips}>
                   {autos.map((t) => (
                     <TagBadge key={t.key} label={tagLabel(t)} />

@@ -623,6 +623,7 @@ export const tr: Catalogue = {
   'photo.clearAll': 'Tümünü temizle',
   'photo.stickerKind': 'Çıkartma türü',
   'photo.marks': 'Simgeler',
+  'photo.emoji': 'Emoji',
   'photo.bringForward': 'Öne getir',
   'photo.sendBack': 'Arkaya gönder',
   'photo.duplicate': 'Çoğalt',

@@ -40,7 +40,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
       <View style={styles.screen}>
         <View style={[styles.header, { paddingTop: topInset }]}>
           <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Messages</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('nav.messages')}</Text>
           <View style={{ width: 40 }} />
         </View>
         <FlatList

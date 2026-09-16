@@ -94,13 +94,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <View style={styles.header}>
           <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10} style={styles.backBtn}>
             <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-            <Text style={[styles.back, { color: colors.textSecondary }]}>Back</Text>
+            <Text style={[styles.back, { color: colors.textSecondary }]}>{t('common.back')}</Text>
           </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Settings</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('settings.title')}</Text>
           <View style={{ width: 64 }} />
         </View>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>Preferences</Text>
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.preferences')}</Text>
         <GlassCard padding="tight">
           <GlassSelect
             first
@@ -127,13 +127,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           />
         </GlassCard>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>Notifications</Text>
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.notifications')}</Text>
         <GlassCard padding="tight">
           <GlassRow first icon="gear" title={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
           <GlassRow icon="bell" title={t('settings.notificationCenter')} onPress={() => navigation.navigate('NotificationCenter')} />
         </GlassCard>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>Privacy</Text>
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.privacy')}</Text>
         <GlassCard>
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.privacy.title')}</Text>
           <View style={styles.pillRow}>
@@ -143,7 +143,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           </View>
         </GlassCard>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>Account</Text>
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
         <GlassCard padding="tight">
           <GlassRow first icon="person" title="Username" value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
           <GlassRow icon="person" title={t('profile.logout')} onPress={logout} destructive />

@@ -121,7 +121,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
                   >
                     <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{item.body}</Text>
                   </View>
-                  {mine && item.readAt ? <Text style={[styles.receipt, { color: colors.textSecondary }]}>Read</Text> : null}
+                  {mine && item.readAt ? <Text style={[styles.receipt, { color: colors.textSecondary }]}>{t('chat.receipt.read')}</Text> : null}
                 </View>
               );
             }}
@@ -146,7 +146,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
             disabled={!draft.trim()}
             style={[styles.sendBtn, { backgroundColor: draft.trim() ? colors.primary : colors.controlTrack }]}
           >
-            <Text style={[styles.sendText, { color: draft.trim() ? colors.textOnPrimary : colors.textSecondary }]}>Send</Text>
+            <Text style={[styles.sendText, { color: draft.trim() ? colors.textOnPrimary : colors.textSecondary }]}>{t('chat.send')}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

@@ -635,7 +635,7 @@ export function PhotoEditor({
               aria-pressed={stickerTab === 'emoji'}
               onClick={() => setStickerTab('emoji')}
             >
-              Emoji
+              {t('photo.emoji')}
             </button>
           </div>
 

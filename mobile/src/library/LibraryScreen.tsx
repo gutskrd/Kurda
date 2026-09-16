@@ -116,7 +116,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back">
             <Icon name="chevron-left" size={24} color={colors.textSecondary} />
           </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>Library</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('library.title')}</Text>
           <View style={{ width: 24 }} />
         </View>
 

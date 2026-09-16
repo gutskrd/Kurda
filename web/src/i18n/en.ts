@@ -700,6 +700,7 @@ export const en = {
   'photo.clearAll': 'Clear all',
   'photo.stickerKind': 'Sticker kind',
   'photo.marks': 'Marks',
+  'photo.emoji': 'Emoji',
   'photo.bringForward': 'Bring forward',
   'photo.sendBack': 'Send back',
   'photo.duplicate': 'Duplicate',

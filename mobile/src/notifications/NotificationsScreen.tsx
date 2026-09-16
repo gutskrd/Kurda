@@ -60,7 +60,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
             const quiet = quietEnabled(prefs);
             return (
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={[styles.section, { color: colors.textSecondary }]}>Categories</Text>
+          <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.categories')}</Text>
           {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
             <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
               <Text style={[styles.label, { color: colors.textPrimary }]}>{CATEGORY_LABEL[cat]}</Text>
@@ -127,13 +127,14 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
 
 function Header({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={onExit} hitSlop={10}>
         <Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text>
       </Pressable>
-      <Text style={[styles.heading, { color: colors.textPrimary }]}>Notifications</Text>
+      <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
     </View>
   );
 }

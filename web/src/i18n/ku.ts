@@ -629,6 +629,7 @@ export const ku: Catalogue = {
   'photo.clearAll': 'Hemûyan rake',
   'photo.stickerKind': 'Cureyê stickerê',
   'photo.marks': 'Nîşan',
+  'photo.emoji': 'Emoji',
   'photo.bringForward': 'Bîne pêş',
   'photo.sendBack': 'Bişîne paş',
   'photo.duplicate': 'Dubare bike',

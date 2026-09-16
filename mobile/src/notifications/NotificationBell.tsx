@@ -7,12 +7,14 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { unreadBadge } from './inbox.js';
+import { useI18n } from '../i18n/I18nContext';
 
 /** Bell row with an unread badge → the notification center (KUR-097). */
 export function NotificationBell() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [unread, setUnread] = useState(0);
 
   useFocusEffect(
@@ -33,7 +35,7 @@ export function NotificationBell() {
       accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
     >
       <Icon name="bell" size={20} color={colors.textOnPrimary} />
-      <Text style={[styles.label, { color: colors.textOnPrimary }]}>Notifications</Text>
+      <Text style={[styles.label, { color: colors.textOnPrimary }]}>{t('notifications.title')}</Text>
       {badge ? (
         <View style={[styles.badge, { backgroundColor: colors.danger }]}>
           <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{badge}</Text>

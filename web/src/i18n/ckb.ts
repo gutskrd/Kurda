@@ -635,6 +635,7 @@ export const ckb: Catalogue = {
   'photo.clearAll': 'هەموو بسڕەوە',
   'photo.stickerKind': 'جۆری ستیکەر',
   'photo.marks': 'نیشانەکان',
+  'photo.emoji': 'ئیمۆجی',
   'photo.bringForward': 'بیهێنە پێشەوە',
   'photo.sendBack': 'بینێرە دواوە',
   'photo.duplicate': 'کۆپی بکە',
