@@ -655,7 +655,29 @@ export type TranslationKey =
   | 'error.code.invalidLink'
   | 'error.code.usernameTaken'
   | 'error.code.signupRejected'
-  | 'error.tooManyRetryInMin';
+  | 'error.tooManyRetryInMin'
+  | 'picture.title'
+  | 'picture.choosePicture'
+  | 'picture.changePicture'
+  | 'picture.asPicture'
+  | 'picture.asMeme'
+  | 'picture.captionPlaceholder'
+  | 'picture.captionLabel'
+  | 'picture.post'
+  | 'picture.posting'
+  | 'picture.accessHelp'
+  | 'picture.uploadFailed'
+  | 'picture.postFailed'
+  | 'picture.noIdReturned'
+  | 'picture.storageOff'
+  | 'memes.images'
+  | 'memes.sortNewest'
+  | 'memes.sortPopular'
+  | 'post.open'
+  | 'post.button'
+  | 'post.what'
+  | 'post.words.sub'
+  | 'post.picture.sub';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1287,6 +1309,28 @@ const en: Catalog = {
   'error.code.usernameTaken': 'That username is already taken.',
   'error.code.signupRejected': 'Registration could not be completed.',
   'error.tooManyRetryInMin': 'Too many attempts. Try again in {minutes} min.',
+  'picture.title': 'Post a picture',
+  'picture.choosePicture': 'Choose a picture',
+  'picture.changePicture': 'Change the picture',
+  'picture.asPicture': 'Picture',
+  'picture.asMeme': 'Meme',
+  'picture.captionPlaceholder': 'Say something about it (optional)…',
+  'picture.captionLabel': 'Caption',
+  'picture.post': 'Post',
+  'picture.posting': 'Posting…',
+  'picture.accessHelp': 'MyKurda needs access to your photos so you can choose one to post.',
+  'picture.uploadFailed': 'The picture could not be uploaded.',
+  'picture.postFailed': 'The picture was uploaded, but the post could not be created.',
+  'picture.noIdReturned': 'The server accepted the picture but returned no id.',
+  'picture.storageOff': 'Picture storage is not set up on this deployment yet.',
+  'memes.images': 'Images',
+  'memes.sortNewest': 'Newest',
+  'memes.sortPopular': 'Popular',
+  'post.open': 'Post something',
+  'post.button': 'Post',
+  'post.what': 'What are you posting?',
+  'post.words.sub': 'A saying, a story or a poem',
+  'post.picture.sub': 'A picture or a meme',
 };
 
 const ku: Catalog = {
@@ -1917,6 +1961,28 @@ const ku: Catalog = {
   'error.code.usernameTaken': 'Ew navê bikarhêner jixwe hatiye girtin.',
   'error.code.signupRejected': 'Tomarkirin nehate temamkirin.',
   'error.tooManyRetryInMin': 'Pir ceriband. Piştî {minutes} deqîqeyan dîsa biceribîne.',
+  'picture.title': 'Wêneyekî bişîne',
+  'picture.choosePicture': 'Wêneyekî hilbijêre',
+  'picture.changePicture': 'Wêneyî biguherîne',
+  'picture.asPicture': 'Wêne',
+  'picture.asMeme': 'Mem',
+  'picture.captionPlaceholder': 'Tiştekî li ser bibêje (bijarte)…',
+  'picture.captionLabel': 'Sernivîs',
+  'picture.post': 'Bişîne',
+  'picture.posting': 'Tê şandin…',
+  'picture.accessHelp': 'Ji bo ku tu wêneyekî hilbijêrî û bişînî, divê MyKurda bigihîje wêneyên te.',
+  'picture.uploadFailed': 'Wêne nehate barkirin.',
+  'picture.postFailed': 'Wêne hate barkirin, lê şandî nehate çêkirin.',
+  'picture.noIdReturned': 'Rajekar wêne qebûl kir lê tu nasname venegerand.',
+  'picture.storageOff': 'Cîhê hilanîna wêneyan hîn li ser vê sazkirinê nehatiye amadekirin.',
+  'memes.images': 'Wêne',
+  'memes.sortNewest': 'Nûtirîn',
+  'memes.sortPopular': 'Populer',
+  'post.open': 'Tiştek biweşîne',
+  'post.button': 'Biweşîne',
+  'post.what': 'Tu çi diweşînî?',
+  'post.words.sub': 'Gotinek, çîrokek an helbestek',
+  'post.picture.sub': 'Wêneyek an mîmek',
 };
 
 const de: Catalog = {
@@ -2547,6 +2613,28 @@ const de: Catalog = {
   'error.code.usernameTaken': 'Dieser Benutzername ist bereits vergeben.',
   'error.code.signupRejected': 'Die Registrierung konnte nicht abgeschlossen werden.',
   'error.tooManyRetryInMin': 'Zu viele Versuche. Versuche es in {minutes} Min. erneut.',
+  'picture.title': 'Bild posten',
+  'picture.choosePicture': 'Bild auswählen',
+  'picture.changePicture': 'Bild ändern',
+  'picture.asPicture': 'Bild',
+  'picture.asMeme': 'Meme',
+  'picture.captionPlaceholder': 'Sag etwas dazu (optional)…',
+  'picture.captionLabel': 'Bildtext',
+  'picture.post': 'Posten',
+  'picture.posting': 'Wird gepostet…',
+  'picture.accessHelp': 'MyKurda braucht Zugriff auf deine Fotos, damit du eines zum Posten auswählen kannst.',
+  'picture.uploadFailed': 'Das Bild konnte nicht hochgeladen werden.',
+  'picture.postFailed': 'Das Bild wurde hochgeladen, aber der Beitrag konnte nicht erstellt werden.',
+  'picture.noIdReturned': 'Der Server hat das Bild angenommen, aber keine Id zurückgegeben.',
+  'picture.storageOff': 'Der Bildspeicher ist auf dieser Installation noch nicht eingerichtet.',
+  'memes.images': 'Bilder',
+  'memes.sortNewest': 'Neueste',
+  'memes.sortPopular': 'Beliebt',
+  'post.open': 'Etwas veröffentlichen',
+  'post.button': 'Posten',
+  'post.what': 'Was möchtest du posten?',
+  'post.words.sub': 'Ein Spruch, eine Geschichte oder ein Gedicht',
+  'post.picture.sub': 'Ein Bild oder ein Meme',
 };
 
 const es: Catalog = {
@@ -3177,6 +3265,28 @@ const es: Catalog = {
   'error.code.usernameTaken': 'Ese nombre de usuario ya está en uso.',
   'error.code.signupRejected': 'No se ha podido completar el registro.',
   'error.tooManyRetryInMin': 'Demasiados intentos. Inténtalo de nuevo en {minutes} min.',
+  'picture.title': 'Publicar una foto',
+  'picture.choosePicture': 'Elige una foto',
+  'picture.changePicture': 'Cambiar la foto',
+  'picture.asPicture': 'Foto',
+  'picture.asMeme': 'Meme',
+  'picture.captionPlaceholder': 'Di algo sobre ella (opcional)…',
+  'picture.captionLabel': 'Pie de foto',
+  'picture.post': 'Publicar',
+  'picture.posting': 'Publicando…',
+  'picture.accessHelp': 'MyKurda necesita acceso a tus fotos para que puedas elegir una y publicarla.',
+  'picture.uploadFailed': 'No se ha podido subir la foto.',
+  'picture.postFailed': 'La foto se ha subido, pero no se ha podido crear la publicación.',
+  'picture.noIdReturned': 'El servidor ha aceptado la foto pero no ha devuelto ningún id.',
+  'picture.storageOff': 'El almacenamiento de fotos aún no está configurado en esta instalación.',
+  'memes.images': 'Imágenes',
+  'memes.sortNewest': 'Recientes',
+  'memes.sortPopular': 'Populares',
+  'post.open': 'Publicar algo',
+  'post.button': 'Publicar',
+  'post.what': '¿Qué vas a publicar?',
+  'post.words.sub': 'Un dicho, un relato o un poema',
+  'post.picture.sub': 'Una imagen o un meme',
 };
 
 const tr: Catalog = {
@@ -3807,6 +3917,28 @@ const tr: Catalog = {
   'error.code.usernameTaken': 'Bu kullanıcı adı zaten alınmış.',
   'error.code.signupRejected': 'Kayıt tamamlanamadı.',
   'error.tooManyRetryInMin': 'Çok fazla deneme. {minutes} dk. sonra tekrar dene.',
+  'picture.title': 'Bir görsel paylaş',
+  'picture.choosePicture': 'Bir görsel seç',
+  'picture.changePicture': 'Görseli değiştir',
+  'picture.asPicture': 'Görsel',
+  'picture.asMeme': 'Meme',
+  'picture.captionPlaceholder': 'Bir şeyler yaz (isteğe bağlı)…',
+  'picture.captionLabel': 'Açıklama',
+  'picture.post': 'Paylaş',
+  'picture.posting': 'Paylaşılıyor…',
+  'picture.accessHelp': 'Paylaşmak için bir görsel seçebilmen adına MyKurda\'nın fotoğraflarına erişmesi gerekiyor.',
+  'picture.uploadFailed': 'Görsel yüklenemedi.',
+  'picture.postFailed': 'Görsel yüklendi ama gönderi oluşturulamadı.',
+  'picture.noIdReturned': 'Sunucu görseli kabul etti ama bir kimlik döndürmedi.',
+  'picture.storageOff': 'Bu kurulumda görsel depolama henüz ayarlanmadı.',
+  'memes.images': 'Görseller',
+  'memes.sortNewest': 'En yeni',
+  'memes.sortPopular': 'Popüler',
+  'post.open': 'Bir şey paylaş',
+  'post.button': 'Paylaş',
+  'post.what': 'Ne paylaşıyorsun?',
+  'post.words.sub': 'Bir söz, bir hikâye ya da bir şiir',
+  'post.picture.sub': 'Bir resim ya da bir mizah görseli',
 };
 
 const ar: Catalog = {
@@ -4437,6 +4569,28 @@ const ar: Catalog = {
   'error.code.usernameTaken': 'اسم المستخدم هذا مستخدَم بالفعل.',
   'error.code.signupRejected': 'تعذّر إكمال التسجيل.',
   'error.tooManyRetryInMin': 'محاولات كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.',
+  'picture.title': 'انشر صورة',
+  'picture.choosePicture': 'اختر صورة',
+  'picture.changePicture': 'غيّر الصورة',
+  'picture.asPicture': 'صورة',
+  'picture.asMeme': 'ميم',
+  'picture.captionPlaceholder': 'قل شيئًا عنها (اختياري)…',
+  'picture.captionLabel': 'التعليق',
+  'picture.post': 'انشر',
+  'picture.posting': 'جارٍ النشر…',
+  'picture.accessHelp': 'يحتاج MyKurda إلى الوصول إلى صورك لتتمكن من اختيار واحدة لنشرها.',
+  'picture.uploadFailed': 'تعذّر رفع الصورة.',
+  'picture.postFailed': 'تم رفع الصورة، لكن تعذّر إنشاء المنشور.',
+  'picture.noIdReturned': 'قبل الخادم الصورة لكنه لم يُعِد أي معرّف.',
+  'picture.storageOff': 'لم يُضبط تخزين الصور في هذا النشر بعد.',
+  'memes.images': 'الصور',
+  'memes.sortNewest': 'الأحدث',
+  'memes.sortPopular': 'الأكثر رواجًا',
+  'post.open': 'انشر شيئاً',
+  'post.button': 'نشر',
+  'post.what': 'ماذا تريد أن تنشر؟',
+  'post.words.sub': 'قول أو قصة أو قصيدة',
+  'post.picture.sub': 'صورة أو ميم',
 };
 
 const fr: Catalog = {
@@ -5067,6 +5221,28 @@ const fr: Catalog = {
   'error.code.usernameTaken': 'Ce nom d’utilisateur est déjà pris.',
   'error.code.signupRejected': 'L’inscription n’a pas pu être finalisée.',
   'error.tooManyRetryInMin': 'Trop de tentatives. Réessaie dans {minutes} min.',
+  'picture.title': 'Publier une photo',
+  'picture.choosePicture': 'Choisis une photo',
+  'picture.changePicture': 'Changer la photo',
+  'picture.asPicture': 'Photo',
+  'picture.asMeme': 'Mème',
+  'picture.captionPlaceholder': 'Dis-en quelque chose (facultatif)…',
+  'picture.captionLabel': 'Légende',
+  'picture.post': 'Publier',
+  'picture.posting': 'Publication…',
+  'picture.accessHelp': 'MyKurda a besoin d’accéder à tes photos pour que tu puisses en choisir une à publier.',
+  'picture.uploadFailed': 'La photo n’a pas pu être envoyée.',
+  'picture.postFailed': 'La photo a été envoyée, mais la publication n’a pas pu être créée.',
+  'picture.noIdReturned': 'Le serveur a accepté la photo mais n’a renvoyé aucun identifiant.',
+  'picture.storageOff': 'Le stockage des photos n’est pas encore configuré sur ce déploiement.',
+  'memes.images': 'Images',
+  'memes.sortNewest': 'Plus récents',
+  'memes.sortPopular': 'Populaires',
+  'post.open': 'Publier quelque chose',
+  'post.button': 'Publier',
+  'post.what': 'Que voulez-vous publier ?',
+  'post.words.sub': 'Un dicton, un récit ou un poème',
+  'post.picture.sub': 'Une image ou un mème',
 };
 
 const nl: Catalog = {
@@ -5697,6 +5873,28 @@ const nl: Catalog = {
   'error.code.usernameTaken': 'Die gebruikersnaam is al bezet.',
   'error.code.signupRejected': 'Registratie kon niet worden voltooid.',
   'error.tooManyRetryInMin': 'Te veel pogingen. Probeer het over {minutes} min. opnieuw.',
+  'picture.title': 'Een foto plaatsen',
+  'picture.choosePicture': 'Kies een foto',
+  'picture.changePicture': 'Foto wijzigen',
+  'picture.asPicture': 'Foto',
+  'picture.asMeme': 'Meme',
+  'picture.captionPlaceholder': 'Zeg er iets over (optioneel)…',
+  'picture.captionLabel': 'Bijschrift',
+  'picture.post': 'Plaatsen',
+  'picture.posting': 'Bezig met plaatsen…',
+  'picture.accessHelp': 'MyKurda heeft toegang tot je foto\'s nodig zodat je er een kunt kiezen om te plaatsen.',
+  'picture.uploadFailed': 'De foto kon niet worden geüpload.',
+  'picture.postFailed': 'De foto is geüpload, maar het bericht kon niet worden aangemaakt.',
+  'picture.noIdReturned': 'De server accepteerde de foto maar gaf geen id terug.',
+  'picture.storageOff': 'Fotoopslag is op deze installatie nog niet ingesteld.',
+  'memes.images': 'Afbeeldingen',
+  'memes.sortNewest': 'Nieuwste',
+  'memes.sortPopular': 'Populair',
+  'post.open': 'Iets plaatsen',
+  'post.button': 'Plaatsen',
+  'post.what': 'Wat ga je plaatsen?',
+  'post.words.sub': 'Een gezegde, een verhaal of een gedicht',
+  'post.picture.sub': 'Een foto of een meme',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6328,6 +6526,28 @@ const ckb: Catalog = {
   'error.code.usernameTaken': 'ئەم ناوی بەکارهێنەرە پێشتر وەرگیراوە.',
   'error.code.signupRejected': 'تۆمارکردن تەواو نەبوو.',
   'error.tooManyRetryInMin': 'هەوڵی زۆر. دوای {minutes} خولەک دووبارە هەوڵ بدەرەوە.',
+  'picture.title': 'وێنەیەک بڵاوبکەرەوە',
+  'picture.choosePicture': 'وێنەیەک هەڵبژێرە',
+  'picture.changePicture': 'وێنەکە بگۆڕە',
+  'picture.asPicture': 'وێنە',
+  'picture.asMeme': 'میم',
+  'picture.captionPlaceholder': 'شتێکی لەسەر بڵێ (ئارەزوومەندانە)…',
+  'picture.captionLabel': 'سەردێڕ',
+  'picture.post': 'بڵاوبکەرەوە',
+  'picture.posting': 'بڵاو دەکرێتەوە…',
+  'picture.accessHelp': 'MyKurda پێویستی بە دەستڕاگەیشتنە بە وێنەکانت تا بتوانیت یەکێک هەڵبژێریت بۆ بڵاوکردنەوە.',
+  'picture.uploadFailed': 'نەتوانرا وێنەکە باربکرێت.',
+  'picture.postFailed': 'وێنەکە بارکرا، بەڵام نەتوانرا پۆستەکە دروست بکرێت.',
+  'picture.noIdReturned': 'ڕاژەکار وێنەکەی وەرگرت بەڵام هیچ ناسنامەیەکی نەگەڕاندەوە.',
+  'picture.storageOff': 'هێشتا کۆگای وێنە لەم دامەزراندنەدا ڕێک نەخراوە.',
+  'memes.images': 'وێنەکان',
+  'memes.sortNewest': 'نوێترین',
+  'memes.sortPopular': 'بەناوبانگ',
+  'post.open': 'شتێک بڵاو بکەرەوە',
+  'post.button': 'بڵاوکردنەوە',
+  'post.what': 'چی بڵاو دەکەیتەوە؟',
+  'post.words.sub': 'قسەیەک، چیرۆکێک یان شیعرێک',
+  'post.picture.sub': 'وێنەیەک یان میمێک',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

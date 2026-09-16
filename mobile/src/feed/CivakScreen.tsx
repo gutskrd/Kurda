@@ -1,9 +1,12 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { ActivityIndicator, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
 import { GradientBackground, Segmented } from '../theme/glass';
+import { Icon } from '../theme/Icon';
+import type { RootNavigation } from '../navigation/rootStack';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
@@ -30,6 +33,9 @@ export function CivakScreen(): React.JSX.Element {
   const { t } = useI18n();
   const topInset = useScreenTopInset();
 
+  const navigation = useNavigation<RootNavigation>();
+  const tabBarInset = useTabBarInset();
+  const [choosing, setChoosing] = useState(false);
   const [section, setSection] = useState<FeedSection>('all');
   const [kind, setKind] = useState<string | null>(null);
   const [items, setItems] = useState<FeedItem[] | null>(null);
@@ -146,8 +152,78 @@ export function CivakScreen(): React.JSX.Element {
             }
           />
         </AsyncBoundary>
+
+        <PostChooser
+          open={choosing}
+          onClose={() => setChoosing(false)}
+          onPick={(what) => {
+            setChoosing(false);
+            navigation.navigate(what === 'words' ? 'LibraryCompose' : 'PostPicture');
+          }}
+        />
+
+        {/* above the tab bar, not under it */}
+        <Pressable
+          onPress={() => setChoosing(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('post.open')}
+          style={({ pressed }) => [
+            styles.fab,
+            { bottom: tabBarInset + spacing.md, backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 },
+          ]}
+        >
+          <Icon name="sparkle" size={22} tone="onPrimary" />
+          <Text style={[styles.fabText, { color: colors.textOnPrimary }]}>{t('post.button')}</Text>
+        </Pressable>
       </View>
     </GradientBackground>
+  );
+}
+
+/**
+ * Asks once, and only once you have decided to post something — the same
+ * question the browser asks, in the same words.
+ */
+function PostChooser({
+  open,
+  onClose,
+  onPick,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPick: (what: 'words' | 'picture') => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
+        {/* the card swallows the tap so choosing does not also dismiss */}
+        <Pressable
+          style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]}
+          onPress={() => undefined}
+        >
+        <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('post.what')}</Text>
+        {([
+          ['words', 'book', 'civak.section.writing', 'post.words.sub'],
+          ['picture', 'image', 'civak.section.pictures', 'post.picture.sub'],
+        ] as const).map(([what, icon, name, sub]) => (
+          <Pressable
+            key={what}
+            onPress={() => onPick(what)}
+            accessibilityRole="button"
+            style={[styles.choice, { borderColor: colors.glassBorder, backgroundColor: colors.controlTrack }]}
+          >
+            <Icon name={icon} size={26} tone="primary" />
+            <View style={styles.choiceText}>
+              <Text style={[styles.choiceName, { color: colors.textPrimary }]}>{t(name)}</Text>
+              <Text style={[styles.choiceSub, { color: colors.textSecondary }]}>{t(sub)}</Text>
+            </View>
+          </Pressable>
+        ))}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -158,4 +234,22 @@ const styles = StyleSheet.create({
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 999,
+  },
+  fabText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: 1, borderRadius: 20, gap: spacing.sm },
+  sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderWidth: 1, borderRadius: 14 },
+  choiceText: { flex: 1 },
+  choiceName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  choiceSub: { fontSize: typography.sizes.sm },
 });

@@ -51,6 +51,7 @@ import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
+import { PostPictureScreen } from './src/memes/PostPictureScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
 import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
@@ -242,6 +243,10 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* a modal, because it is a thing you finish and dismiss, not a place */}
+      <RootStack.Screen name="PostPicture" options={{ presentation: 'modal' }}>
+        {({ navigation }) => <PostPictureScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="MemeDetail" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}

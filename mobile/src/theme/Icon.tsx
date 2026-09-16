@@ -47,7 +47,8 @@ export type IconName =
   | 'globe'
   | 'eye'
   | 'eye-off'
-  | 'alert';
+  | 'alert'
+  | 'image';
 
 /** 24×24 filled-silhouette path data, keyed by icon name. */
 const PATHS: Record<IconName, string> = {
@@ -111,6 +112,8 @@ const PATHS: Record<IconName, string> = {
   eye: 'M12 5c-5 0-9 4.6-10 7 1 2.4 5 7 10 7s9-4.6 10-7c-1-2.4-5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
   'eye-off':
     'M12 5c-5 0-9 4.6-10 7 .5 1.2 1.8 3 3.7 4.5l2.1-2.1A4 4 0 0 1 13.4 9l1.9-1.9A10.6 10.6 0 0 0 12 5Zm8.9.5L18.5 8l-.1-.1A16 16 0 0 1 22 12c-1 2.4-5 7-10 7a10.6 10.6 0 0 1-3.3-.6l-3.2 3.2-1.4-1.4L19.5 4.1l1.4 1.4ZM12 16a4 4 0 0 0 3.7-5.6l-5.3 5.3c.5.2 1 .3 1.6.3Z',
+  // a framed picture: sun and hill punched out of the frame (evenodd)
+  image: 'M4 3.5h16A2.5 2.5 0 0 1 22.5 6v12a2.5 2.5 0 0 1-2.5 2.5H4A2.5 2.5 0 0 1 1.5 18V6A2.5 2.5 0 0 1 4 3.5ZM3.5 6A.5.5 0 0 1 4 5.5h16a.5.5 0 0 1 .5.5v7.2l-4.1-4a1 1 0 0 0-1.4 0L9.2 15 7 12.9a1 1 0 0 0-1.4 0l-2.1 2V6ZM7.8 7.6a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4Z',
   // warning triangle, bang punched out (evenodd)
   alert: 'M10.1 3.9 1.4 18.4a2.2 2.2 0 0 0 1.9 3.4h17.4a2.2 2.2 0 0 0 1.9-3.4L13.9 3.9a2.2 2.2 0 0 0-3.8 0ZM10.8 8.4h2.4l-.4 7.2h-1.6ZM12 16.8a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Z',
   // Google "G" glyph (monochrome, filled)
