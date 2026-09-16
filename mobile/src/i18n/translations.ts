@@ -550,7 +550,9 @@ export type TranslationKey =
   | 'auth.login.submitting'
   | 'auth.register.submitting'
   | 'auth.verify.enterCode'
-  | 'auth.verify.expiresIn15';
+  | 'auth.verify.expiresIn15'
+  | 'practice.title'
+  | 'daily.title';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1077,6 +1079,8 @@ const en: Catalog = {
   'auth.register.submitting': 'Creating…',
   'auth.verify.enterCode': 'Enter the {digits}-digit code from your email.',
   'auth.verify.expiresIn15': 'The code expires 15 minutes after it was sent.',
+  'practice.title': 'Practice',
+  'daily.title': 'Daily Zêr',
 };
 
 const ku: Catalog = {
@@ -1602,6 +1606,8 @@ const ku: Catalog = {
   'auth.register.submitting': 'Tê çêkirin…',
   'auth.verify.enterCode': 'Koda {digits}-hejmarî ya di e-nameya te de binivîse.',
   'auth.verify.expiresIn15': 'Kod 15 xulek piştî şandinê diqede.',
+  'practice.title': 'Temrîn',
+  'daily.title': 'Zêrê rojane',
 };
 
 const de: Catalog = {
@@ -2127,6 +2133,8 @@ const de: Catalog = {
   'auth.register.submitting': 'Wird erstellt…',
   'auth.verify.enterCode': 'Gib den {digits}-stelligen Code aus deiner E-Mail ein.',
   'auth.verify.expiresIn15': 'Der Code läuft 15 Minuten nach dem Versand ab.',
+  'practice.title': 'Üben',
+  'daily.title': 'Tägliche Zêr',
 };
 
 const es: Catalog = {
@@ -2652,6 +2660,8 @@ const es: Catalog = {
   'auth.register.submitting': 'Creando…',
   'auth.verify.enterCode': 'Escribe el código de {digits} dígitos de tu correo.',
   'auth.verify.expiresIn15': 'El código caduca 15 minutos después de enviarse.',
+  'practice.title': 'Practicar',
+  'daily.title': 'Zêr diarios',
 };
 
 const tr: Catalog = {
@@ -3177,6 +3187,8 @@ const tr: Catalog = {
   'auth.register.submitting': 'Oluşturuluyor…',
   'auth.verify.enterCode': 'E-postandaki {digits} haneli kodu gir.',
   'auth.verify.expiresIn15': 'Kod, gönderildikten 15 dakika sonra geçersiz olur.',
+  'practice.title': 'Alıştırma',
+  'daily.title': 'Günlük Zêr',
 };
 
 const ar: Catalog = {
@@ -3702,6 +3714,8 @@ const ar: Catalog = {
   'auth.register.submitting': 'جارٍ الإنشاء…',
   'auth.verify.enterCode': 'أدخل الرمز المكوّن من {digits} أرقام من بريدك.',
   'auth.verify.expiresIn15': 'ينتهي الرمز بعد ١٥ دقيقة من إرساله.',
+  'practice.title': 'تدريب',
+  'daily.title': 'Zêr اليومي',
 };
 
 const fr: Catalog = {
@@ -4227,6 +4241,8 @@ const fr: Catalog = {
   'auth.register.submitting': 'Création…',
   'auth.verify.enterCode': 'Saisis le code à {digits} chiffres reçu par e-mail.',
   'auth.verify.expiresIn15': 'Le code expire 15 minutes après son envoi.',
+  'practice.title': 'S’entraîner',
+  'daily.title': 'Zêr quotidiens',
 };
 
 const nl: Catalog = {
@@ -4752,6 +4768,8 @@ const nl: Catalog = {
   'auth.register.submitting': 'Bezig met aanmaken…',
   'auth.verify.enterCode': 'Voer de {digits}-cijferige code uit je e-mail in.',
   'auth.verify.expiresIn15': 'De code verloopt 15 minuten nadat hij is verstuurd.',
+  'practice.title': 'Oefenen',
+  'daily.title': 'Dagelijkse Zêr',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5278,6 +5296,8 @@ const ckb: Catalog = {
   'auth.register.submitting': 'دروستکردن…',
   'auth.verify.enterCode': 'کۆدی {digits} ژمارەیی ناو ئیمەیڵەکەت بنووسە.',
   'auth.verify.expiresIn15': 'کۆدەکە ١٥ خولەک دوای ناردنی بەسەردەچێت.',
+  'practice.title': 'ڕاهێنان',
+  'daily.title': 'Zêrی ڕۆژانە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

@@ -91,14 +91,14 @@ export function LearnScreen() {
 
   const header = (
     <View style={styles.header}>
-      <Text style={[styles.title, { color: colors.primary }]}>Learn</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{t('nav.learn')}</Text>
       {goal ? (
         <View style={styles.goalCard}>
           <ProgressRing progress={goal.progress} completed={goal.completed} caption={`${goal.earnedXp} / ${goal.effectiveGoal} XP`} />
           <GoalPicker value={goal.goal} onChange={changeGoal} />
         </View>
       ) : null}
-      <ClayButton label="Practice" icon="bolt" tone="primary" onPress={() => navigation.navigate('Practice')} style={styles.practice} />
+      <ClayButton label={t('practice.title')} icon="bolt" tone="primary" onPress={() => navigation.navigate('Practice')} style={styles.practice} />
       <EventBanner />
       <DailyRewardCard />
       <WordOfDayCard />

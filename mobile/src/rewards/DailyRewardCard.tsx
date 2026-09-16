@@ -57,7 +57,7 @@ export function DailyRewardCard() {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
-      <Text style={[styles.heading, { color: colors.textPrimary }]}>Daily Zêr</Text>
+      <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('daily.title')}</Text>
       <View style={styles.row}>
         {status.schedule.map((amount, i) => {
           const day = i + 1;
