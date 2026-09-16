@@ -41,6 +41,7 @@ import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScre
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { useReducedMotion } from './src/a11y/useReducedMotion';
 import { OfflineBanner } from './src/net/OfflineBanner';
+import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { WordleScreen } from './src/wordle/WordleScreen';
@@ -330,7 +331,15 @@ function ThemedNavigation() {
     <NavigationContainer linking={linking} theme={navTheme}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={{ flex: 1 }}>
-        <Root />
+        {/*
+          Inside the container, and around the screens only: the fallback needs
+          the palette and the translator, and recovering should re-enter the
+          navigator at its initial route rather than at the screen that threw.
+          The offline banner stays outside so it survives the crash screen.
+        */}
+        <AppErrorBoundary>
+          <Root />
+        </AppErrorBoundary>
         <OfflineBanner />
       </View>
     </NavigationContainer>
