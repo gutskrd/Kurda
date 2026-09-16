@@ -251,7 +251,7 @@ export function SessionPlayer({
       <GradientBackground>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.tallying, { color: colors.textSecondary }]}>Tallying results…</Text>
+          <Text style={[styles.tallying, { color: colors.textSecondary }]}>{t('lesson.tallying')}</Text>
         </View>
       </GradientBackground>
     );

@@ -22,7 +22,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled }: Pr
         value={text}
         onChangeText={onChangeText}
         editable={!disabled}
-        placeholder="Type in Kurdish…"
+        placeholder={t('lesson.translate.placeholder')}
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}

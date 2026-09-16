@@ -111,7 +111,7 @@ export function SocialScreen() {
         </View>
         <TextInput
           style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-          placeholder="Search by username…"
+          placeholder={t('friends.searchPlaceholder')}
           placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
           value={query}

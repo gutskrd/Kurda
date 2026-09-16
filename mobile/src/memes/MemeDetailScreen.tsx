@@ -194,7 +194,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
           <View style={[styles.composer, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
             <TextInput
               style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="Add a comment…"
+              placeholder={t('comments.add')}
               placeholderTextColor={colors.textSecondary}
               value={draft}
               onChangeText={setDraft}

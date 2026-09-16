@@ -81,7 +81,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
             />
             <TextInput
               style={[styles.bodyInput, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-              placeholder={type === 'poem' ? 'Your poem…' : 'Your story…'}
+              placeholder={t(type === 'poem' ? 'library.poemPlaceholder' : 'library.storyPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={body}
               onChangeText={setBody}

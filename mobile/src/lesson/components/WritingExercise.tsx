@@ -63,7 +63,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
         selection={selection}
         editable={!disabled}
         multiline
-        placeholder="Write in Kurdish…"
+        placeholder={t('lesson.write.placeholder')}
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}

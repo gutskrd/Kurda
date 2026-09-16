@@ -172,7 +172,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
             <View style={[styles.composer, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
               <TextInput
                 style={[styles.input, { color: colors.textPrimary }]}
-                placeholder={voiceUri ? 'Add a note (optional)…' : 'Add a comment…'}
+                placeholder={t(voiceUri ? 'library.notePlaceholder' : 'comments.add')}
                 placeholderTextColor={colors.textSecondary}
                 value={draft}
                 onChangeText={setDraft}
