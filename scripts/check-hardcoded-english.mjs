@@ -195,7 +195,12 @@ function withoutComments(src) {
 /** Is this a phrase a person reads, rather than an identifier or a fragment? */
 function isCopy(value, minWords = 2) {
   const text = value.trim();
-  if (text.length < 4) return false;
+  // Two characters, not four. Four was hiding the To that sits directly
+  // under the From of the quiet-hours range — translating one of a pair is
+  // worse than translating neither — along with Buy and Add. Nothing below
+  // two characters is a word, and nothing between two and four turned out
+  // to be anything but copy.
+  if (text.length < 2) return false;
   if (NOT_COPY.has(text)) return false;
   // must start like a sentence or a label
   if (!/^[A-Z]/.test(text)) return false;
@@ -230,7 +235,10 @@ for (const file of sources(SRC)) {
     let m;
     READER_FACING.lastIndex = 0;
     while ((m = READER_FACING.exec(line))) {
-      if (isCopy(m[3])) {
+      // Same floor as the tag text below, for the same reason: a prop a
+      // person reads is copy at one word. 25 of them were in English,
+      // eight being the Back a screen reader announces.
+      if (isCopy(m[3], 1)) {
         problems.push({ file, line: index + 1, what: `${m[1]}="${m[3]}"` });
         // so the literal pass below does not report the same words a second
         // time, under a second spelling that also has to be paid off

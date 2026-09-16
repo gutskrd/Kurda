@@ -588,7 +588,18 @@ export type TranslationKey =
   | 'settings.group.account'
   | 'tags.automatic'
   | 'username.current'
-  | 'coursemap.lockedBadge';
+  | 'coursemap.lockedBadge'
+  | 'chat.messagePlaceholder'
+  | 'lesson.accuracy'
+  | 'lesson.correct'
+  | 'library.titlePlaceholder'
+  | 'notifications.quietFrom'
+  | 'notifications.quietTo'
+  | 'appearance.swatch.primary'
+  | 'appearance.swatch.soft'
+  | 'profile.streak'
+  | 'profile.badges'
+  | 'tags.claim';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1153,6 +1164,17 @@ const en: Catalog = {
   'tags.automatic': 'Automatic',
   'username.current': 'Current',
   'coursemap.lockedBadge': 'Locked',
+  'chat.messagePlaceholder': 'Message…',
+  'lesson.accuracy': 'Accuracy',
+  'lesson.correct': 'Correct',
+  'library.titlePlaceholder': 'Title',
+  'notifications.quietFrom': 'From',
+  'notifications.quietTo': 'To',
+  'appearance.swatch.primary': 'Primary',
+  'appearance.swatch.soft': 'Soft',
+  'profile.streak': 'Streak',
+  'profile.badges': 'Badges',
+  'tags.claim': 'Add',
 };
 
 const ku: Catalog = {
@@ -1716,6 +1738,17 @@ const ku: Catalog = {
   'tags.automatic': 'Otomatîk',
   'username.current': 'Niha',
   'coursemap.lockedBadge': 'Girtî',
+  'chat.messagePlaceholder': 'Peyam…',
+  'lesson.accuracy': 'Rastbûn',
+  'lesson.correct': 'Rast',
+  'library.titlePlaceholder': 'Sernav',
+  'notifications.quietFrom': 'Ji',
+  'notifications.quietTo': 'Heta',
+  'appearance.swatch.primary': 'Sereke',
+  'appearance.swatch.soft': 'Nerm',
+  'profile.streak': 'Rêz',
+  'profile.badges': 'Nîşan',
+  'tags.claim': 'Zêde bike',
 };
 
 const de: Catalog = {
@@ -2279,6 +2312,17 @@ const de: Catalog = {
   'tags.automatic': 'Automatisch',
   'username.current': 'Aktuell',
   'coursemap.lockedBadge': 'Gesperrt',
+  'chat.messagePlaceholder': 'Nachricht…',
+  'lesson.accuracy': 'Genauigkeit',
+  'lesson.correct': 'Richtig',
+  'library.titlePlaceholder': 'Titel',
+  'notifications.quietFrom': 'Von',
+  'notifications.quietTo': 'Bis',
+  'appearance.swatch.primary': 'Primär',
+  'appearance.swatch.soft': 'Weich',
+  'profile.streak': 'Serie',
+  'profile.badges': 'Abzeichen',
+  'tags.claim': 'Hinzufügen',
 };
 
 const es: Catalog = {
@@ -2842,6 +2886,17 @@ const es: Catalog = {
   'tags.automatic': 'Automático',
   'username.current': 'Actual',
   'coursemap.lockedBadge': 'Bloqueado',
+  'chat.messagePlaceholder': 'Mensaje…',
+  'lesson.accuracy': 'Precisión',
+  'lesson.correct': 'Correctas',
+  'library.titlePlaceholder': 'Título',
+  'notifications.quietFrom': 'Desde',
+  'notifications.quietTo': 'Hasta',
+  'appearance.swatch.primary': 'Principal',
+  'appearance.swatch.soft': 'Suave',
+  'profile.streak': 'Racha',
+  'profile.badges': 'Insignias',
+  'tags.claim': 'Añadir',
 };
 
 const tr: Catalog = {
@@ -3405,6 +3460,17 @@ const tr: Catalog = {
   'tags.automatic': 'Otomatik',
   'username.current': 'Mevcut',
   'coursemap.lockedBadge': 'Kilitli',
+  'chat.messagePlaceholder': 'Mesaj…',
+  'lesson.accuracy': 'Doğruluk',
+  'lesson.correct': 'Doğru',
+  'library.titlePlaceholder': 'Başlık',
+  'notifications.quietFrom': 'Başlangıç',
+  'notifications.quietTo': 'Bitiş',
+  'appearance.swatch.primary': 'Birincil',
+  'appearance.swatch.soft': 'Yumuşak',
+  'profile.streak': 'Seri',
+  'profile.badges': 'Rozetler',
+  'tags.claim': 'Ekle',
 };
 
 const ar: Catalog = {
@@ -3968,6 +4034,17 @@ const ar: Catalog = {
   'tags.automatic': 'تلقائي',
   'username.current': 'الحالي',
   'coursemap.lockedBadge': 'مقفل',
+  'chat.messagePlaceholder': 'رسالة…',
+  'lesson.accuracy': 'الدقة',
+  'lesson.correct': 'صحيح',
+  'library.titlePlaceholder': 'العنوان',
+  'notifications.quietFrom': 'من',
+  'notifications.quietTo': 'إلى',
+  'appearance.swatch.primary': 'أساسي',
+  'appearance.swatch.soft': 'ناعم',
+  'profile.streak': 'سلسلة',
+  'profile.badges': 'الشارات',
+  'tags.claim': 'إضافة',
 };
 
 const fr: Catalog = {
@@ -4531,6 +4608,17 @@ const fr: Catalog = {
   'tags.automatic': 'Automatique',
   'username.current': 'Actuel',
   'coursemap.lockedBadge': 'Verrouillé',
+  'chat.messagePlaceholder': 'Message…',
+  'lesson.accuracy': 'Précision',
+  'lesson.correct': 'Correct',
+  'library.titlePlaceholder': 'Titre',
+  'notifications.quietFrom': 'De',
+  'notifications.quietTo': 'À',
+  'appearance.swatch.primary': 'Principal',
+  'appearance.swatch.soft': 'Doux',
+  'profile.streak': 'Série',
+  'profile.badges': 'Badges',
+  'tags.claim': 'Ajouter',
 };
 
 const nl: Catalog = {
@@ -5094,6 +5182,17 @@ const nl: Catalog = {
   'tags.automatic': 'Automatisch',
   'username.current': 'Huidig',
   'coursemap.lockedBadge': 'Vergrendeld',
+  'chat.messagePlaceholder': 'Bericht…',
+  'lesson.accuracy': 'Nauwkeurigheid',
+  'lesson.correct': 'Correct',
+  'library.titlePlaceholder': 'Titel',
+  'notifications.quietFrom': 'Van',
+  'notifications.quietTo': 'Tot',
+  'appearance.swatch.primary': 'Primair',
+  'appearance.swatch.soft': 'Zacht',
+  'profile.streak': 'Reeks',
+  'profile.badges': 'Badges',
+  'tags.claim': 'Toevoegen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5658,6 +5757,17 @@ const ckb: Catalog = {
   'tags.automatic': 'خۆکار',
   'username.current': 'ئێستا',
   'coursemap.lockedBadge': 'داخراو',
+  'chat.messagePlaceholder': 'نامە…',
+  'lesson.accuracy': 'وردی',
+  'lesson.correct': 'ڕاست',
+  'library.titlePlaceholder': 'ناونیشان',
+  'notifications.quietFrom': 'لە',
+  'notifications.quietTo': 'بۆ',
+  'appearance.swatch.primary': 'سەرەکی',
+  'appearance.swatch.soft': 'نەرم',
+  'profile.streak': 'زنجیرە',
+  'profile.badges': 'نیشانەکان',
+  'tags.claim': 'زیادکردن',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

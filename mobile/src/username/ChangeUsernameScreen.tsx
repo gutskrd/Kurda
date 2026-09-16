@@ -69,7 +69,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
         <View style={[styles.screen, { paddingTop: topInset }]}>
           <View style={styles.header}>
-            <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back">
+            <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.back')}>
               <Icon name="chevron-left" size={22} color={colors.textSecondary} />
             </Pressable>
             <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.username')}</Text>

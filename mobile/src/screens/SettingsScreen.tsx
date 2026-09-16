@@ -112,7 +112,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             onChange={(l) => setLocale(l as Locale)}
           />
           <GlassSelect
-            label="Theme"
+            label={t('appearance.theme')}
             icon="palette"
             value={preference}
             options={THEME_PREFERENCES}
@@ -145,7 +145,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
         <GlassCard padding="tight">
-          <GlassRow first icon="person" title="Username" value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
+          <GlassRow first icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
           <GlassRow icon="person" title={t('profile.logout')} onPress={logout} destructive />
           <GlassRow icon="close" iconColor={colors.textSecondary} title={t('settings.delete.title')} destructive onPress={confirmDelete} />
         </GlassCard>

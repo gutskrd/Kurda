@@ -3,6 +3,7 @@ import { Animated, StyleSheet, View, type DimensionValue, type StyleProp, type V
 import { radii, spacing } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Skeleton placeholder. A soft translucent block that gently
@@ -65,8 +66,9 @@ export function SkeletonRow({ avatar = true }: { avatar?: boolean }): React.JSX.
 /** A stack of text-line skeletons of varying widths — for article/detail bodies. */
 export function SkeletonLines({ count = 3, style }: { count?: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const widths = ['70%', '92%', '85%', '78%', '60%'];
+  const { t } = useI18n();
   return (
-    <View style={[styles.lines, style]} accessibilityLabel="Loading">
+    <View style={[styles.lines, style]} accessibilityLabel={t('common.loading')}>
       {Array.from({ length: count }, (_, i) => (
         <Skeleton key={i} width={widths[i % widths.length] as DimensionValue} height={13} />
       ))}
@@ -76,8 +78,9 @@ export function SkeletonLines({ count = 3, style }: { count?: number; style?: St
 
 /** A stack of skeleton rows — the default "loading" state for list/feed screens. */
 export function SkeletonList({ count = 6, avatar = true, style }: { count?: number; avatar?: boolean; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+  const { t } = useI18n();
   return (
-    <View style={[styles.list, style]} accessibilityLabel="Loading">
+    <View style={[styles.list, style]} accessibilityLabel={t('common.loading')}>
       {Array.from({ length: count }, (_, i) => (
         <SkeletonRow key={i} avatar={avatar} />
       ))}

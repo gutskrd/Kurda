@@ -27,8 +27,8 @@ export function LessonResults({ results, exercises, failed, onDone }: Props) {
 
       <View style={styles.stats}>
         <Stat label="XP" value={`+${results.xpAwarded}`} tone="accent" />
-        <Stat label="Accuracy" value={`${pct}%`} tone="primary" />
-        <Stat label="Correct" value={`${results.correct}/${results.total}`} tone="primary" />
+        <Stat label={t('lesson.accuracy')} value={`${pct}%`} tone="primary" />
+        <Stat label={t('lesson.correct')} value={`${results.correct}/${results.total}`} tone="primary" />
       </View>
 
       <StreakBadge streak={results.streak} />

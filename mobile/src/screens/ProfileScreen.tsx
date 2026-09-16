@@ -104,7 +104,7 @@ export function ProfileScreen() {
           <ClayButton label={t('saved.title')} icon="star-outline" tone="neutral" onPress={() => navigation.navigate('Saved')} />
           <ClayButton label={t('tags.title')} icon="star" tone="neutral" onPress={() => navigation.navigate('Tags')} />
           <NotificationBell />
-          <ClayButton label="Settings" icon="gear" tone="neutral" onPress={() => navigation.navigate('Settings')} />
+          <ClayButton label={t('settings.title')} icon="gear" tone="neutral" onPress={() => navigation.navigate('Settings')} />
         </View>
       </ScrollView>
     </GradientBackground>

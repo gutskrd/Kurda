@@ -62,7 +62,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
         <View style={[styles.screen, { paddingTop: topInset }]}>
           <View style={styles.titleRow}>
-            <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Cancel">
+            <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
               <Icon name="close" size={22} color={colors.textSecondary} />
             </Pressable>
             <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('library.write')}</Text>
@@ -73,7 +73,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
             <Segmented options={['story', 'poem'] as const} value={type} onChange={setType} labelOf={(t) => (t === 'story' ? 'Story' : 'Poem')} />
             <TextInput
               style={[styles.titleInput, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-              placeholder="Title"
+              placeholder={t('library.titlePlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={title}
               onChangeText={setTitle}

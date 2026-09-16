@@ -103,7 +103,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   const header = (
     <View style={styles.titleRow}>
-      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back">
+      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
         <Icon name="chevron-left" size={24} color={colors.textSecondary} />
       </Pressable>
       <Text style={[styles.title, { color: colors.primary }]}>{t('tags.title')}</Text>
@@ -173,13 +173,13 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {toClaim.length > 0 ? (
               <>
                 <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.add')}</Text>
-                {toClaim.map((t) => (
-                  <View key={t.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
+                {toClaim.map((tag) => (
+                  <View key={tag.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
                     <Text style={[styles.claimLabel, { color: colors.textPrimary }]}>
-                      {t.label}
-                      {t.sensitive ? <Text style={{ color: colors.textSecondary }}> · sensitive</Text> : null}
+                      {tag.label}
+                      {tag.sensitive ? <Text style={{ color: colors.textSecondary }}> · sensitive</Text> : null}
                     </Text>
-                    <ClayButton label="Add" tone="neutral" onPress={() => startClaim(t)} />
+                    <ClayButton label={t('tags.claim')} tone="neutral" onPress={() => startClaim(tag)} />
                   </View>
                 ))}
               </>
@@ -209,7 +209,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               </View>
             ) : null}
             <View style={styles.sheetActions}>
-              <ClayButton label="Cancel" tone="neutral" onPress={() => setClaiming(null)} style={styles.flex} />
+              <ClayButton label={t('common.cancel')} tone="neutral" onPress={() => setClaiming(null)} style={styles.flex} />
               <ClayButton label={busy ? t('tags.adding') : t('tags.add')} tone="primary" onPress={submitClaim} style={styles.flex} />
             </View>
           </View>

@@ -86,12 +86,12 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
           {quiet ? (
             <>
               <TimeRow
-                label="From"
+                label={t('notifications.quietFrom')}
                 minute={prefs.quietStartMin!}
                 onStep={(dir) => save({ quietStartMin: stepMinute(prefs.quietStartMin!, dir) })}
               />
               <TimeRow
-                label="To"
+                label={t('notifications.quietTo')}
                 minute={prefs.quietEndMin!}
                 onStep={(dir) => save({ quietEndMin: stepMinute(prefs.quietEndMin!, dir) })}
               />

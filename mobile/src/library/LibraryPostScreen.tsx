@@ -87,7 +87,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   const header = (
     <View style={styles.titleRow}>
-      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back">
+      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
         <Icon name="chevron-left" size={24} color={colors.textSecondary} />
       </Pressable>
       <Text style={[styles.headerTitle, { color: colors.primary }]}>{post?.type === 'poem' ? 'Poem' : 'Story'}</Text>
