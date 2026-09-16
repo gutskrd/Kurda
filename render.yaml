@@ -66,10 +66,10 @@ services:
       # Sign in with Apple: the native token audience is the app bundle id
       - key: APPLE_CLIENT_IDS
         value: app.kurda.mobile
-      # Dev/testing deploy without App Store / Play credentials: allow the stub
-      # IAP receipt verifier so the API can boot. NOT for a store-facing deploy
-      # (the stub doesn't verify real purchases). Remove once a real verifier +
-      # store credentials are configured.
+      # No App Store / Play credentials yet. This lets the API boot without
+      # them; purchases are REFUSED with 503 IAP_UNAVAILABLE until a real
+      # verifier is wired, which is the only safe answer an unverified
+      # environment can give. Remove the flag once the store credentials land.
       - key: IAP_ALLOW_STUB
         value: "true"
       # Media storage for profile photos (KUR-177/180). S3-compatible; Cloudflare
