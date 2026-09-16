@@ -19,7 +19,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10}>
-            <Text style={[styles.back, { color: colors.textSecondary }]}>‹ Back</Text>
+            <Text style={[styles.back, { color: colors.textSecondary }]}>‹ {t('common.back')}</Text>
           </Pressable>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('appearance.title')}</Text>
           <View style={{ width: 44 }} />
@@ -35,11 +35,13 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
               options={THEME_PREFERENCES}
               value={preference}
               onChange={setPreference}
-              labelOf={(p) => PREFERENCE_LABEL[p]}
+              labelOf={(p) => t(PREFERENCE_LABEL[p])}
             />
           </View>
           <Text style={[styles.activeNote, { color: colors.textSecondary }]}>
-            {t('appearance.currently')} <Text style={{ color: colors.primary, fontWeight: typography.weights.bold }}>{scheme}</Text> theme.
+            {t('appearance.currentlyScheme', {
+              scheme: t(scheme === 'dark' ? 'appearance.scheme.dark' : 'appearance.scheme.light'),
+            })}
           </Text>
         </GlassCard>
 
@@ -57,7 +59,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
           <View style={styles.tiles}>
             <GlassCard style={styles.tile} intensity={colors.blurIntensity + 8}>
               <Text style={[styles.tileNum, { color: colors.primary }]}>7</Text>
-              <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>day streak</Text>
+              <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>{t('appearance.preview.dayStreak')}</Text>
             </GlassCard>
             <GlassCard style={styles.tile} intensity={colors.blurIntensity + 8}>
               <Text style={[styles.tileNum, { color: colors.gold }]}>1.2k</Text>
@@ -72,7 +74,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
         </GlassCard>
 
         <Text style={[styles.footNote, { color: colors.textSecondary }]}>
-          Claymorphic buttons + neumorphic tiles, minimalist spacing, depth from layered glass.
+          {t('appearance.footNote')}
         </Text>
       </ScrollView>
     </GradientBackground>

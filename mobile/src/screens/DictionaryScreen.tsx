@@ -148,7 +148,7 @@ export function DictionaryScreen() {
             onRetry={() => setRetryKey((k) => k + 1)}
           />
         ) : query.trim().length > 0 && !loading && results.length === 0 ? (
-          <Text style={[styles.empty, { color: colors.textSecondary }]}>No results for “{query.trim()}”.</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('dictionary.noResults', { query: query.trim() })}</Text>
         ) : null}
 
         <FlatList

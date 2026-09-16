@@ -95,7 +95,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
+          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text></Pressable>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{username}</Text>
           <View style={{ width: 40 }} />
         </View>

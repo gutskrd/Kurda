@@ -51,7 +51,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
       <View style={styles.screen}>
         <View style={[styles.topBar, { paddingTop: topInset }]}>
           <Pressable onPress={onBack} accessibilityLabel={t('dictionary.backToSearch')} hitSlop={12}>
-            <Text style={[styles.back, { color: colors.primary }]}>‹ Back</Text>
+            <Text style={[styles.back, { color: colors.primary }]}>‹ {t('common.back')}</Text>
           </Pressable>
         </View>
 

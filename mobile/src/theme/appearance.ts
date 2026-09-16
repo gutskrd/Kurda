@@ -6,16 +6,23 @@
  * keeping the decision here makes it deterministically testable.
  */
 
+import type { TranslationKey } from '../i18n/translations.js';
+
 export type ColorScheme = 'light' | 'dark';
 export type ThemePreference = 'system' | ColorScheme;
 
 /** Selectable options, in the order the Settings selector shows them. */
 export const THEME_PREFERENCES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 
-export const PREFERENCE_LABEL: Record<ThemePreference, string> = {
-  system: 'System',
-  light: 'Light',
-  dark: 'Dark',
+/**
+ * TranslationKey, not string: this held the English words System, Light and
+ * Dark, and two screens rendered the map straight through labelOf. The type
+ * is what stops a word going back in.
+ */
+export const PREFERENCE_LABEL: Record<ThemePreference, TranslationKey> = {
+  system: 'appearance.preference.system',
+  light: 'appearance.preference.light',
+  dark: 'appearance.preference.dark',
 };
 
 /**
