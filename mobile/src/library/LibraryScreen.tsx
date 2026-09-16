@@ -89,7 +89,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
         style={[styles.card, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}
         accessibilityRole="button"
-        accessibilityLabel={`Read ${item.title}`}
+        accessibilityLabel={t('library.readLabel', { title: item.title })}
       >
         <View style={styles.cardHead}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>

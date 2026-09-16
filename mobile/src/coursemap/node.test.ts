@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { flattenMap, isLaunchable, stateHint, stateIcon } from './node';
-import type { CourseMap, SkillNode } from './types';
+import { STATE_LABEL, flattenMap, isLaunchable, stateHint, stateIcon } from './node';
+import type { CourseMap, SkillNode, SkillState } from './types';
 import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
 const node = (over: Partial<SkillNode> = {}): SkillNode => ({
@@ -47,6 +47,25 @@ describe('stateIcon / stateHint', () => {
     for (const state of ['locked', 'decayed'] as const) {
       const key = stateHint(state)!;
       for (const loc of LOCALES) expect(TRANSLATIONS[loc][key], `${loc} ${key}`).toBeTruthy();
+    }
+  });
+});
+
+describe('STATE_LABEL', () => {
+  /**
+   * The node used to announce its raw state to a screen reader — "Silav,
+   * locked" — because the label was a template literal holding the enum.
+   * Every state now has a word, and every language has to have it.
+   */
+  it('gives every skill state a word in all nine languages', () => {
+    const states: SkillState[] = ['locked', 'unlocked', 'completed', 'gold', 'decayed'];
+    for (const state of states) {
+      const key = STATE_LABEL[state];
+      for (const loc of LOCALES) {
+        const copy = TRANSLATIONS[loc][key];
+        expect(copy, loc + ' ' + state).toBeTruthy();
+        expect(copy, loc + ' ' + state + ' reads as its own key').not.toBe(key);
+      }
     }
   });
 });

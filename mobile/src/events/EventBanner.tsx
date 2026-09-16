@@ -46,7 +46,7 @@ export function EventBanner() {
       onPress={() => navigation.navigate('EventQuests')}
       style={[styles.banner, { backgroundColor: pack ? pack.bannerColors[0] : colors.primary }]}
       accessibilityRole="button"
-      accessibilityLabel={`${event.name} — event quests`}
+      accessibilityLabel={t('events.bannerLabel', { name: event.name })}
     >
       {pack ? <Text style={styles.emoji}>{pack.emoji}</Text> : <Icon name="sparkle" size={24} color={colors.textOnPrimary} />}
       <View style={{ flex: 1 }}>

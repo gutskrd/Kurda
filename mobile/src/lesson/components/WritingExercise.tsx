@@ -48,7 +48,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
             key={key}
             disabled={disabled}
             onPress={() => insertKey(key)}
-            accessibilityLabel={`Insert ${key}`}
+            accessibilityLabel={t('lesson.write.insertKey', { letter: key })}
             style={[styles.key, { borderColor: colors.glassBorder, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
           >
             <Text style={[styles.keyText, { color: colors.textPrimary }]}>{key}</Text>

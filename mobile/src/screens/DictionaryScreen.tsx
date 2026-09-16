@@ -130,7 +130,7 @@ export function DictionaryScreen() {
                     {w.definitionEn ?? ''}
                   </Text>
                 </Pressable>
-                <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={`Remove ${w.headword}`} hitSlop={8}>
+                <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })} hitSlop={8}>
                   <Text style={[styles.remove, { color: colors.textSecondary }]}>✕</Text>
                 </Pressable>
               </View>

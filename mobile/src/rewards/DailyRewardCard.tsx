@@ -89,7 +89,7 @@ export function DailyRewardCard() {
           disabled={claiming}
           style={[styles.claim, { backgroundColor: colors.primary }]}
           accessibilityRole="button"
-          accessibilityLabel={`Claim ${status.reward} Zêr daily reward`}
+          accessibilityLabel={t('daily.claimLabel', { amount: status.reward })}
         >
           {claiming ? (
             <ActivityIndicator color={colors.textOnPrimary} />

@@ -1,6 +1,19 @@
 import type { CourseMap, SkillNode, SkillState } from './types';
 import type { TranslationKey } from '../i18n/translations';
 
+/**
+ * The state as a word, for the label a screen reader reads after the title.
+ * Lowercase, because it is spoken after a comma — "Silav, girtî" — and a
+ * TranslationKey rather than a string, so it cannot reach a screen unless
+ * something calls t() on it.
+ */
+export const STATE_LABEL: Record<SkillState, TranslationKey> = {
+  locked: 'coursemap.state.locked',
+  unlocked: 'coursemap.state.unlocked',
+  completed: 'coursemap.state.completed',
+  gold: 'coursemap.state.gold',
+  decayed: 'coursemap.state.decayed',
+};
 /** A flattened map row for a virtualized list: a unit header or a skill node. */
 export type MapRow =
   | { kind: 'header'; key: string; title: string }

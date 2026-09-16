@@ -600,7 +600,20 @@ export type TranslationKey =
   | 'profile.streak'
   | 'profile.badges'
   | 'tags.claim'
-  | 'notifications.pref.events';
+  | 'notifications.pref.events'
+  | 'coursemap.nodeLabel'
+  | 'coursemap.state.locked'
+  | 'coursemap.state.unlocked'
+  | 'coursemap.state.completed'
+  | 'coursemap.state.gold'
+  | 'coursemap.state.decayed'
+  | 'events.bannerLabel'
+  | 'lesson.livesLabel'
+  | 'lesson.write.insertKey'
+  | 'library.readLabel'
+  | 'practice.startLabel'
+  | 'daily.claimLabel'
+  | 'dictionary.removeSaved';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1177,6 +1190,19 @@ const en: Catalog = {
   'profile.badges': 'Badges',
   'tags.claim': 'Add',
   'notifications.pref.events': 'Events & quests',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'locked',
+  'coursemap.state.unlocked': 'unlocked',
+  'coursemap.state.completed': 'completed',
+  'coursemap.state.gold': 'gold',
+  'coursemap.state.decayed': 'rusty',
+  'events.bannerLabel': '{name} — event quests',
+  'lesson.livesLabel': '{hearts} of {max} lives',
+  'lesson.write.insertKey': 'Insert {letter}',
+  'library.readLabel': 'Read {title}',
+  'practice.startLabel': 'Start: {title}',
+  'daily.claimLabel': 'Claim {amount} Zêr daily reward',
+  'dictionary.removeSaved': 'Remove {word}',
 };
 
 const ku: Catalog = {
@@ -1752,6 +1778,19 @@ const ku: Catalog = {
   'profile.badges': 'Nîşan',
   'tags.claim': 'Zêde bike',
   'notifications.pref.events': 'Bûyer û erk',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'girtî',
+  'coursemap.state.unlocked': 'vekirî',
+  'coursemap.state.completed': 'temamkirî',
+  'coursemap.state.gold': 'zêrîn',
+  'coursemap.state.decayed': 'zengarî',
+  'events.bannerLabel': '{name} — erkên bûyerê',
+  'lesson.livesLabel': '{hearts} ji {max} jiyanan',
+  'lesson.write.insertKey': 'Tîpa {letter} têxe',
+  'library.readLabel': '{title} bixwîne',
+  'practice.startLabel': 'Dest pê bike: {title}',
+  'daily.claimLabel': 'Xelata rojane ya {amount} Zêr bistîne',
+  'dictionary.removeSaved': '{word} rake',
 };
 
 const de: Catalog = {
@@ -2327,6 +2366,19 @@ const de: Catalog = {
   'profile.badges': 'Abzeichen',
   'tags.claim': 'Hinzufügen',
   'notifications.pref.events': 'Events & Quests',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'gesperrt',
+  'coursemap.state.unlocked': 'freigeschaltet',
+  'coursemap.state.completed': 'abgeschlossen',
+  'coursemap.state.gold': 'golden',
+  'coursemap.state.decayed': 'eingerostet',
+  'events.bannerLabel': '{name} — Event-Quests',
+  'lesson.livesLabel': '{hearts} von {max} Leben',
+  'lesson.write.insertKey': '{letter} einfügen',
+  'library.readLabel': '{title} lesen',
+  'practice.startLabel': 'Starten: {title}',
+  'daily.claimLabel': 'Tägliche Belohnung von {amount} Zêr einlösen',
+  'dictionary.removeSaved': '{word} entfernen',
 };
 
 const es: Catalog = {
@@ -2902,6 +2954,19 @@ const es: Catalog = {
   'profile.badges': 'Insignias',
   'tags.claim': 'Añadir',
   'notifications.pref.events': 'Eventos y misiones',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'bloqueado',
+  'coursemap.state.unlocked': 'desbloqueado',
+  'coursemap.state.completed': 'completado',
+  'coursemap.state.gold': 'oro',
+  'coursemap.state.decayed': 'oxidado',
+  'events.bannerLabel': '{name} — misiones del evento',
+  'lesson.livesLabel': '{hearts} de {max} vidas',
+  'lesson.write.insertKey': 'Insertar {letter}',
+  'library.readLabel': 'Leer {title}',
+  'practice.startLabel': 'Empezar: {title}',
+  'daily.claimLabel': 'Reclamar la recompensa diaria de {amount} Zêr',
+  'dictionary.removeSaved': 'Quitar {word}',
 };
 
 const tr: Catalog = {
@@ -3477,6 +3542,19 @@ const tr: Catalog = {
   'profile.badges': 'Rozetler',
   'tags.claim': 'Ekle',
   'notifications.pref.events': 'Etkinlikler ve görevler',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'kilitli',
+  'coursemap.state.unlocked': 'kilidi açık',
+  'coursemap.state.completed': 'tamamlandı',
+  'coursemap.state.gold': 'altın',
+  'coursemap.state.decayed': 'paslanmış',
+  'events.bannerLabel': '{name} — etkinlik görevleri',
+  'lesson.livesLabel': '{max} candan {hearts} tanesi',
+  'lesson.write.insertKey': '{letter} ekle',
+  'library.readLabel': '{title} oku',
+  'practice.startLabel': 'Başla: {title}',
+  'daily.claimLabel': 'Günlük {amount} Zêr ödülünü al',
+  'dictionary.removeSaved': '{word} kaldır',
 };
 
 const ar: Catalog = {
@@ -4052,6 +4130,19 @@ const ar: Catalog = {
   'profile.badges': 'الشارات',
   'tags.claim': 'إضافة',
   'notifications.pref.events': 'الفعاليات والمهام',
+  'coursemap.nodeLabel': '{title}، {state}',
+  'coursemap.state.locked': 'مقفل',
+  'coursemap.state.unlocked': 'مفتوح',
+  'coursemap.state.completed': 'مكتمل',
+  'coursemap.state.gold': 'ذهبي',
+  'coursemap.state.decayed': 'صدئ',
+  'events.bannerLabel': '{name} — مهام الفعالية',
+  'lesson.livesLabel': '{hearts} من {max} أرواح',
+  'lesson.write.insertKey': 'إدراج {letter}',
+  'library.readLabel': 'اقرأ {title}',
+  'practice.startLabel': 'ابدأ: {title}',
+  'daily.claimLabel': 'استلم مكافأة {amount} Zêr اليومية',
+  'dictionary.removeSaved': 'أزل {word}',
 };
 
 const fr: Catalog = {
@@ -4627,6 +4718,19 @@ const fr: Catalog = {
   'profile.badges': 'Badges',
   'tags.claim': 'Ajouter',
   'notifications.pref.events': 'Événements et quêtes',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'verrouillé',
+  'coursemap.state.unlocked': 'déverrouillé',
+  'coursemap.state.completed': 'terminé',
+  'coursemap.state.gold': 'or',
+  'coursemap.state.decayed': 'rouillé',
+  'events.bannerLabel': '{name} — quêtes de l’événement',
+  'lesson.livesLabel': '{hearts} vies sur {max}',
+  'lesson.write.insertKey': 'Insérer {letter}',
+  'library.readLabel': 'Lire {title}',
+  'practice.startLabel': 'Commencer : {title}',
+  'daily.claimLabel': 'Récupérer la récompense quotidienne de {amount} Zêr',
+  'dictionary.removeSaved': 'Retirer {word}',
 };
 
 const nl: Catalog = {
@@ -5202,6 +5306,19 @@ const nl: Catalog = {
   'profile.badges': 'Badges',
   'tags.claim': 'Toevoegen',
   'notifications.pref.events': 'Evenementen en quests',
+  'coursemap.nodeLabel': '{title}, {state}',
+  'coursemap.state.locked': 'vergrendeld',
+  'coursemap.state.unlocked': 'ontgrendeld',
+  'coursemap.state.completed': 'voltooid',
+  'coursemap.state.gold': 'goud',
+  'coursemap.state.decayed': 'verroest',
+  'events.bannerLabel': '{name} — evenement-quests',
+  'lesson.livesLabel': '{hearts} van {max} levens',
+  'lesson.write.insertKey': '{letter} invoegen',
+  'library.readLabel': '{title} lezen',
+  'practice.startLabel': 'Starten: {title}',
+  'daily.claimLabel': 'Dagelijkse beloning van {amount} Zêr ophalen',
+  'dictionary.removeSaved': '{word} verwijderen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5778,6 +5895,19 @@ const ckb: Catalog = {
   'profile.badges': 'نیشانەکان',
   'tags.claim': 'زیادکردن',
   'notifications.pref.events': 'بۆنە و ئەرک',
+  'coursemap.nodeLabel': '{title}، {state}',
+  'coursemap.state.locked': 'داخراو',
+  'coursemap.state.unlocked': 'کراوە',
+  'coursemap.state.completed': 'تەواوکراو',
+  'coursemap.state.gold': 'زێڕین',
+  'coursemap.state.decayed': 'ژەنگاوی',
+  'events.bannerLabel': '{name} — ئەرکەکانی بۆنە',
+  'lesson.livesLabel': '{hearts} لە {max} ژیان',
+  'lesson.write.insertKey': '{letter} دابنێ',
+  'library.readLabel': '{title} بخوێنەوە',
+  'practice.startLabel': 'دەستپێبکە: {title}',
+  'daily.claimLabel': 'خەڵاتی ڕۆژانەی {amount} Zêr وەربگرە',
+  'dictionary.removeSaved': '{word} لابە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
