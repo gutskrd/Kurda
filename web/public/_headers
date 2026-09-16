@@ -4,8 +4,27 @@
 # policy below allows exactly that. If the API origin changes (VITE_API_URL),
 # update connect-src to match; if the app renders R2/CDN media, img-src/media-src
 # already allow https:.
+#
+# style-src carries 'unsafe-inline' because React writes every inline style as
+# a style attribute, and this app has 128 of them across 44 files. Without it
+# the browser blocks the attribute — not only <style> blocks — and drops the
+# declaration silently: no console error unless something is listening for
+# securitypolicyviolation. Live, mykurda.com reported effectiveDirective
+# "style-src-attr", blockedURI "inline".
+#
+# What that cost, for as long as the app has been deployed: the race and
+# Wordle-battle progress bars never moved, the XP level bar never filled, and
+# the photo editor's colour picker had no gradient.
+#
+# script-src stays 'self' with no 'unsafe-inline', which is the directive
+# that matters: CSS-only exfiltration needs markup injection first, and that
+# is what script-src and the escaping in React already prevent.
+#
+# style-src-attr 'unsafe-inline' would be tighter, but a browser without
+# CSP3 attribute support falls back to style-src and silently reproduces
+# exactly this bug, so it is not the safer option it looks like.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self'; media-src 'self' https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
