@@ -599,7 +599,8 @@ export type TranslationKey =
   | 'appearance.swatch.soft'
   | 'profile.streak'
   | 'profile.badges'
-  | 'tags.claim';
+  | 'tags.claim'
+  | 'notifications.pref.events';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1175,6 +1176,7 @@ const en: Catalog = {
   'profile.streak': 'Streak',
   'profile.badges': 'Badges',
   'tags.claim': 'Add',
+  'notifications.pref.events': 'Events & quests',
 };
 
 const ku: Catalog = {
@@ -1749,6 +1751,7 @@ const ku: Catalog = {
   'profile.streak': 'Rêz',
   'profile.badges': 'Nîşan',
   'tags.claim': 'Zêde bike',
+  'notifications.pref.events': 'Bûyer û erk',
 };
 
 const de: Catalog = {
@@ -2323,6 +2326,7 @@ const de: Catalog = {
   'profile.streak': 'Serie',
   'profile.badges': 'Abzeichen',
   'tags.claim': 'Hinzufügen',
+  'notifications.pref.events': 'Events & Quests',
 };
 
 const es: Catalog = {
@@ -2897,6 +2901,7 @@ const es: Catalog = {
   'profile.streak': 'Racha',
   'profile.badges': 'Insignias',
   'tags.claim': 'Añadir',
+  'notifications.pref.events': 'Eventos y misiones',
 };
 
 const tr: Catalog = {
@@ -3471,6 +3476,7 @@ const tr: Catalog = {
   'profile.streak': 'Seri',
   'profile.badges': 'Rozetler',
   'tags.claim': 'Ekle',
+  'notifications.pref.events': 'Etkinlikler ve görevler',
 };
 
 const ar: Catalog = {
@@ -4045,6 +4051,7 @@ const ar: Catalog = {
   'profile.streak': 'سلسلة',
   'profile.badges': 'الشارات',
   'tags.claim': 'إضافة',
+  'notifications.pref.events': 'الفعاليات والمهام',
 };
 
 const fr: Catalog = {
@@ -4619,6 +4626,7 @@ const fr: Catalog = {
   'profile.streak': 'Série',
   'profile.badges': 'Badges',
   'tags.claim': 'Ajouter',
+  'notifications.pref.events': 'Événements et quêtes',
 };
 
 const nl: Catalog = {
@@ -5193,6 +5201,7 @@ const nl: Catalog = {
   'profile.streak': 'Reeks',
   'profile.badges': 'Badges',
   'tags.claim': 'Toevoegen',
+  'notifications.pref.events': 'Evenementen en quests',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5768,6 +5777,7 @@ const ckb: Catalog = {
   'profile.streak': 'زنجیرە',
   'profile.badges': 'نیشانەکان',
   'tags.claim': 'زیادکردن',
+  'notifications.pref.events': 'بۆنە و ئەرک',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
