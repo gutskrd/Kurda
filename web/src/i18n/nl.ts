@@ -487,6 +487,7 @@ export const nl: Catalogue = {
   'groups.youAreAnAdmin': 'jij bent beheerder',
   'error.offline': 'MyKurda is nu niet bereikbaar. Controleer je verbinding en probeer het opnieuw.',
   'error.tooManyRetryIn': 'Te veel pogingen. Probeer het over {seconds}s opnieuw.',
+  'error.tooManyRetryInMin': 'Te veel pogingen. Probeer het over {minutes} min. opnieuw.',
   'error.tooMany': 'Te veel pogingen. Wacht even en probeer het opnieuw.',
   'error.sessionExpired': 'Je sessie is verlopen. Log opnieuw in.',
   'error.server': 'Er is iets misgegaan aan onze kant. Probeer het zo meteen opnieuw.',

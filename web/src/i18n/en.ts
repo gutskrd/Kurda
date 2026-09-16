@@ -558,6 +558,7 @@ export const en = {
   // ---- errors, and the reason a page asks you to sign in -------------
   'error.offline': 'Can’t reach MyKurda right now. Check your connection and try again.',
   'error.tooManyRetryIn': 'Too many attempts. Try again in {seconds}s.',
+  'error.tooManyRetryInMin': 'Too many attempts. Try again in {minutes} min.',
   'error.tooMany': 'Too many attempts. Please wait a moment and try again.',
   'error.sessionExpired': 'Your session has expired. Please sign in again.',
   'error.server': 'Something went wrong on our end. Please try again shortly.',

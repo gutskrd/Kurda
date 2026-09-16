@@ -487,6 +487,7 @@ export const fr: Catalogue = {
   'groups.youAreAnAdmin': 'tu es administrateur',
   'error.offline': 'Impossible de joindre MyKurda pour l’instant. Vérifie ta connexion et réessaie.',
   'error.tooManyRetryIn': 'Trop de tentatives. Réessaie dans {seconds} s.',
+  'error.tooManyRetryInMin': 'Trop de tentatives. Réessaie dans {minutes} min.',
   'error.tooMany': 'Trop de tentatives. Patiente un instant et réessaie.',
   'error.sessionExpired': 'Ta session a expiré. Reconnecte-toi.',
   'error.server': 'Quelque chose s’est mal passé de notre côté. Réessaie dans un instant.',

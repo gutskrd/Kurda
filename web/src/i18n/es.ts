@@ -487,6 +487,7 @@ export const es: Catalogue = {
   'groups.youAreAnAdmin': 'eres administrador',
   'error.offline': 'Ahora mismo no se puede conectar con MyKurda. Comprueba tu conexión e inténtalo de nuevo.',
   'error.tooManyRetryIn': 'Demasiados intentos. Vuelve a intentarlo en {seconds} s.',
+  'error.tooManyRetryInMin': 'Demasiados intentos. Inténtalo de nuevo en {minutes} min.',
   'error.tooMany': 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
   'error.sessionExpired': 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
   'error.server': 'Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento.',

@@ -499,6 +499,7 @@ export const ckb: Catalogue = {
   'groups.youAreAnAdmin': 'تۆ بەڕێوەبەریت',
   'error.offline': 'ئێستا ناتوانرێت بگات بە MyKurda. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدە.',
   'error.tooManyRetryIn': 'هەوڵی زۆر. دوای {seconds} چرکە دووبارە هەوڵ بدە.',
+  'error.tooManyRetryInMin': 'هەوڵی زۆر. دوای {minutes} خولەک دووبارە هەوڵ بدەرەوە.',
   'error.tooMany': 'هەوڵی زۆر. تکایە کەمێک چاوەڕێ بکە و دووبارە هەوڵ بدە.',
   'error.sessionExpired': 'دانیشتنەکەت بەسەرچوو. تکایە دووبارە بچۆ ژوورەوە.',
   'error.server': 'لەلای ئێمە شتێک هەڵە بوو. تکایە دوای کەمێک دووبارە هەوڵ بدە.',
