@@ -31,12 +31,13 @@ export function CosmeticBackground({ background, className }: { background: Prof
 
 /** Level badge + progress bar toward the next level (derived server-side). */
 export function LevelBar({ level }: { level: LevelInfo }): React.JSX.Element {
+  const t = useT();
   const pct = Math.round(Math.min(1, Math.max(0, level.progress)) * 100);
   const toNext = Math.max(0, level.nextLevelXp - level.xp);
   return (
-    <div className="pcard-level" title={`${toNext.toLocaleString()} XP to level ${level.level + 1}`}>
+    <div className="pcard-level" title={t('profile.xpToLevel', { xp: toNext.toLocaleString(), level: level.level + 1 })}>
       <div className="pcard-level-head">
-        <span className="pcard-level-badge">Level {level.level}</span>
+        <span className="pcard-level-badge">{t('profile.levelN', { level: level.level })}</span>
         <span className="pcard-level-xp">{level.xp.toLocaleString()} XP</span>
       </div>
       <div className="pcard-level-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>

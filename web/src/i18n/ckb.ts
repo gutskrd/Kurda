@@ -367,6 +367,8 @@ export const ckb: Catalogue = {
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',
   'profile.levelN': 'ئاستی {level}',
+  'profile.xpToLevel': '{xp} XP بۆ ئاستی {level}',
+  'chat.profileOf': 'پرۆفایلی {name}',
   'profile.activity': 'چالاکی',
   'profile.activityOf': 'چالاکی پرۆفایل',
   'profile.tab.posts': 'بڵاوکراوەکان',

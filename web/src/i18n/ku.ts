@@ -361,6 +361,8 @@ export const ku: Catalogue = {
   'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',
   'profile.levelN': 'Asta {level}',
+  'profile.xpToLevel': '{xp} XP heta asta {level}',
+  'chat.profileOf': 'Profîla {name}',
   'profile.activity': 'Çalakî',
   'profile.activityOf': 'Çalakiya profîlê',
   'profile.tab.posts': 'Şandî',

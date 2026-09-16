@@ -79,7 +79,11 @@ export function SocialScreen() {
       style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
       onPress={() => openProfile(u.userId)}
       accessibilityRole="button"
-      accessibilityLabel={`${u.username}${u.displayName ? `, ${u.displayName}` : ''} — open profile`}
+      accessibilityLabel={
+        u.displayName
+          ? t('friends.openProfileNamed', { username: u.username, name: u.displayName })
+          : t('friends.openProfile', { username: u.username })
+      }
     >
       <InitialsAvatar name={u.username} id={u.userId} size={36} />
       <View style={styles.rowMain}>
@@ -151,7 +155,7 @@ export function SocialScreen() {
                           onPress={() => respond(u.userId, true)}
                           style={[styles.accept, { backgroundColor: colors.primary }]}
                           accessibilityRole="button"
-                          accessibilityLabel={`Accept friend request from ${u.username}`}
+                          accessibilityLabel={t('friends.acceptFrom', { username: u.username })}
                         >
                           <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.accept')}</Text>
                         </Pressable>
@@ -159,7 +163,7 @@ export function SocialScreen() {
                           onPress={() => respond(u.userId, false)}
                           hitSlop={8}
                           accessibilityRole="button"
-                          accessibilityLabel={`Decline friend request from ${u.username}`}
+                          accessibilityLabel={t('friends.declineFrom', { username: u.username })}
                         >
                           <Text style={[styles.decline, { color: colors.danger }]}>✕</Text>
                         </Pressable>

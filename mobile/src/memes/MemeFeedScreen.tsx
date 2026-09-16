@@ -131,7 +131,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         onPress={() => navigation.navigate('MemeDetail', { postId: item.id })}
         style={[styles.card, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}
         accessibilityRole="button"
-        accessibilityLabel={`Open post${item.caption ? `: ${item.caption}` : ''}`}
+        accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
       >
         <View style={styles.cardHead}>
           <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />

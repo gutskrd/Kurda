@@ -5,6 +5,7 @@ import { ensureContrast } from '../a11y/ensureContrast';
 import { scaledFontSize } from '../a11y/dynamicType';
 import { useFontScale } from '../a11y/useFontScale';
 import { initialsAvatar } from './initials';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Monogram avatar shown when a user has no profile photo (KUR-178). Deterministic
@@ -28,6 +29,7 @@ export function InitialsAvatar({
   /** When set, the user's profile photo is shown instead of the monogram (KUR-179). */
   photoUrl?: string | null;
 }) {
+  const { t } = useI18n();
   const { initials, backgroundColor: baseColor, textColor } = initialsAvatar(name, id);
 
   if (photoUrl) {
@@ -35,7 +37,7 @@ export function InitialsAvatar({
       <Image
         source={{ uri: photoUrl }}
         accessibilityRole="image"
-        accessibilityLabel={name ? `${name} profile photo` : 'profile photo'}
+        accessibilityLabel={name ? t('profile.avatarOf', { name }) : t('profile.photoLabel')}
         style={[{ width: size, height: size, borderRadius: size / 2 }, style as StyleProp<ImageStyle>]}
       />
     );
@@ -48,7 +50,7 @@ export function InitialsAvatar({
   return (
     <View
       accessibilityRole="image"
-      accessibilityLabel={name ? `${name} avatar` : 'avatar'}
+      accessibilityLabel={name ? t('profile.avatarOf', { name }) : t('profile.avatar')}
       style={[styles.base, { width: size, height: size, borderRadius: size / 2, backgroundColor }, style]}
     >
       <Text

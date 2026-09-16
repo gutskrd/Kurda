@@ -2,10 +2,24 @@
  *  the helpers are unit-testable. */
 
 import type { Translate } from '../api/errors';
+import type { TranslationKey } from '../i18n/translations.js';
 
 export type Reaction = 'like' | 'laugh' | 'love' | 'wow' | 'sad' | 'angry';
 export type Category = 'meme' | 'image';
 export type AuthorRole = 'user' | 'admin' | 'founder';
+
+/**
+ * What a screen reader says in place of the emoji. A TranslationKey rather
+ * than a string, so a name cannot reach a button without going through t().
+ */
+export const REACTION_LABEL: Record<Reaction, TranslationKey> = {
+  like: 'memes.reaction.like',
+  laugh: 'memes.reaction.laugh',
+  love: 'memes.reaction.love',
+  wow: 'memes.reaction.wow',
+  sad: 'memes.reaction.sad',
+  angry: 'memes.reaction.angry',
+};
 
 /** Display order + emoji for the reaction bar. */
 export const REACTION_ORDER: readonly Reaction[] = ['laugh', 'love', 'like', 'wow', 'sad', 'angry'];

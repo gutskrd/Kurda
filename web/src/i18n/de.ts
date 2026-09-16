@@ -355,6 +355,8 @@ export const de: Catalogue = {
   'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',
   'profile.levelN': 'Stufe {level}',
+  'profile.xpToLevel': '{xp} XP bis Level {level}',
+  'chat.profileOf': 'Profil von {name}',
   'profile.activity': 'Aktivität',
   'profile.activityOf': 'Profilaktivität',
   'profile.tab.posts': 'Beiträge',
