@@ -160,7 +160,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={styles.titleRow}>
-          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back">
+          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
             <Icon name="chevron-left" size={24} color={colors.textSecondary} />
           </Pressable>
           <Text style={[styles.title, { color: colors.primary }]}>{t('memes.title')}</Text>

@@ -107,10 +107,10 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
           ) : (
             <View style={styles.stats}>
-              <Stat label="Streak" value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
+              <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
               <Stat label="XP" value={`${profile.xp ?? 0}`} />
-              <Stat label="League" value={tierMeta(profile.tier ?? 'bronze').label} />
-              <Stat label="Badges" value={`${profile.achievements ?? 0}`} />
+              <Stat label={t('profile.league')} value={tierMeta(profile.tier ?? 'bronze').label} />
+              <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
             </View>
           )}
 

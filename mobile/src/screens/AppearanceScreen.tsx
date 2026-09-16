@@ -66,8 +66,8 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
           </View>
 
           <View style={styles.actions}>
-            <ClayButton label="Primary" tone="primary" onPress={() => {}} style={{ flex: 1 }} />
-            <ClayButton label="Soft" tone="neutral" onPress={() => {}} style={{ flex: 1 }} />
+            <ClayButton label={t('appearance.swatch.primary')} tone="primary" onPress={() => {}} style={{ flex: 1 }} />
+            <ClayButton label={t('appearance.swatch.soft')} tone="neutral" onPress={() => {}} style={{ flex: 1 }} />
           </View>
         </GlassCard>
 

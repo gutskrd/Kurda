@@ -194,7 +194,7 @@ function ItemDetail({
 
       {affordable ? (
         <Pressable style={[styles.buy, { backgroundColor: colors.primary }]} disabled={busy} onPress={() => onBuy(item)}>
-          {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.buyText, { color: colors.textOnPrimary }]}>Buy</Text>}
+          {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.buyText, { color: colors.textOnPrimary }]}>{t('shop.buy')}</Text>}
         </Pressable>
       ) : (
         <View style={styles.insufficient}>

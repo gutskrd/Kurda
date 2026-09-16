@@ -134,7 +134,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
         <View style={[styles.inputRow, { borderTopColor: colors.glassBorder }]}>
           <TextInput
             style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-            placeholder="Message…"
+            placeholder={t('chat.messagePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={draft}
             onChangeText={onType}

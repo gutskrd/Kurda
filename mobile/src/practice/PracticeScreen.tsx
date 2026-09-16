@@ -56,7 +56,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.startFailed')}</Text>
         <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text>
         {retryable ? <Primary label={t('common.retry')} onPress={() => setReloadKey((k) => k + 1)} /> : null}
-        <Primary label="Back" onPress={onExit} />
+        <Primary label={t('common.back')} onPress={onExit} />
       </Centered>
     );
   }
@@ -85,7 +85,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
             onPress={() => navigation.replace('Lesson', { lessonId: start.suggestion!.lessonId })}
           />
         ) : (
-          <Primary label="Back" onPress={onExit} />
+          <Primary label={t('common.back')} onPress={onExit} />
         )}
       </Centered>
     );
