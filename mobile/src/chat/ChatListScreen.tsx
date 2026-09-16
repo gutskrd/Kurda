@@ -39,7 +39,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
     <GradientBackground>
       <View style={styles.screen}>
         <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
+          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text></Pressable>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('nav.messages')}</Text>
           <View style={{ width: 40 }} />
         </View>

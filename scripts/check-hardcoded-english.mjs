@@ -238,7 +238,7 @@ function isCopy(value, minWords = 2) {
   // missing character is a hole, not a false positive: the ellipsis was
   // absent and hid eleven strings, every placeholder in the lesson player
   // among them. Add the character rather than loosening the rule.
-  if (!/^[A-Za-z\d\s.,!?;:'’“”"()&%…–—-]+$/.test(text)) return false;
+  if (!/^[A-Za-z\d\s.,!?;:'’“”"()&%…+·–—-]+$/.test(text)) return false;
   // a type or an expression that happens to read like a phrase
   if (/\b(Promise|React|Record|Partial|void|const|return|string|number|boolean)\b/.test(text)) return false;
   return true;
@@ -298,7 +298,13 @@ for (const file of sources(SRC)) {
    * paragraph in Blocked people was three lines of prose between <p> and </p>
    * and a line-at-a-time reading never saw a sentence.
    */
-  const between = />([^<>{}]+)</g;
+  // The `>` must actually close a tag. Without the lookbehind the `>` of an
+  // arrow function opens a run of "tag text" that ends at the next `<` —
+  // usually a generic — so `(u) => row(\n u,\n <View` was reported as the
+  // English phrase "row( u,". Only the capital-letter rule was keeping that
+  // out of the report, and a rule that hides one bug behind another is not
+  // a rule anyone should be relying on.
+  const between = /(?<![=!<>-])>([^<>{}]+)</g;
   let m;
   while ((m = between.exec(src))) {
     const value = m[1];

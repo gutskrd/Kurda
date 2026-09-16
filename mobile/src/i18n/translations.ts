@@ -165,7 +165,6 @@ export type TranslationKey =
   | 'settings.delete.title'
   | 'learn.noCourses'
   | 'appearance.help'
-  | 'appearance.currently'
   | 'appearance.glass.name'
   | 'appearance.glass.help'
   | 'dictionary.searchLabel'
@@ -636,7 +635,17 @@ export type TranslationKey =
   | 'tags.sensitive'
   | 'profile.avatarOf'
   | 'profile.avatar'
-  | 'profile.photoLabel';
+  | 'profile.photoLabel'
+  | 'appearance.currentlyScheme'
+  | 'appearance.scheme.light'
+  | 'appearance.scheme.dark'
+  | 'appearance.preview.dayStreak'
+  | 'appearance.footNote'
+  | 'memes.imageUnavailable'
+  | 'appearance.preference.system'
+  | 'appearance.preference.light'
+  | 'appearance.preference.dark'
+  | 'dictionary.noResults';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -777,7 +786,6 @@ const en: Catalog = {
   'settings.delete.title': 'Delete account',
   'learn.noCourses': 'No courses available yet',
   'appearance.help': 'Choose light, dark, or follow your device.',
-  'appearance.currently': 'Currently showing the',
   'appearance.glass.name': 'Liquid glass',
   'appearance.glass.help': 'Frosted surfaces float over a spatial gradient with a soft catch-light and a hairline edge.',
   'dictionary.searchLabel': 'Dictionary search',
@@ -1249,6 +1257,16 @@ const en: Catalog = {
   'profile.avatarOf': '{name} avatar',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Profile photo',
+  'appearance.currentlyScheme': 'Currently showing the {scheme} theme.',
+  'appearance.scheme.light': 'light',
+  'appearance.scheme.dark': 'dark',
+  'appearance.preview.dayStreak': 'day streak',
+  'appearance.footNote': 'Claymorphic buttons + neumorphic tiles, minimalist spacing, depth from layered glass.',
+  'memes.imageUnavailable': 'Image unavailable',
+  'appearance.preference.system': 'System',
+  'appearance.preference.light': 'Light',
+  'appearance.preference.dark': 'Dark',
+  'dictionary.noResults': 'No results for “{query}”.',
 };
 
 const ku: Catalog = {
@@ -1388,7 +1406,6 @@ const ku: Catalog = {
   'settings.delete.title': 'Hesabê xwe jê bibe',
   'learn.noCourses': 'Hê kurs tune ne',
   'appearance.help': 'Ronahî, tarî, an li gorî amûra xwe hilbijêre.',
-  'appearance.currently': 'Niha ev tê nîşandan:',
   'appearance.glass.name': 'Şûşeya herikbar',
   'appearance.glass.help': 'Rûyên qeşagirtî li ser derecereng û bi ronahiyek nerm û kêlekek zirav diherikin.',
   'dictionary.searchLabel': 'Lêgerîna ferhengê',
@@ -1860,6 +1877,16 @@ const ku: Catalog = {
   'profile.avatarOf': 'avatara {name}',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Wêneyê profîlê',
+  'appearance.currentlyScheme': 'Niha tema {scheme} tê nîşandan.',
+  'appearance.scheme.light': 'ronahî',
+  'appearance.scheme.dark': 'tarî',
+  'appearance.preview.dayStreak': 'roj li pey hev',
+  'appearance.footNote': 'Bişkokên claymorphic + kaşeyên neumorphic, valahiya hindik, kûrahî ji camê hevrêz.',
+  'memes.imageUnavailable': 'Wêne tune ye',
+  'appearance.preference.system': 'Pergal',
+  'appearance.preference.light': 'Ronahî',
+  'appearance.preference.dark': 'Tarî',
+  'dictionary.noResults': 'Ji bo “{query}” tu encam tune.',
 };
 
 const de: Catalog = {
@@ -1999,7 +2026,6 @@ const de: Catalog = {
   'settings.delete.title': 'Konto löschen',
   'learn.noCourses': 'Noch keine Kurse verfügbar',
   'appearance.help': 'Wähle hell, dunkel oder folge deinem Gerät.',
-  'appearance.currently': 'Aktuell angezeigt:',
   'appearance.glass.name': 'Flüssiges Glas',
   'appearance.glass.help': 'Matte Flächen schweben über einem räumlichen Verlauf, mit sanftem Lichtreflex und haarfeiner Kante.',
   'dictionary.searchLabel': 'Wörterbuchsuche',
@@ -2471,6 +2497,16 @@ const de: Catalog = {
   'profile.avatarOf': 'Avatar von {name}',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Profilbild',
+  'appearance.currentlyScheme': 'Aktuell wird das {scheme} Design angezeigt.',
+  'appearance.scheme.light': 'helle',
+  'appearance.scheme.dark': 'dunkle',
+  'appearance.preview.dayStreak': 'Tage in Folge',
+  'appearance.footNote': 'Claymorphe Schaltflächen + neumorphe Kacheln, minimalistische Abstände, Tiefe aus geschichtetem Glas.',
+  'memes.imageUnavailable': 'Bild nicht verfügbar',
+  'appearance.preference.system': 'System',
+  'appearance.preference.light': 'Hell',
+  'appearance.preference.dark': 'Dunkel',
+  'dictionary.noResults': 'Keine Treffer für „{query}“.',
 };
 
 const es: Catalog = {
@@ -2610,7 +2646,6 @@ const es: Catalog = {
   'settings.delete.title': 'Eliminar la cuenta',
   'learn.noCourses': 'Todavía no hay cursos disponibles',
   'appearance.help': 'Elige claro, oscuro o seguir tu dispositivo.',
-  'appearance.currently': 'Ahora se muestra:',
   'appearance.glass.name': 'Cristal líquido',
   'appearance.glass.help': 'Superficies esmeriladas flotan sobre un degradado espacial, con un brillo suave y un borde finísimo.',
   'dictionary.searchLabel': 'Búsqueda en el diccionario',
@@ -3082,6 +3117,16 @@ const es: Catalog = {
   'profile.avatarOf': 'avatar de {name}',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Foto de perfil',
+  'appearance.currentlyScheme': 'Ahora se muestra el tema {scheme}.',
+  'appearance.scheme.light': 'claro',
+  'appearance.scheme.dark': 'oscuro',
+  'appearance.preview.dayStreak': 'días seguidos',
+  'appearance.footNote': 'Botones claymórficos + mosaicos neumórficos, espaciado minimalista, profundidad de cristal en capas.',
+  'memes.imageUnavailable': 'Imagen no disponible',
+  'appearance.preference.system': 'Sistema',
+  'appearance.preference.light': 'Claro',
+  'appearance.preference.dark': 'Oscuro',
+  'dictionary.noResults': 'Sin resultados para «{query}».',
 };
 
 const tr: Catalog = {
@@ -3221,7 +3266,6 @@ const tr: Catalog = {
   'settings.delete.title': 'Hesabı sil',
   'learn.noCourses': 'Henüz kurs yok',
   'appearance.help': 'Açık, koyu ya da cihazını takip et.',
-  'appearance.currently': 'Şu anda gösteriliyor:',
   'appearance.glass.name': 'Akışkan cam',
   'appearance.glass.help': 'Buzlu yüzeyler, yumuşak bir ışık yansıması ve kıl inceliğinde bir kenarla uzamsal bir geçişin üzerinde süzülür.',
   'dictionary.searchLabel': 'Sözlükte ara',
@@ -3693,6 +3737,16 @@ const tr: Catalog = {
   'profile.avatarOf': '{name} avatarı',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Profil fotoğrafı',
+  'appearance.currentlyScheme': 'Şu anda {scheme} tema gösteriliyor.',
+  'appearance.scheme.light': 'açık',
+  'appearance.scheme.dark': 'koyu',
+  'appearance.preview.dayStreak': 'günlük seri',
+  'appearance.footNote': 'Claymorphic düğmeler + neumorphic kutular, sade boşluklar, katmanlı camdan gelen derinlik.',
+  'memes.imageUnavailable': 'Görsel kullanılamıyor',
+  'appearance.preference.system': 'Sistem',
+  'appearance.preference.light': 'Açık',
+  'appearance.preference.dark': 'Koyu',
+  'dictionary.noResults': '“{query}” için sonuç yok.',
 };
 
 const ar: Catalog = {
@@ -3832,7 +3886,6 @@ const ar: Catalog = {
   'settings.delete.title': 'حذف الحساب',
   'learn.noCourses': 'لا توجد دورات متاحة بعد',
   'appearance.help': 'اختر الفاتح أو الداكن أو اتّبع جهازك.',
-  'appearance.currently': 'يُعرض حاليًا:',
   'appearance.glass.name': 'زجاج سائل',
   'appearance.glass.help': 'أسطح ضبابية تطفو فوق تدرّج مكاني، بلمعة ناعمة وحافة رفيعة للغاية.',
   'dictionary.searchLabel': 'البحث في القاموس',
@@ -4304,6 +4357,16 @@ const ar: Catalog = {
   'profile.avatarOf': 'صورة {name} الرمزية',
   'profile.avatar': 'صورة رمزية',
   'profile.photoLabel': 'صورة الملف الشخصي',
+  'appearance.currentlyScheme': 'يتم عرض السمة {scheme} حاليًا.',
+  'appearance.scheme.light': 'الفاتحة',
+  'appearance.scheme.dark': 'الداكنة',
+  'appearance.preview.dayStreak': 'أيام متتالية',
+  'appearance.footNote': 'أزرار claymorphic + مربعات neumorphic، تباعد بسيط، وعمق من الزجاج المتعدد الطبقات.',
+  'memes.imageUnavailable': 'الصورة غير متاحة',
+  'appearance.preference.system': 'النظام',
+  'appearance.preference.light': 'فاتح',
+  'appearance.preference.dark': 'داكن',
+  'dictionary.noResults': 'لا نتائج لـ «{query}».',
 };
 
 const fr: Catalog = {
@@ -4443,7 +4506,6 @@ const fr: Catalog = {
   'settings.delete.title': 'Supprimer le compte',
   'learn.noCourses': 'Aucun cours disponible pour l’instant',
   'appearance.help': 'Choisissez clair, sombre, ou suivez votre appareil.',
-  'appearance.currently': 'Actuellement affiché :',
   'appearance.glass.name': 'Verre liquide',
   'appearance.glass.help': 'Des surfaces dépolies flottent sur un dégradé spatial, avec un reflet doux et un liseré très fin.',
   'dictionary.searchLabel': 'Recherche dans le dictionnaire',
@@ -4915,6 +4977,16 @@ const fr: Catalog = {
   'profile.avatarOf': 'avatar de {name}',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Photo de profil',
+  'appearance.currentlyScheme': 'Le thème {scheme} est actuellement affiché.',
+  'appearance.scheme.light': 'clair',
+  'appearance.scheme.dark': 'sombre',
+  'appearance.preview.dayStreak': 'jours d’affilée',
+  'appearance.footNote': 'Boutons claymorphiques + tuiles neumorphiques, espacement minimaliste, profondeur du verre superposé.',
+  'memes.imageUnavailable': 'Image indisponible',
+  'appearance.preference.system': 'Système',
+  'appearance.preference.light': 'Clair',
+  'appearance.preference.dark': 'Sombre',
+  'dictionary.noResults': 'Aucun résultat pour « {query} ».',
 };
 
 const nl: Catalog = {
@@ -5054,7 +5126,6 @@ const nl: Catalog = {
   'settings.delete.title': 'Account verwijderen',
   'learn.noCourses': 'Nog geen cursussen beschikbaar',
   'appearance.help': 'Kies licht, donker of volg je apparaat.',
-  'appearance.currently': 'Nu wordt getoond:',
   'appearance.glass.name': 'Vloeiend glas',
   'appearance.glass.help': 'Matte vlakken zweven over een ruimtelijk verloop met een zacht lichtpunt en een haarfijne rand.',
   'dictionary.searchLabel': 'Woordenboek zoeken',
@@ -5526,6 +5597,16 @@ const nl: Catalog = {
   'profile.avatarOf': 'avatar van {name}',
   'profile.avatar': 'Avatar',
   'profile.photoLabel': 'Profielfoto',
+  'appearance.currentlyScheme': 'Op dit moment wordt het {scheme} thema getoond.',
+  'appearance.scheme.light': 'lichte',
+  'appearance.scheme.dark': 'donkere',
+  'appearance.preview.dayStreak': 'dagen op rij',
+  'appearance.footNote': 'Claymorphic-knoppen + neumorphic-tegels, minimalistische witruimte, diepte door gelaagd glas.',
+  'memes.imageUnavailable': 'Afbeelding niet beschikbaar',
+  'appearance.preference.system': 'Systeem',
+  'appearance.preference.light': 'Licht',
+  'appearance.preference.dark': 'Donker',
+  'dictionary.noResults': 'Geen resultaten voor “{query}”.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5666,7 +5747,6 @@ const ckb: Catalog = {
   'settings.delete.title': 'هەژمارە بسڕەوە',
   'learn.noCourses': 'هێشتا خول بەردەست نییە',
   'appearance.help': 'ڕووناک، تاریک، یان بەدوای ئامێرەکەت بکەوە.',
-  'appearance.currently': 'ئێستا ئەمە پیشان دەدرێت:',
   'appearance.glass.name': 'شووشەی ڕەوان',
   'appearance.glass.help': 'ڕووە شەختەکان لەسەر ڕەنگاوڕەنگێکی مەودایی دەسوڕێنەوە، بە ڕووناکییەکی نەرم و لێوارێکی تەنک.',
   'dictionary.searchLabel': 'گەڕانی فەرهەنگ',
@@ -6138,6 +6218,16 @@ const ckb: Catalog = {
   'profile.avatarOf': 'ئەڤاتاری {name}',
   'profile.avatar': 'ئەڤاتار',
   'profile.photoLabel': 'وێنەی پرۆفایل',
+  'appearance.currentlyScheme': 'ئێستا ڕووکاری {scheme} پیشان دەدرێت.',
+  'appearance.scheme.light': 'ڕووناک',
+  'appearance.scheme.dark': 'تاریک',
+  'appearance.preview.dayStreak': 'ڕۆژی بەردەوام',
+  'appearance.footNote': 'دوگمەی claymorphic + خشتەی neumorphic، بۆشایی سادە، قووڵایی لە شووشەی چین‌چین.',
+  'memes.imageUnavailable': 'وێنە بەردەست نییە',
+  'appearance.preference.system': 'سیستەم',
+  'appearance.preference.light': 'ڕووناک',
+  'appearance.preference.dark': 'تاریک',
+  'dictionary.noResults': 'هیچ ئەنجامێک بۆ «{query}» نییە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

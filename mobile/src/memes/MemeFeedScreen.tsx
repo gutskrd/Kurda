@@ -141,7 +141,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
         ) : (
           <View style={[styles.image, styles.imageFallback, { backgroundColor: colors.controlTrack }]}>
-            <Text style={{ color: colors.textSecondary }}>image unavailable</Text>
+            <Text style={{ color: colors.textSecondary }}>{t('memes.imageUnavailable')}</Text>
           </View>
         )}
         {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}

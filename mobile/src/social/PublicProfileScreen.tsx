@@ -161,10 +161,11 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
 function Header({ onExit }: { onExit: () => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const topInset = useScreenTopInset();
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
-      <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text></Pressable>
+      <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text></Pressable>
     </View>
   );
 }

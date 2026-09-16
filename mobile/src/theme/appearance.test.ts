@@ -7,6 +7,7 @@ import {
   resolveScheme,
   THEME_PREFERENCES,
 } from './appearance.js';
+import { LOCALES, TRANSLATIONS } from '../i18n/translations.js';
 
 describe('resolveScheme', () => {
   it('an explicit preference wins over the OS scheme', () => {
@@ -54,7 +55,20 @@ describe('normalizePreference', () => {
 });
 
 describe('PREFERENCE_LABEL', () => {
-  it('has a human label for every preference', () => {
-    for (const p of THEME_PREFERENCES) expect(PREFERENCE_LABEL[p]).toBeTruthy();
+  /**
+   * Truthy was the old assertion, and a key is truthy — so it passed while the
+   * map held the English words System, Light and Dark, and would pass again if
+   * it held keys nothing had translated. Resolving in all nine is the claim
+   * worth making.
+   */
+  it('gives every preference real copy in all nine languages', () => {
+    for (const p of THEME_PREFERENCES) {
+      const key = PREFERENCE_LABEL[p];
+      for (const loc of LOCALES) {
+        const copy = TRANSLATIONS[loc][key];
+        expect(copy, loc + ' ' + p).toBeTruthy();
+        expect(copy, loc + ' ' + p + ' reads as its own key').not.toBe(key);
+      }
+    }
   });
 });

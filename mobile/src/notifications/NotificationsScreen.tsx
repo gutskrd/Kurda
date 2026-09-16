@@ -132,7 +132,7 @@ function Header({ onExit }: { onExit: () => void }) {
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
       <Pressable onPress={onExit} hitSlop={10}>
-        <Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text>
+        <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
       </Pressable>
       <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
     </View>
