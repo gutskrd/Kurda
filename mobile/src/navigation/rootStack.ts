@@ -28,6 +28,7 @@ export type RootStackParamList = {
   RhymeMatch: { id?: string } | undefined;
   Memes: undefined;
   MemeDetail: { postId: string };
+  PostPicture: undefined;
   Tags: undefined;
   ChangeUsername: undefined;
   Library: undefined;

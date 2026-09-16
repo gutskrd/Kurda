@@ -168,8 +168,18 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </View>
 
         <View style={styles.filters}>
-          <Segmented options={['meme', 'image'] as const} value={category} onChange={setCategory} labelOf={(c) => (c === 'meme' ? 'Memes' : 'Images')} />
-          <Segmented options={['newest', 'popular'] as const} value={sort} onChange={setSort} labelOf={(s) => (s === 'newest' ? 'Newest' : 'Popular')} />
+          <Segmented
+            options={['meme', 'image'] as const}
+            value={category}
+            onChange={setCategory}
+            labelOf={(c) => t(c === 'meme' ? 'memes.title' : 'memes.images')}
+          />
+          <Segmented
+            options={['newest', 'popular'] as const}
+            value={sort}
+            onChange={setSort}
+            labelOf={(v) => t(v === 'newest' ? 'memes.sortNewest' : 'memes.sortPopular')}
+          />
         </View>
 
         <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void load()}>
