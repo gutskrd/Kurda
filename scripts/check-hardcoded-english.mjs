@@ -109,6 +109,32 @@ const READER_FACING =
   /\b(placeholder|aria-label|alt|title|accessibilityLabel|accessibilityHint|label|heading|message|caption|hint)=(["'])((?:(?!\2).)*)\2/g;
 
 /**
+ * The same props, written as a template literal.
+ *
+ * `accessibilityLabel={`Insert ${key}`}` is a sentence a screen reader reads
+ * out, and the pattern above cannot see it: it wants a quote and finds a
+ * brace. Twenty of these were fixed by hand, one screen at a time.
+ */
+const READER_FACING_TEMPLATE =
+  /\b(placeholder|aria-label|alt|title|accessibilityLabel|accessibilityHint|label|heading|message|caption|hint)=\{`(.*?)`\}/g;
+
+/**
+ * What is left of a template literal once the values are taken out.
+ *
+ * The words around the holes are the copy; the holes are data. A label that
+ * opens with one — `${name} avatar` — leaves "avatar", a lone lowercase word,
+ * and is waved through: that is the limit of reading these without a parser,
+ * and it is still better than reading none of them.
+ */
+function templateWords(raw) {
+  return raw
+    .replace(/\$\{[^{}]*\}/g, ' ')
+    .replace(/[`${}]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Values that read like a phrase but are not one.
  *
  * SVG path data is the whole list so far, and it is unmistakable: a path
@@ -265,6 +291,23 @@ function selfTest() {
     }
   }
   if (withoutComments('// gone\n').trim() !== '') throw new Error('withoutComments stopped stripping comments');
+
+  // what a template literal is left saying once the values come out
+  const words = [
+    ['Insert ${key}', 'Insert'],
+    ['Read ${item.title}', 'Read'],
+    ['Claim ${n} Zêr daily reward', 'Claim Zêr daily reward'],
+    // a label that opens with a value keeps only a lowercase word, and is
+    // waved through — the documented limit of reading these without a parser
+    ['${name} avatar', 'avatar'],
+  ];
+  for (const [raw, expected] of words) {
+    const got = templateWords(raw);
+    if (got !== expected) throw new Error(`templateWords(${JSON.stringify(raw)}) gave ${JSON.stringify(got)}`);
+  }
+  if (isCopy(templateWords('${name} avatar'), 1)) {
+    throw new Error('a lone lowercase word became copy; the capital-letter rule moved');
+  }
 }
 selfTest();
 const problems = [];
@@ -277,6 +320,17 @@ for (const file of sources(SRC)) {
 
   lines.forEach((line, index) => {
     let m;
+
+    READER_FACING_TEMPLATE.lastIndex = 0;
+    while ((m = READER_FACING_TEMPLATE.exec(line))) {
+      const words = templateWords(m[2]);
+      if (isCopy(words, 1)) {
+        problems.push({ file, line: index + 1, what: `${m[1]}={\`${m[2]}\`}` });
+        // no asProp entry: the pass below reads quoted literals, never
+        // backticks, so there is nothing there to report a second time
+      }
+    }
+
     READER_FACING.lastIndex = 0;
     while ((m = READER_FACING.exec(line))) {
       // Same floor as the tag text below, for the same reason: a prop a
