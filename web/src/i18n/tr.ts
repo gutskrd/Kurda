@@ -491,6 +491,8 @@ export const tr: Catalogue = {
   'error.sessionExpired': 'Oturumun sona erdi. Lütfen tekrar giriş yap.',
   'error.server': 'Bizim tarafımızda bir şeyler ters gitti. Lütfen az sonra tekrar dene.',
   'error.generic': 'Bir şeyler ters gitti.',
+  'error.crash.body': 'Bu sayfada beklenmedik bir sorun oluştu. Hesabın ve ilerlemen güvende.',
+  'error.crash.title': 'Bir şeyler ters gitti',
   'error.notActivated': 'Hesabın henüz etkinleştirilmedi. Devam etmek için e-posta adresini onayla.',
   'gate.title': 'Bunun için bir hesaba ihtiyacın var',
   'gate.body': 'Burada her şeyi hesapsız okuyabilirsin — ama {what} için giriş yapman gerekir.',

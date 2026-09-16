@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuth } from '../auth/AuthProvider';
 import { TopNav, type NavItem } from '../components/TopNav';
 import { BookIcon, ChatsIcon, GameIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
@@ -72,9 +73,11 @@ export function AppLayout(): React.JSX.Element {
          * stay where they are and only the page is missing — which is the
          * truth of what is happening.
          */}
-        <Suspense fallback={<RouteFallback />}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
