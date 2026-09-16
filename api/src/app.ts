@@ -438,8 +438,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const receiptVerifier = createReceiptVerifier(config);
     if (config.NODE_ENV === 'production' && config.IAP_ALLOW_STUB === 'true') {
       app.log.warn(
-        'IAP is using the STUB receipt verifier in production (IAP_ALLOW_STUB=true) — ' +
-          'in-app purchases are NOT cryptographically verified. Dev/testing only.',
+        'IAP has no store credentials (IAP_ALLOW_STUB=true): purchases are REFUSED ' +
+          'with 503 IAP_UNAVAILABLE. Configure the Apple/Google verifiers before selling anything.',
       );
     }
     registerIapRoutes(

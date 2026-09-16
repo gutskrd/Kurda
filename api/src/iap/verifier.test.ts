@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createReceiptVerifier, StubReceiptVerifier } from './verifier.js';
+import { createReceiptVerifier, StubReceiptVerifier, UnavailableReceiptVerifier } from './verifier.js';
 import { loadConfig } from '../config/env.js';
 
 const v = new StubReceiptVerifier();
@@ -45,9 +45,35 @@ describe('createReceiptVerifier', () => {
     expect(() => createReceiptVerifier(cfg(PROD))).toThrow(/no production receipt verifier/);
   });
 
-  it('permits the stub in production ONLY when IAP_ALLOW_STUB=true', () => {
-    expect(createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true' }))).toBeInstanceOf(StubReceiptVerifier);
+  it('lets production boot without store credentials — but never with the stub', () => {
+    const verifier = createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true' }));
+    expect(verifier).toBeInstanceOf(UnavailableReceiptVerifier);
+    expect(verifier).not.toBeInstanceOf(StubReceiptVerifier);
     // any other value keeps the hard error
     expect(() => createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'false' }))).toThrow();
+  });
+
+  /**
+   * The reason the stub must never be the production verifier.
+   *
+   * Every field it returns is read out of the token it was handed, so a caller
+   * writes their own receipt — including `environment: 'production'`, which is
+   * what the sandbox check in IapService.redeem tests. Nothing here is a
+   * vulnerability while the stub stays in dev; all of it is the moment it does
+   * not.
+   */
+  it('shows what the stub would have accepted in production', async () => {
+    const forged = JSON.stringify({ transactionId: 'i-made-this-up', environment: 'production' });
+    const receipt = await new StubReceiptVerifier().verify('apple', forged, 'gems_500');
+
+    expect(receipt.valid).toBe(true);
+    expect(receipt.transactionId).toBe('i-made-this-up');
+    // and past the "never accept sandbox receipts on the live store" check
+    expect(receipt.environment).toBe('production');
+  });
+
+  it('refuses every receipt, rather than answering for a store it cannot reach', async () => {
+    const verifier = new UnavailableReceiptVerifier();
+    await expect(verifier.verify()).rejects.toMatchObject({ code: 'IAP_UNAVAILABLE', statusCode: 503 });
   });
 });
