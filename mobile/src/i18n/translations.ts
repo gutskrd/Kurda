@@ -552,7 +552,9 @@ export type TranslationKey =
   | 'auth.verify.enterCode'
   | 'auth.verify.expiresIn15'
   | 'practice.title'
-  | 'daily.title';
+  | 'daily.title'
+  | 'error.crash.title'
+  | 'error.crash.body';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1081,6 +1083,8 @@ const en: Catalog = {
   'auth.verify.expiresIn15': 'The code expires 15 minutes after it was sent.',
   'practice.title': 'Practice',
   'daily.title': 'Daily Zêr',
+  'error.crash.title': 'Something went wrong',
+  'error.crash.body': 'This screen ran into an unexpected problem. Your account and your progress are safe.',
 };
 
 const ku: Catalog = {
@@ -1608,6 +1612,8 @@ const ku: Catalog = {
   'auth.verify.expiresIn15': 'Kod 15 xulek piştî şandinê diqede.',
   'practice.title': 'Temrîn',
   'daily.title': 'Zêrê rojane',
+  'error.crash.title': 'Tiştek xelet çû',
+  'error.crash.body': 'Vê ekranê pirsgirêkeke nediyar dît. Hesab û pêşketina te ewle ne.',
 };
 
 const de: Catalog = {
@@ -2135,6 +2141,8 @@ const de: Catalog = {
   'auth.verify.expiresIn15': 'Der Code läuft 15 Minuten nach dem Versand ab.',
   'practice.title': 'Üben',
   'daily.title': 'Tägliche Zêr',
+  'error.crash.title': 'Etwas ist schiefgegangen',
+  'error.crash.body': 'Auf diesem Bildschirm ist ein unerwarteter Fehler aufgetreten. Dein Konto und dein Fortschritt sind sicher.',
 };
 
 const es: Catalog = {
@@ -2662,6 +2670,8 @@ const es: Catalog = {
   'auth.verify.expiresIn15': 'El código caduca 15 minutos después de enviarse.',
   'practice.title': 'Practicar',
   'daily.title': 'Zêr diarios',
+  'error.crash.title': 'Algo ha salido mal',
+  'error.crash.body': 'Esta pantalla ha tenido un problema inesperado. Tu cuenta y tu progreso están a salvo.',
 };
 
 const tr: Catalog = {
@@ -3189,6 +3199,8 @@ const tr: Catalog = {
   'auth.verify.expiresIn15': 'Kod, gönderildikten 15 dakika sonra geçersiz olur.',
   'practice.title': 'Alıştırma',
   'daily.title': 'Günlük Zêr',
+  'error.crash.title': 'Bir şeyler ters gitti',
+  'error.crash.body': 'Bu ekranda beklenmedik bir sorun oluştu. Hesabın ve ilerlemen güvende.',
 };
 
 const ar: Catalog = {
@@ -3716,6 +3728,8 @@ const ar: Catalog = {
   'auth.verify.expiresIn15': 'ينتهي الرمز بعد ١٥ دقيقة من إرساله.',
   'practice.title': 'تدريب',
   'daily.title': 'Zêr اليومي',
+  'error.crash.title': 'حدث خطأ ما',
+  'error.crash.body': 'واجهت هذه الشاشة مشكلة غير متوقعة. حسابك وتقدّمك في أمان.',
 };
 
 const fr: Catalog = {
@@ -4243,6 +4257,8 @@ const fr: Catalog = {
   'auth.verify.expiresIn15': 'Le code expire 15 minutes après son envoi.',
   'practice.title': 'S’entraîner',
   'daily.title': 'Zêr quotidiens',
+  'error.crash.title': 'Quelque chose s’est mal passé',
+  'error.crash.body': 'Cet écran a rencontré un problème inattendu. Ton compte et ta progression sont en sécurité.',
 };
 
 const nl: Catalog = {
@@ -4770,6 +4786,8 @@ const nl: Catalog = {
   'auth.verify.expiresIn15': 'De code verloopt 15 minuten nadat hij is verstuurd.',
   'practice.title': 'Oefenen',
   'daily.title': 'Dagelijkse Zêr',
+  'error.crash.title': 'Er is iets misgegaan',
+  'error.crash.body': 'Op dit scherm is een onverwacht probleem opgetreden. Je account en je voortgang zijn veilig.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5298,6 +5316,8 @@ const ckb: Catalog = {
   'auth.verify.expiresIn15': 'کۆدەکە ١٥ خولەک دوای ناردنی بەسەردەچێت.',
   'practice.title': 'ڕاهێنان',
   'daily.title': 'Zêrی ڕۆژانە',
+  'error.crash.title': 'شتێک هەڵە بوو',
+  'error.crash.body': 'ئەم شاشەیە تووشی کێشەیەکی چاوەڕوان‌نەکراو بوو. هەژمار و پێشکەوتنت پارێزراون.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
