@@ -613,7 +613,30 @@ export type TranslationKey =
   | 'library.readLabel'
   | 'practice.startLabel'
   | 'daily.claimLabel'
-  | 'dictionary.removeSaved';
+  | 'dictionary.removeSaved'
+  | 'memes.reaction.laugh'
+  | 'memes.reaction.love'
+  | 'memes.reaction.like'
+  | 'memes.reaction.wow'
+  | 'memes.reaction.sad'
+  | 'memes.reaction.angry'
+  | 'memes.openPost'
+  | 'memes.openPostCaption'
+  | 'friends.openProfile'
+  | 'friends.openProfileNamed'
+  | 'friends.acceptFrom'
+  | 'friends.declineFrom'
+  | 'tags.getTag'
+  | 'tags.showOnProfile'
+  | 'tags.removeTag'
+  | 'tags.valuePlaceholder'
+  | 'tags.addTitle'
+  | 'tags.shownOnProfile'
+  | 'tags.hiddenStatus'
+  | 'tags.sensitive'
+  | 'profile.avatarOf'
+  | 'profile.avatar'
+  | 'profile.photoLabel';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1203,6 +1226,29 @@ const en: Catalog = {
   'practice.startLabel': 'Start: {title}',
   'daily.claimLabel': 'Claim {amount} Zêr daily reward',
   'dictionary.removeSaved': 'Remove {word}',
+  'memes.reaction.laugh': 'Laugh',
+  'memes.reaction.love': 'Love',
+  'memes.reaction.like': 'Like',
+  'memes.reaction.wow': 'Wow',
+  'memes.reaction.sad': 'Sad',
+  'memes.reaction.angry': 'Angry',
+  'memes.openPost': 'Open post',
+  'memes.openPostCaption': 'Open post: {caption}',
+  'friends.openProfile': '{username} — open profile',
+  'friends.openProfileNamed': '{username}, {name} — open profile',
+  'friends.acceptFrom': 'Accept friend request from {username}',
+  'friends.declineFrom': 'Decline friend request from {username}',
+  'tags.getTag': 'Get the {tag} tag',
+  'tags.showOnProfile': 'Show {tag} on profile',
+  'tags.removeTag': 'Remove {tag}',
+  'tags.valuePlaceholder': 'Your {tag} (optional)',
+  'tags.addTitle': 'Add “{tag}”',
+  'tags.shownOnProfile': 'shown on your profile',
+  'tags.hiddenStatus': 'hidden',
+  'tags.sensitive': 'sensitive',
+  'profile.avatarOf': '{name} avatar',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Profile photo',
 };
 
 const ku: Catalog = {
@@ -1791,6 +1837,29 @@ const ku: Catalog = {
   'practice.startLabel': 'Dest pê bike: {title}',
   'daily.claimLabel': 'Xelata rojane ya {amount} Zêr bistîne',
   'dictionary.removeSaved': '{word} rake',
+  'memes.reaction.laugh': 'Ken',
+  'memes.reaction.love': 'Evîn',
+  'memes.reaction.like': 'Biecibîne',
+  'memes.reaction.wow': 'Wow',
+  'memes.reaction.sad': 'Xemgîn',
+  'memes.reaction.angry': 'Hêrs',
+  'memes.openPost': 'Şandiyê veke',
+  'memes.openPostCaption': 'Şandiyê veke: {caption}',
+  'friends.openProfile': '{username} — profîlê veke',
+  'friends.openProfileNamed': '{username}, {name} — profîlê veke',
+  'friends.acceptFrom': 'Daxwaza hevaltiyê ya {username} qebûl bike',
+  'friends.declineFrom': 'Daxwaza hevaltiyê ya {username} red bike',
+  'tags.getTag': 'Nîşana {tag} bistîne',
+  'tags.showOnProfile': '{tag} li ser profîlê nîşan bide',
+  'tags.removeTag': '{tag} rake',
+  'tags.valuePlaceholder': '{tag} ya te (bijarte)',
+  'tags.addTitle': '“{tag}” zêde bike',
+  'tags.shownOnProfile': 'li ser profîla te tê nîşandan',
+  'tags.hiddenStatus': 'veşartî',
+  'tags.sensitive': 'hestyar',
+  'profile.avatarOf': 'avatara {name}',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Wêneyê profîlê',
 };
 
 const de: Catalog = {
@@ -2379,6 +2448,29 @@ const de: Catalog = {
   'practice.startLabel': 'Starten: {title}',
   'daily.claimLabel': 'Tägliche Belohnung von {amount} Zêr einlösen',
   'dictionary.removeSaved': '{word} entfernen',
+  'memes.reaction.laugh': 'Lachen',
+  'memes.reaction.love': 'Liebe',
+  'memes.reaction.like': 'Gefällt mir',
+  'memes.reaction.wow': 'Wow',
+  'memes.reaction.sad': 'Traurig',
+  'memes.reaction.angry': 'Wütend',
+  'memes.openPost': 'Beitrag öffnen',
+  'memes.openPostCaption': 'Beitrag öffnen: {caption}',
+  'friends.openProfile': '{username} — Profil öffnen',
+  'friends.openProfileNamed': '{username}, {name} — Profil öffnen',
+  'friends.acceptFrom': 'Freundschaftsanfrage von {username} annehmen',
+  'friends.declineFrom': 'Freundschaftsanfrage von {username} ablehnen',
+  'tags.getTag': 'Tag {tag} holen',
+  'tags.showOnProfile': '{tag} im Profil zeigen',
+  'tags.removeTag': '{tag} entfernen',
+  'tags.valuePlaceholder': 'Dein {tag} (optional)',
+  'tags.addTitle': '„{tag}“ hinzufügen',
+  'tags.shownOnProfile': 'im Profil sichtbar',
+  'tags.hiddenStatus': 'verborgen',
+  'tags.sensitive': 'sensibel',
+  'profile.avatarOf': 'Avatar von {name}',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Profilbild',
 };
 
 const es: Catalog = {
@@ -2967,6 +3059,29 @@ const es: Catalog = {
   'practice.startLabel': 'Empezar: {title}',
   'daily.claimLabel': 'Reclamar la recompensa diaria de {amount} Zêr',
   'dictionary.removeSaved': 'Quitar {word}',
+  'memes.reaction.laugh': 'Risa',
+  'memes.reaction.love': 'Me encanta',
+  'memes.reaction.like': 'Me gusta',
+  'memes.reaction.wow': 'Guau',
+  'memes.reaction.sad': 'Triste',
+  'memes.reaction.angry': 'Enfadado',
+  'memes.openPost': 'Abrir publicación',
+  'memes.openPostCaption': 'Abrir publicación: {caption}',
+  'friends.openProfile': '{username} — abrir perfil',
+  'friends.openProfileNamed': '{username}, {name} — abrir perfil',
+  'friends.acceptFrom': 'Aceptar la solicitud de amistad de {username}',
+  'friends.declineFrom': 'Rechazar la solicitud de amistad de {username}',
+  'tags.getTag': 'Consigue la etiqueta {tag}',
+  'tags.showOnProfile': 'Mostrar {tag} en el perfil',
+  'tags.removeTag': 'Quitar {tag}',
+  'tags.valuePlaceholder': 'Tu {tag} (opcional)',
+  'tags.addTitle': 'Añadir «{tag}»',
+  'tags.shownOnProfile': 'visible en tu perfil',
+  'tags.hiddenStatus': 'oculta',
+  'tags.sensitive': 'sensible',
+  'profile.avatarOf': 'avatar de {name}',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Foto de perfil',
 };
 
 const tr: Catalog = {
@@ -3555,6 +3670,29 @@ const tr: Catalog = {
   'practice.startLabel': 'Başla: {title}',
   'daily.claimLabel': 'Günlük {amount} Zêr ödülünü al',
   'dictionary.removeSaved': '{word} kaldır',
+  'memes.reaction.laugh': 'Gülme',
+  'memes.reaction.love': 'Sevgi',
+  'memes.reaction.like': 'Beğen',
+  'memes.reaction.wow': 'Vay',
+  'memes.reaction.sad': 'Üzgün',
+  'memes.reaction.angry': 'Kızgın',
+  'memes.openPost': 'Gönderiyi aç',
+  'memes.openPostCaption': 'Gönderiyi aç: {caption}',
+  'friends.openProfile': '{username} — profili aç',
+  'friends.openProfileNamed': '{username}, {name} — profili aç',
+  'friends.acceptFrom': '{username} kullanıcısının arkadaşlık isteğini kabul et',
+  'friends.declineFrom': '{username} kullanıcısının arkadaşlık isteğini reddet',
+  'tags.getTag': '{tag} etiketini al',
+  'tags.showOnProfile': '{tag} etiketini profilde göster',
+  'tags.removeTag': '{tag} kaldır',
+  'tags.valuePlaceholder': '{tag} bilgin (isteğe bağlı)',
+  'tags.addTitle': '“{tag}” ekle',
+  'tags.shownOnProfile': 'profilinde görünüyor',
+  'tags.hiddenStatus': 'gizli',
+  'tags.sensitive': 'hassas',
+  'profile.avatarOf': '{name} avatarı',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Profil fotoğrafı',
 };
 
 const ar: Catalog = {
@@ -4143,6 +4281,29 @@ const ar: Catalog = {
   'practice.startLabel': 'ابدأ: {title}',
   'daily.claimLabel': 'استلم مكافأة {amount} Zêr اليومية',
   'dictionary.removeSaved': 'أزل {word}',
+  'memes.reaction.laugh': 'ضحك',
+  'memes.reaction.love': 'حب',
+  'memes.reaction.like': 'إعجاب',
+  'memes.reaction.wow': 'واو',
+  'memes.reaction.sad': 'حزين',
+  'memes.reaction.angry': 'غاضب',
+  'memes.openPost': 'افتح المنشور',
+  'memes.openPostCaption': 'افتح المنشور: {caption}',
+  'friends.openProfile': '{username} — افتح الملف الشخصي',
+  'friends.openProfileNamed': '{username}، {name} — افتح الملف الشخصي',
+  'friends.acceptFrom': 'اقبل طلب الصداقة من {username}',
+  'friends.declineFrom': 'ارفض طلب الصداقة من {username}',
+  'tags.getTag': 'احصل على وسم {tag}',
+  'tags.showOnProfile': 'أظهر {tag} في الملف الشخصي',
+  'tags.removeTag': 'أزل {tag}',
+  'tags.valuePlaceholder': '{tag} الخاص بك (اختياري)',
+  'tags.addTitle': 'أضف «{tag}»',
+  'tags.shownOnProfile': 'ظاهر في ملفك الشخصي',
+  'tags.hiddenStatus': 'مخفي',
+  'tags.sensitive': 'حساس',
+  'profile.avatarOf': 'صورة {name} الرمزية',
+  'profile.avatar': 'صورة رمزية',
+  'profile.photoLabel': 'صورة الملف الشخصي',
 };
 
 const fr: Catalog = {
@@ -4731,6 +4892,29 @@ const fr: Catalog = {
   'practice.startLabel': 'Commencer : {title}',
   'daily.claimLabel': 'Récupérer la récompense quotidienne de {amount} Zêr',
   'dictionary.removeSaved': 'Retirer {word}',
+  'memes.reaction.laugh': 'Rire',
+  'memes.reaction.love': 'J’adore',
+  'memes.reaction.like': 'J’aime',
+  'memes.reaction.wow': 'Waouh',
+  'memes.reaction.sad': 'Triste',
+  'memes.reaction.angry': 'En colère',
+  'memes.openPost': 'Ouvrir la publication',
+  'memes.openPostCaption': 'Ouvrir la publication : {caption}',
+  'friends.openProfile': '{username} — ouvrir le profil',
+  'friends.openProfileNamed': '{username}, {name} — ouvrir le profil',
+  'friends.acceptFrom': 'Accepter la demande d’ami de {username}',
+  'friends.declineFrom': 'Refuser la demande d’ami de {username}',
+  'tags.getTag': 'Obtenir le tag {tag}',
+  'tags.showOnProfile': 'Afficher {tag} sur le profil',
+  'tags.removeTag': 'Retirer {tag}',
+  'tags.valuePlaceholder': 'Ton {tag} (facultatif)',
+  'tags.addTitle': 'Ajouter « {tag} »',
+  'tags.shownOnProfile': 'visible sur ton profil',
+  'tags.hiddenStatus': 'masqué',
+  'tags.sensitive': 'sensible',
+  'profile.avatarOf': 'avatar de {name}',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Photo de profil',
 };
 
 const nl: Catalog = {
@@ -5319,6 +5503,29 @@ const nl: Catalog = {
   'practice.startLabel': 'Starten: {title}',
   'daily.claimLabel': 'Dagelijkse beloning van {amount} Zêr ophalen',
   'dictionary.removeSaved': '{word} verwijderen',
+  'memes.reaction.laugh': 'Lachen',
+  'memes.reaction.love': 'Liefde',
+  'memes.reaction.like': 'Leuk',
+  'memes.reaction.wow': 'Wow',
+  'memes.reaction.sad': 'Verdrietig',
+  'memes.reaction.angry': 'Boos',
+  'memes.openPost': 'Bericht openen',
+  'memes.openPostCaption': 'Bericht openen: {caption}',
+  'friends.openProfile': '{username} — profiel openen',
+  'friends.openProfileNamed': '{username}, {name} — profiel openen',
+  'friends.acceptFrom': 'Vriendschapsverzoek van {username} accepteren',
+  'friends.declineFrom': 'Vriendschapsverzoek van {username} weigeren',
+  'tags.getTag': 'Tag {tag} halen',
+  'tags.showOnProfile': '{tag} op profiel tonen',
+  'tags.removeTag': '{tag} verwijderen',
+  'tags.valuePlaceholder': 'Jouw {tag} (optioneel)',
+  'tags.addTitle': '“{tag}” toevoegen',
+  'tags.shownOnProfile': 'zichtbaar op je profiel',
+  'tags.hiddenStatus': 'verborgen',
+  'tags.sensitive': 'gevoelig',
+  'profile.avatarOf': 'avatar van {name}',
+  'profile.avatar': 'Avatar',
+  'profile.photoLabel': 'Profielfoto',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5908,6 +6115,29 @@ const ckb: Catalog = {
   'practice.startLabel': 'دەستپێبکە: {title}',
   'daily.claimLabel': 'خەڵاتی ڕۆژانەی {amount} Zêr وەربگرە',
   'dictionary.removeSaved': '{word} لابە',
+  'memes.reaction.laugh': 'پێکەنین',
+  'memes.reaction.love': 'خۆشەویستی',
+  'memes.reaction.like': 'بەدڵمە',
+  'memes.reaction.wow': 'واو',
+  'memes.reaction.sad': 'خەمگین',
+  'memes.reaction.angry': 'تووڕە',
+  'memes.openPost': 'پۆستەکە بکەرەوە',
+  'memes.openPostCaption': 'پۆستەکە بکەرەوە: {caption}',
+  'friends.openProfile': '{username} — پرۆفایل بکەرەوە',
+  'friends.openProfileNamed': '{username}، {name} — پرۆفایل بکەرەوە',
+  'friends.acceptFrom': 'داواکاری هاوڕێیەتی {username} قبوڵ بکە',
+  'friends.declineFrom': 'داواکاری هاوڕێیەتی {username} ڕەت بکەرەوە',
+  'tags.getTag': 'تاگی {tag} بەدەست بهێنە',
+  'tags.showOnProfile': '{tag} لە پرۆفایل پیشان بدە',
+  'tags.removeTag': '{tag} لابە',
+  'tags.valuePlaceholder': '{tag}ی تۆ (ئارەزوومەندانە)',
+  'tags.addTitle': '«{tag}» زیاد بکە',
+  'tags.shownOnProfile': 'لە پرۆفایلەکەت پیشان دەدرێت',
+  'tags.hiddenStatus': 'شاراوە',
+  'tags.sensitive': 'هەستیار',
+  'profile.avatarOf': 'ئەڤاتاری {name}',
+  'profile.avatar': 'ئەڤاتار',
+  'profile.photoLabel': 'وێنەی پرۆفایل',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

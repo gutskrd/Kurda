@@ -131,8 +131,8 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             ) : (
               <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.noMain')}</Text>
             )}
-            {toBuy.map((t) => (
-              <ClayButton key={t.key} label={`Get the ${t.label} tag`} tone="primary" onPress={() => navigation.navigate('Shop')} style={styles.buyBtn} />
+            {toBuy.map((tag) => (
+              <ClayButton key={tag.key} label={t('tags.getTag', { tag: tag.label })} tone="primary" onPress={() => navigation.navigate('Shop')} style={styles.buyBtn} />
             ))}
 
             {/* auto tags */}
@@ -152,17 +152,17 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {claimed.length === 0 ? (
               <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.none')}</Text>
             ) : (
-              claimed.map((t) => (
-                <View key={t.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
+              claimed.map((tag) => (
+                <View key={tag.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
                   <View style={styles.rowMain}>
-                    <TagBadge label={tagLabel(t)} />
+                    <TagBadge label={tagLabel(tag)} />
                     <Text style={[styles.sensitive, { color: colors.textSecondary }]}>
-                      {t.displayed ? 'shown on your profile' : 'hidden'}
-                      {t.sensitive ? ' · sensitive' : ''}
+                      {tag.displayed ? t('tags.shownOnProfile') : t('tags.hiddenStatus')}
+                      {tag.sensitive ? ` · ${t('tags.sensitive')}` : ''}
                     </Text>
                   </View>
-                  <Switch value={t.displayed} onValueChange={(v) => void toggleDisplay(t, v)} accessibilityLabel={`Show ${t.label} on profile`} />
-                  <Pressable onPress={() => revoke(t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${t.label}`}>
+                  <Switch value={tag.displayed} onValueChange={(v) => void toggleDisplay(tag, v)} accessibilityLabel={t('tags.showOnProfile', { tag: tag.label })} />
+                  <Pressable onPress={() => revoke(tag)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('tags.removeTag', { tag: tag.label })}>
                     <Icon name="close" size={20} color={colors.danger} />
                   </Pressable>
                 </View>
@@ -191,10 +191,10 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
         {/* inline claim sheet */}
         {claiming ? (
           <View style={[styles.sheet, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Add “{claiming.label}”</Text>
+            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('tags.addTitle', { tag: claiming.label })}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
-              placeholder={`Your ${claiming.label.toLowerCase()} (optional)`}
+              placeholder={t('tags.valuePlaceholder', { tag: claiming.label.toLowerCase() })}
               placeholderTextColor={colors.textSecondary}
               value={value}
               onChangeText={setValue}

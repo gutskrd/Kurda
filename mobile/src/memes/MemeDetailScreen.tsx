@@ -27,6 +27,7 @@ import {
   commentText,
   relativeTime,
   REACTION_EMOJI,
+  REACTION_LABEL,
   REACTION_ORDER,
   type Comment,
   type ImagePost,
@@ -146,7 +147,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                         { borderColor: active ? colors.primary : colors.glassBorder, backgroundColor: active ? colors.primaryStrong : colors.glassFill },
                       ]}
                       accessibilityRole="button"
-                      accessibilityLabel={`${r}${active ? ', selected' : ''}`}
+                      accessibilityLabel={t(REACTION_LABEL[r])}
                       accessibilityState={{ selected: active }}
                     >
                       <Text style={styles.reactionEmoji}>{REACTION_EMOJI[r]}</Text>

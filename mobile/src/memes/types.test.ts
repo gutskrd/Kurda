@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { commentText, relativeTime, topReactionEmojis, type Comment, type ReactionSummary } from './types';
-import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
+import { REACTION_LABEL, REACTION_ORDER, commentText, relativeTime, topReactionEmojis, type Comment, type ReactionSummary } from './types';
+import { LOCALES, TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
 /** The real catalogue: a stub that echoes the key would hide a missing one. */
@@ -45,5 +45,23 @@ describe('commentText', () => {
     expect(commentText(base, t)).toBe('hello');
     expect(commentText({ ...base, status: 'removed', body: null }, t)).toBe(TRANSLATIONS.en['comments.removed']);
     expect(commentText({ ...base, status: 'removed', body: null }, tr('ku'))).toBe(TRANSLATIONS.ku['comments.removed']);
+  });
+});
+
+describe('REACTION_LABEL', () => {
+  /**
+   * The reaction buttons announced their raw ids to a screen reader — like,
+   * laugh, wow — because the label was a template literal holding the id.
+   * Every reaction in the bar now needs a word in every language.
+   */
+  it('names every reaction in the bar, in all nine languages', () => {
+    for (const reaction of REACTION_ORDER) {
+      const key = REACTION_LABEL[reaction];
+      for (const loc of LOCALES) {
+        const copy = TRANSLATIONS[loc][key];
+        expect(copy, loc + ' ' + reaction).toBeTruthy();
+        expect(copy, loc + ' ' + reaction + ' reads as its own key').not.toBe(key);
+      }
+    }
   });
 });

@@ -355,6 +355,8 @@ export const tr: Catalogue = {
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',
   'profile.levelN': 'Seviye {level}',
+  'profile.xpToLevel': '{level}. seviyeye {xp} XP',
+  'chat.profileOf': '{name} adlı kullanıcının profili',
   'profile.activity': 'Etkinlik',
   'profile.activityOf': 'Profil etkinliği',
   'profile.tab.posts': 'Gönderiler',

@@ -418,6 +418,8 @@ export const en = {
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',
   'profile.levelN': 'Level {level}',
+  'profile.xpToLevel': '{xp} XP to level {level}',
+  'chat.profileOf': '{name}’s profile',
   'profile.activity': 'Activity',
   'profile.activityOf': 'Profile activity',
   'profile.tab.posts': 'Posts',

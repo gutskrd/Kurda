@@ -76,7 +76,7 @@ export function MessageList<T extends ChatMessage>({
                       type="button"
                       className="chat-run-avatar"
                       onClick={() => onOpenProfile(run.senderId, name)}
-                      aria-label={`${name}’s profile`}
+                      aria-label={t('chat.profileOf', { name })}
                     >
                       <Avatar url={first.avatarUrl} glyphSize={18} />
                     </button>

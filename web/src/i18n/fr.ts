@@ -355,6 +355,8 @@ export const fr: Catalogue = {
   'profile.currentlyOnline': 'En ligne actuellement',
   'profile.offline': 'Hors ligne',
   'profile.levelN': 'Niveau {level}',
+  'profile.xpToLevel': '{xp} XP jusqu’au niveau {level}',
+  'chat.profileOf': 'Profil de {name}',
   'profile.activity': 'Activité',
   'profile.activityOf': 'Activité du profil',
   'profile.tab.posts': 'Publications',

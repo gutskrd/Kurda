@@ -360,6 +360,8 @@ export const ar: Catalogue = {
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',
   'profile.levelN': 'المستوى {level}',
+  'profile.xpToLevel': '{xp} XP للوصول إلى المستوى {level}',
+  'chat.profileOf': 'الملف الشخصي لـ {name}',
   'profile.activity': 'النشاط',
   'profile.activityOf': 'نشاط الملف الشخصي',
   'profile.tab.posts': 'المنشورات',
