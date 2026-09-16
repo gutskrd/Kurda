@@ -4,8 +4,26 @@
 # edge proxy, so it calls the API on its own origin cross-origin — that origin is
 # listed in connect-src below and must be kept in step with VITE_API_URL (see
 # admin/src/api.ts). If it starts rendering media from R2, add that host to img-src.
+#
+# style-src carries 'unsafe-inline' because React writes every inline style as
+# a style attribute, and the admin has 287 of them. Without it the browser
+# blocks the attribute — not only <style> blocks — and drops the declaration
+# silently: no console error unless something is listening for
+# securitypolicyviolation. The same policy on mykurda.com reported
+# effectiveDirective "style-src-attr", blockedURI "inline".
+#
+# What that cost here: the Analytics page sizes its DAU and signup bars by
+# height and its funnel by width, so all three have been rendering empty.
+#
+# script-src stays 'self' with no 'unsafe-inline', which is the directive
+# that matters: CSS-only exfiltration needs markup injection first, and that
+# is what script-src and the escaping in React already prevent.
+#
+# style-src-attr 'unsafe-inline' would be tighter, but a browser without
+# CSP3 attribute support falls back to style-src and silently reproduces
+# exactly this bug, so it is not the safer option it looks like.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
