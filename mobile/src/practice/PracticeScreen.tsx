@@ -81,7 +81,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
         <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('practice.empty.body')}</Text>
         {start.suggestion ? (
           <Primary
-            label={`Start: ${start.suggestion.title}`}
+            label={t('practice.startLabel', { title: start.suggestion.title })}
             onPress={() => navigation.replace('Lesson', { lessonId: start.suggestion!.lessonId })}
           />
         ) : (

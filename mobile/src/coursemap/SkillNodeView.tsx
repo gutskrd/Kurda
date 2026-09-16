@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { stateIcon } from './node';
+import { STATE_LABEL, stateIcon } from './node';
 import type { SkillNode } from './types';
 
 const NODE = 72;
@@ -22,7 +22,7 @@ export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () 
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${node.title}, ${s}`}
+        accessibilityLabel={t('coursemap.nodeLabel', { title: node.title, state: t(STATE_LABEL[s]) })}
         style={[styles.node, { borderColor: ringColor, backgroundColor: fill }, cracked && styles.cracked]}
       >
         <Text style={[styles.icon, { color: s === 'unlocked' ? colors.primary : colors.textOnPrimary }]}>{stateIcon(s) || node.level}</Text>
