@@ -645,7 +645,16 @@ export type TranslationKey =
   | 'appearance.preference.system'
   | 'appearance.preference.light'
   | 'appearance.preference.dark'
-  | 'dictionary.noResults';
+  | 'dictionary.noResults'
+  | 'error.code.invalidCredentials'
+  | 'error.code.accountDisabled'
+  | 'error.code.invalidCode'
+  | 'error.code.codeExpired'
+  | 'error.code.tooManyAttempts'
+  | 'error.code.locked'
+  | 'error.code.invalidLink'
+  | 'error.code.usernameTaken'
+  | 'error.code.signupRejected';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1267,6 +1276,15 @@ const en: Catalog = {
   'appearance.preference.light': 'Light',
   'appearance.preference.dark': 'Dark',
   'dictionary.noResults': 'No results for “{query}”.',
+  'error.code.invalidCredentials': 'Wrong email or password.',
+  'error.code.accountDisabled': 'This account is disabled.',
+  'error.code.invalidCode': 'That code is not correct.',
+  'error.code.codeExpired': 'That code has expired — request a new one.',
+  'error.code.tooManyAttempts': 'Too many attempts — request a new code.',
+  'error.code.locked': 'Too many failed attempts — try again later.',
+  'error.code.invalidLink': 'This link is invalid or has expired.',
+  'error.code.usernameTaken': 'That username is already taken.',
+  'error.code.signupRejected': 'Registration could not be completed.',
 };
 
 const ku: Catalog = {
@@ -1887,6 +1905,15 @@ const ku: Catalog = {
   'appearance.preference.light': 'Ronahî',
   'appearance.preference.dark': 'Tarî',
   'dictionary.noResults': 'Ji bo “{query}” tu encam tune.',
+  'error.code.invalidCredentials': 'E-name an şîfre çewt e.',
+  'error.code.accountDisabled': 'Ev hesab hatiye girtin.',
+  'error.code.invalidCode': 'Ev kod ne rast e.',
+  'error.code.codeExpired': 'Dema vê kodê qediya — yekî nû bixwaze.',
+  'error.code.tooManyAttempts': 'Pir ceriband — koda nû bixwaze.',
+  'error.code.locked': 'Pir ceribandinên çewt — paşê dîsa biceribîne.',
+  'error.code.invalidLink': 'Ev girêdan nederbasdar e an dema wê qediya.',
+  'error.code.usernameTaken': 'Ew navê bikarhêner jixwe hatiye girtin.',
+  'error.code.signupRejected': 'Tomarkirin nehate temamkirin.',
 };
 
 const de: Catalog = {
@@ -2507,6 +2534,15 @@ const de: Catalog = {
   'appearance.preference.light': 'Hell',
   'appearance.preference.dark': 'Dunkel',
   'dictionary.noResults': 'Keine Treffer für „{query}“.',
+  'error.code.invalidCredentials': 'E-Mail oder Passwort ist falsch.',
+  'error.code.accountDisabled': 'Dieses Konto ist deaktiviert.',
+  'error.code.invalidCode': 'Dieser Code ist nicht richtig.',
+  'error.code.codeExpired': 'Dieser Code ist abgelaufen — fordere einen neuen an.',
+  'error.code.tooManyAttempts': 'Zu viele Versuche — fordere einen neuen Code an.',
+  'error.code.locked': 'Zu viele Fehlversuche — versuche es später erneut.',
+  'error.code.invalidLink': 'Dieser Link ist ungültig oder abgelaufen.',
+  'error.code.usernameTaken': 'Dieser Benutzername ist bereits vergeben.',
+  'error.code.signupRejected': 'Die Registrierung konnte nicht abgeschlossen werden.',
 };
 
 const es: Catalog = {
@@ -3127,6 +3163,15 @@ const es: Catalog = {
   'appearance.preference.light': 'Claro',
   'appearance.preference.dark': 'Oscuro',
   'dictionary.noResults': 'Sin resultados para «{query}».',
+  'error.code.invalidCredentials': 'Correo o contraseña incorrectos.',
+  'error.code.accountDisabled': 'Esta cuenta está desactivada.',
+  'error.code.invalidCode': 'Ese código no es correcto.',
+  'error.code.codeExpired': 'Ese código ha caducado: pide uno nuevo.',
+  'error.code.tooManyAttempts': 'Demasiados intentos: pide un código nuevo.',
+  'error.code.locked': 'Demasiados intentos fallidos: inténtalo más tarde.',
+  'error.code.invalidLink': 'Este enlace no es válido o ha caducado.',
+  'error.code.usernameTaken': 'Ese nombre de usuario ya está en uso.',
+  'error.code.signupRejected': 'No se ha podido completar el registro.',
 };
 
 const tr: Catalog = {
@@ -3747,6 +3792,15 @@ const tr: Catalog = {
   'appearance.preference.light': 'Açık',
   'appearance.preference.dark': 'Koyu',
   'dictionary.noResults': '“{query}” için sonuç yok.',
+  'error.code.invalidCredentials': 'E-posta veya şifre yanlış.',
+  'error.code.accountDisabled': 'Bu hesap devre dışı bırakıldı.',
+  'error.code.invalidCode': 'Bu kod doğru değil.',
+  'error.code.codeExpired': 'Bu kodun süresi doldu — yenisini iste.',
+  'error.code.tooManyAttempts': 'Çok fazla deneme — yeni bir kod iste.',
+  'error.code.locked': 'Çok fazla başarısız deneme — daha sonra tekrar dene.',
+  'error.code.invalidLink': 'Bu bağlantı geçersiz veya süresi dolmuş.',
+  'error.code.usernameTaken': 'Bu kullanıcı adı zaten alınmış.',
+  'error.code.signupRejected': 'Kayıt tamamlanamadı.',
 };
 
 const ar: Catalog = {
@@ -4367,6 +4421,15 @@ const ar: Catalog = {
   'appearance.preference.light': 'فاتح',
   'appearance.preference.dark': 'داكن',
   'dictionary.noResults': 'لا نتائج لـ «{query}».',
+  'error.code.invalidCredentials': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+  'error.code.accountDisabled': 'هذا الحساب معطّل.',
+  'error.code.invalidCode': 'هذا الرمز غير صحيح.',
+  'error.code.codeExpired': 'انتهت صلاحية هذا الرمز — اطلب رمزًا جديدًا.',
+  'error.code.tooManyAttempts': 'محاولات كثيرة جدًا — اطلب رمزًا جديدًا.',
+  'error.code.locked': 'محاولات فاشلة كثيرة — حاول مرة أخرى لاحقًا.',
+  'error.code.invalidLink': 'هذا الرابط غير صالح أو انتهت صلاحيته.',
+  'error.code.usernameTaken': 'اسم المستخدم هذا مستخدَم بالفعل.',
+  'error.code.signupRejected': 'تعذّر إكمال التسجيل.',
 };
 
 const fr: Catalog = {
@@ -4987,6 +5050,15 @@ const fr: Catalog = {
   'appearance.preference.light': 'Clair',
   'appearance.preference.dark': 'Sombre',
   'dictionary.noResults': 'Aucun résultat pour « {query} ».',
+  'error.code.invalidCredentials': 'Adresse e-mail ou mot de passe incorrect.',
+  'error.code.accountDisabled': 'Ce compte est désactivé.',
+  'error.code.invalidCode': 'Ce code n’est pas correct.',
+  'error.code.codeExpired': 'Ce code a expiré — demandes-en un nouveau.',
+  'error.code.tooManyAttempts': 'Trop de tentatives — demande un nouveau code.',
+  'error.code.locked': 'Trop de tentatives échouées — réessaie plus tard.',
+  'error.code.invalidLink': 'Ce lien est invalide ou a expiré.',
+  'error.code.usernameTaken': 'Ce nom d’utilisateur est déjà pris.',
+  'error.code.signupRejected': 'L’inscription n’a pas pu être finalisée.',
 };
 
 const nl: Catalog = {
@@ -5607,6 +5679,15 @@ const nl: Catalog = {
   'appearance.preference.light': 'Licht',
   'appearance.preference.dark': 'Donker',
   'dictionary.noResults': 'Geen resultaten voor “{query}”.',
+  'error.code.invalidCredentials': 'E-mailadres of wachtwoord klopt niet.',
+  'error.code.accountDisabled': 'Dit account is uitgeschakeld.',
+  'error.code.invalidCode': 'Deze code klopt niet.',
+  'error.code.codeExpired': 'Deze code is verlopen — vraag een nieuwe aan.',
+  'error.code.tooManyAttempts': 'Te veel pogingen — vraag een nieuwe code aan.',
+  'error.code.locked': 'Te veel mislukte pogingen — probeer het later opnieuw.',
+  'error.code.invalidLink': 'Deze link is ongeldig of verlopen.',
+  'error.code.usernameTaken': 'Die gebruikersnaam is al bezet.',
+  'error.code.signupRejected': 'Registratie kon niet worden voltooid.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6228,6 +6309,15 @@ const ckb: Catalog = {
   'appearance.preference.light': 'ڕووناک',
   'appearance.preference.dark': 'تاریک',
   'dictionary.noResults': 'هیچ ئەنجامێک بۆ «{query}» نییە.',
+  'error.code.invalidCredentials': 'ئیمەیل یان وشەی تێپەڕ هەڵەیە.',
+  'error.code.accountDisabled': 'ئەم هەژمارە ناچالاک کراوە.',
+  'error.code.invalidCode': 'ئەم کۆدە ڕاست نییە.',
+  'error.code.codeExpired': 'ماوەی ئەم کۆدە بەسەرچووە — داوای یەکێکی نوێ بکە.',
+  'error.code.tooManyAttempts': 'هەوڵی زۆر — داوای کۆدێکی نوێ بکە.',
+  'error.code.locked': 'هەوڵی سەرنەکەوتووی زۆر — دواتر دووبارە هەوڵ بدەرەوە.',
+  'error.code.invalidLink': 'ئەم بەستەرە نادروستە یان ماوەکەی بەسەرچووە.',
+  'error.code.usernameTaken': 'ئەم ناوی بەکارهێنەرە پێشتر وەرگیراوە.',
+  'error.code.signupRejected': 'تۆمارکردن تەواو نەبوو.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

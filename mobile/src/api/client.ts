@@ -161,7 +161,11 @@ export class ApiClient {
         };
       }
 
-      if (res.status === 401) return 'unauthorized';
+      // Only a request that carried a token can have an expired one. A 401 on
+      // an unauthenticated request is the endpoint answering — a wrong password,
+      // most often — and its body says which, so it must not be thrown away for
+      // a refresh that has nothing to refresh. The browser already does this.
+      if (res.status === 401 && tokens) return 'unauthorized';
       return this.toResult<T>(res);
     };
 

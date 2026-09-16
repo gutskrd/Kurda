@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { ApiClient, describeError } from './api';
+import { ApiClient, CODE_COPY, describeError } from './api';
 import { createTokenStorage } from './tokenStorage';
 import { englishOnly as t, translator } from '../i18n/I18nProvider';
 import { fr } from '../i18n/fr';
+import { en } from '../i18n/en';
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -114,5 +115,40 @@ describe('ApiClient', () => {
     const headers = init.headers as Record<string, string>;
     expect(headers['idempotency-key']).toBeTruthy();
     expect(headers['content-type']).toBe('application/json');
+  });
+});
+
+describe('CODE_COPY', () => {
+  /**
+   * Every 4xx the API raises carries an English message, and describeError
+   * handed it straight to the reader — so a wrong password said "invalid email
+   * or password" in all nine languages. These are the codes that now answer in
+   * the reader's own.
+   */
+  it('answers every mapped code from the catalogue rather than the server', () => {
+    for (const [code, key] of Object.entries(CODE_COPY)) {
+      const said = describeError({ kind: 'client', code, message: 'raw technical detail' }, t);
+      expect(said, code).toBe(en[key]);
+    }
+  });
+
+  it('says a wrong password in French, not in the API\'s English', () => {
+    const wrong = { kind: 'unauthorized' as const, code: 'INVALID_CREDENTIALS', message: 'invalid email or password' };
+    expect(describeError(wrong, translator(fr))).toBe(fr['error.code.invalidCredentials']);
+  });
+
+  /**
+   * 105 codes are not in the table, 17 of them carrying several different
+   * messages apiece, so the code alone cannot say which. The server's own
+   * sentence is the honest thing to show for those.
+   */
+  it('falls through to the server message for a code it does not know', () => {
+    expect(describeError({ kind: 'client', code: 'BAD_ROSTER', message: 'duplicate players in the roster' }, t)).toBe(
+      'duplicate players in the roster',
+    );
+  });
+
+  it('prefers a countdown to a sentence when the server sent one', () => {
+    expect(describeError({ kind: 'rate_limited', code: 'LOCKED', message: 'x', retryAfterSec: 30 }, t)).toMatch(/30s/);
   });
 });
