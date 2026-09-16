@@ -67,7 +67,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           <Pressable onPress={onExit} hitSlop={10}>
             <Text style={[styles.close, { color: colors.primary }]}>‹ Back</Text>
           </Pressable>
-          <Text style={[styles.heading, { color: colors.textPrimary }]}>Notifications</Text>
+          <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
           {hasUnread ? (
             <Pressable onPress={markAll} hitSlop={8}>
               <Text style={[styles.markAll, { color: colors.primary }]}>{t('notifications.markAllRead')}</Text>

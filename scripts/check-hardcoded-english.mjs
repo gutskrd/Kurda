@@ -193,15 +193,20 @@ function withoutComments(src) {
 }
 
 /** Is this a phrase a person reads, rather than an identifier or a fragment? */
-function isCopy(value) {
+function isCopy(value, minWords = 2) {
   const text = value.trim();
   if (text.length < 4) return false;
   if (NOT_COPY.has(text)) return false;
   // must start like a sentence or a label
   if (!/^[A-Z]/.test(text)) return false;
-  // at least two words, one of them more than a letter or two
+  // How many words it takes to be copy is the one thing the three passes
+  // disagree about, and the disagreement is measured rather than guessed.
+  // Reading the phone with the floor at one word: the tag-text pass found 36
+  // strings and not one false positive, while the bare-literal pass found an
+  // extra hundred that were HTTP verbs, route names and league tiers. A word
+  // between tags is read by a person; a word on its own in a file is not.
   const words = text.split(/\s+/).filter(Boolean);
-  if (words.length < 2) return false;
+  if (words.length < minWords) return false;
   // Letters, spaces and ordinary punctuation only — no code. Anything this
   // class does not list is treated as an identifier and waved through, so a
   // missing character is a hole, not a false positive: the ellipsis was
@@ -245,7 +250,10 @@ for (const file of sources(SRC)) {
   let m;
   while ((m = between.exec(src))) {
     const value = m[1];
-    if (!isCopy(value)) continue;
+    // One word between tags is still a sentence to whoever reads it: the
+    // screen titled Settings, the button that says Send, the chip that
+    // says Locked. Thirty-six of them were sitting in English behind this.
+    if (!isCopy(value, 1)) continue;
     const line = src.slice(0, m.index).split(/\r?\n/).length;
     // trimmed *after* the cut, not before: slicing a trimmed string can end on
     // a space, and a reported line that ends in whitespace is one nobody can

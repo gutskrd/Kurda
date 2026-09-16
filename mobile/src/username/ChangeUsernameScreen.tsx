@@ -72,12 +72,12 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
             <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back">
               <Icon name="chevron-left" size={22} color={colors.textSecondary} />
             </Pressable>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Username</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.username')}</Text>
             <View style={{ width: 22 }} />
           </View>
 
           <GlassCard style={styles.card}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Current</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('username.current')}</Text>
             <Text style={[styles.current, { color: colors.textPrimary }]}>{current ?? '…'}</Text>
 
             <Text style={[styles.label, { color: colors.textSecondary, marginTop: spacing.md }]}>{t('username.new')}</Text>

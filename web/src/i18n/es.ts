@@ -623,6 +623,7 @@ export const es: Catalogue = {
   'photo.clearAll': 'Borrar todo',
   'photo.stickerKind': 'Tipo de pegatina',
   'photo.marks': 'Símbolos',
+  'photo.emoji': 'Emojis',
   'photo.bringForward': 'Traer al frente',
   'photo.sendBack': 'Enviar atrás',
   'photo.duplicate': 'Duplicar',

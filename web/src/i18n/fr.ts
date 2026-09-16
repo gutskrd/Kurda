@@ -623,6 +623,7 @@ export const fr: Catalogue = {
   'photo.clearAll': 'Tout effacer',
   'photo.stickerKind': 'Type de sticker',
   'photo.marks': 'Symboles',
+  'photo.emoji': 'Émojis',
   'photo.bringForward': 'Amener devant',
   'photo.sendBack': 'Envoyer derrière',
   'photo.duplicate': 'Dupliquer',

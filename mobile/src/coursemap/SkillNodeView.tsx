@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../i18n/I18nContext';
 import { stateIcon } from './node';
 import type { SkillNode } from './types';
 
@@ -9,6 +10,7 @@ const NODE = 72;
 /** A single skill node on the map; ring/fill reflect its state (KUR-040). */
 export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const s = node.state;
   const ringColor =
     s === 'gold' ? colors.gold : s === 'decayed' ? colors.danger : s === 'locked' ? colors.glassBorder : colors.primary;
@@ -30,7 +32,7 @@ export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () 
         {node.state !== 'locked' ? (
           <Text style={[styles.strength, { color: colors.textSecondary }]}>Strength {node.strength}%{cracked ? ' · cracked' : ''}</Text>
         ) : (
-          <Text style={[styles.locked, { color: colors.textSecondary }]}>Locked</Text>
+          <Text style={[styles.locked, { color: colors.textSecondary }]}>{t('coursemap.lockedBadge')}</Text>
         )}
       </View>
     </View>

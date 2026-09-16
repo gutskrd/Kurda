@@ -92,7 +92,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
 
             {entry.xrefs.length > 0 ? (
               <View style={styles.xrefs}>
-                <Text style={[styles.xrefsTitle, { color: colors.textSecondary }]}>Related</Text>
+                <Text style={[styles.xrefsTitle, { color: colors.textSecondary }]}>{t('dictionary.related')}</Text>
                 <Text style={[styles.xrefsList, { color: colors.primary }]}>
                   {entry.xrefs.map((x) => `${x.headword} (${x.relation})`).join(' · ')}
                 </Text>

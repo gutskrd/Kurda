@@ -77,7 +77,7 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
           <Text style={[styles.errorText, { color: colors.textPrimary }]}>{t('lesson.loadFailed')}</Text>
           <Text style={[styles.errorDetail, { color: colors.textSecondary }]}>{loadError}</Text>
           <Pressable onPress={onExit} style={styles.exitButton}>
-            <Text style={[styles.exitText, { color: colors.primary }]}>Back</Text>
+            <Text style={[styles.exitText, { color: colors.primary }]}>{t('common.back')}</Text>
           </Pressable>
         </View>
       </GradientBackground>

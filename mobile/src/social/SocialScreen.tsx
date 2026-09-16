@@ -153,7 +153,7 @@ export function SocialScreen() {
                           accessibilityRole="button"
                           accessibilityLabel={`Accept friend request from ${u.username}`}
                         >
-                          <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accept</Text>
+                          <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.accept')}</Text>
                         </Pressable>
                         <Pressable
                           onPress={() => respond(u.userId, false)}

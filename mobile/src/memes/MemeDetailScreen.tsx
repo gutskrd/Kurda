@@ -219,12 +219,13 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
 }
 
 function Header({ colors, onExit }: { colors: ReturnType<typeof useTheme>['colors']; onExit: () => void }): React.JSX.Element {
+  const { t } = useI18n();
   return (
     <View style={styles.titleRow}>
       <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Back">
         <Icon name="chevron-left" size={24} color={colors.textSecondary} />
       </Pressable>
-      <Text style={[styles.title, { color: colors.primary }]}>Post</Text>
+      <Text style={[styles.title, { color: colors.primary }]}>{t('memes.post')}</Text>
       <View style={{ width: 24 }} />
     </View>
   );

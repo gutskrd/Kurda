@@ -107,7 +107,7 @@ export function DictionaryScreen() {
 
         {showRecents ? (
           <View style={styles.recents}>
-            <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>Recent</Text>
+            <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
             {recents.map((r) => (
               <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow}>
                 <Text style={[styles.recentText, { color: colors.primary }]}>{r}</Text>
@@ -120,7 +120,7 @@ export function DictionaryScreen() {
           <View style={styles.recents}>
             <View style={styles.savedHeading}>
               <Icon name="star" size={13} color={colors.gold} />
-              <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>Saved</Text>
+              <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
             </View>
             {saved.map((w) => (
               <View key={w.entryId} style={styles.savedRow}>

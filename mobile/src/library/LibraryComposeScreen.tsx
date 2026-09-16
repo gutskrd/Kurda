@@ -65,7 +65,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
             <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel="Cancel">
               <Icon name="close" size={22} color={colors.textSecondary} />
             </Pressable>
-            <Text style={[styles.headerTitle, { color: colors.primary }]}>Write</Text>
+            <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('library.write')}</Text>
             <View style={{ width: 22 }} />
           </View>
 

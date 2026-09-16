@@ -628,6 +628,7 @@ export const ar: Catalogue = {
   'photo.clearAll': 'مسح الكل',
   'photo.stickerKind': 'نوع الملصق',
   'photo.marks': 'الرموز',
+  'photo.emoji': 'إيموجي',
   'photo.bringForward': 'إحضار للأمام',
   'photo.sendBack': 'إرسال للخلف',
   'photo.duplicate': 'تكرار',

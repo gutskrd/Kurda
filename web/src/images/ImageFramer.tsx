@@ -252,7 +252,7 @@ export function ImageFramer({
             settle();
           }}
         >
-          Reset
+          {t('photo.reset')}
         </button>
       </div>
     </div>

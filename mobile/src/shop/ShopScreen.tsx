@@ -112,7 +112,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           <Pressable onPress={onExit} hitSlop={10}>
             <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>Shop</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{t('profile.shop')}</Text>
           <View style={styles.balances}>
             <View style={styles.balanceChip}>
               <Icon name="coin" size={18} color={colors.gold} />

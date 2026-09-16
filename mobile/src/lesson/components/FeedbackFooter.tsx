@@ -57,11 +57,11 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
       <Text style={[styles.bannerTitle, { color: good ? colors.success : colors.danger }]}>{title}</Text>
       {feedback.correction ? (
         <Text style={[styles.correction, { color: colors.textPrimary }]}>
-          Answer: <Text style={styles.correctionValue}>{feedback.correction}</Text>
+          {t('lesson.answer')} <Text style={styles.correctionValue}>{feedback.correction}</Text>
         </Text>
       ) : null}
       <Pressable onPress={onContinue} style={[styles.button, { backgroundColor: good ? colors.success : colors.danger }]}>
-        <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>Continue</Text>
+        <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('common.continue')}</Text>
       </Pressable>
     </Animated.View>
   );

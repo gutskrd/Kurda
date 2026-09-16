@@ -77,7 +77,7 @@ export function VoiceRecorder({
           <AudioPlayer url={value} />
         </View>
         <Pressable onPress={() => onChange(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('recorder.remove')}>
-          <Text style={[styles.action, { color: colors.danger }]}>Remove</Text>
+          <Text style={[styles.action, { color: colors.danger }]}>{t('common.remove')}</Text>
         </Pressable>
       </View>
     );

@@ -18,7 +18,7 @@ export function GrammarTips({ source, onClose }: { source: string; onClose: () =
     <GradientBackground>
       <View style={styles.screen}>
         <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Tips</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('grammar.title')}</Text>
           <Pressable onPress={onClose} accessibilityLabel={t('grammar.closeTips')} hitSlop={12}>
             <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
           </Pressable>

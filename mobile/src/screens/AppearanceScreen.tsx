@@ -21,12 +21,12 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
           <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10}>
             <Text style={[styles.back, { color: colors.textSecondary }]}>‹ Back</Text>
           </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Appearance</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('appearance.title')}</Text>
           <View style={{ width: 44 }} />
         </View>
 
         <GlassCard>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Theme</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('appearance.theme')}</Text>
           <Text style={[styles.cardHint, { color: colors.textSecondary }]}>
             {t('appearance.help')}
           </Text>
@@ -43,7 +43,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
           </Text>
         </GlassCard>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>Preview</Text>
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('appearance.preview')}</Text>
 
         <GlassCard>
           <View style={styles.previewHead}>
