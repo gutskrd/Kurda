@@ -61,7 +61,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         value={text}
         onChangeText={onChangeText}
         editable={!disabled}
-        placeholder="Type what you heard…"
+        placeholder={t('lesson.listen.placeholder')}
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}

@@ -554,7 +554,17 @@ export type TranslationKey =
   | 'practice.title'
   | 'daily.title'
   | 'error.crash.title'
-  | 'error.crash.body';
+  | 'error.crash.body'
+  | 'lesson.listen.placeholder'
+  | 'lesson.translate.placeholder'
+  | 'lesson.write.placeholder'
+  | 'lesson.tallying'
+  | 'library.poemPlaceholder'
+  | 'library.storyPlaceholder'
+  | 'library.notePlaceholder'
+  | 'dictionary.searchPlaceholder'
+  | 'comments.add'
+  | 'friends.searchPlaceholder';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1085,6 +1095,16 @@ const en: Catalog = {
   'daily.title': 'Daily Zêr',
   'error.crash.title': 'Something went wrong',
   'error.crash.body': 'This screen ran into an unexpected problem. Your account and your progress are safe.',
+  'lesson.listen.placeholder': 'Type what you heard…',
+  'lesson.translate.placeholder': 'Type in Kurdish…',
+  'lesson.write.placeholder': 'Write in Kurdish…',
+  'lesson.tallying': 'Tallying results…',
+  'library.poemPlaceholder': 'Your poem…',
+  'library.storyPlaceholder': 'Your story…',
+  'library.notePlaceholder': 'Add a note (optional)…',
+  'dictionary.searchPlaceholder': 'Search Kurdish or English…',
+  'comments.add': 'Add a comment…',
+  'friends.searchPlaceholder': 'Search by username…',
 };
 
 const ku: Catalog = {
@@ -1614,6 +1634,16 @@ const ku: Catalog = {
   'daily.title': 'Zêrê rojane',
   'error.crash.title': 'Tiştek xelet çû',
   'error.crash.body': 'Vê ekranê pirsgirêkeke nediyar dît. Hesab û pêşketina te ewle ne.',
+  'lesson.listen.placeholder': 'Tiştê ku te bihîst binivîse…',
+  'lesson.translate.placeholder': 'Bi kurdî binivîse…',
+  'lesson.write.placeholder': 'Bi kurdî binivîse…',
+  'lesson.tallying': 'Encam tên jimartin…',
+  'library.poemPlaceholder': 'Helbesta te…',
+  'library.storyPlaceholder': 'Çîroka te…',
+  'library.notePlaceholder': 'Notekê lê zêde bike (bijarte)…',
+  'dictionary.searchPlaceholder': 'Bi kurdî an îngilîzî bigere…',
+  'comments.add': 'Şîroveyekê lê zêde bike…',
+  'friends.searchPlaceholder': 'Li gorî navê bikarhêner bigere…',
 };
 
 const de: Catalog = {
@@ -2143,6 +2173,16 @@ const de: Catalog = {
   'daily.title': 'Tägliche Zêr',
   'error.crash.title': 'Etwas ist schiefgegangen',
   'error.crash.body': 'Auf diesem Bildschirm ist ein unerwarteter Fehler aufgetreten. Dein Konto und dein Fortschritt sind sicher.',
+  'lesson.listen.placeholder': 'Tippe, was du gehört hast…',
+  'lesson.translate.placeholder': 'Tippe auf Kurdisch…',
+  'lesson.write.placeholder': 'Schreib auf Kurdisch…',
+  'lesson.tallying': 'Ergebnisse werden ausgezählt…',
+  'library.poemPlaceholder': 'Dein Gedicht…',
+  'library.storyPlaceholder': 'Deine Geschichte…',
+  'library.notePlaceholder': 'Notiz hinzufügen (optional)…',
+  'dictionary.searchPlaceholder': 'Auf Kurdisch oder Englisch suchen…',
+  'comments.add': 'Kommentar hinzufügen…',
+  'friends.searchPlaceholder': 'Nach Benutzernamen suchen…',
 };
 
 const es: Catalog = {
@@ -2672,6 +2712,16 @@ const es: Catalog = {
   'daily.title': 'Zêr diarios',
   'error.crash.title': 'Algo ha salido mal',
   'error.crash.body': 'Esta pantalla ha tenido un problema inesperado. Tu cuenta y tu progreso están a salvo.',
+  'lesson.listen.placeholder': 'Escribe lo que has oído…',
+  'lesson.translate.placeholder': 'Escribe en kurdo…',
+  'lesson.write.placeholder': 'Escribe en kurdo…',
+  'lesson.tallying': 'Contando los resultados…',
+  'library.poemPlaceholder': 'Tu poema…',
+  'library.storyPlaceholder': 'Tu relato…',
+  'library.notePlaceholder': 'Añade una nota (opcional)…',
+  'dictionary.searchPlaceholder': 'Busca en kurdo o inglés…',
+  'comments.add': 'Añade un comentario…',
+  'friends.searchPlaceholder': 'Busca por nombre de usuario…',
 };
 
 const tr: Catalog = {
@@ -3201,6 +3251,16 @@ const tr: Catalog = {
   'daily.title': 'Günlük Zêr',
   'error.crash.title': 'Bir şeyler ters gitti',
   'error.crash.body': 'Bu ekranda beklenmedik bir sorun oluştu. Hesabın ve ilerlemen güvende.',
+  'lesson.listen.placeholder': 'Duyduğunu yaz…',
+  'lesson.translate.placeholder': 'Kürtçe yaz…',
+  'lesson.write.placeholder': 'Kürtçe yaz…',
+  'lesson.tallying': 'Sonuçlar hesaplanıyor…',
+  'library.poemPlaceholder': 'Şiirin…',
+  'library.storyPlaceholder': 'Hikâyen…',
+  'library.notePlaceholder': 'Not ekle (isteğe bağlı)…',
+  'dictionary.searchPlaceholder': 'Kürtçe veya İngilizce ara…',
+  'comments.add': 'Bir yorum ekle…',
+  'friends.searchPlaceholder': 'Kullanıcı adına göre ara…',
 };
 
 const ar: Catalog = {
@@ -3730,6 +3790,16 @@ const ar: Catalog = {
   'daily.title': 'Zêr اليومي',
   'error.crash.title': 'حدث خطأ ما',
   'error.crash.body': 'واجهت هذه الشاشة مشكلة غير متوقعة. حسابك وتقدّمك في أمان.',
+  'lesson.listen.placeholder': 'اكتب ما سمعته…',
+  'lesson.translate.placeholder': 'اكتب بالكردية…',
+  'lesson.write.placeholder': 'اكتب بالكردية…',
+  'lesson.tallying': 'يتم احتساب النتائج…',
+  'library.poemPlaceholder': 'قصيدتك…',
+  'library.storyPlaceholder': 'قصتك…',
+  'library.notePlaceholder': 'أضف ملاحظة (اختياري)…',
+  'dictionary.searchPlaceholder': 'ابحث بالكردية أو الإنجليزية…',
+  'comments.add': 'أضف تعليقًا…',
+  'friends.searchPlaceholder': 'ابحث باسم المستخدم…',
 };
 
 const fr: Catalog = {
@@ -4259,6 +4329,16 @@ const fr: Catalog = {
   'daily.title': 'Zêr quotidiens',
   'error.crash.title': 'Quelque chose s’est mal passé',
   'error.crash.body': 'Cet écran a rencontré un problème inattendu. Ton compte et ta progression sont en sécurité.',
+  'lesson.listen.placeholder': 'Écris ce que tu as entendu…',
+  'lesson.translate.placeholder': 'Écris en kurde…',
+  'lesson.write.placeholder': 'Écris en kurde…',
+  'lesson.tallying': 'Calcul des résultats…',
+  'library.poemPlaceholder': 'Ton poème…',
+  'library.storyPlaceholder': 'Ton histoire…',
+  'library.notePlaceholder': 'Ajoute une note (facultatif)…',
+  'dictionary.searchPlaceholder': 'Cherche en kurde ou en anglais…',
+  'comments.add': 'Ajoute un commentaire…',
+  'friends.searchPlaceholder': 'Rechercher par nom d’utilisateur…',
 };
 
 const nl: Catalog = {
@@ -4788,6 +4868,16 @@ const nl: Catalog = {
   'daily.title': 'Dagelijkse Zêr',
   'error.crash.title': 'Er is iets misgegaan',
   'error.crash.body': 'Op dit scherm is een onverwacht probleem opgetreden. Je account en je voortgang zijn veilig.',
+  'lesson.listen.placeholder': 'Typ wat je hoorde…',
+  'lesson.translate.placeholder': 'Typ in het Koerdisch…',
+  'lesson.write.placeholder': 'Schrijf in het Koerdisch…',
+  'lesson.tallying': 'Resultaten worden geteld…',
+  'library.poemPlaceholder': 'Jouw gedicht…',
+  'library.storyPlaceholder': 'Jouw verhaal…',
+  'library.notePlaceholder': 'Voeg een notitie toe (optioneel)…',
+  'dictionary.searchPlaceholder': 'Zoek in het Koerdisch of Engels…',
+  'comments.add': 'Voeg een reactie toe…',
+  'friends.searchPlaceholder': 'Zoek op gebruikersnaam…',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -5318,6 +5408,16 @@ const ckb: Catalog = {
   'daily.title': 'Zêrی ڕۆژانە',
   'error.crash.title': 'شتێک هەڵە بوو',
   'error.crash.body': 'ئەم شاشەیە تووشی کێشەیەکی چاوەڕوان‌نەکراو بوو. هەژمار و پێشکەوتنت پارێزراون.',
+  'lesson.listen.placeholder': 'ئەوەی گوێت لێبوو بینووسە…',
+  'lesson.translate.placeholder': 'بە کوردی بنووسە…',
+  'lesson.write.placeholder': 'بە کوردی بنووسە…',
+  'lesson.tallying': 'ئەنجامەکان دەژمێردرێن…',
+  'library.poemPlaceholder': 'شیعرەکەت…',
+  'library.storyPlaceholder': 'چیرۆکەکەت…',
+  'library.notePlaceholder': 'تێبینییەک زیاد بکە (ئارەزوومەندانە)…',
+  'dictionary.searchPlaceholder': 'بە کوردی یان ئینگلیزی بگەڕێ…',
+  'comments.add': 'لێدوانێک زیاد بکە…',
+  'friends.searchPlaceholder': 'بەپێی ناوی بەکارهێنەر بگەڕێ…',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

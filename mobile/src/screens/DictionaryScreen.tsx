@@ -95,7 +95,7 @@ export function DictionaryScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search Kurdish or English…"
+          placeholder={t('dictionary.searchPlaceholder')}
           placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}

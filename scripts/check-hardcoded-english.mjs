@@ -202,8 +202,12 @@ function isCopy(value) {
   // at least two words, one of them more than a letter or two
   const words = text.split(/\s+/).filter(Boolean);
   if (words.length < 2) return false;
-  // letters, spaces and ordinary punctuation only — no code
-  if (!/^[A-Za-z\d\s.,!?;:'’“”"()&%–—-]+$/.test(text)) return false;
+  // Letters, spaces and ordinary punctuation only — no code. Anything this
+  // class does not list is treated as an identifier and waved through, so a
+  // missing character is a hole, not a false positive: the ellipsis was
+  // absent and hid eleven strings, every placeholder in the lesson player
+  // among them. Add the character rather than loosening the rule.
+  if (!/^[A-Za-z\d\s.,!?;:'’“”"()&%…–—-]+$/.test(text)) return false;
   // a type or an expression that happens to read like a phrase
   if (/\b(Promise|React|Record|Partial|void|const|return|string|number|boolean)\b/.test(text)) return false;
   return true;
