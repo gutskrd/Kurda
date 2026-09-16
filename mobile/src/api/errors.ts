@@ -20,23 +20,53 @@ import type { ApiError } from './types';
 
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
+/**
+ * Server codes precise enough to say in the reader’s own language.
+ *
+ * The API raises 114 distinct codes and every message is English, so this is
+ * a floor, not a ceiling: the auth flow first, because it is the one every
+ * reader meets. Seventeen of those codes carry more than one message —
+ * FORBIDDEN alone has seven — and a code that vague cannot be translated
+ * from the code alone, so it is left to fall through.
+ */
+export const CODE_COPY: Record<string, TranslationKey> = {
+  ACCOUNT_NOT_ACTIVATED: 'error.notActivated',
+  ACCOUNT_DISABLED: 'error.code.accountDisabled',
+  CODE_EXPIRED: 'error.code.codeExpired',
+  INVALID_CODE: 'error.code.invalidCode',
+  INVALID_CREDENTIALS: 'error.code.invalidCredentials',
+  INVALID_TOKEN: 'error.code.invalidLink',
+  LOCKED: 'error.code.locked',
+  SIGNUP_REJECTED: 'error.code.signupRejected',
+  TOO_MANY_ATTEMPTS: 'error.code.tooManyAttempts',
+  USERNAME_TAKEN: 'error.code.usernameTaken',
+};
 export function describeError(error: ApiError, t: Translate): string {
-  // The one server code worth saying in the reader's own language: it is a 403
-  // like any other to this function, but it is not a refusal — it is an
-  // instruction, and the account is one confirmed email away from working.
-  if (error.code === 'ACCOUNT_NOT_ACTIVATED') return t('error.notActivated');
+  // A live countdown beats any sentence, so it wins when the server sent one.
+  // It only does for RATE_LIMITED today: LOCKED knows exactly how long it has
+  // locked you out and puts the number in details, which nothing turns into a
+  // retry-after header — so that branch is waiting for an API fix rather than
+  // being unreachable.
+  if (error.kind === 'rate_limited' && error.retryAfterSec && error.retryAfterSec > 0) {
+    return t('error.tooManyRetryIn', { seconds: Math.max(1, Math.ceil(error.retryAfterSec)) });
+  }
+
+  // Otherwise a precise code beats the kind: the difference between "something
+  // went wrong" and "that code has expired".
+  const byCode = error.code ? CODE_COPY[error.code] : undefined;
+  if (byCode) return t(byCode);
   switch (error.kind) {
     case 'network':
       return t('error.offline');
     case 'server':
       return t('error.server');
     case 'rate_limited':
-      return error.retryAfterSec && error.retryAfterSec > 0
-        ? t('error.tooManyRetryIn', { seconds: Math.max(1, Math.ceil(error.retryAfterSec)) })
-        : t('error.tooMany');
+      // without a countdown, which the branch at the top already took
+      return t('error.tooMany');
     case 'unauthorized':
-      // a bad login carries the server's own message; only mid-session
-      // refresh-failures fall back to the generic session-expired copy
+      // INVALID_CREDENTIALS is answered by code above, so what reaches here is
+      // a mid-session refresh failure — or a 401 we have no copy for, whose
+      // own message is still better than nothing.
       return error.message && error.message !== 'session expired' ? error.message : t('error.sessionExpired');
     case 'client':
     default:

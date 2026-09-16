@@ -37,6 +37,30 @@ describe('ApiClient', () => {
     expect(fetchFn.mock.calls[0]![1].headers.authorization).toBe('Bearer acc-1');
   });
 
+  /**
+   * Signing in is a 401 on a request that carried no token. Treating that as
+   * an expired session threw away the server's code and told the reader their
+   * session had expired, when what had happened was a wrong password.
+   */
+  it('surfaces a 401 from an unauthenticated request rather than calling it an expired session', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(401, { code: 'INVALID_CREDENTIALS', message: 'invalid email or password' }));
+    const { client, onLogout, ready } = makeClient(fetchFn, false);
+    await ready;
+
+    const res = await client.post('/auth/login', { email: 'a@b.c', password: 'wrong' });
+
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe('INVALID_CREDENTIALS');
+    expect(res.error.message).not.toBe('session expired');
+    // no refresh was attempted, and nobody was signed out of a session they
+    // were never in
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(onLogout).not.toHaveBeenCalled();
+  });
+
   it('refreshes once on 401 and replays with the SAME idempotency key', async () => {
     const fetchFn = vi
       .fn()

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ApiError } from './types';
-import { describeError, isOffline, isRetryable } from './errors';
+import { CODE_COPY, describeError, isOffline, isRetryable } from './errors';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
@@ -85,5 +85,42 @@ describe('isOffline / isRetryable', () => {
     for (const kind of ['client', 'unauthorized'] as const) {
       expect(isRetryable(err({ kind }))).toBe(false);
     }
+  });
+});
+
+describe('CODE_COPY', () => {
+  /**
+   * Every 4xx the API raises carries an English message, and this module's
+   * last line handed it straight to the reader — so a wrong password said
+   * "invalid email or password" in all nine languages. These are the codes
+   * that now answer in the reader's own.
+   */
+  it('answers every mapped code in both languages, and never with the server\'s English', () => {
+    for (const [code, key] of Object.entries(CODE_COPY)) {
+      for (const locale of ['en', 'ku'] as const) {
+        const said = describeError(err({ kind: 'client', code, status: 400 }), translator(locale));
+        expect(said, `${locale} ${code}`).toBe(TRANSLATIONS[locale][key]);
+        expect(said, `${locale} ${code} leaked the server message`).not.toBe('raw technical detail');
+      }
+    }
+  });
+
+  it('says a wrong password in Kurmancî, not in the API\'s English', () => {
+    const wrong = err({ kind: 'unauthorized', code: 'INVALID_CREDENTIALS', message: 'invalid email or password', status: 401 });
+    expect(describeError(wrong, translator('ku'))).toBe(TRANSLATIONS.ku['error.code.invalidCredentials']);
+  });
+
+  /**
+   * 105 codes are not in the table, and 17 of those carry several different
+   * messages apiece, so the code alone cannot say which. The server's own
+   * sentence is the honest thing to show for them.
+   */
+  it('falls through to the server message for a code it does not know', () => {
+    expect(describeError(err({ kind: 'client', code: 'BAD_ROSTER', status: 409 }), t)).toBe('raw technical detail');
+  });
+
+  it('prefers a countdown to a sentence when the server sent one', () => {
+    const limited = err({ kind: 'rate_limited', code: 'LOCKED', retryAfterSec: 30, status: 429 });
+    expect(describeError(limited, t)).toBe(interpolate(TRANSLATIONS.en['error.tooManyRetryIn'], { seconds: 30 }));
   });
 });
