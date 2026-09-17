@@ -7,6 +7,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { markGiftsSeen, receivedGifts, type ReceivedGift } from './gifts';
+import { giftsWereOpened } from './useUnseenGifts';
 
 /**
  * What people have sent you, at the top of the shop (KUR-087).
@@ -34,7 +35,10 @@ export function ReceivedGifts(): React.JSX.Element | null {
       const res = await receivedGifts(client);
       if (cancelled || !res.ok) return;
       setGifts(res.data.gifts);
-      if (res.data.unseen > 0) await markGiftsSeen(client);
+      if (res.data.unseen > 0) {
+        await markGiftsSeen(client);
+        giftsWereOpened();
+      }
     })();
     return () => {
       cancelled = true;

@@ -127,6 +127,7 @@ export function ClayButton({
   onPress,
   tone = 'neutral',
   icon,
+  badge,
   style,
 }: {
   label: string;
@@ -134,6 +135,8 @@ export function ClayButton({
   tone?: 'neutral' | 'primary';
   /** Optional skeuomorphic icon rendered before the label. */
   icon?: IconName;
+  /** a count worth interrupting for, drawn as a pill on the right */
+  badge?: string;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -145,6 +148,11 @@ export function ClayButton({
       <View style={[styles.clay, { backgroundColor: fill, borderColor: primary ? 'transparent' : colors.glassBorder }]}>
         {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
         <Text style={[styles.clayText, { color: textColor }]}>{label}</Text>
+        {badge ? (
+          <View style={[styles.clayBadge, { backgroundColor: colors.gold }]}>
+            <Text style={[styles.clayBadgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -332,6 +340,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   clayText: { fontSize: 15, fontWeight: typography.weights.semibold },
+  clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 3, gap: 2 },
   segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: 6, alignItems: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
