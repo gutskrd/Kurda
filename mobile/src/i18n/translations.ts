@@ -762,7 +762,12 @@ export type TranslationKey =
   | 'shop.giftFromFormer'
   | 'shop.noFriendsToGift'
   | 'shop.searchFriends'
-  | 'shop.sendItem';
+  | 'shop.sendItem'
+  | 'settings.visibility.members'
+  | 'settings.visibility.everyoneHint'
+  | 'settings.visibility.membersHint'
+  | 'settings.visibility.friendsHint'
+  | 'settings.visibility.nobodyHint';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1501,6 +1506,11 @@ const en: Catalog = {
   'shop.noFriendsToGift': 'You have no friends to gift to yet — gifts can only be sent to friends.',
   'shop.searchFriends': 'Search friends…',
   'shop.sendItem': 'Send {name}',
+  'settings.visibility.members': 'MyKurda members',
+  'settings.visibility.everyoneHint': 'Anyone at all, signed in or not — including search engines.',
+  'settings.visibility.membersHint': 'Anyone signed in to MyKurda. Signed-out visitors see only your name.',
+  'settings.visibility.friendsHint': 'Only people you have added as friends.',
+  'settings.visibility.nobodyHint': 'Nobody but you. You stay out of search and off the rankings.',
 };
 
 const ku: Catalog = {
@@ -2238,6 +2248,11 @@ const ku: Catalog = {
   'shop.noFriendsToGift': 'Hê hevalên te tune ne ku diyariyê bişînî — diyarî tenê ji hevalan re tên şandin.',
   'shop.searchFriends': 'Li hevalan bigere…',
   'shop.sendItem': '{name} bişîne',
+  'settings.visibility.members': 'Endamên MyKurda',
+  'settings.visibility.everyoneHint': 'Her kes, têketî yan na — tevî motorên lêgerînê.',
+  'settings.visibility.membersHint': 'Her kesê ku têketiye MyKurda. Yên nehatine têketin tenê navê te dibînin.',
+  'settings.visibility.friendsHint': 'Tenê kesên ku te wek heval lê zêde kirine.',
+  'settings.visibility.nobodyHint': 'Ji bilî te tu kes. Tu ne di lêgerînê de ne jî di rêzbendiyê de xuya dibî.',
 };
 
 const de: Catalog = {
@@ -2975,6 +2990,11 @@ const de: Catalog = {
   'shop.noFriendsToGift': 'Du hast noch keine Freunde zum Beschenken — Geschenke gehen nur an Freunde.',
   'shop.searchFriends': 'Freunde suchen…',
   'shop.sendItem': '{name} senden',
+  'settings.visibility.members': 'MyKurda-Mitglieder',
+  'settings.visibility.everyoneHint': 'Wirklich alle, angemeldet oder nicht — auch Suchmaschinen.',
+  'settings.visibility.membersHint': 'Alle, die bei MyKurda angemeldet sind. Abgemeldete Besucher sehen nur deinen Namen.',
+  'settings.visibility.friendsHint': 'Nur Leute, die du als Freunde hinzugefügt hast.',
+  'settings.visibility.nobodyHint': 'Niemand außer dir. Du bleibst aus der Suche und den Ranglisten heraus.',
 };
 
 const es: Catalog = {
@@ -3712,6 +3732,11 @@ const es: Catalog = {
   'shop.noFriendsToGift': 'Todavía no tienes amigos a quienes regalar: los regalos solo se envían a amigos.',
   'shop.searchFriends': 'Buscar amigos…',
   'shop.sendItem': 'Enviar {name}',
+  'settings.visibility.members': 'Miembros de MyKurda',
+  'settings.visibility.everyoneHint': 'Absolutamente cualquiera, con sesión o sin ella, incluidos los buscadores.',
+  'settings.visibility.membersHint': 'Cualquiera con sesión iniciada en MyKurda. Los visitantes sin sesión solo ven tu nombre.',
+  'settings.visibility.friendsHint': 'Solo las personas que has añadido como amigos.',
+  'settings.visibility.nobodyHint': 'Nadie salvo tú. No apareces en la búsqueda ni en las clasificaciones.',
 };
 
 const tr: Catalog = {
@@ -4449,6 +4474,11 @@ const tr: Catalog = {
   'shop.noFriendsToGift': 'Henüz hediye edebileceğin bir arkadaşın yok — hediyeler yalnızca arkadaşlara gönderilir.',
   'shop.searchFriends': 'Arkadaş ara…',
   'shop.sendItem': '{name} gönder',
+  'settings.visibility.members': 'MyKurda üyeleri',
+  'settings.visibility.everyoneHint': 'Giriş yapmış olsun olmasın herkes — arama motorları dâhil.',
+  'settings.visibility.membersHint': 'MyKurda’ya giriş yapmış herkes. Giriş yapmamış ziyaretçiler yalnızca adını görür.',
+  'settings.visibility.friendsHint': 'Yalnızca arkadaş olarak eklediğin kişiler.',
+  'settings.visibility.nobodyHint': 'Senden başka kimse. Aramada ve sıralamalarda görünmezsin.',
 };
 
 const ar: Catalog = {
@@ -5186,6 +5216,11 @@ const ar: Catalog = {
   'shop.noFriendsToGift': 'ليس لديك أصدقاء لتهديهم بعد — تُرسل الهدايا للأصدقاء فقط.',
   'shop.searchFriends': 'ابحث عن أصدقاء…',
   'shop.sendItem': 'إرسال {name}',
+  'settings.visibility.members': 'أعضاء MyKurda',
+  'settings.visibility.everyoneHint': 'أي شخص على الإطلاق، سجّل الدخول أم لا — بما في ذلك محركات البحث.',
+  'settings.visibility.membersHint': 'أي شخص مسجّل الدخول في MyKurda. أما الزوار غير المسجلين فيرون اسمك فقط.',
+  'settings.visibility.friendsHint': 'الأشخاص الذين أضفتهم كأصدقاء فقط.',
+  'settings.visibility.nobodyHint': 'لا أحد سواك. تبقى خارج البحث وخارج الترتيب.',
 };
 
 const fr: Catalog = {
@@ -5923,6 +5958,11 @@ const fr: Catalog = {
   'shop.noFriendsToGift': 'Tu n’as pas encore d’amis à qui offrir — les cadeaux ne vont qu’aux amis.',
   'shop.searchFriends': 'Rechercher des amis…',
   'shop.sendItem': 'Envoyer {name}',
+  'settings.visibility.members': 'Membres de MyKurda',
+  'settings.visibility.everyoneHint': 'Absolument tout le monde, connecté ou non — moteurs de recherche compris.',
+  'settings.visibility.membersHint': 'Toute personne connectée à MyKurda. Les visiteurs déconnectés ne voient que ton nom.',
+  'settings.visibility.friendsHint': 'Seulement les personnes que tu as ajoutées en amis.',
+  'settings.visibility.nobodyHint': 'Personne d’autre que toi. Tu restes hors de la recherche et des classements.',
 };
 
 const nl: Catalog = {
@@ -6660,6 +6700,11 @@ const nl: Catalog = {
   'shop.noFriendsToGift': 'Je hebt nog geen vrienden om aan te geven — cadeaus kunnen alleen naar vrienden.',
   'shop.searchFriends': 'Zoek vrienden…',
   'shop.sendItem': '{name} versturen',
+  'settings.visibility.members': 'MyKurda-leden',
+  'settings.visibility.everyoneHint': 'Werkelijk iedereen, ingelogd of niet — ook zoekmachines.',
+  'settings.visibility.membersHint': 'Iedereen die is ingelogd bij MyKurda. Uitgelogde bezoekers zien alleen je naam.',
+  'settings.visibility.friendsHint': 'Alleen mensen die je als vriend hebt toegevoegd.',
+  'settings.visibility.nobodyHint': 'Niemand behalve jij. Je blijft buiten de zoekresultaten en de ranglijsten.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7398,6 +7443,11 @@ const ckb: Catalog = {
   'shop.noFriendsToGift': 'هێشتا هاوڕێت نییە دیاریی بۆ بنێریت — دیاری تەنها بۆ هاوڕێ دەنێردرێت.',
   'shop.searchFriends': 'بەدوای هاوڕێدا بگەڕێ…',
   'shop.sendItem': '{name} بنێرە',
+  'settings.visibility.members': 'ئەندامانی MyKurda',
+  'settings.visibility.everyoneHint': 'هەرکەسێک، چیتە ژوورەوە یان نا — بە بزوێنەرەکانی گەڕانەوە.',
+  'settings.visibility.membersHint': 'هەرکەسێک کە چووبێتە ناو MyKurda. ئەوانەی نەچوونەتە ژوورەوە تەنها ناوت دەبینن.',
+  'settings.visibility.friendsHint': 'تەنها ئەو کەسانەی وەک هاوڕێ زیادت کردوون.',
+  'settings.visibility.nobodyHint': 'جگە لە خۆت هیچ کەس. لە گەڕان و ڕیزبەندیدا دەرناکەویت.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

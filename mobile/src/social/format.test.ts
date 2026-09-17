@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { friendActionLabel, isActionable, VISIBILITY_LABEL } from './format';
+import { VISIBILITY_HINT, VISIBILITIES, friendActionLabel, isActionable, VISIBILITY_LABEL } from './format';
 import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
 describe('friendActionLabel', () => {
@@ -40,6 +40,23 @@ describe('VISIBILITY_LABEL', () => {
   it('names a key every language actually has', () => {
     for (const key of Object.values(VISIBILITY_LABEL)) {
       for (const loc of LOCALES) expect(TRANSLATIONS[loc][key], `${loc} ${key}`).toBeTruthy();
+    }
+  });
+});
+
+describe('profile visibility', () => {
+  it('offers every value the server stores', () => {
+    // the column defaults to 'members', and the phone used to offer three
+    // options without it — so a fresh account saw nothing selected, could not
+    // read its own privacy setting, and moved off the default by touching any
+    // of them
+    expect([...VISIBILITIES]).toEqual(['everyone', 'members', 'friends', 'nobody']);
+  });
+
+  it('has a label and a meaning for each', () => {
+    for (const v of VISIBILITIES) {
+      expect(VISIBILITY_LABEL[v]).toBeTruthy();
+      expect(VISIBILITY_HINT[v]).toBeTruthy();
     }
   });
 });
