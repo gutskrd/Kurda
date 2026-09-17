@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native'
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: 44,
+    minHeight: MIN_TOUCH_TARGET,
     paddingVertical: 11,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

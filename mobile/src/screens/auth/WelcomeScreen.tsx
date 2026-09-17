@@ -6,8 +6,10 @@ import type { AuthStackParamList } from '../../navigation/authStack';
 import { useAuth } from '../../auth/AuthContext';
 import { signInWithGoogle } from '../../auth/google';
 import { Icon, type IconName } from '../../theme/Icon';
+import { GoogleMark } from '../../theme/BrandMark';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { AuthScreenShell } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
@@ -132,9 +134,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   };
 
   return (
-    <AuthScreenShell title={t('welcome.title')} onBack={onBack} hero="person">
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('welcome.subtitle')}</Text>
-
+    <AuthScreenShell title={t('welcome.title')} subtitle={t('welcome.subtitle')} onBack={onBack} hero="person">
       <View style={styles.methods}>
         {appleAvailable ? (
           <AppleAuthentication.AppleAuthenticationButton
@@ -150,7 +150,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
           />
         ) : null}
         <MethodButton
-          icon="google"
+          mark={<GoogleMark size={18} />}
           label={t('welcome.google')}
           onPress={onGoogle}
           background={colors.controlTrack}
@@ -158,7 +158,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
           border={colors.glassBorder}
         />
         <MethodButton
-          icon="mail"
+          icon="mail-fill"
           label={t('welcome.email')}
           onPress={() => navigation.navigate('Register')}
           background={colors.primary}
@@ -198,21 +198,29 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   );
 }
 
+/**
+ * One way in: a mark, a word, a tap.
+ *
+ * Either an `icon` — one of ours, drawn in the button's own foreground colour —
+ * or a `mark`, which is somebody else's logo and brings its own colours. Never
+ * both, and never neither: a company's mark is not ours to re-tint, and an icon
+ * that ignored the theme would be the only one in the app that did.
+ */
 function MethodButton({
   icon,
+  mark,
   label,
   onPress,
   background,
   foreground,
   border,
 }: {
-  icon: IconName;
   label: string;
   onPress: () => void;
   background: string;
   foreground: string;
   border?: string;
-}) {
+} & ({ icon: IconName; mark?: never } | { mark: React.JSX.Element; icon?: never })) {
   return (
     <Pressable
       onPress={onPress}
@@ -222,14 +230,13 @@ function MethodButton({
         { backgroundColor: background, borderColor: border ?? background, opacity: pressed ? 0.9 : 1 },
       ]}
     >
-      <Icon name={icon} size={20} color={foreground} />
+      {mark ?? (icon ? <Icon name={icon} size={20} color={foreground} /> : null)}
       <Text style={[styles.methodText, { color: foreground }]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  subtitle: { fontSize: typography.sizes.sm, marginBottom: spacing.lg },
   methods: { gap: spacing.md },
   // Apple's button is a native view with no intrinsic height — size it to
   // match the custom method buttons below it.
@@ -244,7 +251,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   methodText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  link: { marginTop: spacing.lg, alignItems: 'center' },
+  link: { marginTop: spacing.sm, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   diag: { marginTop: spacing.xl, alignItems: 'center', gap: 2 },
   diagText: { fontSize: typography.sizes.xs },

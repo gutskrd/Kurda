@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
   },
   art: { width: '100%', height: '100%' },
   empty: { fontSize: typography.sizes.sm },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: MIN_TOUCH_TARGET },
   toggleLabel: { fontSize: 17 },
   error: { fontSize: typography.sizes.sm },
 });
