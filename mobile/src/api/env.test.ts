@@ -55,3 +55,10 @@ describe('assetUrl', () => {
     expect(assetUrl('')).toBeNull();
   });
 });
+
+describe('avatar art', () => {
+  it('builds an absolute url from a key', async () => {
+    const { avatarAssetUrl } = await import('../profile/cosmetics.js');
+    expect(avatarAssetUrl('default-01')).toBe('https://mykurda.com/cosmetics/avatars/default-01.png');
+  });
+});
