@@ -22,3 +22,28 @@ export function apiBaseUrl(env: AppEnv, override?: string): string {
 export function defaultApiBaseUrl(): string {
   return apiBaseUrl(__DEV__ ? 'development' : 'production');
 }
+
+/**
+ * Where the site's static art lives.
+ *
+ * Cosmetic assets — default avatars, profile backgrounds, icons — are files
+ * shipped with the website, not things the API serves. The API therefore hands
+ * out site-relative paths like `/cosmetics/avatars/default-01.png`, which a
+ * browser resolves against its own origin and a phone cannot resolve at all.
+ */
+const SITE_URL = 'https://mykurda.com';
+
+/**
+ * Make a URL the phone can actually load.
+ *
+ * Absolute URLs (an uploaded photo in object storage) are handed back
+ * untouched; a site-relative path is resolved against the website, which is the
+ * origin that serves it. The production site is used even in development
+ * because these are public, immutable files — a local web server would only
+ * make dev differ from release for no gain.
+ */
+export function assetUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//')) return url;
+  return `${SITE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}

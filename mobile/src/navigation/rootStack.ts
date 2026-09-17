@@ -16,6 +16,7 @@ export type RootStackParamList = {
   Chats: undefined;
   GroupThread: { groupId: string; name: string };
   Clubs: undefined;
+  GroupMembers: { groupId: string };
   EventQuests: undefined;
   Notifications: undefined;
   NotificationCenter: undefined;

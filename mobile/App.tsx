@@ -35,6 +35,7 @@ import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
 import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { ClubsScreen } from './src/groups/ClubsScreen';
+import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
@@ -206,6 +207,16 @@ function SignedInRoot() {
           <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
         )}
       </RootStack.Screen>
+      {/* leaving unwinds past the thread: the club is gone from under it */}
+      <RootStack.Screen name="GroupMembers" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GroupMembersScreen
+            groupId={route.params.groupId}
+            onExit={() => navigation.goBack()}
+            onLeft={() => navigation.navigate('Chats')}
+          />
+        )}
+      </RootStack.Screen>
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
@@ -215,6 +226,7 @@ function SignedInRoot() {
             groupId={route.params.groupId}
             name={route.params.name}
             onExit={() => navigation.goBack()}
+            onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
           />
         )}
       </RootStack.Screen>

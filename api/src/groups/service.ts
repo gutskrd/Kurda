@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
-import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from './roles.js';
+import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
 export interface Group {

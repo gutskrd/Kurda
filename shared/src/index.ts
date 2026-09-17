@@ -20,3 +20,18 @@ export {
   localeFromTag,
   type AppLocale,
 } from './locales.js';
+/**
+ * Group role rules (KUR-084). Here rather than in the API because all three
+ * apps decide what to show from them, and three copies of who-can-remove-whom
+ * is three chances to disagree about it.
+ */
+export {
+  ROLES,
+  MAX_GROUP_MEMBERS,
+  isRole,
+  roleRank,
+  outranks,
+  canManage,
+  canSetRole,
+  type Role,
+} from './group-roles.js';

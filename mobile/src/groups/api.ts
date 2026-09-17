@@ -1,5 +1,8 @@
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
+// one definition of the hierarchy, shared with the API and the browser
+export type { Role } from '@kurda/shared';
+import type { Role } from '@kurda/shared';
 
 /** A club the reader belongs to, with the role they hold in it. */
 export interface Group {
@@ -12,8 +15,6 @@ export interface Group {
   memberCount: number;
   myRole: Role;
 }
-
-export type Role = 'owner' | 'moderator' | 'member';
 
 /**
  * A message in a group channel.
@@ -93,4 +94,47 @@ export function createGroup(
   input: { name: string; description?: string; privacy?: 'open' | 'invite' },
 ): Promise<ApiResult<{ id: string }>> {
   return client.post<{ id: string }>('/groups', input);
+}
+
+/** A club's roster, with the reader's own role in it. */
+export interface GroupDetail extends Omit<Group, 'myRole'> {
+  members: GroupMember[];
+  /** null when the reader is not a member — an open club is readable first */
+  myRole: Role | null;
+}
+
+export interface GroupMember {
+  userId: string;
+  username: string;
+  /** resolved server-side, so the roster shows real faces and not initials */
+  avatarUrl: string | null;
+  role: Role;
+  joinedAt: string;
+}
+
+export function groupDetail(client: ApiClient, groupId: string): Promise<ApiResult<GroupDetail>> {
+  return client.get<GroupDetail>(`/groups/${groupId}`);
+}
+
+/** Promote to moderator or demote to member. Ownership moves by transfer. */
+export function setMemberRole(
+  client: ApiClient,
+  groupId: string,
+  userId: string,
+  role: 'moderator' | 'member',
+): Promise<ApiResult<{ ok: true }>> {
+  return client.put<{ ok: true }>(`/groups/${groupId}/members/${userId}/role`, { role });
+}
+
+export function removeMember(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<{ ok: true }>> {
+  return client.delete<{ ok: true }>(`/groups/${groupId}/members/${userId}`);
+}
+
+/** Hand the club over. The old owner becomes a moderator and cannot undo it. */
+export function transferOwnership(
+  client: ApiClient,
+  groupId: string,
+  userId: string,
+): Promise<ApiResult<{ ok: true }>> {
+  return client.post<{ ok: true }>(`/groups/${groupId}/transfer`, { userId });
 }

@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { GroupService } from './service.js';
-import { canManage } from './roles.js';
+import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
 export const MAX_GROUP_MESSAGE_LEN = 2000;

@@ -39,10 +39,12 @@ export function GroupThreadScreen({
   groupId,
   name,
   onExit,
+  onOpenMembers,
 }: {
   groupId: string;
   name: string;
   onExit: () => void;
+  onOpenMembers: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
@@ -110,7 +112,15 @@ export function GroupThreadScreen({
           <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
             {name}
           </Text>
-          <View style={{ width: 40 }} />
+          <Pressable
+            onPress={onOpenMembers}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t('groups.members')}
+            style={styles.headerAction}
+          >
+            <Icon name="people" size={20} tone="primary" />
+          </Pressable>
         </View>
 
         {loading ? (
@@ -205,6 +215,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   close: { fontSize: typography.sizes.md },
+  headerAction: { width: 40, alignItems: 'flex-end' },
   title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   list: { padding: spacing.lg, gap: spacing.sm },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, maxWidth: '86%' },

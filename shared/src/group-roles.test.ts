@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canManage, canSetRole, outranks, roleRank } from './roles.js';
+import { canManage, canSetRole, outranks, roleRank } from './group-roles.js';
 
 describe('role hierarchy', () => {
   it('ranks owner > moderator > member', () => {

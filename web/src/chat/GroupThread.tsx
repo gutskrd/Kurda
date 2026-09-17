@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import { canManage as canManageRole, canSetRole as canSetRoleShared, roleRank } from '@kurda/shared';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, GroupDetail, GroupMember, GroupMessage, GroupRole } from '../lib/types';
+import type { ApiError, GroupDetail, GroupMember, GroupMessage } from '../lib/types';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from './MessagesProvider';
@@ -234,8 +235,6 @@ export function GroupThread({
 }
 
 /** Higher rank = more power, mirroring the server's group role hierarchy. */
-const ROLE_RANK: Record<GroupRole, number> = { member: 0, moderator: 1, owner: 2 };
-
 /**
  * The group's roster and its admins. A group's creator is its owner; owners can
  * promote members to moderator (a group admin) or demote them, and owners and
@@ -260,13 +259,12 @@ function GroupMembers({
   const [error, setError] = useState<string | null>(null);
 
   const myRole = detail.myRole;
+  // the rules live in shared, so what this offers and what the API allows
+  // cannot drift apart; the only thing added here is that you do not manage
+  // yourself, which is a UI concern rather than a permission
   const canManage = (target: GroupMember): boolean =>
-    myRole !== null &&
-    (myRole === 'owner' || myRole === 'moderator') &&
-    ROLE_RANK[myRole] > ROLE_RANK[target.role] &&
-    target.userId !== user?.id;
-  // only an owner changes roles; ownership itself moves via transfer, not setRole
-  const canSetRole = myRole === 'owner';
+    myRole !== null && canManageRole(myRole, target.role) && target.userId !== user?.id;
+  const canSetRole = myRole !== null && canSetRoleShared(myRole, 'moderator');
 
   /*
    * No `confirm()` here any more. The destructive actions below are
@@ -308,7 +306,7 @@ function GroupMembers({
   }
 
   const ordered = [...detail.members].sort(
-    (a, b) => ROLE_RANK[b.role] - ROLE_RANK[a.role] || a.username.localeCompare(b.username),
+    (a, b) => roleRank(b.role) - roleRank(a.role) || a.username.localeCompare(b.username),
   );
 
   return (
