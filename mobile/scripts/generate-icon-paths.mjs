@@ -165,33 +165,43 @@ ${body}
 export type IconName = keyof typeof ICON_PATHS;
 `;
 
-    // the repo is CRLF; writing LF here would show every line as changed
-  return file.replace(/\n/g, '\r\n');
+  return file;
 }
 
 export const ICON_PATHS_FILE = OUT;
 
 /**
- * `--check` rebuilds and compares instead of writing.
+ * Compare without line endings in the way.
  *
- * The generated file says "do not edit by hand", which is only true if
- * something checks — so mobile's lint runs this, the way it runs the English
- * gate. Without it a hand-tweaked path survives until the next person
- * regenerates and finds a diff they did not make.
+ * The file is stored LF and checked out CRLF on Windows (core.autocrlf), so
+ * the bytes on disk differ by platform while the content does not. Comparing
+ * them raw passed on my machine and failed on the Linux runner, which is the
+ * least useful way for a gate to behave.
  */
-if (process.argv.includes('--check')) {
+const sameContent = (a, b) => a.replace(/\r\n/g, '\n') === b.replace(/\r\n/g, '\n');
+
+/**
+ * Only when run as a script.
+ *
+ * Importing this module must not touch the disk — the earlier version wrote
+ * the file on import, so merely importing it (to read `ICON_PATHS_FILE`)
+ * rewrote the thing the caller was about to inspect.
+ */
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const built = buildIconPaths();
-  const onDisk = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-  if (built !== onDisk) {
-    console.error(
-      `icons: ${path.relative(ROOT, OUT)} is not what the generator produces.\n` +
-        '       Edit MAP in mobile/scripts/generate-icon-paths.mjs and run:\n' +
-        '         node mobile/scripts/generate-icon-paths.mjs',
-    );
-    process.exit(1);
+  if (process.argv.includes('--check')) {
+    const onDisk = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
+    if (!sameContent(built, onDisk)) {
+      console.error(
+        `icons: ${path.relative(ROOT, OUT)} is not what the generator produces.\n` +
+          '       Edit MAP in mobile/scripts/generate-icon-paths.mjs and run:\n' +
+          '         node mobile/scripts/generate-icon-paths.mjs',
+      );
+      process.exit(1);
+    }
+    console.log(`icons: ${Object.keys(MAP).length} glyphs match Phosphor.`);
+  } else {
+    fs.writeFileSync(OUT, built);
+    console.log(`wrote ${Object.keys(MAP).length} icons to ${path.relative(ROOT, OUT)}`);
   }
-  console.log(`icons: ${Object.keys(MAP).length} glyphs match Phosphor.`);
-} else {
-  fs.writeFileSync(OUT, buildIconPaths());
-  console.log(`wrote ${Object.keys(MAP).length} icons to ${path.relative(ROOT, OUT)}`);
 }
