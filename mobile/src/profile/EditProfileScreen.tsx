@@ -14,6 +14,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from './InitialsAvatar';
 import { CosmeticPicker } from './CosmeticPicker';
+import { SectionToggles } from './SectionToggles';
 import { avatarAssetUrl } from './cosmetics';
 
 interface Me {
@@ -45,7 +46,7 @@ const MAX_BIO = 1000;
  * in #722 is unusable to somebody who has no way to say where they are.
  */
 export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
@@ -248,6 +249,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                 );
               })}
             </View>
+
+            {user?.id ? <SectionToggles userId={user.id} /> : null}
 
             <CosmeticPicker
               equippedBackground={me?.equippedBackgroundSku ?? null}

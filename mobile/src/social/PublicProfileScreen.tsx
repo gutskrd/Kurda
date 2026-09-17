@@ -15,6 +15,7 @@ import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import type { ProfileSections } from '../profile/sections';
 import { ReportUserSheet } from './ReportUserSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
@@ -32,6 +33,8 @@ interface Profile {
   tier?: string;
   rating?: number;
   achievements?: number;
+  /** which activity sections they let people see; null when private */
+  sections?: ProfileSections | null;
 }
 
 /** Public profile with a friend action + block (KUR-082). */
@@ -182,7 +185,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             );
           }}
         </AsyncBoundary>
-        {profile && !profile.private ? <ProfileActivity userId={profile.userId} /> : null}
+        {profile && !profile.private ? <ProfileActivity userId={profile.userId} sections={profile.sections} /> : null}
         </ScrollView>
       </View>
     </GradientBackground>

@@ -787,7 +787,16 @@ export type TranslationKey =
   | 'settings.data.request'
   | 'settings.data.requesting'
   | 'settings.data.requested'
-  | 'settings.data.failed';
+  | 'settings.data.failed'
+  | 'profile.hidden'
+  | 'edit.sections.title'
+  | 'edit.sections.help'
+  | 'edit.sections.failed'
+  | 'edit.sections.posts'
+  | 'edit.sections.games'
+  | 'edit.sections.likes'
+  | 'edit.sections.saved'
+  | 'repost.sectionHint';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1551,6 +1560,15 @@ const en: Catalog = {
   'settings.data.requesting': 'Requesting…',
   'settings.data.requested': 'Export requested — you’ll be notified when it’s ready.',
   'settings.data.failed': 'Couldn’t request the export.',
+  'profile.hidden': 'Hidden',
+  'edit.sections.title': 'What your profile shows',
+  'edit.sections.help': 'Turn a section off and it disappears from your profile for everyone else. Nothing is deleted — you can turn it back on whenever you like.',
+  'edit.sections.failed': 'Could not read your profile sections.',
+  'edit.sections.posts': 'Everything you have posted — gotin, çîrok, helbest, wêne and mîm.',
+  'edit.sections.games': 'How your recent games went.',
+  'edit.sections.likes': 'Posts you have liked.',
+  'edit.sections.saved': 'Posts you have saved.',
+  'repost.sectionHint': 'Posts you have reposted onto your own profile.',
 };
 
 const ku: Catalog = {
@@ -2313,6 +2331,15 @@ const ku: Catalog = {
   'settings.data.requesting': 'Tê xwestin…',
   'settings.data.requested': 'Daxwaz hat kirin — gava amade bû dê ji te re were gotin.',
   'settings.data.failed': 'Daxwaz nehat kirin.',
+  'profile.hidden': 'Veşartî',
+  'edit.sections.title': 'Profîla te çi nîşan dide',
+  'edit.sections.help': 'Beşekê bigire û ew ji profîla te ji bo her kesî winda dibe. Tiştek nayê jêbirin — tu dikarî her wextî dîsa vekî.',
+  'edit.sections.failed': 'Beşên profîla te nehatin xwendin.',
+  'edit.sections.posts': 'Her tiştê ku te weşandiye — gotin, çîrok, helbest, wêne û mîm.',
+  'edit.sections.games': 'Lîstikên te yên dawî çawa derbas bûn.',
+  'edit.sections.likes': 'Şandiyên ku te ecibandine.',
+  'edit.sections.saved': 'Şandiyên ku te tomar kirine.',
+  'repost.sectionHint': 'Şandiyên ku te ji nû ve li ser profîla xwe weşandine.',
 };
 
 const de: Catalog = {
@@ -3075,6 +3102,15 @@ const de: Catalog = {
   'settings.data.requesting': 'Wird angefordert…',
   'settings.data.requested': 'Export angefordert — du wirst benachrichtigt, sobald er fertig ist.',
   'settings.data.failed': 'Der Export konnte nicht angefordert werden.',
+  'profile.hidden': 'Ausgeblendet',
+  'edit.sections.title': 'Was dein Profil zeigt',
+  'edit.sections.help': 'Schalte einen Bereich aus und er verschwindet für alle anderen aus deinem Profil. Nichts wird gelöscht — du kannst ihn jederzeit wieder einschalten.',
+  'edit.sections.failed': 'Deine Profilbereiche konnten nicht gelesen werden.',
+  'edit.sections.posts': 'Alles, was du gepostet hast — gotin, çîrok, helbest, wêne und mîm.',
+  'edit.sections.games': 'Wie deine letzten Spiele gelaufen sind.',
+  'edit.sections.likes': 'Beiträge, die dir gefallen haben.',
+  'edit.sections.saved': 'Beiträge, die du gespeichert hast.',
+  'repost.sectionHint': 'Beiträge, die du auf dein eigenes Profil geteilt hast.',
 };
 
 const es: Catalog = {
@@ -3837,6 +3873,15 @@ const es: Catalog = {
   'settings.data.requesting': 'Solicitando…',
   'settings.data.requested': 'Exportación solicitada: te avisaremos cuando esté lista.',
   'settings.data.failed': 'No se ha podido solicitar la exportación.',
+  'profile.hidden': 'Oculto',
+  'edit.sections.title': 'Qué muestra tu perfil',
+  'edit.sections.help': 'Desactiva una sección y desaparecerá de tu perfil para todos los demás. No se borra nada: puedes volver a activarla cuando quieras.',
+  'edit.sections.failed': 'No se han podido leer las secciones de tu perfil.',
+  'edit.sections.posts': 'Todo lo que has publicado: gotin, çîrok, helbest, wêne y mîm.',
+  'edit.sections.games': 'Cómo te han ido las últimas partidas.',
+  'edit.sections.likes': 'Publicaciones que te han gustado.',
+  'edit.sections.saved': 'Publicaciones que has guardado.',
+  'repost.sectionHint': 'Publicaciones que has republicado en tu propio perfil.',
 };
 
 const tr: Catalog = {
@@ -4599,6 +4644,15 @@ const tr: Catalog = {
   'settings.data.requesting': 'İsteniyor…',
   'settings.data.requested': 'Dışa aktarma istendi — hazır olduğunda haber verilecek.',
   'settings.data.failed': 'Dışa aktarma istenemedi.',
+  'profile.hidden': 'Gizli',
+  'edit.sections.title': 'Profilinin gösterdikleri',
+  'edit.sections.help': 'Bir bölümü kapat, herkes için profilinden kaybolur. Hiçbir şey silinmez — istediğin zaman geri açabilirsin.',
+  'edit.sections.failed': 'Profil bölümlerin okunamadı.',
+  'edit.sections.posts': 'Paylaştığın her şey — gotin, çîrok, helbest, wêne ve mîm.',
+  'edit.sections.games': 'Son oyunlarının nasıl geçtiği.',
+  'edit.sections.likes': 'Beğendiğin gönderiler.',
+  'edit.sections.saved': 'Kaydettiğin gönderiler.',
+  'repost.sectionHint': 'Kendi profiline yeniden paylaştığın gönderiler.',
 };
 
 const ar: Catalog = {
@@ -5361,6 +5415,15 @@ const ar: Catalog = {
   'settings.data.requesting': 'جارٍ الطلب…',
   'settings.data.requested': 'تم طلب التصدير — سنُعلمك عندما يكون جاهزًا.',
   'settings.data.failed': 'تعذّر طلب التصدير.',
+  'profile.hidden': 'مخفي',
+  'edit.sections.title': 'ما يعرضه ملفك الشخصي',
+  'edit.sections.help': 'أطفئ قسمًا فيختفي من ملفك الشخصي بالنسبة للجميع. لا يُحذف شيء — يمكنك إعادة تشغيله متى شئت.',
+  'edit.sections.failed': 'تعذّرت قراءة أقسام ملفك الشخصي.',
+  'edit.sections.posts': 'كل ما نشرته — gotin وçîrok وhelbest وwêne وmîm.',
+  'edit.sections.games': 'كيف سارت مبارياتك الأخيرة.',
+  'edit.sections.likes': 'المنشورات التي أعجبتك.',
+  'edit.sections.saved': 'المنشورات التي حفظتها.',
+  'repost.sectionHint': 'المنشورات التي أعدت نشرها على ملفك الشخصي.',
 };
 
 const fr: Catalog = {
@@ -6123,6 +6186,15 @@ const fr: Catalog = {
   'settings.data.requesting': 'Demande en cours…',
   'settings.data.requested': 'Export demandé — tu seras prévenu dès qu’il sera prêt.',
   'settings.data.failed': 'La demande d’export n’a pas abouti.',
+  'profile.hidden': 'Masqué',
+  'edit.sections.title': 'Ce que ton profil montre',
+  'edit.sections.help': 'Désactive une section et elle disparaît de ton profil pour tout le monde. Rien n’est supprimé — tu peux la réactiver quand tu veux.',
+  'edit.sections.failed': 'Impossible de lire les sections de ton profil.',
+  'edit.sections.posts': 'Tout ce que tu as publié — gotin, çîrok, helbest, wêne et mîm.',
+  'edit.sections.games': 'Comment se sont passées tes dernières parties.',
+  'edit.sections.likes': 'Les publications que tu as aimées.',
+  'edit.sections.saved': 'Les publications que tu as enregistrées.',
+  'repost.sectionHint': 'Les publications que vous avez republiées sur votre profil.',
 };
 
 const nl: Catalog = {
@@ -6885,6 +6957,15 @@ const nl: Catalog = {
   'settings.data.requesting': 'Aanvragen…',
   'settings.data.requested': 'Export aangevraagd — je krijgt bericht zodra die klaar is.',
   'settings.data.failed': 'De export kon niet worden aangevraagd.',
+  'profile.hidden': 'Verborgen',
+  'edit.sections.title': 'Wat je profiel laat zien',
+  'edit.sections.help': 'Zet een sectie uit en die verdwijnt voor iedereen van je profiel. Er wordt niets verwijderd — je kunt hem altijd weer aanzetten.',
+  'edit.sections.failed': 'Je profielsecties konden niet worden gelezen.',
+  'edit.sections.posts': 'Alles wat je hebt geplaatst — gotin, çîrok, helbest, wêne en mîm.',
+  'edit.sections.games': 'Hoe je recente spellen zijn gegaan.',
+  'edit.sections.likes': 'Berichten die je leuk vond.',
+  'edit.sections.saved': 'Berichten die je hebt bewaard.',
+  'repost.sectionHint': 'Berichten die je op je eigen profiel opnieuw hebt geplaatst.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7648,6 +7729,15 @@ const ckb: Catalog = {
   'settings.data.requesting': 'داوا دەکرێت…',
   'settings.data.requested': 'داواکاری کرا — کاتێک ئامادە بوو ئاگادار دەکرێیتەوە.',
   'settings.data.failed': 'داواکارییەکە نەکرا.',
+  'profile.hidden': 'شاردراوە',
+  'edit.sections.title': 'پرۆفایلەکەت چی پیشان دەدات',
+  'edit.sections.help': 'بەشێک بکوژێنەوە و لە پرۆفایلەکەت بۆ هەمووان دیار نامێنێت. هیچ ناسڕدرێتەوە — هەر کاتێک بتەوێت دەیکەیتەوە.',
+  'edit.sections.failed': 'بەشەکانی پرۆفایلەکەت نەخوێندرانەوە.',
+  'edit.sections.posts': 'هەموو ئەوەی بڵاوت کردووەتەوە — گوتن، چیرۆک، هەڵبەست، وێنە و میم.',
+  'edit.sections.games': 'یارییە دواییەکانت چۆن بوون.',
+  'edit.sections.likes': 'ئەو بڵاوکراوانەی بەدڵت بوون.',
+  'edit.sections.saved': 'ئەو بڵاوکراوانەی پاشەکەوتت کردوون.',
+  'repost.sectionHint': 'ئەو بابەتانەی لەسەر پرۆفایلی خۆت دووبارە بڵاوت کردوونەتەوە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
