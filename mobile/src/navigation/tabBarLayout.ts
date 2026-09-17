@@ -7,12 +7,22 @@ import { spacing } from '../theme/tokens';
  * space to reserve — otherwise the island would cover the last row of content.
  */
 export const TAB_BAR_HEIGHT = 62;
-export const TAB_BAR_MARGIN = 12; // gap between the island and the screen edges
+/**
+ * How far the island sits from the edges of the screen.
+ *
+ * 21, which is what iOS 26 insets its own tab bars by on the left, right and
+ * bottom — the same 21pt band the home indicator lives in. The bar used to be
+ * pushed a further 12 above the safe area, so it floated noticeably higher
+ * than the system's.
+ */
+export const TAB_BAR_MARGIN = 21;
 
 /** Bottom padding a scrollable tab screen needs so its content clears the island. */
 export function useTabBarInset(): number {
   const insets = useSafeAreaInsets();
-  return insets.bottom + TAB_BAR_MARGIN + TAB_BAR_HEIGHT + 16;
+  // the island is TAB_BAR_MARGIN off the bottom edge, not off the safe area,
+  // so content has to clear whichever of the two reaches higher
+  return Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + 16;
 }
 
 /**

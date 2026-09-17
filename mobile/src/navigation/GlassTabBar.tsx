@@ -53,7 +53,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.wrap, { left: TAB_BAR_MARGIN + 8, right: TAB_BAR_MARGIN + 8, bottom: insets.bottom + TAB_BAR_MARGIN }]}
+      style={[styles.wrap, { left: TAB_BAR_MARGIN, right: TAB_BAR_MARGIN, bottom: Math.max(insets.bottom, TAB_BAR_MARGIN) }]}
     >
       <View style={[styles.island, { shadowColor: dark ? '#000000' : '#3E5147' }]}>
         <View style={styles.clip}>
