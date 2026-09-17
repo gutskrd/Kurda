@@ -746,7 +746,13 @@ export type TranslationKey =
   | 'profile.stat.level'
   | 'profile.stat.streak'
   | 'profile.currentlyOnline'
-  | 'profile.offline';
+  | 'profile.offline'
+  | 'profile.activity'
+  | 'profile.tab.posts'
+  | 'profile.tab.likes'
+  | 'repost.tab'
+  | 'nav.games'
+  | 'profile.nothingHere';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1469,6 +1475,12 @@ const en: Catalog = {
   'profile.stat.streak': 'Streak',
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',
+  'profile.activity': 'Activity',
+  'profile.tab.posts': 'Posts',
+  'profile.tab.likes': 'Likes',
+  'repost.tab': 'Reposts',
+  'nav.games': 'Games',
+  'profile.nothingHere': 'Nothing here yet.',
 };
 
 const ku: Catalog = {
@@ -2190,6 +2202,12 @@ const ku: Catalog = {
   'profile.stat.streak': 'Rêze',
   'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',
+  'profile.activity': 'Çalakî',
+  'profile.tab.posts': 'Şandî',
+  'profile.tab.likes': 'Ecibandin',
+  'repost.tab': 'Ji nû ve weşandin',
+  'nav.games': 'Lîstik',
+  'profile.nothingHere': 'Hê li vir tiştek tune.',
 };
 
 const de: Catalog = {
@@ -2911,6 +2929,12 @@ const de: Catalog = {
   'profile.stat.streak': 'Serie',
   'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',
+  'profile.activity': 'Aktivität',
+  'profile.tab.posts': 'Beiträge',
+  'profile.tab.likes': 'Gefällt mir',
+  'repost.tab': 'Geteilt',
+  'nav.games': 'Spiele',
+  'profile.nothingHere': 'Hier ist noch nichts.',
 };
 
 const es: Catalog = {
@@ -3632,6 +3656,12 @@ const es: Catalog = {
   'profile.stat.streak': 'Racha',
   'profile.currentlyOnline': 'En línea ahora',
   'profile.offline': 'Desconectado',
+  'profile.activity': 'Actividad',
+  'profile.tab.posts': 'Publicaciones',
+  'profile.tab.likes': 'Me gusta',
+  'repost.tab': 'Republicados',
+  'nav.games': 'Juegos',
+  'profile.nothingHere': 'Aquí todavía no hay nada.',
 };
 
 const tr: Catalog = {
@@ -4353,6 +4383,12 @@ const tr: Catalog = {
   'profile.stat.streak': 'Seri',
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',
+  'profile.activity': 'Etkinlik',
+  'profile.tab.posts': 'Gönderiler',
+  'profile.tab.likes': 'Beğeniler',
+  'repost.tab': 'Yeniden paylaşılanlar',
+  'nav.games': 'Oyunlar',
+  'profile.nothingHere': 'Burada henüz bir şey yok.',
 };
 
 const ar: Catalog = {
@@ -5074,6 +5110,12 @@ const ar: Catalog = {
   'profile.stat.streak': 'التتابع',
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',
+  'profile.activity': 'النشاط',
+  'profile.tab.posts': 'المنشورات',
+  'profile.tab.likes': 'الإعجابات',
+  'repost.tab': 'المعاد نشرها',
+  'nav.games': 'الألعاب',
+  'profile.nothingHere': 'لا شيء هنا بعد.',
 };
 
 const fr: Catalog = {
@@ -5795,6 +5837,12 @@ const fr: Catalog = {
   'profile.stat.streak': 'Série',
   'profile.currentlyOnline': 'En ligne actuellement',
   'profile.offline': 'Hors ligne',
+  'profile.activity': 'Activité',
+  'profile.tab.posts': 'Publications',
+  'profile.tab.likes': 'J’aime',
+  'repost.tab': 'Republiés',
+  'nav.games': 'Jeux',
+  'profile.nothingHere': 'Rien ici pour l’instant.',
 };
 
 const nl: Catalog = {
@@ -6516,6 +6564,12 @@ const nl: Catalog = {
   'profile.stat.streak': 'Reeks',
   'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',
+  'profile.activity': 'Activiteit',
+  'profile.tab.posts': 'Berichten',
+  'profile.tab.likes': 'Likes',
+  'repost.tab': 'Opnieuw geplaatst',
+  'nav.games': 'Spellen',
+  'profile.nothingHere': 'Hier is nog niets.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7238,6 +7292,12 @@ const ckb: Catalog = {
   'profile.stat.streak': 'زنجیرە',
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',
+  'profile.activity': 'چالاکی',
+  'profile.tab.posts': 'بڵاوکراوەکان',
+  'profile.tab.likes': 'بەدڵبووەکان',
+  'repost.tab': 'دووبارە بڵاوکراوەکان',
+  'nav.games': 'یاری',
+  'profile.nothingHere': 'هێشتا هیچ لێرە نییە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

@@ -10,6 +10,7 @@ import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useI18n } from '../i18n/I18nContext';
@@ -152,6 +153,8 @@ export function ProfileScreen() {
             {me?.bio || t('profile.noBio')}
           </Text>
         </View>
+
+        {user?.id ? <ProfileActivity userId={user.id} /> : null}
 
         <View style={styles.actions}>
           <ClayButton label={t('profile.league')} icon="trophy" tone="neutral" onPress={() => navigation.navigate('League')} />

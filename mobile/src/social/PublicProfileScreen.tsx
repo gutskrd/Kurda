@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -14,6 +14,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { ProfileActivity } from '../profile/ProfileActivity';
 import { ReportUserSheet } from './ReportUserSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
@@ -98,6 +99,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     <GradientBackground>
       <View style={styles.screen}>
         <Header onExit={onExit} />
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load}>
           {() => {
             if (!profile) return null;
@@ -180,6 +182,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             );
           }}
         </AsyncBoundary>
+        {profile && !profile.private ? <ProfileActivity userId={profile.userId} /> : null}
+        </ScrollView>
       </View>
     </GradientBackground>
   );
@@ -209,7 +213,8 @@ function Stat({ label, value, icon, iconColor }: { label: string; value: string;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  scroll: { paddingBottom: spacing.xxl },
   header: { paddingTop: spacing.md, marginBottom: spacing.md },
   close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
