@@ -739,7 +739,14 @@ export type TranslationKey =
   | 'profile.sending'
   | 'settings.blocked.since'
   | 'friends.title'
-  | 'friends.requests';
+  | 'friends.requests'
+  | 'profile.about'
+  | 'profile.noBio'
+  | 'profile.levelN'
+  | 'profile.stat.level'
+  | 'profile.stat.streak'
+  | 'profile.currentlyOnline'
+  | 'profile.offline';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1455,6 +1462,13 @@ const en: Catalog = {
   'settings.blocked.since': 'blocked {date}',
   'friends.title': 'Friends',
   'friends.requests': 'Requests',
+  'profile.about': 'About',
+  'profile.noBio': 'No bio yet.',
+  'profile.levelN': 'Level {level}',
+  'profile.stat.level': 'Level',
+  'profile.stat.streak': 'Streak',
+  'profile.currentlyOnline': 'Currently Online',
+  'profile.offline': 'Offline',
 };
 
 const ku: Catalog = {
@@ -2169,6 +2183,13 @@ const ku: Catalog = {
   'settings.blocked.since': 'hate astengkirin {date}',
   'friends.title': 'Heval',
   'friends.requests': 'Daxwaz',
+  'profile.about': 'Derbarê',
+  'profile.noBio': 'Hê biyografî tune.',
+  'profile.levelN': 'Asta {level}',
+  'profile.stat.level': 'Ast',
+  'profile.stat.streak': 'Rêze',
+  'profile.currentlyOnline': 'Niha serhêl e',
+  'profile.offline': 'Derhêl',
 };
 
 const de: Catalog = {
@@ -2883,6 +2904,13 @@ const de: Catalog = {
   'settings.blocked.since': 'blockiert am {date}',
   'friends.title': 'Freunde',
   'friends.requests': 'Anfragen',
+  'profile.about': 'Über',
+  'profile.noBio': 'Noch keine Bio.',
+  'profile.levelN': 'Stufe {level}',
+  'profile.stat.level': 'Stufe',
+  'profile.stat.streak': 'Serie',
+  'profile.currentlyOnline': 'Gerade online',
+  'profile.offline': 'Offline',
 };
 
 const es: Catalog = {
@@ -3597,6 +3625,13 @@ const es: Catalog = {
   'settings.blocked.since': 'bloqueado el {date}',
   'friends.title': 'Amigos',
   'friends.requests': 'Solicitudes',
+  'profile.about': 'Acerca de',
+  'profile.noBio': 'Todavía no hay biografía.',
+  'profile.levelN': 'Nivel {level}',
+  'profile.stat.level': 'Nivel',
+  'profile.stat.streak': 'Racha',
+  'profile.currentlyOnline': 'En línea ahora',
+  'profile.offline': 'Desconectado',
 };
 
 const tr: Catalog = {
@@ -4311,6 +4346,13 @@ const tr: Catalog = {
   'settings.blocked.since': '{date} tarihinde engellendi',
   'friends.title': 'Arkadaşlar',
   'friends.requests': 'İstekler',
+  'profile.about': 'Hakkında',
+  'profile.noBio': 'Henüz bir tanıtım yok.',
+  'profile.levelN': 'Seviye {level}',
+  'profile.stat.level': 'Seviye',
+  'profile.stat.streak': 'Seri',
+  'profile.currentlyOnline': 'Şu anda çevrimiçi',
+  'profile.offline': 'Çevrimdışı',
 };
 
 const ar: Catalog = {
@@ -5025,6 +5067,13 @@ const ar: Catalog = {
   'settings.blocked.since': 'حُظر في {date}',
   'friends.title': 'الأصدقاء',
   'friends.requests': 'الطلبات',
+  'profile.about': 'نبذة',
+  'profile.noBio': 'لا توجد نبذة بعد.',
+  'profile.levelN': 'المستوى {level}',
+  'profile.stat.level': 'المستوى',
+  'profile.stat.streak': 'التتابع',
+  'profile.currentlyOnline': 'متصل الآن',
+  'profile.offline': 'غير متصل',
 };
 
 const fr: Catalog = {
@@ -5739,6 +5788,13 @@ const fr: Catalog = {
   'settings.blocked.since': 'bloqué le {date}',
   'friends.title': 'Amis',
   'friends.requests': 'Demandes',
+  'profile.about': 'À propos',
+  'profile.noBio': 'Pas encore de bio.',
+  'profile.levelN': 'Niveau {level}',
+  'profile.stat.level': 'Niveau',
+  'profile.stat.streak': 'Série',
+  'profile.currentlyOnline': 'En ligne actuellement',
+  'profile.offline': 'Hors ligne',
 };
 
 const nl: Catalog = {
@@ -6453,6 +6509,13 @@ const nl: Catalog = {
   'settings.blocked.since': 'geblokkeerd op {date}',
   'friends.title': 'Vrienden',
   'friends.requests': 'Verzoeken',
+  'profile.about': 'Over',
+  'profile.noBio': 'Nog geen bio.',
+  'profile.levelN': 'Niveau {level}',
+  'profile.stat.level': 'Niveau',
+  'profile.stat.streak': 'Reeks',
+  'profile.currentlyOnline': 'Nu online',
+  'profile.offline': 'Offline',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7168,6 +7231,13 @@ const ckb: Catalog = {
   'settings.blocked.since': 'لە {date} بلۆک کرا',
   'friends.title': 'هاوڕێیان',
   'friends.requests': 'داواکارییەکان',
+  'profile.about': 'دەربارە',
+  'profile.noBio': 'هێشتا کورتەیەک نییە.',
+  'profile.levelN': 'ئاستی {level}',
+  'profile.stat.level': 'ئاست',
+  'profile.stat.streak': 'زنجیرە',
+  'profile.currentlyOnline': 'ئێستا سەرهێڵە',
+  'profile.offline': 'دەرهێڵ',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

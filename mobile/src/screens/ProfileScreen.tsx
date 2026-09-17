@@ -4,8 +4,9 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground } from '../theme/glass';
+import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -14,6 +15,18 @@ import { StreakBadge } from '../streak/StreakBadge';
 import { useI18n } from '../i18n/I18nContext';
 import { NotificationBell } from '../notifications/NotificationBell';
 import type { Streak } from '../streak/format';
+
+/** The parts of /me a profile puts on screen. */
+interface Me {
+  username: string;
+  displayName: string | null;
+  bio: string | null;
+  xp: number;
+  streak: Streak;
+  profilePhotoUrl: string | null;
+  /** the server does the levelling, so the two apps cannot disagree about it */
+  level?: { level: number; xp: number } | null;
+}
 
 /**
  * Profile tab (KUR-082): the player's identity + streak and quick links into
@@ -28,18 +41,39 @@ export function ProfileScreen() {
   const topInset = useScreenTopInset();
   const [streak, setStreak] = useState<Streak | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [me, setMe] = useState<Me | null>(null);
+  const [zer, setZer] = useState<number | null>(null);
+  const [friends, setFriends] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const { t } = useI18n();
 
-  // Streak + photo live on /me (the auth session user only carries identity).
+  /*
+   * Who you are, in the three places the server keeps it.
+   *
+   * The session user carries identity and nothing else, so everything a
+   * profile actually shows — the bio, the level, the streak, the photo —
+   * comes from /me, the purse from /me/wallet and the friend count from
+   * /friends. The browser loads exactly these, which is why its profile is a
+   * profile and this one was a menu.
+   */
   useEffect(() => {
     let active = true;
-    void client.get<{ user: { streak: Streak; profilePhotoUrl?: string | null } }>('/me').then((res) => {
-      if (active && res.ok) {
-        setStreak(res.data.user.streak);
-        setPhotoUrl(res.data.user.profilePhotoUrl ?? null);
+    void (async () => {
+      const [m, w, f] = await Promise.all([
+        client.get<{ user: Me }>('/me'),
+        client.get<{ balances: { zer: number } }>('/me/wallet'),
+        client.get<{ friends: unknown[]; total?: number }>('/friends?limit=1'),
+      ]);
+      if (!active) return;
+      if (m.ok) {
+        setMe(m.data.user);
+        setStreak(m.data.user.streak);
+        setPhotoUrl(m.data.user.profilePhotoUrl ?? null);
       }
-    });
+      if (w.ok) setZer(w.data.balances.zer);
+      // an API that predates paging sends no total — it sent the whole list
+      if (f.ok) setFriends(f.data.total ?? f.data.friends.length);
+    })();
     return () => {
       active = false;
     };
@@ -92,10 +126,32 @@ export function ProfileScreen() {
           <Text style={[styles.changePhoto, { color: colors.primary }]}>{photoUrl ? t('profile.editPhoto') : t('profile.addPhoto')}</Text>
         </Pressable>
 
-        <Text style={[styles.username, { color: colors.textPrimary }]}>{user?.username}</Text>
-        {user?.displayName ? <Text style={[styles.displayName, { color: colors.textSecondary }]}>{user.displayName}</Text> : null}
+        {/*
+         * The name people chose, then the handle underneath — the way the
+         * browser does it. This showed the username twice over: once as the
+         * title and again, smaller, as the display name, and never said
+         * which of the two anybody should type to find you.
+         */}
+        <Text style={[styles.name, { color: colors.textPrimary }]}>{me?.displayName ?? user?.displayName ?? user?.username}</Text>
+        <Text style={[styles.handle, { color: colors.textSecondary }]}>@{me?.username ?? user?.username}</Text>
 
         {streak ? <StreakBadge streak={streak} /> : null}
+
+        <View style={[styles.stats, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
+          <Stat label={t('profile.stat.level')} value={String(me?.level?.level ?? 1)} />
+          <Stat label="XP" value={(me?.level?.xp ?? me?.xp ?? 0).toLocaleString()} />
+          <Stat label={t('profile.stat.streak')} value={String(streak?.current ?? 0)} />
+          {/* Zêr is what the currency is called, in every one of the nine */}
+          <Stat label="Zêr" value={zer === null ? '—' : zer.toLocaleString()} />
+          <Stat label={t('nav.friends')} value={friends === null ? '—' : String(friends)} />
+        </View>
+
+        <View style={styles.about}>
+          <Text style={[styles.aboutTitle, { color: colors.textSecondary }]}>{t('profile.about')}</Text>
+          <Text style={[styles.bio, { color: me?.bio ? colors.textPrimary : colors.textSecondary }]}>
+            {me?.bio || t('profile.noBio')}
+          </Text>
+        </View>
 
         <View style={styles.actions}>
           <ClayButton label={t('profile.league')} icon="trophy" tone="neutral" onPress={() => navigation.navigate('League')} />
@@ -111,12 +167,41 @@ export function ProfileScreen() {
   );
 }
 
+/** One number and what it counts, five across under the name. */
+function Stat({ label, value }: { label: string; value: string }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.stat}>
+      <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
+        {value}
+      </Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   content: { alignItems: 'center', padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
   avatarWrap: { width: 120, height: 120, borderRadius: 60, overflow: 'hidden' },
   avatarOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 60 },
   changePhoto: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.xs, marginBottom: spacing.sm },
-  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
-  displayName: { fontSize: typography.sizes.md },
+  name: { ...display(typography.sizes.xl) },
+  handle: { fontSize: typography.sizes.md, marginTop: 2 },
+  stats: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  stat: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 2 },
+  statValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  statLabel: { fontSize: 11, letterSpacing: 0.3 },
+  about: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
+  aboutTitle: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  bio: { fontSize: typography.sizes.md, lineHeight: 22 },
   actions: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.lg },
 });
