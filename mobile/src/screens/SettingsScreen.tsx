@@ -143,6 +143,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           </View>
         </GlassCard>
 
+        {/*
+          With privacy rather than among the social screens: a blocklist is
+          account state, like the setting above it. It is also the only way
+          back from a block — the person is a 404 to you afterwards, so no
+          other screen can offer to undo it.
+        */}
+        <GlassCard padding="tight">
+          <GlassRow
+            first
+            icon="close"
+            iconColor={colors.textSecondary}
+            title={t('settings.blocked.title')}
+            onPress={() => navigation.navigate('BlockedUsers')}
+          />
+        </GlassCard>
+
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
         <GlassCard padding="tight">
           <GlassRow first icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />

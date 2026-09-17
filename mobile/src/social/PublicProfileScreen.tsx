@@ -14,12 +14,16 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { ReportUserSheet } from './ReportUserSheet';
+import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
 
 interface Profile {
   userId: string;
   username: string;
   displayName: string | null;
+  /** the server resolves this (uploaded photo → chosen avatar); the phone was dropping it */
+  avatarUrl?: string | null;
   friendStatus: FriendStatus;
   private: boolean;
   xp?: number;
@@ -38,6 +42,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
   const load = useCallback(() => {
@@ -73,7 +78,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         text: t('moderation.block'),
         style: 'destructive',
         onPress: () => {
-          void client.post(`/friends/${userId}/block`).then(onExit);
+          void blockUser(client, userId).then(onExit);
         },
       },
     ]);
@@ -99,7 +104,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             const labelKey = friendActionLabel(profile.friendStatus);
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
-          <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} />
+          <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
           <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
           {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
 
@@ -147,7 +152,28 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{labelKey ? t(labelKey) : null}</Text>}
                 </Pressable>
               ) : null}
-              <Pressable onPress={block} style={styles.block}><Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text></Pressable>
+              {/*
+                Report and block sit together because they are what you reach
+                for in the same moment, and they do different halves of the
+                job: a block ends it for you and tells nobody, a report tells
+                a moderator and changes nothing you can see. Neither is
+                offered as a substitute for the other.
+              */}
+              <View style={styles.danger}>
+                <Pressable onPress={() => setReporting(true)} style={styles.block} accessibilityRole="button">
+                  <Text style={[styles.blockText, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
+                </Pressable>
+                <Pressable onPress={block} style={styles.block} accessibilityRole="button">
+                  <Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text>
+                </Pressable>
+              </View>
+              {reporting ? (
+                <ReportUserSheet
+                  userId={profile.userId}
+                  name={profile.displayName ?? profile.username}
+                  onClose={() => setReporting(false)}
+                />
+              ) : null}
             </View>
           ) : null}
         </View>
@@ -201,6 +227,7 @@ const styles = StyleSheet.create({
   secondary: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', borderWidth: 2 },
   secondaryText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
   block: { paddingVertical: spacing.sm, alignItems: 'center' },
+  danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl },
   blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });

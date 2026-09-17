@@ -929,6 +929,7 @@ export const tr: Catalogue = {
   'profile.friendsMore': 've {count} kişi daha',
   'settings.blocked.help': 'Engellediğin kişi seni bulamaz, sana mesaj atamaz ve arkadaşlık isteği gönderemez; sen de onu hiçbir yerde görmezsin. Kendisine asla bildirilmez.',
   'settings.blocked.none': 'Kimseyi engellemedin. Birini profilinden ya da arkadaş listenden engelleyebilirsin.',
+  'settings.blocked.since': '{date} tarihinde engellendi',
   'settings.blocked.unblockHint': 'Engeli kaldırmak o kişinin seni yeniden bulmasına ve sana ulaşmasına izin verir. Sizi tekrar arkadaş yapmaz ve ona hiçbir şekilde bildirilmez.',
   'saved.emptyLead': 'Henüz bir şey kaydedilmedi.',
   'saved.emptyTail': 'içindeki herhangi bir gönderide yer imine dokunarak burada tut.',

@@ -138,7 +138,7 @@ export function BlockedUsers(): React.JSX.Element {
                 <span className="blocklist-who">
                   <span className="blocklist-name">{u.displayName || u.username}</span>
                   <span className="blocklist-meta">
-                    @{u.username} · blocked {when(u.blockedAt)}
+                    @{u.username} · {t('settings.blocked.since', { date: when(u.blockedAt) })}
                   </span>
                 </span>
                 <ConfirmButton

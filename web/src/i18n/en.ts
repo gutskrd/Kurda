@@ -1022,6 +1022,7 @@ export const en = {
   'profile.friendsMore': 'and {count} more',
   'settings.blocked.help': 'Someone you block cannot find you, message you or send you a friend request, and you will not see them anywhere either. They are never told.',
   'settings.blocked.none': 'You haven’t blocked anyone. You can block someone from their profile, or from your friends list.',
+  'settings.blocked.since': 'blocked {date}',
   'settings.blocked.unblockHint': 'Unblocking lets that person find you and contact you again. It does not make you friends again, and they are not told either way.',
   'saved.emptyLead': 'Nothing saved yet. Tap the bookmark on any post in',
   'saved.emptyTail': 'to keep it here.',

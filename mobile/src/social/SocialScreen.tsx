@@ -8,6 +8,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -71,7 +72,7 @@ export function SocialScreen() {
     [client, loadLists],
   );
 
-  const openProfile = (userId: string) => navigation.navigate('Profile', { userId });
+  const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });
 
   const row = (u: UserRow, right?: React.ReactNode) => (
     <Pressable
@@ -94,7 +95,11 @@ export function SocialScreen() {
     </Pressable>
   );
 
-  const section = (label: string) => <Text style={[styles.section, { color: colors.textSecondary }]}>{label}</Text>;
+  /** Takes a key, not a word: the two headings here were plain English, and
+      a label built at the call site is invisible to the i18n gate. */
+  const section = (key: TranslationKey) => (
+    <Text style={[styles.section, { color: colors.textSecondary }]}>{t(key)}</Text>
+  );
 
   const showingSearch = results !== null;
 
@@ -146,7 +151,7 @@ export function SocialScreen() {
             ListHeaderComponent={
               requests.length > 0 ? (
                 <View>
-                  {section('Requests')}
+                  {section('friends.requests')}
                   {requests.map((u) =>
                     row(
                       u,
@@ -170,10 +175,10 @@ export function SocialScreen() {
                       </View>,
                     ),
                   )}
-                  {section('Friends')}
+                  {section('friends.title')}
                 </View>
               ) : (
-                section('Friends')
+                section('friends.title')
               )
             }
             renderItem={({ item }) => row(item)}

@@ -929,6 +929,7 @@ export const de: Catalogue = {
   'profile.friendsMore': 'und {count} weitere',
   'settings.blocked.help': 'Wen du blockierst, kann dich nicht finden, dir nicht schreiben und dir keine Freundschaftsanfrage schicken, und du siehst die Person nirgends mehr. Sie erfährt es nie.',
   'settings.blocked.none': 'Du hast niemanden blockiert. Du kannst jemanden über sein Profil oder deine Freundesliste blockieren.',
+  'settings.blocked.since': 'blockiert am {date}',
   'settings.blocked.unblockHint': 'Die Blockierung aufzuheben lässt die Person dich wieder finden und kontaktieren. Ihr werdet dadurch keine Freunde, und sie erfährt nichts davon.',
   'saved.emptyLead': 'Noch nichts gespeichert. Tippe bei einem Beitrag in',
   'saved.emptyTail': 'auf das Lesezeichen, damit er hier landet.',
