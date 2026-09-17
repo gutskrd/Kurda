@@ -35,6 +35,19 @@ export function categoryLabel(category: string): TranslationKey | string {
   return CATEGORY_LABELS[category] ?? category;
 }
 
+/**
+ * The words for a section heading.
+ *
+ *  hands back a key, and a key is a string, so it rendered
+ * straight to screen as SHOP.CATEGORY.MISC for months. This takes the
+ * translator so the call site cannot forget it, and passes a category the
+ * server invented through as it came.
+ */
+export function sectionTitle(category: string, t: (key: TranslationKey) => string): string {
+  const key = CATEGORY_LABELS[category];
+  return key ? t(key) : category;
+}
+
 export function currencyLabel(currency: Currency): string {
   return currency === 'zer' ? 'Zêr' : 'Gems';
 }

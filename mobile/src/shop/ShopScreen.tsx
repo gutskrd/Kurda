@@ -25,10 +25,12 @@ import {
   currencyLabel,
   groupByCategory,
   needsConfirmation,
+  sectionTitle,
   type Balances,
   type ShopItem,
 } from './format';
 import { useI18n } from '../i18n/I18nContext';
+import { GiftSheet } from './GiftSheet';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -47,6 +49,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const [error, setError] = useState<ApiError | null>(null);
   const [selected, setSelected] = useState<ShopItem | null>(null);
   const [busy, setBusy] = useState(false);
+  const [gifting, setGifting] = useState<ShopItem | null>(null);
 
   const load = useCallback(() => {
     void Promise.all([
@@ -131,7 +134,17 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             sections={sections}
             keyExtractor={(i) => i.sku}
             contentContainerStyle={styles.list}
-            renderSectionHeader={({ section }) => <Text style={[styles.section, { color: colors.textSecondary }]}>{section.title}</Text>}
+            /*
+             * The title is a translation KEY, not a word.
+             *
+             * TranslationKey is a union of string literals, so one drops into
+             * a string slot without complaint and renders as itself — the shop
+             * has been heading a section SHOP.CATEGORY.MISC. A category the
+             * server invents has no key and is shown as it came.
+             */
+            renderSectionHeader={({ section }) => (
+              <Text style={[styles.section, { color: colors.textSecondary }]}>{sectionTitle(section.category, t)}</Text>
+            )}
             renderItem={({ item }) => (
               <Pressable style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]} onPress={() => setSelected(item)}>
                 <View style={styles.rowMain}>
@@ -154,10 +167,35 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
           <Pressable style={styles.backdrop} onPress={() => setSelected(null)}>
             <Pressable style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]} onPress={() => undefined}>
-              {selected ? <ItemDetail item={selected} balances={balances} busy={busy} onBuy={confirmBuy} onEarnMore={onEarnMore} /> : null}
+              {selected ? (
+                <ItemDetail
+                  item={selected}
+                  balances={balances}
+                  busy={busy}
+                  onBuy={confirmBuy}
+                  onEarnMore={onEarnMore}
+                  onGift={(it) => {
+                    setSelected(null);
+                    setGifting(it);
+                  }}
+                />
+              ) : null}
             </Pressable>
           </Pressable>
         </Modal>
+
+        {gifting ? (
+          <GiftSheet
+            item={{ sku: gifting.sku, name: gifting.name, price: gifting.price, currency: currencyLabel(gifting.currency) }}
+            onClose={() => setGifting(null)}
+            onSent={(balance, to) => {
+              const name = gifting.name;
+              setGifting(null);
+              setBalances((b) => ({ ...b, zer: balance }));
+              Alert.alert(t('shop.sendGift'), t('shop.onItsWay', { name, to }));
+            }}
+          />
+        ) : null}
       </View>
     </GradientBackground>
   );
@@ -169,12 +207,14 @@ function ItemDetail({
   busy,
   onBuy,
   onEarnMore,
+  onGift,
 }: {
   item: ShopItem;
   balances: Balances;
   busy: boolean;
   onBuy: (item: ShopItem) => void;
   onEarnMore: () => void;
+  onGift: (item: ShopItem) => void;
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -194,9 +234,25 @@ function ItemDetail({
       <Text style={[styles.detailPrice, { color: colors.accent }]}>{item.price} {currencyLabel(item.currency)}</Text>
 
       {affordable ? (
-        <Pressable style={[styles.buy, { backgroundColor: colors.primary }]} disabled={busy} onPress={() => onBuy(item)}>
-          {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.buyText, { color: colors.textOnPrimary }]}>{t('shop.buy')}</Text>}
-        </Pressable>
+        <>
+          <Pressable style={[styles.buy, { backgroundColor: colors.primary }]} disabled={busy} onPress={() => onBuy(item)}>
+            {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.buyText, { color: colors.textOnPrimary }]}>{t('shop.buy')}</Text>}
+          </Pressable>
+          {/*
+           * Buying it for somebody else costs the same and lands the same, so
+           * it sits beside Buy rather than behind a menu — quieter, because
+           * most people are buying for themselves.
+           */}
+          <Pressable
+            style={[styles.gift, { borderColor: colors.glassBorder }]}
+            disabled={busy}
+            onPress={() => onGift(item)}
+            accessibilityRole="button"
+          >
+            <Icon name="gem" size={16} color={colors.textSecondary} />
+            <Text style={[styles.giftText, { color: colors.textSecondary }]}>{t('shop.sendGift')}</Text>
+          </Pressable>
+        </>
       ) : (
         <View style={styles.insufficient}>
           <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
@@ -240,6 +296,18 @@ const styles = StyleSheet.create({
   detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginVertical: spacing.sm },
   buy: { alignSelf: 'stretch', paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
   buyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  gift: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    height: 44,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    marginTop: spacing.sm,
+    alignSelf: 'stretch',
+  },
+  giftText: { fontSize: 15, fontWeight: typography.weights.semibold },
   insufficient: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm },
   insufficientText: { textAlign: 'center', fontSize: typography.sizes.sm },
   earn: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },

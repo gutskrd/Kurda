@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canAfford,
   categoryLabel,
+  sectionTitle,
   CONFIRM_THRESHOLD_ZER,
   groupByCategory,
   needsConfirmation,
@@ -53,5 +54,26 @@ describe('needsConfirmation', () => {
     expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER + 1 }))).toBe(true);
     expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER }))).toBe(false);
     expect(needsConfirmation(item({ currency: 'gems', price: 100_000 }))).toBe(false);
+  });
+});
+
+describe('sectionTitle', () => {
+  const t = (key: string): string => `translated:${key}`;
+
+  it('translates a known category', () => {
+    // the bug this exists for: categoryLabel returns a key, a key is a string,
+    // and the shop rendered SHOP.CATEGORY.MISC as a heading
+    expect(sectionTitle('misc', t as never)).toBe('translated:shop.category.misc');
+    expect(sectionTitle('cosmetic', t as never)).toBe('translated:shop.category.cosmetic');
+  });
+
+  it('passes a category the server invented through untranslated', () => {
+    expect(sectionTitle('brand-new-thing', t as never)).toBe('brand-new-thing');
+  });
+
+  it('never returns something that looks like a key', () => {
+    for (const category of ['cosmetic', 'powerup', 'freeze', 'misc']) {
+      expect(sectionTitle(category, t as never)).not.toMatch(/^shop\./);
+    }
   });
 });
