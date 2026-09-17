@@ -713,6 +713,33 @@ export type TranslationKey =
   | 'groups.makeOwnerWarning'
   | 'groups.remove'
   | 'groups.removeFrom'
+  | 'settings.blocked.title'
+  | 'settings.blocked.help'
+  | 'settings.blocked.none'
+  | 'settings.blocked.unblock'
+  | 'settings.blocked.unblocking'
+  | 'settings.blocked.unblockWho'
+  | 'settings.blocked.unblockHint'
+  | 'moderation.reportWho'
+  | 'moderation.blocking'
+  | 'moderation.category.harassment'
+  | 'moderation.category.spam'
+  | 'moderation.category.impersonation'
+  | 'moderation.category.hate'
+  | 'moderation.category.selfHarm'
+  | 'moderation.category.other'
+  | 'common.showMoreCount'
+  | 'moderation.whatIsHappening'
+  | 'moderation.whatShouldModKnow'
+  | 'moderation.reasonPlaceholder'
+  | 'moderation.reasonTooShort'
+  | 'moderation.charactersLeft'
+  | 'moderation.sendReport'
+  | 'moderation.more'
+  | 'profile.sending'
+  | 'settings.blocked.since'
+  | 'friends.title'
+  | 'friends.requests';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1401,6 +1428,33 @@ const en: Catalog = {
   'groups.makeOwnerWarning': 'Make {name} the owner — you become a moderator and cannot undo this yourself',
   'groups.remove': 'Remove',
   'groups.removeFrom': 'Remove {name} from {group}',
+  'settings.blocked.title': 'Blocked people',
+  'settings.blocked.help': 'Someone you block cannot find you, message you or send you a friend request, and you will not see them anywhere either. They are never told.',
+  'settings.blocked.none': 'You haven’t blocked anyone. You can block someone from their profile, or from your friends list.',
+  'settings.blocked.unblock': 'Unblock',
+  'settings.blocked.unblocking': 'Unblocking…',
+  'settings.blocked.unblockWho': 'Unblock {name}',
+  'settings.blocked.unblockHint': 'Unblocking lets that person find you and contact you again. It does not make you friends again, and they are not told either way.',
+  'moderation.reportWho': 'Report {name}',
+  'moderation.blocking': 'Blocking…',
+  'moderation.category.harassment': 'Harassment or bullying',
+  'moderation.category.spam': 'Spam or scams',
+  'moderation.category.impersonation': 'Pretending to be someone else',
+  'moderation.category.hate': 'Hate or slurs',
+  'moderation.category.selfHarm': 'Self-harm or someone in danger',
+  'moderation.category.other': 'Something else',
+  'common.showMoreCount': 'Show more ({count})',
+  'moderation.whatIsHappening': 'What is happening?',
+  'moderation.whatShouldModKnow': 'What should a moderator know?',
+  'moderation.reasonPlaceholder': 'What they did, and where. Enough for someone who has not seen it.',
+  'moderation.reasonTooShort': 'A few more words — at least {min} characters.',
+  'moderation.charactersLeft': '{count} characters left. They are not told you reported them.',
+  'moderation.sendReport': 'Send report',
+  'moderation.more': 'More',
+  'profile.sending': 'Sending…',
+  'settings.blocked.since': 'blocked {date}',
+  'friends.title': 'Friends',
+  'friends.requests': 'Requests',
 };
 
 const ku: Catalog = {
@@ -2088,6 +2142,33 @@ const ku: Catalog = {
   'groups.makeOwnerWarning': '{name} bike xwedî — tu dibî moderator û tu bi xwe nikarî vê vegerînî',
   'groups.remove': 'Derxîne',
   'groups.removeFrom': '{name} ji {group} derxîne',
+  'settings.blocked.title': 'Kesên astengkirî',
+  'settings.blocked.help': 'Kesê ku te asteng kiriye nikare te bibîne, peyamê ji te re bişîne an daxwaza hevaltiyê bişîne, û tu jî wî li tu derê nabînî. Qet jê re nayê gotin.',
+  'settings.blocked.none': 'Te kes asteng nekiriye. Tu dikarî kesekî ji profîla wî, an ji lîsteya hevalên xwe asteng bikî.',
+  'settings.blocked.unblock': 'Astengiyê rake',
+  'settings.blocked.unblocking': 'Astengî tê rakirin…',
+  'settings.blocked.unblockWho': 'Astengiya {name} rake',
+  'settings.blocked.unblockHint': 'Rakirina astengiyê dihêle ku ew kes dîsa te bibîne û bi te re têkilî deyne. Ew we ne dîsa dike heval, û jê re bi tu awayî nayê gotin.',
+  'moderation.reportWho': '{name} ragihîne',
+  'moderation.blocking': 'Tê astengkirin…',
+  'moderation.category.harassment': 'Tacîz an zordarî',
+  'moderation.category.spam': 'Spam an sextekarî',
+  'moderation.category.impersonation': 'Xwe wek kesekî din nîşan dide',
+  'moderation.category.hate': 'Nefret an çêr',
+  'moderation.category.selfHarm': 'Xwe-birîndarkirin an kesekî di xetereyê de',
+  'moderation.category.other': 'Tiştekî din',
+  'common.showMoreCount': 'Bêtir nîşan bide ({count})',
+  'moderation.whatIsHappening': 'Çi diqewime?',
+  'moderation.whatShouldModKnow': 'Divê moderator çi zanibe?',
+  'moderation.reasonPlaceholder': 'Wan çi kir, û li ku derê. Bi qasî ku kesekî ku nedîtiye jî fêm bike.',
+  'moderation.reasonTooShort': 'Hinekî din binivîse — bi kêmî {min} tîp.',
+  'moderation.charactersLeft': '{count} tîp mane. Jê re nayê gotin ku te ew ragihandiye.',
+  'moderation.sendReport': 'Ragihandinê bişîne',
+  'moderation.more': 'Bêtir',
+  'profile.sending': 'Tê şandin…',
+  'settings.blocked.since': 'hate astengkirin {date}',
+  'friends.title': 'Heval',
+  'friends.requests': 'Daxwaz',
 };
 
 const de: Catalog = {
@@ -2775,6 +2856,33 @@ const de: Catalog = {
   'groups.makeOwnerWarning': '{name} zum Inhaber machen — du wirst Moderator und kannst das nicht selbst rückgängig machen',
   'groups.remove': 'Entfernen',
   'groups.removeFrom': '{name} aus {group} entfernen',
+  'settings.blocked.title': 'Blockierte Personen',
+  'settings.blocked.help': 'Wen du blockierst, kann dich nicht finden, dir nicht schreiben und dir keine Freundschaftsanfrage schicken, und du siehst die Person nirgends mehr. Sie erfährt es nie.',
+  'settings.blocked.none': 'Du hast niemanden blockiert. Du kannst jemanden über sein Profil oder deine Freundesliste blockieren.',
+  'settings.blocked.unblock': 'Entsperren',
+  'settings.blocked.unblocking': 'Wird entsperrt…',
+  'settings.blocked.unblockWho': '{name} entsperren',
+  'settings.blocked.unblockHint': 'Die Blockierung aufzuheben lässt die Person dich wieder finden und kontaktieren. Ihr werdet dadurch keine Freunde, und sie erfährt nichts davon.',
+  'moderation.reportWho': '{name} melden',
+  'moderation.blocking': 'Wird blockiert…',
+  'moderation.category.harassment': 'Belästigung oder Mobbing',
+  'moderation.category.spam': 'Spam oder Betrug',
+  'moderation.category.impersonation': 'Gibt sich als jemand anderes aus',
+  'moderation.category.hate': 'Hass oder Beleidigungen',
+  'moderation.category.selfHarm': 'Selbstverletzung oder jemand in Gefahr',
+  'moderation.category.other': 'Etwas anderes',
+  'common.showMoreCount': 'Mehr anzeigen ({count})',
+  'moderation.whatIsHappening': 'Was ist passiert?',
+  'moderation.whatShouldModKnow': 'Was sollte eine Moderatorin oder ein Moderator wissen?',
+  'moderation.reasonPlaceholder': 'Was diese Person getan hat und wo. Genug für jemanden, der es nicht gesehen hat.',
+  'moderation.reasonTooShort': 'Ein paar Worte mehr — mindestens {min} Zeichen.',
+  'moderation.charactersLeft': 'Noch {count} Zeichen. Die Person erfährt nicht, dass du sie gemeldet hast.',
+  'moderation.sendReport': 'Meldung senden',
+  'moderation.more': 'Mehr',
+  'profile.sending': 'Wird gesendet…',
+  'settings.blocked.since': 'blockiert am {date}',
+  'friends.title': 'Freunde',
+  'friends.requests': 'Anfragen',
 };
 
 const es: Catalog = {
@@ -3462,6 +3570,33 @@ const es: Catalog = {
   'groups.makeOwnerWarning': 'Hacer propietario a {name}: pasarás a ser moderador y no podrás deshacerlo tú mismo',
   'groups.remove': 'Expulsar',
   'groups.removeFrom': 'Expulsar a {name} de {group}',
+  'settings.blocked.title': 'Personas bloqueadas',
+  'settings.blocked.help': 'Alguien a quien bloqueas no puede encontrarte, escribirte ni enviarte una solicitud de amistad, y tú tampoco lo verás en ninguna parte. Nunca se le avisa.',
+  'settings.blocked.none': 'No has bloqueado a nadie. Puedes bloquear a alguien desde su perfil o desde tu lista de amigos.',
+  'settings.blocked.unblock': 'Desbloquear',
+  'settings.blocked.unblocking': 'Desbloqueando…',
+  'settings.blocked.unblockWho': 'Desbloquear a {name}',
+  'settings.blocked.unblockHint': 'Desbloquear permite que esa persona vuelva a encontrarte y a contactarte. No os vuelve a hacer amigos, y no se le avisa de ninguna manera.',
+  'moderation.reportWho': 'Denunciar a {name}',
+  'moderation.blocking': 'Bloqueando…',
+  'moderation.category.harassment': 'Acoso o intimidación',
+  'moderation.category.spam': 'Spam o estafas',
+  'moderation.category.impersonation': 'Se hace pasar por otra persona',
+  'moderation.category.hate': 'Odio o insultos',
+  'moderation.category.selfHarm': 'Autolesiones o alguien en peligro',
+  'moderation.category.other': 'Otra cosa',
+  'common.showMoreCount': 'Mostrar más ({count})',
+  'moderation.whatIsHappening': '¿Qué está pasando?',
+  'moderation.whatShouldModKnow': '¿Qué debería saber una persona moderadora?',
+  'moderation.reasonPlaceholder': 'Qué ha hecho y dónde. Lo suficiente para alguien que no lo ha visto.',
+  'moderation.reasonTooShort': 'Unas palabras más: al menos {min} caracteres.',
+  'moderation.charactersLeft': 'Quedan {count} caracteres. No se le dice que la has denunciado.',
+  'moderation.sendReport': 'Enviar la denuncia',
+  'moderation.more': 'Más',
+  'profile.sending': 'Enviando…',
+  'settings.blocked.since': 'bloqueado el {date}',
+  'friends.title': 'Amigos',
+  'friends.requests': 'Solicitudes',
 };
 
 const tr: Catalog = {
@@ -4149,6 +4284,33 @@ const tr: Catalog = {
   'groups.makeOwnerWarning': '{name} kişisini sahip yap — sen moderatör olursun ve bunu kendin geri alamazsın',
   'groups.remove': 'Çıkar',
   'groups.removeFrom': '{name} kişisini {group} grubundan çıkar',
+  'settings.blocked.title': 'Engellenen kişiler',
+  'settings.blocked.help': 'Engellediğin kişi seni bulamaz, sana mesaj atamaz ve arkadaşlık isteği gönderemez; sen de onu hiçbir yerde görmezsin. Kendisine asla bildirilmez.',
+  'settings.blocked.none': 'Kimseyi engellemedin. Birini profilinden ya da arkadaş listenden engelleyebilirsin.',
+  'settings.blocked.unblock': 'Engeli kaldır',
+  'settings.blocked.unblocking': 'Engel kaldırılıyor…',
+  'settings.blocked.unblockWho': '{name} kişisinin engelini kaldır',
+  'settings.blocked.unblockHint': 'Engeli kaldırmak o kişinin seni yeniden bulmasına ve sana ulaşmasına izin verir. Sizi tekrar arkadaş yapmaz ve ona hiçbir şekilde bildirilmez.',
+  'moderation.reportWho': '{name} kişisini bildir',
+  'moderation.blocking': 'Engelleniyor…',
+  'moderation.category.harassment': 'Taciz veya zorbalık',
+  'moderation.category.spam': 'Spam veya dolandırıcılık',
+  'moderation.category.impersonation': 'Başkasıymış gibi davranma',
+  'moderation.category.hate': 'Nefret veya hakaret',
+  'moderation.category.selfHarm': 'Kendine zarar verme veya tehlikedeki biri',
+  'moderation.category.other': 'Başka bir şey',
+  'common.showMoreCount': 'Daha fazla göster ({count})',
+  'moderation.whatIsHappening': 'Ne oluyor?',
+  'moderation.whatShouldModKnow': 'Bir moderatörün neyi bilmesi gerekiyor?',
+  'moderation.reasonPlaceholder': 'Ne yaptığı ve nerede. Görmemiş biri için yeterli olacak kadar.',
+  'moderation.reasonTooShort': 'Birkaç kelime daha — en az {min} karakter.',
+  'moderation.charactersLeft': '{count} karakter kaldı. Bildirdiğin kişiye haber verilmez.',
+  'moderation.sendReport': 'Bildirimi gönder',
+  'moderation.more': 'Daha fazla',
+  'profile.sending': 'Gönderiliyor…',
+  'settings.blocked.since': '{date} tarihinde engellendi',
+  'friends.title': 'Arkadaşlar',
+  'friends.requests': 'İstekler',
 };
 
 const ar: Catalog = {
@@ -4836,6 +4998,33 @@ const ar: Catalog = {
   'groups.makeOwnerWarning': 'اجعل {name} المالك — ستصبح مشرفًا ولن تتمكن من التراجع بنفسك',
   'groups.remove': 'إزالة',
   'groups.removeFrom': 'إزالة {name} من {group}',
+  'settings.blocked.title': 'الأشخاص المحظورون',
+  'settings.blocked.help': 'من تحظره لا يمكنه العثور عليك أو مراسلتك أو إرسال طلب صداقة إليك، ولن تراه أنت في أي مكان أيضًا. ولا يُبلَّغ بذلك أبدًا.',
+  'settings.blocked.none': 'لم تحظر أحدًا. يمكنك حظر شخص من ملفه الشخصي أو من قائمة أصدقائك.',
+  'settings.blocked.unblock': 'رفع الحظر',
+  'settings.blocked.unblocking': 'جارٍ رفع الحظر…',
+  'settings.blocked.unblockWho': 'رفع الحظر عن {name}',
+  'settings.blocked.unblockHint': 'إلغاء الحظر يتيح لذلك الشخص العثور عليك والتواصل معك من جديد. وهو لا يعيدكما صديقين، ولا يُبلَّغ بذلك بأي حال.',
+  'moderation.reportWho': 'الإبلاغ عن {name}',
+  'moderation.blocking': 'جارٍ الحظر…',
+  'moderation.category.harassment': 'تحرّش أو تنمّر',
+  'moderation.category.spam': 'رسائل مزعجة أو احتيال',
+  'moderation.category.impersonation': 'انتحال شخصية آخر',
+  'moderation.category.hate': 'كراهية أو شتائم',
+  'moderation.category.selfHarm': 'إيذاء النفس أو شخص في خطر',
+  'moderation.category.other': 'شيء آخر',
+  'common.showMoreCount': 'عرض المزيد ({count})',
+  'moderation.whatIsHappening': 'ماذا يحدث؟',
+  'moderation.whatShouldModKnow': 'ما الذي ينبغي أن يعرفه المشرف؟',
+  'moderation.reasonPlaceholder': 'ما الذي فعله وأين. بما يكفي لمن لم يره.',
+  'moderation.reasonTooShort': 'بضع كلمات أخرى — {min} حرفًا على الأقل.',
+  'moderation.charactersLeft': 'بقي {count} حرفًا. لا يُبلَّغ بأنك أبلغت عنه.',
+  'moderation.sendReport': 'إرسال البلاغ',
+  'moderation.more': 'المزيد',
+  'profile.sending': 'جارٍ الإرسال…',
+  'settings.blocked.since': 'حُظر في {date}',
+  'friends.title': 'الأصدقاء',
+  'friends.requests': 'الطلبات',
 };
 
 const fr: Catalog = {
@@ -5523,6 +5712,33 @@ const fr: Catalog = {
   'groups.makeOwnerWarning': 'Nommer {name} propriétaire — tu deviens modérateur et tu ne pourras pas l’annuler toi-même',
   'groups.remove': 'Retirer',
   'groups.removeFrom': 'Retirer {name} de {group}',
+  'settings.blocked.title': 'Personnes bloquées',
+  'settings.blocked.help': 'Une personne que vous bloquez ne peut plus vous trouver, vous écrire ni vous envoyer une demande d’ami, et vous ne la verrez plus nulle part. Elle n’en est jamais informée.',
+  'settings.blocked.none': 'Vous n’avez bloqué personne. Vous pouvez bloquer quelqu’un depuis son profil ou depuis votre liste d’amis.',
+  'settings.blocked.unblock': 'Débloquer',
+  'settings.blocked.unblocking': 'Déblocage…',
+  'settings.blocked.unblockWho': 'Débloquer {name}',
+  'settings.blocked.unblockHint': 'Débloquer permet à cette personne de vous retrouver et de vous contacter à nouveau. Cela ne vous rend pas amis, et elle n’en est pas informée.',
+  'moderation.reportWho': 'Signaler {name}',
+  'moderation.blocking': 'Blocage…',
+  'moderation.category.harassment': 'Harcèlement ou intimidation',
+  'moderation.category.spam': 'Spam ou arnaques',
+  'moderation.category.impersonation': 'Se fait passer pour quelqu’un d’autre',
+  'moderation.category.hate': 'Haine ou insultes',
+  'moderation.category.selfHarm': 'Automutilation ou personne en danger',
+  'moderation.category.other': 'Autre chose',
+  'common.showMoreCount': 'Afficher plus ({count})',
+  'moderation.whatIsHappening': 'Que se passe-t-il ?',
+  'moderation.whatShouldModKnow': 'Que doit savoir un modérateur ?',
+  'moderation.reasonPlaceholder': 'Ce que cette personne a fait, et où. Assez pour quelqu’un qui ne l’a pas vu.',
+  'moderation.reasonTooShort': 'Encore quelques mots — au moins {min} caractères.',
+  'moderation.charactersLeft': 'Il reste {count} caractères. Cette personne n’est pas informée de ton signalement.',
+  'moderation.sendReport': 'Envoyer le signalement',
+  'moderation.more': 'Plus',
+  'profile.sending': 'Envoi…',
+  'settings.blocked.since': 'bloqué le {date}',
+  'friends.title': 'Amis',
+  'friends.requests': 'Demandes',
 };
 
 const nl: Catalog = {
@@ -6210,6 +6426,33 @@ const nl: Catalog = {
   'groups.makeOwnerWarning': 'Maak {name} eigenaar — jij wordt moderator en kunt dit zelf niet terugdraaien',
   'groups.remove': 'Verwijderen',
   'groups.removeFrom': '{name} uit {group} verwijderen',
+  'settings.blocked.title': 'Geblokkeerde personen',
+  'settings.blocked.help': 'Iemand die je blokkeert kan je niet vinden, je geen bericht sturen en geen vriendschapsverzoek doen, en jij ziet hen nergens meer. Ze horen het nooit.',
+  'settings.blocked.none': 'Je hebt niemand geblokkeerd. Je kunt iemand blokkeren vanaf hun profiel of vanuit je vriendenlijst.',
+  'settings.blocked.unblock': 'Deblokkeren',
+  'settings.blocked.unblocking': 'Deblokkeren…',
+  'settings.blocked.unblockWho': '{name} deblokkeren',
+  'settings.blocked.unblockHint': 'Deblokkeren laat die persoon je weer vinden en contact opnemen. Je wordt er geen vrienden meer door, en ze horen er niets over.',
+  'moderation.reportWho': '{name} melden',
+  'moderation.blocking': 'Blokkeren…',
+  'moderation.category.harassment': 'Intimidatie of pesten',
+  'moderation.category.spam': 'Spam of oplichting',
+  'moderation.category.impersonation': 'Zich voordoen als iemand anders',
+  'moderation.category.hate': 'Haat of scheldwoorden',
+  'moderation.category.selfHarm': 'Zelfbeschadiging of iemand in gevaar',
+  'moderation.category.other': 'Iets anders',
+  'common.showMoreCount': 'Meer tonen ({count})',
+  'moderation.whatIsHappening': 'Wat is er aan de hand?',
+  'moderation.whatShouldModKnow': 'Wat moet een moderator weten?',
+  'moderation.reasonPlaceholder': 'Wat deze persoon deed, en waar. Genoeg voor iemand die het niet heeft gezien.',
+  'moderation.reasonTooShort': 'Nog een paar woorden — minstens {min} tekens.',
+  'moderation.charactersLeft': 'Nog {count} tekens. Deze persoon hoort niet dat je een melding hebt gedaan.',
+  'moderation.sendReport': 'Melding versturen',
+  'moderation.more': 'Meer',
+  'profile.sending': 'Versturen…',
+  'settings.blocked.since': 'geblokkeerd op {date}',
+  'friends.title': 'Vrienden',
+  'friends.requests': 'Verzoeken',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6898,6 +7141,33 @@ const ckb: Catalog = {
   'groups.makeOwnerWarning': '{name} بکە خاوەن — تۆ دەبیتە چاودێر و ناتوانیت خۆت هەڵیبوەشێنیتەوە',
   'groups.remove': 'دەریبکە',
   'groups.removeFrom': '{name} لە {group} دەربکە',
+  'settings.blocked.title': 'کەسە بلۆککراوەکان',
+  'settings.blocked.help': 'ئەو کەسەی بلۆکت کردووە ناتوانێت بتدۆزێتەوە، نامەت بۆ بنێرێت یان داوای هاوڕێیەتیت لێ بکات، و تۆش لە هیچ شوێنێک نایبینیت. هەرگیز پێی ناوترێت.',
+  'settings.blocked.none': 'هیچ کەسێکت بلۆک نەکردووە. دەتوانیت کەسێک لە پرۆفایلەکەیەوە، یان لە لیستی هاوڕێکانتەوە بلۆک بکەیت.',
+  'settings.blocked.unblock': 'بلۆک لابە',
+  'settings.blocked.unblocking': 'بلۆک لادەبرێت…',
+  'settings.blocked.unblockWho': 'بلۆکی {name} لابە',
+  'settings.blocked.unblockHint': 'لابردنی بلۆک ڕێگە دەدات ئەو کەسە دیسان بتدۆزێتەوە و پەیوەندیت پێوە بکات. دیسان نەتانکاتە هاوڕێ، و بە هیچ شێوەیەک پێی ناوترێت.',
+  'moderation.reportWho': 'ڕاپۆرتی {name}',
+  'moderation.blocking': 'بلۆک دەکرێت…',
+  'moderation.category.harassment': 'ئازاردان یان گاڵتەپێکردن',
+  'moderation.category.spam': 'سپام یان فێڵ',
+  'moderation.category.impersonation': 'خۆدەرخستن وەک کەسێکی تر',
+  'moderation.category.hate': 'ڕق یان جنێو',
+  'moderation.category.selfHarm': 'ئازاردانی خود یان کەسێک لە مەترسیدا',
+  'moderation.category.other': 'شتێکی تر',
+  'common.showMoreCount': 'زیاتر پیشان بدە ({count})',
+  'moderation.whatIsHappening': 'چی ڕوودەدات؟',
+  'moderation.whatShouldModKnow': 'پێویستە چاودێر چی بزانێت؟',
+  'moderation.reasonPlaceholder': 'چییان کرد و لە کوێ. بەشێک کە کەسێکی نەیبینیوە تێبگات.',
+  'moderation.reasonTooShort': 'چەند وشەیەکی تر — بەلایەنی کەمەوە {min} پیت.',
+  'moderation.charactersLeft': '{count} پیت ماوە. پێی ناوترێت کە ڕاپۆرتت کردووە.',
+  'moderation.sendReport': 'ڕاپۆرت بنێرە',
+  'moderation.more': 'زیاتر',
+  'profile.sending': 'دەنێردرێت…',
+  'settings.blocked.since': 'لە {date} بلۆک کرا',
+  'friends.title': 'هاوڕێیان',
+  'friends.requests': 'داواکارییەکان',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

@@ -47,6 +47,7 @@ import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
 import { WordleScreen } from './src/wordle/WordleScreen';
 import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
@@ -197,7 +198,7 @@ function SignedInRoot() {
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <LeagueScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Profile" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="UserProfile" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
@@ -206,6 +207,9 @@ function SignedInRoot() {
         {({ route, navigation }) => (
           <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="BlockedUsers" options={{ presentation: 'card' }}>
+        {({ navigation }) => <BlockedUsersScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
       <RootStack.Screen name="GroupMembers" options={{ presentation: 'card' }}>

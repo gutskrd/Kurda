@@ -929,6 +929,7 @@ export const fr: Catalogue = {
   'profile.friendsMore': 'et {count} de plus',
   'settings.blocked.help': 'Une personne que vous bloquez ne peut plus vous trouver, vous écrire ni vous envoyer une demande d’ami, et vous ne la verrez plus nulle part. Elle n’en est jamais informée.',
   'settings.blocked.none': 'Vous n’avez bloqué personne. Vous pouvez bloquer quelqu’un depuis son profil ou depuis votre liste d’amis.',
+  'settings.blocked.since': 'bloqué le {date}',
   'settings.blocked.unblockHint': 'Débloquer permet à cette personne de vous retrouver et de vous contacter à nouveau. Cela ne vous rend pas amis, et elle n’en est pas informée.',
   'saved.emptyLead': 'Rien d’enregistré pour l’instant. Touchez le marque-page sur une publication dans',
   'saved.emptyTail': 'pour la garder ici.',

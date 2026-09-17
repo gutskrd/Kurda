@@ -11,7 +11,15 @@ export type RootStackParamList = {
   Game: { roomId: string };
   Shop: undefined;
   League: undefined;
-  Profile: { userId: string };
+  /**
+   * Somebody else's profile.
+   *
+   * Not 'Profile': the tab bar already has a route by that name, and
+   * react-navigation resolves a name against the nearest navigator first, so
+   * navigate('Profile', { userId }) from inside the tabs opened your own
+   * profile tab and dropped the id. Which meant nobody could open anybody.
+   */
+  UserProfile: { userId: string };
   Chat: { userId: string; username: string };
   Chats: undefined;
   GroupThread: { groupId: string; name: string };
@@ -22,6 +30,7 @@ export type RootStackParamList = {
   NotificationCenter: undefined;
   Appearance: undefined;
   Settings: undefined;
+  BlockedUsers: undefined;
   Wordle: undefined;
   /** An id when an invite link opened it; nothing when you came to make one. */
   WordleBattle: { id?: string } | undefined;

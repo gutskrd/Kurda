@@ -935,6 +935,7 @@ export const ku: Catalogue = {
   'profile.friendsMore': 'û {count} din',
   'settings.blocked.help': 'Kesê ku te asteng kiriye nikare te bibîne, peyamê ji te re bişîne an daxwaza hevaltiyê bişîne, û tu jî wî li tu derê nabînî. Qet jê re nayê gotin.',
   'settings.blocked.none': 'Te kes asteng nekiriye. Tu dikarî kesekî ji profîla wî, an ji lîsteya hevalên xwe asteng bikî.',
+  'settings.blocked.since': 'hate astengkirin {date}',
   'settings.blocked.unblockHint': 'Rakirina astengiyê dihêle ku ew kes dîsa te bibîne û bi te re têkilî deyne. Ew we ne dîsa dike heval, û jê re bi tu awayî nayê gotin.',
   'saved.emptyLead': 'Hê tiştek nehatiye tomarkirin. Li',
   'saved.emptyTail': 'li ser her şandiyekê bişkoka tomarkirinê bitikîne da ku li vir bimîne.',
