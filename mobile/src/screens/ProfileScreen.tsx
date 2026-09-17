@@ -154,7 +154,7 @@ export function ProfileScreen() {
           </Text>
         </View>
 
-        {user?.id ? <ProfileActivity userId={user.id} /> : null}
+        {user?.id ? <ProfileActivity userId={user.id} own /> : null}
 
         <View style={styles.actions}>
           <ClayButton label={t('profile.league')} icon="trophy" tone="neutral" onPress={() => navigation.navigate('League')} />

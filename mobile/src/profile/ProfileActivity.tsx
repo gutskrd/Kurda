@@ -9,22 +9,22 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 
-/** The sections the server will answer for, in the order the browser shows them. */
-const SECTIONS = ['posts', 'games', 'likes', 'reposts'] as const;
-type Section = (typeof SECTIONS)[number];
+import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
 
-const LABEL: Record<Section, TranslationKey> = {
+const LABEL: Record<ProfileSection, TranslationKey> = {
   posts: 'profile.tab.posts',
   games: 'nav.games',
   likes: 'profile.tab.likes',
   reposts: 'repost.tab',
+  saved: 'saved.title',
 };
 
-const GLYPH: Record<Section, IconName> = {
+const GLYPH: Record<ProfileSection, IconName> = {
   posts: 'wall',
   games: 'play',
   likes: 'heart',
   reposts: 'repost',
+  saved: 'bookmark',
 };
 
 /** A game, which stays a row: a line in a history rather than a post. */
@@ -53,16 +53,35 @@ interface ActivityPage {
  * a thumbnail and a poem to an icon was showing a list *about* posts rather
  * than the posts. Only games stay a row.
  */
-export function ProfileActivity({ userId }: { userId: string }): React.JSX.Element {
+export function ProfileActivity({
+  userId,
+  sections,
+  own = false,
+}: {
+  userId: string;
+  /** what the owner lets people see; null when the profile is private */
+  sections?: ProfileSections | null;
+  /** your own profile: the hidden ones are still yours to look at, labelled */
+  own?: boolean;
+}): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
 
-  const [section, setSection] = useState<Section>('posts');
+  /*
+   * A section the owner has turned off is not offered to anybody else. On
+   * your own profile it stays, marked, so that turning something off does not
+   * also hide it from you.
+   */
+  const shown = PROFILE_SECTIONS.filter((key) => own || sections?.[key] !== false);
+  const [section, setSection] = useState<ProfileSection>(shown[0] ?? 'posts');
+  // recomputed rather than stored, so a tab that disappears under you is
+  // replaced instead of leaving an empty panel
+  const active = shown.includes(section) ? section : (shown[0] ?? null);
   const [page, setPage] = useState<ActivityPage | null>(null);
 
   const load = useCallback(
-    (kind: Section) => {
+    (kind: ProfileSection) => {
       setPage(null);
       void client.get<ActivityPage>(`/users/${userId}/activity?kind=${kind}&limit=12`).then((res) => {
         // a section that will not load shows as empty rather than as an error:
@@ -73,7 +92,11 @@ export function ProfileActivity({ userId }: { userId: string }): React.JSX.Eleme
     [client, userId],
   );
 
-  useEffect(() => load(section), [load, section]);
+  useEffect(() => {
+    if (active) load(active);
+  }, [load, active]);
+
+  if (active === null) return null;
 
   const items = page?.items ?? [];
   const entries = page?.entries ?? [];
@@ -88,8 +111,8 @@ export function ProfileActivity({ userId }: { userId: string }): React.JSX.Eleme
         they share the width and keep their labels.
       */}
       <View style={[styles.tabs, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
-        {SECTIONS.map((s) => {
-          const on = s === section;
+        {shown.map((s) => {
+          const on = s === active;
           return (
             <Pressable
               key={s}
@@ -103,7 +126,7 @@ export function ProfileActivity({ userId }: { userId: string }): React.JSX.Eleme
                 numberOfLines={1}
                 style={[styles.tabText, { color: on ? colors.textPrimary : colors.textSecondary }]}
               >
-                {t(LABEL[s])}
+                {t(LABEL[s])}{own && sections?.[s] === false ? ' ·' : ''}
               </Text>
             </Pressable>
           );
