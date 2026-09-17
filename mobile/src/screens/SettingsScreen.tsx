@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
@@ -50,6 +51,42 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const changeVisibility = (v: Visibility) => {
     setVisibility(v);
     void client.put('/me/privacy', { visibility: v });
+  };
+
+  /**
+   * Sign out on every device, including this one.
+   *
+   * The server bumps the token version, which invalidates every refresh
+   * token there is — so this device's session dies with the rest. Signing out
+   * locally afterwards is not tidying up; it is the only way the app and the
+   * server still agree about what just happened.
+   */
+  const signOutEverywhere = () => {
+    Alert.alert(t('settings.sessions.signOutEverywhere'), t('settings.sessions.help'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.sessions.signOutEverywhere'),
+        style: 'destructive',
+        onPress: () => void client.delete('/me/sessions').then(() => logout()),
+      },
+    ]);
+  };
+
+  /**
+   * Ask for a copy of everything.
+   *
+   * The answer is 202 and an email later, not a file now, so the only honest
+   * acknowledgement is that it was asked for.
+   */
+  const [exporting, setExporting] = useState(false);
+  const requestExport = () => {
+    if (exporting) return;
+    setExporting(true);
+    void client.post('/me/export').then((res) => {
+      setExporting(false);
+      if (res.ok) Alert.alert(t('settings.data.title'), t('settings.data.requested'));
+      else Alert.alert(t('settings.data.failed'), describeError(res.error, t));
+    });
   };
 
   // Apple-required in-app account deletion (KUR-275). Server keeps a 14-day
@@ -168,7 +205,20 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
         <GlassCard padding="tight">
           <GlassRow first icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
-          <GlassRow icon="sign-out" title={t('profile.logout')} onPress={logout} destructive />
+          <GlassRow
+            icon="sign-out"
+            title={t('settings.sessions.signOutEverywhere')}
+            onPress={signOutEverywhere}
+            destructive
+          />
+          <GlassRow
+            icon="download"
+            title={t('settings.data.request')}
+            subtitle={t('settings.data.help')}
+            value={exporting ? t('settings.data.requesting') : undefined}
+            onPress={requestExport}
+          />
+          <GlassRow icon="sign-out" title={t('profile.logout')} onPress={logout} />
           <GlassRow icon="trash" title={t('settings.delete.title')} destructive onPress={confirmDelete} />
         </GlassCard>
       </ScrollView>
