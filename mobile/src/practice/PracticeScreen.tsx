@@ -7,6 +7,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import type { ApiError } from '../api/types';
 import { describeError, isRetryable } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  title: { ...display(typography.sizes.xl), textAlign: 'center' },
   detail: { fontSize: typography.sizes.md, textAlign: 'center' },
   button: {
     marginTop: spacing.md,

@@ -173,7 +173,21 @@ const NOT_READER_FACING = [/[\\/]worker\.ts$/];
  * `t('Something')` is the fix, not the problem. Each is matched on the 24
  * characters in front of the string, which is enough for all three and cheap.
  */
-const NOT_COPY_CONTEXT = [/(from|import|require\()\s*$/, /[=!]==?\s*$/, /\bt\(\s*$/];
+const NOT_COPY_CONTEXT = [
+  /(from|import|require\()\s*$/,
+  /[=!]==?\s*$/,
+  /\bt\(\s*$/,
+  /*
+   * A font family name.
+   *
+   * "Iowan Old Style" is three capitalised English words and nobody reads it —
+   * it names a typeface to the OS. The stack form is already excused by the
+   * generic family at its end (see NOT_LITERAL), but React Native takes a
+   * single family with nothing to give it away, so the key has to say so.
+   * Deliberately narrow: the key must end in `Font` or be `fontFamily`.
+   */
+  /(\bfontFamily|[A-Za-z]Font)\s*:\s*$/,
+];
 
 function sources(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {

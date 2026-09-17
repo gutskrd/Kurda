@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, Share, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -25,6 +26,8 @@ import { CARD_LABEL_KEY, type EngagementKind, type FeedItem } from './types';
  * auth stack, so anyone looking at this has an account. Adding "sign in to
  * like" states here would be writing for a reader who cannot get here.
  */
+/** The rim the website puts on a poem badge: the gold, well faded back. */
+const GOLD_RIM = 'rgba(240,194,74,0.3)';
 export function FeedCard({
   item,
   onChanged,
@@ -90,14 +93,23 @@ export function FeedCard({
         style={styles.body}
       >
         <View style={styles.head}>
-          <InitialsAvatar name={who} id={item.author.id} size={28} />
+          <InitialsAvatar name={who} id={item.author.id} size={28} photoUrl={item.author.avatarUrl} />
           <View style={styles.headText}>
             <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
               {who}
             </Text>
             <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.at)}</Text>
           </View>
-          <Text style={[styles.badge, { color: colors.textSecondary, borderColor: colors.glassBorder }]}>{badge}</Text>
+          <Text
+            style={[
+              styles.badge,
+              item.kind === 'poem'
+                ? { color: colors.gold, borderColor: GOLD_RIM }
+                : { color: colors.textSecondary, borderColor: colors.glassBorder },
+            ]}
+          >
+            {badge}
+          </Text>
         </View>
 
         {item.title ? (
@@ -117,7 +129,7 @@ export function FeedCard({
         ) : null}
       </Pressable>
 
-      <View style={styles.actions}>
+      <View style={[styles.actions, { borderTopColor: colors.separator }]}>
         <Action
           icon="chat"
           label={t('feed.comments', { count: item.commentCount })}
@@ -143,6 +155,7 @@ export function FeedCard({
         <Action icon="share" label={t('share.post')} onPress={() => void share()} />
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
+          style={styles.save}
           on={e.bookmarked}
           disabled={busy !== null}
           label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
@@ -167,6 +180,7 @@ function Action({
   on = false,
   disabled = false,
   onPress,
+  style,
 }: {
   icon: IconName;
   label: string;
@@ -174,6 +188,7 @@ function Action({
   on?: boolean;
   disabled?: boolean;
   onPress: () => void;
+  style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const tint = on ? colors.primary : colors.textSecondary;
@@ -185,7 +200,7 @@ function Action({
       accessibilityRole="button"
       accessibilityState={{ selected: on, disabled }}
       accessibilityLabel={count ? `${label} (${count})` : label}
-      style={[styles.action, disabled && styles.actionDisabled]}
+      style={[styles.action, disabled && styles.actionDisabled, style]}
     >
       <Icon name={icon} size={18} color={tint} />
       {count ? <Text style={[styles.count, { color: tint }]}>{count}</Text> : null}
@@ -201,18 +216,29 @@ const styles = StyleSheet.create({
   who: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   age: { fontSize: typography.sizes.sm },
   badge: {
-    fontSize: typography.sizes.sm,
+    fontSize: 11,
+    letterSpacing: 0.66,
+    textTransform: 'uppercase',
     borderWidth: 1,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     overflow: 'hidden',
   },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.lg) },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md },
   excerpt: { fontSize: typography.sizes.md },
-  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: spacing.xs },
-  action: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 2 },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingTop: spacing.xs,
+    marginTop: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  /** Saved sits apart: it is about you, not about the post. */
+  save: { marginLeft: 'auto' },
+  action: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 11, borderRadius: radii.pill },
   actionDisabled: { opacity: 0.5 },
   count: { fontSize: typography.sizes.sm },
 });

@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, TextIn
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.lg) },
   list: { padding: spacing.lg, gap: spacing.xs },
   row: {
     flexDirection: 'row',
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: 1, borderRadius: 20, gap: spacing.sm },
-  sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  sheetTitle: { ...display(typography.sizes.lg) },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   input: {
     borderWidth: StyleSheet.hairlineWidth,

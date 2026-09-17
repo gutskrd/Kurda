@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -82,7 +83,7 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
-  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   body: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
   detail: { fontSize: typography.sizes.xs, textAlign: 'center', fontStyle: 'italic' },
   buttonWrap: { alignSelf: 'stretch', marginTop: spacing.md },

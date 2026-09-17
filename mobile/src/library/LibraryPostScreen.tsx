@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   loading: { padding: spacing.lg, gap: spacing.lg },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xl) },
   postBody: { fontSize: typography.sizes.md, lineHeight: 24 },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   empty: { textAlign: 'center', marginTop: spacing.md },

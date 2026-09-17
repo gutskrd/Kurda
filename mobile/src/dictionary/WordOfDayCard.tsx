@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { EntryDetail } from './EntryDetail';
 import { useI18n } from '../i18n/I18nContext';
@@ -58,6 +59,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   label: { fontSize: typography.sizes.xs, textTransform: 'uppercase', opacity: 0.8 },
-  headword: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  headword: { ...display(typography.sizes.xxl) },
   def: { fontSize: typography.sizes.md, opacity: 0.9 },
 });

@@ -17,6 +17,7 @@ import { flattenMap, isLaunchable, stateHint, type MapRow } from '../coursemap/n
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.xs },
   header: { gap: spacing.md, marginBottom: spacing.md },
-  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xxl) },
   goalCard: { alignItems: 'center', gap: spacing.md, alignSelf: 'stretch' },
   practice: { alignSelf: 'stretch' },
   courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.sm },

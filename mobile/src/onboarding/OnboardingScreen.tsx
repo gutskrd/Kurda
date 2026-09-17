@@ -8,6 +8,7 @@ import { ClayButton, GradientBackground } from '../theme/glass';
 import { BreathingIcon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import {
   ONBOARDING_STEPS,
   currentStep,
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
   slide: { flex: 1, justifyContent: 'center' },
   centered: { alignItems: 'center' },
   slideIcon: { alignSelf: 'center', marginBottom: spacing.md },
-  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   notifTitle: { marginTop: spacing.lg },
   notifHint: { fontSize: typography.sizes.sm, textAlign: 'center', marginTop: spacing.lg, fontStyle: 'italic' },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
   langLabel: { fontSize: typography.sizes.lg },
   langLabelActive: { fontWeight: typography.weights.bold },
   check: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  brand: { ...display(typography.sizes.xxl) },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
   propList: { marginTop: spacing.lg, gap: spacing.sm, alignItems: 'center' },
   prop: { fontSize: typography.sizes.md, textAlign: 'center' },

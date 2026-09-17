@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -117,7 +118,7 @@ export function PlayScreen() {
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, alignItems: 'center', padding: spacing.xl, gap: spacing.lg },
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xl) },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center' },
   button: { alignSelf: 'stretch', marginTop: spacing.md },
   searching: { alignItems: 'center', gap: spacing.md, marginTop: spacing.md },

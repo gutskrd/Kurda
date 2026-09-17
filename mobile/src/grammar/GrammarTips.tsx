@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -42,7 +43,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xl) },
   close: { fontSize: typography.sizes.lg },
   body: { padding: spacing.lg },
 });

@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -134,7 +135,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xl) },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },

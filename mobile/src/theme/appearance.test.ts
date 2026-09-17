@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
+import { DEFAULT_PREFERENCE,
   isDarkMode,
   nextPreference,
   normalizePreference,
@@ -20,8 +20,10 @@ describe('resolveScheme', () => {
     expect(resolveScheme('system', 'light')).toBe('light');
   });
 
-  it('defaults to light when the OS scheme is unknown', () => {
-    expect(resolveScheme('system', null)).toBe('light');
+  it('falls back to dark when the OS scheme is unknown', () => {
+    // the website is dark and has no light theme, so dark is what the app is
+    // when nothing has told it otherwise
+    expect(resolveScheme('system', null)).toBe('dark');
   });
 });
 
@@ -29,7 +31,8 @@ describe('isDarkMode', () => {
   it('reflects the resolved scheme', () => {
     expect(isDarkMode('dark', 'light')).toBe(true);
     expect(isDarkMode('system', 'dark')).toBe(true);
-    expect(isDarkMode('system', null)).toBe(false);
+    // unknown OS scheme resolves to the default, which is dark
+    expect(isDarkMode('system', null)).toBe(true);
   });
 });
 
@@ -46,11 +49,13 @@ describe('normalizePreference', () => {
     for (const p of THEME_PREFERENCES) expect(normalizePreference(p)).toBe(p);
   });
 
-  it('falls back to system for anything invalid', () => {
-    expect(normalizePreference('purple')).toBe('system');
-    expect(normalizePreference(undefined)).toBe('system');
-    expect(normalizePreference(null)).toBe('system');
-    expect(normalizePreference(42)).toBe('system');
+  it('falls back to the default for anything invalid', () => {
+    // nothing stored, or nonsense stored, means nobody has chosen — and the
+    // app before anyone chooses is the dark one the website is
+    for (const bad of ['purple', undefined, null, 42]) {
+      expect(normalizePreference(bad)).toBe(DEFAULT_PREFERENCE);
+    }
+    expect(DEFAULT_PREFERENCE).toBe('dark');
   });
 });
 

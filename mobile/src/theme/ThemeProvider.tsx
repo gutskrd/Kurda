@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
-import { normalizePreference, resolveScheme, type ColorScheme, type ThemePreference } from './appearance';
+import { DEFAULT_PREFERENCE, normalizePreference, resolveScheme, type ColorScheme, type ThemePreference } from './appearance';
 import { PALETTES, type Palette } from './palette';
 import { createThemeModeStore } from './themeModeStore';
 
@@ -23,7 +23,7 @@ const ThemeContext = createContext<ThemeValue | null>(null);
 export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const os = useColorScheme();
   const systemScheme: ColorScheme | null = os === 'dark' || os === 'light' ? os : null;
-  const [preference, setPref] = useState<ThemePreference>('system');
+  const [preference, setPref] = useState<ThemePreference>(DEFAULT_PREFERENCE);
 
   useEffect(() => {
     let active = true;

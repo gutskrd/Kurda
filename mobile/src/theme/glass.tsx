@@ -137,19 +137,15 @@ export function ClayButton({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const fill = tone === 'primary' ? ([colors.primary, colors.primaryStrong] as const) : colors.clayFill;
-  const textColor = tone === 'primary' ? colors.textOnPrimary : colors.textPrimary;
+  const primary = tone === 'primary';
+  const fill = primary ? colors.primary : colors.controlTrack;
+  const textColor = primary ? colors.textOnPrimary : colors.textPrimary;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }, style]}>
-      <LinearGradient
-        colors={fill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.clay, { borderColor: colors.clayBorder, shadowColor: colors.softShadow }]}
-      >
+      <View style={[styles.clay, { backgroundColor: fill, borderColor: primary ? 'transparent' : colors.glassBorder }]}>
         {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
         <Text style={[styles.clayText, { color: textColor }]}>{label}</Text>
-      </LinearGradient>
+      </View>
     </Pressable>
   );
 }
@@ -196,15 +192,24 @@ export function Segmented<T extends string>({
 }): React.JSX.Element {
   const { colors } = useTheme();
   return (
-    <View style={[styles.segTrack, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+    <View style={[styles.segTrack, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
       {options.map((opt) => {
         const active = opt === value;
         return (
-          <Pressable key={opt} onPress={() => onChange(opt)} accessibilityRole="button" accessibilityState={{ selected: active }} style={styles.segItem}>
-            {active ? (
-              <LinearGradient colors={[colors.primary, colors.primaryStrong]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
-            ) : null}
-            <Text style={[styles.segText, { color: active ? colors.textOnPrimary : colors.textSecondary }]}>{labelOf(opt)}</Text>
+          <Pressable
+            key={opt}
+            onPress={() => onChange(opt)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            /*
+             * The chosen segment is a slightly lighter pill with white text,
+             * which is what the website does. It used to be a solid white
+             * pill with dark text — the strongest thing on the screen, for a
+             * filter, and nothing like the same control on the web.
+             */
+            style={[styles.segItem, active ? { backgroundColor: colors.controlTrack } : null]}
+          >
+            <Text style={[styles.segText, { color: active ? colors.textPrimary : colors.textSecondary }]}>{labelOf(opt)}</Text>
           </Pressable>
         );
       })}
@@ -311,10 +316,10 @@ const styles = StyleSheet.create({
   rowSubtitle: { fontSize: typography.sizes.sm },
   rowValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   clay: {
-    borderRadius: radii.pill,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
+    height: 44,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -324,10 +329,10 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 6,
   },
-  clayText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 4, gap: 4 },
-  segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: spacing.sm, alignItems: 'center' },
-  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  clayText: { fontSize: 15, fontWeight: typography.weights.semibold },
+  segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 3, gap: 2 },
+  segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: 6, alignItems: 'center' },
+  segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },

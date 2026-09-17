@@ -3,6 +3,7 @@ import { THEME_PREFERENCES, PREFERENCE_LABEL, type ThemePreference } from '../th
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -85,8 +86,8 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   back: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
-  cardTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xl) },
+  cardTitle: { ...display(typography.sizes.lg) },
   cardHint: { fontSize: typography.sizes.sm, marginTop: 4, lineHeight: 20 },
   activeNote: { fontSize: typography.sizes.sm, marginTop: spacing.md },
   section: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 1, marginTop: spacing.sm, marginLeft: spacing.xs },
