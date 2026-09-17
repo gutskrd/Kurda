@@ -3,6 +3,7 @@ import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, T
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
   // kurdî" is three
   title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
-  startTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: spacing.sm },
+  startTitle: { ...display(typography.sizes.xl), marginTop: spacing.sm },
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: spacing.xs },
   promptRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
@@ -266,6 +267,6 @@ const styles = StyleSheet.create({
   finish: { alignItems: 'center', marginTop: spacing.lg },
   finishText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, textDecorationLine: 'underline' },
   resultCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
-  resultTitle: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  resultTitle: { ...display(typography.sizes.xxl) },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
 });

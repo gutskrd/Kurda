@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -222,7 +223,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.lg) },
   body: { paddingBottom: spacing.xxl, gap: spacing.sm },
   section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.md },
   hint: { fontSize: typography.sizes.md },

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import { normalizePreference, type ThemePreference } from './appearance';
+import { DEFAULT_PREFERENCE, normalizePreference, type ThemePreference } from './appearance';
 
 const KEY = 'kurda_theme_pref_v1';
 
@@ -20,7 +20,7 @@ export function createThemeModeStore(): ThemeModeStore {
         try {
           return normalizePreference(globalThis.localStorage?.getItem(KEY));
         } catch {
-          return 'system';
+          return DEFAULT_PREFERENCE;
         }
       },
       async set(value) {

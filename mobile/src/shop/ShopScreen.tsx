@@ -15,6 +15,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md },
   close: { fontSize: typography.sizes.lg },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, flex: 1 },
+  title: { ...display(typography.sizes.xl), flex: 1 },
   balances: { flexDirection: 'row', gap: spacing.md },
   balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   sheet: { borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
   detail: { alignItems: 'center', gap: spacing.sm },
   preview: { width: 96, height: 96, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
-  detailName: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  detailName: { ...display(typography.sizes.xl) },
   detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },
   detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginVertical: spacing.sm },
   buy: { alignSelf: 'stretch', paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },

@@ -12,6 +12,19 @@ export type ColorScheme = 'light' | 'dark';
 export type ThemePreference = 'system' | ColorScheme;
 
 /** Selectable options, in the order the Settings selector shows them. */
+/**
+ * What the app is before anybody chooses.
+ *
+ * Dark, not system. mykurda.com is a single dark theme — it sets
+ * `color-scheme: dark` and has no light one — so an app that opened light on
+ * a light phone opened looking like a different product. Light and system are
+ * still there in Appearance for anyone who wants them.
+ */
+export const DEFAULT_PREFERENCE: ThemePreference = 'dark';
+
+/** Where  lands when the OS will not say which it is. */
+export const DEFAULT_PREFERENCE_SCHEME: ColorScheme = 'dark';
+
 export const THEME_PREFERENCES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 
 /**
@@ -34,7 +47,7 @@ export function resolveScheme(
   preference: ThemePreference,
   systemScheme: ColorScheme | null,
 ): ColorScheme {
-  if (preference === 'system') return systemScheme ?? 'light';
+  if (preference === 'system') return systemScheme ?? DEFAULT_PREFERENCE_SCHEME;
   return preference;
 }
 
@@ -51,5 +64,5 @@ export function nextPreference(preference: ThemePreference): ThemePreference {
 
 /** Narrow an arbitrary stored value back to a valid preference (default system). */
 export function normalizePreference(value: unknown): ThemePreference {
-  return value === 'light' || value === 'dark' || value === 'system' ? value : 'system';
+  return value === 'light' || value === 'dark' || value === 'system' ? value : DEFAULT_PREFERENCE;
 }

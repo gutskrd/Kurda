@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { display } from '../../theme/fonts';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useI18n } from '../../i18n/I18nContext';
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.lg,
   },
-  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xxl) },
   stats: { flexDirection: 'row', gap: spacing.lg },
   stat: { alignItems: 'center', minWidth: 72 },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },

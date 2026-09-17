@@ -29,10 +29,13 @@ export const spacing = {
   xxl: 48,
 } as const;
 
+/** The website's radius scale, to the pixel — its --r-* tokens. */
 export const radii = {
-  sm: 6,
+  xs: 6,
+  sm: 8,
   md: 12,
-  lg: 20,
+  lg: 18,
+  xl: 26,
   pill: 999,
 } as const;
 
@@ -43,6 +46,30 @@ export const typography = {
    * full Kurdish character set before shipping (no tofu/fallback mixing).
    */
   fontFamily: 'System',
+  /**
+   * The display face, for headings — the same one the website sets as
+   * `--font-display` and applies to every h1–h4.
+   *
+   * Kept as data, by platform, because this module is deliberately free of
+   * React Native so it can be unit-tested; `fonts.ts` resolves it. The order
+   * mirrors the browser stack: a Mac or an iPhone lands on Iowan Old Style,
+   * so an iPhone reading mykurda.com and an iPhone running the app see the
+   * same letters.
+   *
+   * Body copy stays on the system face. That is what iOS does with a brand
+   * serif, and what the website does — the serif is for titles, not for
+   * paragraphs.
+   */
+  displayByPlatform: {
+    iosFont: 'Iowan Old Style',
+    androidFont: 'serif',
+    webFont: "'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif",
+  },
+  /** Headings are 600 on the web, not 700 — a serif at 700 gets heavy fast. */
+  displayWeight: '600',
+  /** The website sets line-height 1.12 and letter-spacing -0.01em on headings. */
+  displayLineHeight: 1.12,
+  displayTracking: -0.01,
   sizes: {
     xs: 12,
     sm: 14,
@@ -54,6 +81,8 @@ export const typography = {
   weights: {
     regular: '400',
     medium: '500',
+    /** What the website's buttons and headings are; 700 is too heavy for both. */
+    semibold: '600',
     bold: '700',
   },
 } as const;

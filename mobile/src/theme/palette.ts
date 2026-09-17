@@ -90,37 +90,37 @@ export const DARK: Palette = {
   scheme: 'dark',
   // Monochrome brand: near-white on a near-black app (SCRL-style). Functional
   // accents (gold XP, danger, success) stay coloured for meaning.
-  primary: '#F4F5F4',
+  primary: '#FFFFFF',
   primaryStrong: '#FFFFFF',
   accent: '#CFCFCF',
   gold: '#F0C24A',
-  danger: '#E5695B',
-  success: '#4FB783',
-  successFill: 'rgba(79,183,131,0.18)',
-  dangerFill: 'rgba(229,105,91,0.18)',
+  danger: '#FF9C90',
+  success: '#86E2A4',
+  successFill: 'rgba(87,185,107,0.18)',
+  dangerFill: 'rgba(255,120,105,0.16)',
 
-  textPrimary: '#F3F4F3',
-  textSecondary: '#9A9A9A',
-  textOnPrimary: '#0A0A0A',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#9D9E9F',
+  textOnPrimary: '#141414',
 
-  background: '#0A0A0B',
+  background: '#0B0D10',
   // neutral near-black spatial gradient (no colour tint)
-  gradient: ['#0D0D0E', '#0A0A0B', '#111112'],
+  gradient: ['#0E1014', '#0B0D10', '#101318'],
 
   blurTint: 'dark',
   blurSoft: 28,
   blurIntensity: 44,
   blurStrong: 64,
-  glassFill: 'rgba(255,255,255,0.055)',
-  glassBorder: 'rgba(255,255,255,0.12)',
-  glassHighlight: 'rgba(255,255,255,0.24)',
+  glassFill: 'rgba(255,255,255,0.05)',
+  glassBorder: 'rgba(255,255,255,0.14)',
+  glassHighlight: 'rgba(255,255,255,0.28)',
   separator: 'rgba(255,255,255,0.08)',
 
   clayFill: ['#1E1E1E', '#151515'],
   clayBorder: 'rgba(255,255,255,0.10)',
   softShadow: '#000000',
 
-  controlTrack: 'rgba(255,255,255,0.07)',
+  controlTrack: 'rgba(255,255,255,0.11)',
 };
 
 export const PALETTES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };

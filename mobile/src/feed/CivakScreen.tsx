@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -229,7 +230,7 @@ function PostChooser({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.xl) },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   fabText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: 1, borderRadius: 20, gap: spacing.sm },
-  sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
+  sheetTitle: { ...display(typography.sizes.lg), marginBottom: spacing.xs },
   choice: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderWidth: 1, borderRadius: 14 },
   choiceText: { flex: 1 },
   choiceName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

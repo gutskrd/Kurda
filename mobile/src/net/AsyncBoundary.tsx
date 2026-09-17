@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 import type { ApiError } from '../api/types';
 import { spacing, radii, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { ErrorRetry } from '../theme/glass';
 import { SkeletonList } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -84,7 +85,7 @@ export function AsyncBoundary({
 const styles = StyleSheet.create({
   skeleton: { padding: spacing.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.md, textAlign: 'center' },
   retry: { marginTop: spacing.sm, borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   retryText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

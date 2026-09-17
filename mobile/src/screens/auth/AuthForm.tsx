@@ -6,6 +6,7 @@ import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
 
 export function AuthScreenShell({
@@ -176,10 +177,10 @@ const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
   back: { position: 'absolute', top: spacing.xl, left: spacing.lg, zIndex: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.xs },
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  brand: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   hero: { alignSelf: 'center', marginBottom: spacing.md },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  title: { ...display(typography.sizes.lg) },
   titleAlone: { marginBottom: spacing.md },
   subtitle: { fontSize: typography.sizes.sm, marginTop: spacing.xs, marginBottom: spacing.md, lineHeight: 18 },
   field: { marginBottom: spacing.md },

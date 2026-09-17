@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { formatCountdown, remainingUntil } from '../i18n/format';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.md, marginBottom: spacing.md },
   close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  heading: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  heading: { ...display(typography.sizes.lg) },
   content: { gap: spacing.lg, paddingBottom: spacing.xl },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   dim: { textAlign: 'center', paddingHorizontal: spacing.lg },

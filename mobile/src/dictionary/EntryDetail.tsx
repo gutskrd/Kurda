@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
   back: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   body: { padding: spacing.lg, gap: spacing.sm },
   headwordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  headword: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
+  headword: { ...display(typography.sizes.xxl) },
   audioBtn: {
     width: 44,
     height: 44,

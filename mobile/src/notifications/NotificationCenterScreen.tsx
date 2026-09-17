@@ -6,6 +6,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingTop: spacing.md, marginBottom: spacing.md },
   close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  heading: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  heading: { ...display(typography.sizes.lg) },
   markAll: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   dim: {},
