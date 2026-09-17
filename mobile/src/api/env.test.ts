@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { apiBaseUrl, defaultApiBaseUrl } from './env.js';
+import { apiBaseUrl, assetUrl, defaultApiBaseUrl } from './env.js';
 
 // __DEV__ is a bundler-injected global (RN/Metro) — not defined under vitest,
 // so set it explicitly per test via a typed cast (RN declares it as a bare var,
@@ -32,5 +32,26 @@ describe('defaultApiBaseUrl', () => {
   it('uses the local server only in a dev build (__DEV__ true)', () => {
     g.__DEV__ = true;
     expect(defaultApiBaseUrl()).toBe('http://localhost:3000');
+  });
+});
+
+describe('assetUrl', () => {
+  it('leaves an absolute url alone', () => {
+    expect(assetUrl('https://storage.example.com/photos/a.jpg')).toBe('https://storage.example.com/photos/a.jpg');
+    expect(assetUrl('//cdn.example.com/a.png')).toBe('//cdn.example.com/a.png');
+  });
+
+  it('resolves the site-relative paths the API hands out', () => {
+    expect(assetUrl('/cosmetics/avatars/default-01.png')).toBe('https://mykurda.com/cosmetics/avatars/default-01.png');
+  });
+
+  it('copes with a path that forgot its leading slash', () => {
+    expect(assetUrl('cosmetics/icons/x.png')).toBe('https://mykurda.com/cosmetics/icons/x.png');
+  });
+
+  it('passes nothing through as nothing', () => {
+    expect(assetUrl(null)).toBeNull();
+    expect(assetUrl(undefined)).toBeNull();
+    expect(assetUrl('')).toBeNull();
   });
 });

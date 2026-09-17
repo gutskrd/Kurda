@@ -703,7 +703,16 @@ export type TranslationKey =
   | 'groups.inviteOnly'
   | 'groups.noGroupsYet'
   | 'groups.noGroupsBody'
-  | 'groups.leave';
+  | 'groups.leave'
+  | 'groups.members'
+  | 'groups.membersOf'
+  | 'groups.role.owner'
+  | 'groups.role.admin'
+  | 'groups.role.member'
+  | 'groups.makeOwner'
+  | 'groups.makeOwnerWarning'
+  | 'groups.remove'
+  | 'groups.removeFrom'
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1383,6 +1392,15 @@ const en: Catalog = {
   'groups.noGroupsYet': 'No groups yet',
   'groups.noGroupsBody': 'Create a group or discover an open one to start a group chat.',
   'groups.leave': 'Leave {group}',
+  'groups.members': 'Members',
+  'groups.membersOf': 'Group members',
+  'groups.role.owner': 'Owner',
+  'groups.role.admin': 'Admin',
+  'groups.role.member': 'Member',
+  'groups.makeOwner': 'Make owner',
+  'groups.makeOwnerWarning': 'Make {name} the owner — you become a moderator and cannot undo this yourself',
+  'groups.remove': 'Remove',
+  'groups.removeFrom': 'Remove {name} from {group}',
 };
 
 const ku: Catalog = {
@@ -2061,6 +2079,15 @@ const ku: Catalog = {
   'groups.noGroupsYet': 'Hê kom tune',
   'groups.noGroupsBody': 'Komekê çêke an komeke vekirî bibîne da ku suhbeta komê dest pê bike.',
   'groups.leave': 'Ji {group} derkeve',
+  'groups.members': 'Endam',
+  'groups.membersOf': 'Endamên komê',
+  'groups.role.owner': 'Xwedî',
+  'groups.role.admin': 'Rêvebir',
+  'groups.role.member': 'Endam',
+  'groups.makeOwner': 'Bike xwedî',
+  'groups.makeOwnerWarning': '{name} bike xwedî — tu dibî moderator û tu bi xwe nikarî vê vegerînî',
+  'groups.remove': 'Derxîne',
+  'groups.removeFrom': '{name} ji {group} derxîne',
 };
 
 const de: Catalog = {
@@ -2739,6 +2766,15 @@ const de: Catalog = {
   'groups.noGroupsYet': 'Noch keine Gruppen',
   'groups.noGroupsBody': 'Erstelle eine Gruppe oder entdecke eine offene, um einen Gruppenchat zu beginnen.',
   'groups.leave': '{group} verlassen',
+  'groups.members': 'Mitglieder',
+  'groups.membersOf': 'Gruppenmitglieder',
+  'groups.role.owner': 'Inhaber',
+  'groups.role.admin': 'Admin',
+  'groups.role.member': 'Mitglied',
+  'groups.makeOwner': 'Zum Inhaber machen',
+  'groups.makeOwnerWarning': '{name} zum Inhaber machen — du wirst Moderator und kannst das nicht selbst rückgängig machen',
+  'groups.remove': 'Entfernen',
+  'groups.removeFrom': '{name} aus {group} entfernen',
 };
 
 const es: Catalog = {
@@ -3417,6 +3453,15 @@ const es: Catalog = {
   'groups.noGroupsYet': 'Todavía no hay grupos',
   'groups.noGroupsBody': 'Crea un grupo o descubre uno abierto para empezar un chat de grupo.',
   'groups.leave': 'Salir de {group}',
+  'groups.members': 'Miembros',
+  'groups.membersOf': 'Miembros del grupo',
+  'groups.role.owner': 'Propietario',
+  'groups.role.admin': 'Administrador',
+  'groups.role.member': 'Miembro',
+  'groups.makeOwner': 'Hacer propietario',
+  'groups.makeOwnerWarning': 'Hacer propietario a {name}: pasarás a ser moderador y no podrás deshacerlo tú mismo',
+  'groups.remove': 'Expulsar',
+  'groups.removeFrom': 'Expulsar a {name} de {group}',
 };
 
 const tr: Catalog = {
@@ -4095,6 +4140,15 @@ const tr: Catalog = {
   'groups.noGroupsYet': 'Henüz grup yok',
   'groups.noGroupsBody': 'Grup sohbeti başlatmak için bir grup oluştur ya da açık bir grup keşfet.',
   'groups.leave': '{group} grubundan ayrıl',
+  'groups.members': 'Üyeler',
+  'groups.membersOf': 'Grup üyeleri',
+  'groups.role.owner': 'Sahip',
+  'groups.role.admin': 'Yönetici',
+  'groups.role.member': 'Üye',
+  'groups.makeOwner': 'Sahip yap',
+  'groups.makeOwnerWarning': '{name} kişisini sahip yap — sen moderatör olursun ve bunu kendin geri alamazsın',
+  'groups.remove': 'Çıkar',
+  'groups.removeFrom': '{name} kişisini {group} grubundan çıkar',
 };
 
 const ar: Catalog = {
@@ -4773,6 +4827,15 @@ const ar: Catalog = {
   'groups.noGroupsYet': 'لا مجموعات بعد',
   'groups.noGroupsBody': 'أنشئ مجموعة أو اكتشف مجموعة مفتوحة لبدء دردشة جماعية.',
   'groups.leave': 'مغادرة {group}',
+  'groups.members': 'الأعضاء',
+  'groups.membersOf': 'أعضاء المجموعة',
+  'groups.role.owner': 'المالك',
+  'groups.role.admin': 'مشرف',
+  'groups.role.member': 'عضو',
+  'groups.makeOwner': 'اجعله المالك',
+  'groups.makeOwnerWarning': 'اجعل {name} المالك — ستصبح مشرفًا ولن تتمكن من التراجع بنفسك',
+  'groups.remove': 'إزالة',
+  'groups.removeFrom': 'إزالة {name} من {group}',
 };
 
 const fr: Catalog = {
@@ -5451,6 +5514,15 @@ const fr: Catalog = {
   'groups.noGroupsYet': 'Pas encore de groupes',
   'groups.noGroupsBody': 'Crée un groupe ou découvres-en un ouvert pour lancer une discussion de groupe.',
   'groups.leave': 'Quitter {group}',
+  'groups.members': 'Membres',
+  'groups.membersOf': 'Membres du groupe',
+  'groups.role.owner': 'Propriétaire',
+  'groups.role.admin': 'Administrateur',
+  'groups.role.member': 'Membre',
+  'groups.makeOwner': 'Nommer propriétaire',
+  'groups.makeOwnerWarning': 'Nommer {name} propriétaire — tu deviens modérateur et tu ne pourras pas l’annuler toi-même',
+  'groups.remove': 'Retirer',
+  'groups.removeFrom': 'Retirer {name} de {group}',
 };
 
 const nl: Catalog = {
@@ -6129,6 +6201,15 @@ const nl: Catalog = {
   'groups.noGroupsYet': 'Nog geen groepen',
   'groups.noGroupsBody': 'Maak een groep aan of ontdek een open groep om een groepsgesprek te beginnen.',
   'groups.leave': '{group} verlaten',
+  'groups.members': 'Leden',
+  'groups.membersOf': 'Groepsleden',
+  'groups.role.owner': 'Eigenaar',
+  'groups.role.admin': 'Beheerder',
+  'groups.role.member': 'Lid',
+  'groups.makeOwner': 'Eigenaar maken',
+  'groups.makeOwnerWarning': 'Maak {name} eigenaar — jij wordt moderator en kunt dit zelf niet terugdraaien',
+  'groups.remove': 'Verwijderen',
+  'groups.removeFrom': '{name} uit {group} verwijderen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6808,6 +6889,15 @@ const ckb: Catalog = {
   'groups.noGroupsYet': 'هێشتا گروپ نییە',
   'groups.noGroupsBody': 'گروپێک دروست بکە یان گروپێکی کراوە بدۆزەرەوە بۆ دەستپێکردنی گفتوگۆی گروپی.',
   'groups.leave': 'لە {group} دەربچۆ',
+  'groups.members': 'ئەندامان',
+  'groups.membersOf': 'ئەندامانی گروپ',
+  'groups.role.owner': 'خاوەن',
+  'groups.role.admin': 'بەڕێوەبەر',
+  'groups.role.member': 'ئەندام',
+  'groups.makeOwner': 'بیکە خاوەن',
+  'groups.makeOwnerWarning': '{name} بکە خاوەن — تۆ دەبیتە چاودێر و ناتوانیت خۆت هەڵیبوەشێنیتەوە',
+  'groups.remove': 'دەریبکە',
+  'groups.removeFrom': '{name} لە {group} دەربکە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

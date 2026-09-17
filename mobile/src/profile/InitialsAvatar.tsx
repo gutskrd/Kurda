@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Image, StyleSheet, Text, View, type ImageStyle, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { typography } from '../theme/tokens';
 import { AAA_NORMAL } from '../a11y/contrast';
@@ -6,6 +7,7 @@ import { scaledFontSize } from '../a11y/dynamicType';
 import { useFontScale } from '../a11y/useFontScale';
 import { initialsAvatar } from './initials';
 import { useI18n } from '../i18n/I18nContext';
+import { assetUrl } from '../api/env';
 
 /**
  * Monogram avatar shown when a user has no profile photo (KUR-178). Deterministic
@@ -30,12 +32,22 @@ export function InitialsAvatar({
   photoUrl?: string | null;
 }) {
   const { t } = useI18n();
+  // a photo that will not load falls back to the monogram rather than to a
+  // hole: the server hands out site-relative paths for the stock avatars, and
+  // an empty circle reads as a bug to everyone who sees it
+  const [broken, setBroken] = useState(false);
   const { initials, backgroundColor: baseColor, textColor } = initialsAvatar(name, id);
+  // honour Dynamic Type, but tightly so the monogram stays inside the circle.
+  // Above the early return, because a photo that fails swaps the branch mid-life
+  // and a hook that only runs on one side would change the hook count.
+  const fontScale = useFontScale({ max: 1.15 });
 
-  if (photoUrl) {
+  const resolved = assetUrl(photoUrl);
+  if (resolved && !broken) {
     return (
       <Image
-        source={{ uri: photoUrl }}
+        source={{ uri: resolved }}
+        onError={() => setBroken(true)}
         accessibilityRole="image"
         accessibilityLabel={name ? t('profile.avatarOf', { name }) : t('profile.photoLabel')}
         style={[{ width: size, height: size, borderRadius: size / 2 }, style as StyleProp<ImageStyle>]}
@@ -45,8 +57,6 @@ export function InitialsAvatar({
   // the palette is already AA against white; nudge it to AAA (7:1) so monograms
   // stay crisp for low-vision users (deterministic — same id → same colour)
   const backgroundColor = ensureContrast(baseColor, textColor, AAA_NORMAL);
-  // honour Dynamic Type, but tightly so the monogram stays inside the circle
-  const fontScale = useFontScale({ max: 1.15 });
   return (
     <View
       accessibilityRole="image"
