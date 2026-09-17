@@ -15,6 +15,8 @@ import { uploadProfilePhoto } from '../profile/photoUpload';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useI18n } from '../i18n/I18nContext';
 import { NotificationBell } from '../notifications/NotificationBell';
+import { useUnseenGifts } from '../shop/useUnseenGifts';
+import { unreadBadge } from '../notifications/inbox';
 import type { Streak } from '../streak/format';
 
 /** The parts of /me a profile puts on screen. */
@@ -47,6 +49,7 @@ export function ProfileScreen() {
   const [friends, setFriends] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const { t } = useI18n();
+  const gifts = useUnseenGifts();
 
   /*
    * Who you are, in the three places the server keeps it.
@@ -158,7 +161,14 @@ export function ProfileScreen() {
 
         <View style={styles.actions}>
           <ClayButton label={t('profile.league')} icon="trophy" tone="neutral" onPress={() => navigation.navigate('League')} />
-          <ClayButton label={t('profile.shop')} icon="cart" tone="neutral" onPress={() => navigation.navigate('Shop')} />
+          {/* a gift that arrives silently may as well not have arrived */}
+          <ClayButton
+            label={t('profile.shop')}
+            icon="cart"
+            tone="neutral"
+            badge={unreadBadge(gifts) ?? undefined}
+            onPress={() => navigation.navigate('Shop')}
+          />
           <ClayButton label={t('profile.edit')} icon="person" tone="neutral" onPress={() => navigation.navigate('EditProfile')} />
           <ClayButton label={t('saved.title')} icon="bookmark" tone="neutral" onPress={() => navigation.navigate('Saved')} />
           <ClayButton label={t('tags.title')} icon="star" tone="neutral" onPress={() => navigation.navigate('Tags')} />
