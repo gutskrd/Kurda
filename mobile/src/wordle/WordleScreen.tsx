@@ -338,7 +338,7 @@ function ResultPanel({
         {edu ? (
           <View style={[styles.edu, { borderColor: colors.glassBorder }]}>
             <View style={styles.eduHead}>
-              <Icon name="book" size={18} color={colors.primary} />
+              <Icon name="text" size={18} color={colors.primary} />
               <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
               {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
             </View>

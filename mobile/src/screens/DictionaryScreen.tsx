@@ -119,7 +119,7 @@ export function DictionaryScreen() {
         {isEmpty && saved.length > 0 ? (
           <View style={styles.recents}>
             <View style={styles.savedHeading}>
-              <Icon name="star" size={13} color={colors.gold} />
+              <Icon name="bookmark" size={13} color={colors.gold} />
               <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
             </View>
             {saved.map((w) => (
