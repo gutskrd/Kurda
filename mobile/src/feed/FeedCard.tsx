@@ -125,7 +125,7 @@ export function FeedCard({
           onPress={open}
         />
         <Action
-          icon="heart"
+          icon={e.liked ? 'heart-fill' : 'heart'}
           on={e.liked}
           disabled={busy !== null}
           label={e.liked ? t('feed.unlike') : t('feed.like')}
@@ -133,16 +133,16 @@ export function FeedCard({
           onPress={() => void toggle('like')}
         />
         <Action
-          icon="sparkle"
+          icon="repost"
           on={e.reposted}
           disabled={busy !== null}
           label={e.reposted ? t('repost.undo') : t('repost.do')}
           count={e.reposts}
           onPress={() => void toggle('repost')}
         />
-        <Action icon="mail" label={t('share.post')} onPress={() => void share()} />
+        <Action icon="share" label={t('share.post')} onPress={() => void share()} />
         <Action
-          icon={e.bookmarked ? 'star' : 'star-outline'}
+          icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
           on={e.bookmarked}
           disabled={busy !== null}
           label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}

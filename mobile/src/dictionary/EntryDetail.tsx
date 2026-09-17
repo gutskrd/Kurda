@@ -79,7 +79,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 accessibilityState={{ selected: saved }}
                 style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
               >
-                <Icon name={saved ? 'star' : 'star-outline'} size={22} color={saved ? colors.gold : colors.textSecondary} />
+                <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.gold : colors.textSecondary} />
               </Pressable>
             </View>
             <Text style={[styles.dialect, { color: colors.textSecondary }]}>{entry.dialect}</Text>

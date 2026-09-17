@@ -1,5 +1,6 @@
 /** Tab registry — pure data so it stays unit-testable without React Native. */
 import type { TranslationKey } from '../i18n/translations';
+import type { IconName } from '../theme/icon-paths';
 
 export interface TabDef {
   /** Route name used by navigation and deep links. */
@@ -11,9 +12,15 @@ export interface TabDef {
    * read in eight languages, while every screen behind them translated.
    */
   labelKey: TranslationKey;
-  /** Skeuomorphic icon name (see theme/Icon). Kept as a plain string so this
-   *  registry stays React-Native-free and unit-testable. */
-  icon: 'home' | 'play' | 'book' | 'people' | 'person' | 'globe';
+  /**
+   * Which glyph the bar draws (see theme/Icon).
+   *
+   * These match the browser's nav one destination at a time: Civak is the
+   * newspaper it is there, Learn the open book, the dictionary the letters.
+   * The phone had a globe for Civak and a house for Learn, which made the two
+   * navs read as two products.
+   */
+  icon: IconName;
   /** Path segment for kurda:// deep links. */
   path: string;
 }
@@ -25,10 +32,10 @@ export interface TabDef {
  * them feel like two products. Learn keeps its place directly after it.
  */
 export const TABS: readonly TabDef[] = [
-  { name: 'Civak', labelKey: 'nav.civak', icon: 'globe', path: 'civak' },
-  { name: 'Learn', labelKey: 'nav.learn', icon: 'home', path: 'learn' },
+  { name: 'Civak', labelKey: 'nav.civak', icon: 'wall', path: 'civak' },
+  { name: 'Learn', labelKey: 'nav.learn', icon: 'book', path: 'learn' },
   { name: 'Play', labelKey: 'nav.play', icon: 'play', path: 'play' },
-  { name: 'Dictionary', labelKey: 'nav.dictionary', icon: 'book', path: 'dictionary' },
+  { name: 'Dictionary', labelKey: 'nav.dictionary', icon: 'text', path: 'dictionary' },
   { name: 'Social', labelKey: 'nav.friends', icon: 'people', path: 'social' },
   { name: 'Profile', labelKey: 'nav.profile', icon: 'person', path: 'profile' },
 ] as const;

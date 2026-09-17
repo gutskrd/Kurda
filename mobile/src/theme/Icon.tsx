@@ -1,129 +1,33 @@
 import { useEffect, useRef } from 'react';
 import { Animated, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from './ThemeProvider';
+import { ICON_PATHS, ICON_VIEWBOX, type IconName } from './icon-paths';
+
+export type { IconName };
 
 /**
- * Skeuomorphic SVG icon set (KUR-268 icon pass). Replaces the app's emoji with
- * crisp vector glyphs that carry real depth: each icon is painted with a
- * vertical light→dark gradient of its tint (a beveled sheen), a soft white top
- * highlight, and a dark bottom shadow edge — the classic emboss. One component,
- * one `name`, themed by the active palette.
+ * The app's icons, drawn from Phosphor — the same family, at the same weight,
+ * as the browser.
  *
- * Paths are authored on a 24×24 grid as filled silhouettes.
- */
-export type IconName =
-  | 'home'
-  | 'play'
-  | 'book'
-  | 'people'
-  | 'person'
-  | 'bolt'
-  | 'speaker'
-  | 'star'
-  | 'star-outline'
-  | 'cart'
-  | 'trophy'
-  | 'palette'
-  | 'chat'
-  | 'gear'
-  | 'bell'
-  | 'coin'
-  | 'gem'
-  | 'flame'
-  | 'close'
-  | 'chevron-left'
-  | 'chevron-right'
-  | 'chevron-down'
-  | 'check'
-  | 'sparkle'
-  | 'ice'
-  | 'moon'
-  | 'heart'
-  | 'mail'
-  | 'apple'
-  | 'google'
-  | 'globe'
-  | 'eye'
-  | 'eye-off'
-  | 'alert'
-  | 'image';
-
-/** 24×24 filled-silhouette path data, keyed by icon name. */
-const PATHS: Record<IconName, string> = {
-  home: 'M12 2.6 1.5 12.2h3V21h5.2v-5.6h4.6V21H21v-8.8h3L12 2.6Z',
-  // rounded game controller
-  play:
-    'M7.5 7h9a5.5 5.5 0 0 1 5.4 4.5l.7 4A3.2 3.2 0 0 1 16.4 17l-1.3-1.5H8.9L7.6 17A3.2 3.2 0 0 1 1.4 15.5l.7-4A5.5 5.5 0 0 1 7.5 7Zm-1 3.2v1.6H4.9v1.6H6.5v1.6h1.6v-1.6h1.6v-1.6H8.1v-1.6H6.5Zm9.2.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Zm2.4 2.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Z',
-  // open book, two pages
-  book: 'M11 4.4C8.2 2.9 5.3 2.9 2.6 4.4v15c2.7-1.5 5.6-1.5 8.4 0V4.4Zm2 0v15c2.8-1.5 5.7-1.5 8.4 0v-15C18.7 2.9 15.8 2.9 13 4.4Z',
-  // two people
-  people:
-    'M8.7 4.2a3.1 3.1 0 1 0 0 6.2 3.1 3.1 0 0 0 0-6.2ZM16.4 5.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2ZM2.5 20c0-4.1 2.8-6.2 6.2-6.2s6.2 2.1 6.2 6.2H2.5Zm14.2-4.9c2.9.1 4.8 2 4.8 4.9h-4.1c0-1.9-.6-3.6-1.6-4.9.3 0 .6 0 .9 0Z',
-  // single person
-  person: 'M12 3.6a4.1 4.1 0 1 0 0 8.2 4.1 4.1 0 0 0 0-8.2ZM4 20.4c0-4.4 3.6-6.8 8-6.8s8 2.4 8 6.8H4Z',
-  bolt: 'M13.4 2 4 13.4h6L9.2 22 20 9.6h-6.4L13.4 2Z',
-  speaker:
-    'M11 4.2 6.2 8.2H3.2A1 1 0 0 0 2.2 9.2v5.6a1 1 0 0 0 1 1h3L11 19.8V4.2Zm3.4 3.2a1 1 0 0 1 1.4.2 6.5 6.5 0 0 1 0 8.8 1 1 0 1 1-1.5-1.3 4.5 4.5 0 0 0 0-6.2 1 1 0 0 1 .1-1.5Zm2.7-2.6a1 1 0 0 1 1.4.1 10 10 0 0 1 0 13.2 1 1 0 1 1-1.5-1.3 8 8 0 0 0 0-10.6 1 1 0 0 1 .1-1.4Z',
-  star: 'M12 2.4 15 8.9l7.1.8-5.3 4.8 1.5 7-6.3-3.6-6.3 3.6 1.5-7L2.9 9.7 10 8.9 12 2.4Z',
-  'star-outline':
-    'M12 2.4 15 8.9l7.1.8-5.3 4.8 1.5 7-6.3-3.6-6.3 3.6 1.5-7L2.9 9.7 10 8.9 12 2.4Zm0 4.9-1.7 3.6-3.9.4 2.9 2.7-.8 3.9L12 18l3.5 2-.8-3.9 2.9-2.7-3.9-.4L12 7.3Z',
-  cart: 'M2 3h2.2l.9 2h14.7a1 1 0 0 1 1 1.3l-2 6.4a1 1 0 0 1-1 .7H8.3l-.4 1.6H19v2H6.6a1 1 0 0 1-1-1.3L7.5 13 5 5.3 4 3H2V3Zm6.5 16.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5Zm9 0a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5Z',
-  trophy:
-    'M6 3h12v2h3v3a4 4 0 0 1-4 4h-.4A6 6 0 0 1 13 15.8V18h3v2H8v-2h3v-2.2A6 6 0 0 1 7.4 12H7a4 4 0 0 1-4-4V5h3V3Zm0 4H5v1a2 2 0 0 0 1 1.7V7Zm12 0v2.7A2 2 0 0 0 19 8V7h-1Z',
-  palette:
-    'M12 3a9 9 0 0 0 0 18 2.4 2.4 0 0 0 2.4-2.4c0-.6-.2-1.1-.6-1.5a2.4 2.4 0 0 1 1.8-4H18a3 3 0 0 0 3-3c0-4.1-4-7.1-9-7.1Zm-4.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm2-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z',
-  chat: 'M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z',
-  gear:
-    'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm9 3.5-2.1-1.6.3-2.6-2.5-.8-1.3-2.3-2.5.6L11 3l-1.9 2.3-2.5-.6-1.3 2.3-2.5.8.3 2.6L1 12l2.1 1.6-.3 2.6 2.5.8 1.3 2.3 2.5-.6L11 21l1.9-2.3 2.5.6 1.3-2.3 2.5-.8-.3-2.6L21 12Z',
-  bell: 'M12 2.5a5.5 5.5 0 0 0-5.5 5.5v3.5L4.5 15v1.5h15V15l-2-3.5V8A5.5 5.5 0 0 0 12 2.5ZM9.5 18a2.5 2.5 0 0 0 5 0h-5Z',
-  coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 3.5c2.2 0 4 .8 4 2S14.2 12 12 12s-4-.8-4-1.5.8-1.5 4-1.5Zm-4 4.6C9 11.7 10.4 12 12 12s3-.3 4-.9v2c0 1.2-1.8 2-4 2s-4-.8-4-2v-2Z',
-  gem: 'M7 3h10l4 5-9 12L3 8l4-5Zm.5 2L5 8h4L10.5 5H7.5Zm5.5 0-1.5 3h5L14 5h-1.5ZM6 9l4 8V9H6Zm8 0v8l4-8h-4Z',
-  flame:
-    'M13.5 2c.6 3-1.2 4.6-2.8 6.2C9 9.9 7 11.7 7 14.7A5.3 5.3 0 0 0 12.3 20a5 5 0 0 0 5-5c0-1.9-.8-3.4-1.7-4.6-.3 1-1 1.7-1.9 2 .6-2.3-.2-4.6-1.6-6.4-.4-.5-.9-1-1.6-2Z',
-  close: 'M6 4.6 4.6 6 10.6 12 4.6 18 6 19.4 12 13.4 18 19.4 19.4 18 13.4 12 19.4 6 18 4.6 12 10.6 6 4.6Z',
-  'chevron-left': 'M15.4 5.4 8.8 12l6.6 6.6 1.4-1.4L11.6 12l5.2-5.2-1.4-1.4Z',
-  'chevron-right': 'M8.6 5.4 7.2 6.8 12.4 12l-5.2 5.2 1.4 1.4L16 12 8.6 5.4Z',
-  'chevron-down': 'M5.4 8.6 4 10l8 8 8-8-1.4-1.4L12 15.2 5.4 8.6Z',
-  check: 'M9.5 16.2 4.8 11.5l-1.4 1.4 6.1 6.1L20.6 8 19.2 6.6 9.5 16.2Z',
-  sparkle: 'M12 2c.8 4.2 2.8 6.2 7 7-4.2.8-6.2 2.8-7 7-.8-4.2-2.8-6.2-7-7 4.2-.8 6.2-2.8 7-7Z',
-  // filled 6-point snowflake / ice crystal
-  ice: 'M12 1.5l1.7 3.6 3.9-1-1 3.9 3.6 1.7-3.6 1.7 1 3.9-3.9-1L12 19.5l-1.7-3.7-3.9 1 1-3.9L2.9 12l3.6-1.7-1-3.9 3.9 1L12 1.5Z',
-  moon: 'M13 2.5A9.5 9.5 0 1 0 21.5 15 7.5 7.5 0 0 1 13 2.5Z',
-  heart: 'M12 21.3 3.8 13a5.6 5.6 0 0 1 7.9-7.9l.3.3.3-.3A5.6 5.6 0 0 1 20.2 13L12 21.3Z',
-  // filled envelope
-  mail: 'M2 6.2A2.2 2.2 0 0 1 4.2 4h15.6A2.2 2.2 0 0 1 22 6.2l-10 6.1L2 6.2Zm0 2.5V17.8A2.2 2.2 0 0 0 4.2 20h15.6a2.2 2.2 0 0 0 2.2-2.2V8.7l-9.5 5.8a1 1 0 0 1-1 0L2 8.7Z',
-  // Apple logo (body + leaf)
-  apple:
-    'M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.89 2.65 3.24 2.6 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.53.99-1.45 1.4-2.85 1.42-2.92-.03-.01-2.73-1.05-2.75-4.16ZM14.5 4.9c.72-.87 1.2-2.08 1.07-3.29-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.09 3.18 1.15.09 2.32-.58 3.04-1.45Z',
-  /*
-   * Globe: a sphere with meridians and parallels.
-   *
-   * The previous one was the Material "public" glyph — continents as abstract
-   * blobs — which at 22px in a tab bar reads as a circle with marks in it
-   * rather than as a world. Lines of longitude and latitude are what make a
-   * drawing legible as a globe at that size, and they carry no map, so nobody
-   * has to find their own coastline in it.
-   */
-  globe:
-    'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2c1.2 0 2.5 2 2.9 5H9.1C9.5 6 10.8 4 12 4ZM7.1 9C7.4 6.9 8 5.2 8.8 4.3A8.05 8.05 0 0 0 4.6 9h2.5Zm-2.9 2h2.7a20 20 0 0 0 0 2H4.2a8.1 8.1 0 0 1 0-2Zm.4 4h2.5c.3 2.1.9 3.8 1.7 4.7A8.05 8.05 0 0 1 4.6 15Zm4.5 0h5.8c-.4 3-1.7 5-2.9 5s-2.5-2-2.9-5Zm6.1-2H8.8a17 17 0 0 1 0-2h6.4a17 17 0 0 1 0 2Zm1.7 2h2.5a8.05 8.05 0 0 1-4.2 4.7c.8-.9 1.4-2.6 1.7-4.7Zm.3-2a20 20 0 0 0 0-2h2.7a8.1 8.1 0 0 1 0 2h-2.7ZM16.9 9c-.3-2.1-.9-3.8-1.7-4.7A8.05 8.05 0 0 1 19.4 9h-2.5Z',
-  // an eye, and the same eye struck through: "show / hide what I typed"
-  eye: 'M12 5c-5 0-9 4.6-10 7 1 2.4 5 7 10 7s9-4.6 10-7c-1-2.4-5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z',
-  'eye-off':
-    'M12 5c-5 0-9 4.6-10 7 .5 1.2 1.8 3 3.7 4.5l2.1-2.1A4 4 0 0 1 13.4 9l1.9-1.9A10.6 10.6 0 0 0 12 5Zm8.9.5L18.5 8l-.1-.1A16 16 0 0 1 22 12c-1 2.4-5 7-10 7a10.6 10.6 0 0 1-3.3-.6l-3.2 3.2-1.4-1.4L19.5 4.1l1.4 1.4ZM12 16a4 4 0 0 0 3.7-5.6l-5.3 5.3c.5.2 1 .3 1.6.3Z',
-  // a framed picture: sun and hill punched out of the frame (evenodd)
-  image: 'M4 3.5h16A2.5 2.5 0 0 1 22.5 6v12a2.5 2.5 0 0 1-2.5 2.5H4A2.5 2.5 0 0 1 1.5 18V6A2.5 2.5 0 0 1 4 3.5ZM3.5 6A.5.5 0 0 1 4 5.5h16a.5.5 0 0 1 .5.5v7.2l-4.1-4a1 1 0 0 0-1.4 0L9.2 15 7 12.9a1 1 0 0 0-1.4 0l-2.1 2V6ZM7.8 7.6a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4Z',
-  // warning triangle, bang punched out (evenodd)
-  alert: 'M10.1 3.9 1.4 18.4a2.2 2.2 0 0 0 1.9 3.4h17.4a2.2 2.2 0 0 0 1.9-3.4L13.9 3.9a2.2 2.2 0 0 0-3.8 0ZM10.8 8.4h2.4l-.4 7.2h-1.6ZM12 16.8a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Z',
-  // Google "G" glyph (monochrome, filled)
-  google:
-    'M21.6 12.2c0-.68-.06-1.34-.18-1.97H12v3.73h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.75 2.98-4.33 2.98-7.28ZM12 22c2.7 0 4.96-.9 6.62-2.42l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.76-5.58-4.12H3.06v2.58A10 10 0 0 0 12 22ZM6.42 13.9a6 6 0 0 1 0-3.82V7.5H3.06a10 10 0 0 0 0 9l3.36-2.6ZM12 5.96c1.47 0 2.78.5 3.82 1.5l2.86-2.86A10 10 0 0 0 12 2 10 10 0 0 0 3.06 7.5l3.36 2.58C7.2 7.72 9.4 5.96 12 5.96Z',
-};
-
-/**
- * Render a skeuomorphic icon. `color` defaults to the theme's primary tint;
- * pass `tone="onPrimary"` on primary-filled buttons, or an explicit color.
+ * This was a hand-drawn set: ~35 filled silhouettes carrying a skeuomorphic
+ * emboss — a dark edge offset down, a white highlight offset up, and a sheen
+ * gradient over the face. The browser gave up its own hand-drawn set for
+ * Phosphor because every new screen needed another glyph drawn and they drifted
+ * in weight and optical size; the phone had the same problem and the added one
+ * of not looking like the same product. A globe in the phone's tab bar and a
+ * newspaper in the browser's nav are not two styles of one icon, they are two
+ * different answers to "what is Civak".
+ *
+ * The emboss went with them. Phosphor at regular weight is a fine traced
+ * outline, and offsetting a copy of one by a few per cent and painting it black
+ * reads as a printing misregistration rather than as depth. The glass and clay
+ * surfaces behind the icons still carry the app's dimensionality; the glyphs sit
+ * on them flat, in one tint, which is also how the browser draws them.
+ *
+ * The path data is generated, not written — see `icon-paths.ts` and the script
+ * named in its header.
  */
 export function Icon({
   name,
@@ -139,7 +43,7 @@ export function Icon({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const base =
+  const fill =
     color ??
     (tone === 'onPrimary'
       ? colors.textOnPrimary
@@ -148,28 +52,13 @@ export function Icon({
         : tone === 'primary'
           ? colors.primary
           : colors.textPrimary);
-  const d = PATHS[name];
-  const gid = `ig-${name}`;
-  const inset = size * 0.03; // room for the emboss highlight/shadow offsets
 
   return (
     <View style={[{ width: size, height: size }, style]}>
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        <Defs>
-          <LinearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.35} />
-            <Stop offset="0.5" stopColor="#FFFFFF" stopOpacity={0} />
-            <Stop offset="1" stopColor="#000000" stopOpacity={0.18} />
-          </LinearGradient>
-        </Defs>
-        {/* dark shadow edge (down) */}
-        <Path d={d} fill="#000000" fillRule="evenodd" opacity={0.28} transform={`translate(0 ${inset})`} />
-        {/* light highlight edge (up) */}
-        <Path d={d} fill="#FFFFFF" fillRule="evenodd" opacity={0.45} transform={`translate(0 ${-inset})`} />
-        {/* solid face in the icon tint */}
-        <Path d={d} fill={base} fillRule="evenodd" />
-        {/* beveled sheen: light top → dark bottom over the face */}
-        <Path d={d} fill={`url(#${gid})`} fillRule="evenodd" />
+      <Svg width={size} height={size} viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}>
+        {ICON_PATHS[name].map((d) => (
+          <Path key={d} d={d} fill={fill} />
+        ))}
       </Svg>
     </View>
   );

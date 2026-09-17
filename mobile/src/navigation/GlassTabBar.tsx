@@ -3,7 +3,7 @@ import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } f
 import { BlurView } from 'expo-blur';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, type IconName } from '../theme/Icon';
+import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -87,7 +87,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                   accessibilityLabel={label}
                   style={styles.item}
                 >
-                  <Icon name={(tab?.icon ?? 'home') as IconName} size={22} color={color} />
+                  <Icon name={tab?.icon ?? 'home'} size={22} color={color} />
                   <Text numberOfLines={1} style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
                     {label}
                   </Text>
