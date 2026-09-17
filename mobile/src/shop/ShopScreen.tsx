@@ -31,6 +31,7 @@ import {
 } from './format';
 import { useI18n } from '../i18n/I18nContext';
 import { GiftSheet } from './GiftSheet';
+import { ReceivedGifts } from './ReceivedGifts';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -130,10 +131,12 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         </View>
 
         <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load}>
+          {/* the inbox sits above the catalogue: what arrived matters more than what is for sale */}
           <SectionList
             sections={sections}
             keyExtractor={(i) => i.sku}
             contentContainerStyle={styles.list}
+            ListHeaderComponent={<ReceivedGifts />}
             /*
              * The title is a translation KEY, not a word.
              *
