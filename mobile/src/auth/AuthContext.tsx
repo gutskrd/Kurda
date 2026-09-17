@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ApiClient } from '../api/client';
+import { useHeartbeat } from './useHeartbeat';
 import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
 import { describeError } from '../api/errors';
@@ -107,6 +108,8 @@ export function AuthProvider({
       }),
     [baseUrl, storage],
   );
+
+  useHeartbeat(client, status === 'signedIn');
 
   useEffect(() => {
     let cancelled = false;
