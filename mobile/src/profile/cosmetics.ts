@@ -1,3 +1,4 @@
+import { assetUrl } from '../api/env';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
@@ -37,4 +38,20 @@ export function equip(client: ApiClient, slot: CosmeticSlot, sku: string | null)
  */
 export function setIconVisibility(client: ApiClient, enabled: boolean): Promise<ApiResult<unknown>> {
   return client.put('/me/cosmetics/icon/visibility', { enabled });
+}
+
+/**
+ * The picture for a default-avatar key, ready to load.
+ *
+ * GET /cosmetics/avatars answers with keys and nothing else — there is no url
+ * on an AvatarEntry and never was. The browser builds the path the same way
+ * (web/src/lib/cosmetics.ts) from the same rule; the phone additionally has to
+ * make it absolute, because a site-relative path means nothing on a device.
+ *
+ * The avatar picker had been reading a field that does not exist, so every
+ * option in it fell back to a monogram of its own key — a grid of identical
+ * coloured circles reading DE.
+ */
+export function avatarAssetUrl(key: string): string | null {
+  return assetUrl(`/cosmetics/avatars/${key}.png`);
 }

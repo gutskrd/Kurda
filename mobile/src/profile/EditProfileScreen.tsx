@@ -14,6 +14,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from './InitialsAvatar';
 import { CosmeticPicker } from './CosmeticPicker';
+import { avatarAssetUrl } from './cosmetics';
 
 interface Me {
   username: string;
@@ -31,7 +32,6 @@ interface Me {
 interface AvatarOption {
   key: string;
   requiresPremium: boolean;
-  url?: string | null;
 }
 
 const MAX_BIO = 1000;
@@ -243,7 +243,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                       locked && styles.locked,
                     ]}
                   >
-                    <InitialsAvatar name={a.key} id={a.key} size={44} photoUrl={a.url ?? null} />
+                    <InitialsAvatar name={a.key} id={a.key} size={44} photoUrl={avatarAssetUrl(a.key)} />
                   </Pressable>
                 );
               })}
