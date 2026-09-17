@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -160,7 +161,7 @@ export function CosmeticPicker({
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
-  heading: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  heading: { ...sectionLabel },
   shelf: { gap: spacing.xs },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   row: { gap: spacing.sm, paddingVertical: 2 },

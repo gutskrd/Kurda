@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from './InitialsAvatar';
 import { spacing, typography } from '../theme/tokens';
+import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -110,7 +111,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
-  heading: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  heading: { ...sectionLabel },
   row: { gap: spacing.md, paddingVertical: 2 },
   friend: { width: 60, alignItems: 'center', gap: 4 },
   name: { fontSize: typography.sizes.xs, textAlign: 'center' },

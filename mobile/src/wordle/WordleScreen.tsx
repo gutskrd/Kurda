@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   saveText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   resultActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   statsCard: { gap: spacing.sm },
-  statsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 1 },
+  statsTitle: { ...sectionLabel },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
   stat: { width: '30%', alignItems: 'center' },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },

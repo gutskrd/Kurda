@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native'
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, typography } from '../theme/tokens';
+import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -98,7 +99,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
-  heading: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  heading: { ...sectionLabel },
   help: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
   row: {
     flexDirection: 'row',

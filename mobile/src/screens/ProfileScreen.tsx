@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground } from '../theme/glass';
-import { display } from '../theme/fonts';
+import { statValue, statCaption, sectionLabel, display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -214,10 +214,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   stat: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 2 },
-  statValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
-  statLabel: { fontSize: 11, letterSpacing: 0.3 },
+  statValue,
+  statLabel: statCaption,
   about: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
-  aboutTitle: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  aboutTitle: { ...sectionLabel },
   bio: { fontSize: typography.sizes.md, lineHeight: 22 },
   actions: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.lg },
 });

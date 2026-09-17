@@ -3,7 +3,7 @@ import { THEME_PREFERENCES, PREFERENCE_LABEL, type ThemePreference } from '../th
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   cardTitle: { ...display(typography.sizes.lg) },
   cardHint: { fontSize: typography.sizes.sm, marginTop: 4, lineHeight: 20 },
   activeNote: { fontSize: typography.sizes.sm, marginTop: spacing.md },
-  section: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 1, marginTop: spacing.sm, marginLeft: spacing.xs },
+  section: { ...sectionLabel, marginTop: spacing.sm, marginLeft: spacing.xs },
   previewHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dot: { width: 10, height: 10, borderRadius: radii.pill },
   tiles: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },

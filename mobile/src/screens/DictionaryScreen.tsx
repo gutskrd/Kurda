@@ -6,6 +6,7 @@ import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
 import { radii, spacing, typography } from '../theme/tokens';
+import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
   savedHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  recentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
+  recentsTitle: { ...sectionLabel },
   recentRow: { paddingVertical: spacing.sm },
   recentText: { fontSize: typography.sizes.md },
   savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },

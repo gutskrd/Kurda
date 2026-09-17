@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   heading: { ...display(typography.sizes.lg) },
   content: { gap: spacing.xs, paddingBottom: spacing.xl },
-  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginTop: spacing.lg, marginBottom: spacing.xs },
+  section: { ...sectionLabel, marginTop: spacing.lg, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   label: { fontSize: typography.sizes.md, flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

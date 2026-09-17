@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
@@ -124,6 +124,6 @@ const styles = StyleSheet.create({
   dialect: { fontSize: typography.sizes.sm, textTransform: 'capitalize' },
   senses: { marginTop: spacing.md },
   xrefs: { marginTop: spacing.lg, gap: spacing.xs },
-  xrefsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
+  xrefsTitle: { ...sectionLabel },
   xrefsList: { fontSize: typography.sizes.md },
 });
