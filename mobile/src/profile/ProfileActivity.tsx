@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { FeedCard } from '../feed/FeedCard';
 import type { FeedItem } from '../feed/types';
 import { radii, spacing, typography } from '../theme/tokens';
+import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -165,7 +166,7 @@ export function ProfileActivity({
 
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
-  heading: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  heading: { ...sectionLabel },
   tabs: {
     flexDirection: 'row',
     borderRadius: radii.pill,

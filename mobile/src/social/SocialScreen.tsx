@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   input: { borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
-  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginTop: spacing.md, marginBottom: spacing.xs },
+  section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.sm },
   rowMain: { flex: 1 },
   username: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

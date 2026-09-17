@@ -3,6 +3,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
 import { radii, spacing, typography } from '../theme/tokens';
+import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -88,7 +89,7 @@ export function ReceivedGifts(): React.JSX.Element | null {
 
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.xs },
-  heading: { fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: typography.weights.bold },
+  heading: { ...sectionLabel },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

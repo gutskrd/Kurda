@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { GlassCard, GlassRow, GlassSelect, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -232,15 +232,7 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', width: 64 },
   back: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   title: { ...display(typography.sizes.xl) },
-  section: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: spacing.md,
-    marginLeft: spacing.xs,
-    marginBottom: spacing.xs,
-  },
+  section: { ...sectionLabel, marginTop: spacing.md, marginLeft: spacing.xs, marginBottom: spacing.xs },
   groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
   pill: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },

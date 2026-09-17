@@ -15,7 +15,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   list: { padding: spacing.lg, gap: spacing.xs },
-  section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginTop: spacing.md, marginBottom: spacing.xs },
+  section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.md, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth },
   rowMain: { flex: 1, gap: 2 },
   itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

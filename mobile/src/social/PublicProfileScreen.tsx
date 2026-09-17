@@ -7,6 +7,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { statCaption, statValue } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -229,8 +230,8 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },
   stat: { alignItems: 'center', gap: 2 },
   statValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  statLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase' },
+  statValue,
+  statLabel: statCaption,
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
   primary: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
   primaryText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },

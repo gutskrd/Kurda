@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -134,6 +134,6 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   empty: { textAlign: 'center', marginTop: spacing.xl },
   section: { gap: spacing.xs, marginBottom: spacing.md },
-  sectionTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
+  sectionTitle: { ...sectionLabel },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
