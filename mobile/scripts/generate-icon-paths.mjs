@@ -52,6 +52,7 @@ const MAP = {
   bell: { glyph: 'Bell', note: 'web BellIcon' },
   gear: { glyph: 'Gear', note: 'web GearIcon' },
   close: { glyph: 'X', note: 'web CloseIcon' },
+  plus: { glyph: 'Plus', weight: 'bold', note: 'web PlusIcon, which it renders bold — add something, saying nothing about what' },
   heart: { glyph: 'Heart', note: 'web HeartIcon' },
   'heart-fill': { glyph: 'Heart', weight: 'fill', note: 'web HeartIcon at fill — already liked' },
   repost: { glyph: 'Repeat', note: 'web RepostIcon — putting it on your own wall' },

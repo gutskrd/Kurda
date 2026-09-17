@@ -119,12 +119,31 @@ export function CivakScreen(): React.JSX.Element {
         <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
 
         <View style={styles.filters}>
-          <Segmented
-            options={SECTIONS.map((s) => s.key)}
-            value={section}
-            onChange={chooseSection}
-            labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
-          />
+          <View style={styles.filterRow}>
+            <View style={styles.filterGrow}>
+              <Segmented
+                options={SECTIONS.map((s) => s.key)}
+                value={section}
+                onChange={chooseSection}
+                labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
+              />
+            </View>
+            {/*
+             * Posting lives here, next to the wall it adds to, exactly where
+             * the browser keeps it — and it is a plus, which says "add" and
+             * nothing about what. It used to be a sparkle in a pill floating
+             * over the bottom-right corner: an Android habit, and on iOS the
+             * one corner a tab bar has already claimed.
+             */}
+            <Pressable
+              onPress={() => setChoosing(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('post.open')}
+              style={({ pressed }) => [styles.plus, { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 }]}
+            >
+              <Icon name="plus" size={20} color={colors.textOnPrimary} />
+            </Pressable>
+          </View>
           {/* the second level appears only once there is a half to narrow */}
           {kinds.length > 0 && (
             <Segmented
@@ -143,7 +162,7 @@ export function CivakScreen(): React.JSX.Element {
             data={items}
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
-            contentContainerStyle={styles.list}
+            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
@@ -163,19 +182,6 @@ export function CivakScreen(): React.JSX.Element {
           }}
         />
 
-        {/* above the tab bar, not under it */}
-        <Pressable
-          onPress={() => setChoosing(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('post.open')}
-          style={({ pressed }) => [
-            styles.fab,
-            { bottom: tabBarInset + spacing.md, backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 },
-          ]}
-        >
-          <Icon name="sparkle" size={22} tone="onPrimary" />
-          <Text style={[styles.fabText, { color: colors.textOnPrimary }]}>{t('post.button')}</Text>
-        </Pressable>
       </View>
     </GradientBackground>
   );
@@ -233,19 +239,16 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl) },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
-  list: { paddingBottom: 120, gap: spacing.md },
+  list: { gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: 999,
-  },
-  fabText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  filterRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  filterGrow: { flex: 1 },
+  /*
+   * The browser shrinks its post button to a 38px circle at this width. iOS
+   * asks for 44 before it will call something tappable, so it is 44 here —
+   * same shape, same place, a thumb-sized version of it.
+   */
+  plus: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: 1, borderRadius: 20, gap: spacing.sm },
   sheetTitle: { ...display(typography.sizes.lg), marginBottom: spacing.xs },
