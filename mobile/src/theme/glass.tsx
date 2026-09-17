@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyl
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
 import { useI18n } from '../i18n/I18nContext';
@@ -319,7 +320,7 @@ const styles = StyleSheet.create({
   rowSeparator: { marginHorizontal: -spacing.lg },
   /** aligned with the title: the icon column plus the gap after it */
   rowSeparatorInset: { marginLeft: 26 + spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44, paddingVertical: 11 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 11 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: 17, fontWeight: typography.weights.regular },
@@ -328,7 +329,7 @@ const styles = StyleSheet.create({
   clay: {
     borderRadius: radii.sm,
     borderWidth: 1,
-    height: 44,
+    height: MIN_TOUCH_TARGET,
     paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',

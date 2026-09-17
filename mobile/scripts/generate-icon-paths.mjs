@@ -88,6 +88,7 @@ const MAP = {
   palette: { glyph: 'Palette', note: 'appearance' },
   globe: { glyph: 'Globe', note: 'the world, on the league and onboarding screens' },
   mail: { glyph: 'Envelope', note: 'sign in with an email address' },
+  'mail-fill': { glyph: 'Envelope', weight: 'fill', note: 'the sign-in row, where a hairline outline sits oddly beside two solid brand marks' },
   alert: { glyph: 'Warning', note: 'something went wrong' },
   apple: { glyph: 'AppleLogo', note: 'sign in with Apple' },
   google: { glyph: 'GoogleLogo', note: 'sign in with Google' },

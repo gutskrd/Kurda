@@ -6,6 +6,7 @@ import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
 
@@ -24,7 +25,18 @@ export function AuthScreenShell({
   /** optional breathing hero glyph shown above the title (sign-in choice) */
   hero?: IconName;
 }) {
-  const { colors } = useTheme();
+  const { colors } = useTheme();
+  /**
+   * A hero makes the head a centred composition.
+   *
+   * The two screens that show one — the sign-in choice and the code screen —
+   * also centre everything underneath: the glyph, the buttons, the code field,
+   * the links. Only the title and the line under it were left-aligned, so a
+   * centred 52pt glyph sat directly above a heading that started at the left
+   * edge. The screens with fields have no hero and stay left-aligned, because a
+   * centred heading above left-aligned labels is the same mistake mirrored.
+   */
+  const centred = Boolean(hero);
 
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -46,8 +58,14 @@ export function AuthScreenShell({
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
         <GlassCard>
           {hero ? <BreathingIcon name={hero} size={52} tone="primary" style={styles.hero} /> : null}
-          <Text style={[styles.title, { color: colors.textPrimary }, subtitle ? null : styles.titleAlone]}>{title}</Text>
-          {subtitle ? <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text> : null}
+          <Text
+            style={[styles.title, { color: colors.textPrimary }, subtitle ? null : styles.titleAlone, centred && styles.centred]}
+          >
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text style={[styles.subtitle, { color: colors.textSecondary }, centred && styles.centred]}>{subtitle}</Text>
+          ) : null}
           {children}
         </GlassCard>
       </KeyboardAvoidingView>
@@ -139,6 +157,8 @@ export function SubmitButton(props: { label: string; busy: boolean; onPress: () 
     <Pressable
       onPress={props.onPress}
       disabled={props.busy}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: props.busy, busy: props.busy }}
       testID="submit"
       style={({ pressed }) => [styles.buttonWrap, { opacity: props.busy ? 0.7 : pressed ? 0.92 : 1 }]}
     >
@@ -161,7 +181,7 @@ export function SubmitButton(props: { label: string; busy: boolean; onPress: () 
 export function LinkText(props: { label: string; onPress: () => void }) {
   const { colors } = useTheme();
   return (
-    <Pressable onPress={props.onPress} style={styles.link}>
+    <Pressable onPress={props.onPress} accessibilityRole="button" style={styles.link}>
       <Text style={[styles.linkText, { color: colors.primary }]}>{props.label}</Text>
     </Pressable>
   );
@@ -181,6 +201,7 @@ const styles = StyleSheet.create({
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   hero: { alignSelf: 'center', marginBottom: spacing.md },
   title: { ...display(typography.sizes.lg) },
+  centred: { textAlign: 'center' },
   titleAlone: { marginBottom: spacing.md },
   subtitle: { fontSize: typography.sizes.sm, marginTop: spacing.xs, marginBottom: spacing.md, lineHeight: 18 },
   field: { marginBottom: spacing.md },
@@ -208,6 +229,13 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  link: { marginTop: spacing.md, alignItems: 'center' },
+  /**
+   * A link is still something a finger has to land on.
+   *
+   * The text is 18pt tall, which was the whole tappable box — well under the
+   * 44 a fingertip needs. The box grew and the margin shrank by what it gained,
+   * so the words sit where they always did and the target around them does not.
+   */
+  link: { marginTop: spacing.xs, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
 });

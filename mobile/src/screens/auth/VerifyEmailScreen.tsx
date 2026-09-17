@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../../auth/AuthContext';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { AuthScreenShell, FormError, SubmitButton } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
@@ -107,12 +108,12 @@ export function VerifyEmailScreen() {
       <SubmitButton label={t('auth.verify.submit')} busy={busy} onPress={onVerify} />
 
       <View style={styles.actions}>
-        <Pressable onPress={onResend} disabled={cooldown > 0} accessibilityRole="button">
+        <Pressable onPress={onResend} disabled={cooldown > 0} accessibilityRole="button" style={styles.action}>
           <Text style={[styles.link, { color: cooldown > 0 ? colors.textSecondary : colors.primary }]}>
             {cooldown > 0 ? t('auth.verify.sendNewIn', { seconds: cooldown }) : t('auth.verify.sendNew')}
           </Text>
         </Pressable>
-        <Pressable onPress={() => void logout()} accessibilityRole="button">
+        <Pressable onPress={() => void logout()} accessibilityRole="button" style={styles.action}>
           <Text style={[styles.link, { color: colors.textSecondary }]}>{t('auth.verify.startOver')}</Text>
         </Pressable>
       </View>
@@ -122,7 +123,7 @@ export function VerifyEmailScreen() {
 
 const styles = StyleSheet.create({
   address: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center', marginBottom: spacing.sm },
-  subtitle: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
+  subtitle: { fontSize: typography.sizes.sm, marginBottom: spacing.md, textAlign: 'center' },
   notice: { fontSize: typography.sizes.sm, marginBottom: spacing.sm, textAlign: 'center' },
   codeInput: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -134,6 +135,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     marginBottom: spacing.sm,
   },
-  actions: { marginTop: spacing.lg, gap: spacing.md, alignItems: 'center' },
+  actions: { marginTop: spacing.sm, alignItems: 'center' },
+  // the 44pt rows carry their own separation; a gap on top of them is too much
+  action: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm },
   link: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
 });
