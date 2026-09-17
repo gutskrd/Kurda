@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
+import { myGroups, type Group } from '../groups/api';
 
 interface Conversation {
   userId: string;
@@ -26,11 +27,15 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
   const { t } = useI18n();
   const topInset = useScreenTopInset();
   const [convos, setConvos] = useState<Conversation[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       void client.get<{ conversations: Conversation[] }>('/chat/conversations').then((r) => {
         if (r.ok) setConvos(r.data.conversations);
+      });
+      void myGroups(client).then((r) => {
+        if (r.ok) setGroups(r.data.groups);
       });
     }, [client]),
   );
@@ -47,6 +52,30 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
           data={convos}
           keyExtractor={(c) => c.userId}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={
+            groups.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('groups.title')}</Text>
+                {groups.map((g) => (
+                  <Pressable
+                    key={g.id}
+                    style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+                    onPress={() => navigation.navigate('GroupThread', { groupId: g.id, name: g.name })}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('groups.open', { name: g.name })}
+                  >
+                    <InitialsAvatar name={g.name} id={g.id} size={44} />
+                    <View style={styles.main}>
+                      <Text style={[styles.name, { color: colors.textPrimary }]}>{g.name}</Text>
+                      <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {t('groups.members', { count: g.memberCount })}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => (
             <Pressable
               style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
@@ -56,7 +85,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
               <View style={styles.main}>
                 <Text style={[styles.name, { color: colors.textPrimary }]}>{item.username}</Text>
                 <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {item.lastFromMe ? 'You: ' : ''}{item.lastMessage}
+                  {item.lastFromMe ? t('chat.lastFromYou', { preview: item.lastMessage }) : item.lastMessage}
                 </Text>
               </View>
               {item.unread > 0 ? (
@@ -84,4 +113,6 @@ const styles = StyleSheet.create({
   badge: { minWidth: 22, height: 22, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   empty: { textAlign: 'center', marginTop: spacing.xl },
+  section: { gap: spacing.xs, marginBottom: spacing.md },
+  sectionTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
 });

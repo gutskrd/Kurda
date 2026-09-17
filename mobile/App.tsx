@@ -33,6 +33,7 @@ import { SocialScreen } from './src/social/SocialScreen';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
+import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
@@ -202,6 +203,15 @@ function SignedInRoot() {
       <RootStack.Screen name="Chat" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (
           <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GroupThreadScreen
+            groupId={route.params.groupId}
+            name={route.params.name}
+            onExit={() => navigation.goBack()}
+          />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Chats" options={{ presentation: 'card' }}>

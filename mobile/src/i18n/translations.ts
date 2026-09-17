@@ -677,7 +677,15 @@ export type TranslationKey =
   | 'post.button'
   | 'post.what'
   | 'post.words.sub'
-  | 'post.picture.sub';
+  | 'post.picture.sub'
+  | 'groups.title'
+  | 'groups.none'
+  | 'groups.sayHello'
+  | 'groups.messageDeleted'
+  | 'groups.members'
+  | 'groups.open'
+  | 'chat.typing'
+  | 'chat.lastFromYou';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1331,6 +1339,14 @@ const en: Catalog = {
   'post.what': 'What are you posting?',
   'post.words.sub': 'A saying, a story or a poem',
   'post.picture.sub': 'A picture or a meme',
+  'groups.title': 'Clubs',
+  'groups.none': 'You are not in any club yet.',
+  'groups.sayHello': 'Nothing here yet — say something.',
+  'groups.messageDeleted': 'This message was removed.',
+  'groups.members': '{count} members',
+  'groups.open': 'Open {name}',
+  'chat.typing': '{name} is typing…',
+  'chat.lastFromYou': 'You: {preview}',
 };
 
 const ku: Catalog = {
@@ -1983,6 +1999,14 @@ const ku: Catalog = {
   'post.what': 'Tu çi diweşînî?',
   'post.words.sub': 'Gotinek, çîrokek an helbestek',
   'post.picture.sub': 'Wêneyek an mîmek',
+  'groups.title': 'Klûb',
+  'groups.none': 'Tu hêj ne di tu klûbê de yî.',
+  'groups.sayHello': 'Hêj tiştek li vir tune — tiştekî bibêje.',
+  'groups.messageDeleted': 'Ev peyam hate rakirin.',
+  'groups.members': '{count} endam',
+  'groups.open': '{name} veke',
+  'chat.typing': '{name} dinivîse…',
+  'chat.lastFromYou': 'Tu: {preview}',
 };
 
 const de: Catalog = {
@@ -2635,6 +2659,14 @@ const de: Catalog = {
   'post.what': 'Was möchtest du posten?',
   'post.words.sub': 'Ein Spruch, eine Geschichte oder ein Gedicht',
   'post.picture.sub': 'Ein Bild oder ein Meme',
+  'groups.title': 'Clubs',
+  'groups.none': 'Du bist noch in keinem Club.',
+  'groups.sayHello': 'Hier ist noch nichts — sag etwas.',
+  'groups.messageDeleted': 'Diese Nachricht wurde entfernt.',
+  'groups.members': '{count} Mitglieder',
+  'groups.open': '{name} öffnen',
+  'chat.typing': '{name} schreibt…',
+  'chat.lastFromYou': 'Du: {preview}',
 };
 
 const es: Catalog = {
@@ -3287,6 +3319,14 @@ const es: Catalog = {
   'post.what': '¿Qué vas a publicar?',
   'post.words.sub': 'Un dicho, un relato o un poema',
   'post.picture.sub': 'Una imagen o un meme',
+  'groups.title': 'Clubes',
+  'groups.none': 'Todavía no estás en ningún club.',
+  'groups.sayHello': 'Aquí todavía no hay nada: di algo.',
+  'groups.messageDeleted': 'Este mensaje se ha eliminado.',
+  'groups.members': '{count} miembros',
+  'groups.open': 'Abrir {name}',
+  'chat.typing': '{name} está escribiendo…',
+  'chat.lastFromYou': 'Tú: {preview}',
 };
 
 const tr: Catalog = {
@@ -3939,6 +3979,14 @@ const tr: Catalog = {
   'post.what': 'Ne paylaşıyorsun?',
   'post.words.sub': 'Bir söz, bir hikâye ya da bir şiir',
   'post.picture.sub': 'Bir resim ya da bir mizah görseli',
+  'groups.title': 'Kulüpler',
+  'groups.none': 'Henüz hiçbir kulüpte değilsin.',
+  'groups.sayHello': 'Burada henüz bir şey yok — bir şeyler söyle.',
+  'groups.messageDeleted': 'Bu mesaj kaldırıldı.',
+  'groups.members': '{count} üye',
+  'groups.open': '{name} kulübünü aç',
+  'chat.typing': '{name} yazıyor…',
+  'chat.lastFromYou': 'Sen: {preview}',
 };
 
 const ar: Catalog = {
@@ -4591,6 +4639,14 @@ const ar: Catalog = {
   'post.what': 'ماذا تريد أن تنشر؟',
   'post.words.sub': 'قول أو قصة أو قصيدة',
   'post.picture.sub': 'صورة أو ميم',
+  'groups.title': 'النوادي',
+  'groups.none': 'لست في أي نادٍ بعد.',
+  'groups.sayHello': 'لا شيء هنا بعد — قل شيئًا.',
+  'groups.messageDeleted': 'تمت إزالة هذه الرسالة.',
+  'groups.members': '{count} عضوًا',
+  'groups.open': 'افتح {name}',
+  'chat.typing': '{name} يكتب…',
+  'chat.lastFromYou': 'أنت: {preview}',
 };
 
 const fr: Catalog = {
@@ -5243,6 +5299,14 @@ const fr: Catalog = {
   'post.what': 'Que voulez-vous publier ?',
   'post.words.sub': 'Un dicton, un récit ou un poème',
   'post.picture.sub': 'Une image ou un mème',
+  'groups.title': 'Clubs',
+  'groups.none': 'Tu n’es encore dans aucun club.',
+  'groups.sayHello': 'Il n’y a encore rien ici — dis quelque chose.',
+  'groups.messageDeleted': 'Ce message a été supprimé.',
+  'groups.members': '{count} membres',
+  'groups.open': 'Ouvrir {name}',
+  'chat.typing': '{name} écrit…',
+  'chat.lastFromYou': 'Toi : {preview}',
 };
 
 const nl: Catalog = {
@@ -5895,6 +5959,14 @@ const nl: Catalog = {
   'post.what': 'Wat ga je plaatsen?',
   'post.words.sub': 'Een gezegde, een verhaal of een gedicht',
   'post.picture.sub': 'Een foto of een meme',
+  'groups.title': 'Clubs',
+  'groups.none': 'Je zit nog in geen enkele club.',
+  'groups.sayHello': 'Hier is nog niets — zeg iets.',
+  'groups.messageDeleted': 'Dit bericht is verwijderd.',
+  'groups.members': '{count} leden',
+  'groups.open': '{name} openen',
+  'chat.typing': '{name} is aan het typen…',
+  'chat.lastFromYou': 'Jij: {preview}',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6548,6 +6620,14 @@ const ckb: Catalog = {
   'post.what': 'چی بڵاو دەکەیتەوە؟',
   'post.words.sub': 'قسەیەک، چیرۆکێک یان شیعرێک',
   'post.picture.sub': 'وێنەیەک یان میمێک',
+  'groups.title': 'کڵۆبەکان',
+  'groups.none': 'هێشتا لە هیچ کڵۆبێکدا نیت.',
+  'groups.sayHello': 'هێشتا هیچ لێرە نییە — شتێک بڵێ.',
+  'groups.messageDeleted': 'ئەم نامەیە لابرا.',
+  'groups.members': '{count} ئەندام',
+  'groups.open': '{name} بکەرەوە',
+  'chat.typing': '{name} دەنووسێت…',
+  'chat.lastFromYou': 'تۆ: {preview}',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
