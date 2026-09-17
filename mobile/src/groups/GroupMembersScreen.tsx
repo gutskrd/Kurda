@@ -9,7 +9,7 @@ import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import {
   groupDetail,
@@ -45,7 +45,6 @@ export function GroupMembersScreen({
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const me = user?.id ?? '';
 
   const [detail, setDetail] = useState<GroupDetail | null>(null);
@@ -127,16 +126,8 @@ export function GroupMembersScreen({
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.header}>
-          <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button">
-            <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-            {t('groups.membersOf')}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.screen}>
+        <ScreenHeader title={t('groups.membersOf')} onBack={onExit} />
 
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
@@ -214,15 +205,6 @@ export function GroupMembersScreen({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   list: { padding: spacing.lg, gap: spacing.xs },
   description: { fontSize: typography.sizes.sm, marginBottom: spacing.sm },
   row: {

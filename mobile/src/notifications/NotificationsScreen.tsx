@@ -6,10 +6,10 @@ import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
-import { sectionLabel, display } from '../theme/fonts';
+import { sectionLabel } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import {
   CATEGORY_LABEL,
   NOTIFICATION_CATEGORIES,
@@ -54,7 +54,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <Header onExit={onExit} />
+        <ScreenHeader title={t('notifications.title')} onBack={onExit} />
         <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load}>
           {() => {
             if (!prefs) return null;
@@ -126,26 +126,9 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
   );
 }
 
-function Header({ onExit }: { onExit: () => void }) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const topInset = useScreenTopInset();
-  return (
-    <View style={[styles.header, { paddingTop: topInset }]}>
-      <Pressable onPress={onExit} hitSlop={10}>
-        <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-      </Pressable>
-      <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.md, marginBottom: spacing.md },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  heading: { ...display(typography.sizes.lg) },
-  content: { gap: spacing.xs, paddingBottom: spacing.xl },
+  screen: { flex: 1 },
+  content: { gap: spacing.xs, padding: spacing.lg, paddingBottom: spacing.xl },
   section: { ...sectionLabel, marginTop: spacing.lg, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   label: { fontSize: typography.sizes.md, flex: 1 },

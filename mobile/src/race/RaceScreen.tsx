@@ -8,7 +8,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { finishRace, startRace, type RaceGame, type RaceLength, type RaceResult } from './raceApi';
 
 const LENGTHS: readonly RaceLength[] = [1, 2, 3];
@@ -39,7 +39,6 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [game, setGame] = useState<RaceGame | null>(null);
   const [length, setLength] = useState<RaceLength>(1);
@@ -108,18 +107,12 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   return (
     <GradientBackground>
+      <ScreenHeader title={t('games.race.name')} onBack={onExit} />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: topInset }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" accessibilityLabel={t('common.back')} hitSlop={10}>
-            <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('games.race.name')}</Text>
-          <View style={styles.headerSpacer} />
-        </View>
 
         {!game ? (
           <GlassCard style={styles.card}>
@@ -252,9 +245,6 @@ function Figure({ value, label }: { value: string; label: string }): React.JSX.E
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  headerSpacer: { width: 22 },
-  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

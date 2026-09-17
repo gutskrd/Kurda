@@ -1,10 +1,11 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { THEME_PREFERENCES, PREFERENCE_LABEL, type ThemePreference } from '../theme/appearance';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 
 /**
  * Appearance settings + live design showcase (KUR-268 / KUR-270). Picks
@@ -17,14 +18,8 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
 
   return (
     <GradientBackground>
+      <ScreenHeader title={t('appearance.title')} onBack={onExit} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10}>
-            <Text style={[styles.back, { color: colors.textSecondary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('appearance.title')}</Text>
-          <View style={{ width: 44 }} />
-        </View>
 
         <GlassCard>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{t('appearance.theme')}</Text>
@@ -83,10 +78,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  back: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  title: { ...display(typography.sizes.xl) },
+  content: { padding: spacing.lg, gap: spacing.lg },
   cardTitle: { ...display(typography.sizes.lg) },
   cardHint: { fontSize: typography.sizes.sm, marginTop: 4, lineHeight: 20 },
   activeNote: { fontSize: typography.sizes.sm, marginTop: spacing.md },

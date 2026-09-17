@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -10,7 +10,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import {
   createMatch,
   getMatch,
@@ -407,23 +407,14 @@ function Shell({
   onExit: () => void;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const topInset = useScreenTopInset();
   return (
     <GradientBackground>
+      <ScreenHeader title={title} onBack={onExit} />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: topInset }]}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" accessibilityLabel={t('common.back')} hitSlop={10}>
-            <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
-          <View style={styles.headerSpacer} />
-        </View>
         {children}
       </ScrollView>
     </GradientBackground>
@@ -432,11 +423,8 @@ function Shell({
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  headerSpacer: { width: 22 },
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it
-  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

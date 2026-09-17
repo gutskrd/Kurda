@@ -6,10 +6,9 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { relativeTime, resolveDeepLink, type InboxItem } from './inbox.js';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -19,7 +18,6 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
@@ -64,19 +62,19 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}>
-            <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
-          {hasUnread ? (
-            <Pressable onPress={markAll} hitSlop={8}>
-              <Text style={[styles.markAll, { color: colors.primary }]}>{t('notifications.markAllRead')}</Text>
-            </Pressable>
-          ) : (
-            <View style={{ width: 1 }} />
-          )}
-        </View>
+        <ScreenHeader
+          title={t('notifications.title')}
+          onBack={onExit}
+          right={
+            hasUnread ? (
+              <Pressable onPress={markAll} hitSlop={8} accessibilityRole="button">
+                <Text style={[styles.markAll, { color: colors.primary }]} numberOfLines={1}>
+                  {t('notifications.markAllRead')}
+                </Text>
+              </Pressable>
+            ) : null
+          }
+        />
 
         <AsyncBoundary
           loading={items === null}
@@ -114,14 +112,11 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingTop: spacing.md, marginBottom: spacing.md },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  heading: { ...display(typography.sizes.lg) },
+  screen: { flex: 1 },
   markAll: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   dim: {},
-  list: { gap: spacing.sm, paddingBottom: spacing.xl },
+  list: { gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xl },
   card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md },
   dot: { width: 8, height: 8, borderRadius: radii.pill },
   dotSpacer: { width: 8 },

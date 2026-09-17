@@ -1,9 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { spacing } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
-import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { MarkdownView } from './MarkdownView';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -12,18 +10,11 @@ import { useI18n } from '../i18n/I18nContext';
  * mid-lesson never unmounts the player — session state is untouched.
  */
 export function GrammarTips({ source, onClose }: { source: string; onClose: () => void }) {
-  const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('grammar.title')}</Text>
-          <Pressable onPress={onClose} accessibilityLabel={t('grammar.closeTips')} hitSlop={12}>
-            <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
-          </Pressable>
-        </View>
+        <ScreenHeader title={t('grammar.title')} onBack={onClose} leading="close" hairline />
         <ScrollView contentContainerStyle={styles.body}>
           <MarkdownView source={source} />
         </ScrollView>
@@ -34,16 +25,5 @@ export function GrammarTips({ source, onClose }: { source: string; onClose: () =
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  title: { ...display(typography.sizes.xl) },
-  close: { fontSize: typography.sizes.lg },
   body: { padding: spacing.lg },
 });

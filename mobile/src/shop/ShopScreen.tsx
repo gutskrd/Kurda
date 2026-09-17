@@ -19,7 +19,7 @@ import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import {
   canAfford,
   currencyLabel,
@@ -43,7 +43,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   const [loading, setLoading] = useState(true);
@@ -113,22 +112,23 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}>
-            <Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('profile.shop')}</Text>
-          <View style={styles.balances}>
-            <View style={styles.balanceChip}>
-              <Icon name="coin" size={18} color={colors.gold} />
-              <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.zer}</Text>
+        <ScreenHeader
+          title={t('profile.shop')}
+          onBack={onExit}
+          leading="close"
+          right={
+            <View style={styles.balances}>
+              <View style={styles.balanceChip}>
+                <Icon name="coin" size={18} color={colors.gold} />
+                <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.zer}</Text>
+              </View>
+              <View style={styles.balanceChip}>
+                <Icon name="gem" size={18} color={colors.accent} />
+                <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.gems}</Text>
+              </View>
             </View>
-            <View style={styles.balanceChip}>
-              <Icon name="gem" size={18} color={colors.accent} />
-              <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.gems}</Text>
-            </View>
-          </View>
-        </View>
+          }
+        />
 
         <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load}>
           {/* the inbox sits above the catalogue: what arrived matters more than what is for sale */}
@@ -275,9 +275,6 @@ function ItemDetail({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md },
-  close: { fontSize: typography.sizes.lg },
-  title: { ...display(typography.sizes.xl), flex: 1 },
   balances: { flexDirection: 'row', gap: spacing.md },
   balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
