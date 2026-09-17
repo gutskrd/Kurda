@@ -97,7 +97,7 @@ export function GlassRow({
   const titleColor = destructive ? colors.danger : colors.textPrimary;
   const body = (pressed: boolean) => (
     <>
-      {first ? null : <Separator style={styles.rowSeparator} />}
+      {first ? null : <Separator style={[styles.rowSeparator, icon ? styles.rowSeparatorInset : null]} />}
       <View style={[styles.row, pressed && { opacity: 0.6 }]}>
         {icon ? (
           <View style={styles.rowIcon}>
@@ -309,12 +309,14 @@ const styles = StyleSheet.create({
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '55%', opacity: 0.6 },
   separator: { height: StyleSheet.hairlineWidth, alignSelf: 'stretch' },
   rowSeparator: { marginHorizontal: -spacing.lg },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52, paddingVertical: spacing.sm },
+  /** aligned with the title: the icon column plus the gap after it */
+  rowSeparatorInset: { marginLeft: 26 + spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 44, paddingVertical: 11 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  rowTitle: { fontSize: 17, fontWeight: typography.weights.regular },
   rowSubtitle: { fontSize: typography.sizes.sm },
-  rowValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  rowValue: { fontSize: 17 },
   clay: {
     borderRadius: radii.sm,
     borderWidth: 1,

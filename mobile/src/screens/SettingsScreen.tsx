@@ -13,7 +13,7 @@ import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
-import { VISIBILITY_LABEL, type Visibility } from '../social/format';
+import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, type Visibility } from '../social/format';
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -80,10 +80,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       accessibilityState={{ selected: active }}
       style={[
         styles.pill,
-        { backgroundColor: active ? colors.primary : colors.controlTrack, borderColor: active ? colors.primary : colors.glassBorder },
+        {
+          backgroundColor: colors.controlTrack,
+          borderColor: active ? colors.textPrimary : colors.glassBorder,
+        },
       ]}
     >
-      <Text style={[styles.pillText, { color: active ? colors.textOnPrimary : colors.textSecondary }, active && styles.pillTextActive]}>
+      <Text style={[styles.pillText, { color: active ? colors.textPrimary : colors.textSecondary }, active && styles.pillTextActive]}>
         {label}
       </Text>
     </Pressable>
@@ -106,7 +109,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassSelect
             first
             label={t('settings.language')}
-            icon="book"
+            icon="translate"
             value={locale}
             options={LOCALES}
             labelOf={(l) => LOCALE_LABEL[l as Locale]}
@@ -138,10 +141,12 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <GlassCard>
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.privacy.title')}</Text>
           <View style={styles.pillRow}>
-            {(['everyone', 'friends', 'nobody'] as Visibility[]).map((v) => (
+            {VISIBILITIES.map((v) => (
               <Pill key={v} label={t(VISIBILITY_LABEL[v])} active={visibility === v} onPress={() => changeVisibility(v)} />
             ))}
           </View>
+          {/* a setting about who sees you is worth a sentence, not just a word */}
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
         </GlassCard>
 
         {/*
@@ -153,7 +158,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <GlassCard padding="tight">
           <GlassRow
             first
-            icon="close"
+            icon="person"
             iconColor={colors.textSecondary}
             title={t('settings.blocked.title')}
             onPress={() => navigation.navigate('BlockedUsers')}
@@ -163,8 +168,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
         <GlassCard padding="tight">
           <GlassRow first icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
-          <GlassRow icon="person" title={t('profile.logout')} onPress={logout} destructive />
-          <GlassRow icon="close" iconColor={colors.textSecondary} title={t('settings.delete.title')} destructive onPress={confirmDelete} />
+          <GlassRow icon="sign-out" title={t('profile.logout')} onPress={logout} destructive />
+          <GlassRow icon="trash" title={t('settings.delete.title')} destructive onPress={confirmDelete} />
         </GlassCard>
       </ScrollView>
     </GradientBackground>
@@ -190,5 +195,6 @@ const styles = StyleSheet.create({
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
   pill: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },
   pillText: { fontSize: typography.sizes.sm },
+  hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
   pillTextActive: { fontWeight: typography.weights.bold },
 });
