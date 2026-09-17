@@ -11,6 +11,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileFriends } from '../profile/ProfileFriends';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { StreakBadge } from '../streak/StreakBadge';
 import { useI18n } from '../i18n/I18nContext';
@@ -156,6 +157,8 @@ export function ProfileScreen() {
             {me?.bio || t('profile.noBio')}
           </Text>
         </View>
+
+        {user?.id ? <ProfileFriends userId={user.id} /> : null}
 
         {user?.id ? <ProfileActivity userId={user.id} own /> : null}
 
