@@ -778,7 +778,16 @@ export type TranslationKey =
   | 'edit.noBackgrounds'
   | 'edit.noIcons'
   | 'edit.showPremiumIcon'
-  | 'edit.loadingCosmetics';
+  | 'edit.loadingCosmetics'
+  | 'settings.sessions.title'
+  | 'settings.sessions.help'
+  | 'settings.sessions.signOutEverywhere'
+  | 'settings.data.title'
+  | 'settings.data.help'
+  | 'settings.data.request'
+  | 'settings.data.requesting'
+  | 'settings.data.requested'
+  | 'settings.data.failed';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1533,6 +1542,15 @@ const en: Catalog = {
   'edit.noIcons': 'No icons available yet.',
   'edit.showPremiumIcon': 'Show premium icon on my profile',
   'edit.loadingCosmetics': 'Loading cosmetics…',
+  'settings.sessions.title': 'Sessions',
+  'settings.sessions.help': 'Sign out here, or on every device at once.',
+  'settings.sessions.signOutEverywhere': 'Log out everywhere',
+  'settings.data.title': 'Your data',
+  'settings.data.help': 'Request a copy of your MyKurda data. We’ll prepare it and email you when it’s ready.',
+  'settings.data.request': 'Request data export',
+  'settings.data.requesting': 'Requesting…',
+  'settings.data.requested': 'Export requested — you’ll be notified when it’s ready.',
+  'settings.data.failed': 'Couldn’t request the export.',
 };
 
 const ku: Catalog = {
@@ -2286,6 +2304,15 @@ const ku: Catalog = {
   'edit.noIcons': 'Hê îkon tune ne.',
   'edit.showPremiumIcon': 'Îkona premium li ser profîla min nîşan bide',
   'edit.loadingCosmetics': 'Xemil tên barkirin…',
+  'settings.sessions.title': 'Danişîn',
+  'settings.sessions.help': 'Li vir derkeve, an jî li ser hemû cîhazan bi carekê.',
+  'settings.sessions.signOutEverywhere': 'Li her derê derkeve',
+  'settings.data.title': 'Daneyên te',
+  'settings.data.help': 'Kopiyeke daneyên xwe yên MyKurda bixwaze. Em ê wê amade bikin û gava amade bû ji te re e-nameyekê bişînin.',
+  'settings.data.request': 'Daxwaza derxistina daneyan bike',
+  'settings.data.requesting': 'Tê xwestin…',
+  'settings.data.requested': 'Daxwaz hat kirin — gava amade bû dê ji te re were gotin.',
+  'settings.data.failed': 'Daxwaz nehat kirin.',
 };
 
 const de: Catalog = {
@@ -3039,6 +3066,15 @@ const de: Catalog = {
   'edit.noIcons': 'Noch keine Symbole verfügbar.',
   'edit.showPremiumIcon': 'Premium-Symbol auf meinem Profil zeigen',
   'edit.loadingCosmetics': 'Kosmetik wird geladen…',
+  'settings.sessions.title': 'Sitzungen',
+  'settings.sessions.help': 'Melde dich hier ab — oder auf allen Geräten gleichzeitig.',
+  'settings.sessions.signOutEverywhere': 'Überall abmelden',
+  'settings.data.title': 'Deine Daten',
+  'settings.data.help': 'Fordere eine Kopie deiner MyKurda-Daten an. Wir bereiten sie vor und schreiben dir, sobald sie fertig ist.',
+  'settings.data.request': 'Datenexport anfordern',
+  'settings.data.requesting': 'Wird angefordert…',
+  'settings.data.requested': 'Export angefordert — du wirst benachrichtigt, sobald er fertig ist.',
+  'settings.data.failed': 'Der Export konnte nicht angefordert werden.',
 };
 
 const es: Catalog = {
@@ -3792,6 +3828,15 @@ const es: Catalog = {
   'edit.noIcons': 'Todavía no hay iconos disponibles.',
   'edit.showPremiumIcon': 'Mostrar el icono premium en mi perfil',
   'edit.loadingCosmetics': 'Cargando cosméticos…',
+  'settings.sessions.title': 'Sesiones',
+  'settings.sessions.help': 'Cierra sesión aquí, o en todos los dispositivos a la vez.',
+  'settings.sessions.signOutEverywhere': 'Cerrar sesión en todas partes',
+  'settings.data.title': 'Tus datos',
+  'settings.data.help': 'Solicita una copia de tus datos de MyKurda. La prepararemos y te avisaremos por correo cuando esté lista.',
+  'settings.data.request': 'Solicitar exportación de datos',
+  'settings.data.requesting': 'Solicitando…',
+  'settings.data.requested': 'Exportación solicitada: te avisaremos cuando esté lista.',
+  'settings.data.failed': 'No se ha podido solicitar la exportación.',
 };
 
 const tr: Catalog = {
@@ -4545,6 +4590,15 @@ const tr: Catalog = {
   'edit.noIcons': 'Henüz simge yok.',
   'edit.showPremiumIcon': 'Premium simgesini profilimde göster',
   'edit.loadingCosmetics': 'Görsel eşyalar yükleniyor…',
+  'settings.sessions.title': 'Oturumlar',
+  'settings.sessions.help': 'Buradan çık, ya da tüm cihazlarda tek seferde.',
+  'settings.sessions.signOutEverywhere': 'Her yerde çıkış yap',
+  'settings.data.title': 'Verilerin',
+  'settings.data.help': 'MyKurda verilerinin bir kopyasını iste. Hazırlayıp hazır olduğunda sana e-posta göndeririz.',
+  'settings.data.request': 'Veri dışa aktarımı iste',
+  'settings.data.requesting': 'İsteniyor…',
+  'settings.data.requested': 'Dışa aktarma istendi — hazır olduğunda haber verilecek.',
+  'settings.data.failed': 'Dışa aktarma istenemedi.',
 };
 
 const ar: Catalog = {
@@ -5298,6 +5352,15 @@ const ar: Catalog = {
   'edit.noIcons': 'لا توجد أيقونات متاحة بعد.',
   'edit.showPremiumIcon': 'أظهر أيقونة بريميوم في ملفي الشخصي',
   'edit.loadingCosmetics': 'جارٍ تحميل التزيينات…',
+  'settings.sessions.title': 'الجلسات',
+  'settings.sessions.help': 'سجّل الخروج من هنا، أو من جميع الأجهزة دفعة واحدة.',
+  'settings.sessions.signOutEverywhere': 'تسجيل الخروج من كل مكان',
+  'settings.data.title': 'بياناتك',
+  'settings.data.help': 'اطلب نسخة من بيانات MyKurda الخاصة بك. سنجهّزها ونراسلك عندما تكون جاهزة.',
+  'settings.data.request': 'طلب تصدير البيانات',
+  'settings.data.requesting': 'جارٍ الطلب…',
+  'settings.data.requested': 'تم طلب التصدير — سنُعلمك عندما يكون جاهزًا.',
+  'settings.data.failed': 'تعذّر طلب التصدير.',
 };
 
 const fr: Catalog = {
@@ -6051,6 +6114,15 @@ const fr: Catalog = {
   'edit.noIcons': 'Aucune icône disponible pour l’instant.',
   'edit.showPremiumIcon': 'Afficher l’icône premium sur mon profil',
   'edit.loadingCosmetics': 'Chargement des cosmétiques…',
+  'settings.sessions.title': 'Sessions',
+  'settings.sessions.help': 'Déconnectez-vous ici, ou sur tous vos appareils d’un coup.',
+  'settings.sessions.signOutEverywhere': 'Se déconnecter partout',
+  'settings.data.title': 'Vos données',
+  'settings.data.help': 'Demande une copie de tes données MyKurda. Nous la préparons et t’écrivons dès qu’elle est prête.',
+  'settings.data.request': 'Demander un export de mes données',
+  'settings.data.requesting': 'Demande en cours…',
+  'settings.data.requested': 'Export demandé — tu seras prévenu dès qu’il sera prêt.',
+  'settings.data.failed': 'La demande d’export n’a pas abouti.',
 };
 
 const nl: Catalog = {
@@ -6804,6 +6876,15 @@ const nl: Catalog = {
   'edit.noIcons': 'Nog geen iconen beschikbaar.',
   'edit.showPremiumIcon': 'Premium-icoon op mijn profiel tonen',
   'edit.loadingCosmetics': 'Cosmetica laden…',
+  'settings.sessions.title': 'Sessies',
+  'settings.sessions.help': 'Log hier uit, of in één keer op al je apparaten.',
+  'settings.sessions.signOutEverywhere': 'Overal uitloggen',
+  'settings.data.title': 'Jouw gegevens',
+  'settings.data.help': 'Vraag een kopie van je MyKurda-gegevens aan. We maken die klaar en mailen je zodra het zover is.',
+  'settings.data.request': 'Gegevensexport aanvragen',
+  'settings.data.requesting': 'Aanvragen…',
+  'settings.data.requested': 'Export aangevraagd — je krijgt bericht zodra die klaar is.',
+  'settings.data.failed': 'De export kon niet worden aangevraagd.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7558,6 +7639,15 @@ const ckb: Catalog = {
   'edit.noIcons': 'هێشتا ئایکۆن بەردەست نییە.',
   'edit.showPremiumIcon': 'ئایکۆنی پریمیۆم لەسەر پرۆفایلەکەم پیشان بدە',
   'edit.loadingCosmetics': 'ڕازاندنەوەکان بار دەکرێن…',
+  'settings.sessions.title': 'دانیشتنەکان',
+  'settings.sessions.help': 'لێرە بچۆ دەرەوە، یان لە هەموو ئامێرەکان بە یەک جار.',
+  'settings.sessions.signOutEverywhere': 'لە هەموو شوێنێک بچۆ دەرەوە',
+  'settings.data.title': 'داتاکانت',
+  'settings.data.help': 'داوای کۆپییەک لە داتاکانی MyKurda بکە. ئامادەی دەکەین و کاتێک ئامادە بوو ئیمەیڵت بۆ دەنێرین.',
+  'settings.data.request': 'داوای هەناردەی داتا بکە',
+  'settings.data.requesting': 'داوا دەکرێت…',
+  'settings.data.requested': 'داواکاری کرا — کاتێک ئامادە بوو ئاگادار دەکرێیتەوە.',
+  'settings.data.failed': 'داواکارییەکە نەکرا.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

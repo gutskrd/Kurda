@@ -53,6 +53,7 @@ const MAP = {
   gear: { glyph: 'Gear', note: 'web GearIcon' },
   'sign-out': { glyph: 'SignOut', note: 'web SignOutIcon — leaving, not a person' },
   trash: { glyph: 'Trash', note: 'web TrashIcon — throw away, always behind a confirm' },
+  download: { glyph: 'DownloadSimple', note: 'a copy of your data, coming to you' },
   translate: { glyph: 'Translate', note: 'the language the interface is in' },
   close: { glyph: 'X', note: 'web CloseIcon' },
   plus: { glyph: 'Plus', weight: 'bold', note: 'web PlusIcon, which it renders bold — add something, saying nothing about what' },
