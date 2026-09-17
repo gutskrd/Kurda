@@ -752,7 +752,17 @@ export type TranslationKey =
   | 'profile.tab.likes'
   | 'repost.tab'
   | 'nav.games'
-  | 'profile.nothingHere';
+  | 'profile.nothingHere'
+  | 'shop.sendGift'
+  | 'shop.giftTo'
+  | 'shop.giftPaidByYou'
+  | 'shop.onItsWay'
+  | 'shop.yourGifts'
+  | 'shop.giftFrom'
+  | 'shop.giftFromFormer'
+  | 'shop.noFriendsToGift'
+  | 'shop.searchFriends'
+  | 'shop.sendItem';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1481,6 +1491,16 @@ const en: Catalog = {
   'repost.tab': 'Reposts',
   'nav.games': 'Games',
   'profile.nothingHere': 'Nothing here yet.',
+  'shop.sendGift': 'Send as a gift',
+  'shop.giftTo': 'Gift {name} to a friend',
+  'shop.giftPaidByYou': '{price} {currency}, paid by you. They get the item, and a notification saying it came from you.',
+  'shop.onItsWay': '{name} is on its way to {to}.',
+  'shop.yourGifts': 'Your gifts',
+  'shop.giftFrom': 'from {name}',
+  'shop.giftFromFormer': 'from a former member',
+  'shop.noFriendsToGift': 'You have no friends to gift to yet — gifts can only be sent to friends.',
+  'shop.searchFriends': 'Search friends…',
+  'shop.sendItem': 'Send {name}',
 };
 
 const ku: Catalog = {
@@ -2208,6 +2228,16 @@ const ku: Catalog = {
   'repost.tab': 'Ji nû ve weşandin',
   'nav.games': 'Lîstik',
   'profile.nothingHere': 'Hê li vir tiştek tune.',
+  'shop.sendGift': 'Wek diyarî bişîne',
+  'shop.giftTo': '{name} wek diyarî ji hevalekî re bişîne',
+  'shop.giftPaidByYou': '{price} {currency}, ji aliyê te ve tê dayîn. Ew tiştê distîne, û agahdariyekê ku dibêje ji te hatiye.',
+  'shop.onItsWay': '{name} di rê de ye bo {to}.',
+  'shop.yourGifts': 'Diyariyên te',
+  'shop.giftFrom': 'ji {name}',
+  'shop.giftFromFormer': 'ji endamekî berê',
+  'shop.noFriendsToGift': 'Hê hevalên te tune ne ku diyariyê bişînî — diyarî tenê ji hevalan re tên şandin.',
+  'shop.searchFriends': 'Li hevalan bigere…',
+  'shop.sendItem': '{name} bişîne',
 };
 
 const de: Catalog = {
@@ -2935,6 +2965,16 @@ const de: Catalog = {
   'repost.tab': 'Geteilt',
   'nav.games': 'Spiele',
   'profile.nothingHere': 'Hier ist noch nichts.',
+  'shop.sendGift': 'Als Geschenk senden',
+  'shop.giftTo': '{name} einem Freund schenken',
+  'shop.giftPaidByYou': '{price} {currency}, von dir bezahlt. Die Person bekommt den Gegenstand und eine Nachricht, dass er von dir ist.',
+  'shop.onItsWay': '{name} ist unterwegs zu {to}.',
+  'shop.yourGifts': 'Deine Geschenke',
+  'shop.giftFrom': 'von {name}',
+  'shop.giftFromFormer': 'von einem ehemaligen Mitglied',
+  'shop.noFriendsToGift': 'Du hast noch keine Freunde zum Beschenken — Geschenke gehen nur an Freunde.',
+  'shop.searchFriends': 'Freunde suchen…',
+  'shop.sendItem': '{name} senden',
 };
 
 const es: Catalog = {
@@ -3662,6 +3702,16 @@ const es: Catalog = {
   'repost.tab': 'Republicados',
   'nav.games': 'Juegos',
   'profile.nothingHere': 'Aquí todavía no hay nada.',
+  'shop.sendGift': 'Enviar como regalo',
+  'shop.giftTo': 'Regalar {name} a un amigo',
+  'shop.giftPaidByYou': '{price} {currency}, los pagas tú. Recibirá el artículo y un aviso de que viene de tu parte.',
+  'shop.onItsWay': '{name} va camino de {to}.',
+  'shop.yourGifts': 'Tus regalos',
+  'shop.giftFrom': 'de {name}',
+  'shop.giftFromFormer': 'de un antiguo miembro',
+  'shop.noFriendsToGift': 'Todavía no tienes amigos a quienes regalar: los regalos solo se envían a amigos.',
+  'shop.searchFriends': 'Buscar amigos…',
+  'shop.sendItem': 'Enviar {name}',
 };
 
 const tr: Catalog = {
@@ -4389,6 +4439,16 @@ const tr: Catalog = {
   'repost.tab': 'Yeniden paylaşılanlar',
   'nav.games': 'Oyunlar',
   'profile.nothingHere': 'Burada henüz bir şey yok.',
+  'shop.sendGift': 'Hediye olarak gönder',
+  'shop.giftTo': '{name} ürününü bir arkadaşına hediye et',
+  'shop.giftPaidByYou': '{price} {currency}, ödemeyi sen yaparsın. Kişi ürünü ve senden geldiğini söyleyen bir bildirim alır.',
+  'shop.onItsWay': '{name}, {to} kişisine gönderiliyor.',
+  'shop.yourGifts': 'Hediyelerin',
+  'shop.giftFrom': '{name} gönderdi',
+  'shop.giftFromFormer': 'eski bir üyeden',
+  'shop.noFriendsToGift': 'Henüz hediye edebileceğin bir arkadaşın yok — hediyeler yalnızca arkadaşlara gönderilir.',
+  'shop.searchFriends': 'Arkadaş ara…',
+  'shop.sendItem': '{name} gönder',
 };
 
 const ar: Catalog = {
@@ -5116,6 +5176,16 @@ const ar: Catalog = {
   'repost.tab': 'المعاد نشرها',
   'nav.games': 'الألعاب',
   'profile.nothingHere': 'لا شيء هنا بعد.',
+  'shop.sendGift': 'أرسلها هدية',
+  'shop.giftTo': 'أهدِ {name} لصديق',
+  'shop.giftPaidByYou': '{price} {currency}، تدفعها أنت. سيحصل على العنصر مع إشعار بأنه منك.',
+  'shop.onItsWay': '{name} في طريقه إلى {to}.',
+  'shop.yourGifts': 'هداياك',
+  'shop.giftFrom': 'من {name}',
+  'shop.giftFromFormer': 'من عضو سابق',
+  'shop.noFriendsToGift': 'ليس لديك أصدقاء لتهديهم بعد — تُرسل الهدايا للأصدقاء فقط.',
+  'shop.searchFriends': 'ابحث عن أصدقاء…',
+  'shop.sendItem': 'إرسال {name}',
 };
 
 const fr: Catalog = {
@@ -5843,6 +5913,16 @@ const fr: Catalog = {
   'repost.tab': 'Republiés',
   'nav.games': 'Jeux',
   'profile.nothingHere': 'Rien ici pour l’instant.',
+  'shop.sendGift': 'Envoyer en cadeau',
+  'shop.giftTo': 'Offrir {name} à un ami',
+  'shop.giftPaidByYou': '{price} {currency}, à ta charge. La personne reçoit l’objet et une notification disant qu’il vient de toi.',
+  'shop.onItsWay': '{name} est en route pour {to}.',
+  'shop.yourGifts': 'Tes cadeaux',
+  'shop.giftFrom': 'de {name}',
+  'shop.giftFromFormer': 'd’un ancien membre',
+  'shop.noFriendsToGift': 'Tu n’as pas encore d’amis à qui offrir — les cadeaux ne vont qu’aux amis.',
+  'shop.searchFriends': 'Rechercher des amis…',
+  'shop.sendItem': 'Envoyer {name}',
 };
 
 const nl: Catalog = {
@@ -6570,6 +6650,16 @@ const nl: Catalog = {
   'repost.tab': 'Opnieuw geplaatst',
   'nav.games': 'Spellen',
   'profile.nothingHere': 'Hier is nog niets.',
+  'shop.sendGift': 'Als cadeau versturen',
+  'shop.giftTo': 'Geef {name} cadeau aan een vriend',
+  'shop.giftPaidByYou': '{price} {currency}, door jou betaald. Zij krijgen het item en een melding dat het van jou komt.',
+  'shop.onItsWay': '{name} is onderweg naar {to}.',
+  'shop.yourGifts': 'Je cadeaus',
+  'shop.giftFrom': 'van {name}',
+  'shop.giftFromFormer': 'van een voormalig lid',
+  'shop.noFriendsToGift': 'Je hebt nog geen vrienden om aan te geven — cadeaus kunnen alleen naar vrienden.',
+  'shop.searchFriends': 'Zoek vrienden…',
+  'shop.sendItem': '{name} versturen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7298,6 +7388,16 @@ const ckb: Catalog = {
   'repost.tab': 'دووبارە بڵاوکراوەکان',
   'nav.games': 'یاری',
   'profile.nothingHere': 'هێشتا هیچ لێرە نییە.',
+  'shop.sendGift': 'وەک دیاری بنێرە',
+  'shop.giftTo': '{name} وەک دیاری بۆ هاوڕێیەک بنێرە',
+  'shop.giftPaidByYou': '{price} {currency}، تۆ دەیدەیت. ئەو شتەکە وەردەگرێت، لەگەڵ ئاگادارییەک کە دەڵێت لە تۆوە هاتووە.',
+  'shop.onItsWay': '{name} لە ڕێگادایە بۆ {to}.',
+  'shop.yourGifts': 'دیارییەکانت',
+  'shop.giftFrom': 'لە {name}',
+  'shop.giftFromFormer': 'لە ئەندامێکی پێشوو',
+  'shop.noFriendsToGift': 'هێشتا هاوڕێت نییە دیاریی بۆ بنێریت — دیاری تەنها بۆ هاوڕێ دەنێردرێت.',
+  'shop.searchFriends': 'بەدوای هاوڕێدا بگەڕێ…',
+  'shop.sendItem': '{name} بنێرە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
