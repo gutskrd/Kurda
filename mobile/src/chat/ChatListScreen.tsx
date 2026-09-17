@@ -8,6 +8,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Icon } from '../theme/Icon';
 import { useI18n } from '../i18n/I18nContext';
 import { myGroups, type Group } from '../groups/api';
 
@@ -53,9 +54,25 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
           keyExtractor={(c) => c.userId}
           contentContainerStyle={styles.list}
           ListHeaderComponent={
-            groups.length > 0 ? (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('groups.title')}</Text>
+            /*
+              Always rendered, even with no clubs. The heading is the only way
+              through to discovery, and someone in no clubs is exactly the
+              person who needs to find one.
+            */
+            <View style={styles.section}>
+              {
+                /* the heading is the way in: a club you have not joined is
+                   not in this list, so discovery has to be reachable from it */
+              }
+                <Pressable
+                  style={styles.sectionRow}
+                  onPress={() => navigation.navigate('Clubs')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('groups.discover')}
+                >
+                  <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('groups.section')}</Text>
+                  <Icon name="chevron-right" size={16} tone="secondary" />
+                </Pressable>
                 {groups.map((g) => (
                   <Pressable
                     key={g.id}
@@ -68,13 +85,15 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
                     <View style={styles.main}>
                       <Text style={[styles.name, { color: colors.textPrimary }]}>{g.name}</Text>
                       <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {t('groups.members', { count: g.memberCount })}
+                        {t('groups.memberCount', { count: g.memberCount })}
                       </Text>
                     </View>
                   </Pressable>
                 ))}
-              </View>
-            ) : null
+              {groups.length === 0 ? (
+                <Text style={[styles.preview, { color: colors.textSecondary }]}>{t('groups.noGroupsBody')}</Text>
+              ) : null}
+            </View>
           }
           renderItem={({ item }) => (
             <Pressable
@@ -115,4 +134,5 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: spacing.xl },
   section: { gap: spacing.xs, marginBottom: spacing.md },
   sectionTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
