@@ -25,11 +25,20 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
             accessibilityState={{ selected }}
             style={[
               styles.segment,
-              { borderColor: selected ? colors.primary : colors.glassBorder, backgroundColor: selected ? colors.primary : colors.controlTrack },
+              /*
+               * Chosen is a lighter panel with a brighter rim, the same way a
+               * chosen filter reads. It used to be solid white with dark text
+               * — a second, louder idea of "selected" living in the same app
+               * as the first.
+               */
+              {
+                borderColor: selected ? colors.textPrimary : colors.glassBorder,
+                backgroundColor: selected ? colors.controlTrack : 'transparent',
+              },
               disabled && styles.dim,
             ]}
           >
-            <Text style={[styles.label, { color: selected ? colors.textOnPrimary : colors.textPrimary }]}>{option}</Text>
+            <Text style={[styles.label, { color: selected ? colors.textPrimary : colors.textSecondary }]}>{option}</Text>
           </Pressable>
         );
       })}

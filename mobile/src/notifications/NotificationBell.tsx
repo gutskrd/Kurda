@@ -29,13 +29,13 @@ export function NotificationBell() {
 
   return (
     <Pressable
-      style={[styles.row, { backgroundColor: colors.primary }]}
+      style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
       onPress={() => navigation.navigate('NotificationCenter')}
       accessibilityRole="button"
       accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
     >
-      <Icon name="bell" size={20} color={colors.textOnPrimary} />
-      <Text style={[styles.label, { color: colors.textOnPrimary }]}>{t('notifications.title')}</Text>
+      <Icon name="bell" size={20} color={colors.textPrimary} />
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
       {badge ? (
         <View style={[styles.badge, { backgroundColor: colors.danger }]}>
           <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
@@ -46,8 +46,8 @@ export function NotificationBell() {
 }
 
 const styles = StyleSheet.create({
-  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
-  label: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 44, paddingHorizontal: 18, borderWidth: 1, borderRadius: radii.sm },
+  label: { fontSize: 15, fontWeight: typography.weights.semibold },
   badge: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
 });
