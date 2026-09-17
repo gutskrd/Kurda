@@ -13,6 +13,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from './InitialsAvatar';
+import { CosmeticPicker } from './CosmeticPicker';
 
 interface Me {
   username: string;
@@ -22,6 +23,9 @@ interface Me {
   premium?: boolean;
   selectedAvatarKey?: string | null;
   profilePhotoUrl?: string | null;
+  equippedBackgroundSku?: string | null;
+  equippedIconSku?: string | null;
+  premiumIconEnabled?: boolean;
 }
 
 interface AvatarOption {
@@ -235,7 +239,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                     accessibilityLabel={a.key}
                     style={[
                       styles.avatarTile,
-                      { borderColor: selected === a.key ? colors.primary : colors.glassBorder },
+                      { borderColor: selected === a.key ? colors.textPrimary : colors.glassBorder },
                       locked && styles.locked,
                     ]}
                   >
@@ -244,6 +248,13 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                 );
               })}
             </View>
+
+            <CosmeticPicker
+              equippedBackground={me?.equippedBackgroundSku ?? null}
+              equippedIcon={me?.equippedIconSku ?? null}
+              iconVisible={me?.premiumIconEnabled ?? true}
+              onChanged={load}
+            />
           </ScrollView>
         </AsyncBoundary>
       </View>
@@ -260,10 +271,10 @@ function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPre
       accessibilityState={{ selected: on }}
       style={[
         styles.chip,
-        { backgroundColor: on ? colors.primary : colors.controlTrack, borderColor: colors.glassBorder },
+        { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : colors.glassBorder },
       ]}
     >
-      <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.chipText, { color: on ? colors.textPrimary : colors.textSecondary }]}>{label}</Text>
     </Pressable>
   );
 }

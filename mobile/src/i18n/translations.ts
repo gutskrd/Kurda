@@ -767,7 +767,18 @@ export type TranslationKey =
   | 'settings.visibility.everyoneHint'
   | 'settings.visibility.membersHint'
   | 'settings.visibility.friendsHint'
-  | 'settings.visibility.nobodyHint';
+  | 'settings.visibility.nobodyHint'
+  | 'edit.cosmetics'
+  | 'edit.background'
+  | 'edit.icon'
+  | 'edit.equip'
+  | 'edit.equipped'
+  | 'edit.equippedMsg'
+  | 'edit.removedMsg'
+  | 'edit.noBackgrounds'
+  | 'edit.noIcons'
+  | 'edit.showPremiumIcon'
+  | 'edit.loadingCosmetics';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1511,6 +1522,17 @@ const en: Catalog = {
   'settings.visibility.membersHint': 'Anyone signed in to MyKurda. Signed-out visitors see only your name.',
   'settings.visibility.friendsHint': 'Only people you have added as friends.',
   'settings.visibility.nobodyHint': 'Nobody but you. You stay out of search and off the rankings.',
+  'edit.cosmetics': 'Cosmetics',
+  'edit.background': 'Background',
+  'edit.icon': 'Icon',
+  'edit.equip': 'Equip',
+  'edit.equipped': 'Equipped',
+  'edit.equippedMsg': 'Equipped.',
+  'edit.removedMsg': 'Removed.',
+  'edit.noBackgrounds': 'No backgrounds available yet.',
+  'edit.noIcons': 'No icons available yet.',
+  'edit.showPremiumIcon': 'Show premium icon on my profile',
+  'edit.loadingCosmetics': 'Loading cosmetics…',
 };
 
 const ku: Catalog = {
@@ -2253,6 +2275,17 @@ const ku: Catalog = {
   'settings.visibility.membersHint': 'Her kesê ku têketiye MyKurda. Yên nehatine têketin tenê navê te dibînin.',
   'settings.visibility.friendsHint': 'Tenê kesên ku te wek heval lê zêde kirine.',
   'settings.visibility.nobodyHint': 'Ji bilî te tu kes. Tu ne di lêgerînê de ne jî di rêzbendiyê de xuya dibî.',
+  'edit.cosmetics': 'Xemil',
+  'edit.background': 'Paşxane',
+  'edit.icon': 'Îkon',
+  'edit.equip': 'Deyne',
+  'edit.equipped': 'Li ser',
+  'edit.equippedMsg': 'Hat danîn.',
+  'edit.removedMsg': 'Hat rakirin.',
+  'edit.noBackgrounds': 'Hê paşxane tune ne.',
+  'edit.noIcons': 'Hê îkon tune ne.',
+  'edit.showPremiumIcon': 'Îkona premium li ser profîla min nîşan bide',
+  'edit.loadingCosmetics': 'Xemil tên barkirin…',
 };
 
 const de: Catalog = {
@@ -2995,6 +3028,17 @@ const de: Catalog = {
   'settings.visibility.membersHint': 'Alle, die bei MyKurda angemeldet sind. Abgemeldete Besucher sehen nur deinen Namen.',
   'settings.visibility.friendsHint': 'Nur Leute, die du als Freunde hinzugefügt hast.',
   'settings.visibility.nobodyHint': 'Niemand außer dir. Du bleibst aus der Suche und den Ranglisten heraus.',
+  'edit.cosmetics': 'Kosmetik',
+  'edit.background': 'Hintergrund',
+  'edit.icon': 'Symbol',
+  'edit.equip': 'Ausrüsten',
+  'edit.equipped': 'Ausgerüstet',
+  'edit.equippedMsg': 'Ausgerüstet.',
+  'edit.removedMsg': 'Entfernt.',
+  'edit.noBackgrounds': 'Noch keine Hintergründe verfügbar.',
+  'edit.noIcons': 'Noch keine Symbole verfügbar.',
+  'edit.showPremiumIcon': 'Premium-Symbol auf meinem Profil zeigen',
+  'edit.loadingCosmetics': 'Kosmetik wird geladen…',
 };
 
 const es: Catalog = {
@@ -3737,6 +3781,17 @@ const es: Catalog = {
   'settings.visibility.membersHint': 'Cualquiera con sesión iniciada en MyKurda. Los visitantes sin sesión solo ven tu nombre.',
   'settings.visibility.friendsHint': 'Solo las personas que has añadido como amigos.',
   'settings.visibility.nobodyHint': 'Nadie salvo tú. No apareces en la búsqueda ni en las clasificaciones.',
+  'edit.cosmetics': 'Cosméticos',
+  'edit.background': 'Fondo',
+  'edit.icon': 'Icono',
+  'edit.equip': 'Equipar',
+  'edit.equipped': 'Equipado',
+  'edit.equippedMsg': 'Equipado.',
+  'edit.removedMsg': 'Quitado.',
+  'edit.noBackgrounds': 'Todavía no hay fondos disponibles.',
+  'edit.noIcons': 'Todavía no hay iconos disponibles.',
+  'edit.showPremiumIcon': 'Mostrar el icono premium en mi perfil',
+  'edit.loadingCosmetics': 'Cargando cosméticos…',
 };
 
 const tr: Catalog = {
@@ -4479,6 +4534,17 @@ const tr: Catalog = {
   'settings.visibility.membersHint': 'MyKurda’ya giriş yapmış herkes. Giriş yapmamış ziyaretçiler yalnızca adını görür.',
   'settings.visibility.friendsHint': 'Yalnızca arkadaş olarak eklediğin kişiler.',
   'settings.visibility.nobodyHint': 'Senden başka kimse. Aramada ve sıralamalarda görünmezsin.',
+  'edit.cosmetics': 'Görsel eşyalar',
+  'edit.background': 'Arka plan',
+  'edit.icon': 'Simge',
+  'edit.equip': 'Kullan',
+  'edit.equipped': 'Kullanımda',
+  'edit.equippedMsg': 'Kullanıma alındı.',
+  'edit.removedMsg': 'Kaldırıldı.',
+  'edit.noBackgrounds': 'Henüz arka plan yok.',
+  'edit.noIcons': 'Henüz simge yok.',
+  'edit.showPremiumIcon': 'Premium simgesini profilimde göster',
+  'edit.loadingCosmetics': 'Görsel eşyalar yükleniyor…',
 };
 
 const ar: Catalog = {
@@ -5221,6 +5287,17 @@ const ar: Catalog = {
   'settings.visibility.membersHint': 'أي شخص مسجّل الدخول في MyKurda. أما الزوار غير المسجلين فيرون اسمك فقط.',
   'settings.visibility.friendsHint': 'الأشخاص الذين أضفتهم كأصدقاء فقط.',
   'settings.visibility.nobodyHint': 'لا أحد سواك. تبقى خارج البحث وخارج الترتيب.',
+  'edit.cosmetics': 'التزيينات',
+  'edit.background': 'الخلفية',
+  'edit.icon': 'الأيقونة',
+  'edit.equip': 'تجهيز',
+  'edit.equipped': 'مُجهَّز',
+  'edit.equippedMsg': 'تم التجهيز.',
+  'edit.removedMsg': 'أُزيل.',
+  'edit.noBackgrounds': 'لا توجد خلفيات متاحة بعد.',
+  'edit.noIcons': 'لا توجد أيقونات متاحة بعد.',
+  'edit.showPremiumIcon': 'أظهر أيقونة بريميوم في ملفي الشخصي',
+  'edit.loadingCosmetics': 'جارٍ تحميل التزيينات…',
 };
 
 const fr: Catalog = {
@@ -5963,6 +6040,17 @@ const fr: Catalog = {
   'settings.visibility.membersHint': 'Toute personne connectée à MyKurda. Les visiteurs déconnectés ne voient que ton nom.',
   'settings.visibility.friendsHint': 'Seulement les personnes que tu as ajoutées en amis.',
   'settings.visibility.nobodyHint': 'Personne d’autre que toi. Tu restes hors de la recherche et des classements.',
+  'edit.cosmetics': 'Cosmétiques',
+  'edit.background': 'Arrière-plan',
+  'edit.icon': 'Icône',
+  'edit.equip': 'Équiper',
+  'edit.equipped': 'Équipé',
+  'edit.equippedMsg': 'Équipé.',
+  'edit.removedMsg': 'Retiré.',
+  'edit.noBackgrounds': 'Aucun arrière-plan disponible pour l’instant.',
+  'edit.noIcons': 'Aucune icône disponible pour l’instant.',
+  'edit.showPremiumIcon': 'Afficher l’icône premium sur mon profil',
+  'edit.loadingCosmetics': 'Chargement des cosmétiques…',
 };
 
 const nl: Catalog = {
@@ -6705,6 +6793,17 @@ const nl: Catalog = {
   'settings.visibility.membersHint': 'Iedereen die is ingelogd bij MyKurda. Uitgelogde bezoekers zien alleen je naam.',
   'settings.visibility.friendsHint': 'Alleen mensen die je als vriend hebt toegevoegd.',
   'settings.visibility.nobodyHint': 'Niemand behalve jij. Je blijft buiten de zoekresultaten en de ranglijsten.',
+  'edit.cosmetics': 'Cosmetica',
+  'edit.background': 'Achtergrond',
+  'edit.icon': 'Icoon',
+  'edit.equip': 'Gebruiken',
+  'edit.equipped': 'In gebruik',
+  'edit.equippedMsg': 'Ingesteld.',
+  'edit.removedMsg': 'Verwijderd.',
+  'edit.noBackgrounds': 'Nog geen achtergronden beschikbaar.',
+  'edit.noIcons': 'Nog geen iconen beschikbaar.',
+  'edit.showPremiumIcon': 'Premium-icoon op mijn profiel tonen',
+  'edit.loadingCosmetics': 'Cosmetica laden…',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7448,6 +7547,17 @@ const ckb: Catalog = {
   'settings.visibility.membersHint': 'هەرکەسێک کە چووبێتە ناو MyKurda. ئەوانەی نەچوونەتە ژوورەوە تەنها ناوت دەبینن.',
   'settings.visibility.friendsHint': 'تەنها ئەو کەسانەی وەک هاوڕێ زیادت کردوون.',
   'settings.visibility.nobodyHint': 'جگە لە خۆت هیچ کەس. لە گەڕان و ڕیزبەندیدا دەرناکەویت.',
+  'edit.cosmetics': 'ڕازاندنەوەکان',
+  'edit.background': 'پاشبنەما',
+  'edit.icon': 'ئایکۆن',
+  'edit.equip': 'دایبنێ',
+  'edit.equipped': 'بەکارهێنراو',
+  'edit.equippedMsg': 'دانرا.',
+  'edit.removedMsg': 'لابرا.',
+  'edit.noBackgrounds': 'هێشتا پاشبنەما بەردەست نییە.',
+  'edit.noIcons': 'هێشتا ئایکۆن بەردەست نییە.',
+  'edit.showPremiumIcon': 'ئایکۆنی پریمیۆم لەسەر پرۆفایلەکەم پیشان بدە',
+  'edit.loadingCosmetics': 'ڕازاندنەوەکان بار دەکرێن…',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
