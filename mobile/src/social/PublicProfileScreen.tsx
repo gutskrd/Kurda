@@ -15,6 +15,7 @@ import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileFriends } from '../profile/ProfileFriends';
 import type { ProfileSections } from '../profile/sections';
 import { ReportUserSheet } from './ReportUserSheet';
 import { blockUser } from './blocks';
@@ -185,6 +186,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             );
           }}
         </AsyncBoundary>
+        {profile && !profile.private ? <ProfileFriends userId={profile.userId} /> : null}
         {profile && !profile.private ? <ProfileActivity userId={profile.userId} sections={profile.sections} /> : null}
         </ScrollView>
       </View>

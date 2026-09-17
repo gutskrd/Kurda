@@ -796,7 +796,8 @@ export type TranslationKey =
   | 'edit.sections.games'
   | 'edit.sections.likes'
   | 'edit.sections.saved'
-  | 'repost.sectionHint';
+  | 'repost.sectionHint'
+  | 'profile.friendsMore';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1569,6 +1570,7 @@ const en: Catalog = {
   'edit.sections.likes': 'Posts you have liked.',
   'edit.sections.saved': 'Posts you have saved.',
   'repost.sectionHint': 'Posts you have reposted onto your own profile.',
+  'profile.friendsMore': 'and {count} more',
 };
 
 const ku: Catalog = {
@@ -2340,6 +2342,7 @@ const ku: Catalog = {
   'edit.sections.likes': 'Şandiyên ku te ecibandine.',
   'edit.sections.saved': 'Şandiyên ku te tomar kirine.',
   'repost.sectionHint': 'Şandiyên ku te ji nû ve li ser profîla xwe weşandine.',
+  'profile.friendsMore': 'û {count} din',
 };
 
 const de: Catalog = {
@@ -3111,6 +3114,7 @@ const de: Catalog = {
   'edit.sections.likes': 'Beiträge, die dir gefallen haben.',
   'edit.sections.saved': 'Beiträge, die du gespeichert hast.',
   'repost.sectionHint': 'Beiträge, die du auf dein eigenes Profil geteilt hast.',
+  'profile.friendsMore': 'und {count} weitere',
 };
 
 const es: Catalog = {
@@ -3882,6 +3886,7 @@ const es: Catalog = {
   'edit.sections.likes': 'Publicaciones que te han gustado.',
   'edit.sections.saved': 'Publicaciones que has guardado.',
   'repost.sectionHint': 'Publicaciones que has republicado en tu propio perfil.',
+  'profile.friendsMore': 'y {count} más',
 };
 
 const tr: Catalog = {
@@ -4653,6 +4658,7 @@ const tr: Catalog = {
   'edit.sections.likes': 'Beğendiğin gönderiler.',
   'edit.sections.saved': 'Kaydettiğin gönderiler.',
   'repost.sectionHint': 'Kendi profiline yeniden paylaştığın gönderiler.',
+  'profile.friendsMore': 've {count} kişi daha',
 };
 
 const ar: Catalog = {
@@ -5424,6 +5430,7 @@ const ar: Catalog = {
   'edit.sections.likes': 'المنشورات التي أعجبتك.',
   'edit.sections.saved': 'المنشورات التي حفظتها.',
   'repost.sectionHint': 'المنشورات التي أعدت نشرها على ملفك الشخصي.',
+  'profile.friendsMore': 'و{count} آخرين',
 };
 
 const fr: Catalog = {
@@ -6195,6 +6202,7 @@ const fr: Catalog = {
   'edit.sections.likes': 'Les publications que tu as aimées.',
   'edit.sections.saved': 'Les publications que tu as enregistrées.',
   'repost.sectionHint': 'Les publications que vous avez republiées sur votre profil.',
+  'profile.friendsMore': 'et {count} de plus',
 };
 
 const nl: Catalog = {
@@ -6966,6 +6974,7 @@ const nl: Catalog = {
   'edit.sections.likes': 'Berichten die je leuk vond.',
   'edit.sections.saved': 'Berichten die je hebt bewaard.',
   'repost.sectionHint': 'Berichten die je op je eigen profiel opnieuw hebt geplaatst.',
+  'profile.friendsMore': 'en nog {count}',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -7738,6 +7747,7 @@ const ckb: Catalog = {
   'edit.sections.likes': 'ئەو بڵاوکراوانەی بەدڵت بوون.',
   'edit.sections.saved': 'ئەو بڵاوکراوانەی پاشەکەوتت کردوون.',
   'repost.sectionHint': 'ئەو بابەتانەی لەسەر پرۆفایلی خۆت دووبارە بڵاوت کردوونەتەوە.',
+  'profile.friendsMore': 'و {count} زیاتر',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
