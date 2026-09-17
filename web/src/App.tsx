@@ -43,6 +43,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => (
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
+const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
@@ -159,6 +160,7 @@ export function App(): React.JSX.Element {
           >
             <Route index element={<Civak />} />
             <Route path="learn" element={<RequireAccount what="gate.what.course"><Learn /></RequireAccount>} />
+            <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
             <Route path="civak" element={<CivakMoved />} />

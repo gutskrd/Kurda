@@ -5229,3 +5229,159 @@ a.mkp-activity-row:hover {
   display: grid;
   gap: 12px;
 }
+
+/* ── dictionary (KUR-045) ───────────────────────────────────────────────────
+   The browser had no dictionary at all while the phone had a whole tab of it.
+   Laid out as a reading column rather than a grid: looking a word up is one
+   thing at a time, and a second column only gives the eye somewhere else to be.
+*/
+.dict {
+  display: grid;
+  gap: 18px;
+}
+.dict-search {
+  width: 100%;
+  font-size: 1.05rem;
+  padding: 12px 14px;
+}
+.dict-fuzzy {
+  margin: 0;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+.dict-section {
+  display: grid;
+  gap: 10px;
+}
+.dict-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+.dict-chip-row,
+.dict-xref-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dict-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.dict-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+/* the row is one target, so the button fills it rather than sitting inside it */
+.dict-row-main {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+}
+.dict-row-main:hover {
+  background: var(--surface-2);
+}
+.dict-row-word {
+  font-weight: 700;
+}
+.dict-row-def {
+  font-size: 0.88rem;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dict-entry {
+  display: grid;
+  gap: 16px;
+}
+.dict-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dict-entry-actions {
+  display: flex;
+  gap: 8px;
+}
+.dict-headword {
+  margin: 0 0 4px;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+.dict-senses {
+  margin: 0;
+  padding-inline-start: 1.2em;
+  display: grid;
+  gap: 14px;
+}
+.dict-sense {
+  display: grid;
+  gap: 4px;
+}
+.dict-pos {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--ink-3);
+}
+.dict-def {
+  margin: 0;
+  font-size: 1rem;
+}
+.dict-def-ku {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-3);
+}
+.dict-examples {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0 0 0 12px;
+  border-inline-start: 2px solid var(--border);
+  display: grid;
+  gap: 6px;
+}
+.dict-examples li {
+  display: grid;
+  gap: 2px;
+}
+.dict-example-ku {
+  font-size: 0.95rem;
+}
+.dict-example-en {
+  font-size: 0.86rem;
+  color: var(--ink-3);
+}
+.dict-xrefs {
+  display: grid;
+  gap: 8px;
+}
+.dict-xrefs-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}

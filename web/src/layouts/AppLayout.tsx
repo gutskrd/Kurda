@@ -4,7 +4,7 @@ import { RouteFallback } from '../components/RouteFallback';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuth } from '../auth/AuthProvider';
 import { TopNav, type NavItem } from '../components/TopNav';
-import { BookIcon, ChatsIcon, GameIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
+import { BookIcon, ChatsIcon, GameIcon, TextIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
 import { useT } from '../i18n/I18nProvider';
@@ -39,6 +39,7 @@ const OPEN_LINKS: NavEntry[] = [
 /** What only an account can. */
 const MEMBER_LINKS: NavEntry[] = [
   { key: 'nav.learn', to: '/app/learn', icon: <BookIcon size={18} /> },
+  { key: 'nav.dictionary', to: '/app/dictionary', icon: <TextIcon size={18} /> },
   { key: 'nav.friends', to: '/app/friends', icon: <UsersIcon size={18} /> },
   { key: 'nav.messages', to: '/app/messages', icon: <ChatsIcon size={18} /> },
 ];
