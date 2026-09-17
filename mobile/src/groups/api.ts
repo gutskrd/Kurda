@@ -68,3 +68,29 @@ export function groupUnread(
 ): Promise<ApiResult<{ unread: Array<{ groupId: string; unread: number }> }>> {
   return client.get<{ unread: Array<{ groupId: string; unread: number }> }>('/me/groups/unread');
 }
+
+/**
+ * Clubs anyone can find, newest first and capped by the server at thirty.
+ *
+ * Invite-only clubs appear here too — being discoverable and being joinable are
+ * different things, and hiding them would make the club you were told about
+ * simply not exist.
+ */
+export function discoverGroups(client: ApiClient): Promise<ApiResult<{ groups: Group[] }>> {
+  return client.get<{ groups: Group[] }>('/groups');
+}
+
+export function joinGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
+  return client.post<{ ok: true }>(`/groups/${groupId}/join`);
+}
+
+export function leaveGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
+  return client.post<{ ok: true }>(`/groups/${groupId}/leave`);
+}
+
+export function createGroup(
+  client: ApiClient,
+  input: { name: string; description?: string; privacy?: 'open' | 'invite' },
+): Promise<ApiResult<{ id: string }>> {
+  return client.post<{ id: string }>('/groups', input);
+}

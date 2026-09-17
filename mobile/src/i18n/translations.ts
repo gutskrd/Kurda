@@ -678,14 +678,32 @@ export type TranslationKey =
   | 'post.what'
   | 'post.words.sub'
   | 'post.picture.sub'
-  | 'groups.title'
+  | 'groups.section'
   | 'groups.none'
   | 'groups.sayHello'
   | 'groups.messageDeleted'
-  | 'groups.members'
+  | 'groups.memberCount'
   | 'groups.open'
   | 'chat.typing'
-  | 'chat.lastFromYou';
+  | 'chat.lastFromYou'
+  | 'groups.discover'
+  | 'groups.join'
+  | 'groups.joining'
+  | 'groups.joined'
+  | 'groups.new'
+  | 'groups.name'
+  | 'groups.namePlaceholder'
+  | 'groups.description'
+  | 'groups.privacy'
+  | 'groups.privacy.openHint'
+  | 'groups.privacy.inviteHint'
+  | 'groups.create'
+  | 'groups.creating'
+  | 'groups.nothingToDiscover'
+  | 'groups.inviteOnly'
+  | 'groups.noGroupsYet'
+  | 'groups.noGroupsBody'
+  | 'groups.leave';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1339,14 +1357,32 @@ const en: Catalog = {
   'post.what': 'What are you posting?',
   'post.words.sub': 'A saying, a story or a poem',
   'post.picture.sub': 'A picture or a meme',
-  'groups.title': 'Clubs',
+  'groups.section': 'Clubs',
   'groups.none': 'You are not in any club yet.',
   'groups.sayHello': 'Nothing here yet — say something.',
   'groups.messageDeleted': 'This message was removed.',
-  'groups.members': '{count} members',
+  'groups.memberCount': '{count} members',
   'groups.open': 'Open {name}',
   'chat.typing': '{name} is typing…',
   'chat.lastFromYou': 'You: {preview}',
+  'groups.discover': 'Discover groups',
+  'groups.join': 'Join',
+  'groups.joining': 'Joining…',
+  'groups.joined': 'Joined',
+  'groups.new': 'New group',
+  'groups.name': 'Name',
+  'groups.namePlaceholder': 'e.g. Kurmancî learners',
+  'groups.description': 'Description',
+  'groups.privacy': 'Privacy',
+  'groups.privacy.openHint': 'Anyone can find and join.',
+  'groups.privacy.inviteHint': 'People join only when a member invites them.',
+  'groups.create': 'Create group',
+  'groups.creating': 'Creating…',
+  'groups.nothingToDiscover': 'No groups to discover right now. Create your own to get started!',
+  'groups.inviteOnly': 'invite-only',
+  'groups.noGroupsYet': 'No groups yet',
+  'groups.noGroupsBody': 'Create a group or discover an open one to start a group chat.',
+  'groups.leave': 'Leave {group}',
 };
 
 const ku: Catalog = {
@@ -1999,14 +2035,32 @@ const ku: Catalog = {
   'post.what': 'Tu çi diweşînî?',
   'post.words.sub': 'Gotinek, çîrokek an helbestek',
   'post.picture.sub': 'Wêneyek an mîmek',
-  'groups.title': 'Klûb',
+  'groups.section': 'Klûb',
   'groups.none': 'Tu hêj ne di tu klûbê de yî.',
   'groups.sayHello': 'Hêj tiştek li vir tune — tiştekî bibêje.',
   'groups.messageDeleted': 'Ev peyam hate rakirin.',
-  'groups.members': '{count} endam',
+  'groups.memberCount': '{count} endam',
   'groups.open': '{name} veke',
   'chat.typing': '{name} dinivîse…',
   'chat.lastFromYou': 'Tu: {preview}',
+  'groups.discover': 'Koman bibîne',
+  'groups.join': 'Tevlî bibe',
+  'groups.joining': 'Tê tevlîbûn…',
+  'groups.joined': 'Tevlî bûyî',
+  'groups.new': 'Komeke nû',
+  'groups.name': 'Nav',
+  'groups.namePlaceholder': 'wek: Fêrbûyerên Kurmancî',
+  'groups.description': 'Danasîn',
+  'groups.privacy': 'Nihênî',
+  'groups.privacy.openHint': 'Her kes dikare bibîne û tevlî bibe.',
+  'groups.privacy.inviteHint': 'Mirov tenê gava endamek wan vexwîne tevlî dibin.',
+  'groups.create': 'Komê çêke',
+  'groups.creating': 'Tê çêkirin…',
+  'groups.nothingToDiscover': 'Niha komên nû tune ne. Ya xwe çêke da ku dest pê bikî!',
+  'groups.inviteOnly': 'bi vexwendin',
+  'groups.noGroupsYet': 'Hê kom tune',
+  'groups.noGroupsBody': 'Komekê çêke an komeke vekirî bibîne da ku suhbeta komê dest pê bike.',
+  'groups.leave': 'Ji {group} derkeve',
 };
 
 const de: Catalog = {
@@ -2659,14 +2713,32 @@ const de: Catalog = {
   'post.what': 'Was möchtest du posten?',
   'post.words.sub': 'Ein Spruch, eine Geschichte oder ein Gedicht',
   'post.picture.sub': 'Ein Bild oder ein Meme',
-  'groups.title': 'Clubs',
+  'groups.section': 'Clubs',
   'groups.none': 'Du bist noch in keinem Club.',
   'groups.sayHello': 'Hier ist noch nichts — sag etwas.',
   'groups.messageDeleted': 'Diese Nachricht wurde entfernt.',
-  'groups.members': '{count} Mitglieder',
+  'groups.memberCount': '{count} Mitglieder',
   'groups.open': '{name} öffnen',
   'chat.typing': '{name} schreibt…',
   'chat.lastFromYou': 'Du: {preview}',
+  'groups.discover': 'Gruppen entdecken',
+  'groups.join': 'Beitreten',
+  'groups.joining': 'Beitreten…',
+  'groups.joined': 'Beigetreten',
+  'groups.new': 'Neue Gruppe',
+  'groups.name': 'Name',
+  'groups.namePlaceholder': 'z. B. Kurmancî-Lernende',
+  'groups.description': 'Beschreibung',
+  'groups.privacy': 'Privatsphäre',
+  'groups.privacy.openHint': 'Jede und jeder kann sie finden und beitreten.',
+  'groups.privacy.inviteHint': 'Leute treten nur bei, wenn ein Mitglied sie einlädt.',
+  'groups.create': 'Gruppe erstellen',
+  'groups.creating': 'Wird erstellt…',
+  'groups.nothingToDiscover': 'Gerade gibt es keine Gruppen zu entdecken. Erstelle deine eigene!',
+  'groups.inviteOnly': 'nur mit Einladung',
+  'groups.noGroupsYet': 'Noch keine Gruppen',
+  'groups.noGroupsBody': 'Erstelle eine Gruppe oder entdecke eine offene, um einen Gruppenchat zu beginnen.',
+  'groups.leave': '{group} verlassen',
 };
 
 const es: Catalog = {
@@ -3319,14 +3391,32 @@ const es: Catalog = {
   'post.what': '¿Qué vas a publicar?',
   'post.words.sub': 'Un dicho, un relato o un poema',
   'post.picture.sub': 'Una imagen o un meme',
-  'groups.title': 'Clubes',
+  'groups.section': 'Clubes',
   'groups.none': 'Todavía no estás en ningún club.',
   'groups.sayHello': 'Aquí todavía no hay nada: di algo.',
   'groups.messageDeleted': 'Este mensaje se ha eliminado.',
-  'groups.members': '{count} miembros',
+  'groups.memberCount': '{count} miembros',
   'groups.open': 'Abrir {name}',
   'chat.typing': '{name} está escribiendo…',
   'chat.lastFromYou': 'Tú: {preview}',
+  'groups.discover': 'Descubrir grupos',
+  'groups.join': 'Unirse',
+  'groups.joining': 'Uniéndote…',
+  'groups.joined': 'Te has unido',
+  'groups.new': 'Grupo nuevo',
+  'groups.name': 'Nombre',
+  'groups.namePlaceholder': 'p. ej. Estudiantes de kurmanyi',
+  'groups.description': 'Descripción',
+  'groups.privacy': 'Privacidad',
+  'groups.privacy.openHint': 'Cualquiera puede encontrarlo y unirse.',
+  'groups.privacy.inviteHint': 'Solo se unen las personas invitadas por un miembro.',
+  'groups.create': 'Crear grupo',
+  'groups.creating': 'Creando…',
+  'groups.nothingToDiscover': 'Ahora mismo no hay grupos que descubrir. ¡Crea el tuyo para empezar!',
+  'groups.inviteOnly': 'solo por invitación',
+  'groups.noGroupsYet': 'Todavía no hay grupos',
+  'groups.noGroupsBody': 'Crea un grupo o descubre uno abierto para empezar un chat de grupo.',
+  'groups.leave': 'Salir de {group}',
 };
 
 const tr: Catalog = {
@@ -3979,14 +4069,32 @@ const tr: Catalog = {
   'post.what': 'Ne paylaşıyorsun?',
   'post.words.sub': 'Bir söz, bir hikâye ya da bir şiir',
   'post.picture.sub': 'Bir resim ya da bir mizah görseli',
-  'groups.title': 'Kulüpler',
+  'groups.section': 'Kulüpler',
   'groups.none': 'Henüz hiçbir kulüpte değilsin.',
   'groups.sayHello': 'Burada henüz bir şey yok — bir şeyler söyle.',
   'groups.messageDeleted': 'Bu mesaj kaldırıldı.',
-  'groups.members': '{count} üye',
+  'groups.memberCount': '{count} üye',
   'groups.open': '{name} kulübünü aç',
   'chat.typing': '{name} yazıyor…',
   'chat.lastFromYou': 'Sen: {preview}',
+  'groups.discover': 'Grupları keşfet',
+  'groups.join': 'Katıl',
+  'groups.joining': 'Katılınıyor…',
+  'groups.joined': 'Katıldın',
+  'groups.new': 'Yeni grup',
+  'groups.name': 'Ad',
+  'groups.namePlaceholder': 'ör. Kurmancî öğrenenler',
+  'groups.description': 'Açıklama',
+  'groups.privacy': 'Gizlilik',
+  'groups.privacy.openHint': 'Herkes bulabilir ve katılabilir.',
+  'groups.privacy.inviteHint': 'İnsanlar yalnızca bir üye davet ettiğinde katılır.',
+  'groups.create': 'Grup oluştur',
+  'groups.creating': 'Oluşturuluyor…',
+  'groups.nothingToDiscover': 'Şu anda keşfedilecek grup yok. Başlamak için kendi grubunu oluştur!',
+  'groups.inviteOnly': 'yalnızca davetle',
+  'groups.noGroupsYet': 'Henüz grup yok',
+  'groups.noGroupsBody': 'Grup sohbeti başlatmak için bir grup oluştur ya da açık bir grup keşfet.',
+  'groups.leave': '{group} grubundan ayrıl',
 };
 
 const ar: Catalog = {
@@ -4639,14 +4747,32 @@ const ar: Catalog = {
   'post.what': 'ماذا تريد أن تنشر؟',
   'post.words.sub': 'قول أو قصة أو قصيدة',
   'post.picture.sub': 'صورة أو ميم',
-  'groups.title': 'النوادي',
+  'groups.section': 'النوادي',
   'groups.none': 'لست في أي نادٍ بعد.',
   'groups.sayHello': 'لا شيء هنا بعد — قل شيئًا.',
   'groups.messageDeleted': 'تمت إزالة هذه الرسالة.',
-  'groups.members': '{count} عضوًا',
+  'groups.memberCount': '{count} عضوًا',
   'groups.open': 'افتح {name}',
   'chat.typing': '{name} يكتب…',
   'chat.lastFromYou': 'أنت: {preview}',
+  'groups.discover': 'اكتشف المجموعات',
+  'groups.join': 'انضمام',
+  'groups.joining': 'جارٍ الانضمام…',
+  'groups.joined': 'انضممت',
+  'groups.new': 'مجموعة جديدة',
+  'groups.name': 'الاسم',
+  'groups.namePlaceholder': 'مثلًا: متعلمو الكرمانجية',
+  'groups.description': 'الوصف',
+  'groups.privacy': 'الخصوصية',
+  'groups.privacy.openHint': 'يمكن لأي شخص العثور عليها والانضمام.',
+  'groups.privacy.inviteHint': 'ينضم الأشخاص فقط عندما يدعوهم أحد الأعضاء.',
+  'groups.create': 'إنشاء مجموعة',
+  'groups.creating': 'جارٍ الإنشاء…',
+  'groups.nothingToDiscover': 'لا مجموعات لاكتشافها الآن. أنشئ مجموعتك للبدء!',
+  'groups.inviteOnly': 'بالدعوة فقط',
+  'groups.noGroupsYet': 'لا مجموعات بعد',
+  'groups.noGroupsBody': 'أنشئ مجموعة أو اكتشف مجموعة مفتوحة لبدء دردشة جماعية.',
+  'groups.leave': 'مغادرة {group}',
 };
 
 const fr: Catalog = {
@@ -5299,14 +5425,32 @@ const fr: Catalog = {
   'post.what': 'Que voulez-vous publier ?',
   'post.words.sub': 'Un dicton, un récit ou un poème',
   'post.picture.sub': 'Une image ou un mème',
-  'groups.title': 'Clubs',
+  'groups.section': 'Clubs',
   'groups.none': 'Tu n’es encore dans aucun club.',
   'groups.sayHello': 'Il n’y a encore rien ici — dis quelque chose.',
   'groups.messageDeleted': 'Ce message a été supprimé.',
-  'groups.members': '{count} membres',
+  'groups.memberCount': '{count} membres',
   'groups.open': 'Ouvrir {name}',
   'chat.typing': '{name} écrit…',
   'chat.lastFromYou': 'Toi : {preview}',
+  'groups.discover': 'Découvrir des groupes',
+  'groups.join': 'Rejoindre',
+  'groups.joining': 'Participation…',
+  'groups.joined': 'Rejoint',
+  'groups.new': 'Nouveau groupe',
+  'groups.name': 'Nom',
+  'groups.namePlaceholder': 'ex. Apprenants de kurmandji',
+  'groups.description': 'Description',
+  'groups.privacy': 'Confidentialité',
+  'groups.privacy.openHint': 'N’importe qui peut le trouver et le rejoindre.',
+  'groups.privacy.inviteHint': 'On ne rejoint que sur invitation d’un membre.',
+  'groups.create': 'Créer le groupe',
+  'groups.creating': 'Création…',
+  'groups.nothingToDiscover': 'Aucun groupe à découvrir pour l’instant. Crée le tien pour commencer !',
+  'groups.inviteOnly': 'sur invitation',
+  'groups.noGroupsYet': 'Pas encore de groupes',
+  'groups.noGroupsBody': 'Crée un groupe ou découvres-en un ouvert pour lancer une discussion de groupe.',
+  'groups.leave': 'Quitter {group}',
 };
 
 const nl: Catalog = {
@@ -5959,14 +6103,32 @@ const nl: Catalog = {
   'post.what': 'Wat ga je plaatsen?',
   'post.words.sub': 'Een gezegde, een verhaal of een gedicht',
   'post.picture.sub': 'Een foto of een meme',
-  'groups.title': 'Clubs',
+  'groups.section': 'Clubs',
   'groups.none': 'Je zit nog in geen enkele club.',
   'groups.sayHello': 'Hier is nog niets — zeg iets.',
   'groups.messageDeleted': 'Dit bericht is verwijderd.',
-  'groups.members': '{count} leden',
+  'groups.memberCount': '{count} leden',
   'groups.open': '{name} openen',
   'chat.typing': '{name} is aan het typen…',
   'chat.lastFromYou': 'Jij: {preview}',
+  'groups.discover': 'Groepen ontdekken',
+  'groups.join': 'Meedoen',
+  'groups.joining': 'Meedoen…',
+  'groups.joined': 'Lid',
+  'groups.new': 'Nieuwe groep',
+  'groups.name': 'Naam',
+  'groups.namePlaceholder': 'bijv. Kurmancî-leerders',
+  'groups.description': 'Beschrijving',
+  'groups.privacy': 'Privacy',
+  'groups.privacy.openHint': 'Iedereen kan deze vinden en meedoen.',
+  'groups.privacy.inviteHint': 'Mensen doen alleen mee als een lid hen uitnodigt.',
+  'groups.create': 'Groep aanmaken',
+  'groups.creating': 'Aanmaken…',
+  'groups.nothingToDiscover': 'Op dit moment zijn er geen groepen te ontdekken. Maak je eigen groep aan!',
+  'groups.inviteOnly': 'alleen op uitnodiging',
+  'groups.noGroupsYet': 'Nog geen groepen',
+  'groups.noGroupsBody': 'Maak een groep aan of ontdek een open groep om een groepsgesprek te beginnen.',
+  'groups.leave': '{group} verlaten',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -6620,14 +6782,32 @@ const ckb: Catalog = {
   'post.what': 'چی بڵاو دەکەیتەوە؟',
   'post.words.sub': 'قسەیەک، چیرۆکێک یان شیعرێک',
   'post.picture.sub': 'وێنەیەک یان میمێک',
-  'groups.title': 'کڵۆبەکان',
+  'groups.section': 'کڵۆبەکان',
   'groups.none': 'هێشتا لە هیچ کڵۆبێکدا نیت.',
   'groups.sayHello': 'هێشتا هیچ لێرە نییە — شتێک بڵێ.',
   'groups.messageDeleted': 'ئەم نامەیە لابرا.',
-  'groups.members': '{count} ئەندام',
+  'groups.memberCount': '{count} ئەندام',
   'groups.open': '{name} بکەرەوە',
   'chat.typing': '{name} دەنووسێت…',
   'chat.lastFromYou': 'تۆ: {preview}',
+  'groups.discover': 'گروپەکان بدۆزەرەوە',
+  'groups.join': 'بەشداری بکە',
+  'groups.joining': 'بەشداری دەکرێت…',
+  'groups.joined': 'بەشداریت کردووە',
+  'groups.new': 'گروپی نوێ',
+  'groups.name': 'ناو',
+  'groups.namePlaceholder': 'وەک: فێرخوازانی کورمانجی',
+  'groups.description': 'وەسف',
+  'groups.privacy': 'تایبەتمەندی',
+  'groups.privacy.openHint': 'هەرکەسێک دەتوانێت بیدۆزێتەوە و بەشداری بکات.',
+  'groups.privacy.inviteHint': 'خەڵک تەنها کاتێک بەشداری دەکەن کە ئەندامێک بانگهێشتیان بکات.',
+  'groups.create': 'گروپ دروست بکە',
+  'groups.creating': 'دروست دەکرێت…',
+  'groups.nothingToDiscover': 'ئێستا گروپ نییە بۆ دۆزینەوە. هی خۆت دروست بکە بۆ دەستپێکردن!',
+  'groups.inviteOnly': 'تەنها بە بانگهێشت',
+  'groups.noGroupsYet': 'هێشتا گروپ نییە',
+  'groups.noGroupsBody': 'گروپێک دروست بکە یان گروپێکی کراوە بدۆزەرەوە بۆ دەستپێکردنی گفتوگۆی گروپی.',
+  'groups.leave': 'لە {group} دەربچۆ',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
