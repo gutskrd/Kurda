@@ -103,7 +103,9 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
             {hint ? (
               <Text style={[styles.hint, { color: hint.tone === 'error' ? colors.danger : colors.success }]}>{hint.text}</Text>
             ) : (
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>3–{USERNAME_MAX} characters · letters, numbers, _ · you can change it once every 30 days.</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                {t('username.rules', { max: USERNAME_MAX })}
+              </Text>
             )}
           </GlassCard>
 

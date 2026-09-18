@@ -30,7 +30,9 @@ export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () 
       <View style={styles.meta}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{node.title}</Text>
         {node.state !== 'locked' ? (
-          <Text style={[styles.strength, { color: colors.textSecondary }]}>Strength {node.strength}%{cracked ? ' · cracked' : ''}</Text>
+          <Text style={[styles.strength, { color: colors.textSecondary }]}>
+            {t(cracked ? 'coursemap.strengthDecayed' : 'coursemap.strength', { percent: node.strength })}
+          </Text>
         ) : (
           <Text style={[styles.locked, { color: colors.textSecondary }]}>{t('coursemap.lockedBadge')}</Text>
         )}

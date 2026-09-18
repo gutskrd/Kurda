@@ -9,6 +9,7 @@ import {
 } from 'expo-audio';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { Icon } from '../theme/Icon';
 import { AudioPlayer } from './AudioPlayer';
 import { clock } from './types';
 import { useI18n } from '../i18n/I18nContext';
@@ -92,7 +93,9 @@ export function VoiceRecorder({
         accessibilityLabel={t('lesson.speak.stop')}
       >
         <View style={[styles.dot, { backgroundColor: colors.danger }]} />
-        <Text style={[styles.pillText, { color: colors.danger }]}>Recording {clock(state.durationMillis / 1000)} · tap to stop</Text>
+        <Text style={[styles.pillText, { color: colors.danger }]}>
+          {t('recorder.recording', { time: clock(state.durationMillis / 1000) })}
+        </Text>
       </Pressable>
     );
   }
@@ -103,9 +106,10 @@ export function VoiceRecorder({
       disabled={busy}
       style={[styles.pill, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder, opacity: busy ? 0.5 : 1 }]}
       accessibilityRole="button"
-      accessibilityLabel="Record a voice note"
+      accessibilityLabel={t('recorder.startNote')}
     >
-      <Text style={[styles.pillText, { color: colors.primary }]}>🎙 Record a voice note</Text>
+      <Icon name="microphone" size={16} color={colors.primary} />
+      <Text style={[styles.pillText, { color: colors.primary }]}>{t('recorder.startNote')}</Text>
     </Pressable>
   );
 }

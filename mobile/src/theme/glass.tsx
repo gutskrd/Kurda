@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
@@ -129,6 +129,7 @@ export function ClayButton({
   tone = 'neutral',
   icon,
   badge,
+  busy = false,
   style,
 }: {
   label: string;
@@ -138,6 +139,16 @@ export function ClayButton({
   icon?: IconName;
   /** a count worth interrupting for, drawn as a pill on the right */
   badge?: string;
+  /**
+   * Working on it.
+   *
+   * Two screens said so by swapping the word — "Publish" became "Publishing…",
+   * "+ Post" became "Uploading…" — which meant writing the progress word twice
+   * more in every language, and meant the button still looked pressable while
+   * it was not. A spinner in place of the label is what iOS does, says the same
+   * thing in every language, and takes the press away while it spins.
+   */
+  busy?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -145,10 +156,23 @@ export function ClayButton({
   const fill = primary ? colors.primary : colors.controlTrack;
   const textColor = primary ? colors.textOnPrimary : colors.textPrimary;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }, style]}>
+    <Pressable
+      onPress={onPress}
+      disabled={busy}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ busy, disabled: busy }}
+      style={({ pressed }) => [{ opacity: busy ? 0.7 : pressed ? 0.92 : 1, transform: [{ scale: pressed && !busy ? 0.98 : 1 }] }, style]}
+    >
       <View style={[styles.clay, { backgroundColor: fill, borderColor: primary ? 'transparent' : colors.glassBorder }]}>
-        {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
-        <Text style={[styles.clayText, { color: textColor }]}>{label}</Text>
+        {busy ? (
+          <ActivityIndicator color={textColor} />
+        ) : (
+          <>
+            {icon ? <Icon name={icon} size={20} color={textColor} /> : null}
+            <Text style={[styles.clayText, { color: textColor }]}>{label}</Text>
+          </>
+        )}
         {badge ? (
           <View style={[styles.clayBadge, { backgroundColor: colors.gold }]}>
             <Text style={[styles.clayBadgeText, { color: colors.textOnPrimary }]}>{badge}</Text>

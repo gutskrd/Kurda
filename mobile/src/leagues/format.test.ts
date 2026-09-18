@@ -3,7 +3,10 @@ import { countdown, tierMeta, weekEnd, zoneFor } from './format';
 
 describe('tierMeta', () => {
   it('maps known tiers and falls back for unknown', () => {
-    expect(tierMeta('gold').label).toBe('Gold');
+    expect(tierMeta('gold').labelKey).toBe('leagues.tier.gold');
+    // a tier this map does not know has nothing to look up, and falls back to
+    // the name the server gave it
+    expect(tierMeta('mystery').labelKey).toBe(null);
     expect(tierMeta('mystery').label).toBe('mystery');
   });
 });

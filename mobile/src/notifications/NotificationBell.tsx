@@ -32,7 +32,9 @@ export function NotificationBell() {
       style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
       onPress={() => navigation.navigate('NotificationCenter')}
       accessibilityRole="button"
-      accessibilityLabel={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+      accessibilityLabel={
+        unread > 0 ? t('notifications.unreadLabel', { count: unread }) : t('notifications.title')
+      }
     >
       <Icon name="bell" size={20} color={colors.textPrimary} />
       <Text style={[styles.label, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>

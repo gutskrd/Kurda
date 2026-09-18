@@ -132,7 +132,8 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 accessibilityRole="button"
                 accessibilityLabel={t('moderation.reportPost')}
               >
-                <Text style={[styles.report, { color: colors.textSecondary }]}>⚐ Report post</Text>
+                <Icon name="flag" size={14} color={colors.textSecondary} />
+                <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>
               </Pressable>
 
               <View style={styles.reactionBar}>
@@ -182,7 +183,8 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                         ) : null}
                         {c.status !== 'removed' ? (
                           <Pressable onPress={() => confirmReport(t, 'comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
-                            <Text style={[styles.replyHint, { color: colors.textSecondary }]}>⚐ Report</Text>
+                            <Icon name="flag" size={12} color={colors.textSecondary} />
+                            <Text style={[styles.replyHint, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
                           </Pressable>
                         ) : null}
                       </View>

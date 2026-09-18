@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useI18n } from '../../i18n/I18nContext';
@@ -40,14 +40,18 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
           onPress={onCheck}
           style={[styles.button, { backgroundColor: colors.primary }, (!canCheck || submitting) && styles.disabled]}
         >
-          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{submitting ? 'Checking…' : 'Check'}</Text>
+          {submitting ? (
+            <ActivityIndicator color={colors.textOnPrimary} />
+          ) : (
+            <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('lesson.check')}</Text>
+          )}
         </Pressable>
       </View>
     );
   }
 
   const good = feedback.accepted;
-  const title = feedback.verdict === 'typo' ? t('lesson.almostTypo') : good ? 'Correct!' : t('lesson.notQuite');
+  const title = feedback.verdict === 'typo' ? t('lesson.almostTypo') : good ? t('lesson.correct') : t('lesson.notQuite');
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
   return (

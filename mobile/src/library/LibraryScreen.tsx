@@ -122,8 +122,18 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         </View>
 
         <View style={styles.filters}>
-          <Segmented options={['story', 'poem'] as const} value={type} onChange={setType} labelOf={(t) => (t === 'story' ? 'Stories' : 'Poems')} />
-          <Segmented options={['newest', 'popular'] as const} value={sort} onChange={setSort} labelOf={(s) => (s === 'newest' ? 'Newest' : 'Popular')} />
+          <Segmented
+            options={['story', 'poem'] as const}
+            value={type}
+            onChange={setType}
+            labelOf={(kind) => t(kind === 'story' ? 'library.kind.stories' : 'library.kind.poems')}
+          />
+          <Segmented
+            options={['newest', 'popular'] as const}
+            value={sort}
+            onChange={setSort}
+            labelOf={(order) => t(order === 'newest' ? 'library.sort.newest' : 'library.sort.popular')}
+          />
         </View>
 
         <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()}>

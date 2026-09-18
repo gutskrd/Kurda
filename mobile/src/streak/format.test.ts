@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { isFlameLit, streakLabel } from './format';
+import { isFlameLit, streakLabelKey } from './format';
 
-describe('streakLabel', () => {
+describe('streakLabelKey', () => {
   it('is singular at one day', () => {
-    expect(streakLabel(1)).toBe('1 day');
+    expect(streakLabelKey(1)).toBe('streak.day');
   });
 
   it('is plural otherwise (including zero)', () => {
-    expect(streakLabel(0)).toBe('0 days');
-    expect(streakLabel(2)).toBe('2 days');
-    expect(streakLabel(42)).toBe('42 days');
+    expect(streakLabelKey(0)).toBe('streak.days');
+    expect(streakLabelKey(2)).toBe('streak.days');
+    expect(streakLabelKey(42)).toBe('streak.days');
   });
 });
 

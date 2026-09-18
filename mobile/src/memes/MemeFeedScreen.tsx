@@ -198,7 +198,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </AsyncBoundary>
 
         <View style={[styles.fab, { bottom: spacing.xl }]}>
-          <ClayButton label={uploading ? 'Uploading…' : '+ Post'} tone="primary" onPress={pickAndUpload} />
+          <ClayButton label={t('memes.post')} icon="plus" busy={uploading} tone="primary" onPress={pickAndUpload} />
         </View>
       </View>
     </GradientBackground>

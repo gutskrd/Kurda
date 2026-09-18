@@ -70,7 +70,12 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
           </View>
 
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <Segmented options={['story', 'poem'] as const} value={type} onChange={setType} labelOf={(t) => (t === 'story' ? 'Story' : 'Poem')} />
+            <Segmented
+              options={['story', 'poem'] as const}
+              value={type}
+              onChange={setType}
+              labelOf={(kind) => t(kind === 'story' ? 'library.kind.story' : 'library.kind.poem')}
+            />
             <TextInput
               style={[styles.titleInput, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
               placeholder={t('library.titlePlaceholder')}
@@ -95,7 +100,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
 
           <View style={styles.actions}>
             <ClayButton label={t('library.saveDraft')} tone="neutral" onPress={() => void submit(false)} style={styles.flex} />
-            <ClayButton label={saving ? 'Publishing…' : 'Publish'} tone="primary" onPress={() => void submit(true)} style={styles.flex} />
+            <ClayButton label={t('library.publish')} busy={saving} tone="primary" onPress={() => void submit(true)} style={styles.flex} />
           </View>
         </View>
       </KeyboardAvoidingView>

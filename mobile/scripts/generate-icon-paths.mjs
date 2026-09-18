@@ -91,6 +91,12 @@ const MAP = {
   'mail-fill': { glyph: 'Envelope', weight: 'fill', note: 'the sign-in row, where a hairline outline sits oddly beside two solid brand marks' },
   alert: { glyph: 'Warning', note: 'something went wrong' },
   apple: { glyph: 'AppleLogo', note: 'sign in with Apple' },
+
+  // --- the typographic glyphs that four screens drew instead of icons ---
+  stop: { glyph: 'Stop', weight: 'fill', note: 'stop recording — the square the speaking exercise typed as U+25A0' },
+  record: { glyph: 'Record', weight: 'fill', note: 'start recording — the dot it typed as U+25CF, which is not even round in every font' },
+  flag: { glyph: 'Flag', note: 'report this to a moderator; the screens used U+2690, a flag outline most fonts do not have' },
+  microphone: { glyph: 'Microphone', note: 'record a voice note — the emoji renders as a whole illustration beside monochrome icons' },
   google: { glyph: 'GoogleLogo', note: 'sign in with Google' },
 };
 
