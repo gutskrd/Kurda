@@ -7,10 +7,9 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { formatCountdown, remainingUntil } from '../i18n/format';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import {
   claimState,
   progressPct,
@@ -31,7 +30,6 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { t } = useI18n();
   const { colors } = useTheme();
-  const topInset = useScreenTopInset();
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
@@ -75,12 +73,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}>
-            <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('events.title')}</Text>
-        </View>
+        <ScreenHeader title={t('events.title')} onBack={onExit} />
 
         <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} emptyText={t('events.none')}>
           {() => events == null ? null : (
@@ -149,11 +142,8 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.md, marginBottom: spacing.md },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  heading: { ...display(typography.sizes.lg) },
-  content: { gap: spacing.lg, paddingBottom: spacing.xl },
+  screen: { flex: 1 },
+  content: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xl },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   dim: { textAlign: 'center', paddingHorizontal: spacing.lg },
   eventBlock: { gap: spacing.sm },

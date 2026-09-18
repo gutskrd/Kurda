@@ -5,11 +5,10 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { sectionLabel, display } from '../theme/fonts';
+import { sectionLabel } from '../theme/fonts';
 import { GlassCard, GlassRow, GlassSelect, GradientBackground } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
@@ -25,7 +24,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const { client, logout, deleteAccount } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, preference, setPreference } = useTheme();
-  const topInset = useScreenTopInset();
   const { optedOut, setOptedOut } = useEventTheme();
   const { t, locale, setLocale } = useI18n();
   const [visibility, setVisibility] = useState<Visibility>('everyone');
@@ -131,15 +129,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   return (
     <GradientBackground>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset }]} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" hitSlop={10} style={styles.backBtn}>
-            <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-            <Text style={[styles.back, { color: colors.textSecondary }]}>{t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('settings.title')}</Text>
-          <View style={{ width: 64 }} />
-        </View>
+      <ScreenHeader title={t('settings.title')} onBack={onExit} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.preferences')}</Text>
         <GlassCard padding="tight">
@@ -228,10 +219,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  backBtn: { flexDirection: 'row', alignItems: 'center', width: 64 },
-  back: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  title: { ...display(typography.sizes.xl) },
   section: { ...sectionLabel, marginTop: spacing.md, marginLeft: spacing.xs, marginBottom: spacing.xs },
   groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },

@@ -8,7 +8,7 @@ import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 
@@ -63,7 +63,6 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const reduceMotion = useReducedMotion();
 
   const [game, setGame] = useState<RhymeGameView | null>(null);
@@ -148,14 +147,8 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 
   return (
     <GradientBackground>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset }]} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Pressable onPress={onExit} accessibilityRole="button" accessibilityLabel={t('common.back')} hitSlop={10}>
-            <Icon name="chevron-left" size={22} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhyme.name')}</Text>
-          <View style={{ width: 22 }} />
-        </View>
+      <ScreenHeader title={t('games.rhyme.name')} onBack={onExit} />
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         {!game ? (
           <GlassCard style={styles.startCard}>
@@ -240,11 +233,9 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
   // kurdî" is three
-  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
   startTitle: { ...display(typography.sizes.xl), marginTop: spacing.sm },
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

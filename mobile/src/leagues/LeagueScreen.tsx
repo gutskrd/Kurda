@@ -5,11 +5,10 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { Palette } from '../theme/palette';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
@@ -84,7 +83,6 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const [tab, setTab] = useState<Tab>('league');
   const [type, setType] = useState<BoardType>('weekly_xp');
   const [scope, setScope] = useState<Scope>('global');
@@ -136,13 +134,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
     return () => clearInterval(id);
   }, []);
 
-  const header = (
-    <View style={[styles.header, { paddingTop: topInset }]}>
-      <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.textSecondary }]}>✕</Text></Pressable>
-      <Text style={[styles.title, { color: colors.primary }]}>{t('rankings.title')}</Text>
-      <View style={{ width: 20 }} />
-    </View>
-  );
+  const header = <ScreenHeader title={t('rankings.title')} onBack={onExit} leading="close" />;
 
   const tabs = (
     <View style={styles.tabs}>
@@ -341,9 +333,6 @@ const styles = StyleSheet.create({
   more: { alignItems: 'center', paddingVertical: spacing.md },
   moreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md },
-  close: { fontSize: typography.sizes.lg },
-  title: { ...display(typography.sizes.xl) },
   tabs: { flexDirection: 'row', paddingHorizontal: spacing.lg, gap: spacing.sm, marginBottom: spacing.sm },
   tab: { flex: 1, paddingVertical: spacing.sm, borderRadius: radii.pill, alignItems: 'center' },
   tabText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },

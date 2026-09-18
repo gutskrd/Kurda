@@ -7,7 +7,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import { blockedUsers, unblockUser, type BlockedUser } from './blocks';
 
@@ -40,7 +40,6 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [list, setList] = useState<BlockedUser[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -97,16 +96,8 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.header}>
-          <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button">
-            <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-            {t('settings.blocked.title')}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.screen}>
+        <ScreenHeader title={t('settings.blocked.title')} onBack={onExit} />
 
         {list === null ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
@@ -175,15 +166,6 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   list: { padding: spacing.lg, gap: spacing.xs },
   help: { fontSize: typography.sizes.sm, marginBottom: spacing.sm },
   row: {

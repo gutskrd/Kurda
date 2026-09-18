@@ -11,11 +11,10 @@ import {
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -34,7 +33,6 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const me = user?.id ?? '';
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
@@ -95,11 +93,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text></Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{username}</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title={username} onBack={onExit} hairline />
 
         {loading ? (
           <SkeletonList style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg }} />
@@ -157,9 +151,6 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 40 },
-  title: { ...display(typography.sizes.lg) },
   list: { padding: spacing.lg, gap: spacing.xs },
   bubbleRow: { maxWidth: '80%' },
   rowMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },

@@ -4,10 +4,10 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { sectionLabel, display } from '../theme/fonts';
+import { sectionLabel } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { Icon } from '../theme/Icon';
 import { useI18n } from '../i18n/I18nContext';
@@ -27,7 +27,6 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
 
@@ -45,11 +44,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text></Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('nav.messages')}</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title={t('nav.messages')} onBack={onExit} />
         <FlatList
           data={convos}
           keyExtractor={(c) => c.userId}
@@ -122,9 +117,6 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.sm },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 40 },
-  title: { ...display(typography.sizes.lg) },
   list: { padding: spacing.lg, gap: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md },
   main: { flex: 1 },

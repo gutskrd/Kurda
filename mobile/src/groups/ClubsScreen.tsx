@@ -9,7 +9,7 @@ import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import { createGroup, discoverGroups, joinGroup, myGroups, type Group } from './api';
@@ -33,7 +33,6 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [all, setAll] = useState<Group[] | null>(null);
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
@@ -73,16 +72,21 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.header}>
-          <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button">
-            <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('groups.discover')}</Text>
-          <Pressable onPress={() => setComposing(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('groups.new')}>
-            <Icon name="sparkle" size={22} tone="primary" />
-          </Pressable>
-        </View>
+      <View style={styles.screen}>
+        {/*
+          A plus, not a sparkle. Making a club is adding one to a list; a
+          sparkle says something delightful is about to happen and leaves you
+          guessing what.
+        */}
+        <ScreenHeader
+          title={t('groups.discover')}
+          onBack={onExit}
+          right={
+            <Pressable onPress={() => setComposing(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('groups.new')}>
+              <Icon name="plus" size={22} tone="primary" />
+            </Pressable>
+          }
+        />
 
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
@@ -240,15 +244,6 @@ function NewClub({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  title: { ...display(typography.sizes.lg) },
   list: { padding: spacing.lg, gap: spacing.xs },
   row: {
     flexDirection: 'row',

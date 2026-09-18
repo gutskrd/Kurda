@@ -18,7 +18,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import { groupHistory, markGroupRead, sendToGroup, type GroupMessage } from './api';
 
@@ -49,7 +49,6 @@ export function GroupThreadScreen({
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const me = user?.id ?? '';
 
   const [messages, setMessages] = useState<GroupMessage[]>([]);
@@ -105,23 +104,21 @@ export function GroupThreadScreen({
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.header, { borderBottomColor: colors.glassBorder, paddingTop: topInset }]}>
-          <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button">
-            <Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-            {name}
-          </Text>
-          <Pressable
-            onPress={onOpenMembers}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={t('groups.members')}
-            style={styles.headerAction}
-          >
-            <Icon name="people" size={20} tone="primary" />
-          </Pressable>
-        </View>
+        <ScreenHeader
+          title={name}
+          onBack={onExit}
+          hairline
+          right={
+            <Pressable
+              onPress={onOpenMembers}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={t('groups.members')}
+            >
+              <Icon name="people" size={20} tone="primary" />
+            </Pressable>
+          }
+        />
 
         {loading ? (
           <SkeletonList style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg }} />
@@ -206,17 +203,6 @@ function Bubble({ message, mine }: { message: GroupMessage; mine: boolean }): Re
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  close: { fontSize: typography.sizes.md },
-  headerAction: { width: 40, alignItems: 'flex-end' },
-  title: { flex: 1, textAlign: 'center', fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   list: { padding: spacing.lg, gap: spacing.sm },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, maxWidth: '86%' },
   rowMine: { alignSelf: 'flex-end' },
