@@ -6,6 +6,7 @@ import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { LargeTitle } from '../navigation/LargeTitle';
 import { GoalPicker } from '../goals/GoalPicker';
 import { ProgressRing } from '../goals/ProgressRing';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
@@ -17,7 +18,6 @@ import { flattenMap, isLaunchable, stateHint, type MapRow } from '../coursemap/n
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -92,7 +92,7 @@ export function LearnScreen() {
 
   const header = (
     <View style={styles.header}>
-      <Text style={[styles.title, { color: colors.primary }]}>{t('nav.learn')}</Text>
+      <LargeTitle title={t('nav.learn')} />
       {goal ? (
         <View style={styles.goalCard}>
           <ProgressRing progress={goal.progress} completed={goal.completed} caption={`${goal.earnedXp} / ${goal.effectiveGoal} XP`} />
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.xs },
   header: { gap: spacing.md, marginBottom: spacing.md },
-  title: { ...display(typography.sizes.xxl) },
+
   goalCard: { alignItems: 'center', gap: spacing.md, alignSelf: 'stretch' },
   practice: { alignSelf: 'stretch' },
   courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.sm },

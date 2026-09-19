@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { sectionLabel, display } from '../theme/fonts';
+import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -12,6 +12,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { LargeTitle } from '../navigation/LargeTitle';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface UserRow {
@@ -107,18 +108,19 @@ export function SocialScreen() {
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('nav.friends')}</Text>
-          {/* Library and Memes used to be two links here, into two screens
-              showing halves of the same wall. Both now live on the Civak tab,
-              together, which is what this tab stopped being about. */}
-          <View style={styles.headerLinks}>
+        {/* Library and Memes used to be two links here, into two screens
+            showing halves of the same wall. Both now live on the Civak tab,
+            together, which is what this tab stopped being about. */}
+        <LargeTitle
+          title={t('nav.friends')}
+          style={styles.head}
+          right={
             <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel={t('nav.messages')}>
               <Icon name="chat" size={18} tone="primary" />
               <Text style={[styles.messages, { color: colors.primary }]}>{t('nav.messages')}</Text>
             </Pressable>
-          </View>
-        </View>
+          }
+        />
         <TextInput
           style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
           placeholder={t('friends.searchPlaceholder')}
@@ -193,9 +195,7 @@ export function SocialScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  title: { ...display(typography.sizes.xxl) },
-  headerLinks: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   input: { borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
