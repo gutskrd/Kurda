@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useAuth } from '../../auth/AuthContext';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { recordingRejection } from '../recording';
 import type { Exercise } from '../types';
@@ -97,15 +98,13 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
           </Pressable>
         </View>
       ) : (
-        <Pressable
-          onPress={() => recorder.start()}
+        <ClayButton
+          label={t('lesson.speak.start')}
+          icon="record"
+          tone="danger"
           disabled={disabled}
-          style={[styles.record, { backgroundColor: colors.danger }, disabled && styles.dim]}
-          accessibilityLabel={t('lesson.speak.start')}
-        >
-          <Icon name="record" size={14} color={colors.textOnPrimary} />
-          <Text style={[styles.recordText, { color: colors.textOnPrimary }]}>{t('lesson.speak.start')}</Text>
-        </Pressable>
+          onPress={() => recorder.start()}
+        />
       )}
 
       {message ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text> : null}
@@ -122,8 +121,6 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  record: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  recordText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },
   bar: { width: 4, borderRadius: radii.pill },
@@ -135,5 +132,4 @@ const styles = StyleSheet.create({
   reRecordText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   skip: { alignItems: 'center', paddingVertical: spacing.sm },
   skipText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
-  dim: { opacity: 0.4 },
 });

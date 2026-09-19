@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -16,7 +15,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -238,9 +237,7 @@ function ItemDetail({
 
       {affordable ? (
         <>
-          <Pressable style={[styles.buy, { backgroundColor: colors.primary }]} disabled={busy} onPress={() => onBuy(item)}>
-            {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.buyText, { color: colors.textOnPrimary }]}>{t('shop.buy')}</Text>}
-          </Pressable>
+          <ClayButton label={t('shop.buy')} tone="primary" size="large" busy={busy} onPress={() => onBuy(item)} />
           {/*
            * Buying it for somebody else costs the same and lands the same, so
            * it sits beside Buy rather than behind a menu — quieter, because
@@ -263,9 +260,7 @@ function ItemDetail({
             {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.gemPacksSoon')}
           </Text>
           {item.currency === 'zer' ? (
-            <Pressable style={[styles.earn, { backgroundColor: colors.accent }]} onPress={onEarnMore}>
-              <Text style={[styles.earnText, { color: colors.textOnPrimary }]}>{t('shop.earnZer')}</Text>
-            </Pressable>
+            <ClayButton label={t('shop.earnZer')} tone="accent" onPress={onEarnMore} />
           ) : null}
         </View>
       )}
@@ -294,8 +289,6 @@ const styles = StyleSheet.create({
   detailName: { ...display(typography.sizes.xl) },
   detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },
   detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginVertical: spacing.sm },
-  buy: { alignSelf: 'stretch', paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  buyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   gift: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -310,6 +303,4 @@ const styles = StyleSheet.create({
   giftText: { fontSize: 15, fontWeight: typography.weights.semibold },
   insufficient: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm },
   insufficientText: { textAlign: 'center', fontSize: typography.sizes.sm },
-  earn: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
-  earnText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

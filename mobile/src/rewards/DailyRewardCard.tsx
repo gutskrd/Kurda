@@ -1,10 +1,11 @@
 import { useI18n } from '../i18n/I18nContext';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { ClayButton } from '../theme/glass';
 
 interface DailyStatus {
   canClaim: boolean;
@@ -84,19 +85,12 @@ export function DailyRewardCard() {
       </View>
 
       {status.canClaim ? (
-        <Pressable
+        <ClayButton
+          label={t('rewards.claimZer', { amount: status.reward })}
+          tone="primary"
+          busy={claiming}
           onPress={claim}
-          disabled={claiming}
-          style={[styles.claim, { backgroundColor: colors.primary }]}
-          accessibilityRole="button"
-          accessibilityLabel={t('daily.claimLabel', { amount: status.reward })}
-        >
-          {claiming ? (
-            <ActivityIndicator color={colors.textOnPrimary} />
-          ) : (
-            <Text style={[styles.claimText, { color: colors.textOnPrimary }]}>{t('rewards.claimZer', { amount: status.reward })}</Text>
-          )}
-        </Pressable>
+        />
       ) : (
         <Text style={[styles.done, { color: colors.textSecondary }]}>
           {justEarned != null ? t('rewards.claimedZer', { amount: justEarned }) : t('rewards.comeBackTomorrow')}
@@ -114,7 +108,5 @@ const styles = StyleSheet.create({
   cellToday: { borderWidth: 2 },
   cellDay: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   cellAmount: { fontSize: typography.sizes.xs },
-  claim: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  claimText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   done: { textAlign: 'center', fontSize: typography.sizes.sm, paddingVertical: spacing.sm },
 });

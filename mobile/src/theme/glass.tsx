@@ -123,18 +123,41 @@ export function GlassRow({
 }
 
 /** Claymorphic / neumorphic soft button — puffy gradient fill + soft shadow. */
+/** What a button is for, and what colour that makes it. */
+export type ClayTone = 'neutral' | 'primary' | 'accent' | 'success' | 'danger';
+
 export function ClayButton({
   label,
   onPress,
   tone = 'neutral',
+  variant = 'solid',
+  size = 'regular',
   icon,
   badge,
   busy = false,
+  disabled = false,
   style,
 }: {
   label: string;
   onPress: () => void;
-  tone?: 'neutral' | 'primary';
+  /**
+   * Neutral unless the button means something: the brand for the action a
+   * screen is for, accent for a way to earn, success and danger for the two
+   * answers a lesson gives back.
+   */
+  tone?: ClayTone;
+  /**
+   * Outlined for the quieter of two actions side by side — the tone in the
+   * edge and the label, nothing in the fill. Six screens drew that by hand
+   * with a 2pt border, which is heavier than anything else in the app.
+   */
+  variant?: 'solid' | 'outline';
+  /**
+   * 44 is the minimum a fingertip needs and the right height for a button
+   * among other things. A full-width action at the bottom of a screen is the
+   * screen, and iOS gives that one 50.
+   */
+  size?: 'regular' | 'large';
   /** Optional skeuomorphic icon rendered before the label. */
   icon?: IconName;
   /** a count worth interrupting for, drawn as a pill on the right */
@@ -149,22 +172,44 @@ export function ClayButton({
    * thing in every language, and takes the press away while it spins.
    */
   busy?: boolean;
+  /** Nothing to press yet — a lesson with no answer typed, a purchase mid-flight. */
+  disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const primary = tone === 'primary';
-  const fill = primary ? colors.primary : colors.controlTrack;
-  const textColor = primary ? colors.textOnPrimary : colors.textPrimary;
+  const TONE: Record<ClayTone, string | null> = {
+    neutral: null,
+    primary: colors.primary,
+    accent: colors.accent,
+    success: colors.success,
+    danger: colors.danger,
+  };
+  const toneColor = TONE[tone];
+  const outline = variant === 'outline';
+  const fill = outline ? 'transparent' : (toneColor ?? colors.controlTrack);
+  const textColor = outline
+    ? (toneColor ?? colors.textPrimary)
+    : toneColor
+      ? colors.textOnPrimary
+      : colors.textPrimary;
+  const edge = outline ? (toneColor ?? colors.glassBorder) : (toneColor ? 'transparent' : colors.glassBorder);
+  const off = busy || disabled;
   return (
     <Pressable
       onPress={onPress}
-      disabled={busy}
+      disabled={off}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ busy, disabled: busy }}
-      style={({ pressed }) => [{ opacity: busy ? 0.7 : pressed ? 0.92 : 1, transform: [{ scale: pressed && !busy ? 0.98 : 1 }] }, style]}
+      accessibilityState={{ busy, disabled: off }}
+      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1, transform: [{ scale: pressed && !off ? 0.98 : 1 }] }, style]}
     >
-      <View style={[styles.clay, { backgroundColor: fill, borderColor: primary ? 'transparent' : colors.glassBorder }]}>
+      <View
+        style={[
+          styles.clay,
+          size === 'large' && styles.clayLarge,
+          { backgroundColor: fill, borderColor: edge },
+        ]}
+      >
         {busy ? (
           <ActivityIndicator color={textColor} />
         ) : (
@@ -364,6 +409,8 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 6,
   },
+  // 50, which is what iOS gives the full-width button a screen is about
+  clayLarge: { height: 50, alignSelf: 'stretch' },
   clayText: { fontSize: 15, fontWeight: typography.weights.semibold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

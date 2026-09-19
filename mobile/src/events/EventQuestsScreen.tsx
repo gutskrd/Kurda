@@ -144,8 +144,6 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: spacing.lg, padding: spacing.lg, paddingBottom: spacing.xl },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  dim: { textAlign: 'center', paddingHorizontal: spacing.lg },
   eventBlock: { gap: spacing.sm },
   eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eventName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textTransform: 'uppercase' },

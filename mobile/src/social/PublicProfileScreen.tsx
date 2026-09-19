@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -8,7 +8,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { statCaption, statValue } from '../theme/fonts';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -130,34 +130,36 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             <View style={styles.actions}>
               {profile.friendStatus === 'friends' ? (
                 <>
-                  <Pressable
+                  <ClayButton
+                    label={t('profile.message')}
+                    tone="primary"
+                    size="large"
                     onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
-                    style={[styles.primary, { backgroundColor: colors.primary }]}
-                  >
-                    <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{t('profile.message')}</Text>
-                  </Pressable>
-                  <Pressable
+                  />
+                  <ClayButton
+                    label={t('profile.challenge1v1')}
+                    icon="play"
+                    tone="accent"
+                    variant="outline"
+                    size="large"
                     onPress={() =>
                       void client.post('/challenges', { userId: profile.userId }).then((res) => {
                         if (res.ok) Alert.alert(t('profile.challengeSent'), t('profile.challengeWaiting'));
                         else Alert.alert(t('profile.challengeFailed'), describeError(res.error, t));
                       })
                     }
-                    style={[styles.secondary, { borderColor: colors.accent }]}
-                  >
-                    <Icon name="play" size={18} color={colors.accent} />
-                    <Text style={[styles.secondaryText, { color: colors.accent }]}>{t('profile.challenge1v1')}</Text>
-                  </Pressable>
+                  />
                 </>
               ) : null}
               {labelKey ? (
-                <Pressable
-                  onPress={() => isActionable(profile.friendStatus) && act(profile.friendStatus)}
-                  disabled={busy || !isActionable(profile.friendStatus)}
-                  style={[styles.primary, { backgroundColor: isActionable(profile.friendStatus) ? colors.primary : colors.controlTrack }]}
-                >
-                  {busy ? <ActivityIndicator color={colors.textOnPrimary} /> : <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{labelKey ? t(labelKey) : null}</Text>}
-                </Pressable>
+                <ClayButton
+                  label={t(labelKey)}
+                  tone={isActionable(profile.friendStatus) ? 'primary' : 'neutral'}
+                  size="large"
+                  busy={busy}
+                  disabled={!isActionable(profile.friendStatus)}
+                  onPress={() => act(profile.friendStatus)}
+                />
               ) : null}
               {/*
                 Report and block sit together because they are what you reach
@@ -226,10 +228,6 @@ const styles = StyleSheet.create({
   statValue,
   statLabel: statCaption,
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
-  primary: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  primaryText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
-  secondary: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center', borderWidth: 2 },
-  secondaryText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
   block: { paddingVertical: spacing.sm, alignItems: 'center' },
   danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl },
   blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
