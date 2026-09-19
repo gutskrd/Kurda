@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
 import type { Exercise } from '../types';
@@ -80,6 +81,7 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', gap: spacing.sm },
   prompt: { fontSize: typography.sizes.md },
   input: {
+    minHeight: MIN_TOUCH_TARGET,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,

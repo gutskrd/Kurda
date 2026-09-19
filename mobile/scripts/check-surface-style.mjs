@@ -26,8 +26,14 @@
  * 1.75× the divider — and a chat screen had one of each, the nav bar line in
  * one grey and the composer line above the keyboard in the other.
  *
- * So: a passive edge is `StyleSheet.hairlineWidth`, a corner is a token, and a
- * border on one side only is a divider, which takes `colors.separator`.
+ * And nine text fields were 39pt tall: a hairline edge, `radii.md`, and 8pt of
+ * padding around 16pt text. That is under the 44 a fingertip needs, and a miss
+ * on a text field is worse than a miss on a button — it dismisses the keyboard
+ * or focuses the one above.
+ *
+ * So: a passive edge is `StyleSheet.hairlineWidth`, a corner is a token, a
+ * border on one side only is a divider and takes `colors.separator`, and a
+ * style a `TextInput` wears declares a minHeight.
  *
  * An edge that carries a colour is not passive and is not checked — the brand
  * on a selected option, danger on a live recording, the gold rim on a badge are
@@ -40,6 +46,10 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname, relative, sep } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/** Apple HIG / WCAG, the same number `src/a11y/a11y.ts` exports — this file is
+ * .mjs and cannot import a .ts module, so it is written once more here. */
+const MIN_TOUCH_TARGET = 44;
 const SRC = join(ROOT, 'src');
 
 /**
@@ -132,6 +142,26 @@ for (const file of sources(SRC)) {
     }
   }
 
+  /*
+   * A field you type into is a field you have to hit.
+   *
+   * Every style named in a `<TextInput>`'s own `style` prop has to say how
+   * tall it is at least. A multi-line field declares a bigger one of its own,
+   * which is why the rule asks for a minHeight rather than for the number.
+   */
+  for (const m of src.matchAll(/<TextInput[\s\S]{0,600}?\/>/g)) {
+    const tag = m[0];
+    const styleProp = /style=\{\[?([\s\S]*?)\]?\}/.exec(tag)?.[1] ?? '';
+    for (const ref of styleProp.matchAll(/styles\.([A-Za-z][A-Za-z\d]*)/g)) {
+      const s2 = styleObjects(src).find((o) => o.key === ref[1]);
+      if (!s2 || /minHeight|\bheight:/.test(s2.body)) continue;
+      if (!/fontSize|padding/.test(s2.body)) continue;
+      problems.push(
+        `${where}:${s2.line}  ${s2.key} — a TextInput wears this and it has no minHeight; fields are at least ${MIN_TOUCH_TARGET}`,
+      );
+    }
+  }
+
   // a line on one side only is a divider, and takes the divider colour
   src.split('\n').forEach((line, i) => {
     const m = /border(Top|Bottom|Left|Right)Color:\s*colors\.glassBorder/.exec(line);
@@ -146,9 +176,10 @@ for (const file of sources(SRC)) {
 if (problems.length > 0) {
   console.error(`\nsurfaces: ${problems.length} that do not match the rest of the app:\n`);
   for (const p of problems) console.error(`  ${p}`);
-  console.error('\nA passive edge is a hairline, a corner is a radii token, a one-sided line is a separator.');
+  console.error('\nA passive edge is a hairline, a corner is a radii token, a one-sided line is a separator,');
+  console.error('and a field you type into is at least 44 tall.');
   console.error('If a number here is a measurement rather than a choice, say so in ALLOWED_RAW_RADII.\n');
   process.exit(1);
 }
 
-console.log('surfaces: one edge weight, one divider colour, every corner on the scale.');
+console.log('surfaces: one edge weight, one divider colour, every corner on the scale, every field tappable.');
