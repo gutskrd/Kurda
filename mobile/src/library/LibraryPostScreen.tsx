@@ -218,6 +218,6 @@ const styles = StyleSheet.create({
   replyHint: { fontSize: typography.sizes.xs },
   report: { fontSize: typography.sizes.sm },
   composerWrap: { gap: spacing.sm, marginBottom: spacing.md },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   input: { flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

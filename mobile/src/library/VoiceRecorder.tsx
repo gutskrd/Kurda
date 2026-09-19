@@ -120,5 +120,5 @@ const styles = StyleSheet.create({
   action: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radii.pill, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   pillText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: { width: 10, height: 10, borderRadius: radii.pill },
 });

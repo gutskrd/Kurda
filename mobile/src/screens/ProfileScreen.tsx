@@ -200,8 +200,8 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
 
 const styles = StyleSheet.create({
   content: { alignItems: 'center', padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
-  avatarWrap: { width: 120, height: 120, borderRadius: 60, overflow: 'hidden' },
-  avatarOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 60 },
+  avatarWrap: { width: 120, height: 120, borderRadius: radii.pill, overflow: 'hidden' },
+  avatarOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
   changePhoto: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.xs, marginBottom: spacing.sm },
   name: { ...display(typography.sizes.xl) },
   handle: { fontSize: typography.sizes.md, marginTop: 2 },

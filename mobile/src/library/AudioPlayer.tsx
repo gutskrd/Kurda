@@ -52,11 +52,11 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderRadius: radii.lg, padding: spacing.sm },
-  button: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, padding: spacing.sm },
+  button: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   symbol: { fontSize: 16, fontWeight: typography.weights.bold },
   track: { flex: 1, gap: 4 },
-  trackBg: { height: 6, borderRadius: 3, overflow: 'hidden' },
-  trackFill: { height: 6, borderRadius: 3 },
+  trackBg: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
+  trackFill: { height: 6, borderRadius: radii.pill },
   time: { fontSize: typography.sizes.xs },
 });

@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl) },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
-  card: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.sm },
+  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.sm },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   age: { fontSize: typography.sizes.sm },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md },

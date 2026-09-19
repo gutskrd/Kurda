@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { parseMarkdown, type Span } from './markdown';
 
@@ -75,6 +75,6 @@ const styles = StyleSheet.create({
   bulletRow: { flexDirection: 'row', gap: spacing.sm },
   bulletDot: { fontSize: typography.sizes.md },
   bulletText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 24 },
-  codeBlock: { borderRadius: 8, padding: spacing.md },
+  codeBlock: { borderRadius: radii.sm, padding: spacing.md },
   codeText: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md },
 });

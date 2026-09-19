@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   notice: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
   section: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.lg },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
-  input: { borderWidth: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   bio: { minHeight: 96, textAlignVertical: 'top' },
   countries: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   chip: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },

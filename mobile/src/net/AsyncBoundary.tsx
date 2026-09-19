@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
   title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.md, textAlign: 'center' },
-  retry: { marginTop: spacing.sm, borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retry: { marginTop: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   retryText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

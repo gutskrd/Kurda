@@ -257,6 +257,6 @@ const styles = StyleSheet.create({
   commentFoot: { flexDirection: 'row', gap: spacing.md },
   replyHint: { fontSize: typography.sizes.xs },
   report: { fontSize: typography.sizes.sm },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
   input: { flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

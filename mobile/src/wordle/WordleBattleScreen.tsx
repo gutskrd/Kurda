@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   opponents: { gap: spacing.sm },
   opponent: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   opponentName: { fontSize: typography.sizes.sm, width: 84 },
-  track: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
-  trackFill: { height: 6, borderRadius: 3 },
+  track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
+  trackFill: { height: 6, borderRadius: radii.pill },
   opponentState: { fontSize: typography.sizes.sm, minWidth: 72, textAlign: 'right' },
 });

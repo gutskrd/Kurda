@@ -1,0 +1,136 @@
+/**
+ * One edge weight, one radius scale.
+ *
+ * Two kinds of drift that nothing was watching for, both measured before this
+ * was written:
+ *
+ *   Eighty-nine bordered surfaces existed in fifteen different shapes. Of the
+ *   ones whose edge is only ever `colors.glassBorder` — a passive edge, there
+ *   to separate a surface from the gradient behind it rather than to be seen —
+ *   thirty-nine drew a hairline, twenty drew 1pt and three drew 2pt. On a 3×
+ *   screen a hairline is one physical pixel and 1pt is three, so a feed card's
+ *   edge was three times the weight of a settings row's, and an answer field's
+ *   was six times, in the same app and often on the same screen.
+ *
+ *   And eight corners were written as numbers beside a radius scale that
+ *   mirrors the website's `--r-*` tokens to the pixel: two sheets at 20 where
+ *   the scale says 18, a row at 14 where it says 12, four that were already
+ *   exactly a token but spelled as digits, and circles that said `20` on a 40pt
+ *   box and `60` on a 120pt one — the same idea written twice, and wrong the
+ *   moment either size changes.
+ *
+ * So: a passive edge is `StyleSheet.hairlineWidth`, and a corner is a token.
+ *
+ * An edge that carries a colour is not passive and is not checked — the brand
+ * on a selected option, danger on a live recording, the gold rim on a badge are
+ * all meant to be seen at whatever weight they were given.
+ *
+ * Runs inside `npm run lint --workspace @kurda/mobile`.
+ */
+import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join, dirname, relative, sep } from 'node:path';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const SRC = join(ROOT, 'src');
+
+/**
+ * Corners that are a measurement rather than a choice.
+ *
+ * Each has to say why. A number here is a geometric consequence — half of a
+ * known size, a scale's own definition — not a decision somebody made about
+ * how round a card should look.
+ */
+const ALLOWED_RAW_RADII = new Set([
+  // the scale itself, where the numbers are the definition
+  'theme/tokens.ts',
+  // the tab bar island is a capsule of a known height; `TAB_BAR_HEIGHT / 2` is
+  // the arithmetic, not a corner style
+  'navigation/GlassTabBar.tsx',
+]);
+
+function sources(dir, out = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) sources(p, out);
+    else if (/\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)) out.push(p);
+  }
+  return out;
+}
+
+const rel = (f) => relative(SRC, f).split(sep).join('/');
+
+/** Every `key: { … }` in a file's StyleSheet, brace-balanced. */
+function styleObjects(src) {
+  const out = [];
+  const re = /\n  ([A-Za-z][A-Za-z\d]*): \{/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const i = src.indexOf('{', m.index);
+    let depth = 0;
+    for (let j = i; j < src.length; j++) {
+      if (src[j] === '{') depth++;
+      else if (src[j] === '}') {
+        depth--;
+        if (depth === 0) {
+          out.push({
+            key: m[1],
+            body: src.slice(i + 1, j).replace(/\s+/g, ' ').trim(),
+            line: src.slice(0, m.index).split('\n').length + 1,
+          });
+          break;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+const problems = [];
+
+for (const file of sources(SRC)) {
+  const src = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const where = rel(file);
+
+  // a corner written as a number, anywhere in the file
+  if (!ALLOWED_RAW_RADII.has(where)) {
+    src.split('\n').forEach((line, i) => {
+      const m = /borderRadius:\s*(\d+)/.exec(line);
+      if (m) problems.push(`${where}:${i + 1}  borderRadius: ${m[1]} — use a radii token (radii.pill for a circle or capsule)`);
+    });
+  }
+
+  // a passive edge drawn heavier than a hairline
+  const body = src.split('const styles = StyleSheet.create(')[0];
+  for (const s of styleObjects(src)) {
+    const width = /borderWidth:\s*([^,}]+)/.exec(s.body)?.[1]?.trim();
+    if (!width || width === 'StyleSheet.hairlineWidth') continue;
+    // a colour fixed in the style object is the author naming the edge; leave it
+    if (/borderColor:/.test(s.body)) continue;
+
+    const uses = [...body.matchAll(new RegExp(`styles\\.${s.key}\\b`, 'g'))];
+    if (uses.length === 0) continue;
+
+    // what every call site paints this edge
+    const colours = new Set();
+    for (const u of uses) {
+      const near = body.slice(u.index, u.index + 400);
+      for (const c of near.matchAll(/borderColor:\s*([^,}\n]+)/g)) colours.add(c[1].trim());
+    }
+    if (colours.size === 1 && [...colours][0] === 'colors.glassBorder') {
+      problems.push(
+        `${where}:${s.line}  ${s.key} — borderWidth: ${width} on an edge that is only ever glassBorder; passive edges are StyleSheet.hairlineWidth`,
+      );
+    }
+  }
+}
+
+if (problems.length > 0) {
+  console.error(`\nsurfaces: ${problems.length} that do not match the rest of the app:\n`);
+  for (const p of problems) console.error(`  ${p}`);
+  console.error('\nA passive edge is a hairline; a corner is a radii token.');
+  console.error('If a number here is a measurement rather than a choice, say so in ALLOWED_RAW_RADII.\n');
+  process.exit(1);
+}
+
+console.log('surfaces: one edge weight, every corner on the scale.');

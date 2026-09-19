@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -248,11 +248,11 @@ const styles = StyleSheet.create({
    * asks for 44 before it will call something tappable, so it is 44 here —
    * same shape, same place, a thumb-sized version of it.
    */
-  plus: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  plus: { width: 44, height: 44, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: 1, borderRadius: 20, gap: spacing.sm },
+  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, gap: spacing.sm },
   sheetTitle: { ...display(typography.sizes.lg), marginBottom: spacing.xs },
-  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderWidth: 1, borderRadius: 14 },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md },
   choiceText: { flex: 1 },
   choiceName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   choiceSub: { fontSize: typography.sizes.sm },

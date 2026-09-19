@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   recordText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },
-  bar: { width: 4, borderRadius: 2 },
+  bar: { width: 4, borderRadius: radii.pill },
   dur: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   stop: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xl, borderRadius: radii.md },
   stopText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

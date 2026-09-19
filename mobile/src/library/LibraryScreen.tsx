@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl) },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
-  card: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.xs },
+  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.xs },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   cardTitle: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   preview: { fontSize: typography.sizes.md },

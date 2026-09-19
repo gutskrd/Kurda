@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: spacing.xl },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: 1, borderRadius: 20, gap: spacing.sm },
+  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, gap: spacing.sm },
   sheetTitle: { ...display(typography.sizes.lg) },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   input: {

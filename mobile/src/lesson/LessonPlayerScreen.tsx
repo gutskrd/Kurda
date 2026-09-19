@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   offline: {
     margin: spacing.lg,
     padding: spacing.md,
-    borderRadius: 12,
+    borderRadius: radii.md,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
