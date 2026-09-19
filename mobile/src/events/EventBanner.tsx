@@ -48,7 +48,7 @@ export function EventBanner() {
       accessibilityRole="button"
       accessibilityLabel={t('events.bannerLabel', { name: event.name })}
     >
-      {pack ? <Text style={styles.emoji}>{pack.emoji}</Text> : <Icon name="sparkle" size={24} color={colors.textOnPrimary} />}
+      {pack ? <Text style={styles.emoji}>{pack.emoji}</Text> : <Icon name="star" size={24} color={colors.textOnPrimary} />}
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: colors.textOnPrimary }]}>{event.name}</Text>
         <Text style={[styles.subtitle, { color: colors.textOnPrimary }]}>{t('events.bannerSubtitle')}</Text>

@@ -77,7 +77,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
   if (start.empty || !start.sessionId || !start.exercises?.length) {
     return (
       <Centered>
-        <Icon name="sparkle" size={56} color={colors.gold} />
+        <Icon name="check" size={56} color={colors.gold} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.empty.title')}</Text>
         <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('practice.empty.body')}</Text>
         {start.suggestion ? (

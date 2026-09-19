@@ -117,7 +117,7 @@ export function CosmeticPicker({
                 ) : art ? (
                   <Image source={{ uri: art }} style={styles.art} resizeMode="cover" accessibilityIgnoresInvertColors />
                 ) : (
-                  <Icon name={slot === 'background' ? 'image' : 'sparkle'} size={20} color={colors.textSecondary} />
+                  <Icon name={slot === 'background' ? 'image' : 'star'} size={20} color={colors.textSecondary} />
                 )}
               </Pressable>
             );

@@ -62,14 +62,14 @@ export function PlayScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Icon name="sparkle" size={40} tone="primary" />
+          <Icon name="grid" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.wordle.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.wordle.solo')}</Text>
           <ClayButton label={t('games.play')} tone="neutral" onPress={() => navigation.navigate('Wordle')} style={styles.button} />
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Icon name="trophy" size={40} tone="primary" />
+          <Icon name="people" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.battle.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.wordle.online')}</Text>
           <ClayButton
@@ -81,7 +81,7 @@ export function PlayScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Icon name="chat" size={40} tone="primary" />
+          <Icon name="speaker" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhyme.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.solo')}</Text>
           <ClayButton label={t('games.play')} tone="neutral" onPress={() => navigation.navigate('Rhyme')} style={styles.button} />
@@ -100,7 +100,7 @@ export function PlayScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Icon name="trophy" size={40} tone="primary" />
+          <Icon name="people" size={40} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.rhymeMatch.name')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('games.rhyme.online')}</Text>
           <ClayButton
