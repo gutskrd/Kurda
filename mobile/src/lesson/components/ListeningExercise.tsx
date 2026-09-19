@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
-import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ClayButton } from '../../theme/glass';
 import type { Exercise } from '../types';
 import { useAudio } from '../useAudio';
 import { useI18n } from '../../i18n/I18nContext';
@@ -36,23 +36,21 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.listen.prompt')}</Text>
 
       <View style={styles.controls}>
-        <Pressable
+        <ClayButton
+          label={t('lesson.listen.playShort')}
+          icon="speaker"
+          tone="primary"
           disabled={disabled || cannotPlay}
           onPress={() => audio.play(1)}
-          accessibilityLabel={t('lesson.listen.play')}
-          style={[styles.playButton, { backgroundColor: colors.primary }, (disabled || cannotPlay) && styles.dim]}
-        >
-          <Icon name="speaker" size={20} color={colors.textOnPrimary} />
-          <Text style={[styles.playText, { color: colors.textOnPrimary }]}>{t('lesson.listen.playShort')}</Text>
-        </Pressable>
-        <Pressable
+        />
+        {/* the same sound, slower; quieter than the button beside it */}
+        <ClayButton
+          label="0.75×"
+          tone="primary"
+          variant="outline"
           disabled={disabled || cannotPlay}
           onPress={() => audio.play(0.75)}
-          accessibilityLabel={t('lesson.listen.playSlow')}
-          style={[styles.slowButton, { borderColor: colors.primary }, (disabled || cannotPlay) && styles.dim]}
-        >
-          <Text style={[styles.slowText, { color: colors.primary }]}>0.75×</Text>
-        </Pressable>
+        />
       </View>
 
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textSecondary }]}>{exercise.prompt}</Text> : null}
@@ -80,24 +78,6 @@ const styles = StyleSheet.create({
   container: { gap: spacing.md },
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   controls: { flexDirection: 'row', gap: spacing.sm },
-  playButton: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  playText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  slowButton: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radii.md,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  slowText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   prompt: { fontSize: typography.sizes.md },
   input: {
     borderWidth: StyleSheet.hairlineWidth,

@@ -4,7 +4,7 @@ import { useGameSocket } from '../game/useGameSocket';
 import { useRematch } from '../game/useRematch';
 import { opponentAnswered, selfResult } from '../game/reducer';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -103,9 +103,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
             ))}
 
             {onPractice ? (
-              <Pressable onPress={onPractice} style={[styles.secondary, { borderColor: colors.primary }]}>
-                <Text style={[styles.secondaryText, { color: colors.primary }]}>{t('game.practiceMissed')}</Text>
-              </Pressable>
+              <ClayButton label={t('game.practiceMissed')} tone="primary" variant="outline" size="large" onPress={onPractice} />
             ) : null}
 
             {onRematch && !provisional ? (
@@ -117,9 +115,7 @@ export function GameScreen({ roomId, selfId, onExit, onRematch, onPractice }: Ga
               ) : expired ? (
                 <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('game.rematchExpired')}</Text>
               ) : (
-                <Pressable onPress={rematch.accept} style={[styles.primary, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.primaryText, { color: colors.textOnPrimary }]}>{t('game.rematch')}</Text>
-                </Pressable>
+                <ClayButton label={t('game.rematch')} tone="primary" size="large" onPress={rematch.accept} />
               )
             ) : null}
 
@@ -222,10 +218,6 @@ const styles = StyleSheet.create({
   xp: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   rating: { fontSize: typography.sizes.md },
   rematchWait: { marginTop: spacing.lg, alignItems: 'center', gap: spacing.sm },
-  primary: { marginTop: spacing.lg, alignSelf: 'stretch', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md },
-  primaryText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  secondary: { marginTop: spacing.md, alignSelf: 'stretch', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radii.md, borderWidth: 2 },
-  secondaryText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   done: { marginTop: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
   doneText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

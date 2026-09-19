@@ -15,7 +15,6 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -231,7 +230,6 @@ function Header({ onExit }: { onExit: () => void }): React.JSX.Element {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  title: { ...display(typography.sizes.lg) },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   loading: { padding: spacing.lg, gap: spacing.lg },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md, backgroundColor: '#0002' },

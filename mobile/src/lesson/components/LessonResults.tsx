@@ -1,8 +1,9 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { display } from '../../theme/fonts';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ClayButton } from '../../theme/glass';
 import { useI18n } from '../../i18n/I18nContext';
 import { StreakBadge } from '../../streak/StreakBadge';
 import type { Exercise, SessionResults } from '../types';
@@ -46,9 +47,7 @@ export function LessonResults({ results, exercises, failed, onDone }: Props) {
         </View>
       ) : null}
 
-      <Pressable onPress={onDone} style={[styles.done, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.doneText, { color: colors.textOnPrimary }]}>{t('common.done')}</Text>
-      </Pressable>
+      <ClayButton label={t('common.done')} tone="primary" size="large" onPress={onDone} />
     </ScrollView>
   );
 }
@@ -87,12 +86,4 @@ const styles = StyleSheet.create({
   mistakeRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
   mistakePrompt: { flex: 1, fontSize: typography.sizes.md },
   mistakeVerdict: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
-  done: {
-    alignSelf: 'stretch',
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  doneText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

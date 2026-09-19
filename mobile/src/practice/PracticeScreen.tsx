@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
@@ -8,7 +8,7 @@ import type { ApiError } from '../api/types';
 import { describeError, isRetryable } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
@@ -113,12 +113,7 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 function Primary({ label, onPress }: { label: string; onPress: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable onPress={onPress} style={[styles.button, { backgroundColor: colors.primary }]}>
-      <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{label}</Text>
-    </Pressable>
-  );
+  return <ClayButton label={label} tone="primary" size="large" onPress={onPress} />;
 }
 
 const styles = StyleSheet.create({
@@ -132,12 +127,4 @@ const styles = StyleSheet.create({
   loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
   title: { ...display(typography.sizes.xl), textAlign: 'center' },
   detail: { fontSize: typography.sizes.md, textAlign: 'center' },
-  button: {
-    marginTop: spacing.md,
-    alignSelf: 'stretch',
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

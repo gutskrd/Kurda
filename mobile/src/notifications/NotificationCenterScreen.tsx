@@ -114,8 +114,6 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   markAll: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  dim: {},
   list: { gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xl },
   card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md },
   dot: { width: 8, height: 8, borderRadius: radii.pill },

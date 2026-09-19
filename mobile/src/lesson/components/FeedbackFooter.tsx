@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ClayButton } from '../../theme/glass';
 import { useI18n } from '../../i18n/I18nContext';
 import type { Feedback } from '../player';
 
@@ -35,17 +36,14 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
   if (!feedback) {
     return (
       <View style={styles.footer}>
-        <Pressable
-          disabled={!canCheck || submitting}
+        <ClayButton
+          label={t('lesson.check')}
+          tone="primary"
+          size="large"
+          busy={submitting}
+          disabled={!canCheck}
           onPress={onCheck}
-          style={[styles.button, { backgroundColor: colors.primary }, (!canCheck || submitting) && styles.disabled]}
-        >
-          {submitting ? (
-            <ActivityIndicator color={colors.textOnPrimary} />
-          ) : (
-            <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('lesson.check')}</Text>
-          )}
-        </Pressable>
+        />
       </View>
     );
   }
@@ -64,22 +62,18 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
           {t('lesson.answer')} <Text style={styles.correctionValue}>{feedback.correction}</Text>
         </Text>
       ) : null}
-      <Pressable onPress={onContinue} style={[styles.button, { backgroundColor: good ? colors.success : colors.danger }]}>
-        <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('common.continue')}</Text>
-      </Pressable>
+      <ClayButton
+        label={t('common.continue')}
+        tone={good ? 'success' : 'danger'}
+        size="large"
+        onPress={onContinue}
+      />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   footer: { padding: spacing.lg },
-  button: {
-    paddingVertical: spacing.md,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  disabled: { opacity: 0.4 },
-  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   banner: {
     padding: spacing.lg,
     gap: spacing.sm,
