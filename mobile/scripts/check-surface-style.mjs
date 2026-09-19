@@ -19,7 +19,15 @@
  *   box and `60` on a 120pt one — the same idea written twice, and wrong the
  *   moment either size changes.
  *
- * So: a passive edge is `StyleSheet.hairlineWidth`, and a corner is a token.
+ * And nine dividers were drawn in the colour of an edge. The palette has both
+ * and says which is which: `glassBorder` is "hairline edge — kept subtle" and
+ * `separator` is "faint divider between rows inside a surface". In dark mode
+ * they are rgba(255,255,255,0.14) and rgba(255,255,255,0.08), so the edge is
+ * 1.75× the divider — and a chat screen had one of each, the nav bar line in
+ * one grey and the composer line above the keyboard in the other.
+ *
+ * So: a passive edge is `StyleSheet.hairlineWidth`, a corner is a token, and a
+ * border on one side only is a divider, which takes `colors.separator`.
  *
  * An edge that carries a colour is not passive and is not checked — the brand
  * on a selected option, danger on a live recording, the gold rim on a badge are
@@ -123,14 +131,24 @@ for (const file of sources(SRC)) {
       );
     }
   }
+
+  // a line on one side only is a divider, and takes the divider colour
+  src.split('\n').forEach((line, i) => {
+    const m = /border(Top|Bottom|Left|Right)Color:\s*colors\.glassBorder/.exec(line);
+    if (m) {
+      problems.push(
+        `${where}:${i + 1}  border${m[1]}Color: colors.glassBorder — a border on one side is a divider; use colors.separator`,
+      );
+    }
+  });
 }
 
 if (problems.length > 0) {
   console.error(`\nsurfaces: ${problems.length} that do not match the rest of the app:\n`);
   for (const p of problems) console.error(`  ${p}`);
-  console.error('\nA passive edge is a hairline; a corner is a radii token.');
+  console.error('\nA passive edge is a hairline, a corner is a radii token, a one-sided line is a separator.');
   console.error('If a number here is a measurement rather than a choice, say so in ALLOWED_RAW_RADII.\n');
   process.exit(1);
 }
 
-console.log('surfaces: one edge weight, every corner on the scale.');
+console.log('surfaces: one edge weight, one divider colour, every corner on the scale.');

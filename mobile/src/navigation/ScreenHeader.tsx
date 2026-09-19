@@ -60,7 +60,13 @@ export function ScreenHeader({
   backLabel?: string;
   /** A trailing action, if the screen has one. */
   right?: ReactNode;
-  /** A hairline under the bar — for screens whose content scrolls beneath it. */
+  /**
+   * A hairline under the bar, for screens whose content scrolls beneath it.
+   *
+   * Drawn with `separator`, not `glassBorder`: this is a line between two
+   * regions of a screen, which is the same job the composer line at the bottom
+   * of a chat does. Chat had one of each, and they were two different greys.
+   */
   hairline?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
@@ -73,7 +79,7 @@ export function ScreenHeader({
       style={[
         styles.wrap,
         { paddingTop: topInset },
-        hairline && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.glassBorder },
+        hairline && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
         style,
       ]}
     >

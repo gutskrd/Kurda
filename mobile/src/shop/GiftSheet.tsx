@@ -121,7 +121,7 @@ export function GiftSheet({
                     onPress={() => send(f)}
                     accessibilityRole="button"
                     accessibilityLabel={t('shop.sendItem', { name: item.name, to: f.username })}
-                    style={[styles.row, { borderColor: colors.glassBorder }]}
+                    style={[styles.row, { borderBottomColor: colors.separator }]}
                   >
                     <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
                     <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>

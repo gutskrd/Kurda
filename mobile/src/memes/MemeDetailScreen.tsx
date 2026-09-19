@@ -169,7 +169,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
               ) : (
                 comments.map((c) => (
-                  <View key={c.id} style={[styles.comment, { borderColor: colors.glassBorder }]}>
+                  <View key={c.id} style={[styles.comment, { borderTopColor: colors.separator }]}>
                     <InitialsAvatar name={c.authorId.slice(0, 2)} id={c.authorId} size={28} />
                     <View style={styles.commentMain}>
                       <Text style={[styles.commentAge, { color: colors.textSecondary }]}>{relativeTime(c.createdAt)}</Text>

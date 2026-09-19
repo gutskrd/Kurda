@@ -157,7 +157,7 @@ export function DictionaryScreen() {
           keyExtractor={(h) => h.entryId}
           contentContainerStyle={{ paddingBottom: tabBarInset }}
           renderItem={({ item }) => (
-            <Pressable onPress={() => openHit(item)} style={[styles.hit, { borderBottomColor: colors.glassBorder }]}>
+            <Pressable onPress={() => openHit(item)} style={[styles.hit, { borderBottomColor: colors.separator }]}>
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
               <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
