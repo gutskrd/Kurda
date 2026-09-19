@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     height: 44,
     borderRadius: radii.sm,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     marginTop: spacing.sm,
     alignSelf: 'stretch',
   },

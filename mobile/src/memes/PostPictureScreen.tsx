@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { gap: spacing.md, paddingBottom: spacing.xxl },
   dropzone: {
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.lg,
     minHeight: 220,
     alignItems: 'center',

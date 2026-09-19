@@ -48,7 +48,7 @@ export function NotificationBell() {
 }
 
 const styles = StyleSheet.create({
-  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 44, paddingHorizontal: 18, borderWidth: 1, borderRadius: radii.sm },
+  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 44, paddingHorizontal: 18, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.sm },
   label: { fontSize: 15, fontWeight: typography.weights.semibold },
   badge: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

@@ -7,7 +7,7 @@
     "dev": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "eslint App.tsx src && node ../scripts/check-hardcoded-english.mjs mobile && node scripts/generate-icon-paths.mjs --check",
+    "lint": "eslint App.tsx src && node ../scripts/check-hardcoded-english.mjs mobile && node scripts/generate-icon-paths.mjs --check && node scripts/check-surface-style.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "web": "expo start --web --port 8081"

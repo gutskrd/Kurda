@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   slowText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   prompt: { fontSize: typography.sizes.md },
   input: {
-    borderWidth: 2,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,

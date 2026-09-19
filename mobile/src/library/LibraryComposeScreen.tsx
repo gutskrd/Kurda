@@ -114,8 +114,8 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
-  titleInput: { borderWidth: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  bodyInput: { borderWidth: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },
+  titleInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  bodyInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },
   narrationLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   actions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
 });
