@@ -6,6 +6,7 @@ import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -175,6 +176,7 @@ export function DictionaryScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, gap: spacing.sm },
   input: {
+    minHeight: MIN_TOUCH_TARGET,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,

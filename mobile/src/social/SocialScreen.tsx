@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.sm },

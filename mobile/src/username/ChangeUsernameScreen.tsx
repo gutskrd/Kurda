@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   current: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   inputWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginTop: spacing.xs },
   at: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { flex: 1, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md },
   hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
   save: { marginTop: spacing.lg },
   saveDisabled: { opacity: 0.4 },

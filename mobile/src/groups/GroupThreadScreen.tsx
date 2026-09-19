@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -223,6 +224,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   input: {
+    minHeight: MIN_TOUCH_TARGET,
     flex: 1,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
