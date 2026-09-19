@@ -11,7 +11,7 @@ import { statCaption, statValue } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -195,15 +195,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 }
 
+/** No title: on a profile the person is the title, and their name is on the card below. */
 function Header({ onExit }: { onExit: () => void }) {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const topInset = useScreenTopInset();
-  return (
-    <View style={[styles.header, { paddingTop: topInset }]}>
-      <Pressable onPress={onExit} hitSlop={10}><Text style={[styles.close, { color: colors.primary }]}>‹ {t('common.back')}</Text></Pressable>
-    </View>
-  );
+  return <ScreenHeader onBack={onExit} />;
 }
 function Stat({ label, value, icon, iconColor }: { label: string; value: string; icon?: IconName; iconColor?: string }) {
   const { colors } = useTheme();
@@ -221,8 +215,7 @@ function Stat({ label, value, icon, iconColor }: { label: string; value: string;
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   scroll: { paddingBottom: spacing.xxl },
-  header: { paddingTop: spacing.md, marginBottom: spacing.md },
-  close: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
   username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { createPost } from './api';
 import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
@@ -60,14 +60,8 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          <View style={styles.titleRow}>
-            <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
-              <Icon name="close" size={22} color={colors.textSecondary} />
-            </Pressable>
-            <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('library.write')}</Text>
-            <View style={{ width: 22 }} />
-          </View>
+        <ScreenHeader title={t('library.write')} onBack={onExit} leading="close" />
+        <View style={styles.screen}>
 
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Segmented
@@ -111,8 +105,6 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   titleInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   bodyInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },

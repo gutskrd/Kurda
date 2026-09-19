@@ -1,16 +1,14 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { getSaved } from './api';
 import { FeedCard } from './FeedCard';
 import type { FeedItem } from './types';
@@ -31,7 +29,6 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -98,14 +95,8 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.titleRow}>
-          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-            <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('saved.title')}</Text>
-          <View style={{ width: 24 }} />
-        </View>
+      <ScreenHeader title={t('saved.title')} onBack={onExit} />
+      <View style={styles.screen}>
         <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
 
         <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()}>
@@ -134,8 +125,6 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { ...display(typography.sizes.xl) },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },

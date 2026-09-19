@@ -4,13 +4,12 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
 import { bodyPreview, type LibraryPost, type PostType } from './types';
 import { useI18n } from '../i18n/I18nContext';
@@ -27,7 +26,6 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [type, setType] = useState<PostType>('story');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
@@ -112,14 +110,8 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.titleRow}>
-          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-            <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('library.title')}</Text>
-          <View style={{ width: 24 }} />
-        </View>
+      <ScreenHeader title={t('library.title')} onBack={onExit} />
+      <View style={styles.screen}>
 
         <View style={styles.filters}>
           <Segmented
@@ -160,8 +152,6 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  title: { ...display(typography.sizes.xl) },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.xs },

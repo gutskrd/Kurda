@@ -21,6 +21,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines, SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { confirmReport } from '../moderation/report';
 import { addComment, clearReaction, getPost, getReactions, listComments, reportComment, reportPost, setReaction } from './api';
@@ -102,8 +103,8 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
   if (failed && !post) {
     return (
       <GradientBackground>
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          <Header colors={colors} onExit={onExit} />
+        <Header onExit={onExit} />
+        <View style={styles.screen}>
           <ErrorRetry onRetry={() => void loadAll()} />
         </View>
       </GradientBackground>
@@ -113,8 +114,8 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          <Header colors={colors} onExit={onExit} />
+        <Header onExit={onExit} />
+        <View style={styles.screen}>
           {post === null ? (
             <View style={styles.loading}>
               <Skeleton height={220} radius={radii.lg} />
@@ -222,23 +223,14 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
   );
 }
 
-function Header({ colors, onExit }: { colors: ReturnType<typeof useTheme>['colors']; onExit: () => void }): React.JSX.Element {
+function Header({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
-  return (
-    <View style={styles.titleRow}>
-      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-        <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-      </Pressable>
-      <Text style={[styles.title, { color: colors.primary }]}>{t('memes.post')}</Text>
-      <View style={{ width: 24 }} />
-    </View>
-  );
+  return <ScreenHeader title={t('memes.post')} onBack={onExit} />;
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   title: { ...display(typography.sizes.lg) },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   loading: { padding: spacing.lg, gap: spacing.lg },

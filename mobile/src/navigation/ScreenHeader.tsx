@@ -36,6 +36,7 @@ export function ScreenHeader({
   title,
   onBack,
   leading = 'back',
+  backLabel,
   right,
   hairline = false,
   style,
@@ -51,6 +52,12 @@ export function ScreenHeader({
    * "this is on top of what you were doing".
    */
   leading?: 'back' | 'close';
+  /**
+   * What a screen reader should call the way back, when "Back" is vaguer
+   * than it needs to be — the dictionary entry's says "Back to search".
+   * The visible word does not change; iOS keeps that short on purpose.
+   */
+  backLabel?: string;
   /** A trailing action, if the screen has one. */
   right?: ReactNode;
   /** A hairline under the bar — for screens whose content scrolls beneath it. */
@@ -76,7 +83,7 @@ export function ScreenHeader({
             <Pressable
               onPress={onBack}
               accessibilityRole="button"
-              accessibilityLabel={leading === 'close' ? t('common.cancel') : t('common.back')}
+              accessibilityLabel={backLabel ?? (leading === 'close' ? t('common.cancel') : t('common.back'))}
               hitSlop={10}
               style={({ pressed }) => [styles.leading, pressed && styles.pressed]}
             >

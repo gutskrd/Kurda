@@ -4,13 +4,12 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { claimTag, myClaimedTags, myTags, setTagDisplayed, tagCatalog, unclaimTag } from './api';
 import { TagBadge } from './TagBadge';
 import { claimableCatalog, purchasableTags, tagLabel, type ClaimedTag, type ProfileTags, type TagRow } from './types';
@@ -27,7 +26,6 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [profile, setProfile] = useState<ProfileTags | null>(null);
   const [claimed, setClaimed] = useState<ClaimedTag[]>([]);
@@ -102,15 +100,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     [client, load],
   );
 
-  const header = (
-    <View style={styles.titleRow}>
-      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-        <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-      </Pressable>
-      <Text style={[styles.title, { color: colors.primary }]}>{t('tags.title')}</Text>
-      <View style={{ width: 24 }} />
-    </View>
-  );
+  const header = <ScreenHeader title={t('tags.title')} onBack={onExit} />;
 
   const autos = profile ? profile.claimable.filter((t) => t.auto) : [];
   const toClaim = catalog ? claimableCatalog(catalog, claimed) : [];
@@ -118,8 +108,8 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
         {header}
+      <View style={styles.screen}>
         <AsyncBoundary loading={profile === null} error={profile === null ? error : null} onRetry={() => void load()}>
           {() => profile == null ? null : (
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -222,8 +212,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  title: { ...display(typography.sizes.lg) },
+
   body: { paddingBottom: spacing.xxl, gap: spacing.sm },
   section: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.md },
   hint: { fontSize: typography.sizes.md },
