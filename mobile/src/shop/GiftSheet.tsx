@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
@@ -159,7 +160,8 @@ const styles = StyleSheet.create({
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm },
   search: {
-    borderRadius: radii.sm,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: radii.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
     height: 44,

@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, Te
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
-  titleInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  titleInput: { minHeight: MIN_TOUCH_TARGET, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   bodyInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },
   narrationLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   actions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },

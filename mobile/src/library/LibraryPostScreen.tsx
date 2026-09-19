@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -215,5 +216,5 @@ const styles = StyleSheet.create({
   report: { fontSize: typography.sizes.sm },
   composerWrap: { gap: spacing.sm, marginBottom: spacing.md },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  input: { flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

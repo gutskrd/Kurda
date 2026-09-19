@@ -207,9 +207,10 @@ const styles = StyleSheet.create({
   field: { marginBottom: spacing.md },
   label: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
   input: {
+    minHeight: MIN_TOUCH_TARGET,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     fontSize: typography.sizes.md,
   },

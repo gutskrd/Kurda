@@ -1,5 +1,6 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
@@ -38,6 +39,7 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   input: {
+    minHeight: MIN_TOUCH_TARGET,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
