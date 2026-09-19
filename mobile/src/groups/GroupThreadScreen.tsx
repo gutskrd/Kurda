@@ -140,7 +140,7 @@ export function GroupThreadScreen({
 
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
-        <View style={[styles.inputRow, { borderTopColor: colors.glassBorder }]}>
+        <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
           <TextInput
             style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}

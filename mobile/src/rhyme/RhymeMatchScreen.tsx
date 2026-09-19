@@ -299,7 +299,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
             </Text>
             <View style={styles.stretch}>
               {results.ranking.map((r) => (
-                <View key={r.userId} style={[styles.scoreLine, { borderColor: colors.glassBorder }]}>
+                <View key={r.userId} style={[styles.scoreLine, { borderTopColor: colors.separator }]}>
                   <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
                   <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
                     {r.userId === user?.id ? t('games.you') : t('games.opponent')}

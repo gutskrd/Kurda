@@ -14,7 +14,7 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
   const hasExamples = sense.examples.length > 0;
 
   return (
-    <View style={[styles.sense, { borderBottomColor: colors.glassBorder }]}>
+    <View style={[styles.sense, { borderBottomColor: colors.separator }]}>
       <Pressable onPress={() => setOpen((o) => !o)} style={styles.header} disabled={!hasExamples}>
         <Text style={[styles.pos, { color: colors.primary }]}>{sense.pos}</Text>
         <Text style={[styles.def, { color: colors.textPrimary }]}>
