@@ -13,6 +13,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { LargeTitle } from '../navigation/LargeTitle';
 import { getFeed } from './api';
 import { FeedCard } from './FeedCard';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
@@ -115,8 +116,7 @@ export function CivakScreen(): React.JSX.Element {
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        <Text style={[styles.title, { color: colors.primary }]}>{t('civak.title')}</Text>
-        <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
+        <LargeTitle title={t('civak.title')} subtitle={t('civak.subtitle')} style={styles.head} />
 
         <View style={styles.filters}>
           <View style={styles.filterRow}>
@@ -236,8 +236,7 @@ function PostChooser({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  title: { ...display(typography.sizes.xl) },
-  sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
+  head: { marginBottom: spacing.md },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },
