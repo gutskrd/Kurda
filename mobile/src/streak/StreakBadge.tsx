@@ -4,7 +4,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { themeAccent } from '../theme/eventThemes';
-import { isFlameLit, streakLabel, type Streak } from './format';
+import { isFlameLit, streakLabelKey, type Streak } from './format';
+import { useI18n } from '../i18n/I18nContext';
 
 /**
  * Flame + day count (KUR-031). Lit while the run is alive; dimmed when the
@@ -13,6 +14,7 @@ import { isFlameLit, streakLabel, type Streak } from './format';
  */
 export function StreakBadge({ streak }: { streak: Streak }) {
   const lit = isFlameLit(streak.current);
+  const { t } = useI18n();
   const { pack } = useEventTheme();
   const { colors } = useTheme();
   return (
@@ -24,7 +26,7 @@ export function StreakBadge({ streak }: { streak: Streak }) {
     >
       <Icon name="flame" size={18} color={lit ? colors.danger : colors.textSecondary} />
       <Text style={[styles.count, { color: lit ? colors.textOnPrimary : colors.textSecondary }]}>
-        {streakLabel(streak.current)}
+        {t(streakLabelKey(streak.current), { count: streak.current })}
       </Text>
       {streak.freezes > 0 ? <Icon name="ice" size={14} color={colors.primary} /> : null}
     </View>

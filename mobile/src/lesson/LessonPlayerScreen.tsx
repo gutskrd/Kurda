@@ -337,7 +337,7 @@ export function SessionPlayer({
         {offline ? (
           <Pressable onPress={retry} style={[styles.offline, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
             <Text style={[styles.offlineText, { color: colors.textSecondary }]}>
-              {submitting ? 'Syncing…' : t('lesson.offlineRetry')}
+              {submitting ? t('lesson.syncing') : t('lesson.offlineRetry')}
             </Text>
           </Pressable>
         ) : (

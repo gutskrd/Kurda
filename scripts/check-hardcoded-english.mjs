@@ -79,6 +79,11 @@ const NOT_COPY = new Set([
   'RGB',
   'HSL',
   'Enter',
+  // The label on the sign-in screen’s connection readout, which renders only
+  // under __DEV__ and names a protocol rather than saying anything. It became
+  // visible to this gate only once it learned to read the words either side of
+  // a value — `API: {baseUrl}` — and there is nothing there to translate.
+  'API:',
   'Sans',
   'Serif',
   'Slab',
@@ -86,6 +91,11 @@ const NOT_COPY = new Set([
   'Premium',
   // a football club, on a sticker, beside Kurdistan and Zilan
   'Amed Spor',
+  // The line under the wordmark, on the intro slides and above the sign-in
+  // card. It is Kurmancî — "life is sweeter in Kurdish" — and it is the app's
+  // own line, not a sentence to be turned into nine. It only becomes visible
+  // to this gate now that a glyph no longer hides the strings around it.
+  'Jiyan bi kurdî xweştire',
   // the header on a shared Wordle grid. A share text is pasted into somebody
   // else's chat, where the sharer's language is not the reader's, so it stays
   // one recognisable name — the grid underneath is the content.
@@ -189,6 +199,31 @@ const NOT_COPY_CONTEXT = [
   /(\bfontFamily|[A-Za-z]Font)\s*:\s*$/,
 ];
 
+/**
+ * Replace each balanced `{…}` with a space, keeping the words either side.
+ *
+ * `templateWords` does the same job for `\${…}` with a regex, which is enough
+ * there because a template hole rarely nests. A JSX expression does —
+ * `{cracked ? ' · cracked' : ''}` has braces of its own — so this counts them.
+ */
+function dropExpressions(s) {
+  let out = '';
+  let depth = 0;
+  for (const ch of s) {
+    if (ch === '{') {
+      depth++;
+      if (depth === 1) out += ' ';
+      continue;
+    }
+    if (ch === '}') {
+      depth = Math.max(0, depth - 1);
+      continue;
+    }
+    if (depth === 0) out += ch;
+  }
+  return out;
+}
+
 function sources(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, entry.name);
@@ -253,9 +288,26 @@ function withoutComments(src) {
   return out;
 }
 
+/**
+ * Drop a pictograph somebody typed in front of the words.
+ *
+ * Four screens wrote their icons as characters — `■ Stop`, `● Record`,
+ * `⚐ Report post`, `🎙 Record a voice note` — and the character class below
+ * has no `■` in it, so each of those read as "not copy" and shipped to nine
+ * languages in English, beside an accessibilityLabel that was translated.
+ *
+ * Listing the glyphs would be whack-a-mole: the next screen picks a different
+ * one. A leading character that is neither a letter, a digit nor ordinary
+ * punctuation, followed by a space, is decoration in front of copy — so it
+ * comes off and the words behind it are judged on their own.
+ */
+function undecorate(text) {
+  return text.replace(/^[^A-Za-z\d\s.,!?;:'’“”"()&%…+·–—_-]{1,2}\s+/u, '');
+}
+
 /** Is this a phrase a person reads, rather than an identifier or a fragment? */
 function isCopy(value, minWords = 2) {
-  const text = value.trim();
+  const text = undecorate(value.trim());
   // Two characters, not four. Four was hiding the To that sits directly
   // under the From of the quiet-hours range — translating one of a pair is
   // worse than translating neither — along with Buy and Add. Nothing below
@@ -263,8 +315,20 @@ function isCopy(value, minWords = 2) {
   // to be anything but copy.
   if (text.length < 2) return false;
   if (NOT_COPY.has(text)) return false;
-  // must start like a sentence or a label
-  if (!/^[A-Z]/.test(text)) return false;
+  /*
+   * Must start like a sentence or a label.
+   *
+   * Or like a measurement: "3–20 characters · letters, numbers, _ · you can
+   * change it once every 30 days." is a sentence that begins with a number,
+   * and the capital-letter rule waved the whole thing through.
+   *
+   * A digit buys a much higher floor, and one counted in plain words rather
+   * than in things separated by spaces: `viewBox="0 0 18 18"` is four of the
+   * latter, and `length > 0 && audio.supported ? (` is five. Three runs of
+   * nothing but letters is what a sentence has and neither of those does.
+   */
+  const opensWithANumber = /^\d/.test(text);
+  if (!/^[A-Z]/.test(text) && !opensWithANumber) return false;
   // How many words it takes to be copy is the one thing the three passes
   // disagree about, and the disagreement is measured rather than guessed.
   // Reading the phone with the floor at one word: the tag-text pass found 36
@@ -272,15 +336,37 @@ function isCopy(value, minWords = 2) {
   // extra hundred that were HTTP verbs, route names and league tiers. A word
   // between tags is read by a person; a word on its own in a file is not.
   const words = text.split(/\s+/).filter(Boolean);
-  if (words.length < minWords) return false;
+  // A word that ends in an ellipsis or a bang is a sentence, whatever the
+  // floor says. `'Publishing…'`, `'Uploading…'`, `'Checking…'`, `'Syncing…'`
+  // and `'Correct!'` were all one word inside an expression, all below the
+  // two-word floor, and all on screen in English. No identifier ends that way,
+  // so this costs nothing and catches the whole shape of mistake.
+  const endsASentence = /[…!?]$/.test(text);
+  if (opensWithANumber && words.filter((w) => /^[A-Za-z]{2,}[.,!?;:]?$/.test(w)).length < 3) return false;
+  if (words.length < minWords && !endsASentence) return false;
   // Letters, spaces and ordinary punctuation only — no code. Anything this
   // class does not list is treated as an identifier and waved through, so a
   // missing character is a hole, not a false positive: the ellipsis was
   // absent and hid eleven strings, every placeholder in the lesson player
   // among them. Add the character rather than loosening the rule.
-  if (!/^[A-Za-z\d\s.,!?;:'’“”"()&%…+·–—-]+$/.test(text)) return false;
-  // a type or an expression that happens to read like a phrase
-  if (/\b(Promise|React|Record|Partial|void|const|return|string|number|boolean)\b/.test(text)) return false;
+  if (!/^[A-Za-z\d\s.,!?;:'’“”"()&%…+·–—_-]+$/.test(text)) return false;
+  /*
+   * A type or an expression that happens to read like a phrase.
+   *
+   * `Record` needs its angle bracket. It was listed bare with the other type
+   * names, and it is also the word on a record button — so `● Record` and
+   * `🎙 Record a voice note` were both excused as TypeScript, and both went to
+   * nine languages in English. A name that is also an ordinary word has to be
+   * matched as the type it is, not as the letters it shares.
+   *
+   * The rest stay bare. Nobody reads "Promise" or "async" on a screen, and the
+   * tag-text pass cuts at `<` — so `async function submit(): Promise<void>`
+   * arrives here with its bracket already gone, and the name is all that is
+   * left to know it by.
+   */
+  if (/\bRecord\s*</.test(text)) return false;
+  if (/\b(Promise|React|Partial|Readonly|Pick|Omit)\b/.test(text)) return false;
+  if (/\b(void|const|let|var|function|async|await|return|string|number|boolean)\b/.test(text)) return false;
   return true;
 }
 
@@ -321,6 +407,32 @@ function selfTest() {
   }
   if (isCopy(templateWords('${name} avatar'), 1)) {
     throw new Error('a lone lowercase word became copy; the capital-letter rule moved');
+  }
+
+  // a typed-out icon in front of the words
+  for (const decorated of ['■ Stop', '⚐ Report post', '🎙 Record a voice note']) {
+    if (!isCopy(decorated, 1)) throw new Error(`${decorated} read as not-copy; undecorate stopped working`);
+  }
+  // …and the glyph alone is still not a sentence
+  if (isCopy('■', 1)) throw new Error('a lone glyph became copy');
+
+  // one word, ending a sentence
+  for (const one of ['Publishing…', 'Correct!']) {
+    if (!isCopy(one)) throw new Error(`${one} read as not-copy at the two-word floor`);
+  }
+  if (isCopy('Bronze')) throw new Error('a lone capitalised word became copy at the two-word floor');
+
+  // a sentence that opens with a number, and a value that only looks like one
+  if (!isCopy('3–20 characters · letters, numbers, _ · you can change it once every 30 days.')) {
+    throw new Error('a sentence opening with a digit read as not-copy');
+  }
+  for (const value of ['3 days', '404 Not Found', '12 px', '0 0 18 18', '0 && audio.supported ? (']) {
+    if (isCopy(value)) throw new Error(`${value} became copy; the digit floor moved`);
+  }
+
+  // words either side of a value
+  if (dropExpressions("Strength {node.strength}%{cracked ? ' · cracked' : ''}").replace(/\s+/g, ' ').trim() !== 'Strength %') {
+    throw new Error('dropExpressions stopped counting braces');
   }
 }
 selfTest();
@@ -401,6 +513,22 @@ for (const file of sources(SRC)) {
    * whole file rather than only the JSX is deliberate — a string handed to
    * `setError` three functions up is read by exactly the same person.
    */
+  /*
+   * The same tag text, when a value interrupts it.
+   *
+   * `<Text>Strength {node.strength}%</Text>` has a word in it and the pattern
+   * above cannot see one: it wants a run with no braces in it and gives up at
+   * the first. The words around a value are still words — the same thing the
+   * template-literal pass already knows, applied to JSX text.
+   */
+  const interrupted = /(?<![=!<>-])>([^<>]*\{[^<>]*)</g;
+  while ((m = interrupted.exec(src))) {
+    const value = dropExpressions(m[1]).replace(/\s+/g, ' ').trim();
+    if (!isCopy(value, 1)) continue;
+    const line = src.slice(0, m.index).split(/\r?\n/).length;
+    problems.push({ file, line, what: value.slice(0, 80) });
+  }
+
   const literal = /(['"])((?:(?!\1)[^\\]|\\.)*)\1/g;
   let lit;
   while ((lit = literal.exec(src))) {

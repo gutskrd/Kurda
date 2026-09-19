@@ -7,9 +7,16 @@ export interface Streak {
   lastActiveOn: string | null;
 }
 
-/** "1 day" / "N days" — singular-aware count for the flame label. */
-export function streakLabel(current: number): string {
-  return `${current} ${current === 1 ? 'day' : 'days'}`;
+/**
+ * Which of the two day-count forms the flame label needs.
+ *
+ * It used to build the string — `${current} days` — which put English in a
+ * pure module and on every profile in the app. The choice between one and many
+ * is still this function's, because it is the only place that knows the number;
+ * the words belong to the catalogue.
+ */
+export function streakLabelKey(current: number): 'streak.day' | 'streak.days' {
+  return current === 1 ? 'streak.day' : 'streak.days';
 }
 
 /**

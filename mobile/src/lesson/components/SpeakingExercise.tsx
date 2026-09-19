@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useAuth } from '../../auth/AuthContext';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import { Icon } from '../../theme/Icon';
 import { recordingRejection } from '../recording';
 import type { Exercise } from '../types';
 import { uploadRecording } from '../upload';
@@ -78,7 +79,8 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
           </View>
           <Text style={[styles.dur, { color: colors.textPrimary }]}>{(recorder.durationMs / 1000).toFixed(1)}s</Text>
           <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityLabel={t('lesson.speak.stop')}>
-            <Text style={[styles.stopText, { color: colors.background }]}>■ Stop</Text>
+            <Icon name="stop" size={14} color={colors.background} />
+            <Text style={[styles.stopText, { color: colors.background }]}>{t('lesson.speak.stop')}</Text>
           </Pressable>
         </View>
       ) : status === 'uploading' ? (
@@ -88,7 +90,8 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
         </View>
       ) : status === 'ready' ? (
         <View style={styles.recordingBox}>
-          <Text style={[styles.ready, { color: colors.success }]}>✓ Recorded</Text>
+          <Icon name="check" size={14} color={colors.success} />
+          <Text style={[styles.ready, { color: colors.success }]}>{t('lesson.speak.recorded')}</Text>
           <Pressable onPress={() => recorder.start()} disabled={disabled} style={[styles.reRecord, { borderColor: colors.primary }]}>
             <Text style={[styles.reRecordText, { color: colors.primary }]}>{t('lesson.speak.reRecord')}</Text>
           </Pressable>
@@ -100,7 +103,8 @@ export function SpeakingExercise({ exercise, onSetAudioKey, onDenyPermission, on
           style={[styles.record, { backgroundColor: colors.danger }, disabled && styles.dim]}
           accessibilityLabel={t('lesson.speak.start')}
         >
-          <Text style={[styles.recordText, { color: colors.textOnPrimary }]}>● Record</Text>
+          <Icon name="record" size={14} color={colors.textOnPrimary} />
+          <Text style={[styles.recordText, { color: colors.textOnPrimary }]}>{t('lesson.speak.start')}</Text>
         </Pressable>
       )}
 

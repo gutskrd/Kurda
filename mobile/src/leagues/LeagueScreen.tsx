@@ -225,8 +225,12 @@ function LeagueTab({ league }: { league: LeagueView | null }) {
       contentContainerStyle={styles.list}
       ListHeaderComponent={
         <View style={styles.leagueHead}>
-          <Text style={[styles.tierName, { color: meta.color }]}>{meta.emoji} {meta.label} League</Text>
-          <Text style={[styles.countdown, { color: colors.textSecondary }]}>Ends in {countdown(league.weekKey)} · UTC</Text>
+          <Text style={[styles.tierName, { color: meta.color }]}>
+            {t('leagues.tierName', { emoji: meta.emoji, tier: meta.labelKey ? t(meta.labelKey) : meta.label })}
+          </Text>
+          <Text style={[styles.countdown, { color: colors.textSecondary }]}>
+            {t('leagues.endsIn', { time: countdown(league.weekKey) })}
+          </Text>
           {notStarted ? (
             <Text style={[styles.cta, { color: colors.accent }]}>{t('leagues.doALesson')}</Text>
           ) : null}
