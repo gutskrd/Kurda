@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { GlassCard, GlassRow, GlassSelect, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -222,7 +223,14 @@ const styles = StyleSheet.create({
   section: { ...sectionLabel, marginTop: spacing.md, marginLeft: spacing.xs, marginBottom: spacing.xs },
   groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
-  pill: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth },
+  pill: {
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   pillText: { fontSize: typography.sizes.sm },
   hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
   pillTextActive: { fontWeight: typography.weights.bold },

@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -115,7 +116,13 @@ export function SocialScreen() {
           title={t('nav.friends')}
           style={styles.head}
           right={
-            <Pressable onPress={() => navigation.navigate('Chats')} hitSlop={8} style={styles.messagesLink} accessibilityRole="button" accessibilityLabel={t('nav.messages')}>
+            <Pressable
+              onPress={() => navigation.navigate('Chats')}
+              hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
+              style={styles.messagesLink}
+              accessibilityRole="button"
+              accessibilityLabel={t('nav.messages')}
+            >
               <Icon name="chat" size={18} tone="primary" />
               <Text style={[styles.messages, { color: colors.primary }]}>{t('nav.messages')}</Text>
             </Pressable>

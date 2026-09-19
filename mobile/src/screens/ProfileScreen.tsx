@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { statValue, statCaption, sectionLabel, display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -127,7 +128,7 @@ export function ProfileScreen() {
             </View>
           ) : null}
         </Pressable>
-        <Pressable onPress={changePhoto} accessibilityRole="button" hitSlop={8}>
+        <Pressable onPress={changePhoto} accessibilityRole="button" hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 30)}>
           <Text style={[styles.changePhoto, { color: colors.primary }]}>{photoUrl ? t('profile.editPhoto') : t('profile.addPhoto')}</Text>
         </Pressable>
 
