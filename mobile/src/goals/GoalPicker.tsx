@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { GOAL_OPTIONS, type GoalOption } from './format';
 
@@ -47,13 +48,16 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: spacing.sm },
+  row: { flexDirection: 'row', gap: spacing.sm, alignSelf: 'stretch' },
   segment: {
     flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     borderRadius: radii.md,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   label: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   dim: { opacity: 0.5 },
