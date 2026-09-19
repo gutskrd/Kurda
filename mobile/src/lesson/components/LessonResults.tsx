@@ -23,7 +23,7 @@ export function LessonResults({ results, exercises, failed, onDone }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.screen}>
-      <Icon name={failed ? 'heart' : 'sparkle'} size={64} color={failed ? colors.danger : colors.gold} />
+      <Icon name={failed ? 'heart' : 'trophy'} size={64} color={failed ? colors.danger : colors.gold} />
       <Text style={[styles.title, { color: colors.textPrimary }]}>{failed ? t('lesson.outOfHearts') : t('lesson.complete')}</Text>
 
       <View style={styles.stats}>

@@ -269,7 +269,7 @@ export function SessionPlayer({
           </View>
           {view.grammarMd ? (
             <Pressable onPress={() => setShowTips(true)} accessibilityLabel={t('lesson.grammarTips')} hitSlop={8}>
-              <Icon name="sparkle" size={22} color={colors.gold} />
+              <Icon name="lightbulb" size={22} color={colors.gold} />
             </Pressable>
           ) : null}
           <HeartsBar hearts={state.hearts} max={STARTING_HEARTS} />

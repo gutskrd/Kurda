@@ -235,7 +235,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
         {!game ? (
           <GlassCard style={styles.startCard}>
-            <Icon name="sparkle" size={44} tone="primary" />
+            <Icon name="grid" size={44} tone="primary" />
             <Text style={[styles.startTitle, { color: colors.textPrimary }]}>{t('games.wordle.name')}</Text>
             <Text style={[styles.startHint, { color: colors.textSecondary }]}>
               {t('games.wordle.rules')}

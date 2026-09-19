@@ -152,7 +152,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 
         {!game ? (
           <GlassCard style={styles.startCard}>
-            <Icon name="sparkle" size={44} tone="primary" />
+            <Icon name="speaker" size={44} tone="primary" />
             <Text style={[styles.startTitle, { color: colors.textPrimary }]}>{t('games.rhyme.name')}</Text>
             <Text style={[styles.startHint, { color: colors.textSecondary }]}>
               {t('games.rhyme.rules')}

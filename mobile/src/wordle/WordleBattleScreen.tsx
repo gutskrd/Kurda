@@ -97,7 +97,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
   return (
     <>
       <GlassCard style={styles.card}>
-        <Icon name="sparkle" size={44} tone="primary" />
+        <Icon name="people" size={44} tone="primary" />
         <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.battle.intro')}</Text>
         <View style={styles.stretch}>
           <Segmented<Difficulty>
