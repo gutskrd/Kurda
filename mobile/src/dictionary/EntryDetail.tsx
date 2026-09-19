@@ -9,7 +9,7 @@ import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { SenseSection } from './SenseSection';
 import type { Entry } from './types';
 import { useI18n } from '../i18n/I18nContext';
@@ -21,7 +21,6 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
   const [entry, setEntry] = useState<Entry | null>(null);
   const [saved, setSaved] = useState(false);
@@ -50,11 +49,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <View style={[styles.topBar, { paddingTop: topInset }]}>
-          <Pressable onPress={onBack} accessibilityLabel={t('dictionary.backToSearch')} hitSlop={12}>
-            <Text style={[styles.back, { color: colors.primary }]}>‹ {t('common.back')}</Text>
-          </Pressable>
-        </View>
+        <ScreenHeader onBack={onBack} backLabel={t('dictionary.backToSearch')} />
 
         {!entry ? (
           <View style={styles.body}>
@@ -108,8 +103,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  topBar: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
-  back: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+
   body: { padding: spacing.lg, gap: spacing.sm },
   headwordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   headword: { ...display(typography.sizes.xxl) },

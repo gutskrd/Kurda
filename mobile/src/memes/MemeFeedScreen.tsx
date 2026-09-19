@@ -15,13 +15,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { createPost, listPosts, uploadMemeImage } from './api';
 import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
@@ -40,7 +38,6 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [category, setCategory] = useState<Category>('meme');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
@@ -159,14 +156,8 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.titleRow}>
-          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-            <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('memes.title')}</Text>
-          <View style={{ width: 24 }} />
-        </View>
+      <ScreenHeader title={t('memes.title')} onBack={onExit} />
+      <View style={styles.screen}>
 
         <View style={styles.filters}>
           <Segmented
@@ -207,8 +198,6 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  title: { ...display(typography.sizes.xl) },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   card: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.sm },

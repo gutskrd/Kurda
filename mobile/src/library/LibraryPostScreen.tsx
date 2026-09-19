@@ -19,6 +19,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines, SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { AudioPlayer } from './AudioPlayer';
 import { confirmReport } from '../moderation/report';
@@ -87,20 +88,17 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   }, [client, postId, draft, voiceUri, posting]);
 
   const header = (
-    <View style={styles.titleRow}>
-      <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-        <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-      </Pressable>
-      <Text style={[styles.headerTitle, { color: colors.primary }]}>{post?.type === 'poem' ? 'Poem' : 'Story'}</Text>
-      <View style={{ width: 24 }} />
-    </View>
+    <ScreenHeader
+      title={t(post?.type === 'poem' ? 'library.kind.poem' : 'library.kind.story')}
+      onBack={onExit}
+    />
   );
 
   if (failed && !post) {
     return (
       <GradientBackground>
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          {header}
+        {header}
+        <View style={styles.screen}>
           <ErrorRetry onRetry={() => void loadAll()} />
         </View>
       </GradientBackground>
@@ -110,8 +108,8 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          {header}
+        {header}
+        <View style={styles.screen}>
           {post === null ? (
             <View style={styles.loading}>
               <Skeleton width="60%" height={24} />
@@ -203,8 +201,6 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   loading: { padding: spacing.lg, gap: spacing.lg },
   title: { ...display(typography.sizes.xl) },

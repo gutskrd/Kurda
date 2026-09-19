@@ -8,10 +8,9 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from './InitialsAvatar';
 import { CosmeticPicker } from './CosmeticPicker';
 import { SectionToggles } from './SectionToggles';
@@ -49,7 +48,6 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const topInset = useScreenTopInset();
 
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -146,14 +144,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <View style={styles.titleRow}>
-          <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-            <Icon name="chevron-left" size={24} color={colors.textSecondary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.primary }]}>{t('profile.edit')}</Text>
-          <View style={{ width: 24 }} />
-        </View>
+      <ScreenHeader title={t('profile.edit')} onBack={onExit} />
+      <View style={styles.screen}>
 
         <AsyncBoundary loading={me === null && error === null} error={me === null ? error : null} onRetry={() => void load()}>
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -284,8 +276,7 @@ function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPre
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { ...display(typography.sizes.xl) },
+
   body: { paddingBottom: 140, gap: spacing.sm },
   notice: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
   section: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.lg },

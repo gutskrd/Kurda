@@ -20,6 +20,7 @@ import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import { uploadPostImage } from './imageUpload';
 import type { Category, ImagePost } from './types';
@@ -111,14 +112,8 @@ export function PostPictureScreen({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={topInset}
       >
-        <View style={[styles.screen, { paddingTop: topInset }]}>
-          <View style={styles.titleRow}>
-            <Pressable onPress={onExit} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
-              <Icon name="close" size={22} color={colors.textSecondary} />
-            </Pressable>
-            <Text style={[styles.headerTitle, { color: colors.primary }]}>{t('picture.title')}</Text>
-            <View style={{ width: 22 }} />
-          </View>
+        <ScreenHeader title={t('picture.title')} onBack={onExit} leading="close" />
+        <View style={styles.screen}>
 
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             <Pressable
@@ -184,13 +179,6 @@ export function PostPictureScreen({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  headerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   body: { gap: spacing.md, paddingBottom: spacing.xxl },
   dropzone: {
     borderWidth: 1,
