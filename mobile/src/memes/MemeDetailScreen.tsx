@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   caption: { fontSize: typography.sizes.md },
   reactionBar: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   reaction: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 6 },
-  reactionEmoji: { fontSize: 18 },
+  reactionEmoji: { fontSize: typography.sizes.lg },
   reactionCount: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   empty: { textAlign: 'center', marginTop: spacing.md },

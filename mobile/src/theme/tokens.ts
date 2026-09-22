@@ -78,6 +78,26 @@ export const typography = {
     xl: 26,
     xxl: 34,
   },
+  /**
+   * The sizes iOS sets its own controls at.
+   *
+   * Not the website's scale above, which is what body copy and headings
+   * use. These three come from the Human Interface Guidelines and are what
+   * makes a row, a button or a tab label read as native rather than as
+   * approximately native — a settings row at 16 is a settings row that is
+   * one point wrong, on every line, forever.
+   *
+   * Nine styles had copied the numbers loose, each from whichever other one
+   * its author happened to look at.
+   */
+  ios: {
+    /** a tab bar label */
+    tabLabel: 11,
+    /** the label on a button */
+    button: 15,
+    /** the title and the value on a list row */
+    row: 17,
+  },
   weights: {
     regular: '400',
     medium: '500',

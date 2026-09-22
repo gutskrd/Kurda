@@ -392,9 +392,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 11 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: 17, fontWeight: typography.weights.regular },
+  rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
   rowSubtitle: { fontSize: typography.sizes.sm },
-  rowValue: { fontSize: 17 },
+  rowValue: { fontSize: typography.ios.row },
   clay: {
     borderRadius: radii.sm,
     borderWidth: 1,
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   // 50, which is what iOS gives the full-width button a screen is about
   clayLarge: { height: 50, alignSelf: 'stretch' },
-  clayText: { fontSize: 15, fontWeight: typography.weights.semibold },
+  clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 3, gap: 2 },

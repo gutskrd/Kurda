@@ -178,6 +178,6 @@ const styles = StyleSheet.create({
   art: { width: '100%', height: '100%' },
   empty: { fontSize: typography.sizes.sm },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: MIN_TOUCH_TARGET },
-  toggleLabel: { fontSize: 17 },
+  toggleLabel: { fontSize: typography.ios.row },
   error: { fontSize: typography.sizes.sm },
 });
