@@ -7,6 +7,7 @@ import type { ApiError } from '../api/types';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -417,6 +418,7 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
   link: { fontSize: typography.sizes.sm, textAlign: 'center' },
   input: {
+    minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,

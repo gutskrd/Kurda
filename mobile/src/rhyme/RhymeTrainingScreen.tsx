@@ -3,6 +3,7 @@ import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, T
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   timer: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   score: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   inputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
-  input: { flex: 1, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
   addBtn: { paddingHorizontal: spacing.lg },
   found: { gap: spacing.xs, marginTop: spacing.sm },
   foundRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },

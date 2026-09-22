@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   claimLabel: { flex: 1, fontSize: typography.sizes.md },
   sheet: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   sheetTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   consentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   consentText: { flex: 1, fontSize: typography.sizes.sm },
   sheetActions: { flexDirection: 'row', gap: spacing.sm },
