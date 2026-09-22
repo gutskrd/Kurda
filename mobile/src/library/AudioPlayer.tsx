@@ -54,7 +54,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, padding: spacing.sm },
   button: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  symbol: { fontSize: 16, fontWeight: typography.weights.bold },
+  symbol: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   track: { flex: 1, gap: 4 },
   trackBg: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },

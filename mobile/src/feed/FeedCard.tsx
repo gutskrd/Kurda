@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   who: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   age: { fontSize: typography.sizes.sm },
   badge: {
-    fontSize: 11,
+    fontSize: typography.sizes.xs,
     letterSpacing: 0.66,
     textTransform: 'uppercase',
     borderWidth: 1,

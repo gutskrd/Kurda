@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   main: { flex: 1, gap: 2 },
-  label: { fontSize: 17 },
+  label: { fontSize: typography.ios.row },
   hint: { fontSize: typography.sizes.sm },
   error: { fontSize: typography.sizes.sm, marginTop: spacing.xs },
 });

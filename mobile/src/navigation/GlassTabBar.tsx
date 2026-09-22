@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
+import { typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './tabBarLayout';
 import { TABS } from './tabs';
@@ -123,5 +124,5 @@ const styles = StyleSheet.create({
     borderRadius: (TAB_BAR_HEIGHT - PILL_INSET_Y * 2) / 2,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4, paddingHorizontal: 2 },
-  label: { fontSize: 11, letterSpacing: 0.1 },
+  label: { fontSize: typography.ios.tabLabel, letterSpacing: 0.1 },
 });
