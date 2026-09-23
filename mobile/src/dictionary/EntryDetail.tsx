@@ -64,7 +64,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 <Pressable
                   onPress={() => audio.play(1)}
                   accessibilityLabel={t('dictionary.playPronunciation')}
-                  style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+                  style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
                   <Icon name="speaker" size={22} tone="primary" />
                 </Pressable>
@@ -73,7 +73,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 onPress={toggleSave}
                 accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
                 accessibilityState={{ selected: saved }}
-                style={[styles.audioBtn, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+                style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
               >
                 <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.gold : colors.textSecondary} />
               </Pressable>
@@ -111,7 +111,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },

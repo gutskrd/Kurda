@@ -142,7 +142,7 @@ export function GroupMembersScreen({
             {members.map((m) => (
               <View
                 key={m.userId}
-                style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+                style={[styles.row, { backgroundColor: colors.controlTrack }]}
               >
                 <InitialsAvatar name={m.username} id={m.userId} size={40} photoUrl={m.avatarUrl} />
                 <View style={styles.main}>
@@ -212,7 +212,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
   },
   main: { flex: 1 },

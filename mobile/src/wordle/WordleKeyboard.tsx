@@ -50,7 +50,7 @@ export function WordleKeyboard({
                 style={[
                   styles.key,
                   control && styles.keyWide,
-                  { backgroundColor: fb ? feedbackColor(fb, colors) : colors.controlTrack, borderColor: colors.glassBorder },
+                  { backgroundColor: fb ? feedbackColor(fb, colors) : colors.controlTrack },
                 ]}
               >
                 {key === DEL ? (
@@ -81,7 +81,6 @@ const styles = StyleSheet.create({
     maxWidth: 34,
     height: 46,
     borderRadius: radii.sm,
-    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
   },

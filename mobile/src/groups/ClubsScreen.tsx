@@ -99,7 +99,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
             const already = mineIds.has(item.id);
             const inviteOnly = item.privacy === 'invite';
             return (
-              <View style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+              <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
                 <InitialsAvatar name={item.name} id={item.id} size={44} />
                 <View style={styles.main}>
                   <Text style={[styles.name, { color: colors.textPrimary }]}>{item.name}</Text>
@@ -192,14 +192,14 @@ function NewClub({
     <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
         <Pressable
-          style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]}
+          style={[styles.sheet, { backgroundColor: colors.background }]}
           onPress={() => undefined}
         >
           <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('groups.new')}</Text>
 
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+            style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             value={name}
             onChangeText={setName}
             placeholder={t('groups.namePlaceholder')}
@@ -210,7 +210,7 @@ function NewClub({
 
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.description')}</Text>
           <TextInput
-            style={[styles.input, styles.multiline, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+            style={[styles.input, styles.multiline, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -251,7 +251,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
   },
   main: { flex: 1 },
@@ -262,12 +261,11 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: spacing.xl },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, gap: spacing.sm },
+  sheet: { margin: spacing.lg, padding: spacing.md, borderRadius: radii.lg, gap: spacing.sm },
   sheetTitle: { ...display(typography.sizes.lg) },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   input: {
     minHeight: MIN_TOUCH_TARGET,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

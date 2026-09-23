@@ -78,7 +78,7 @@ export function ReportUserSheet({
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
         {/* a tap inside the sheet must not reach the backdrop and close it */}
         <Pressable
-          style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]}
+          style={[styles.sheet, { backgroundColor: colors.background }]}
           onPress={() => undefined}
         >
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('moderation.reportWho', { name })}</Text>
@@ -128,7 +128,7 @@ export function ReportUserSheet({
                 maxLength={MAX_REASON}
                 style={[
                   styles.input,
-                  { color: colors.textPrimary, backgroundColor: colors.controlTrack, borderColor: colors.glassBorder },
+                  { color: colors.textPrimary, backgroundColor: colors.controlTrack },
                 ]}
               />
               <Text style={[styles.note, { color: colors.textSecondary }]}>
@@ -169,7 +169,6 @@ const styles = StyleSheet.create({
     maxHeight: '78%',
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.sm,
@@ -183,7 +182,6 @@ const styles = StyleSheet.create({
     minHeight: 90,
     textAlignVertical: 'top',
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
     fontSize: typography.sizes.md,
     marginTop: spacing.xs,

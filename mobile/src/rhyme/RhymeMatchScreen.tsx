@@ -133,7 +133,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
           accessibilityLabel={t('games.inviteLink')}
           style={[
             styles.input,
-            { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary },
+            { backgroundColor: colors.controlTrack, color: colors.textPrimary },
           ]}
         />
         <ClayButton label={t('games.rhymeMatch.join')} tone="neutral" onPress={enter} style={styles.stretch} />
@@ -337,7 +337,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
         </Text>
       </View>
 
-      <View style={[styles.board, { borderColor: colors.glassBorder }]}>
+      <View style={[styles.board, { backgroundColor: colors.controlTrack }]}>
         {match.scoreboard.map((s) => (
           <Text
             key={s.userId}
@@ -368,7 +368,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
             style={[
               styles.input,
               styles.composeInput,
-              { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary },
+              { backgroundColor: colors.controlTrack, color: colors.textPrimary },
             ]}
           />
           <ClayButton label={t('games.submit')} tone="primary" onPress={() => void submit()} style={styles.send} />
@@ -382,7 +382,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
       {found.length > 0 ? (
         <View style={styles.found} accessibilityLabel={t('games.rhyme.foundList')}>
           {found.map((f, i) => (
-            <View key={`${f.word}-${i}`} style={[styles.foundRow, { borderColor: colors.glassBorder }]}>
+            <View key={`${f.word}-${i}`} style={[styles.foundRow, { backgroundColor: colors.controlTrack }]}>
               <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
               <View style={styles.foundMeta}>
                 <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.gold }]}>
@@ -434,7 +434,6 @@ const styles = StyleSheet.create({
   input: {
     minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -458,7 +457,7 @@ const styles = StyleSheet.create({
   stage: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   prompt: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
   timer: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  board: { flexDirection: 'row', justifyContent: 'space-around', borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, padding: spacing.sm },
+  board: { flexDirection: 'row', justifyContent: 'space-around', borderRadius: radii.md, padding: spacing.sm },
   boardEntry: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   compose: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   composeInput: { flex: 1, alignSelf: 'auto' },
@@ -468,7 +467,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

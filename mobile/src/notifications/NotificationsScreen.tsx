@@ -63,7 +63,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.categories')}</Text>
           {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
-            <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+            <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
               <Text style={[styles.label, { color: colors.textPrimary }]}>{t(CATEGORY_LABEL[cat])}</Text>
               <Switch
                 value={prefs[cat]}
@@ -74,7 +74,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
           ))}
 
           <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.quietHours')}</Text>
-          <View style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+          <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>{t('notifications.enableQuietHours')}</Text>
             <Switch
               value={quiet}
@@ -111,7 +111,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
 function TimeRow({ label, minute, onStep }: { label: string; minute: number; onStep: (dir: 1 | -1) => void }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+    <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
       <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>
       <View style={styles.stepper}>
         <Pressable onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8}>
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: spacing.xs, padding: spacing.lg, paddingBottom: spacing.xl },
   section: { ...sectionLabel, marginTop: spacing.lg, marginBottom: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   label: { fontSize: typography.sizes.md, flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stepBtn: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

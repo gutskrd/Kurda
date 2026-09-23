@@ -111,7 +111,7 @@ export function ProfileActivity({
         Scrollable would hide a tab off the edge; four fit across a phone, so
         they share the width and keep their labels.
       */}
-      <View style={[styles.tabs, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
+      <View style={[styles.tabs, { backgroundColor: colors.glassFill }]}>
         {shown.map((s) => {
           const on = s === active;
           return (
@@ -146,7 +146,7 @@ export function ProfileActivity({
           {entries.map((e) => (
             <View
               key={e.id}
-              style={[styles.row, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}
+              style={[styles.row, { backgroundColor: colors.glassFill }]}
             >
               <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                 {e.title}
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: 3,
     gap: 2,
   },
@@ -188,7 +187,6 @@ const styles = StyleSheet.create({
   nothing: { fontSize: typography.sizes.sm, textAlign: 'center', paddingVertical: spacing.lg },
   row: {
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
     gap: 2,
   },

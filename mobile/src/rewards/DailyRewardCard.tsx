@@ -57,7 +57,7 @@ export function DailyRewardCard() {
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
       <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('daily.title')}</Text>
       <View style={styles.row}>
         {status.schedule.map((amount, i) => {
@@ -101,7 +101,7 @@ export function DailyRewardCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth },
+  card: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
   heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.xs },
   cell: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radii.sm, borderWidth: 1, gap: 2 },

@@ -72,7 +72,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
               labelOf={(kind) => t(kind === 'story' ? 'library.kind.story' : 'library.kind.poem')}
             />
             <TextInput
-              style={[styles.titleInput, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+              style={[styles.titleInput, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
               placeholder={t('library.titlePlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={title}
@@ -80,7 +80,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
               maxLength={200}
             />
             <TextInput
-              style={[styles.bodyInput, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+              style={[styles.bodyInput, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
               placeholder={t(type === 'poem' ? 'library.poemPlaceholder' : 'library.storyPlaceholder')}
               placeholderTextColor={colors.textSecondary}
               value={body}
@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
-  titleInput: { minHeight: MIN_TOUCH_TARGET, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  bodyInput: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },
+  titleInput: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  bodyInput: { borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, minHeight: 220 },
   narrationLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   actions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
 });

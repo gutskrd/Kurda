@@ -90,7 +90,7 @@ export function GiftSheet({
       >
         {/* a tap inside the sheet must not reach the backdrop and close it */}
         <Pressable
-          style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]}
+          style={[styles.sheet, { backgroundColor: colors.background }]}
           onPress={() => undefined}
         >
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('shop.giftTo', { name: item.name })}</Text>
@@ -112,7 +112,7 @@ export function GiftSheet({
                 autoCapitalize="none"
                 style={[
                   styles.search,
-                  { color: colors.textPrimary, backgroundColor: colors.controlTrack, borderColor: colors.glassBorder },
+                  { color: colors.textPrimary, backgroundColor: colors.controlTrack },
                 ]}
               />
               <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
@@ -152,7 +152,6 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.sm,
@@ -162,7 +161,6 @@ const styles = StyleSheet.create({
   search: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
     height: 44,
     fontSize: typography.sizes.md,

@@ -111,7 +111,7 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
   const state = claimState(quest);
   const reward = rewardLabel(quest.reward);
   return (
-    <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
       <View style={styles.rowTop}>
         <Text style={[styles.questTitle, { color: colors.textPrimary }]}>{questTitle(quest, t)}</Text>
         {reward ? <Text style={[styles.reward, { color: colors.textSecondary }]}>{reward}</Text> : null}
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eventName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textTransform: 'uppercase' },
   countdown: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.sm },
+  card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   questTitle: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   reward: { fontSize: typography.sizes.sm },

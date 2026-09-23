@@ -72,7 +72,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
                 {groups.map((g) => (
                   <Pressable
                     key={g.id}
-                    style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+                    style={[styles.row, { backgroundColor: colors.controlTrack }]}
                     onPress={() => navigation.navigate('GroupThread', { groupId: g.id, name: g.name })}
                     accessibilityRole="button"
                     accessibilityLabel={t('groups.open', { name: g.name })}
@@ -93,7 +93,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
           }
           renderItem={({ item }) => (
             <Pressable
-              style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+              style={[styles.row, { backgroundColor: colors.controlTrack }]}
               onPress={() => navigation.navigate('Chat', { userId: item.userId, username: item.username })}
             >
               <InitialsAvatar name={item.username} id={item.userId} size={44} />
@@ -118,7 +118,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { padding: spacing.lg, gap: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
   main: { flex: 1 },
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   preview: { fontSize: typography.sizes.sm },

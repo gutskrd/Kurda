@@ -29,7 +29,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
   const progress = status.duration > 0 ? Math.min(1, status.currentTime / status.duration) : 0;
 
   return (
-    <View style={[styles.bar, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
+    <View style={[styles.bar, { backgroundColor: colors.glassFill }]}>
       <Pressable
         onPress={toggle}
         style={[styles.button, { backgroundColor: colors.primaryStrong }]}
@@ -52,7 +52,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, padding: spacing.sm },
+  bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.sm },
   button: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   symbol: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   track: { flex: 1, gap: 4 },

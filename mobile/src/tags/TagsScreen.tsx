@@ -145,7 +145,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.none')}</Text>
             ) : (
               claimed.map((tag) => (
-                <View key={tag.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
+                <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
                   <View style={styles.rowMain}>
                     <TagBadge label={tagLabel(tag)} />
                     <Text style={[styles.sensitive, { color: colors.textSecondary }]}>
@@ -166,7 +166,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <>
                 <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.add')}</Text>
                 {toClaim.map((tag) => (
-                  <View key={tag.key} style={[styles.row, { borderColor: colors.glassBorder }]}>
+                  <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
                     <Text style={[styles.claimLabel, { color: colors.textPrimary }]}>
                       {tag.label}
                       {tag.sensitive ? <Text style={{ color: colors.textSecondary }}> · sensitive</Text> : null}
@@ -182,10 +182,10 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
         {/* inline claim sheet */}
         {claiming ? (
-          <View style={[styles.sheet, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.glassFill }]}>
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('tags.addTitle', { tag: claiming.label })}</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+              style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
               placeholder={t('tags.valuePlaceholder', { tag: claiming.label.toLowerCase() })}
               placeholderTextColor={colors.textSecondary}
               value={value}
@@ -219,13 +219,13 @@ const styles = StyleSheet.create({
   hint: { fontSize: typography.sizes.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   buyBtn: { marginTop: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, padding: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowMain: { flex: 1, gap: 2 },
   sensitive: { fontSize: typography.sizes.xs },
   claimLabel: { flex: 1, fontSize: typography.sizes.md },
-  sheet: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
+  sheet: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   sheetTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { minHeight: MIN_TOUCH_TARGET, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   consentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   consentText: { flex: 1, fontSize: typography.sizes.sm },
   sheetActions: { flexDirection: 'row', gap: spacing.sm },

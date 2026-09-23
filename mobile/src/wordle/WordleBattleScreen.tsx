@@ -128,7 +128,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
           accessibilityLabel={t('games.inviteLink')}
           style={[
             styles.input,
-            { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary },
+            { backgroundColor: colors.controlTrack, color: colors.textPrimary },
           ]}
         />
         <ClayButton label={t('games.battle.join')} tone="neutral" onPress={enter} style={styles.stretch} />
@@ -420,7 +420,6 @@ const styles = StyleSheet.create({
   input: {
     minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

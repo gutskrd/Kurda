@@ -335,7 +335,7 @@ export function SessionPlayer({
       </ScrollView>
 
         {offline ? (
-          <Pressable onPress={retry} style={[styles.offline, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+          <Pressable onPress={retry} style={[styles.offline, { backgroundColor: colors.controlTrack }]}>
             <Text style={[styles.offlineText, { color: colors.textSecondary }]}>
               {submitting ? t('lesson.syncing') : t('lesson.offlineRetry')}
             </Text>
@@ -378,7 +378,6 @@ const styles = StyleSheet.create({
     margin: spacing.lg,
     padding: spacing.md,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
   offlineText: { fontSize: typography.sizes.md },

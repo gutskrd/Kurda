@@ -143,7 +143,7 @@ export function ProfileScreen() {
 
         {streak ? <StreakBadge streak={streak} /> : null}
 
-        <View style={[styles.stats, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
+        <View style={[styles.stats, { backgroundColor: colors.glassFill }]}>
           <Stat label={t('profile.stat.level')} value={String(me?.level?.level ?? 1)} />
           <Stat label="XP" value={(me?.level?.xp ?? me?.xp ?? 0).toLocaleString()} />
           <Stat label={t('profile.stat.streak')} value={String(streak?.current ?? 0)} />
@@ -212,7 +212,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingVertical: spacing.md,
     borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   stat: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 2 },
   statValue,

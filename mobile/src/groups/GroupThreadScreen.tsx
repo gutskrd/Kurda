@@ -143,7 +143,7 @@ export function GroupThreadScreen({
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+            style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={draft}
@@ -183,7 +183,7 @@ function Bubble({ message, mine }: { message: GroupMessage; mine: boolean }): Re
             styles.bubble,
             mine
               ? { backgroundColor: colors.primary }
-              : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder },
+              : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth },
           ]}
         >
           {message.deleted ? (
@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
   input: {
     minHeight: MIN_TOUCH_TARGET,
     flex: 1,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

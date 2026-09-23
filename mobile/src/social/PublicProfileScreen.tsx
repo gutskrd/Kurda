@@ -110,7 +110,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             if (!profile) return null;
             const labelKey = friendActionLabel(profile.friendStatus);
             return (
-        <View style={[styles.card, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+        <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
           <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
           <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
           {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xxl },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
+  card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.xl },
   username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   display: { fontSize: typography.sizes.md },
   stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },

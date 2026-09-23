@@ -92,7 +92,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
                 onPress={() => open(item)}
                 style={[
                   styles.card,
-                  { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder },
+                  { backgroundColor: colors.controlTrack },
                   !item.readAt && { borderLeftWidth: 3, borderLeftColor: colors.primary },
                 ]}
               >
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   markAll: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   list: { gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xl },
-  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md },
+  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
   dot: { width: 8, height: 8, borderRadius: radii.pill },
   dotSpacer: { width: 8 },
   title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

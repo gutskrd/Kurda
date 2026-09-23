@@ -29,7 +29,7 @@ export function NotificationBell() {
 
   return (
     <Pressable
-      style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+      style={[styles.row, { backgroundColor: colors.controlTrack }]}
       onPress={() => navigation.navigate('NotificationCenter')}
       accessibilityRole="button"
       accessibilityLabel={
@@ -48,7 +48,7 @@ export function NotificationBell() {
 }
 
 const styles = StyleSheet.create({
-  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 44, paddingHorizontal: 18, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.sm },
+  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 44, paddingHorizontal: 18, borderRadius: radii.sm },
   label: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   badge: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

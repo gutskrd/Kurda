@@ -211,7 +211,6 @@ export function SideMenu({
           {
             width,
             backgroundColor: colors.background,
-            borderRightColor: colors.separator,
             paddingTop: insets.top + spacing.md,
             paddingBottom: insets.bottom,
             transform: [
@@ -279,7 +278,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
-    borderRightWidth: StyleSheet.hairlineWidth,
   },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   body: { paddingBottom: spacing.lg },

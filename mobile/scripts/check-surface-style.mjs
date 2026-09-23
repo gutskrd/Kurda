@@ -1,5 +1,5 @@
 /**
- * One edge weight, one radius scale.
+ * No frames, no frost, one radius scale.
  *
  * Two kinds of drift that nothing was watching for, both measured before this
  * was written:
@@ -11,6 +11,14 @@
  *   screen a hairline is one physical pixel and 1pt is three, so a feed card's
  *   edge was three times the weight of a settings row's, and an answer field's
  *   was six times, in the same app and often on the same screen.
+ *
+ *   That first version of this rule picked one weight and stopped there,
+ *   which was answering the wrong question. Seventy-four of those edges sat
+ *   round a surface that already had a fill, where the line says nothing the
+ *   fill has not said and reads as a box drawn on glass. They are gone, and
+ *   the rule is now that they stay gone: an edge that is always the same grey
+ *   is a frame. An edge that changes — selected, wrong, live, gold — is a
+ *   state, and a state is allowed to be seen.
  *
  *   And eight corners were written as numbers beside a radius scale that
  *   mirrors the website's `--r-*` tokens to the pixel: two sheets at 20 where
@@ -31,9 +39,10 @@
  * on a text field is worse than a miss on a button — it dismisses the keyboard
  * or focuses the one above.
  *
- * So: a passive edge is `StyleSheet.hairlineWidth`, a corner is a token, a
- * border on one side only is a divider and takes `colors.separator`, and a
- * style a `TextInput` wears declares a minHeight.
+ * So: a surface has no passive edge and nothing blurred behind it, a corner
+ * is a token, a border on one side only is a divider and takes
+ * `colors.separator`, a colour has a width to draw it, and a style a
+ * `TextInput` wears declares a minHeight.
  *
  * An edge that carries a colour is not passive and is not checked — the brand
  * on a selected option, danger on a live recording, the gold rim on a badge are
@@ -118,11 +127,16 @@ for (const file of sources(SRC)) {
     });
   }
 
-  // a passive edge drawn heavier than a hairline
+  // the frost, which is the one thing here that is a single import away
+  if (/from '(expo-blur|@react-native-community\/blur)'/.test(src)) {
+    problems.push(`${where}  a backdrop blur — surfaces are clear now; the edge is LensRim, not frost`);
+  }
+
+  // a frame round a shape that already has one
   const body = src.split('const styles = StyleSheet.create(')[0];
   for (const s of styleObjects(src)) {
     const width = /borderWidth:\s*([^,}]+)/.exec(s.body)?.[1]?.trim();
-    if (!width || width === 'StyleSheet.hairlineWidth') continue;
+    if (!width) continue;
     // a colour fixed in the style object is the author naming the edge; leave it
     if (/borderColor:/.test(s.body)) continue;
 
@@ -137,7 +151,7 @@ for (const file of sources(SRC)) {
     }
     if (colours.size === 1 && [...colours][0] === 'colors.glassBorder') {
       problems.push(
-        `${where}:${s.line}  ${s.key} — borderWidth: ${width} on an edge that is only ever glassBorder; passive edges are StyleSheet.hairlineWidth`,
+        `${where}:${s.line}  ${s.key} — borderWidth: ${width} on an edge that is only ever glassBorder; a surface has a fill, not a frame`,
       );
     }
   }
@@ -162,6 +176,42 @@ for (const file of sources(SRC)) {
     }
   }
 
+  /*
+   * A colour with nothing to draw it.
+   *
+   * Width and colour live in two places in this app — the width in the
+   * StyleSheet, the colour at the call site — so removing one leaves the
+   * other looking complete. Taking the frames out cost two states this way
+   * before anyone noticed: the goal picker's selected ring and the gold rim
+   * on a gift you have not opened, both reduced to a colour with no border.
+   *
+   * Nothing shows and nothing warns, so the question has to be asked of every
+   * style array that names a colour: does anything in it have a width?
+   */
+  for (const m of src.matchAll(/style=\{(\(\{[^}]*\}\) =>\s*)?\[/g)) {
+    const open = src.indexOf('[', m.index);
+    let depth = 0;
+    let close = -1;
+    for (let j = open; j < src.length; j++) {
+      if (src[j] === '[') depth++;
+      else if (src[j] === ']' && --depth === 0) {
+        close = j;
+        break;
+      }
+    }
+    if (close < 0) continue;
+    const arr = src.slice(open, close + 1);
+    if (!/borderColor:/.test(arr) || /borderWidth:/.test(arr)) continue;
+    const names = [...arr.matchAll(/styles\.([A-Za-z][A-Za-z\d]*)/g)].map((x) => x[1]);
+    const objs = styleObjects(src);
+    const drawn = names.some((n) => /border(Top|Right|Bottom|Left)?Width:/.test(objs.find((o) => o.key === n)?.body ?? ''));
+    if (drawn) continue;
+    const line = src.slice(0, open).split('\n').length;
+    problems.push(
+      `${where}:${line}  [${names.join(', ')}] — a borderColor with no borderWidth behind it draws nothing`,
+    );
+  }
+
   // a line on one side only is a divider, and takes the divider colour
   src.split('\n').forEach((line, i) => {
     const m = /border(Top|Bottom|Left|Right)Color:\s*colors\.glassBorder/.exec(line);
@@ -176,10 +226,10 @@ for (const file of sources(SRC)) {
 if (problems.length > 0) {
   console.error(`\nsurfaces: ${problems.length} that do not match the rest of the app:\n`);
   for (const p of problems) console.error(`  ${p}`);
-  console.error('\nA passive edge is a hairline, a corner is a radii token, a one-sided line is a separator,');
-  console.error('and a field you type into is at least 44 tall.');
+  console.error('\nA surface has a fill, not a frame, and nothing blurred behind it; a corner is a radii');
+  console.error('token, a one-sided line is a separator, a colour has a width, and a field is 44 tall.');
   console.error('If a number here is a measurement rather than a choice, say so in ALLOWED_RAW_RADII.\n');
   process.exit(1);
 }
 
-console.log('surfaces: one edge weight, one divider colour, every corner on the scale, every field tappable.');
+console.log('surfaces: no frames, no frost, every colour drawn, every corner on the scale, every field tappable.');

@@ -54,7 +54,7 @@ export function AsyncBoundary({
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('net.offline.title')}</Text>
           <Text style={[styles.body, { color: colors.textSecondary }]}>{t('net.offline.body')}</Text>
           {onRetry ? (
-            <Pressable onPress={onRetry} style={[styles.retry, { borderColor: colors.glassBorder }]} accessibilityRole="button" accessibilityLabel={t('common.retry')}>
+            <Pressable onPress={onRetry} style={[styles.retry, { backgroundColor: colors.controlTrack }]} accessibilityRole="button" accessibilityLabel={t('common.retry')}>
               <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.retry')}</Text>
             </Pressable>
           ) : null}
@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
   title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.md, textAlign: 'center' },
-  retry: { marginTop: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retry: { marginTop: spacing.sm, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   retryText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

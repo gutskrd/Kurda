@@ -82,7 +82,7 @@ export function SocialScreen() {
   const row = (u: UserRow, right?: React.ReactNode) => (
     <Pressable
       key={u.userId}
-      style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+      style={[styles.row, { backgroundColor: colors.controlTrack }]}
       onPress={() => openProfile(u.userId)}
       accessibilityRole="button"
       accessibilityLabel={
@@ -132,7 +132,7 @@ export function SocialScreen() {
           }
         />
         <TextInput
-          style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+          style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
           placeholder={t('friends.searchPlaceholder')}
           placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
@@ -208,10 +208,10 @@ const styles = StyleSheet.create({
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, padding: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowMain: { flex: 1 },
   username: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   display: { fontSize: typography.sizes.sm },
