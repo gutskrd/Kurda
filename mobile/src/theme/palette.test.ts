@@ -41,7 +41,6 @@ describe('palettes', () => {
       expect(p.glassFill).toMatch(CSS_COLOR);
       expect(p.glassBorder).toMatch(CSS_COLOR);
 
-      expect(p.clayFill).toHaveLength(2);
     }
   });
 
@@ -61,7 +60,7 @@ describe('palettes', () => {
         expect(band[1]).toMatch(CSS_COLOR);
         expect(band[0]).not.toBe(band[1]);
       }
-      expect(p.lensSpecular).toMatch(CSS_COLOR);
+
     }
   });
 

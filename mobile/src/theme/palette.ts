@@ -52,7 +52,7 @@ export interface Palette {
    */
   lensWarm: readonly [string, string];
   lensCool: readonly [string, string];
-  lensSpecular: string;
+
 
   /*
    * The same two ends of the spectrum, for a glyph rather than a band.
@@ -77,8 +77,14 @@ export interface Palette {
    */
   separator: string;
 
-  // claymorphism / neumorphism (soft, puffy controls)
-  clayFill: readonly [string, string]; // vertical gradient for a soft button
+  /*
+   * What is left of claymorphism: one border colour.
+   *
+   * `clayFill` was a white-to-grey vertical gradient for a soft, puffy
+   * button. Nothing has used it since the buttons stopped being puffy, and a
+   * painted-on highlight is the thing to reach for when a control looks flat
+   * and the thing not to reach for when it is meant to be glass.
+   */
   clayBorder: string;
   softShadow: string; // outer drop shadow colour (spatial elevation)
 
@@ -113,11 +119,11 @@ export const LIGHT: Palette = {
 
   lensWarm: ['rgba(255,207,150,0.34)', 'rgba(255,146,94,0.20)'],
   lensCool: ['rgba(126,206,255,0.22)', 'rgba(150,132,255,0.28)'],
-  lensSpecular: 'rgba(255,255,255,0.50)',
+
   lensFringe: ['rgba(240,110,40,0.55)', 'rgba(40,120,235,0.50)'],
   separator: 'rgba(20,20,20,0.07)',
 
-  clayFill: ['#FFFFFF', '#EFEFEF'],
+
   clayBorder: 'rgba(255,255,255,0.8)',
   softShadow: '#3A3A3A',
 
@@ -150,11 +156,11 @@ export const DARK: Palette = {
 
   lensWarm: ['rgba(255,190,128,0.30)', 'rgba(255,132,80,0.18)'],
   lensCool: ['rgba(110,198,255,0.20)', 'rgba(138,118,255,0.26)'],
-  lensSpecular: 'rgba(255,255,255,0.22)',
+
   lensFringe: ['rgba(255,150,70,0.60)', 'rgba(90,160,255,0.55)'],
   separator: 'rgba(255,255,255,0.08)',
 
-  clayFill: ['#1E1E1E', '#151515'],
+
   clayBorder: 'rgba(255,255,255,0.10)',
   softShadow: '#000000',
 
