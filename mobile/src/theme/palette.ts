@@ -41,11 +41,17 @@ export interface Palette {
    * Not a line. Light bending through a lens leaves warm where it exits and
    * cool where it enters, with a bright catch along one edge — which is what
    * the recordings show, and what a hairline in a single grey never looks
-   * like. All three are barely there on purpose: at a 2pt band this is a
-   * suggestion of colour, and at full strength it would read as a sticker.
+   * like.
+   *
+   * Two stops each, because one hue per edge is a tint and the thing being
+   * copied is dispersion: white light comes out of a lens spread, amber
+   * running to orange on the way out and cyan running to violet on the way
+   * in. The first of each pair sits at the boundary, the second just inside
+   * it. Both are barely there on purpose — at full strength a rim like this
+   * reads as a sticker.
    */
-  lensWarm: string;
-  lensCool: string;
+  lensWarm: readonly [string, string];
+  lensCool: readonly [string, string];
   lensSpecular: string;
 
   separator: string; // faint divider between rows inside a surface
@@ -84,8 +90,8 @@ export const LIGHT: Palette = {
   glassFill: 'rgba(255,255,255,0.34)',
   glassBorder: 'rgba(255,255,255,0.45)',
 
-  lensWarm: 'rgba(255,186,120,0.30)',
-  lensCool: 'rgba(120,170,255,0.26)',
+  lensWarm: ['rgba(255,207,150,0.34)', 'rgba(255,146,94,0.20)'],
+  lensCool: ['rgba(126,206,255,0.22)', 'rgba(150,132,255,0.28)'],
   lensSpecular: 'rgba(255,255,255,0.50)',
   separator: 'rgba(20,20,20,0.07)',
 
@@ -120,8 +126,8 @@ export const DARK: Palette = {
   glassFill: 'rgba(255,255,255,0.07)',
   glassBorder: 'rgba(255,255,255,0.14)',
 
-  lensWarm: 'rgba(255,170,100,0.26)',
-  lensCool: 'rgba(110,165,255,0.24)',
+  lensWarm: ['rgba(255,190,128,0.30)', 'rgba(255,132,80,0.18)'],
+  lensCool: ['rgba(110,198,255,0.20)', 'rgba(138,118,255,0.26)'],
   lensSpecular: 'rgba(255,255,255,0.22)',
   separator: 'rgba(255,255,255,0.08)',
 
