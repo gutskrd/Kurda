@@ -1,16 +1,18 @@
-import { NavigationContainer, DefaultTheme, DarkTheme, type LinkingOptions, type Theme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation, type LinkingOptions, type Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import { inviteRoutePath } from '@kurda/shared';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
 import { GlassTabBar } from './src/navigation/GlassTabBar';
-import type { RootStackParamList } from './src/navigation/rootStack';
+import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import type { RootNavigation, RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
@@ -100,10 +102,71 @@ const linking: LinkingOptions<RootStackParamList> = {
   },
 };
 
+/**
+ * Everywhere the tab bar has no room for.
+ *
+ * Six tabs is already one more than iOS suggests, and the app has thirty-three
+ * screens. Most of the rest were reachable only by going Profile → a row, or
+ * Settings → a row — and two of them, the library and the memes, had no link
+ * pointing at them from anywhere at all. They were built, they work, and there
+ * was no way in.
+ */
+function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
+  return [
+    {
+      titleKey: null,
+      links: [
+        { key: 'chats', labelKey: 'nav.messages', icon: 'chat', onPress: () => navigation.navigate('Chats') },
+        { key: 'clubs', labelKey: 'groups.discover', icon: 'people', onPress: () => navigation.navigate('Clubs') },
+      ],
+    },
+    {
+      titleKey: 'nav.menu.discover',
+      links: [
+        { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
+        { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
+        { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
+        { key: 'league', labelKey: 'rankings.title', icon: 'trophy', onPress: () => navigation.navigate('League') },
+      ],
+    },
+    {
+      titleKey: 'nav.menu.yours',
+      links: [
+        { key: 'saved', labelKey: 'saved.title', icon: 'bookmark', onPress: () => navigation.navigate('Saved') },
+        { key: 'tags', labelKey: 'tags.title', icon: 'star', onPress: () => navigation.navigate('Tags') },
+        { key: 'shop', labelKey: 'profile.shop', icon: 'cart', onPress: () => navigation.navigate('Shop') },
+        { key: 'settings', labelKey: 'settings.title', icon: 'gear', onPress: () => navigation.navigate('Settings') },
+      ],
+    },
+  ];
+}
+
 function SignedInTabs() {
+  const navigation = useNavigation<RootNavigation>();
+  const groups = useMenuGroups(navigation);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const openMenu = useCallback(() => setMenuOpen(true), []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   return (
+    <MenuProvider value={openMenu}>
     <Tab.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        /*
+         * Tabs cross-fade; they do not cut.
+         *
+         * The default is no animation at all — one screen is replaced by
+         * another between two frames, which reads as a flicker rather than as
+         * a move. The app this was measured against dissolves one into the
+         * other, and both are on screen together in the middle of it.
+         *
+         * 200ms, measured off a screen recording at 50ms granularity: the old
+         * tab is whole at one sample, both are half there at the next, and the
+         * new one is whole at the one after.
+         */
+        animation: 'fade',
+        transitionSpec: { animation: 'timing', config: { duration: 200 } },
+      }}
       // custom frosted-glass island with labels + a sliding active highlight
       tabBar={(props) => <GlassTabBar {...props} />}
     >
@@ -127,8 +190,10 @@ function SignedInTabs() {
             )
           }
         </Tab.Screen>
-      ))}
-    </Tab.Navigator>
+        ))}
+      </Tab.Navigator>
+      <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} />
+    </MenuProvider>
   );
 }
 

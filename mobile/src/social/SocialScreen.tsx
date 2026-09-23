@@ -14,6 +14,7 @@ import type { TranslationKey } from '../i18n/translations';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
+import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 
 interface UserRow {
@@ -29,6 +30,7 @@ export function SocialScreen() {
   const { colors } = useTheme();
 
   const { t } = useI18n();
+  const openMenu = useOpenMenu();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -113,6 +115,7 @@ export function SocialScreen() {
             showing halves of the same wall. Both now live on the Civak tab,
             together, which is what this tab stopped being about. */}
         <LargeTitle
+          left={<SideMenuButton onPress={openMenu} />}
           title={t('nav.friends')}
           style={styles.head}
           right={

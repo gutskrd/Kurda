@@ -7,6 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
+import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { GoalPicker } from '../goals/GoalPicker';
 import { ProgressRing } from '../goals/ProgressRing';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
@@ -30,6 +31,7 @@ export function LearnScreen() {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const openMenu = useOpenMenu();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
@@ -92,7 +94,7 @@ export function LearnScreen() {
 
   const header = (
     <View style={styles.header}>
-      <LargeTitle title={t('nav.learn')} />
+      <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('nav.learn')} />
       {goal ? (
         <View style={styles.goalCard}>
           <ProgressRing progress={goal.progress} completed={goal.completed} caption={`${goal.earnedXp} / ${goal.effectiveGoal} XP`} />

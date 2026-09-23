@@ -24,12 +24,21 @@ import { spacing, typography } from '../theme/tokens';
 export function LargeTitle({
   title,
   subtitle,
+  left,
   right,
   style,
 }: {
   title: string;
   /** The line under it, where a tab has something worth saying about itself. */
   subtitle?: string;
+  /**
+   * A leading control, before the title.
+   *
+   * The way into the side panel goes here, which is where the recording this
+   * was measured against puts it: top left, above the content, on the screens
+   * you land on.
+   */
+  left?: ReactNode;
   /** A trailing action, on the title's own line. */
   right?: ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -39,6 +48,7 @@ export function LargeTitle({
   return (
     <View style={style}>
       <View style={styles.row}>
+        {left ?? null}
         <Text style={[styles.title, { color: colors.primary }]} numberOfLines={1}>
           {title}
         </Text>
@@ -50,8 +60,10 @@ export function LargeTitle({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  // the title takes the space, so a leading control sits before it and a
+  // trailing one is pushed to the end — rather than all three spreading out
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   // 34, which is what iOS sets a large title at
-  title: { ...display(typography.sizes.xxl), flexShrink: 1 },
+  title: { ...display(typography.sizes.xxl), flex: 1 },
   subtitle: { fontSize: typography.sizes.sm, marginTop: 2 },
 });
