@@ -5,13 +5,14 @@ import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import { inviteRoutePath } from '@kurda/shared';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, linkingScreens } from './src/navigation/tabs';
 import { GlassTabBar } from './src/navigation/GlassTabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import type { RootNavigation, RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
@@ -375,22 +376,22 @@ function SignedInRoot() {
 function Root() {
   const { status, user } = useAuth();
   const onboarding = useOnboarding();
-  const { colors } = useTheme();
 
   if (status === 'restoring' || !onboarding.ready) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <LaunchScreen />;
   }
 
   if (status === 'signedOut') {
     // first launch: show the intro before the auth screens (KUR-271/272/273)
     if (onboarding.needsOnboarding) {
-      return <OnboardingScreen onComplete={onboarding.complete} initialStep={onboarding.reopenStep} />;
+      return (
+        <Entrance>
+          <OnboardingScreen onComplete={onboarding.complete} initialStep={onboarding.reopenStep} />
+        </Entrance>
+      );
     }
     return (
+      <Entrance>
       <AuthStack.Navigator initialRouteName={AUTH_INITIAL_ROUTE} screenOptions={{ headerShown: false }}>
         {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
         <AuthStack.Screen name="Welcome">
@@ -400,16 +401,25 @@ function Root() {
         <AuthStack.Screen name="Register" component={RegisterScreen} />
         <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       </AuthStack.Navigator>
+      </Entrance>
     );
   }
 
   // Email-ownership gate (KUR-014): a signed-in but unverified account can't
   // reach the app until it enters the emailed code.
   if (user && !user.emailVerified) {
-    return <VerifyEmailScreen />;
+    return (
+      <Entrance>
+        <VerifyEmailScreen />
+      </Entrance>
+    );
   }
 
-  return <SignedInRoot />;
+  return (
+    <Entrance>
+      <SignedInRoot />
+    </Entrance>
+  );
 }
 
 /** NavigationContainer + StatusBar wired to the active palette (KUR-268). */
