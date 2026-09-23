@@ -96,6 +96,9 @@ const MAP = {
   grid: { glyph: 'GridFour', note: 'Wordle — a board of letter squares, which is what the game is' },
   lightbulb: { glyph: 'Lightbulb', note: 'a grammar tip; a sparkle said something nice was coming and not what' },
 
+  // --- the way in to everywhere the tab bar has no room for ---
+  menu: { glyph: 'List', note: 'the side panel; three lines, which is what every app uses and what the recording used' },
+
   // --- the typographic glyphs that four screens drew instead of icons ---
   stop: { glyph: 'Stop', weight: 'fill', note: 'stop recording — the square the speaking exercise typed as U+25A0' },
   record: { glyph: 'Record', weight: 'fill', note: 'start recording — the dot it typed as U+25CF, which is not even round in every font' },

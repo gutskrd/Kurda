@@ -14,6 +14,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
+import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { getFeed } from './api';
 import { FeedCard } from './FeedCard';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
@@ -33,6 +34,7 @@ export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const openMenu = useOpenMenu();
   const topInset = useScreenTopInset();
 
   const navigation = useNavigation<RootNavigation>();
@@ -116,7 +118,7 @@ export function CivakScreen(): React.JSX.Element {
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        <LargeTitle title={t('civak.title')} subtitle={t('civak.subtitle')} style={styles.head} />
+        <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('civak.title')} subtitle={t('civak.subtitle')} style={styles.head} />
 
         <View style={styles.filters}>
           <View style={styles.filterRow}>
