@@ -300,7 +300,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
             </Text>
             <View style={styles.stretch}>
               {results.ranking.map((r) => (
-                <View key={r.userId} style={[styles.scoreLine, { borderTopColor: colors.separator }]}>
+                <View key={r.userId} style={styles.scoreLine}>
                   <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
                   <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
                     {r.userId === user?.id ? t('games.you') : t('games.opponent')}
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
+
     paddingVertical: spacing.sm,
   },
   rank: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, width: 20 },

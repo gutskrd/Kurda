@@ -169,7 +169,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
               ) : (
                 comments.map((c) => (
-                  <View key={c.id} style={[styles.comment, { borderTopColor: colors.separator }]}>
+                  <View key={c.id} style={styles.comment}>
                     <InitialsAvatar name={c.authorId.slice(0, 2)} id={c.authorId} size={28} />
                     <View style={styles.commentMain}>
                       <Text style={[styles.commentAge, { color: colors.textSecondary }]}>{relativeTime(c.createdAt)}</Text>
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   reactionCount: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   empty: { textAlign: 'center', marginTop: spacing.md },
-  comment: { flexDirection: 'row', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
+  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
   commentMain: { flex: 1, gap: 2 },
   commentAge: { fontSize: typography.sizes.xs },
   commentBody: { fontSize: typography.sizes.md },

@@ -158,7 +158,7 @@ export function DictionaryScreen() {
           keyExtractor={(h) => h.entryId}
           contentContainerStyle={{ paddingBottom: tabBarInset }}
           renderItem={({ item }) => (
-            <Pressable onPress={() => openHit(item)} style={[styles.hit, { borderBottomColor: colors.separator }]}>
+            <Pressable onPress={() => openHit(item)} style={styles.hit}>
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
               <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   savedMain: { flex: 1 },
   remove: { fontSize: typography.sizes.md },
   empty: { marginTop: spacing.lg },
-  hit: { paddingVertical: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  hit: { paddingVertical: spacing.md },
   hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   hitDef: { fontSize: typography.sizes.sm },
 });

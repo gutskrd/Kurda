@@ -129,7 +129,7 @@ export function FeedCard({
         ) : null}
       </Pressable>
 
-      <View style={[styles.actions, { borderTopColor: colors.separator }]}>
+      <View style={styles.actions}>
         <Action
           icon="chat"
           label={t('feed.comments', { count: item.commentCount })}
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingTop: spacing.xs,
     marginTop: spacing.xs,
-    borderTopWidth: StyleSheet.hairlineWidth,
+
   },
   /** Saved sits apart: it is about you, not about the post. */
   save: { marginLeft: 'auto' },

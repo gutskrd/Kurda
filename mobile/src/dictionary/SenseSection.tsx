@@ -14,7 +14,7 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
   const hasExamples = sense.examples.length > 0;
 
   return (
-    <View style={[styles.sense, { borderBottomColor: colors.separator }]}>
+    <View style={styles.sense}>
       <Pressable onPress={() => setOpen((o) => !o)} style={styles.header} disabled={!hasExamples}>
         <Text style={[styles.pos, { color: colors.primary }]}>{sense.pos}</Text>
         <Text style={[styles.def, { color: colors.textPrimary }]}>
@@ -38,7 +38,7 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
 }
 
 const styles = StyleSheet.create({
-  sense: { paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, gap: 4 },
+  sense: { paddingVertical: spacing.sm, gap: 4 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   pos: {
     fontSize: typography.sizes.xs,

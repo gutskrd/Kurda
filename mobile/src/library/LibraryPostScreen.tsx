@@ -140,7 +140,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
               ) : (
                 comments.map((c) => (
-                  <View key={c.id} style={[styles.comment, { borderTopColor: colors.separator }]}>
+                  <View key={c.id} style={styles.comment}>
                     <InitialsAvatar name={c.authorId.slice(0, 2)} id={c.authorId} size={28} />
                     <View style={styles.commentMain}>
                       {c.status !== 'removed' && c.audioUrl ? <AudioPlayer url={c.audioUrl} /> : null}
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   postBody: { fontSize: typography.sizes.md, lineHeight: 24 },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   empty: { textAlign: 'center', marginTop: spacing.md },
-  comment: { flexDirection: 'row', gap: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
+  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
   commentMain: { flex: 1, gap: 2 },
   commentBody: { fontSize: typography.sizes.md },
   commentFoot: { flexDirection: 'row', gap: spacing.md },

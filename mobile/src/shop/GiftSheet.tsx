@@ -122,7 +122,7 @@ export function GiftSheet({
                     onPress={() => send(f)}
                     accessibilityRole="button"
                     accessibilityLabel={t('shop.sendItem', { name: item.name, to: f.username })}
-                    style={[styles.row, { borderBottomColor: colors.separator }]}
+                    style={styles.row}
                   >
                     <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
                     <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+
   },
   who: { flex: 1, fontSize: typography.sizes.md },
   cancel: { alignItems: 'center', paddingVertical: spacing.md },
