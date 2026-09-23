@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
@@ -42,12 +43,27 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
   }, [state.index, tabWidth, reduceMotion, translateX]);
 
   const dark = scheme === 'dark';
-  // Translucent enough that the content behind stays recognizable (the strong blur
-  // does the legibility work); no opaque block, no bright frost ring.
-  const barBg = dark ? 'rgba(14,14,16,0.55)' : 'rgba(255,255,255,0.58)';
+  /*
+   * The same glass the cards are made of.
+   *
+   * This used to paint its own two colours, and in dark mode the fill was
+   * `rgba(14,14,16,0.55)` — a darker layer over an already dark screen, where
+   * the palette's own `glassFill` is `rgba(255,255,255,0.05)`, a lighter one.
+   * A pane darker than what is behind it does not read as glass; it reads as
+   * a bar. The blur was doing its work and nothing was showing it off.
+   */
+  const barBg = colors.glassFill;
   const border = colors.glassBorder;
-  // The active state is a soft, translucent pill — not a high-contrast solid block.
-  const pillColor = dark ? 'rgba(255,255,255,0.10)' : 'rgba(20,20,20,0.055)';
+  /**
+   * The bubble under the active tab.
+   *
+   * Brighter than the pane it sits in, and with an edge, so it reads as a
+   * lozenge resting in the glass rather than a patch where the glass happens
+   * to be lighter. It was 0.10 white on a pane that was darker than the
+   * screen — a difference you had to look for.
+   */
+  const pillColor = dark ? 'rgba(255,255,255,0.13)' : 'rgba(20,20,20,0.07)';
+  const pillEdge = dark ? 'rgba(255,255,255,0.10)' : 'rgba(20,20,20,0.05)';
   const activeText = colors.primary; // brand near-black / near-white, full strength
   const inactiveText = colors.textSecondary;
 
@@ -60,12 +76,27 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
         <View style={styles.clip}>
           <BlurView intensity={colors.blurStrong} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           <View style={[StyleSheet.absoluteFill, styles.tint, { backgroundColor: barBg, borderColor: border }]} />
+          {/*
+            The catch-light, which is what makes a pane look like one. Runs from
+            the top-left corner and fades out before the middle, the same way
+            `GlassCard`'s does, so the island and the cards above it are lit
+            from the same place.
+          */}
+          <LinearGradient
+            colors={[colors.glassHighlight, 'transparent']}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={[StyleSheet.absoluteFill, styles.sheen, { pointerEvents: 'none' }]}
+          />
 
           <View style={styles.row} onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}>
             {tabWidth > 0 ? (
               <Animated.View
                 pointerEvents="none"
-                style={[styles.pill, { width: tabWidth - PILL_INSET_X * 2, backgroundColor: pillColor, transform: [{ translateX }] }]}
+                style={[
+                  styles.pill,
+                  { width: tabWidth - PILL_INSET_X * 2, backgroundColor: pillColor, borderColor: pillEdge, transform: [{ translateX }] },
+                ]}
               />
             ) : null}
 
@@ -122,7 +153,10 @@ const styles = StyleSheet.create({
     top: PILL_INSET_Y,
     bottom: PILL_INSET_Y,
     borderRadius: (TAB_BAR_HEIGHT - PILL_INSET_Y * 2) / 2,
+    borderWidth: StyleSheet.hairlineWidth,
   },
+  // half the island, so the light falls off before the middle
+  sheen: { bottom: undefined, height: TAB_BAR_HEIGHT / 2, opacity: 0.5 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4, paddingHorizontal: 2 },
   label: { fontSize: typography.ios.tabLabel, letterSpacing: 0.1 },
 });
