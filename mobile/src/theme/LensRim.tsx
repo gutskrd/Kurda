@@ -12,12 +12,17 @@ import { rimBand } from './rim';
  * clear disc dragged across a page — the words under it bent and bigger,
  * and a band of orange and blue at the left and right of the rim.
  *
- * Three gradients and no stroke:
+ * Two gradients and no stroke:
  *
  *   a warm band on one edge, amber into orange, fading inwards
  *   a cool band on the other, cyan into violet, fading inwards
- *   a bright specular in the top-left corner, short and sharp
  *   nothing at all in the middle
+ *
+ * There was a third, a white wedge in the top-left corner, and it was paint.
+ * A catch-light is how you make a flat rectangle look like a lit object, and
+ * glass is not a lit object — it is something you see through, and the only
+ * thing it does to light is bend it. At 50% white over a third of the
+ * selector it was not a suggestion of a reflection, it was a smear.
  *
  * Two stops per band rather than one, because a single hue at an edge is a
  * coloured line and what a lens does is spread the light.
@@ -55,8 +60,6 @@ export function LensRim({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const band = rimBand(radius);
-  // and the specular is bounded for the same reason the band is
-  const reach = Math.min(radius, 40);
   const across = axis === 'x';
   const near = across
     ? ({ position: 'absolute', left: 0, top: 0, bottom: 0, width: band } as const)
@@ -84,19 +87,7 @@ export function LensRim({
         end={to}
         style={[far, { opacity: strength }]}
       />
-      <LinearGradient
-        colors={[colors.lensSpecular, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.65, y: 0.9 }}
-        style={[styles.specular, { width: reach * 2.4, height: reach * 1.2, opacity: strength }]}
-      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  // the two bands are built inline, because which edge they sit on is a prop
-  // sized from the radius at the call site; these are the ceilings, so a small
-  // surface gets a highlight in proportion to itself rather than a wash
-  specular: { position: 'absolute', top: 0, left: 0, maxWidth: '55%', maxHeight: '45%' },
-});
