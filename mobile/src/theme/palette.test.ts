@@ -40,7 +40,7 @@ describe('palettes', () => {
     for (const p of [LIGHT, DARK]) {
       expect(p.glassFill).toMatch(CSS_COLOR);
       expect(p.glassBorder).toMatch(CSS_COLOR);
-      expect(p.glassHighlight).toMatch(CSS_COLOR);
+
       expect(p.clayFill).toHaveLength(2);
     }
   });

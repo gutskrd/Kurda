@@ -148,7 +148,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               </Text>
             </View>
 
-            <Pressable onPress={() => inputRef.current?.focus()} style={[styles.typeArea, { borderColor: colors.glassBorder }]}>
+            <Pressable onPress={() => inputRef.current?.focus()} style={[styles.typeArea, { backgroundColor: colors.controlTrack }]}>
               <Text style={styles.raceText}>
                 {chars.map((ch, i) => {
                   const got = typedChars[i];
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },
   textTitle: { fontSize: typography.sizes.sm, maxWidth: 110 },
-  typeArea: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, padding: spacing.md, minHeight: 180 },
+  typeArea: { borderRadius: radii.md, padding: spacing.md, minHeight: 180 },
   raceText: { lineHeight: 30 },
   raceChar: { fontSize: typography.sizes.lg },
   // full-bleed and invisible: it takes the keystrokes, the text above is read

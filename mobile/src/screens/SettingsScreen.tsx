@@ -136,7 +136,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.preferences')}</Text>
         <GlassCard padding="tight">
           <GlassSelect
-            first
             label={t('settings.language')}
             icon="translate"
             value={locale}
@@ -162,7 +161,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.notifications')}</Text>
         <GlassCard padding="tight">
-          <GlassRow first icon="gear" title={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
+          <GlassRow icon="gear" title={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
           <GlassRow icon="bell" title={t('settings.notificationCenter')} onPress={() => navigation.navigate('NotificationCenter')} />
         </GlassCard>
 
@@ -186,7 +185,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         */}
         <GlassCard padding="tight">
           <GlassRow
-            first
             icon="person"
             iconColor={colors.textSecondary}
             title={t('settings.blocked.title')}
@@ -196,7 +194,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
         <GlassCard padding="tight">
-          <GlassRow first icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
+          <GlassRow icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
           <GlassRow
             icon="sign-out"
             title={t('settings.sessions.signOutEverywhere')}

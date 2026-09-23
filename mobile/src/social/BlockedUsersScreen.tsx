@@ -114,7 +114,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                 {list.map((u) => (
                   <View
                     key={u.userId}
-                    style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}
+                    style={[styles.row, { backgroundColor: colors.controlTrack }]}
                   >
                     <InitialsAvatar
                       name={u.displayName || u.username}
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
   },
   main: { flex: 1 },

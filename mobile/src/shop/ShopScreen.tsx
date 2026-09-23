@@ -148,7 +148,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
               <Text style={[styles.section, { color: colors.textSecondary }]}>{sectionTitle(section.category, t)}</Text>
             )}
             renderItem={({ item }) => (
-              <Pressable style={[styles.row, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]} onPress={() => setSelected(item)}>
+              <Pressable style={[styles.row, { backgroundColor: colors.controlTrack }]} onPress={() => setSelected(item)}>
                 <View style={styles.rowMain}>
                   <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.name}</Text>
                   {item.description ? <Text style={[styles.itemDesc, { color: colors.textSecondary }]} numberOfLines={1}>{item.description}</Text> : null}
@@ -168,7 +168,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
 
         <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
           <Pressable style={styles.backdrop} onPress={() => setSelected(null)}>
-            <Pressable style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]} onPress={() => undefined}>
+            <Pressable style={[styles.sheet, { backgroundColor: colors.background }]} onPress={() => undefined}>
               {selected ? (
                 <ItemDetail
                   item={selected}
@@ -224,7 +224,7 @@ function ItemDetail({
   return (
     <View style={styles.detail}>
       {/* preview placeholder until item art lands with the design pass */}
-      <View style={[styles.preview, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, borderWidth: StyleSheet.hairlineWidth }]}>
+      <View style={[styles.preview, { backgroundColor: colors.controlTrack, borderWidth: StyleSheet.hairlineWidth }]}>
         <Icon
           name={item.category === 'freeze' ? 'ice' : item.category === 'powerup' ? 'bolt' : 'sparkle'}
           size={44}
@@ -244,7 +244,7 @@ function ItemDetail({
            * most people are buying for themselves.
            */}
           <Pressable
-            style={[styles.gift, { borderColor: colors.glassBorder }]}
+            style={[styles.gift, { backgroundColor: colors.controlTrack }]}
             disabled={busy}
             onPress={() => onGift(item)}
             accessibilityRole="button"
@@ -276,14 +276,14 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   list: { padding: spacing.lg, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.md, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center', borderRadius: radii.md, padding: spacing.md },
   rowMain: { flex: 1, gap: 2 },
   itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   itemDesc: { fontSize: typography.sizes.sm },
   price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   empty: { textAlign: 'center', marginTop: spacing.xl },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.xl },
+  sheet: { borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, padding: spacing.xl },
   detail: { alignItems: 'center', gap: spacing.sm },
   preview: { width: 96, height: 96, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   detailName: { ...display(typography.sizes.xl) },
@@ -296,7 +296,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     height: 44,
     borderRadius: radii.sm,
-    borderWidth: StyleSheet.hairlineWidth,
     marginTop: spacing.sm,
     alignSelf: 'stretch',
   },

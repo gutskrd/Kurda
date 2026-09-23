@@ -112,7 +112,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
                       styles.bubble,
                       mine
                         ? { backgroundColor: colors.primary }
-                        : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder },
+                        : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth },
                     ]}
                   >
                     <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{item.body}</Text>
@@ -129,7 +129,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+            style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={draft}
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: spacing.xl },
   typing: { fontStyle: 'italic', paddingHorizontal: spacing.lg, paddingBottom: spacing.xs, fontSize: typography.sizes.sm },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, maxHeight: 120, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, maxHeight: 120, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   sendBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radii.md },
   sendText: { fontWeight: typography.weights.bold },
 });

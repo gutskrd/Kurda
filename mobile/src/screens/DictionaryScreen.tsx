@@ -101,7 +101,7 @@ export function DictionaryScreen() {
           placeholderTextColor={colors.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
-          style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+          style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
           accessibilityLabel={t('dictionary.searchLabel')}
         />
 
@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, gap: spacing.sm },
   input: {
     minHeight: MIN_TOUCH_TARGET,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,

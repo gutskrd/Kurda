@@ -53,11 +53,11 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
           </Text>
 
           <View style={styles.tiles}>
-            <GlassCard style={styles.tile} intensity={colors.blurIntensity + 8}>
+            <GlassCard style={styles.tile}>
               <Text style={[styles.tileNum, { color: colors.primary }]}>7</Text>
               <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>{t('appearance.preview.dayStreak')}</Text>
             </GlassCard>
-            <GlassCard style={styles.tile} intensity={colors.blurIntensity + 8}>
+            <GlassCard style={styles.tile}>
               <Text style={[styles.tileNum, { color: colors.gold }]}>1.2k</Text>
               <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>XP</Text>
             </GlassCard>

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { LensRim } from './LensRim';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -19,38 +19,33 @@ export function GradientBackground({ children, style }: { children?: ReactNode; 
 }
 
 /**
- * Frosted glassmorphism / liquid-glass surface: a real backdrop blur, a
- * translucent tint, a hairline edge, and a top catch-light sheen — floating
- * over the gradient with a soft spatial shadow.
+ * A piece of glass, not a piece of frost.
+ *
+ * This used to be a backdrop blur, a tint over half opaque, a hairline in a
+ * flat grey and a white sheen. The blur is what made it milky, the hairline
+ * is what made it a box, and between them the surface stopped being
+ * something you could see through.
+ *
+ * Now it is a fill light enough to read text off and nothing else, with the
+ * edge given by `LensRim` — warm at the top, cool at the bottom, a catch
+ * along the top-left, and no stroke anywhere.
  */
 export function GlassCard({
   children,
   style,
-  intensity,
-  blur = 'regular',
   padding = 'regular',
 }: {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
-  intensity?: number;
-  /** Blur tier: 'soft' for flat scrolled content, 'strong' for floating surfaces. */
-  blur?: 'soft' | 'regular' | 'strong';
   /** 'tight' trims the vertical padding for dense row-lists (Settings). */
   padding?: 'regular' | 'tight';
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const level = intensity ?? (blur === 'soft' ? colors.blurSoft : blur === 'strong' ? colors.blurStrong : colors.blurIntensity);
   return (
     <View style={[styles.shadow, { shadowColor: colors.softShadow }, style]}>
       <View style={styles.clip}>
-        <BlurView intensity={level} tint={colors.blurTint} style={StyleSheet.absoluteFill} />
-        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
-          <LinearGradient
-            colors={[colors.glassHighlight, 'transparent']}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 0.4, y: 1 }}
-            style={[styles.sheen, { pointerEvents: 'none' }]}
-          />
+        <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }]}>
+          <LensRim radius={radii.lg} />
           {children}
         </View>
       </View>
@@ -58,18 +53,17 @@ export function GlassCard({
   );
 }
 
-/** A faint hairline divider between rows inside a glass surface. */
-export function Separator({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const { colors } = useTheme();
-  return <View style={[styles.separator, { backgroundColor: colors.separator }, style]} />;
-}
 
 /**
  * A single settings / list row inside a GlassCard (KUR-270 polish). One consistent
  * layout — optional leading icon, a title + optional subtitle, and a trailing slot
  * (value text, chevron, switch, or any node) — with a comfortable ≥52px touch
- * target and a subtle press highlight. The row itself is translucent; the parent
- * GlassCard supplies the glass, so there's no per-row border ("frost line").
+ * target and a subtle press highlight.
+ *
+ * No divider between rows. There was one, and it read as a line drawn across
+ * the middle of the card — which is what a settings list looks like when the
+ * card is opaque and what it must not look like when the card is glass. The
+ * spacing does the separating now.
  */
 export function GlassRow({
   icon,
@@ -80,7 +74,6 @@ export function GlassRow({
   trailing,
   onPress,
   destructive = false,
-  first = false,
 }: {
   icon?: IconName;
   iconColor?: string;
@@ -91,14 +84,11 @@ export function GlassRow({
   trailing?: ReactNode;
   onPress?: () => void;
   destructive?: boolean;
-  /** Skip the top separator (use for the first row in a card). */
-  first?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const titleColor = destructive ? colors.danger : colors.textPrimary;
   const body = (pressed: boolean) => (
     <>
-      {first ? null : <Separator style={[styles.rowSeparator, icon ? styles.rowSeparatorInset : null]} />}
       <View style={[styles.row, pressed && { opacity: 0.6 }]}>
         {icon ? (
           <View style={styles.rowIcon}>
@@ -192,7 +182,9 @@ export function ClayButton({
     : toneColor
       ? colors.textOnPrimary
       : colors.textPrimary;
-  const edge = outline ? (toneColor ?? colors.glassBorder) : (toneColor ? 'transparent' : colors.glassBorder);
+  // the outline variant has no fill, so its rim is the whole button; a filled
+  // one already has a shape and a rim round it is just a rim
+  const edge = outline ? (toneColor ?? colors.glassBorder) : 'transparent';
   const off = busy || disabled;
   return (
     <Pressable
@@ -270,7 +262,7 @@ export function Segmented<T extends string>({
 }): React.JSX.Element {
   const { colors } = useTheme();
   return (
-    <View style={[styles.segTrack, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
+    <View style={[styles.segTrack, { backgroundColor: colors.glassFill }]}>
       {options.map((opt) => {
         const active = opt === value;
         return (
@@ -306,7 +298,6 @@ export function GlassSelect<T extends string>({
   labelOf,
   onChange,
   icon,
-  first = false,
 }: {
   label: string;
   value: T;
@@ -314,8 +305,6 @@ export function GlassSelect<T extends string>({
   labelOf: (v: T) => string;
   onChange: (v: T) => void;
   icon?: IconName;
-  /** Skip the top separator (first row in a card). */
-  first?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const [open, setOpen] = useState(false);
@@ -324,7 +313,6 @@ export function GlassSelect<T extends string>({
       <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={label}>
         {({ pressed }) => (
           <>
-            {first ? null : <Separator style={styles.rowSeparator} />}
             <View style={[styles.row, pressed && { opacity: 0.6 }]}>
               {icon ? (
                 <View style={styles.rowIcon}>
@@ -382,13 +370,11 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   clip: { borderRadius: radii.lg, overflow: 'hidden' },
-  glassFace: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.lg, overflow: 'hidden' },
+  glassFace: { borderRadius: radii.lg, padding: spacing.lg, overflow: 'hidden' },
   glassFaceTight: { paddingVertical: spacing.xs },
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '55%', opacity: 0.6 },
-  separator: { height: StyleSheet.hairlineWidth, alignSelf: 'stretch' },
-  rowSeparator: { marginHorizontal: -spacing.lg },
+
   /** aligned with the title: the icon column plus the gap after it */
-  rowSeparatorInset: { marginLeft: 26 + spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 11 },
   rowIcon: { width: 26, alignItems: 'center' },
   rowMain: { flex: 1, gap: 2 },
@@ -414,7 +400,7 @@ const styles = StyleSheet.create({
   clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  segTrack: { flexDirection: 'row', borderRadius: radii.pill, borderWidth: StyleSheet.hairlineWidth, padding: 3, gap: 2 },
+  segTrack: { flexDirection: 'row', borderRadius: radii.pill, padding: 3, gap: 2 },
   segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: 6, alignItems: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },

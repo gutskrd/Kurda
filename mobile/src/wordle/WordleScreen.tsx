@@ -330,7 +330,7 @@ function ResultPanel({
         )}
 
         {edu ? (
-          <View style={[styles.edu, { borderColor: colors.glassBorder }]}>
+          <View style={[styles.edu, { backgroundColor: colors.controlTrack }]}>
             <View style={styles.eduHead}>
               <Icon name="text" size={18} color={colors.primary} />
               <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   resultCard: { gap: spacing.sm },
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
-  edu: { borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },
+  edu: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },
   eduHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   eduWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   eduPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },

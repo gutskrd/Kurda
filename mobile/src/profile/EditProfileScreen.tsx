@@ -162,7 +162,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               onChangeText={setDisplayName}
               maxLength={60}
               accessibilityLabel={t('edit.displayName')}
-              style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+              style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             />
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>{t('edit.bio')}</Text>
@@ -177,7 +177,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               style={[
                 styles.input,
                 styles.bio,
-                { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary },
+                { backgroundColor: colors.controlTrack, color: colors.textPrimary },
               ]}
             />
 
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   notice: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
   section: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.lg },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
-  input: { minHeight: MIN_TOUCH_TARGET, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   bio: { minHeight: 96, textAlignVertical: 'top' },
   countries: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   chip: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },

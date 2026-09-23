@@ -80,7 +80,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
       <Text style={[styles.help, { color: colors.textSecondary }]}>{t('edit.sections.help')}</Text>
 
       {PROFILE_SECTIONS.map((key) => (
-        <View key={key} style={[styles.row, { borderBottomColor: colors.separator }]}>
+        <View key={key} style={styles.row}>
           <View style={styles.main}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>{t(COPY[key].label)}</Text>
             <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(COPY[key].hint)}</Text>

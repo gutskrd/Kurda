@@ -86,7 +86,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     ({ item }: { item: LibraryPost }) => (
       <Pressable
         onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
-        style={[styles.card, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}
+        style={[styles.card, { backgroundColor: colors.glassFill }]}
         accessibilityRole="button"
         accessibilityLabel={t('library.readLabel', { title: item.title })}
       >
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
-  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.xs },
+  card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.xs },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   cardTitle: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   preview: { fontSize: typography.sizes.md },

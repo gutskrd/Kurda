@@ -209,7 +209,7 @@ function PostChooser({
       <Pressable style={styles.scrim} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
         {/* the card swallows the tap so choosing does not also dismiss */}
         <Pressable
-          style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.glassBorder }]}
+          style={[styles.sheet, { backgroundColor: colors.background }]}
           onPress={() => undefined}
         >
         <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('post.what')}</Text>
@@ -221,7 +221,7 @@ function PostChooser({
             key={what}
             onPress={() => onPick(what)}
             accessibilityRole="button"
-            style={[styles.choice, { borderColor: colors.glassBorder, backgroundColor: colors.controlTrack }]}
+            style={[styles.choice, { backgroundColor: colors.controlTrack }]}
           >
             <Icon name={icon} size={26} tone="primary" />
             <View style={styles.choiceText}>
@@ -251,9 +251,9 @@ const styles = StyleSheet.create({
    */
   plus: { width: 44, height: 44, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: { margin: spacing.lg, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, gap: spacing.sm },
+  sheet: { margin: spacing.lg, padding: spacing.md, borderRadius: radii.lg, gap: spacing.sm },
   sheetTitle: { ...display(typography.sizes.lg), marginBottom: spacing.xs },
-  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md },
+  choice: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radii.md },
   choiceText: { flex: 1 },
   choiceName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   choiceSub: { fontSize: typography.sizes.sm },

@@ -85,7 +85,7 @@ export function FeedCard({
   const e = item.engagement;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
       <Pressable
         onPress={open}
         accessibilityRole="button"
@@ -209,7 +209,7 @@ function Action({
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.sm },
+  card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   body: { gap: spacing.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   headText: { flex: 1 },

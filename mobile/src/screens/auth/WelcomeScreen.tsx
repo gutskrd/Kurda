@@ -153,9 +153,8 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
           mark={<GoogleMark size={18} />}
           label={t('welcome.google')}
           onPress={onGoogle}
-          background={colors.controlTrack}
-          foreground={colors.textPrimary}
-          border={colors.glassBorder}
+          background={GOOGLE_SURFACE}
+          foreground={GOOGLE_INK}
         />
         <MethodButton
           icon="mail-fill"
@@ -198,6 +197,15 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   );
 }
 
+/*
+ * Google’s own two, and the only colours in this file that are not the
+ * theme’s. A sign-in button carrying somebody else’s mark is their surface,
+ * not ours to tint, and it stays the same in the dark theme for the same
+ * reason the G in the middle of it does.
+ */
+const GOOGLE_SURFACE = '#FFFFFF';
+const GOOGLE_INK = '#1F1F1F';
+
 /**
  * One way in: a mark, a word, a tap.
  *
@@ -213,13 +221,11 @@ function MethodButton({
   onPress,
   background,
   foreground,
-  border,
 }: {
   label: string;
   onPress: () => void;
   background: string;
   foreground: string;
-  border?: string;
 } & ({ icon: IconName; mark?: never } | { mark: React.JSX.Element; icon?: never })) {
   return (
     <Pressable
@@ -227,7 +233,7 @@ function MethodButton({
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.method,
-        { backgroundColor: background, borderColor: border ?? background, opacity: pressed ? 0.9 : 1 },
+        { backgroundColor: background, opacity: pressed ? 0.9 : 1 },
       ]}
     >
       {mark ?? (icon ? <Icon name={icon} size={20} color={foreground} /> : null)}
@@ -248,7 +254,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.md,
     borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   methodText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   link: { marginTop: spacing.sm, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },

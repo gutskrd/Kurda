@@ -64,7 +64,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+        style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.listen.answerLabel')}
       />
 
@@ -82,7 +82,6 @@ const styles = StyleSheet.create({
   prompt: { fontSize: typography.sizes.md },
   input: {
     minHeight: MIN_TOUCH_TARGET,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,

@@ -120,7 +120,7 @@ export function PostPictureScreen({
               onPress={pick}
               accessibilityRole="button"
               accessibilityLabel={asset ? t('picture.changePicture') : t('picture.choosePicture')}
-              style={[styles.dropzone, { borderColor: colors.glassBorder, backgroundColor: colors.controlTrack }]}
+              style={[styles.dropzone, { backgroundColor: colors.controlTrack }]}
             >
               {asset ? (
                 <Image source={{ uri: asset.uri }} style={styles.preview} resizeMode="contain" />
@@ -142,7 +142,7 @@ export function PostPictureScreen({
             <TextInput
               style={[
                 styles.caption,
-                { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary },
+                { backgroundColor: colors.controlTrack, color: colors.textPrimary },
               ]}
               placeholder={t('picture.captionPlaceholder')}
               placeholderTextColor={colors.textSecondary}
@@ -181,7 +181,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   body: { gap: spacing.md, paddingBottom: spacing.xxl },
   dropzone: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.lg,
     minHeight: 220,
     alignItems: 'center',
@@ -192,7 +191,6 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', gap: spacing.sm, padding: spacing.xl },
   emptyText: { fontSize: typography.sizes.sm, textAlign: 'center' },
   caption: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     padding: spacing.md,
     minHeight: 90,

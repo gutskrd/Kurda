@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LensRim } from '../theme/LensRim';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
@@ -53,7 +52,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
    * a bar. The blur was doing its work and nothing was showing it off.
    */
   const barBg = colors.glassFill;
-  const border = colors.glassBorder;
+
   /**
    * The bubble under the active tab.
    *
@@ -63,7 +62,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
    * screen — a difference you had to look for.
    */
   const pillColor = dark ? 'rgba(255,255,255,0.13)' : 'rgba(20,20,20,0.07)';
-  const pillEdge = dark ? 'rgba(255,255,255,0.10)' : 'rgba(20,20,20,0.05)';
+
   const activeText = colors.primary; // brand near-black / near-white, full strength
   const inactiveText = colors.textSecondary;
 
@@ -74,20 +73,8 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
     >
       <View style={[styles.island, { shadowColor: dark ? '#000000' : '#3E5147' }]}>
         <View style={styles.clip}>
-          <BlurView intensity={colors.blurStrong} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, styles.tint, { backgroundColor: barBg, borderColor: border }]} />
-          {/*
-            The catch-light, which is what makes a pane look like one. Runs from
-            the top-left corner and fades out before the middle, the same way
-            `GlassCard`'s does, so the island and the cards above it are lit
-            from the same place.
-          */}
-          <LinearGradient
-            colors={[colors.glassHighlight, 'transparent']}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={[StyleSheet.absoluteFill, styles.sheen, { pointerEvents: 'none' }]}
-          />
+          <View style={[StyleSheet.absoluteFill, styles.tint, { backgroundColor: barBg }]} />
+          <LensRim radius={TAB_BAR_HEIGHT / 2} />
 
           <View style={styles.row} onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}>
             {tabWidth > 0 ? (
@@ -95,7 +82,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                 pointerEvents="none"
                 style={[
                   styles.pill,
-                  { width: tabWidth - PILL_INSET_X * 2, backgroundColor: pillColor, borderColor: pillEdge, transform: [{ translateX }] },
+                  { width: tabWidth - PILL_INSET_X * 2, backgroundColor: pillColor, transform: [{ translateX }] },
                 ]}
               />
             ) : null}
@@ -145,7 +132,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   clip: { flex: 1, borderRadius: TAB_BAR_HEIGHT / 2, overflow: 'hidden' },
-  tint: { borderRadius: TAB_BAR_HEIGHT / 2, borderWidth: StyleSheet.hairlineWidth },
+  tint: { borderRadius: TAB_BAR_HEIGHT / 2 },
   row: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   pill: {
     position: 'absolute',
@@ -153,10 +140,7 @@ const styles = StyleSheet.create({
     top: PILL_INSET_Y,
     bottom: PILL_INSET_Y,
     borderRadius: (TAB_BAR_HEIGHT - PILL_INSET_Y * 2) / 2,
-    borderWidth: StyleSheet.hairlineWidth,
   },
-  // half the island, so the light falls off before the middle
-  sheen: { bottom: undefined, height: TAB_BAR_HEIGHT / 2, opacity: 0.5 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4, paddingHorizontal: 2 },
   label: { fontSize: typography.ios.tabLabel, letterSpacing: 0.1 },
 });

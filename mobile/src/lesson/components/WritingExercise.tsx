@@ -49,7 +49,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
             disabled={disabled}
             onPress={() => insertKey(key)}
             accessibilityLabel={t('lesson.write.insertKey', { letter: key })}
-            style={[styles.key, { borderColor: colors.glassBorder, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+            style={[styles.key, { backgroundColor: colors.controlTrack }, disabled && styles.dim]}
           >
             <Text style={[styles.keyText, { color: colors.textPrimary }]}>{key}</Text>
           </Pressable>
@@ -67,7 +67,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled }: Prop
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+        style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.write.answerLabel')}
       />
     </View>
@@ -83,13 +83,11 @@ const styles = StyleSheet.create({
     minWidth: 40,
     paddingVertical: spacing.sm,
     borderRadius: radii.sm,
-    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
   keyText: { fontSize: typography.sizes.lg },
   input: {
     minHeight: 96,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,

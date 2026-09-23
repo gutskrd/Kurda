@@ -127,7 +127,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     ({ item }: { item: ImagePost }) => (
       <Pressable
         onPress={() => navigation.navigate('MemeDetail', { postId: item.id })}
-        style={[styles.card, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder }]}
+        style={[styles.card, { backgroundColor: colors.glassFill }]}
         accessibilityRole="button"
         accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
       >
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
-  card: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth, padding: spacing.md, gap: spacing.sm },
+  card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   age: { fontSize: typography.sizes.sm },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md },

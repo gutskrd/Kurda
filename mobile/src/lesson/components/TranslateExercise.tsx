@@ -27,7 +27,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled }: Pr
         placeholderTextColor={colors.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.input, { borderColor: colors.glassBorder, color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
+        style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.translate.answerLabel')}
       />
     </View>
@@ -40,7 +40,6 @@ const styles = StyleSheet.create({
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   input: {
     minHeight: MIN_TOUCH_TARGET,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,

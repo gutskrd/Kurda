@@ -196,7 +196,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
             </ScrollView>
           )}
 
-          <View style={[styles.composer, { borderColor: colors.glassBorder, backgroundColor: colors.glassFill }]}>
+          <View style={[styles.composer, { backgroundColor: colors.glassFill }]}>
             <TextInput
               style={[styles.input, { color: colors.textPrimary }]}
               placeholder={t('comments.add')}
@@ -248,6 +248,6 @@ const styles = StyleSheet.create({
   commentFoot: { flexDirection: 'row', gap: spacing.md },
   replyHint: { fontSize: typography.sizes.xs },
   report: { fontSize: typography.sizes.sm },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
   input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

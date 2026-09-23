@@ -36,7 +36,7 @@ export function LessonResults({ results, exercises, failed, onDone }: Props) {
       <StreakBadge streak={results.streak} />
 
       {results.mistakes.length > 0 ? (
-        <View style={[styles.mistakes, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder }]}>
+        <View style={[styles.mistakes, { backgroundColor: colors.controlTrack }]}>
           <Text style={[styles.mistakesTitle, { color: colors.textPrimary }]}>{t('lesson.review')}</Text>
           {results.mistakes.map((m) => (
             <View key={m.exerciseId} style={styles.mistakeRow}>
@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     gap: spacing.sm,
     borderRadius: radii.md,
-    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.lg,
   },
   mistakesTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

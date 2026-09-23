@@ -32,13 +32,22 @@ export interface Palette {
   // glassmorphism / liquid glass — three blur tiers so we can go stronger on
   // floating surfaces (nav, modals, sheets) and lighter on flat, scrolled content
   // (cards, rows) where heavy blur costs performance and hurts readability.
-  blurTint: 'light' | 'dark';
-  blurSoft: number; // flat, in-flow surfaces (cards, rows)
-  blurIntensity: number; // the standard tier (default)
-  blurStrong: number; // floating surfaces (tab bar, modals, sheets)
   glassFill: string; // translucent tint painted over the blur
   glassBorder: string; // hairline edge — kept subtle (no "frost line")
-  glassHighlight: string; // top sheen for the "liquid glass" catch-light
+
+  /*
+   * What the edge of a piece of glass is made of.
+   *
+   * Not a line. Light bending through a lens leaves warm where it exits and
+   * cool where it enters, with a bright catch along one edge — which is what
+   * the recordings show, and what a hairline in a single grey never looks
+   * like. All three are barely there on purpose: at a 2pt band this is a
+   * suggestion of colour, and at full strength it would read as a sticker.
+   */
+  lensWarm: string;
+  lensCool: string;
+  lensSpecular: string;
+
   separator: string; // faint divider between rows inside a surface
 
   // claymorphism / neumorphism (soft, puffy controls)
@@ -69,14 +78,15 @@ export const LIGHT: Palette = {
   background: '#F3F3F3',
   gradient: ['#FBFBFB', '#F4F4F4', '#EDEDED'],
 
-  blurTint: 'light',
-  blurSoft: 18,
-  blurIntensity: 30,
-  blurStrong: 50,
-  glassFill: 'rgba(255,255,255,0.55)',
-  // a soft catch-light edge, not an opaque white ring (was 0.8 → the "frost line")
+  // no blur behind it any more, so this is the whole surface: enough to hold
+  // text and no more. It was 0.55 — more than half opaque, which is a milky
+  // pane rather than a pane you can see through.
+  glassFill: 'rgba(255,255,255,0.34)',
   glassBorder: 'rgba(255,255,255,0.45)',
-  glassHighlight: 'rgba(255,255,255,0.9)',
+
+  lensWarm: 'rgba(255,186,120,0.30)',
+  lensCool: 'rgba(120,170,255,0.26)',
+  lensSpecular: 'rgba(255,255,255,0.50)',
   separator: 'rgba(20,20,20,0.07)',
 
   clayFill: ['#FFFFFF', '#EFEFEF'],
@@ -107,13 +117,12 @@ export const DARK: Palette = {
   // neutral near-black spatial gradient (no colour tint)
   gradient: ['#0E1014', '#0B0D10', '#101318'],
 
-  blurTint: 'dark',
-  blurSoft: 28,
-  blurIntensity: 44,
-  blurStrong: 64,
-  glassFill: 'rgba(255,255,255,0.05)',
+  glassFill: 'rgba(255,255,255,0.07)',
   glassBorder: 'rgba(255,255,255,0.14)',
-  glassHighlight: 'rgba(255,255,255,0.28)',
+
+  lensWarm: 'rgba(255,170,100,0.26)',
+  lensCool: 'rgba(110,165,255,0.24)',
+  lensSpecular: 'rgba(255,255,255,0.22)',
   separator: 'rgba(255,255,255,0.08)',
 
   clayFill: ['#1E1E1E', '#151515'],

@@ -104,7 +104,7 @@ export function VoiceRecorder({
     <Pressable
       onPress={() => void start()}
       disabled={busy}
-      style={[styles.pill, { backgroundColor: colors.glassFill, borderColor: colors.glassBorder, opacity: busy ? 0.5 : 1 }]}
+      style={[styles.pill, { backgroundColor: colors.glassFill, opacity: busy ? 0.5 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={t('recorder.startNote')}
     >

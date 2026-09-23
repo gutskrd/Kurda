@@ -191,7 +191,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
             <Animated.View style={{ transform: [{ translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) }] }}>
               <View style={styles.inputRow}>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.controlTrack, borderColor: colors.glassBorder, color: colors.textPrimary }]}
+                  style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
                   placeholder={t('games.rhyme.placeholder', { word: game.prompt })}
                   placeholderTextColor={colors.textSecondary}
                   autoCapitalize="none"
@@ -212,7 +212,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 
             <View style={styles.found}>
               {found.map((f, i) => (
-                <View key={`${f.word}-${i}`} style={[styles.foundRow, { borderColor: colors.glassBorder }]}>
+                <View key={`${f.word}-${i}`} style={[styles.foundRow, { backgroundColor: colors.controlTrack }]}>
                   <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
                   <View style={styles.foundMeta}>
                     <Text style={[styles.foundQuality, { color: qualityColor(f.quality) }]}>{t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}</Text>
@@ -248,10 +248,10 @@ const styles = StyleSheet.create({
   timer: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   score: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   inputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
   addBtn: { paddingHorizontal: spacing.lg },
   found: { gap: spacing.xs, marginTop: spacing.sm },
-  foundRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: StyleSheet.hairlineWidth, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  foundRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   foundWord: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   foundMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   foundQuality: { fontSize: typography.sizes.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
