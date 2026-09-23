@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
-import { LensRim } from '../theme/LensRim';
+
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
@@ -74,7 +74,6 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
       <View style={[styles.island, { shadowColor: dark ? '#000000' : '#3E5147' }]}>
         <View style={styles.clip}>
           <View style={[StyleSheet.absoluteFill, styles.tint, { backgroundColor: barBg }]} />
-          <LensRim radius={TAB_BAR_HEIGHT / 2} />
 
           <View style={styles.row} onLayout={(e: LayoutChangeEvent) => setBarWidth(e.nativeEvent.layout.width)}>
             {tabWidth > 0 ? (

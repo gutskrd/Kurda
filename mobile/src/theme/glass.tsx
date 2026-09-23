@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Animated, Easing, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LensRim } from './LensRim';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
@@ -26,9 +26,11 @@ export function GradientBackground({ children, style }: { children?: ReactNode; 
  * is what made it a box, and between them the surface stopped being
  * something you could see through.
  *
- * Now it is a fill light enough to read text off and nothing else, with the
- * edge given by `LensRim` — warm at the top, cool at the bottom, a catch
- * along the top-left, and no stroke anywhere.
+ * Now it is a fill light enough to read text off, and nothing else at all —
+ * no stroke, no sheen, and no rim either. The rim went on here first and it
+ * was wrong: a piece of glass with a coloured edge on every card in the app
+ * is not glass, it is a border in two colours instead of one. It lives on
+ * the segmented control now, which is the only thing here that moves.
  */
 export function GlassCard({
   children,
@@ -45,7 +47,6 @@ export function GlassCard({
     <View style={[styles.shadow, { shadowColor: colors.softShadow }, style]}>
       <View style={styles.clip}>
         <View style={[styles.glassFace, padding === 'tight' && styles.glassFaceTight, { backgroundColor: colors.glassFill }]}>
-          <LensRim radius={radii.lg} />
           {children}
         </View>
       </View>
@@ -248,7 +249,46 @@ export function ErrorRetry({
   );
 }
 
-/** Segmented control on a glass track (used for the theme picker). */
+/**
+ * How much bigger the glass makes what is under it.
+ *
+ * 1.18 is small enough that the label still fits its segment at four
+ * options and large enough to be unmistakably a magnification rather than a
+ * bolder weight. Below about 1.1 it reads as the text simply being heavier.
+ */
+const LENS_MAGNIFY = 1.18;
+
+/**
+ * How far apart the glass puts the warm and the cool end of the spectrum.
+ *
+ * On a thirteen-point label a stroke is about a point and a half wide, so
+ * this is roughly one stroke: enough to show at the edge of a letter and
+ * not enough to read as the word being printed twice.
+ */
+const LENS_SPLIT = 1.2;
+
+/** Inset of the travelling lens from the edge of its track. */
+const SEG_PAD = 3;
+
+/**
+ * A segmented control, and the one piece of real glass in the app.
+ *
+ * Everything else here is a flat translucent fill. This is the thing with a
+ * selection that travels, so this is where the lens goes: a clear capsule
+ * that slides to the option you picked, and inside it the label is bigger
+ * and its letters carry colour at their edges.
+ *
+ * The magnification is a transform on the label that is already there — the
+ * real content being scaled, not a copy drawn over it — so there is nothing
+ * to keep aligned and nothing to double.
+ *
+ * The two ghosts behind it are the dispersion: the same word in the warm end
+ * of the rim colour a point and a half to one side, and in the cool end a
+ * point and a half to the other. At rest you read it as an edge on the
+ * letters. That is what the glass in the recording does to the text under
+ * it, and it is as close as this gets without a backdrop shader — Skia’s
+ * `RuntimeShader` or the system glass on iOS 26, neither of which is here.
+ */
 export function Segmented<T extends string>({
   options,
   value,
@@ -261,25 +301,90 @@ export function Segmented<T extends string>({
   labelOf: (v: T) => string;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const index = Math.max(0, options.indexOf(value));
+  const seg = box.w > 0 ? (box.w - SEG_PAD * 2) / options.length : 0;
+  // its real radius, not `radii.pill` — a capsule is round by half its height
+  const lensRadius = Math.max(2, (box.h - SEG_PAD * 2) / 2);
+  const x = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (seg <= 0) return;
+    Animated.timing(x, {
+      toValue: SEG_PAD + index * seg,
+      duration: 240,
+      easing: Easing.out(Easing.sin),
+      useNativeDriver: true,
+    }).start();
+  }, [index, seg, x]);
+
   return (
-    <View style={[styles.segTrack, { backgroundColor: colors.glassFill }]}>
+    <View
+      style={[styles.segTrack, { backgroundColor: colors.glassFill }]}
+      onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+    >
+      {/*
+        The glass. It sits under the labels rather than over them, because a
+        capsule drawn on top would need to redraw the word it covers, and the
+        word it covers is the one being magnified anyway.
+      */}
+      {seg > 0 ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.segLens,
+            { width: seg, backgroundColor: colors.glassFill, transform: [{ translateX: x }] },
+          ]}
+        >
+          <LensRim radius={lensRadius} axis="x" />
+        </Animated.View>
+      ) : null}
+
       {options.map((opt) => {
         const active = opt === value;
+        const label = labelOf(opt);
         return (
           <Pressable
             key={opt}
             onPress={() => onChange(opt)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            /*
-             * The chosen segment is a slightly lighter pill with white text,
-             * which is what the website does. It used to be a solid white
-             * pill with dark text — the strongest thing on the screen, for a
-             * filter, and nothing like the same control on the web.
-             */
-            style={[styles.segItem, active ? { backgroundColor: colors.controlTrack } : null]}
+            style={styles.segItem}
           >
-            <Text style={[styles.segText, { color: active ? colors.textPrimary : colors.textSecondary }]}>{labelOf(opt)}</Text>
+            {active ? (
+              <>
+                <Text
+                  style={[
+                    styles.segText,
+                    styles.segGhost,
+                    { color: colors.lensFringe[0], transform: [{ translateX: LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {label}
+                </Text>
+                <Text
+                  style={[
+                    styles.segText,
+                    styles.segGhost,
+                    { color: colors.lensFringe[1], transform: [{ translateX: -LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {label}
+                </Text>
+              </>
+            ) : null}
+            <Text
+              style={[
+                styles.segText,
+                { color: active ? colors.textPrimary : colors.textSecondary },
+                active ? { transform: [{ scale: LENS_MAGNIFY }] } : null,
+              ]}
+              numberOfLines={1}
+            >
+              {label}
+            </Text>
           </Pressable>
         );
       })}
@@ -400,9 +505,21 @@ const styles = StyleSheet.create({
   clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  segTrack: { flexDirection: 'row', borderRadius: radii.pill, padding: 3, gap: 2 },
-  segItem: { flex: 1, borderRadius: radii.pill, overflow: 'hidden', paddingVertical: 6, alignItems: 'center' },
+  segTrack: { flexDirection: 'row', borderRadius: radii.pill, padding: SEG_PAD },
+  // absolute, so it can travel independently of the row it sits behind
+  segLens: {
+    position: 'absolute',
+    left: 0,
+    top: SEG_PAD,
+    bottom: SEG_PAD,
+    borderRadius: radii.pill,
+    overflow: 'hidden',
+  },
+  segItem: { flex: 1, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  // sits exactly where the label sits, so the two ends of the spectrum land
+  // a point and a half either side of it
+  segGhost: { position: 'absolute', left: 0, right: 0, top: 6, textAlign: 'center' },
   selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },

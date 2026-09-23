@@ -55,6 +55,17 @@ export interface Palette {
   lensSpecular: string;
 
   /*
+   * The same two ends of the spectrum, for a glyph rather than a band.
+   *
+   * The rim colours are spread over three points and seen edge-on. These
+   * are painted as a whole word a point and a bit to one side of itself,
+   * nearly on top of the letter they are fringing, so they have to be far
+   * stronger to register at all — at rim strength the fringe was in the DOM
+   * and invisible on screen.
+   */
+  lensFringe: readonly [string, string];
+
+  /*
    * The boundary between two regions of a screen — and only that.
    *
    * It used to be the rule between rows inside a card too, which is a line
@@ -103,6 +114,7 @@ export const LIGHT: Palette = {
   lensWarm: ['rgba(255,207,150,0.34)', 'rgba(255,146,94,0.20)'],
   lensCool: ['rgba(126,206,255,0.22)', 'rgba(150,132,255,0.28)'],
   lensSpecular: 'rgba(255,255,255,0.50)',
+  lensFringe: ['rgba(240,110,40,0.55)', 'rgba(40,120,235,0.50)'],
   separator: 'rgba(20,20,20,0.07)',
 
   clayFill: ['#FFFFFF', '#EFEFEF'],
@@ -139,6 +151,7 @@ export const DARK: Palette = {
   lensWarm: ['rgba(255,190,128,0.30)', 'rgba(255,132,80,0.18)'],
   lensCool: ['rgba(110,198,255,0.20)', 'rgba(138,118,255,0.26)'],
   lensSpecular: 'rgba(255,255,255,0.22)',
+  lensFringe: ['rgba(255,150,70,0.60)', 'rgba(90,160,255,0.55)'],
   separator: 'rgba(255,255,255,0.08)',
 
   clayFill: ['#1E1E1E', '#151515'],

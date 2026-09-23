@@ -55,7 +55,7 @@ describe('palettes', () => {
    */
   it('each lens band spreads across two colours', () => {
     for (const p of [LIGHT, DARK]) {
-      for (const band of [p.lensWarm, p.lensCool]) {
+      for (const band of [p.lensWarm, p.lensCool, p.lensFringe]) {
         expect(band).toHaveLength(2);
         expect(band[0]).toMatch(CSS_COLOR);
         expect(band[1]).toMatch(CSS_COLOR);
