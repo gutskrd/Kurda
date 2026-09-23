@@ -54,7 +54,17 @@ export interface Palette {
   lensCool: readonly [string, string];
   lensSpecular: string;
 
-  separator: string; // faint divider between rows inside a surface
+  /*
+   * The boundary between two regions of a screen — and only that.
+   *
+   * It used to be the rule between rows inside a card too, which is a line
+   * drawn across the middle of a surface, and there are none of those left.
+   * Three uses remain: the composer above the keyboard in a chat and in a
+   * group thread, and the hairline under a header that content scrolls
+   * beneath. Take those away and what you are writing runs into what you
+   * have already sent.
+   */
+  separator: string;
 
   // claymorphism / neumorphism (soft, puffy controls)
   clayFill: readonly [string, string]; // vertical gradient for a soft button
