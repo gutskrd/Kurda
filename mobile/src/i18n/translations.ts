@@ -828,6 +828,8 @@ export type TranslationKey =
   | 'nav.menu'
   | 'nav.menu.discover'
   | 'nav.menu.yours'
+  | 'nav.short.dictionary'
+  | 'nav.short.civak'
   | 'lesson.check'
   | 'library.publish'
   | 'profile.friendsMore';
@@ -1301,6 +1303,8 @@ const en: Catalog = {
   'nav.menu': 'Menu',
   'nav.menu.discover': 'Discover',
   'nav.menu.yours': 'Yours',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Dictionary',
   'library.kind.stories': 'Stories',
   'library.kind.poems': 'Poems',
   'library.sort.newest': 'Newest',
@@ -2106,6 +2110,8 @@ const ku: Catalog = {
   'nav.menu': 'Menû',
   'nav.menu.discover': 'Keşf bike',
   'nav.menu.yours': 'Yên te',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Ferheng',
   'library.kind.stories': 'Çîrok',
   'library.kind.poems': 'Helbest',
   'library.sort.newest': 'Nûtirîn',
@@ -2911,6 +2917,8 @@ const de: Catalog = {
   'nav.menu': 'Menü',
   'nav.menu.discover': 'Entdecken',
   'nav.menu.yours': 'Deins',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Wörter',
   'library.kind.stories': 'Geschichten',
   'library.kind.poems': 'Gedichte',
   'library.sort.newest': 'Neueste',
@@ -3716,6 +3724,8 @@ const es: Catalog = {
   'nav.menu': 'Menú',
   'nav.menu.discover': 'Descubrir',
   'nav.menu.yours': 'Lo tuyo',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Palabras',
   'library.kind.stories': 'Relatos',
   'library.kind.poems': 'Poemas',
   'library.sort.newest': 'Recientes',
@@ -4521,6 +4531,8 @@ const tr: Catalog = {
   'nav.menu': 'Menü',
   'nav.menu.discover': 'Keşfet',
   'nav.menu.yours': 'Seninkiler',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Sözlük',
   'library.kind.stories': 'Hikâyeler',
   'library.kind.poems': 'Şiirler',
   'library.sort.newest': 'En yeni',
@@ -5326,6 +5338,8 @@ const ar: Catalog = {
   'nav.menu': 'القائمة',
   'nav.menu.discover': 'استكشف',
   'nav.menu.yours': 'خاصتك',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'القاموس',
   'library.kind.stories': 'قصص',
   'library.kind.poems': 'قصائد',
   'library.sort.newest': 'الأحدث',
@@ -6131,6 +6145,8 @@ const fr: Catalog = {
   'nav.menu': 'Menu',
   'nav.menu.discover': 'Découvrir',
   'nav.menu.yours': 'À vous',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Mots',
   'library.kind.stories': 'Récits',
   'library.kind.poems': 'Poèmes',
   'library.sort.newest': 'Récents',
@@ -6936,6 +6952,8 @@ const nl: Catalog = {
   'nav.menu': 'Menu',
   'nav.menu.discover': 'Ontdekken',
   'nav.menu.yours': 'Van jou',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'Woorden',
   'library.kind.stories': 'Verhalen',
   'library.kind.poems': 'Gedichten',
   'library.sort.newest': 'Nieuwste',
@@ -7742,6 +7760,8 @@ const ckb: Catalog = {
   'nav.menu': 'پێڕست',
   'nav.menu.discover': 'دۆزینەوە',
   'nav.menu.yours': 'هی تۆ',
+  'nav.short.civak': 'Civak',
+  'nav.short.dictionary': 'فەرهەنگ',
   'library.kind.stories': 'چیرۆکەکان',
   'library.kind.poems': 'هۆنراوەکان',
   'library.sort.newest': 'نوێترین',

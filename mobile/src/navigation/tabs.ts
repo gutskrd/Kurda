@@ -13,6 +13,17 @@ export interface TabDef {
    */
   labelKey: TranslationKey;
   /**
+   * What the bar says, when the screen's own name is too long for a sixth of
+   * the island.
+   *
+   * Measured at 375pt: each tab gets 55.5, and "Community" needs 58.2 at the
+   * 11pt iOS sets a tab label at. "Gemeinschaft" needs 68.4 and
+   * "Gemeenschap" 70.0, so no size that is still a tab label makes them fit.
+   * iOS asks for a short tab title for exactly this reason, and Apple's own
+   * apps give a tab a shorter name than the screen behind it.
+   */
+  shortLabelKey?: TranslationKey;
+  /**
    * Which glyph the bar draws (see theme/Icon).
    *
    * These match the browser's nav one destination at a time: Civak is the
@@ -32,10 +43,10 @@ export interface TabDef {
  * them feel like two products. Learn keeps its place directly after it.
  */
 export const TABS: readonly TabDef[] = [
-  { name: 'Civak', labelKey: 'nav.civak', icon: 'wall', path: 'civak' },
+  { name: 'Civak', labelKey: 'nav.civak', shortLabelKey: 'nav.short.civak', icon: 'wall', path: 'civak' },
   { name: 'Learn', labelKey: 'nav.learn', icon: 'book', path: 'learn' },
   { name: 'Play', labelKey: 'nav.play', icon: 'play', path: 'play' },
-  { name: 'Dictionary', labelKey: 'nav.dictionary', icon: 'text', path: 'dictionary' },
+  { name: 'Dictionary', labelKey: 'nav.dictionary', shortLabelKey: 'nav.short.dictionary', icon: 'text', path: 'dictionary' },
   { name: 'Social', labelKey: 'nav.friends', icon: 'people', path: 'social' },
   { name: 'Profile', labelKey: 'nav.profile', icon: 'person', path: 'profile' },
 ] as const;

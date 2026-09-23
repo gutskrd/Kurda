@@ -89,8 +89,11 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
 
             {state.routes.map((route, i) => {
               const tab = TABS.find((x) => x.name === route.name);
-              // the bar speaks the reader's language like everything behind it
-              const label = tab ? t(tab.labelKey) : route.name;
+              // the bar speaks the reader's language like everything behind it,
+              // and takes the shorter name where the screen has one
+              const label = tab ? t(tab.shortLabelKey ?? tab.labelKey) : route.name;
+              // …but a screen reader gets the whole name, which is not short of room
+              const spoken = tab ? t(tab.labelKey) : route.name;
               const focused = state.index === i;
               const color = focused ? activeText : inactiveText;
               const onPress = () => {
@@ -103,11 +106,14 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                   onPress={onPress}
                   accessibilityRole="button"
                   accessibilityState={{ selected: focused }}
-                  accessibilityLabel={label}
+                  accessibilityLabel={spoken}
                   style={styles.item}
                 >
                   <Icon name={tab?.icon ?? 'home'} size={22} color={color} />
-                  <Text numberOfLines={1} style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}
+                  >
                     {label}
                   </Text>
                 </Pressable>
@@ -141,6 +147,6 @@ const styles = StyleSheet.create({
     bottom: PILL_INSET_Y,
     borderRadius: (TAB_BAR_HEIGHT - PILL_INSET_Y * 2) / 2,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4, paddingHorizontal: 2 },
-  label: { fontSize: typography.ios.tabLabel, letterSpacing: 0.1 },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4 },
+  label: { fontSize: typography.ios.tabLabel },
 });
