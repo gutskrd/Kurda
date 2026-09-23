@@ -45,6 +45,26 @@ describe('palettes', () => {
     }
   });
 
+  /*
+   * The rim is dispersion, not a tint.
+   *
+   * Each band is a pair — the hue at the boundary and the hue just inside it —
+   * and the pair has to actually be two different colours, or the gradient is a
+   * flat band and the whole point of it is gone. A single hue at an edge is a
+   * coloured line, which is what the rim replaced.
+   */
+  it('each lens band spreads across two colours', () => {
+    for (const p of [LIGHT, DARK]) {
+      for (const band of [p.lensWarm, p.lensCool]) {
+        expect(band).toHaveLength(2);
+        expect(band[0]).toMatch(CSS_COLOR);
+        expect(band[1]).toMatch(CSS_COLOR);
+        expect(band[0]).not.toBe(band[1]);
+      }
+      expect(p.lensSpecular).toMatch(CSS_COLOR);
+    }
+  });
+
   it('PALETTES maps each scheme to its own palette', () => {
     expect(PALETTES.light.scheme).toBe('light');
     expect(PALETTES.dark.scheme).toBe('dark');

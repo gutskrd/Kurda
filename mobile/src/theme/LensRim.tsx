@@ -15,12 +15,17 @@ import { useTheme } from './ThemeProvider';
  * is what a border looks like, not what glass looks like, and seventy-five
  * surfaces had one.
  *
- * So the rim is four thin gradients and no stroke:
+ * So the rim is three gradients and no stroke:
  *
- *   a warm band along the top, fading down
- *   a cool band along the bottom, fading up
- *   a bright specular along the top-left, short and sharp
+ *   a warm band along the top, amber into orange, fading down
+ *   a cool band along the bottom, cyan into violet, fading up
+ *   a bright specular in the top-left corner, short and sharp
  *   nothing at all in the middle
+ *
+ * Two stops per band rather than one, because a single hue at an edge is a
+ * coloured line and what a lens actually does is spread the light. And the
+ * bands are measured off the radius: 2pt on a sixty-point tab bar is a
+ * hairline again, which is the thing this replaced.
  *
  * It is an impression of refraction, not refraction. Bending what is actually
  * behind the surface needs a backdrop shader — Skia's `RuntimeShader`, or
@@ -39,6 +44,8 @@ export function LensRim({
   strength?: number;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // a soft edge on a big surface, and still an edge on a small one
+  const band = Math.max(2, Math.round(radius * 0.18));
 
   return (
     <View
@@ -46,16 +53,16 @@ export function LensRim({
       style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }, style]}
     >
       <LinearGradient
-        colors={[colors.lensWarm, 'transparent']}
+        colors={[colors.lensWarm[0], colors.lensWarm[1], 'transparent']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        style={[styles.top, { opacity: strength }]}
+        style={[styles.top, { height: band, opacity: strength }]}
       />
       <LinearGradient
-        colors={['transparent', colors.lensCool]}
+        colors={['transparent', colors.lensCool[0], colors.lensCool[1]]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
-        style={[styles.bottom, { opacity: strength }]}
+        style={[styles.bottom, { height: band, opacity: strength }]}
       />
       <LinearGradient
         colors={[colors.lensSpecular, 'transparent']}
@@ -68,9 +75,10 @@ export function LensRim({
 }
 
 const styles = StyleSheet.create({
-  // thin: the colour lives at the boundary and nowhere else
-  top: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 2 },
+  // the colour lives at the boundary and nowhere else; the height comes
+  // from the radius at the call site
+  top: { position: 'absolute', top: 0, left: 0, right: 0 },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   // sized from the radius at the call site; these are the ceilings, so a small
   // surface gets a highlight in proportion to itself rather than a wash
   specular: { position: 'absolute', top: 0, left: 0, maxWidth: '55%', maxHeight: '45%' },
