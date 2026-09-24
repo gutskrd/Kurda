@@ -33,6 +33,7 @@ import { PracticeScreen } from './src/practice/PracticeScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
+import { SearchScreen } from './src/search/SearchScreen';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
@@ -124,6 +125,7 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
     {
       titleKey: 'nav.menu.discover',
       links: [
+        { key: 'search', labelKey: 'nav.search', icon: 'search', onPress: () => navigation.navigate('Search') },
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
         { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
@@ -349,6 +351,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="EditProfile" options={{ presentation: 'card' }}>
         {({ navigation }) => <EditProfileScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Search" options={{ presentation: 'card' }}>
+        {() => <SearchScreen />}
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
         {({ navigation }) => <SavedScreen onExit={() => navigation.goBack()} />}
