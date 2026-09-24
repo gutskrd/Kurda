@@ -44,6 +44,7 @@ export type RootStackParamList = {
   Tags: undefined;
   ChangeUsername: undefined;
   Library: undefined;
+  Search: undefined;
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };
