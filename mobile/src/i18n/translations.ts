@@ -842,7 +842,14 @@ export type TranslationKey =
   | 'search.scope.people'
   | 'search.scope.words'
   | 'search.scope.lessons'
-  | 'search.scope.games';
+  | 'search.scope.games'
+  | 'nav.inbox'
+  | 'inbox.title'
+  | 'inbox.filter.all'
+  | 'inbox.empty'
+  | 'inbox.openChats'
+  | 'inbox.openAlerts'
+  | 'inbox.filter.alerts';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1661,6 +1668,13 @@ const en: Catalog = {
   'search.scope.words': 'Words',
   'search.scope.lessons': 'Lessons',
   'search.scope.games': 'Games',
+  'nav.inbox': 'Inbox',
+  'inbox.title': 'Inbox',
+  'inbox.filter.all': 'All',
+  'inbox.empty': 'Nothing new.',
+  'inbox.openChats': 'All conversations',
+  'inbox.openAlerts': 'All notifications',
+  'inbox.filter.alerts': 'Alerts',
 };
 
 const ku: Catalog = {
@@ -2478,6 +2492,13 @@ const ku: Catalog = {
   'search.scope.words': 'Peyv',
   'search.scope.lessons': 'Ders',
   'search.scope.games': 'Lîstik',
+  'nav.inbox': 'Sinc',
+  'inbox.title': 'Sinc',
+  'inbox.filter.all': 'Hemû',
+  'inbox.empty': 'Tiştekî nû tune.',
+  'inbox.openChats': 'Hemû axaftin',
+  'inbox.openAlerts': 'Hemû agahdarî',
+  'inbox.filter.alerts': 'Agahdarî',
 };
 
 const de: Catalog = {
@@ -3295,6 +3316,13 @@ const de: Catalog = {
   'search.scope.words': 'Wörter',
   'search.scope.lessons': 'Lektionen',
   'search.scope.games': 'Spiele',
+  'nav.inbox': 'Posteingang',
+  'inbox.title': 'Posteingang',
+  'inbox.filter.all': 'Alle',
+  'inbox.empty': 'Nichts Neues.',
+  'inbox.openChats': 'Alle Unterhaltungen',
+  'inbox.openAlerts': 'Alle Benachrichtigungen',
+  'inbox.filter.alerts': 'Hinweise',
 };
 
 const es: Catalog = {
@@ -4112,6 +4140,13 @@ const es: Catalog = {
   'search.scope.words': 'Palabras',
   'search.scope.lessons': 'Lecciones',
   'search.scope.games': 'Juegos',
+  'nav.inbox': 'Bandeja',
+  'inbox.title': 'Bandeja',
+  'inbox.filter.all': 'Todo',
+  'inbox.empty': 'Nada nuevo.',
+  'inbox.openChats': 'Todas las conversaciones',
+  'inbox.openAlerts': 'Todas las notificaciones',
+  'inbox.filter.alerts': 'Avisos',
 };
 
 const tr: Catalog = {
@@ -4929,6 +4964,13 @@ const tr: Catalog = {
   'search.scope.words': 'Kelimeler',
   'search.scope.lessons': 'Dersler',
   'search.scope.games': 'Oyunlar',
+  'nav.inbox': 'Gelen kutusu',
+  'inbox.title': 'Gelen kutusu',
+  'inbox.filter.all': 'Tümü',
+  'inbox.empty': 'Yeni bir şey yok.',
+  'inbox.openChats': 'Tüm sohbetler',
+  'inbox.openAlerts': 'Tüm bildirimler',
+  'inbox.filter.alerts': 'Uyarılar',
 };
 
 const ar: Catalog = {
@@ -5746,6 +5788,13 @@ const ar: Catalog = {
   'search.scope.words': 'كلمات',
   'search.scope.lessons': 'دروس',
   'search.scope.games': 'ألعاب',
+  'nav.inbox': 'الوارد',
+  'inbox.title': 'الوارد',
+  'inbox.filter.all': 'الكل',
+  'inbox.empty': 'لا جديد.',
+  'inbox.openChats': 'كل المحادثات',
+  'inbox.openAlerts': 'كل الإشعارات',
+  'inbox.filter.alerts': 'تنبيهات',
 };
 
 const fr: Catalog = {
@@ -6563,6 +6612,13 @@ const fr: Catalog = {
   'search.scope.words': 'Mots',
   'search.scope.lessons': 'Leçons',
   'search.scope.games': 'Jeux',
+  'nav.inbox': 'Boîte de réception',
+  'inbox.title': 'Boîte de réception',
+  'inbox.filter.all': 'Tout',
+  'inbox.empty': 'Rien de nouveau.',
+  'inbox.openChats': 'Toutes les conversations',
+  'inbox.openAlerts': 'Toutes les notifications',
+  'inbox.filter.alerts': 'Alertes',
 };
 
 const nl: Catalog = {
@@ -7380,6 +7436,13 @@ const nl: Catalog = {
   'search.scope.words': 'Woorden',
   'search.scope.lessons': 'Lessen',
   'search.scope.games': 'Spellen',
+  'nav.inbox': 'Postvak',
+  'inbox.title': 'Postvak',
+  'inbox.filter.all': 'Alles',
+  'inbox.empty': 'Niets nieuws.',
+  'inbox.openChats': 'Alle gesprekken',
+  'inbox.openAlerts': 'Alle meldingen',
+  'inbox.filter.alerts': 'Meldingen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8198,6 +8261,13 @@ const ckb: Catalog = {
   'search.scope.words': 'وشەکان',
   'search.scope.lessons': 'وانەکان',
   'search.scope.games': 'یارییەکان',
+  'nav.inbox': 'نامەکان',
+  'inbox.title': 'نامەکان',
+  'inbox.filter.all': 'هەموو',
+  'inbox.empty': 'هیچ شتێکی نوێ نییە.',
+  'inbox.openChats': 'هەموو گفتوگۆکان',
+  'inbox.openAlerts': 'هەموو ئاگادارکردنەوەکان',
+  'inbox.filter.alerts': 'ئاگادارییەکان',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
