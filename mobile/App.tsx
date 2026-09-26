@@ -34,7 +34,6 @@ import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
 import { InboxScreen } from './src/inbox/InboxScreen';
-import { ActionButton, type Action } from './src/navigation/ActionButton';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
@@ -145,25 +144,10 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
   ];
 }
 
-/**
- * What the action button offers, in the order a thumb reaches them.
- *
- * The stack grows upward from the button, so the first entry here is the
- * furthest from it and the last is nearest. Learn is the one people open
- * most and it is at the bottom, next to the thumb.
- */
-function useActions(navigation: RootNavigation): Action[] {
-  return [
-    { key: 'play', labelKey: 'nav.play', icon: 'play', onPress: () => navigation.navigate('Play') },
-    { key: 'dictionary', labelKey: 'nav.dictionary', icon: 'text', onPress: () => navigation.navigate('Dictionary') },
-    { key: 'learn', labelKey: 'nav.learn', icon: 'book', onPress: () => navigation.navigate('Learn') },
-  ];
-}
 
 function SignedInTabs() {
   const navigation = useNavigation<RootNavigation>();
   const groups = useMenuGroups(navigation);
-  const actions = useActions(navigation);
   const [menuOpen, setMenuOpen] = useState(false);
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -197,6 +181,8 @@ function SignedInTabs() {
               <CivakScreen />
             ) : tab.name === 'Search' ? (
               <SearchScreen />
+            ) : tab.name === 'Play' ? (
+              <PlayScreen />
             ) : tab.name === 'Inbox' ? (
               <InboxScreen />
             ) : (
@@ -206,7 +192,6 @@ function SignedInTabs() {
         </Tab.Screen>
         ))}
       </Tab.Navigator>
-      <ActionButton actions={actions} />
       <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} />
     </MenuProvider>
   );
@@ -372,9 +357,6 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Dictionary" options={{ presentation: 'card' }}>
         {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="Play" options={{ presentation: 'card' }}>
-        {({ navigation }) => <PlayScreen onBack={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
         {({ navigation }) => <SavedScreen onExit={() => navigation.goBack()} />}
