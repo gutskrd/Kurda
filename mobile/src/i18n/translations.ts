@@ -850,7 +850,15 @@ export type TranslationKey =
   | 'inbox.openChats'
   | 'inbox.openAlerts'
   | 'inbox.filter.alerts'
-  | 'nav.home';
+  | 'nav.home'
+  | 'profile.premium'
+  | 'profile.premiumIcon'
+  | 'profile.backgroundGiftedBy'
+  | 'profile.iconGiftedBy'
+  | 'profile.favoritePoem'
+  | 'profile.favoriteStory'
+  | 'profile.stat.rank'
+  | 'profile.stat.icons';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1677,6 +1685,14 @@ const en: Catalog = {
   'inbox.openAlerts': 'All notifications',
   'inbox.filter.alerts': 'Alerts',
   'nav.home': 'Home',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Premium profile icon',
+  'profile.backgroundGiftedBy': 'Background gifted by @{name}',
+  'profile.iconGiftedBy': 'Icon gifted by @{name}',
+  'profile.favoritePoem': 'Favorite poem',
+  'profile.favoriteStory': 'Favorite story',
+  'profile.stat.rank': 'Rank',
+  'profile.stat.icons': 'Icons',
 };
 
 const ku: Catalog = {
@@ -2502,6 +2518,14 @@ const ku: Catalog = {
   'inbox.openAlerts': 'Hemû agahdarî',
   'inbox.filter.alerts': 'Agahdarî',
   'nav.home': 'Mal',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Îkona profîlê ya Premium',
+  'profile.backgroundGiftedBy': 'Paşxane ji aliyê @{name} ve hatiye diyarîkirin',
+  'profile.iconGiftedBy': 'Îkon ji aliyê @{name} ve hatiye diyarîkirin',
+  'profile.favoritePoem': 'Helbesta bijare',
+  'profile.favoriteStory': 'Çîroka bijare',
+  'profile.stat.rank': 'Rêzbendî',
+  'profile.stat.icons': 'Îkon',
 };
 
 const de: Catalog = {
@@ -3327,6 +3351,14 @@ const de: Catalog = {
   'inbox.openAlerts': 'Alle Benachrichtigungen',
   'inbox.filter.alerts': 'Hinweise',
   'nav.home': 'Start',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Premium-Profilsymbol',
+  'profile.backgroundGiftedBy': 'Hintergrund geschenkt von @{name}',
+  'profile.iconGiftedBy': 'Symbol geschenkt von @{name}',
+  'profile.favoritePoem': 'Lieblingsgedicht',
+  'profile.favoriteStory': 'Lieblingsgeschichte',
+  'profile.stat.rank': 'Rang',
+  'profile.stat.icons': 'Symbole',
 };
 
 const es: Catalog = {
@@ -4152,6 +4184,14 @@ const es: Catalog = {
   'inbox.openAlerts': 'Todas las notificaciones',
   'inbox.filter.alerts': 'Avisos',
   'nav.home': 'Inicio',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Icono de perfil Premium',
+  'profile.backgroundGiftedBy': 'Fondo regalado por @{name}',
+  'profile.iconGiftedBy': 'Icono regalado por @{name}',
+  'profile.favoritePoem': 'Poema favorito',
+  'profile.favoriteStory': 'Relato favorito',
+  'profile.stat.rank': 'Puesto',
+  'profile.stat.icons': 'Iconos',
 };
 
 const tr: Catalog = {
@@ -4977,6 +5017,14 @@ const tr: Catalog = {
   'inbox.openAlerts': 'Tüm bildirimler',
   'inbox.filter.alerts': 'Uyarılar',
   'nav.home': 'Ana sayfa',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Premium profil simgesi',
+  'profile.backgroundGiftedBy': 'Arka planı @{name} hediye etti',
+  'profile.iconGiftedBy': 'Simgeyi @{name} hediye etti',
+  'profile.favoritePoem': 'Favori şiir',
+  'profile.favoriteStory': 'Favori hikâye',
+  'profile.stat.rank': 'Sıra',
+  'profile.stat.icons': 'Simgeler',
 };
 
 const ar: Catalog = {
@@ -5802,6 +5850,14 @@ const ar: Catalog = {
   'inbox.openAlerts': 'كل الإشعارات',
   'inbox.filter.alerts': 'تنبيهات',
   'nav.home': 'الرئيسية',
+  'profile.premium': 'بريميوم',
+  'profile.premiumIcon': 'أيقونة ملف شخصي بريميوم',
+  'profile.backgroundGiftedBy': 'الخلفية هدية من @{name}',
+  'profile.iconGiftedBy': 'الأيقونة هدية من @{name}',
+  'profile.favoritePoem': 'القصيدة المفضلة',
+  'profile.favoriteStory': 'القصة المفضلة',
+  'profile.stat.rank': 'الترتيب',
+  'profile.stat.icons': 'الأيقونات',
 };
 
 const fr: Catalog = {
@@ -6627,6 +6683,14 @@ const fr: Catalog = {
   'inbox.openAlerts': 'Toutes les notifications',
   'inbox.filter.alerts': 'Alertes',
   'nav.home': 'Accueil',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Icône de profil Premium',
+  'profile.backgroundGiftedBy': 'Arrière-plan offert par @{name}',
+  'profile.iconGiftedBy': 'Icône offerte par @{name}',
+  'profile.favoritePoem': 'Poème préféré',
+  'profile.favoriteStory': 'Histoire préférée',
+  'profile.stat.rank': 'Rang',
+  'profile.stat.icons': 'Icônes',
 };
 
 const nl: Catalog = {
@@ -7452,6 +7516,14 @@ const nl: Catalog = {
   'inbox.openAlerts': 'Alle meldingen',
   'inbox.filter.alerts': 'Meldingen',
   'nav.home': 'Start',
+  'profile.premium': 'Premium',
+  'profile.premiumIcon': 'Premium-profielicoon',
+  'profile.backgroundGiftedBy': 'Achtergrond cadeau gedaan door @{name}',
+  'profile.iconGiftedBy': 'Icoon cadeau gedaan door @{name}',
+  'profile.favoritePoem': 'Favoriet gedicht',
+  'profile.favoriteStory': 'Favoriet verhaal',
+  'profile.stat.rank': 'Positie',
+  'profile.stat.icons': 'Iconen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8278,6 +8350,14 @@ const ckb: Catalog = {
   'inbox.openAlerts': 'هەموو ئاگادارکردنەوەکان',
   'inbox.filter.alerts': 'ئاگادارییەکان',
   'nav.home': 'سەرەتا',
+  'profile.premium': 'پریمیۆم',
+  'profile.premiumIcon': 'ئایکۆنی پرۆفایلی پریمیۆم',
+  'profile.backgroundGiftedBy': 'پاشبنەما لەلایەن @{name} دیاری کراوە',
+  'profile.iconGiftedBy': 'ئایکۆن لەلایەن @{name} دیاری کراوە',
+  'profile.favoritePoem': 'شیعری دڵخواز',
+  'profile.favoriteStory': 'چیرۆکی دڵخواز',
+  'profile.stat.rank': 'ڕیزبەندی',
+  'profile.stat.icons': 'ئایکۆنەکان',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
