@@ -10,6 +10,8 @@ import { typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from './tabBarLayout';
 import { TABS } from './tabs';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useAuth } from '../auth/AuthContext';
 
 const PILL_INSET_Y = 8;
 const PILL_INSET_X = 6;
@@ -42,6 +44,8 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
   }, [state.index, tabWidth, reduceMotion, translateX]);
 
   const dark = scheme === 'dark';
+  // the signed-in session, for the picture on the profile tab
+  const { user } = useAuth();
   /*
    * The same glass the cards are made of.
    *
@@ -108,7 +112,28 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                   accessibilityLabel={spoken}
                   style={styles.item}
                 >
-                  <Icon name={tab?.icon ?? 'home'} size={22} color={color} />
+                  {/*
+                    Your own face on your own tab.
+                    
+                    Every other tab is a glyph for a place. This one is a
+                    person, and the person is you — so it is you, at the size
+                    an icon would have been. The photo comes off the session
+                    that is already loaded, so this costs no request; without
+                    one it is the same coloured initials the app draws for you
+                    everywhere else.
+                  */}
+                  {route.name === 'Profile' && user ? (
+                    <InitialsAvatar
+                      name={user.username}
+                      id={user.id}
+                      size={24}
+                      photoUrl={user.profilePhotoUrl ?? undefined}
+                      textStyle={styles.avatarText}
+                      style={focused ? { borderWidth: 2, borderColor: activeText } : undefined}
+                    />
+                  ) : (
+                    <Icon name={tab?.icon ?? 'home'} size={22} color={color} />
+                  )}
                   <Text
                     numberOfLines={1}
                     style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}
@@ -148,4 +173,6 @@ const styles = StyleSheet.create({
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4 },
   label: { fontSize: typography.ios.tabLabel },
+  // the initials inside a 24pt avatar, which is an icon’s worth of room
+  avatarText: { fontSize: 10 },
 });

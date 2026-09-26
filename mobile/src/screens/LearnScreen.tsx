@@ -7,7 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
-import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
+import { BackButton } from '../navigation/BackButton';
 import { GoalPicker } from '../goals/GoalPicker';
 import { ProgressRing } from '../goals/ProgressRing';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
@@ -26,12 +26,12 @@ import { useI18n } from '../i18n/I18nContext';
  * the course, virtualized for large courses. Tapping an unlocked skill opens
  * its next lesson; a locked skill explains its unlock condition.
  */
-export function LearnScreen() {
+/** `onBack` is how you leave: this is a pushed screen, not a tab, since #809. */
+export function LearnScreen({ onBack }: { onBack: () => void }) {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const openMenu = useOpenMenu();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
@@ -94,7 +94,7 @@ export function LearnScreen() {
 
   const header = (
     <View style={styles.header}>
-      <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('nav.learn')} />
+      <LargeTitle left={<BackButton onPress={onBack} />} title={t('nav.learn')} />
       {goal ? (
         <View style={styles.goalCard}>
           <ProgressRing progress={goal.progress} completed={goal.completed} caption={`${goal.earnedXp} / ${goal.effectiveGoal} XP`} />

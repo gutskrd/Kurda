@@ -13,6 +13,14 @@ export interface SessionUser {
   email: string;
   username: string;
   displayName: string | null;
+  /**
+   * Their own picture, for the profile tab.
+   *
+   * `/me` has always returned it and this type has always dropped it, so the
+   * profile screen fetched `/me` a second time to get it. Declaring it here
+   * costs no request: the session already holds the whole object.
+   */
+  profilePhotoUrl: string | null;
   /** Whether the user has proven ownership of their email (KUR-014). */
   emailVerified: boolean;
 }

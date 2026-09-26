@@ -849,7 +849,10 @@ export type TranslationKey =
   | 'inbox.empty'
   | 'inbox.openChats'
   | 'inbox.openAlerts'
-  | 'inbox.filter.alerts';
+  | 'inbox.filter.alerts'
+  | 'common.close'
+  | 'nav.actions'
+  | 'nav.home';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1675,6 +1678,9 @@ const en: Catalog = {
   'inbox.openChats': 'All conversations',
   'inbox.openAlerts': 'All notifications',
   'inbox.filter.alerts': 'Alerts',
+  'common.close': 'Close',
+  'nav.actions': 'Study and play',
+  'nav.home': 'Home',
 };
 
 const ku: Catalog = {
@@ -2499,6 +2505,9 @@ const ku: Catalog = {
   'inbox.openChats': 'Hemû axaftin',
   'inbox.openAlerts': 'Hemû agahdarî',
   'inbox.filter.alerts': 'Agahdarî',
+  'common.close': 'Bigire',
+  'nav.actions': 'Fêrbûn û lîstin',
+  'nav.home': 'Mal',
 };
 
 const de: Catalog = {
@@ -3323,6 +3332,9 @@ const de: Catalog = {
   'inbox.openChats': 'Alle Unterhaltungen',
   'inbox.openAlerts': 'Alle Benachrichtigungen',
   'inbox.filter.alerts': 'Hinweise',
+  'common.close': 'Schließen',
+  'nav.actions': 'Lernen und spielen',
+  'nav.home': 'Start',
 };
 
 const es: Catalog = {
@@ -4147,6 +4159,9 @@ const es: Catalog = {
   'inbox.openChats': 'Todas las conversaciones',
   'inbox.openAlerts': 'Todas las notificaciones',
   'inbox.filter.alerts': 'Avisos',
+  'common.close': 'Cerrar',
+  'nav.actions': 'Estudiar y jugar',
+  'nav.home': 'Inicio',
 };
 
 const tr: Catalog = {
@@ -4971,6 +4986,9 @@ const tr: Catalog = {
   'inbox.openChats': 'Tüm sohbetler',
   'inbox.openAlerts': 'Tüm bildirimler',
   'inbox.filter.alerts': 'Uyarılar',
+  'common.close': 'Kapat',
+  'nav.actions': 'Öğren ve oyna',
+  'nav.home': 'Ana sayfa',
 };
 
 const ar: Catalog = {
@@ -5795,6 +5813,9 @@ const ar: Catalog = {
   'inbox.openChats': 'كل المحادثات',
   'inbox.openAlerts': 'كل الإشعارات',
   'inbox.filter.alerts': 'تنبيهات',
+  'common.close': 'إغلاق',
+  'nav.actions': 'ادرس والعب',
+  'nav.home': 'الرئيسية',
 };
 
 const fr: Catalog = {
@@ -6619,6 +6640,9 @@ const fr: Catalog = {
   'inbox.openChats': 'Toutes les conversations',
   'inbox.openAlerts': 'Toutes les notifications',
   'inbox.filter.alerts': 'Alertes',
+  'common.close': 'Fermer',
+  'nav.actions': 'Apprendre et jouer',
+  'nav.home': 'Accueil',
 };
 
 const nl: Catalog = {
@@ -7443,6 +7467,9 @@ const nl: Catalog = {
   'inbox.openChats': 'Alle gesprekken',
   'inbox.openAlerts': 'Alle meldingen',
   'inbox.filter.alerts': 'Meldingen',
+  'common.close': 'Sluiten',
+  'nav.actions': 'Leren en spelen',
+  'nav.home': 'Start',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8268,6 +8295,9 @@ const ckb: Catalog = {
   'inbox.openChats': 'هەموو گفتوگۆکان',
   'inbox.openAlerts': 'هەموو ئاگادارکردنەوەکان',
   'inbox.filter.alerts': 'ئاگادارییەکان',
+  'common.close': 'داخستن',
+  'nav.actions': 'فێربوون و یاری',
+  'nav.home': 'سەرەتا',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

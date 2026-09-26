@@ -192,7 +192,7 @@ export function SideMenu({
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
     >
       <Animated.View
-        style={[StyleSheet.absoluteFill, styles.scrim, { opacity: slide }]}
+        style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim, opacity: slide }]}
         pointerEvents={open ? 'auto' : 'none'}
       >
         <Pressable
@@ -272,7 +272,6 @@ export function SideMenuButton({ onPress }: { onPress: () => void }): React.JSX.
 }
 
 const styles = StyleSheet.create({
-  scrim: { backgroundColor: 'rgba(0,0,0,0.45)' },
   panel: {
     position: 'absolute',
     top: 0,
