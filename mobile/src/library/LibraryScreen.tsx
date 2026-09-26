@@ -13,6 +13,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
 import { bodyPreview, type LibraryPost, type PostType } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 const PAGE = 20;
 
@@ -137,13 +138,19 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('library.empty')}</Text>}
+            ListEmptyComponent={
+              <EmptyState
+                icon="book"
+                title={t('library.empty')}
+                action={{ label: t('library.emptyAction'), onPress: () => navigation.navigate('LibraryCompose') }}
+              />
+            }
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>
 
         <View style={styles.fab}>
-          <ClayButton label="+ Write" tone="primary" onPress={() => navigation.navigate('LibraryCompose')} />
+          <ClayButton label={t('library.emptyAction')} tone="primary" onPress={() => navigation.navigate('LibraryCompose')} />
         </View>
       </View>
     </GradientBackground>
@@ -160,6 +167,5 @@ const styles = StyleSheet.create({
   preview: { fontSize: typography.sizes.md },
   cardFoot: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xs },
   stat: { fontSize: typography.sizes.sm },
-  empty: { textAlign: 'center', marginTop: spacing.xl },
   fab: { position: 'absolute', right: spacing.lg, bottom: spacing.xl },
 });

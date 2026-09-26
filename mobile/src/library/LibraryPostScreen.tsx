@@ -29,6 +29,7 @@ import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
 import { commentText, type LibraryComment, type LibraryPost } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -137,7 +138,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
               ) : comments.length === 0 ? (
-                <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
+                <EmptyState icon="chat" title={t('comments.empty')} />
               ) : (
                 comments.map((c) => (
                   <View key={c.id} style={styles.comment}>
@@ -207,7 +208,6 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl) },
   postBody: { fontSize: typography.sizes.md, lineHeight: 24 },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
-  empty: { textAlign: 'center', marginTop: spacing.md },
   comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
   commentMain: { flex: 1, gap: 2 },
   commentBody: { fontSize: typography.sizes.md },

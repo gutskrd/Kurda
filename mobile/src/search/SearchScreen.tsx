@@ -20,6 +20,7 @@ import { EntryDetail } from '../dictionary/EntryDetail';
 import type { CourseMap, CourseSummary } from '../coursemap/types';
 import { flattenMap } from '../coursemap/node';
 import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, matches, readyForServer, scopesToRun, type Scope } from './scope';
+import { EmptyState } from '../theme/EmptyState';
 
 interface UserRow {
   userId: string;
@@ -225,7 +226,7 @@ export function SearchScreen(): React.JSX.Element {
         showsVerticalScrollIndicator={false}
       >
         {!typed ? (
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('search.start')}</Text>
+          <EmptyState icon="search" title={t('search.start')} />
         ) : null}
 
         {section(
@@ -285,7 +286,7 @@ export function SearchScreen(): React.JSX.Element {
         )}
 
         {nothing ? (
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('search.empty', { query: query.trim() })}</Text>
+          <EmptyState icon="search" title={t('search.empty', { query: query.trim() })} />
         ) : null}
       </ScrollView>
     </GradientBackground>
@@ -304,7 +305,6 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: typography.sizes.md, minHeight: MIN_TOUCH_TARGET },
   content: { padding: spacing.lg, gap: spacing.lg },
-  hint: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.xl },
   section: { gap: spacing.sm },
   sectionTitle: { ...sectionLabel },
   rows: { gap: spacing.sm },

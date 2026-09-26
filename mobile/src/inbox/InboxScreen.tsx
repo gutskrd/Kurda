@@ -17,6 +17,7 @@ import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { relativeTime, resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { FILTERS, FILTER_LABEL, SECTION_LABEL, newestFirst, sectionsFor, type InboxFilter } from './sections';
+import { EmptyState } from '../theme/EmptyState';
 
 interface RequestRow {
   userId: string;
@@ -246,7 +247,7 @@ export function InboxScreen(): React.JSX.Element {
           </View>
         ) : null}
 
-        {empty ? <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('inbox.empty')}</Text> : null}
+        {empty ? <EmptyState icon="tray" title={t('inbox.empty')} body={t('inbox.empty.body')} /> : null}
       </ScrollView>
     </GradientBackground>
   );
@@ -279,5 +280,4 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   more: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: MIN_TOUCH_TARGET },
   moreText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
-  hint: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.xl },
 });

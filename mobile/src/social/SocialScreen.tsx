@@ -16,6 +16,7 @@ import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
 import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { EmptyState } from '../theme/EmptyState';
 
 interface UserRow {
   userId: string;
@@ -150,7 +151,7 @@ export function SocialScreen() {
               searching ? (
                 <SkeletonList count={5} style={{ marginTop: spacing.sm }} />
               ) : (
-                <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.noResults')}</Text>
+                <EmptyState icon="people" title={t('friends.noResults')} />
               )
             }
           />

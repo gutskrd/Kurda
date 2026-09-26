@@ -15,6 +15,7 @@ import { claimTag, myClaimedTags, myTags, setTagDisplayed, tagCatalog, unclaimTa
 import { TagBadge } from './TagBadge';
 import { claimableCatalog, purchasableTags, tagLabel, type ClaimedTag, type ProfileTags, type TagRow } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 /**
  * Tags & badges management (KUR-287): shows the user's effective main tag +
@@ -142,7 +143,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {/* my claimed tags */}
             <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.yours')}</Text>
             {claimed.length === 0 ? (
-              <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.none')}</Text>
+              <EmptyState icon="star" title={t('tags.none')} />
             ) : (
               claimed.map((tag) => (
                 <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>

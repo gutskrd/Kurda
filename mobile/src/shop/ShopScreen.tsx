@@ -31,6 +31,7 @@ import {
 import { useI18n } from '../i18n/I18nContext';
 import { GiftSheet } from './GiftSheet';
 import { ReceivedGifts } from './ReceivedGifts';
+import { EmptyState } from '../theme/EmptyState';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -161,7 +162,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 </View>
               </Pressable>
             )}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('shop.empty')}</Text>}
+            ListEmptyComponent={<EmptyState icon="cart" title={t('shop.empty')} />}
             stickySectionHeadersEnabled={false}
           />
         </AsyncBoundary>
@@ -281,7 +282,6 @@ const styles = StyleSheet.create({
   itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   itemDesc: { fontSize: typography.sizes.sm },
   price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  empty: { textAlign: 'center', marginTop: spacing.xl },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: radii.lg, borderTopRightRadius: radii.lg, padding: spacing.xl },
   detail: { alignItems: 'center', gap: spacing.sm },

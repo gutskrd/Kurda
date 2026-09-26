@@ -24,6 +24,7 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { createPost, listPosts, uploadMemeImage } from './api';
 import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 const PAGE = 20;
 
@@ -183,7 +184,13 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('memes.empty')}</Text>}
+            ListEmptyComponent={
+              <EmptyState
+                icon="image"
+                title={t('memes.empty')}
+                action={{ label: t('picture.choosePicture'), onPress: () => navigation.navigate('PostPicture') }}
+              />
+            }
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>
@@ -208,6 +215,5 @@ const styles = StyleSheet.create({
   caption: { fontSize: typography.sizes.md },
   cardFoot: { flexDirection: 'row', gap: spacing.lg },
   stat: { fontSize: typography.sizes.sm },
-  empty: { textAlign: 'center', marginTop: spacing.xl },
   fab: { position: 'absolute', right: spacing.lg },
 });

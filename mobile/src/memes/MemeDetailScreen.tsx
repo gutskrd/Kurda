@@ -24,6 +24,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { confirmReport } from '../moderation/report';
+import { EmptyState } from '../theme/EmptyState';
 import { addComment, clearReaction, getPost, getReactions, listComments, reportComment, reportPost, setReaction } from './api';
 import {
   commentText,
@@ -166,7 +167,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
               ) : comments.length === 0 ? (
-                <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('comments.empty')}</Text>
+                <EmptyState icon="chat" title={t('comments.empty')} />
               ) : (
                 comments.map((c) => (
                   <View key={c.id} style={styles.comment}>
@@ -240,7 +241,6 @@ const styles = StyleSheet.create({
   reactionEmoji: { fontSize: typography.sizes.lg },
   reactionCount: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
-  empty: { textAlign: 'center', marginTop: spacing.md },
   comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
   commentMain: { flex: 1, gap: 2 },
   commentAge: { fontSize: typography.sizes.xs },

@@ -10,6 +10,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { EmptyState } from '../theme/EmptyState';
 import {
   claimState,
   progressPct,
@@ -75,7 +76,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
       <View style={styles.screen}>
         <ScreenHeader title={t('events.title')} onBack={onExit} />
 
-        <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} emptyText={t('events.none')}>
+        <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} empty={<EmptyState icon="star" title={t('events.none')} />}>
           {() => events == null ? null : (
           <ScrollView contentContainerStyle={styles.content}>
             {events.map((event) => {
