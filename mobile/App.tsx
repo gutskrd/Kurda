@@ -34,6 +34,7 @@ import { ShopScreen } from './src/shop/ShopScreen';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
+import { InboxScreen } from './src/inbox/InboxScreen';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
@@ -118,6 +119,7 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
     {
       titleKey: null,
       links: [
+        { key: 'inbox', labelKey: 'nav.inbox', icon: 'tray', onPress: () => navigation.navigate('Inbox') },
         { key: 'chats', labelKey: 'nav.messages', icon: 'chat', onPress: () => navigation.navigate('Chats') },
         { key: 'clubs', labelKey: 'groups.discover', icon: 'people', onPress: () => navigation.navigate('Clubs') },
       ],
@@ -351,6 +353,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="EditProfile" options={{ presentation: 'card' }}>
         {({ navigation }) => <EditProfileScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Inbox" options={{ presentation: 'card' }}>
+        {() => <InboxScreen />}
       </RootStack.Screen>
       <RootStack.Screen name="Search" options={{ presentation: 'card' }}>
         {() => <SearchScreen />}

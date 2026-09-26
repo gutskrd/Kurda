@@ -47,6 +47,7 @@ const MAP = {
   person: { glyph: 'User', note: 'web UserIcon — one person, an account, you' },
   home: { glyph: 'House', note: 'web HomeIcon — the tab bar falls back to it' },
   search: { glyph: 'MagnifyingGlass', note: 'web SearchIcon — one field for people, words, lessons and games' },
+  tray: { glyph: 'Tray', note: 'the inbox — chats, requests and alerts in one place; a bell would mean only the alerts' },
 
   // --- the rest of the browser's façade, same glyph, same job ---
   chat: { glyph: 'ChatCircle', note: 'web ChatsIcon' },
