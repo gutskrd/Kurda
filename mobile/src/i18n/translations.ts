@@ -832,7 +832,17 @@ export type TranslationKey =
   | 'nav.short.civak'
   | 'lesson.check'
   | 'library.publish'
-  | 'profile.friendsMore';
+  | 'profile.friendsMore'
+  | 'nav.search'
+  | 'search.title'
+  | 'search.placeholder'
+  | 'search.start'
+  | 'search.empty'
+  | 'search.scope.all'
+  | 'search.scope.people'
+  | 'search.scope.words'
+  | 'search.scope.lessons'
+  | 'search.scope.games';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1641,6 +1651,16 @@ const en: Catalog = {
   'edit.sections.saved': 'Posts you have saved.',
   'repost.sectionHint': 'Posts you have reposted onto your own profile.',
   'profile.friendsMore': 'and {count} more',
+  'nav.search': 'Search',
+  'search.title': 'Search',
+  'search.placeholder': 'People, words, lessons, games…',
+  'search.start': 'Type to search across the app.',
+  'search.empty': 'Nothing found for “{query}”.',
+  'search.scope.all': 'All',
+  'search.scope.people': 'People',
+  'search.scope.words': 'Words',
+  'search.scope.lessons': 'Lessons',
+  'search.scope.games': 'Games',
 };
 
 const ku: Catalog = {
@@ -2448,6 +2468,16 @@ const ku: Catalog = {
   'edit.sections.saved': 'Şandiyên ku te tomar kirine.',
   'repost.sectionHint': 'Şandiyên ku te ji nû ve li ser profîla xwe weşandine.',
   'profile.friendsMore': 'û {count} din',
+  'nav.search': 'Lêgerîn',
+  'search.title': 'Lêgerîn',
+  'search.placeholder': 'Bikarhêner, peyv, ders, lîstik…',
+  'search.start': 'Binivîse da ku li seranserê sepanê bigerî.',
+  'search.empty': 'Ji bo “{query}” tiştek nehat dîtin.',
+  'search.scope.all': 'Hemû',
+  'search.scope.people': 'Bikarhêner',
+  'search.scope.words': 'Peyv',
+  'search.scope.lessons': 'Ders',
+  'search.scope.games': 'Lîstik',
 };
 
 const de: Catalog = {
@@ -3255,6 +3285,16 @@ const de: Catalog = {
   'edit.sections.saved': 'Beiträge, die du gespeichert hast.',
   'repost.sectionHint': 'Beiträge, die du auf dein eigenes Profil geteilt hast.',
   'profile.friendsMore': 'und {count} weitere',
+  'nav.search': 'Suche',
+  'search.title': 'Suche',
+  'search.placeholder': 'Personen, Wörter, Lektionen, Spiele…',
+  'search.start': 'Tippe, um die ganze App zu durchsuchen.',
+  'search.empty': 'Nichts gefunden für „{query}“.',
+  'search.scope.all': 'Alle',
+  'search.scope.people': 'Personen',
+  'search.scope.words': 'Wörter',
+  'search.scope.lessons': 'Lektionen',
+  'search.scope.games': 'Spiele',
 };
 
 const es: Catalog = {
@@ -4062,6 +4102,16 @@ const es: Catalog = {
   'edit.sections.saved': 'Publicaciones que has guardado.',
   'repost.sectionHint': 'Publicaciones que has republicado en tu propio perfil.',
   'profile.friendsMore': 'y {count} más',
+  'nav.search': 'Buscar',
+  'search.title': 'Buscar',
+  'search.placeholder': 'Personas, palabras, lecciones, juegos…',
+  'search.start': 'Escribe para buscar en toda la aplicación.',
+  'search.empty': 'No se encontró nada para «{query}».',
+  'search.scope.all': 'Todo',
+  'search.scope.people': 'Personas',
+  'search.scope.words': 'Palabras',
+  'search.scope.lessons': 'Lecciones',
+  'search.scope.games': 'Juegos',
 };
 
 const tr: Catalog = {
@@ -4869,6 +4919,16 @@ const tr: Catalog = {
   'edit.sections.saved': 'Kaydettiğin gönderiler.',
   'repost.sectionHint': 'Kendi profiline yeniden paylaştığın gönderiler.',
   'profile.friendsMore': 've {count} kişi daha',
+  'nav.search': 'Ara',
+  'search.title': 'Ara',
+  'search.placeholder': 'Kişiler, kelimeler, dersler, oyunlar…',
+  'search.start': 'Uygulamanın tamamında aramak için yazın.',
+  'search.empty': '“{query}” için sonuç bulunamadı.',
+  'search.scope.all': 'Tümü',
+  'search.scope.people': 'Kişiler',
+  'search.scope.words': 'Kelimeler',
+  'search.scope.lessons': 'Dersler',
+  'search.scope.games': 'Oyunlar',
 };
 
 const ar: Catalog = {
@@ -5676,6 +5736,16 @@ const ar: Catalog = {
   'edit.sections.saved': 'المنشورات التي حفظتها.',
   'repost.sectionHint': 'المنشورات التي أعدت نشرها على ملفك الشخصي.',
   'profile.friendsMore': 'و{count} آخرين',
+  'nav.search': 'بحث',
+  'search.title': 'بحث',
+  'search.placeholder': 'أشخاص، كلمات، دروس، ألعاب…',
+  'search.start': 'اكتب للبحث في التطبيق كله.',
+  'search.empty': 'لا نتائج لـ «{query}».',
+  'search.scope.all': 'الكل',
+  'search.scope.people': 'أشخاص',
+  'search.scope.words': 'كلمات',
+  'search.scope.lessons': 'دروس',
+  'search.scope.games': 'ألعاب',
 };
 
 const fr: Catalog = {
@@ -6483,6 +6553,16 @@ const fr: Catalog = {
   'edit.sections.saved': 'Les publications que tu as enregistrées.',
   'repost.sectionHint': 'Les publications que vous avez republiées sur votre profil.',
   'profile.friendsMore': 'et {count} de plus',
+  'nav.search': 'Recherche',
+  'search.title': 'Recherche',
+  'search.placeholder': 'Personnes, mots, leçons, jeux…',
+  'search.start': 'Tapez pour chercher dans toute l’application.',
+  'search.empty': 'Aucun résultat pour « {query} ».',
+  'search.scope.all': 'Tout',
+  'search.scope.people': 'Personnes',
+  'search.scope.words': 'Mots',
+  'search.scope.lessons': 'Leçons',
+  'search.scope.games': 'Jeux',
 };
 
 const nl: Catalog = {
@@ -7290,6 +7370,16 @@ const nl: Catalog = {
   'edit.sections.saved': 'Berichten die je hebt bewaard.',
   'repost.sectionHint': 'Berichten die je op je eigen profiel opnieuw hebt geplaatst.',
   'profile.friendsMore': 'en nog {count}',
+  'nav.search': 'Zoeken',
+  'search.title': 'Zoeken',
+  'search.placeholder': 'Mensen, woorden, lessen, spellen…',
+  'search.start': 'Typ om de hele app te doorzoeken.',
+  'search.empty': 'Niets gevonden voor “{query}”.',
+  'search.scope.all': 'Alles',
+  'search.scope.people': 'Mensen',
+  'search.scope.words': 'Woorden',
+  'search.scope.lessons': 'Lessen',
+  'search.scope.games': 'Spellen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8098,6 +8188,16 @@ const ckb: Catalog = {
   'edit.sections.saved': 'ئەو بڵاوکراوانەی پاشەکەوتت کردوون.',
   'repost.sectionHint': 'ئەو بابەتانەی لەسەر پرۆفایلی خۆت دووبارە بڵاوت کردوونەتەوە.',
   'profile.friendsMore': 'و {count} زیاتر',
+  'nav.search': 'گەڕان',
+  'search.title': 'گەڕان',
+  'search.placeholder': 'کەسان، وشەکان، وانەکان، یارییەکان…',
+  'search.start': 'بنووسە بۆ گەڕان بە ناو هەموو ئەپەکەدا.',
+  'search.empty': 'هیچ نەدۆزرایەوە بۆ «{query}».',
+  'search.scope.all': 'هەموو',
+  'search.scope.people': 'کەسان',
+  'search.scope.words': 'وشەکان',
+  'search.scope.lessons': 'وانەکان',
+  'search.scope.games': 'یارییەکان',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
