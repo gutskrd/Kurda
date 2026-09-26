@@ -118,7 +118,7 @@ export function CivakScreen(): React.JSX.Element {
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('civak.title')} subtitle={t('civak.subtitle')} style={styles.head} />
+        <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('nav.home')} subtitle={t('civak.subtitle')} style={styles.head} />
 
         <View style={styles.filters}>
           <View style={styles.filterRow}>

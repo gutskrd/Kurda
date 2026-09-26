@@ -27,7 +27,6 @@ import { DictionaryScreen } from './src/screens/DictionaryScreen';
 import { PlayScreen } from './src/screens/PlayScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
-import { TabScreen } from './src/screens/TabScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
@@ -35,6 +34,7 @@ import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
 import { InboxScreen } from './src/inbox/InboxScreen';
+import { ActionButton, type Action } from './src/navigation/ActionButton';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
@@ -119,15 +119,14 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
     {
       titleKey: null,
       links: [
-        { key: 'inbox', labelKey: 'nav.inbox', icon: 'tray', onPress: () => navigation.navigate('Inbox') },
         { key: 'chats', labelKey: 'nav.messages', icon: 'chat', onPress: () => navigation.navigate('Chats') },
+        { key: 'friends', labelKey: 'nav.friends', icon: 'people', onPress: () => navigation.navigate('Friends') },
         { key: 'clubs', labelKey: 'groups.discover', icon: 'people', onPress: () => navigation.navigate('Clubs') },
       ],
     },
     {
       titleKey: 'nav.menu.discover',
       links: [
-        { key: 'search', labelKey: 'nav.search', icon: 'search', onPress: () => navigation.navigate('Search') },
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
         { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
@@ -146,9 +145,25 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
   ];
 }
 
+/**
+ * What the action button offers, in the order a thumb reaches them.
+ *
+ * The stack grows upward from the button, so the first entry here is the
+ * furthest from it and the last is nearest. Learn is the one people open
+ * most and it is at the bottom, next to the thumb.
+ */
+function useActions(navigation: RootNavigation): Action[] {
+  return [
+    { key: 'play', labelKey: 'nav.play', icon: 'play', onPress: () => navigation.navigate('Play') },
+    { key: 'dictionary', labelKey: 'nav.dictionary', icon: 'text', onPress: () => navigation.navigate('Dictionary') },
+    { key: 'learn', labelKey: 'nav.learn', icon: 'book', onPress: () => navigation.navigate('Learn') },
+  ];
+}
+
 function SignedInTabs() {
   const navigation = useNavigation<RootNavigation>();
   const groups = useMenuGroups(navigation);
+  const actions = useActions(navigation);
   const [menuOpen, setMenuOpen] = useState(false);
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -178,25 +193,20 @@ function SignedInTabs() {
       {TABS.map((tab) => (
         <Tab.Screen key={tab.name} name={tab.name}>
           {() =>
-            tab.name === 'Civak' ? (
+            tab.name === 'Home' ? (
               <CivakScreen />
-            ) : tab.name === 'Profile' ? (
-              <ProfileScreen />
-            ) : tab.name === 'Learn' ? (
-              <LearnScreen />
-            ) : tab.name === 'Dictionary' ? (
-              <DictionaryScreen />
-            ) : tab.name === 'Play' ? (
-              <PlayScreen />
-            ) : tab.name === 'Social' ? (
-              <SocialScreen />
+            ) : tab.name === 'Search' ? (
+              <SearchScreen />
+            ) : tab.name === 'Inbox' ? (
+              <InboxScreen />
             ) : (
-              <TabScreen tab={tab} />
+              <ProfileScreen />
             )
           }
         </Tab.Screen>
         ))}
       </Tab.Navigator>
+      <ActionButton actions={actions} />
       <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} />
     </MenuProvider>
   );
@@ -354,11 +364,17 @@ function SignedInRoot() {
       <RootStack.Screen name="EditProfile" options={{ presentation: 'card' }}>
         {({ navigation }) => <EditProfileScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Inbox" options={{ presentation: 'card' }}>
-        {() => <InboxScreen />}
+      <RootStack.Screen name="Friends" options={{ presentation: 'card' }}>
+        {() => <SocialScreen />}
       </RootStack.Screen>
-      <RootStack.Screen name="Search" options={{ presentation: 'card' }}>
-        {() => <SearchScreen />}
+      <RootStack.Screen name="Learn" options={{ presentation: 'card' }}>
+        {({ navigation }) => <LearnScreen onBack={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Dictionary" options={{ presentation: 'card' }}>
+        {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Play" options={{ presentation: 'card' }}>
+        {({ navigation }) => <PlayScreen onBack={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
         {({ navigation }) => <SavedScreen onExit={() => navigation.goBack()} />}

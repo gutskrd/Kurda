@@ -45,7 +45,17 @@ export type RootStackParamList = {
   ChangeUsername: undefined;
   Library: undefined;
   Inbox: undefined;
-  Search: undefined;
+  /*
+   * Learn, Dictionary and Play.
+   *
+   * Tabs until the bar came down to four. They are pushed screens now,
+   * opened by the action button above the bar — things you set out to do,
+   * rather than places you keep an eye on.
+   */
+  Friends: undefined;
+  Learn: undefined;
+  Dictionary: undefined;
+  Play: undefined;
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };

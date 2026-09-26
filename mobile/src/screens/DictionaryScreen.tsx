@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { EntryDetail } from '../dictionary/EntryDetail';
+import { ScreenHeader } from '../navigation/ScreenHeader';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchHit, SearchResult } from '../dictionary/types';
@@ -12,7 +13,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -20,12 +21,12 @@ import { useI18n } from '../i18n/I18nContext';
  * searches, an entry detail page (senses/examples/audio), and a
  * closest-matches state when nothing matches exactly.
  */
-export function DictionaryScreen() {
+/** `onBack` is how you leave: this is a pushed screen, not a tab, since #809. */
+export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const tabBarInset = useTabBarInset();
-  const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,7 +94,8 @@ export function DictionaryScreen() {
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
+      <ScreenHeader title={t('nav.dictionary')} onBack={onBack} />
+      <View style={styles.screen}>
         <TextInput
           value={query}
           onChangeText={setQuery}

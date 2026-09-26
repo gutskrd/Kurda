@@ -75,6 +75,15 @@ export interface Palette {
    * beneath. Take those away and what you are writing runs into what you
    * have already sent.
    */
+  /**
+   * What dims the screen behind something raised over it.
+   *
+   * One value, because two things now raise something: the side panel and
+   * the action button. It was a literal in the panel’s own stylesheet, which
+   * is where the second one would have been written again, slightly different.
+   */
+  scrim: string;
+
   separator: string;
 
   /*
@@ -121,6 +130,7 @@ export const LIGHT: Palette = {
   lensCool: ['rgba(126,206,255,0.22)', 'rgba(150,132,255,0.28)'],
 
   lensFringe: ['rgba(240,110,40,0.55)', 'rgba(40,120,235,0.50)'],
+  scrim: 'rgba(0,0,0,0.45)',
   separator: 'rgba(20,20,20,0.07)',
 
 
@@ -158,6 +168,7 @@ export const DARK: Palette = {
   lensCool: ['rgba(110,198,255,0.20)', 'rgba(138,118,255,0.26)'],
 
   lensFringe: ['rgba(255,150,70,0.60)', 'rgba(90,160,255,0.55)'],
+  scrim: 'rgba(0,0,0,0.6)',
   separator: 'rgba(255,255,255,0.08)',
 
 
