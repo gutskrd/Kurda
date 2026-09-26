@@ -40,11 +40,22 @@ const DURATION = 220;
  *
  * Tapping it raises a short stack of labelled pills rather than a sheet. A
  * sheet is a modal — it covers the screen, takes a drag to dismiss, and for
- * two destinations is more ceremony than the choice deserves. The pills appear
- * where the thumb already is.
+ * three destinations is more ceremony than the choice deserves. The pills
+ * appear where the thumb already is.
  *
  * Open, it is a close button, and the scrim behind it dismisses. Nothing here
  * traps you.
+ *
+ * It is a graduation cap and not a plus. It went in as a plus, which put two
+ * plus buttons on Home — one beside the filter that posts to the wall, and
+ * this one, which adds nothing at all. A plus says "add" and says nothing
+ * about what, so it belongs to the button that makes something; this one
+ * takes you somewhere.
+ *
+ * And it is glass rather than brand colour, for the same reason. It sits on
+ * top of the tab bar, it is made of what the tab bar is made of, and it moves
+ * you around the app. The one filled brand-coloured circle on a screen should
+ * be the one that creates something.
  */
 export function ActionButton({ actions }: { actions: readonly Action[] }): React.JSX.Element {
   const { colors } = useTheme();
@@ -136,20 +147,25 @@ export function ActionButton({ actions }: { actions: readonly Action[] }): React
           style={({ pressed }) => [
             styles.fab,
             {
-              backgroundColor: colors.primary,
+              backgroundColor: colors.controlTrack,
               shadowColor: colors.softShadow,
               opacity: pressed ? 0.9 : 1,
             },
           ]}
         >
-          <Animated.View
-            style={{
-              transform: [
-                { rotate: anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '135deg'] }) },
-              ],
-            }}
-          >
-            <Icon name="plus" size={24} color={colors.textOnPrimary} />
+          <LensRim radius={SIZE / 2} />
+          {/*
+            Two glyphs crossfading, not one glyph turning.
+            
+            A plus can rotate into a close because it already is one at 45°. A
+            cap cannot: turned 135° it is a cap lying on its back. So both are
+            drawn, stacked, and the open state fades between them.
+          */}
+          <Animated.View style={[styles.glyph, { opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
+            <Icon name="graduation-cap" size={24} color={colors.textPrimary} />
+          </Animated.View>
+          <Animated.View style={[styles.glyph, { opacity: anim }]}>
+            <Icon name="close" size={22} color={colors.textPrimary} />
           </Animated.View>
         </Pressable>
       </View>
@@ -169,12 +185,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pillText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  // both glyphs occupy the same spot, so the fade is a fade and not a shuffle
+  glyph: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   fab: {
     width: SIZE,
     height: SIZE,
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     shadowOpacity: 1,
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 18,
