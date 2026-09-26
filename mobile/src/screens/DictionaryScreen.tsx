@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 /**
  * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
@@ -152,7 +153,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
             onRetry={() => setRetryKey((k) => k + 1)}
           />
         ) : query.trim().length > 0 && !loading && results.length === 0 ? (
-          <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('dictionary.noResults', { query: query.trim() })}</Text>
+          <EmptyState icon="text" title={t('dictionary.noResults', { query: query.trim() })} />
         ) : null}
 
         <FlatList
@@ -193,7 +194,6 @@ const styles = StyleSheet.create({
   savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
   remove: { fontSize: typography.sizes.md },
-  empty: { marginTop: spacing.lg },
   hit: { paddingVertical: spacing.md },
   hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   hitDef: { fontSize: typography.sizes.sm },

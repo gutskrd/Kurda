@@ -858,7 +858,11 @@ export type TranslationKey =
   | 'profile.favoritePoem'
   | 'profile.favoriteStory'
   | 'profile.stat.rank'
-  | 'profile.stat.icons';
+  | 'profile.stat.icons'
+  | 'civak.empty.body'
+  | 'inbox.empty.body'
+  | 'profile.nothingHere.body'
+  | 'library.emptyAction';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1693,6 +1697,10 @@ const en: Catalog = {
   'profile.favoriteStory': 'Favorite story',
   'profile.stat.rank': 'Rank',
   'profile.stat.icons': 'Icons',
+  'civak.empty.body': 'Stories, poems and pictures from everyone show up here.',
+  'inbox.empty.body': 'Friend requests, messages and notifications arrive here.',
+  'profile.nothingHere.body': 'What you post and play shows up here.',
+  'library.emptyAction': 'Write something',
 };
 
 const ku: Catalog = {
@@ -2526,6 +2534,10 @@ const ku: Catalog = {
   'profile.favoriteStory': 'Çîroka bijare',
   'profile.stat.rank': 'Rêzbendî',
   'profile.stat.icons': 'Îkon',
+  'civak.empty.body': 'Çîrok, helbest û wêneyên ji her kesî li vir xuya dibin.',
+  'inbox.empty.body': 'Daxwazên hevaltiyê, peyam û agahdarî li vir tên.',
+  'profile.nothingHere.body': 'Tiştên ku tu diweşînî û dilîzî li vir xuya dibin.',
+  'library.emptyAction': 'Tiştekî binivîse',
 };
 
 const de: Catalog = {
@@ -3359,6 +3371,10 @@ const de: Catalog = {
   'profile.favoriteStory': 'Lieblingsgeschichte',
   'profile.stat.rank': 'Rang',
   'profile.stat.icons': 'Symbole',
+  'civak.empty.body': 'Geschichten, Gedichte und Bilder von allen erscheinen hier.',
+  'inbox.empty.body': 'Freundschaftsanfragen, Nachrichten und Benachrichtigungen landen hier.',
+  'profile.nothingHere.body': 'Was du veröffentlichst und spielst, erscheint hier.',
+  'library.emptyAction': 'Schreib etwas',
 };
 
 const es: Catalog = {
@@ -4192,6 +4208,10 @@ const es: Catalog = {
   'profile.favoriteStory': 'Relato favorito',
   'profile.stat.rank': 'Puesto',
   'profile.stat.icons': 'Iconos',
+  'civak.empty.body': 'Aquí aparecen historias, poemas e imágenes de todos.',
+  'inbox.empty.body': 'Aquí llegan las solicitudes de amistad, los mensajes y las notificaciones.',
+  'profile.nothingHere.body': 'Lo que publicas y juegas aparece aquí.',
+  'library.emptyAction': 'Escribe algo',
 };
 
 const tr: Catalog = {
@@ -5025,6 +5045,10 @@ const tr: Catalog = {
   'profile.favoriteStory': 'Favori hikâye',
   'profile.stat.rank': 'Sıra',
   'profile.stat.icons': 'Simgeler',
+  'civak.empty.body': 'Herkesin hikâyeleri, şiirleri ve resimleri burada görünür.',
+  'inbox.empty.body': 'Arkadaşlık istekleri, mesajlar ve bildirimler buraya gelir.',
+  'profile.nothingHere.body': 'Paylaştıkların ve oynadıkların burada görünür.',
+  'library.emptyAction': 'Bir şeyler yaz',
 };
 
 const ar: Catalog = {
@@ -5858,6 +5882,10 @@ const ar: Catalog = {
   'profile.favoriteStory': 'القصة المفضلة',
   'profile.stat.rank': 'الترتيب',
   'profile.stat.icons': 'الأيقونات',
+  'civak.empty.body': 'تظهر هنا القصص والقصائد والصور من الجميع.',
+  'inbox.empty.body': 'تصل هنا طلبات الصداقة والرسائل والإشعارات.',
+  'profile.nothingHere.body': 'يظهر هنا ما تنشره وما تلعبه.',
+  'library.emptyAction': 'اكتب شيئًا',
 };
 
 const fr: Catalog = {
@@ -6691,6 +6719,10 @@ const fr: Catalog = {
   'profile.favoriteStory': 'Histoire préférée',
   'profile.stat.rank': 'Rang',
   'profile.stat.icons': 'Icônes',
+  'civak.empty.body': 'Les histoires, poèmes et images de tout le monde apparaissent ici.',
+  'inbox.empty.body': 'Les demandes d’ami, les messages et les notifications arrivent ici.',
+  'profile.nothingHere.body': 'Ce que vous publiez et jouez apparaît ici.',
+  'library.emptyAction': 'Écrivez quelque chose',
 };
 
 const nl: Catalog = {
@@ -7524,6 +7556,10 @@ const nl: Catalog = {
   'profile.favoriteStory': 'Favoriet verhaal',
   'profile.stat.rank': 'Positie',
   'profile.stat.icons': 'Iconen',
+  'civak.empty.body': 'Verhalen, gedichten en foto’s van iedereen verschijnen hier.',
+  'inbox.empty.body': 'Vriendschapsverzoeken, berichten en meldingen komen hier binnen.',
+  'profile.nothingHere.body': 'Wat je plaatst en speelt verschijnt hier.',
+  'library.emptyAction': 'Schrijf iets',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8358,6 +8394,10 @@ const ckb: Catalog = {
   'profile.favoriteStory': 'چیرۆکی دڵخواز',
   'profile.stat.rank': 'ڕیزبەندی',
   'profile.stat.icons': 'ئایکۆنەکان',
+  'civak.empty.body': 'چیرۆک و شیعر و وێنەی هەمووان لێرە دەردەکەون.',
+  'inbox.empty.body': 'داواکاری هاوڕێیەتی و نامە و ئاگادارکردنەوەکان لێرە دەگەن.',
+  'profile.nothingHere.body': 'ئەوەی بڵاوی دەکەیتەوە و یاری دەکەیت لێرە دەردەکەوێت.',
+  'library.emptyAction': 'شتێک بنووسە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

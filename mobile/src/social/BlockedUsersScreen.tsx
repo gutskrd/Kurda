@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import { blockedUsers, unblockUser, type BlockedUser } from './blocks';
+import { EmptyState } from '../theme/EmptyState';
 
 /** "3 Sep" / "3 Sep 2024" — the year only when it is not this one. */
 function when(iso: string): string {
@@ -108,7 +109,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
             {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
             {list.length === 0 ? (
-              <Text style={[styles.help, { color: colors.textSecondary }]}>{t('settings.blocked.none')}</Text>
+              <EmptyState icon="person" title={t('settings.blocked.none')} />
             ) : (
               <>
                 {list.map((u) => (

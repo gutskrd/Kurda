@@ -11,6 +11,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
+import { EmptyState } from '../theme/EmptyState';
 
 const LABEL: Record<ProfileSection, TranslationKey> = {
   posts: 'profile.tab.posts',
@@ -137,7 +138,7 @@ export function ProfileActivity({
       {page === null ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
       ) : empty ? (
-        <Text style={[styles.nothing, { color: colors.textSecondary }]}>{t('profile.nothingHere')}</Text>
+        <EmptyState icon="person" title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
       ) : (
         <View style={styles.list}>
           {items.map((item) => (
@@ -184,7 +185,6 @@ const styles = StyleSheet.create({
   },
   tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
   list: { gap: spacing.md },
-  nothing: { fontSize: typography.sizes.sm, textAlign: 'center', paddingVertical: spacing.lg },
   row: {
     borderRadius: radii.md,
     padding: spacing.md,

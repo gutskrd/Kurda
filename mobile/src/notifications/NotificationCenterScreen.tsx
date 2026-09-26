@@ -11,6 +11,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { relativeTime, resolveDeepLink, type InboxItem } from './inbox.js';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 /** In-app notification center: list, mark-read, deep links (KUR-097). */
 export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
@@ -81,7 +82,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           error={items === null ? error : null}
           isEmpty={items?.length === 0}
           onRetry={load}
-          emptyText={t('notifications.allCaughtUp')}
+          empty={<EmptyState icon="bell" title={t('notifications.allCaughtUp')} />}
         >
           <FlatList
             data={items ?? []}

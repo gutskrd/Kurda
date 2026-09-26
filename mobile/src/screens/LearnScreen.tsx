@@ -20,6 +20,7 @@ import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 /**
  * Learn tab (KUR-040): the daily-goal ring + a scrollable skill-tree map of
@@ -139,7 +140,7 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           loading ? (
             <SkeletonList style={{ marginTop: spacing.md }} />
           ) : (
-            <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('learn.noCourses')}</Text>
+            <EmptyState icon="book" title={t('learn.noCourses')} />
           )
         }
         // virtualization tuning for large courses (100+ nodes)
@@ -166,5 +167,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.xs,
   },
-  empty: { textAlign: 'center', marginTop: spacing.xl },
 });

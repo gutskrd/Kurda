@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useIsOnline } from './useNetworkStatus';
 import { deriveAsyncState } from './asyncState';
 import { useI18n } from '../i18n/I18nContext';
+import { EmptyState } from '../theme/EmptyState';
 
 /**
  * One place that renders a data screen's loading / offline / error+retry / empty /
@@ -23,6 +24,7 @@ export function AsyncBoundary({
   isEmpty,
   onRetry,
   emptyText,
+  empty,
   skeleton,
   children,
 }: {
@@ -32,6 +34,8 @@ export function AsyncBoundary({
   onRetry?: () => void;
   /** Defaults to "nothing here yet" in the reader's language. */
   emptyText?: string;
+  /** A whole empty state, for a screen that has a glyph and an action in mind. */
+  empty?: ReactNode;
   /** Loading placeholder. Defaults to a generic list skeleton; pass a screen-shaped
    *  skeleton for a closer match to the content that's coming. */
   skeleton?: ReactNode;
@@ -71,11 +75,12 @@ export function AsyncBoundary({
       );
 
     case 'empty':
-      return (
-        <View style={styles.center}>
-          <Text style={[styles.body, { color: colors.textSecondary }]}>{emptyText ?? t('civak.empty')}</Text>
-        </View>
-      );
+      /*
+       * The shared empty state, so a screen that says nothing about what is
+       * missing at least looks like a beginning rather than a failure. A
+       * screen with something better to say passes `empty` itself.
+       */
+      return <>{empty ?? <EmptyState icon="wall" title={emptyText ?? t('civak.empty')} />}</>;
 
     case 'ready':
       return <>{typeof children === 'function' ? children() : children}</>;

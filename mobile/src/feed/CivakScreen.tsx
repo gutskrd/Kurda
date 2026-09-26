@@ -18,6 +18,7 @@ import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { getFeed } from './api';
 import { FeedCard } from './FeedCard';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
+import { EmptyState } from '../theme/EmptyState';
 
 const PAGE = 20;
 
@@ -168,7 +169,14 @@ export function CivakScreen(): React.JSX.Element {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('civak.empty')}</Text>}
+            ListEmptyComponent={
+              <EmptyState
+                icon="wall"
+                title={t('civak.empty')}
+                body={t('civak.empty.body')}
+                action={{ label: t('post.open'), onPress: () => setChoosing(true) }}
+              />
+            }
             ListFooterComponent={
               loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null
             }
@@ -241,7 +249,6 @@ const styles = StyleSheet.create({
   head: { marginBottom: spacing.md },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { gap: spacing.md },
-  empty: { textAlign: 'center', marginTop: spacing.xl },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   filterGrow: { flex: 1 },
   /*
