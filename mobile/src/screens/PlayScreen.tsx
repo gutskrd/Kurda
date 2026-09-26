@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { ScreenHeader } from '../navigation/ScreenHeader';
+import { Pressable } from 'react-native';
+import { LargeTitle } from '../navigation/LargeTitle';
+import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
+import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -14,15 +18,24 @@ import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * Play tab (KUR-054): find a 1v1 match. Queuing returns a room once an
- * opponent is paired; the match itself runs in GameScreen. On the glass theme.
+ * The middle of the bar: everything you open in order to do something.
+ *
+ * Six games — a 1v1 quiz that queues for an opponent, Wordle alone and
+ * against somebody, rhyming alone and against somebody, and a typing race —
+ * and, above them, the two screens that are not games.
+ *
+ * Learn and Dictionary are rows rather than cards. They are ways through to
+ * somewhere else, and a row with an icon, a name and a chevron is what the
+ * rest of the app uses to say so; six more cards would have buried the thing
+ * the screen is mostly made of.
  */
-/** `onBack` is how you leave: this is a pushed screen, not a tab, since #809. */
-export function PlayScreen({ onBack }: { onBack: () => void }) {
+export function PlayScreen() {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const openMenu = useOpenMenu();
+  const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
   const [searching, setSearching] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -45,8 +58,39 @@ export function PlayScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('nav.play')} onBack={onBack} />
+      <View style={{ paddingTop: topInset }}>
+        <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('nav.play')} />
+      </View>
       <ScrollView contentContainerStyle={[styles.screen, { paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
+        {/*
+          The two that are not games, above the six that are.
+        */}
+        <View style={styles.ways}>
+          {(
+            [
+              { key: 'learn', labelKey: 'nav.learn', icon: 'book', route: 'Learn' },
+              { key: 'dictionary', labelKey: 'nav.dictionary', icon: 'text', route: 'Dictionary' },
+            ] as const
+          ).map((w) => (
+            <Pressable
+              key={w.key}
+              onPress={() => navigation.navigate(w.route)}
+              accessibilityRole="button"
+              accessibilityLabel={t(w.labelKey)}
+              style={({ pressed }) => [
+                styles.way,
+                { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Icon name={w.icon} size={22} color={colors.primary} />
+              <Text style={[styles.wayText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {t(w.labelKey)}
+              </Text>
+              <Icon name="chevron-right" size={16} color={colors.textSecondary} />
+            </Pressable>
+          ))}
+        </View>
+
         <GlassCard style={styles.card}>
           <Icon name="play" size={56} tone="primary" />
           <Text style={[styles.title, { color: colors.primary }]}>{t('games.quiz.name')}</Text>
@@ -119,6 +163,16 @@ export function PlayScreen({ onBack }: { onBack: () => void }) {
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, alignItems: 'center', padding: spacing.xl, gap: spacing.lg },
+  ways: { alignSelf: 'stretch', gap: spacing.sm },
+  way: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+  },
+  wayText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
   title: { ...display(typography.sizes.xl) },
   subtitle: { fontSize: typography.sizes.md, textAlign: 'center' },
