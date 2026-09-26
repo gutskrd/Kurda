@@ -57,6 +57,14 @@ export interface MenuLink {
   labelKey: TranslationKey;
   icon: IconName;
   onPress: () => void;
+  /**
+   * A count on the right of the row, for a destination with something
+   * waiting in it.
+   *
+   * Already a string rather than a number: `unreadBadge` caps it, so what
+   * arrives here is "3" or "9+" and this does not have to know which.
+   */
+  badge?: string;
 }
 
 export interface MenuGroup {
@@ -178,9 +186,14 @@ export function SideMenu({
         <Text style={[styles.linkText, { color: colors.textPrimary }]} numberOfLines={1}>
           {t(link.labelKey)}
         </Text>
+        {link.badge ? (
+          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{link.badge}</Text>
+          </View>
+        ) : null}
       </Pressable>
     ),
-    [colors.controlTrack, colors.textPrimary, colors.textSecondary, onClose, t],
+    [colors.controlTrack, colors.primary, colors.textOnPrimary, colors.textPrimary, colors.textSecondary, onClose, t],
   );
 
   return (
@@ -290,7 +303,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: radii.sm,
   },
-  linkText: { fontSize: typography.ios.row, flexShrink: 1 },
+  linkText: { fontSize: typography.ios.row, flexShrink: 1, flex: 1 },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   menuButton: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingRight: spacing.sm },
 });

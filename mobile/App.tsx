@@ -34,6 +34,8 @@ import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
 import { InboxScreen } from './src/inbox/InboxScreen';
+import { useUnseenGifts } from './src/shop/useUnseenGifts';
+import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { ChatListScreen } from './src/chat/ChatListScreen';
@@ -113,7 +115,16 @@ const linking: LinkingOptions<RootStackParamList> = {
  * pointing at them from anywhere at all. They were built, they work, and there
  * was no way in.
  */
+/**
+ * The panel’s contents.
+ *
+ * `giftBadge` is the count of gifts you have not opened. It used to sit on a
+ * Shop button on the profile, with a comment saying why it existed: a gift
+ * that arrives silently may as well not have arrived. The profile stopped
+ * being a menu, so the count moved to where Shop now lives.
+ */
 function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
+  const giftBadge = unreadBadge(useUnseenGifts()) ?? undefined;
   return [
     {
       titleKey: null,
@@ -137,7 +148,7 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
       links: [
         { key: 'saved', labelKey: 'saved.title', icon: 'bookmark', onPress: () => navigation.navigate('Saved') },
         { key: 'tags', labelKey: 'tags.title', icon: 'star', onPress: () => navigation.navigate('Tags') },
-        { key: 'shop', labelKey: 'profile.shop', icon: 'cart', onPress: () => navigation.navigate('Shop') },
+        { key: 'shop', labelKey: 'profile.shop', icon: 'cart', badge: giftBadge, onPress: () => navigation.navigate('Shop') },
         { key: 'settings', labelKey: 'settings.title', icon: 'gear', onPress: () => navigation.navigate('Settings') },
       ],
     },
