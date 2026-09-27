@@ -42,11 +42,11 @@ describe('assetUrl', () => {
   });
 
   it('resolves the site-relative paths the API hands out', () => {
-    expect(assetUrl('/cosmetics/avatars/default-01.png')).toBe('https://mykurda.com/cosmetics/avatars/default-01.png');
+    expect(assetUrl('/cosmetics/avatars/default-01.png')).toBe('https://hevalo.app/cosmetics/avatars/default-01.png');
   });
 
   it('copes with a path that forgot its leading slash', () => {
-    expect(assetUrl('cosmetics/icons/x.png')).toBe('https://mykurda.com/cosmetics/icons/x.png');
+    expect(assetUrl('cosmetics/icons/x.png')).toBe('https://hevalo.app/cosmetics/icons/x.png');
   });
 
   it('passes nothing through as nothing', () => {
@@ -59,6 +59,6 @@ describe('assetUrl', () => {
 describe('avatar art', () => {
   it('builds an absolute url from a key', async () => {
     const { avatarAssetUrl } = await import('../profile/cosmetics.js');
-    expect(avatarAssetUrl('default-01')).toBe('https://mykurda.com/cosmetics/avatars/default-01.png');
+    expect(avatarAssetUrl('default-01')).toBe('https://hevalo.app/cosmetics/avatars/default-01.png');
   });
 });

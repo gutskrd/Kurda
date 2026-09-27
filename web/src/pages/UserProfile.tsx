@@ -13,7 +13,7 @@ import { FullProfileSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
-/** Another user's full MyKurda profile (/app/users/:id), privacy-gated. */
+/** Another user's full Hevalo profile (/app/users/:id), privacy-gated. */
 export function UserProfile(): React.JSX.Element {
   const { id = '' } = useParams();
   const { client } = useAuth();

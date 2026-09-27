@@ -63,14 +63,14 @@ const debt = existsSync(DEBT_FILE)
   : new Set();
 
 /**
- * Words that are the same in every language MyKurda speaks, or are not words.
+ * Words that are the same in every language Hevalo speaks, or are not words.
  *
  * Each of these would otherwise be "translated" into itself nine times. Zêr is
  * the app's own currency and keeps its Kurmancî name everywhere, the way a
  * currency does.
  */
 const NOT_COPY = new Set([
-  'MyKurda',
+  'Hevalo',
   'Zêr',
   'XP',
   'iOS',
@@ -99,7 +99,7 @@ const NOT_COPY = new Set([
   // the header on a shared Wordle grid. A share text is pasted into somebody
   // else's chat, where the sharer's language is not the reader's, so it stays
   // one recognisable name — the grid underneath is the content.
-  'MyKurda Wordle',
+  'Hevalo Wordle',
 ]);
 
 /**

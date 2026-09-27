@@ -31,7 +31,7 @@ export function defaultApiBaseUrl(): string {
  * out site-relative paths like `/cosmetics/avatars/default-01.png`, which a
  * browser resolves against its own origin and a phone cannot resolve at all.
  */
-const SITE_URL = 'https://mykurda.com';
+const SITE_URL = 'https://hevalo.app';
 
 /**
  * Make a URL the phone can actually load.

@@ -94,14 +94,14 @@ describe('what a preview says', () => {
 
   it('falls back to the byline for a picture, which usually has no title', () => {
     const p = previewOf({ caption: 'Li Hewlêrê', author, imageUrl: 'https://cdn.test/a.webp' }, 'image')!;
-    expect(p.title).toBe('A picture on MyKurda · @rojîn');
+    expect(p.title).toBe('A picture on Hevalo · @rojîn');
     expect(p.description).toBe('Li Hewlêrê');
     expect(p.image).toBe('https://cdn.test/a.webp');
   });
 
   it('says something rather than nothing when a post has no words', () => {
     const p = previewOf({ title: 'Wêne', author }, 'image')!;
-    expect(p.description).toContain('MyKurda');
+    expect(p.description).toContain('Hevalo');
   });
 
   it('claims no picture it cannot vouch for', () => {
@@ -114,8 +114,8 @@ describe('what a preview says', () => {
 
   it('survives a post that is missing everything', () => {
     const p = previewOf({}, 'library')!;
-    expect(p.title).toBe('A post on MyKurda');
-    expect(p.description).toContain('MyKurda');
+    expect(p.title).toBe('A post on Hevalo');
+    expect(p.description).toContain('Hevalo');
     expect(p.image).toBeNull();
   });
 

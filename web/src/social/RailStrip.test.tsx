@@ -94,7 +94,7 @@ describe('RailStrip', () => {
    * user knows which number is which.
    */
   it('names its rungs in the reader’s language', async () => {
-    localStorage.setItem('mykurda_locale', 'de');
+    localStorage.setItem('hevalo_locale', 'de');
     await preloadCatalogue();
     render(
       <I18nProvider>

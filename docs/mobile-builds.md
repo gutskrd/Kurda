@@ -33,7 +33,7 @@ That message means "I asked for my code and something handed me a web page". It
 is the expected behaviour of a development build with nowhere to get its code
 from — not a fault in the app.
 
-Both profiles use the same bundle identifier (`app.kurda.mobile`), so whichever
+Both profiles use the same bundle identifier (`app.hevalo.mobile`), so whichever
 you install last replaces the other. Installing `preview` over a broken
 development build is a clean fix.
 

@@ -16,7 +16,10 @@ coverage/
 api/.pgdata/
 
 # The demo site is its own standalone repo (preserved separately) — never
-# absorb it into this monorepo. See Demo-MyKurda/README.md.
+# absorb it into this monorepo. Still Demo-MyKurda on disk and in its own
+# history: the rebrand renamed the product, not a folder somebody else owns,
+# and an ignore rule that does not match the directory is no ignore rule.
+# See Demo-MyKurda/README.md.
 /Demo-MyKurda/
 
 # Cosmetic source assets — canonical copies live in web/public/cosmetics (avatars/icons)

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 /**
- * The mark every Dîmen carries: the MyKurda logo and whose picture it is.
+ * The mark every Dîmen carries: the Hevalo logo and whose picture it is.
  *
  * Burned in here rather than drawn by the browser, because a signature the
  * client applies is a signature the client can leave off — and the point of it

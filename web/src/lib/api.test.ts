@@ -59,7 +59,7 @@ describe('describeError', () => {
     const notActivated = {
       kind: 'client' as const,
       code: 'ACCOUNT_NOT_ACTIVATED',
-      message: 'confirm your email address to use MyKurda',
+      message: 'confirm your email address to use Hevalo',
       status: 403,
     };
     expect(describeError(notActivated, t)).toMatch(/activated/i);

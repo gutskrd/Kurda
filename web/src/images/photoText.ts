@@ -5,7 +5,7 @@ import type { MessageKey } from '../i18n/en';
  *
  * The text is drawn onto a canvas and the canvas is what gets uploaded, so what
  * the composer shows and what everyone else sees are the same pixels — there is
- * no second renderer to disagree with the preview. The MyKurda mark is added by
+ * no second renderer to disagree with the preview. The Hevalo mark is added by
  * the server on the way in; the preview draws a stand-in so the corner is not a
  * surprise, but the real one is not the client's to apply.
  */

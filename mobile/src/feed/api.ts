@@ -35,10 +35,10 @@ export const getFeed = (client: ApiClient, q: FeedQuery = {}): Promise<ApiResult
  *
  * The web derives this from `window.location.origin`; a phone has no such
  * thing, so it is named. It matters that it is the real site: a link to
- * mykurda.com goes through the Worker that writes the post's own title, author
+ * hevalo.app goes through the Worker that writes the post's own title, author
  * and picture into the page head, so it unfurls properly wherever it is pasted.
  */
-export const SITE_ORIGIN = 'https://mykurda.com';
+export const SITE_ORIGIN = 'https://hevalo.app';
 
 /** The absolute URL of a post — a share target is somewhere else, so it needs the origin. */
 export const postUrl = (item: Pick<FeedItem, 'href'>): string => `${SITE_ORIGIN}${item.href}`;

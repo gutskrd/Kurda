@@ -3,7 +3,7 @@ import { COUNTRIES, countriesIn, countryName, flagUrl } from './countries';
 
 describe('COUNTRIES', () => {
   it('includes Kurdistan', () => {
-    // an app called MyKurda that could not say where you are from
+    // an app called Hevalo that could not say where you are from
     expect(COUNTRIES.find((c) => c.code === 'KU')?.name).toBe('Kurdistan');
   });
 

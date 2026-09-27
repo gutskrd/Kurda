@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 const signIn = () =>
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 
 const LINKS: NavItem[] = [
   { label: 'Home', to: '/app', icon: <HomeIcon size={18} /> },

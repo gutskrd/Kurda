@@ -11,7 +11,7 @@ afterEach(() => {
 const guest = () => vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
 
 function member(emailVerified = true): void {
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) =>

@@ -38,7 +38,7 @@ function UnreadProbe(): React.JSX.Element {
 }
 
 function setup(route: string, fetchImpl?: (url: string) => Promise<Response>) {
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
     vi.fn(

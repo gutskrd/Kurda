@@ -130,7 +130,7 @@ describe('MessageList', () => {
    * the browser's language, not the one the reader chose, unless it is told.
    */
   it('separates days in the reader’s language', async () => {
-    localStorage.setItem('mykurda_locale', 'de');
+    localStorage.setItem('hevalo_locale', 'de');
     await preloadCatalogue();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);

@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 function signIn(): void {
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
@@ -89,7 +89,7 @@ describe('Games hub', () => {
    * in — so this checks the whole page in a language nobody defaulted to.
    */
   it('names the games in the chosen language', async () => {
-    localStorage.setItem('mykurda_locale', 'de');
+    localStorage.setItem('hevalo_locale', 'de');
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
@@ -103,7 +103,7 @@ describe('Games hub', () => {
   });
 
   it('translates the mode chooser too', async () => {
-    localStorage.setItem('mykurda_locale', 'tr');
+    localStorage.setItem('hevalo_locale', 'tr');
     signIn();
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
@@ -120,13 +120,13 @@ describe('TopNav brand', () => {
   it('sends a signed-in user to the app, not the marketing site', async () => {
     signIn();
     renderApp(<TopNav links={[{ label: 'Home', to: '/app' }]} />, ['/app']);
-    const brand = await screen.findByRole('link', { name: /mykurda home/i });
+    const brand = await screen.findByRole('link', { name: /hevalo home/i });
     expect(brand).toHaveAttribute('href', '/app');
   });
 
   it('sends a signed-out visitor to the landing page', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<TopNav links={[{ label: 'Stories', to: '/stories' }]} />, ['/']);
-    expect(screen.getByRole('link', { name: /mykurda home/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: /hevalo home/i })).toHaveAttribute('href', '/');
   });
 });

@@ -82,7 +82,7 @@ describe('production configuration', () => {
   const base = {
     NODE_ENV: 'production',
     JWT_SECRET: 'a-real-production-secret-at-least-32-chars',
-    APP_BASE_URL: 'https://mykurda.com',
+    APP_BASE_URL: 'https://hevalo.app',
     DATABASE_URL: 'postgres://u:p@localhost:5432/kurda',
   };
 

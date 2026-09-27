@@ -59,7 +59,7 @@ describe('reading a message without a provider', () => {
 
   it('falls back to English rather than throwing', () => {
     render(<Bare />);
-    expect(screen.getByTestId('bare')).toHaveTextContent('Try again · MyKurda is now in X.');
+    expect(screen.getByTestId('bare')).toHaveTextContent('Try again · Hevalo is now in X.');
   });
 
   it('still refuses useI18n, which cannot mean anything without one', () => {
@@ -183,19 +183,19 @@ describe('choosing a language', () => {
     await userEvent.selectOptions(screen.getByRole('combobox'), 'ku');
 
     expect(screen.getByTestId('games')).toHaveTextContent('Lîstik');
-    expect(screen.getByTestId('vars')).toHaveTextContent('MyKurda niha bi Kurdî e.');
-    expect(localStorage.getItem('mykurda_locale')).toBe('ku');
+    expect(screen.getByTestId('vars')).toHaveTextContent('Hevalo niha bi Kurdî e.');
+    expect(localStorage.getItem('hevalo_locale')).toBe('ku');
   });
 
   it('picks up what this device chose last', async () => {
-    localStorage.setItem('mykurda_locale', 'tr');
+    localStorage.setItem('hevalo_locale', 'tr');
     await preloadCatalogue();
     show();
     expect(screen.getByTestId('games')).toHaveTextContent('Oyunlar');
   });
 
   it('ignores a stored value that is not a language it has', () => {
-    localStorage.setItem('mykurda_locale', 'klingon');
+    localStorage.setItem('hevalo_locale', 'klingon');
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('en');
     show();
     expect(screen.getByTestId('games')).toHaveTextContent('Games');
@@ -228,10 +228,10 @@ describe('choosing a language', () => {
     document.head.appendChild(meta);
 
     show();
-    expect(document.title).toBe('MyKurda — Learn Kurdish');
+    expect(document.title).toBe('Hevalo — Learn Kurdish');
 
     await userEvent.selectOptions(screen.getByRole('combobox'), 'de');
-    expect(document.title).toBe('MyKurda — Kurdisch lernen');
+    expect(document.title).toBe('Hevalo — Kurdisch lernen');
     expect(meta.getAttribute('content')).toContain('Kurdisch zu lernen');
 
     meta.remove();

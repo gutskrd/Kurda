@@ -53,7 +53,7 @@ export const typography = {
    * Kept as data, by platform, because this module is deliberately free of
    * React Native so it can be unit-tested; `fonts.ts` resolves it. The order
    * mirrors the browser stack: a Mac or an iPhone lands on Iowan Old Style,
-   * so an iPhone reading mykurda.com and an iPhone running the app see the
+   * so an iPhone reading hevalo.app and an iPhone running the app see the
    * same letters.
    *
    * Body copy stays on the system face. That is what iOS does with a brand

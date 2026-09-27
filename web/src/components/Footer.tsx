@@ -50,7 +50,7 @@ export function Footer(): React.JSX.Element {
         </div>
 
         <div className="footer-bottom">
-          <span>© {year} MyKurda</span>
+          <span>© {year} Hevalo</span>
           <span className="muted">{t('footer.madeWithCare')}</span>
         </div>
       </div>

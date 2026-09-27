@@ -29,7 +29,7 @@ const item: FeedItem = {
 
 /** A signed-in session, since sending to a friend needs one. */
 function signedIn(): void {
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
 }
 
 describe('sharing a post', () => {

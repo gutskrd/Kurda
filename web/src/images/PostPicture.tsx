@@ -26,7 +26,7 @@ const MAX_CAPTION = 2_000;
  *
  * The framing and everything added is burned into a canvas here and the canvas
  * is what is uploaded, so the preview and the stored file are the same pixels.
- * The MyKurda mark is the exception: the server adds that afterwards, because a
+ * The Hevalo mark is the exception: the server adds that afterwards, because a
  * mark the client applies is a mark the client can leave off — which is also
  * why nothing here can end up over the top of it.
  *

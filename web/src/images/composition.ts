@@ -245,7 +245,7 @@ function gradedPhoto(
  * Draw a composition onto a canvas.
  *
  * The preview and the export both come through here, so what is arranged is
- * what is stored. The MyKurda mark is not drawn: the server adds it last, so
+ * what is stored. The Hevalo mark is not drawn: the server adds it last, so
  * that nothing added here can end up on top of it.
  *
  * With no grading to do there is no second canvas and no pixel pass — the crop

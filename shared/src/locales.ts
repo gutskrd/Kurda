@@ -1,5 +1,5 @@
 /**
- * The languages MyKurda's interface is offered in.
+ * The languages Hevalo's interface is offered in.
  *
  * One list, shared by the API and the web app, because the two have to agree:
  * the account stores the choice (`users.locale`) and the browser renders it, so

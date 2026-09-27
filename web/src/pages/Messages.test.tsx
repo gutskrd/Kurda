@@ -107,7 +107,7 @@ describe('Messages', () => {
   });
 
   it('appends an incoming DM instantly over realtime (no poll)', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -149,7 +149,7 @@ describe('Messages', () => {
     // the server has tracked delivered_at/read_at all along and publishes
     // dm_read — nothing on the client ever showed it, so a sent message looked
     // identical whether it had been read or had never arrived
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -185,7 +185,7 @@ describe('Messages', () => {
   });
 
   it('shows a typing indicator, and only for the person you are reading', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -221,7 +221,7 @@ describe('Messages', () => {
   });
 
   it('creates a group from the Groups tab', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const calls: Array<{ url: string; body: unknown }> = [];
     vi.stubGlobal(
       'fetch',
@@ -251,7 +251,7 @@ describe('Messages', () => {
   });
 
   it('shows groups I already belong to in Discover, marked as joined', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const mineG = { id: 'g1', name: 'My Club', description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner' };
     const publicG = { id: 'g2', name: 'Open Circle', description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 4 };
     vi.stubGlobal(
@@ -278,7 +278,7 @@ describe('Messages', () => {
   });
 
   it('lets a group owner promote a member to group admin', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     const detail = {
       id: 'g1', name: 'Test Group', description: null, privacy: 'open', ownerId: 'me',
@@ -316,7 +316,7 @@ describe('Messages', () => {
   });
   /** A group roster, seen through the eyes of whoever `myRole` says you are. */
   function stubGroup(myRole: 'owner' | 'moderator' | 'member', calls: Array<{ url: string; method: string }>) {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const detail = {
       id: 'g1', name: 'Test Group', description: null, privacy: 'open', ownerId: myRole === 'owner' ? 'me' : 'u9',
       archivedAt: null, memberCount: 2, myRole,
@@ -371,7 +371,7 @@ describe('Messages', () => {
   });
 
   it('renders a game-invite link in a DM as an invite card', async () => {
-    const invite = 'https://mykurda.com/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
+    const invite = 'https://hevalo.app/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -390,7 +390,7 @@ describe('Messages', () => {
   });
 
   it('appends an incoming group message over realtime', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {

@@ -65,7 +65,7 @@ describe('validateUsername (structural rules)', () => {
 
   it('rejects reserved names and their look-alikes', () => {
     expect(reasonOf('admin')).toBe('reserved');
-    expect(reasonOf('MyKurda')).toBe('reserved');
+    expect(reasonOf('Hevalo')).toBe('reserved');
     expect(reasonOf('official')).toBe('reserved');
     expect(reasonOf('adm1n')).toBe('reserved'); // leet confusable
     expect(reasonOf('my_kurda')).toBe('reserved'); // separator stripped

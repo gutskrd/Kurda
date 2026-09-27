@@ -1,10 +1,10 @@
-# MyKurda — Production Security & Readiness
+# Hevalo — Production Security & Readiness
 
-This document is the single reference for MyKurda's security architecture and its
+This document is the single reference for Hevalo's security architecture and its
 mapping to the production requirements checklist. It is kept in sync with the
 implementation; when a control changes, update the relevant section here.
 
-**Scope note.** `Demo-MyKurda/` is a static HTML/CSS/JS marketing prototype with
+**Scope note.** `Demo-Hevalo/` is a static HTML/CSS/JS marketing prototype with
 no backend, auth, or database. It is a product/design/content reference only and
 must **never** be used as a security reference or have code copied from it.
 
@@ -212,7 +212,7 @@ superuser. Administrative ownership stays with the `postgres` role, which the
 
 ## 17. Admin SPA security headers — IMPLEMENTED
 
-The admin panel (`admin.mykurda.com`, Cloudflare Pages) ships a locked-down CSP
+The admin panel (`admin.hevalo.app`, Cloudflare Pages) ships a locked-down CSP
 and companion headers as an **HTTP response header** via `admin/public/_headers`
 (Vite copies it to the build root; Pages serves it) — not a `<meta>` tag, so
 `frame-ancestors` works and dev HMR is unaffected.
@@ -361,11 +361,11 @@ shutdown (drain in-flight work, close pool/Redis, run `onClose`).
 - **`JWT_SECRET`** — a strong, unique ≥32-char secret from secrets management (not
   the compose placeholder). Rotating it invalidates all access tokens.
 - **`CORS_ORIGINS`** — the explicit production origin allowlist. The known admin
-  origin is `https://admin.mykurda.com`; add the production web-app origin **only
+  origin is `https://admin.hevalo.app`; add the production web-app origin **only
   if a browser web client is actually deployed** (native apps send no Origin and
   need no entry). Do not use `*`. _Note: the admin SPA calls the API over
   same-origin relative paths via a Cloudflare Pages proxy — in that setup it needs
-  no CORS entry; add `https://admin.mykurda.com` only if the admin is pointed at a
+  no CORS entry; add `https://admin.hevalo.app` only if the admin is pointed at a
   cross-origin API._
 - **Database role** — the runtime `DATABASE_URL` for api+worker must use a
   least-privilege, **non-superuser** role (the `kurda_app` model in §16); the

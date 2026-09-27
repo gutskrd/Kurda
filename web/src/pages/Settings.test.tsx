@@ -32,7 +32,7 @@ describe('Settings page', () => {
     // the widest rung says "the web" rather than "everyone", because that is
     // what it now means — see VIS_LABEL
     expect(screen.getByRole('button', { name: 'Anyone on the web' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'MyKurda members' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hevalo members' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Friends only' })).toBeInTheDocument();
     // signing out moved here from the nav, where it sat beside your own face
     expect(screen.getByRole('button', { name: /^sign out$/i })).toBeInTheDocument();
@@ -63,8 +63,8 @@ describe('Settings page', () => {
 
     // the chip label alone cannot carry the difference between "everyone here"
     // and "everyone at all", so the consequence is written out under it
-    expect(await screen.findByText(/Anyone signed in to MyKurda/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'MyKurda members' })).toHaveAttribute('aria-pressed', 'true');
+    expect(await screen.findByText(/Anyone signed in to Hevalo/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hevalo members' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Anyone on the web' })).toHaveAttribute('aria-pressed', 'false');
   });
 });

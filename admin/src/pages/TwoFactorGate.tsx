@@ -188,7 +188,7 @@ function Verify({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
   return (
     <Screen title="Enter your 2FA code">
       <p className="subtle">
-        Open your authenticator app and enter the current six-digit code for MyKurda Admin.
+        Open your authenticator app and enter the current six-digit code for Hevalo Admin.
       </p>
       <form onSubmit={(e) => void submit(e)} style={{ marginTop: 14 }}>
         <CodeInput value={code} onChange={setCode} autoFocus />
@@ -231,7 +231,7 @@ function Screen({ title, children }: { title: string; children?: React.ReactNode
     <div className="login">
       <div className="card login-card">
         <div className="brand" style={{ padding: '0 0 10px' }}>
-          MyKurda Admin
+          Hevalo Admin
         </div>
         <h1 style={{ marginBottom: 10 }}>{title}</h1>
         {children}

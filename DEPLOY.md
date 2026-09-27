@@ -21,7 +21,7 @@ Railway and Fly.io are fine alternatives; the env vars below are the same.)
    `https://kurda-api-XXXX.onrender.com`. Visit `…/health`; you should get
    `{"status":"ok",...}` with `db` and `redis` reporting healthy.
 
-`APPLE_CLIENT_IDS=app.kurda.mobile` and a generated `JWT_SECRET` are already set
+`APPLE_CLIENT_IDS=app.hevalo.mobile` and a generated `JWT_SECRET` are already set
 by the Blueprint — nothing else is required for sign-in to work.
 
 > **The blueprint is on `starter`** — always-on API, durable Postgres, no idle
@@ -168,12 +168,12 @@ the API returns `503 MEDIA_UNAVAILABLE` and the app shows an error. Cloudflare
 **R2** is the cheapest fit (no egress fees) and is S3-compatible.
 
 **One-time setup (your side — I can't create buckets or hold credentials):**
-1. Create an R2 bucket, e.g. `mykurda-media`.
+1. Create an R2 bucket, e.g. `hevalo-media`.
 2. Create an R2 **API token** (Object Read & Write) → note the Access Key ID +
    Secret Access Key, and your account's S3 endpoint
    `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
 3. Make objects publicly readable: enable the bucket's **public r2.dev URL**, or
-   connect a **custom domain** (e.g. `media.mykurda.com`). That public base is
+   connect a **custom domain** (e.g. `media.hevalo.app`). That public base is
    `CDN_BASE_URL`.
 4. On the **kurda-api** Render service → Environment, set:
 
@@ -181,7 +181,7 @@ the API returns `503 MEDIA_UNAVAILABLE` and the app shows an error. Cloudflare
    |---|---|
    | `S3_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
    | `S3_REGION` | `auto` |
-   | `S3_BUCKET` | `mykurda-media` |
+   | `S3_BUCKET` | `hevalo-media` |
    | `S3_ACCESS_KEY_ID` | *(R2 token access key id)* |
    | `S3_SECRET_ACCESS_KEY` | *(R2 token secret — mark as secret)* |
    | `CDN_BASE_URL` | `https://<public-r2.dev-or-custom-domain>` |

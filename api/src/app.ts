@@ -243,7 +243,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     if (config.NODE_ENV !== 'test' && config.RUN_WORKER_IN_API !== 'false') {
       // its own pino instance: Fastify's logger type isn't pino's, and a distinct
       // name keeps job logs separable from request logs
-      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'mykurda-api-worker' }));
+      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'hevalo-api-worker' }));
       app.log.info('processing background jobs in-process (set RUN_WORKER_IN_API=false if a dedicated worker runs)');
       // The dashboards read pre-aggregated tables that nothing populated, so they
       // were permanently empty. Schedule the rollups here (the dedicated worker

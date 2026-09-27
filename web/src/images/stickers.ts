@@ -39,7 +39,7 @@ export const PICTURE_STICKERS: readonly PictureSticker[] = [
   { src: '/stickers/black_sun.webp', name: 'black-sun', labelKey: 'photo.sticker.blackSun' },
   { src: '/stickers/zilan.webp', name: 'Zilan' },
   { src: '/stickers/amed_spor.webp', name: 'Amed Spor' },
-  { src: '/stickers/logo.webp', name: 'MyKurda' },
+  { src: '/stickers/logo.webp', name: 'Hevalo' },
 ];
 
 export interface EmojiSticker {

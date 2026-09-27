@@ -26,7 +26,7 @@ list); this documents the decisions.
 - **Reserved names** (and their look-alikes) are rejected — see below.
 
 ## Reserved names
-`reserved-usernames.ts` holds one editable list of names that impersonate MyKurda,
+`reserved-usernames.ts` holds one editable list of names that impersonate Hevalo,
 staff/roles, or system accounts (`admin`, `moderator`, `support`, `official`,
 `mykurda`, `system`, …). The check **folds** case, Kurdish diacritics, separators
 (`_ - . space`), and leet confusables (`0→o 1→i 3→e …`) before comparing, so

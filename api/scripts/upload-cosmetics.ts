@@ -4,8 +4,8 @@
  * bucket + credentials as profile photos — no new bucket, no secrets in code).
  *
  * Run locally with the R2 env vars set (never commit them):
- *   S3_ENDPOINT=… S3_BUCKET=mykurda-media S3_ACCESS_KEY_ID=… S3_SECRET_ACCESS_KEY=… \
- *   CDN_BASE_URL=https://media.mykurda.com \
+ *   S3_ENDPOINT=… S3_BUCKET=hevalo-media S3_ACCESS_KEY_ID=… S3_SECRET_ACCESS_KEY=… \
+ *   CDN_BASE_URL=https://media.hevalo.app \
  *   npx tsx api/scripts/upload-cosmetics.ts
  *
  * Idempotent: uploading the same file overwrites the same key. Backgrounds get

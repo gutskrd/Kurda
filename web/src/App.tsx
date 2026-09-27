@@ -15,7 +15,7 @@ import { NotFound } from './pages/NotFound';
  * Every other page is fetched when somebody first goes to it.
  *
  * Thirty-eight routes were imported here statically, so the first visit to
- * mykurda.com downloaded the photo editor, both multiplayer games, the shop
+ * hevalo.app downloaded the photo editor, both multiplayer games, the shop
  * and the settings screen before it could draw the landing page. The three
  * above keep their static import because they are what somebody sees first —
  * the landing page, the wall behind /app, and the not-found page, which is

@@ -6,7 +6,7 @@ and the **App Privacy "nutrition label"** answers in App Store Connect. This fil
 documents the last one and cross-references the code so the three stay consistent
 (with the privacy surfaces of #109 and export/deletion of #24).
 
-**MyKurda does not track users and shows no ads.** `NSPrivacyTracking` is `false`
+**Hevalo does not track users and shows no ads.** `NSPrivacyTracking` is `false`
 and `NSPrivacyTrackingDomains` is empty. No data is shared with data brokers or
 used to follow users across other apps/sites.
 

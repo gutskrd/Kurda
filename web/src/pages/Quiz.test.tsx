@@ -53,7 +53,7 @@ const question = {
 
 describe('Quiz (ranked 1v1)', () => {
   it('matches, plays a question, and shows results', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {

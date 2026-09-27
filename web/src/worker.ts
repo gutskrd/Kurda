@@ -1,11 +1,11 @@
 /**
- * What a MyKurda link looks like when it is pasted somewhere else.
+ * What a Hevalo link looks like when it is pasted somewhere else.
  *
  * The app is a Vite SPA: the server sends one `index.html` for every path and
  * React fills it in. That is fine for a reader and useless for everything that
  * unfurls a link — WhatsApp, Telegram, iMessage, Slack, Twitter, Facebook — none
  * of which runs the JavaScript that would set the title. Every post shared out
- * of MyKurda arrived as the same grey "MyKurda — Learn Kurdish" card, whichever
+ * of Hevalo arrived as the same grey "Hevalo — Learn Kurdish" card, whichever
  * post it was.
  *
  * So a post's URL gets its real title, its author, its first lines and its
@@ -120,12 +120,12 @@ function previewOf(post: Record<string, unknown>, kind: PostRoute['kind']): Prev
   const rawBody = typeof post.body === 'string' ? post.body : typeof post.caption === 'string' ? post.caption : '';
 
   // a picture usually has no title, so the byline becomes the headline
-  const headline = rawTitle.trim() || (kind === 'image' ? 'A picture on MyKurda' : 'A post on MyKurda');
+  const headline = rawTitle.trim() || (kind === 'image' ? 'A picture on Hevalo' : 'A post on Hevalo');
   const title = by ? `${trim(headline, MAX_TITLE)} · @${by}` : trim(headline, MAX_TITLE);
 
   const description = rawBody.trim()
     ? trim(rawBody, MAX_DESCRIPTION)
-    : 'Read it on MyKurda — stories, poems and pictures in Kurdish.';
+    : 'Read it on Hevalo — stories, poems and pictures in Kurdish.';
 
   const image = typeof post.imageUrl === 'string' && /^https:\/\//.test(post.imageUrl) ? post.imageUrl : null;
 
@@ -161,7 +161,7 @@ function withPreview(html: Response, preview: Preview, url: string): Response {
     `<title>${attr(preview.title)}</title>`,
     `<meta name="description" content="${attr(preview.description)}" />`,
     `<meta property="og:type" content="article" />`,
-    `<meta property="og:site_name" content="MyKurda" />`,
+    `<meta property="og:site_name" content="Hevalo" />`,
     `<meta property="og:title" content="${attr(preview.title)}" />`,
     `<meta property="og:description" content="${attr(preview.description)}" />`,
     `<meta property="og:url" content="${attr(url)}" />`,

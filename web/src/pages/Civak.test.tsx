@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 const signIn = () =>
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 
 const engagement = (over = {}) => ({ likes: 0, bookmarks: 0, liked: false, bookmarked: false, ...over });
 
@@ -186,7 +186,7 @@ describe('Civak', () => {
    */
   describe('in another language', () => {
     it('translates the sections, not only the words around them', async () => {
-      localStorage.setItem('mykurda_locale', 'es');
+      localStorage.setItem('hevalo_locale', 'es');
       await preloadCatalogue();
       feedFetch([item('library:s1')]);
       renderApp(<Civak />, ['/app/civak']);
@@ -200,7 +200,7 @@ describe('Civak', () => {
 
     /** In Kurmancî those words ARE the translation, so they come back. */
     it('keeps the Kurdish words for someone reading in Kurdish', async () => {
-      localStorage.setItem('mykurda_locale', 'ku');
+      localStorage.setItem('hevalo_locale', 'ku');
       await preloadCatalogue();
       feedFetch([item('library:s1')]);
       renderApp(<Civak />, ['/app/civak']);
@@ -211,7 +211,7 @@ describe('Civak', () => {
     });
 
     it('translates the badge on a card', async () => {
-      localStorage.setItem('mykurda_locale', 'fr');
+      localStorage.setItem('hevalo_locale', 'fr');
       await preloadCatalogue();
       feedFetch([item('library:p1', { kind: 'poem' })]);
       renderApp(<Civak />, ['/app/civak']);
@@ -221,7 +221,7 @@ describe('Civak', () => {
     });
 
     it('translates the controls on a card', async () => {
-      localStorage.setItem('mykurda_locale', 'de');
+      localStorage.setItem('hevalo_locale', 'de');
       await preloadCatalogue();
       signIn();
       feedFetch([item('library:s1')]);
@@ -233,7 +233,7 @@ describe('Civak', () => {
     });
 
     it('offers to post in your language, without renaming what you can post', async () => {
-      localStorage.setItem('mykurda_locale', 'tr');
+      localStorage.setItem('hevalo_locale', 'tr');
       await preloadCatalogue();
       signIn();
       feedFetch([]);

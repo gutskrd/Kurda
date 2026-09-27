@@ -7,7 +7,7 @@
  * consistent weight, so a new screen picks an icon instead of inventing one.
  *
  * This file stays as the façade rather than importing Phosphor at every call
- * site: the names here say what the icon is *for* in MyKurda, so swapping the
+ * site: the names here say what the icon is *for* in Hevalo, so swapping the
  * glyph behind `GameIcon` is one line here instead of a search across the app.
  *
  * Each icon is imported from its own module rather than the package barrel.

@@ -33,7 +33,7 @@ describe('Friends', () => {
    * "Retirer {name} de vos amis" with the braces still in it. Worth one test.
    */
   it('reads in the chosen language, names and all', async () => {
-    localStorage.setItem('mykurda_locale', 'fr');
+    localStorage.setItem('hevalo_locale', 'fr');
     vi.stubGlobal(
       'fetch',
       routedFetch({

@@ -69,7 +69,7 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
     <div className="login">
       <form className="login-card" onSubmit={submit}>
         <div className="login-top">
-          <span>MyKurda</span>
+          <span>Hevalo</span>
           <span>Admin console</span>
         </div>
 
@@ -77,7 +77,7 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
         <p className="login-welcome">
           {returning
             ? 'Welcome back. Sign in to continue.'
-            : 'Sign in to the MyKurda admin console.'}
+            : 'Sign in to the Hevalo admin console.'}
         </p>
 
         <div className="login-input">

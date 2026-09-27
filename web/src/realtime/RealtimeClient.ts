@@ -14,7 +14,7 @@ import {
 const WS_OPEN = 1;
 
 /**
- * Framework-agnostic realtime client for the MyKurda gateway.
+ * Framework-agnostic realtime client for the Hevalo gateway.
  *
  * Protocol (see api/src/realtime/gateway.ts): fetch a single-use ticket over the
  * bearer-authed API, open `wss://…/realtime?ticket=…` (never the JWT), receive

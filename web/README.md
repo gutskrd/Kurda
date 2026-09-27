@@ -1,7 +1,7 @@
-# @kurda/web — MyKurda web app
+# @kurda/web — Hevalo web app
 
-The browser-first MyKurda web application (React + TypeScript + Vite + React
-Router). This is a purpose-built site for **mykurda.com**, not the Expo mobile
+The browser-first Hevalo web application (React + TypeScript + Vite + React
+Router). This is a purpose-built site for **hevalo.app**, not the Expo mobile
 web export.
 
 ## Develop
@@ -19,7 +19,7 @@ The app talks to the existing Render API. Configure the base URL with
 
 ## Deployment
 
-Deployed as **static assets on the `mykurda` Cloudflare Worker** (no Worker
+Deployed as **static assets on the `hevalo` Cloudflare Worker** (no Worker
 script — see [`wrangler.toml`](./wrangler.toml)). The Worker serves the built
 `web/dist` files; SPA deep links resolve to `index.html` via
 `not_found_handling = "single-page-application"`. Security headers/CSP come from

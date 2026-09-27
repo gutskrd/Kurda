@@ -31,7 +31,7 @@ const activeBattle = {
 
 describe('WordleBattle', () => {
   it('shows the lobby with an invite link, start gated on a second player', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -48,7 +48,7 @@ describe('WordleBattle', () => {
   });
 
   it('submits a guess in an active battle', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     let guessBody: unknown = null;
     vi.stubGlobal(
       'fetch',

@@ -202,5 +202,5 @@ function genCode(): string {
 }
 
 function smsBody(code: string): string {
-  return `Your MyKurda verification code is ${code}. It expires in 10 minutes.`;
+  return `Your Hevalo verification code is ${code}. It expires in 10 minutes.`;
 }
