@@ -140,7 +140,6 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
               <EmptyState
-                icon="book"
                 title={t('library.empty')}
                 action={{ label: t('library.emptyAction'), onPress: () => navigation.navigate('LibraryCompose') }}
               />

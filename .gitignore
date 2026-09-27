@@ -26,8 +26,10 @@ api/.pgdata/
 /premium-icons/
 /mykurda-background/
 
-# Where source artwork is dropped for conversion (e.g. sticker PNGs). The files
-# that ship are the sized WebPs under web/public/stickers, generated from these.
+# Where source artwork is dropped for conversion (sticker PNGs, the empty-state
+# drawings). The files that ship are generated from these: sized WebPs under
+# web/public/stickers, and the four PNGs under mobile/assets/empty.
 # Ignored so a `git add -A` cannot sweep multi-megabyte originals into a commit.
 /stickers/
+/empty/
 /kurdistan_filter.png

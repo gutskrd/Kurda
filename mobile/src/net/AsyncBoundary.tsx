@@ -1,8 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 import type { ApiError } from '../api/types';
-import { spacing, radii, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { spacing, typography } from '../theme/tokens';
 import { ErrorRetry } from '../theme/glass';
 import { SkeletonList } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -53,16 +52,19 @@ export function AsyncBoundary({
       return <>{skeleton ?? <SkeletonList style={styles.skeleton} />}</>;
 
     case 'offline':
+      /*
+       * The fawn with the unplugged cable, which is the one picture in this
+       * app that is not about something being empty. A screen that could not
+       * load and a screen with nothing in it are different things and used
+       * to look the same: two centred grey sentences.
+       */
       return (
-        <View style={styles.center}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('net.offline.title')}</Text>
-          <Text style={[styles.body, { color: colors.textSecondary }]}>{t('net.offline.body')}</Text>
-          {onRetry ? (
-            <Pressable onPress={onRetry} style={[styles.retry, { backgroundColor: colors.controlTrack }]} accessibilityRole="button" accessibilityLabel={t('common.retry')}>
-              <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.retry')}</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        <EmptyState
+          art="offline"
+          title={t('net.offline.title')}
+          body={t('net.offline.body')}
+          {...(onRetry ? { action: { label: t('common.retry'), onPress: onRetry } } : {})}
+        />
       );
 
     case 'error':
@@ -80,7 +82,7 @@ export function AsyncBoundary({
        * missing at least looks like a beginning rather than a failure. A
        * screen with something better to say passes `empty` itself.
        */
-      return <>{empty ?? <EmptyState icon="wall" title={emptyText ?? t('civak.empty')} />}</>;
+      return <>{empty ?? <EmptyState title={emptyText ?? t('civak.empty')} />}</>;
 
     case 'ready':
       return <>{typeof children === 'function' ? children() : children}</>;
@@ -90,8 +92,5 @@ export function AsyncBoundary({
 const styles = StyleSheet.create({
   skeleton: { padding: spacing.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
-  title: { ...display(typography.sizes.lg) },
   body: { fontSize: typography.sizes.md, textAlign: 'center' },
-  retry: { marginTop: spacing.sm, borderRadius: radii.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  retryText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

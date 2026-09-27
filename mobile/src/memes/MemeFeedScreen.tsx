@@ -186,7 +186,6 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
               <EmptyState
-                icon="image"
                 title={t('memes.empty')}
                 action={{ label: t('picture.choosePicture'), onPress: () => navigation.navigate('PostPicture') }}
               />

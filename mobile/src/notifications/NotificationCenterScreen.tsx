@@ -82,7 +82,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           error={items === null ? error : null}
           isEmpty={items?.length === 0}
           onRetry={load}
-          empty={<EmptyState icon="bell" title={t('notifications.allCaughtUp')} />}
+          empty={<EmptyState title={t('notifications.allCaughtUp')} />}
         >
           <FlatList
             data={items ?? []}

@@ -171,7 +171,6 @@ export function CivakScreen(): React.JSX.Element {
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
               <EmptyState
-                icon="wall"
                 title={t('civak.empty')}
                 body={t('civak.empty.body')}
                 action={{ label: t('post.open'), onPress: () => setChoosing(true) }}

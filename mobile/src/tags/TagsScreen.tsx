@@ -143,7 +143,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {/* my claimed tags */}
             <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.yours')}</Text>
             {claimed.length === 0 ? (
-              <EmptyState icon="star" title={t('tags.none')} />
+              <EmptyState title={t('tags.none')} />
             ) : (
               claimed.map((tag) => (
                 <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
