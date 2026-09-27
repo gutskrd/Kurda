@@ -138,7 +138,7 @@ export function ProfileActivity({
       {page === null ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
       ) : empty ? (
-        <EmptyState icon="person" title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
+        <EmptyState title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
       ) : (
         <View style={styles.list}>
           {items.map((item) => (

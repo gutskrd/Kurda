@@ -247,7 +247,7 @@ export function InboxScreen(): React.JSX.Element {
           </View>
         ) : null}
 
-        {empty ? <EmptyState icon="tray" title={t('inbox.empty')} body={t('inbox.empty.body')} /> : null}
+        {empty ? <EmptyState title={t('inbox.empty')} body={t('inbox.empty.body')} /> : null}
       </ScrollView>
     </GradientBackground>
   );

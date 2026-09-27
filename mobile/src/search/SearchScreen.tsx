@@ -226,7 +226,7 @@ export function SearchScreen(): React.JSX.Element {
         showsVerticalScrollIndicator={false}
       >
         {!typed ? (
-          <EmptyState icon="search" title={t('search.start')} />
+          <EmptyState title={t('search.start')} />
         ) : null}
 
         {section(
@@ -286,7 +286,7 @@ export function SearchScreen(): React.JSX.Element {
         )}
 
         {nothing ? (
-          <EmptyState icon="search" title={t('search.empty', { query: query.trim() })} />
+          <EmptyState title={t('search.empty', { query: query.trim() })} />
         ) : null}
       </ScrollView>
     </GradientBackground>

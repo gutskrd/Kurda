@@ -151,7 +151,7 @@ export function SocialScreen() {
               searching ? (
                 <SkeletonList count={5} style={{ marginTop: spacing.sm }} />
               ) : (
-                <EmptyState icon="people" title={t('friends.noResults')} />
+                <EmptyState title={t('friends.noResults')} />
               )
             }
           />

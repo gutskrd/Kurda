@@ -162,7 +162,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 </View>
               </Pressable>
             )}
-            ListEmptyComponent={<EmptyState icon="cart" title={t('shop.empty')} />}
+            ListEmptyComponent={<EmptyState title={t('shop.empty')} />}
             stickySectionHeadersEnabled={false}
           />
         </AsyncBoundary>

@@ -167,7 +167,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
               ) : comments.length === 0 ? (
-                <EmptyState icon="chat" title={t('comments.empty')} />
+                <EmptyState title={t('comments.empty')} />
               ) : (
                 comments.map((c) => (
                   <View key={c.id} style={styles.comment}>

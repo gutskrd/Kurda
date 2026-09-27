@@ -153,7 +153,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
             onRetry={() => setRetryKey((k) => k + 1)}
           />
         ) : query.trim().length > 0 && !loading && results.length === 0 ? (
-          <EmptyState icon="text" title={t('dictionary.noResults', { query: query.trim() })} />
+          <EmptyState title={t('dictionary.noResults', { query: query.trim() })} />
         ) : null}
 
         <FlatList

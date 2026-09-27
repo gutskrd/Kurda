@@ -140,7 +140,7 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           loading ? (
             <SkeletonList style={{ marginTop: spacing.md }} />
           ) : (
-            <EmptyState icon="book" title={t('learn.noCourses')} />
+            <EmptyState title={t('learn.noCourses')} />
           )
         }
         // virtualization tuning for large courses (100+ nodes)
