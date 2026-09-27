@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2D6A4F"
+      "backgroundColor": "#DAE7FA"
     },
     "ios": {
       "supportsTablet": false,
@@ -109,12 +109,14 @@
     "android": {
       "package": "app.kurda.mobile",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#2D6A4F"
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
+      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
