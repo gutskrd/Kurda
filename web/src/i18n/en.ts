@@ -1030,6 +1030,21 @@ export const en = {
   'post.audioUnsupported': 'Your browser cannot play this recording.',
   'images.reactions': 'Reactions',
   'picture.decodeFailed': 'This {format} should have opened here and didn’t. Try again — or post it as it is, which still works.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} {tier} League',
+  'leagues.endsIn': 'Ends in {time} · UTC',
+  'leagues.noLeague': 'No league yet.',
+  'leagues.tier.bronze': 'Bronze',
+  'leagues.tier.silver': 'Silver',
+  'leagues.tier.gold': 'Gold',
+  'leagues.tier.sapphire': 'Sapphire',
+  'leagues.tier.ruby': 'Ruby',
+  'leagues.tier.emerald': 'Emerald',
+  'leagues.tier.amethyst': 'Amethyst',
+  'leagues.tier.pearl': 'Pearl',
+  'leagues.tier.obsidian': 'Obsidian',
+  'leagues.tier.diamond': 'Diamond',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -949,4 +949,19 @@ export const ckb: Catalogue = {
   'post.audioUnsupported': 'وێبگەڕەکەت ناتوانێت ئەم تۆمارە لێبدات.',
   'images.reactions': 'کاردانەوەکان',
   'picture.decodeFailed': 'دەبووایە ئەم {format}ـە لێرە بکرێتەوە بەڵام نەکرایەوە. دووبارە هەوڵ بدە — یان وەک خۆی بڵاوی بکەرەوە، کە هێشتا کار دەکات.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} خولی {tier}',
+  'leagues.endsIn': 'لە {time} کۆتایی دێت · UTC',
+  'leagues.noLeague': 'هێشتا لیگ نییە.',
+  'leagues.tier.bronze': 'بڕۆنز',
+  'leagues.tier.silver': 'زیو',
+  'leagues.tier.gold': 'زێڕین',
+  'leagues.tier.sapphire': 'یاقووتی شین',
+  'leagues.tier.ruby': 'یاقووتی سوور',
+  'leagues.tier.emerald': 'زمروود',
+  'leagues.tier.amethyst': 'جەمەشت',
+  'leagues.tier.pearl': 'مرواری',
+  'leagues.tier.obsidian': 'سەبەج',
+  'leagues.tier.diamond': 'ئەڵماس',
 };

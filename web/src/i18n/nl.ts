@@ -937,4 +937,19 @@ export const nl: Catalogue = {
   'post.audioUnsupported': 'Je browser kan deze opname niet afspelen.',
   'images.reactions': 'Reacties',
   'picture.decodeFailed': 'Deze {format} had hier moeten openen, maar deed dat niet. Probeer het opnieuw — of plaats hem zoals hij is, dat werkt ook.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} Divisie {tier}',
+  'leagues.endsIn': 'Eindigt over {time} · UTC',
+  'leagues.noLeague': 'Nog geen competitie.',
+  'leagues.tier.bronze': 'Brons',
+  'leagues.tier.silver': 'Zilver',
+  'leagues.tier.gold': 'Goud',
+  'leagues.tier.sapphire': 'Saffier',
+  'leagues.tier.ruby': 'Robijn',
+  'leagues.tier.emerald': 'Smaragd',
+  'leagues.tier.amethyst': 'Amethist',
+  'leagues.tier.pearl': 'Parel',
+  'leagues.tier.obsidian': 'Obsidiaan',
+  'leagues.tier.diamond': 'Diamant',
 };

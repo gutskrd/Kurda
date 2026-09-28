@@ -942,4 +942,19 @@ export const ar: Catalogue = {
   'post.audioUnsupported': 'متصفحك لا يستطيع تشغيل هذا التسجيل.',
   'images.reactions': 'التفاعلات',
   'picture.decodeFailed': 'كان من المفترض أن يُفتح هذا الـ{format} هنا لكنه لم يُفتح. حاول مرة أخرى — أو انشره كما هو، فهذا يعمل أيضًا.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} دوري {tier}',
+  'leagues.endsIn': 'ينتهي خلال {time} · UTC',
+  'leagues.noLeague': 'لا يوجد دوري بعد.',
+  'leagues.tier.bronze': 'برونز',
+  'leagues.tier.silver': 'فضة',
+  'leagues.tier.gold': 'ذهب',
+  'leagues.tier.sapphire': 'ياقوت أزرق',
+  'leagues.tier.ruby': 'ياقوت أحمر',
+  'leagues.tier.emerald': 'زمرد',
+  'leagues.tier.amethyst': 'جمشت',
+  'leagues.tier.pearl': 'لؤلؤ',
+  'leagues.tier.obsidian': 'سبج',
+  'leagues.tier.diamond': 'ألماس',
 };

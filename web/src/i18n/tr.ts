@@ -937,4 +937,19 @@ export const tr: Catalogue = {
   'post.audioUnsupported': 'Tarayıcın bu kaydı oynatamıyor.',
   'images.reactions': 'Tepkiler',
   'picture.decodeFailed': 'Bu {format} burada açılmalıydı ama açılmadı. Tekrar dene — ya da olduğu gibi paylaş, o da çalışır.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} {tier} Ligi',
+  'leagues.endsIn': '{time} sonra bitiyor · UTC',
+  'leagues.noLeague': 'Henüz lig yok.',
+  'leagues.tier.bronze': 'Bronz',
+  'leagues.tier.silver': 'Gümüş',
+  'leagues.tier.gold': 'Altın',
+  'leagues.tier.sapphire': 'Safir',
+  'leagues.tier.ruby': 'Yakut',
+  'leagues.tier.emerald': 'Zümrüt',
+  'leagues.tier.amethyst': 'Ametist',
+  'leagues.tier.pearl': 'İnci',
+  'leagues.tier.obsidian': 'Obsidyen',
+  'leagues.tier.diamond': 'Elmas',
 };

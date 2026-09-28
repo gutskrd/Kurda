@@ -943,4 +943,19 @@ export const ku: Catalogue = {
   'post.audioUnsupported': 'Geroka te nikare vê dengê lê bide.',
   'images.reactions': 'Berteka',
   'picture.decodeFailed': 'Divê ev {format} li vir vebûya lê venebû. Dîsa biceribîne — an wê wek xwe biweşîne, ku hîn jî dixebite.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} Lîga {tier}',
+  'leagues.endsIn': 'Di {time} de diqede · UTC',
+  'leagues.noLeague': 'Hê lîg tune.',
+  'leagues.tier.bronze': 'Bronz',
+  'leagues.tier.silver': 'Zîv',
+  'leagues.tier.gold': 'Zêrîn',
+  'leagues.tier.sapphire': 'Safîr',
+  'leagues.tier.ruby': 'Yaqût',
+  'leagues.tier.emerald': 'Zimrûd',
+  'leagues.tier.amethyst': 'Ametîst',
+  'leagues.tier.pearl': 'Dur',
+  'leagues.tier.obsidian': 'Obsîdyen',
+  'leagues.tier.diamond': 'Elmas',
 };
