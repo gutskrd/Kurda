@@ -116,7 +116,7 @@ export function GiftedNote({
  * two apps cannot end up with different country lists. Flags come from
  * flagcdn as small cached PNGs, because emoji flags do not render on every
  * platform — except Kurdistan's, which no service that only knows about states
- * will serve, so MyKurda serves its own.
+ * will serve, so Hevalo serves its own.
  */
 export function flagUrl(code: string): string {
   if (code.toUpperCase() === 'KU') return assetUrl('/flags/kurdistan.png') ?? '';

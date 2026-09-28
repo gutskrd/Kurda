@@ -48,7 +48,7 @@ export function LaunchScreen(): React.JSX.Element {
             transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }],
           }}
         >
-          <Text style={[styles.brand, { color: colors.primary }]}>MyKurda</Text>
+          <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
         </Animated.View>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
       </View>

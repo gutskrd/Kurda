@@ -199,7 +199,7 @@ describe('ProfileModal', () => {
      * they have to understand what they are about to do, and to whom.
      */
     it('speaks the language the reader chose', async () => {
-      localStorage.setItem('mykurda_locale', 'ku');
+      localStorage.setItem('hevalo_locale', 'ku');
       stub();
       renderApp(<OpenUser />);
       const user = userEvent.setup();

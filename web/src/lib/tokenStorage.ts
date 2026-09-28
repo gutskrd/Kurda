@@ -1,4 +1,5 @@
 import type { TokenPair } from './types';
+import { readRenamed } from './renamedKey';
 
 /**
  * Browser token persistence. "Remember me" chooses localStorage (survives a
@@ -10,7 +11,9 @@ import type { TokenPair } from './types';
  * short-lived and refreshed; the refresh token rotates server-side with theft
  * detection. The browser is untrusted; no security decision is made here.
  */
-const KEY = 'mykurda_tokens';
+const KEY = 'hevalo_tokens';
+/* what it was called while the app was MyKurda; see `readRenamed`. */
+const LEGACY_KEY = 'mykurda_tokens';
 
 export interface TokenStorage {
   get(): TokenPair | null;
@@ -20,7 +23,7 @@ export interface TokenStorage {
 
 function readFrom(store: Storage): TokenPair | null {
   try {
-    const raw = store.getItem(KEY);
+    const raw = readRenamed(store, KEY, LEGACY_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<TokenPair>;
     if (typeof parsed.accessToken === 'string' && typeof parsed.refreshToken === 'string') {

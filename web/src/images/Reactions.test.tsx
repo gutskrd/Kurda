@@ -32,7 +32,7 @@ function reactionFetch(reply: ReactionSummary) {
 
 /** Signed in: the component reads auth status, and guests cannot react. */
 function signIn(): void {
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 }
 
 /** Wait for the session to restore, so the buttons are live before clicking. */

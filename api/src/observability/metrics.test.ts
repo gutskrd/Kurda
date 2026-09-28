@@ -30,7 +30,7 @@ const scrape = (app: FastifyInstance, token?: string) =>
 describe('GET /metrics', () => {
   it('is not there at all in production without a token', async () => {
     // the default cannot be to serve an open metrics endpoint — that is the bug
-    const app = await serve({ NODE_ENV: 'production', APP_BASE_URL: 'https://mykurda.com' });
+    const app = await serve({ NODE_ENV: 'production', APP_BASE_URL: 'https://hevalo.app' });
     const res = await scrape(app);
     expect(res.statusCode).toBe(404);
     expect(res.body).not.toContain('nodejs_version_info');
@@ -38,7 +38,7 @@ describe('GET /metrics', () => {
   });
 
   it('serves a scrape to a request carrying the token', async () => {
-    const app = await serve({ NODE_ENV: 'production', APP_BASE_URL: 'https://mykurda.com', METRICS_TOKEN: TOKEN });
+    const app = await serve({ NODE_ENV: 'production', APP_BASE_URL: 'https://hevalo.app', METRICS_TOKEN: TOKEN });
     const res = await scrape(app, TOKEN);
     expect(res.statusCode).toBe(200);
     expect(res.body).toContain('process_cpu_user_seconds_total');
@@ -46,7 +46,7 @@ describe('GET /metrics', () => {
   });
 
   it('refuses a wrong token, a missing one, and a prefix of the right one', async () => {
-    const app = await serve({ NODE_ENV: 'production', APP_BASE_URL: 'https://mykurda.com', METRICS_TOKEN: TOKEN });
+    const app = await serve({ NODE_ENV: 'production', APP_BASE_URL: 'https://hevalo.app', METRICS_TOKEN: TOKEN });
     for (const attempt of [undefined, 'wrong', TOKEN.slice(0, -1), `${TOKEN}x`, '']) {
       const res = await scrape(app, attempt);
       expect(res.statusCode, `token ${JSON.stringify(attempt)}`).toBe(401);

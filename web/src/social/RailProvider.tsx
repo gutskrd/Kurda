@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useSocialRail, type Arrival, type SocialRailData } from './useSocialRail';
+import { readRenamed } from '../lib/renamedKey';
 
 interface RailContext {
   data: SocialRailData;
@@ -45,11 +46,13 @@ const ABSENT: RailContext = {
   total: 0,
 };
 
-const COLLAPSED_KEY = 'mykurda_rail_collapsed';
+const COLLAPSED_KEY = 'hevalo_rail_collapsed';
+/* what it was called while the app was MyKurda; see `readRenamed`. */
+const LEGACY_COLLAPSED_KEY = 'mykurda_rail_collapsed';
 
 function readCollapsed(): boolean {
   try {
-    return localStorage.getItem(COLLAPSED_KEY) === '1';
+    return readRenamed(localStorage, COLLAPSED_KEY, LEGACY_COLLAPSED_KEY) === '1';
   } catch {
     return false;
   }

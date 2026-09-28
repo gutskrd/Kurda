@@ -8,7 +8,7 @@
  *
  * All but one are ISO-3166 alpha-2. Kurdistan has no ISO code — it is not a
  * state — so it takes `KU`, which ISO has never assigned. For an app called
- * MyKurda, leaving it off the list was the odder choice.
+ * Hevalo, leaving it off the list was the odder choice.
  *
  * What is NOT here: where to find a flag image. That answer is different on a
  * web page and in a native app, so each keeps its own.

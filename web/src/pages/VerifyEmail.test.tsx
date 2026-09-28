@@ -18,7 +18,7 @@ const user = (emailVerified: boolean) => ({
 });
 
 function signedIn(): void {
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
 }
 
 describe('email verification gate', () => {

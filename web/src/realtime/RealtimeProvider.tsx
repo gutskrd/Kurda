@@ -7,7 +7,7 @@ import type { RealtimeEventEnvelope, RealtimeState } from './events';
 /**
  * App-wide realtime context. Connects the RealtimeClient once the user is signed
  * in and tears it down on logout. Cross-tab safe: only the tab holding the
- * `mykurda-realtime` Web Lock opens the socket (one connection per browser); it
+ * `hevalo-realtime` Web Lock opens the socket (one connection per browser); it
  * fans events out to the other tabs over a BroadcastChannel, so every tab's
  * subscribers receive events regardless of which one owns the socket. Falls back
  * to a per-tab connection where Web Locks are unavailable (the client's 4001
@@ -120,7 +120,7 @@ export function RealtimeProvider({
       });
     clientRef.current = rc;
 
-    const bc = 'BroadcastChannel' in globalThis ? new BroadcastChannel('mykurda-realtime') : null;
+    const bc = 'BroadcastChannel' in globalThis ? new BroadcastChannel('hevalo-realtime') : null;
     bcRef.current = bc;
 
     // leader: our socket's events/state → local subscribers + other tabs.
@@ -169,7 +169,7 @@ export function RealtimeProvider({
       const held = new Promise<void>((resolve) => {
         releaseLock = resolve;
       });
-      void locks.request('mykurda-realtime', { mode: 'exclusive' }, async () => {
+      void locks.request('hevalo-realtime', { mode: 'exclusive' }, async () => {
         if (cancelled) return;
         becomeLeader();
         await held; // hold the lock (stay leader) until cleanup

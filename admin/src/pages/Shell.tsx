@@ -48,7 +48,7 @@ export function Shell({
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand">MyKurda Admin</div>
+        <div className="brand">Hevalo Admin</div>
 
         {/* mobile only — shows where you are, and opens the section list */}
         <button

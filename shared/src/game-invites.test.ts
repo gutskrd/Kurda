@@ -26,19 +26,19 @@ describe('game invites', () => {
   });
 
   it('defaults to the production origin and honours a deploy that passes its own', () => {
-    expect(buildInviteUrl('wordle-battle', 'abc123')).toBe('https://mykurda.com/app/games/wordle-battle?id=abc123');
+    expect(buildInviteUrl('wordle-battle', 'abc123')).toBe('https://hevalo.app/app/games/wordle-battle?id=abc123');
     expect(buildInviteUrl('wordle-battle', 'abc123', 'http://localhost:5173')).toBe(
       'http://localhost:5173/app/games/wordle-battle?id=abc123',
     );
   });
 
   it('finds a link inside an ordinary message', () => {
-    const body = 'beat this if you can https://mykurda.com/app/games/wordle-battle?id=match-42 😄';
+    const body = 'beat this if you can https://hevalo.app/app/games/wordle-battle?id=match-42 😄';
     expect(parseInvite(body)).toEqual({ type: 'wordle-battle', id: 'match-42' });
   });
 
   it('ignores anything that is not one of our lobbies', () => {
-    expect(parseInvite('https://mykurda.com/app/games/chess?id=abc123')).toBeNull();
+    expect(parseInvite('https://hevalo.app/app/games/chess?id=abc123')).toBeNull();
     expect(parseInvite('https://evil.example/app/games/wordle-battle')).toBeNull();
     // too short to be an id — a bare "?id=x" is not an invite
     expect(parseInvite('/app/games/wordle-battle?id=x')).toBeNull();
@@ -46,12 +46,12 @@ describe('game invites', () => {
 
   it('strips every link from a body, however many there are', () => {
     const body =
-      'one https://mykurda.com/app/games/wordle-battle?id=aaa111 two https://mykurda.com/app/games/rhyme-match?id=bbb222 three';
+      'one https://hevalo.app/app/games/wordle-battle?id=aaa111 two https://hevalo.app/app/games/rhyme-match?id=bbb222 three';
     expect(body.replace(inviteLinkPattern(), '').replace(/\s+/g, ' ').trim()).toBe('one two three');
   });
 
   it('hands back a fresh pattern each call, so a global regex cannot carry lastIndex', () => {
-    const body = 'https://mykurda.com/app/games/wordle-battle?id=aaa111';
+    const body = 'https://hevalo.app/app/games/wordle-battle?id=aaa111';
     expect(body.replace(inviteLinkPattern(), '')).toBe('');
     expect(body.replace(inviteLinkPattern(), '')).toBe('');
   });

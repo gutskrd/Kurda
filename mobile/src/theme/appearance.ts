@@ -15,7 +15,7 @@ export type ThemePreference = 'system' | ColorScheme;
 /**
  * What the app is before anybody chooses.
  *
- * Dark, not system. mykurda.com is a single dark theme — it sets
+ * Dark, not system. hevalo.app is a single dark theme — it sets
  * `color-scheme: dark` and has no light one — so an app that opened light on
  * a light phone opened looking like a different product. Light and system are
  * still there in Appearance for anyone who wants them.

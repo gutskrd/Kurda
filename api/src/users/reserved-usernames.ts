@@ -1,6 +1,6 @@
 /**
  * Reserved usernames (KUR-004 hardening). A single configurable list of names that
- * may not be claimed because they impersonate MyKurda, its staff/roles, or system
+ * may not be claimed because they impersonate Hevalo, its staff/roles, or system
  * accounts. Centralised here (not scattered through the code) so it's easy to audit
  * and extend in one place.
  *
@@ -12,6 +12,9 @@
 /** Base reserved set (lowercase, already fold-normalized where relevant). */
 const BASE_RESERVED: readonly string[] = [
   // product / brand
+  'hevalo', 'hevaloapp', 'heval',
+  // kept from the old name: a @mykurda now would be a stranger in a
+  // name people still recognise
   'mykurda', 'kurda', 'mykurdaapp', 'kurdaapp', 'kurdi', 'kurdish',
   // roles / staff
   'admin', 'administrator', 'superadmin', 'sysadmin', 'moderator', 'mod', 'staff',

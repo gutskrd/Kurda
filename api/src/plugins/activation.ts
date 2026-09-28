@@ -100,7 +100,7 @@ export function installActivationGate(app: FastifyInstance): void {
 
     await reply.code(403).send({
       code: 'ACCOUNT_NOT_ACTIVATED',
-      message: 'confirm your email address to use MyKurda',
+      message: 'confirm your email address to use Hevalo',
       requestId: req.id,
     });
   });

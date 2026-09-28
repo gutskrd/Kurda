@@ -36,7 +36,7 @@ const active = {
 
 describe('RhymeMatch', () => {
   it('shows the lobby with an invite link, start gated on a second player', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -52,7 +52,7 @@ describe('RhymeMatch', () => {
   });
 
   it('submits a rhyme in an active match', async () => {
-    localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     let body: unknown = null;
     vi.stubGlobal(
       'fetch',

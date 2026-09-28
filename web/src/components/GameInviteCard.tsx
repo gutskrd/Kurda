@@ -12,7 +12,7 @@ import { ChevronIcon, TilesIcon, WaveformIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Renders a chat message body: if it carries a MyKurda game-invite link, show a
+ * Renders a chat message body: if it carries a Hevalo game-invite link, show a
  * visual invite card (with any surrounding text kept above it); otherwise render
  * the text as-is. Used by both direct and group chat bubbles.
  */

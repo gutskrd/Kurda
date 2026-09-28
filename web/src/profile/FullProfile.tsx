@@ -5,7 +5,7 @@ import { CosmeticBackground, GiftedNote, IconOverlay } from './cosmetic-parts';
 import { PersonGlyph } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
-/** Normalized data a MyKurda profile renders (self or another user). */
+/** Normalized data a Hevalo profile renders (self or another user). */
 export interface FullProfileView {
   name: string;
   username: string;
@@ -24,7 +24,7 @@ export interface FullProfileView {
 }
 
 /**
- * Full-bleed, MyKurda profile shell used by both the signed-in user's page
+ * Full-bleed, Hevalo profile shell used by both the signed-in user's page
  * and other users' pages. Renders the background, header (avatar + identity +
  * level/featured), showcases (About / favorites) and the info sidebar with the
  * base Level / XP / Streak rows. Callers pass the right-column action(s) and any

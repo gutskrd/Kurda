@@ -88,7 +88,7 @@ export function verifyTotp(
 }
 
 /** otpauth:// URI for provisioning in an authenticator app (QR code). */
-export function otpauthUri(secretBase32: string, label: string, issuer = 'MyKurda Admin'): string {
+export function otpauthUri(secretBase32: string, label: string, issuer = 'Hevalo Admin'): string {
   const enc = encodeURIComponent;
   return (
     `otpauth://totp/${enc(issuer)}:${enc(label)}` +

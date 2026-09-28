@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 const signIn = () =>
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 
 const engagement = (over = {}) => ({ likes: 0, bookmarks: 1, liked: false, bookmarked: true, ...over });
 

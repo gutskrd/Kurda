@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 const signIn = () =>
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 
 const person = (id: string, username: string, extra: Record<string, unknown> = {}) => ({
   userId: id,

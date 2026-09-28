@@ -19,7 +19,7 @@ type Visibility = (typeof VISIBILITIES)[number];
 /**
  * 'Everyone' has to say *the web*, out loud.
  *
- * MyKurda can be read without an account, so the widest setting is genuinely
+ * Hevalo can be read without an account, so the widest setting is genuinely
  * public — findable, linkable, readable by someone who never signed up. A chip
  * labelled "Everyone" reads like "everyone here", which is what 'Members' is,
  * and nobody should learn the difference after the fact.
@@ -114,7 +114,7 @@ export function Settings(): React.JSX.Element {
 }
 
 /**
- * The language MyKurda speaks to you in.
+ * The language Hevalo speaks to you in.
  *
  * Applied the moment it is chosen and saved to the account in the background,
  * rather than the other way round: waiting for a round trip before the buttons

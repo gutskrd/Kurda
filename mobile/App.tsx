@@ -87,14 +87,14 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
  * `?id=…` needs no `:param`: React Navigation passes query parameters through
  * as route params, which is why both screens take an optional `id`.
  *
- * mykurda.com is listed so the web invite URL matches, but a browser will not
+ * hevalo.app is listed so the web invite URL matches, but a browser will not
  * hand it over until the two association files exist — apple-app-site-association
  * (needs the Apple team id) and assetlinks.json (needs the signing certificate's
  * SHA-256), both served from the site's /.well-known/. Until then a tapped link
  * opens the website and `kurda://` still works.
  */
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [Linking.createURL('/'), 'kurda://', 'https://mykurda.com'],
+  prefixes: [Linking.createURL('/'), 'kurda://', 'https://hevalo.app'],
   config: {
     screens: {
       Tabs: { screens: linkingScreens() },

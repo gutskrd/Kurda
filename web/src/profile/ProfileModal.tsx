@@ -264,7 +264,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         <span className="pcard-label">{target.kind === 'me' ? t('profile.title') : name}</span>
         <span className="pcard-logo">
           <img src="/logo.png" alt="" aria-hidden="true" />
-          MyKurda
+          Hevalo
         </span>
       </div>
 

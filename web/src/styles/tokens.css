@@ -1,5 +1,5 @@
 /*
- * MyKurda web — liquid-glass design tokens.
+ * Hevalo web — liquid-glass design tokens.
  * The app sits on ONE consistent base color (--app-bg); surfaces are translucent,
  * blurred glass with white text. The only user-specific background is the profile
  * background, rendered inside profiles — never the whole page.

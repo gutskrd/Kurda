@@ -20,25 +20,25 @@ describe('token storage', () => {
     const s = createTokenStorage();
     s.clear();
     expect(s.get()).toBeNull();
-    expect(localStorage.getItem('mykurda_tokens')).toBeNull();
-    expect(sessionStorage.getItem('mykurda_tokens')).toBeNull();
+    expect(localStorage.getItem('hevalo_tokens')).toBeNull();
+    expect(sessionStorage.getItem('hevalo_tokens')).toBeNull();
   });
 
   it('remember=false keeps tokens in sessionStorage only', () => {
     persistTokens(tokens, false);
-    expect(sessionStorage.getItem('mykurda_tokens')).not.toBeNull();
-    expect(localStorage.getItem('mykurda_tokens')).toBeNull();
+    expect(sessionStorage.getItem('hevalo_tokens')).not.toBeNull();
+    expect(localStorage.getItem('hevalo_tokens')).toBeNull();
     expect(createTokenStorage().get()).toEqual(tokens);
   });
 
   it('remember=true persists in localStorage', () => {
     persistTokens(tokens, true);
-    expect(localStorage.getItem('mykurda_tokens')).not.toBeNull();
-    expect(sessionStorage.getItem('mykurda_tokens')).toBeNull();
+    expect(localStorage.getItem('hevalo_tokens')).not.toBeNull();
+    expect(sessionStorage.getItem('hevalo_tokens')).toBeNull();
   });
 
   it('ignores malformed stored data', () => {
-    localStorage.setItem('mykurda_tokens', '{not json');
+    localStorage.setItem('hevalo_tokens', '{not json');
     expect(createTokenStorage().get()).toBeNull();
   });
 });

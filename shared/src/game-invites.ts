@@ -1,8 +1,8 @@
 /**
- * Shareable links to MyKurda online-game lobbies.
+ * Shareable links to Hevalo online-game lobbies.
  *
  * A link points at a lobby route that anyone can open: in the browser it routes
- * to the lobby, pasted into a MyKurda DM it renders as an invite card, and on
+ * to the lobby, pasted into a Hevalo DM it renders as an invite card, and on
  * the phone it is what the share sheet hands to whichever app the person you
  * sent it to opens.
  *
@@ -44,7 +44,7 @@ export function inviteRoutePath(type: GameInviteType): string {
 }
 
 /** An absolute, shareable URL. `origin` lets the browser use the current deploy. */
-export function buildInviteUrl(type: GameInviteType, id: string, origin = 'https://mykurda.com'): string {
+export function buildInviteUrl(type: GameInviteType, id: string, origin = 'https://hevalo.app'): string {
   return `${origin}${invitePath({ type, id })}`;
 }
 

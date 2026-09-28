@@ -37,6 +37,6 @@ export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
 /** An absolute, shareable URL — this deploy's origin, so a preview links to itself. */
 export function buildInviteUrl(type: GameInviteType, id: string): string {
   const origin =
-    typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://mykurda.com';
+    typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://hevalo.app';
   return buildUrl(type, id, origin);
 }

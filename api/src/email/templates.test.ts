@@ -30,11 +30,11 @@ describe('renderEmail', () => {
 describe('branded auth emails', () => {
   it('renders the verification code in both the HTML and the text fallback', () => {
     const r = renderEmail('verify-email-code', 'en', { code: '952530' });
-    expect(r.subject).toBe('Your MyKurda verification code');
-    expect(r.text).toContain('Welcome to MyKurda!');
+    expect(r.subject).toBe('Your Hevalo verification code');
+    expect(r.text).toContain('Welcome to Hevalo!');
     expect(r.text).toContain('952530');
     expect(r.text).toContain('This code is valid for 15 minutes.');
-    expect(r.text).toContain('— The MyKurda team');
+    expect(r.text).toContain('— The Hevalo team');
     expect(r.html).toContain('952530');
     expect(r.html).toContain('Be quick, friend 😄');
     expect(r.html).not.toMatch(/\{[a-z]+\}/); // nothing left uninterpolated
@@ -42,16 +42,16 @@ describe('branded auth emails', () => {
 
   it('renders the same code email in Kurmancî', () => {
     const r = renderEmail('verify-email-code', 'ku', { code: '952530' });
-    expect(r.subject).toBe('Koda piştrastkirinê ya MyKurda');
-    expect(r.text).toContain('Bi xêr hatî MyKurda!');
+    expect(r.subject).toBe('Koda piştrastkirinê ya Hevalo');
+    expect(r.text).toContain('Bi xêr hatî Hevalo!');
     expect(r.text).toContain('952530');
     expect(r.text).toContain('Ev kod ji bo 15 xulekan derbasdar e.');
-    expect(r.text).toContain('— Tîma MyKurda');
+    expect(r.text).toContain('— Tîma Hevalo');
     expect(r.html).toContain('Zû be, heval 😄');
   });
 
   it('renders the reset button linking to the token URL, and the raw link in text', () => {
-    const link = 'https://mykurda.com/reset-password?token=abc123';
+    const link = 'https://hevalo.app/reset-password?token=abc123';
     for (const [locale, button] of [
       ['en', 'Update password'],
       ['ku', 'Şîfreyê Nû Bike'],

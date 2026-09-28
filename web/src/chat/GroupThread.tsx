@@ -239,7 +239,7 @@ export function GroupThread({
  * The group's roster and its admins. A group's creator is its owner; owners can
  * promote members to moderator (a group admin) or demote them, and owners and
  * moderators can remove anyone they outrank. This is entirely separate from
- * MyKurda staff roles — being a group admin grants nothing outside the group.
+ * Hevalo staff roles — being a group admin grants nothing outside the group.
  * The server re-checks every action; this only mirrors the rules to hide buttons
  * that would be rejected.
  */

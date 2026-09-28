@@ -8,7 +8,7 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
  * A message reduced to one line, for a conversation row or a notification.
  *
  * A game invite is sent as a link, so a conversation whose last message was an
- * invite showed a raw URL — `https://mykurda.com/app/games/wordle-battle?id=8f3c…`
+ * invite showed a raw URL — `https://hevalo.app/app/games/wordle-battle?id=8f3c…`
  * — which is unreadable and tells you nothing. The link is replaced by what it
  * actually is, keeping any words the sender wrote alongside it.
  *

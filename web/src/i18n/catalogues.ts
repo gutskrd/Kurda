@@ -1,5 +1,6 @@
 import { DEFAULT_LOCALE, isAppLocale, localeFromTag, type AppLocale } from '@kurda/shared';
 import { en, type Catalogue } from './en';
+import { readRenamed } from '../lib/renamedKey';
 
 /**
  * Nine languages, fetched one at a time.
@@ -8,7 +9,7 @@ import { en, type Catalogue } from './en';
  * kilobytes each" and a round trip would leave the first paint wordless. The
  * first half stopped being true: the catalogues are 50–65 KB of source apiece,
  * 136 KB gzipped for the set, which was half of everything the browser
- * downloaded to open mykurda.com. Somebody reading in Kurmancî was paying for
+ * downloaded to open hevalo.app. Somebody reading in Kurmancî was paying for
  * Arabic, Dutch, German, Spanish, French and Turkish to sit unread in memory.
  *
  * The second half is answered by `preloadCatalogue`, which `main.tsx` awaits
@@ -91,11 +92,13 @@ export function resolveLocale(): AppLocale {
  * another device. Somebody reading without an account has nowhere else to put
  * it, and it would be rude to ask them to choose again on every visit.
  */
-export const LOCALE_STORAGE_KEY = 'mykurda_locale';
+export const LOCALE_STORAGE_KEY = 'hevalo_locale';
+/* what it was called while the app was MyKurda; see `readRenamed`. */
+const LEGACY_LOCALE_KEY = 'mykurda_locale';
 
 export function readStoredLocale(): AppLocale | null {
   try {
-    const raw = localStorage.getItem(LOCALE_STORAGE_KEY);
+    const raw = readRenamed(localStorage, LOCALE_STORAGE_KEY, LEGACY_LOCALE_KEY);
     return isAppLocale(raw) ? raw : null;
   } catch {
     // a private window, or site data blocked: not knowing is fine

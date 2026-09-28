@@ -7,7 +7,7 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * Browser API client for MyKurda. It follows the same protocol the mobile
+ * Browser API client for Hevalo. It follows the same protocol the mobile
  * client already implements (mobile/src/api/client.ts):
  *   - attaches the access token to every request
  *   - on 401, refreshes once (single-flight) and replays the request
@@ -159,7 +159,7 @@ export class ApiClient {
     if (!res.ok) return false;
     const next = (await res.json()) as TokenPair;
     // preserve the persistence choice: rewrite wherever the tokens currently live
-    const remembered = localStorage.getItem('mykurda_tokens') !== null;
+    const remembered = localStorage.getItem('hevalo_tokens') !== null;
     persistTokens(next, remembered);
     return true;
   }

@@ -8,7 +8,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { FeedItem, UserSummary } from '../lib/types';
 
 /**
- * Passing a post on — inside MyKurda, or out of it.
+ * Passing a post on — inside Hevalo, or out of it.
  *
  * Two different acts behind one button, because to a reader they are one
  * thought. Sending it to a friend here keeps them in the app and arrives as a
@@ -62,7 +62,7 @@ export function SharePost({ item }: { item: FeedItem }): React.JSX.Element {
 
   async function shareOut(): Promise<void> {
     try {
-      await navigator.share({ title: shareText(item) || 'MyKurda', text: shareText(item), url });
+      await navigator.share({ title: shareText(item) || 'Hevalo', text: shareText(item), url });
       setOpen(false);
     } catch {
       // the sheet was dismissed, which is a choice rather than a failure

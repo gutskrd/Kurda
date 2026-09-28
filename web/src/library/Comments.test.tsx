@@ -43,7 +43,7 @@ function commentFetch(thread: unknown[] = []) {
 }
 
 const signIn = () =>
-  localStorage.setItem('mykurda_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+  localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
 
 describe('Comments', () => {
   it('talks to the library paths by default', async () => {

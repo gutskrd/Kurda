@@ -17,8 +17,8 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     DATABASE_URL,
     NODE_ENV: 'test',
     LOG_LEVEL: 'fatal',
-    GOOGLE_CLIENT_IDS: 'kurda-web,kurda-ios',
-    APPLE_CLIENT_IDS: 'app.kurda.mobile',
+    GOOGLE_CLIENT_IDS: 'hevalo-web,hevalo-ios',
+    APPLE_CLIENT_IDS: 'app.hevalo.mobile',
   });
   let pool: pg.Pool;
   let service: OAuthService;
@@ -53,7 +53,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   function makeToken(provider: OAuthProvider, opts: TokenOpts): Promise<string> {
     const iss =
       opts.iss ?? (provider === 'google' ? 'https://accounts.google.com' : 'https://appleid.apple.com');
-    const aud = opts.aud ?? (provider === 'google' ? 'kurda-ios' : 'app.kurda.mobile');
+    const aud = opts.aud ?? (provider === 'google' ? 'hevalo-ios' : 'app.hevalo.mobile');
     const jwt = new SignJWT({
       ...(opts.email ? { email: opts.email } : {}),
       ...(opts.emailVerified !== undefined ? { email_verified: opts.emailVerified } : {}),

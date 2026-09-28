@@ -437,7 +437,7 @@ a.rank-name:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* footer row: label left, MyKurda logo bottom-right */
+/* footer row: label left, Hevalo logo bottom-right */
 .pcard-foot {
   width: 100%;
   margin-top: auto;
@@ -2100,7 +2100,7 @@ button.feature {
 }
 
 
-/* ---- MyKurda full profile (full-bleed) ------------ */
+/* ---- Hevalo full profile (full-bleed) ------------ */
 .mkp-page {
   position: relative;
   width: 100%;

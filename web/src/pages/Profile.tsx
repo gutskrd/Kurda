@@ -16,7 +16,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 const FRIEND_FACES = 3;
 
 /**
- * The signed-in user's own full profile — a read-only, MyKurda showcase. All
+ * The signed-in user's own full profile — a read-only, Hevalo showcase. All
  * editing lives on /app/profile/edit (reached from the Edit Profile button). The
  * sidebar adds private-to-you rows: Zêr, an owned-icon stack, and a friend stack.
  */

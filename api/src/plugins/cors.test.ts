@@ -18,9 +18,9 @@ describe('corsOrigins', () => {
 
   it('uses only configured origins in production', () => {
     const origins = corsOrigins(
-      loadConfig({ NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(32), CORS_ORIGINS: 'https://app.kurda.app' }),
+      loadConfig({ NODE_ENV: 'production', JWT_SECRET: 'x'.repeat(32), CORS_ORIGINS: 'https://app.hevalo.app' }),
     );
-    expect(origins).toEqual(['https://app.kurda.app']);
+    expect(origins).toEqual(['https://app.hevalo.app']);
   });
 
   it('parses and trims a comma-separated list', () => {

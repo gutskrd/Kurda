@@ -61,7 +61,7 @@ services:
       # NEVER set this on a store-facing deployment.
       IAP_ALLOW_STUB: ${IAP_ALLOW_STUB:-true}
       # Sign in with Apple (KUR-276): native token audience = the app bundle id
-      APPLE_CLIENT_IDS: app.kurda.mobile
+      APPLE_CLIENT_IDS: app.hevalo.mobile
       # Transactional email (KUR-098): put real values in a .env beside this file.
       # Unset secrets fall back to the no-op stub; the port/secure/from defaults
       # keep config validation happy when nothing is configured.
@@ -72,7 +72,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.com>}"
+      EMAIL_FROM: "${EMAIL_FROM:-Hevalo <no-reply@hevalo.app>}"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -96,7 +96,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
-      EMAIL_FROM: "${EMAIL_FROM:-MyKurda <no-reply@mykurda.com>}"
+      EMAIL_FROM: "${EMAIL_FROM:-Hevalo <no-reply@hevalo.app>}"
     depends_on:
       migrate:
         condition: service_completed_successfully

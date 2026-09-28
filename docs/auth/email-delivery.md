@@ -8,7 +8,7 @@ password-reset emails won't reach real inboxes).
 
 Selection precedence (`createEmailProvider`): **Resend** → **SMTP** → **stub**.
 
-Set `EMAIL_FROM` for either provider (default `MyKurda <no-reply@mykurda.com>`);
+Set `EMAIL_FROM` for either provider (default `Hevalo <no-reply@hevalo.app>`);
 it must be an address on a domain you've verified with the provider.
 
 ## Option A — Resend (HTTP API, simplest)
@@ -20,7 +20,7 @@ it must be an address on a domain you've verified with the provider.
 
    ```
    RESEND_API_KEY=re_xxxxxxxx
-   EMAIL_FROM=MyKurda <no-reply@yourdomain>
+   EMAIL_FROM=Hevalo <no-reply@yourdomain>
    ```
 
 That's it — no SDK, no SMTP ports.
@@ -31,7 +31,7 @@ Point the SMTP settings at any provider. Either a single connection string:
 
 ```
 SMTP_URL=smtps://USER:PASS@smtp.provider.com:465
-EMAIL_FROM=MyKurda <no-reply@yourdomain>
+EMAIL_FROM=Hevalo <no-reply@yourdomain>
 ```
 
 or discrete settings:
@@ -42,7 +42,7 @@ SMTP_PORT=587
 SMTP_USER=...
 SMTP_PASS=...
 SMTP_SECURE=false        # true for port 465 (implicit TLS); false uses STARTTLS
-EMAIL_FROM=MyKurda <no-reply@yourdomain>
+EMAIL_FROM=Hevalo <no-reply@yourdomain>
 ```
 
 Provider notes:

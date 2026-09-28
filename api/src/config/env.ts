@@ -38,7 +38,7 @@ const envSchema = z.object({
    * Public origin of the web app. Email links (password reset, email
    * verification) are built from this, so a wrong value sends users nowhere.
    */
-  APP_BASE_URL: z.string().url().default('https://mykurda.com'),
+  APP_BASE_URL: z.string().url().default('https://hevalo.app'),
   /**
    * Process background jobs inside the API instead of a separate worker service.
    * The API only ENQUEUES jobs; without something consuming the queue, emails
@@ -133,7 +133,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_SECURE: z.enum(['true', 'false']).optional(),
   /** From address for transactional email. */
-  EMAIL_FROM: z.string().default('MyKurda <no-reply@mykurda.com>'),
+  EMAIL_FROM: z.string().default('Hevalo <no-reply@hevalo.app>'),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**
