@@ -70,7 +70,6 @@ const MAP = {
   gem: { glyph: 'DiamondsFour', note: 'web GemIcon — the harder currency' },
   cart: { glyph: 'Storefront', note: 'web ShopIcon' },
   trophy: { glyph: 'Trophy', note: 'web TrophyIcon' },
-  sparkle: { glyph: 'Sparkle', note: 'web SparkIcon' },
   speaker: { glyph: 'Waveform', note: 'web WaveformIcon — hear it said' },
   moon: { glyph: 'Moon', note: 'web MoonIcon' },
   eye: { glyph: 'Eye', note: 'web EyeIcon' },

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { LinkButton } from '../components/Button';
-import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, SparkIcon, CoinIcon } from '../components/icons';
+import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, FlameIcon, CoinIcon } from '../components/icons';
 import { warmApi } from '../lib/warmup';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -10,7 +10,7 @@ const FEATURES: ReadonlyArray<{ icon: React.ReactNode; titleKey: MessageKey; bod
   { icon: <FeatherIcon />, titleKey: 'landing.feature.library', bodyKey: 'landing.feature.libraryBody' },
   { icon: <GameIcon />, titleKey: 'landing.feature.play', bodyKey: 'landing.feature.playBody' },
   { icon: <TrophyIcon />, titleKey: 'landing.feature.rankings', bodyKey: 'landing.feature.rankingsBody' },
-  { icon: <SparkIcon />, titleKey: 'landing.feature.streaks', bodyKey: 'landing.feature.streaksBody' },
+  { icon: <FlameIcon />, titleKey: 'landing.feature.streaks', bodyKey: 'landing.feature.streaksBody' },
   { icon: <CoinIcon />, titleKey: 'landing.feature.zer', bodyKey: 'landing.feature.zerBody' },
 ];
 

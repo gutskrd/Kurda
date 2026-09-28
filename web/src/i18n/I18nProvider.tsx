@@ -93,6 +93,9 @@ export function useLocale(): AppLocale {
  * paint still has the right words on it. English is always here, so a
  * language that has not arrived yet reads in English rather than in keys.
  */
+/** The name of the thing. Not translated, not a key: a name has no language. */
+export const APP_NAME = 'Hevalo';
+
 export function I18nProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [locale, setLocaleState] = useState<AppLocale>(resolveLocale);
   const [catalogue, setCatalogue] = useState<Catalogue>(() => readyCatalogue(resolveLocale()) ?? en);
@@ -137,20 +140,22 @@ export function I18nProvider({ children }: { children: ReactNode }): React.JSX.E
    * hyphenates by; `dir` is what puts Arabic the right way round. Neither is
    * cosmetic, and both have to change when the choice does.
    *
-   * The title and description come from `index.html`, which is one static file
-   * served to everybody — so they were English on every screen, in the browser
-   * tab, in the bookmark, and in whatever a search engine had cached. They are
-   * set here for the same reason `lang` is: the choice is only known once this
-   * has mounted.
+   * The description comes from `index.html`, which is one static file served to
+   * everybody — so it was English on every screen, in the bookmark, and in
+   * whatever a search engine had cached. It is set here for the same reason
+   * `lang` is: the choice is only known once this has mounted.
+   *
+   * The title is not translated and is not a key. It is the name of the thing,
+   * and a name does not change language — it used to read "Hevalo — Learn
+   * Kurdish", which put a tagline in every tab and every bookmark somebody made.
    */
   useEffect(() => {
     const root = document.documentElement;
     root.lang = locale;
     root.dir = localeDir(locale);
 
-    const t = translator(catalogue);
-    document.title = t('app.documentTitle');
-    document.querySelector('meta[name="description"]')?.setAttribute('content', t('app.description'));
+    document.title = APP_NAME;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', translator(catalogue)('app.description'));
   }, [locale, catalogue]);
 
   const value = useMemo<I18n>(

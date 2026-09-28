@@ -222,16 +222,23 @@ describe('choosing a language', () => {
    * in the bookmark, and in whatever a search engine had cached. Found by
    * looking at the running app rather than by any test.
    */
-  it('renames the tab and the description too', async () => {
+  /**
+   * The description follows the language; the title does not.
+   *
+   * A name has no language, and the tab used to read "Hevalo — Learn Kurdish",
+   * which put a tagline into every tab and every bookmark anybody made. So the
+   * interesting assertion is now that changing language leaves it alone.
+   */
+  it('translates the description and leaves the name alone', async () => {
     const meta = document.createElement('meta');
     meta.setAttribute('name', 'description');
     document.head.appendChild(meta);
 
     show();
-    expect(document.title).toBe('Hevalo — Learn Kurdish');
+    expect(document.title).toBe('Hevalo');
 
     await userEvent.selectOptions(screen.getByRole('combobox'), 'de');
-    expect(document.title).toBe('Hevalo — Kurdisch lernen');
+    expect(document.title).toBe('Hevalo');
     expect(meta.getAttribute('content')).toContain('Kurdisch zu lernen');
 
     meta.remove();
