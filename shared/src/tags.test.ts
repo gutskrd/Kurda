@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { claimableCatalog, purchasableTags, tagLabel, type DisplayTag, type TagRow } from './types';
+import { claimableCatalog, purchasableTags, tagLabel, type DisplayTag, type TagRow } from './tags.js';
 
 const row = (over: Partial<TagRow>): TagRow => ({
   id: over.key ?? 'x', key: 'x', label: 'X', kind: 'claimable', category: 'c', acquisition: 'self_claim',

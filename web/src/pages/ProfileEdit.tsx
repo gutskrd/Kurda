@@ -10,6 +10,7 @@ import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { ProfilePhotoPicker } from '../profile/ProfilePhotoPicker';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { SectionToggles } from '../profile/SectionToggles';
+import { TagsCard } from '../tags/TagsCard';
 import { ErrorState } from '../components/states';
 import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
@@ -76,6 +77,7 @@ export function ProfileEdit(): React.JSX.Element {
       <CosmeticCustomizer me={me} onChanged={changed} />
       <FavoritesPicker me={me} onChanged={changed} />
       <SectionToggles me={me} />
+      <TagsCard />
 
       <div style={{ marginTop: 24 }}>
         <Link to="/app/settings" className="btn btn-secondary">{t('edit.accountSettings')}</Link>
