@@ -964,4 +964,17 @@ export const ckb: Catalogue = {
   'leagues.tier.pearl': 'مرواری',
   'leagues.tier.obsidian': 'سەبەج',
   'leagues.tier.diamond': 'ئەڵماس',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'ئاگادارکردنەوەکان',
+  'notifications.pref.streak': 'بیرخستنەوەی زنجیرە',
+  'notifications.pref.friends': 'چالاکی هاوڕێکان',
+  'notifications.pref.games': 'بانگهێشت و ئەنجامی یارییەکان',
+  'notifications.pref.events': 'بۆنە و ئەرک',
+  'notifications.pref.news': 'هەواڵ و پێشنیارەکان',
+  'notifications.quietHours': 'کاتژمێرە بێدەنگەکان',
+  'notifications.enableQuietHours': 'کاتژمێرە بێدەنگەکان چالاک بکە',
+  'notifications.quietHoursHelp': 'لەم ماوەیەدا هیچ ئاگادارکردنەوەیەک نانێردرێت.',
+  'notifications.quietFrom': 'لە',
+  'notifications.quietTo': 'بۆ',
 };

@@ -958,4 +958,17 @@ export const ku: Catalogue = {
   'leagues.tier.pearl': 'Dur',
   'leagues.tier.obsidian': 'Obsîdyen',
   'leagues.tier.diamond': 'Elmas',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'Agahdarî',
+  'notifications.pref.streak': 'Bîrxistinên rêzê',
+  'notifications.pref.friends': 'Çalakiya hevalan',
+  'notifications.pref.games': 'Vexwendin û encamên lîstikan',
+  'notifications.pref.events': 'Bûyer û erk',
+  'notifications.pref.news': 'Nûçe û pêşniyar',
+  'notifications.quietHours': 'Demên bêdeng',
+  'notifications.enableQuietHours': 'Demên bêdeng veke',
+  'notifications.quietHoursHelp': 'Di vê demê de tu agahdarî nayê şandin.',
+  'notifications.quietFrom': 'Ji',
+  'notifications.quietTo': 'Heta',
 };

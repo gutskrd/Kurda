@@ -952,4 +952,17 @@ export const tr: Catalogue = {
   'leagues.tier.pearl': 'İnci',
   'leagues.tier.obsidian': 'Obsidyen',
   'leagues.tier.diamond': 'Elmas',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'Bildirimler',
+  'notifications.pref.streak': 'Seri hatırlatmaları',
+  'notifications.pref.friends': 'Arkadaş etkinliği',
+  'notifications.pref.games': 'Oyun davetleri ve sonuçları',
+  'notifications.pref.events': 'Etkinlikler ve görevler',
+  'notifications.pref.news': 'Haberler ve teklifler',
+  'notifications.quietHours': 'Sessiz saatler',
+  'notifications.enableQuietHours': 'Sessiz saatleri aç',
+  'notifications.quietHoursHelp': 'Bu aralıkta hiçbir bildirim gönderilmez.',
+  'notifications.quietFrom': 'Başlangıç',
+  'notifications.quietTo': 'Bitiş',
 };

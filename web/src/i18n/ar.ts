@@ -957,4 +957,17 @@ export const ar: Catalogue = {
   'leagues.tier.pearl': 'لؤلؤ',
   'leagues.tier.obsidian': 'سبج',
   'leagues.tier.diamond': 'ألماس',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'الإشعارات',
+  'notifications.pref.streak': 'تذكيرات السلسلة',
+  'notifications.pref.friends': 'نشاط الأصدقاء',
+  'notifications.pref.games': 'دعوات المباريات ونتائجها',
+  'notifications.pref.events': 'الفعاليات والمهام',
+  'notifications.pref.news': 'الأخبار والعروض',
+  'notifications.quietHours': 'ساعات الهدوء',
+  'notifications.enableQuietHours': 'تفعيل ساعات الهدوء',
+  'notifications.quietHoursHelp': 'لا تُرسَل أي إشعارات خلال هذه الفترة.',
+  'notifications.quietFrom': 'من',
+  'notifications.quietTo': 'إلى',
 };

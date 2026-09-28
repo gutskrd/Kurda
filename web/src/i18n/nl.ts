@@ -952,4 +952,17 @@ export const nl: Catalogue = {
   'leagues.tier.pearl': 'Parel',
   'leagues.tier.obsidian': 'Obsidiaan',
   'leagues.tier.diamond': 'Diamant',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'Meldingen',
+  'notifications.pref.streak': 'Reeksherinneringen',
+  'notifications.pref.friends': 'Vriendenactiviteit',
+  'notifications.pref.games': 'Spel­uitnodigingen en resultaten',
+  'notifications.pref.events': 'Evenementen en quests',
+  'notifications.pref.news': 'Nieuws en aanbiedingen',
+  'notifications.quietHours': 'Stille uren',
+  'notifications.enableQuietHours': 'Stille uren inschakelen',
+  'notifications.quietHoursHelp': 'Tijdens dit venster worden geen meldingen verstuurd.',
+  'notifications.quietFrom': 'Van',
+  'notifications.quietTo': 'Tot',
 };

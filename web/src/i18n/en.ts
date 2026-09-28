@@ -1045,6 +1045,19 @@ export const en = {
   'leagues.tier.pearl': 'Pearl',
   'leagues.tier.obsidian': 'Obsidian',
   'leagues.tier.diamond': 'Diamond',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'Notifications',
+  'notifications.pref.streak': 'Streak reminders',
+  'notifications.pref.friends': 'Friend activity',
+  'notifications.pref.games': 'Game invites & results',
+  'notifications.pref.events': 'Events & quests',
+  'notifications.pref.news': 'News & offers',
+  'notifications.quietHours': 'Quiet hours',
+  'notifications.enableQuietHours': 'Enable quiet hours',
+  'notifications.quietHoursHelp': 'No notifications are sent during this window.',
+  'notifications.quietFrom': 'From',
+  'notifications.quietTo': 'To',
 } as const;
 
 export type MessageKey = keyof typeof en;
