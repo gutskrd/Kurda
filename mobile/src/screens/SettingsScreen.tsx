@@ -151,7 +151,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             labelOf={(p) => t(PREFERENCE_LABEL[p])}
             onChange={setPreference}
           />
-          <GlassRow icon="sparkle" title={t('settings.appearance')} onPress={() => navigation.navigate('Appearance')} />
+          <GlassRow icon="palette" title={t('settings.appearance')} onPress={() => navigation.navigate('Appearance')} />
           <GlassRow
             icon="star"
             title={t('settings.eventThemes')}

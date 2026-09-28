@@ -55,7 +55,7 @@ export interface Destination {
 export const GAMES: readonly Destination[] = [
   { key: 'wordle', labelKey: 'games.wordle.name', icon: 'grid', route: 'Wordle' },
   { key: 'battle', labelKey: 'games.battle.name', icon: 'people', route: 'WordleBattle' },
-  { key: 'rhyme', labelKey: 'games.rhyme.name', icon: 'sparkle', route: 'Rhyme' },
+  { key: 'rhyme', labelKey: 'games.rhyme.name', icon: 'speaker', route: 'Rhyme' },
   { key: 'rhymeMatch', labelKey: 'games.rhymeMatch.name', icon: 'people', route: 'RhymeMatch' },
   { key: 'race', labelKey: 'games.race.name', icon: 'bolt', route: 'Race' },
 ];

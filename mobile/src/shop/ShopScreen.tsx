@@ -227,7 +227,7 @@ function ItemDetail({
       {/* preview placeholder until item art lands with the design pass */}
       <View style={[styles.preview, { backgroundColor: colors.controlTrack, borderWidth: StyleSheet.hairlineWidth }]}>
         <Icon
-          name={item.category === 'freeze' ? 'ice' : item.category === 'powerup' ? 'bolt' : 'sparkle'}
+          name={item.category === 'freeze' ? 'ice' : item.category === 'powerup' ? 'bolt' : 'star'}
           size={44}
           color={colors.primary}
         />

@@ -603,7 +603,7 @@ export const en = {
   'gate.what.settings': 'change your settings',
 
   // ---- the footer, the nav’s own words, and the rest of settings -----
-  'footer.tagline': 'A beautiful way to learn Kurdish — lessons, stories, poems and play.',
+  'footer.tagline': 'Learn Kurdish — lessons, stories, poems and play.',
   'footer.lessons': 'Lessons',
   'footer.community': 'Community',
   'footer.join': 'Join Hevalo',
@@ -759,7 +759,7 @@ export const en = {
   'landing.everythingTitle': 'Everything in one place',
   'landing.everythingSub': 'A complete way to learn.',
   'landing.readyTitle': 'Ready to begin?',
-  'landing.readyBody': 'Create a free account and pick up where curiosity leaves off. It takes under a minute.',
+  'landing.readyBody': 'Create a free account. It takes under a minute.',
   'landing.feature.lessons': 'Structured lessons',
   'landing.feature.lessonsBody': 'A clear path through Kurdish — vocabulary, grammar and listening, one confident step at a time.',
   'landing.feature.library': 'Stories & poems',
@@ -805,8 +805,8 @@ export const en = {
   'learn.noCourses': 'No courses available yet',
   'learn.noCoursesBody': 'New courses are being prepared. Check back soon — they’ll appear here as soon as they’re published.',
   'learn.skillTree': 'A guided skill tree — vocabulary, grammar and listening, unlocked as you go.',
-  'landing.headline': 'Learn Kurdish, beautifully.',
-  'landing.lead': 'Hevalo brings lessons, stories, poems and play into one calm, focused place — designed to make the Kurdish language feel close, and keep you coming back.',
+  'landing.headline': 'Learn Kurdish.',
+  'landing.lead': 'Hevalo brings lessons, stories, poems and play into one place.',
   'landing.startFree': 'Start learning — free',
   'landing.exploreStories': 'Explore stories',
   'landing.sameProduct': 'The same product you’ll find on mobile, shaped for the browser: more room to read, to compare, to explore at your own pace.',
@@ -994,8 +994,7 @@ export const en = {
   'dimen.aPicture': 'A picture',
   'dimen.views': '{count} views',
   'saved.eyebrow': 'Saved',
-  'app.documentTitle': 'Hevalo — Learn Kurdish',
-  'app.description': 'Hevalo is a beautiful way to learn Kurdish — lessons, stories, poems, games and a community.',
+  'app.description': 'Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community.',
 
   /* passing a post on, here or anywhere else */
   'share.post': 'Share this post',

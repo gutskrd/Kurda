@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Avatar } from '../components/Avatar';
-import { CloseIcon, GameIcon, UserIcon, SparkIcon } from '../components/icons';
+import { BellIcon, CloseIcon, GameIcon, UserIcon } from '../components/icons';
 import type { Arrival } from './useSocialRail';
 import { useT } from '../i18n/I18nProvider';
 
@@ -63,7 +63,7 @@ function Toast({
           {arrival.who ? (
             <Avatar url={arrival.who.avatarUrl} glyphSize={16} />
           ) : (
-            <SparkIcon size={18} />
+            <BellIcon size={18} />
           )}
           <span className="rail-toast-kind" aria-hidden>
             {arrival.kind === 'challenge' ? <GameIcon size={11} /> : arrival.kind === 'request' ? <UserIcon size={11} /> : null}

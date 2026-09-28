@@ -47,13 +47,13 @@ import { ShareNetwork } from '@phosphor-icons/react/dist/icons/ShareNetwork';
 import { LinkSimple } from '@phosphor-icons/react/dist/icons/LinkSimple';
 import { PaperPlaneTilt } from '@phosphor-icons/react/dist/icons/PaperPlaneTilt';
 import { Repeat } from '@phosphor-icons/react/dist/icons/Repeat';
+import { Flame } from '@phosphor-icons/react/dist/icons/Flame';
 import { Heart } from '@phosphor-icons/react/dist/icons/Heart';
 import { Image as ImageGlyph } from '@phosphor-icons/react/dist/icons/Image';
 import { List } from '@phosphor-icons/react/dist/icons/List';
 import { Moon } from '@phosphor-icons/react/dist/icons/Moon';
 import { PenNib } from '@phosphor-icons/react/dist/icons/PenNib';
 import { Plus } from '@phosphor-icons/react/dist/icons/Plus';
-import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 import { SquaresFour } from '@phosphor-icons/react/dist/icons/SquaresFour';
 import { Sun } from '@phosphor-icons/react/dist/icons/Sun';
 import { TextAa } from '@phosphor-icons/react/dist/icons/TextAa';
@@ -104,7 +104,8 @@ export const TrophyIcon = named(Trophy, 22);
 export const UserIcon = named(User, 22);
 /** More than one person: friends, the social panel, a group. */
 export const UsersIcon = named(Users, 22);
-export const SparkIcon = named(Sparkle, 22);
+/** A streak, which the phone has drawn as a flame since it had streaks. */
+export const FlameIcon = named(Flame, 22);
 export const CoinIcon = named(Coin, 22);
 export const TilesIcon = named(SquaresFour, 22);
 export const WaveformIcon = named(Waveform, 22);

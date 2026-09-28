@@ -18,7 +18,7 @@ describe('icons', () => {
     // rather than silently leaving a hole in a toolbar
     for (const expected of [
       'PersonGlyph', 'BookIcon', 'FeatherIcon', 'GameIcon', 'PhotoIcon', 'HeartIcon',
-      'CommentIcon', 'TrophyIcon', 'UserIcon', 'UsersIcon', 'SparkIcon', 'CoinIcon',
+      'CommentIcon', 'TrophyIcon', 'UserIcon', 'UsersIcon', 'FlameIcon', 'CoinIcon',
       'TilesIcon', 'WaveformIcon', 'ChevronIcon', 'GiftIcon', 'MenuIcon', 'CloseIcon',
       'SunIcon', 'MoonIcon', 'GearIcon', 'ArrowIcon', 'BookmarkIcon', 'TextIcon', 'EyeIcon',
     ]) {
