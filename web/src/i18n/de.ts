@@ -937,4 +937,19 @@ export const de: Catalogue = {
   'post.audioUnsupported': 'Dein Browser kann diese Aufnahme nicht abspielen.',
   'images.reactions': 'Reaktionen',
   'picture.decodeFailed': 'Dieses {format} hätte sich hier öffnen sollen, hat es aber nicht. Versuch es noch einmal — oder poste es so, wie es ist, das geht auch.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} {tier}-Liga',
+  'leagues.endsIn': 'Endet in {time} · UTC',
+  'leagues.noLeague': 'Noch keine Liga.',
+  'leagues.tier.bronze': 'Bronze',
+  'leagues.tier.silver': 'Silber',
+  'leagues.tier.gold': 'Gold',
+  'leagues.tier.sapphire': 'Saphir',
+  'leagues.tier.ruby': 'Rubin',
+  'leagues.tier.emerald': 'Smaragd',
+  'leagues.tier.amethyst': 'Amethyst',
+  'leagues.tier.pearl': 'Perle',
+  'leagues.tier.obsidian': 'Obsidian',
+  'leagues.tier.diamond': 'Diamant',
 };

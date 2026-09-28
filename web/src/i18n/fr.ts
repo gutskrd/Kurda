@@ -937,4 +937,19 @@ export const fr: Catalogue = {
   'post.audioUnsupported': 'Votre navigateur ne peut pas lire cet enregistrement.',
   'images.reactions': 'Réactions',
   'picture.decodeFailed': 'Ce {format} aurait dû s’ouvrir ici et ne l’a pas fait. Réessaie — ou publie-le tel quel, ça marche aussi.',
+
+  // ---- the weekly league (KUR-062) ----------------------------------------
+  'leagues.tierName': '{emoji} Ligue {tier}',
+  'leagues.endsIn': 'Se termine dans {time} · UTC',
+  'leagues.noLeague': 'Pas encore de ligue.',
+  'leagues.tier.bronze': 'Bronze',
+  'leagues.tier.silver': 'Argent',
+  'leagues.tier.gold': 'Or',
+  'leagues.tier.sapphire': 'Saphir',
+  'leagues.tier.ruby': 'Rubis',
+  'leagues.tier.emerald': 'Émeraude',
+  'leagues.tier.amethyst': 'Améthyste',
+  'leagues.tier.pearl': 'Perle',
+  'leagues.tier.obsidian': 'Obsidienne',
+  'leagues.tier.diamond': 'Diamant',
 };

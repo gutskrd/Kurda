@@ -7,6 +7,7 @@ import { ErrorState, EmptyState } from '../components/states';
 import { RankingsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { LeaguePanel } from '../leagues/LeaguePanel';
 import type { MessageKey } from '../i18n/en';
 
 interface Entry {
@@ -105,6 +106,10 @@ export function Rankings(): React.JSX.Element {
         <h1 className="page-title">{t('rankings.title')}</h1>
         <p className="page-sub">{t(meta.blurbKey)}</p>
       </div>
+
+      {/* this week's cohort of thirty — a different question from the boards
+          below, and the one with a deadline, so it goes first */}
+      <LeaguePanel />
 
       <div className="toolbar" role="tablist" aria-label={t('rankings.leaderboard')}>
         {BOARDS.map((b) => (
