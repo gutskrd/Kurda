@@ -1058,6 +1058,30 @@ export const en = {
   'notifications.quietHoursHelp': 'No notifications are sent during this window.',
   'notifications.quietFrom': 'From',
   'notifications.quietTo': 'To',
+
+  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  'tags.title': 'Tags & badges',
+  'tags.main': 'Main tag',
+  'tags.noMain': 'No main tag yet.',
+  'tags.yours': 'Your tags',
+  'tags.none': 'You haven’t added any tags yet.',
+  'tags.automatic': 'Automatic',
+  'tags.sensitive': 'sensitive',
+  'tags.showOnProfile': 'Show {tag} on profile',
+  'tags.shownOnProfile': 'shown on your profile',
+  'tags.hiddenStatus': 'hidden',
+  'tags.remove': 'Remove tag',
+  'tags.removeTag': 'Remove {tag}',
+  'tags.removeConfirm': 'Remove “{label}” from your profile? This deletes any value you entered.',
+  'tags.add': 'Add a tag',
+  'tags.claim': 'Add',
+  'tags.addTitle': 'Add “{tag}”',
+  'tags.valuePlaceholder': 'Your {tag} (optional)',
+  'tags.adding': 'Adding…',
+  'tags.consentNeeded': 'Consent needed',
+  'tags.consentHelp': 'Sensitive tags are optional. Tick consent to add this tag.',
+  'tags.sensitiveConsent': 'I consent to showing this sensitive tag. It’s optional and can be removed anytime.',
+  'tags.getTag': 'Get the {tag} tag',
 } as const;
 
 export type MessageKey = keyof typeof en;

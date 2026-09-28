@@ -35,3 +35,20 @@ export {
   canSetRole,
   type Role,
 } from './group-roles.js';
+
+/**
+ * Tags & badges, for the same reason as the roles above: the API decides whether
+ * a claim is allowed, and both clients have to offer the same options before one
+ * is made.
+ */
+export {
+  claimableCatalog,
+  purchasableTags,
+  tagLabel,
+  type Acquisition,
+  type ClaimedTag,
+  type DisplayTag,
+  type ProfileTags,
+  type TagKind,
+  type TagRow,
+} from './tags.js';
