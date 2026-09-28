@@ -17,7 +17,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     DATABASE_URL,
     NODE_ENV: 'test',
     LOG_LEVEL: 'fatal',
-    GOOGLE_CLIENT_IDS: 'kurda-web,kurda-ios',
+    GOOGLE_CLIENT_IDS: 'hevalo-web,hevalo-ios',
     APPLE_CLIENT_IDS: 'app.hevalo.mobile',
   });
   let pool: pg.Pool;
