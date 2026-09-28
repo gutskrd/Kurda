@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import type { GameEvent } from './events';
-import { initGameState, reduce } from './reducer';
+import { initGameState, reduce, type GameSnapshot } from './reducer';
 
 /**
  * Realtime 1v1 game socket (KUR-054). Fetches a ticket, opens the WebSocket,
@@ -33,6 +33,19 @@ export function useGameSocket(roomId: string, selfId: string) {
     const Ctor = (globalThis as { WebSocket?: SocketCtor }).WebSocket;
     if (!Ctor) return;
     let closed = false;
+
+    /*
+     * Seed from the engine's snapshot before the socket says anything.
+     *
+     * Events alone cannot describe a game already under way, so a reconnect — or
+     * reopening the room after the app was backgrounded — showed a spinner until
+     * the next question and missed the one on screen. This is what
+     * `GET /games/:roomId/state` is for; its own route comment says "resume lands
+     * here after rejoining". A 404 just means there is no game to resume.
+     */
+    void client.get<GameSnapshot>(`/games/${roomId}/state`).then((res) => {
+      if (!closed && res.ok) dispatch({ type: 'snapshot', snapshot: res.data });
+    });
 
     void (async () => {
       const ticketRes = await client.post<{ ticket: string }>('/realtime/ticket');

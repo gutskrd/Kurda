@@ -69,7 +69,7 @@ import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
-import { ChallengeListener } from './src/challenge/ChallengeListener';
+import { UserEventListener } from './src/realtime/UserEventListener';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -237,7 +237,7 @@ function SignedInRoot() {
   return (
     <>
       <PushRegistration />
-      <ChallengeListener />
+      <UserEventListener />
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,

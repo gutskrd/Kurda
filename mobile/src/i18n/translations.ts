@@ -875,6 +875,7 @@ export type TranslationKey =
   | 'favorites.change'
   | 'favorites.noPoems'
   | 'favorites.noStories'
+  | 'games.quiz.noOpponent'
   | 'library.emptyAction';
 
 type Catalog = Record<TranslationKey, string>;
@@ -1727,6 +1728,7 @@ const en: Catalog = {
   'favorites.change': 'Change',
   'favorites.noPoems': 'No published poems yet.',
   'favorites.noStories': 'No published stories yet.',
+  'games.quiz.noOpponent': 'No opponent found right now — try again in a moment.',
 };
 
 const ku: Catalog = {
@@ -2577,6 +2579,7 @@ const ku: Catalog = {
   'favorites.change': 'Biguherîne',
   'favorites.noPoems': 'Hê helbestên weşandî tune ne.',
   'favorites.noStories': 'Hê çîrokên weşandî tune ne.',
+  'games.quiz.noOpponent': 'Niha hevrik nehat dîtin — piştî demekê dîsa biceribîne.',
 };
 
 const de: Catalog = {
@@ -3427,6 +3430,7 @@ const de: Catalog = {
   'favorites.change': 'Ändern',
   'favorites.noPoems': 'Noch keine veröffentlichten Gedichte.',
   'favorites.noStories': 'Noch keine veröffentlichten Geschichten.',
+  'games.quiz.noOpponent': 'Gerade kein Gegner gefunden — versuch es gleich noch einmal.',
 };
 
 const es: Catalog = {
@@ -4277,6 +4281,7 @@ const es: Catalog = {
   'favorites.change': 'Cambiar',
   'favorites.noPoems': 'Todavía no hay poemas publicados.',
   'favorites.noStories': 'Todavía no hay relatos publicados.',
+  'games.quiz.noOpponent': 'Ahora mismo no hay rival: inténtalo de nuevo en un momento.',
 };
 
 const tr: Catalog = {
@@ -5127,6 +5132,7 @@ const tr: Catalog = {
   'favorites.change': 'Değiştir',
   'favorites.noPoems': 'Henüz yayımlanmış şiir yok.',
   'favorites.noStories': 'Henüz yayımlanmış hikâye yok.',
+  'games.quiz.noOpponent': 'Şu anda rakip bulunamadı — birazdan tekrar dene.',
 };
 
 const ar: Catalog = {
@@ -5977,6 +5983,7 @@ const ar: Catalog = {
   'favorites.change': 'تغيير',
   'favorites.noPoems': 'لا توجد قصائد منشورة بعد.',
   'favorites.noStories': 'لا توجد قصص منشورة بعد.',
+  'games.quiz.noOpponent': 'لا يوجد خصم الآن — حاول مرة أخرى بعد قليل.',
 };
 
 const fr: Catalog = {
@@ -6827,6 +6834,7 @@ const fr: Catalog = {
   'favorites.change': 'Changer',
   'favorites.noPoems': 'Aucun poème publié pour l’instant.',
   'favorites.noStories': 'Aucune histoire publiée pour l’instant.',
+  'games.quiz.noOpponent': 'Aucun adversaire pour le moment — réessaie dans un instant.',
 };
 
 const nl: Catalog = {
@@ -7677,6 +7685,7 @@ const nl: Catalog = {
   'favorites.change': 'Wijzigen',
   'favorites.noPoems': 'Nog geen gepubliceerde gedichten.',
   'favorites.noStories': 'Nog geen gepubliceerde verhalen.',
+  'games.quiz.noOpponent': 'Op dit moment geen tegenstander gevonden — probeer het zo nog eens.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8528,6 +8537,7 @@ const ckb: Catalog = {
   'favorites.change': 'بگۆڕە',
   'favorites.noPoems': 'هێشتا شیعری بڵاوکراوە نییە.',
   'favorites.noStories': 'هێشتا چیرۆکی بڵاوکراوە نییە.',
+  'games.quiz.noOpponent': 'ئێستا بەرامبەر نەدۆزرایەوە — دوای کەمێک دووبارە هەوڵ بدە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
