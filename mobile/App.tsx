@@ -12,6 +12,7 @@ import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/au
 import { TABS, linkingScreens } from './src/navigation/tabs';
 import { GlassTabBar } from './src/navigation/GlassTabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
+import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
 import type { RootNavigation, RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
@@ -162,8 +163,12 @@ function SignedInTabs() {
   const [menuOpen, setMenuOpen] = useState(false);
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const [slideOpen, setSlideOpen] = useState(false);
+  const openSlide = useCallback(() => setSlideOpen(true), []);
+  const closeSlide = useCallback(() => setSlideOpen(false), []);
   return (
     <MenuProvider value={openMenu}>
+    <SlideProvider value={openSlide}>
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
@@ -204,6 +209,8 @@ function SignedInTabs() {
         ))}
       </Tab.Navigator>
       <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} />
+      <SocialSlide open={slideOpen} onClose={closeSlide} />
+    </SlideProvider>
     </MenuProvider>
   );
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import { LargeTitle } from '../navigation/LargeTitle';
 import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
+import { SocialSlideButton, useOpenSlide } from '../social/SocialSlide';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { useNavigation } from '@react-navigation/native';
@@ -38,6 +39,7 @@ export function PlayScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const openMenu = useOpenMenu();
+  const openSlide = useOpenSlide();
   const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
   const [searching, setSearching] = useState(false);
@@ -102,7 +104,7 @@ export function PlayScreen() {
   return (
     <GradientBackground>
       <View style={{ paddingTop: topInset }}>
-        <LargeTitle left={<SideMenuButton onPress={openMenu} />} title={t('nav.play')} />
+        <LargeTitle left={<SideMenuButton onPress={openMenu} />} right={<SocialSlideButton onPress={openSlide} />} title={t('nav.play')} />
       </View>
       <ScrollView contentContainerStyle={[styles.screen, { paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
         {/*
