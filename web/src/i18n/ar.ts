@@ -984,7 +984,6 @@ export const ar: Catalogue = {
   'tags.hiddenStatus': 'مخفي',
   'tags.remove': 'إزالة الوسم',
   'tags.removeTag': 'أزل {tag}',
-  'tags.removeConfirm': 'إزالة «{label}» من ملفك؟ سيؤدي هذا إلى حذف أي قيمة أدخلتها.',
   'tags.add': 'إضافة وسم',
   'tags.claim': 'إضافة',
   'tags.addTitle': 'أضف «{tag}»',

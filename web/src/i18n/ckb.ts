@@ -991,7 +991,6 @@ export const ckb: Catalogue = {
   'tags.hiddenStatus': 'شاراوە',
   'tags.remove': 'تاگەکە لابە',
   'tags.removeTag': '{tag} لابە',
-  'tags.removeConfirm': '«{label}» لە پرۆفایلەکەت لابردرێت؟ ئەمە هەر بەهایەک کە نووسیوتە دەسڕێتەوە.',
   'tags.add': 'تاگێک زیاد بکە',
   'tags.claim': 'زیادکردن',
   'tags.addTitle': '«{tag}» زیاد بکە',

@@ -979,7 +979,6 @@ export const nl: Catalogue = {
   'tags.hiddenStatus': 'verborgen',
   'tags.remove': 'Tag verwijderen',
   'tags.removeTag': '{tag} verwijderen',
-  'tags.removeConfirm': '“{label}” van je profiel verwijderen? Dit wist de waarde die je hebt ingevuld.',
   'tags.add': 'Tag toevoegen',
   'tags.claim': 'Toevoegen',
   'tags.addTitle': '“{tag}” toevoegen',

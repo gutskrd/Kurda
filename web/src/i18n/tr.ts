@@ -979,7 +979,6 @@ export const tr: Catalogue = {
   'tags.hiddenStatus': 'gizli',
   'tags.remove': 'Etiketi kaldır',
   'tags.removeTag': '{tag} kaldır',
-  'tags.removeConfirm': '“{label}” profilinden kaldırılsın mı? Girdiğin değer de silinir.',
   'tags.add': 'Etiket ekle',
   'tags.claim': 'Ekle',
   'tags.addTitle': '“{tag}” ekle',

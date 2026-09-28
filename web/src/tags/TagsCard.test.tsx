@@ -97,25 +97,30 @@ describe('TagsCard', () => {
     expect(s.posts[0]!.body).toEqual({ key: 'age', displayed: false });
   });
 
-  /* giving up a tag deletes whatever was typed into it, so it asks first */
-  it('asks before giving a tag up, and does nothing if refused', async () => {
+  /**
+   * Giving up a tag cannot be undone, so it asks — through `ConfirmButton`, which
+   * every destructive control in the browser uses, rather than `confirm()`. One
+   * press arms it and changes the label; a second press goes through.
+   */
+  it('arms rather than deleting on the first press', async () => {
     const s = tagServer({ claimed: [claimedTag({ value: '25–34' })] });
     vi.stubGlobal('fetch', s.fetch);
-    vi.stubGlobal('confirm', vi.fn(() => false));
     renderApp(<TagsCard />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Remove Age' }));
-    expect(window.confirm).toHaveBeenCalled();
+    const remove = await screen.findByRole('button', { name: 'Remove Age' });
+    await userEvent.click(remove);
     expect(s.deletes).toHaveLength(0);
+    expect(remove).toHaveTextContent('Sure?');
   });
 
-  it('deletes the tag once that is confirmed', async () => {
+  it('deletes on the second press', async () => {
     const s = tagServer({ claimed: [claimedTag({})] });
     vi.stubGlobal('fetch', s.fetch);
-    vi.stubGlobal('confirm', vi.fn(() => true));
     renderApp(<TagsCard />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Remove Age' }));
+    const remove = await screen.findByRole('button', { name: 'Remove Age' });
+    await userEvent.click(remove);
+    await userEvent.click(remove);
     await waitFor(() => expect(s.deletes).toHaveLength(1));
     expect(s.deletes[0]).toContain('/me/tags/age');
   });

@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 import { Button } from '../components/Button';
+import { ConfirmButton } from '../components/ConfirmButton';
 import {
   claimableCatalog,
   purchasableTags,
@@ -113,17 +114,21 @@ export function TagsCard(): React.JSX.Element {
     [client, load],
   );
 
+  /*
+   * The asking belongs to `ConfirmButton`, not to `confirm()`. That component
+   * exists specifically in place of the browser dialog and says why in its own
+   * docstring: a dialog the app cannot style, which lands outside the page for a
+   * screen reader and is blocked outright in some embedded browsers, leaving the
+   * action silently impossible. Every other destructive control in the browser —
+   * removing a friend, a favourite, a block, a comment — goes through it.
+   */
   const revoke = useCallback(
     async (tag: ClaimedTag) => {
-      // giving up a tag also deletes whatever was typed into it, so it asks
-      if (!window.confirm(t('tags.removeConfirm', { label: tag.label }))) return;
-      setBusy(true);
       const res = await unclaimTag(client, tag.key);
-      setBusy(false);
       if (!res.ok) setFailure(res.error);
       await load();
     },
-    [client, load, t],
+    [client, load],
   );
 
   const toClaim = catalog ? claimableCatalog(catalog, claimed) : [];
@@ -172,15 +177,13 @@ export function TagsCard(): React.JSX.Element {
                         {t('tags.showOnProfile', { tag: tag.label })}
                       </span>
                     </label>
-                    <button
-                      type="button"
+                    <ConfirmButton
                       className="btn btn-ghost btn-sm"
+                      label={t('tags.remove')}
+                      title={t('tags.removeTag', { tag: tag.label })}
                       disabled={busy}
-                      aria-label={t('tags.removeTag', { tag: tag.label })}
-                      onClick={() => void revoke(tag)}
-                    >
-                      {t('tags.remove')}
-                    </button>
+                      onConfirm={() => revoke(tag)}
+                    />
                   </div>
                 </li>
               ))}

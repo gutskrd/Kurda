@@ -979,7 +979,6 @@ export const de: Catalogue = {
   'tags.hiddenStatus': 'verborgen',
   'tags.remove': 'Tag entfernen',
   'tags.removeTag': '{tag} entfernen',
-  'tags.removeConfirm': '„{label}“ aus deinem Profil entfernen? Damit wird auch der eingegebene Wert gelöscht.',
   'tags.add': 'Tag hinzufügen',
   'tags.claim': 'Hinzufügen',
   'tags.addTitle': '„{tag}“ hinzufügen',

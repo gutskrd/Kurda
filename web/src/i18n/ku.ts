@@ -985,7 +985,6 @@ export const ku: Catalogue = {
   'tags.hiddenStatus': 'veşartî',
   'tags.remove': 'Etîketê rake',
   'tags.removeTag': '{tag} rake',
-  'tags.removeConfirm': '“{label}” ji profîla te were rakirin? Ev her nirxa ku te nivîsî jê dibe.',
   'tags.add': 'Nîşanekê zêde bike',
   'tags.claim': 'Zêde bike',
   'tags.addTitle': '“{tag}” zêde bike',

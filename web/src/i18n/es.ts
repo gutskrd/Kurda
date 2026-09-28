@@ -979,7 +979,6 @@ export const es: Catalogue = {
   'tags.hiddenStatus': 'oculta',
   'tags.remove': 'Quitar la etiqueta',
   'tags.removeTag': 'Quitar {tag}',
-  'tags.removeConfirm': '¿Quitar «{label}» de tu perfil? Esto borra cualquier valor que hayas escrito.',
   'tags.add': 'Añadir una etiqueta',
   'tags.claim': 'Añadir',
   'tags.addTitle': 'Añadir «{tag}»',

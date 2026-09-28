@@ -1072,7 +1072,6 @@ export const en = {
   'tags.hiddenStatus': 'hidden',
   'tags.remove': 'Remove tag',
   'tags.removeTag': 'Remove {tag}',
-  'tags.removeConfirm': 'Remove “{label}” from your profile? This deletes any value you entered.',
   'tags.add': 'Add a tag',
   'tags.claim': 'Add',
   'tags.addTitle': 'Add “{tag}”',
