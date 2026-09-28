@@ -12,7 +12,7 @@ import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { friendActionLabel, isActionable, type FriendStatus } from './format';
+import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
@@ -66,15 +66,42 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
   useFocusEffect(useCallback(() => load(), [load]));
 
-  const act = useCallback(
+  const perform = useCallback(
     async (status: FriendStatus) => {
       setBusy(true);
       if (status === 'none') await client.post('/friends/requests', { userId });
       else if (status === 'pending_in') await client.post(`/friends/requests/${userId}/accept`);
+      else if (status === 'pending_out') await client.delete(`/friends/requests/${userId}`);
+      else if (status === 'friends') await client.delete(`/friends/${userId}`);
       setBusy(false);
       load();
     },
     [client, userId, load],
+  );
+
+  /**
+   * The button, and the question the two destructive states ask first.
+   *
+   * Sending a request and accepting one happen on the tap — they are offers, and
+   * an offer made by accident costs the other person a notification. Cancelling
+   * a request and ending a friendship do not: both throw away something the two
+   * of you already have, and neither is recoverable without the other person
+   * agreeing again, so both name the person and wait to be told yes.
+   */
+  const act = useCallback(
+    (status: FriendStatus) => {
+      const undo = undoAction(status);
+      if (!undo) {
+        void perform(status);
+        return;
+      }
+      const name = profile?.displayName ?? profile?.username ?? '';
+      Alert.alert(t(undo.label), t(undo.prompt, { name }), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t(undo.label), style: 'destructive', onPress: () => void perform(status) },
+      ]);
+    },
+    [perform, profile, t],
   );
 
   const block = useCallback(() => {
@@ -154,7 +181,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               {labelKey ? (
                 <ClayButton
                   label={t(labelKey)}
-                  tone={isActionable(profile.friendStatus) ? 'primary' : 'neutral'}
+                  // an undo is pressable but not an invitation, so it stays neutral
+                  tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
                   size="large"
                   busy={busy}
                   disabled={!isActionable(profile.friendStatus)}

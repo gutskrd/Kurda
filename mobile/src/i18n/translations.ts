@@ -862,6 +862,14 @@ export type TranslationKey =
   | 'civak.empty.body'
   | 'inbox.empty.body'
   | 'profile.nothingHere.body'
+  | 'friends.sent'
+  | 'friends.cancel'
+  | 'friends.cancelRequest'
+  | 'friends.remove'
+  | 'friends.removeWho'
+  | 'friends.suggestions'
+  | 'friends.mutual'
+  | 'friends.add'
   | 'library.emptyAction';
 
 type Catalog = Record<TranslationKey, string>;
@@ -1701,6 +1709,14 @@ const en: Catalog = {
   'inbox.empty.body': 'Friend requests, messages and notifications arrive here.',
   'profile.nothingHere.body': 'What you post and play shows up here.',
   'library.emptyAction': 'Write something',
+  'friends.sent': 'Sent',
+  'friends.cancel': 'Cancel',
+  'friends.cancelRequest': 'Cancel your request to {name}',
+  'friends.remove': 'Remove',
+  'friends.removeWho': 'Remove {name} as a friend',
+  'friends.suggestions': 'People you may know',
+  'friends.mutual': '{count} mutual friends',
+  'friends.add': 'Add',
 };
 
 const ku: Catalog = {
@@ -2538,6 +2554,14 @@ const ku: Catalog = {
   'inbox.empty.body': 'Daxwazên hevaltiyê, peyam û agahdarî li vir tên.',
   'profile.nothingHere.body': 'Tiştên ku tu diweşînî û dilîzî li vir xuya dibin.',
   'library.emptyAction': 'Tiştekî binivîse',
+  'friends.sent': 'Şandin',
+  'friends.cancel': 'Betal bike',
+  'friends.cancelRequest': 'Daxwaza xwe ya ji {name} betal bike',
+  'friends.remove': 'Rake',
+  'friends.removeWho': '{name} ji hevaltiyê rake',
+  'friends.suggestions': 'Kesên ku dibe tu wan nas bikî',
+  'friends.mutual': '{count} hevalên hevpar',
+  'friends.add': 'Zêde bike',
 };
 
 const de: Catalog = {
@@ -3375,6 +3399,14 @@ const de: Catalog = {
   'inbox.empty.body': 'Freundschaftsanfragen, Nachrichten und Benachrichtigungen landen hier.',
   'profile.nothingHere.body': 'Was du veröffentlichst und spielst, erscheint hier.',
   'library.emptyAction': 'Schreib etwas',
+  'friends.sent': 'Gesendet',
+  'friends.cancel': 'Abbrechen',
+  'friends.cancelRequest': 'Deine Anfrage an {name} zurückziehen',
+  'friends.remove': 'Entfernen',
+  'friends.removeWho': '{name} als Freund entfernen',
+  'friends.suggestions': 'Leute, die du kennen könntest',
+  'friends.mutual': '{count} gemeinsame Freunde',
+  'friends.add': 'Hinzufügen',
 };
 
 const es: Catalog = {
@@ -4212,6 +4244,14 @@ const es: Catalog = {
   'inbox.empty.body': 'Aquí llegan las solicitudes de amistad, los mensajes y las notificaciones.',
   'profile.nothingHere.body': 'Lo que publicas y juegas aparece aquí.',
   'library.emptyAction': 'Escribe algo',
+  'friends.sent': 'Enviadas',
+  'friends.cancel': 'Cancelar',
+  'friends.cancelRequest': 'Cancelar tu solicitud a {name}',
+  'friends.remove': 'Quitar',
+  'friends.removeWho': 'Quitar a {name} de tus amigos',
+  'friends.suggestions': 'Personas que quizá conozcas',
+  'friends.mutual': '{count} amigos en común',
+  'friends.add': 'Añadir',
 };
 
 const tr: Catalog = {
@@ -5049,6 +5089,14 @@ const tr: Catalog = {
   'inbox.empty.body': 'Arkadaşlık istekleri, mesajlar ve bildirimler buraya gelir.',
   'profile.nothingHere.body': 'Paylaştıkların ve oynadıkların burada görünür.',
   'library.emptyAction': 'Bir şeyler yaz',
+  'friends.sent': 'Gönderilen',
+  'friends.cancel': 'Vazgeç',
+  'friends.cancelRequest': '{name} kişisine gönderdiğin isteği geri al',
+  'friends.remove': 'Çıkar',
+  'friends.removeWho': '{name} kişisini arkadaşlıktan çıkar',
+  'friends.suggestions': 'Tanıyor olabileceğin kişiler',
+  'friends.mutual': '{count} ortak arkadaş',
+  'friends.add': 'Ekle',
 };
 
 const ar: Catalog = {
@@ -5886,6 +5934,14 @@ const ar: Catalog = {
   'inbox.empty.body': 'تصل هنا طلبات الصداقة والرسائل والإشعارات.',
   'profile.nothingHere.body': 'يظهر هنا ما تنشره وما تلعبه.',
   'library.emptyAction': 'اكتب شيئًا',
+  'friends.sent': 'المُرسَلة',
+  'friends.cancel': 'إلغاء',
+  'friends.cancelRequest': 'إلغاء طلبك إلى {name}',
+  'friends.remove': 'إزالة',
+  'friends.removeWho': 'إزالة {name} من أصدقائك',
+  'friends.suggestions': 'أشخاص قد تعرفهم',
+  'friends.mutual': '{count} أصدقاء مشتركون',
+  'friends.add': 'إضافة',
 };
 
 const fr: Catalog = {
@@ -6723,6 +6779,14 @@ const fr: Catalog = {
   'inbox.empty.body': 'Les demandes d’ami, les messages et les notifications arrivent ici.',
   'profile.nothingHere.body': 'Ce que vous publiez et jouez apparaît ici.',
   'library.emptyAction': 'Écrivez quelque chose',
+  'friends.sent': 'Envoyées',
+  'friends.cancel': 'Annuler',
+  'friends.cancelRequest': 'Annuler votre demande à {name}',
+  'friends.remove': 'Retirer',
+  'friends.removeWho': 'Retirer {name} de vos amis',
+  'friends.suggestions': 'Personnes que vous connaissez peut-être',
+  'friends.mutual': '{count} amis en commun',
+  'friends.add': 'Ajouter',
 };
 
 const nl: Catalog = {
@@ -7560,6 +7624,14 @@ const nl: Catalog = {
   'inbox.empty.body': 'Vriendschapsverzoeken, berichten en meldingen komen hier binnen.',
   'profile.nothingHere.body': 'Wat je plaatst en speelt verschijnt hier.',
   'library.emptyAction': 'Schrijf iets',
+  'friends.sent': 'Verzonden',
+  'friends.cancel': 'Annuleren',
+  'friends.cancelRequest': 'Je verzoek aan {name} annuleren',
+  'friends.remove': 'Verwijderen',
+  'friends.removeWho': '{name} als vriend verwijderen',
+  'friends.suggestions': 'Mensen die je misschien kent',
+  'friends.mutual': '{count} gemeenschappelijke vrienden',
+  'friends.add': 'Toevoegen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8398,6 +8470,14 @@ const ckb: Catalog = {
   'inbox.empty.body': 'داواکاری هاوڕێیەتی و نامە و ئاگادارکردنەوەکان لێرە دەگەن.',
   'profile.nothingHere.body': 'ئەوەی بڵاوی دەکەیتەوە و یاری دەکەیت لێرە دەردەکەوێت.',
   'library.emptyAction': 'شتێک بنووسە',
+  'friends.sent': 'نێردراو',
+  'friends.cancel': 'پاشگەزبوونەوە',
+  'friends.cancelRequest': 'داواکارییەکەت بۆ {name} هەڵبوەشێنەوە',
+  'friends.remove': 'لابردن',
+  'friends.removeWho': '{name} لە هاوڕێیەتی لابە',
+  'friends.suggestions': 'کەسانێک کە لەوانەیە بیانناسیت',
+  'friends.mutual': '{count} هاوڕێی هاوبەش',
+  'friends.add': 'زیادکردن',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
