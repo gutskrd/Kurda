@@ -5,7 +5,7 @@
  * React fills it in. That is fine for a reader and useless for everything that
  * unfurls a link — WhatsApp, Telegram, iMessage, Slack, Twitter, Facebook — none
  * of which runs the JavaScript that would set the title. Every post shared out
- * of Hevalo arrived as the same grey "Hevalo — Learn Kurdish" card, whichever
+ * of Hevalo arrived as the same grey card, whichever
  * post it was.
  *
  * So a post's URL gets its real title, its author, its first lines and its
@@ -181,14 +181,93 @@ function withPreview(html: Response, preview: Preview, url: string): Response {
     .transform(html);
 }
 
+/** How long the edge may reuse the sitemap. It only changes when somebody publishes. */
+const SITEMAP_TTL_SECONDS = 3_600;
+/** Bounded: five pages of a hundred is five hundred posts, and a fixed cost. */
+const SITEMAP_PAGES = 5;
+const SITEMAP_PAGE_SIZE = 100;
+
+/** The paths worth submitting that are not a post. */
+const STATIC_PATHS = ['/', '/app', '/app/games', '/app/rankings'];
+
+/**
+ * The sitemap, built from what is actually published.
+ *
+ * A static file would list the four paths above and nothing else, which misses
+ * the only pages here worth finding: the library of Kurdish stories and poems.
+ * Those are rows in a database, so the list has to come from the API —
+ * `GET /library/posts` is public and returns only `status = 'published'`, which
+ * is exactly the set that belongs in a sitemap.
+ *
+ * Bounded on purpose. An unbounded loop at the edge is a request that gets
+ * slower every time somebody writes a poem.
+ *
+ * A failed fetch still returns a valid sitemap with the static paths in it: half
+ * a sitemap is worth more than a 500, which a crawler can read as the whole site
+ * being unavailable.
+ */
+async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
+  const urls: Array<{ loc: string; lastmod?: string }> = STATIC_PATHS.map((p) => ({ loc: origin + p }));
+
+  for (let page = 0; page < SITEMAP_PAGES; page++) {
+    const offset = page * SITEMAP_PAGE_SIZE;
+    const body = await fetchPost(apiOrigin, `/library/posts?limit=${SITEMAP_PAGE_SIZE}&offset=${offset}`);
+    const posts = Array.isArray((body as { posts?: unknown } | null)?.posts)
+      ? (body as { posts: unknown[] }).posts
+      : null;
+    if (!posts || posts.length === 0) break;
+
+    for (const raw of posts) {
+      const post = raw as { id?: unknown; updatedAt?: unknown; publishedAt?: unknown };
+      // the id goes straight into a URL, so it is a UUID or it is nothing
+      if (typeof post.id !== 'string' || !UUID.test(post.id)) continue;
+      const when = typeof post.updatedAt === 'string' ? post.updatedAt : post.publishedAt;
+      urls.push({
+        loc: `${origin}/app/library/${post.id}`,
+        lastmod: typeof when === 'string' ? when.slice(0, 10) : undefined,
+      });
+    }
+
+    // a short page is the last page
+    if (posts.length < SITEMAP_PAGE_SIZE) break;
+  }
+
+  const entries = urls
+    .map((u) => {
+      const lastmod = u.lastmod ? `<lastmod>${attr(u.lastmod)}</lastmod>` : '';
+      return `<url><loc>${attr(u.loc)}</loc>${lastmod}</url>`;
+    })
+    .join('');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${entries}</urlset>`;
+
+  return new Response(xml, {
+    headers: {
+      'content-type': 'application/xml; charset=utf-8',
+      'cache-control': `public, max-age=0, s-maxage=${SITEMAP_TTL_SECONDS}`,
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // the asset binding answers everything; this only rewrites what comes back
+    const url = new URL(request.url);
+
+    /*
+     * Built here rather than shipped as a file in the bundle, because it has to
+     * list what is published now — not what was published when the site was last
+     * deployed. Answered before the asset binding is asked, so a stray
+     * `public/sitemap.xml` could never shadow it.
+     */
+    if (request.method === 'GET' && url.pathname === '/sitemap.xml') {
+      return sitemap(env.API_ORIGIN ?? DEFAULT_API, url.origin);
+    }
+
+    // the asset binding answers everything else; this only rewrites what comes back
     const assets = await env.ASSETS.fetch(request);
 
     if (request.method !== 'GET') return assets;
 
-    const url = new URL(request.url);
     const route = routeFor(url.pathname);
     if (!route) return assets;
 
@@ -210,4 +289,4 @@ export default {
 };
 
 // exported for the tests, which is the only reason these are not file-local
-export const __test = { routeFor, attr, trim, previewOf };
+export const __test = { routeFor, attr, trim, previewOf, sitemap };

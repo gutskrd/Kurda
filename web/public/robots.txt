@@ -1,0 +1,29 @@
+# What a crawler may read.
+#
+# Everything public is open: the landing page, the feed, the games, and — the
+# part that is actually worth finding — the library of Kurdish stories and poems
+# at /app/library/<id>, each of which the worker gives a real title and excerpt.
+#
+# The paths below are closed not to hide them but because they are not pages. A
+# signed-out crawler gets the same "you need an account" panel on every one of
+# them, so indexing them would spend the crawl budget on one thin page repeated
+# a dozen times, and compete with the pages that do say something.
+#
+# `/api/` is not this host; it is listed so a misconfigured proxy never leaks a
+# JSON endpoint into search results.
+
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /app/settings
+Disallow: /app/profile/edit
+Disallow: /app/saved
+Disallow: /app/messages
+Disallow: /api/
+
+Sitemap: https://hevalo.app/sitemap.xml

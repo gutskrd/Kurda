@@ -9,6 +9,36 @@
       name="description"
       content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
     />
+    <!--
+      What a crawler and a link preview see.
+
+      This file is the only HTML the site has: React fills the page in afterwards,
+      and nothing that unfurls a link runs React. The worker rewrites these tags
+      for a post's own URL (see src/worker.ts); everything else — the landing
+      page, the feed, the games — is served exactly this, so it has to stand on
+      its own.
+
+      The title is the name and nothing else. The description carries what the
+      site is, because that is the line a search result shows, and it is rewritten
+      per language once the app knows which one to use.
+    -->
+    <link rel="canonical" href="https://hevalo.app/" />
+    <meta property="og:site_name" content="Hevalo" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hevalo.app/" />
+    <meta property="og:title" content="Hevalo" />
+    <meta
+      property="og:description"
+      content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
+    />
+    <meta property="og:image" content="https://hevalo.app/logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Hevalo" />
+    <meta
+      name="twitter:description"
+      content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
+    />
+    <meta name="twitter:image" content="https://hevalo.app/logo.png" />
   </head>
   <body>
     <div id="root"></div>

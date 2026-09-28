@@ -6,10 +6,10 @@
  * chat app that unfurls the link. The rest is about a preview reading well —
  * ending on a word, naming the author, not claiming a picture it does not have.
  */
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { __test } from './worker';
 
-const { routeFor, attr, trim, previewOf } = __test;
+const { routeFor, attr, trim, previewOf, sitemap } = __test;
 
 describe('which paths get a preview', () => {
   it('recognises a post and a picture', () => {
@@ -124,5 +124,103 @@ describe('what a preview says', () => {
     // the ellipsis and the byline are the only things past the cut
     expect(p.title.length).toBeLessThan(90);
     expect(p.title.endsWith('· @rojîn')).toBe(true);
+  });
+});
+
+describe('the sitemap', () => {
+  const ORIGIN = 'https://hevalo.app';
+  const ID = '11111111-2222-4333-8444-555555555555';
+  const ID2 = '99999999-2222-4333-8444-555555555555';
+
+  const serving = (pages: unknown[][]) => {
+    let call = 0;
+    return vi.fn(async () => {
+      const posts = pages[call++] ?? [];
+      return new Response(JSON.stringify({ posts }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+  };
+
+  const xmlOf = async (res: Response) => await res.text();
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('lists the static paths and every published post', async () => {
+    vi.stubGlobal('fetch', serving([[{ id: ID, updatedAt: '2026-09-28T10:00:00.000Z' }]]));
+    const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
+
+    expect(xml).toContain('<loc>https://hevalo.app/</loc>');
+    expect(xml).toContain('<loc>https://hevalo.app/app/games</loc>');
+    expect(xml).toContain(`<loc>https://hevalo.app/app/library/${ID}</loc>`);
+    // a date, not a timestamp: a sitemap lastmod is a day
+    expect(xml).toContain('<lastmod>2026-09-28</lastmod>');
+  });
+
+  it('is well-formed XML with the right content type', async () => {
+    vi.stubGlobal('fetch', serving([[]]));
+    const res = await sitemap('https://api.test', ORIGIN);
+
+    expect(res.headers.get('content-type')).toContain('application/xml');
+    const xml = await xmlOf(res);
+    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+    expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
+    expect(xml.endsWith('</urlset>')).toBe(true);
+  });
+
+  /**
+   * The id goes straight into a URL. Anything that is not a UUID is dropped
+   * rather than escaped, because there is no reason for it to be there and no
+   * safe rendering of a guess.
+   */
+  it('drops anything whose id is not a UUID', async () => {
+    vi.stubGlobal(
+      'fetch',
+      serving([[{ id: '../../etc/passwd' }, { id: 42 }, { id: null }, { id: ID }]]),
+    );
+    const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
+
+    expect(xml).not.toContain('passwd');
+    expect(xml).toContain(`/app/library/${ID}`);
+    // four static paths plus the one good post
+    expect(xml.match(/<url>/g)).toHaveLength(5);
+  });
+
+  it('stops at a short page rather than asking for another', async () => {
+    const fetchMock = serving([[{ id: ID }]]);
+    vi.stubGlobal('fetch', fetchMock);
+    await sitemap('https://api.test', ORIGIN);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('never asks for more than its page limit', async () => {
+    const full = Array.from({ length: 100 }, () => ({ id: ID }));
+    const fetchMock = serving([full, full, full, full, full, full, full]);
+    vi.stubGlobal('fetch', fetchMock);
+    await sitemap('https://api.test', ORIGIN);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  /*
+   * Half a sitemap beats a 500, which a crawler can read as the whole site being
+   * unavailable — and the four paths that need no API are still true.
+   */
+  it('still answers when the API does not', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('down'); }));
+    const res = await sitemap('https://api.test', ORIGIN);
+
+    expect(res.status).toBe(200);
+    const xml = await xmlOf(res);
+    expect(xml).toContain('<loc>https://hevalo.app/</loc>');
+    expect(xml.match(/<url>/g)).toHaveLength(4);
+  });
+
+  it('omits lastmod rather than inventing one', async () => {
+    vi.stubGlobal('fetch', serving([[{ id: ID2 }]]));
+    const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
+    expect(xml).toContain(`<url><loc>https://hevalo.app/app/library/${ID2}</loc></url>`);
   });
 });
