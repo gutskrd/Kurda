@@ -952,4 +952,17 @@ export const es: Catalogue = {
   'leagues.tier.pearl': 'Perla',
   'leagues.tier.obsidian': 'Obsidiana',
   'leagues.tier.diamond': 'Diamante',
+
+  // ---- notification preferences (KUR-095) ---------------------------------
+  'notifications.title': 'Notificaciones',
+  'notifications.pref.streak': 'Recordatorios de racha',
+  'notifications.pref.friends': 'Actividad de amigos',
+  'notifications.pref.games': 'Invitaciones y resultados de partidas',
+  'notifications.pref.events': 'Eventos y misiones',
+  'notifications.pref.news': 'Novedades y ofertas',
+  'notifications.quietHours': 'Horas de silencio',
+  'notifications.enableQuietHours': 'Activar las horas de silencio',
+  'notifications.quietHoursHelp': 'No se envían notificaciones durante este intervalo.',
+  'notifications.quietFrom': 'Desde',
+  'notifications.quietTo': 'Hasta',
 };

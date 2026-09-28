@@ -8,6 +8,7 @@ import { ErrorState } from '../components/states';
 import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
+import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -72,6 +73,10 @@ export function Settings(): React.JSX.Element {
         everywhere else, a blocked person is already invisible to you.
       */}
       <BlockedUsers />
+
+      {/* the other half of "who reaches me": privacy above says who may see
+          you, this says what the app is allowed to interrupt you about */}
+      <NotificationPrefsCard />
 
       <section className="card" style={{ marginTop: 20 }}>
         <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.sessions.title')}</h2>
