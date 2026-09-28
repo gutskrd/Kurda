@@ -14,8 +14,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
 import { tierMeta } from '../leagues/format';
+import { FavoriteRow } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import type { ProfileSections } from '../profile/sections';
 import { ReportUserSheet } from './ReportUserSheet';
@@ -37,6 +39,13 @@ interface Profile {
   achievements?: number;
   /** which activity sections they let people see; null when private */
   sections?: ProfileSections | null;
+  /*
+   * What they pinned to their profile. The API only sends these when the post
+   * behind them is still published, so there is nothing to check here — an
+   * unpublished favourite arrives as null and simply does not draw.
+   */
+  favoritePoem?: FavoriteRef | null;
+  favoriteStory?: FavoriteRef | null;
 }
 
 /** Public profile with a friend action + block (KUR-082). */
@@ -145,12 +154,23 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           {profile.private ? (
             <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
           ) : (
-            <View style={styles.stats}>
-              <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
-              <Stat label="XP" value={`${profile.xp ?? 0}`} />
-              <Stat label={t('profile.league')} value={tierMeta(profile.tier ?? 'bronze').label} />
-              <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
-            </View>
+            <>
+              <View style={styles.stats}>
+                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
+                <Stat label="XP" value={`${profile.xp ?? 0}`} />
+                <Stat label={t('profile.league')} value={tierMeta(profile.tier ?? 'bronze').label} />
+                <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
+              </View>
+
+              {/* behind the same privacy check as the stats: pinning a poem is
+                  something you did for people who can see your profile */}
+              {profile.favoritePoem ? (
+                <FavoriteRow label={t('profile.favoritePoem')} title={profile.favoritePoem.title} />
+              ) : null}
+              {profile.favoriteStory ? (
+                <FavoriteRow label={t('profile.favoriteStory')} title={profile.favoriteStory.title} />
+              ) : null}
+            </>
           )}
 
           {profile.friendStatus !== 'self' ? (

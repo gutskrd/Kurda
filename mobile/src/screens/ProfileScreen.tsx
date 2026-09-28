@@ -14,7 +14,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { CosmeticBackground, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
+import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
 import { countryName } from '@kurda/shared';
 import { ProfileActivity } from '../profile/ProfileActivity';
@@ -303,8 +303,8 @@ export function ProfileScreen() {
         <GiftedNote background={me?.background} icon={me?.icon} />
 
         {/* only where there is one; an empty frame saying so is not a showcase */}
-        {me?.favoritePoem ? <Favorite label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}
-        {me?.favoriteStory ? <Favorite label={t('profile.favoriteStory')} title={me.favoriteStory.title} /> : null}
+        {me?.favoritePoem ? <FavoriteRow label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}
+        {me?.favoriteStory ? <FavoriteRow label={t('profile.favoriteStory')} title={me.favoriteStory.title} /> : null}
 
         {user?.id ? <ProfileActivity userId={user.id} own /> : null}
       </ScrollView>
@@ -335,17 +335,6 @@ function Stat({ label, value, onPress }: { label: string; value: string; onPress
     >
       {body}
     </Pressable>
-  );
-}
-
-/** A poem or a story somebody put on their profile on purpose. */
-function Favorite({ label, title }: { label: string; title: string }): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.favorite}>
-      <Text style={[styles.favoriteLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.favoriteTitle, { color: colors.textPrimary }]}>{title}</Text>
-    </View>
   );
 }
 
@@ -404,8 +393,4 @@ const styles = StyleSheet.create({
   },
 
   bio: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
-
-  favorite: { alignSelf: 'stretch', gap: 2, marginTop: spacing.md },
-  favoriteLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
-  favoriteTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
 });

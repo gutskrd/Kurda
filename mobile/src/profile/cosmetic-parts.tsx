@@ -123,10 +123,31 @@ export function flagUrl(code: string): string {
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
+/**
+ * A poem or a story somebody put on their profile on purpose.
+ *
+ * Here rather than on a screen because two screens show it: your own profile and
+ * somebody else's. It lived on `ProfileScreen` while only that one did, and the
+ * moment a second screen needed it was the moment it would otherwise have been
+ * copied — which is the drift this file exists to prevent.
+ */
+export function FavoriteRow({ label, title }: { label: string; title: string }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.favorite}>
+      <Text style={[styles.favoriteLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.favoriteTitle, { color: colors.textPrimary }]}>{title}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   premium: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   premiumText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   gifts: { gap: 2, marginTop: spacing.xs },
   gift: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   giftText: { fontSize: typography.sizes.xs },
+  favorite: { alignSelf: 'stretch', gap: 2, marginTop: spacing.md },
+  favoriteLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
+  favoriteTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
 });
