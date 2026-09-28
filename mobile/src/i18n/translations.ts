@@ -870,6 +870,11 @@ export type TranslationKey =
   | 'friends.suggestions'
   | 'friends.mutual'
   | 'friends.add'
+  | 'favorites.title'
+  | 'favorites.none'
+  | 'favorites.change'
+  | 'favorites.noPoems'
+  | 'favorites.noStories'
   | 'library.emptyAction';
 
 type Catalog = Record<TranslationKey, string>;
@@ -1717,6 +1722,11 @@ const en: Catalog = {
   'friends.suggestions': 'People you may know',
   'friends.mutual': '{count} mutual friends',
   'friends.add': 'Add',
+  'favorites.title': 'Favorites',
+  'favorites.none': 'None',
+  'favorites.change': 'Change',
+  'favorites.noPoems': 'No published poems yet.',
+  'favorites.noStories': 'No published stories yet.',
 };
 
 const ku: Catalog = {
@@ -2562,6 +2572,11 @@ const ku: Catalog = {
   'friends.suggestions': 'Kesên ku dibe tu wan nas bikî',
   'friends.mutual': '{count} hevalên hevpar',
   'friends.add': 'Zêde bike',
+  'favorites.title': 'Bijare',
+  'favorites.none': 'Tune',
+  'favorites.change': 'Biguherîne',
+  'favorites.noPoems': 'Hê helbestên weşandî tune ne.',
+  'favorites.noStories': 'Hê çîrokên weşandî tune ne.',
 };
 
 const de: Catalog = {
@@ -3407,6 +3422,11 @@ const de: Catalog = {
   'friends.suggestions': 'Leute, die du kennen könntest',
   'friends.mutual': '{count} gemeinsame Freunde',
   'friends.add': 'Hinzufügen',
+  'favorites.title': 'Favoriten',
+  'favorites.none': 'Keins',
+  'favorites.change': 'Ändern',
+  'favorites.noPoems': 'Noch keine veröffentlichten Gedichte.',
+  'favorites.noStories': 'Noch keine veröffentlichten Geschichten.',
 };
 
 const es: Catalog = {
@@ -4252,6 +4272,11 @@ const es: Catalog = {
   'friends.suggestions': 'Personas que quizá conozcas',
   'friends.mutual': '{count} amigos en común',
   'friends.add': 'Añadir',
+  'favorites.title': 'Favoritos',
+  'favorites.none': 'Ninguno',
+  'favorites.change': 'Cambiar',
+  'favorites.noPoems': 'Todavía no hay poemas publicados.',
+  'favorites.noStories': 'Todavía no hay relatos publicados.',
 };
 
 const tr: Catalog = {
@@ -5097,6 +5122,11 @@ const tr: Catalog = {
   'friends.suggestions': 'Tanıyor olabileceğin kişiler',
   'friends.mutual': '{count} ortak arkadaş',
   'friends.add': 'Ekle',
+  'favorites.title': 'Favoriler',
+  'favorites.none': 'Yok',
+  'favorites.change': 'Değiştir',
+  'favorites.noPoems': 'Henüz yayımlanmış şiir yok.',
+  'favorites.noStories': 'Henüz yayımlanmış hikâye yok.',
 };
 
 const ar: Catalog = {
@@ -5942,6 +5972,11 @@ const ar: Catalog = {
   'friends.suggestions': 'أشخاص قد تعرفهم',
   'friends.mutual': '{count} أصدقاء مشتركون',
   'friends.add': 'إضافة',
+  'favorites.title': 'المفضلة',
+  'favorites.none': 'لا شيء',
+  'favorites.change': 'تغيير',
+  'favorites.noPoems': 'لا توجد قصائد منشورة بعد.',
+  'favorites.noStories': 'لا توجد قصص منشورة بعد.',
 };
 
 const fr: Catalog = {
@@ -6787,6 +6822,11 @@ const fr: Catalog = {
   'friends.suggestions': 'Personnes que vous connaissez peut-être',
   'friends.mutual': '{count} amis en commun',
   'friends.add': 'Ajouter',
+  'favorites.title': 'Favoris',
+  'favorites.none': 'Aucun',
+  'favorites.change': 'Changer',
+  'favorites.noPoems': 'Aucun poème publié pour l’instant.',
+  'favorites.noStories': 'Aucune histoire publiée pour l’instant.',
 };
 
 const nl: Catalog = {
@@ -7632,6 +7672,11 @@ const nl: Catalog = {
   'friends.suggestions': 'Mensen die je misschien kent',
   'friends.mutual': '{count} gemeenschappelijke vrienden',
   'friends.add': 'Toevoegen',
+  'favorites.title': 'Favorieten',
+  'favorites.none': 'Geen',
+  'favorites.change': 'Wijzigen',
+  'favorites.noPoems': 'Nog geen gepubliceerde gedichten.',
+  'favorites.noStories': 'Nog geen gepubliceerde verhalen.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8478,6 +8523,11 @@ const ckb: Catalog = {
   'friends.suggestions': 'کەسانێک کە لەوانەیە بیانناسیت',
   'friends.mutual': '{count} هاوڕێی هاوبەش',
   'friends.add': 'زیادکردن',
+  'favorites.title': 'دڵخوازەکان',
+  'favorites.none': 'هیچ',
+  'favorites.change': 'بگۆڕە',
+  'favorites.noPoems': 'هێشتا شیعری بڵاوکراوە نییە.',
+  'favorites.noStories': 'هێشتا چیرۆکی بڵاوکراوە نییە.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

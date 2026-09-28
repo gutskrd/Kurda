@@ -14,6 +14,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from './InitialsAvatar';
 import { CosmeticPicker } from './CosmeticPicker';
+import { FavoritesPicker } from './FavoritesPicker';
+import type { FavoriteRef } from './types';
 import { SectionToggles } from './SectionToggles';
 import { avatarAssetUrl } from './cosmetics';
 
@@ -28,6 +30,9 @@ interface Me {
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
   premiumIconEnabled?: boolean;
+  /* `/me` has always sent these two; nothing on the phone had asked for them */
+  favoritePoem?: FavoriteRef | null;
+  favoriteStory?: FavoriteRef | null;
 }
 
 interface AvatarOption {
@@ -249,6 +254,12 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               equippedBackground={me?.equippedBackgroundSku ?? null}
               equippedIcon={me?.equippedIconSku ?? null}
               iconVisible={me?.premiumIconEnabled ?? true}
+              onChanged={load}
+            />
+
+            <FavoritesPicker
+              favoritePoem={me?.favoritePoem ?? null}
+              favoriteStory={me?.favoriteStory ?? null}
               onChanged={load}
             />
           </ScrollView>
