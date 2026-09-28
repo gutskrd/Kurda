@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { GameEvent, ScoreLine } from './events';
-import { initGameState, opponentAnswered, reduce, selfResult, type GameState } from './reducer';
+import { initGameState, opponentAnswered, reduce, selfResult, type GameSnapshot, type GameState } from './reducer';
 
 const SELF = 'me';
 const OPP = 'them';
@@ -81,5 +81,78 @@ describe('reduce — flow', () => {
     s = apply(s, { type: 'answer_rejected', index: 0, code: 'ANSWER_TOO_LATE' });
     expect(s.myChoice).toBeNull();
     expect(s.rejected).toBe(true);
+  });
+});
+
+describe('reduce — the reconnect snapshot', () => {
+  const snap = (over: Partial<GameSnapshot> = {}): GameSnapshot => ({
+    phase: 'question',
+    questionIndex: 1,
+    questionCount: 3,
+    players: [{ id: SELF, username: 'me' }, { id: OPP, username: 'them' }],
+    ...over,
+  });
+
+  /**
+   * The count is the reason this action exists rather than reusing `question`.
+   * `GameEngine.getSnapshot` puts `index`, `prompt`, `options` and `endsAt` on
+   * `currentQuestion` and leaves the total *outside* it, as `questionCount` — so
+   * anything that takes `currentQuestion` at face value renders "question 2 of
+   * undefined". The browser's copy of this does exactly that.
+   */
+  it('takes the question count from beside the question, not from inside it', () => {
+    const s = reduce(initGameState(SELF), {
+      type: 'snapshot',
+      snapshot: snap({ currentQuestion: { index: 1, prompt: 'Q2', options: ['a', 'b'], endsAt: 9000 } }),
+    });
+    expect(s.phase).toBe('question');
+    expect(s.question).toEqual({ index: 1, total: 3, prompt: 'Q2', options: ['a', 'b'], endsAt: 9000 });
+  });
+
+  it('reads who has already answered the open question', () => {
+    const s = reduce(initGameState(SELF), {
+      type: 'snapshot',
+      snapshot: snap({
+        players: [{ id: SELF, username: 'me' }, { id: OPP, username: 'them', answeredCurrent: true }],
+        currentQuestion: { index: 1, prompt: 'Q2', options: ['a'], endsAt: 9000 },
+      }),
+    });
+    expect(s.answered).toEqual([OPP]);
+    expect(opponentAnswered(s)).toBe(true);
+  });
+
+  /* lobby and countdown carry no question; the phase alone is the news */
+  it('keeps the phase without inventing a question', () => {
+    const s = reduce(initGameState(SELF), { type: 'snapshot', snapshot: snap({ phase: 'lobby' }) });
+    expect(s.phase).toBe('lobby');
+    expect(s.question).toBeNull();
+  });
+
+  it('restores the scores of a finished game', () => {
+    const scores: ScoreLine[] = [
+      { userId: SELF, username: 'me', points: 3, correct: 3, rank: 1 },
+      { userId: OPP, username: 'them', points: 1, correct: 1, rank: 2 },
+    ];
+    const s = reduce(initGameState(SELF), { type: 'snapshot', snapshot: snap({ phase: 'results', scores }) });
+    expect(s.phase).toBe('results');
+    expect(selfResult(s)?.rank).toBe(1);
+  });
+
+  /**
+   * The one ordering that would be visible and wrong. A snapshot in flight when
+   * the results land would otherwise reopen a finished game underneath somebody
+   * reading their score.
+   */
+  it('never reopens a game that has already finished', () => {
+    const finished = apply(initGameState(SELF), {
+      type: 'results',
+      provisional: false,
+      scores: [{ userId: SELF, username: 'me', points: 2, correct: 2, rank: 1 }],
+    });
+    const s = reduce(finished, {
+      type: 'snapshot',
+      snapshot: snap({ currentQuestion: { index: 1, prompt: 'Q2', options: ['a'], endsAt: 9000 } }),
+    });
+    expect(s).toBe(finished);
   });
 });
