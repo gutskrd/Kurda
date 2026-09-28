@@ -138,3 +138,14 @@ export function transferOwnership(
 ): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>(`/groups/${groupId}/transfer`, { userId });
 }
+
+/**
+ * "I am typing" in a group thread.
+ *
+ * Fire and forget: the gateway fans it out to the room and nothing depends on the
+ * reply, so a failed ping is not worth telling anybody about — the indicator on
+ * the other side expires by itself either way.
+ */
+export const sendGroupTyping = (client: ApiClient, groupId: string): void => {
+  void client.post(`/groups/${groupId}/chat/typing`).catch(() => undefined);
+};
