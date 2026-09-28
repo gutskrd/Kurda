@@ -21,7 +21,9 @@ import { SkeletonList } from '../theme/Skeleton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
-import { groupHistory, markGroupRead, sendToGroup, type GroupMessage } from './api';
+import { groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
+import { useRoomEvents } from '../realtime/useRoomEvents';
+import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
 
 const MAX_LEN = 2000;
 
@@ -58,6 +60,7 @@ export function GroupThreadScreen({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [exhausted, setExhausted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { typing, note } = useTypingWatch();
 
   useEffect(() => {
     let active = true;
@@ -90,6 +93,45 @@ export function GroupThreadScreen({
     }
     setMessages((prev) => [...res.data.messages, ...prev]);
   }, [client, groupId, messages, loadingOlder, exhausted]);
+
+  /**
+   * The room, which this screen used to have no connection to at all.
+   *
+   * History loaded once on mount and nothing after it, so a reply to a group
+   * message did not appear until you left the thread and came back — the browser
+   * has joined `group:{id}` and listened for these three since the thread was
+   * built. Our own send still appends locally; the echo is dropped by id.
+   */
+  useRoomEvents(
+    `group:${groupId}`,
+    useCallback(
+      (ev) => {
+        if (ev.groupId !== groupId) return;
+        if (ev.type === 'group_msg') {
+          const message = ev.message as GroupMessage | undefined;
+          if (!message?.id) return;
+          setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+          // it is on screen, so it counts as read
+          void markGroupRead(client, groupId);
+          return;
+        }
+        if (ev.type === 'group_msg_deleted' && typeof ev.id === 'string') {
+          const id = ev.id;
+          setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deleted: true, body: '' } : m)));
+          return;
+        }
+        // the room includes us, so our own pings come back — ignore those
+        if (ev.type === 'group_typing' && typeof ev.username === 'string' && ev.userId !== me) {
+          note(ev.username);
+        }
+      },
+      [groupId, client, me, note],
+    ),
+  );
+
+  const signalTyping = useTypingSignal(
+    useCallback(() => void sendGroupTyping(client, groupId), [client, groupId]),
+  );
 
   const send = useCallback(async () => {
     const body = draft.trim();
@@ -139,6 +181,14 @@ export function GroupThreadScreen({
           />
         )}
 
+        {/* above the composer, where the browser puts it, and announced when it
+            changes rather than read out on every ping */}
+        {typing.length > 0 ? (
+          <Text style={[styles.typing, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+            {typingLabel(typing, t)}
+          </Text>
+        ) : null}
+
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
@@ -147,7 +197,10 @@ export function GroupThreadScreen({
             placeholder={t('chat.messagePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={draft}
-            onChangeText={setDraft}
+            onChangeText={(next) => {
+              setDraft(next);
+              signalTyping();
+            }}
             maxLength={MAX_LEN}
             multiline
             accessibilityLabel={t('chat.messagePlaceholder')}
@@ -215,6 +268,7 @@ const styles = StyleSheet.create({
   deletedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   deleted: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   empty: { textAlign: 'center', marginTop: spacing.xl, transform: [{ scaleY: -1 }] },
+  typing: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   inputRow: {
     flexDirection: 'row',

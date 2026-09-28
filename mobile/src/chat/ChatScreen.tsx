@@ -125,7 +125,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
           />
         )}
 
-        {peerTyping ? <Text style={[styles.typing, { color: colors.textSecondary }]}>{t('chat.typing', { name: username })}</Text> : null}
+        {peerTyping ? <Text style={[styles.typing, { color: colors.textSecondary }]}>{t('chat.typing.one', { name: username })}</Text> : null}
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
           <TextInput
