@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/logo.png" type="image/png" />
+    <!--
+      The tab icon carries its own field, because a tab strip is light in one
+      browser and dark in the next. The mark is one colour now, so the cut-out
+      version disappears into one of them.
+    -->
+    <link rel="icon" href="/favicon.png" type="image/png" />
     <title>Hevalo</title>
     <meta
       name="description"
@@ -31,14 +36,21 @@
       property="og:description"
       content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
     />
-    <meta property="og:image" content="https://hevalo.app/logo.png" />
-    <meta name="twitter:card" content="summary" />
+    <!--
+      A card, not the bare mark. Whatever unfurls this flattens a transparent
+      PNG onto a background of its choosing — usually white, which is exactly
+      where a white mark stops existing.
+    -->
+    <meta property="og:image" content="https://hevalo.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Hevalo" />
     <meta
       name="twitter:description"
       content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
     />
-    <meta name="twitter:image" content="https://hevalo.app/logo.png" />
+    <meta name="twitter:image" content="https://hevalo.app/og.png" />
   </head>
   <body>
     <div id="root"></div>

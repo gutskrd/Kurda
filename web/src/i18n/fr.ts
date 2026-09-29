@@ -590,6 +590,8 @@ export const fr: Catalogue = {
   'photo.sticker.yellowSun': 'Soleil jaune',
   'photo.sticker.whiteSun': 'Soleil blanc',
   'photo.sticker.blackSun': 'Soleil noir',
+  'photo.sticker.hevaloWhite': 'Logo Hevalo, blanc',
+  'photo.sticker.hevaloBlack': 'Logo Hevalo, noir',
   'photo.pickSticker': 'Choisis un sticker',
   'photo.swapSticker': 'Changer de sticker',
   'photo.closeStickers': 'Fermer le choix des stickers',

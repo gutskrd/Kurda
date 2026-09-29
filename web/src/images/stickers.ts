@@ -39,7 +39,15 @@ export const PICTURE_STICKERS: readonly PictureSticker[] = [
   { src: '/stickers/black_sun.webp', name: 'black-sun', labelKey: 'photo.sticker.blackSun' },
   { src: '/stickers/zilan.webp', name: 'Zilan' },
   { src: '/stickers/amed_spor.webp', name: 'Amed Spor' },
-  { src: '/stickers/logo.webp', name: 'Hevalo' },
+  /*
+   * Both, because the surface is somebody's photograph. The mark is one colour
+   * now, so neither version reads on every picture — the same reason the sheet
+   * has carried a white sun and a black sun all along.
+   */
+  // 'Hevalo' keeps its name: it is carried onto saved layers, so renaming it
+  // now would orphan every picture somebody has already put it on
+  { src: '/stickers/logo.webp', name: 'Hevalo', labelKey: 'photo.sticker.hevaloWhite' },
+  { src: '/stickers/logo_dark.webp', name: 'hevalo-dark', labelKey: 'photo.sticker.hevaloBlack' },
 ];
 
 export interface EmojiSticker {

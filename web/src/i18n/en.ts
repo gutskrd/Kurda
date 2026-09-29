@@ -665,6 +665,8 @@ export const en = {
   'photo.sticker.yellowSun': 'Yellow sun',
   'photo.sticker.whiteSun': 'White sun',
   'photo.sticker.blackSun': 'Black sun',
+  'photo.sticker.hevaloWhite': 'Hevalo logo, white',
+  'photo.sticker.hevaloBlack': 'Hevalo logo, black',
   'photo.pickSticker': 'Pick a sticker',
   'photo.swapSticker': 'Swap the sticker',
   'photo.closeStickers': 'Close the sticker picker',
