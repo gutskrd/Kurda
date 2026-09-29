@@ -59,7 +59,18 @@ DATABASE_URL=… npx tsx scripts/import-lexicon.ts words.json --dry-run
 
 Always dry-run first. It writes nothing and prints the conflict report.
 
-De-duplication is by **normalised headword + part of speech**:
+De-duplication is by **normalised headword + part of speech**, where
+"normalised" means the folded key: letters only, with ç ê î ş û folded to
+their base letters. `zabit` and `zabît` are one word to the importer, and
+about 7.5% of Wîkîferheng's spellings collide that way — reported as conflicts,
+never merged silently.
+
+> A row carries two keys, and they are not interchangeable. `headword_folded`
+> is the one above, used to find an entry — by the search, by the importer, and
+> by a game asking whether a guess is a word at all. `headword_normalized`
+> keeps the diacritics and is what the rhyme engine compares rimes and curator
+> rulings with, where ê and e are different vowels. Anything writing straight to
+> `dict_entries` has to write both; `DictionaryRepository.createEntry` does.
 
 - new headword → the entry and its senses are created
 - same headword, new part of speech → the sense joins the existing entry

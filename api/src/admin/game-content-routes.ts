@@ -5,7 +5,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { classifyRhyme, normalizeWord, type Dialect } from '../game/rhyme.js';
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
 import { QuizQuestionService } from './quiz-questions.js';
-import { letterCount } from '@kurda/shared';
+import { dictionaryKey, letterCount } from '@kurda/shared';
 
 /**
  * Admin management of the shared game word pool (`dict_entries`).
@@ -105,8 +105,10 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     // always one way or the other, never both: the two views are different sets
     const conds: string[] = [inGames ? 'in_games' : 'NOT in_games'];
     if (q) {
-      params.push(`%${normalizeWord(q)}%`);
-      conds.push(`headword_normalized LIKE $${params.length}`);
+      // the folded key, so that searching "sev" finds sêv and an imported word
+      // can be found at all — see 1751000115000
+      params.push(`%${dictionaryKey(q)}%`);
+      conds.push(`headword_folded LIKE $${params.length}`);
     }
     if (length !== undefined) {
       params.push(length);
@@ -167,11 +169,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         // `in_games` is true here and defaults to false everywhere else: a word
         // an admin typed in is a word chosen for the games, which is the whole
         // difference between this and an imported lexicon (1751000112000)
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect, is_rhyme_prompt, in_games, letter_count)
-         SELECT $1, $2, $3, $4, true, $5
+        `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, is_rhyme_prompt, in_games, letter_count)
+         SELECT $1, $2, $3, $4, $5, true, $6
           WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)
          RETURNING id`,
-        [headword, normalized, dialect, isRhymePrompt, letterCount(headword)],
+        [headword, normalized, dictionaryKey(headword), dialect, isRhymePrompt, letterCount(headword)],
       );
       if (res.rowCount) added.push(headword);
       else {
@@ -283,8 +285,10 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     try {
       await client.query('BEGIN');
       await client.query(
-        `UPDATE dict_entries SET headword = $2, headword_normalized = $3, letter_count = $4 WHERE id = $1`,
-        [id, headword, to, letterCount(headword)],
+        `UPDATE dict_entries
+            SET headword = $2, headword_normalized = $3, headword_folded = $4, letter_count = $5
+          WHERE id = $1`,
+        [id, headword, to, dictionaryKey(headword), letterCount(headword)],
       );
       // Only the normalized form keys the decisions, so a cosmetic edit (case or
       // punctuation) needs no migration at all.
@@ -602,10 +606,10 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         if (letterCount(trimmed) < 2) throw new AppError('BAD_WORD', 400, 'a word must be at least two letters');
         const ins = await app.db.query(
           // "add to pool" means exactly that
-          `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games)
-           SELECT $1, $2, $3, true
+          `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
+           SELECT $1, $2, $3, $4, true
             WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)`,
-          [trimmed, target, dialect],
+          [trimmed, target, dictionaryKey(trimmed), dialect],
         );
         addedToPool = (ins.rowCount ?? 0) > 0;
       }

@@ -1,5 +1,6 @@
 /** Rhyme multiplayer (1v1 / FFA) flow against real Postgres (CI job). KUR-299. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
 import { RhymeMatchService } from './rhyme-match-service.js';
 
@@ -40,8 +41,9 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     await pool.query(`DELETE FROM dict_entries`);
     for (const w of RHYMES) {
       const r = await pool.query<{ id: string }>(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games) VALUES ($1,$1,'kurmanji',true) RETURNING id`,
-        [w],
+        `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
+         VALUES ($1, $2, $3, 'kurmanji', true) RETURNING id`,
+        [w, letterKey(w), dictionaryKey(w)],
       );
       entryIds.push(r.rows[0]!.id);
     }

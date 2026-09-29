@@ -1,5 +1,6 @@
 /** Rhyming Words training backend against real Postgres (CI job). KUR-299. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
 import { RhymeService } from './rhyme-service.js';
 
@@ -15,9 +16,9 @@ describe.skipIf(!DATABASE_URL)('rhyme training service (integration)', () => {
 
   async function seedWord(headword: string): Promise<void> {
     const res = await pool.query<{ id: string }>(
-      `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games)
-       VALUES ($1, $1, 'kurmanji', true) RETURNING id`,
-      [headword],
+      `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
+       VALUES ($1, $2, $3, 'kurmanji', true) RETURNING id`,
+      [headword, letterKey(headword), dictionaryKey(headword)],
     );
     entryIds.push(res.rows[0]!.id);
   }

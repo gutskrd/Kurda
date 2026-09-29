@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { foldDiacritics, letterCount, normalizeKurdish } from '@kurda/shared';
+import { dictionaryKey, letterCount, letterKey } from '@kurda/shared';
 
 export type PartOfSpeech =
   | 'noun'
@@ -44,10 +44,14 @@ export interface Entry {
   xrefs: Array<{ entryId: string; headword: string; relation: XrefRelation }>;
 }
 
-/** Search/normalize form for a headword: diacritic-folded, lowercased. */
-export function normalizedHeadword(headword: string): string {
-  return foldDiacritics(normalizeKurdish(headword)).toLowerCase();
-}
+/**
+ * What to look a headword up by: letters only, diacritics folded.
+ *
+ * Re-exported under the name the dictionary code already used for it. The
+ * definition moved to @kurda/shared next to `letterKey`, which is the other
+ * key this table carries — see 1751000115000 for why there are two.
+ */
+export const normalizedHeadword = dictionaryKey;
 
 /** Lexicon data access (KUR-043). */
 export class DictionaryRepository {
@@ -62,9 +66,12 @@ export class DictionaryRepository {
    */
   async createEntry(headword: string, dialect = 'kurmanji'): Promise<string> {
     const res = await this.pool.query<{ id: string }>(
-      `INSERT INTO dict_entries (headword, headword_normalized, dialect, letter_count)
-       VALUES ($1, $2, $3, $4) RETURNING id`,
-      [headword, normalizedHeadword(headword), dialect, letterCount(headword)],
+      `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, letter_count)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      // both keys, because the table carries both: the games compare a guess
+      // against the first and a search or an import looks a word up by the
+      // second. Writing only one is how an import became invisible to the games
+      [headword, letterKey(headword), dictionaryKey(headword), dialect, letterCount(headword)],
     );
     return res.rows[0]!.id;
   }
@@ -75,7 +82,7 @@ export class DictionaryRepository {
     dialect: string,
   ): Promise<{ id: string; senses: ExistingSense[] } | null> {
     const entry = await this.pool.query<{ id: string }>(
-      `SELECT id FROM dict_entries WHERE headword_normalized = $1 AND dialect = $2 LIMIT 1`,
+      `SELECT id FROM dict_entries WHERE headword_folded = $1 AND dialect = $2 LIMIT 1`,
       [normalized, dialect],
     );
     const id = entry.rows[0]?.id;

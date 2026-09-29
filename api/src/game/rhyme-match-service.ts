@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { dictionaryKey } from '@kurda/shared';
 import { XpService } from '../xp/service.js';
 import {
   evaluateSubmission,
@@ -321,11 +322,20 @@ export class RhymeMatchService {
     return { userId: r.user_id, score: r.score, accepted: r.accepted };
   }
 
+  /**
+   * Is this a word at all?
+   *
+   * Looked up by the folded key, not the one the guess was normalized with.
+   * Almost every Kurmancî word carries a ç ê î ş or û, and an imported lexicon
+   * stores those folded (1751000115000) — matching on the unfolded key would
+   * reject hundreds of thousands of real words. A missing word is a correct
+   * answer thrown out, which is the more annoying failure of the two.
+   */
   private async wordExists(client: pg.PoolClient, normalized: string): Promise<boolean> {
     if (!normalized) return false;
     const res = await client.query<{ exists: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $1) AS exists`,
-      [normalized],
+      `SELECT EXISTS (SELECT 1 FROM dict_entries WHERE headword_folded = $1) AS exists`,
+      [dictionaryKey(normalized)],
     );
     return res.rows[0]?.exists ?? false;
   }

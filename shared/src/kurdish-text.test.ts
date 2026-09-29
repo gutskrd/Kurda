@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foldDiacritics, letterCount, normalizeKurdish } from './kurdish-text.js';
+import { dictionaryKey, foldDiacritics, letterCount, letterKey, normalizeKurdish } from './kurdish-text.js';
 
 // Explicit code points so precomposed vs. decomposed intent is unambiguous.
 const E_CIRC = String.fromCharCode(0xea); // precomposed e-circumflex
@@ -60,5 +60,47 @@ describe('letterCount', () => {
   it('is zero for a word with no letters in it', () => {
     expect(letterCount('')).toBe(0);
     expect(letterCount('— 42 —')).toBe(0);
+  });
+});
+
+describe('letterKey and dictionaryKey', () => {
+  it('both reduce a word to its letters', () => {
+    for (const key of [letterKey, dictionaryKey]) {
+      expect(key('Bi Roj!')).toBe('biroj');
+      expect(key("av'a")).toBe('ava');
+      expect(key('xwe-bi-xwe')).toBe('xwebixwe');
+    }
+  });
+
+  /**
+   * The whole reason there are two. A game compares a typed guess, where ê and
+   * e are different letters in different squares; a search and an importer look
+   * a word *up*, where somebody typing "sev" means sêv.
+   */
+  it('differ on exactly one thing: the diacritics', () => {
+    expect(letterKey('sêv')).toBe('sêv');
+    expect(dictionaryKey('sêv')).toBe('sev');
+    expect(letterKey('pirtûk')).toBe('pirtûk');
+    expect(dictionaryKey('pirtûk')).toBe('pirtuk');
+    expect(letterKey('çîrok')).toBe('çîrok');
+    expect(dictionaryKey('çîrok')).toBe('cirok');
+  });
+
+  /**
+   * The games hand `wordExists` a value that has already been through
+   * `letterKey`, so the lookup key is computed from a key rather than from the
+   * raw word. Applying it twice has to mean the same as applying it once.
+   */
+  it('dictionaryKey is idempotent, and agrees whichever order it is reached by', () => {
+    for (const word of ['sêv', 'Bi Rê!', 'ŞÛŞE', 'xwe-bi-xwe']) {
+      const once = dictionaryKey(word);
+      expect(dictionaryKey(once), word).toBe(once);
+      expect(dictionaryKey(letterKey(word)), word).toBe(once);
+    }
+  });
+
+  it('leaves a word with no diacritics alone', () => {
+    expect(dictionaryKey('roj')).toBe('roj');
+    expect(letterKey('roj')).toBe('roj');
   });
 });

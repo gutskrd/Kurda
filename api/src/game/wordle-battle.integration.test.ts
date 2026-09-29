@@ -1,5 +1,6 @@
 /** Wordle Battle multiplayer flow against real Postgres (CI job). KUR-306. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
 import { WordleBattleService } from './wordle-battle-service.js';
 
@@ -34,8 +35,9 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     svc = new WordleBattleService(pool);
     for (const w of MEDIUM) {
       const r = await pool.query<{ id: string }>(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games) VALUES ($1,$1,'kurmanji',true) RETURNING id`,
-        [w],
+        `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
+         VALUES ($1, $2, $3, 'kurmanji', true) RETURNING id`,
+        [w, letterKey(w), dictionaryKey(w)],
       );
       entryIds.push(r.rows[0]!.id);
     }
