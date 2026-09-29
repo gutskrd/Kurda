@@ -92,10 +92,12 @@ export class RhymeMatchService {
   async create(userId: string, opts: { dialect?: Dialect; maxPlayers?: number; windowMs?: number }): Promise<CreateResult> {
     const picked = await this.pool.query<{ headword: string }>(
       `SELECT headword FROM dict_entries
-        WHERE headword_normalized <> ''
-          -- prefer curated prompts; fall back to any word while none are marked,
-          -- so rounds keep working before anyone has curated
-          AND (is_rhyme_prompt OR NOT EXISTS (SELECT 1 FROM dict_entries WHERE is_rhyme_prompt))
+        WHERE headword_normalized <> '' AND in_games
+          -- prefer curated prompts; fall back to the game pool while none are
+          -- marked, so rounds keep working before anyone has curated. The
+          -- fallback is bounded by in_games: without it an imported lexicon
+          -- would hand players a prompt nobody can rhyme with (1751000112000).
+          AND (is_rhyme_prompt OR NOT EXISTS (SELECT 1 FROM dict_entries WHERE is_rhyme_prompt AND in_games))
         ORDER BY random() LIMIT 1`,
     );
     const prompt = picked.rows[0]?.headword;

@@ -351,7 +351,10 @@ export class WordleBattleService {
 
   private async pickTarget(difficulty: Difficulty): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
-    const all = await this.pool.query<{ headword: string }>(`SELECT headword FROM dict_entries ORDER BY id`);
+    // in_games only; guess validation stays over the whole dictionary
+    const all = await this.pool.query<{ headword: string }>(
+      `SELECT headword FROM dict_entries WHERE in_games ORDER BY id`,
+    );
     const words = all.rows.map((r) => r.headword);
     for (const tier of order) {
       const pool = filterByDifficulty(words, tier);
