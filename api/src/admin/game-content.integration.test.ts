@@ -163,8 +163,13 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     // ruled out: gone from the accepted list, listed separately so it can be undone
     expect(report.rhymes.some((r: { word: string }) => r.word === 'kul')).toBe(false);
     expect(report.ruledOut.find((r: { word: string }) => r.word === 'kul')).toMatchObject({ derived: 'perfect' });
-    // candidates are what a curator could still rule in
-    expect(report.candidates).toEqual(expect.arrayContaining(['kul']));
+    /*
+     * There is no `candidates` list any more. It was every pool word that did
+     * not rhyme — a set a curator could pick one out of while the pool was a
+     * few hundred words, and 447,000 rows once a dictionary is imported. Ruling
+     * a word in is a search now, not a list; the admin page never read it.
+     */
+    expect(report.candidates).toBeUndefined();
 
     // 'auto' hands the pair back to the derived result
     await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'kul', quality: 'auto' });
@@ -179,6 +184,40 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
   it('refuses a word rhyming with itself', async () => {
     const res = await authed('PUT', '/admin/dictionary/rhymes', editorToken, { word: 'gul', rhyme: 'gul', quality: 'perfect' });
     expect(res.statusCode).toBe(400);
+  });
+
+  /**
+   * The counts are over the dictionary, not the pool, because the dictionary is
+   * what a player may answer with. Counting the pool made a prompt with
+   * thousands of valid answers read as having none, and sent a curator looking
+   * for work that did not exist — which is the whole reason an import used to
+   * need hand-curation behind it.
+   */
+  it('counts rhymes the game accepts, including words outside the pool', async () => {
+    const prompt = `zy${suffix}an`;
+    await authed('POST', '/admin/dictionary', editorToken, { words: [prompt] });
+    added.push(prompt);
+
+    const before = (await authed('GET', `/admin/dictionary/rhymes?word=${prompt}`, editorToken)).json();
+
+    // a word only the dictionary knows — imported, never promoted into the pool
+    const outsider = `zy${suffix}ban`;
+    added.push(outsider);
+    await new DictionaryRepository(pool).createEntry(outsider);
+
+    const after = (await authed('GET', `/admin/dictionary/rhymes?word=${prompt}`, editorToken)).json();
+    expect(after.total.perfect).toBe(before.total.perfect + 1);
+    expect(after.rhymes.some((r: { word: string }) => r.word === outsider)).toBe(true);
+
+    // and it makes the prompt playable, so a rebuild keeps it
+    const rebuilt = await authed('POST', '/admin/rhyme/prompts/rebuild', editorToken, { dryRun: true });
+    expect(rebuilt.json().withoutRhymes).not.toContain(prompt);
+  });
+
+  /** A one-letter word cannot share two final letters with anything but itself. */
+  it('gives a one-letter prompt no perfect rhymes', async () => {
+    const report = (await authed('GET', '/admin/dictionary/rhymes?word=a', editorToken)).json();
+    expect(report.total.perfect).toBe(0);
   });
 
   it('creates, edits and deletes a quiz question', async () => {

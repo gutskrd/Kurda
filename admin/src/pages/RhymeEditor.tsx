@@ -50,7 +50,10 @@ interface RhymeView {
   inDictionary: boolean;
   rhymes: RhymeRow[];
   ruledOut: RhymeRow[];
-  candidates: string[];
+  /** what the game accepts, whether or not it fitted in `rhymes` */
+  total: { perfect: number; near: number };
+  /** true when `rhymes` was cut short — the counts above are the real ones */
+  truncated: boolean;
 }
 
 const PAGE = 25;
@@ -472,7 +475,8 @@ function RhymePanel({
         <div className="spacer" />
         {view && (
           <span className="subtle">
-            {view.rhymes.length} accepted
+            {view.total.perfect + view.total.near} accepted
+            {view.truncated && ` (showing ${view.rhymes.length})`}
             {view.ruledOut.length > 0 && ` · ${view.ruledOut.length} ruled out`}
           </span>
         )}

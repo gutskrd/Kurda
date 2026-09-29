@@ -41,7 +41,35 @@ export function sharedEnding(a: string, b: string): number {
 }
 
 /** Two shared letters is a full rhyme; one is a half rhyme. */
-const PERFECT_FROM = 2;
+export const PERFECT_FROM = 2;
+
+/**
+ * A word written backwards, which is how its rhymes are found.
+ *
+ * Rhyming is a question about the end of a word, and no index can answer one of
+ * those. Reversed it becomes a question about the start: every word ending in
+ * `-an` begins `na-` here, so "what rhymes with kurdistan" is a prefix lookup.
+ * `dict_entries.rhyme_key` is the stored form of this (1751000117000), and
+ * Postgres' `reverse()` has to agree with this function exactly.
+ */
+export function rhymeKey(word: string): string {
+  return [...normalizeWord(word)].reverse().join('');
+}
+
+/**
+ * The rhyme-key prefix shared by every word that ends with this one's last
+ * `letters` letters, or null when the word is too short to have that many.
+ *
+ * Null is the answer to a real question rather than an error: a one-letter word
+ * cannot share two final letters with anything but itself, so it has no perfect
+ * rhymes at all. Returning a short prefix instead would match every word ending
+ * in that letter and call them all perfect.
+ */
+export function rhymePrefix(word: string, letters: number): string | null {
+  const key = [...rhymeKey(word)];
+  if (letters < 1 || key.length < letters) return null;
+  return key.slice(0, letters).join('');
+}
 
 /**
  * Classify how well two words rhyme, by their shared ending alone:

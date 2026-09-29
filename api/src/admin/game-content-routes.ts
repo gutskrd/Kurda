@@ -2,7 +2,18 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
-import { classifyRhyme, normalizeWord } from '../game/rhyme.js';
+import { classifyRhyme, normalizeWord, rhymePrefix, PERFECT_FROM, type RhymeQuality } from '../game/rhyme.js';
+import { applyRulings, rhymeGroupSizes } from '../game/rhyme-groups.js';
+
+/**
+ * How many rhyming words a prompt's list shows before it stops.
+ *
+ * Over the pool this never bit — a few hundred words, and a prompt had a
+ * handful of rhymes. Over an imported dictionary a common ending has tens of
+ * thousands, and nobody reads those; the count beside the list is the part a
+ * curator acts on.
+ */
+const RHYME_LIST_LIMIT = 200;
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
 import { QuizQuestionService } from './quiz-questions.js';
 import { dictionaryKey, letterCount } from '@kurda/shared';
@@ -354,30 +365,25 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   );
 
   /**
-   * Which dictionary words rhyme with `word` — computed, never stored. Lets an
-   * admin verify a prompt actually has rhymes available before relying on it.
+   * Which words rhyme with `word` — computed, never stored.
+   *
+   * **The whole dictionary, not the pool.** A player may answer with any word
+   * the dictionary knows, so the pool was never the right set to report: after
+   * an import it would show three rhymes for a prompt the game accepts forty
+   * thousand answers to, and a curator would read that as thin coverage and go
+   * looking for work that does not exist.
+   *
+   * It is a prefix scan on the reversed headword (1751000117000) rather than
+   * `classifyRhyme` over every row, so the set it reads got a thousand times
+   * bigger while the work got smaller. The list is capped — nobody scrolls
+   * forty thousand words — and `total` says what the cap hid.
    */
   app.get('/admin/dictionary/rhymes', { schema: { querystring: rhymeQuery }, preHandler: canEdit }, async (req) => {
     const { word, dialect } = req.query as z.infer<typeof rhymeQuery>;
-    /*
-     * The game pool, not the dictionary.
-     *
-     * Every row here is put through `classifyRhyme` below, so this is an O(n)
-     * CPU loop per request — fine over a few hundred curated words, and not fine
-     * over an imported lexicon of several hundred thousand. It is also the right
-     * set on its own terms: this list is what a curator decides about, and
-     * deciding about 447,000 inflected forms is not curation (1751000112000).
-     */
-    const rows = await app.db.query<{ headword: string }>(`SELECT headword FROM dict_entries WHERE in_games`);
-    const perfect: string[] = [];
-    const near: string[] = [];
     const target = normalizeWord(word);
-    for (const r of rows.rows) {
-      if (normalizeWord(r.headword) === target) continue; // a word never rhymes with itself
-      const q = classifyRhyme(word, r.headword);
-      if (q === 'perfect') perfect.push(r.headword);
-      else if (q === 'near') near.push(r.headword);
-    }
+    const anyPrefix = rhymePrefix(word, 1);
+    const perfectPrefix = rhymePrefix(word, PERFECT_FROM);
+
     // an admin's explicit decisions for this prompt, so the UI can show which
     // pairs are curated rather than merely derived
     const overrides = await app.db.query<{ rhyme_normalized: string; quality: string }>(
@@ -386,40 +392,97 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     );
     const decided = new Map(overrides.rows.map((o) => [o.rhyme_normalized, o.quality]));
 
-    // What the game will actually accept, and at what strength: the derived
-    // answer with any decision applied on top. Strongest first, so thin coverage
-    // for a prompt is obvious at a glance.
-    const ORDER: Record<string, number> = { perfect: 0, near: 1 };
-    const rhymes = rows.rows
-      .map((r) => r.headword)
-      .filter((h) => normalizeWord(h) !== target)
-      .map((h) => {
-        const derivedQuality = classifyRhyme(word, h);
-        const chosen = decided.get(normalizeWord(h));
-        return {
-          word: h,
-          quality: chosen ?? derivedQuality,
-          derived: derivedQuality,
-          /** 'decided' means a curator overrode the endings, in either direction */
-          source: chosen ? ('decided' as const) : ('derived' as const),
-        };
-      });
+    const listed = anyPrefix
+      ? await app.db.query<{ headword: string; headword_normalized: string; perfect: boolean }>(
+          // perfect first, then alphabetically, so thin coverage shows at a glance
+          `SELECT headword, headword_normalized,
+                  ($2::text IS NOT NULL AND rhyme_key LIKE $2 || '%') AS perfect
+             FROM dict_entries
+            WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $3
+            ORDER BY perfect DESC, headword ASC
+            LIMIT $4`,
+          [anyPrefix, perfectPrefix, target, RHYME_LIST_LIMIT],
+        )
+      : { rows: [], rowCount: 0 };
 
+    const counts = anyPrefix
+      ? await app.db.query<{ any_rhyme: string; perfect: string }>(
+          `SELECT count(*)::text AS any_rhyme,
+                  count(*) FILTER (WHERE $2::text IS NOT NULL AND rhyme_key LIKE $2 || '%')::text AS perfect
+             FROM dict_entries
+            WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $3`,
+          [anyPrefix, perfectPrefix, target],
+        )
+      : { rows: [{ any_rhyme: '0', perfect: '0' }] };
+
+    const inPool = await app.db.query(
+      `SELECT 1 FROM dict_entries WHERE headword_normalized = $1 AND in_games LIMIT 1`,
+      [target],
+    );
+
+    /*
+     * Every word a curator has ruled on for this prompt, fetched by name.
+     *
+     * The prefix scan above finds what the endings accept, and that is not the
+     * same set: a ruling can bring in a word that does not rhyme at all, and it
+     * can sit past the cap on a prompt with thousands of partners. Both are
+     * decisions somebody made deliberately, so neither may go missing because
+     * of where it happened to fall in a list.
+     */
+    const named = decided.size
+      ? await app.db.query<{ headword: string; headword_normalized: string }>(
+          `SELECT headword, headword_normalized FROM dict_entries WHERE headword_normalized = ANY($1)`,
+          [[...decided.keys()]],
+        )
+      : { rows: [] };
+
+    const byNormalized = new Map<string, { word: string; derived: RhymeQuality }>();
+    for (const r of listed.rows) {
+      byNormalized.set(r.headword_normalized, {
+        word: r.headword,
+        derived: r.perfect ? 'perfect' : 'near',
+      });
+    }
+    for (const r of named.rows) {
+      if (byNormalized.has(r.headword_normalized)) continue;
+      byNormalized.set(r.headword_normalized, {
+        word: r.headword,
+        derived: classifyRhyme(word, r.headword),
+      });
+    }
+
+    const rhymes = [...byNormalized].map(([normalized, { word: headword, derived }]) => {
+      const chosen = decided.get(normalized) as RhymeQuality | undefined;
+      return {
+        word: headword,
+        quality: chosen ?? derived,
+        derived,
+        /** 'decided' means a curator overrode the endings, in either direction */
+        source: chosen ? ('decided' as const) : ('derived' as const),
+      };
+    });
+
+    /** words a curator ruled out that the endings would have accepted */
+    const ruledOut = rhymes
+      .filter((r) => r.quality === 'none' && r.source === 'decided' && r.derived !== 'none')
+      .sort((a, b) => a.word.localeCompare(b.word));
+
+    const ORDER: Record<RhymeQuality, number> = { perfect: 0, near: 1, none: 2 };
+
+    const anyRhyme = Number(counts.rows[0]?.any_rhyme ?? 0);
+    const perfect = Number(counts.rows[0]?.perfect ?? 0);
     return {
       word,
       dialect,
-      inDictionary: rows.rows.some((r) => normalizeWord(r.headword) === target),
-      /** accepted rhymes, strongest first */
+      inDictionary: (inPool.rowCount ?? 0) > 0,
+      /** accepted rhymes, strongest first — capped, see `total` */
       rhymes: rhymes
         .filter((r) => r.quality !== 'none')
-        .sort((a, b) => ORDER[a.quality]! - ORDER[b.quality]! || a.word.localeCompare(b.word)),
-      /** words a curator ruled out that the endings would have accepted */
-      ruledOut: rhymes
-        .filter((r) => r.quality === 'none' && r.source === 'decided' && r.derived !== 'none')
-        .sort((a, b) => a.word.localeCompare(b.word)),
-      // kept for the pair editor: every pool word, so a curator can rule one IN
-      // that the endings missed
-      candidates: rhymes.filter((r) => r.quality === 'none').map((r) => r.word),
+        .sort((a, b) => ORDER[a.quality] - ORDER[b.quality] || a.word.localeCompare(b.word)),
+      ruledOut,
+      /** what the game accepts, whether or not it fitted in the list above */
+      total: { perfect, near: anyRhyme - perfect },
+      truncated: anyRhyme > listed.rows.length,
     };
   });
 
@@ -428,32 +491,67 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * against.
    *
    * A prompt with nothing to rhyme with makes an unplayable round, and that was
-   * invisible until someone hit it in a game. Counts are computed per listed word
-   * against the whole pool rather than for every pair up front — the page is small
-   * and the pool is hand-curated, so this stays exact instead of approximating.
+   * invisible until someone hit it in a game.
+   *
+   * **The counts are over the dictionary**, because that is what the game
+   * accepts — the pool is what it *asks*. Counting the pool made a prompt with
+   * forty thousand valid answers read as having three, which is a curator sent
+   * to fix something that is not broken.
+   *
+   * It used to compare every listed word against every pool word. One grouped
+   * pass over the dictionary replaces that: a rhyme group is a suffix group
+   * (1751000117000), so counting how many words end in each letter and each
+   * pair of letters answers the whole page at once, exactly, however many
+   * prompts are on it.
    */
   app.get('/admin/rhyme/prompts', { schema: { querystring: promptsQuery }, preHandler: canEdit }, async (req) => {
     // `dialect` is still accepted and still ignored: a rhyme is decided by the
     // letters two words end with, which is the same question in either script.
     const { q, limit, offset } = req.query as z.infer<typeof promptsQuery>;
-    const all = await app.db.query<WordRow>(
-      // the curated pool only: this is the coverage view, and an imported
-      // lexicon has nothing to do with which prompts a round can open on
-      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt
-         FROM dict_entries WHERE in_games ORDER BY headword ASC`,
+
+    const poolSizeRow = await app.db.query<{ n: string; curated: string }>(
+      `SELECT count(*)::text AS n, count(*) FILTER (WHERE is_rhyme_prompt)::text AS curated
+         FROM dict_entries WHERE in_games`,
     );
-    const curated = all.rows.filter((r) => r.is_rhyme_prompt);
+    const poolSize = Number(poolSizeRow.rows[0]?.n ?? 0);
     // Rounds fall back to the WHOLE pool while nothing is curated, so that is
     // genuinely the set of possible base words — say so rather than showing none.
-    const usingFallback = curated.length === 0;
-    const base = usingFallback ? all.rows : curated;
+    const usingFallback = Number(poolSizeRow.rows[0]?.curated ?? 0) === 0;
 
-    const needle = q ? normalizeWord(q) : '';
-    const matched = needle ? base.filter((r) => r.headword_normalized.includes(needle)) : base;
-    const page = matched.slice(offset, offset + limit);
+    const params: unknown[] = [];
+    const conds = ['in_games'];
+    if (!usingFallback) conds.push('is_rhyme_prompt');
+    if (q) {
+      params.push(`%${normalizeWord(q)}%`);
+      conds.push(`headword_normalized LIKE $${params.length}`);
+    }
+    const where = conds.join(' AND ');
+    params.push(limit, offset);
+    const [matchedRow, pageRows] = await Promise.all([
+      app.db.query<{ n: string }>(`SELECT count(*)::text AS n FROM dict_entries WHERE ${where}`, params.slice(0, -2)),
+      app.db.query<WordRow & { rhyme_key: string }>(
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt, rhyme_key
+           FROM dict_entries WHERE ${where}
+          ORDER BY headword ASC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+        params,
+      ),
+    ]);
+    const page = pageRows.rows;
+
+    const groups = await rhymeGroupSizes(app);
+    const names = page.map((r) => r.headword_normalized);
+    // how many dictionary rows *are* each prompt: a word never rhymes with
+    // itself, and the grouped counts above cannot know which row is which
+    const selves = await app.db.query<{ headword_normalized: string; n: string }>(
+      `SELECT headword_normalized, count(*)::text AS n FROM dict_entries
+        WHERE headword_normalized = ANY($1) GROUP BY 1`,
+      [names],
+    );
+    const selfCount = new Map(selves.rows.map((r) => [r.headword_normalized, Number(r.n)]));
 
     const decided = await app.db.query<{ prompt_normalized: string; rhyme_normalized: string; quality: string }>(
-      `SELECT prompt_normalized, rhyme_normalized, quality FROM rhyme_overrides`,
+      `SELECT prompt_normalized, rhyme_normalized, quality FROM rhyme_overrides WHERE prompt_normalized = ANY($1)`,
+      [names],
     );
     const byPrompt = new Map<string, Map<string, string>>();
     for (const d of decided.rows) {
@@ -463,18 +561,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     }
 
     const words = page.map((row) => {
-      const overrides = byPrompt.get(row.headword_normalized);
-      let perfect = 0;
-      let near = 0;
-      let ruledOut = 0;
-      for (const other of all.rows) {
-        if (other.headword_normalized === row.headword_normalized) continue;
-        const derived = classifyRhyme(row.headword, other.headword);
-        const quality = overrides?.get(other.headword_normalized) ?? derived;
-        if (quality === 'perfect') perfect++;
-        else if (quality === 'near') near++;
-        else if (overrides?.get(other.headword_normalized) === 'none' && derived !== 'none') ruledOut++;
-      }
+      const { perfect, near, ruledOut } = applyRulings(
+        row.headword,
+        groups.countsFor(row.headword, selfCount.get(row.headword_normalized) ?? 0),
+        byPrompt.get(row.headword_normalized) ?? [],
+      );
       return {
         id: row.id,
         headword: row.headword,
@@ -483,11 +574,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         perfect,
         near,
         ruledOut,
-        decided: overrides?.size ?? 0,
+        decided: byPrompt.get(row.headword_normalized)?.size ?? 0,
       };
     });
 
-    return { total: matched.length, poolSize: all.rows.length, usingFallback, words };
+    return { total: Number(matchedRow.rows[0]?.n ?? 0), poolSize, usingFallback, words };
   });
 
   /**
@@ -505,8 +596,14 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * than replacing it. Words with no rhyme are deliberately left unmarked —
    * excluding those is what the flag was for.
    *
-   * The count is computed exactly as `GET /admin/rhyme/prompts` computes it,
-   * overrides included, so the number here and the number on the page agree.
+   * The count is computed exactly as `GET /admin/rhyme/prompts` computes it —
+   * over the dictionary, from the same grouped pass — so the number here and
+   * the number on the page agree.
+   *
+   * After an import there is usually nothing left for it to exclude: a word is
+   * unplayable only if the dictionary holds nothing else ending in its last
+   * letter, and among several hundred thousand words that is close to nobody.
+   * Running it is still how the cliff above gets unset.
    */
   app.post(
     '/admin/rhyme/prompts/rebuild',
@@ -514,7 +611,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     async (req) => {
       const { dryRun } = req.body as z.infer<typeof rebuildBody>;
       const all = await app.db.query<WordRow>(
-        // rebuild reasons about the pool a round draws from, not the dictionary
+        // rebuild decides which pool words a round may open on; what they rhyme
+        // against is the dictionary, which is what the grouped counts below read
         `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE in_games`,
       );
       const decided = await app.db.query<{ prompt_normalized: string; rhyme_normalized: string; quality: string }>(
@@ -527,18 +625,25 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         byPrompt.set(d.prompt_normalized, m);
       }
 
+      const groups = await rhymeGroupSizes(app);
+      const selves = await app.db.query<{ headword_normalized: string; n: string }>(
+        `SELECT headword_normalized, count(*)::text AS n FROM dict_entries
+          WHERE headword_normalized = ANY($1) GROUP BY 1`,
+        [all.rows.map((r) => r.headword_normalized)],
+      );
+      const selfCount = new Map(selves.rows.map((r) => [r.headword_normalized, Number(r.n)]));
+
       const playable: string[] = [];
       const unplayable: string[] = [];
       for (const row of all.rows) {
-        const overrides = byPrompt.get(row.headword_normalized);
-        const hasPartner = all.rows.some((other) => {
-          if (other.headword_normalized === row.headword_normalized) return false;
-          const quality =
-            overrides?.get(other.headword_normalized) ??
-            classifyRhyme(row.headword, other.headword);
-          return quality === 'perfect' || quality === 'near';
-        });
-        if (hasPartner) playable.push(row.id);
+        // the same numbers the coverage page shows, rulings and all, so a word
+        // reported as having no rhymes there is the word left unmarked here
+        const { perfect, near } = applyRulings(
+          row.headword,
+          groups.countsFor(row.headword, selfCount.get(row.headword_normalized) ?? 0),
+          byPrompt.get(row.headword_normalized) ?? [],
+        );
+        if (perfect + near > 0) playable.push(row.id);
         else unplayable.push(row.headword);
       }
 
