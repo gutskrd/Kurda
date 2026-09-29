@@ -51,6 +51,36 @@ const POS: Record<string, string> = {
   proverb: 'phrase',
 };
 
+/** One published source file, as the manifest lists it. */
+export interface Chunk {
+  file: string;
+  count: number;
+}
+
+/**
+ * Which of the published files this run will actually read.
+ *
+ * The full Kurmancî set is 105 files and about an hour and a half, which is
+ * longer than a shell session on a hosting dashboard reliably stays open. `from`
+ * is what makes an interrupted run cheap to resume: it is the number the
+ * progress line prints, so a run that died at `[41/105]` restarts with
+ * `--from 41` and redoes that one file. Redoing a file costs nothing — the
+ * importer skips what it has already seen — and starting one file early is a
+ * far better default than starting one file late and leaving a gap nobody
+ * would notice until a player's word was rejected.
+ */
+export function plan(files: readonly Chunk[], opts: { from?: number; limit?: number } = {}): {
+  skipped: number;
+  chunks: Chunk[];
+} {
+  const from = Math.max(1, Math.floor(opts.from ?? 1));
+  const skipped = Math.min(from - 1, files.length);
+  const rest = files.slice(skipped);
+  const limit = opts.limit;
+  const chunks = limit !== undefined && Number.isFinite(limit) ? rest.slice(0, Math.max(0, limit)) : [...rest];
+  return { skipped, chunks };
+}
+
 const MAX_DEFINITION = 1000; // the importer's limit
 const MAX_HEADWORD = 200;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toLexicon } from './ferheng.js';
+import { plan, toLexicon } from './ferheng.js';
 import { validateLexicon } from './import.js';
 
 const row = (over: Record<string, unknown>) => ({ word: 'x', pos: 'noun', glosses: ['g'], ...over });
@@ -110,5 +110,42 @@ describe('toLexicon', () => {
 
   it('takes the dialect it is given', () => {
     expect(toLexicon([row({})], 'sorani')[0]!.dialect).toBe('sorani');
+  });
+});
+
+describe('plan', () => {
+  const files = Array.from({ length: 105 }, (_, i) => ({ file: `${i + 1}.json`, count: 9000 }));
+
+  it('reads every file when asked for nothing in particular', () => {
+    expect(plan(files)).toEqual({ skipped: 0, chunks: files });
+  });
+
+  /**
+   * The contract the runbook depends on: the progress line prints `[41/105]`
+   * while it is working on the 41st file, so `--from 41` has to redo that file
+   * rather than the one after it. Off by one here is a gap in the dictionary
+   * that nothing would surface until a player's word came back rejected.
+   */
+  it('resumes at the file the progress line named, not the one after it', () => {
+    const { skipped, chunks } = plan(files, { from: 41 });
+    expect(skipped).toBe(40);
+    expect(chunks[0]!.file).toBe('41.json');
+    expect(chunks).toHaveLength(65);
+  });
+
+  it('counts from the first file for --from 1 and below', () => {
+    for (const from of [1, 0, -5]) {
+      expect(plan(files, { from }).chunks[0]!.file, String(from)).toBe('1.json');
+    }
+  });
+
+  it('takes the limit from where it resumed', () => {
+    const { skipped, chunks } = plan(files, { from: 41, limit: 3 });
+    expect(skipped).toBe(40);
+    expect(chunks.map((c) => c.file)).toEqual(['41.json', '42.json', '43.json']);
+  });
+
+  it('runs out rather than wrapping when asked to start past the end', () => {
+    expect(plan(files, { from: 400 })).toEqual({ skipped: 105, chunks: [] });
   });
 });
