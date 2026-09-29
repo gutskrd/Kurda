@@ -17,12 +17,19 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
     <View style={styles.sense}>
       <Pressable onPress={() => setOpen((o) => !o)} style={styles.header} disabled={!hasExamples}>
         <Text style={[styles.pos, { color: colors.primary }]}>{sense.pos}</Text>
+        {/*
+          English on top when there is one, and the Kurdish under it. A word that
+          is only defined in Kurdish — which is most of Wîkîferheng — puts that
+          definition here rather than leaving "1." followed by nothing.
+        */}
         <Text style={[styles.def, { color: colors.textPrimary }]}>
-          {sense.position}. {sense.definitionEn}
+          {sense.position}. {sense.definitionEn ?? sense.definitionKu}
         </Text>
         {hasExamples ? <Text style={[styles.chevron, { color: colors.textSecondary }]}>{open ? '▾' : '▸'}</Text> : null}
       </Pressable>
-      {sense.definitionKu ? <Text style={[styles.defKu, { color: colors.textSecondary }]}>{sense.definitionKu}</Text> : null}
+      {sense.definitionEn && sense.definitionKu ? (
+        <Text style={[styles.defKu, { color: colors.textSecondary }]}>{sense.definitionKu}</Text>
+      ) : null}
       {open && hasExamples ? (
         <View style={styles.examples}>
           {sense.examples.map((ex, i) => (

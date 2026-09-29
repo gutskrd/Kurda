@@ -21,14 +21,27 @@ const POS_VALUES = [
 ] as const;
 const RELATIONS = ['synonym', 'antonym', 'root', 'derived', 'related'] as const;
 
-const senseSchema = z.object({
-  pos: z.enum(POS_VALUES),
-  definitionEn: z.string().min(1).max(1000),
-  definitionKu: z.string().max(1000).optional(),
-  examples: z
-    .array(z.object({ textKu: z.string().min(1).max(500), textEn: z.string().max(500).optional() }))
-    .optional(),
-});
+/**
+ * A sense needs *a* definition, not an English one.
+ *
+ * `definitionEn` was required, which assumed every source explains Kurdish in
+ * English. Wîkîferheng — the largest Kurdish lexicon there is — explains
+ * Kurmancî in Kurmancî, so its 447,000 glosses are Kurdish and were unimportable
+ * without writing them into an English field and lying about them.
+ */
+const senseSchema = z
+  .object({
+    pos: z.enum(POS_VALUES),
+    definitionEn: z.string().min(1).max(1000).optional(),
+    definitionKu: z.string().min(1).max(1000).optional(),
+    examples: z
+      .array(z.object({ textKu: z.string().min(1).max(500), textEn: z.string().max(500).optional() }))
+      .optional(),
+  })
+  .refine((s) => s.definitionEn !== undefined || s.definitionKu !== undefined, {
+    message: 'a sense needs definitionEn or definitionKu',
+    path: ['definitionEn'],
+  });
 
 const lexiconEntrySchema = z.object({
   headword: z.string().min(1).max(200),
@@ -53,8 +66,51 @@ export interface LexiconImportResult {
   entriesCreated: number;
   sensesAdded: number;
   duplicatesSkipped: number;
+  /** senses that gained the definition they were missing, from the other language */
+  definitionsFilled: number;
   conflicts: ImportConflict[];
   issues: Array<{ index: number; message: string }>;
+}
+
+const same = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * What to do with an incoming sense that matches an existing one's part of speech.
+ *
+ * Compared per language, which is the whole point. An existing English
+ * definition and an incoming Kurdish one are not two answers to the same
+ * question — they are two halves of one entry, and treating them as a conflict
+ * would report every word twice over when two sources are imported in turn.
+ */
+type Verdict =
+  | { kind: 'duplicate' }
+  | { kind: 'fill'; side: 'en' | 'ku'; text: string }
+  | { kind: 'conflict'; existing: string; incoming: string };
+
+export function reconcile(
+  existing: { definitionEn: string | null; definitionKu: string | null },
+  incoming: { definitionEn?: string; definitionKu?: string },
+): Verdict {
+  // same language on both sides is the only case where they can disagree
+  if (existing.definitionEn && incoming.definitionEn) {
+    return same(existing.definitionEn, incoming.definitionEn)
+      ? { kind: 'duplicate' }
+      : { kind: 'conflict', existing: existing.definitionEn, incoming: incoming.definitionEn };
+  }
+  if (existing.definitionKu && incoming.definitionKu) {
+    return same(existing.definitionKu, incoming.definitionKu)
+      ? { kind: 'duplicate' }
+      : { kind: 'conflict', existing: existing.definitionKu, incoming: incoming.definitionKu };
+  }
+  // one side has what the other lacks
+  if (!existing.definitionEn && incoming.definitionEn) {
+    return { kind: 'fill', side: 'en', text: incoming.definitionEn };
+  }
+  if (!existing.definitionKu && incoming.definitionKu) {
+    return { kind: 'fill', side: 'ku', text: incoming.definitionKu };
+  }
+  // the incoming sense says nothing the entry does not already say
+  return { kind: 'duplicate' };
 }
 
 export function validateLexicon(raw: unknown): { ok: true; entries: LexiconEntry[] } | { ok: false; issues: Array<{ index: number; message: string }> } {
@@ -80,6 +136,7 @@ export async function importLexicon(
     entriesCreated: 0,
     sensesAdded: 0,
     duplicatesSkipped: 0,
+    definitionsFilled: 0,
     conflicts: [],
     issues: [],
   };
@@ -113,16 +170,28 @@ export async function importLexicon(
         if (!options.dryRun) await writeSense(repo, existing.id, sense, nextPosition);
         nextPosition += 1;
         result.sensesAdded += 1;
-      } else if (match.definitionEn.trim().toLowerCase() === sense.definitionEn.trim().toLowerCase()) {
-        result.duplicatesSkipped += 1;
       } else {
-        // same headword + POS, different definition → manual review
-        result.conflicts.push({
-          headword: entry.headword,
-          pos: sense.pos,
-          existingDefinition: match.definitionEn,
-          incomingDefinition: sense.definitionEn,
-        });
+        const verdict = reconcile(match, sense);
+        if (verdict.kind === 'duplicate') {
+          result.duplicatesSkipped += 1;
+        } else if (verdict.kind === 'fill') {
+          /*
+           * The two sources describe this word in different languages, so the
+           * second completes the first. This is what makes importing Wîkîferheng
+           * (Kurdish glosses) and then English Wiktionary give one entry with
+           * both, rather than a conflict report the length of the dictionary.
+           */
+          if (!options.dryRun) await repo.fillSenseDefinition(match.id, verdict.side, verdict.text);
+          result.definitionsFilled += 1;
+        } else {
+          // same headword, same POS, same language, different words → for a person
+          result.conflicts.push({
+            headword: entry.headword,
+            pos: sense.pos,
+            existingDefinition: verdict.existing,
+            incomingDefinition: verdict.incoming,
+          });
+        }
       }
     }
   }
