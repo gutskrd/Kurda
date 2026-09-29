@@ -16,19 +16,6 @@ export type Dialect = 'kurmanci' | 'sorani';
 
 export type RhymeQuality = 'perfect' | 'near' | 'none';
 
-/** Vowels per dialect. Kurmancî ê/î/û and Soranî vowels are distinct letters,
- *  not decorative diacritics, so they are kept (NFC), never decomposed. */
-const VOWELS: Record<Dialect, ReadonlySet<string>> = {
-  kurmanci: new Set(['a', 'e', 'ê', 'i', 'î', 'o', 'u', 'û']),
-  sorani: new Set(['ا', 'ە', 'ه', 'ێ', 'ی', 'ۆ', 'و', 'ئ']),
-};
-
-/** Long/short (and close) vowel pairs that count as a *near* (slant) match. */
-const NEAR_VOWELS: Record<Dialect, ReadonlyArray<ReadonlySet<string>>> = {
-  kurmanci: [new Set(['i', 'î']), new Set(['u', 'û']), new Set(['e', 'ê'])],
-  sorani: [new Set(['و', 'ۆ']), new Set(['ی', 'ێ']), new Set(['ه', 'ە'])],
-};
-
 /**
  * Normalize a word for comparison: lowercase, NFC (keeps ê/î/û as single
  * letters), and strip everything that is not a letter — whitespace,
@@ -39,56 +26,49 @@ export function normalizeWord(word: string): string {
   return word.toLowerCase().normalize('NFC').replace(/[^\p{L}]/gu, '');
 }
 
-interface Rime {
-  nucleus: string;
-  coda: string;
-  hadVowel: boolean;
+/**
+ * How many letters two words end with in common, counted from the last letter
+ * backwards.
+ *
+ * `kurdistan` against `baran`: n=n, a=a, t≠r — two. The walk stops at the first
+ * letter that differs and never looks past it, so the *last* letter deciding
+ * everything is not a special case but the first step of the same loop.
+ */
+export function sharedEnding(a: string, b: string): number {
+  let n = 0;
+  while (n < a.length && n < b.length && a[a.length - 1 - n] === b[b.length - 1 - n]) n += 1;
+  return n;
 }
 
-/** The rime = final vowel (nucleus) + trailing consonants (coda). */
-function rimeOf(normalized: string, dialect: Dialect): Rime {
-  const vowels = VOWELS[dialect];
-  let last = -1;
-  for (let i = normalized.length - 1; i >= 0; i--) {
-    const ch = normalized[i];
-    if (ch !== undefined && vowels.has(ch)) {
-      last = i;
-      break;
-    }
-  }
-  if (last === -1) return { nucleus: '', coda: normalized, hadVowel: false };
-  return { nucleus: normalized[last] ?? '', coda: normalized.slice(last + 1), hadVowel: true };
-}
-
-function vowelsNear(a: string, b: string, dialect: Dialect): boolean {
-  if (a === b) return true;
-  return NEAR_VOWELS[dialect].some((set) => set.has(a) && set.has(b));
-}
+/** Two shared letters is a full rhyme; one is a half rhyme. */
+const PERFECT_FROM = 2;
 
 /**
- * Classify how well two words rhyme:
- *  - `perfect`: identical rime (same final vowel + same trailing consonants).
- *  - `near` (slant): same final vowel but a different coda, or the same coda
- *    with a close long/short vowel.
- *  - `none`: otherwise.
+ * Classify how well two words rhyme, by their shared ending alone:
+ *  - `perfect`: the last two letters or more are the same.
+ *  - `near`: exactly the last letter is the same.
+ *  - `none`: the last letters differ.
+ *
+ * A word whose last letter does not match does not rhyme at all, whatever it
+ * shares further back — `roj` and `soz` are not a rhyme here even though both
+ * run `-o-`. That is a deliberate narrowing of an earlier rule that compared
+ * the final vowel and its trailing consonants separately.
+ *
+ * It is spelling, not phonetics, and it is meant to be: it gives one answer a
+ * player can predict, it is the same rule in Latin and in Arabic script so
+ * Soranî needs no vowel table of its own, and it decides hundreds of thousands
+ * of imported words without anybody ruling on them one at a time. Where it is
+ * wrong about a particular pair, a curator's `rhyme_overrides` verdict beats
+ * it — in both directions.
  */
-export function classifyRhyme(prompt: string, submission: string, dialect: Dialect): RhymeQuality {
+export function classifyRhyme(prompt: string, submission: string): RhymeQuality {
   const np = normalizeWord(prompt);
   const ns = normalizeWord(submission);
   if (np === '' || ns === '') return 'none';
 
-  const rp = rimeOf(np, dialect);
-  const rs = rimeOf(ns, dialect);
-
-  if (rp.nucleus === rs.nucleus && rp.coda === rs.coda && (rp.hadVowel || np === ns)) {
-    return 'perfect';
-  }
-  if (rp.hadVowel && rs.hadVowel) {
-    if (rp.nucleus === rs.nucleus) return 'near'; // same vowel, different coda
-    if (rp.coda === rs.coda && rp.coda !== '' && vowelsNear(rp.nucleus, rs.nucleus, dialect)) {
-      return 'near'; // same coda, close vowel
-    }
-  }
+  const shared = sharedEnding(np, ns);
+  if (shared >= PERFECT_FROM) return 'perfect';
+  if (shared === 1) return 'near';
   return 'none';
 }
 
@@ -208,7 +188,7 @@ export function evaluateSubmission(
   if (!deps.lexicon.has(normalized, dialect)) return reject('not-a-word');
 
   // a curator's explicit decision beats the derived one, in both directions
-  const quality = deps.overrideQuality?.(normalizeWord(prompt), normalized) ?? classifyRhyme(prompt, submission, dialect);
+  const quality = deps.overrideQuality?.(normalizeWord(prompt), normalized) ?? classifyRhyme(prompt, submission);
   if (quality === 'none') return reject('no-rhyme');
 
   return {
