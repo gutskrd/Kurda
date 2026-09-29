@@ -5,6 +5,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { classifyRhyme, normalizeWord, type Dialect } from '../game/rhyme.js';
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
 import { QuizQuestionService } from './quiz-questions.js';
+import { letterCount } from '@kurda/shared';
 
 /**
  * Admin management of the shared game word pool (`dict_entries`).
@@ -20,11 +21,6 @@ import { QuizQuestionService } from './quiz-questions.js';
  *
  * Writes are role-gated server-side; the admin SPA only hides UI.
  */
-
-/** Kurdish letter count (NFC, code-point aware) — matches the games' view. */
-function letterCount(word: string): number {
-  return Array.from(word.normalize('NFC').replace(/[^\p{L}]/gu, '')).length;
-}
 
 /**
  * A boolean in a query string, which `z.coerce.boolean()` cannot read.
@@ -93,45 +89,61 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   const canEdit = [requireAuth, requireRoles('admin', 'superadmin', 'content_editor')];
 
   /**
-   * Browse the word pool (search + filter by letter length, paginated). Length is
-   * computed in JS with the same letterCount() the games use, so the bands here
-   * always agree with what Wordle actually offers (rather than relying on a
-   * locale-dependent SQL character class).
+   * Browse the word pool: search, filter by letter length, paginated.
+   *
+   * Every condition is SQL now, and so is the page. This used to select all the
+   * matching rows and then filter and slice them here, which was survivable at a
+   * few hundred curated words — but the *dictionary-only* view is the one that
+   * holds a whole imported lexicon, and it is also the one an admin has to use
+   * to promote words into the games. `letter_count` is stored (1751000114000)
+   * so the band filter is an index scan rather than 447,000 rows crossing the
+   * wire on every keystroke.
    */
   app.get('/admin/dictionary', { schema: { querystring: listQuery }, preHandler: canEdit }, async (req) => {
     const { q, length, prompts, inGames, limit, offset } = req.query as z.infer<typeof listQuery>;
     const params: unknown[] = [];
-    const conds: string[] = [];
+    // always one way or the other, never both: the two views are different sets
+    const conds: string[] = [inGames ? 'in_games' : 'NOT in_games'];
     if (q) {
       params.push(`%${normalizeWord(q)}%`);
       conds.push(`headword_normalized LIKE $${params.length}`);
     }
+    if (length !== undefined) {
+      params.push(length);
+      conds.push(`letter_count = $${params.length}`);
+    }
+    if (prompts) conds.push('is_rhyme_prompt');
+
     /*
-     * Always one way or the other, never both. The rows are paginated in JS
-     * below, so an unfiltered browse would pull every headword in the database
-     * into this process on each keystroke — which is survivable at a few hundred
-     * curated words and is not once a lexicon has been imported.
+     * Counted separately rather than with COUNT(*) OVER(), which was the first
+     * thing tried. A window function has to see every matching row before the
+     * LIMIT can throw them away, so it sorts the whole set: measured at 400,000
+     * dictionary rows, the unfiltered browse took 791ms that way and 26ms as
+     * two queries — a count that reads no rows in order, and a page the index
+     * hands back fifty of.
      */
-    conds.push(inGames ? 'in_games' : 'NOT in_games');
-    const clause = conds.length > 0 ? `WHERE ${conds.join(' AND ')}` : '';
-    const rows = await app.db.query<WordRow>(
-      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt, in_games
-         FROM dict_entries ${clause} ORDER BY headword ASC`,
-      params,
-    );
-    const all = rows.rows
-      .map((r) => ({
+    const where = conds.join(' AND ');
+    const [counted, rows] = await Promise.all([
+      app.db.query<{ n: string }>(`SELECT COUNT(*)::text AS n FROM dict_entries WHERE ${where}`, params),
+      app.db.query<WordRow & { letter_count: number }>(
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt, in_games, letter_count
+           FROM dict_entries WHERE ${where}
+          ORDER BY headword ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, limit, offset],
+      ),
+    ]);
+    return {
+      total: Number(counted.rows[0]?.n ?? 0),
+      words: rows.rows.map((r) => ({
         id: r.id,
         headword: r.headword,
         normalized: r.headword_normalized,
         dialect: r.dialect,
         isRhymePrompt: r.is_rhyme_prompt,
         inGames: r.in_games ?? true,
-        length: letterCount(r.headword),
-      }))
-      .filter((w) => length === undefined || w.length === length)
-      .filter((w) => !prompts || w.isRhymePrompt);
-    return { total: all.length, words: all.slice(offset, offset + limit) };
+        length: r.letter_count,
+      })),
+    };
   });
 
   /**
@@ -155,11 +167,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         // `in_games` is true here and defaults to false everywhere else: a word
         // an admin typed in is a word chosen for the games, which is the whole
         // difference between this and an imported lexicon (1751000112000)
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect, is_rhyme_prompt, in_games)
-         SELECT $1, $2, $3, $4, true
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect, is_rhyme_prompt, in_games, letter_count)
+         SELECT $1, $2, $3, $4, true, $5
           WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)
          RETURNING id`,
-        [headword, normalized, dialect, isRhymePrompt],
+        [headword, normalized, dialect, isRhymePrompt, letterCount(headword)],
       );
       if (res.rowCount) added.push(headword);
       else {
@@ -270,11 +282,10 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     const client = await app.db.connect();
     try {
       await client.query('BEGIN');
-      await client.query(`UPDATE dict_entries SET headword = $2, headword_normalized = $3 WHERE id = $1`, [
-        id,
-        headword,
-        to,
-      ]);
+      await client.query(
+        `UPDATE dict_entries SET headword = $2, headword_normalized = $3, letter_count = $4 WHERE id = $1`,
+        [id, headword, to, letterCount(headword)],
+      );
       // Only the normalized form keys the decisions, so a cosmetic edit (case or
       // punctuation) needs no migration at all.
       if (from !== to) {

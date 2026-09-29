@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import { foldDiacritics, letterCount, normalizeKurdish } from '@kurda/shared';
 
 export type PartOfSpeech =
   | 'noun'
@@ -53,11 +53,18 @@ export function normalizedHeadword(headword: string): string {
 export class DictionaryRepository {
   constructor(private readonly pool: pg.Pool) {}
 
+  /**
+   * `letter_count` is written here rather than computed when read: the admin
+   * screen filters hundreds of thousands of rows by it, and `[^p{L}]` on an
+   * NFC string has no exact SQL equivalent to filter with (see 1751000114000).
+   * One writer, so the games' view of a word's length and the admin's cannot
+   * drift apart.
+   */
   async createEntry(headword: string, dialect = 'kurmanji'): Promise<string> {
     const res = await this.pool.query<{ id: string }>(
-      `INSERT INTO dict_entries (headword, headword_normalized, dialect)
-       VALUES ($1, $2, $3) RETURNING id`,
-      [headword, normalizedHeadword(headword), dialect],
+      `INSERT INTO dict_entries (headword, headword_normalized, dialect, letter_count)
+       VALUES ($1, $2, $3, $4) RETURNING id`,
+      [headword, normalizedHeadword(headword), dialect, letterCount(headword)],
     );
     return res.rows[0]!.id;
   }
