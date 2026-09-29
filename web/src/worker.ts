@@ -150,16 +150,57 @@ async function fetchPost(apiOrigin: string, path: string): Promise<Record<string
 }
 
 /**
- * Replace the shell's head with this post's.
+ * Every tag this file writes, and therefore every tag it has to take out first.
+ *
+ * Appending without removing was the bug, and it was invisible from the markup:
+ * the page ends up with two `og:title`s, the shell's generic one **first**, and
+ * everything that unfurls a link reads the first. So a shared post carried the
+ * site's own card — "Hevalo", the landing-page blurb, the home page's URL —
+ * which is exactly the thing this worker was written to stop.
+ *
+ * A `<title>` was already being removed, which is why the browser tab looked
+ * right and the card did not.
+ */
+const REPLACED = [
+  'title',
+  'link[rel="canonical"]',
+  'meta[name="description"]',
+  'meta[property="og:type"]',
+  'meta[property="og:site_name"]',
+  'meta[property="og:title"]',
+  'meta[property="og:description"]',
+  'meta[property="og:url"]',
+  'meta[property="og:image"]',
+  'meta[property="og:image:width"]',
+  'meta[property="og:image:height"]',
+  'meta[name="twitter:card"]',
+  'meta[name="twitter:title"]',
+  'meta[name="twitter:description"]',
+  'meta[name="twitter:image"]',
+];
+
+/**
+ * Swap the shell's head for this page's.
  *
  * `HTMLRewriter` streams, so this costs nothing in memory and adds no round
- * trip. The existing title and description are removed rather than duplicated —
- * a document with two `<title>`s is a document whose title is a coin toss.
+ * trip. Anything the new tags cover is removed on the way past rather than
+ * duplicated — a document with two of a tag is a document whose meaning is
+ * whichever one the reader happens to take.
  */
-function withPreview(html: Response, preview: Preview, url: string): Response {
-  const tags = [
+function withHead(html: Response, tags: ReadonlyArray<string | ''>): Response {
+  const rewriter = new HTMLRewriter();
+  for (const selector of REPLACED) rewriter.on(selector, { element: (el) => el.remove() });
+  return rewriter
+    .on('head', { element: (el) => el.append(tags.filter(Boolean).join(''), { html: true }) })
+    .transform(html);
+}
+
+/** What a post says about itself, as a head. */
+function previewHead(preview: Preview, url: string): Array<string | ''> {
+  return [
     `<title>${attr(preview.title)}</title>`,
     `<meta name="description" content="${attr(preview.description)}" />`,
+    `<link rel="canonical" href="${attr(url)}" />`,
     `<meta property="og:type" content="article" />`,
     `<meta property="og:site_name" content="Hevalo" />`,
     `<meta property="og:title" content="${attr(preview.title)}" />`,
@@ -170,15 +211,43 @@ function withPreview(html: Response, preview: Preview, url: string): Response {
     `<meta name="twitter:title" content="${attr(preview.title)}" />`,
     `<meta name="twitter:description" content="${attr(preview.description)}" />`,
     preview.image ? `<meta name="twitter:image" content="${attr(preview.image)}" />` : '',
-  ]
-    .filter(Boolean)
-    .join('');
+  ];
+}
 
-  return new HTMLRewriter()
-    .on('title', { element: (el) => el.remove() })
-    .on('meta[name="description"]', { element: (el) => el.remove() })
-    .on('head', { element: (el) => el.append(tags, { html: true }) })
-    .transform(html);
+/**
+ * The head a listed, non-post page should have had all along.
+ *
+ * The canonical is the reason this exists. `index.html` carries
+ * `<link rel="canonical" href="https://hevalo.app/">` and the asset binding
+ * hands that same file to every path, so **every URL on the site was telling
+ * search engines it was a duplicate of the home page** — the library posts
+ * included, which are the only pages here anyone would search for. A sitemap of
+ * five URLs, four of which asked not to be indexed, and the fifth of which had
+ * already been collapsed into the first.
+ *
+ * Only the paths that really are pages get one. An unknown path still gets the
+ * shell, and the shell pointing at `/` is the right answer for it: a typo under
+ * `/app/` is not a page, and a canonical of its own would invite a crawler to
+ * collect them.
+ */
+function staticHead(page: { title: string; description: string }, url: string): Array<string | ''> {
+  return [
+    `<title>${attr(page.title)}</title>`,
+    `<meta name="description" content="${attr(page.description)}" />`,
+    `<link rel="canonical" href="${attr(url)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="Hevalo" />`,
+    `<meta property="og:url" content="${attr(url)}" />`,
+    `<meta property="og:title" content="${attr(page.title)}" />`,
+    `<meta property="og:description" content="${attr(page.description)}" />`,
+    `<meta property="og:image" content="${attr(new URL('/og.png', url).toString())}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${attr(page.title)}" />`,
+    `<meta name="twitter:description" content="${attr(page.description)}" />`,
+    `<meta name="twitter:image" content="${attr(new URL('/og.png', url).toString())}" />`,
+  ];
 }
 
 /** How long the edge may reuse the sitemap. It only changes when somebody publishes. */
@@ -187,8 +256,45 @@ const SITEMAP_TTL_SECONDS = 3_600;
 const SITEMAP_PAGES = 5;
 const SITEMAP_PAGE_SIZE = 100;
 
-/** The paths worth submitting that are not a post. */
-const STATIC_PATHS = ['/', '/app', '/app/games', '/app/rankings'];
+/**
+ * The paths worth submitting that are not a post, and what each one is.
+ *
+ * The shell says the same thing on all of them, because the shell is written
+ * once and React fills in the rest — so a crawler, which does not run React,
+ * read four copies of the landing page under four URLs. Search engines answer
+ * that by keeping one and dropping the others, which is the correct response to
+ * four identical pages and the wrong outcome for four different ones.
+ *
+ * The copy is English and stays English: this is the head a crawler gets, and a
+ * crawler has no account and no locale to read one from. The app itself is
+ * translated the moment it starts.
+ */
+const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: string }> = [
+  {
+    path: '/',
+    title: 'Hevalo',
+    description: 'Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community.',
+  },
+  {
+    path: '/app',
+    title: 'Kurdish lessons, stories and poems · Hevalo',
+    description:
+      'Learn Kurdish with short lessons, then read stories and poems written in Kurmancî and Soranî by the people using Hevalo.',
+  },
+  {
+    path: '/app/games',
+    title: 'Kurdish word games · Hevalo',
+    description:
+      'Wordle, rhyming rounds and quizzes played in Kurdish, against a dictionary of hundreds of thousands of words.',
+  },
+  {
+    path: '/app/rankings',
+    title: 'Rankings · Hevalo',
+    description: 'Who is furthest along on Hevalo this week — by XP, by streak and by game.',
+  },
+];
+
+const STATIC_PATHS = STATIC_PAGES.map((p) => p.path);
 
 /**
  * The sitemap, built from what is actually published.
@@ -268,12 +374,25 @@ export default {
 
     if (request.method !== 'GET') return assets;
 
-    const route = routeFor(url.pathname);
-    if (!route) return assets;
-
-    // a post path that somehow resolved to a real file is left alone
+    // a path that resolved to a real file is left alone, whatever it looks like
     const type = assets.headers.get('content-type') ?? '';
     if (!type.includes('text/html')) return assets;
+
+    /*
+     * A listed page: its own title, its own description, its own address. No
+     * API call and nothing that can fail, so this needs no fallback — it is a
+     * table lookup and a rewrite of markup already in hand.
+     */
+    const page = STATIC_PAGES.find((p) => p.path === url.pathname);
+    if (page) {
+      // the query string is not part of the page; a canonical carrying one
+      // invites a crawler to index ?ref=… as a page of its own
+      const clean = new URL(url.pathname, url.origin).toString();
+      return withHead(assets, staticHead(page, clean));
+    }
+
+    const route = routeFor(url.pathname);
+    if (!route) return assets;
 
     const post = await fetchPost(env.API_ORIGIN ?? DEFAULT_API, route.api);
     if (!post) return assets;
@@ -281,7 +400,8 @@ export default {
     const preview = previewOf(post, route.kind);
     if (!preview) return assets;
 
-    const rewritten = withPreview(assets, preview, url.toString());
+    const clean = new URL(url.pathname, url.origin).toString();
+    const rewritten = withHead(assets, previewHead(preview, clean));
     // the preview is public and identical for everyone who opens this link
     rewritten.headers.set('cache-control', `public, max-age=0, s-maxage=${PREVIEW_TTL_SECONDS}`);
     return rewritten;
@@ -289,4 +409,4 @@ export default {
 };
 
 // exported for the tests, which is the only reason these are not file-local
-export const __test = { routeFor, attr, trim, previewOf, sitemap };
+export const __test = { routeFor, attr, trim, previewOf, sitemap, staticHead, previewHead, STATIC_PAGES, REPLACED };

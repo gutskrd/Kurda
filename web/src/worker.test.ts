@@ -224,3 +224,59 @@ describe('the sitemap', () => {
     expect(xml).toContain(`<url><loc>https://hevalo.app/app/library/${ID2}</loc></url>`);
   });
 });
+
+describe('what a page tells a search engine it is', () => {
+  const { staticHead, previewHead, STATIC_PAGES, REPLACED } = __test;
+  const head = (tags: ReadonlyArray<string | ''>) => tags.filter(Boolean).join('');
+
+  /**
+   * The bug this whole section exists for. `index.html` carries one canonical
+   * pointing at `/`, and the asset binding serves that same file for every
+   * path — so every URL in the sitemap was asking not to be indexed, and the
+   * library posts, the only pages worth finding, were asking loudest.
+   */
+  it('gives a page its own address, not the shell', () => {
+    const url = 'https://hevalo.app/app/games';
+    expect(head(staticHead(STATIC_PAGES[1]!, url))).toContain(`<link rel="canonical" href="${url}" />`);
+
+    const post = 'https://hevalo.app/app/library/abc';
+    const preview = { title: 'Helbest', description: 'Rêzek', image: null };
+    expect(head(previewHead(preview, post))).toContain(`<link rel="canonical" href="${post}" />`);
+  });
+
+  /**
+   * Appending without removing is invisible in the markup and decisive in the
+   * result: everything that unfurls a link reads the *first* og:title, and the
+   * shell's generic one comes first. A shared post carried the site's own card.
+   */
+  it('replaces every tag it writes, so nothing is said twice', () => {
+    const preview = { title: 'Helbest', description: 'Rêzek', image: 'https://cdn.test/a.jpg' };
+    // every meta the two heads write, whichever attribute names it
+    const written = head(previewHead(preview, 'https://hevalo.app/app/library/abc'))
+      + head(staticHead(STATIC_PAGES[0]!, 'https://hevalo.app/'));
+    for (const [, kind, name] of written.matchAll(/(property|name)="([^"]+)"/g)) {
+      expect(REPLACED, `${name} is written but never removed`).toContain(`meta[${kind}="${name}"]`);
+    }
+    expect(REPLACED).toContain('title');
+    expect(REPLACED).toContain('link[rel="canonical"]');
+  });
+
+  /** Four URLs in the sitemap that said the same thing were four duplicates. */
+  it('says something different on each listed page', () => {
+    const titles = STATIC_PAGES.map((p) => p.title);
+    const descriptions = STATIC_PAGES.map((p) => p.description);
+    expect(new Set(titles).size).toBe(STATIC_PAGES.length);
+    expect(new Set(descriptions).size).toBe(STATIC_PAGES.length);
+    for (const p of STATIC_PAGES) {
+      expect(p.description.length, p.path).toBeGreaterThan(50);
+      expect(p.description.length, p.path).toBeLessThanOrEqual(160);
+    }
+  });
+
+  it('escapes a title into the tags it builds', () => {
+    const preview = { title: 'a "quote" & <tag>', description: 'x', image: null };
+    const written = head(previewHead(preview, 'https://hevalo.app/app/library/abc'));
+    expect(written).not.toContain('<tag>');
+    expect(written).toContain('&quot;quote&quot;');
+  });
+});
