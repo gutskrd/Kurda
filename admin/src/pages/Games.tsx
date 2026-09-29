@@ -12,9 +12,14 @@ interface Word {
   length: number;
   /** used as a rhyme-round prompt */
   isRhymePrompt: boolean;
+  /** in the pool a game chooses from, rather than only in the dictionary */
+  inGames: boolean;
 }
 interface Stats {
+  /** words a game can choose from */
   total: number;
+  /** every headword, imports included — what a guess is checked against */
+  dictionary: number;
   /** how many words are curated as rhyme prompts */
   rhymePrompts: number;
   byLength: { length: number; words: number }[];
@@ -24,9 +29,19 @@ interface Stats {
 const PAGE = 50;
 
 /**
- * Game content management (the word pool). One dictionary feeds every word game:
- * Wordle picks its targets from it and validates guesses against it, and Rhyme
- * draws prompts from it and only accepts submissions that are in it.
+ * Game content management (the word pool).
+ *
+ * Two sets, not one. The **pool** is what a game chooses from — Wordle's targets,
+ * Rhyme's prompts — and it is what this screen curates. The **dictionary** behind
+ * it is what a guess is checked against, and after a lexicon import it is orders
+ * of magnitude larger: hundreds of thousands of headwords, mostly inflected forms
+ * nobody would recognise as an answer.
+ *
+ * They are separated because they want opposite things. A bad target is an
+ * unplayable round, so the pool stays small and hand-picked; a missing word is a
+ * correct answer rejected, so the dictionary should be as large as it can be.
+ * Promoting a word out of the dictionary and into the pool is the one editing
+ * action the second view offers.
  *
  * Rhymes are computed from each word's ending, never stored — so an admin curates
  * WORDS and the rhyme sets follow. The rhyme checker surfaces that computation so
@@ -38,6 +53,8 @@ export function Games(): React.JSX.Element {
   const [stats, setStats] = useState<Stats | null>(null);
   const [q, setQ] = useState('');
   const [length, setLength] = useState<number | ''>('');
+  /** the pool, or the dictionary behind it */
+  const [inPool, setInPool] = useState(true);
   const [page, setPage] = useState(0);
   // categories: the pool is shared, but Wordle and Rhyme care about different
   // things, so each gets its own view rather than one long undifferentiated page
@@ -54,6 +71,7 @@ export function Games(): React.JSX.Element {
       const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE) });
       if (q.trim()) params.set('q', q.trim());
       if (length !== '') params.set('length', String(length));
+      params.set('inGames', String(inPool));
       if (promptsOnly) params.set('prompts', 'true');
       const res = await api<{ total: number; words: Word[] }>(`/admin/dictionary?${params}`);
       setWords(res.words);
@@ -64,7 +82,7 @@ export function Games(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [q, length, page, promptsOnly]);
+  }, [q, length, page, promptsOnly, inPool]);
 
   useEffect(() => {
     void load();
@@ -78,6 +96,24 @@ export function Games(): React.JSX.Element {
     setBusy(w.id);
     try {
       await api(`/admin/dictionary/${w.id}`, { method: 'DELETE' });
+      await load();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Move a word between the dictionary and the pool a game draws from.
+   *
+   * Dropping one out clears its rhyme-prompt flag server-side, because a prompt
+   * outside the pool is a round the game will never open.
+   */
+  async function setInGames(w: Word, inGames: boolean): Promise<void> {
+    setBusy(w.id);
+    try {
+      await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { inGames } });
       await load();
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Failed');
@@ -143,8 +179,26 @@ export function Games(): React.JSX.Element {
       {section === 'pool' && (
       <div className="card" style={{ padding: 0 }}>
         <div className="toolbar" style={{ margin: '14px 16px 8px' }}>
-          <div className="section-title">Word pool ({total})</div>
+          <div className="section-title">{inPool ? 'Word pool' : 'Dictionary'} ({total})</div>
           <div className="spacer" />
+          {/*
+            Two different sets, not a filter on one.
+
+            The pool is what a game chooses from and what these screens curate.
+            The dictionary behind it is everything a guess is checked against,
+            which after an import is far larger and is nobody's editing surface —
+            you come here to promote a word out of it, and that is all.
+          */}
+          <select
+            value={inPool ? 'pool' : 'dictionary'}
+            onChange={(e) => {
+              setInPool(e.target.value === 'pool');
+              setPage(0);
+            }}
+          >
+            <option value="pool">In the games</option>
+            <option value="dictionary">Dictionary only</option>
+          </select>
           <input
             placeholder="Search words…"
             value={q}
@@ -192,6 +246,7 @@ export function Games(): React.JSX.Element {
                   <th>Word</th>
                   <th>Letters</th>
                   <th>Dialect</th>
+                  <th>In the games</th>
                   <th>Rhyme prompt</th>
                   <th></th>
                 </tr>
@@ -210,8 +265,22 @@ export function Games(): React.JSX.Element {
                       <label className="row" style={{ gap: 6, width: 'auto' }}>
                         <input
                           type="checkbox"
-                          checked={w.isRhymePrompt}
+                          checked={w.inGames}
                           disabled={busy === w.id}
+                          onChange={(e) => void setInGames(w, e.target.checked)}
+                        />
+                        <span className="subtle">play</span>
+                      </label>
+                    </td>
+                    <td>
+                      <label className="row" style={{ gap: 6, width: 'auto' }}>
+                        <input
+                          type="checkbox"
+                          checked={w.isRhymePrompt}
+                          // a word outside the pool cannot be a prompt, so the
+                          // control says so rather than accepting a click that
+                          // the server would undo
+                          disabled={busy === w.id || !w.inGames}
                           onChange={(e) => void setPrompt(w, e.target.checked)}
                         />
                         <span className="subtle">use</span>
@@ -256,6 +325,17 @@ function Coverage({ stats }: { stats: Stats }): React.JSX.Element {
       <div className="subtle" style={{ marginBottom: 10 }}>
         Each difficulty uses a fixed word length. A band with no words falls back to an easier one; if
         every band is empty the game reports “no words available”.
+      </div>
+      {/*
+        Both numbers, because they answer different questions and only one of
+        them is about whether the game is playable. Counting the dictionary here
+        is how you end up believing there are hundreds of thousands of words to
+        play with when the pool is a few dozen.
+      */}
+      <div className="subtle" style={{ marginBottom: 10 }}>
+        <strong>{stats.total.toLocaleString()}</strong> in the games ·{' '}
+        <strong>{stats.dictionary.toLocaleString()}</strong> in the dictionary, which is what a guess is
+        checked against · <strong>{stats.rhymePrompts.toLocaleString()}</strong> rhyme prompts
       </div>
       <div className="tablewrap">
         <table>

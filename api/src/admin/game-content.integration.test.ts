@@ -455,4 +455,83 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(body.ruledOut.some((r: { word: string }) => r.word === mate)).toBe(true);
   });
 
+  describe('the pool and the dictionary behind it', () => {
+    /**
+     * A word that arrived the way an import arrives: straight into the table,
+     * with no `in_games`.
+     *
+     * The normalized form is computed rather than reusing the headword, because
+     * the games' normalizer drops everything that is not a letter — and the
+     * unique suffix these tests build names with contains digits. Storing the
+     * raw word means the search, which normalizes what you type, can never match
+     * it.
+     */
+    async function imported(word: string): Promise<void> {
+      added.push(word);
+      const normalized = word.toLowerCase().normalize('NFC').replace(/[^\p{L}]/gu, '');
+      await pool.query(
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1, $2, 'kurmanji')`,
+        [word, normalized],
+      );
+    }
+
+    it('keeps an admin-added word in the pool and an imported one out of it', async () => {
+      const mine = `zp${suffix}a`;
+      const theirs = `zp${suffix}b`;
+      added.push(mine);
+      await authed('POST', '/admin/dictionary', editorToken, { words: [mine] });
+      await imported(theirs);
+
+      const inPool = await authed('GET', `/admin/dictionary?q=zp${suffix}`, editorToken);
+      expect(inPool.json().words.map((w: { headword: string }) => w.headword)).toEqual([mine]);
+
+      /*
+       * The regression. `z.coerce.boolean()` is `Boolean(value)`, so the string
+       * "false" coerced to **true** and this view returned the pool — the one
+       * input a flag like this is guaranteed to be given.
+       */
+      const outOfPool = await authed('GET', `/admin/dictionary?q=zp${suffix}&inGames=false`, editorToken);
+      expect(outOfPool.json().words.map((w: { headword: string }) => w.headword)).toEqual([theirs]);
+    });
+
+    it('counts the pool and the dictionary separately', async () => {
+      const before = (await authed('GET', '/admin/dictionary/stats', editorToken)).json();
+      await imported(`zq${suffix}`);
+      const after = (await authed('GET', '/admin/dictionary/stats', editorToken)).json();
+
+      // an import adds to what a guess is checked against, and to nothing else
+      expect(after.dictionary).toBe(before.dictionary + 1);
+      expect(after.total).toBe(before.total);
+    });
+
+    it('promotes an imported word into the pool, and drops one back out', async () => {
+      const word = `zr${suffix}`;
+      await imported(word);
+
+      const found = await authed('GET', `/admin/dictionary?q=${word}&inGames=false`, editorToken);
+      const id = found.json().words[0].id as string;
+
+      await authed('PATCH', `/admin/dictionary/${id}`, editorToken, { inGames: true });
+      const promoted = await authed('GET', `/admin/dictionary?q=${word}`, editorToken);
+      expect(promoted.json().words[0].inGames).toBe(true);
+
+      await authed('PATCH', `/admin/dictionary/${id}`, editorToken, { inGames: false });
+      const demoted = await authed('GET', `/admin/dictionary?q=${word}&inGames=false`, editorToken);
+      expect(demoted.json().words[0].inGames).toBe(false);
+    });
+
+    /**
+     * A prompt outside the pool is a round the game will never open, so dropping
+     * a word out has to take its prompt flag with it rather than leave a promise
+     * the coverage view would go on counting.
+     */
+    it('clears the rhyme-prompt flag when a word leaves the pool', async () => {
+      const word = `zs${suffix}`;
+      const id = await seed(word, true);
+
+      await authed('PATCH', `/admin/dictionary/${id}`, editorToken, { inGames: false });
+      const after = await authed('GET', `/admin/dictionary?q=${word}&inGames=false`, editorToken);
+      expect(after.json().words[0].isRhymePrompt).toBe(false);
+    });
+  });
 });
