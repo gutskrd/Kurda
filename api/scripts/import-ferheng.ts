@@ -1,7 +1,7 @@
 /**
  * Import all of Wîkîferheng, one published chunk at a time.
  *
- *   tsx scripts/import-ferheng.ts [--lang ku|sor|zza] [--dry-run] [--limit N]
+ *   tsx scripts/import-ferheng.ts [--lang ku|sor|zza] [--dry-run] [--from N] [--limit N]
  *
  * The Ferheng project publishes the Kurdish Wiktionary extraction as ~105
  * letter-bucketed JSON files plus an `index.json` manifest. This walks that
@@ -12,7 +12,8 @@
  * source and the converted form in memory is how a long import dies three
  * quarters of the way through with nothing written. Chunk-at-a-time also means
  * an interrupted run has kept everything it already did, and re-running is safe
- * — the importer skips what it has seen.
+ * — the importer skips what it has seen. `--from N` picks up at the file the
+ * progress line was last printing, so resuming does not re-read the first forty.
  *
  * Licence: the data is Wiktionary's, CC BY-SA 4.0 + GFDL. Attribution belongs
  * wherever the dictionary is shown — see docs/admin/dictionary-import.md.
@@ -21,7 +22,7 @@ import pg from 'pg';
 import { loadConfig } from '../src/config/env.js';
 import { DictionaryRepository } from '../src/dictionary/repository.js';
 import { importLexicon, type LexiconEntry } from '../src/dictionary/import.js';
-import { toLexicon, type SourceEntry } from '../src/dictionary/ferheng.js';
+import { plan, toLexicon, type Chunk, type SourceEntry } from '../src/dictionary/ferheng.js';
 
 const BASE = 'https://raw.githubusercontent.com/kurdish-tech/kurdish-tech.github.io/main/public/data';
 
@@ -30,7 +31,7 @@ const LANGS: Record<string, string> = { ku: 'kurmanji', sor: 'sorani', zza: 'zaz
 
 interface Manifest {
   total_words?: number;
-  letters: Record<string, Array<{ file: string; count: number }>>;
+  letters: Record<string, Chunk[]>;
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -49,6 +50,7 @@ async function main(): Promise<void> {
   const dialect = LANGS[lang];
   const dryRun = args.includes('--dry-run');
   const limit = Number(flag('limit') ?? Number.POSITIVE_INFINITY);
+  const from = Number(flag('from') ?? 1);
 
   if (!dialect) {
     console.error(`unknown --lang ${lang}; expected one of ${Object.keys(LANGS).join(', ')}`);
@@ -64,11 +66,11 @@ async function main(): Promise<void> {
   console.log(`reading the manifest for ${lang} (${dialect})…`);
   const manifest = await getJson<Manifest>(`${BASE}/${lang}/index.json`);
   const files = Object.values(manifest.letters).flat();
-  const planned = files.slice(0, Number.isFinite(limit) ? limit : files.length);
+  const { skipped, chunks: planned } = plan(files, { from, limit });
 
   console.log(
     `${manifest.total_words?.toLocaleString() ?? '?'} words across ${files.length} files` +
-      (planned.length < files.length ? ` — importing the first ${planned.length}` : '') +
+      (planned.length < files.length ? ` — importing ${planned.length} of them, from file ${skipped + 1}` : '') +
       (dryRun ? ' (dry run — nothing written)' : ''),
   );
 
@@ -93,8 +95,10 @@ async function main(): Promise<void> {
       const done = i + 1;
       const elapsed = (Date.now() - started) / 1000;
       const eta = Math.round((elapsed / done) * (planned.length - done));
+      // numbered against the whole manifest, not against this run: the number
+      // printed here is the one to hand back to --from after an interruption
       console.log(
-        `[${String(done).padStart(3)}/${planned.length}] ${chunk.file.padEnd(12)} ` +
+        `[${String(skipped + done).padStart(3)}/${files.length}] ${chunk.file.padEnd(12)} ` +
           `+${String(res.entriesCreated).padStart(6)} entries  ` +
           `${totals.entries.toLocaleString()} total` +
           (done < planned.length ? `  ~${Math.floor(eta / 60)}m left` : ''),

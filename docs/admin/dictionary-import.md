@@ -26,9 +26,11 @@ view to *Dictionary only* and ticking **play**.
 
 ## The format
 
-A JSON array. `definitionEn` is required, `pos` is one of `noun`, `verb`,
-`adjective`, `adverb`, `pronoun`, `preposition`, `conjunction`, `particle`,
-`numeral`, `phrase`, `other`.
+A JSON array. A sense needs **at least one** of `definitionEn` and
+`definitionKu` — a word defined in Kurdish alone is a definition, and most of a
+Kurdish source is exactly that. `pos` is one of `noun`, `verb`, `adjective`,
+`adverb`, `pronoun`, `preposition`, `conjunction`, `particle`, `numeral`,
+`phrase`, `other`.
 
 ```json
 [
@@ -80,6 +82,61 @@ so the glosses are in English — which is what `definitionEn` needs:
 Ten thousand real entries with meanings is worth far more to a learner than a
 hundred times as many bare headwords.
 
+### All of Wîkîferheng, in one command
+
+The Ferheng project publishes that extraction as ~105 letter-bucketed JSON files
+with a manifest, and there is a driver for it:
+
+```
+cd api
+DATABASE_URL=… npx tsx scripts/import-ferheng.ts --lang ku --dry-run --limit 1
+```
+
+`--lang` is `ku` (Kurmancî, ~447,000 entries), `sor` (Soranî) or `zza` (Zazakî).
+It walks the manifest a file at a time rather than parsing 65 MB in one piece,
+so an interrupted run keeps everything it already wrote.
+
+**Measured on the real data**, one file at a time: 9,627 headwords in becomes
+8,904 entries and 9,012 senses, all Kurdish-only, all `in_games = false`, in
+about two minutes. The whole Kurmancî set is therefore around 90 minutes.
+
+The shortfall — 9,627 in, 8,904 out — is diacritics. `headword_normalized` folds
+them, so `zabit` and `zabît` are one identity to this schema; 7.5% of spellings
+collide that way, which is roughly 33,000 words across the full set. They are
+reported as conflicts rather than merged silently.
+
+### Running it against production
+
+The production database does not accept connections from outside its private
+network, and it should stay that way. Run the import where the credentials
+already live instead of bringing them to your machine:
+
+1. Render dashboard → the API service → **Shell**
+2. `cd /app`
+3. One file first, writing nothing:
+   `npx tsx api/scripts/import-ferheng.ts --lang ku --dry-run --limit 1`
+4. Then the real run, detached, so closing the tab does not kill it:
+
+```
+nohup npx tsx api/scripts/import-ferheng.ts --lang ku > /tmp/ferheng.log 2>&1 &
+tail -f /tmp/ferheng.log
+```
+
+`DATABASE_URL` is already in that service's environment; nothing needs to be
+typed, pasted or stored anywhere.
+
+It runs beside the live API and holds a connection for the duration, so start it
+when traffic is low.
+
+**If it stops**, the last progress line names the file it was on — `[41/105]` —
+and that number goes straight back in:
+
+```
+npx tsx api/scripts/import-ferheng.ts --lang ku --from 41
+```
+
+Re-reading that file costs nothing; the importer skips what it has already seen.
+
 ### The large dumps, and what they actually are
 
 You will see much larger figures advertised — the Ferheng app quotes 456,639
@@ -106,6 +163,10 @@ Everything above is derived from Wiktionary and carries **CC BY-SA 4.0 + GFDL**:
 If that is not acceptable, the alternatives are a permissively licensed source,
 a licensed commercial one, or building the dictionary through the admin screens
 over time. The import path is the same either way.
+
+The **BY** half is already shipped: both apps render a `SourceLine` under the
+dictionary and under an entry, naming Wîkîferheng and linking the licence, in all
+nine languages. Nothing more is needed for an import from that source.
 
 ## After importing
 
