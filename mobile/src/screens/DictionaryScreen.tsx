@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { EntryDetail } from '../dictionary/EntryDetail';
+import { SourceLine } from '../dictionary/SourceLine';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
@@ -132,7 +133,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
                 <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
                   <Text style={[styles.recentText, { color: colors.primary }]}>{w.headword}</Text>
                   <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {w.definitionEn ?? ''}
+                    {w.definitionEn ?? w.definitionKu ?? ''}
                   </Text>
                 </Pressable>
                 <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })} hitSlop={8}>
@@ -165,11 +166,12 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
               <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
-                {item.definitionEn ?? ''}
+                {item.definitionEn ?? item.definitionKu ?? ''}
               </Text>
             </Pressable>
           )}
           keyboardShouldPersistTaps="handled"
+          ListFooterComponent={<SourceLine />}
         />
       </View>
     </GradientBackground>

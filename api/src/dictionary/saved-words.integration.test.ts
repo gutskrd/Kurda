@@ -35,6 +35,11 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
       entryIds.push(id);
     }
 
+    // one word defined in Kurdish and nothing else, the way an import leaves them
+    const kurdishOnly = await repo.createEntry(`swku${suffix}`);
+    await repo.addSense(kurdishOnly, 1, 'noun', undefined, 'Fêkiyekî dardar e.');
+    entryIds.push(kurdishOnly);
+
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -93,5 +98,18 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
 
     const list = await authed('GET', '/me/saved-words');
     expect(list.json().words.length).toBeGreaterThanOrEqual(10);
+  });
+
+  /**
+   * The bookmark list shows each word's first definition, and after an import
+   * most words have only the Kurdish one. Without it here the list is a column
+   * of headwords with nothing under them.
+   */
+  it('lists the Kurdish definition for a word that has no English one', async () => {
+    const id = entryIds[entryIds.length - 1]!;
+    await authed('PUT', `/dictionary/entries/${id}/save`);
+    const list = await authed('GET', '/me/saved-words');
+    const word = list.json().words.find((w: { entryId: string }) => w.entryId === id);
+    expect(word).toMatchObject({ definitionEn: null, definitionKu: 'Fêkiyekî dardar e.' });
   });
 });

@@ -11,6 +11,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { SenseSection } from './SenseSection';
+import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -94,6 +95,8 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 </Text>
               </View>
             ) : null}
+
+            <SourceLine />
           </ScrollView>
         )}
       </View>

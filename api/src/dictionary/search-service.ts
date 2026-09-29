@@ -114,15 +114,22 @@ export class DictionarySearchService {
   /** Attach each hit's first sense (pos + definition) in one round-trip. */
   private async attachSenses(hits: SearchHit[]): Promise<SearchHit[]> {
     if (hits.length === 0) return hits;
-    const rows = await this.pool.query<{ entry_id: string; pos: PartOfSpeech; definition_en: string }>(
-      `SELECT DISTINCT ON (entry_id) entry_id, pos, definition_en FROM dict_senses
+    const rows = await this.pool.query<{
+      entry_id: string;
+      pos: PartOfSpeech;
+      definition_en: string | null;
+      definition_ku: string | null;
+    }>(
+      `SELECT DISTINCT ON (entry_id) entry_id, pos, definition_en, definition_ku FROM dict_senses
        WHERE entry_id = ANY($1::uuid[]) ORDER BY entry_id, position ASC`,
       [hits.map((h) => h.entryId)],
     );
     const bySense = new Map(rows.rows.map((r) => [r.entry_id, r]));
     return hits.map((h) => {
       const s = bySense.get(h.entryId);
-      return s ? { ...h, pos: s.pos, definitionEn: s.definition_en } : h;
+      // the Kurdish one travels too: most of an imported lexicon has no English,
+      // and a result list of blank definitions reads as a broken search
+      return s ? { ...h, pos: s.pos, definitionEn: s.definition_en, definitionKu: s.definition_ku } : h;
     });
   }
 }

@@ -193,6 +193,7 @@ export const ckb: Catalogue = {
   'dictionary.noExactMatch': 'هیچ هاوتایەکی تەواو نییە — نزیکترین وشەکان پیشان دەدرێن',
   'dictionary.searchPlaceholder': 'بە کوردی یان ئینگلیزی بگەڕێ…',
   'dictionary.searchLabel': 'گەڕانی فەرهەنگ',
+  'dictionary.source': 'پێناسەکان لە {source}ەوەن، بە مۆڵەتنامەی {licence}.',
   'saved.subtitle': 'ئەو بابەتانەی بۆ دواتر هێشتتەوە. تەنها تۆ دەیبینیت.',
   'saved.loading': 'پاشەکەوتکراوەکانت بار دەکرێن…',
   'saved.emptyLink': 'کۆمەڵگا',

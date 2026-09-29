@@ -12,6 +12,7 @@ interface WordOfDay {
   headword: string;
   pos: string | null;
   definitionEn: string | null;
+  definitionKu: string | null;
 }
 
 /** Home-screen word-of-the-day card (KUR-046); tapping opens the entry. */
@@ -41,7 +42,7 @@ export function WordOfDayCard() {
         <Text style={[styles.headword, { color: colors.textOnPrimary }]}>{word.headword}</Text>
         <Text style={[styles.def, { color: colors.textOnPrimary }]} numberOfLines={1}>
           {word.pos ? `${word.pos} · ` : ''}
-          {word.definitionEn ?? ''}
+          {word.definitionEn ?? word.definitionKu ?? ''}
         </Text>
       </Pressable>
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>

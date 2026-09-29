@@ -5354,6 +5354,14 @@ a.mkp-activity-row:hover {
   font-size: 0.95rem;
   color: var(--ink-3);
 }
+.dict-source {
+  margin: 24px 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+.dict-source a {
+  color: inherit;
+}
 .dict-examples {
   list-style: none;
   margin: 6px 0 0;

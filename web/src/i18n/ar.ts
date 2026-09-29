@@ -186,6 +186,7 @@ export const ar: Catalogue = {
   'dictionary.noExactMatch': 'لا تطابق تام — تُعرض أقرب الكلمات',
   'dictionary.searchPlaceholder': 'ابحث بالكردية أو الإنجليزية…',
   'dictionary.searchLabel': 'البحث في القاموس',
+  'dictionary.source': 'التعريفات من {source}، مستخدمة بموجب {licence}.',
   'saved.subtitle': 'منشورات احتفظت بها للعودة إليها. أنت وحدك من يراها.',
   'saved.loading': 'جارٍ تحميل منشوراتك المحفوظة…',
   'saved.emptyLink': 'المجتمع',

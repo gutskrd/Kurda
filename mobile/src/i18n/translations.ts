@@ -168,6 +168,7 @@ export type TranslationKey =
   | 'appearance.glass.name'
   | 'appearance.glass.help'
   | 'dictionary.searchLabel'
+  | 'dictionary.source'
   | 'dictionary.noExactMatch'
   | 'game.practiceMissed'
   | 'game.rematchExpired'
@@ -1045,6 +1046,7 @@ const en: Catalog = {
   'appearance.glass.name': 'Liquid glass',
   'appearance.glass.help': 'Frosted surfaces float over a spatial gradient with a soft catch-light and a hairline edge.',
   'dictionary.searchLabel': 'Dictionary search',
+  'dictionary.source': 'Definitions from {source}, used under {licence}.',
   'dictionary.noExactMatch': 'No exact match — showing closest words',
   'game.practiceMissed': 'Practice missed words',
   'game.rematchExpired': 'Rematch offer expired',
@@ -1921,6 +1923,7 @@ const ku: Catalog = {
   'appearance.glass.name': 'Şûşeya herikbar',
   'appearance.glass.help': 'Rûyên qeşagirtî li ser derecereng û bi ronahiyek nerm û kêlekek zirav diherikin.',
   'dictionary.searchLabel': 'Lêgerîna ferhengê',
+  'dictionary.source': 'Danasîn ji {source} ne, bi lîsansa {licence}.',
   'dictionary.noExactMatch': 'Tam li hev nayê — peyvên herî nêzîk têne nîşandan',
   'game.practiceMissed': 'Peyvên ji dest çûyî pratîk bike',
   'game.rematchExpired': 'Pêşniyara lîstika nû qediya',
@@ -2797,6 +2800,7 @@ const de: Catalog = {
   'appearance.glass.name': 'Flüssiges Glas',
   'appearance.glass.help': 'Matte Flächen schweben über einem räumlichen Verlauf, mit sanftem Lichtreflex und haarfeiner Kante.',
   'dictionary.searchLabel': 'Wörterbuchsuche',
+  'dictionary.source': 'Definitionen von {source}, verwendet unter {licence}.',
   'dictionary.noExactMatch': 'Keine genaue Übereinstimmung — die nächstliegenden Wörter werden gezeigt',
   'game.practiceMissed': 'Verpasste Wörter üben',
   'game.rematchExpired': 'Das Revanche-Angebot ist abgelaufen',
@@ -3673,6 +3677,7 @@ const es: Catalog = {
   'appearance.glass.name': 'Cristal líquido',
   'appearance.glass.help': 'Superficies esmeriladas flotan sobre un degradado espacial, con un brillo suave y un borde finísimo.',
   'dictionary.searchLabel': 'Búsqueda en el diccionario',
+  'dictionary.source': 'Definiciones de {source}, usadas bajo {licence}.',
   'dictionary.noExactMatch': 'Sin coincidencia exacta — mostrando las palabras más cercanas',
   'game.practiceMissed': 'Practica las palabras falladas',
   'game.rematchExpired': 'La oferta de revancha ha caducado',
@@ -4549,6 +4554,7 @@ const tr: Catalog = {
   'appearance.glass.name': 'Akışkan cam',
   'appearance.glass.help': 'Buzlu yüzeyler, yumuşak bir ışık yansıması ve kıl inceliğinde bir kenarla uzamsal bir geçişin üzerinde süzülür.',
   'dictionary.searchLabel': 'Sözlükte ara',
+  'dictionary.source': 'Tanımlar {source} kaynaklıdır, {licence} ile kullanılır.',
   'dictionary.noExactMatch': 'Tam eşleşme yok — en yakın kelimeler gösteriliyor',
   'game.practiceMissed': 'Kaçırdığın kelimeleri çalış',
   'game.rematchExpired': 'Rövanş teklifinin süresi doldu',
@@ -5425,6 +5431,7 @@ const ar: Catalog = {
   'appearance.glass.name': 'زجاج سائل',
   'appearance.glass.help': 'أسطح ضبابية تطفو فوق تدرّج مكاني، بلمعة ناعمة وحافة رفيعة للغاية.',
   'dictionary.searchLabel': 'البحث في القاموس',
+  'dictionary.source': 'التعريفات من {source}، مستخدمة بموجب {licence}.',
   'dictionary.noExactMatch': 'لا تطابق تام — تُعرض أقرب الكلمات',
   'game.practiceMissed': 'تدرّب على الكلمات الفائتة',
   'game.rematchExpired': 'انتهت صلاحية عرض إعادة المباراة',
@@ -6301,6 +6308,7 @@ const fr: Catalog = {
   'appearance.glass.name': 'Verre liquide',
   'appearance.glass.help': 'Des surfaces dépolies flottent sur un dégradé spatial, avec un reflet doux et un liseré très fin.',
   'dictionary.searchLabel': 'Recherche dans le dictionnaire',
+  'dictionary.source': 'Définitions de {source}, utilisées sous {licence}.',
   'dictionary.noExactMatch': 'Aucune correspondance exacte — voici les mots les plus proches',
   'game.practiceMissed': 'Revoir les mots manqués',
   'game.rematchExpired': 'L’offre de revanche a expiré',
@@ -7177,6 +7185,7 @@ const nl: Catalog = {
   'appearance.glass.name': 'Vloeiend glas',
   'appearance.glass.help': 'Matte vlakken zweven over een ruimtelijk verloop met een zacht lichtpunt en een haarfijne rand.',
   'dictionary.searchLabel': 'Woordenboek zoeken',
+  'dictionary.source': 'Definities van {source}, gebruikt onder {licence}.',
   'dictionary.noExactMatch': 'Geen exacte match — dichtstbijzijnde woorden worden getoond',
   'game.practiceMissed': 'Oefen gemiste woorden',
   'game.rematchExpired': 'Aanbod voor een rematch is verlopen',
@@ -8054,6 +8063,7 @@ const ckb: Catalog = {
   'appearance.glass.name': 'شووشەی ڕەوان',
   'appearance.glass.help': 'ڕووە شەختەکان لەسەر ڕەنگاوڕەنگێکی مەودایی دەسوڕێنەوە، بە ڕووناکییەکی نەرم و لێوارێکی تەنک.',
   'dictionary.searchLabel': 'گەڕانی فەرهەنگ',
+  'dictionary.source': 'پێناسەکان لە {source}ەوەن، بە مۆڵەتنامەی {licence}.',
   'dictionary.noExactMatch': 'هیچ هاوتایەکی تەواو نییە — نزیکترین وشەکان پیشان دەدرێن',
   'game.practiceMissed': 'ڕاهێنان بە وشە لەدەستچووەکان',
   'game.rematchExpired': 'پێشنیاری یارییەکەی دووبارە بەسەرچوو',

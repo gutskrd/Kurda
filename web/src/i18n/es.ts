@@ -181,6 +181,7 @@ export const es: Catalogue = {
   'dictionary.noExactMatch': 'Sin coincidencia exacta — mostrando las palabras más cercanas',
   'dictionary.searchPlaceholder': 'Busca en kurdo o inglés…',
   'dictionary.searchLabel': 'Búsqueda en el diccionario',
+  'dictionary.source': 'Definiciones de {source}, usadas bajo {licence}.',
   'saved.subtitle': 'Publicaciones que has guardado para volver a ellas. Solo tú lo ves.',
   'saved.loading': 'Cargando tus publicaciones guardadas…',
   'saved.emptyLink': 'Comunidad',

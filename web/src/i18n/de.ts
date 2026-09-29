@@ -181,6 +181,7 @@ export const de: Catalogue = {
   'dictionary.noExactMatch': 'Keine genaue Übereinstimmung — die nächstliegenden Wörter werden gezeigt',
   'dictionary.searchPlaceholder': 'Auf Kurdisch oder Englisch suchen…',
   'dictionary.searchLabel': 'Wörterbuchsuche',
+  'dictionary.source': 'Definitionen von {source}, verwendet unter {licence}.',
   'saved.subtitle': 'Beiträge, die du dir aufgehoben hast. Nur du siehst das.',
   'saved.loading': 'Deine gespeicherten Beiträge werden geladen…',
   'saved.emptyLink': 'Gemeinschaft',

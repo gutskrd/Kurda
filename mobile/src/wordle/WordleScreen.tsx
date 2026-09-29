@@ -73,7 +73,8 @@ interface EduEntry {
   entryId: string;
   headword: string;
   pos: string | null;
-  definitionEn: string | null;
+  /** whichever definition the word has; most of the lexicon has only the Kurdish one */
+  definition: string | null;
 }
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
@@ -151,7 +152,13 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       if (!res.ok) return;
       const hit =
         res.data.results.find((r) => r.headword.toLowerCase() === target.toLowerCase()) ?? res.data.results[0];
-      if (hit) setEdu({ entryId: hit.entryId, headword: hit.headword, pos: hit.pos, definitionEn: hit.definitionEn });
+      if (hit)
+        setEdu({
+          entryId: hit.entryId,
+          headword: hit.headword,
+          pos: hit.pos,
+          definition: hit.definitionEn ?? hit.definitionKu,
+        });
     },
     [client],
   );
@@ -336,7 +343,7 @@ function ResultPanel({
               <Text style={[styles.eduWord, { color: colors.textPrimary }]}>{edu.headword}</Text>
               {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
             </View>
-            {edu.definitionEn ? <Text style={[styles.eduDef, { color: colors.textSecondary }]}>{edu.definitionEn}</Text> : null}
+            {edu.definition ? <Text style={[styles.eduDef, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
             <Pressable onPress={onSave} accessibilityRole="button" style={styles.saveRow} disabled={savedWord}>
               <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
               <Text style={[styles.saveText, { color: colors.primary }]}>
