@@ -109,8 +109,14 @@ export function EntryView({
         {entry.senses.map((s) => (
           <li key={s.id} className="dict-sense">
             <span className="dict-pos">{s.pos}</span>
-            <p className="dict-def">{s.definitionEn}</p>
-            {s.definitionKu ? <p className="dict-def-ku">{s.definitionKu}</p> : null}
+            {/*
+              English on top when there is one, and the Kurdish under it. A word
+              that is only defined in Kurdish — which is most of Wîkîferheng —
+              puts that definition here rather than leaving an empty line above
+              it, so the sense reads as a definition rather than as a gap.
+            */}
+            <p className="dict-def">{s.definitionEn ?? s.definitionKu}</p>
+            {s.definitionEn && s.definitionKu ? <p className="dict-def-ku">{s.definitionKu}</p> : null}
             {s.examples.length > 0 ? (
               <ul className="dict-examples">
                 {s.examples.map((e, i) => (

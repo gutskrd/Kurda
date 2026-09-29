@@ -16,11 +16,21 @@ export type PartOfSpeech =
 
 export type XrefRelation = 'synonym' | 'antonym' | 'root' | 'derived' | 'related';
 
+/** A stored sense, as the importer reconciles against it. Either definition may be absent. */
+export interface ExistingSense {
+  id: string;
+  pos: PartOfSpeech;
+  definitionEn: string | null;
+  definitionKu: string | null;
+  position: number;
+}
+
 export interface Sense {
   id: string;
   position: number;
   pos: PartOfSpeech;
-  definitionEn: string;
+  /** null when the source defines the word in Kurdish alone (see 1751000113000) */
+  definitionEn: string | null;
   definitionKu: string | null;
   examples: Array<{ textKu: string; textEn: string | null }>;
 }
@@ -52,37 +62,70 @@ export class DictionaryRepository {
     return res.rows[0]!.id;
   }
 
-  /** Find an entry by its normalized headword + dialect, with its senses' POS/definitions. */
+  /** One sense as the importer needs to see it, to decide what to do with an incoming one. */
   async findEntryByNormalized(
     normalized: string,
     dialect: string,
-  ): Promise<{ id: string; senses: Array<{ pos: PartOfSpeech; definitionEn: string; position: number }> } | null> {
+  ): Promise<{ id: string; senses: ExistingSense[] } | null> {
     const entry = await this.pool.query<{ id: string }>(
       `SELECT id FROM dict_entries WHERE headword_normalized = $1 AND dialect = $2 LIMIT 1`,
       [normalized, dialect],
     );
     const id = entry.rows[0]?.id;
     if (!id) return null;
-    const senses = await this.pool.query<{ pos: PartOfSpeech; definition_en: string; position: number }>(
-      `SELECT pos, definition_en, position FROM dict_senses WHERE entry_id = $1 ORDER BY position ASC`,
+    const senses = await this.pool.query<{
+      id: string;
+      pos: PartOfSpeech;
+      definition_en: string | null;
+      definition_ku: string | null;
+      position: number;
+    }>(
+      `SELECT id, pos, definition_en, definition_ku, position
+         FROM dict_senses WHERE entry_id = $1 ORDER BY position ASC`,
       [id],
     );
-    return { id, senses: senses.rows.map((s) => ({ pos: s.pos, definitionEn: s.definition_en, position: s.position })) };
+    return {
+      id,
+      senses: senses.rows.map((s) => ({
+        id: s.id,
+        pos: s.pos,
+        definitionEn: s.definition_en,
+        definitionKu: s.definition_ku,
+        position: s.position,
+      })),
+    };
   }
 
   async addSense(
     entryId: string,
     position: number,
     pos: PartOfSpeech,
-    definitionEn: string,
+    definitionEn?: string,
     definitionKu?: string,
   ): Promise<string> {
     const res = await this.pool.query<{ id: string }>(
       `INSERT INTO dict_senses (entry_id, position, pos, definition_en, definition_ku)
        VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [entryId, position, pos, definitionEn, definitionKu ?? null],
+      [entryId, position, pos, definitionEn ?? null, definitionKu ?? null],
     );
     return res.rows[0]!.id;
+  }
+
+  /**
+   * Fill in a definition a sense does not have yet.
+   *
+   * Two sources describe the same word in different languages — Wîkîferheng in
+   * Kurdish, English Wiktionary in English — and the second should complete the
+   * first rather than collide with it. Only ever writes an absent side; an
+   * existing definition is a conflict for a person to look at, not something to
+   * overwrite here.
+   */
+  async fillSenseDefinition(senseId: string, side: 'en' | 'ku', text: string): Promise<void> {
+    const column = side === 'en' ? 'definition_en' : 'definition_ku';
+    await this.pool.query(
+      `UPDATE dict_senses SET ${column} = $2 WHERE id = $1 AND ${column} IS NULL`,
+      [senseId, text],
+    );
   }
 
   async addExample(senseId: string, position: number, textKu: string, textEn?: string): Promise<void> {

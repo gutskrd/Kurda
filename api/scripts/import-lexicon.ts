@@ -8,7 +8,7 @@
  * (same headword+POS with a different definition → manual review, never
  * silently merged).
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pg from 'pg';
 import { loadConfig } from '../src/config/env.js';
@@ -45,13 +45,30 @@ async function main(): Promise<void> {
     const verb = res.dryRun ? 'would import' : 'imported';
     console.log(
       `✓ ${verb}: ${res.entriesCreated} new entrie(s), ${res.sensesAdded} sense(s), ` +
-        `${res.duplicatesSkipped} duplicate(s) skipped, ${res.conflicts.length} conflict(s)` +
+        `${res.duplicatesSkipped} duplicate(s) skipped, ${res.definitionsFilled} definition(s) filled in, ${res.conflicts.length} conflict(s)` +
         (res.dryRun ? ' (dry run — nothing written)' : ''),
     );
+    /*
+     * Summarised, with the full list written out.
+     *
+     * A hand-written lexicon produces a handful of conflicts and printing them
+     * all is right. A real one does not: `headword_normalized` folds diacritics,
+     * so `zabit` and `zabît` are one identity and about 7% of Kurmancî arrives
+     * as a conflict with a word it is not — roughly thirty thousand lines for
+     * the whole of Wîkîferheng, which is not a report anybody reads. The first
+     * few go to the terminal so the shape is visible; the rest go to a file that
+     * can be looked at.
+     */
     if (res.conflicts.length > 0) {
-      console.log('\nConflicts (flagged for manual review — NOT merged):');
-      for (const c of res.conflicts) {
+      const SHOWN = 10;
+      console.log(`\n${res.conflicts.length} conflict(s) — flagged for review, NOT merged:`);
+      for (const c of res.conflicts.slice(0, SHOWN)) {
         console.log(`  ${c.headword} [${c.pos}]: existing "${c.existingDefinition}" ≠ incoming "${c.incomingDefinition}"`);
+      }
+      if (res.conflicts.length > SHOWN) {
+        const report = resolve(`${file}.conflicts.json`);
+        writeFileSync(report, JSON.stringify(res.conflicts, null, 2));
+        console.log(`  … and ${res.conflicts.length - SHOWN} more — all of them written to ${report}`);
       }
     }
   } finally {
