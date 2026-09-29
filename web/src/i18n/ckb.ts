@@ -602,6 +602,8 @@ export const ckb: Catalogue = {
   'photo.sticker.yellowSun': 'خۆری زەرد',
   'photo.sticker.whiteSun': 'خۆری سپی',
   'photo.sticker.blackSun': 'خۆری ڕەش',
+  'photo.sticker.hevaloWhite': 'لۆگۆی Hevalo، سپی',
+  'photo.sticker.hevaloBlack': 'لۆگۆی Hevalo، ڕەش',
   'photo.pickSticker': 'ستیکەرێک هەڵبژێرە',
   'photo.swapSticker': 'ستیکەرەکە بگۆڕە',
   'photo.closeStickers': 'هەڵبژێری ستیکەر دابخە',
