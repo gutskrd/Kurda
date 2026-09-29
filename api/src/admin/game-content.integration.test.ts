@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { normalizeWord } from '../game/rhyme.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { activate } from '../test/activate.js';
+import { DictionaryRepository } from '../dictionary/repository.js';
 import { letterCount } from '@kurda/shared';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -469,15 +470,9 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
      */
     async function imported(word: string): Promise<void> {
       added.push(word);
-      // the games' normalizer, which is what the seed migration and the admin
-      // screen both write — not the repository's, which folds diacritics and
-      // would not be found by the search this suite exercises
-      const normalized = normalizeWord(word);
-      await pool.query(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect, letter_count)
-         VALUES ($1, $2, 'kurmanji', $3)`,
-        [word, normalized, letterCount(word)],
-      );
+      // through the repository, which is the path an import takes — and which
+      // writes both keys, so the browse can find what it wrote (1751000115000)
+      await new DictionaryRepository(pool).createEntry(word);
     }
 
     it('keeps an admin-added word in the pool and an imported one out of it', async () => {

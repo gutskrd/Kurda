@@ -28,13 +28,13 @@ const FUZZY_CANDIDATES = 400;
 interface EntryRow {
   id: string;
   headword: string;
-  headword_normalized: string;
+  headword_folded: string;
   dialect: string;
 }
 
 /**
- * Bidirectional dictionary search (KUR-044): Kurdish→English by normalized
- * headword prefix (diacritic-folded, so "se" finds "sê"/"ser"/"şev"),
+ * Bidirectional dictionary search (KUR-044): Kurdish→English by folded
+ * headword prefix — "se" finds "sê", "ser" and "şev", and so does "sê" —
  * English→Kurdish by definition match, with an edit-distance-1 fuzzy fallback
  * when nothing matches. Hot queries are Redis-cached.
  */
@@ -65,21 +65,21 @@ export class DictionarySearchService {
     // Kurdish → English: normalized prefix, exact headword first
     if (norm.length > 0) {
       const rows = await this.pool.query<EntryRow>(
-        `SELECT id, headword, headword_normalized, dialect FROM dict_entries
-         WHERE headword_normalized LIKE $1 || '%'
-         ORDER BY (headword_normalized = $1) DESC, length(headword_normalized) ASC, headword ASC
+        `SELECT id, headword, headword_folded, dialect FROM dict_entries
+         WHERE headword_folded LIKE $1 || '%'
+         ORDER BY (headword_folded = $1) DESC, length(headword_folded) ASC, headword ASC
          LIMIT $2`,
         [norm, cap],
       );
       for (const r of rows.rows) {
-        hits.set(r.id, this.hit(r, r.headword_normalized === norm ? 'exact' : 'prefix'));
+        hits.set(r.id, this.hit(r, r.headword_folded === norm ? 'exact' : 'prefix'));
       }
     }
 
     // English → Kurdish: definition contains the (raw) query
     if (hits.size < cap && english.length >= 2) {
       const rows = await this.pool.query<EntryRow>(
-        `SELECT DISTINCT e.id, e.headword, e.headword_normalized, e.dialect
+        `SELECT DISTINCT e.id, e.headword, e.headword_folded, e.dialect
          FROM dict_entries e JOIN dict_senses s ON s.entry_id = e.id
          WHERE s.definition_en ILIKE '%' || $1 || '%'
          LIMIT $2`,
@@ -92,14 +92,14 @@ export class DictionarySearchService {
     if (hits.size === 0 && norm.length > 0) {
       fuzzy = true;
       const candidates = await this.pool.query<EntryRow>(
-        `SELECT id, headword, headword_normalized, dialect FROM dict_entries
-         WHERE length(headword_normalized) BETWEEN $1 AND $2
+        `SELECT id, headword, headword_folded, dialect FROM dict_entries
+         WHERE length(headword_folded) BETWEEN $1 AND $2
          LIMIT $3`,
         [norm.length - 1, norm.length + 1, FUZZY_CANDIDATES],
       );
       for (const r of candidates.rows) {
         if (hits.size >= cap) break;
-        if (isWithinOneEdit(norm, r.headword_normalized)) hits.set(r.id, this.hit(r, 'fuzzy'));
+        if (isWithinOneEdit(norm, r.headword_folded)) hits.set(r.id, this.hit(r, 'fuzzy'));
       }
     }
 

@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { DictionaryRepository } from './repository.js';
+import { dictionaryKey, letterKey } from '@kurda/shared';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -27,6 +28,21 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     return id;
   }
 
+  /**
+   * A curated word, written the way migration 1751000094000 and the admin screen
+   * write one — both keys, the games' keeping its diacritics.
+   */
+  async function curated(headword: string, def: string): Promise<void> {
+    const res = await pool.query<{ id: string }>(
+      `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
+       VALUES ($1, $2, $3, 'kurmanji', true) RETURNING id`,
+      [headword, letterKey(headword), dictionaryKey(headword)],
+    );
+    const id = res.rows[0]!.id;
+    await repo.addSense(id, 1, 'noun', def);
+    ids.push(id);
+  }
+
   /** A word defined in Kurdish and nothing else, which is most of an imported lexicon. */
   async function kurdishOnly(headword: string, def: string): Promise<string> {
     const id = await repo.createEntry(headword);
@@ -45,6 +61,7 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     await entry('ser', 'noun', 'head; top');
     await entry('şev', 'noun', 'night');
     await entry('mamoste', 'noun', 'teacher');
+    await curated('pirtûkî', 'book');
     await kurdishOnly('hirmî', 'Fêkiyekî dardar e.');
 
     const reg = await app.inject({
@@ -106,5 +123,20 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     const res = await authed('/dictionary/search?q=hirmî');
     const first = res.json().results[0];
     expect(first).toMatchObject({ headword: 'hirmî', definitionEn: null, definitionKu: 'Fêkiyekî dardar e.' });
+  });
+  /**
+   * The bug this was hiding. Everything else in this suite seeds through the
+   * repository, which writes the folded key — so the search found its own
+   * fixtures while every word actually in the database, seeded by 1751000094000
+   * with the diacritics kept, was unreachable. Typing the word exactly returned
+   * nothing. There are two keys now (1751000115000) and the search reads the
+   * one meant for finding.
+   */
+  it('finds a curated word, typed with its diacritics or without', async () => {
+    for (const q of ['pirtûkî', 'pirtuki', 'pirtû', 'pirtu']) {
+      const res = await authed(`/dictionary/search?q=${encodeURIComponent(q)}`);
+      const words = res.json().results.map((r: { headword: string }) => r.headword);
+      expect(words, q).toContain('pirtûkî');
+    }
   });
 });

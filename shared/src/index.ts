@@ -1,4 +1,4 @@
-export { normalizeKurdish, foldDiacritics, letterCount } from './kurdish-text.js';
+export { normalizeKurdish, foldDiacritics, letterCount, letterKey, dictionaryKey } from './kurdish-text.js';
 export { escapeHtml, stripControlChars, hasHtmlSpecialChars } from './sanitize.js';
 export { XSS_PAYLOADS } from './xss-corpus.js';
 export { COUNTRIES, countriesIn, countryName, type Country } from './countries.js';

@@ -52,3 +52,31 @@ export function foldDiacritics(input: string): string {
 export function letterCount(word: string): number {
   return Array.from(word.normalize('NFC').replace(/[^\p{L}]/gu, '')).length;
 }
+
+/**
+ * A word reduced to its letters: lowercase, NFC, nothing else.
+ *
+ * What a game compares a typed guess against, and what the rhyme engine keys
+ * its rimes and its curator rulings on. Diacritics are **kept** — ê and e are
+ * different vowels and rhyme differently, so folding them here would silently
+ * rewrite what rhymes with what.
+ */
+export function letterKey(word: string): string {
+  return word.toLowerCase().normalize('NFC').replace(/[^\p{L}]/gu, '');
+}
+
+/**
+ * The same word as something to look an entry up by: letters only, and Kurdish
+ * diacritics folded to their base letters.
+ *
+ * Finding is not comparing. Somebody searching for "sev" means sêv, and an
+ * importer meeting "zabît" after "zabit" is meeting the same headword twice —
+ * neither of those is true of a Wordle guess, which is why this is a second key
+ * rather than a change to the first.
+ *
+ * Idempotent: folding an already-folded key leaves it alone, so it is safe to
+ * apply to a value that has been through `letterKey` already.
+ */
+export function dictionaryKey(word: string): string {
+  return letterKey(foldDiacritics(word));
+}

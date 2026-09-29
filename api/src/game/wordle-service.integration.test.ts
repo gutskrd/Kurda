@@ -3,6 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { WordleService } from './wordle-service.js';
 import { utcDayIndex, type Difficulty } from './wordle-daily.js';
+import { dictionaryKey, letterKey } from '@kurda/shared';
+import { DictionaryRepository } from '../dictionary/repository.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -20,11 +22,12 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
   const serviceAt = (date: Date): WordleService =>
     new WordleService(pool, { now: () => date });
 
+  /** A curated word, written the way the seed migration and the admin screen write one. */
   async function seedWord(headword: string): Promise<void> {
     const res = await pool.query<{ id: string }>(
-      `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games)
-       VALUES ($1, $1, 'kurmanji', true) RETURNING id`,
-      [headword],
+      `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, in_games)
+       VALUES ($1, $2, $3, 'kurmanji', true) RETURNING id`,
+      [headword, letterKey(headword), dictionaryKey(headword)],
     );
     entryIds.push(res.rows[0]!.id);
   }
@@ -160,6 +163,27 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
 
     const row = await pool.query<{ guesses: unknown[] }>(`SELECT guesses FROM wordle_games WHERE id=$1`, [gameId]);
     expect(row.rows[0]!.guesses).toHaveLength(0); // neither attempt landed
+  });
+
+  /**
+   * The reason a guess is looked up by the folded key (1751000115000). An
+   * imported word is written by the repository, which stores ç ê î ş û folded;
+   * matching on the unfolded key rejected every one of them, and nearly every
+   * Kurmancî word has one. Guessed here both ways, because a player typing the
+   * plain letters has still named a word the dictionary knows.
+   */
+  it('accepts an imported word, diacritics or not', async () => {
+    const imported = `sêvçî`;
+    entryIds.push(await new DictionaryRepository(pool).createEntry(imported));
+
+    const u = await makeUser();
+    const gameId = await insertGame(u, 'practice', 'medium', 'malan', null);
+    const svc = serviceAt(new Date());
+
+    for (const guess of [imported, 'sevci']) {
+      const res = await svc.guess(u, gameId, guess);
+      expect(res.ok, guess).toBe(true);
+    }
   });
 
   it('awards participation XP (10) on a daily loss and keeps streak at 0', async () => {
