@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { AppError } from '../plugins/errors.js';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
-import { classifyRhyme, normalizeWord, type Dialect } from '../game/rhyme.js';
+import { classifyRhyme, normalizeWord } from '../game/rhyme.js';
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
 import { QuizQuestionService } from './quiz-questions.js';
 import { dictionaryKey, letterCount } from '@kurda/shared';
@@ -14,8 +14,8 @@ import { dictionaryKey, letterCount } from '@kurda/shared';
  * validates guesses against it, and Rhyme draws prompts from it and only accepts
  * submissions that are in it. So adding a word here makes it playable everywhere.
  *
- * Rhymes are NOT stored — `classifyRhyme` derives them from the rime (final vowel
- * + trailing consonants), so an admin curates *words* and the rhyme sets follow.
+ * Rhymes are NOT stored — `classifyRhyme` derives them from how many letters two
+ * words end with in common, so an admin curates *words* and the rhyme sets follow.
  * `GET /admin/dictionary/rhymes` exposes that computation so an admin can see
  * which words currently rhyme with a given one and spot thin coverage.
  *
@@ -374,7 +374,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     const target = normalizeWord(word);
     for (const r of rows.rows) {
       if (normalizeWord(r.headword) === target) continue; // a word never rhymes with itself
-      const q = classifyRhyme(word, r.headword, dialect as Dialect);
+      const q = classifyRhyme(word, r.headword);
       if (q === 'perfect') perfect.push(r.headword);
       else if (q === 'near') near.push(r.headword);
     }
@@ -394,7 +394,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       .map((r) => r.headword)
       .filter((h) => normalizeWord(h) !== target)
       .map((h) => {
-        const derivedQuality = classifyRhyme(word, h, dialect as Dialect);
+        const derivedQuality = classifyRhyme(word, h);
         const chosen = decided.get(normalizeWord(h));
         return {
           word: h,
@@ -433,7 +433,9 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * and the pool is hand-curated, so this stays exact instead of approximating.
    */
   app.get('/admin/rhyme/prompts', { schema: { querystring: promptsQuery }, preHandler: canEdit }, async (req) => {
-    const { q, dialect, limit, offset } = req.query as z.infer<typeof promptsQuery>;
+    // `dialect` is still accepted and still ignored: a rhyme is decided by the
+    // letters two words end with, which is the same question in either script.
+    const { q, limit, offset } = req.query as z.infer<typeof promptsQuery>;
     const all = await app.db.query<WordRow>(
       // the curated pool only: this is the coverage view, and an imported
       // lexicon has nothing to do with which prompts a round can open on
@@ -467,7 +469,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       let ruledOut = 0;
       for (const other of all.rows) {
         if (other.headword_normalized === row.headword_normalized) continue;
-        const derived = classifyRhyme(row.headword, other.headword, dialect as Dialect);
+        const derived = classifyRhyme(row.headword, other.headword);
         const quality = overrides?.get(other.headword_normalized) ?? derived;
         if (quality === 'perfect') perfect++;
         else if (quality === 'near') near++;
@@ -510,7 +512,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     '/admin/rhyme/prompts/rebuild',
     { schema: { body: rebuildBody }, preHandler: canEdit },
     async (req) => {
-      const { dialect, dryRun } = req.body as z.infer<typeof rebuildBody>;
+      const { dryRun } = req.body as z.infer<typeof rebuildBody>;
       const all = await app.db.query<WordRow>(
         // rebuild reasons about the pool a round draws from, not the dictionary
         `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE in_games`,
@@ -533,7 +535,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
           if (other.headword_normalized === row.headword_normalized) return false;
           const quality =
             overrides?.get(other.headword_normalized) ??
-            classifyRhyme(row.headword, other.headword, dialect as Dialect);
+            classifyRhyme(row.headword, other.headword);
           return quality === 'perfect' || quality === 'near';
         });
         if (hasPartner) playable.push(row.id);

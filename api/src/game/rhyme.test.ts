@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { POINTS_BASE, SPEED_BONUS } from './scoring.js';
 import {
   classifyRhyme,
+  sharedEnding,
   evaluateSubmission,
   InMemoryLexicon,
   normalizeWord,
@@ -35,27 +36,68 @@ describe('normalizeWord', () => {
   });
 });
 
+describe('sharedEnding', () => {
+  /** The worked example the rule is written from: kurdistan, read backwards. */
+  it('counts backwards from the last letter and stops at the first difference', () => {
+    expect(sharedEnding('kurdistan', 'baran')).toBe(2); // n, a, then t vs r
+    expect(sharedEnding('kurdistan', 'kurdistan')).toBe(9);
+    expect(sharedEnding('kurdistan', 'stan')).toBe(4);
+  });
+
+  it('never looks past a letter that differs', () => {
+    // -an- runs through both, but the last letters are d and t
+    expect(sharedEnding('hand', 'want')).toBe(0);
+  });
+
+  it('is zero against an empty word, and symmetric', () => {
+    expect(sharedEnding('roj', '')).toBe(0);
+    expect(sharedEnding('', '')).toBe(0);
+    expect(sharedEnding('mal', 'sal')).toBe(sharedEnding('sal', 'mal'));
+  });
+});
+
 describe('classifyRhyme (Kurmancî)', () => {
-  it('perfect when the rime (final vowel + coda) matches', () => {
-    expect(classifyRhyme('gul', 'kul', 'kurmanci')).toBe('perfect'); // -ul / -ul
-    expect(classifyRhyme('jîn', 'şîn', 'kurmanci')).toBe('perfect'); // -în / -în
+  it('perfect on two shared letters or more', () => {
+    expect(classifyRhyme('gul', 'kul')).toBe('perfect'); // -ul
+    expect(classifyRhyme('jîn', 'şîn')).toBe('perfect'); // -în
+    expect(classifyRhyme('kurdistan', 'baran')).toBe('perfect'); // -an
   });
 
-  it('near (slant) when the final vowel matches but the coda differs', () => {
-    expect(classifyRhyme('roj', 'soz', 'kurmanci')).toBe('near'); // -oj vs -oz
+  it('near on exactly one', () => {
+    expect(classifyRhyme('dil', 'gîl')).toBe('near'); // -l, then i vs î
+    expect(classifyRhyme('roj', 'baj')).toBe('near'); // -j, then o vs a
   });
 
-  it('near when the coda matches with a close long/short vowel', () => {
-    expect(classifyRhyme('dil', 'gîl', 'kurmanci')).toBe('near'); // i~î, shared -l
-  });
-
-  it('none when neither vowel nor coda lines up', () => {
-    expect(classifyRhyme('roj', 'gul', 'kurmanci')).toBe('none');
-    expect(classifyRhyme('av', 'dil', 'kurmanci')).toBe('none');
+  /**
+   * The narrowing this rule makes. The old engine compared the final vowel and
+   * the coda separately, so `roj`/`soz` counted as a slant rhyme on the shared
+   * -o-. A rhyme now has to reach the end of the word: if the last letters
+   * differ there is no rhyme, whatever the words share further back.
+   */
+  it('none when the last letters differ, however much precedes them', () => {
+    expect(classifyRhyme('roj', 'soz')).toBe('none');
+    expect(classifyRhyme('roj', 'gul')).toBe('none');
+    expect(classifyRhyme('av', 'dil')).toBe('none');
   });
 
   it('is case- and punctuation-insensitive', () => {
-    expect(classifyRhyme('GUL', ' kul! ', 'kurmanci')).toBe('perfect');
+    expect(classifyRhyme('GUL', ' kul! ')).toBe('perfect');
+  });
+
+  /**
+   * Letters, not sounds, so it needs no vowel table per dialect and reads
+   * Soranî's script the same way it reads Kurmancî's.
+   */
+  it('works the same in Arabic script', () => {
+    // کوردستان / باران — ن, ا, then ت against ر: two shared letters
+    expect(classifyRhyme('کوردستان', 'باران')).toBe('perfect');
+    // کوردی / فارسی — ی, then د against س: one
+    expect(classifyRhyme('کوردی', 'فارسی')).toBe('near');
+  });
+
+  it('is none when either side has no letters at all', () => {
+    expect(classifyRhyme('roj', '123')).toBe('none');
+    expect(classifyRhyme('', 'roj')).toBe('none');
   });
 });
 
