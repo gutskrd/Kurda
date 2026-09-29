@@ -26,18 +26,28 @@ function letterCount(word: string): number {
   return Array.from(word.normalize('NFC').replace(/[^\p{L}]/gu, '')).length;
 }
 
+/**
+ * A boolean in a query string, which `z.coerce.boolean()` cannot read.
+ *
+ * Coercion is `Boolean(value)`, and every non-empty string is truthy — so
+ * `?inGames=false` parsed as **true** and the "dictionary only" view returned
+ * the pool. The word "false" is the one input a flag like this is guaranteed to
+ * receive, so it has to be read rather than coerced.
+ */
+const queryBool = z.enum(['true', 'false']).transform((v) => v === 'true');
+
 const listQuery = z.object({
   q: z.string().max(80).optional(),
   /** filter to one letter-length (the Wordle difficulty bands are length-based) */
   length: z.coerce.number().int().min(1).max(40).optional(),
   /** only words marked as rhyme prompts */
-  prompts: z.coerce.boolean().optional(),
+  prompts: queryBool.optional(),
   /**
    * Which set to browse. The game pool by default, because that is what this
    * screen is for and because the dictionary behind it may be hundreds of
    * thousands of rows; `false` reaches those, to promote one into the pool.
    */
-  inGames: z.coerce.boolean().default(true),
+  inGames: queryBool.default(true),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
 });
