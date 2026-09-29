@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foldDiacritics, normalizeKurdish } from './kurdish-text.js';
+import { foldDiacritics, letterCount, normalizeKurdish } from './kurdish-text.js';
 
 // Explicit code points so precomposed vs. decomposed intent is unambiguous.
 const E_CIRC = String.fromCharCode(0xea); // precomposed e-circumflex
@@ -35,5 +35,30 @@ describe('foldDiacritics', () => {
 
   it('leaves plain Latin text untouched', () => {
     expect(foldDiacritics('kurda')).toBe('kurda');
+  });
+});
+
+describe('letterCount', () => {
+  it('counts letters, not characters', () => {
+    expect(letterCount('roj')).toBe(3);
+    expect(letterCount("av'a")).toBe(3);
+    expect(letterCount('bi rê')).toBe(4);
+    expect(letterCount('xwe-bi-xwe')).toBe(8);
+  });
+
+  /**
+   * A decomposed ê is two code points and one letter. Counting it as two puts
+   * the word in the wrong Wordle band, where it becomes a target the grid has
+   * no room for.
+   */
+  it('counts a decomposed diacritic once', () => {
+    expect(letterCount('sêv')).toBe(3);
+    expect(letterCount('sêv')).toBe(3);
+    expect(letterCount('şûşe')).toBe(4);
+  });
+
+  it('is zero for a word with no letters in it', () => {
+    expect(letterCount('')).toBe(0);
+    expect(letterCount('— 42 —')).toBe(0);
   });
 });

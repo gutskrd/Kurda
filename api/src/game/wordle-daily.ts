@@ -5,6 +5,7 @@
  * repeats), the XP-by-guess-count table, and streak/stats aggregation. Storage,
  * HTTP, and the guess engine (#303) live elsewhere; this module has no I/O.
  */
+import { letterCount } from '@kurda/shared';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -14,11 +15,6 @@ export const DIFFICULTY_LENGTHS: Record<Difficulty, readonly number[]> = {
   medium: [5],
   hard: [6, 7, 8],
 };
-
-/** Count Kurdish letters (NFC, code-point aware) — matches the engine's view. */
-function letterCount(word: string): number {
-  return Array.from(word.normalize('NFC').replace(/[^\p{L}]/gu, '')).length;
-}
 
 /** Keep only words whose letter-length fits the difficulty. */
 export function filterByDifficulty(words: Iterable<string>, difficulty: Difficulty): string[] {

@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { normalizeWord } from '../game/rhyme.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { activate } from '../test/activate.js';
+import { letterCount } from '@kurda/shared';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -468,10 +469,14 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
      */
     async function imported(word: string): Promise<void> {
       added.push(word);
-      const normalized = word.toLowerCase().normalize('NFC').replace(/[^\p{L}]/gu, '');
+      // the games' normalizer, which is what the seed migration and the admin
+      // screen both write — not the repository's, which folds diacritics and
+      // would not be found by the search this suite exercises
+      const normalized = normalizeWord(word);
       await pool.query(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1, $2, 'kurmanji')`,
-        [word, normalized],
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect, letter_count)
+         VALUES ($1, $2, 'kurmanji', $3)`,
+        [word, normalized, letterCount(word)],
       );
     }
 
@@ -492,6 +497,51 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
        */
       const outOfPool = await authed('GET', `/admin/dictionary?q=zp${suffix}&inGames=false`, editorToken);
       expect(outOfPool.json().words.map((w: { headword: string }) => w.headword)).toEqual([theirs]);
+    });
+
+    /**
+     * The band filter and the page are SQL now (1751000114000). They used to be
+     * a `.filter()` and a `.slice()` over every matching row, which the
+     * dictionary-only view — the one that holds a whole imported lexicon, and
+     * the one an admin has to use to promote anything out of it — would have
+     * made unusable.
+     *
+     * What is asserted is the part that is easy to get wrong when a filter moves
+     * into SQL beside a LIMIT: the total has to be how many words matched the
+     * filter, not how many are on the page.
+     */
+    it('filters by letter length and pages, in agreement with the games', async () => {
+      for (const w of ['pênûs', 'hirmî', 'zêrîn', 'sêvî', 'kevn']) await imported(w);
+
+      const band = await authed('GET', '/admin/dictionary?inGames=false&length=5&limit=2', editorToken);
+      const words = band.json().words as Array<{ headword: string; length: number }>;
+      expect(words).toHaveLength(2); // the page
+      expect(band.json().total).toBeGreaterThanOrEqual(3); // …of everything that matched
+      for (const w of words) {
+        expect(w.length, w.headword).toBe(5);
+        expect(letterCount(w.headword), w.headword).toBe(5);
+      }
+
+      const second = await authed('GET', '/admin/dictionary?inGames=false&length=5&limit=2&offset=2', editorToken);
+      expect(second.json().total).toBe(band.json().total);
+      const seen = new Set(words.map((w) => w.headword));
+      for (const w of second.json().words) expect(seen.has(w.headword), w.headword).toBe(false);
+    });
+
+    /**
+     * A rename is the only thing that changes a headword after it is written, so
+     * it is the only thing that can leave the stored length describing a word
+     * that is no longer there.
+     */
+    it('keeps the stored length right when a word is renamed', async () => {
+      const short = `zn${suffix}`;
+      const id = await seed(short);
+      const longer = `${short}ker`;
+      added.push(longer);
+
+      await authed('PATCH', `/admin/dictionary/${id}`, editorToken, { headword: longer });
+      const found = await authed('GET', `/admin/dictionary?q=${longer}`, editorToken);
+      expect(found.json().words[0].length).toBe(letterCount(longer));
     });
 
     it('counts the pool and the dictionary separately', async () => {
