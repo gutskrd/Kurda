@@ -117,7 +117,7 @@ async function main(): Promise<void> {
   );
   if (totals.conflicts > 0) {
     console.log(
-      'Conflicts are mostly diacritics: `headword_normalized` folds them, so zabit and zabît\n' +
+      'Conflicts are mostly diacritics: `headword_folded` folds them, so zabit and zabît\n' +
         'are one identity to this schema. See docs/admin/dictionary-import.md.',
     );
   }

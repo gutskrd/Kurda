@@ -3,6 +3,8 @@ import { POINTS_BASE, SPEED_BONUS } from './scoring.js';
 import {
   classifyRhyme,
   sharedEnding,
+  rhymeKey,
+  rhymePrefix,
   evaluateSubmission,
   InMemoryLexicon,
   normalizeWord,
@@ -53,6 +55,52 @@ describe('sharedEnding', () => {
     expect(sharedEnding('roj', '')).toBe(0);
     expect(sharedEnding('', '')).toBe(0);
     expect(sharedEnding('mal', 'sal')).toBe(sharedEnding('sal', 'mal'));
+  });
+});
+
+describe('rhymeKey and rhymePrefix', () => {
+  it('writes a word backwards, normalized', () => {
+    expect(rhymeKey('Kurdistan')).toBe('natsidruk');
+    expect(rhymeKey(' baran! ')).toBe('narab');
+    expect(rhymeKey('kurdistanê')).toBe('ênatsidruk');
+  });
+
+  /**
+   * The equivalence the whole scheme rests on: two words rhyme perfectly iff
+   * their rhyme keys share a two-character prefix, and at all iff they share
+   * one. Asserted directly rather than trusted.
+   */
+  it('agrees with classifyRhyme', () => {
+    const pairs: Array<[string, string]> = [
+      ['kurdistan', 'baran'],
+      ['gul', 'kul'],
+      ['dil', 'gîl'],
+      ['roj', 'soz'],
+      ['av', 'dil'],
+    ];
+    for (const [a, b] of pairs) {
+      const quality = classifyRhyme(a, b);
+      const sharesTwo = rhymePrefix(a, 2) !== null && rhymeKey(b).startsWith(rhymePrefix(a, 2)!);
+      const sharesOne = rhymePrefix(a, 1) !== null && rhymeKey(b).startsWith(rhymePrefix(a, 1)!);
+      expect(sharesTwo, `${a}/${b} perfect`).toBe(quality === 'perfect');
+      expect(sharesOne, `${a}/${b} rhymes at all`).toBe(quality !== 'none');
+    }
+  });
+
+  /**
+   * A one-letter word has no perfect rhymes — nothing can share two final
+   * letters with it. A one-character prefix would have matched every word
+   * ending in that letter and called them all perfect.
+   */
+  it('has no two-letter prefix for a one-letter word', () => {
+    expect(rhymePrefix('a', 2)).toBeNull();
+    expect(rhymePrefix('a', 1)).toBe('a');
+    expect(rhymePrefix('', 1)).toBeNull();
+    expect(rhymePrefix('roj', 0)).toBeNull();
+  });
+
+  it('reads Arabic script the same way', () => {
+    expect(rhymePrefix('کوردستان', 2)).toBe(rhymePrefix('باران', 2));
   });
 });
 
