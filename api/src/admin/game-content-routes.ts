@@ -32,6 +32,12 @@ const listQuery = z.object({
   length: z.coerce.number().int().min(1).max(40).optional(),
   /** only words marked as rhyme prompts */
   prompts: z.coerce.boolean().optional(),
+  /**
+   * Which set to browse. The game pool by default, because that is what this
+   * screen is for and because the dictionary behind it may be hundreds of
+   * thousands of rows; `false` reaches those, to promote one into the pool.
+   */
+  inGames: z.coerce.boolean().default(true),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
 });
@@ -67,6 +73,8 @@ interface WordRow {
   headword_normalized: string;
   dialect: string;
   is_rhyme_prompt: boolean;
+  /** in the pool a game chooses from, as opposed to merely in the dictionary */
+  in_games?: boolean;
 }
 
 export function registerGameContentRoutes(app: FastifyInstance): void {
@@ -81,15 +89,24 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * locale-dependent SQL character class).
    */
   app.get('/admin/dictionary', { schema: { querystring: listQuery }, preHandler: canEdit }, async (req) => {
-    const { q, length, prompts, limit, offset } = req.query as z.infer<typeof listQuery>;
+    const { q, length, prompts, inGames, limit, offset } = req.query as z.infer<typeof listQuery>;
     const params: unknown[] = [];
-    let clause = '';
+    const conds: string[] = [];
     if (q) {
       params.push(`%${normalizeWord(q)}%`);
-      clause = 'WHERE headword_normalized LIKE $1';
+      conds.push(`headword_normalized LIKE $${params.length}`);
     }
+    /*
+     * Always one way or the other, never both. The rows are paginated in JS
+     * below, so an unfiltered browse would pull every headword in the database
+     * into this process on each keystroke — which is survivable at a few hundred
+     * curated words and is not once a lexicon has been imported.
+     */
+    conds.push(inGames ? 'in_games' : 'NOT in_games');
+    const clause = conds.length > 0 ? `WHERE ${conds.join(' AND ')}` : '';
     const rows = await app.db.query<WordRow>(
-      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries ${clause} ORDER BY headword ASC`,
+      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt, in_games
+         FROM dict_entries ${clause} ORDER BY headword ASC`,
       params,
     );
     const all = rows.rows
@@ -99,6 +116,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         normalized: r.headword_normalized,
         dialect: r.dialect,
         isRhymePrompt: r.is_rhyme_prompt,
+        inGames: r.in_games ?? true,
         length: letterCount(r.headword),
       }))
       .filter((w) => length === undefined || w.length === length)
@@ -124,8 +142,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         continue;
       }
       const res = await app.db.query<{ id: string }>(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect, is_rhyme_prompt)
-         SELECT $1, $2, $3, $4
+        // `in_games` is true here and defaults to false everywhere else: a word
+        // an admin typed in is a word chosen for the games, which is the whole
+        // difference between this and an imported lexicon (1751000112000)
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect, is_rhyme_prompt, in_games)
+         SELECT $1, $2, $3, $4, true
           WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)
          RETURNING id`,
         [headword, normalized, dialect, isRhymePrompt],
@@ -157,16 +178,26 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       schema: {
         params: z.object({ id: z.uuid() }),
         body: z
-          .object({ isRhymePrompt: z.boolean().optional(), headword: z.string().min(1).max(64).optional() })
-          .refine((b) => b.isRhymePrompt !== undefined || b.headword !== undefined, {
-            message: 'nothing to change',
-          }),
+          .object({
+            isRhymePrompt: z.boolean().optional(),
+            headword: z.string().min(1).max(64).optional(),
+            /** promote an imported word into the pool a game chooses from, or drop it back out */
+            inGames: z.boolean().optional(),
+          })
+          .refine(
+            (b) => b.isRhymePrompt !== undefined || b.headword !== undefined || b.inGames !== undefined,
+            { message: 'nothing to change' },
+          ),
       },
       preHandler: canEdit,
     },
     async (req) => {
       const { id } = req.params as { id: string };
-      const { isRhymePrompt, headword } = req.body as { isRhymePrompt?: boolean; headword?: string };
+      const { isRhymePrompt, headword, inGames } = req.body as {
+        isRhymePrompt?: boolean;
+        headword?: string;
+        inGames?: boolean;
+      };
 
       const existing = await app.db.query<WordRow>(
         `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE id = $1`,
@@ -191,6 +222,20 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
 
       if (isRhymePrompt !== undefined) {
         await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = $2 WHERE id = $1`, [id, isRhymePrompt]);
+      }
+
+      /*
+       * Dropping a word out of the pool takes its prompt flag with it. A prompt
+       * that is not in the pool is a round the game will never open, and a
+       * coverage view counting it would be counting a word nobody can be asked.
+       */
+      if (inGames !== undefined) {
+        await app.db.query(
+          inGames
+            ? `UPDATE dict_entries SET in_games = true WHERE id = $1`
+            : `UPDATE dict_entries SET in_games = false, is_rhyme_prompt = false WHERE id = $1`,
+          [id],
+        );
       }
 
       const after = await app.db.query<WordRow>(
@@ -289,7 +334,16 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    */
   app.get('/admin/dictionary/rhymes', { schema: { querystring: rhymeQuery }, preHandler: canEdit }, async (req) => {
     const { word, dialect } = req.query as z.infer<typeof rhymeQuery>;
-    const rows = await app.db.query<{ headword: string }>(`SELECT headword FROM dict_entries`);
+    /*
+     * The game pool, not the dictionary.
+     *
+     * Every row here is put through `classifyRhyme` below, so this is an O(n)
+     * CPU loop per request — fine over a few hundred curated words, and not fine
+     * over an imported lexicon of several hundred thousand. It is also the right
+     * set on its own terms: this list is what a curator decides about, and
+     * deciding about 447,000 inflected forms is not curation (1751000112000).
+     */
+    const rows = await app.db.query<{ headword: string }>(`SELECT headword FROM dict_entries WHERE in_games`);
     const perfect: string[] = [];
     const near: string[] = [];
     const target = normalizeWord(word);
@@ -356,7 +410,10 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   app.get('/admin/rhyme/prompts', { schema: { querystring: promptsQuery }, preHandler: canEdit }, async (req) => {
     const { q, dialect, limit, offset } = req.query as z.infer<typeof promptsQuery>;
     const all = await app.db.query<WordRow>(
-      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries ORDER BY headword ASC`,
+      // the curated pool only: this is the coverage view, and an imported
+      // lexicon has nothing to do with which prompts a round can open on
+      `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt
+         FROM dict_entries WHERE in_games ORDER BY headword ASC`,
     );
     const curated = all.rows.filter((r) => r.is_rhyme_prompt);
     // Rounds fall back to the WHOLE pool while nothing is curated, so that is
@@ -430,7 +487,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     async (req) => {
       const { dialect, dryRun } = req.body as z.infer<typeof rebuildBody>;
       const all = await app.db.query<WordRow>(
-        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries`,
+        // rebuild reasons about the pool a round draws from, not the dictionary
+        `SELECT id, headword, headword_normalized, dialect, is_rhyme_prompt FROM dict_entries WHERE in_games`,
       );
       const decided = await app.db.query<{ prompt_normalized: string; rhyme_normalized: string; quality: string }>(
         `SELECT prompt_normalized, rhyme_normalized, quality FROM rhyme_overrides`,
@@ -522,8 +580,9 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         const trimmed = rhyme.trim();
         if (letterCount(trimmed) < 2) throw new AppError('BAD_WORD', 400, 'a word must be at least two letters');
         const ins = await app.db.query(
-          `INSERT INTO dict_entries (headword, headword_normalized, dialect)
-           SELECT $1, $2, $3
+          // "add to pool" means exactly that
+          `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games)
+           SELECT $1, $2, $3, true
             WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)`,
           [trimmed, target, dialect],
         );
@@ -552,7 +611,13 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
    * can see at a glance whether a difficulty is thin (or empty → EMPTY_POOL).
    */
   app.get('/admin/dictionary/stats', { config: { skipValidation: true }, preHandler: canEdit }, async () => {
-    const rows = await app.db.query<{ headword: string }>(`SELECT headword FROM dict_entries`);
+    /*
+     * Length bands describe what Wordle can offer, so they count the pool. The
+     * dictionary behind it is counted separately below — the two numbers
+     * answer different questions, and showing only the second is how you end up
+     * believing there are 447,000 words to play with.
+     */
+    const rows = await app.db.query<{ headword: string }>(`SELECT headword FROM dict_entries WHERE in_games`);
     const byLength = new Map<number, number>();
     for (const r of rows.rows) {
       const n = letterCount(r.headword);
@@ -563,12 +628,17 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       lengths: [...DIFFICULTY_LENGTHS[d]],
       words: DIFFICULTY_LENGTHS[d].reduce((sum, n) => sum + (byLength.get(n) ?? 0), 0),
     }));
-    const prompts = await app.db.query<{ n: string }>(
-      `SELECT COUNT(*)::int AS n FROM dict_entries WHERE is_rhyme_prompt`,
+    const counts = await app.db.query<{ prompts: number; dictionary: number }>(
+      `SELECT COUNT(*) FILTER (WHERE is_rhyme_prompt AND in_games)::int AS prompts,
+              COUNT(*)::int AS dictionary
+         FROM dict_entries`,
     );
     return {
+      /** words a game can choose from */
       total: rows.rows.length,
-      rhymePrompts: Number(prompts.rows[0]?.n ?? 0),
+      /** every headword, including any imported lexicon — what a guess is checked against */
+      dictionary: Number(counts.rows[0]?.dictionary ?? 0),
+      rhymePrompts: Number(counts.rows[0]?.prompts ?? 0),
       byLength: [...byLength.entries()].sort((a, b) => a[0] - b[0]).map(([length, words]) => ({ length, words })),
       difficulties,
     };

@@ -317,7 +317,10 @@ export class WordleService {
   /** Difficulty pool = dictionary headwords of the right letter-length, stable order. */
   private async loadPool(difficulty: Difficulty): Promise<string[]> {
     const res = await this.pool.query<{ headword: string }>(
-      `SELECT headword FROM dict_entries ORDER BY id`,
+      // in_games only: a target has to be a word somebody recognises (see
+      // migration 1751000112000). Guess validation below stays over the whole
+      // dictionary, where a bigger lexicon only helps.
+      `SELECT headword FROM dict_entries WHERE in_games ORDER BY id`,
     );
     return filterByDifficulty(res.rows.map((r) => r.headword), difficulty);
   }

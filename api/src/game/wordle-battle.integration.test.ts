@@ -34,7 +34,7 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     svc = new WordleBattleService(pool);
     for (const w of MEDIUM) {
       const r = await pool.query<{ id: string }>(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1,$1,'kurmanji') RETURNING id`,
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games) VALUES ($1,$1,'kurmanji',true) RETURNING id`,
         [w],
       );
       entryIds.push(r.rows[0]!.id);

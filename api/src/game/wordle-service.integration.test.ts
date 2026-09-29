@@ -22,8 +22,8 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
 
   async function seedWord(headword: string): Promise<void> {
     const res = await pool.query<{ id: string }>(
-      `INSERT INTO dict_entries (headword, headword_normalized, dialect)
-       VALUES ($1, $1, 'kurmanji') RETURNING id`,
+      `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games)
+       VALUES ($1, $1, 'kurmanji', true) RETURNING id`,
       [headword],
     );
     entryIds.push(res.rows[0]!.id);

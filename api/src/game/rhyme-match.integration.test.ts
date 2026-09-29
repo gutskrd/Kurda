@@ -40,7 +40,7 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     await pool.query(`DELETE FROM dict_entries`);
     for (const w of RHYMES) {
       const r = await pool.query<{ id: string }>(
-        `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1,$1,'kurmanji') RETURNING id`,
+        `INSERT INTO dict_entries (headword, headword_normalized, dialect, in_games) VALUES ($1,$1,'kurmanji',true) RETURNING id`,
         [w],
       );
       entryIds.push(r.rows[0]!.id);
