@@ -3,6 +3,7 @@ import { api, ApiError } from '../api';
 import { RhymeEditor } from './RhymeEditor';
 import { QuizQuestions } from './QuizQuestions';
 import { RaceTexts } from './RaceTexts';
+import { DictionaryImport } from './DictionaryImport';
 
 interface Word {
   id: string;
@@ -175,6 +176,7 @@ export function Games(): React.JSX.Element {
       {section === 'quiz' && <QuizQuestions />}
       {section === 'race' && <RaceTexts />}
       {section === 'pool' && <AddWords onAdded={load} />}
+      {section === 'pool' && <DictionaryImport />}
 
       {section === 'pool' && (
       <div className="card" style={{ padding: 0 }}>

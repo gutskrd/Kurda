@@ -111,12 +111,28 @@ so an interrupted run keeps everything it already wrote.
 8,904 entries and 9,012 senses, all Kurdish-only, all `in_games = false`, in
 about two minutes. The whole Kurmancî set is therefore around 90 minutes.
 
-The shortfall — 9,627 in, 8,904 out — is diacritics. `headword_normalized` folds
+The shortfall — 9,627 in, 8,904 out — is diacritics. `headword_folded` folds
 them, so `zabit` and `zabît` are one identity to this schema; 7.5% of spellings
 collide that way, which is roughly 33,000 words across the full set. They are
 reported as conflicts rather than merged silently.
 
 ### Running it against production
+
+**From the admin panel.** *Games → Word pool → Import a dictionary*, pick a
+language, press the button. The request returns immediately and the work carries
+on in the API; the card shows files done, words added and a rough time left, and
+you can close the page. Admin or superadmin only — importing a language writes
+several hundred thousand rows and has no undo, which is a different thing from
+curating words.
+
+If a deploy restarts the API mid-import, the run is marked failed and the button
+comes back as **Continue the import**: it picks up at the file it reached rather
+than starting over, because re-reading a file it already did costs nothing.
+Only one import runs at a time, enforced by a unique index rather than a check.
+
+Everything below is the same job from a shell, for when there is no panel to
+reach — a first import into an empty database, or a language you want to watch
+scroll past.
 
 The production database does not accept connections from outside its private
 network, and it should stay that way. Run the import where the credentials

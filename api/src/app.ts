@@ -121,6 +121,8 @@ import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
 import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
+import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
+import type { FerhengSource } from './dictionary/ferheng-source.js';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
 import { createPushProvider } from './push/provider.js';
@@ -174,6 +176,14 @@ export interface BuildAppOptions {
   matchmaking?: MatchmakingOptions;
   /** Test seam: shrink phase timers. */
   engine?: EngineOptions;
+  /**
+   * Test seam: where a dictionary import reads its words from.
+   *
+   * The real one downloads 65 MB from GitHub over about ninety minutes, which no
+   * test should start by accident — and a test that asserts the endpoint returns
+   * 202 does start it, because returning before the work finishes is the point.
+   */
+  ferheng?: FerhengSource;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -501,6 +511,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // database is configured, which this branch already requires.
     registerAdminRoutes(app, adminTotp!);
     registerGameContentRoutes(app);
+    // starting a dictionary import from the panel, so it needs no shell on the host
+    registerDictionaryImportRoutes(app, options.ferheng);
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,

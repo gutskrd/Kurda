@@ -349,6 +349,22 @@ h1 { font-size: 21px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.015e
   padding: 20px;
 }
 
+/* ---- a long job, running ----------------------------------------------- */
+/* The dictionary import takes about ninety minutes, so the one thing this has
+   to communicate is that something is still happening. */
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--separator);
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--ok);
+  border-radius: 999px;
+  transition: width 400ms ease;
+}
+
 /* ---- tables: crisp inside the glass card ------------------------------- */
 .tablewrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; min-width: 520px; }

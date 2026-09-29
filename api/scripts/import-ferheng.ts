@@ -22,23 +22,8 @@ import pg from 'pg';
 import { loadConfig } from '../src/config/env.js';
 import { DictionaryRepository } from '../src/dictionary/repository.js';
 import { importLexicon, type LexiconEntry } from '../src/dictionary/import.js';
-import { plan, toLexicon, type Chunk, type SourceEntry } from '../src/dictionary/ferheng.js';
-
-const BASE = 'https://raw.githubusercontent.com/kurdish-tech/kurdish-tech.github.io/main/public/data';
-
-/** Their directory → the dialect we store. */
-const LANGS: Record<string, string> = { ku: 'kurmanji', sor: 'sorani', zza: 'zazaki' };
-
-interface Manifest {
-  total_words?: number;
-  letters: Record<string, Chunk[]>;
-}
-
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { accept: 'application/json' } });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-  return (await res.json()) as T;
-}
+import { plan, toLexicon } from '../src/dictionary/ferheng.js';
+import { FERHENG_LANGS as LANGS, publishedFerheng } from '../src/dictionary/ferheng-source.js';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -64,12 +49,12 @@ async function main(): Promise<void> {
   }
 
   console.log(`reading the manifest for ${lang} (${dialect})…`);
-  const manifest = await getJson<Manifest>(`${BASE}/${lang}/index.json`);
-  const files = Object.values(manifest.letters).flat();
+  const manifest = await publishedFerheng.manifest(lang);
+  const files = manifest.files;
   const { skipped, chunks: planned } = plan(files, { from, limit });
 
   console.log(
-    `${manifest.total_words?.toLocaleString() ?? '?'} words across ${files.length} files` +
+    `${manifest.totalWords?.toLocaleString() ?? '?'} words across ${files.length} files` +
       (planned.length < files.length ? ` — importing ${planned.length} of them, from file ${skipped + 1}` : '') +
       (dryRun ? ' (dry run — nothing written)' : ''),
   );
@@ -81,7 +66,7 @@ async function main(): Promise<void> {
 
   try {
     for (const [i, chunk] of planned.entries()) {
-      const source = await getJson<SourceEntry[]>(`${BASE}/${lang}/${chunk.file}`);
+      const source = await publishedFerheng.chunk(lang, chunk.file);
       const entries: LexiconEntry[] = toLexicon(source, dialect) as LexiconEntry[];
       const res = await importLexicon(repo, entries, { dryRun });
 
