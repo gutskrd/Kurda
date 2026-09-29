@@ -230,6 +230,7 @@ export const en = {
   'dictionary.noExactMatch': 'No exact match — showing closest words',
   'dictionary.searchPlaceholder': 'Search Kurdish or English…',
   'dictionary.searchLabel': 'Dictionary search',
+  'dictionary.source': 'Definitions from {source}, used under {licence}.',
   'saved.subtitle': 'Posts you kept to come back to. Only you can see this.',
   'saved.loading': 'Loading your saved posts…',
   'saved.emptyLink': 'Community',

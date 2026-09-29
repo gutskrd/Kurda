@@ -19,6 +19,21 @@ describe('translation catalogs', () => {
     }
   });
 
+  /**
+   * The dictionary is mostly imported from Wîkîferheng under CC BY-SA 4.0, and
+   * naming the source and the licence is the condition of using it. The
+   * sentence carries both as placeholders so each language keeps its own word
+   * order; a translation that drops one renders the attribution with a hole in
+   * it, in one language only, which is how a licence gets breached quietly.
+   */
+  it('keeps the source and the licence in the attribution, in every language', () => {
+    for (const locale of LOCALES) {
+      const sentence = TRANSLATIONS[locale]['dictionary.source'];
+      expect(sentence, locale).toContain('{source}');
+      expect(sentence, locale).toContain('{licence}');
+    }
+  });
+
   it('has a display label for every locale', () => {
     for (const locale of LOCALES) expect(LOCALE_LABEL[locale]).toBeTruthy();
   });

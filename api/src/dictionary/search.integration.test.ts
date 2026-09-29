@@ -27,6 +27,14 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     return id;
   }
 
+  /** A word defined in Kurdish and nothing else, which is most of an imported lexicon. */
+  async function kurdishOnly(headword: string, def: string): Promise<string> {
+    const id = await repo.createEntry(headword);
+    await repo.addSense(id, 1, 'noun', undefined, def);
+    ids.push(id);
+    return id;
+  }
+
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -37,6 +45,7 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     await entry('ser', 'noun', 'head; top');
     await entry('şev', 'noun', 'night');
     await entry('mamoste', 'noun', 'teacher');
+    await kurdishOnly('hirmî', 'Fêkiyekî dardar e.');
 
     const reg = await app.inject({
       method: 'POST',
@@ -84,5 +93,18 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     const res = await authed('/dictionary/search?q=sêv');
     const first = res.json().results[0];
     expect(first).toMatchObject({ headword: 'sêv', matchType: 'exact', pos: 'noun', definitionEn: 'apple' });
+  });
+
+  /**
+   * Wîkîferheng defines its words in Kurdish, so after an import almost nothing
+   * has an English definition. A hit that carried only `definitionEn` would give
+   * every one of those words a blank line under it, and a dictionary of hundreds
+   * of thousands of empty definitions reads as a broken search rather than a
+   * full one.
+   */
+  it('carries the Kurdish definition when a word has no English one', async () => {
+    const res = await authed('/dictionary/search?q=hirmî');
+    const first = res.json().results[0];
+    expect(first).toMatchObject({ headword: 'hirmî', definitionEn: null, definitionKu: 'Fêkiyekî dardar e.' });
   });
 });

@@ -9,6 +9,7 @@ export interface WordOfDay {
   dialect: string;
   pos: PartOfSpeech | null;
   definitionEn: string | null;
+  definitionKu: string | null;
   date: string;
 }
 
@@ -32,8 +33,12 @@ export class WordOfDayService {
     );
     if (entry.rowCount === 0) return null;
 
-    const sense = await this.pool.query<{ pos: PartOfSpeech; definition_en: string }>(
-      `SELECT pos, definition_en FROM dict_senses WHERE entry_id = $1 ORDER BY position ASC LIMIT 1`,
+    const sense = await this.pool.query<{
+      pos: PartOfSpeech;
+      definition_en: string | null;
+      definition_ku: string | null;
+    }>(
+      `SELECT pos, definition_en, definition_ku FROM dict_senses WHERE entry_id = $1 ORDER BY position ASC LIMIT 1`,
       [entryId],
     );
 
@@ -43,6 +48,7 @@ export class WordOfDayService {
       dialect: entry.rows[0]!.dialect,
       pos: sense.rows[0]?.pos ?? null,
       definitionEn: sense.rows[0]?.definition_en ?? null,
+      definitionKu: sense.rows[0]?.definition_ku ?? null,
       date: day,
     };
   }

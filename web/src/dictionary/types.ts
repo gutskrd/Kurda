@@ -11,6 +11,8 @@ export interface SearchHit {
   dialect: string;
   pos: string | null;
   definitionEn: string | null;
+  /** most of an imported lexicon is defined in Kurdish alone, with no English at all */
+  definitionKu: string | null;
   matchType: MatchType;
 }
 
@@ -25,7 +27,8 @@ export interface Sense {
   id: string;
   position: number;
   pos: string;
-  definitionEn: string;
+  /** null when the word is defined in Kurdish alone */
+  definitionEn: string | null;
   definitionKu: string | null;
   examples: Array<{ textKu: string; textEn: string | null }>;
 }
@@ -46,5 +49,6 @@ export interface SavedWord {
   headword: string;
   pos: string | null;
   definitionEn: string | null;
+  definitionKu: string | null;
   savedAt: string;
 }

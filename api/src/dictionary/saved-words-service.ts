@@ -76,13 +76,14 @@ export class SavedWordsService {
       headword: string;
       pos: PartOfSpeech | null;
       definition_en: string | null;
+      definition_ku: string | null;
       saved_at: Date;
     }>(
-      `SELECT sw.entry_id, e.headword, s.pos, s.definition_en, sw.saved_at
+      `SELECT sw.entry_id, e.headword, s.pos, s.definition_en, s.definition_ku, sw.saved_at
        FROM saved_words sw
        JOIN dict_entries e ON e.id = sw.entry_id
        LEFT JOIN LATERAL (
-         SELECT pos, definition_en FROM dict_senses WHERE entry_id = sw.entry_id ORDER BY position ASC LIMIT 1
+         SELECT pos, definition_en, definition_ku FROM dict_senses WHERE entry_id = sw.entry_id ORDER BY position ASC LIMIT 1
        ) s ON true
        WHERE sw.user_id = $1
        ORDER BY sw.saved_at DESC`,
@@ -93,6 +94,7 @@ export class SavedWordsService {
       headword: r.headword,
       pos: r.pos,
       definitionEn: r.definition_en,
+      definitionKu: r.definition_ku,
       savedAt: new Date(r.saved_at).toISOString(),
     }));
   }

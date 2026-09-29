@@ -250,7 +250,7 @@ export function SearchScreen(): React.JSX.Element {
               'w-' + w.entryId,
               <Icon name="text" size={20} color={colors.primary} />,
               w.headword,
-              w.definitionEn,
+              w.definitionEn ?? w.definitionKu,
               () => setOpenEntry(w.entryId),
               w.headword,
             ),

@@ -181,6 +181,7 @@ export const nl: Catalogue = {
   'dictionary.noExactMatch': 'Geen exacte match — dichtstbijzijnde woorden worden getoond',
   'dictionary.searchPlaceholder': 'Zoek in het Koerdisch of Engels…',
   'dictionary.searchLabel': 'Woordenboek zoeken',
+  'dictionary.source': 'Definities van {source}, gebruikt onder {licence}.',
   'saved.subtitle': 'Berichten die je hebt bewaard. Alleen jij ziet dit.',
   'saved.loading': 'Je bewaarde berichten worden geladen…',
   'saved.emptyLink': 'Gemeenschap',

@@ -5,6 +5,7 @@ import { useT } from '../i18n/I18nProvider';
 import { EmptyState, ErrorState } from '../components/states';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
 import { EntryView } from '../dictionary/EntryView';
+import { SourceLine } from '../dictionary/SourceLine';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchResult } from '../dictionary/types';
@@ -82,6 +83,7 @@ export function Dictionary(): React.JSX.Element {
           onOpenEntry={(id) => setOpenEntry(id)}
           onSavedChange={loadSaved}
         />
+        <SourceLine />
       </div>
     );
   }
@@ -130,7 +132,7 @@ export function Dictionary(): React.JSX.Element {
               <li key={w.entryId} className="dict-row">
                 <button type="button" className="dict-row-main" onClick={() => open(w.entryId, w.headword)}>
                   <span className="dict-row-word">{w.headword}</span>
-                  <span className="dict-row-def">{w.definitionEn ?? ''}</span>
+                  <span className="dict-row-def">{w.definitionEn ?? w.definitionKu ?? ''}</span>
                 </button>
                 <button
                   type="button"
@@ -158,13 +160,15 @@ export function Dictionary(): React.JSX.Element {
                 <span className="dict-row-word">{hit.headword}</span>
                 <span className="dict-row-def">
                   {hit.pos ? `${hit.pos} · ` : ''}
-                  {hit.definitionEn ?? ''}
+                  {hit.definitionEn ?? hit.definitionKu ?? ''}
                 </span>
               </button>
             </li>
           ))}
         </ul>
       ) : null}
+
+      <SourceLine />
     </div>
   );
 }

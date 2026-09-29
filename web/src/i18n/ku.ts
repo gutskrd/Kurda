@@ -187,6 +187,7 @@ export const ku: Catalogue = {
   'dictionary.noExactMatch': 'Tam li hev nayê — peyvên herî nêzîk têne nîşandan',
   'dictionary.searchPlaceholder': 'Bi kurdî an îngilîzî bigere…',
   'dictionary.searchLabel': 'Lêgerîna ferhengê',
+  'dictionary.source': 'Danasîn ji {source} ne, bi lîsansa {licence}.',
   'saved.subtitle': 'Şandiyên ku te ji bo paşê hilanîn. Tenê tu dikarî vê bibînî.',
   'saved.loading': 'Tomarkiriyên te tên barkirin…',
   'saved.emptyLink': 'Civak',

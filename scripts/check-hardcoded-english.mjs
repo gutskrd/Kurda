@@ -100,6 +100,11 @@ const NOT_COPY = new Set([
   // else's chat, where the sharer's language is not the reader's, so it stays
   // one recognisable name — the grid underneath is the content.
   'Hevalo Wordle',
+  // The licence the imported dictionary arrives under, named beside the source
+  // on every screen that shows a definition. A licence identifier is the same
+  // string in every language — translating it would misname the licence, and
+  // the attribution it is part of is what lets the words be there at all.
+  'CC BY-SA 4.0',
 ]);
 
 /**

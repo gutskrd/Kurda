@@ -181,6 +181,7 @@ export const tr: Catalogue = {
   'dictionary.noExactMatch': 'Tam eşleşme yok — en yakın kelimeler gösteriliyor',
   'dictionary.searchPlaceholder': 'Kürtçe veya İngilizce ara…',
   'dictionary.searchLabel': 'Sözlükte ara',
+  'dictionary.source': 'Tanımlar {source} kaynaklıdır, {licence} ile kullanılır.',
   'saved.subtitle': 'Sonra dönmek için sakladığın gönderiler. Bunu yalnızca sen görürsün.',
   'saved.loading': 'Kaydedilen gönderilerin yükleniyor…',
   'saved.emptyLink': 'Topluluk',
