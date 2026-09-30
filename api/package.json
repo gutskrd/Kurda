@@ -34,7 +34,7 @@
     "ioredis": "^6.0.0",
     "jose": "^6.2.7",
     "node-pg-migrate": "^9.0.0",
-    "nodemailer": "^9.0.5",
+    "nodemailer": "^10.0.13",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
     "prom-client": "^15.1.3",
