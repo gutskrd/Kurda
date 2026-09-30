@@ -596,8 +596,6 @@ export const ku: Catalogue = {
   'photo.sticker.yellowSun': 'Roja zer',
   'photo.sticker.whiteSun': 'Roja spî',
   'photo.sticker.blackSun': 'Roja reş',
-  'photo.sticker.hevaloWhite': 'Logoya Hevalo, spî',
-  'photo.sticker.hevaloBlack': 'Logoya Hevalo, reş',
   'photo.pickSticker': 'Stickerekê hilbijêre',
   'photo.swapSticker': 'Stickerê biguherîne',
   'photo.closeStickers': 'Hilbijartina stickeran bigire',

@@ -595,8 +595,6 @@ export const ar: Catalogue = {
   'photo.sticker.yellowSun': 'شمس صفراء',
   'photo.sticker.whiteSun': 'شمس بيضاء',
   'photo.sticker.blackSun': 'شمس سوداء',
-  'photo.sticker.hevaloWhite': 'شعار Hevalo، أبيض',
-  'photo.sticker.hevaloBlack': 'شعار Hevalo، أسود',
   'photo.pickSticker': 'اختر ملصقًا',
   'photo.swapSticker': 'استبدل الملصق',
   'photo.closeStickers': 'إغلاق منتقي الملصقات',

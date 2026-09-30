@@ -1,7 +1,7 @@
 /**
- * The antlered H, everywhere it has to appear.
+ * The deer, everywhere it has to appear.
  *
- * Two drops go in — `Logos/Hevalo_Logo_Dark.png` and `Logos/Hevalo_Logo_Light.png`
+ * Two drops go in — `Logos/Hevalo_Logo.png` and `Logos/Hevalo_Christmas_Logo.png`
  * — plus sixteen `Profiles/IMG_*.png`, and every avatar and every icon in both
  * apps comes out. Run from the repo root:
  *
@@ -10,40 +10,43 @@
  * The sources are gitignored, the way sticker and empty-state originals are.
  * What ships is what this writes, and it is committed.
  *
- * ── dark and light are the ink, not the background ───────────────────────
+ * ── one drawing, two things to take from it ──────────────────────────────
  *
- * `Hevalo_Logo_Dark.png` is the mark drawn in black, for light surfaces.
- * `Hevalo_Logo_Light.png` is the same mark in white, for dark ones. Both are
- * cut out, so neither carries a card of its own and the caller supplies the
- * field.
+ * Each drop is a finished icon: the deer on a rounded purple card, breaking the
+ * frame at the antlers and the chest. That is exactly right where a platform
+ * asks for a square it will round itself — the app icon, the tab icon, the
+ * social card — and exactly wrong everywhere the art is composited onto
+ * something else or masked to a shape, because a card inside a launcher's
+ * circle is an icon inside an icon.
  *
- * Which one goes where follows from the apps rather than from taste. The web
- * app has a single immersive theme on `--app-bg` (#0b0d10, `web/src/styles/
- * tokens.css`), so everything it shows is the light mark. Every icon a platform
- * asks for — the app icon, the favicon, the Android background layer — is that
- * same field with the light mark on it, so launching the app is one unbroken
- * look from the home screen through the splash into the app.
+ * So the card is used as drawn, and `deerOf` lifts the animal off it for the
+ * rest. The card is a purple gradient and the deer is brown and cream, so the
+ * two separate on colour alone; what the colour test leaves behind is the
+ * card's antialiased rim as a hairline ring, and on the Christmas drop the
+ * snowflakes painted on the card. Both are components of their own, so keeping
+ * only the largest one drops both and takes the animal — bow, lights, scarf and
+ * bells included, because those touch it.
  *
- * The dark mark earns its place on the sticker sheet, where the surface is
- * somebody's photograph and no single colour reads on all of them. That is
- * already why there is a white sun and a black sun.
+ * This is inference about where the drawing ends, which a previous version of
+ * this file deleted 120 lines of, on the grounds that a second cut-out drop
+ * said it directly. That is still the better answer: a transparent deer with no
+ * card would make `deerOf` unnecessary. It is not available, the separation is
+ * clean, and every output was looked at.
  *
- * ── this replaces a coloured drawing ─────────────────────────────────────
+ * ── Christmas ───────────────────────────────────────────────────────────
  *
- * The mark before it was a purple deer, and a purple deer reads on anything.
- * A one-colour mark does not, which is why the splash background moved off its
- * pale blue card: a black-on-pale-blue splash followed by the dark app was two
- * brands, and a white mark on pale blue is nothing at all.
+ * The second drop is the same deer in lights and a scarf. It ships as one more
+ * file, `web/public/logo-christmas.png`, and `web/src/brand/season.ts` decides
+ * which of the two the browser shows. Nothing on a phone changes: an app icon
+ * is chosen at build time and swapping it is a store release, not a date.
  *
- * ── sizes ────────────────────────────────────────────────────────────────
+ * ── the field ───────────────────────────────────────────────────────────
  *
- * The drop is 451 x 554 with the mark 213 x 266 inside it, so more than half
- * the file is transparent margin and the mark is smaller than most of what is
- * drawn from it. The old script refused to enlarge — the drawing it had was
- * bigger than every target, so scaling up could only have been a mistake. This
- * one has to: a 1024 app icon wants the mark near 560. A flat two-tone
- * silhouette is the one thing that survives it, having no texture to blur, and
- * `lanczos3` keeps the curves clean.
+ * `FIELD` is the card's own purple, averaged off the drop rather than guessed.
+ * It backs the splash, the Android layer under the deer and the social card, so
+ * launching the app is the icon opening out rather than three different
+ * backgrounds in a row. The web app keeps its own dark theme — that belongs to
+ * the app, not to the logo.
  *
  * ── the avatars ──────────────────────────────────────────────────────────
  *
@@ -69,13 +72,22 @@ const LOGOS = path.join(ROOT, 'Logos');
 const FACES = path.join(ROOT, 'Profiles');
 
 /**
- * The field the mark stands on, wherever a platform wants a finished square.
+ * The card's own purple, averaged off the drop rather than picked by eye.
  *
- * `--app-bg` from the web app's tokens: the one colour the brand sits on, so
- * the home-screen icon, the splash and the first painted frame are the same.
+ * Backs the splash, the Android layer under the deer, and the social card, so
+ * the icon opening into the app is one colour rather than three.
  */
-const FIELD = '#0b0d10';
+const FIELD = '#b874f0';
 
+/**
+ * How a PNG that ships is encoded.
+ *
+ * The drawing is a soft gradient, which is the worst case for PNG: straight
+ * out of sharp the app icon was 1.1 MB and the 512px brand mark 291 KB, for a
+ * mark the browser draws at 30. Quantising to a palette costs nothing visible
+ * on flat-shaded art and takes both down by roughly an order of magnitude.
+ */
+const PNG = { palette: true, quality: 92, effort: 9, compressionLevel: 9 };
 const AVATAR_SIZE = 280;
 const AVATAR_COUNT = 16;
 
@@ -117,7 +129,7 @@ async function croppedMark(file) {
   }
   return sharp(file)
     .extract({ left: minX, top: minY, width: maxX - minX + 1, height: maxY - minY + 1 })
-    .png()
+    .png(PNG)
     .toBuffer();
 }
 
@@ -127,7 +139,7 @@ async function onGlass(art, size, fraction) {
   const scaled = await sharp(art).resize(inner, inner, { fit: 'inside', kernel: 'lanczos3' }).toBuffer();
   return sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: scaled, gravity: 'centre' }])
-    .png()
+    .png(PNG)
     .toBuffer();
 }
 
@@ -138,16 +150,78 @@ async function onField(art, size, fraction) {
   return sharp({ create: { width: size, height: size, channels: 4, background: FIELD } })
     .composite([{ input: scaled, gravity: 'centre' }])
     .flatten({ background: FIELD }) // iOS rejects an app icon carrying alpha
-    .png()
+    .png(PNG)
     .toBuffer();
+}
+
+/**
+ * The animal, lifted off its card.
+ *
+ * The card is a purple gradient and the deer is brown and cream, so a pixel
+ * belongs to the card when blue leads red and red leads green by a margin.
+ * That alone leaves two things behind: the card's antialiased rim, as a
+ * hairline ring tracing the rounded rectangle, and — on the Christmas drop —
+ * the snowflakes painted on the card. Neither touches the animal, so keeping
+ * only the largest connected run of kept pixels removes both.
+ *
+ * The bow, the lights, the scarf and the bells all survive, because all of them
+ * touch the deer. Verified by looking at both results, which is the only way to
+ * verify a thing like this.
+ */
+async function deerOf(file) {
+  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+  const count = width * height;
+
+  const keep = new Uint8Array(count);
+  for (let i = 0; i < count; i++) {
+    const o = i * channels;
+    const [r, g, b, a] = [data[o], data[o + 1], data[o + 2], data[o + 3]];
+    if (a > 16 && !(b > r + 12 && r > g + 30)) keep[i] = 1;
+  }
+
+  // flood fill, iterative: 250,000 pixels is deeper than the call stack goes
+  const label = new Int32Array(count).fill(-1);
+  const stack = [];
+  let best = -1;
+  let bestSize = 0;
+  let next = 0;
+  for (let seed = 0; seed < count; seed++) {
+    if (!keep[seed] || label[seed] !== -1) continue;
+    let size = 0;
+    label[seed] = next;
+    stack.push(seed);
+    while (stack.length > 0) {
+      const p = stack.pop();
+      size += 1;
+      const x = p % width;
+      const y = (p / width) | 0;
+      if (x > 0 && keep[p - 1] && label[p - 1] === -1) { label[p - 1] = next; stack.push(p - 1); }
+      if (x < width - 1 && keep[p + 1] && label[p + 1] === -1) { label[p + 1] = next; stack.push(p + 1); }
+      if (y > 0 && keep[p - width] && label[p - width] === -1) { label[p - width] = next; stack.push(p - width); }
+      if (y < height - 1 && keep[p + width] && label[p + width] === -1) { label[p + width] = next; stack.push(p + width); }
+    }
+    if (size > bestSize) { bestSize = size; best = next; }
+    next += 1;
+  }
+
+  const cut = Buffer.alloc(count * 4);
+  for (let i = 0; i < count; i++) {
+    if (label[i] !== best) continue;
+    const o = i * channels;
+    cut[i * 4] = data[o];
+    cut[i * 4 + 1] = data[o + 1];
+    cut[i * 4 + 2] = data[o + 2];
+    cut[i * 4 + 3] = data[o + 3];
+  }
+  return sharp(cut, { raw: { width, height, channels: 4 } }).png(PNG).toBuffer();
 }
 
 /**
  * The cut-out as a flat shape, for Android's themed icons.
  *
  * Only the alpha channel matters: everything the artist drew becomes one
- * colour and everything they did not stays clear. The counter inside the H is
- * a hole in the drop, so it is a hole here, which is what a silhouette wants.
+ * colour and everything they did not stays clear.
  */
 async function silhouette(art, size, fraction) {
   const inner = Math.round(size * fraction);
@@ -158,10 +232,10 @@ async function silhouette(art, size, fraction) {
     .toBuffer({ resolveWithObject: true });
   const black = Buffer.alloc(info.width * info.height * 4);
   for (let i = 0; i < black.length; i += 4) black[i + 3] = data[i + 3];
-  const shape = await sharp(black, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+  const shape = await sharp(black, { raw: { width: info.width, height: info.height, channels: 4 } }).png(PNG).toBuffer();
   return sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite([{ input: shape, gravity: 'centre' }])
-    .png()
+    .png(PNG)
     .toBuffer();
 }
 
@@ -210,46 +284,53 @@ fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 console.log(`  api/content/cosmetics.json                        ${manifest.avatars.length} avatars`);
 
 // ───────────────────────────────────────────────────────────────── the marks
-const light = await croppedMark(path.join(LOGOS, 'Hevalo_Logo_Light.png'));
-const dark = await croppedMark(path.join(LOGOS, 'Hevalo_Logo_Dark.png'));
+const card = await croppedMark(path.join(LOGOS, 'Hevalo_Logo.png'));
+const deer = await croppedMark(await deerOf(path.join(LOGOS, 'Hevalo_Logo.png')));
+const deerXmas = await croppedMark(await deerOf(path.join(LOGOS, 'Hevalo_Christmas_Logo.png')));
 
 // ─────────────────────────────────────────────────────── what the web shows
 console.log('web');
-// the app is one dark theme, so its own mark is the light one
-await write('web/public/logo.png', await onGlass(light, 512, 0.68));
+/*
+ * The animal, not the card. The brand mark is 30px beside the wordmark on a
+ * dark bar, and a rounded purple tile at that size reads as somebody's app
+ * icon dropped into the navigation rather than as a logo.
+ */
+await write('web/public/logo.png', await onGlass(deer, 512, 0.92));
+await write('web/public/logo-christmas.png', await onGlass(deerXmas, 512, 0.92));
 
 /*
- * The tab and the social card get the field, because neither is ours. A tab
- * strip is light in one browser and dark in the next, and a chat app flattens
- * a transparent PNG onto whatever it likes — usually white, which is where a
- * white mark disappears. A field is the only version that cannot vanish.
+ * The tab and the social card get the card as drawn. Neither surface is ours —
+ * a tab strip is light in one browser and dark in the next, and whatever
+ * unfurls a link flattens a transparent PNG onto a background of its choosing
+ * — and the card is the one version that carries its own.
  */
-await write('web/public/favicon.png', await onField(light, 64, 0.62));
+await write('web/public/favicon.png', await sharp(card).resize(64, 64, { fit: 'inside', kernel: 'lanczos3' }).png(PNG).toBuffer());
 await write('web/public/og.png', await sharp({ create: { width: 1200, height: 630, channels: 4, background: FIELD } })
-  .composite([{ input: await sharp(light).resize(340, 340, { fit: 'inside', kernel: 'lanczos3' }).toBuffer(), gravity: 'centre' }])
-  .png()
+  .composite([{ input: await sharp(deer).resize(420, 420, { fit: 'inside', kernel: 'lanczos3' }).toBuffer(), gravity: 'centre' }])
+  .png(PNG)
   .toBuffer());
 
 // ───────────────────────────────────────────────────────── the sticker sheet
 console.log('stickers');
-// both, because the surface is a photograph: the same reason there is a white
-// sun and a black sun on the sheet already
-await write('web/public/stickers/logo.webp', await sharp(await onGlass(light, 512, 0.68)).webp({ quality: 90 }).toBuffer());
-await write('web/public/stickers/logo_dark.webp', await sharp(await onGlass(dark, 512, 0.68)).webp({ quality: 90 }).toBuffer());
+// one again: a brown deer reads on any photograph, which is what the two
+// one-colour versions before it could not do
+await write('web/public/stickers/logo.webp', await sharp(await onGlass(deer, 512, 0.92)).webp({ quality: 90 }).toBuffer());
 
 // ──────────────────────────────────────────────────────── what the phone ships
 console.log('phone');
-await write('mobile/assets/icon.png', await onField(light, 1024, 0.56));
-await write('mobile/assets/favicon.png', await onField(light, 48, 0.62));
+// the card, as drawn, is what an app icon is; the platform does its own rounding
+await write('mobile/assets/icon.png', await onField(card, 1024, 0.92));
+await write('mobile/assets/favicon.png', await onField(card, 48, 0.92));
 
-// the splash draws this over `splash.backgroundColor`, which is FIELD
-await write('mobile/assets/splash-icon.png', await onGlass(light, 1024, 0.34));
+// the splash draws this over `splash.backgroundColor`, which is FIELD — so the
+// animal alone, and the card's own colour behind it
+await write('mobile/assets/splash-icon.png', await onGlass(deer, 1024, 0.42));
 
-// an adaptive icon is masked to whatever shape the launcher likes, so the mark
-// lives inside the safe 66% and the field is a separate layer
-await write('mobile/assets/android-icon-foreground.png', await onGlass(light, 512, 0.62));
+// an adaptive icon is masked to whatever shape the launcher likes, so the
+// animal lives inside the safe 66% and the card's colour is a separate layer
+await write('mobile/assets/android-icon-foreground.png', await onGlass(deer, 512, 0.62));
 await write(
   'mobile/assets/android-icon-background.png',
-  await sharp({ create: { width: 512, height: 512, channels: 4, background: FIELD } }).png().toBuffer(),
+  await sharp({ create: { width: 512, height: 512, channels: 4, background: FIELD } }).png(PNG).toBuffer(),
 );
-await write('mobile/assets/android-icon-monochrome.png', await silhouette(light, 432, 0.62));
+await write('mobile/assets/android-icon-monochrome.png', await silhouette(deer, 432, 0.62));
