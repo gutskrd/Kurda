@@ -590,8 +590,6 @@ export const tr: Catalogue = {
   'photo.sticker.yellowSun': 'Sarı güneş',
   'photo.sticker.whiteSun': 'Beyaz güneş',
   'photo.sticker.blackSun': 'Siyah güneş',
-  'photo.sticker.hevaloWhite': 'Hevalo logosu, beyaz',
-  'photo.sticker.hevaloBlack': 'Hevalo logosu, siyah',
   'photo.pickSticker': 'Bir çıkartma seç',
   'photo.swapSticker': 'Çıkartmayı değiştir',
   'photo.closeStickers': 'Çıkartma seçiciyi kapat',

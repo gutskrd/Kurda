@@ -590,8 +590,6 @@ export const nl: Catalogue = {
   'photo.sticker.yellowSun': 'Gele zon',
   'photo.sticker.whiteSun': 'Witte zon',
   'photo.sticker.blackSun': 'Zwarte zon',
-  'photo.sticker.hevaloWhite': 'Hevalo-logo, wit',
-  'photo.sticker.hevaloBlack': 'Hevalo-logo, zwart',
   'photo.pickSticker': 'Kies een sticker',
   'photo.swapSticker': 'Sticker vervangen',
   'photo.closeStickers': 'Stickerkiezer sluiten',

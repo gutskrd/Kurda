@@ -21,6 +21,7 @@ import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } fr
 import { UserActions } from './UserActions';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { seasonalLogo } from '../brand/season';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -263,7 +264,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
       <div className="pcard-foot">
         <span className="pcard-label">{target.kind === 'me' ? t('profile.title') : name}</span>
         <span className="pcard-logo">
-          <img src="/logo.png" alt="" aria-hidden="true" />
+          <img src={seasonalLogo()} alt="" aria-hidden="true" />
           Hevalo
         </span>
       </div>

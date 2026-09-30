@@ -590,8 +590,6 @@ export const es: Catalogue = {
   'photo.sticker.yellowSun': 'Sol amarillo',
   'photo.sticker.whiteSun': 'Sol blanco',
   'photo.sticker.blackSun': 'Sol negro',
-  'photo.sticker.hevaloWhite': 'Logotipo de Hevalo, blanco',
-  'photo.sticker.hevaloBlack': 'Logotipo de Hevalo, negro',
   'photo.pickSticker': 'Elige una pegatina',
   'photo.swapSticker': 'Cambiar la pegatina',
   'photo.closeStickers': 'Cerrar el selector de pegatinas',
