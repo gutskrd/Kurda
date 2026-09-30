@@ -13,11 +13,13 @@
  * ── one drawing, two things to take from it ──────────────────────────────
  *
  * Each drop is a finished icon: the deer on a rounded purple card, breaking the
- * frame at the antlers and the chest. That is exactly right where a platform
- * asks for a square it will round itself — the app icon, the tab icon, the
- * social card — and exactly wrong everywhere the art is composited onto
- * something else or masked to a shape, because a card inside a launcher's
- * circle is an icon inside an icon.
+ * frame at the antlers and the chest. That is the logo, so it is what anything
+ * showing the logo shows: the app icon, the tab icon, the social card, and the
+ * mark in the browser's navigation.
+ *
+ * It is still wrong in the two places where the art is masked to a shape or
+ * drawn over a colour of its own — the Android adaptive foreground and the
+ * splash — because a card inside a launcher's circle is an icon inside an icon.
  *
  * So the card is used as drawn, and `deerOf` lifts the animal off it for the
  * rest. The card is a purple gradient and the deer is brown and cream, so the
@@ -285,18 +287,24 @@ console.log(`  api/content/cosmetics.json                        ${manifest.avat
 
 // ───────────────────────────────────────────────────────────────── the marks
 const card = await croppedMark(path.join(LOGOS, 'Hevalo_Logo.png'));
+const cardXmas = await croppedMark(path.join(LOGOS, 'Hevalo_Christmas_Logo.png'));
 const deer = await croppedMark(await deerOf(path.join(LOGOS, 'Hevalo_Logo.png')));
-const deerXmas = await croppedMark(await deerOf(path.join(LOGOS, 'Hevalo_Christmas_Logo.png')));
 
 // ─────────────────────────────────────────────────────── what the web shows
 console.log('web');
 /*
- * The animal, not the card. The brand mark is 30px beside the wordmark on a
- * dark bar, and a rounded purple tile at that size reads as somebody's app
- * icon dropped into the navigation rather than as a logo.
+ * The logo as it was drawn, card and all.
+ *
+ * This was the animal on its own for one release, on the reasoning that a
+ * rounded tile 30px wide beside the wordmark reads as an app icon dropped into
+ * the navigation. That is a matter of taste and the taste is not mine: the card
+ * is the logo, so the browser shows the logo.
+ *
+ * It keeps the Christmas pair working the same way, and it is the one version
+ * that needs no `deerOf` — the drop, cropped, at the size asked for.
  */
-await write('web/public/logo.png', await onGlass(deer, 512, 0.92));
-await write('web/public/logo-christmas.png', await onGlass(deerXmas, 512, 0.92));
+await write('web/public/logo.png', await onGlass(card, 512, 0.98));
+await write('web/public/logo-christmas.png', await onGlass(cardXmas, 512, 0.98));
 
 /*
  * The tab and the social card get the card as drawn. Neither surface is ours —
