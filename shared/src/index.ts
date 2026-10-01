@@ -1,4 +1,6 @@
 export { normalizeKurdish, foldDiacritics, letterCount, letterKey, dictionaryKey } from './kurdish-text.js';
+export { plan, toLexicon, type Chunk, type ConvertedEntry, type SourceEntry } from './ferheng.js';
+export { FERHENG_LANGS, publishedFerheng, type FerhengSource, type Manifest } from './ferheng-source.js';
 export { escapeHtml, stripControlChars, hasHtmlSpecialChars } from './sanitize.js';
 export { XSS_PAYLOADS } from './xss-corpus.js';
 export { COUNTRIES, countriesIn, countryName, type Country } from './countries.js';

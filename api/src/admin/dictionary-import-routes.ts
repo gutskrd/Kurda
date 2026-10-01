@@ -19,7 +19,7 @@ import {
   UnknownLanguage,
   type ImportRun,
 } from '../dictionary/import-runner.js';
-import { FERHENG_LANGS, publishedFerheng, type FerhengSource } from '../dictionary/ferheng-source.js';
+import { FERHENG_LANGS, publishedFerheng, type FerhengSource } from '@kurda/shared';
 
 const startBody = z.object({
   /** the source's own language directory; ku is Kurmancî, the ~447,000-word set */

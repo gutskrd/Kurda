@@ -26,4 +26,8 @@ Disallow: /app/saved
 Disallow: /app/messages
 Disallow: /api/
 
+# Two, because the dictionary has its own and it is the bigger half: 3,400
+# pages of Kurdish words, generated at build time and served as files. The
+# first lists what the app is; the second lists what it knows.
 Sitemap: https://hevalo.app/sitemap.xml
+Sitemap: https://hevalo.app/ferheng/sitemap.xml

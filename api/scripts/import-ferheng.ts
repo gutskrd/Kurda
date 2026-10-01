@@ -22,8 +22,7 @@ import pg from 'pg';
 import { loadConfig } from '../src/config/env.js';
 import { DictionaryRepository } from '../src/dictionary/repository.js';
 import { importLexicon, type LexiconEntry } from '../src/dictionary/import.js';
-import { plan, toLexicon } from '../src/dictionary/ferheng.js';
-import { FERHENG_LANGS as LANGS, publishedFerheng } from '../src/dictionary/ferheng-source.js';
+import { plan, toLexicon, FERHENG_LANGS as LANGS, publishedFerheng } from '@kurda/shared';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);

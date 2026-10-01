@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && tsx scripts/build-ferheng.ts",
     "preview": "vite preview",
-    "lint": "eslint src && node ../scripts/check-i18n.mjs && node ../scripts/check-hardcoded-english.mjs",
+    "lint": "eslint src scripts && node ../scripts/check-i18n.mjs && node ../scripts/check-hardcoded-english.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },

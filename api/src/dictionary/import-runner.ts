@@ -24,8 +24,7 @@
 import type pg from 'pg';
 import { DictionaryRepository } from './repository.js';
 import { importLexicon, type LexiconEntry } from './import.js';
-import { toLexicon } from './ferheng.js';
-import { FERHENG_LANGS, publishedFerheng, type FerhengSource } from './ferheng-source.js';
+import { FERHENG_LANGS, publishedFerheng, toLexicon, type FerhengSource } from '@kurda/shared';
 
 export type ImportStatus = 'running' | 'done' | 'failed' | 'cancelled';
 
