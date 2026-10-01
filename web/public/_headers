@@ -32,30 +32,30 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
 
-# The public dictionary (/ferheng/*), which is a different kind of page and
-# gets a different policy.
+# The public dictionary (/ferheng/*), which is a different kind of page.
 #
-# These are generated files, not the React app: no script, no inline style, no
-# fetch, nothing but markup and one stylesheet. So the policy says exactly that,
-# and `script-src 'none'` is the point of it — the definitions are Wiktionary
-# text written by strangers, and this is the second of the two things between
-# that text and code running. The first is the escaping in
-# web/scripts/escape.ts; this one does not depend on that one being right.
+# `_headers` rules ADD, they do not replace: a /ferheng/ page matches `/*`
+# above as well as this, and is served every header from both. Measured on
+# the live site — two Content-Security-Policy headers, and a
+# Strict-Transport-Security whose value was its own value twice, comma-joined.
+# That last one matters: the preload list wants one well-formed header.
 #
-# `default-src 'none'` rather than 'self': a page that needs four things should
-# name four things. Anything these pages later grow — an image, a font — has to
-# be added here deliberately, which is the review this directory deserves.
+# So this block names only what differs, and the shared headers are left to
+# `/*`. The second CSP is deliberate and is the exception: a browser given two
+# policies enforces BOTH, so the result is their intersection and can only be
+# stricter than either. `/*` allows scripts from self; this names no
+# script-src at all and falls back to `default-src 'none'`, so the intersection
+# forbids them outright. Same for inline style, which `/*` permits and this
+# does not.
 #
-# A longer cache than the app's, because a word's meaning does not change
-# between deploys, and `immutable` is wrong for the same reason it is not
-# hashed: the next import rewrites it in place.
+# That is the second of the two things between a stranger's Wiktionary text
+# and code running here. The first is the escaping in web/scripts/escape.ts,
+# and this one does not depend on that one being right. Verified live: a
+# fetch() from one of these pages is blocked before it leaves.
+#
+# A longer cache than the app, because a word's meaning does not change
+# between deploys. Not `immutable`: the next import rewrites it in place.
 /ferheng/*
-  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
-  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400
