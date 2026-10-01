@@ -9,7 +9,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { toLexicon, type SourceEntry } from '../src/dictionary/ferheng.js';
+import { toLexicon, type SourceEntry } from '@kurda/shared';
 
 function main(): void {
   const args = process.argv.slice(2);

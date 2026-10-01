@@ -122,7 +122,7 @@ import { registerAdminRoutes } from './admin/routes.js';
 import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
-import type { FerhengSource } from './dictionary/ferheng-source.js';
+import type { FerhengSource } from '@kurda/shared';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
 import { createPushProvider } from './push/provider.js';

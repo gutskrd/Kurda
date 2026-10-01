@@ -29,6 +29,13 @@ export function Footer(): React.JSX.Element {
             <Link to="/learn">{t('footer.lessons')}</Link>
             <Link to="/app/civak">{t('nav.civak')}</Link>
             <Link to="/games">{t('nav.games')}</Link>
+            {/*
+              A real anchor, not a <Link>: /ferheng/ is 3,400 generated files
+              served straight off the edge, outside this app entirely. A
+              client-side transition would hand the path to a router that has
+              no route for it and show "Page not found" over a page that exists.
+            */}
+            <a href="/ferheng/">{t('nav.dictionary')}</a>
           </div>
 
           <div className="footer-col">

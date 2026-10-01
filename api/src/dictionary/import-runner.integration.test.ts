@@ -7,8 +7,7 @@ import {
   UnknownLanguage,
   type ImportRun,
 } from './import-runner.js';
-import type { FerhengSource } from './ferheng-source.js';
-import type { SourceEntry } from './ferheng.js';
+import type { FerhengSource, SourceEntry } from '@kurda/shared';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
