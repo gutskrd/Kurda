@@ -27,7 +27,7 @@ export function Footer(): React.JSX.Element {
           <div className="footer-col">
             <h4>{t('nav.learn')}</h4>
             <Link to="/learn">{t('footer.lessons')}</Link>
-            <Link to="/app/civak">{t('nav.civak')}</Link>
+            <Link to="/app">{t('nav.home')}</Link>
             <Link to="/games">{t('nav.games')}</Link>
             {/*
               A real anchor, not a <Link>: /ferheng/ is 3,400 generated files

@@ -9,7 +9,7 @@ import type { Catalogue } from './en';
  * here needs to know about direction.
  */
 export const ckb: Catalogue = {
-  'nav.civak': 'کۆمەڵگا',
+  'nav.home': 'سەرەتا',
   'nav.games': 'یاری',
   'nav.rankings': 'ڕیزبەندی',
   'nav.learn': 'فێربوون',

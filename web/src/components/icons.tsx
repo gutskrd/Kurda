@@ -24,6 +24,7 @@ import { ArrowUUpRight } from '@phosphor-icons/react/dist/icons/ArrowUUpRight';
 import { Crop } from '@phosphor-icons/react/dist/icons/Crop';
 import { Pencil } from '@phosphor-icons/react/dist/icons/Pencil';
 import { BookOpen } from '@phosphor-icons/react/dist/icons/BookOpen';
+import { BookOpenText } from '@phosphor-icons/react/dist/icons/BookOpenText';
 import { Bell } from '@phosphor-icons/react/dist/icons/Bell';
 import { BookmarkSimple } from '@phosphor-icons/react/dist/icons/BookmarkSimple';
 import { CaretRight } from '@phosphor-icons/react/dist/icons/CaretRight';
@@ -142,6 +143,15 @@ export const BellIcon = named(Bell, 22);
 /** One bubble, not two: a conversation, whether it has two people in it or ten. */
 export const ChatsIcon = named(ChatCircle, 22);
 export const TextIcon = named(TextAa, 22);
+/**
+ * The dictionary: an open book with lines of text in it.
+ *
+ * `TextAa` was here, which is the glyph an editor uses for font size — it reads
+ * as a formatting control, not as a book of words. An open book is what every
+ * dictionary has on its cover; the lines are what distinguish it from
+ * `BookOpen`, which Learn already uses for lessons.
+ */
+export const DictionaryIcon = named(BookOpenText, 22);
 /** Throw something away — always behind a confirm. */
 export const TrashIcon = named(Trash, 22);
 /** Add something — it makes no claim about what. */

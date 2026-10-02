@@ -2,7 +2,7 @@ import type { Catalogue } from './en';
 
 /** German. */
 export const de: Catalogue = {
-  'nav.civak': 'Gemeinschaft',
+  'nav.home': 'Start',
   'nav.games': 'Spiele',
   'nav.rankings': 'Rangliste',
   'nav.learn': 'Lernen',

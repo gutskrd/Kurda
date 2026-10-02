@@ -246,9 +246,10 @@ export function document_(opts: {
 <header class="top">
 <a class="wordmark" href="/">Hevalo</a>
 <nav class="topnav">
-<a href="/ferheng/">Ferheng</a>
-<a href="/app/civak">Civak</a>
+<a href="/app">Mal</a>
+<a class="here" href="/ferheng/" aria-current="page">Ferheng</a>
 <a href="/app/games">Lîstik</a>
+<a href="/app/rankings">Rêzbendî</a>
 <a class="pill" href="/register">Hesab veke</a>
 </nav>
 </header>
@@ -705,6 +706,8 @@ a { color: inherit; }
 .topnav { margin-left: auto; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .topnav a { font-size: var(--text-sm); color: var(--dim); text-decoration: none; padding: 7px 12px; border-radius: 999px; transition: color .2s var(--ease-out), background-color .2s var(--ease-out); }
 .topnav a:hover { color: var(--ink); background: #ffffff0d; }
+/* the page you are on, marked the way the app marks it */
+.topnav .here { color: var(--ink); background: #ffffff0d; }
 .pill { border: .8px solid var(--line); }
 .topnav .pill { color: var(--ink); }
 .topnav .pill:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }

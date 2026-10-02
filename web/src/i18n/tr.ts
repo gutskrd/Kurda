@@ -2,7 +2,7 @@ import type { Catalogue } from './en';
 
 /** Turkish. */
 export const tr: Catalogue = {
-  'nav.civak': 'Topluluk',
+  'nav.home': 'Ana sayfa',
   'nav.games': 'Oyunlar',
   'nav.rankings': 'Sıralama',
   'nav.learn': 'Öğren',

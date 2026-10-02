@@ -29,7 +29,7 @@ function Probe(): React.JSX.Element {
   const t = useT();
   return (
     <>
-      <span data-testid="civak">{t('nav.civak')}</span>
+      <span data-testid="civak">{t('nav.home')}</span>
       <span data-testid="games">{t('nav.games')}</span>
       <span data-testid="vars">{t('language.savedTo', { language: 'Kurdî' })}</span>
       <LanguagePicker value={locale} onChange={setLocale} />

@@ -8,7 +8,7 @@ import type { Catalogue } from './en';
  * English ones.
  */
 export const ku: Catalogue = {
-  'nav.civak': 'Civak',
+  'nav.home': 'Mal',
   'nav.games': 'Lîstik',
   'nav.rankings': 'Rêzbendî',
   'nav.learn': 'Fêrbûn',

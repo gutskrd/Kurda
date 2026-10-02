@@ -7,7 +7,7 @@ import type { Catalogue } from './en';
  * file needs to know about direction; it is text like any other catalogue.
  */
 export const ar: Catalogue = {
-  'nav.civak': 'المجتمع',
+  'nav.home': 'الرئيسية',
   'nav.games': 'الألعاب',
   'nav.rankings': 'الترتيب',
   'nav.learn': 'تعلّم',
