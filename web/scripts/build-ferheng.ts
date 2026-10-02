@@ -56,6 +56,7 @@ import {
   indexPage,
   letterOf,
   letterPage,
+  notFoundPage,
   pageKey,
   paginate,
   wordsPage,
@@ -162,7 +163,10 @@ async function main(): Promise<void> {
     indexPage(letters, words.length, pages.length, featured(words, 8), pageOf),
   );
   fs.writeFileSync(path.join(OUT, 'ferheng.css'), STYLE);
-  files += 2;
+  // what the Worker serves for an address with no page behind it; see
+  // notFoundPage() for why the app's own 404 screen cannot do this job
+  fs.writeFileSync(path.join(OUT, '404.html'), notFoundPage());
+  files += 3;
 
   /*
    * The typefaces, out of node_modules and onto the edge.

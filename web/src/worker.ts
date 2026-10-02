@@ -355,6 +355,40 @@ async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
   });
 }
 
+/** The published dictionary, which is files rather than a screen in the app. */
+const FERHENG = '/ferheng';
+
+/**
+ * A dictionary address, answered as a dictionary address.
+ *
+ * Cloudflare serves the SPA shell for any path it has no file for, and
+ * `public/_headers` applies the dictionary's policy by URL rather than by file.
+ * So a stale /ferheng/ link got the app shell under `default-src 'none'`, the
+ * shell's own bundle was refused, React never booted, and the reader was left
+ * looking at nothing at all. Measured live on /ferheng/sa-sc/: "Loading the
+ * script … violates the following Content Security Policy directive:
+ * default-src 'none'". It was a 200, too, so a crawler was told the page was
+ * fine.
+ *
+ * The shell is recognised by the one thing every real dictionary page has and
+ * it does not: a link to the dictionary's own stylesheet. Reading the body is
+ * affordable here — these pages carry a day of edge cache, so the Worker sees
+ * them rarely, and an unmatched path reaches the Worker either way.
+ */
+async function ferheng(assets: Response, url: URL, env: Env): Promise<Response> {
+  const html = await assets.text();
+  if (html.includes(`${FERHENG}/ferheng.css`)) {
+    // a real page; hand back exactly what the asset binding gave us
+    return new Response(html, { status: assets.status, headers: assets.headers });
+  }
+
+  const page = await env.ASSETS.fetch(new Request(new URL(`${FERHENG}/404.html`, url.origin).toString()));
+  return new Response(page.body, {
+    status: 404,
+    headers: { 'content-type': 'text/html; charset=utf-8' },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -377,6 +411,8 @@ export default {
     // a path that resolved to a real file is left alone, whatever it looks like
     const type = assets.headers.get('content-type') ?? '';
     if (!type.includes('text/html')) return assets;
+
+    if (url.pathname.startsWith(`${FERHENG}/`)) return ferheng(assets, url, env);
 
     /*
      * A listed page: its own title, its own description, its own address. No
@@ -409,4 +445,15 @@ export default {
 };
 
 // exported for the tests, which is the only reason these are not file-local
-export const __test = { routeFor, attr, trim, previewOf, sitemap, staticHead, previewHead, STATIC_PAGES, REPLACED };
+export const __test = {
+  routeFor,
+  attr,
+  trim,
+  previewOf,
+  sitemap,
+  staticHead,
+  previewHead,
+  STATIC_PAGES,
+  REPLACED,
+  ferheng,
+};
