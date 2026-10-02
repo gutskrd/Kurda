@@ -445,7 +445,7 @@ export function letterPage(letter: string, pages: Page[], total: number): string
     breadcrumb: [{ name: 'Ferheng', url: `${ORIGIN}/ferheng/` }],
     here: letter.toUpperCase(),
     body: `<header class="head">
-<p class="eyebrow">Tîp</p>
+<p class="eyebrow">${escape(alphabetName(letter))}</p>
 <h1 class="letter" dir="auto">${escape(letter.toUpperCase())}</h1>
 <p class="eyebrow">${words.toLocaleString('en')} peyv ji ${total.toLocaleString('en')}</p>
 </header>
@@ -504,6 +504,44 @@ export function featured(words: Word[], count: number): Word[] {
 }
 
 /**
+ * Which alphabet a letter belongs to, and what that alphabet is called.
+ *
+ * Kurdish is written in two alphabets, and a reader of one frequently cannot
+ * read the other — so an index that runs A, B, C … Z and then straight into
+ * ئ, ب, پ is not one alphabet with an odd tail. It is two, and saying which is
+ * which is the difference between a reader finding their own letters and
+ * scrolling past a block of script they do not use.
+ *
+ * **Hawar** is the Latin alphabet Celadet Alî Bedirxan set out in the journal
+ * of that name from 1932, and what Kurmancî is written in. **Soranî** is the
+ * Arabic-script alphabet. They are named rather than numbered because that is
+ * what a Kurdish reader calls them.
+ *
+ * Decided by Unicode script rather than by a fixed list of letters, which keeps
+ * `Ḧ` — 268 words, Latin, not in the 31 letters of standard Hawar — with the
+ * alphabet it plainly belongs to instead of in a leftover pile. `other` exists
+ * for the Cyrillic orthography, which the corpus has words in but not currently
+ * enough of to open a letter.
+ */
+const ALPHABETS = [
+  { id: 'hawar', name: 'Alfabeya Hawarê' },
+  { id: 'sorani', name: 'Alfabeya Soranî' },
+  { id: 'other', name: 'Tîpên din' },
+] as const;
+
+export function alphabetOf(letter: string): (typeof ALPHABETS)[number]['id'] {
+  if (/\p{Script=Arabic}/u.test(letter)) return 'sorani';
+  if (/\p{Script=Latin}/u.test(letter)) return 'hawar';
+  return 'other';
+}
+
+/** What to call the alphabet a letter is in. */
+export function alphabetName(letter: string): string {
+  const id = alphabetOf(letter);
+  return ALPHABETS.find((a) => a.id === id)!.name;
+}
+
+/**
  * The front page: what this is, a few words of it, and the way in.
  *
  * The thumb index at the bottom is the A–Z, set as a printed dictionary sets
@@ -518,14 +556,23 @@ export function indexPage(
   samples: Word[],
   pageOf: Map<string, string>,
 ): string {
-  const index = letters
-    .map(
-      (l) =>
-        `<a class="thumb" href="/ferheng/${escape(l.letter)}/">` +
-        `<span class="thumb-t" dir="auto">${escape(l.letter.toUpperCase())}</span>` +
-        `<span class="thumb-n">${l.words.toLocaleString('en')}</span></a>`,
-    )
-    .join('');
+  const thumbs = (group: Array<{ letter: string; words: number }>): string =>
+    group
+      .map(
+        (l) =>
+          `<a class="thumb" href="/ferheng/${escape(l.letter)}/">` +
+          `<span class="thumb-t" dir="auto">${escape(l.letter.toUpperCase())}</span>` +
+          `<span class="thumb-n">${l.words.toLocaleString('en')}</span></a>`,
+      )
+      .join('');
+
+  const index = ALPHABETS.map(({ name, id }) => {
+    const group = letters.filter((l) => alphabetOf(l.letter) === id);
+    if (group.length === 0) return '';
+    return `<p class="eyebrow">${escape(name)}</p>\n<div class="thumbs">${thumbs(group)}</div>`;
+  })
+    .filter(Boolean)
+    .join('\n');
 
   return document_({
     title: 'Ferhenga kurdî — Hevalo',
@@ -547,8 +594,7 @@ Ne hesab, ne reklam, ne tomarkirin.</p>
 </section>
 
 <section class="section">
-<p class="eyebrow">Tîp</p>
-<div class="thumbs">${index}</div>
+${index}
 </section>
 
 <section class="section">
@@ -667,6 +713,9 @@ main { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
 .thumb:hover { background: #ffffff0d; }
 .thumb-t { font-family: var(--font-kurdish); font-size: 1.6rem; line-height: 1; color: var(--ink); }
 .thumb-n { font-size: .6875rem; letter-spacing: .04em; }
+/* the second alphabet needs air above its name, but not a whole section's
+   worth — Hawar and Soranî are two halves of one index, not two chapters */
+.thumbs + .eyebrow { margin: 2.75rem 0 28px; padding-bottom: 14px; border-bottom: .8px solid var(--line); }
 
 /* ── a letter's ranges ────────────────────────────────────────────────── */
 .ranges { display: flex; flex-direction: column; }

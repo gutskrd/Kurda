@@ -4,6 +4,8 @@ import { definitionsOf, isInflected, toEntries } from './ferheng-entries';
 import {
   STYLE,
   WORDS_PER_PAGE,
+  alphabetName,
+  alphabetOf,
   featured,
   indexPage,
   letterPage,
@@ -247,6 +249,53 @@ describe('what a page tells a search engine', () => {
       arabic: ['ج'],
     };
     expect(featured([letter, stub, inflected], 4)).toEqual([]);
+  });
+
+  /**
+   * Kurdish is written in two alphabets and a reader of one often cannot read
+   * the other, so an index running A…Z straight into ئ, ب, پ is not one
+   * alphabet with an odd tail. Hawar is the Latin alphabet from Celadet Alî
+   * Bedirxan's journal; Soranî is the Arabic-script one.
+   */
+  it('names the two alphabets instead of running them together', () => {
+    const html = indexPage(
+      [{ letter: 'a', words: 120 }, { letter: 'ب', words: 40 }],
+      160,
+      4,
+      [],
+      new Map(),
+    );
+    expect(html).toContain('Alfabeya Hawarê');
+    expect(html).toContain('Alfabeya Soranî');
+    // each letter sits under its own heading, in the order the alphabets are listed
+    expect(html.indexOf('Alfabeya Hawarê')).toBeLessThan(html.indexOf('Alfabeya Soranî'));
+    expect(html.indexOf('/ferheng/a/')).toBeLessThan(html.indexOf('Alfabeya Soranî'));
+    expect(html.indexOf('Alfabeya Soranî')).toBeLessThan(html.indexOf('/ferheng/ب/'));
+  });
+
+  it('leaves out an alphabet the corpus has no letters in', () => {
+    const html = indexPage([{ letter: 'a', words: 120 }], 120, 1, [], new Map());
+    expect(html).toContain('Alfabeya Hawarê');
+    expect(html).not.toContain('Alfabeya Soranî');
+    expect(html).not.toContain('Tîpên din');
+  });
+
+  /** `Ḧ` is Latin and has 268 words, but is not one of Hawar's 31 letters —
+      deciding by Unicode script keeps it with the alphabet it belongs to. */
+  it('sorts a letter by script, not by a fixed list', () => {
+    expect(alphabetOf('a')).toBe('hawar');
+    expect(alphabetOf('Ḧ')).toBe('hawar');
+    expect(alphabetOf('ڕ')).toBe('sorani');
+    expect(alphabetOf('щ')).toBe('other');
+    expect(alphabetName('s')).toBe('Alfabeya Hawarê');
+    expect(alphabetName('ش')).toBe('Alfabeya Soranî');
+  });
+
+  it('names the alphabet on a letter’s own page too', () => {
+    const latin = letterPage('s', paginate([word('sêv', 'sev')]), 1);
+    expect(latin).toContain('Alfabeya Hawarê');
+    const arabic = letterPage('ش', paginate([word('شار', 'شار')]), 1);
+    expect(arabic).toContain('Alfabeya Soranî');
   });
 
   it('lists a letter’s ranges from its own page', () => {
