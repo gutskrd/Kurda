@@ -12,7 +12,7 @@
  * long-lived immutable caching via the storage layer's put(). Avatars + icons are
  * NOT uploaded here — they ship as web static assets (web/public/cosmetics).
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { loadConfig } from '../src/config/env.js';
 import { createStorage } from '../src/media/storage.js';
@@ -32,7 +32,12 @@ async function main(): Promise<void> {
     console.error('Storage not configured — set S3_ENDPOINT/S3_BUCKET/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY.');
     process.exit(1);
   }
-  const dir = join(process.cwd(), 'mykurda-background');
+  // either name: the folder was `mykurda-background/` when the app was
+  // MyKurda, and it is a gitignored drop on somebody's disk, so the rename is
+  // theirs to do whenever rather than something a commit can time
+  const dir = ['hevalo-background', 'mykurda-background']
+    .map((d) => join(process.cwd(), d))
+    .find((d) => existsSync(d)) ?? join(process.cwd(), 'hevalo-background');
   const files = readdirSync(dir).filter((f) => CONTENT_TYPES[extname(f).toLowerCase()]);
   if (files.length === 0) {
     console.error(`No background assets found in ${dir}`);

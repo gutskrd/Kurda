@@ -27,6 +27,7 @@ api/.pgdata/
 # committed (api/content/cosmetics.json); the large/binary sources are not.
 /default-avatars/
 /premium-icons/
+/hevalo-background/
 /mykurda-background/
 
 # Where source artwork is dropped for conversion: sticker PNGs, the empty-state

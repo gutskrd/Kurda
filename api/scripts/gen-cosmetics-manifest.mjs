@@ -25,6 +25,20 @@ const list = (dir) => {
 };
 const title = (base) => base.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+/**
+ * The backgrounds drop folder, under either name.
+ *
+ * It was `mykurda-background/` when the app was MyKurda. The folder is a
+ * gitignored drop at the repo root — art lands in it by hand — so renaming it
+ * is something a person does on their own disk whenever they get to it, not
+ * something a commit can do for them. Preferring the new name and falling back
+ * to the old means the rename can happen any day and nothing has to be timed
+ * with it.
+ */
+const BACKGROUNDS_DIR = ['hevalo-background', 'mykurda-background'].find(
+  (d) => list(d).length > 0,
+) ?? 'hevalo-background';
+
 const bgPrice = (type) => (type === 'video' ? 1000 : 500);
 
 // default-01 is the universal free fallback; every other default avatar is premium-gated.
@@ -50,7 +64,7 @@ const icons = list('premium-icons')
 // png/jpg/gif → .webp (gif animates in an <img>); video copied as-is. So the
 // manifest asset keys point at the optimized web-static files, and the render
 // type is either 'image' (webp) or 'video' (mp4/webm).
-const backgrounds = list('mykurda-background')
+const backgrounds = list(BACKGROUNDS_DIR)
   .filter((f) => /\.(png|jpe?g|webp|avif|gif|mp4|webm)$/i.test(f))
   .map((f, i) => {
     const key = f.replace(extname(f), '');

@@ -1,4 +1,4 @@
-# Cloudflare Pages response headers for the MyKurda web app (mykurda.com).
+# Cloudflare Pages response headers for the Hevalo web app (hevalo.app).
 # The app is a self-contained Vite SPA: it loads only its own hashed
 # /assets/*.js + /assets/*.css and talks to the Render API over HTTPS. The
 # policy below allows exactly that. If the API origin changes (VITE_API_URL),
@@ -9,7 +9,7 @@
 # a style attribute, and this app has 128 of them across 44 files. Without it
 # the browser blocks the attribute — not only <style> blocks — and drops the
 # declaration silently: no console error unless something is listening for
-# securitypolicyviolation. Live, mykurda.com reported effectiveDirective
+# securitypolicyviolation. Live, the site reported effectiveDirective
 # "style-src-attr", blockedURI "inline".
 #
 # What that cost, for as long as the app has been deployed: the race and
