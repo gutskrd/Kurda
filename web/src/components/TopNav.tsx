@@ -18,6 +18,14 @@ export interface NavItem {
   to: string;
   /** shown before the label; the nav reads faster as glyph + word than as words */
   icon?: React.ReactNode;
+  /**
+   * A path this app does not route — the published dictionary under /ferheng/,
+   * which is files on the edge rather than a screen in here.
+   *
+   * It has to be a plain anchor. A client-side navigation would hand the
+   * router a path it has no route for and draw a 404 over a page that exists.
+   */
+  external?: boolean;
 }
 
 /** Where the shop lives — kept out of `links` so it can sit on its own. */
@@ -67,14 +75,9 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
 
         <nav aria-label={t('nav.primary')}>
           <ul className={`nav-links${open ? ' open' : ''}`}>
-            {links.map((l) => (
-              <li key={l.to}>
-                <NavLink
-                  to={l.to}
-                  end={l.to === '/' || matchesExactly(l.to, links)}
-                  className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                  onClick={close}
-                >
+            {links.map((l) => {
+              const inner = (
+                <>
                   {l.icon && <span className="nav-link-icon" aria-hidden>{l.icon}</span>}
                   {/* wrapped so the middle widths can hide the word and keep the
                       glyph — hidden by clipping, never display:none, or the link
@@ -87,9 +90,27 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                       {unreadTotal > 99 ? '99+' : unreadTotal}
                     </span>
                   )}
-                </NavLink>
-              </li>
-            ))}
+                </>
+              );
+              return (
+                <li key={l.to}>
+                  {l.external ? (
+                    <a href={l.to} className="nav-link" onClick={close}>
+                      {inner}
+                    </a>
+                  ) : (
+                    <NavLink
+                      to={l.to}
+                      end={l.to === '/' || matchesExactly(l.to, links)}
+                      className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                      onClick={close}
+                    >
+                      {inner}
+                    </NavLink>
+                  )}
+                </li>
+              );
+            })}
 
             {/* actions inside the mobile dropdown only */}
             <li className="nav-mobile-actions">

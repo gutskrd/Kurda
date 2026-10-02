@@ -1,0 +1,25 @@
+/*
+ * The build scripts, which are Node and not the browser.
+ *
+ * They need their own config because `tsconfig.json` is the app's: it includes
+ * only `src`, and its `types` are the browser's. So for as long as that was the
+ * only config, everything under `scripts/` was never typechecked — and the
+ * dictionary build is the largest thing in there. It read a field off an object
+ * that had no such field, in a function whose whole job is to render it, and
+ * nothing anywhere said so. The synonym links were simply missing from 3,413
+ * published pages.
+ *
+ * Both configs run from `npm run typecheck`.
+ */
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["scripts"]
+}

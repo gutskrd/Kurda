@@ -26,6 +26,12 @@
       "port": 5173
     },
     {
+      "name": "web-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--workspace", "web", "--", "--port", "4174", "--strictPort"],
+      "port": 4174
+    },
+    {
       "name": "admin-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview", "--workspace", "admin", "--", "--port", "4173", "--strictPort"],
