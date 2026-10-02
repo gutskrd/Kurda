@@ -9,13 +9,20 @@
  * Idempotent: re-running overwrites the outputs. Keep the source PNGs as the
  * canonical art; the committed WebP files are the production assets.
  */
-import { readdirSync, mkdirSync, statSync, copyFileSync } from 'node:fs';
+import { readdirSync, mkdirSync, statSync, copyFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const srcDir = join(root, 'mykurda-background');
+/*
+ * The drop folder, under either name. It was `mykurda-background/` when the app
+ * was MyKurda, and it is a gitignored folder on somebody's disk — so the rename
+ * is theirs to do whenever, and this just takes whichever is there.
+ */
+const srcDir = ['hevalo-background', 'mykurda-background']
+  .map((d) => join(root, d))
+  .find((d) => existsSync(d)) ?? join(root, 'hevalo-background');
 const outDir = join(root, 'web', 'public', 'cosmetics', 'backgrounds');
 const MAX_WIDTH = 1280; // profile background display width; never enlarge
 const QUALITY = 78;

@@ -1,4 +1,4 @@
-# Cloudflare Pages response headers for the MyKurda admin (admin.mykurda.com).
+# Cloudflare Pages response headers for the Hevalo admin (admin.hevalo.app).
 # The admin is a self-contained Vite SPA: it loads only its own hashed
 # /assets/*.js + /assets/*.css and renders no external images/fonts. There is no
 # edge proxy, so it calls the API on its own origin cross-origin — that origin is
@@ -9,7 +9,7 @@
 # a style attribute, and the admin has 287 of them. Without it the browser
 # blocks the attribute — not only <style> blocks — and drops the declaration
 # silently: no console error unless something is listening for
-# securitypolicyviolation. The same policy on mykurda.com reported
+# securitypolicyviolation. The same policy on the public site reported
 # effectiveDirective "style-src-attr", blockedURI "inline".
 #
 # What that cost here: the Analytics page sizes its DAU and signup bars by

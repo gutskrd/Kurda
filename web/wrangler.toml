@@ -11,8 +11,19 @@
 # opening lines and picture into the head before the page leaves the edge.
 # Everything else is passed through untouched.
 #
-# `name` must match the Cloudflare Worker this deploys to ("mykurda") so a deploy
-# updates that Worker instead of creating a new one.
+# `name` is the old brand, and changing it here would not rename anything.
+#
+# Cloudflare has no rename for a Worker: this name is the identity of the
+# deployment target, so editing it would create a *second* Worker called
+# "hevalo" with no routes, while "mykurda" carried on serving hevalo.app. The
+# site would look untouched and every deploy would go somewhere nobody is
+# reading.
+#
+# Renaming for real means creating the new Worker, moving the hevalo.app route
+# and the custom domain onto it, and deleting the old one — a dashboard
+# operation with a gap in it, not a line in this file. Until somebody does that
+# deliberately, this stays as it is and is only a name in a dashboard: nothing
+# a reader of the site can see says "mykurda".
 name = "mykurda"
 main = "src/worker.ts"
 compatibility_date = "2024-11-01"
