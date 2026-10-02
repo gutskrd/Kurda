@@ -22,6 +22,28 @@ const ALLOWLIST = {
   // downgrading Expo. REMOVE once a metro/Expo release ships a patched image-size.
   'GHSA-w3rx-r6r6-pgpr': 'image-size ICNS DoS — build-only (metro); no runtime exposure; awaiting patched Expo/metro',
   'GHSA-5p2g-fcmc-qvqq': 'image-size JXL/HEIF DoS — build-only (metro); no runtime exposure; awaiting patched Expo/metro',
+  // node-forge accepts extra nested DigestAlgorithm elements when verifying an
+  // RSA PKCS#1 v1.5 signature. Serious where it is reached — and it is not
+  // reached here. It arrives only under `@expo/cli` and
+  // `@expo/code-signing-certificates`: the Expo command line, which runs on a
+  // developer's machine, and the certificate verification for Expo's own signed
+  // updates, which this project does not use (no `codeSigning` in app.json).
+  // Nothing in mobile/, api/ or web/ imports it, so Metro never bundles it and
+  // it is not in anything shipped to a phone or served to a browser.
+  //
+  // It is also unfixable rather than unfixed: the advisory's patched range is
+  // `<=1.4.0`, which is every version ever published, and npm's suggested
+  // remedy is downgrading expo 57 to 44.0.6 — three years back, across two
+  // majors, to escape a build-time tool.
+  //
+  // REMOVE once node-forge publishes a patched release and Expo picks it up.
+  'GHSA-86w9-cpqp-85rv':
+    'node-forge PKCS#1 v1.5 signature confusion — build-only (@expo/cli); not bundled; no patched version exists',
+  // fastify's seven advisories, one of them an authentication bypass, were here
+  // for about a minute. `^5.11.0` already allowed the fix, so `npm update
+  // fastify` took the tree to 5.12.5 and they are gone. Check the declared
+  // range before reaching for this list.
+  //
   // browserslist's two advisories were here, accepted as build-only and marked
   // REMOVE once the tree resolved past 4.28.6 on its own. `npm update
   // browserslist` did that — 4.29.3 — so they are gone, for the same reason the

@@ -100,31 +100,44 @@ endpoint stays open in local development.
 `req.ip` is what the rate limiter on `/auth/login` counts against, what the
 captcha is told the caller's address is, and what signup and login risk scoring
 reasons about. Behind a proxy it has to be worked out from `X-Forwarded-For`,
-and `TRUST_PROXY` is how far to walk back along that header from the connection.
+and `TRUST_PROXY` names the proxies allowed to write it.
 
-The default is `1`, which is safe everywhere: proxies append to the header, so
-anything a client writes ends up furthest to the left, and counting from the
-right can only ever reach an address a proxy wrote. Counting **too far** is the
-dangerous direction — it reaches the client's own text — so production refuses
-`TRUST_PROXY=true` outright.
+> **This changed, and an old value will stop the API booting.** `TRUST_PROXY`
+> used to be a hop count. Fastify 5.12.5 fixed GHSA-3m5p-2c4r-xxw2 by making a
+> numeric `trustProxy` consume no hop at all — measured against 5.12.5, `1`, `2`
+> and `3` all return the connection's own address. A hop count is now silently
+> useless, so the config refuses one rather than let a deploy rate-limit the
+> whole internet as a single caller. **If `TRUST_PROXY=1` is set on the
+> kurda-api service, delete it** (the default is right for Render) or set it to
+> a proxy list.
 
-To confirm the number is right for this deployment, read the first log line the
+The default is `loopback,linklocal,uniquelocal` — loopback and every private
+range. That is right for a managed platform like Render, where the load
+balancer reaches the container over the private network and nothing on the
+public internet can open a connection to it directly. Where the origin *is*
+publicly reachable, name exact addresses or CIDRs instead.
+
+Naming **too much** is the dangerous direction: include an address a stranger
+can connect from and the header they write is believed. `TRUST_PROXY=true`
+believes the client's own text and production refuses it outright.
+
+To confirm the setting is right for this deployment, read the first log line the
 API writes after a restart:
 
 ```
-proxy chain as seen on the first request — set TRUST_PROXY to the number of
-addresses a proxy wrote
-  trustProxy: "1"
+proxy chain as seen on the first request — TRUST_PROXY must cover the socket
+address, or resolvedIp is the proxy and every caller shares one rate-limit bucket
+  trustProxy: "loopback,linklocal,uniquelocal"
   socket: "10.x.x.x"
   forwardedFor: "203.0.113.9, 172.71.x.x"
-  resolvedIp: "172.71.x.x"
+  resolvedIp: "203.0.113.9"
 ```
 
-Count the addresses in `forwardedFor` that a proxy wrote — every one of them
-unless a leading entry is obviously a reader's own invention — and set
-`TRUST_PROXY` to that. In the example above the answer is `2`, and `resolvedIp`
-would then be `203.0.113.9`. If the API is reached directly with no proxy in
-front of it, set `false`.
+`socket` is the address the list has to cover — `10.x.x.x` is a private range,
+so the default covers it. The check that matters: if `forwardedFor` has
+addresses in it but `resolvedIp` equals `socket`, the list is **not** covering
+the proxy, and every caller on earth is sharing one rate-limit bucket. If the
+API is reached directly with no proxy in front of it, set `false`.
 
 ## Store listing — category and developer name
 
