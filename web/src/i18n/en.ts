@@ -14,7 +14,7 @@
  */
 export const en = {
   // ---- the shell -----------------------------------------------------------
-  'nav.civak': 'Community',
+  'nav.home': 'Home',
   'nav.games': 'Games',
   'nav.rankings': 'Rankings',
   'nav.learn': 'Learn',

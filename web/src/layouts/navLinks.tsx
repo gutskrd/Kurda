@@ -1,5 +1,13 @@
 import { useAuth } from '../auth/AuthProvider';
-import { BookIcon, ChatsIcon, GameIcon, TextIcon, TrophyIcon, UsersIcon, WallIcon } from '../components/icons';
+import {
+  BookIcon,
+  ChatsIcon,
+  DictionaryIcon,
+  GameIcon,
+  HomeIcon,
+  TrophyIcon,
+  UsersIcon,
+} from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { NavItem } from '../components/TopNav';
 
@@ -22,7 +30,16 @@ export function useNavLinks(): NavItem[] {
   const signedIn = status === 'signedIn';
 
   return [
-    { label: t('nav.civak'), to: '/app', icon: <WallIcon size={18} /> },
+    /*
+     * Home, with a house on it — the same name and the same glyph the phone's
+     * first tab has.
+     *
+     * It said Civak here and Home there, for one screen. mobile/src/navigation/
+     * tabs.ts settled that already: "Civak is Home. Same screen, a house on it,
+     * because it is the first thing you land on and that is what a house
+     * means." A newspaper is what the wall is; a house is where you are.
+     */
+    { label: t('nav.home'), to: '/app', icon: <HomeIcon size={18} /> },
     /*
      * The dictionary everyone gets — but not the same dictionary.
      *
@@ -38,8 +55,8 @@ export function useNavLinks(): NavItem[] {
      * a path it has no route for and render a 404 over a page that exists.
      */
     signedIn
-      ? { label: t('nav.dictionary'), to: '/app/dictionary', icon: <TextIcon size={18} /> }
-      : { label: t('nav.dictionary'), to: '/ferheng/', icon: <TextIcon size={18} />, external: true },
+      ? { label: t('nav.dictionary'), to: '/app/dictionary', icon: <DictionaryIcon size={18} /> }
+      : { label: t('nav.dictionary'), to: '/ferheng/', icon: <DictionaryIcon size={18} />, external: true },
     { label: t('nav.games'), to: '/app/games', icon: <GameIcon size={18} /> },
     { label: t('nav.rankings'), to: '/app/rankings', icon: <TrophyIcon size={18} /> },
     ...(signedIn
