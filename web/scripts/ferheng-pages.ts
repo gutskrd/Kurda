@@ -47,23 +47,23 @@ export const ORIGIN = 'https://hevalo.app';
 export const WORDS_PER_PAGE = 150;
 
 /**
- * The typefaces, copied out of node_modules at build time and served from
- * /ferheng/fonts/.
+ * The one typeface these pages load, copied out of node_modules at build time
+ * and served from /ferheng/fonts/.
  *
- * Self-hosted rather than fetched from a font CDN for three reasons, in order
- * of how much they matter: these pages are served under `default-src 'none'`,
- * and a third-party font would need a hole in it; a file on Cloudflare's edge
- * is unmetered, where a third party's is a request a reader makes to a company
- * that did not ask them; and it is what zagrosian.com does.
+ * Only Arabic. Latin text is set in the app's own `--font-sans`, which is the
+ * system stack and downloads nothing — these pages carried a Latin webfont for
+ * a while and it was part of why they did not look like the rest of Hevalo.
+ * The Arabic script has no system face worth relying on across platforms, and
+ * a quarter of this dictionary is written in it.
  *
- * Four subsets, each with its `unicode-range`, so a page of Kurmancî fetches
- * the two Latin files and a page of Soranî fetches the Arabic one. Nothing
- * downloads a script it does not set.
+ * Self-hosted rather than fetched from a font CDN for two reasons: these pages
+ * are served under `default-src 'none'`, so a third party would need a hole in
+ * it, and a file on Cloudflare's edge is unmetered where a third party's is a
+ * request a reader makes to a company that did not ask them.
+ *
+ * Its `unicode-range` means a page of Kurmancî never fetches it at all.
  */
 export const FONTS = [
-  { from: '@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2', as: 'inter-latin.woff2' },
-  { from: '@fontsource-variable/inter/files/inter-latin-ext-opsz-normal.woff2', as: 'inter-latin-ext.woff2' },
-  { from: '@fontsource-variable/inter/files/inter-cyrillic-opsz-normal.woff2', as: 'inter-cyrillic.woff2' },
   { from: '@fontsource-variable/vazirmatn/files/vazirmatn-arabic-wght-normal.woff2', as: 'vazirmatn-arabic.woff2' },
 ] as const;
 
@@ -215,6 +215,39 @@ function breadcrumb(trail: Array<{ name: string; url: string }>, here: string): 
   return `<nav class="crumbs"><ol itemscope itemtype="https://schema.org/BreadcrumbList">${items}</ol></nav>`;
 }
 
+/**
+ * The four glyphs the app's nav draws, as markup.
+ *
+ * The same Phosphor icons at the same weight the app imports — House,
+ * BookOpenText, PuzzlePiece, Trophy — because a bar with four words and no
+ * glyphs beside them is one of the things that made this read as a different
+ * site. Inline SVG rather than a sprite or an icon font: `default-src 'none'`
+ * means nothing can be fetched to draw them, and inline SVG is markup rather
+ * than script, so it needs no exception at all.
+ *
+ * Repeated on every page, which sounds wasteful and is not: it is the same
+ * 1.8 KB on all 3,363 of them, and it compresses to nothing on the wire.
+ */
+const NAV_ICONS: Record<string, string> = {
+  mal: 'M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z',
+  ferheng:
+    'M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64ZM160,88h40a8,8,0,0,1,0,16H160a8,8,0,0,1,0-16Zm48,40a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,128Zm0,32a8,8,0,0,1-8,8H160a8,8,0,0,1,0-16h40A8,8,0,0,1,208,160Z',
+  listik:
+    'M220.27,158.54a8,8,0,0,0-7.7-.46,20,20,0,1,1,0-36.16A8,8,0,0,0,224,114.69V72a16,16,0,0,0-16-16H171.78a35.36,35.36,0,0,0,.22-4,36.11,36.11,0,0,0-11.36-26.24,36,36,0,0,0-60.55,23.62,36.56,36.56,0,0,0,.14,6.62H64A16,16,0,0,0,48,72v32.22a35.36,35.36,0,0,0-4-.22,36.12,36.12,0,0,0-26.24,11.36,35.7,35.7,0,0,0-9.69,27,36.08,36.08,0,0,0,33.31,33.6,35.68,35.68,0,0,0,6.62-.14V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V165.31A8,8,0,0,0,220.27,158.54ZM208,208H64V165.31a8,8,0,0,0-11.43-7.23,20,20,0,1,1,0-36.16A8,8,0,0,0,64,114.69V72h46.69a8,8,0,0,0,7.23-11.43,20,20,0,1,1,36.16,0A8,8,0,0,0,161.31,72H208v32.23a35.68,35.68,0,0,0-6.62-.14A36,36,0,0,0,204,176a35.36,35.36,0,0,0,4-.22Z',
+  rezbendi:
+    'M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80V96a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.58c31.94-3.23,58.44-25.64,68.08-55.58H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4,.39,8Zm144-8.9c0,35.52-29,64.64-64,64.9a64,64,0,0,1-64-64V56H192ZM232,96a24,24,0,0,1-24,24h-.5a81.81,81.81,0,0,0,.5-8.9V80h24Z',
+};
+
+/** One nav entry, drawn the way the app draws one: glyph, then word. */
+function navLink(key: string, href: string, label: string, current = false): string {
+  return (
+    `<a class="nav-link${current ? ' active' : ''}" href="${escape(href)}"${current ? ' aria-current="page"' : ''}>` +
+    `<svg class="nav-link-icon" viewBox="0 0 256 256" width="18" height="18" fill="currentColor" aria-hidden="true">` +
+    `<path d="${NAV_ICONS[key]!}"></path></svg>` +
+    `<span>${escape(label)}</span></a>`
+  );
+}
+
 /** The shell every page shares: no scripts, nothing fetched off this origin. */
 export function document_(opts: {
   title: string;
@@ -243,24 +276,38 @@ export function document_(opts: {
 <link rel="stylesheet" href="/ferheng/ferheng.css">
 </head>
 <body>
-<header class="top">
-<a class="wordmark" href="/">Hevalo</a>
-<nav class="topnav">
-<a href="/app">Mal</a>
-<a class="here" href="/ferheng/" aria-current="page">Ferheng</a>
-<a href="/app/games">Lîstik</a>
-<a href="/app/rankings">Rêzbendî</a>
-<a class="pill" href="/register">Hesab veke</a>
+<header class="nav">
+<div class="container nav-inner">
+<a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
+<nav class="nav-links">
+${navLink('mal', '/app', 'Mal')}
+${navLink('ferheng', '/ferheng/', 'Ferheng', true)}
+${navLink('listik', '/app/games', 'Lîstik')}
+${navLink('rezbendi', '/app/rankings', 'Rêzbendî')}
 </nav>
+<span class="nav-spacer"></span>
+<a class="nav-link" href="/login">Têkeve</a>
+<a class="btn" href="/register">Dest pê bike</a>
+</div>
 </header>
-<main>
+<main class="container">
 ${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' · ')[0]!) : ''}
 ${opts.body}
 </main>
-<footer>
-<p class="mono">Hevalo — berhemeke <a href="https://zagrosian.com" rel="noopener">Zagrosian</a></p>
+<footer class="footer">
+<div class="container footer-grid">
+<div class="footer-col">
+<h4>Ferheng</h4>
+<a href="/ferheng/">Hemû tîp</a>
+<a href="/app">Mal</a>
+<a href="/register">Hesab veke</a>
+</div>
+<div class="footer-col footer-note">
 <p>Peyv ji <a href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>, bi lîsansa
 <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>.</p>
+<p>Hevalo — berhemeke <a href="https://zagrosian.com" rel="noopener">Zagrosian</a>.</p>
+</div>
+</div>
 </footer>
 </body>
 </html>
@@ -648,154 +695,196 @@ statîk tê weşandin — ji ber vê yekê ew her û her belaş e, çiqas kes j�
  * the gutter formula are the same values. What differs is noted where it
  * differs.
  */
-export const STYLE = `@font-face { font-family: 'Inter'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/inter-latin.woff2) format('woff2-variations'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
-@font-face { font-family: 'Inter'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/inter-latin-ext.woff2) format('woff2-variations'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
-@font-face { font-family: 'Inter'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/inter-cyrillic.woff2) format('woff2-variations'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
-@font-face { font-family: 'Vazirmatn'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/vazirmatn-arabic.woff2) format('woff2-variations'); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200E; }
+/**
+ * The stylesheet, which is the whole design: there is no script to lean on.
+ *
+ * These are the app's own tokens and its own nav, footer and surfaces, copied
+ * from web/src/styles/. They were a separate monochrome design for a while, and
+ * the verdict on that was "the whole site changes when I click on the
+ * dictionary" — which it did: different background, different type, a different
+ * bar along the top. A reader should not be able to tell they have left the app.
+ *
+ * Copied rather than imported because these pages load no bundle, which is the
+ * point of them. The duty that comes with copying is to stay in step.
+ */
+export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/vazirmatn-arabic.woff2) format('woff2-variations'); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200E; }
 
+/*
+ * The app's own tokens, copied from web/src/styles/tokens.css.
+ *
+ * Copied rather than imported because these pages load no bundle — that is the
+ * whole point of them. The duty is to stay in step: if --app-bg or the glass
+ * surfaces move there, move them here, or clicking Ferheng will again feel like
+ * leaving the site.
+ */
 :root {
   color-scheme: dark;
-  --ink: #f2f2f2;
-  --dim: #bdbdbd;
-  --muted: #8f8f8f;
-  --line: #242424;
-  --line-soft: #1a1a1a;
-  /* lighter than a rule, because this one sits between words and has to be
-     seen: at --line it was invisible and the synonyms read as one phrase */
-  --sep: #4a4a4a;
-  --paper: #0a0a0a;
-  --surface: #121212;
-
-  --font-sans: 'Inter', 'Vazirmatn', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-  /* the same serif zagrosian.com sets Kurdish in, and the app's --font-display */
-  --font-kurdish: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
-
-  --text-xs: .8125rem;
-  --text-sm: .9375rem;
-  --text-base: 1.0625rem;
-  --gutter: clamp(1.25rem, .75rem + 2.5vw, 3rem);
-  --measure: 60rem;
-  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --app-bg: #0b0d10;
+  --ink: #ffffff;
+  --ink-2: rgba(255, 255, 255, 0.84);
+  --ink-3: rgba(255, 255, 255, 0.6);
+  --ink-4: rgba(255, 255, 255, 0.42);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.11);
+  --border: rgba(255, 255, 255, 0.14);
+  --gold: #f0c24a;
+  --r-sm: 8px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --glass-blur: 20px;
+  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --container: 1120px;
+  --nav-h: 66px;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
 }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--app-bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: var(--text-base);
+  font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  /* the backstop: clip, never hidden — hidden on body makes every in-page
-     anchor jump land in a scroll container instead of on the entry, and these
-     pages are nothing but anchors */
+  /* clip, never hidden: hidden makes body a scroll container and every
+     in-page anchor then lands in it rather than on the entry */
   overflow-x: clip;
 }
 a { color: inherit; }
+.container { width: 100%; max-width: var(--container); margin: 0 auto; padding-inline: 24px; }
 
-/* ── the bar ──────────────────────────────────────────────────────────── */
-.top {
-  display: flex; align-items: center; gap: 24px;
-  max-width: var(--measure); margin: 0 auto; padding: 20px var(--gutter);
-  border-bottom: .8px solid var(--line);
+/* ── the bar, as the app draws it ─────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 40; height: var(--nav-h);
+  background: rgba(10, 12, 16, 0.4);
+  -webkit-backdrop-filter: saturate(1.2) blur(20px);
+  backdrop-filter: saturate(1.2) blur(20px);
+  border-bottom: 1px solid var(--border);
 }
-.wordmark { font-weight: 600; letter-spacing: -.02em; text-decoration: none; }
-.topnav { margin-left: auto; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.topnav a { font-size: var(--text-sm); color: var(--dim); text-decoration: none; padding: 7px 12px; border-radius: 999px; transition: color .2s var(--ease-out), background-color .2s var(--ease-out); }
-.topnav a:hover { color: var(--ink); background: #ffffff0d; }
-/* the page you are on, marked the way the app marks it */
-.topnav .here { color: var(--ink); background: #ffffff0d; }
-.pill { border: .8px solid var(--line); }
-.topnav .pill { color: var(--ink); }
-.topnav .pill:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-
-main { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-
-/* ── the small print that labels everything ───────────────────────────── */
-.eyebrow, .mono, .label, .thumb-n, .range-n, .stats {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--muted);
+.nav-inner { height: 100%; display: flex; align-items: center; gap: 28px; }
+.brand {
+  display: inline-flex; align-items: center; gap: 9px; flex: none;
+  font-family: var(--font-display); font-size: 1.22rem; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--ink); text-decoration: none;
 }
-.sep { color: var(--sep); }
-.stats .sep { margin: 0 .55em; }
-
-/* ── the front page ───────────────────────────────────────────────────── */
-.hero { padding: clamp(3rem, 1.5rem + 6vw, 7rem) 0 0; }
-.hero .eyebrow { margin: 0 0 20px; }
-.display {
-  font-size: clamp(2.5rem, 1.2rem + 4.6vw, 5rem);
-  line-height: .98; letter-spacing: -.045em; font-weight: 500;
-  margin: 0 0 24px;
+/*
+ * The plain deer, every day of the year.
+ *
+ * The app swaps in the one wearing a scarf for December, decided in the
+ * browser from the reader's own clock. These pages run nothing, and deciding it
+ * at build time would be worse than not doing it — a deploy in November would
+ * hold the plain one through Christmas and a deploy in December would hold the
+ * scarf through spring.
+ */
+.brand-mark { flex: none; width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+.nav-links { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.nav-link {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 12px;
+  border-radius: var(--r-sm); font-size: 0.92rem; font-weight: 500;
+  color: var(--ink-3); text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease;
 }
-.lead { max-width: 34rem; font-size: clamp(1.0625rem, 1rem + .35vw, 1.3rem); color: var(--dim); margin: 0 0 28px; }
-.stats { text-transform: none; letter-spacing: .02em; margin: 0; }
-
-.section { padding: clamp(3.5rem, 2rem + 6vw, 7rem) 0 0; }
-.section > .eyebrow { margin: 0 0 28px; padding-bottom: 14px; border-bottom: .8px solid var(--line); }
-.prose { max-width: 34rem; color: var(--dim); margin: 0; }
-
-/* the thumb index: type, not controls */
-.thumbs { display: flex; flex-wrap: wrap; gap: 4px 2px; }
-.thumbs .thumb {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 3.4rem; padding: 10px 8px; border-radius: 12px;
-  text-decoration: none; transition: background-color .2s var(--ease-out);
+.nav-link:hover { color: var(--ink); background: var(--surface-2); }
+.nav-link.active { color: var(--ink); font-weight: 600; }
+.nav-link-icon { flex: none; margin-right: 7px; }
+/* the app drops the words and keeps the glyphs where the bar runs out of
+   room; same thresholds, so the two bars narrow together */
+@media (min-width: 861px) and (max-width: 1179px) {
+  .nav-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .nav-link-icon { margin-right: 0; }
 }
-.thumb:hover { background: #ffffff0d; }
-.thumb-t { font-family: var(--font-kurdish); font-size: 1.6rem; line-height: 1; color: var(--ink); }
-.thumb-n { font-size: .6875rem; letter-spacing: .04em; }
-/* the second alphabet needs air above its name, but not a whole section's
-   worth — Hawar and Soranî are two halves of one index, not two chapters */
-.thumbs + .eyebrow { margin: 2.75rem 0 28px; padding-bottom: 14px; border-bottom: .8px solid var(--line); }
-
-/* ── a letter's ranges ────────────────────────────────────────────────── */
-.ranges { display: flex; flex-direction: column; }
-.range {
-  display: flex; align-items: baseline; gap: 16px;
-  padding: 15px 4px; border-bottom: .8px solid var(--line-soft);
-  text-decoration: none; transition: padding-left .25s var(--ease-out), border-color .2s var(--ease-out);
+.nav-spacer { flex: 1; }
+.btn {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
+  border-radius: var(--r-pill); background: var(--ink); color: #141414;
+  font-size: 0.92rem; font-weight: 600; text-decoration: none; white-space: nowrap;
 }
-.range:hover { padding-left: 12px; border-color: var(--line); }
-.range-span { font-family: var(--font-kurdish); font-size: 1.15rem; color: var(--ink); }
-.range-n { margin-left: auto; }
+.btn:hover { background: rgba(255, 255, 255, 0.88); }
 
-/* ── the page heading ─────────────────────────────────────────────────── */
-.head { padding: clamp(2rem, 1rem + 4vw, 4rem) 0 0; }
-.head .eyebrow { margin: 0; }
-.running { font-family: var(--font-kurdish); font-size: clamp(1.75rem, 1.1rem + 2.4vw, 3rem); font-weight: 400; line-height: 1.1; margin: 14px 0; }
-.letter { font-family: var(--font-kurdish); font-size: clamp(4rem, 2rem + 9vw, 8rem); font-weight: 400; line-height: 1; margin: 8px 0 14px; letter-spacing: -.02em; }
+main { padding-bottom: 8px; }
 
-.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 22px 0 0; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted); }
-.crumbs li + li::before { content: "/"; margin-right: 8px; color: var(--line); }
-.crumbs a { color: var(--muted); text-decoration: none; }
+/* ── headings and the trail ───────────────────────────────────────────── */
+.crumbs ol {
+  list-style: none; display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 0; margin: 20px 0 0; font-size: 0.82rem; color: var(--ink-4);
+}
+.crumbs li + li::before { content: "›"; margin-right: 8px; color: var(--ink-4); }
+.crumbs a { color: var(--ink-3); text-decoration: none; }
 .crumbs a:hover { color: var(--ink); }
 
-/* ── the entries ──────────────────────────────────────────────────────── */
-.entries { margin-top: 32px; }
-.entry { padding: 26px 0; border-top: .8px solid var(--line); scroll-margin-top: 24px; }
-.entry:target { background: #ffffff08; box-shadow: inset 2px 0 0 var(--ink); padding-left: 14px; }
-.hw { font-family: var(--font-kurdish); font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem); font-weight: 400; line-height: 1.15; margin: 0 0 14px; letter-spacing: -.01em; }
-.hw a { text-decoration: none; }
-.hw a:hover { text-decoration: underline; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+.head { padding: 28px 0 0; }
+.eyebrow {
+  margin: 0; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.running { font-family: var(--font-display); font-size: clamp(1.5rem, 1.1rem + 2vw, 2.4rem); font-weight: 600; line-height: 1.15; margin: 10px 0; }
+.letter { font-family: var(--font-display); font-size: clamp(3.5rem, 2rem + 8vw, 7rem); font-weight: 600; line-height: 1; margin: 6px 0 10px; }
 
-/* one grid for every labelled row, so the parts of speech and the Soranî
-   line up — two numbers for one column is how they drift apart */
-.row { display: grid; grid-template-columns: 8.5rem 1fr; gap: 6px 20px; align-items: baseline; margin: 0 0 9px; }
-.row .label { text-align: right; line-height: 1.7; }
-.sense ol { margin: 0; padding-left: 1.15rem; color: var(--dim); }
+/* ── the front page ───────────────────────────────────────────────────── */
+.hero { padding: 48px 0 0; }
+.hero .eyebrow { margin-bottom: 14px; }
+.display { font-size: clamp(2rem, 1.3rem + 3vw, 3.4rem); line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; margin: 0 0 16px; }
+.lead { max-width: 36rem; font-size: 1.05rem; color: var(--ink-3); margin: 0 0 20px; }
+.stats { margin: 0; font-size: 0.9rem; color: var(--ink-4); }
+.section { padding: 44px 0 0; }
+.section > .eyebrow { margin-bottom: 16px; }
+.prose { max-width: 36rem; color: var(--ink-3); margin: 0; }
+.sep { color: var(--ink-4); }
+.stats .sep { margin: 0 0.55em; }
+
+/* the thumb index: type a reader scans, not a wall of controls */
+.thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.thumbs .thumb {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  min-width: 3.6rem; padding: 10px 10px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface); text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.thumb:hover { background: var(--surface-2); border-color: var(--ink-4); }
+.thumb-t { font-family: var(--font-display); font-size: 1.5rem; line-height: 1; color: var(--ink); }
+.thumb-n { font-size: 0.7rem; color: var(--ink-4); }
+.thumbs + .eyebrow { margin-top: 32px; }
+
+/* ── a letter's pages ─────────────────────────────────────────────────── */
+.ranges { display: grid; gap: 6px; margin-top: 4px; }
+.range {
+  display: flex; align-items: baseline; gap: 14px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface); text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.range:hover { background: var(--surface-2); border-color: var(--ink-4); }
+.range-span { font-family: var(--font-display); font-size: 1.05rem; color: var(--ink); }
+.range-n { margin-left: auto; font-size: 0.8rem; color: var(--ink-4); }
+
+/* ── the entries ──────────────────────────────────────────────────────── */
+.entries { margin-top: 20px; }
+.entry { padding: 20px 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--nav-h) + 12px); }
+.entry:target { background: rgba(240, 194, 74, 0.07); box-shadow: inset 2px 0 0 var(--gold); padding-left: 14px; }
+.hw { font-family: var(--font-display); font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); font-weight: 600; line-height: 1.2; margin: 0 0 10px; }
+.hw a { text-decoration: none; }
+.hw a:hover { color: var(--gold); }
+
+/* one grid for every labelled row, so the parts of speech and the Soranî line
+   up — two numbers for one column is how they drift apart */
+.row { display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 18px; align-items: baseline; margin: 0 0 8px; }
+/* the app sets a part of speech in italics at 0.78rem (.dict-pos), not in
+   uppercase — which also stops "Formeke navdêrê", the commonest label in the
+   corpus, from wrapping onto two lines in the column */
+.row .label { font-size: 0.78rem; font-style: italic; color: var(--ink-3); text-align: right; line-height: 1.9; }
+.sense ol { margin: 0; padding-left: 1.2rem; color: var(--ink-2); }
 .sense ol li { margin-bottom: 4px; }
-.sense ol li::marker { color: var(--muted); font-family: var(--font-mono); font-size: .82em; }
+.sense ol li::marker { color: var(--ink-4); font-size: 0.85em; }
 .sense ol:not(:has(li + li)) { list-style: none; padding-left: 0; }
 
 /* an inflected form is not a word in its own right, and reads as one if it is
    given the same weight — half the corpus is these */
-.sense.form ol { color: var(--muted); font-size: var(--text-sm); }
+.sense.form ol { color: var(--ink-3); font-size: 0.94rem; }
 
 /*
  * Flex rather than a run of inline text, because the separator is a glyph and
@@ -804,30 +893,39 @@ main { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
  * opportunities, so the row never wrapped and the whole page scrolled
  * sideways. Wrapping flex items need no whitespace to break between.
  */
-.vals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .5em; color: var(--dim); }
-.vals a { color: var(--dim); text-decoration: none; border-bottom: .8px solid var(--line); }
+.vals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5em; color: var(--ink-2); }
+.vals a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--border); }
 .vals a:hover { color: var(--ink); border-color: var(--ink); }
-[lang="ar"], [lang="ckb"][dir="rtl"], [dir="rtl"] { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.08em; }
+[lang="ar"], [dir="rtl"] { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.06em; }
 
 /* ── paging ───────────────────────────────────────────────────────────── */
-.pager { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 56px 0 0; }
-.pager .pill { padding: 9px 18px; font-size: var(--text-sm); color: var(--dim); text-decoration: none; border-radius: 999px; transition: color .2s var(--ease-out), border-color .2s var(--ease-out); }
-.pager .pill:hover { color: var(--ink); border-color: var(--ink); }
-
-footer {
-  max-width: var(--measure); margin: clamp(4rem, 2rem + 7vw, 8rem) auto 0;
-  padding: 28px var(--gutter) 56px; border-top: .8px solid var(--line);
-  color: var(--muted); font-size: var(--text-sm);
+.pager { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 40px 0 0; }
+.pager .pill {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink-2); font-size: 0.92rem; text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-footer p { margin: 0 0 6px; }
-footer .mono { text-transform: none; letter-spacing: .02em; }
-footer a { color: var(--dim); }
+.pager .pill:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
+
+/* ── the foot, as the app draws it ────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border); background: rgba(10, 12, 16, 0.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
+  padding: 48px 0 40px; margin-top: 64px;
+}
+.footer-grid { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; }
+.footer-col h4 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; font-weight: 600; }
+.footer-col a { display: block; color: var(--ink-2); font-size: 0.95rem; padding: 4px 0; text-decoration: none; }
+.footer-col a:hover { color: var(--ink); }
+.footer-note { max-width: 32rem; color: var(--ink-4); font-size: 0.86rem; }
+.footer-note p { margin: 0 0 6px; }
+.footer-note a { display: inline; padding: 0; color: var(--ink-3); text-decoration: underline; }
 
 @media (max-width: 40rem) {
   .row { grid-template-columns: 1fr; gap: 2px; }
-  .row .label { text-align: left; }
-  .range { gap: 10px; }
-  .topnav { gap: 0; }
-  .topnav a { padding: 7px 9px; }
+  .row .label { text-align: left; line-height: 1.6; }
+  .nav-inner { gap: 12px; }
+  .nav-link { padding: 0 8px; }
 }
 `;

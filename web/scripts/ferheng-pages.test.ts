@@ -53,16 +53,25 @@ describe('escaping', () => {
 describe('a page carries no markup it was not given', () => {
   const nasty = '<img src=x onerror="alert(1)">';
 
+  /**
+   * The shell has an `<img>` of its own — the deer in the brand — so "the page
+   * contains no img tag" stopped being the question. The question is whether
+   * the *attacker's* tag survived, which is what `src=x` asks.
+   */
+  const injected = /<img[^>]*src=x/;
+
   it('escapes a definition', () => {
     const html = wordsPage({ prefix: 'a', words: [word('av', 'av', nasty)] }, null, null);
-    expect(html).not.toContain('<img');
+    expect(html).not.toMatch(injected);
     expect(html).not.toContain('onerror="');
     expect(html).toContain('&lt;img');
   });
 
   it('escapes a headword, which is also somebody else’s text', () => {
     const html = wordsPage({ prefix: 'a', words: [word(nasty, 'a')] }, null, null);
-    expect(html).not.toContain('<img');
+    expect(html).not.toMatch(injected);
+    expect(html).not.toContain('onerror="');
+    expect(html).toContain('&lt;img');
   });
 
   it('escapes the id it builds out of a key, and the links around it', () => {
