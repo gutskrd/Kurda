@@ -51,6 +51,26 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Which proxies may say who is asking. Everything IP-keyed reads req.ip —
+      # the /auth/login rate limit, the captcha's remote-IP check, signup and
+      # login risk scoring — and behind Render's balancer it has to come from
+      # X-Forwarded-For.
+      #
+      # Declared here rather than left to the code's default so the value is in
+      # the repository instead of in a dashboard nobody can review. It is also
+      # the value that matters most to get right: too wide and a stranger's
+      # X-Forwarded-For is believed; unset in the wrong way and every caller on
+      # earth shares one rate-limit bucket.
+      #
+      # These three proxy-addr presets are loopback plus every private range,
+      # which is what Render's balancer reaches the container from — nothing on
+      # the public internet can open a connection to it directly.
+      #
+      # A bare hop count is NOT valid any more and the API refuses to boot on
+      # one: fastify 5.12.5 fixed GHSA-3m5p-2c4r-xxw2 by making a numeric
+      # trustProxy consume no hop at all. See DEPLOY.md.
+      - key: TRUST_PROXY
+        value: loopback,linklocal,uniquelocal
       - key: DATABASE_URL
         fromDatabase:
           name: kurda-db
