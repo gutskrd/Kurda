@@ -143,7 +143,7 @@ const envSchema = z.object({
    */
   CORS_ORIGINS: z.string().default(''),
   /**
-   * How many proxies sit in front of this server.
+   * Which proxies in front of this server are allowed to say who is asking.
    *
    * Everything that asks "who is this" reads `req.ip` — the rate limiter on
    * /auth/login, the captcha's own remote-IP check, the signup and login risk
@@ -152,23 +152,38 @@ const envSchema = z.object({
    * for the whole internet: five login attempts a minute shared by everybody,
    * and abuse that cannot be attributed to anyone.
    *
-   * The count is how far to walk back along X-Forwarded-For from the connection,
-   * and it is the whole safety property: the header is appended to by each hop,
-   * so anything a client writes ends up furthest to the LEFT. Counting from the
-   * right can only ever reach addresses a proxy wrote. Counting too far reaches
-   * the client's own text — which is why this is a number and not `true`, and
-   * why `true` is refused in production below.
+   * This used to be a **hop count**, and it no longer can be. Fastify 5.12.5
+   * fixed GHSA-3m5p-2c4r-xxw2, "X-Forwarded-* spoofing under trustProxy
+   * hop-count", and the fix is that a numeric `trustProxy` no longer consumes
+   * any hop at all. Measured against 5.12.5 over a real socket: 1, 2 and 3 all
+   * return the connection's own address and `req.ips` is just `[peer]`. A hop
+   * count is now silently useless, which is worse than wrong — the server would
+   * boot, serve, and quietly rate-limit the entire internet as one caller.
    *
-   * 1 is the safe default and is never worse than no setting at all. Whether it
-   * is exactly right depends on the deployment, and the log line the server
-   * writes on its first request says what the real chain looks like.
+   * So the trusted proxies are **named** instead of counted. That was always
+   * the stronger form of the same safety property: Fastify walks
+   * X-Forwarded-For from the right and stops at the first address not on this
+   * list, and since each hop appends the peer it actually saw, whatever a
+   * client writes sits furthest LEFT and is never reached. Verified: with
+   * `X-Forwarded-For: 1.2.3.4, 203.0.113.7` from a trusted peer, `req.ip` is
+   * 203.0.113.7 — the address the proxy wrote, not the one the client claimed.
+   *
+   * The default is the three `proxy-addr` presets, which is every private range
+   * and loopback: right for a managed platform like Render, where the load
+   * balancer reaches the container over the private network and nothing else
+   * can open a connection to it at all. Name exact addresses instead wherever
+   * the origin is reachable from the public internet.
+   *
+   * `true` trusts the client's own text and is refused in production below.
    */
   TRUST_PROXY: z
     .string()
-    .default('1')
+    .default('loopback,linklocal,uniquelocal')
     .refine(
-      (v) => v === 'false' || v === 'true' || /^\d+$/.test(v) || v.includes('.') || v.includes(':'),
-      'must be false, a hop count, or a comma-separated list of proxy IPs/CIDRs',
+      (v) => v === 'false' || v === 'true' || isProxyList(v),
+      'must be false, or a comma-separated list of proxy IPs/CIDRs and the ' +
+        'presets loopback/linklocal/uniquelocal — a bare hop count no longer ' +
+        'works (fastify GHSA-3m5p-2c4r-xxw2)',
     ),
   /**
    * Bearer token a Prometheus scraper must present at /metrics.
@@ -181,11 +196,26 @@ const envSchema = z.object({
   METRICS_TOKEN: z.string().min(16, 'must be at least 16 characters').optional(),
 });
 
+/** The names `proxy-addr` understands for "every address in this range". */
+const PROXY_PRESETS = new Set(['loopback', 'linklocal', 'uniquelocal']);
+
+/**
+ * Whether every entry names a proxy rather than counting one.
+ *
+ * A bare number is deliberately not a proxy list any more: Fastify 5.12.5 made
+ * a numeric `trustProxy` a no-op, so accepting one here would let a deploy boot
+ * believing it reads X-Forwarded-For when it does not.
+ */
+function isProxyList(value: string): boolean {
+  const parts = value.split(',').map((p) => p.trim());
+  return parts.length > 0 && parts.every((p) => PROXY_PRESETS.has(p) || p.includes('.') || p.includes(':'));
+}
+
 /** `TRUST_PROXY` in the shape Fastify wants. */
-export function trustProxyOption(value: string): boolean | number | string {
+export function trustProxyOption(value: string): boolean | string {
   if (value === 'false') return false;
   if (value === 'true') return true;
-  return /^\d+$/.test(value) ? Number(value) : value;
+  return value;
 }
 
 export type AppConfig = Readonly<z.infer<typeof envSchema>>;
@@ -222,10 +252,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     // `true` trusts the whole X-Forwarded-For header, including the part the
     // client wrote. Anyone could then pick their own address and get a private
     // rate-limit bucket, a clean risk score, and somebody else's name in the
-    // logs. A hop count can only ever reach addresses a proxy appended.
+    // logs. Naming the proxies can only ever reach addresses a proxy appended.
     if (config.TRUST_PROXY === 'true') {
       problems.push(
-        "  TRUST_PROXY: 'true' trusts a client-supplied X-Forwarded-For and is not allowed in production — use a hop count, or a list of proxy IPs",
+        "  TRUST_PROXY: 'true' trusts a client-supplied X-Forwarded-For and is not allowed in production — name the proxies instead",
       );
     }
     // APP_BASE_URL is the base of every emailed link; a trailing slash or an

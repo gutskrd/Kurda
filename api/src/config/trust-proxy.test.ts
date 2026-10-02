@@ -7,74 +7,90 @@
  * "five login attempts per minute per IP" was five per minute for the whole
  * internet, and no abuse could be attributed to anyone.
  *
- * The fix is a hop count, and the count is the entire safety property: proxies
- * append to X-Forwarded-For, so whatever a client writes ends up furthest to the
- * left. Counting from the right can only ever reach an address a proxy wrote —
- * unless the count goes one too far, which is why it is a number rather than
- * `true`, and why production refuses `true`.
+ * This was a hop count until fastify 5.12.5 fixed GHSA-3m5p-2c4r-xxw2 by making
+ * a numeric `trustProxy` consume no hop at all. The proxies are **named** now,
+ * which carries the same safety property more directly: Fastify walks
+ * X-Forwarded-For from the right and stops at the first address not on the
+ * list, and because each hop appends the peer it actually saw, whatever a
+ * client writes sits furthest LEFT and is never reached.
+ *
+ * These go over a real socket rather than through `app.inject`, because the
+ * thing under test is how Fastify reads the connection's own address, and
+ * inject supplies that from an option instead of from a socket.
  */
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import Fastify from 'fastify';
 import { loadConfig, trustProxyOption } from './env.js';
 
-/** Ask a server configured this way what it thinks the client's address is. */
+const servers: Array<{ close: () => Promise<void> }> = [];
+afterAll(async () => {
+  await Promise.all(servers.map((s) => s.close()));
+});
+
+/**
+ * Ask a server configured this way what it thinks the client's address is.
+ *
+ * It listens on loopback, so the connection's peer is 127.0.0.1 — which is what
+ * `loopback` in a trust list names, and what a managed platform's load balancer
+ * looks like from inside the container.
+ */
 async function resolvedIp(trustProxy: string, forwardedFor?: string): Promise<string> {
   const app = Fastify({ logger: false, trustProxy: trustProxyOption(trustProxy) });
   app.get('/who', async (req) => ({ ip: req.ip }));
-  const res = await app.inject({
-    method: 'GET',
-    url: '/who',
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  servers.push({ close: () => app.close() });
+  const address = app.server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  const res = await fetch(`http://127.0.0.1:${port}/who`, {
     headers: forwardedFor ? { 'x-forwarded-for': forwardedFor } : {},
-    remoteAddress: '10.0.0.1', // the proxy that opened the connection
   });
-  await app.close();
-  return res.json().ip as string;
+  return ((await res.json()) as { ip: string }).ip;
 }
 
 describe('trustProxyOption', () => {
-  it('reads a hop count as a number, not a string', () => {
-    // a string would be read as an IP list and match nothing
-    expect(trustProxyOption('1')).toBe(1);
-    expect(trustProxyOption('2')).toBe(2);
-  });
-
   it('reads false as off', () => {
     expect(trustProxyOption('false')).toBe(false);
   });
 
-  it('passes an address list through for Fastify to compile', () => {
+  it('passes a proxy list through for Fastify to compile', () => {
     expect(trustProxyOption('10.0.0.0/8,192.168.0.1')).toBe('10.0.0.0/8,192.168.0.1');
+    expect(trustProxyOption('loopback,uniquelocal')).toBe('loopback,uniquelocal');
   });
 });
 
 describe('the client address behind a proxy', () => {
   it('without trust, reports the proxy — which is the bug', async () => {
-    expect(await resolvedIp('false', '203.0.113.7')).toBe('10.0.0.1');
+    expect(await resolvedIp('false', '203.0.113.7')).toBe('127.0.0.1');
   });
 
-  it('with one hop, reports the address the proxy wrote', async () => {
-    expect(await resolvedIp('1', '203.0.113.7')).toBe('203.0.113.7');
+  it('with the proxy named, reports the address the proxy wrote', async () => {
+    expect(await resolvedIp('loopback', '203.0.113.7')).toBe('203.0.113.7');
   });
 
   it('cannot be told who to believe by the client', async () => {
     // The client writes "1.2.3.4"; each proxy appends the peer it actually saw,
     // so the injected value is pushed left and the real one sits to its right.
-    // Counting from the connection never reaches the client's own text.
+    // Walking from the connection stops before the client's own text.
     const chain = '1.2.3.4, 203.0.113.7'; // [client-supplied, written by the edge]
-    expect(await resolvedIp('1', chain)).toBe('203.0.113.7');
+    expect(await resolvedIp('loopback', chain)).toBe('203.0.113.7');
+    expect(await resolvedIp('loopback,uniquelocal', chain)).toBe('203.0.113.7');
   });
 
-  it('a longer chain needs a bigger count, and a wrong one fails safe', async () => {
-    // two proxies: the reader, then an edge, then the load balancer
-    const chain = '198.51.100.9, 203.0.113.7';
-    expect(await resolvedIp('2', chain)).toBe('198.51.100.9');
-    // counting short lands on a proxy — useless, but never a forged address
-    expect(await resolvedIp('1', chain)).toBe('203.0.113.7');
+  /**
+   * The regression that made this rewrite necessary. Under fastify 5.11 a hop
+   * count walked the header; under 5.12.5 it consumes nothing, so a deploy
+   * still carrying `TRUST_PROXY=1` would attribute every request on earth to
+   * its own load balancer and never say so. The config refuses it at boot —
+   * this pins down the behaviour that refusal exists for.
+   */
+  it('gets nothing from a bare hop count, which is why one is refused', async () => {
+    expect(await resolvedIp('1', '203.0.113.7')).toBe('127.0.0.1');
+    expect(await resolvedIp('2', '198.51.100.9, 203.0.113.7')).toBe('127.0.0.1');
   });
 
   it('falls back to the connection when there is no header at all', async () => {
     // a native app talking straight to the origin sends no X-Forwarded-For
-    expect(await resolvedIp('1')).toBe('10.0.0.1');
+    expect(await resolvedIp('loopback')).toBe('127.0.0.1');
   });
 });
 
@@ -93,9 +109,20 @@ describe('production configuration', () => {
     expect(() => loadConfig({ ...base, TRUST_PROXY: 'true' })).toThrow(/TRUST_PROXY/);
   });
 
-  it('accepts a hop count, and defaults to one', () => {
-    expect(loadConfig({ ...base, TRUST_PROXY: '2' }).TRUST_PROXY).toBe('2');
-    expect(loadConfig(base).TRUST_PROXY).toBe('1');
+  it('accepts a proxy list, and defaults to the private ranges', () => {
+    expect(loadConfig({ ...base, TRUST_PROXY: '10.0.0.0/8' }).TRUST_PROXY).toBe('10.0.0.0/8');
+    expect(loadConfig(base).TRUST_PROXY).toBe('loopback,linklocal,uniquelocal');
+  });
+
+  /**
+   * A hop count is not merely wrong now, it is quiet: fastify 5.12.5 made a
+   * numeric `trustProxy` consume no hop, so a deploy carrying the old
+   * `TRUST_PROXY=1` would boot, serve, and rate-limit the whole internet as one
+   * caller without a word. Better to refuse to start.
+   */
+  it('refuses a hop count, which fastify 5.12.5 made a silent no-op', () => {
+    expect(() => loadConfig({ ...base, TRUST_PROXY: '1' })).toThrow(/TRUST_PROXY/);
+    expect(() => loadConfig({ ...base, TRUST_PROXY: '2' })).toThrow(/hop count/);
   });
 
   it('still allows turning it off where there is no proxy', () => {
