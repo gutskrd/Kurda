@@ -55,7 +55,12 @@
 #
 # A longer cache than the app, because a word's meaning does not change
 # between deploys. Not `immutable`: the next import rewrites it in place.
+# `font-src 'self'` is the one thing added since: the typefaces are copied out
+# of node_modules into /ferheng/fonts/ at build time and served from this
+# origin. A font from a CDN would need a host named here, which would be the
+# first third party these pages talk to; a file on the edge costs nothing and
+# tells nobody that somebody read a word.
 /ferheng/*
-  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400
