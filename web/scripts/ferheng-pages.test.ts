@@ -9,6 +9,7 @@ import {
   featured,
   indexPage,
   letterPage,
+  notFoundPage,
   pageKey,
   paginate,
   wordsPage,
@@ -458,6 +459,28 @@ describe('reading the corpus', () => {
   it('ignores a row whose fields are not what they claim to be', () => {
     expect(toEntries([row({ word: 42 }), row({ word: 'ok', glosses: 'not an array' })])).toEqual([]);
     expect(toEntries([row({ word: 'ok', synonyms: [1, null, 'yek'] })])[0]!.synonyms).toEqual(['yek']);
+  });
+});
+
+describe('an address with no page behind it', () => {
+  /**
+   * It has to be a file in here rather than the app's own not-found screen:
+   * Cloudflare answers an unmatched path with the SPA shell, and `_headers`
+   * applies this directory's policy by URL, so the shell arrived under
+   * `default-src 'none'` and its own bundle was refused. The reader got a
+   * blank page.
+   */
+  it('is a page of its own, and needs no script to say so', () => {
+    const html = notFoundPage();
+    expect(html).toContain('nehat dîtin');
+    expect(html).toContain('href="/ferheng/"');
+    expect(html).not.toContain('<script');
+  });
+
+  /** The letters are the one thing a re-import never moves. */
+  it('sends a reader somewhere that still exists', () => {
+    expect(notFoundPage()).toContain('Here ferhengê');
+    expect(notFoundPage()).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
   });
 });
 

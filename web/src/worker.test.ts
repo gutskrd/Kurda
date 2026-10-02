@@ -280,3 +280,38 @@ describe('what a page tells a search engine it is', () => {
     expect(written).toContain('&quot;quote&quot;');
   });
 });
+
+/**
+ * The blank page.
+ *
+ * Cloudflare answers a path it has no file for with the SPA shell, and
+ * `public/_headers` applies the dictionary's policy by URL rather than by file.
+ * So a stale /ferheng/ link was served the app shell under `default-src
+ * 'none'`, the shell's own bundle was refused, and the reader got nothing at
+ * all — with a 200 on it, so a crawler was told the page was fine.
+ *
+ * Stale links are the normal case, not the odd one: page boundaries follow how
+ * the words divide, so a re-import moves every range URL the last build had.
+ */
+describe('a dictionary address with no page behind it', () => {
+  const { ferheng } = __test;
+
+  const shell = '<!doctype html><html><body><div id="root"></div><script src="/assets/index-x.js"></script></body></html>';
+  const page = '<!doctype html><html lang="ku"><head><link rel="stylesheet" href="/ferheng/ferheng.css"></head><body>sêv</body></html>';
+  const url = new URL('https://hevalo.app/ferheng/sa-sc/');
+  const env = {
+    ASSETS: { fetch: vi.fn(async () => new Response('<p>Ev rûpel nehat dîtin.</p>', { status: 200 })) },
+  } as unknown as Parameters<typeof ferheng>[2];
+
+  it('answers with the dictionary’s own 404, not the app shell', async () => {
+    const res = await ferheng(new Response(shell, { status: 200 }), url, env);
+    expect(res.status).toBe(404);
+    expect(await res.text()).toContain('nehat dîtin');
+  });
+
+  it('leaves a real dictionary page exactly as it found it', async () => {
+    const res = await ferheng(new Response(page, { status: 200 }), url, env);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(page);
+  });
+});

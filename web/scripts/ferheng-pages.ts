@@ -504,6 +504,40 @@ export function featured(words: Word[], count: number): Word[] {
 }
 
 /**
+ * The page for a dictionary address that has nothing behind it.
+ *
+ * It has to exist, and it has to be a file here rather than the app's own
+ * not-found screen, because of how the two overlap. Cloudflare answers an
+ * unmatched path with the SPA shell, and `_headers` applies this directory's
+ * policy by URL rather than by file — so the shell arrived under
+ * `default-src 'none'`, its own bundle was refused, React never booted, and the
+ * reader got a white page with nothing on it. Measured live on
+ * /ferheng/sa-sc/: "Loading the script … violates the following Content
+ * Security Policy directive: default-src 'none'".
+ *
+ * These addresses are not rare. Page boundaries are a property of how the words
+ * divide, so a re-import moves them: every range URL from the previous build —
+ * bookmarked, linked, or sitting in somebody's history — becomes one of these.
+ * The letters never move, which is why this page sends a reader to them.
+ */
+export function notFoundPage(): string {
+  return document_({
+    title: 'Ev rûpel nehat dîtin · Ferhenga kurdî',
+    description: 'Ev navnîşan di ferhengê de nîne.',
+    canonical: `${ORIGIN}/ferheng/`,
+    breadcrumb: [{ name: 'Ferheng', url: `${ORIGIN}/ferheng/` }],
+    here: 'Nehat dîtin',
+    body: `<header class="head">
+<p class="eyebrow">404</p>
+<h1 class="running">Ev rûpel nehat dîtin.</h1>
+</header>
+<p class="prose">Dibe ku ev navnîşan kevn be: gava ferheng ji nû ve tê barkirin,
+peyv ji rûpelekê diçin rûpeleke din. Tîp her tim li cihê xwe dimînin.</p>
+<nav class="pager"><a class="pill" href="/ferheng/">Here ferhengê</a></nav>`,
+  });
+}
+
+/**
  * Which alphabet a letter belongs to, and what that alphabet is called.
  *
  * Kurdish is written in two alphabets, and a reader of one frequently cannot
