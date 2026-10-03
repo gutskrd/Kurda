@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { LinkButton } from '../components/Button';
 import { BookIcon, FeatherIcon, GameIcon, TrophyIcon, FlameIcon, CoinIcon } from '../components/icons';
+import { seasonalLogo } from '../brand/season';
 import { warmApi } from '../lib/warmup';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -23,24 +24,45 @@ export function Landing(): React.JSX.Element {
   return (
     <>
       <section className="hero">
-        <div className="container hero-inner">
-          <span className="eyebrow">{t('landing.eyebrow')}</span>
-          {/*
-            One sentence, not two halves with a <br> between them. The line
-            break was a typographic choice made for one English sentence, and
-            every other language breaks in a different place — or not at all.
-          */}
-          <h1 className="display">{t('landing.headline')}</h1>
-          <p className="lead">{t('landing.lead')}</p>
-          <div className="hero-actions">
-            <LinkButton to="/register" size="lg">
-              {t('landing.startFree')}
-            </LinkButton>
-            <LinkButton to="/stories" variant="secondary" size="lg">
-              {t('landing.exploreStories')}
-            </LinkButton>
+        <div className="container hero-grid">
+          <div className="hero-inner">
+            <span className="eyebrow">{t('landing.eyebrow')}</span>
+            {/*
+              One sentence, not two halves with a <br> between them. The line
+              break was a typographic choice made for one English sentence, and
+              every other language breaks in a different place — or not at all.
+            */}
+            <h1 className="display">{t('landing.headline')}</h1>
+            <p className="lead">{t('landing.lead')}</p>
+            <div className="hero-actions">
+              <LinkButton to="/register" size="lg">
+                {t('landing.startFree')}
+              </LinkButton>
+              <LinkButton to="/stories" variant="secondary" size="lg">
+                {t('landing.exploreStories')}
+              </LinkButton>
+            </div>
+            <p className="hero-note">{t('landing.noCreditCard')}</p>
           </div>
-          <p className="hero-note">{t('landing.noCreditCard')}</p>
+
+          {/*
+            The deer, at the size a product icon is shown at.
+
+            The page was words from the top of the screen to the bottom of it —
+            an eyebrow, a headline, a sentence, two buttons and a line of fine
+            print — and the thing the whole product is called after appeared
+            nowhere on it but 30px wide in the corner of the nav.
+
+            Decorative, so `alt=""`: the brand is already named in the bar above
+            and in the headline, and a screen reader that announced the deer
+            here would be saying Hevalo three times before the first sentence.
+
+            `seasonalLogo()` is the same one the bar uses, so the scarf arrives
+            in December in both places at once.
+          */}
+          <div className="hero-art">
+            <img src={seasonalLogo()} alt="" width={512} height={512} fetchPriority="high" />
+          </div>
         </div>
       </section>
 

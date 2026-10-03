@@ -238,6 +238,59 @@ const NAV_ICONS: Record<string, string> = {
     'M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80V96a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.58c31.94-3.23,58.44-25.64,68.08-55.58H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4,.39,8Zm144-8.9c0,35.52-29,64.64-64,64.9a64,64,0,0,1-64-64V56H192ZM232,96a24,24,0,0,1-24,24h-.5a81.81,81.81,0,0,0,.5-8.9V80h24Z',
 };
 
+/**
+ * The app's footer, in Kurmancî, with the dictionary's own licence line added.
+ *
+ * Section for section and link for link the same as `web/src/components/
+ * Footer.tsx`: the brand and its tagline, the Kurdish motto, the three columns,
+ * the bottom bar. These pages had a two-column footer of their own for a while,
+ * which is the kind of difference a reader cannot name and can see.
+ *
+ * The strings are the `ku` catalogue's, read from web/src/i18n/ku.ts rather
+ * than translated again — these pages are `lang="ku"` and have no reader whose
+ * language to follow, so they are Kurmancî always.
+ *
+ * The motto is deliberately not translated anywhere in the app: it is the
+ * app's own line, the way a masthead keeps its motto.
+ *
+ * The year is the build's. A static page cannot read a clock, and a copyright
+ * line one year stale is a smaller wrong than a line that says nothing.
+ */
+const FOOTER = `<footer class="footer">
+<div class="container">
+<div class="footer-grid">
+<div class="footer-brand">
+<a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
+<p class="muted">Fêrî kurdî bibe — ders, çîrok, helbest û lîstik.</p>
+<p class="kurdish">Jiyan bi kurdî xweştire.</p>
+</div>
+<div class="footer-col">
+<h4>Fêrbûn</h4>
+<a href="/learn">Ders</a>
+<a href="/app">Mal</a>
+<a href="/games">Lîstik</a>
+<a href="/ferheng/">Ferheng</a>
+</div>
+<div class="footer-col">
+<h4>Civak</h4>
+<a href="/rankings">Rêzbendî</a>
+<a href="/register">Tevlî Hevalo bibe</a>
+<a href="/login">Têkeve</a>
+</div>
+<div class="footer-col">
+<h4>Sepan</h4>
+<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">iOS (di rê de)</a>
+<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">Android (di rê de)</a>
+</div>
+</div>
+<div class="footer-bottom">
+<span>© ${new Date().getFullYear()} Hevalo</span>
+<span class="muted">Peyv ji <a href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>,
+bi lîsansa <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>.</span>
+</div>
+</div>
+</footer>`;
+
 /** One nav entry, drawn the way the app draws one: glyph, then word. */
 function navLink(key: string, href: string, label: string, current = false): string {
   return (
@@ -286,29 +339,15 @@ ${navLink('listik', '/app/games', 'Lîstik')}
 ${navLink('rezbendi', '/app/rankings', 'Rêzbendî')}
 </nav>
 <span class="nav-spacer"></span>
-<a class="nav-link" href="/login">Têkeve</a>
-<a class="btn" href="/register">Dest pê bike</a>
+<a class="btn-sm btn-ghost" href="/login">Têkeve</a>
+<a class="btn-sm" href="/register">Dest pê bike</a>
 </div>
 </header>
 <main class="container">
 ${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' · ')[0]!) : ''}
 ${opts.body}
 </main>
-<footer class="footer">
-<div class="container footer-grid">
-<div class="footer-col">
-<h4>Ferheng</h4>
-<a href="/ferheng/">Hemû tîp</a>
-<a href="/app">Mal</a>
-<a href="/register">Hesab veke</a>
-</div>
-<div class="footer-col footer-note">
-<p>Peyv ji <a href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>, bi lîsansa
-<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>.</p>
-<p>Hevalo — berhemeke <a href="https://zagrosian.com" rel="noopener">Zagrosian</a>.</p>
-</div>
-</div>
-</footer>
+${FOOTER}
 </body>
 </html>
 `;
@@ -707,16 +746,32 @@ statîk tê weşandin — ji ber vê yekê ew her û her belaş e, çiqas kes j�
  * Copied rather than imported because these pages load no bundle, which is the
  * point of them. The duty that comes with copying is to stay in step.
  */
+/**
+ * The stylesheet: the app's, then the dictionary's.
+ *
+ * Everything above the second banner is web/src/styles/tokens.css, base.css
+ * and the nav and footer rules out of layout.css, value for value. Copied and
+ * not imported because these pages load no bundle, which is what makes them
+ * free to serve; the duty that comes with copying is to stay in step.
+ *
+ * The one that mattered most and was missed twice: the app sets h1-h4 in
+ * --font-display, the Palatino serif. A page whose headings are bold sans is
+ * not the same site, however well its colours match.
+ */
 export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/vazirmatn-arabic.woff2) format('woff2-variations'); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200E; }
 
-/*
- * The app's own tokens, copied from web/src/styles/tokens.css.
+/* ======================================================================== *
+ * Copied from the app, value for value. Everything down to "the dictionary"
+ * below is web/src/styles/tokens.css + base.css + the nav and footer rules
+ * out of layout.css, and it is copied rather than imported because these
+ * pages load no bundle — that is what makes them free to serve.
  *
- * Copied rather than imported because these pages load no bundle — that is the
- * whole point of them. The duty is to stay in step: if --app-bg or the glass
- * surfaces move there, move them here, or clicking Ferheng will again feel like
- * leaving the site.
- */
+ * So the duty is to stay in step. If a token or either of those two
+ * components moves there, move it here: a reader who clicks Ferheng must not
+ * be able to tell they have left the app.
+ * ======================================================================== */
+
+/* ---- tokens.css -------------------------------------------------------- */
 :root {
   color-scheme: dark;
   --app-bg: #0b0d10;
@@ -727,37 +782,76 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --surface: rgba(255, 255, 255, 0.05);
   --surface-2: rgba(255, 255, 255, 0.11);
   --border: rgba(255, 255, 255, 0.14);
+  --primary: #ffffff;
+  --primary-hover: rgba(255, 255, 255, 0.88);
+  --primary-ink: #141414;
   --gold: #f0c24a;
+  --focus: rgba(255, 255, 255, 0.55);
+  --glass-blur: 20px;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
+  --r-xs: 6px;
   --r-sm: 8px;
+  --r-md: 12px;
   --r-lg: 18px;
   --r-pill: 999px;
-  --glass-blur: 20px;
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.28);
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
   --container: 1120px;
   --nav-h: 66px;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
 }
 
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+/* ---- base.css ---------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+/* clip, not hidden: hidden makes the element a scroll container, which breaks
+   the sticky nav inside it */
+html, body { overflow-x: clip; max-width: 100%; }
 body {
   margin: 0;
-  background: var(--app-bg);
-  color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: 16px;
   line-height: 1.6;
+  color: var(--ink);
+  background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
-  /* clip, never hidden: hidden makes body a scroll container and every
-     in-page anchor then lands in it rather than on the entry */
-  overflow-x: clip;
+  text-rendering: optimizeLegibility;
 }
-a { color: inherit; }
-.container { width: 100%; max-width: var(--container); margin: 0 auto; padding-inline: 24px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+/* the app sets every heading in the display serif — this is most of why a page
+   looks like Hevalo rather than like a generic dark site */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink);
+}
+p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-xs); }
 
-/* ── the bar, as the app draws it ─────────────────────────────────────── */
+.container { width: 100%; max-width: var(--container); margin: 0 auto; padding-inline: 24px; }
+@media (max-width: 640px) { .container { padding-inline: 18px; } }
+.muted { color: var(--ink-3); }
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.kurdish { font-family: var(--font-display); font-style: italic; color: var(--ink-2); }
+.display { font-size: clamp(2.4rem, 5vw, 3.75rem); letter-spacing: -0.022em; }
+.h-section { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+.lead { font-size: 1.175rem; line-height: 1.6; color: var(--ink-2); }
+
+/* ---- layout.css: the nav ----------------------------------------------- */
 .nav {
   position: sticky; top: 0; z-index: 40; height: var(--nav-h);
   background: rgba(10, 12, 16, 0.4);
@@ -769,80 +863,95 @@ a { color: inherit; }
 .brand {
   display: inline-flex; align-items: center; gap: 9px; flex: none;
   font-family: var(--font-display); font-size: 1.22rem; font-weight: 600;
-  letter-spacing: -0.01em; color: var(--ink); text-decoration: none;
+  letter-spacing: -0.01em; color: var(--ink);
 }
-/*
- * The plain deer, every day of the year.
- *
- * The app swaps in the one wearing a scarf for December, decided in the
- * browser from the reader's own clock. These pages run nothing, and deciding it
- * at build time would be worse than not doing it — a deploy in November would
- * hold the plain one through Christmas and a deploy in December would hold the
- * scarf through spring.
- */
 .brand-mark { flex: none; width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
-.nav-links { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-link {
   display: inline-flex; align-items: center; height: 36px; padding: 0 12px;
   border-radius: var(--r-sm); font-size: 0.92rem; font-weight: 500;
-  color: var(--ink-3); text-decoration: none;
-  transition: color 0.15s ease, background 0.15s ease;
+  color: var(--ink-3); transition: color 0.15s ease, background 0.15s ease;
 }
 .nav-link:hover { color: var(--ink); background: var(--surface-2); }
 .nav-link.active { color: var(--ink); font-weight: 600; }
 .nav-link-icon { flex: none; margin-right: 7px; }
-/* the app drops the words and keeps the glyphs where the bar runs out of
-   room; same thresholds, so the two bars narrow together */
-@media (min-width: 861px) and (max-width: 1179px) {
+.nav-spacer { flex: 1; }
+.btn-sm {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
+  border-radius: var(--r-sm); font-size: 0.92rem; font-weight: 600;
+  background: var(--primary); color: var(--primary-ink);
+}
+.btn-sm:hover { background: var(--primary-hover); }
+.btn-ghost { background: transparent; color: var(--ink-2); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
+/* the app drops the words and keeps the glyphs between 861 and 1179px, and
+   collapses to a menu below that; these pages have no script for a menu, so
+   below 861 they keep the glyphs instead of hiding the links altogether */
+@media (max-width: 1179px) {
   .nav-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .nav-link-icon { margin-right: 0; }
+  .nav-inner { gap: 14px; }
+  .nav-link { padding: 0 9px; }
 }
-.nav-spacer { flex: 1; }
-.btn {
-  display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
-  border-radius: var(--r-pill); background: var(--ink); color: #141414;
-  font-size: 0.92rem; font-weight: 600; text-decoration: none; white-space: nowrap;
+
+/* ---- layout.css: the footer -------------------------------------------- */
+.footer {
+  border-top: 1px solid var(--border);
+  background: rgba(10, 12, 16, 0.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  padding: 48px 0 40px;
+  margin-top: 64px;
 }
-.btn:hover { background: rgba(255, 255, 255, 0.88); }
+.footer-grid { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; }
+.footer-brand { max-width: 280px; }
+.footer-brand .muted { margin-top: 12px; font-size: 0.92rem; }
+.footer-brand .kurdish { margin-top: 10px; }
+.footer-col h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; font-weight: 600; }
+.footer-col a { display: block; color: var(--ink-2); font-size: 0.95rem; padding: 4px 0; }
+.footer-col a:hover { color: var(--ink); }
+.footer-bottom {
+  margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+  justify-content: space-between; color: var(--ink-3); font-size: 0.88rem;
+}
+
+/* ======================================================================== *
+ * The dictionary's own, below here. Nothing above this line is invented.
+ * ======================================================================== */
 
 main { padding-bottom: 8px; }
 
-/* ── headings and the trail ───────────────────────────────────────────── */
 .crumbs ol {
   list-style: none; display: flex; flex-wrap: wrap; gap: 8px;
   padding: 0; margin: 20px 0 0; font-size: 0.82rem; color: var(--ink-4);
 }
 .crumbs li + li::before { content: "›"; margin-right: 8px; color: var(--ink-4); }
-.crumbs a { color: var(--ink-3); text-decoration: none; }
+.crumbs a { color: var(--ink-3); }
 .crumbs a:hover { color: var(--ink); }
 
 .head { padding: 28px 0 0; }
-.eyebrow {
-  margin: 0; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--ink-3);
-}
-.running { font-family: var(--font-display); font-size: clamp(1.5rem, 1.1rem + 2vw, 2.4rem); font-weight: 600; line-height: 1.15; margin: 10px 0; }
-.letter { font-family: var(--font-display); font-size: clamp(3.5rem, 2rem + 8vw, 7rem); font-weight: 600; line-height: 1; margin: 6px 0 10px; }
+.running { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 10px 0; }
+.letter { font-size: clamp(3.5rem, 2rem + 8vw, 7rem); line-height: 1; margin: 6px 0 10px; }
 
-/* ── the front page ───────────────────────────────────────────────────── */
-.hero { padding: 48px 0 0; }
-.hero .eyebrow { margin-bottom: 14px; }
-.display { font-size: clamp(2rem, 1.3rem + 3vw, 3.4rem); line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; margin: 0 0 16px; }
-.lead { max-width: 36rem; font-size: 1.05rem; color: var(--ink-3); margin: 0 0 20px; }
+/* ---- the front page ---------------------------------------------------- */
+.hero { padding: 56px 0 0; }
+.hero .eyebrow { margin-bottom: 16px; }
+.hero .display { margin-bottom: 18px; }
+.hero .lead { max-width: 36rem; margin-bottom: 20px; }
 .stats { margin: 0; font-size: 0.9rem; color: var(--ink-4); }
-.section { padding: 44px 0 0; }
+.section { padding: 52px 0 0; }
 .section > .eyebrow { margin-bottom: 16px; }
 .prose { max-width: 36rem; color: var(--ink-3); margin: 0; }
 .sep { color: var(--ink-4); }
 .stats .sep { margin: 0 0.55em; }
 
-/* the thumb index: type a reader scans, not a wall of controls */
 .thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
 .thumbs .thumb {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  min-width: 3.6rem; padding: 10px 10px;
+  min-width: 3.6rem; padding: 10px;
   border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface); text-decoration: none;
+  background: var(--surface);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .thumb:hover { background: var(--surface-2); border-color: var(--ink-4); }
@@ -850,24 +959,23 @@ main { padding-bottom: 8px; }
 .thumb-n { font-size: 0.7rem; color: var(--ink-4); }
 .thumbs + .eyebrow { margin-top: 32px; }
 
-/* ── a letter's pages ─────────────────────────────────────────────────── */
+/* ---- a letter's pages -------------------------------------------------- */
 .ranges { display: grid; gap: 6px; margin-top: 4px; }
 .range {
   display: flex; align-items: baseline; gap: 14px;
   padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface); text-decoration: none;
+  background: var(--surface);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .range:hover { background: var(--surface-2); border-color: var(--ink-4); }
 .range-span { font-family: var(--font-display); font-size: 1.05rem; color: var(--ink); }
 .range-n { margin-left: auto; font-size: 0.8rem; color: var(--ink-4); }
 
-/* ── the entries ──────────────────────────────────────────────────────── */
+/* ---- the entries ------------------------------------------------------- */
 .entries { margin-top: 20px; }
 .entry { padding: 20px 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--nav-h) + 12px); }
 .entry:target { background: rgba(240, 194, 74, 0.07); box-shadow: inset 2px 0 0 var(--gold); padding-left: 14px; }
-.hw { font-family: var(--font-display); font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); font-weight: 600; line-height: 1.2; margin: 0 0 10px; }
-.hw a { text-decoration: none; }
+.hw { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); margin: 0 0 10px; }
 .hw a:hover { color: var(--gold); }
 
 /* one grid for every labelled row, so the parts of speech and the Soranî line
@@ -894,38 +1002,21 @@ main { padding-bottom: 8px; }
  * sideways. Wrapping flex items need no whitespace to break between.
  */
 .vals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5em; color: var(--ink-2); }
-.vals a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--border); }
+.vals a { border-bottom: 1px solid var(--border); }
 .vals a:hover { color: var(--ink); border-color: var(--ink); }
 [lang="ar"], [dir="rtl"] { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.06em; }
 
-/* ── paging ───────────────────────────────────────────────────────────── */
 .pager { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 40px 0 0; }
 .pager .pill {
   display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
   border: 1px solid var(--border); border-radius: var(--r-pill);
-  background: var(--surface); color: var(--ink-2); font-size: 0.92rem; text-decoration: none;
+  background: var(--surface); color: var(--ink-2); font-size: 0.92rem;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .pager .pill:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
 
-/* ── the foot, as the app draws it ────────────────────────────────────── */
-.footer {
-  border-top: 1px solid var(--border); background: rgba(10, 12, 16, 0.4);
-  -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
-  padding: 48px 0 40px; margin-top: 64px;
-}
-.footer-grid { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; }
-.footer-col h4 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; font-weight: 600; }
-.footer-col a { display: block; color: var(--ink-2); font-size: 0.95rem; padding: 4px 0; text-decoration: none; }
-.footer-col a:hover { color: var(--ink); }
-.footer-note { max-width: 32rem; color: var(--ink-4); font-size: 0.86rem; }
-.footer-note p { margin: 0 0 6px; }
-.footer-note a { display: inline; padding: 0; color: var(--ink-3); text-decoration: underline; }
-
 @media (max-width: 40rem) {
   .row { grid-template-columns: 1fr; gap: 2px; }
   .row .label { text-align: left; line-height: 1.6; }
-  .nav-inner { gap: 12px; }
-  .nav-link { padding: 0 8px; }
 }
 `;
