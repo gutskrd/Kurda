@@ -62,6 +62,8 @@ export interface Copy {
     android: string;
     /** the CC BY-SA sentence, with {wiki} and {licence} as the two link slots */
     licence: string;
+    /** the imprint beside the copyright line */
+    byZagrosian: string;
   };
   /** the three alphabets, in the order they are listed */
   alphabets: { hawar: string; sorani: string; other: string };
@@ -128,6 +130,7 @@ const KU: Copy = {
     ios: 'iOS (di rê de)',
     android: 'Android (di rê de)',
     licence: 'Peyv ji {wiki}, bi lîsansa {licence}.',
+    byZagrosian: 'Berhemeke Zagrosian',
   },
   alphabets: { hawar: 'Alfabeya Hawarê', sorani: 'Alfabeya Soranî', other: 'Tîpên din' },
   index: {
@@ -191,6 +194,7 @@ const EN: Copy = {
     ios: 'iOS (coming soon)',
     android: 'Android (coming soon)',
     licence: 'Words from {wiki}, licensed {licence}.',
+    byZagrosian: 'A Zagrosian product',
   },
   alphabets: { hawar: 'Hawar alphabet', sorani: 'Sorani alphabet', other: 'Other letters' },
   index: {

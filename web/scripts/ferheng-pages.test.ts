@@ -2,15 +2,16 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { escapeHtml } from './escape';
+import { HAWAR, SORANI, alphabetOf, compareKeys } from './ferheng-alphabet';
 import { COPY, ferhengLocaleFor } from './ferheng-copy';
 import { definitionsOf, isInflected, toEntries } from './ferheng-entries';
 import {
   STYLE,
   WORDS_PER_PAGE,
   alphabetName,
-  alphabetOf,
   featured,
   indexPage,
+  letterOf,
   letterPage,
   notFoundPage,
   pageKey,
@@ -296,15 +297,73 @@ describe('what a page tells a search engine', () => {
     expect(html).not.toContain('Tîpên din');
   });
 
-  /** `Ḧ` is Latin and has 268 words, but is not one of Hawar's 31 letters —
-      deciding by Unicode script keeps it with the alphabet it belongs to. */
-  it('sorts a letter by script, not by a fixed list', () => {
+  /**
+   * By membership of the two alphabets, not by Unicode script. `Ḧ` is Latin
+   * and `ط` is Arabic, and neither is one of the 31 or the 33 — calling them
+   * Hawar and Soranî would be wrong in a dictionary, and hiding them would lose
+   * the 250 words that begin with `ḧ`.
+   */
+  it('sorts a letter by which alphabet it is actually in', () => {
     expect(alphabetOf('a')).toBe('hawar');
-    expect(alphabetOf('Ḧ')).toBe('hawar');
+    expect(alphabetOf('ş')).toBe('hawar');
+    expect(alphabetOf('ḧ')).toBe('other');
     expect(alphabetOf('ڕ')).toBe('sorani');
+    expect(alphabetOf('ط')).toBe('other');
     expect(alphabetOf('щ')).toBe('other');
+    // one letter written two ways still belongs to its alphabet
+    expect(alphabetOf('ك')).toBe('sorani');
     expect(alphabetName('s')).toBe('Alfabeya Hawarê');
     expect(alphabetName('ش')).toBe('Alfabeya Soranî');
+  });
+
+  /** The orders are the standard ones, and complete. */
+  it('knows all 31 Hawar letters and all 33 Soranî ones', () => {
+    expect(HAWAR).toHaveLength(31);
+    expect(HAWAR.join('')).toBe('abcçdeêfghiîjklmnopqrsştuûvwxyz');
+    expect(SORANI).toHaveLength(33);
+    expect(SORANI[0]).toBe('ا');
+    expect(SORANI.at(-1)).toBe('ێ');
+    // every letter appears once
+    expect(new Set([...HAWAR, ...SORANI]).size).toBe(64);
+  });
+
+  /**
+   * The point the whole change turns on: Ş is a letter, not a decoration on S,
+   * so it sorts after S and before T rather than wherever folding put it.
+   */
+  it('puts a diacritic letter in its own place, not beside its base', () => {
+    const order = ['sal', 'sor', 'şal', 'şor', 'tar'];
+    expect([...order].reverse().sort(compareKeys)).toEqual(order);
+    expect(compareKeys('ş', 's')).toBeGreaterThan(0);
+    expect(compareKeys('ş', 't')).toBeLessThan(0);
+    expect(compareKeys('ç', 'c')).toBeGreaterThan(0);
+    expect(compareKeys('ç', 'd')).toBeLessThan(0);
+  });
+
+  /**
+   * Merging by size alone produced `چە-ح`: 93 ح words on a page named for چ,
+   * so `letterOf` filed them under چ and ح had no section in the index at all.
+   * Thirteen letters went missing that way.
+   */
+  it('never merges a page across two letters', () => {
+    const words = [
+      ...['sal', 'sar', 'sor'].map((w) => word(w)),
+      ...['şal', 'şar'].map((w) => word(w)),
+      ...['tar'].map((w) => word(w)),
+    ];
+    const pages = paginate(words);
+    for (const p of pages) {
+      const letters = new Set(p.words.map((w) => [...w.key][0]));
+      expect([...letters], `page ${p.prefix} spans ${[...letters].join('')}`).toHaveLength(1);
+    }
+    // and so every letter present keeps a page of its own to be indexed under
+    expect(new Set(pages.map((p) => letterOf(p.prefix)))).toEqual(new Set(['s', 'ş', 't']));
+  });
+
+  /** Anything in neither alphabet sorts after everything that is in one. */
+  it('puts a letter from neither alphabet last', () => {
+    expect(compareKeys('ḧa', 'za')).toBeGreaterThan(0);
+    expect(compareKeys('ḧa', 'ا')).toBeGreaterThan(0);
   });
 
   it('names the alphabet on a letter’s own page too', () => {
@@ -708,9 +767,40 @@ describe('what a word is filed under', () => {
     expect(pageKey('123')).toBe('');
   });
 
-  it('keeps every script the corpus actually uses', () => {
-    expect(pageKey('sêv')).toBe('sev');
+  /**
+   * The diacritics stay. `dictionaryKey` folds them so a search for "sev"
+   * finds "sêv"; an index must not, or five of Kurmancî's letters have no
+   * section and `şev` is filed under S.
+   */
+  it('keeps a word’s own letters', () => {
+    expect(pageKey('sêv')).toBe('sêv');
+    expect(pageKey('şev')).toBe('şev');
+    expect(pageKey('ÇÛN')).toBe('çûn');
     expect(pageKey('ڕۆژ')).toBe('ڕۆژ');
     expect(pageKey('щрщ')).toBe('щрщ');
+  });
+
+  /**
+   * One letter written two ways is still one letter. The corpus proves each of
+   * these: it holds `هات` beside `ھاتن` — the same verb — and `كابانی` beside
+   * `کا`. Unfolded, every one of them split a letter in two down the index.
+   */
+  it('folds the Arabic letters that are one letter in Kurdish', () => {
+    expect(pageKey('كا')).toBe(pageKey('کا'));
+    expect(pageKey('يا')).toBe(pageKey('یا'));
+    expect(pageKey('هات')).toBe(pageKey('ھات'));
+    // and the presentation forms NFKC turns back into ordinary letters
+    expect(pageKey('ﻛا')).toBe(pageKey('کا'));
+  });
+
+  /**
+   * Hawar has i and î and no dotless ı, so in Kurmancî it is a slip of a
+   * Turkish keyboard. It also uppercases to `I`, so leaving it out of the
+   * alphabet put a letter in the leftover block that a reader could not tell
+   * apart from Hawar's own I.
+   */
+  it('folds the Turkish dotless i, which Hawar does not have', () => {
+    expect(pageKey('ısot')).toBe('isot');
+    expect(alphabetOf('ı')).toBe('hawar');
   });
 });

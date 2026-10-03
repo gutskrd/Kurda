@@ -47,6 +47,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { publishedFerheng } from '@kurda/shared';
+import { compareKeys } from './ferheng-alphabet.js';
 import { COPY, FERHENG_LOCALES } from './ferheng-copy.js';
 import { toEntries } from './ferheng-entries.js';
 import {
@@ -97,10 +98,14 @@ async function main(): Promise<void> {
         continue;
       }
       /*
-       * Two spellings of one folded key — zabit and zabît — share a page entry
-       * rather than each claiming the same anchor. Senses are concatenated and
-       * regrouped when the page is rendered; the rest is a set union, because
-       * one word spelled two ways has one set of synonyms.
+       * Two writings of one key share a page entry rather than each claiming
+       * the same anchor: `Kurd` and `kurd`, or `كا` and `کا`, which are the
+       * same letters typed two ways.
+       *
+       * It used to catch far more than that, because the key folded the
+       * diacritics and `zabit` and `zabît` collided. They are separate words
+       * and have separate entries now — see `pageKey`. Senses are concatenated
+       * and regrouped when the page is rendered; the rest is a set union.
        */
       existing.senses.push(...entry.senses);
       existing.synonyms = [...new Set([...existing.synonyms, ...entry.synonyms])];
@@ -114,7 +119,7 @@ async function main(): Promise<void> {
 
   if (seen.size === 0) throw new Error('the corpus produced no words — refusing to publish an empty dictionary');
 
-  const words = [...seen.values()].sort((a, b) => a.key.localeCompare(b.key));
+  const words = [...seen.values()].sort((a, b) => compareKeys(a.key, b.key));
   const pages = paginate(words);
   console.log(`ferheng: ${words.length.toLocaleString('en')} words across ${pages.length} pages`);
 
@@ -133,7 +138,7 @@ async function main(): Promise<void> {
     byLetter.set(letter, [...(byLetter.get(letter) ?? []), page]);
   }
   const letters = [...byLetter]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => compareKeys(a, b))
     .map(([letter, ps]) => ({ letter, words: ps.reduce((n, q) => n + q.words.length, 0) }));
   const samples = featured(words, 8);
 

@@ -545,6 +545,7 @@ export const ku: Catalogue = {
   'footer.iosSoon': 'iOS (di rê de)',
   'footer.androidSoon': 'Android (di rê de)',
   'footer.madeWithCare': 'Bi hezkirin ji bo zimanê kurdî hatiye çêkirin.',
+  'footer.byZagrosian': 'Berhemeke Zagrosian',
   'nav.shopGiftsWaiting': 'Firoşgeh — {count} diyarî li benda te',
   'nav.yourProfile': 'Profîla te',
   'nav.yourProfileLevel': 'Profîla te — asta {level}',

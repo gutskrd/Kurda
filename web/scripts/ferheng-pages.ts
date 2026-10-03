@@ -31,8 +31,10 @@
  * as a grid of controls, and a letter's ranges are named by the words they
  * start and end at instead of by the folded prefix the build happens to use.
  */
-import { dictionaryKey } from '@kurda/shared';
+import { letterKey } from '@kurda/shared';
 import { escapeHtml as escape } from './escape.js';
+import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../src/brand/zagrosian.js';
+import { alphabetOf, compareKeys, foldLetter } from './ferheng-alphabet.js';
 import { COPY, type Copy } from './ferheng-copy.js';
 import { isInflected, type Entry } from './ferheng-entries.js';
 
@@ -115,7 +117,7 @@ export function paginate(words: Word[], depth = 1): Page[] {
   }
 
   const parts: Page[] = [];
-  for (const [prefix, list] of [...groups].sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [prefix, list] of [...groups].sort(([a], [b]) => compareKeys(a, b))) {
     const splittable = list.some((w) => w.key.length > depth);
     if (list.length > WORDS_PER_PAGE && splittable) {
       parts.push(...paginate(list, depth + 1));
@@ -127,21 +129,34 @@ export function paginate(words: Word[], depth = 1): Page[] {
 }
 
 /**
- * What a word is filed under: its lookup key, with the stretches taken out.
+ * What a word is filed under: its own letters, in their own alphabet.
  *
- * `dictionaryKey` keeps anything Unicode calls a letter, and the *modifier*
- * letters are letters — among them Arabic tatweel (U+0640), which is a
- * typographic elongation rather than a sound. It carries no meaning, so it must
- * not decide where a word is filed: a headword beginning with one was sorting
- * ahead of the whole Latin alphabet and opening the A–Z with a section called
- * `ـ`. Stripping it files the word under its first real letter instead.
+ * `letterKey` and not `dictionaryKey`. The second folds the diacritics — ş to
+ * s, ê to e — which is right for a search box, where somebody typing "sev"
+ * should find "sêv", and wrong for an index: Ş is a letter of the Kurdish
+ * alphabet and not a decoration on S. Filed by the folded key, five of
+ * Kurmancî's thirty-one letters had no section at all and `şev` sorted in among
+ * the s-words.
+ *
+ * Three things are still folded, because they are one letter written two ways
+ * rather than two letters: `ك`/`ک`, `ي`/`ی` and `ه`/`ھ`. NFKC first, which
+ * turns the Arabic presentation forms (`ﻛ`, `ﻫ`, `ﻋ`) into the ordinary ones.
+ *
+ * Modifier letters go. Unicode counts Arabic tatweel (U+0640) as a letter, but
+ * it is a typographic stretch rather than a sound, and a headword starting with
+ * one was sorting ahead of the entire Latin alphabet and opening the A–Z with a
+ * section called `ـ`.
  *
  * Returns an empty string for a headword that is nothing but stretches, which
- * the caller skips. Scripts other than Latin stay — Kurmancî has a Cyrillic
- * orthography and the Arabic-script entries are Soranî; those are real pages.
+ * the caller skips.
  */
 export function pageKey(headword: string): string {
-  return dictionaryKey(headword).replace(/\p{Lm}/gu, '');
+  return (
+    letterKey(headword.normalize('NFKC'))
+      .replace(/\p{Lm}/gu, '')
+      // ك and ک are one letter in Kurdish, as are ي and ی, ه and ھ
+      .replace(/./gu, (ch) => foldLetter(ch))
+  );
 }
 
 /** Adjacent pages joined while they fit, named for the range they cover. */
@@ -149,7 +164,17 @@ function coalesce(parts: Page[]): Page[] {
   const merged: Page[] = [];
   for (const part of parts) {
     const last = merged[merged.length - 1];
-    if (last && last.words.length + part.words.length <= WORDS_PER_PAGE) {
+    /*
+     * A page never spans two letters, however much room is left on it.
+     *
+     * Merging purely by size produced `چە-ح`: ninety-three ح words on a page
+     * named for چ, so `letterOf` filed them under چ and ح got no section in the
+     * index at all. Thirteen letters disappeared that way. It read badly even
+     * where it was harmless — `şablon – sabotortî` is a page that begins in one
+     * letter and ends in another, which is not how a dictionary is divided.
+     */
+    const sameLetter = last !== undefined && letterOf(last.prefix) === part.prefix.slice(0, 1);
+    if (last && sameLetter && last.words.length + part.words.length <= WORDS_PER_PAGE) {
       /*
        * Either side may already be a range, because coalescing happens at every
        * depth and a child can arrive merged. Widening has to take the low end
@@ -294,8 +319,11 @@ ${/* not translated anywhere in the app: it is the app's own line, the way a
 </div>
 </div>
 <div class="footer-bottom">
-<span>© ${new Date().getFullYear()} Hevalo</span>
-<span class="muted">${licence}</span>
+<span class="footer-bottom-left"><span>© ${new Date().getFullYear()} Hevalo</span><span class="muted">${licence}</span></span>
+${/* the imprint, drawn exactly as the app draws it — see ZagrosianCredit.tsx */ ''}
+<a class="by-zagrosian" href="${ZAGROSIAN_URL}" target="_blank" rel="noreferrer noopener"><span>${escape(
+    c.footer.byZagrosian,
+  )}</span><svg class="by-zagrosian-mark" viewBox="${ZAGROSIAN_VIEWBOX}" fill="currentColor" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${ZAGROSIAN_MARK}"></path></svg></a>
 </div>
 </div>
 </footer>`;
@@ -390,8 +418,9 @@ ${footer(c)}
  * class and are set back from the words that stand on their own.
  *
  * Regrouping here rather than trusting the converter's order is deliberate: a
- * page entry can be two spellings of one folded key merged together, and their
- * senses arrive concatenated rather than interleaved.
+ * page entry can be two writings of one key merged together — `Kurd` and
+ * `kurd`, `كا` and `کا` — and their senses arrive concatenated rather than
+ * interleaved.
  */
 function senseList(senses: Word['senses'], copy: Copy): string {
   const byPos = new Map<string, string[]>();
@@ -613,10 +642,10 @@ export function featured(words: Word[], count: number): Word[] {
   }
 
   return [...best.values()]
-    .sort((a, b) => b.score - a.score || a.word.key.localeCompare(b.word.key))
+    .sort((a, b) => b.score - a.score || compareKeys(a.word.key, b.word.key))
     .slice(0, count)
     .map((x) => x.word)
-    .sort((a, b) => a.key.localeCompare(b.key));
+    .sort((a, b) => compareKeys(a.key, b.key));
 }
 
 /**
@@ -654,7 +683,7 @@ export function notFoundPage(copy: Copy = COPY.ku): string {
 }
 
 /**
- * Which alphabet a letter belongs to, and what that alphabet is called.
+ * The three blocks the index is shown in, in order.
  *
  * Kurdish is written in two alphabets, and a reader of one frequently cannot
  * read the other — so an index that runs A, B, C … Z and then straight into
@@ -662,24 +691,14 @@ export function notFoundPage(copy: Copy = COPY.ku): string {
  * which is the difference between a reader finding their own letters and
  * scrolling past a block of script they do not use.
  *
- * **Hawar** is the Latin alphabet Celadet Alî Bedirxan set out in the journal
- * of that name from 1932, and what Kurmancî is written in. **Soranî** is the
- * Arabic-script alphabet. They are named rather than numbered because that is
- * what a Kurdish reader calls them.
- *
- * Decided by Unicode script rather than by a fixed list of letters, which keeps
- * `Ḧ` — 268 words, Latin, not in the 31 letters of standard Hawar — with the
- * alphabet it plainly belongs to instead of in a leftover pile. `other` exists
- * for the Cyrillic orthography, which the corpus has words in but not currently
- * enough of to open a letter.
+ * The third block is for the letters that are in neither: the Latin `ḧ` and
+ * `ẍ` some Kurmancî orthographies use, the Arabic `ط ص ظ` of unassimilated
+ * loanwords, the handful of Cyrillic. They are shown rather than hidden —
+ * 250 words begin with `ḧ` and somebody looking for one needs to find it —
+ * but they are not claimed as Hawar's or Soranî's. Which letters belong to
+ * which is in ferheng-alphabet.ts.
  */
 const ALPHABETS = ['hawar', 'sorani', 'other'] as const;
-
-export function alphabetOf(letter: string): (typeof ALPHABETS)[number] {
-  if (/\p{Script=Arabic}/u.test(letter)) return 'sorani';
-  if (/\p{Script=Latin}/u.test(letter)) return 'hawar';
-  return 'other';
-}
 
 /** What to call the alphabet a letter is in. */
 export function alphabetName(letter: string, copy: Copy = COPY.ku): string {
@@ -1005,6 +1024,14 @@ img { max-width: 100%; display: block; }
   display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
   justify-content: space-between; color: var(--ink-3); font-size: 0.88rem;
 }
+.footer-bottom-left { display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center; }
+/* who made this — an imprint, not an advertisement. It sits at the weight of
+   the copyright line beside it and only lifts when somebody reaches for it;
+   the mark is drawn in currentColor so it brightens with the words rather than
+   staying lit while they move */
+.by-zagrosian { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-3); white-space: nowrap; transition: color 0.18s ease; }
+.by-zagrosian:hover { color: var(--ink); }
+.by-zagrosian-mark { height: 17px; width: auto; flex: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45)); }
 
 /* ======================================================================== *
  * The dictionary's own, below here. Nothing above this line is invented.

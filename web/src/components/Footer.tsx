@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Brand } from './Brand';
+import { ZagrosianCredit } from './ZagrosianCredit';
 import { useT } from '../i18n/I18nProvider';
 
 export function Footer(): React.JSX.Element {
@@ -57,8 +58,13 @@ export function Footer(): React.JSX.Element {
         </div>
 
         <div className="footer-bottom">
-          <span>© {year} Hevalo</span>
-          <span className="muted">{t('footer.madeWithCare')}</span>
+          {/* the two quiet lines travel together on the left, so the imprint
+              has the right-hand end of the bar to itself */}
+          <span className="footer-bottom-left">
+            <span>© {year} Hevalo</span>
+            <span className="muted">{t('footer.madeWithCare')}</span>
+          </span>
+          <ZagrosianCredit />
         </div>
       </div>
     </footer>

@@ -539,6 +539,7 @@ export const de: Catalogue = {
   'footer.iosSoon': 'iOS (demnächst)',
   'footer.androidSoon': 'Android (demnächst)',
   'footer.madeWithCare': 'Mit Sorgfalt für die kurdische Sprache gemacht.',
+  'footer.byZagrosian': 'Ein Produkt von Zagrosian',
   'nav.shopGiftsWaiting': 'Shop — {count} Geschenke warten',
   'nav.yourProfile': 'Dein Profil',
   'nav.yourProfileLevel': 'Dein Profil — Stufe {level}',

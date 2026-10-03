@@ -539,6 +539,7 @@ export const tr: Catalogue = {
   'footer.iosSoon': 'iOS (yakında)',
   'footer.androidSoon': 'Android (yakında)',
   'footer.madeWithCare': 'Kürt dili için özenle yapıldı.',
+  'footer.byZagrosian': 'Bir Zagrosian ürünü',
   'nav.shopGiftsWaiting': 'Mağaza — {count} hediye seni bekliyor',
   'nav.yourProfile': 'Profilin',
   'nav.yourProfileLevel': 'Profilin — seviye {level}',
