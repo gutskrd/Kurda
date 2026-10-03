@@ -551,6 +551,7 @@ export const ckb: Catalogue = {
   'footer.iosSoon': 'iOS (بەم زووانە)',
   'footer.androidSoon': 'ئەندرۆید (بەم زووانە)',
   'footer.madeWithCare': 'بە خۆشەویستی بۆ زمانی کوردی دروست کراوە.',
+  'footer.byZagrosian': 'بەرهەمێکی Zagrosian',
   'nav.shopGiftsWaiting': 'فرۆشگا — {count} دیاری چاوەڕوانن',
   'nav.yourProfile': 'پرۆفایلەکەت',
   'nav.yourProfileLevel': 'پرۆفایلەکەت — ئاستی {level}',

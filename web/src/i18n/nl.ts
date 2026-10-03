@@ -539,6 +539,7 @@ export const nl: Catalogue = {
   'footer.iosSoon': 'iOS (binnenkort)',
   'footer.androidSoon': 'Android (binnenkort)',
   'footer.madeWithCare': 'Met zorg gemaakt voor de Koerdische taal.',
+  'footer.byZagrosian': 'Een product van Zagrosian',
   'nav.shopGiftsWaiting': 'Winkel — {count} cadeaus wachten op je',
   'nav.yourProfile': 'Jouw profiel',
   'nav.yourProfileLevel': 'Jouw profiel — niveau {level}',

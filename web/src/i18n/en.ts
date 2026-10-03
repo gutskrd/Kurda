@@ -612,6 +612,7 @@ export const en = {
   'footer.iosSoon': 'iOS (coming soon)',
   'footer.androidSoon': 'Android (coming soon)',
   'footer.madeWithCare': 'Made with care for the Kurdish language.',
+  'footer.byZagrosian': 'A Zagrosian product',
   'nav.shopGiftsWaiting': 'Shop — {count} gifts waiting',
   'nav.yourProfile': 'Your profile',
   'nav.yourProfileLevel': 'Your profile — level {level}',

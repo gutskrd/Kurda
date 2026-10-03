@@ -390,6 +390,43 @@ button.nav-link {
   color: var(--ink-3);
   font-size: 0.88rem;
 }
+.footer-bottom-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  align-items: center;
+}
+
+/*
+ * Who made this — an imprint, not an advertisement.
+ *
+ * It sits at the weight of the copyright line it shares the bar with, and only
+ * lifts when somebody reaches for it. The mark is drawn in `currentColor`, so
+ * it brightens with the words instead of staying lit while they move: one
+ * thing responding, not two.
+ *
+ * The mark is taller than it is wide (1326 × 1368), so it is sized by height
+ * and left to find its own width.
+ */
+.by-zagrosian {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  transition: color 0.18s ease;
+}
+.by-zagrosian:hover {
+  color: var(--ink);
+}
+.by-zagrosian-mark {
+  height: 17px;
+  width: auto;
+  flex: none;
+  /* the mark's own strokes are fine; a hair of weight keeps it from
+     disappearing against the footer at this size */
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+}
 
 /* Unread count on the Messages link — so a message is visible from any page
    without opening Messages to find out. */

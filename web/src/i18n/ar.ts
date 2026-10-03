@@ -544,6 +544,7 @@ export const ar: Catalogue = {
   'footer.iosSoon': 'iOS (قريبًا)',
   'footer.androidSoon': 'أندرويد (قريبًا)',
   'footer.madeWithCare': 'صُنع بعناية من أجل اللغة الكردية.',
+  'footer.byZagrosian': 'منتج من Zagrosian',
   'nav.shopGiftsWaiting': 'المتجر — {count} هدايا في انتظارك',
   'nav.yourProfile': 'ملفك الشخصي',
   'nav.yourProfileLevel': 'ملفك الشخصي — المستوى {level}',

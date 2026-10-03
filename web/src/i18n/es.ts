@@ -539,6 +539,7 @@ export const es: Catalogue = {
   'footer.iosSoon': 'iOS (próximamente)',
   'footer.androidSoon': 'Android (próximamente)',
   'footer.madeWithCare': 'Hecho con cuidado para la lengua kurda.',
+  'footer.byZagrosian': 'Un producto de Zagrosian',
   'nav.shopGiftsWaiting': 'Tienda: {count} regalos esperando',
   'nav.yourProfile': 'Tu perfil',
   'nav.yourProfileLevel': 'Tu perfil: nivel {level}',
