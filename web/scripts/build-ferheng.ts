@@ -47,6 +47,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { publishedFerheng } from '@kurda/shared';
+import { COPY, FERHENG_LOCALES } from './ferheng-copy.js';
 import { toEntries } from './ferheng-entries.js';
 import {
   FONTS,
@@ -63,8 +64,8 @@ import {
   type Word,
 } from './ferheng-pages.js';
 
+/* each language writes to its own folder under here — see ferheng-copy.ts */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = path.join(ROOT, 'dist', 'ferheng');
 
 /** Finding the font files where npm actually put them, hoisted or not. */
 const require_ = createRequire(import.meta.url);
@@ -117,9 +118,6 @@ async function main(): Promise<void> {
   const pages = paginate(words);
   console.log(`ferheng: ${words.length.toLocaleString('en')} words across ${pages.length} pages`);
 
-  fs.rmSync(OUT, { recursive: true, force: true });
-  fs.mkdirSync(OUT, { recursive: true });
-
   /*
    * Where every word lives, so a synonym can become a link. A page cannot
    * work this out alone — the word it points at is almost always on a
@@ -127,17 +125,6 @@ async function main(): Promise<void> {
    */
   const pageOf = new Map<string, string>();
   for (const page of pages) for (const w of page.words) pageOf.set(w.key, page.prefix);
-
-  let bytes = 0;
-  let files = 0;
-  for (const [i, page] of pages.entries()) {
-    const dir = path.join(OUT, page.prefix);
-    fs.mkdirSync(dir, { recursive: true });
-    const html = wordsPage(page, pages[i - 1]?.prefix ?? null, pages[i + 1]?.prefix ?? null, pageOf);
-    fs.writeFileSync(path.join(dir, 'index.html'), html);
-    bytes += Buffer.byteLength(html);
-    files += 1;
-  }
 
   // one page per letter, between the A–Z and the words
   const byLetter = new Map<string, typeof pages>();
@@ -148,57 +135,81 @@ async function main(): Promise<void> {
   const letters = [...byLetter]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([letter, ps]) => ({ letter, words: ps.reduce((n, q) => n + q.words.length, 0) }));
-
-  for (const { letter } of letters) {
-    const dir = path.join(OUT, letter);
-    fs.mkdirSync(dir, { recursive: true });
-    const html = letterPage(letter, byLetter.get(letter)!, words.length);
-    fs.writeFileSync(path.join(dir, 'index.html'), html);
-    bytes += Buffer.byteLength(html);
-    files += 1;
-  }
-
-  fs.writeFileSync(
-    path.join(OUT, 'index.html'),
-    indexPage(letters, words.length, pages.length, featured(words, 8), pageOf),
-  );
-  fs.writeFileSync(path.join(OUT, 'ferheng.css'), STYLE);
-  // what the Worker serves for an address with no page behind it; see
-  // notFoundPage() for why the app's own 404 screen cannot do this job
-  fs.writeFileSync(path.join(OUT, '404.html'), notFoundPage());
-  files += 3;
+  const samples = featured(words, 8);
 
   /*
-   * The typefaces, out of node_modules and onto the edge.
+   * Published once per language.
    *
-   * Copied rather than linked because these pages are served under
-   * `default-src 'none'` and a font from anywhere else would need a hole in
-   * it. Each carries a `unicode-range` in the stylesheet, so a page of
-   * Kurmancî fetches the Latin files and a page of Soranî fetches the Arabic
-   * one — nothing downloads a script it does not set.
+   * The words are Kurdish in both; what differs is the bar, the footer and the
+   * labels, which belong to whoever is reading rather than to the dictionary.
+   * See ferheng-copy.ts for why there are two languages and not nine, and why
+   * they are sibling paths rather than one nested under the other.
+   *
+   * Everything above this loop — the corpus, the pagination, which word sits
+   * on which page — is worked out once and shared, so a second language costs
+   * the writing and not the thinking.
    */
-  const fonts = path.join(OUT, 'fonts');
-  fs.mkdirSync(fonts, { recursive: true });
-  for (const font of FONTS) {
-    const from = require_.resolve(font.from);
-    fs.copyFileSync(from, path.join(fonts, font.as));
-    bytes += fs.statSync(from).size;
-    files += 1;
+  let bytes = 0;
+  let files = 0;
+  for (const locale of FERHENG_LOCALES) {
+    const copy = COPY[locale];
+    const out = path.join(ROOT, 'dist', copy.base);
+    fs.rmSync(out, { recursive: true, force: true });
+    fs.mkdirSync(out, { recursive: true });
+
+    const write = (rel: string, html: string): void => {
+      const file = path.join(out, rel);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, html);
+      bytes += Buffer.byteLength(html);
+      files += 1;
+    };
+
+    for (const [i, page] of pages.entries()) {
+      write(
+        path.join(page.prefix, 'index.html'),
+        wordsPage(page, pages[i - 1]?.prefix ?? null, pages[i + 1]?.prefix ?? null, pageOf, copy),
+      );
+    }
+    for (const { letter } of letters) {
+      write(path.join(letter, 'index.html'), letterPage(letter, byLetter.get(letter)!, words.length, copy));
+    }
+    write('index.html', indexPage(letters, words.length, pages.length, samples, pageOf, copy));
+    write('ferheng.css', STYLE);
+    // what the Worker serves for an address with no page behind it; see
+    // notFoundPage() for why the app's own 404 screen cannot do this job
+    write('404.html', notFoundPage(copy));
+
+    /*
+     * The typefaces, out of node_modules and onto the edge.
+     *
+     * Copied rather than linked because these pages are served under
+     * `default-src 'none'` and a font from anywhere else would need a hole in
+     * it. Its `unicode-range` means a page of Kurmancî never fetches it.
+     */
+    const fonts = path.join(out, 'fonts');
+    fs.mkdirSync(fonts, { recursive: true });
+    for (const font of FONTS) {
+      const from = require_.resolve(font.from);
+      fs.copyFileSync(from, path.join(fonts, font.as));
+      bytes += fs.statSync(from).size;
+      files += 1;
+    }
+
+    // its own sitemap, announced from robots.txt alongside the app’s
+    const urls = ['', ...letters.map((l) => `${l.letter}/`), ...pages.map((q) => `${q.prefix}/`)]
+      .map((u) => `<url><loc>${ORIGIN}/${copy.base}/${u}</loc></url>`)
+      .join('');
+    write(
+      'sitemap.xml',
+      `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>
+`,
+    );
+    console.log(`  /${copy.base}/ — ${pages.length} word pages, ${letters.length} letters`);
   }
 
-  // its own sitemap, announced from robots.txt alongside the app’s
-  const urls = ['', ...letters.map((l) => `${l.letter}/`), ...pages.map((q) => `${q.prefix}/`)]
-    .map((u) => `<url><loc>${ORIGIN}/ferheng/${u}</loc></url>`)
-    .join('');
-  fs.writeFileSync(
-    path.join(OUT, 'sitemap.xml'),
-    `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>
-`,
-  );
-  files += 1;
-
   console.log(
-    `ferheng: ${pages.length} word pages, ${letters.length} letters, ` +
+    `ferheng: ${FERHENG_LOCALES.length} languages, ` +
       `${files} files, ${(bytes / 1024 / 1024).toFixed(0)} MB  (free limit is 20,000 files)`,
   );
   /*
@@ -206,6 +217,9 @@ async function main(): Promise<void> {
    * of it leaves room for the app’s own assets and for the dictionary to
    * grow, and a build that fails here is a far better outcome than a deploy
    * Cloudflare refuses halfway through.
+   *
+   * It is also what decides how many languages this can be published in: a
+   * third would be another ~3,360 files.
    */
   if (files > 18_000) {
     throw new Error(`${files} files is too close to the 20,000 limit — raise WORDS_PER_PAGE`);

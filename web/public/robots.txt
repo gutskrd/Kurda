@@ -26,8 +26,12 @@ Disallow: /app/saved
 Disallow: /app/messages
 Disallow: /api/
 
-# Two, because the dictionary has its own and it is the bigger half: 3,400
-# pages of Kurdish words, generated at build time and served as files. The
-# first lists what the app is; the second lists what it knows.
+# Three, because the dictionary has its own and it is the bigger half: 3,300
+# pages of Kurdish words, generated at build time and served as files, and
+# published twice — the words are the same, the labels around them are Kurmancî
+# at /ferheng/ and English at /dictionary/. Each page names the other as its
+# `hreflang` alternate, so the pair is indexed as one page in two languages
+# rather than as two competing ones.
 Sitemap: https://hevalo.app/sitemap.xml
 Sitemap: https://hevalo.app/ferheng/sitemap.xml
+Sitemap: https://hevalo.app/dictionary/sitemap.xml

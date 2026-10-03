@@ -8,7 +8,7 @@ import {
   TrophyIcon,
   UsersIcon,
 } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import type { NavItem } from '../components/TopNav';
 
 /**
@@ -27,6 +27,7 @@ import type { NavItem } from '../components/TopNav';
 export function useNavLinks(): NavItem[] {
   const { status } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const signedIn = status === 'signedIn';
 
   return [
@@ -56,7 +57,19 @@ export function useNavLinks(): NavItem[] {
      */
     signedIn
       ? { label: t('nav.dictionary'), to: '/app/dictionary', icon: <DictionaryIcon size={18} /> }
-      : { label: t('nav.dictionary'), to: '/ferheng/', icon: <DictionaryIcon size={18} />, external: true },
+      : {
+          label: t('nav.dictionary'),
+          /*
+           * The published pages exist in two languages, at sibling paths, so a
+           * reader is sent to their own rather than into an all-Kurmancî page.
+           * Kurmancî for somebody who chose Kurmancî, English for everyone
+           * else — the same rule `emailLocaleFor` uses on the API, and for the
+           * same reason: English is what every other locale falls back to.
+           */
+          to: locale === 'ku' ? '/ferheng/' : '/dictionary/',
+          icon: <DictionaryIcon size={18} />,
+          external: true,
+        },
     { label: t('nav.games'), to: '/app/games', icon: <GameIcon size={18} /> },
     { label: t('nav.rankings'), to: '/app/rankings', icon: <TrophyIcon size={18} /> },
     ...(signedIn

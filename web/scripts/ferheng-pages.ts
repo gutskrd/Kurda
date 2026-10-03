@@ -33,6 +33,7 @@
  */
 import { dictionaryKey } from '@kurda/shared';
 import { escapeHtml as escape } from './escape.js';
+import { COPY, type Copy } from './ferheng-copy.js';
 import { isInflected, type Entry } from './ferheng-entries.js';
 
 export const ORIGIN = 'https://hevalo.app';
@@ -256,40 +257,49 @@ const NAV_ICONS: Record<string, string> = {
  * The year is the build's. A static page cannot read a clock, and a copyright
  * line one year stale is a smaller wrong than a line that says nothing.
  */
-const FOOTER = `<footer class="footer">
+function footer(c: Copy): string {
+  const licence = escape(c.footer.licence)
+    .replace('{wiki}', '<a href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>')
+    .replace(
+      '{licence}',
+      '<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>',
+    );
+  return `<footer class="footer">
 <div class="container">
 <div class="footer-grid">
 <div class="footer-brand">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
-<p class="muted">Fêrî kurdî bibe — ders, çîrok, helbest û lîstik.</p>
-<p class="kurdish">Jiyan bi kurdî xweştire.</p>
+<p class="muted">${escape(c.footer.tagline)}</p>
+${/* not translated anywhere in the app: it is the app's own line, the way a
+      masthead keeps its motto */ ''}
+<p class="kurdish" lang="ku">Jiyan bi kurdî xweştire.</p>
 </div>
 <div class="footer-col">
-<h4>Fêrbûn</h4>
-<a href="/learn">Ders</a>
-<a href="/app">Mal</a>
-<a href="/games">Lîstik</a>
-<a href="/ferheng/">Ferheng</a>
+<h4>${escape(c.footer.learn)}</h4>
+<a href="/learn">${escape(c.footer.lessons)}</a>
+<a href="/app">${escape(c.nav.home)}</a>
+<a href="/games">${escape(c.nav.games)}</a>
+<a href="/${c.base}/">${escape(c.nav.dictionary)}</a>
 </div>
 <div class="footer-col">
-<h4>Civak</h4>
-<a href="/rankings">Rêzbendî</a>
-<a href="/register">Tevlî Hevalo bibe</a>
-<a href="/login">Têkeve</a>
+<h4>${escape(c.footer.community)}</h4>
+<a href="/rankings">${escape(c.nav.rankings)}</a>
+<a href="/register">${escape(c.footer.join)}</a>
+<a href="/login">${escape(c.nav.login)}</a>
 </div>
 <div class="footer-col">
-<h4>Sepan</h4>
-<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">iOS (di rê de)</a>
-<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">Android (di rê de)</a>
+<h4>${escape(c.footer.app)}</h4>
+<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">${escape(c.footer.ios)}</a>
+<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">${escape(c.footer.android)}</a>
 </div>
 </div>
 <div class="footer-bottom">
 <span>© ${new Date().getFullYear()} Hevalo</span>
-<span class="muted">Peyv ji <a href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>,
-bi lîsansa <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>.</span>
+<span class="muted">${licence}</span>
 </div>
 </div>
 </footer>`;
+}
 
 /** One nav entry, drawn the way the app draws one: glyph, then word. */
 function navLink(key: string, href: string, label: string, current = false): string {
@@ -311,9 +321,12 @@ export function document_(opts: {
   breadcrumb?: Array<{ name: string; url: string }>;
   /** what the trail calls this page, when it is not the title */
   here?: string;
+  /** which of the published languages this page is one of */
+  copy: Copy;
 }): string {
+  const c = opts.copy;
   return `<!doctype html>
-<html lang="ku">
+<html lang="${c.htmlLang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -326,26 +339,30 @@ export function document_(opts: {
 <meta property="og:url" content="${escape(opts.canonical)}">
 <meta property="og:title" content="${escape(opts.title)}">
 <meta property="og:description" content="${escape(opts.description)}">
-<link rel="stylesheet" href="/ferheng/ferheng.css">
+<link rel="stylesheet" href="/${c.base}/ferheng.css">
+${/* each language points at the other, so a search engine indexes them as one
+      page in two languages rather than as two competing pages */ ''}
+<link rel="alternate" hreflang="ku" href="${ORIGIN}/ferheng/">
+<link rel="alternate" hreflang="en" href="${ORIGIN}/dictionary/">
 </head>
 <body>
 <header class="nav">
 <div class="container nav-inner">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
-<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="Menû">
+<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="${escape(c.nav.menu)}">
 <nav class="nav-links">
-${navLink('mal', '/app', 'Mal')}
-${navLink('ferheng', '/ferheng/', 'Ferheng', true)}
-${navLink('listik', '/app/games', 'Lîstik')}
-${navLink('rezbendi', '/app/rankings', 'Rêzbendî')}
+${navLink('mal', '/app', c.nav.home)}
+${navLink('ferheng', `/${c.base}/`, c.nav.dictionary, true)}
+${navLink('listik', '/app/games', c.nav.games)}
+${navLink('rezbendi', '/app/rankings', c.nav.rankings)}
 <span class="nav-mobile-actions">
-<a class="nav-link" href="/login">Têkeve</a>
-<a class="nav-link" href="/register">Dest pê bike</a>
+<a class="nav-link" href="/login">${escape(c.nav.login)}</a>
+<a class="nav-link" href="/register">${escape(c.nav.register)}</a>
 </span>
 </nav>
 <span class="nav-spacer"></span>
-<a class="btn-sm btn-ghost nav-desktop-only" href="/login">Têkeve</a>
-<a class="btn-sm nav-desktop-only" href="/register">Dest pê bike</a>
+<a class="btn-sm btn-ghost nav-desktop-only" href="/login">${escape(c.nav.login)}</a>
+<a class="btn-sm nav-desktop-only" href="/register">${escape(c.nav.register)}</a>
 <label class="nav-toggle" for="nav-open"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg></label>
 </div>
 </header>
@@ -353,7 +370,7 @@ ${navLink('rezbendi', '/app/rankings', 'Rêzbendî')}
 ${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' · ')[0]!) : ''}
 ${opts.body}
 </main>
-${FOOTER}
+${footer(c)}
 </body>
 </html>
 `;
@@ -376,7 +393,7 @@ ${FOOTER}
  * page entry can be two spellings of one folded key merged together, and their
  * senses arrive concatenated rather than interleaved.
  */
-function senseList(senses: Word['senses']): string {
+function senseList(senses: Word['senses'], copy: Copy): string {
   const byPos = new Map<string, string[]>();
   for (const s of senses) {
     const list = byPos.get(s.pos) ?? [];
@@ -387,7 +404,8 @@ function senseList(senses: Word['senses']): string {
     .map(([pos, definitions]) => {
       const items = definitions.map((d) => `<li itemprop="description" dir="auto">${escape(d)}</li>`).join('');
       const kind = isInflected(pos) ? 'row sense form' : 'row sense';
-      return `<div class="${kind}"><span class="label">${escape(pos)}</span><ol>${items}</ol></div>`;
+      const label = copy.pos[pos] ?? pos;
+      return `<div class="${kind}"><span class="label">${escape(label)}</span><ol>${items}</ol></div>`;
     })
     .join('');
 }
@@ -405,7 +423,7 @@ function senseList(senses: Word['senses']): string {
  * saying otherwise in markup a search engine reads would be a small lie that
  * costs nothing to avoid.
  */
-function equivalents(word: Word): string {
+function equivalents(word: Word, copy: Copy): string {
   const row = (label: string, values: string[], lang: string, prop: string | null): string => {
     if (values.length === 0) return '';
     const items = values
@@ -413,7 +431,7 @@ function equivalents(word: Word): string {
       .join('<span class="sep">·</span>');
     return `<p class="row"><span class="label">${escape(label)}</span><span class="vals">${items}</span></p>`;
   };
-  return row('Soranî', word.sorani, 'ckb', 'alternateName') + row('Erebî', word.arabic, 'ar', null);
+  return row(copy.rows.sorani, word.sorani, 'ckb', 'alternateName') + row(copy.rows.arabic, word.arabic, 'ar', null);
 }
 
 /**
@@ -425,7 +443,7 @@ function equivalents(word: Word): string {
  * link: the word is still worth showing, and a link to nothing is worse than
  * no link.
  */
-function synonymList(words: string[], pageOf: Map<string, string>): string {
+function synonymList(words: string[], pageOf: Map<string, string>, copy: Copy): string {
   if (words.length === 0) return '';
   const links = words
     .map((w) => {
@@ -437,17 +455,17 @@ function synonymList(words: string[], pageOf: Map<string, string>): string {
         : `<span${attrs}>${escape(w)}</span>`;
     })
     .join('<span class="sep">·</span>');
-  return `<p class="row"><span class="label">Hevmane</span><span class="vals">${links}</span></p>`;
+  return `<p class="row"><span class="label">${escape(copy.rows.synonyms)}</span><span class="vals">${links}</span></p>`;
 }
 
 /** One entry, headword and all. */
-function entry(w: Word, pageOf: Map<string, string>): string {
+function entry(w: Word, pageOf: Map<string, string>, copy: Copy): string {
   return (
     `<article class="entry" id="${escape(w.key)}" itemscope itemtype="https://schema.org/DefinedTerm">` +
     // the headword links to its own anchor, so a reader who wants to send
     // somebody one word has an address for exactly that word
     `<h2 class="hw" itemprop="name" dir="auto"><a href="#${escape(w.key)}">${escape(w.headword)}</a></h2>` +
-    `<div class="body">${senseList(w.senses)}${equivalents(w)}${synonymList(w.synonyms, pageOf)}</div>` +
+    `<div class="body">${senseList(w.senses, copy)}${equivalents(w, copy)}${synonymList(w.synonyms, pageOf, copy)}</div>` +
     `</article>`
   );
 }
@@ -469,14 +487,16 @@ export function wordsPage(
   prev: string | null,
   next: string | null,
   pageOf: Map<string, string> = new Map(),
+  copy: Copy = COPY.ku,
 ): string {
-  const entries = page.words.map((w) => entry(w, pageOf)).join('\n');
+  const entries = page.words.map((w) => entry(w, pageOf, copy)).join('\n');
   const letter = letterOf(page.prefix);
+  const base = copy.base;
 
   const nav = [
-    prev ? `<a class="pill" rel="prev" href="/ferheng/${escape(prev)}/">←</a>` : '',
-    `<a class="pill" href="/ferheng/${escape(letter)}/">Hemû ${escape(letter.toUpperCase())}</a>`,
-    next ? `<a class="pill" rel="next" href="/ferheng/${escape(next)}/">→</a>` : '',
+    prev ? `<a class="pill" rel="prev" href="/${base}/${escape(prev)}/">←</a>` : '',
+    `<a class="pill" href="/${base}/${escape(letter)}/">${escape(copy.words.all(letter.toUpperCase()))}</a>`,
+    next ? `<a class="pill" rel="next" href="/${base}/${escape(next)}/">→</a>` : '',
   ]
     .filter(Boolean)
     .join('');
@@ -485,21 +505,22 @@ export function wordsPage(
   const first = page.words[0]!.headword;
   const last = page.words[page.words.length - 1]!.headword;
   return document_({
-    title: `${here} · Ferhenga kurdî`,
-    description: `${page.words.length} peyvên kurdî ji ${first} heta ${last}, bi wateyên wan — belaş û bê hesab.`,
-    canonical: `${ORIGIN}/ferheng/${page.prefix}/`,
+    copy,
+    title: `${here} · ${copy.titleSuffix}`,
+    description: copy.words.description(page.words.length, first, last),
+    canonical: `${ORIGIN}/${base}/${page.prefix}/`,
     breadcrumb: [
-      { name: 'Ferheng', url: `${ORIGIN}/ferheng/` },
-      { name: letter.toUpperCase(), url: `${ORIGIN}/ferheng/${letter}/` },
+      { name: copy.root, url: `${ORIGIN}/${base}/` },
+      { name: letter.toUpperCase(), url: `${ORIGIN}/${base}/${letter}/` },
     ],
     here,
     body: `<header class="head">
 <p class="eyebrow">${escape(letter.toUpperCase())}</p>
-<h1 class="running" dir="auto">${escape(here)}</h1>
-<p class="eyebrow">${page.words.length} peyv</p>
+<h1 class="running" dir="auto" lang="ku">${escape(here)}</h1>
+<p class="eyebrow">${escape(copy.words.count(page.words.length))}</p>
 </header>
 <div class="entries" itemscope itemtype="https://schema.org/DefinedTermSet">
-<meta itemprop="name" content="Ferhenga kurdî">
+<meta itemprop="name" content="${escape(copy.titleSuffix)}">
 <meta itemprop="inLanguage" content="ku">
 ${entries}
 </div>
@@ -521,26 +542,28 @@ export function letterOf(prefix: string): string {
  * there. Printed dictionaries solved this centuries ago with the running head,
  * so a row names the first and last word on the page it leads to.
  */
-export function letterPage(letter: string, pages: Page[], total: number): string {
+export function letterPage(letter: string, pages: Page[], total: number, copy: Copy = COPY.ku): string {
   const rows = pages
     .map(
       (p) =>
-        `<a class="range" href="/ferheng/${escape(p.prefix)}/">` +
-        `<span class="range-span" dir="auto">${escape(span(p))}</span>` +
+        `<a class="range" href="/${copy.base}/${escape(p.prefix)}/">` +
+        `<span class="range-span" dir="auto" lang="ku">${escape(span(p))}</span>` +
         `<span class="range-n">${p.words.length}</span></a>`,
     )
     .join('');
   const words = pages.reduce((n, p) => n + p.words.length, 0);
+  const up = letter.toUpperCase();
   return document_({
-    title: `Peyvên kurdî bi tîpa ${letter.toUpperCase()} · Ferhenga kurdî`,
-    description: `${words.toLocaleString('en')} peyvên kurdî ku bi ${letter.toUpperCase()} dest pê dikin, bi wateyên wan.`,
-    canonical: `${ORIGIN}/ferheng/${letter}/`,
-    breadcrumb: [{ name: 'Ferheng', url: `${ORIGIN}/ferheng/` }],
-    here: letter.toUpperCase(),
+    copy,
+    title: `${copy.letter.title(up)} · ${copy.titleSuffix}`,
+    description: copy.letter.description(words.toLocaleString('en'), up),
+    canonical: `${ORIGIN}/${copy.base}/${letter}/`,
+    breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/` }],
+    here: up,
     body: `<header class="head">
-<p class="eyebrow">${escape(alphabetName(letter))}</p>
-<h1 class="letter" dir="auto">${escape(letter.toUpperCase())}</h1>
-<p class="eyebrow">${words.toLocaleString('en')} peyv ji ${total.toLocaleString('en')}</p>
+<p class="eyebrow">${escape(alphabetName(letter, copy))}</p>
+<h1 class="letter" dir="auto" lang="ku">${escape(up)}</h1>
+<p class="eyebrow">${escape(copy.letter.count(words.toLocaleString('en'), total.toLocaleString('en')))}</p>
 </header>
 <div class="ranges">${rows}</div>`,
   });
@@ -613,20 +636,20 @@ export function featured(words: Word[], count: number): Word[] {
  * bookmarked, linked, or sitting in somebody's history — becomes one of these.
  * The letters never move, which is why this page sends a reader to them.
  */
-export function notFoundPage(): string {
+export function notFoundPage(copy: Copy = COPY.ku): string {
   return document_({
-    title: 'Ev rûpel nehat dîtin · Ferhenga kurdî',
-    description: 'Ev navnîşan di ferhengê de nîne.',
-    canonical: `${ORIGIN}/ferheng/`,
-    breadcrumb: [{ name: 'Ferheng', url: `${ORIGIN}/ferheng/` }],
-    here: 'Nehat dîtin',
+    copy,
+    title: `${copy.notFound.title} · ${copy.titleSuffix}`,
+    description: copy.notFound.description,
+    canonical: `${ORIGIN}/${copy.base}/`,
+    breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/` }],
+    here: copy.notFound.here,
     body: `<header class="head">
 <p class="eyebrow">404</p>
-<h1 class="running">Ev rûpel nehat dîtin.</h1>
+<h1 class="running">${escape(copy.notFound.heading)}</h1>
 </header>
-<p class="prose">Dibe ku ev navnîşan kevn be: gava ferheng ji nû ve tê barkirin,
-peyv ji rûpelekê diçin rûpeleke din. Tîp her tim li cihê xwe dimînin.</p>
-<nav class="pager"><a class="pill" href="/ferheng/">Here ferhengê</a></nav>`,
+<p class="prose">${escape(copy.notFound.body)}</p>
+<nav class="pager"><a class="pill" href="/${copy.base}/">${escape(copy.notFound.action)}</a></nav>`,
   });
 }
 
@@ -650,22 +673,17 @@ peyv ji rûpelekê diçin rûpeleke din. Tîp her tim li cihê xwe dimînin.</p>
  * for the Cyrillic orthography, which the corpus has words in but not currently
  * enough of to open a letter.
  */
-const ALPHABETS = [
-  { id: 'hawar', name: 'Alfabeya Hawarê' },
-  { id: 'sorani', name: 'Alfabeya Soranî' },
-  { id: 'other', name: 'Tîpên din' },
-] as const;
+const ALPHABETS = ['hawar', 'sorani', 'other'] as const;
 
-export function alphabetOf(letter: string): (typeof ALPHABETS)[number]['id'] {
+export function alphabetOf(letter: string): (typeof ALPHABETS)[number] {
   if (/\p{Script=Arabic}/u.test(letter)) return 'sorani';
   if (/\p{Script=Latin}/u.test(letter)) return 'hawar';
   return 'other';
 }
 
 /** What to call the alphabet a letter is in. */
-export function alphabetName(letter: string): string {
-  const id = alphabetOf(letter);
-  return ALPHABETS.find((a) => a.id === id)!.name;
+export function alphabetName(letter: string, copy: Copy = COPY.ku): string {
+  return copy.alphabets[alphabetOf(letter)];
 }
 
 /**
@@ -682,43 +700,44 @@ export function indexPage(
   pages: number,
   samples: Word[],
   pageOf: Map<string, string>,
+  copy: Copy = COPY.ku,
 ): string {
   const thumbs = (group: Array<{ letter: string; words: number }>): string =>
     group
       .map(
         (l) =>
-          `<a class="thumb" href="/ferheng/${escape(l.letter)}/">` +
-          `<span class="thumb-t" dir="auto">${escape(l.letter.toUpperCase())}</span>` +
+          `<a class="thumb" href="/${copy.base}/${escape(l.letter)}/">` +
+          `<span class="thumb-t" dir="auto" lang="ku">${escape(l.letter.toUpperCase())}</span>` +
           `<span class="thumb-n">${l.words.toLocaleString('en')}</span></a>`,
       )
       .join('');
 
-  const index = ALPHABETS.map(({ name, id }) => {
+  const index = ALPHABETS.map((id) => {
     const group = letters.filter((l) => alphabetOf(l.letter) === id);
     if (group.length === 0) return '';
-    return `<p class="eyebrow">${escape(name)}</p>\n<div class="thumbs">${thumbs(group)}</div>`;
+    return `<p class="eyebrow">${escape(copy.alphabets[id])}</p>\n<div class="thumbs">${thumbs(group)}</div>`;
   })
     .filter(Boolean)
     .join('\n');
 
   return document_({
-    title: 'Ferhenga kurdî — Hevalo',
-    description: `${total.toLocaleString('en')} peyvên kurdî bi wateyên wan. Belaş, bê hesab û bê reklam.`,
-    canonical: `${ORIGIN}/ferheng/`,
+    copy,
+    title: `${copy.titleSuffix} — Hevalo`,
+    description: copy.index.description(total.toLocaleString('en')),
+    canonical: `${ORIGIN}/${copy.base}/`,
     body: `<section class="hero">
 <div class="hero-grid">
 <div class="hero-inner">
-<p class="eyebrow">Ferhenga kurdî</p>
-<h1 class="display">Hemû peyvên<br>kurmancî, li vir.</h1>
-<p class="lead">Wate, formên soranî û erebî, û hevmaneyên her peyvê — vekirî ji her kesî re.
-Ne hesab, ne reklam, ne tomarkirin.</p>
+<p class="eyebrow">${escape(copy.index.eyebrow)}</p>
+<h1 class="display">${copy.index.headline}</h1>
+<p class="lead">${escape(copy.index.lead)}</p>
 </div>
 <div class="hero-art"><img src="/logo.png" alt="" width="512" height="512"></div>
 </div>
 <div class="stat-row">
-<div class="stat"><span class="stat-n">${total.toLocaleString('en')}</span><span class="stat-l">peyv</span></div>
-<div class="stat"><span class="stat-n">${letters.length}</span><span class="stat-l">tîp</span></div>
-<div class="stat"><span class="stat-n">${pages.toLocaleString('en')}</span><span class="stat-l">rûpel</span></div>
+<div class="stat"><span class="stat-n">${total.toLocaleString('en')}</span><span class="stat-l">${escape(copy.index.statWords)}</span></div>
+<div class="stat"><span class="stat-n">${letters.length}</span><span class="stat-l">${escape(copy.index.statLetters)}</span></div>
+<div class="stat"><span class="stat-n">${pages.toLocaleString('en')}</span><span class="stat-l">${escape(copy.index.statPages)}</span></div>
 </div>
 </section>
 
@@ -727,14 +746,13 @@ ${index}
 </section>
 
 <section class="section">
-<p class="eyebrow">Peyvên hilbijartî</p>
-<div class="entries">${samples.map((w) => entry(w, pageOf)).join('\n')}</div>
+<p class="eyebrow">${escape(copy.index.selected)}</p>
+<div class="entries">${samples.map((w) => entry(w, pageOf, copy)).join('\n')}</div>
 </section>
 
 <section class="section">
-<p class="eyebrow">Derbarê</p>
-<p class="prose">Ev ferheng ji Wîkîferhenga kurdî tê, û her peyv li vir wekî rûpeleke
-statîk tê weşandin — ji ber vê yekê ew her û her belaş e, çiqas kes jî wê bixwîne.</p>
+<p class="eyebrow">${escape(copy.index.about)}</p>
+<p class="prose">${escape(copy.index.aboutBody)}</p>
 </section>`,
   });
 }

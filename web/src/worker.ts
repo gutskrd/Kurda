@@ -355,8 +355,21 @@ async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
   });
 }
 
-/** The published dictionary, which is files rather than a screen in the app. */
-const FERHENG = '/ferheng';
+/**
+ * The published dictionary, which is files rather than a screen in the app —
+ * one folder per language it is published in.
+ *
+ * `/ferheng/` is Kurmancî and `/dictionary/` is English. They are siblings
+ * rather than one nested under the other because everything a level under them
+ * is a letter or a range of words, named from the corpus, and both `ku` and
+ * `en` are plausible range names. See web/scripts/ferheng-copy.ts.
+ */
+const DICTIONARIES = ['/ferheng', '/dictionary'] as const;
+
+/** Which of them a path belongs to, or null if it belongs to neither. */
+function dictionaryOf(pathname: string): string | null {
+  return DICTIONARIES.find((d) => pathname.startsWith(`${d}/`)) ?? null;
+}
 
 /**
  * A dictionary address, answered as a dictionary address.
@@ -375,14 +388,16 @@ const FERHENG = '/ferheng';
  * affordable here — these pages carry a day of edge cache, so the Worker sees
  * them rarely, and an unmatched path reaches the Worker either way.
  */
-async function ferheng(assets: Response, url: URL, env: Env): Promise<Response> {
+async function ferheng(assets: Response, url: URL, env: Env, base: string): Promise<Response> {
   const html = await assets.text();
-  if (html.includes(`${FERHENG}/ferheng.css`)) {
+  if (html.includes(`${base}/ferheng.css`)) {
     // a real page; hand back exactly what the asset binding gave us
     return new Response(html, { status: assets.status, headers: assets.headers });
   }
 
-  const page = await env.ASSETS.fetch(new Request(new URL(`${FERHENG}/404.html`, url.origin).toString()));
+  // the 404 of the language whose path was asked for, so a reader who typed a
+  // dead /dictionary/ address is not answered in Kurmancî
+  const page = await env.ASSETS.fetch(new Request(new URL(`${base}/404.html`, url.origin).toString()));
   return new Response(page.body, {
     status: 404,
     headers: { 'content-type': 'text/html; charset=utf-8' },
@@ -412,7 +427,8 @@ export default {
     const type = assets.headers.get('content-type') ?? '';
     if (!type.includes('text/html')) return assets;
 
-    if (url.pathname.startsWith(`${FERHENG}/`)) return ferheng(assets, url, env);
+    const dictionary = dictionaryOf(url.pathname);
+    if (dictionary) return ferheng(assets, url, env, dictionary);
 
     /*
      * A listed page: its own title, its own description, its own address. No
@@ -456,4 +472,5 @@ export const __test = {
   STATIC_PAGES,
   REPLACED,
   ferheng,
+  dictionaryOf,
 };

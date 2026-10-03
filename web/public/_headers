@@ -64,3 +64,13 @@
   Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400
+
+# The same dictionary in English. Two sibling paths rather than one nested
+# under the other, because everything a level under them is a letter or a range
+# of words named from the corpus, and both `ku` and `en` are plausible range
+# names — see web/scripts/ferheng-copy.ts. Every header has to be repeated:
+# `_headers` matches a path, and /dictionary/ does not match /ferheng/*.
+/dictionary/*
+  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=3600, s-maxage=86400
