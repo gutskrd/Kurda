@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { escapeHtml } from './escape';
 import { definitionsOf, isInflected, toEntries } from './ferheng-entries';
@@ -493,6 +495,74 @@ describe('an address with no page behind it', () => {
   it('sends a reader somewhere that still exists', () => {
     expect(notFoundPage()).toContain('Here ferhengê');
     expect(notFoundPage()).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
+  });
+});
+
+/**
+ * The dictionary copies the app's tokens and shell rules rather than importing
+ * them, because these pages load no bundle — that is what makes them free to
+ * serve. The cost is that the copy can drift, and it did, twice, in ways a
+ * reader could see but not name: `.eyebrow` at 0.78rem against the app's 12px,
+ * and the nav's 1440px cap missing entirely, so clicking Ferheng made the
+ * navigation visibly narrower than everywhere else.
+ *
+ * Reading the app's own CSS and comparing is what turns the next drift into a
+ * failing test instead of a judgement call.
+ */
+describe('what the dictionary copies from the app', () => {
+  /*
+   * Resolved from the workspace root rather than from `import.meta.url`, which
+   * vitest rewrites — the first version of this silently read the test file
+   * itself, and a looser assertion would have passed against it and proved
+   * nothing. The guard is the point: a test that reads the wrong file must
+   * fail, not quietly succeed.
+   */
+  const read = (p: string): string => {
+    // vitest may be rooted at the workspace or at the repo, and `import.meta.url`
+    // is rewritten under it — the first version of this silently read the test
+    // file itself, which a looser assertion would have passed against.
+    const candidates = ['src/styles', 'web/src/styles'].map((d) => resolve(process.cwd(), d, p));
+    const found = candidates.find((f) => existsSync(f));
+    if (!found) throw new Error(`cannot find ${p}; looked in ${candidates.join(', ')}`);
+    const css = readFileSync(found, 'utf8');
+    if (!css.includes('{')) throw new Error(`${found} does not look like CSS`);
+    return css;
+  };
+
+  /** Every `--name: value` declared in a file's `:root`. */
+  const tokensOf = (css: string): Map<string, string> => {
+    const root = css.slice(css.indexOf(':root'), css.indexOf('}', css.indexOf(':root')));
+    const out = new Map<string, string>();
+    for (const m of root.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) out.set(m[1]!, m[2]!.trim());
+    return out;
+  };
+
+  it('gives every token it declares the app’s own value', () => {
+    const app = tokensOf(read('tokens.css'));
+    const mine = tokensOf(STYLE);
+    expect(mine.size).toBeGreaterThan(10);
+    const wrong: string[] = [];
+    for (const [name, value] of mine) {
+      const theirs = app.get(name);
+      // the dictionary copies a subset; what it does copy must match
+      if (theirs !== undefined && theirs !== value) wrong.push(`${name}: ${value} ≠ ${theirs}`);
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  /**
+   * The bar is not a column of text and does not take a column of text's cap.
+   * Missing this one rule is what "the navbar becomes less wide" was.
+   */
+  it('lets the bar run wider than the content column, as the app does', () => {
+    expect(read('layout.css')).toMatch(/min-width:\s*1180px[\s\S]{0,120}max-width:\s*1440px/);
+    expect(STYLE).toMatch(/min-width:\s*1180px[\s\S]{0,120}max-width:\s*1440px/);
+  });
+
+  /** Headings in the display serif is most of why a page looks like Hevalo. */
+  it('sets headings in the same family the app sets them in', () => {
+    expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
+    expect(STYLE).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
   });
 });
 

@@ -700,13 +700,20 @@ export function indexPage(
     description: `${total.toLocaleString('en')} peyvên kurdî bi wateyên wan. Belaş, bê hesab û bê reklam.`,
     canonical: `${ORIGIN}/ferheng/`,
     body: `<section class="hero">
+<div class="hero-grid">
+<div class="hero-inner">
 <p class="eyebrow">Ferhenga kurdî</p>
 <h1 class="display">Hemû peyvên<br>kurmancî, li vir.</h1>
 <p class="lead">Wate, formên soranî û erebî, û hevmaneyên her peyvê — vekirî ji her kesî re.
 Ne hesab, ne reklam, ne tomarkirin.</p>
-<p class="stats mono">${total.toLocaleString('en')} peyv<span class="sep">·</span>${pages.toLocaleString(
-      'en',
-    )} rûpel<span class="sep">·</span>belaş</p>
+</div>
+<div class="hero-art"><img src="/logo.png" alt="" width="512" height="512"></div>
+</div>
+<div class="stat-row">
+<div class="stat"><span class="stat-n">${total.toLocaleString('en')}</span><span class="stat-l">peyv</span></div>
+<div class="stat"><span class="stat-n">${letters.length}</span><span class="stat-l">tîp</span></div>
+<div class="stat"><span class="stat-n">${pages.toLocaleString('en')}</span><span class="stat-l">rûpel</span></div>
+</div>
 </section>
 
 <section class="section">
@@ -852,6 +859,19 @@ img { max-width: 100%; display: block; }
 .lead { font-size: 1.175rem; line-height: 1.6; color: var(--ink-2); }
 
 /* ---- layout.css: the nav ----------------------------------------------- */
+/*
+ * The bar is allowed wider than the page it sits over — 1440px against the
+ * content column's 1120px.
+ *
+ * This rule was missed when the rest of the nav was copied, and it is the one
+ * a reader can see without being able to name: above 1180px the app's bar
+ * reaches 1440px and the dictionary's stopped at 1120px, so clicking Ferheng
+ * made the navigation visibly narrow. The bar is not a column of text and does
+ * not want a column of text's cap.
+ */
+@media (min-width: 1180px) {
+  .nav .container.nav-inner { max-width: 1440px; }
+}
 .nav {
   position: sticky; top: 0; z-index: 40; height: var(--nav-h);
   background: rgba(10, 12, 16, 0.4);
@@ -935,16 +955,40 @@ main { padding-bottom: 8px; }
 .letter { font-size: clamp(3.5rem, 2rem + 8vw, 7rem); line-height: 1; margin: 6px 0 10px; }
 
 /* ---- the front page ---------------------------------------------------- */
-.hero { padding: 56px 0 0; }
+.hero { padding: 48px 0 0; }
 .hero .eyebrow { margin-bottom: 16px; }
 .hero .display { margin-bottom: 18px; }
-.hero .lead { max-width: 36rem; margin-bottom: 20px; }
-.stats { margin: 0; font-size: 0.9rem; color: var(--ink-4); }
+.hero .lead { max-width: 36rem; }
+
+/* the same two-column hero the app's landing page has, so the two front pages
+   are the same shape and the deer appears on both — see pages.css */
+.hero-grid { display: grid; gap: clamp(28px, 5vw, 64px); align-items: center; }
+@media (min-width: 900px) { .hero-grid { grid-template-columns: minmax(0, 1fr) auto; } }
+.hero-art { position: relative; display: flex; justify-content: center; }
+.hero-art img {
+  width: clamp(168px, 30vw, 300px); height: auto;
+  filter: drop-shadow(0 22px 44px rgba(0, 0, 0, 0.55));
+}
+.hero-art::before {
+  content: ''; position: absolute; inset: -14%; z-index: -1; border-radius: 50%;
+  background: radial-gradient(circle at 50% 45%, rgba(184, 116, 240, 0.3), transparent 68%);
+  filter: blur(26px);
+}
+
+/* three numbers the dictionary can state plainly, as tiles rather than as a
+   run of small grey text — they are the reason to trust the page and were set
+   at 0.9rem in --ink-4, which is where a caption goes to be ignored */
+.stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 40px; }
+.stat {
+  padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: var(--surface); display: flex; flex-direction: column; gap: 2px;
+}
+.stat-n { font-family: var(--font-display); font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem); line-height: 1.1; color: var(--ink); }
+.stat-l { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .section { padding: 52px 0 0; }
 .section > .eyebrow { margin-bottom: 16px; }
 .prose { max-width: 36rem; color: var(--ink-3); margin: 0; }
 .sep { color: var(--ink-4); }
-.stats .sep { margin: 0 0.55em; }
 
 .thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
 .thumbs .thumb {
