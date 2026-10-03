@@ -222,7 +222,10 @@ describe('what a page tells a search engine', () => {
     expect(html).toContain('href="/ferheng/a/"');
     expect(html).toContain('href="/ferheng/b/"');
     expect(html).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
-    expect(html.length, 'the landing page should stay small').toBeLessThan(6000);
+    // what this guards is the INDEX, not the chrome: listing every range put
+    // this page at 145 KB once. The app's nav and footer are a fixed ~4 KB that
+    // every page carries so that none of them looks like a different site.
+    expect(html.length, 'the landing page should not list every range').toBeLessThan(10_000);
   });
 
   /**
