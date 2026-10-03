@@ -22,6 +22,20 @@ const ALLOWLIST = {
   // downgrading Expo. REMOVE once a metro/Expo release ships a patched image-size.
   'GHSA-w3rx-r6r6-pgpr': 'image-size ICNS DoS — build-only (metro); no runtime exposure; awaiting patched Expo/metro',
   'GHSA-5p2g-fcmc-qvqq': 'image-size JXL/HEIF DoS — build-only (metro); no runtime exposure; awaiting patched Expo/metro',
+  // braces exhausts the stack on a deeply nested pattern. Reached only under
+  // `@expo/cli` → `@expo/metro-file-map` → `micromatch`: the Expo bundler,
+  // which runs on a developer's machine over this repository's own files.
+  // Nothing in mobile/, api/, web/ or admin/ imports micromatch or braces, so
+  // it is in nothing shipped to a phone or served to a browser, and the
+  // patterns it sees are ours rather than a stranger's.
+  //
+  // Unfixable rather than unfixed, like node-forge below: the advisory's
+  // patched range is `<=3.0.3`, which is every version ever published, and
+  // npm's suggested remedy is downgrading expo 57 to 44.0.6.
+  //
+  // REMOVE once braces publishes a patched release and Expo picks it up.
+  'GHSA-vfj7-8cjw-p6xm':
+    'braces stack exhaustion — build-only (@expo/cli metro); not bundled; no patched version exists',
   // node-forge accepts extra nested DigestAlgorithm elements when verifying an
   // RSA PKCS#1 v1.5 signature. Serious where it is reached — and it is not
   // reached here. It arrives only under `@expo/cli` and
