@@ -332,15 +332,21 @@ export function document_(opts: {
 <header class="nav">
 <div class="container nav-inner">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
+<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="Menû">
 <nav class="nav-links">
 ${navLink('mal', '/app', 'Mal')}
 ${navLink('ferheng', '/ferheng/', 'Ferheng', true)}
 ${navLink('listik', '/app/games', 'Lîstik')}
 ${navLink('rezbendi', '/app/rankings', 'Rêzbendî')}
+<span class="nav-mobile-actions">
+<a class="nav-link" href="/login">Têkeve</a>
+<a class="nav-link" href="/register">Dest pê bike</a>
+</span>
 </nav>
 <span class="nav-spacer"></span>
-<a class="btn-sm btn-ghost" href="/login">Têkeve</a>
-<a class="btn-sm" href="/register">Dest pê bike</a>
+<a class="btn-sm btn-ghost nav-desktop-only" href="/login">Têkeve</a>
+<a class="btn-sm nav-desktop-only" href="/register">Dest pê bike</a>
+<label class="nav-toggle" for="nav-open"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg></label>
 </div>
 </header>
 <main class="container">
@@ -717,12 +723,12 @@ Ne hesab, ne reklam, ne tomarkirin.</p>
 </section>
 
 <section class="section">
-<p class="eyebrow">Peyvên hilbijartî</p>
-<div class="entries">${samples.map((w) => entry(w, pageOf)).join('\n')}</div>
+${index}
 </section>
 
 <section class="section">
-${index}
+<p class="eyebrow">Peyvên hilbijartî</p>
+<div class="entries">${samples.map((w) => entry(w, pageOf)).join('\n')}</div>
 </section>
 
 <section class="section">
@@ -786,9 +792,11 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --ink-2: rgba(255, 255, 255, 0.84);
   --ink-3: rgba(255, 255, 255, 0.6);
   --ink-4: rgba(255, 255, 255, 0.42);
+  --bg: rgba(255, 255, 255, 0.06);
   --surface: rgba(255, 255, 255, 0.05);
   --surface-2: rgba(255, 255, 255, 0.11);
   --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.28);
   --primary: #ffffff;
   --primary-hover: rgba(255, 255, 255, 0.88);
   --primary-ink: #141414;
@@ -803,6 +811,7 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --r-lg: 18px;
   --r-pill: 999px;
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
   --container: 1120px;
   --nav-h: 66px;
 }
@@ -904,14 +913,57 @@ img { max-width: 100%; display: block; }
 .btn-sm:hover { background: var(--primary-hover); }
 .btn-ghost { background: transparent; color: var(--ink-2); }
 .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
-/* the app drops the words and keeps the glyphs between 861 and 1179px, and
-   collapses to a menu below that; these pages have no script for a menu, so
-   below 861 they keep the glyphs instead of hiding the links altogether */
-@media (max-width: 1179px) {
+/*
+ * The toggle is a checkbox and a label, because these pages run no script.
+ *
+ * The app opens its mobile menu with React state; "default-src 'none'" forbids
+ * script here, so the open/closed state is a checkbox the label flips and the
+ * panel reads with ":checked ~". Same breakpoint, same panel, same behaviour —
+ * the bar was keeping its glyphs on a phone while the app showed a hamburger,
+ * which is a difference a reader meets on the device most of them are on.
+ *
+ * The checkbox is moved off-screen rather than "hidden", so it keeps its place
+ * in the tab order and can still be operated from the keyboard; the focus ring
+ * is drawn on the label instead.
+ */
+.nav-toggle-state { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
+.nav-toggle {
+  display: none; width: 40px; height: 40px; flex: none;
+  border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--bg); color: var(--ink);
+  align-items: center; justify-content: center; cursor: pointer;
+}
+.nav-toggle-state:focus-visible ~ .nav-toggle { outline: 2px solid var(--focus); outline-offset: 2px; }
+.nav-mobile-actions { display: none; }
+
+/* between 861 and 1179 the app drops the words and keeps the glyphs */
+@media (min-width: 861px) and (max-width: 1179px) {
   .nav-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .nav-link-icon { margin-right: 0; }
   .nav-inner { gap: 14px; }
   .nav-link { padding: 0 9px; }
+}
+
+@media (max-width: 860px) {
+  .nav-toggle { display: inline-flex; }
+  .nav-links {
+    position: fixed; inset: var(--nav-h) 0 auto 0;
+    flex-direction: column; align-items: stretch; gap: 2px;
+    padding: 12px 18px 18px;
+    background: rgba(6, 8, 11, 0.98);
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-8px); opacity: 0; pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+  .nav-toggle-state:checked ~ .nav-links { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .nav-link { height: 44px; font-size: 1rem; }
+  .nav-desktop-only { display: none; }
+  .nav-mobile-actions {
+    display: flex; flex-direction: column; gap: 2px;
+    margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border);
+  }
 }
 
 /* ---- layout.css: the footer -------------------------------------------- */
