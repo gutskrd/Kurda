@@ -304,14 +304,44 @@ describe('a dictionary address with no page behind it', () => {
   } as unknown as Parameters<typeof ferheng>[2];
 
   it('answers with the dictionary’s own 404, not the app shell', async () => {
-    const res = await ferheng(new Response(shell, { status: 200 }), url, env);
+    const res = await ferheng(new Response(shell, { status: 200 }), url, env, '/ferheng');
     expect(res.status).toBe(404);
     expect(await res.text()).toContain('nehat dîtin');
   });
 
   it('leaves a real dictionary page exactly as it found it', async () => {
-    const res = await ferheng(new Response(page, { status: 200 }), url, env);
+    const res = await ferheng(new Response(page, { status: 200 }), url, env, '/ferheng');
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(page);
+  });
+
+  /**
+   * The dictionary is published once per language, at sibling paths. A dead
+   * /dictionary/ address must not be answered in Kurmancî, and an English page
+   * must not be mistaken for the shell because it links a different stylesheet.
+   */
+  it('answers each language from its own folder', async () => {
+    const english = page.replace('/ferheng/ferheng.css', '/dictionary/ferheng.css').replace('lang="ku"', 'lang="en"');
+    const enUrl = new URL('https://hevalo.app/dictionary/sa-sc/');
+
+    const kept = await ferheng(new Response(english, { status: 200 }), enUrl, env, '/dictionary');
+    expect(kept.status).toBe(200);
+    expect(await kept.text()).toBe(english);
+
+    const missing = await ferheng(new Response(shell, { status: 200 }), enUrl, env, '/dictionary');
+    expect(missing.status).toBe(404);
+    expect(vi.mocked(env.ASSETS.fetch).mock.calls.at(-1)?.[0]).toMatchObject({
+      url: 'https://hevalo.app/dictionary/404.html',
+    });
+  });
+
+  /** A path that is neither belongs to the app, and is left alone. */
+  it('claims only the dictionary paths', () => {
+    const { dictionaryOf } = __test;
+    expect(dictionaryOf('/ferheng/se/')).toBe('/ferheng');
+    expect(dictionaryOf('/dictionary/se/')).toBe('/dictionary');
+    expect(dictionaryOf('/app/library/abc')).toBeNull();
+    // the bare path is the app's own route, not a page in either dictionary
+    expect(dictionaryOf('/dictionary')).toBeNull();
   });
 });

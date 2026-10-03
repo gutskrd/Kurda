@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { escapeHtml } from './escape';
+import { COPY, ferhengLocaleFor } from './ferheng-copy';
 import { definitionsOf, isInflected, toEntries } from './ferheng-entries';
 import {
   STYLE,
@@ -563,6 +564,110 @@ describe('what the dictionary copies from the app', () => {
   it('sets headings in the same family the app sets them in', () => {
     expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
     expect(STYLE).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
+  });
+});
+
+/**
+ * Clicking Dictionary in an app set to English turned the whole screen
+ * Kurmancî. The words are Kurdish and always will be — that is the dictionary —
+ * but the bar, the footer and the labels belong to whoever is reading.
+ */
+describe('the language around the words', () => {
+  const sev: Word = { ...word('sêv', 'sev', 'Fêkiyeke sor e.'), sorani: ['سێو'] };
+  const pages = paginate([sev]);
+
+  it('publishes the chrome in English without touching the words', () => {
+    const html = wordsPage(pages[0]!, null, null, new Map(), COPY.en);
+    expect(html).toContain('<html lang="en">');
+    expect(html).toContain('>Home<');
+    expect(html).toContain('>Dictionary<');
+    expect(html).toContain('1 words');
+    // the entry itself is untouched
+    expect(html).toContain('sêv');
+    expect(html).toContain('Fêkiyeke sor e.');
+    // and none of the Kurmancî chrome survives
+    expect(html).not.toContain('>Mal<');
+    expect(html).not.toContain('peyv</p>');
+  });
+
+  it('keeps the Kurmancî set Kurmancî', () => {
+    const html = wordsPage(pages[0]!, null, null, new Map(), COPY.ku);
+    expect(html).toContain('<html lang="ku">');
+    expect(html).toContain('>Mal<');
+    expect(html).toContain('1 peyv');
+  });
+
+  /** Sibling paths: `ku` and `en` are both plausible range names. */
+  it('gives each language its own path, and never nests one under the other', () => {
+    expect(COPY.ku.base).toBe('ferheng');
+    expect(COPY.en.base).toBe('dictionary');
+    expect(wordsPage(pages[0]!, null, null, new Map(), COPY.en)).toContain('href="/dictionary/');
+    expect(indexPage([{ letter: 's', words: 1 }], 1, 1, [], new Map(), COPY.en)).toContain(
+      '<link rel="canonical" href="https://hevalo.app/dictionary/">',
+    );
+  });
+
+  /** Each names the other, so the pair is one page in two languages. */
+  it('points each language at the other for a search engine', () => {
+    for (const c of [COPY.ku, COPY.en]) {
+      const html = indexPage([{ letter: 's', words: 1 }], 1, 1, [], new Map(), c);
+      expect(html).toContain('<link rel="alternate" hreflang="ku" href="https://hevalo.app/ferheng/">');
+      expect(html).toContain('<link rel="alternate" hreflang="en" href="https://hevalo.app/dictionary/">');
+    }
+  });
+
+  /** The same rule the API already uses for email. */
+  it('sends a reader of anything but Kurmancî to the English set', () => {
+    expect(ferhengLocaleFor('ku')).toBe('ku');
+    for (const l of ['en', 'ckb', 'de', 'tr', 'ar', null, undefined]) expect(ferhengLocaleFor(l)).toBe('en');
+  });
+
+  it('names both alphabets in whichever language is being read', () => {
+    expect(alphabetName('s', COPY.en)).toBe('Hawar alphabet');
+    expect(alphabetName('ش', COPY.en)).toBe('Sorani alphabet');
+    expect(alphabetName('s', COPY.ku)).toBe('Alfabeya Hawarê');
+  });
+
+  /**
+   * The part of speech was the last Kurmancî left on an English page, sitting
+   * in the margin of every entry. The corpus writes it; the English set turns
+   * it over, and anything unlisted falls through as written rather than being
+   * guessed at.
+   */
+  it('turns the part of speech over too, and passes through what it cannot', () => {
+    const w: Word = {
+      ...word('sal'),
+      senses: [
+        { pos: 'Navdêr', definition: '12 meh' },
+        { pos: 'Formeke navdêrê', definition: 'Rewşa çemandî ya sal.' },
+        { pos: 'Tiştekî nenas', definition: 'x' },
+      ],
+    };
+    const html = wordsPage({ prefix: 'sa', words: [w] }, null, null, new Map(), COPY.en);
+    expect(html).toContain('>Noun<');
+    expect(html).toContain('>Noun form<');
+    expect(html).toContain('>Tiştekî nenas<');
+    expect(html).not.toContain('>Navdêr<');
+
+    // and the rows that are ours rather than the corpus's
+    const rich: Word = { ...word('sal'), sorani: ['ساڵ'], arabic: ['سَنَة'], synonyms: ['bihar'] };
+    const rows = wordsPage({ prefix: 'sa', words: [rich] }, null, null, new Map(), COPY.en);
+    expect(rows).toContain('>Synonyms<');
+    expect(rows).toContain('>Arabic<');
+    expect(rows).not.toContain('>Hevmane<');
+    expect(rows).not.toContain('>Erebî<');
+    // the dialect's name, spelled the way the alphabet heading spells it
+    expect(rows).toContain('>Sorani<');
+    expect(alphabetName('ش', COPY.en)).toContain('Sorani');
+
+    const ku = wordsPage({ prefix: 'sa', words: [w] }, null, null, new Map(), COPY.ku);
+    expect(ku).toContain('>Navdêr<');
+  });
+
+  it('answers a dead address in the language it was asked in', () => {
+    expect(notFoundPage(COPY.en)).toContain('This page was not found.');
+    expect(notFoundPage(COPY.en)).toContain('href="/dictionary/"');
+    expect(notFoundPage(COPY.ku)).toContain('nehat dîtin');
   });
 });
 
