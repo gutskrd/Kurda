@@ -149,6 +149,15 @@ describe('the sitemap', () => {
     vi.restoreAllMocks();
   });
 
+  /** The pages about Hevalo itself are pages a search engine should find. */
+  it('lists About, Privacy and Terms', async () => {
+    vi.stubGlobal('fetch', serving([[]]));
+    const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
+    for (const path of ['/about', '/privacy', '/terms']) {
+      expect(xml, path).toContain(`<loc>https://hevalo.app${path}</loc>`);
+    }
+  });
+
   it('lists the static paths and every published post', async () => {
     vi.stubGlobal('fetch', serving([[{ id: ID, updatedAt: '2026-09-28T10:00:00.000Z' }]]));
     const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
@@ -185,8 +194,8 @@ describe('the sitemap', () => {
 
     expect(xml).not.toContain('passwd');
     expect(xml).toContain(`/app/library/${ID}`);
-    // four static paths plus the one good post
-    expect(xml.match(/<url>/g)).toHaveLength(5);
+    // the static paths plus the one good post
+    expect(xml.match(/<url>/g)).toHaveLength(__test.STATIC_PAGES.length + 1);
   });
 
   it('stops at a short page rather than asking for another', async () => {
@@ -215,7 +224,7 @@ describe('the sitemap', () => {
     expect(res.status).toBe(200);
     const xml = await xmlOf(res);
     expect(xml).toContain('<loc>https://hevalo.app/</loc>');
-    expect(xml.match(/<url>/g)).toHaveLength(4);
+    expect(xml.match(/<url>/g)).toHaveLength(__test.STATIC_PAGES.length);
   });
 
   it('omits lastmod rather than inventing one', async () => {

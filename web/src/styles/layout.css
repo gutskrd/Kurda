@@ -324,6 +324,91 @@ button.nav-link {
   }
 }
 
+/*
+ * The front door's bar (`variant="marketing"`).
+ *
+ * Words only — it has no glyphs to fall back on — so it never takes the
+ * glyphs-only squeeze above. It folds into the menu sooner instead: five words
+ * and two buttons fit the full bar in English at 860px, but not in German or
+ * French, and a bar that runs off the side takes the whole page with it.
+ */
+@media (min-width: 861px) and (max-width: 1179px) {
+  .nav--marketing .nav-link-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+  }
+  .nav--marketing .nav-link {
+    padding: 0 11px;
+  }
+}
+@media (min-width: 861px) and (max-width: 1023px) {
+  .nav--marketing .nav-toggle {
+    display: inline-flex;
+  }
+  .nav--marketing .nav-links {
+    position: fixed;
+    inset: var(--nav-h) 0 auto 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 12px 18px 18px;
+    background: rgba(6, 8, 11, 0.98);
+    border-bottom: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+  .nav--marketing .nav-links.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .nav--marketing .nav-link {
+    height: 44px;
+    font-size: 1rem;
+  }
+  .nav--marketing .nav-desktop-only {
+    display: none;
+  }
+  .nav--marketing .nav-mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+}
+/* in the menu, Get started is the button it is on the bar, not one more link */
+.nav-mobile-actions .nav-cta {
+  justify-content: center;
+  margin-top: 8px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-weight: 600;
+}
+.nav-mobile-actions .nav-cta:hover,
+.nav-mobile-actions .nav-cta.active {
+  background: var(--primary-hover);
+  color: var(--primary-ink);
+}
+/* the front door's bar: the words in plain ink rather than the app's dimmer one */
+.nav--marketing .nav-link {
+  color: var(--ink-2);
+}
+.nav--marketing .nav-link.active {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
 /* ---- app content shell ------------------------------------------------- */
 .app-main {
   padding: 40px 0 80px;
@@ -360,7 +445,7 @@ button.nav-link {
   gap: 40px;
   justify-content: space-between;
 }
-.footer-col h4 {
+.footer-heading {
   font-family: var(--font-sans);
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -377,6 +462,16 @@ button.nav-link {
 }
 .footer-col a:hover {
   color: var(--ink);
+}
+/* a store that is not open yet: said, not linked */
+.footer-soon {
+  display: block;
+  color: var(--ink-3);
+  font-size: 0.95rem;
+  padding: 4px 0;
+}
+.footer-about {
+  max-width: 280px;
 }
 .footer-bottom {
   margin-top: 36px;

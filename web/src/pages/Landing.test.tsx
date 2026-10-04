@@ -1,18 +1,64 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Landing } from './Landing';
 
+const show = () =>
+  render(
+    <MemoryRouter>
+      <Landing />
+    </MemoryRouter>,
+  );
+
 describe('Landing', () => {
-  it('renders the hero and primary calls to action', () => {
-    render(
-      <MemoryRouter>
-        <Landing />
-      </MemoryRouter>,
-    );
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/learn kurdish/i);
-    const start = screen.getByRole('link', { name: /start learning/i });
-    expect(start).toHaveAttribute('href', '/register');
-    expect(screen.getByRole('link', { name: /explore stories/i })).toHaveAttribute('href', '/stories');
+  it('says what Hevalo is in its heading, and offers both ways in', () => {
+    show();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent(/learn kurdish/i);
+    expect(h1).toHaveTextContent(/play together/i);
+    expect(screen.getByRole('link', { name: /start learning kurdish/i })).toHaveAttribute('href', '/register');
+    // a visitor can play before they sign up, because solo games really are open
+    expect(screen.getByRole('link', { name: /play a game first/i })).toHaveAttribute('href', '/app/games');
+  });
+
+  it('links every game to the place it is played', () => {
+    show();
+    for (const [name, href] of [
+      ['Kurdish Wordle', '/app/games/wordle'],
+      ['Rhyming Words', '/app/games/rhyme'],
+      ['Typing Race', '/app/games/race'],
+      ['Ranked Quiz', '/app/games/quiz'],
+    ]) {
+      expect(screen.getByRole('link', { name }), name).toHaveAttribute('href', href);
+    }
+  });
+
+  /**
+   * Lessons live in the phone app, which is not in the stores yet. The section
+   * that shows a lesson has to say so, rather than let the picture imply that
+   * the lesson is a click away.
+   */
+  it('says the lessons are coming, where it shows one', () => {
+    show();
+    const learn = document.getElementById('learn')!;
+    expect(within(learn).getByText(/coming soon to ios and android/i)).toBeInTheDocument();
+  });
+
+  it('claims no store availability it does not have', () => {
+    const { container } = show();
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/apps coming soon/i);
+    expect(text).not.toMatch(/download on the app store|get it on google play|available on ios/i);
+  });
+
+  /** The pictures are pictures: one described image each, nothing to press inside. */
+  it('describes each picture of the product once, and puts no controls in them', () => {
+    show();
+    const pictures = screen.getAllByRole('img').filter((el) => el.classList.contains('lp-mock'));
+    expect(pictures.length).toBeGreaterThanOrEqual(6);
+    for (const picture of pictures) {
+      expect(picture).toHaveAccessibleName();
+      expect(picture.querySelector('a, button, input')).toBeNull();
+    }
   });
 });

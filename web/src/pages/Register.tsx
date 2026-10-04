@@ -99,8 +99,12 @@ export function Register(): React.JSX.Element {
             {busy ? t('auth.register.submitting') : t('auth.register.submit')}
           </Button>
 
+          {/* the sentence names two documents, so it links to both of them */}
           <p className="oauth-note">
-            {t('auth.register.terms')}
+            {t('auth.register.terms')}{' '}
+            <Link to="/terms" className="doc-link">{t('footer.terms')}</Link>
+            {' · '}
+            <Link to="/privacy" className="doc-link">{t('footer.privacy')}</Link>
           </p>
         </form>
 

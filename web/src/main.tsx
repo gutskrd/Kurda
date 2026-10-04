@@ -10,6 +10,7 @@ import './styles/pages.css';
 import './styles/feed.css';
 import './styles/rail.css';
 import './styles/editor.css';
+import './styles/marketing.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

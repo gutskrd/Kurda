@@ -83,18 +83,25 @@ button {
   border-radius: var(--r-xs);
 }
 
+/*
+ * Parked above the top edge, not off to the side. It used to sit at
+ * `left: -9999px`, which on an Arabic or Soranî page — right to left — is the
+ * direction a page overflows into, and made those pages ten thousand pixels
+ * wide to anything measuring them.
+ */
 .skip-link {
   position: absolute;
-  left: -9999px;
+  inset-inline-start: 0;
   top: 0;
   z-index: 100;
   background: var(--primary);
   color: var(--primary-ink);
   padding: 10px 16px;
-  border-radius: 0 0 var(--r-sm) 0;
+  border-end-end-radius: var(--r-sm);
+  transform: translateY(-110%);
 }
 .skip-link:focus {
-  left: 0;
+  transform: none;
 }
 
 /* ---- layout helpers ---------------------------------------------------- */

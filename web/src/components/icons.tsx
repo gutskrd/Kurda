@@ -64,6 +64,10 @@ import { User } from '@phosphor-icons/react/dist/icons/User';
 import { Users } from '@phosphor-icons/react/dist/icons/Users';
 import { Waveform } from '@phosphor-icons/react/dist/icons/Waveform';
 import { X } from '@phosphor-icons/react/dist/icons/X';
+import { Play } from '@phosphor-icons/react/dist/icons/Play';
+import { Microphone } from '@phosphor-icons/react/dist/icons/Microphone';
+import { SpeakerHigh } from '@phosphor-icons/react/dist/icons/SpeakerHigh';
+import { Check } from '@phosphor-icons/react/dist/icons/Check';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -110,6 +114,11 @@ export const FlameIcon = named(Flame, 22);
 export const CoinIcon = named(Coin, 22);
 export const TilesIcon = named(SquaresFour, 22);
 export const WaveformIcon = named(Waveform, 22);
+/* the landing page's pictures of a lesson: a clip to play, a word to say */
+export const PlayIcon = named(Play, 22, 'fill');
+export const MicIcon = named(Microphone, 22);
+export const SpeakerIcon = named(SpeakerHigh, 22);
+export const CheckIcon = named(Check, 22, 'bold');
 export const ChevronIcon = named(CaretRight, 18);
 export const GiftIcon = named(Gift, 22);
 /** Passing a post on — the network glyph, not the iOS box-and-arrow, which

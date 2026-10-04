@@ -173,6 +173,7 @@ const REPLACED = [
   'meta[property="og:image"]',
   'meta[property="og:image:width"]',
   'meta[property="og:image:height"]',
+  'meta[property="og:image:alt"]',
   'meta[name="twitter:card"]',
   'meta[name="twitter:title"]',
   'meta[name="twitter:description"]',
@@ -243,6 +244,7 @@ function staticHead(page: { title: string; description: string }, url: string): 
     `<meta property="og:image" content="${attr(new URL('/og.png', url).toString())}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="Hevalo — Learn Kurdish. Play together." />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${attr(page.title)}" />`,
     `<meta name="twitter:description" content="${attr(page.description)}" />`,
@@ -270,16 +272,27 @@ const SITEMAP_PAGE_SIZE = 100;
  * translated the moment it starts.
  */
 const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: string }> = [
+  /*
+   * The front door is the one page whose title is more than the name. It is the
+   * result somebody looking for a way to learn Kurdish is shown, and "Hevalo" on
+   * its own tells them nothing; see `usePageMeta`, which gives the rendered page
+   * the same title in the reader's own language.
+   */
   {
     path: '/',
-    title: 'Hevalo',
-    description: 'Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community.',
+    title: 'Hevalo — Learn Kurdish and Kurmanji with friends',
+    description:
+      'Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser.',
   },
+  /*
+   * The wall, described as what it is. It used to promise "short lessons" here
+   * too, which the browser does not have — the lessons are in the phone app.
+   */
   {
     path: '/app',
-    title: 'Kurdish lessons, stories and poems · Hevalo',
+    title: 'Kurdish stories, poems and pictures · Hevalo',
     description:
-      'Learn Kurdish with short lessons, then read stories and poems written in Kurmancî and Soranî by the people using Hevalo.',
+      'Stories, poems and pictures in Kurmancî and Soranî, posted by the people learning and speaking Kurdish on Hevalo. Open to read, no account needed.',
   },
   {
     path: '/app/games',
@@ -291,6 +304,24 @@ const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: st
     path: '/app/rankings',
     title: 'Rankings · Hevalo',
     description: 'Who is furthest along on Hevalo this week — by XP, by streak and by game.',
+  },
+  {
+    path: '/about',
+    title: 'About Hevalo — Kurdish, learned together',
+    description:
+      'Why Hevalo exists, what it does today and what comes next: a place to learn Kurdish, Kurmanji first, through games, friends and a community.',
+  },
+  {
+    path: '/privacy',
+    title: 'Privacy · Hevalo',
+    description:
+      'What Hevalo keeps, why, and what you control. No ads, no tracking across other apps and websites, and your data is never sold.',
+  },
+  {
+    path: '/terms',
+    title: 'Terms · Hevalo',
+    description:
+      'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr and gems work.',
   },
 ];
 

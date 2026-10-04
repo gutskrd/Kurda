@@ -52,6 +52,9 @@ const UserProfile = lazy(() => import('./pages/UserProfile').then((m) => ({ defa
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
 const Messages = lazy(() => import('./pages/Messages').then((m) => ({ default: m.Messages })));
 const Shop = lazy(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
+const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About })));
+const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -104,9 +107,13 @@ export function App(): React.JSX.Element {
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
         <Routes>
-          {/* the landing page, and old public addresses that now live in the app */}
+          {/* the landing page, the pages about Hevalo itself, and old public
+              addresses that now live in the app */}
           <Route element={<MarketingLayout />}>
             <Route path="/" element={<Landing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />

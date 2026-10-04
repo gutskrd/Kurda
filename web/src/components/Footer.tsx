@@ -1,16 +1,28 @@
 import { Link } from 'react-router-dom';
 import { Brand } from './Brand';
 import { ZagrosianCredit } from './ZagrosianCredit';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
+import { publishedDictionary } from '../layouts/navLinks';
 
+/**
+ * The foot of the public pages.
+ *
+ * Two of its links used to go nowhere: `/learn` and `/rankings` are not routes,
+ * only `/app/learn` and `/app/rankings` are, so both drew "Page not found". And
+ * the two store links opened the App Store's and Google Play's front pages under
+ * the words "coming soon" — a link that promises an app and delivers a
+ * storefront. Until the apps are in the stores, the column says so in plain
+ * text and links nowhere.
+ */
 export function Footer(): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const year = new Date().getFullYear();
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer-grid">
-          <div style={{ maxWidth: 280 }}>
+          <div className="footer-about">
             <Brand />
             <p className="muted" style={{ marginTop: 12, fontSize: '0.92rem' }}>
               {t('footer.tagline')}
@@ -20,40 +32,42 @@ export function Footer(): React.JSX.Element {
               line, the way a masthead keeps its motto. Translating it would
               turn the one Kurdish sentence on a German screen into German.
             */}
-            <p className="kurdish" style={{ marginTop: 10 }}>
+            <p className="kurdish" lang="ku" style={{ marginTop: 10 }}>
               Jiyan bi kurdî xweştire.
             </p>
           </div>
 
-          <div className="footer-col">
-            <h4>{t('nav.learn')}</h4>
-            <Link to="/learn">{t('footer.lessons')}</Link>
-            <Link to="/app">{t('nav.home')}</Link>
-            <Link to="/games">{t('nav.games')}</Link>
+          <nav className="footer-col" aria-labelledby="footer-explore">
+            <h2 className="footer-heading" id="footer-explore">
+              {t('footer.explore')}
+            </h2>
+            <Link to="/#learn">{t('nav.learn')}</Link>
+            <Link to="/app/games">{t('nav.games')}</Link>
+            <Link to="/app">{t('nav.community')}</Link>
             {/*
-              A real anchor, not a <Link>: /ferheng/ is 3,400 generated files
-              served straight off the edge, outside this app entirely. A
-              client-side transition would hand the path to a router that has
-              no route for it and show "Page not found" over a page that exists.
+              A real anchor, not a <Link>: the published dictionary is thousands
+              of generated files served straight off the edge, outside this app
+              entirely. A client-side transition would hand the path to a router
+              that has no route for it and show "Page not found" over a page
+              that exists.
             */}
-            <a href="/ferheng/">{t('nav.dictionary')}</a>
-          </div>
+            <a href={publishedDictionary(locale)}>{t('nav.dictionary')}</a>
+            <Link to="/app/rankings">{t('nav.rankings')}</Link>
+          </nav>
+
+          <nav className="footer-col" aria-labelledby="footer-company">
+            <h2 className="footer-heading" id="footer-company">
+              {t('footer.company')}
+            </h2>
+            <Link to="/about">{t('nav.about')}</Link>
+            <Link to="/privacy">{t('footer.privacy')}</Link>
+            <Link to="/terms">{t('footer.terms')}</Link>
+          </nav>
 
           <div className="footer-col">
-            <h4>{t('footer.community')}</h4>
-            <Link to="/rankings">{t('nav.rankings')}</Link>
-            <Link to="/register">{t('footer.join')}</Link>
-            <Link to="/login">{t('nav.login')}</Link>
-          </div>
-
-          <div className="footer-col">
-            <h4>{t('footer.app')}</h4>
-            <a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">
-              {t('footer.iosSoon')}
-            </a>
-            <a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">
-              {t('footer.androidSoon')}
-            </a>
+            <h2 className="footer-heading">{t('footer.app')}</h2>
+            <span className="footer-soon">{t('footer.iosSoon')}</span>
+            <span className="footer-soon">{t('footer.androidSoon')}</span>
           </div>
         </div>
 

@@ -145,25 +145,64 @@ export function I18nProvider({ children }: { children: ReactNode }): React.JSX.E
    * whatever a search engine had cached. It is set here for the same reason
    * `lang` is: the choice is only known once this has mounted.
    *
-   * The title is not translated and is not a key. It is the name of the thing,
-   * and a name does not change language — it used to read "Hevalo — Learn
-   * Kurdish", which put a tagline in every tab and every bookmark somebody made.
+   * Inside the app the title is not translated and is not a key. It is the name
+   * of the thing, and a name does not change language — it used to read "Hevalo
+   * — Learn Kurdish", which put a tagline in every tab and every bookmark
+   * somebody made.
+   *
+   * The public pages are the exception, and only while they are on screen: the
+   * front page, About, Privacy and Terms are what a search result shows somebody
+   * looking for a way to learn Kurdish, and a result titled just "Hevalo" tells
+   * them nothing. They ask through `usePageMeta`. It has to go through here
+   * rather than write the title itself, because a parent's effects run after its
+   * children's: this effect would overwrite whatever the page had just set.
    */
+  const [page, setPage] = useState<PageMeta | null>(null);
+
   useEffect(() => {
     const root = document.documentElement;
     root.lang = locale;
     root.dir = localeDir(locale);
 
-    document.title = APP_NAME;
-    document.querySelector('meta[name="description"]')?.setAttribute('content', translator(catalogue)('app.description'));
-  }, [locale, catalogue]);
+    document.title = page?.title ?? APP_NAME;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute('content', page?.description ?? translator(catalogue)('app.description'));
+  }, [locale, catalogue, page]);
 
   const value = useMemo<I18n>(
     () => ({ locale, setLocale, t: translator(catalogue) }),
     [locale, catalogue, setLocale],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={value}>
+      <PageMetaCtx.Provider value={setPage}>{children}</PageMetaCtx.Provider>
+    </Ctx.Provider>
+  );
+}
+
+interface PageMeta {
+  title: string;
+  description: string;
+}
+
+/** How a page hands the provider its own title; a no-op outside a provider. */
+const PageMetaCtx = createContext<(meta: PageMeta | null) => void>(() => undefined);
+
+/**
+ * Give this page its own title and description while it is on screen.
+ *
+ * For the public pages only — see the effect above for why the app's own
+ * screens keep the bare name. Pass strings already translated; when the
+ * language changes they change, and the provider writes them again.
+ */
+export function usePageMeta(title: string, description: string): void {
+  const setPage = useContext(PageMetaCtx);
+  useEffect(() => {
+    setPage({ title, description });
+    return () => setPage(null);
+  }, [setPage, title, description]);
 }
 
 /** The languages on offer, in the order the picker should show them. */
