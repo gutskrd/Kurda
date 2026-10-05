@@ -91,13 +91,18 @@ describe('the dictionary bar, in the reader’s language', () => {
     expect(home.textContent).not.toBe('Home');
   });
 
-  /** As the app's bar does in Arabic: mirrored, in the app's own type rather than the word forms'. */
-  it('mirrors the bar and footer for a right-to-left reader, and leaves the entries left to right', () => {
-    const doc = open(pages.words('en'), 'ar');
-    expect(doc.querySelector('header.nav')?.getAttribute('dir')).toBe('rtl');
-    expect(doc.querySelector('footer.footer')?.getAttribute('dir')).toBe('rtl');
-    expect(doc.querySelector('main')?.hasAttribute('dir')).toBe(false);
-    expect(open(pages.words('en'), 'de').querySelector('header.nav')?.getAttribute('dir')).toBe('ltr');
+  /** As the app's bar: the same shape in every language — only the footer follows the reader's direction. */
+  it('never mirrors the bar, even for a right-to-left reader', () => {
+    for (const locale of ['ar', 'ckb']) {
+      const doc = open(pages.words('en'), locale);
+      const bar = doc.querySelector('header.nav')!;
+      expect(bar.getAttribute('dir')).not.toBe('rtl');
+      expect(bar.querySelector('.brand')?.compareDocumentPosition(bar.querySelector('.nav-actions')!)).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(doc.querySelector('footer.footer')?.getAttribute('dir')).toBe('rtl');
+      expect(doc.querySelector('main')?.hasAttribute('dir')).toBe(false);
+    }
   });
 
   it('ignores a stored value that is not one of the app’s languages', () => {

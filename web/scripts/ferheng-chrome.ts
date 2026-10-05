@@ -223,10 +223,12 @@ export function chromeTable(): Record<AppLocale, ChromeWords> {
  * — straight after the bar, so the bar is relabelled before it is painted — and
  * again once the document has parsed, for the page and the footer.
  *
- * The bar and the footer take the reader's direction as a whole, as the app's
- * do: in Arabic or Soranî they mirror, brand on the right. The page between
- * them keeps the published direction, because its entries — Kurmancî words,
- * English or Kurmancî definitions — read left to right.
+ * The bar keeps the same shape in every language, as the app's does — brand on
+ * the left, the way in on the right — and only its words change; each one is
+ * set right to left inside its own span where the language needs it. The
+ * footer takes the reader's direction as a whole, as the app's footer does.
+ * The page between them keeps the published direction, because its entries —
+ * Kurmancî words, English or Kurmancî definitions — read left to right.
  *
  * Four kinds of mark:
  *   - `data-copy` — replace the text with this key's template, `{name}` filled
@@ -299,11 +301,13 @@ export function chromeScript(): string {
     el.setAttribute('dir', dir);
   }
   function relabel() {
-    // the bar and the footer are the app's, and in a right-to-left language the app mirrors them
-    var bars = document.querySelectorAll('header.nav, footer.footer');
-    for (var b = 0; b < bars.length; b++) {
-      bars[b].setAttribute('lang', locale);
-      bars[b].setAttribute('dir', dir);
+    // the bar is left to right in every language, as the app's is; the footer follows the app's footer
+    var bar = document.querySelector('header.nav');
+    if (bar) bar.setAttribute('lang', locale);
+    var footer = document.querySelector('footer.footer');
+    if (footer) {
+      footer.setAttribute('lang', locale);
+      footer.setAttribute('dir', dir);
     }
     var marked = document.querySelectorAll('[data-copy]');
     for (var i = 0; i < marked.length; i++) {

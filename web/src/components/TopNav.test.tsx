@@ -185,4 +185,18 @@ describe('TopNav', () => {
     expect(screen.queryByRole('link', { name: 'Shop' })).not.toBeInTheDocument();
     expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
   });
+
+  /** The bar is the same shape in every language; only its words change. */
+  it('stays left to right on a right-to-left page', async () => {
+    railFetch(null);
+    document.documentElement.dir = 'rtl';
+    try {
+      const { container } = show();
+      expect(container.querySelector('header.nav')).toHaveAttribute('dir', 'ltr');
+      // each word still reads its own way inside its button
+      for (const label of container.querySelectorAll('.nav-link-label')) expect(label).toHaveAttribute('dir', 'auto');
+    } finally {
+      document.documentElement.dir = '';
+    }
+  });
 });

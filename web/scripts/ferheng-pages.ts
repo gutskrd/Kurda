@@ -424,7 +424,7 @@ ${/* the app's right-hand group: the two buttons and the menu, 14px apart, not t
 <div class="nav-actions">
 <a class="btn-sm btn-ghost nav-desktop-only" href="/login">${labelled('nav.login', c.nav.login)}</a>
 <a class="btn-sm nav-desktop-only" href="/register">${labelled('nav.register', c.nav.register)}</a>
-<label class="nav-toggle" for="nav-open"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg></label>
+<label class="nav-toggle" for="nav-open"><svg class="nav-toggle-open" viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg><svg class="nav-toggle-close" viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg></label>
 </div>
 </div>
 </header>
@@ -1027,7 +1027,11 @@ img { max-width: 100%; display: block; }
   background: var(--bg); color: var(--ink);
   align-items: center; justify-content: center; cursor: pointer;
 }
-.nav-toggle-state:focus-visible ~ .nav-toggle { outline: 2px solid var(--focus); outline-offset: 2px; }
+.nav-toggle-state:focus-visible ~ .nav-actions .nav-toggle { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* the app's toggle turns into a cross while the menu is open; so does this one */
+.nav-toggle-close { display: none; }
+.nav-toggle-state:checked ~ .nav-actions .nav-toggle-open { display: none; }
+.nav-toggle-state:checked ~ .nav-actions .nav-toggle-close { display: block; }
 .nav-mobile-actions { display: none; }
 
 /* between 861 and 1179 the app drops the words and keeps the glyphs */
@@ -1053,6 +1057,8 @@ img { max-width: 100%; display: block; }
   }
   .nav-toggle-state:checked ~ .nav-links { transform: translateY(0); opacity: 1; pointer-events: auto; }
   .nav-link { height: 44px; font-size: 1rem; }
+  /* the app's links sit in list items and are as wide as their words; these are the panel's own children, so say so */
+  .nav-links > .nav-link { align-self: flex-start; }
   .nav-desktop-only { display: none; }
   .nav-mobile-actions {
     display: flex; flex-direction: column; gap: 2px;

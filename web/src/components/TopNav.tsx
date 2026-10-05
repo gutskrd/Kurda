@@ -77,7 +77,15 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   }, [open]);
 
   return (
-    <header className="nav">
+    /*
+     * Left to right in every language. In Arabic or Soranî the page mirrors —
+     * reading order is right to left — but the bar does not: brand on the
+     * left, places in the middle, what you have on the right, the same in all
+     * nine languages, as on any product's bar. Only its words change, and each
+     * label is `dir="auto"` so an Arabic word still reads right to left inside
+     * its own button.
+     */
+    <header className="nav" dir="ltr">
       <div className="container nav-inner">
         {/* signed-in users stay inside the app shell instead of
             landing on the marketing site (which has its own nav) */}
@@ -92,7 +100,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                   {/* wrapped so the middle widths can hide the word and keep the
                       glyph — hidden by clipping, never display:none, or the link
                       would lose its accessible name along with its label */}
-                  <span className="nav-link-label">{l.label}</span>
+                  <span className="nav-link-label" dir="auto">{l.label}</span>
                   {/* a link carries its own waiting count, so something arriving is
                       visible from anywhere without opening the page to check */}
                   {l.to === '/app/messages' && unreadTotal > 0 && (

@@ -232,10 +232,11 @@ describe('what a page tells a search engine', () => {
     expect(html).toContain('href="/ferheng/b/"');
     expect(html).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
     // what this guards is the INDEX, not the chrome: listing every range put
-    // this page at 145 KB once. The app's nav and footer are a fixed ~4.5 KB
+    // this page at 145 KB once. The app's nav and footer are a fixed ~5 KB
     // that every page carries so that none of them looks like a different site
-    // — the labels in them are marked for chrome.js, which is the last 0.5 KB.
-    expect(html.length, 'the landing page should not list every range').toBeLessThan(11_000);
+    // — with the menu's cross beside its bars, and every label marked for
+    // chrome.js. Twelve thousand characters is still a long way under 145 KB.
+    expect(html.length, 'the landing page should not list every range').toBeLessThan(12_000);
   });
 
   /**
@@ -664,6 +665,23 @@ describe('what the dictionary copies from the app', () => {
     expect(wrong).toEqual([]);
     // the page you are on is not bolder: a wider link moves every link after it
     for (const css of [layout, STYLE]) expect(declOf(css, '.nav-link.active', 'font-weight')).toBeUndefined();
+  });
+
+  /**
+   * The menu runs on a checkbox, and every style for its label reaches it from
+   * the checkbox with `~`. Moving the label into the right-hand group without
+   * moving those selectors silently took away its keyboard focus ring.
+   */
+  it('reaches the menu toggle from its checkbox, focus ring and cross included', () => {
+    const doc = new DOMParser().parseFromString(wordsPage({ prefix: 'a', words: [word('av')] }, null, null), 'text/html');
+    const box = doc.querySelector('.nav-toggle-state')!;
+    const label = doc.querySelector('label.nav-toggle')!;
+    const group = label.closest('.nav-actions')!;
+    expect(group.parentElement).toBe(box.parentElement);
+    expect(box.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(STYLE).toContain('.nav-toggle-state:focus-visible ~ .nav-actions .nav-toggle');
+    expect(STYLE).toContain('.nav-toggle-state:checked ~ .nav-actions .nav-toggle-close');
+    expect(STYLE).not.toMatch(/\.nav-toggle-state:[\w-]+ ~ \.nav-toggle\b/);
   });
 
   /** Headings in the display serif is most of why a page looks like Hevalo. */
