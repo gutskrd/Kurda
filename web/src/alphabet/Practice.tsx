@@ -224,7 +224,15 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
       )}
 
       {done && (
-        <div className="ab-q-done" role="status">
+        <div className={`ab-q-done${missed.length === 0 ? ' is-perfect' : ''}`} role="status">
+          {/* a small burst for a clean round: effort noticed, not a slot machine */}
+          {missed.length === 0 && (
+            <span className="ab-burst" aria-hidden="true">
+              {Array.from({ length: 10 }, (_, i) => (
+                <i key={i} style={{ '--i': i } as React.CSSProperties} />
+              ))}
+            </span>
+          )}
           <ol className="ab-dots" aria-hidden="true">
             {results.map((r, i) => (
               <li key={i} className={r ? 'is-right' : 'is-wrong'} />

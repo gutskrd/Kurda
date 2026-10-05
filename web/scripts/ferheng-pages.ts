@@ -37,7 +37,7 @@ import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../src/brand/z
 import { alphabetOf, compareKeys, foldLetter } from './ferheng-alphabet.js';
 import { COPY, type Copy } from './ferheng-copy.js';
 import { CHROME_FILE, copyHook, type ChromeKey, type PageKey } from './ferheng-chrome.js';
-import { isInflected, type Entry } from './ferheng-entries.js';
+import { formOf, isInflected, type Entry } from './ferheng-entries.js';
 
 export const ORIGIN = 'https://hevalo.app';
 
@@ -435,6 +435,8 @@ ${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' 
 ${opts.body}
 </main>
 ${footer(c)}
+${/* the search box; hidden in the markup, so without this nothing pretends to search */ ''}
+<script src="/ferheng/search.js" defer></script>
 </body>
 </html>
 `;
@@ -513,17 +515,104 @@ function equivalents(word: Word, copy: Copy): string {
  */
 function synonymList(words: string[], pageOf: Map<string, string>, copy: Copy): string {
   if (words.length === 0) return '';
-  const links = words
-    .map((w) => {
-      const key = pageKey(w);
-      const page = pageOf.get(key);
-      const attrs = isArabic(w) ? ' dir="rtl"' : '';
-      return page
-        ? `<a href="/ferheng/${escape(page)}/#${escape(key)}"${attrs}>${escape(w)}</a>`
-        : `<span${attrs}>${escape(w)}</span>`;
-    })
-    .join('<span class="sep">·</span>');
-  return `<p class="row"><span class="label"${copyHook('page.rows.synonyms')}>${escape(copy.rows.synonyms)}</span><span class="vals">${links}</span></p>`;
+  const link = (w: string): string => {
+    const key = pageKey(w);
+    const page = pageOf.get(key);
+    const attrs = isArabic(w) ? ' dir="rtl"' : '';
+    return page
+      ? `<a href="/${copy.base}/${escape(page)}/#${escape(key)}"${attrs}>${escape(w)}</a>`
+      : `<span${attrs}>${escape(w)}</span>`;
+  };
+  const sep = '<span class="sep">·</span>';
+  // some words list forty; eight are enough to read, the rest wait behind a tap
+  const shown = words.slice(0, SYNONYMS_SHOWN).map(link).join(sep);
+  const rest = words.slice(SYNONYMS_SHOWN);
+  const more = rest.length
+    ? `<details class="more"><summary>+${rest.length}</summary>${sep}${rest.map(link).join(sep)}</details>`
+    : '';
+  return `<p class="row"><span class="label"${copyHook('page.rows.synonyms')}>${escape(copy.rows.synonyms)}</span><span class="vals">${shown}${more}</span></p>`;
+}
+
+/** How many synonyms an entry shows before "+N". */
+export const SYNONYMS_SHOWN = 8;
+
+/**
+ * A word that is only a grammatical form of another, with nothing else to say.
+ *
+ * Over half the corpus: `dadana`, `dadanan`, `dadane`… each printed as a full
+ * entry whose one line is "Rewşa îzafeyî ya yekjimar a binavkirî ya dadan." A
+ * page of those reads as a wall, and the thing a reader wants from one is the
+ * word it is a form of. So it is one line — the kind of form, an arrow, the
+ * base word as a link — and the grammar is a tap away rather than gone.
+ */
+export function isFormOnly(w: Word): boolean {
+  return (
+    w.senses.length > 0 &&
+    w.senses.every((s) => isInflected(s.pos)) &&
+    w.synonyms.length + w.sorani.length + w.arabic.length === 0
+  );
+}
+
+function formEntry(w: Word, pageOf: Map<string, string>, here: string, copy: Copy): string {
+  const first = w.senses[0]!;
+  const base = formOf(first.definition);
+  const label = copy.pos[first.pos] ?? first.pos;
+  let target = '';
+  if (base) {
+    const key = pageKey(base);
+    const page = pageOf.get(key);
+    const href = page === here ? `#${key}` : page ? `/${copy.base}/${page}/#${key}` : null;
+    target = href
+      ? ` <span class="arrow" aria-hidden="true">→</span> <a href="${escape(href)}" lang="ku" dir="auto">${escape(base)}</a>`
+      : ` <span class="arrow" aria-hidden="true">→</span> <span lang="ku" dir="auto">${escape(base)}</span>`;
+  }
+  const grammar = [...new Set(w.senses.map((s) => s.definition))]
+    .map((d) => `<li itemprop="description" dir="auto">${escape(d)}</li>`)
+    .join('');
+  return (
+    `<article class="entry form-entry" id="${escape(w.key)}" itemscope itemtype="https://schema.org/DefinedTerm">` +
+    `<h2 class="hw" itemprop="name" dir="auto"><a href="#${escape(w.key)}">${escape(w.headword)}</a></h2>` +
+    `<details class="form-of"><summary><span class="label" data-copy-pos="${escape(first.pos)}">${escape(label)}</span>${target}</summary>` +
+    `<ol>${grammar}</ol></details></article>`
+  );
+}
+
+/** Entries in page order, with each run of bare forms gathered into one compact block. */
+function entriesOf(words: Word[], pageOf: Map<string, string>, here: string, copy: Copy): string {
+  const out: string[] = [];
+  let run: string[] = [];
+  const flush = (): void => {
+    if (run.length) out.push(`<div class="forms">${run.join('')}</div>`);
+    run = [];
+  };
+  for (const w of words) {
+    if (isFormOnly(w)) run.push(formEntry(w, pageOf, here, copy));
+    else {
+      flush();
+      out.push(entry(w, pageOf, copy));
+    }
+  }
+  flush();
+  return out.join('\n');
+}
+
+/**
+ * The search box. Hidden until search.js shows it, so a browser that runs no
+ * script never sees a box that does nothing. Its words are hooked like the
+ * rest of the page, so chrome.js puts them in the reader's language.
+ */
+export function searchBox(copy: Copy, total: number, id: string, big = false): string {
+  const n = total.toLocaleString('en');
+  const placeholder = total
+    ? ` placeholder="${escape(copy.search.placeholder(n))}"${copyHook('page.search.placeholder', 'placeholder', { n })}`
+    : ` placeholder="${escape(copy.search.label)}"`;
+  return `<form class="search${big ? ' search--big' : ''}" id="${id}" data-base="${copy.base}" role="search" hidden>
+<label class="search-field"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg><span class="sr-only">${labelled('page.search.label', copy.search.label)}</span><input type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-list"${placeholder}></label>
+<ul class="search-list" id="${id}-list" role="listbox" hidden></ul>
+<p class="search-msg" data-msg="more" hidden>${labelled('page.search.more', copy.search.more)}</p>
+<p class="search-msg" data-msg="none" hidden>${labelled('page.search.none', copy.search.none)}</p>
+<p class="search-msg" data-msg="letter" hidden><a href="/${copy.base}/">${labelled('page.search.letter', copy.search.letter)} <b data-letter></b> →</a></p>
+</form>`;
 }
 
 /** One entry, headword and all. */
@@ -556,8 +645,10 @@ export function wordsPage(
   next: string | null,
   pageOf: Map<string, string> = new Map(),
   copy: Copy = COPY.ku,
+  /** every word in the dictionary, for the search box's placeholder */
+  total = 0,
 ): string {
-  const entries = page.words.map((w) => entry(w, pageOf, copy)).join('\n');
+  const entries = entriesOf(page.words, pageOf, page.prefix, copy);
   const letter = letterOf(page.prefix);
   const base = copy.base;
 
@@ -588,6 +679,7 @@ export function wordsPage(
 <h1 class="running" dir="auto" lang="ku">${escape(here)}</h1>
 <p class="eyebrow">${labelled('page.words.count', copy.words.count(page.words.length), { n: page.words.length })}</p>
 </header>
+${searchBox(copy, total, 'search-top')}
 <div class="entries" itemscope itemtype="https://schema.org/DefinedTermSet">
 <meta itemprop="name" content="${escape(copy.titleSuffix)}">
 <meta itemprop="inLanguage" content="ku">
@@ -638,6 +730,7 @@ export function letterPage(letter: string, pages: Page[], total: number, copy: C
   total: total.toLocaleString('en'),
 })}</p>
 </header>
+${searchBox(copy, total, 'search-top')}
 <div class="ranges">${rows}</div>`,
   });
 }
@@ -780,6 +873,10 @@ export function indexPage(
   const index = ALPHABETS.map((id) => {
     const group = letters.filter((l) => alphabetOf(l.letter) === id);
     if (group.length === 0) return '';
+    // the letters in neither alphabet are a handful of words each; findable, but not a third block to read past
+    if (id === 'other') {
+      return `<details class="other-letters"><summary class="eyebrow">${labelled('page.alphabets.other', copy.alphabets.other)} · ${group.length}</summary>\n<div class="thumbs">${thumbs(group)}</div></details>`;
+    }
     return `<p class="eyebrow">${labelled(`page.alphabets.${id}`, copy.alphabets[id])}</p>\n<div class="thumbs">${thumbs(group)}</div>`;
   })
     .filter(Boolean)
@@ -801,11 +898,13 @@ ${/* the headline is the one piece of copy with markup in it — a line break �
 </div>
 <div class="hero-art"><img src="/logo.png" alt="" width="512" height="512"></div>
 </div>
-<div class="stat-row">
-<div class="stat"><span class="stat-n">${total.toLocaleString('en')}</span><span class="stat-l"${copyHook('page.index.statWords')}>${escape(copy.index.statWords)}</span></div>
-<div class="stat"><span class="stat-n">${letters.length}</span><span class="stat-l"${copyHook('page.index.statLetters')}>${escape(copy.index.statLetters)}</span></div>
-<div class="stat"><span class="stat-n">${pages.toLocaleString('en')}</span><span class="stat-l"${copyHook('page.index.statPages')}>${escape(copy.index.statPages)}</span></div>
-</div>
+${/* the first thing to do on a dictionary is to look a word up, so the box comes before everything else */ ''}
+${searchBox(copy, total, 'search-hero', true)}
+</section>
+
+<section class="section">
+<p class="eyebrow">${labelled('page.index.selected', copy.index.selected)}</p>
+<div class="cards">${samples.map((w) => card(w, pageOf, copy)).join('\n')}</div>
 </section>
 
 <section class="section">
@@ -815,15 +914,27 @@ ${/* how each of these letters sounds lives in the app, which explains it agains
 </section>
 
 <section class="section">
-<p class="eyebrow">${labelled('page.index.selected', copy.index.selected)}</p>
-<div class="entries">${samples.map((w) => entry(w, pageOf, copy)).join('\n')}</div>
-</section>
-
-<section class="section">
 <p class="eyebrow">${labelled('page.index.about', copy.index.about)}</p>
 <p class="prose">${labelled('page.index.aboutBody', copy.index.aboutBody)}</p>
 </section>`,
   });
+}
+
+/**
+ * A word on the front page, as a card: the word, what kind, and its first
+ * meaning. The full entry is one tap away; the front page is for wanting to.
+ */
+function card(w: Word, pageOf: Map<string, string>, copy: Copy): string {
+  const main = w.senses.find((s) => !isInflected(s.pos)) ?? w.senses[0]!;
+  const page = pageOf.get(w.key);
+  const href = page ? `/${copy.base}/${escape(page)}/#${escape(w.key)}` : `/${copy.base}/`;
+  return (
+    `<a class="word-card" href="${href}">` +
+    `<span class="word-card-hw" lang="ku" dir="auto">${escape(w.headword)}</span>` +
+    `<span class="label" data-copy-pos="${escape(main.pos)}">${escape(copy.pos[main.pos] ?? main.pos)}</span>` +
+    `<span class="word-card-def" dir="auto">${escape(main.definition)}</span>` +
+    `</a>`
+  );
 }
 
 /**
@@ -1143,16 +1254,6 @@ main { padding-bottom: 8px; }
   filter: blur(26px);
 }
 
-/* three numbers the dictionary can state plainly, as tiles rather than as a
-   run of small grey text — they are the reason to trust the page and were set
-   at 0.9rem in --ink-4, which is where a caption goes to be ignored */
-.stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 40px; }
-.stat {
-  padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--r-lg);
-  background: var(--surface); display: flex; flex-direction: column; gap: 2px;
-}
-.stat-n { font-family: var(--font-display); font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem); line-height: 1.1; color: var(--ink); }
-.stat-l { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .section { padding: 52px 0 0; }
 .section > .eyebrow { margin-bottom: 16px; }
 .prose { max-width: 36rem; color: var(--ink-3); margin: 0; }
@@ -1172,7 +1273,7 @@ main { padding-bottom: 8px; }
 .thumbs + .eyebrow { margin-top: 32px; }
 
 /* ---- a letter's pages -------------------------------------------------- */
-.ranges { display: grid; gap: 6px; margin-top: 4px; }
+.ranges { display: grid; gap: 6px; margin-top: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
 .range {
   display: flex; align-items: baseline; gap: 14px;
   padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
@@ -1232,5 +1333,103 @@ main { padding-bottom: 8px; }
 @media (max-width: 40rem) {
   .row { grid-template-columns: 1fr; gap: 2px; }
   .row .label { text-align: left; line-height: 1.6; }
+}
+
+/* ======================================================================== *
+ * Calmer pages: a search box first, one line per grammatical form, and the
+ * long lists folded behind a tap.
+ * ======================================================================== */
+[hidden] { display: none !important; }
+/* on a phone the search box is the first thing, not the deer above it */
+@media (max-width: 899px) { .hero-art { display: none; } .hero { padding-top: 28px; } }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---- the search box ---------------------------------------------------- */
+.search { position: relative; max-width: 40rem; margin: 22px 0 0; }
+.search--big { margin-top: 36px; }
+.search-field {
+  display: flex; align-items: center; gap: 10px;
+  height: 48px; padding: 0 16px;
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink-3);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.search--big .search-field { height: 58px; padding: 0 20px; font-size: 1.08rem; }
+.search-field:focus-within { border-color: var(--ink-3); background: var(--surface-2); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06); }
+.search-field input {
+  flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent;
+  color: var(--ink); font: inherit; font-size: 1em;
+}
+.search-field input::placeholder { color: var(--ink-4); }
+.search-field input::-webkit-search-cancel-button { filter: invert(1) opacity(0.5); }
+.search-list {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0;
+  margin: 0; padding: 6px; list-style: none;
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: #15161b; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+  max-height: min(70vh, 26rem); overflow-y: auto;
+}
+.search-list a {
+  display: flex; align-items: baseline; gap: 12px; padding: 10px 12px; border-radius: var(--r-sm);
+  color: var(--ink-2);
+}
+.search-list [aria-selected="true"] a, .search-list a:hover { background: var(--surface-2); color: var(--ink); }
+.search-word { flex: none; font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); }
+.search-gloss { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem; color: var(--ink-3); }
+.search-msg { margin: 10px 4px 0; font-size: 0.88rem; color: var(--ink-3); }
+.search-msg a { color: var(--ink-2); border-bottom: 1px solid var(--border); }
+
+/* ---- the front page's words, as cards ---------------------------------- */
+.cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+.word-card {
+  display: flex; flex-direction: column; gap: 4px; padding: 16px 18px;
+  border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.word-card:hover { background: var(--surface-2); border-color: var(--ink-4); transform: translateY(-1px); }
+.word-card-hw { font-family: var(--font-display); font-size: 1.45rem; color: var(--ink); }
+.word-card .label { font-size: 0.78rem; font-style: italic; color: var(--ink-3); }
+.word-card-def {
+  color: var(--ink-2); font-size: 0.93rem; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.other-letters { margin-top: 28px; }
+.other-letters summary { cursor: pointer; list-style: none; margin-bottom: 12px; }
+.other-letters summary::-webkit-details-marker { display: none; }
+.other-letters summary::after { content: " +"; }
+.other-letters[open] summary::after { content: " −"; }
+
+/* ---- grammatical forms, one line each ---------------------------------- */
+.forms { border-top: 1px solid var(--border); padding: 6px 0; }
+.forms .entry.form-entry {
+  display: grid; grid-template-columns: minmax(7rem, 14rem) 1fr; gap: 2px 18px; align-items: baseline;
+  padding: 7px 0; border-top: 0;
+}
+.form-entry .hw { font-size: 1.12rem; margin: 0; overflow-wrap: anywhere; }
+.form-of { color: var(--ink-3); font-size: 0.92rem; }
+.form-of summary { cursor: pointer; list-style: none; }
+.form-of summary::-webkit-details-marker { display: none; }
+.form-of summary .label { font-style: italic; font-size: 0.82rem; }
+.form-of summary a { color: var(--ink-2); border-bottom: 1px solid var(--border); }
+.form-of summary a:hover { color: var(--ink); border-color: var(--ink); }
+.form-of .arrow { color: var(--ink-4); }
+.form-of ol { margin: 6px 0 2px; padding-left: 1.1rem; font-size: 0.88rem; color: var(--ink-3); }
+.form-of ol:not(:has(li + li)) { list-style: none; padding-left: 0; }
+.forms .entry.form-entry:target { padding-left: 12px; }
+@media (max-width: 560px) {
+  .forms .entry.form-entry { grid-template-columns: 1fr; }
+}
+
+/* ---- "+N" more synonyms ------------------------------------------------ */
+.more { display: contents; }
+.more summary {
+  cursor: pointer; list-style: none; padding: 0 8px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); font-size: 0.8rem; color: var(--ink-3); line-height: 1.6;
+}
+.more summary::-webkit-details-marker { display: none; }
+.more[open] summary { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .word-card, .search-field { transition: none; }
+  .word-card:hover { transform: none; }
 }
 `;

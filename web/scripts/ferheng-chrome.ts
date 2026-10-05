@@ -104,13 +104,15 @@ export const PAGE_KEYS = [
   'page.index.eyebrow',
   'page.index.headline',
   'page.index.lead',
-  'page.index.statWords',
-  'page.index.statLetters',
-  'page.index.statPages',
   'page.index.selected',
   'page.index.about',
   'page.index.aboutBody',
   'page.index.alphabet',
+  'page.search.label',
+  'page.search.placeholder',
+  'page.search.more',
+  'page.search.none',
+  'page.search.letter',
   'page.letter.count',
   'page.words.count',
   'page.words.all',
@@ -149,7 +151,7 @@ const CATALOGUES: Record<AppLocale, Catalogue> = { ku, ckb, en, nl, de, es, fr, 
  *
  * `vars` are the values a template's `{name}` holes are filled with.
  */
-export function copyHook(key: ChromeKey, attr?: 'aria-label', vars?: Record<string, string | number>): string {
+export function copyHook(key: ChromeKey, attr?: 'aria-label' | 'placeholder', vars?: Record<string, string | number>): string {
   const filled = Object.entries(vars ?? {})
     .map(([name, value]) => ` data-v-${name}="${escapeAttr(String(value))}"`)
     .join('');
@@ -173,13 +175,15 @@ function pageTemplates(p: PageText): Record<PageKey, string> {
     'page.index.eyebrow': p.index.eyebrow,
     'page.index.headline': p.index.headline.replace(/<br\s*\/?>/g, '\n'),
     'page.index.lead': p.index.lead,
-    'page.index.statWords': p.index.statWords,
-    'page.index.statLetters': p.index.statLetters,
-    'page.index.statPages': p.index.statPages,
     'page.index.selected': p.index.selected,
     'page.index.about': p.index.about,
     'page.index.aboutBody': p.index.aboutBody,
     'page.index.alphabet': p.index.alphabet,
+    'page.search.label': p.search.label,
+    'page.search.placeholder': p.search.placeholder(hole('n')),
+    'page.search.more': p.search.more,
+    'page.search.none': p.search.none,
+    'page.search.letter': p.search.letter,
     'page.letter.count': p.letter.count(hole('words'), hole('total')),
     'page.words.count': p.words.count(hole('n') as unknown as number),
     'page.words.all': p.words.all(hole('letter')),
@@ -235,7 +239,7 @@ export function chromeTable(): Record<AppLocale, ChromeWords> {
  * Four kinds of mark:
  *   - `data-copy` — replace the text with this key's template, `{name}` filled
  *     from `data-v-name`, `\n` drawn as a `<br>`;
- *   - `data-copy-attr="aria-label"` — the same, into that attribute;
+ *   - `data-copy-attr="aria-label"` (or `placeholder`) — the same, into that attribute;
  *   - `data-copy-slots` — the template's `{name}` holes are the element's own
  *     children marked `data-slot="name"` (the licence's two links), moved back
  *     in between the new words rather than rebuilt;
@@ -317,8 +321,9 @@ export function chromeScript(): string {
       var template = words[el.getAttribute('data-copy')];
       if (typeof template !== 'string') continue;
       var text = fill(template, el);
-      if (el.getAttribute('data-copy-attr') === 'aria-label') {
-        el.setAttribute('aria-label', text);
+      var attr = el.getAttribute('data-copy-attr');
+      if (attr === 'aria-label' || attr === 'placeholder') {
+        el.setAttribute(attr, text);
         continue;
       }
       if (el.hasAttribute('data-copy-done')) continue;

@@ -73,15 +73,21 @@ export interface Copy {
     eyebrow: string;
     headline: string;
     lead: string;
-    statWords: string;
-    statLetters: string;
-    statPages: string;
     selected: string;
     about: string;
     aboutBody: string;
     /** the way from the letter index to the app's alphabet, where each letter's sound is explained */
     alphabet: string;
     description: (total: string) => string;
+  };
+  /** the search box on every page */
+  search: {
+    label: string;
+    placeholder: (words: string) => string;
+    more: string;
+    none: string;
+    /** before a letter, linking to its page: "Every word under S" */
+    letter: string;
   };
   letter: {
     title: (letter: string) => string;
@@ -140,16 +146,20 @@ const KU: Copy = {
   index: {
     eyebrow: 'Ferhenga kurdî',
     headline: 'Hemû peyvên<br>kurmancî, li vir.',
-    lead: 'Wate, formên soranî û erebî, û hevmaneyên her peyvê — vekirî ji her kesî re. Ne hesab, ne reklam, ne tomarkirin.',
-    statWords: 'peyv',
-    statLetters: 'tîp',
-    statPages: 'rûpel',
+    lead: 'Wate, beramberên soranî û erebî, hevwate. Belaş, bê hesab.',
     selected: 'Peyvên hilbijartî',
     about: 'Derbarê',
     aboutBody:
       'Ev ferheng ji Wîkîferhenga kurdî tê, û her peyv li vir wekî rûpeleke statîk tê weşandin — ji ber vê yekê ew her û her belaş e, çiqas kes jî wê bixwîne.',
     alphabet: 'Tîp ji te re nû ne? Bibîne her yek çawa tê gotin',
     description: (total) => `${total} peyvên kurdî bi wateyên wan. Belaş, bê hesab û bê reklam.`,
+  },
+  search: {
+    label: 'Di ferhengê de bigere',
+    placeholder: (n) => `Di nav ${n} peyvan de bigere`,
+    more: 'Binivîse da ku kêmtir bibin',
+    none: 'Tu peyv wiha dest pê nake. Rastnivîseke din biceribîne.',
+    letter: 'Hemû peyvên tîpa',
   },
   letter: {
     title: (letter) => `Peyvên kurdî bi tîpa ${letter}`,
@@ -205,16 +215,20 @@ const EN: Copy = {
   index: {
     eyebrow: 'Kurdish dictionary',
     headline: 'Every Kurmancî<br>word, in one place.',
-    lead: 'Meanings, Soranî and Arabic forms, and the synonyms of every word — open to everyone. No account, no adverts, nothing recorded.',
-    statWords: 'words',
-    statLetters: 'letters',
-    statPages: 'pages',
+    lead: 'Meanings, Soranî and Arabic forms, synonyms. Free, no account.',
     selected: 'Selected words',
     about: 'About',
     aboutBody:
       'This dictionary comes from the Kurdish Wiktionary, and every word here is published as a static page — which is why it stays free however many people read it.',
     alphabet: 'New to the letters? See how each one sounds',
     description: (total) => `${total} Kurdish words and what they mean. Free, no account, no adverts.`,
+  },
+  search: {
+    label: 'Search the dictionary',
+    placeholder: (n) => `Search ${n} words`,
+    more: 'Keep typing to narrow it down',
+    none: 'No word starts like that. Try another spelling.',
+    letter: 'Every word under',
   },
   letter: {
     title: (letter) => `Kurdish words beginning with ${letter}`,
@@ -299,14 +313,14 @@ export function ferhengLocaleFor(locale: string | null | undefined): FerhengLoca
  * spellings follow the app's catalogues: Kurmandschi and Sorani in German,
  * kurmanji and sorani in Spanish, and so on.
  */
-export type PageText = Pick<Copy, 'alphabets' | 'index' | 'letter' | 'words' | 'notFound' | 'pos' | 'rows' | 'root' | 'titleSuffix'> & {
+export type PageText = Pick<Copy, 'alphabets' | 'index' | 'search' | 'letter' | 'words' | 'notFound' | 'pos' | 'rows' | 'root' | 'titleSuffix'> & {
   /** the CC BY-SA sentence, with {wiki} and {licence} as the two link slots */
   licence: string;
 };
 
 function pageTextOf(c: Copy): PageText {
-  const { alphabets, index, letter, words, notFound, pos, rows, root, titleSuffix } = c;
-  return { alphabets, index, letter, words, notFound, pos, rows, root, titleSuffix, licence: c.footer.licence };
+  const { alphabets, index, search, letter, words, notFound, pos, rows, root, titleSuffix } = c;
+  return { alphabets, index, search, letter, words, notFound, pos, rows, root, titleSuffix, licence: c.footer.licence };
 }
 
 const DE: PageText = {
@@ -314,16 +328,20 @@ const DE: PageText = {
   index: {
     eyebrow: 'Kurdisches Wörterbuch',
     headline: 'Jedes Wort auf Kurmandschi,<br>an einem Ort.',
-    lead: 'Bedeutungen, Formen auf Sorani und Arabisch und die Synonyme jedes Wortes — offen für alle. Kein Konto, keine Werbung, nichts wird aufgezeichnet.',
-    statWords: 'Wörter',
-    statLetters: 'Buchstaben',
-    statPages: 'Seiten',
+    lead: 'Bedeutungen, Sorani- und arabische Formen, Synonyme. Kostenlos, ohne Konto.',
     selected: 'Ausgewählte Wörter',
     about: 'Über das Wörterbuch',
     aboutBody:
       'Dieses Wörterbuch stammt aus dem kurdischen Wiktionary, und jedes Wort hier ist als statische Seite veröffentlicht — deshalb bleibt es kostenlos, ganz gleich, wie viele Menschen es lesen.',
     alphabet: 'Neu bei den Buchstaben? So klingt jeder einzelne',
     description: (total) => `${total} kurdische Wörter und ihre Bedeutungen. Kostenlos, ohne Konto, ohne Werbung.`,
+  },
+  search: {
+    label: 'Wörterbuch durchsuchen',
+    placeholder: (n) => `${n} Wörter durchsuchen`,
+    more: 'Weiterschreiben, um einzugrenzen',
+    none: 'Kein Wort beginnt so. Versuch eine andere Schreibweise.',
+    letter: 'Alle Wörter unter',
   },
   letter: {
     title: (letter) => `Kurdische Wörter, die mit ${letter} beginnen`,
@@ -381,16 +399,20 @@ const NL: PageText = {
   index: {
     eyebrow: 'Koerdisch woordenboek',
     headline: 'Elk Kurmanci-woord<br>op één plek.',
-    lead: 'Betekenissen, Sorani- en Arabische vormen en de synoniemen van elk woord — open voor iedereen. Geen account, geen advertenties, er wordt niets bijgehouden.',
-    statWords: 'woorden',
-    statLetters: 'letters',
-    statPages: 'pagina’s',
+    lead: 'Betekenissen, Sorani- en Arabische vormen, synoniemen. Gratis, zonder account.',
     selected: 'Uitgelichte woorden',
     about: 'Over het woordenboek',
     aboutBody:
       'Dit woordenboek komt uit het Koerdische Wiktionary, en elk woord staat hier als statische pagina — daarom blijft het gratis, hoeveel mensen het ook lezen.',
     alphabet: 'Nieuw met de letters? Zo klinkt elke letter',
     description: (total) => `${total} Koerdische woorden en hun betekenis. Gratis, zonder account, zonder advertenties.`,
+  },
+  search: {
+    label: 'Zoek in het woordenboek',
+    placeholder: (n) => `Zoek in ${n} woorden`,
+    more: 'Typ verder om te verfijnen',
+    none: 'Geen woord begint zo. Probeer een andere spelling.',
+    letter: 'Alle woorden onder',
   },
   letter: {
     title: (letter) => `Koerdische woorden die beginnen met ${letter}`,
@@ -448,16 +470,20 @@ const ES: PageText = {
   index: {
     eyebrow: 'Diccionario kurdo',
     headline: 'Cada palabra en kurmanji,<br>en un solo lugar.',
-    lead: 'Significados, formas en sorani y en árabe, y los sinónimos de cada palabra — abierto a todo el mundo. Sin cuenta, sin anuncios, sin registros.',
-    statWords: 'palabras',
-    statLetters: 'letras',
-    statPages: 'páginas',
+    lead: 'Significados, formas en sorani y árabe, sinónimos. Gratis y sin cuenta.',
     selected: 'Palabras destacadas',
     about: 'Sobre el diccionario',
     aboutBody:
       'Este diccionario procede del Wikcionario kurdo, y cada palabra se publica aquí como una página estática; por eso sigue siendo gratis, la lea quien la lea.',
     alphabet: '¿Nuevo con las letras? Mira cómo suena cada una',
     description: (total) => `${total} palabras kurdas y su significado. Gratis, sin cuenta y sin anuncios.`,
+  },
+  search: {
+    label: 'Buscar en el diccionario',
+    placeholder: (n) => `Buscar entre ${n} palabras`,
+    more: 'Sigue escribiendo para afinar',
+    none: 'Ninguna palabra empieza así. Prueba otra grafía.',
+    letter: 'Todas las palabras con',
   },
   letter: {
     title: (letter) => `Palabras kurdas que empiezan por ${letter}`,
@@ -515,16 +541,20 @@ const FR: PageText = {
   index: {
     eyebrow: 'Dictionnaire kurde',
     headline: 'Chaque mot kurmandji,<br>au même endroit.',
-    lead: 'Les sens, les formes en sorani et en arabe, et les synonymes de chaque mot — ouvert à tous. Pas de compte, pas de publicité, rien n’est enregistré.',
-    statWords: 'mots',
-    statLetters: 'lettres',
-    statPages: 'pages',
+    lead: 'Sens, formes sorani et arabes, synonymes. Gratuit, sans compte.',
     selected: 'Mots choisis',
     about: 'À propos du dictionnaire',
     aboutBody:
       'Ce dictionnaire provient du Wiktionnaire kurde, et chaque mot y est publié sous forme de page statique — c’est pourquoi il reste gratuit, quel que soit le nombre de lecteurs.',
     alphabet: 'Vous découvrez les lettres ? Voyez comment chacune se prononce',
     description: (total) => `${total} mots kurdes et leur sens. Gratuit, sans compte, sans publicité.`,
+  },
+  search: {
+    label: 'Rechercher dans le dictionnaire',
+    placeholder: (n) => `Rechercher parmi ${n} mots`,
+    more: 'Continuez à taper pour affiner',
+    none: 'Aucun mot ne commence ainsi. Essayez une autre orthographe.',
+    letter: 'Tous les mots en',
   },
   letter: {
     title: (letter) => `Mots kurdes commençant par ${letter}`,
@@ -582,16 +612,20 @@ const TR: PageText = {
   index: {
     eyebrow: 'Kürtçe sözlük',
     headline: 'Bütün Kurmanci kelimeler<br>tek bir yerde.',
-    lead: 'Her kelimenin anlamları, Soranice ve Arapça biçimleri ve eş anlamlıları — herkese açık. Hesap yok, reklam yok, hiçbir şey kaydedilmez.',
-    statWords: 'kelime',
-    statLetters: 'harf',
-    statPages: 'sayfa',
+    lead: 'Anlamlar, Soranice ve Arapça karşılıklar, eş anlamlılar. Ücretsiz, hesapsız.',
     selected: 'Seçme kelimeler',
     about: 'Sözlük hakkında',
     aboutBody:
       'Bu sözlük Kürtçe Vikisözlük’ten gelir ve buradaki her kelime statik bir sayfa olarak yayımlanır — bu yüzden kaç kişi okursa okusun ücretsiz kalır.',
     alphabet: 'Harflerde yeni misin? Her birinin nasıl okunduğuna bak',
     description: (total) => `${total} Kürtçe kelime ve anlamları. Ücretsiz, hesapsız, reklamsız.`,
+  },
+  search: {
+    label: 'Sözlükte ara',
+    placeholder: (n) => `${n} kelimede ara`,
+    more: 'Daraltmak için yazmaya devam et',
+    none: 'Böyle başlayan kelime yok. Başka bir yazım dene.',
+    letter: 'Harfin tüm kelimeleri:',
   },
   letter: {
     title: (letter) => `${letter} ile başlayan Kürtçe kelimeler`,
@@ -649,15 +683,19 @@ const AR: PageText = {
   index: {
     eyebrow: 'قاموس كردي',
     headline: 'كل كلمات الكرمانجية<br>في مكان واحد.',
-    lead: 'المعاني، والصيغ السورانية والعربية، ومرادفات كل كلمة — متاح للجميع. لا حساب، ولا إعلانات، ولا يُسجَّل شيء.',
-    statWords: 'كلمة',
-    statLetters: 'حرف',
-    statPages: 'صفحة',
+    lead: 'المعاني، والصيغ السورانية والعربية، والمرادفات. مجاني وبلا حساب.',
     selected: 'كلمات مختارة',
     about: 'عن القاموس',
     aboutBody: 'هذا القاموس مأخوذ من ويكاموس الكردي، وكل كلمة فيه منشورة كصفحة ثابتة — ولهذا يبقى مجانيًا مهما كثر قرّاؤه.',
     alphabet: 'جديد على الحروف؟ تعرّف على نطق كل حرف',
     description: (total) => `${total} كلمة كردية ومعانيها. مجاني، بلا حساب ولا إعلانات.`,
+  },
+  search: {
+    label: 'ابحث في القاموس',
+    placeholder: (n) => `ابحث في ${n} كلمة`,
+    more: 'تابع الكتابة لتضييق النتائج',
+    none: 'لا توجد كلمة تبدأ هكذا. جرّب تهجئة أخرى.',
+    letter: 'كل الكلمات بحرف',
   },
   letter: {
     title: (letter) => `كلمات كردية تبدأ بحرف ${letter}`,
@@ -715,16 +753,20 @@ const CKB: PageText = {
   index: {
     eyebrow: 'فەرهەنگی کوردی',
     headline: 'هەموو وشەکانی کورمانجی<br>لە یەک شوێندا.',
-    lead: 'واتاکان، شێوە سۆرانی و عەرەبییەکان، و هاوواتاکانی هەموو وشەیەک — بۆ هەمووان کراوەیە. نە هەژمار، نە ڕیکلام، هیچ شتێک تۆمار ناکرێت.',
-    statWords: 'وشە',
-    statLetters: 'پیت',
-    statPages: 'پەڕە',
+    lead: 'واتا، شێوەی سۆرانی و عەرەبی، هاوواتا. بێبەرامبەر، بێ هەژمار.',
     selected: 'وشە هەڵبژێردراوەکان',
     about: 'دەربارەی فەرهەنگ',
     aboutBody:
       'ئەم فەرهەنگە لە ویکیفەرهەنگی کوردییەوە هاتووە، و هەموو وشەیەک لێرە وەک پەڕەیەکی جێگیر بڵاو دەکرێتەوە — بۆیە بێبەرامبەر دەمێنێتەوە، هەرچەند کەس بیخوێنێتەوە.',
     alphabet: 'پیتەکان بۆ تۆ نوێن؟ ببینە هەر یەکەیان چۆن دەگوترێت',
     description: (total) => `${total} وشەی کوردی و واتاکانیان. بێبەرامبەر، بێ هەژمار و بێ ڕیکلام.`,
+  },
+  search: {
+    label: 'لە فەرهەنگدا بگەڕێ',
+    placeholder: (n) => `لە ناو ${n} وشەدا بگەڕێ`,
+    more: 'بەردەوام بە لە نووسین بۆ کەمکردنەوە',
+    none: 'هیچ وشەیەک بەم شێوەیە دەست پێ ناکات. ڕێنووسێکی تر تاقی بکەرەوە.',
+    letter: 'هەموو وشەکانی پیتی',
   },
   letter: {
     title: (letter) => `وشە کوردییەکان کە بە ${letter} دەست پێ دەکەن`,

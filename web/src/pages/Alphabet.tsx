@@ -8,7 +8,7 @@ import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
-import { isSynthesised, latinSound, latinWord, soraniSound, soraniWord, useRecordings } from '../alphabet/audio';
+import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, useRecordings } from '../alphabet/audio';
 import { Practice } from '../alphabet/Practice';
 import { Sound } from '../alphabet/Sound';
 import { Meaning } from '../alphabet/Meaning';
@@ -112,6 +112,39 @@ function latinHint(l: LatinLetter, locale: AppLocale): string | null {
   return sound && sound.toLocaleLowerCase() !== l.id ? sound : null;
 }
 
+/**
+ * Which letters this reader has opened, per alphabet — in this browser only,
+ * never sent anywhere. Seeing the ticks add up is the small, honest kind of
+ * progress that keeps someone going (and storage that fails just means no ticks).
+ */
+const SEEN_KEY = 'hevalo_alphabet_seen';
+
+function readSeen(): Record<Script, string[]> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}') as Partial<Record<Script, unknown>>;
+    const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+    return { kmr: list(raw.kmr), ckb: list(raw.ckb) };
+  } catch {
+    return { kmr: [], ckb: [] };
+  }
+}
+
+function useSeen(script: Script): [Set<string>, (id: string) => void] {
+  const [all, setAll] = useState(readSeen);
+  const mark = (id: string): void =>
+    setAll((prev) => {
+      if (prev[script].includes(id)) return prev;
+      const next = { ...prev, [script]: [...prev[script], id] };
+      try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify(next));
+      } catch {
+        // private mode or full storage: the ticks just do not persist
+      }
+      return next;
+    });
+  return [useMemo(() => new Set(all[script]), [all, script]), mark];
+}
+
 function useScript(locale: AppLocale): [Script, (s: Script) => void] {
   const [params, setParams] = useSearchParams();
   const asked = params.get('script');
@@ -145,14 +178,36 @@ export function Alphabet(): React.JSX.Element {
   }, [script]);
   const current = picked ?? order[0]!;
 
-  const pick = (id: string): void => {
+  const [seen, markSeen] = useSeen(script);
+  // hearing it the moment you tap is the point of tapping: sound and shape, together
+  const open = (id: string): void => {
     setPicked(id);
+    markSeen(id);
+    const sorani = script === 'ckb' ? SORANI.find((l) => l.id === id) : undefined;
+    const clip = sorani ? soraniSound(sorani) : latinSound(id);
+    if (clip) play(clip);
+  };
+  const pick = (id: string): void => {
+    open(id);
     if (!wide) setSheet(true);
   };
   const step = (by: number): void => {
     const i = order.indexOf(current);
-    setPicked(order[(i + by + order.length) % order.length]!);
+    open(order[(i + by + order.length) % order.length]!);
   };
+  const explored = order.filter((id) => seen.has(id)).length;
+  const progress = (
+    <div className={`ab-progress${explored === order.length ? ' is-done' : ''}`}>
+      <div className="ab-progress-track" aria-hidden="true">
+        <span style={{ width: `${(explored / order.length) * 100}%` }} />
+      </div>
+      <span className="ab-progress-text" aria-live="polite">
+        {explored === order.length
+          ? t('alphabet.exploredAll', { total: order.length })
+          : t('alphabet.explored', { n: explored, total: order.length })}
+      </span>
+    </div>
+  );
 
   const lang = compareLocaleOf(locale);
   const same = lang ? LATIN.filter((l) => bandOf(l.id, lang) === 'same').length : 0;
@@ -198,6 +253,7 @@ export function Alphabet(): React.JSX.Element {
                   ? t('alphabet.summary.compare', { same, total: LATIN.length, rest: LATIN.length - same })
                   : t('alphabet.summary.bridge')}
               </p>
+              {progress}
               <HatRule />
               {latin.map((g) => (
                 <section key={g.id} className={`ab-group ab-group--${g.id}`} aria-labelledby={`ab-${g.id}`}>
@@ -212,7 +268,7 @@ export function Alphabet(): React.JSX.Element {
                         <button
                           key={l.id}
                           type="button"
-                          className={`ab-tile${current === l.id ? ' is-on' : ''}`}
+                          className={`ab-tile${current === l.id ? ' is-on' : ''}${seen.has(l.id) ? ' is-seen' : ''}`}
                           aria-pressed={current === l.id}
                           aria-label={hint ? t('alphabet.tileLabel', { letter: l.upper, hint }) : l.upper}
                           onClick={() => pick(l.id)}
@@ -236,6 +292,7 @@ export function Alphabet(): React.JSX.Element {
           ) : (
             <>
               <p className="ab-summary">{t('alphabet.summary.ckb')}</p>
+              {progress}
               <JoinDemo />
               {sorani.map((g) => (
                 <section key={g.id} className={`ab-group ab-group--${g.id}`} aria-labelledby={`ab-${g.id}`}>
@@ -248,7 +305,7 @@ export function Alphabet(): React.JSX.Element {
                       <button
                         key={l.id}
                         type="button"
-                        className={`ab-tile${current === l.id ? ' is-on' : ''}${locale === 'ar' && l.kurdishOnly ? ' is-kurdish' : ''}`}
+                        className={`ab-tile${current === l.id ? ' is-on' : ''}${seen.has(l.id) ? ' is-seen' : ''}${locale === 'ar' && l.kurdishOnly ? ' is-kurdish' : ''}`}
                         aria-pressed={current === l.id}
                         aria-label={l.latin ? t('alphabet.tileLabel', { letter: l.char, hint: l.latin }) : l.char}
                         onClick={() => pick(l.id)}

@@ -52,6 +52,7 @@ import { compareKeys } from './ferheng-alphabet.js';
 import { CHROME_FILE, chromeScript } from './ferheng-chrome.js';
 import { COPY, FERHENG_LOCALES } from './ferheng-copy.js';
 import { toEntries } from './ferheng-entries.js';
+import { SEARCH_DIR, SEARCH_FILE, fileName, searchScript, shard, shardFile } from './ferheng-search.js';
 import {
   FONTS,
   ORIGIN,
@@ -175,7 +176,7 @@ async function main(): Promise<void> {
     for (const [i, page] of pages.entries()) {
       write(
         path.join(page.prefix, 'index.html'),
-        wordsPage(page, pages[i - 1]?.prefix ?? null, pages[i + 1]?.prefix ?? null, pageOf, copy),
+        wordsPage(page, pages[i - 1]?.prefix ?? null, pages[i + 1]?.prefix ?? null, pageOf, copy, words.length),
       );
     }
     for (const { letter } of letters) {
@@ -216,6 +217,26 @@ async function main(): Promise<void> {
     );
     console.log(`  /${copy.base}/ — ${pages.length} word pages, ${letters.length} letters`);
   }
+
+  /*
+   * The search box's files, once for both languages: a word's page has the
+   * same name in each, so /dictionary/ pages read them from /ferheng/s/ too.
+   * Written after the loop because each language's folder is cleared first.
+   */
+  const shards = shard(pages);
+  const dir = path.join(ROOT, 'dist', SEARCH_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  for (const [id, rows] of shards) {
+    const body = shardFile(id, rows);
+    fs.writeFileSync(path.join(dir, fileName(id)), body);
+    bytes += Buffer.byteLength(body);
+    files += 1;
+  }
+  const script = searchScript([...shards.keys()]);
+  fs.writeFileSync(path.join(ROOT, 'dist', 'ferheng', SEARCH_FILE), script);
+  bytes += Buffer.byteLength(script);
+  files += 1;
+  console.log(`  search: ${shards.size} files, largest ${Math.max(...[...shards.values()].map((r) => r.length))} words`);
 
   console.log(
     `ferheng: ${FERHENG_LOCALES.length} languages, ` +

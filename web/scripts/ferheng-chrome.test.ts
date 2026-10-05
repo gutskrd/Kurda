@@ -129,7 +129,8 @@ describe('the dictionary page, in the reader’s language', () => {
     const doc = open(pages.index('en'), 'de');
     expect(text(doc, 'page.index.eyebrow')).toEqual(['Kurdisches Wörterbuch']);
     expect(text(doc, 'page.index.lead')[0]).toMatch(/^Bedeutungen/);
-    expect(text(doc, 'page.index.statWords')).toEqual(['Wörter']);
+    // the search box's placeholder is an attribute, and turns too
+    expect(doc.querySelector('[data-copy="page.search.placeholder"]')!.getAttribute('placeholder')).toBe('409,435 Wörter durchsuchen');
     expect(text(doc, 'page.index.selected')).toEqual(['Ausgewählte Wörter']);
     expect(text(doc, 'page.alphabets.hawar')).toEqual(['Hawar-Alphabet']);
     expect(doc.title).toBe('Kurdisches Wörterbuch — Hevalo');

@@ -736,3 +736,113 @@
 .ab-q-meaning .ab-card-meaning {
   font-size: inherit;
 }
+
+/* ---- progress: the letters you have opened ---------------------------------- */
+.ab-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: -14px;
+}
+.ab-progress-track {
+  flex: 0 1 220px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.ab-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+  transition: width 0.35s ease;
+}
+.ab-progress-text {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ab-progress.is-done .ab-progress-text {
+  color: var(--success);
+  font-weight: 600;
+  animation: ab-pop 0.5s ease;
+}
+/* a letter you have opened keeps a small tick, top left (the gold dot is top right) */
+.ab-tile.is-seen::before {
+  content: '✓';
+  position: absolute;
+  top: 5px;
+  inset-inline-start: 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--success);
+}
+.ab-tile:active {
+  transform: scale(0.96);
+}
+
+/* ---- a clean round ---------------------------------------------------------- */
+.ab-q-done {
+  position: relative;
+}
+.ab-q-done.is-perfect .ab-q-score {
+  color: var(--success);
+  animation: ab-pop 0.5s ease;
+}
+.ab-burst {
+  position: absolute;
+  top: 40px;
+  inset-inline-start: 60px;
+  pointer-events: none;
+}
+.ab-burst i {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--gold);
+  opacity: 0;
+  animation: ab-burst 0.9s ease-out forwards;
+  animation-delay: calc(var(--i) * 18ms);
+  transform: rotate(calc(var(--i) * 36deg)) translateY(0);
+}
+.ab-burst i:nth-child(odd) {
+  background: var(--success);
+  border-radius: 50%;
+}
+@keyframes ab-burst {
+  0% {
+    opacity: 1;
+    transform: rotate(calc(var(--i) * 36deg)) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 36deg)) translateY(-56px) scale(0.6);
+  }
+}
+@keyframes ab-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ab-burst {
+    display: none;
+  }
+  .ab-progress.is-done .ab-progress-text,
+  .ab-q-done.is-perfect .ab-q-score,
+  .ab-progress-track span {
+    animation: none;
+    transition: none;
+  }
+  .ab-tile:active {
+    transform: none;
+  }
+}

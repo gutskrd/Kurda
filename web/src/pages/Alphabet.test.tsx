@@ -22,7 +22,7 @@ describe('Alphabet', () => {
     expect(groups[0]).toHaveTextContent('Look familiar, sound different');
     const watch = groups[0]!.closest('section')!;
     expect(within(watch).getByRole('button', { name: 'C, like j' })).toBeInTheDocument();
-    expect(screen.getByText(/You can already read 16 of these 31 letters/)).toBeInTheDocument();
+    expect(screen.getByText(/You already know 16 of these 31 letters/)).toBeInTheDocument();
   });
 
   it('sorts for a German reader by what German does', async () => {
@@ -56,6 +56,19 @@ describe('Alphabet', () => {
     localStorage.setItem('hevalo_locale', 'ckb');
     show();
     expect(await screen.findByRole('tab', { name: /سۆرانی/, selected: true })).toBeInTheDocument();
+  });
+
+  /** Tapping a letter plays it, ticks it, and counts it — all in this browser only. */
+  it('plays a letter when tapped and counts the ones opened', async () => {
+    const played = vi.spyOn(HTMLMediaElement.prototype, 'play');
+    show();
+    expect(await screen.findByText('0 of 31 explored')).toBeInTheDocument();
+    const c = screen.getByRole('button', { name: 'C, like j' });
+    await userEvent.click(c);
+    expect(played).toHaveBeenCalled();
+    expect(c).toHaveClass('is-seen');
+    expect(screen.getByText('1 of 31 explored')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('hevalo_alphabet_seen')!)).toEqual({ kmr: ['c'], ckb: [] });
   });
 
   /** Low stakes: a miss answers with the right letter at once, and comes back later in the round. */

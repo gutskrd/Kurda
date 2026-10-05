@@ -80,6 +80,23 @@ export function isInflected(pos: string): boolean {
 }
 
 /**
+ * The word an inflected form is a form of, from the source's own description.
+ *
+ * Half the corpus is entries like `dadana` — "Rewşa îzafeyî ya yekjimar a
+ * binavkirî ya dadan." — and verb forms like "Kesê yekem yekjimar dema niha ji
+ * lêkera dan derzîkirin." The base is the last word after `ya`/`a`, or what
+ * follows `ji lêkera`, which holds for 98% of them. The rest return null and
+ * are shown as the source wrote them.
+ */
+export function formOf(definition: string): string | null {
+  const text = definition.trim();
+  const verb = /\sji\slêkera?\s(.+?)(?:\s*\([^)]*\))?\.?$/u.exec(text);
+  if (verb) return verb[1]!.trim();
+  const noun = /\s(?:ya|a)\s([^\s.]+)\.?$/u.exec(text);
+  return noun ? noun[1]! : null;
+}
+
+/**
  * The strings in a list field, with the ones that are not words taken out.
  *
  * 25 cross-reference values in 5,208 contain no letter at all: a lone comma, a

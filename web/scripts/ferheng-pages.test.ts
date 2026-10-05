@@ -99,10 +99,10 @@ describe('a page carries no markup it was not given', () => {
    * second line, not the first. The one script is chrome.js, which relabels
    * the bar; it is empty-bodied and named by path, and nothing else may be.
    */
-  it('runs no script but its own chrome file, and no inline style', () => {
+  it('runs no script but its own two files, and no inline style', () => {
     const html = wordsPage({ prefix: 'a', words: [word('av')] }, null, null);
-    expect(html.match(/<script/gi)).toHaveLength(1);
-    expect(html).toContain('<script src="/ferheng/chrome.js"></script>');
+    // the relabelling and the search box, both files on this origin
+    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">', '<script src="/ferheng/search.js" defer>']);
     expect(html).not.toMatch(/<style/i);
     expect(html).not.toMatch(/\son\w+=/i); // onclick, onerror, onload…
     expect(html).not.toMatch(/javascript:/i);
@@ -235,8 +235,9 @@ describe('what a page tells a search engine', () => {
     // this page at 145 KB once. The app's nav and footer are a fixed ~5 KB
     // that every page carries so that none of them looks like a different site
     // — with the menu's cross beside its bars, and every label marked for
-    // chrome.js. Twelve thousand characters is still a long way under 145 KB.
-    expect(html.length, 'the landing page should not list every range').toBeLessThan(12_000);
+    // chrome.js — and now the search box. Fourteen thousand characters is
+    // still a long way under 145 KB.
+    expect(html.length, 'the landing page should not list every range').toBeLessThan(14_000);
   });
 
   /**
@@ -247,9 +248,10 @@ describe('what a page tells a search engine', () => {
   it('opens the dictionary with words, not only with letters', () => {
     const sev: Word = { ...word('sêv', 'sev', 'Fêkiyeke sor an kesk e, ji dara sêvê.'), sorani: ['سێو'] };
     const html = indexPage([{ letter: 's', words: 1 }], 1, 1, featured([sev], 4), new Map());
-    expect(html).toContain('>sêv</a>');
+    // as a card: the word and its meaning, linking to the full entry
+    expect(html).toContain('>sêv</span>');
     expect(html).toContain('Fêkiyeke sor an kesk e, ji dara sêvê.');
-    expect(html).toContain('سێو');
+    expect(html).toContain('class="word-card"');
   });
 
   /** A spread across the alphabet, and the same spread on every build. */
@@ -431,9 +433,32 @@ describe('how an entry reads', () => {
       ...word('sabatan'),
       senses: [{ pos: 'Formeke navdêrê', definition: 'Rewşa çemandî ya pirjimar a binavkirî ya sabat.' }],
     };
-    const html = wordsPage({ prefix: 'sa', words: [form, word('sabat')] }, null, null);
-    expect(html).toContain('class="row sense form"');
+    const html = wordsPage({ prefix: 'sa', words: [form, word('sabat')] }, null, null, new Map([['sabat', 'sa'], ['sabatan', 'sa']]));
+    // one compact line: the kind of form, an arrow, the word it is a form of
+    expect(html).toContain('class="entry form-entry" id="sabatan"');
+    expect(html).toMatch(/→<\/span> <a href="#sabat"[^>]*>sabat<\/a>/);
+    // the grammar is still there, a tap away
+    expect(html).toContain('Rewşa çemandî ya pirjimar a binavkirî ya sabat.');
     expect(html.match(/class="row sense"/g)).toHaveLength(1);
+  });
+
+  it('keeps a form with more to say as a full entry', () => {
+    const form: Word = {
+      ...word('sabatan'),
+      senses: [{ pos: 'Formeke navdêrê', definition: 'Rewşa çemandî ya pirjimar a binavkirî ya sabat.' }],
+      sorani: ['سابات'],
+    };
+    const html = wordsPage({ prefix: 'sa', words: [form] }, null, null);
+    expect(html).toContain('class="row sense form"');
+    expect(html).not.toContain('form-entry');
+  });
+
+  it('folds a long list of synonyms behind +N', () => {
+    const w: Word = { ...word('bab'), synonyms: Array.from({ length: 12 }, (_, i) => `syn${i}`) };
+    const html = wordsPage({ prefix: 'b', words: [w] }, null, null);
+    expect(html).toContain('<details class="more"><summary>+4</summary>');
+    expect(html.indexOf('syn7')).toBeLessThan(html.indexOf('<details class="more">'));
+    expect(html.indexOf('syn8')).toBeGreaterThan(html.indexOf('<details class="more">'));
   });
 
   it('says a thing once, however many times the source said it', () => {
@@ -556,7 +581,7 @@ describe('an address with no page behind it', () => {
     expect(html).toContain('nehat dîtin');
     expect(html).toContain('href="/ferheng/"');
     // only the bar's relabelling, which every page carries; nothing of the app's
-    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">']);
+    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">', '<script src="/ferheng/search.js" defer>']);
   });
 
   /** The letters are the one thing a re-import never moves. */
