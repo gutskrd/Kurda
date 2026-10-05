@@ -54,3 +54,11 @@ export {
   type TagKind,
   type TagRow,
 } from './tags.js';
+export {
+  ALPHABET_CLIPS,
+  ALPHABET_CLIP_GROUPS,
+  ALPHABET_CLIP_MAX_SECONDS,
+  isAlphabetClipKey,
+  type AlphabetClip,
+  type AlphabetClipGroup,
+} from './alphabet-audio.js';

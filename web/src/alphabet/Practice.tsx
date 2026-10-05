@@ -3,7 +3,7 @@ import type { AppLocale } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { latinSound, latinWord, pairWord, play, soraniSound } from './audio';
+import { latinSound, latinWord, pairWord, play, soraniSound, useRecordings } from './audio';
 import { LATIN, SORANI, compareLocaleOf, likeFor, type Likeness } from './letters';
 import { Meaning } from './Meaning';
 import { again, makeRound, type Option, type Question, type Script, type Topic } from './practice';
@@ -48,6 +48,8 @@ function clipOf(q: Question): string | null {
 
 export function Practice({ script, locale, onOpen }: { script: Script; locale: AppLocale; onOpen: (id: string) => void }): React.JSX.Element {
   const t = useT();
+  // a round started after the recordings arrive asks with them
+  useRecordings();
   const [queue, setQueue] = useState<Item[] | null>(null);
   const [at, setAt] = useState(0);
   const [chosen, setChosen] = useState<string | null>(null);

@@ -21,6 +21,7 @@ import { Ops } from './pages/Ops';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
+import { AlphabetAudio } from './pages/AlphabetAudio';
 import { Shop } from './pages/Shop';
 
 // `roles` gates the nav link (cosmetic only — the API re-authorizes every
@@ -43,6 +44,7 @@ const PAGES: Page[] = [
   { key: 'ops', label: 'Ops', render: () => <Ops /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'games', label: 'Games', roles: ['superadmin', 'content_editor'], render: () => <Games /> },
+  { key: 'alphabet', label: 'Alphabet audio', roles: ['superadmin', 'content_editor', 'admin'], render: () => <AlphabetAudio /> },
   { key: 'shop', label: 'Shop', roles: ['superadmin'], render: () => <Shop /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
   { key: 'audit', label: 'Audit', roles: ['superadmin'], render: () => <Audit /> },

@@ -8,7 +8,7 @@ import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
-import { latinSound, latinWord, soraniSound, soraniWord } from '../alphabet/audio';
+import { isSynthesised, latinSound, latinWord, soraniSound, soraniWord, useRecordings } from '../alphabet/audio';
 import { Practice } from '../alphabet/Practice';
 import { Sound } from '../alphabet/Sound';
 import { Meaning } from '../alphabet/Meaning';
@@ -361,7 +361,9 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
 
 function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: AppLocale; onStep: (by: number) => void }): React.JSX.Element {
   const t = useT();
+  useRecordings();
   const like = likeFor(letter.id, locale);
+  const synthetic = [latinSound(letter.id), latinWord(letter.id)].some(isSynthesised);
   return (
     <article className="ab-card" aria-live="polite">
       <div className="ab-card-head">
@@ -410,14 +412,16 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
       {letter.note === 'rolled' && <p className="ab-card-note">{t('alphabet.note.rolled')}</p>}
 
       <Stepper onStep={onStep} />
-      <p className="ab-voice-note">{t('alphabet.voiceNote')}</p>
+      {synthetic && <p className="ab-voice-note">{t('alphabet.voiceNote')}</p>}
     </article>
   );
 }
 
 function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: AppLocale; onStep: (by: number) => void }): React.JSX.Element {
   const t = useT();
+  useRecordings();
   const like = locale === 'ckb' ? null : soraniLikeFor(letter, locale);
+  const synthetic = [soraniSound(letter), soraniWord(letter)].some(isSynthesised);
   const forms = formsOf(letter);
   return (
     <article className="ab-card" aria-live="polite">
@@ -490,7 +494,7 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
       )}
 
       <Stepper onStep={onStep} />
-      <p className="ab-voice-note">{t('alphabet.voiceNote')}</p>
+      {synthetic && <p className="ab-voice-note">{t('alphabet.voiceNote')}</p>}
     </article>
   );
 }

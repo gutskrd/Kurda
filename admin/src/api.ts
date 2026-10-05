@@ -76,3 +76,24 @@ export async function api<T>(
   }
   return data as T;
 }
+
+/**
+ * Send raw bytes (a recording) rather than JSON. Same auth and error handling
+ * as `api`, so an expired session or 2FA window behaves the same way.
+ */
+export async function apiUpload<T>(path: string, body: Uint8Array, contentType: string, method = 'PUT'): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: { 'content-type': contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body: body as BodyInit,
+  });
+  if (res.status === 401) {
+    setToken(null);
+    location.reload();
+    throw new ApiError(401, 'UNAUTHENTICATED', 'session expired');
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (res.status === 403 && (data.code === 'TOTP_REQUIRED' || data.code === 'TOTP_ENROLLMENT_REQUIRED')) location.reload();
+  if (!res.ok) throw new ApiError(res.status, String(data.code ?? 'ERROR'), String(data.message ?? res.statusText));
+  return data as T;
+}

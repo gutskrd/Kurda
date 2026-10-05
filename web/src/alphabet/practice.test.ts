@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APP_LOCALES } from '@kurda/shared';
+import { ALPHABET_CLIPS, APP_LOCALES } from '@kurda/shared';
 import { CLIPS } from './clips';
 import { latinSound, latinWord, pairWord, soraniSound } from './audio';
 import { LATIN, PAIRS, SORANI } from './letters';
@@ -101,6 +101,11 @@ describe('the sounds', () => {
   it('has a file for every clip, and no file without one', () => {
     expect(files.size).toBe(Object.keys(CLIPS).length);
     for (const [key, file] of Object.entries(CLIPS)) expect(files.has(file), key).toBe(true);
+  });
+
+  /** the admin panel records exactly the sounds the page plays — no more, no fewer */
+  it('records the same sounds the page ships', () => {
+    expect(ALPHABET_CLIPS.map((c) => c.key).sort()).toEqual(Object.keys(CLIPS).sort());
   });
 
   it('can say every letter, every example word and every minimal pair', () => {

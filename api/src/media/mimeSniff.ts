@@ -65,7 +65,9 @@ export function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
 }
 
 /** Audio types accepted for voice notes (KUR-282). */
-export type SniffedAudioType = 'audio/mpeg' | 'audio/mp4' | 'audio/webm';
+export type SniffedAudioType = 'audio/mpeg' | 'audio/mp4' | 'audio/webm' | 'audio/wav';
+
+const WAVE = [0x57, 0x41, 0x56, 0x45]; // "WAVE" at offset 8 of a RIFF file
 
 const ID3 = [0x49, 0x44, 0x33]; // "ID3" — MP3 with an ID3v2 tag
 
@@ -111,5 +113,8 @@ export function sniffAudioType(bytes: Uint8Array): SniffedAudioType | null {
   // m4a / aac / mp4 audio: "ftyp" box at byte 4
   if (startsWith(bytes, FTYP, 4)) return 'audio/mp4';
   if (startsWith(bytes, EBML) && isWebm(bytes)) return 'audio/webm';
+  // WAV: the RIFF container with "WAVE" at byte 8. Only the alphabet recordings
+  // allow it (see alphabet/routes.ts); voice notes keep their own allow-list.
+  if (startsWith(bytes, RIFF) && startsWith(bytes, WAVE, 8)) return 'audio/wav';
   return null;
 }

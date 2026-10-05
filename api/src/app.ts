@@ -122,6 +122,7 @@ import { registerAdminRoutes } from './admin/routes.js';
 import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
+import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import type { FerhengSource } from '@kurda/shared';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
@@ -513,6 +514,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerGameContentRoutes(app);
     // starting a dictionary import from the panel, so it needs no shell on the host
     registerDictionaryImportRoutes(app, options.ferheng);
+    // recordings for the alphabet page, made in the admin panel
+    registerAlphabetAudioRoutes(app, config);
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,

@@ -19,15 +19,21 @@
 # that matters: CSS-only exfiltration needs markup injection first, and that
 # is what script-src and the escaping in React already prevent.
 #
+# media-src and microphone=(self) are for the Alphabet audio page: an editor
+# records a letter here (the microphone, on this origin only, and only after
+# the browser asks them), hears it back before saving (a blob: URL), and plays
+# what is already stored (the media CDN, over https). Nothing else asks for
+# either.
+#
 # style-src-attr 'unsafe-inline' would be tighter, but a browser without
 # CSP3 attribute support falls back to style-src and silently reproduces
 # exactly this bug, so it is not the safer option it looks like.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin

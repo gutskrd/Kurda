@@ -32,7 +32,7 @@ const reject = (status: number, code: string, message: string, reason: string): 
 });
 
 /** The content types a client may POST raw audio bytes under. */
-export const AUDIO_CONTENT_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/webm'] as const;
+export const AUDIO_CONTENT_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/wav'] as const;
 
 /**
  * Install the raw-audio body parser, once.
