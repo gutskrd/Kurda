@@ -150,10 +150,10 @@ describe('the sitemap', () => {
   });
 
   /** The pages about Hevalo itself are pages a search engine should find. */
-  it('lists About, Privacy and Terms', async () => {
+  it('lists About, the FAQ, Privacy and Terms', async () => {
     vi.stubGlobal('fetch', serving([[]]));
     const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
-    for (const path of ['/about', '/privacy', '/terms']) {
+    for (const path of ['/about', '/faq', '/privacy', '/terms']) {
       expect(xml, path).toContain(`<loc>https://hevalo.app${path}</loc>`);
     }
   });

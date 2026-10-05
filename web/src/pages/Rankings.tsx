@@ -8,6 +8,7 @@ import { RankingsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeaguePanel } from '../leagues/LeaguePanel';
+import { RankList, RankRow } from '../ui/RankRow';
 import type { MessageKey } from '../i18n/en';
 
 interface Entry {
@@ -141,12 +142,15 @@ export function Rankings(): React.JSX.Element {
 
       {/* your standing on THIS board — a global rank would be misleading here */}
       {board?.me && !meInList && (
-        <div className="rank-row rank-me" style={{ marginBottom: 16 }}>
-          <span className="rank-pos">#{board.me.rank}</span>
-          <span className="rank-name">{t('games.you')}</span>
-          <span className="rank-score">
-            {board.me.score.toLocaleString()} {t(meta.unitKey)}
-          </span>
+        <div className="rank-standing">
+          <RankList>
+            <RankRow
+              rank={board.me.rank}
+              name={t('games.you')}
+              score={`${board.me.score.toLocaleString()} ${t(meta.unitKey)}`}
+              me
+            />
+          </RankList>
         </div>
       )}
 
@@ -174,20 +178,19 @@ export function Rankings(): React.JSX.Element {
             </p>
           )}
 
-          <div className="post-list">
+          <RankList label={t(meta.labelKey)}>
             {entries.map((e) => (
-              <div className={`rank-row${e.userId === user?.id ? ' rank-me' : ''}`} key={e.userId}>
-                <span className="rank-pos">{medal(e.rank)}</span>
-                <Link className="rank-name" to={`/app/users/${e.userId}`}>
-                  {e.username}
-                  {e.userId === user?.id && <span className="rank-you">{t('rankings.youMarker')}</span>}
-                </Link>
-                <span className="rank-score">
-                  {e.score.toLocaleString()} {t(meta.unitKey)}
-                </span>
-              </div>
+              <RankRow
+                key={e.userId}
+                rank={e.rank}
+                name={e.username}
+                href={`/app/users/${e.userId}`}
+                score={`${e.score.toLocaleString()} ${t(meta.unitKey)}`}
+                me={e.userId === user?.id}
+                marker={e.userId === user?.id ? <span className="rank-you">{t('rankings.youMarker')}</span> : undefined}
+              />
             ))}
-          </div>
+          </RankList>
 
           <div className="rank-more">
             {hasMore ? (
@@ -211,11 +214,6 @@ export function Rankings(): React.JSX.Element {
       )}
     </div>
   );
-}
-
-/** The top three read better as medals than as numbers. */
-function medal(rank: number): string {
-  return rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : String(rank);
 }
 
 function emptyTitleKey(scope: Scope): MessageKey {

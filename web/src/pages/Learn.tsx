@@ -1,7 +1,7 @@
 import { useApiGet } from '../lib/useApi';
 import { ErrorState, EmptyState } from '../components/states';
 import { CourseGridSkeleton } from '../components/skeletons';
-import { BookIcon } from '../components/icons';
+import { LessonMock } from '../landing/mocks';
 import { useT } from '../i18n/I18nProvider';
 
 interface CourseSummary {
@@ -39,19 +39,21 @@ export function Learn(): React.JSX.Element {
           message={t('learn.noCoursesBody')}
         />
       ) : (
-        <div className="grid grid-2">
-          {courses.map((c) => (
-            <article className="feature" key={c.id}>
-              <div className="feature-icon">
-                <BookIcon />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <h3 style={{ margin: 0 }}>{c.title}</h3>
-                <span className="badge">{DIALECT_LABEL[c.dialect] ?? c.dialect}</span>
-              </div>
-              <p>{t('learn.skillTree')}</p>
-            </article>
-          ))}
+        <div className="learn-grid">
+          <div>
+            {courses.map((c) => (
+              <article className="course-card" key={c.id}>
+                <span className="lp-chip">{DIALECT_LABEL[c.dialect] ?? c.dialect}</span>
+                <h2 className="course-card-title">{c.title}</h2>
+                <p>{t('learn.skillTree')}</p>
+              </article>
+            ))}
+          </div>
+          {/* what a lesson looks like — the front page's picture, and where to take it */}
+          <aside className="learn-preview">
+            <LessonMock />
+            <p className="lp-status">{t('landing.status.app')}</p>
+          </aside>
         </div>
       )}
     </div>

@@ -136,11 +136,11 @@ export function FriendListSkeleton({
 export function RankingsSkeleton({ count = 10 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
-    <SkeletonRegion label={t('common.loading')} className="post-list">
+    <SkeletonRegion label={t('common.loading')} className="rank-list">
       {times(count, (i) => (
         <div className="rank-row" key={i}>
           <span className="rank-pos">
-            <Skeleton line w={22} />
+            <Skeleton line w={16} />
           </span>
           <span className="rank-name">
             <Skeleton line w="46%" />
@@ -273,47 +273,39 @@ export function ProfileCardSkeleton(): React.JSX.Element {
   const t = useT();
   return (
     <SkeletonRegion label={t('profile.loading')}>
-      <article className="pcard pcard-modal">
-        <div className="pcard-photo-wrap">
-          <Skeleton className="pcard-photo" />
-        </div>
-        <div className="pcard-plate">
-          <div className="pcard-name-row">
-            <div className="pcard-name">
-              <Skeleton line w="52%" />
-            </div>
-          </div>
-          <div className="pcard-handle">
-            <Skeleton line w={92} />
-          </div>
-          <Skeleton h={8} radius={999} style={{ marginTop: 14 }} />
-          <p className="pcard-bio">
-            <SkeletonText lines={2} lastWidth="44%" />
-          </p>
-          <dl className="pcard-rows">
-            {times(2, (i) => (
-              <div className="pcard-row" key={i}>
-                <dt>
-                  <Skeleton line w={54} />
-                </dt>
-                <dd>
-                  <Skeleton line w={72} />
-                </dd>
+      <article className="pc-modal">
+        <div className="pc">
+          <Skeleton className="pc-banner" radius={0} />
+          <div className="pc-body">
+            <div className="pc-id">
+              <span className="pc-face">
+                <Skeleton className="pc-face-img" circle />
+              </span>
+              <div className="pc-names">
+                <Skeleton line w="52%" />
+                <Skeleton line w={92} />
               </div>
-            ))}
-          </dl>
-          <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
-            <Skeleton h={36} radius="var(--r-sm)" />
-            <Skeleton h={36} radius="var(--r-sm)" />
+            </div>
+            <Skeleton h={6} radius={999} style={{ marginTop: 18 }} />
+            <p className="pc-bio">
+              <SkeletonText lines={2} lastWidth="44%" />
+            </p>
+            <dl className="pc-stats">
+              {times(2, (i) => (
+                <div className="pc-stat" key={i}>
+                  <dt>
+                    <Skeleton line w={54} />
+                  </dt>
+                  <dd>
+                    <Skeleton line w={72} />
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
-        <div className="pcard-foot">
-          <span className="pcard-label">
-            <Skeleton line w={130} />
-          </span>
-          <span className="pcard-logo">
-            <Skeleton line w={94} />
-          </span>
+        <div className="profile-actions">
+          <Skeleton h={38} w={150} radius="var(--r-sm)" />
         </div>
       </article>
     </SkeletonRegion>
@@ -321,36 +313,32 @@ export function ProfileCardSkeleton(): React.JSX.Element {
 }
 
 /**
- * The full profile page.
+ * The full profile page: the wide card, then the showcase and the side column.
  *
- * Deliberately without the artwork layer: whether somebody has a background is
- * not known until their profile arrives, and painting a dark panel that then
- * turns into a photograph is a worse flash than the plain page turning into one.
+ * The banner is a plain shimmer: whether somebody has a background is not known
+ * until their profile arrives, and the card's own default banner is what shows
+ * when they do not.
  */
 export function FullProfileSkeleton({ label }: { label?: MessageKey }): React.JSX.Element {
   const t = useT();
   return (
     <SkeletonRegion label={t(label ?? 'profile.loading')} className="mkp-page">
       <div className="mkp-wrap">
-        <header className="mkp-head">
-          <span className="mkp-avatar">
-            <Skeleton className="mkp-avatar-img" circle />
-          </span>
-          <div className="mkp-id-text">
-            <div className="mkp-name">
-              <Skeleton line w={190} />
+        <div className="pc pc--wide">
+          <Skeleton className="pc-banner" radius={0} />
+          <div className="pc-body">
+            <div className="pc-id">
+              <span className="pc-face">
+                <Skeleton className="pc-face-img" circle />
+              </span>
+              <div className="pc-names">
+                <Skeleton line w={190} />
+                <Skeleton line w={110} />
+              </div>
             </div>
-            <div className="mkp-sub">
-              <Skeleton line w={110} />
-            </div>
+            <Skeleton h={6} radius={999} style={{ marginTop: 18, maxWidth: 440 }} />
           </div>
-          <div className="mkp-level-col">
-            <div className="mkp-level-line">
-              <Skeleton line w={104} />
-            </div>
-            <Skeleton h={64} radius="var(--r-lg)" style={{ marginTop: 12 }} />
-          </div>
-        </header>
+        </div>
 
         <div className="mkp-body">
           <main className="mkp-main">
@@ -455,23 +443,23 @@ export function PostSkeleton({ withImage = false }: { withImage?: boolean }): Re
 }
 
 /** The course list on Learn: two columns of cards. */
-export function CourseGridSkeleton({ count = 4 }: { count?: number }): React.JSX.Element {
+export function CourseGridSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
-    <SkeletonRegion label={t('common.loading')} className="grid grid-2">
-      {times(count, (i) => (
-        <article className="feature" key={i}>
-          <div className="feature-icon">
-            <Skeleton circle size={26} />
-          </div>
-          <h3>
-            <Skeleton line w="58%" />
-          </h3>
-          <p>
-            <SkeletonText lines={2} lastWidth="52%" />
-          </p>
-        </article>
-      ))}
+    <SkeletonRegion label={t('common.loading')} className="learn-grid">
+      <div>
+        {times(count, (i) => (
+          <article className="course-card" key={i}>
+            <Skeleton line w={74} />
+            <h2 className="course-card-title">
+              <Skeleton line w="58%" />
+            </h2>
+            <p>
+              <SkeletonText lines={2} lastWidth="52%" />
+            </p>
+          </article>
+        ))}
+      </div>
     </SkeletonRegion>
   );
 }

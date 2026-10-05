@@ -312,6 +312,12 @@ const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: st
       'Why Hevalo exists, what it does today and what comes next: a place to learn Kurdish, Kurmanji first, through games, friends and a community.',
   },
   {
+    path: '/faq',
+    title: 'Questions about Hevalo · FAQ',
+    description:
+      'Is Hevalo free? Which Kurdish does it teach? How do you play with friends, and where are the lessons? Straight answers about learning Kurdish on Hevalo.',
+  },
+  {
     path: '/privacy',
     title: 'Privacy · Hevalo',
     description:

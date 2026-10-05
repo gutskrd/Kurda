@@ -91,6 +91,7 @@ export function Profile(): React.JSX.Element {
     background: me.background ?? null,
     premium: me.premium,
     level: me.level?.level ?? 1,
+    levelInfo: me.level,
     xp: me.level?.xp ?? me.xp,
     streakDays: me.streak.current,
     bio: me.bio,
@@ -103,7 +104,7 @@ export function Profile(): React.JSX.Element {
   return (
     <FullProfile
       view={view}
-      headerAction={<Link to="/app/profile/edit" className="mkp-edit">{t('profile.edit')}</Link>}
+      headerAction={<Link to="/app/profile/edit" className="btn btn-secondary btn-sm">{t('profile.edit')}</Link>}
       activity={<ProfileActivity userId={me.id} sections={sections} own />}
       sidebarExtra={
         <>

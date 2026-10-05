@@ -7,6 +7,9 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Loading } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
+import { useRail } from '../social/RailProvider';
+import { PlayerChip } from '../ui/PlayerChip';
+import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
 
 /** Matchmaking → live 1v1 ranked quiz (KUR-051/61). Server-timed; the client
@@ -145,6 +148,7 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
   const { client, user } = useAuth();
   const t = useT();
   const send = useRealtimeSend();
+  const myAvatar = useRail().data.you?.avatarUrl ?? null;
   useRealtimeRoom(roomId); // join to receive the match events
 
   const [phase, setPhase] = useState<Phase>('connecting');
@@ -256,6 +260,11 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
 
   const opponent = players.find((p) => p.id !== user?.id);
   const me = players.find((p) => p.id === user?.id);
+  // nobody has scored before the first question, and that is still a score
+  const scoreLine = (id: string | undefined): string => {
+    const line = scores.find((s) => s.userId === id);
+    return t('games.quiz.playerScore', { points: line?.points ?? 0, correct: line?.correct ?? 0 });
+  };
 
   if (phase === 'connecting') return <Loading />;
 
@@ -267,21 +276,28 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
         <h2 className="quiz-verdict">
           {won ? t('games.youWon') : results.length > 1 ? t('games.quiz.goodGame') : t('games.quiz.matchOver')}
         </h2>
-        <ol className="quiz-scoreboard">
+        <RankList>
           {results.map((s) => (
-            <li key={s.userId} className={`quiz-scoreline${s.userId === user?.id ? ' me' : ''}`}>
-              <span className="quiz-rank">{s.rank}</span>
-              <span className="quiz-name">{s.username}</span>
-              <span className="quiz-pts">{t('games.quiz.playerScore', { points: s.points, correct: s.correct })}</span>
-              {typeof s.ratingDelta === 'number' && s.ratingDelta !== 0 && (
-                <span className={`quiz-delta${s.ratingDelta > 0 ? ' up' : ' down'}`}>
-                  {s.ratingDelta > 0 ? '+' : ''}{s.ratingDelta}
-                </span>
-              )}
-              {s.xp ? <span className="quiz-xp">+{s.xp} XP</span> : null}
-            </li>
+            <RankRow
+              key={s.userId}
+              rank={s.rank}
+              name={s.username}
+              avatarUrl={s.userId === user?.id ? myAvatar : null}
+              me={s.userId === user?.id}
+              score={t('games.quiz.playerScore', { points: s.points, correct: s.correct })}
+              trailing={
+                <>
+                  {typeof s.ratingDelta === 'number' && s.ratingDelta !== 0 && (
+                    <span className={`rank-delta${s.ratingDelta > 0 ? ' up' : ' down'}`}>
+                      {s.ratingDelta > 0 ? '+' : ''}{s.ratingDelta}
+                    </span>
+                  )}
+                  {s.xp ? <span className="rank-xp">+{s.xp} XP</span> : null}
+                </>
+              }
+            />
           ))}
-        </ol>
+        </RankList>
         <Button onClick={onLeave}>{t('games.quiz.backToMatchmaking')}</Button>
       </div>
     );
@@ -292,21 +308,20 @@ function MatchRoom({ roomId, onLeave }: { roomId: string; onLeave: () => void })
 
   return (
     <div className="quiz-match">
-      <div className="quiz-players">
-        <span className="quiz-player me">{me?.username ?? t('games.you')}</span>
-        <span className="quiz-vs">{t('games.quiz.vs')}</span>
-        <span className={`quiz-player${opponent?.ready ? ' ready' : ''}`}>{opponent?.username ?? t('games.opponent')}</span>
+      {/* the same chips as the front page's battle: who is playing, and the score so far */}
+      <div className="players quiz-players">
+        <PlayerChip
+          name={me?.username ?? t('games.you')}
+          avatarUrl={myAvatar}
+          status={scoreLine(user?.id)}
+        />
+        <PlayerChip
+          name={opponent?.username ?? t('games.opponent')}
+          avatarUrl={null}
+          done={phase === 'lobby' && !!opponent?.ready}
+          status={scoreLine(opponent?.id)}
+        />
       </div>
-
-      {scores.length > 0 && phase !== 'lobby' && (
-        <div className="quiz-live-score">
-          {scores.map((s) => (
-            <span key={s.userId} className={s.userId === user?.id ? 'me' : ''}>
-              {s.username}: {s.points}
-            </span>
-          ))}
-        </div>
-      )}
 
       {phase === 'lobby' && (
         <div className="quiz-lobby">

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import type { FavoriteRef, ProfileBackground, ProfileIcon } from '../lib/types';
+import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { flagUrl } from '../lib/countries';
-import { CosmeticBackground, GiftedNote, IconOverlay } from './cosmetic-parts';
-import { PersonGlyph } from '../components/icons';
+import { GiftedNote } from './cosmetic-parts';
+import { ProfileCard } from '../ui/ProfileCard';
 import { useT } from '../i18n/I18nProvider';
 
 /** Normalized data a Hevalo profile renders (self or another user). */
@@ -14,6 +14,8 @@ export interface FullProfileView {
   background?: ProfileBackground | null;
   premium?: boolean;
   level: number;
+  /** the whole level, for the bar toward the next one; absent on older responses */
+  levelInfo?: LevelInfo;
   xp: number;
   streakDays: number;
   bio?: string | null;
@@ -45,56 +47,37 @@ export function FullProfile({
   const t = useT();
   const online = view.online ?? false;
   return (
-    <div className={`mkp-page${view.background ? ' mkp-has-bg' : ''}`}>
-      {view.background && (
-        <>
-          <CosmeticBackground background={view.background} className="mkp-bg" />
-          {/* its own element, not ::after: the scrim has to be pinned to the
-              viewport alongside the picture, not to the page box */}
-          <div className="mkp-scrim" aria-hidden />
-        </>
-      )}
-
+    <div className="mkp-page">
       <div className="mkp-wrap">
-        <header className="mkp-head">
-          <span className="mkp-avatar hero-avatar-wrap">
-            {view.avatarUrl ? (
-              <img src={view.avatarUrl} alt="" className="mkp-avatar-img" />
-            ) : (
-              <span className="mkp-avatar-img avatar-fallback" aria-hidden="true"><PersonGlyph size={72} /></span>
-            )}
-            {view.icon && <IconOverlay icon={view.icon} />}
-          </span>
-
-          <div className="mkp-id-text">
-            <div className="mkp-name">
-              {view.name}
-              {view.premium && <span className="mkp-premium">{t('profile.premium')}</span>}
-            </div>
-            <div className="mkp-sub">@{view.username}</div>
-            {view.country && (
-              <div className="mkp-country">
-                <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
-                <span>{view.country.name}</span>
-              </div>
-            )}
-            <GiftedNote background={view.background} icon={view.icon} />
-          </div>
-
-          <div className="mkp-level-col">
-            <div className="mkp-level-line">{t('profile.stat.level')} <span className="mkp-hex">{view.level}</span></div>
-            <div className="mkp-featured">
-              <span className="mkp-featured-badge">
-                {view.icon ? <img src={view.icon.url} alt="" /> : <PersonGlyph size={26} />}
-              </span>
-              <span className="mkp-featured-text">
-                <span className="mkp-featured-title">{t('profile.levelN', { level: view.level })}</span>
-                <span className="mkp-featured-sub">{view.xp.toLocaleString()} XP</span>
-              </span>
-            </div>
-            {headerAction}
-          </div>
-        </header>
+        {/*
+          The same card as the profile popup and the front page's picture of
+          one, only wider. The background used to fill the whole page behind
+          a header of its own; it is the banner now, where it reads as theirs
+          and the text below it stays on the app's own black.
+        */}
+        <ProfileCard
+          wide
+          name={view.name}
+          username={view.username}
+          avatarUrl={view.avatarUrl}
+          background={view.background}
+          icon={view.icon}
+          premium={view.premium}
+          online={online}
+          level={view.levelInfo}
+          aside={headerAction}
+          meta={
+            <>
+              {view.country && (
+                <div className="mkp-country">
+                  <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
+                  <span>{view.country.name}</span>
+                </div>
+              )}
+              <GiftedNote background={view.background} icon={view.icon} />
+            </>
+          }
+        />
 
         <div className="mkp-body">
           <main className="mkp-main">

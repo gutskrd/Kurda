@@ -125,11 +125,16 @@ button {
 }
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 12px;
+  /* the front page's kicker: small, wide-tracked, quiet */
+  font-size: 0.76rem;
   font-weight: 600;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink-3);
+}
+/* Arabic script is joined, and tracking pulls the joins apart */
+[dir='rtl'] .eyebrow {
+  letter-spacing: normal;
 }
 .kurdish {
   font-family: var(--font-display);

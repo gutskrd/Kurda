@@ -48,7 +48,7 @@
   border-radius: var(--r-sm);
   font-size: 0.92rem;
   font-weight: 500;
-  color: var(--ink-3);
+  color: var(--ink-2);
   transition:
     color 0.15s ease,
     background 0.15s ease;
@@ -60,6 +60,7 @@
 .nav-link.active {
   color: var(--ink);
   font-weight: 600;
+  background: var(--surface-2);
 }
 .nav-spacer {
   flex: 1;
@@ -400,14 +401,6 @@ button.nav-link {
   background: var(--primary-hover);
   color: var(--primary-ink);
 }
-/* the front door's bar: the words in plain ink rather than the app's dimmer one */
-.nav--marketing .nav-link {
-  color: var(--ink-2);
-}
-.nav--marketing .nav-link.active {
-  color: var(--ink);
-  background: var(--surface-2);
-}
 
 /* ---- app content shell ------------------------------------------------- */
 .app-main {
@@ -418,16 +411,23 @@ button.nav-link {
   margin-bottom: 28px;
 }
 .page-header .eyebrow {
-  margin-bottom: 8px;
+  display: block;
+  margin-bottom: 12px;
 }
+/* the front page's section heads, a size down: the app is read, not toured */
 .page-title {
-  font-size: clamp(1.7rem, 3.2vw, 2.3rem);
+  font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.024em;
+  text-wrap: balance;
 }
 .page-sub {
-  margin-top: 8px;
+  margin-top: 10px;
   color: var(--ink-2);
   font-size: 1.05rem;
+  line-height: 1.6;
   max-width: 60ch;
+  text-wrap: pretty;
 }
 
 /* ---- footer ------------------------------------------------------------ */

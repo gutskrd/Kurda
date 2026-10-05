@@ -4,8 +4,8 @@ import type { MessageKey } from '../i18n/en';
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { FeatherIcon, BookIcon, KeyboardIcon, TrophyIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
+import { QuizMini, RaceMini, RhymeMini, WordleMini } from '../landing/mocks';
 
 /**
  * A game, before it has words.
@@ -23,7 +23,10 @@ interface GameMode {
 }
 
 interface GameCard {
-  icon: React.JSX.Element;
+  /** the tile's shape in the grid, shared with the front page */
+  id: 'wordle' | 'rhyme' | 'race' | 'quiz';
+  /** a small picture of the game being played — the front page's, decorative */
+  visual: React.JSX.Element;
   nameKey: MessageKey;
   bodyKey: MessageKey;
   /** how this game can be played; one box per game, the mode is chosen on click */
@@ -33,7 +36,8 @@ interface GameCard {
 /** One box per game — the mode (solo / online / …) is chosen after clicking. */
 const GAMES: GameCard[] = [
   {
-    icon: <BookIcon />,
+    id: 'wordle',
+    visual: <WordleMini />,
     nameKey: 'games.wordle.name',
     bodyKey: 'games.wordle.body',
     modes: [
@@ -42,7 +46,8 @@ const GAMES: GameCard[] = [
     ],
   },
   {
-    icon: <FeatherIcon />,
+    id: 'rhyme',
+    visual: <RhymeMini />,
     nameKey: 'games.rhyme.name',
     bodyKey: 'games.rhyme.body',
     modes: [
@@ -51,9 +56,8 @@ const GAMES: GameCard[] = [
     ],
   },
   {
-    // a keyboard, not a quill: this one is about keys, and a second quill made
-    // it look like another version of Rhyming Words
-    icon: <KeyboardIcon />,
+    id: 'race',
+    visual: <RaceMini />,
     nameKey: 'games.race.name',
     bodyKey: 'games.race.body',
     modes: [
@@ -65,7 +69,8 @@ const GAMES: GameCard[] = [
     ],
   },
   {
-    icon: <TrophyIcon />,
+    id: 'quiz',
+    visual: <QuizMini />,
     nameKey: 'games.quiz.name',
     bodyKey: 'games.quiz.body',
     modes: [
@@ -93,7 +98,8 @@ export function Games(): React.JSX.Element {
         <p className="page-sub">{t('games.subtitle')}</p>
       </div>
 
-      <div className="grid grid-2">
+      {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
+      <div className="game-grid">
         {GAMES.map((g) => {
           // a guest can play anything they play alone; only the modes against
           // other people need an account, so a game is only closed to them when
@@ -101,33 +107,38 @@ export function Games(): React.JSX.Element {
           const playable = g.modes.filter((m) => signedIn || !m.online);
           const single = playable.length === 1 ? playable[0] : undefined;
           return (
-            <article className="feature game-card" key={g.nameKey}>
-              <div className="feature-icon">{g.icon}</div>
-              <div className="game-card-head">
-                <h3>{t(g.nameKey)}</h3>
-                <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
-                  {playable.length > 0 ? t('games.playable') : t('games.signInToPlay')}
-                </span>
+            <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
+              <div className="game-tile-visual">{g.visual}</div>
+              <div className="game-tile-text">
+                <div className="game-tile-head">
+                  <h3>{t(g.nameKey)}</h3>
+                  <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
+                    {playable.length > 0 ? t('games.playable') : t('games.signInToPlay')}
+                  </span>
+                </div>
+                <p>{t(g.bodyKey)}</p>
+                <ul className="game-tags">
+                  {g.modes.map((m) => {
+                    const locked = !signedIn && m.online;
+                    return (
+                      <li key={m.href} className={locked ? 'is-locked' : undefined}>
+                        {t(m.labelKey)}
+                        {locked && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {playable.length > 0 &&
+                  (single ? (
+                    <Link to={single.href} className="btn btn-primary btn-sm">
+                      {t('games.play')}
+                    </Link>
+                  ) : (
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setChooser(g)}>
+                      {t('games.play')}
+                    </button>
+                  ))}
               </div>
-              <p>{t(g.bodyKey)}</p>
-              <ul className="game-modes-hint">
-                {g.modes.map((m) => (
-                  <li key={m.href}>
-                    {t(m.labelKey)}
-                    {!signedIn && m.online && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
-                  </li>
-                ))}
-              </ul>
-              {playable.length > 0 &&
-                (single ? (
-                  <Link to={single.href} className="btn btn-primary btn-sm">
-                    {t('games.play')}
-                  </Link>
-                ) : (
-                  <button type="button" className="btn btn-primary btn-sm" onClick={() => setChooser(g)}>
-                    {t('games.play')}
-                  </button>
-                ))}
             </article>
           );
         })}

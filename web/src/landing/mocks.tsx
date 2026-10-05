@@ -2,6 +2,11 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { CheckIcon, CloseIcon, CoinIcon, CommentIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
+import { ProfileCard } from '../ui/ProfileCard';
+import { LeagueLadder, leagueName } from '../ui/LeagueLadder';
+import { RankList, RankRow } from '../ui/RankRow';
+import { PlayerChip } from '../ui/PlayerChip';
+import { InviteCardBody } from '../ui/InviteCardBody';
 import {
   BATTLE_GUESSES,
   HEVAL,
@@ -108,24 +113,19 @@ export function BattleMock(): React.JSX.Element {
           <span className="lp-live" aria-hidden />
         </div>
 
-        <div className="lp-players">
-          <div className="lp-player is-done">
-            <Face src={PEOPLE.you.avatar} size={34} lazy={false} />
-            <span className="lp-player-text">
-              <span className="lp-player-name">{t('games.you')}</span>
-              <span className="lp-player-status">{t('games.battle.solvedIn', { count: 3 })}</span>
-            </span>
-          </div>
-          <div className="lp-player">
-            <Face src={PEOPLE.rojin.avatar} size={34} lazy={false} />
-            <span className="lp-player-text">
-              <span className="lp-player-name">{PEOPLE.rojin.name}</span>
-              <span className="lp-player-status">{t('games.battle.lettersProgress', { done: 3, total: 5 })}</span>
-            </span>
-            <span className="lp-meter" aria-hidden>
-              <span style={{ width: '60%' }} />
-            </span>
-          </div>
+        <div className="players">
+          <PlayerChip
+            name={t('games.you')}
+            status={t('games.battle.solvedIn', { count: 3 })}
+            avatarUrl={PEOPLE.you.avatar}
+            done
+          />
+          <PlayerChip
+            name={PEOPLE.rojin.name}
+            status={t('games.battle.lettersProgress', { done: 3, total: 5 })}
+            avatarUrl={PEOPLE.rojin.avatar}
+            progress={0.6}
+          />
         </div>
 
         <div className="lp-board">
@@ -154,7 +154,7 @@ export function LeagueChipMock(): React.JSX.Element {
   const t = useT();
   return (
     <Mock label={t('landing.mock.leagueLabel')} className="lp-float lp-float--league">
-      <span className="lp-float-kicker">{t('leagues.tierName', { emoji: '', tier: t('leagues.tier.gold') }).trim()}</span>
+      <span className="lp-float-kicker">{leagueName(t, 'gold')}</span>
       <span className="lp-float-row">
         <span className="lp-rank">#2</span>
         <span className="lp-float-value">298 {t('rankings.unit.xp')}</span>
@@ -185,22 +185,23 @@ export function WordCardMock(): React.JSX.Element {
 export function InviteMock(): React.JSX.Element {
   const t = useT();
   return (
-    <Mock label={t('landing.mock.inviteLabel')} className="lp-card lp-invite">
+    <Mock label={t('landing.mock.inviteLabel')} className="lp-invitemock">
       <div className="lp-invite-from">
         <Face src={PEOPLE.rojin.avatar} size={28} />
         <span>{PEOPLE.rojin.name}</span>
       </div>
-      <div className="lp-invite-card">
-        <span className="lp-float-kicker">{t('games.invite.eyebrow')}</span>
-        <span className="lp-invite-title">{t('games.invite.join', { game: t('games.battle.name') })}</span>
-        <span className="lp-invite-blurb">{t('games.invite.blurb.battle')}</span>
-        <span className="lp-fake-btn">{t('games.battle.join')}</span>
+      <div className="invite-card">
+        <InviteCardBody
+          game={t('games.battle.name')}
+          blurb={t('games.invite.blurb.battle')}
+          action={t('games.battle.join')}
+        />
       </div>
     </Mock>
   );
 }
 
-/** This week, among friends. */
+/** This week, among friends — the same rows every leaderboard in the app uses. */
 export function FriendsBoardMock(): React.JSX.Element {
   const t = useT();
   const rows = [
@@ -209,21 +210,16 @@ export function FriendsBoardMock(): React.JSX.Element {
     { name: PEOPLE.dilan.name, avatar: PEOPLE.dilan.avatar, xp: 240 },
   ];
   return (
-    <Mock label={t('landing.mock.boardLabel')} className="lp-card lp-board-card">
-      <div className="lp-board-head">
+    <Mock label={t('landing.mock.boardLabel')} className="lp-boardmock">
+      <div className="lp-boardmock-head">
         <span>{t('rankings.board.weeklyXp')}</span>
         <span className="lp-chip">{t('nav.friends')}</span>
       </div>
-      <ol className="lp-rows">
+      <RankList>
         {rows.map((r, i) => (
-          <li key={r.name} className={r.you ? 'is-you' : undefined}>
-            <span className="lp-rows-rank">{i + 1}</span>
-            <Face src={r.avatar} size={26} />
-            <span className="lp-rows-name">{r.name}</span>
-            <span className="lp-rows-xp">{r.xp}</span>
-          </li>
+          <RankRow key={r.name} rank={i + 1} name={r.name} avatarUrl={r.avatar} score={r.xp} me={r.you} lazy />
         ))}
-      </ol>
+      </RankList>
     </Mock>
   );
 }
@@ -427,41 +423,26 @@ export function SpeakVisual({ step }: { step: 'see' | 'hear' | 'say' | 'use' }):
  */
 export function ProgressMock(): React.JSX.Element {
   const t = useT();
-  const ladder: MessageKey[] = ['leagues.tier.bronze', 'leagues.tier.silver', 'leagues.tier.gold', 'leagues.tier.sapphire'];
   return (
     <Mock label={t('landing.mock.progressLabel')} className="lp-progress-mock">
-      <div className="lp-card lp-profile">
-        <img className="lp-profile-bg" src={PROFILE_BACKGROUND} alt="" width={600} height={338} loading="lazy" decoding="async" />
-        <div className="lp-profile-body">
-          <span className="lp-profile-face">
-            <Face src={PEOPLE.dilan.avatar} size={64} />
-          </span>
-          <span className="lp-profile-name">{PEOPLE.dilan.name}</span>
-          <span className="lp-profile-level">{t('profile.levelN', { level: 12 })}</span>
-          <span className="lp-progress lp-progress--gold" aria-hidden>
-            <span style={{ width: '72%' }} />
-          </span>
-          <span className="lp-profile-next">{t('profile.xpToLevel', { xp: 140, level: 13 })}</span>
-        </div>
-      </div>
+      <ProfileCard
+        name={PEOPLE.dilan.name}
+        avatarUrl={PEOPLE.dilan.avatar}
+        background={{ sku: 'sample', assetKey: 'sample', type: 'image', url: PROFILE_BACKGROUND }}
+        level={{ level: 12, xp: 2860, nextLevelXp: 3000, progress: 0.72 }}
+        lazy
+      />
 
-      <div className="lp-card lp-ladder">
+      <div className="lp-card lp-laddercard">
         <span className="lp-float-kicker">{t('leagues.endsIn', { time: '2d 4h' })}</span>
-        <ol className="lp-ladder-tiers">
-          {ladder.map((key, i) => (
-            <li key={key} className={i === 2 ? 'is-current' : i < 2 ? 'is-past' : undefined}>
-              <span className="lp-ladder-dot" />
-              <span>{t(key)}</span>
-            </li>
-          ))}
-        </ol>
+        <LeagueLadder tier="gold" />
       </div>
 
-      <div className="lp-card lp-reward">
-        <span className="lp-round lp-round--gold">
+      <div className="zer-card lp-rewardmock">
+        <span className="zer-coin">
           <CoinIcon size={18} />
         </span>
-        <span>{t('daily.dayReward', { day: 3, amount: 20 })}</span>
+        <span className="zer-sub">{t('daily.dayReward', { day: 3, amount: 20 })}</span>
       </div>
     </Mock>
   );
@@ -477,8 +458,8 @@ export function PostMock(): React.JSX.Element {
       <div className="lp-post-head">
         <Face src={PEOPLE.dilan.avatar} size={36} />
         <span className="lp-post-who">
-          <span className="lp-player-name">{PEOPLE.dilan.name}</span>
-          <span className="lp-player-status">{t('civak.kind.poem')}</span>
+          <span className="player-name">{PEOPLE.dilan.name}</span>
+          <span className="player-status">{t('civak.kind.poem')}</span>
         </span>
       </div>
       <Ku className="lp-post-title">{POEM.title}</Ku>

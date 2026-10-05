@@ -6,6 +6,9 @@ import type { RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
+import { useRail } from '../social/RailProvider';
+import { PlayerChip } from '../ui/PlayerChip';
+import { RankList, RankRow } from '../ui/RankRow';
 import { useTypeOnly } from '../components/typeOnly';
 import { buildInviteUrl } from '../lib/gameInvites';
 import { useT } from '../i18n/I18nProvider';
@@ -102,6 +105,7 @@ function CreateMatch(): React.JSX.Element {
 
 function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const { client, user } = useAuth();
+  const myAvatar = useRail().data.you?.avatarUrl ?? null;
   const t = useT();
   const [match, setMatch] = useState<MatchState | null>(null);
   const [results, setResults] = useState<MatchResults | null>(null);
@@ -238,16 +242,22 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
         {results && (
           <>
             <p className="muted">{t('games.rhymeMatch.promptWas', { word: results.prompt })}</p>
-            <ol className="quiz-scoreboard">
-              {results.ranking.map((r) => (
-                <li key={r.userId} className={`quiz-scoreline${r.userId === user?.id ? ' me' : ''}`}>
-                  <span className="quiz-rank">{r.rank}</span>
-                  <span className="quiz-name">{r.userId === user?.id ? t('games.you') : t('games.opponent')}</span>
-                  <span className="quiz-pts">{t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}</span>
-                  {r.xpAwarded ? <span className="quiz-xp">+{r.xpAwarded} XP</span> : null}
-                </li>
-              ))}
-            </ol>
+            <RankList>
+              {results.ranking.map((r) => {
+                const me = r.userId === user?.id;
+                return (
+                  <RankRow
+                    key={r.userId}
+                    rank={r.rank}
+                    name={me ? t('games.you') : t('games.opponent')}
+                    avatarUrl={me ? myAvatar : null}
+                    me={me}
+                    score={t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
+                    trailing={r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : undefined}
+                  />
+                );
+              })}
+            </RankList>
           </>
         )}
         <Link to="/app/games/rhyme-match" className="btn btn-primary">{t('games.rhymeMatch.new')}</Link>
@@ -268,12 +278,18 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
         </div>
       </div>
 
-      <div className="quiz-live-score">
-        {match.scoreboard.map((s) => (
-          <span key={s.userId} className={s.userId === user?.id ? 'me' : ''}>
-            {s.userId === user?.id ? t('games.you') : t('games.opponent')}: {s.score}
-          </span>
-        ))}
+      <div className="players">
+        {match.scoreboard.map((s) => {
+          const me = s.userId === user?.id;
+          return (
+            <PlayerChip
+              key={s.userId}
+              name={me ? t('games.you') : t('games.opponent')}
+              avatarUrl={me ? myAvatar : null}
+              status={t('games.rhymeMatch.playerScore', { score: s.score, count: s.accepted })}
+            />
+          );
+        })}
       </div>
 
       {active ? (

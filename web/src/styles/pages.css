@@ -247,59 +247,7 @@
 }
 
 /* ---- rankings ---------------------------------------------------------- */
-.rank-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-}
-.rank-pos {
-  width: 30px;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--ink-3);
-  text-align: center;
-}
-.rank-name {
-  flex: 1;
-  min-width: 0;
-  font-weight: 550;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rank-score {
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
-}
-/* your own row, picked out in the list rather than repeated above it */
-.rank-me {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-.rank-you {
-  margin-left: 8px;
-  padding: 1px 7px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  vertical-align: middle;
-}
-a.rank-name:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
+/* rows and the list live in product.css, shared with the front page */
 /* paging control under the list */
 .rank-more {
   display: flex;
@@ -309,124 +257,6 @@ a.rank-name:hover {
   margin-top: 16px;
   min-height: 32px;
   font-size: 0.88rem;
-}
-
-/* ---- profile: liquid-glass contact card -------------------------------- */
-.profile-wrap {
-  min-height: calc(100vh - var(--nav-h));
-  display: grid;
-  place-items: center;
-  padding: 40px 20px 72px;
-}
-.pcard {
-  position: relative;
-  width: 100%;
-  max-width: 440px;
-  aspect-ratio: 5 / 6;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--border-strong);
-  background: rgba(10, 12, 16, 0.5);
-  -webkit-backdrop-filter: blur(30px) saturate(1.3);
-  backdrop-filter: blur(30px) saturate(1.3);
-  box-shadow: var(--glass-rim), var(--shadow-lg);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: clamp(28px, 6vw, 44px);
-}
-/* white person silhouette (head + shoulders) */
-.pcard-figure {
-  color: #fff;
-  margin-top: 6px;
-  filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.4));
-}
-/* frosted plate that holds the details, overlapping the figure's shoulders */
-.pcard-plate {
-  position: relative;
-  width: 100%;
-  margin-top: -18px;
-  padding: 20px 22px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.14);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  backdrop-filter: blur(24px) saturate(1.2);
-  box-shadow: var(--glass-rim);
-}
-.pcard-name {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.1;
-}
-.pcard-handle {
-  color: var(--ink-3);
-  font-size: 0.95rem;
-  margin-top: 2px;
-}
-.pcard-rows {
-  margin-top: 16px;
-  display: grid;
-  gap: 1px;
-  border-radius: var(--r-sm);
-  overflow: hidden;
-  background: var(--border);
-}
-.pcard-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 11px 14px;
-  background: rgba(20, 22, 28, 0.35);
-  font-size: 0.92rem;
-}
-.pcard-row dt {
-  color: var(--ink-3);
-}
-.pcard-row dd {
-  margin: 0;
-  color: var(--ink);
-  font-weight: 550;
-  text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* footer row: label left, Hevalo logo bottom-right */
-.pcard-foot {
-  width: 100%;
-  margin-top: auto;
-  padding-top: 22px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-}
-.pcard-label {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  font-weight: 600;
-}
-.pcard-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px 7px 9px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.08);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-}
-.pcard-logo img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
 }
 
 /* more than one of these can appear at once — add friend, message, view — and
@@ -511,7 +341,7 @@ a.rank-name:hover {
  * background, so the card fills the panel corner to corner — and the card comes
  * after this button in the DOM with nothing to say otherwise, so it painted
  * over it. `document.elementFromPoint` at the middle of the X returned
- * `.pcard-modal`, not the button. A z-index puts it back on top; it is the one
+ * `.pc-modal`, not the button. A z-index puts it back on top; it is the one
  * control that has to work whatever else is in the dialog.
  *
  * And it was pale-on-pale: white ink on a 11%-white fill, which on a bright
@@ -546,26 +376,6 @@ a.rank-name:hover {
   border-color: rgba(255, 255, 255, 0.45);
 }
 
-/* profile card inside the modal: the panel provides the glass, so the card
-   itself is just layout (no second glass layer, no fixed aspect ratio) */
-.pcard-modal {
-  width: 100%;
-  max-width: none;
-  aspect-ratio: auto;
-  min-width: 0;
-  /*
-   * No padding at the top. There used to be six pixels of it, which is six
-   * pixels of equipped background showing above the picture — a bright strip
-   * across the top of every card belonging to someone with a background on.
-   */
-  padding: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  overflow: visible;
-}
 .pcard-avatar {
   width: 112px;
   height: 112px;
@@ -573,74 +383,6 @@ a.rank-name:hover {
   object-fit: cover;
   border: 2px solid var(--border-strong);
   box-shadow: var(--shadow);
-}
-
-/* large full photo area at the top of the profile card (reference look) */
-.pcard-photo {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-}
-/* soft fade at the bottom of the image so it melts into the card */
-.pcard-photo::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 45%, rgba(14, 16, 22, 0.85));
-  pointer-events: none;
-}
-
-/*
- * On the popup the picture is the top of the card, so it takes the card's own
- * corners at the top and none at the bottom — square, because the bottom is not
- * an edge any more, it is where the picture stops being a picture.
- *
- * The fade is a mask on the image rather than a wash laid over it. A wash can
- * only fade towards a colour it has to name, which paints over the background
- * behind it; a mask takes the picture away and lets whatever is behind come
- * through, which is what fading into the background means.
- */
-.pcard-modal .pcard-photo {
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
-  border: 0;
-}
-.pcard-modal .pcard-photo-img,
-.pcard-modal .pcard-photo-glyph {
-  -webkit-mask-image: linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0.35) 84%, transparent);
-  mask-image: linear-gradient(to bottom, #000 58%, rgba(0, 0, 0, 0.35) 84%, transparent);
-}
-/* the wash is only there to keep the name legible, so it stops well short */
-.pcard-modal .pcard-photo::after {
-  background: linear-gradient(to bottom, transparent 62%, rgba(14, 16, 22, 0.45));
-}
-.pcard-photo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.pcard-photo-glyph {
-  color: #fff;
-  opacity: 0.94;
-  filter: drop-shadow(0 10px 34px rgba(0, 0, 0, 0.45));
-}
-/* the frosted plate overlaps the bottom of the photo, like the reference */
-.pcard-modal .pcard-plate {
-  margin-top: -30px;
-  z-index: 1;
-}
-.pcard-bio {
-  margin-top: 10px;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  color: var(--ink-2);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 /* ---- what you can do about another person -------------------------------- */
@@ -823,17 +565,8 @@ a.rank-name:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-/* "● Online" line under the handle in the profile card */
-.pcard-online {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #37d67a;
-}
-.presence-dot-inline {
+
+.presence-dot.presence-dot-inline {
   position: static;
   right: auto;
   bottom: auto;
@@ -844,114 +577,7 @@ a.rank-name:hover {
 }
 
 /* ---- equipped cosmetics (profile popup) -------------------------------- */
-/* equipped background: sits behind the card content, dimmed for legibility */
-.pcard-bg-media {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--r-lg);
-  opacity: 0.5;
-  /* it is a photograph being shown small: let the browser scale it properly
-     rather than with the fast filter it uses for decorative fills */
-  image-rendering: auto;
-  z-index: 0;
-  pointer-events: none;
-}
-/* keep the photo + plate above the background layer */
-.pcard-has-bg .pcard-photo,
-.pcard-has-bg .pcard-plate,
-.pcard-has-bg .pcard-foot,
-.pcard-has-bg .profile-actions {
-  position: relative;
-  z-index: 1;
-}
-.pcard-has-bg .pcard-photo {
-  background: rgba(10, 12, 16, 0.35);
-}
 
-/*
- * With a background equipped, the card IS the panel.
- *
- * The artwork is absolutely positioned inside the card, and the card sits
- * inside the panel's 32/30/28px padding — so the picture stopped 31px short on
- * the left, 46px on the right and 33px at the top, and what showed in that
- * frame was the panel's own near-black glass. A dark border drawn round
- * somebody's background is not a border they chose.
- *
- * So the padding moves from the panel to the card. Nothing about the spacing
- * changes — the content sits exactly where it did — but the artwork now starts
- * at the panel's edge, and the panel's own radius and its scroll clip do the
- * rounding, which is why the media gives its radius up.
- */
-.modal-panel:has(.pcard-has-bg) {
-  padding: 0;
-}
-.modal-panel:has(.pcard-has-bg) .pcard-modal {
-  padding: 32px 30px 28px;
-}
-.modal-panel:has(.pcard-has-bg) .pcard-bg-media {
-  border-radius: 0;
-}
-@media (max-width: 640px) {
-  .modal-panel:has(.pcard-has-bg) .pcard-modal {
-    padding: 26px 14px 20px;
-  }
-}
-
-/*
- * Over artwork, the card's surfaces go dark.
- *
- * Everywhere else in the app a raised surface is a light tint — white at 5–14%
- * — which works because what is behind it is always near-black. On a card with
- * a background it is behind nothing of the sort: measured against the artwork,
- * white text on the plate came to 3.34:1 and on a secondary button 3.52:1, both
- * under AA, and a light button on a light photograph is a button you cannot
- * find. Dark glass on the same artwork measures 10.8:1 and 12.4:1.
- *
- * The rim stays light. That is what keeps them reading as glass laid on the
- * picture rather than holes cut out of it.
- */
-.pcard-has-bg .pcard-plate {
-  background: rgba(10, 12, 16, 0.55);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-.pcard-has-bg .btn-secondary,
-.pcard-has-bg .user-actions-btn {
-  background: rgba(8, 10, 14, 0.62);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: var(--ink);
-}
-.pcard-has-bg .btn-secondary:hover:not(:disabled),
-.pcard-has-bg .user-actions-btn:hover {
-  background: rgba(8, 10, 14, 0.78);
-  border-color: rgba(255, 255, 255, 0.45);
-}
-/*
- * The foot sits straight on the artwork with nothing behind it, so it gets a
- * shadow rather than a plate: it is two short pieces of large text, and giving
- * them a panel would put a fourth box on a card that is already three.
- */
-.pcard-has-bg .pcard-foot {
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.75);
-}
-
-/* name + equipped icon + premium badge on one line */
-.pcard-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-/* premium icon overlay — straddles the avatar boundary (partly inside/outside).
-   The wrapper is position:relative and NOT clipped; the photo itself keeps its
-   rounded overflow. Sizing/offset are per-surface so the icon scales with the
-   avatar. Decorative layer over the avatar — never baked into the image. */
-.pcard-photo-wrap {
-  position: relative;
-  width: 100%;
-}
 .cosmetic-icon-overlay {
   position: absolute;
   object-fit: contain;
@@ -959,13 +585,7 @@ a.rank-name:hover {
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
   z-index: 2;
 }
-/* profile popup: large photo → larger badge at the top-right corner */
-.pcard-photo-wrap .cosmetic-icon-overlay {
-  width: clamp(38px, 12vw, 52px);
-  height: clamp(38px, 12vw, 52px);
-  top: -12px;
-  right: -6px;
-}
+
 /* full-profile hero: 96px avatar → medium badge */
 .hero-avatar-wrap {
   position: relative;
@@ -989,44 +609,6 @@ a.rank-name:hover {
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-}
-
-/* level badge + progress bar */
-.pcard-level {
-  margin-top: 14px;
-}
-.pcard-level-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.pcard-level-badge {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--gold-ink);
-}
-.pcard-level-xp {
-  font-size: 0.8rem;
-  color: var(--ink-3);
-}
-.pcard-level-track {
-  height: 7px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-.pcard-level-fill {
-  height: 100%;
-  border-radius: var(--r-pill);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 70%, transparent), var(--gold));
-  transition: width 0.4s ease;
-}
-
-.pcard-favorites {
-  margin-top: 10px;
 }
 
 /* ---- friends ----------------------------------------------------------- */
@@ -1152,126 +734,6 @@ button.feature {
   color: var(--ink);
 }
 
-/* ---- daily Zêr reward -------------------------------------------------- */
-.zer-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 18px 20px;
-  margin-bottom: 24px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-rim);
-}
-.zer-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1;
-  min-width: 0;
-}
-.zer-coin {
-  flex: none;
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-md);
-  background: var(--gold-soft);
-  color: var(--gold-ink);
-  border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
-}
-.zer-balance {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.1;
-}
-.zer-unit {
-  font-size: 0.95rem;
-  color: var(--gold-ink);
-}
-.zer-sub {
-  font-size: 0.88rem;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
-.zer-action {
-  flex: none;
-}
-.zer-msg {
-  flex-basis: 100%;
-  font-size: 0.88rem;
-  color: var(--gold-ink);
-}
-
-/* ---- full profile page ------------------------------------------------- */
-.profile-hero {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-rim);
-}
-/* showcase variant: equipped background banner behind the hero content */
-.profile-hero-showcase {
-  display: block;
-  position: relative;
-  overflow: hidden;
-  padding: 0;
-}
-.profile-hero-media {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.3;
-  z-index: 0;
-  pointer-events: none;
-}
-/* fade toward the left so the avatar + text stay legible over the banner */
-.profile-hero-showcase.has-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, var(--surface) 0%, color-mix(in srgb, var(--surface) 55%, transparent) 55%, transparent 100%);
-  z-index: 0;
-  pointer-events: none;
-}
-.profile-hero-inner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  padding: 22px;
-}
-.profile-hero-badges {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.profile-hero-badges .pcard-premium {
-  margin-left: 0;
-}
-.profile-hero-avatar {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
 .avatar-fallback {
   width: 96px;
   height: 96px;
@@ -1282,21 +744,7 @@ button.feature {
   border: 1px solid var(--border);
   color: var(--ink-2);
 }
-.profile-hero-avatar .pcard-avatar {
-  width: 96px;
-  height: 96px;
-}
-.profile-hero-body {
-  flex: 1;
-  min-width: 0;
-}
-.profile-bio {
-  font-size: 1rem;
-  line-height: 1.55;
-  color: var(--ink-2);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
+
 .stat-link {
   cursor: pointer;
   transition:
@@ -1611,17 +1059,6 @@ button.feature {
 .fav-option.is-current {
   color: var(--gold-ink);
   font-weight: 600;
-}
-
-@media (max-width: 560px) {
-  .profile-hero,
-  .profile-hero-inner {
-    flex-direction: column;
-    text-align: center;
-  }
-  .profile-hero-badges {
-    justify-content: center;
-  }
 }
 
 /* ---- chat / messages --------------------------------------------------- */
@@ -2055,129 +1492,19 @@ button.feature {
   }
 }
 
-
 /* ---- Hevalo full profile (full-bleed) ------------ */
 .mkp-page {
   position: relative;
   width: 100%;
-  margin-top: -40px; /* start the bg under the nav (cancels .app-main top pad) */
-  min-height: calc(100vh - var(--nav-h));
-}
-.mkp-page:not(.mkp-has-bg) {
-  margin-top: 0;
-  min-height: 0;
-}
-/*
- * The backdrop is FIXED to the viewport, not sized to the page.
- *
- * As an absolutely positioned child it ended where .mkp-page ended — but
- * .app-main adds 80px of padding below that, so scrolling a tall profile ran
- * off the bottom of the image and showed bare app background. Pinning it to the
- * viewport means the picture is simply always there, however long the profile
- * gets, and the content scrolls over it.
- *
- * No filter, no transform, no downscaling: an animated GIF is served and painted
- * at its own resolution, exactly as before.
- */
-/*
- * Pinned with `right` rather than `width: 100vw`.
- *
- * `100vw` is the viewport including the scrollbar gutter, so a fixed element at
- * `left: 0; width: 100vw` reaches past the right edge by the width of the
- * scrollbar — which is a page you can drag sideways. `left: 0; right: 0` is the
- * viewport as it actually is.
- */
-.mkp-bg,
-.mkp-scrim {
-  position: fixed;
-  top: var(--nav-h);
-  left: 0;
-  right: 0;
-  /* dvh so a phone's collapsing URL bar cannot expose a strip underneath */
-  height: calc(100dvh - var(--nav-h));
-  z-index: 0;
-  pointer-events: none;
-}
-/*
- * `width: 100%` is doing the work here, not `left: 0; right: 0`.
- *
- * Those two stretch a div — the scrim above is proof — but they do NOT stretch
- * a REPLACED element. With `width: auto` an <img> or <video> takes its own
- * intrinsic size, so pinning both edges is over-constrained and the browser
- * drops `right`. The picture was drawn at (forced height x its own aspect
- * ratio) and simply stopped: a 1200x676 background on a 1518px screen came out
- * 1115px wide, leaving 387px of black down the right-hand side. `object-fit`
- * never got a say, because the box was never the size the page needed.
- */
-.mkp-bg {
-  width: 100%;
-  object-fit: cover;
-}
-.mkp-scrim {
-  background: linear-gradient(180deg, rgba(8, 10, 14, 0.35), rgba(8, 10, 14, 0.15) 30%, rgba(8, 10, 14, 0.5));
 }
 .mkp-wrap {
   position: relative;
   z-index: 1;
   max-width: 940px;
   margin: 0 auto;
-  padding: 32px 16px 80px;
+  padding: 0 16px 80px;
 }
 
-/* header */
-.mkp-head {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 22px;
-  align-items: start;
-}
-.mkp-avatar {
-  line-height: 0;
-}
-.mkp-avatar-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.5);
-  display: block;
-}
-.mkp-avatar-img.avatar-fallback {
-  display: grid;
-  place-items: center;
-  background: var(--surface-2);
-  color: var(--ink-2);
-}
-.mkp-id-text {
-  padding-top: 6px;
-  min-width: 0;
-}
-.mkp-name {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
-}
-.mkp-premium {
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
-  background: var(--gold-soft);
-  color: var(--gold-ink);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.mkp-sub {
-  color: var(--ink-3);
-  margin-top: 3px;
-  font-size: 0.9rem;
-}
 .mkp-country {
   display: flex;
   align-items: center;
@@ -2200,87 +1527,6 @@ button.feature {
 .mkp-actions .btn {
   flex: 1 1 auto;
 }
-.mkp-level-col {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 210px;
-}
-.mkp-level-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1.25rem;
-  color: var(--ink-2);
-}
-.mkp-hex {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--gold-ink);
-  background: rgba(20, 24, 32, 0.5);
-  border: 2px solid var(--gold);
-  box-shadow: 0 0 0 3px rgba(240, 194, 74, 0.12);
-}
-.mkp-featured {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  width: 100%;
-  padding: 10px 12px;
-  background: rgba(20, 24, 32, 0.34);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-}
-.mkp-featured-badge {
-  width: 44px;
-  height: 44px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 3px;
-  color: var(--ink-2);
-}
-.mkp-featured-badge img {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-}
-.mkp-featured-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.mkp-featured-title {
-  font-size: 0.9rem;
-}
-.mkp-featured-sub {
-  color: var(--ink-3);
-  font-size: 0.8rem;
-}
-.mkp-edit {
-  align-self: stretch;
-  text-align: center;
-  padding: 7px 14px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-strong);
-  color: var(--ink);
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-.mkp-edit:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
 
 /* body */
 .mkp-body {
@@ -2295,19 +1541,24 @@ button.feature {
   gap: 18px;
   min-width: 0;
 }
+/* the sections under the card are cards themselves, headed the way the front page heads one */
 .mkp-showcase-label {
-  font-size: 0.95rem;
-  color: var(--ink);
-  margin: 0 0 6px 2px;
+  margin: 0 0 8px 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+[dir='rtl'] .mkp-showcase-label {
+  letter-spacing: normal;
 }
 .mkp-showcase {
-  background: rgba(20, 24, 32, 0.34);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 18px;
   padding: 16px 18px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--glass-rim);
 }
 .mkp-bio {
   margin: 0;
@@ -2330,7 +1581,7 @@ button.feature {
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
+  border-radius: 12px;
   font-size: 1.5rem;
 }
 .mkp-fav-meta {
@@ -2338,23 +1589,24 @@ button.feature {
   min-width: 0;
 }
 .mkp-fav-title {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
 }
 
 /* right info sidebar */
 .mkp-online {
-  background: rgba(20, 24, 32, 0.34);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 14px 16px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: var(--glass-rim);
 }
+/* online in the card's own green, the way the card above says it */
 .mkp-online-title {
-  color: var(--teal, #66c0de);
-  font-size: 1.15rem;
-  font-weight: 400;
+  color: var(--success);
+  font-size: 0.95rem;
+  font-weight: 650;
   margin-bottom: 2px;
 }
 .mkp-online-title.is-offline {
@@ -2381,9 +1633,10 @@ button.feature {
   color: var(--ink-2);
 }
 .mkp-collection-head .n {
-  color: var(--ink-3);
-  font-size: 1.5rem;
-  font-weight: 300;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 .mkp-collection-link:hover .n {
@@ -2462,9 +1715,10 @@ button.feature {
   color: var(--ink-2);
 }
 .mkp-info-row .n {
-  color: var(--ink-3);
-  font-size: 1.5rem;
-  font-weight: 300;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 .mkp-info-link:hover .n {
@@ -2904,14 +2158,7 @@ a.mkp-activity-row:hover {
 }
 
 @media (max-width: 760px) {
-  .mkp-head {
-    grid-template-columns: auto 1fr;
-  }
-  .mkp-level-col {
-    grid-column: 1 / -1;
-    align-items: stretch;
-    min-width: 0;
-  }
+
   .mkp-body {
     grid-template-columns: 1fr;
   }
@@ -2949,6 +2196,12 @@ a.mkp-activity-row:hover {
   gap: 18px;
   flex-wrap: wrap;
   margin-bottom: 8px;
+}
+/* a Kurmancî word, and the Latin keyboard that types it, read left to right on
+   an Arabic or Soranî page too — mirrored, "silav" came out as "valis" */
+.wordle-board,
+.wordle-keyboard {
+  direction: ltr;
 }
 .wordle-board {
   --wordle-cell-max: 54px;
@@ -3076,9 +2329,15 @@ a.mkp-activity-row:hover {
   color: #fff;
 }
 .wordle-gray {
-  background: var(--ink-3);
-  border-color: var(--ink-3);
-  color: var(--bg);
+  /* the front page's grey: a letter that is not in the word steps back */
+  background: rgba(255, 255, 255, 0.16);
+  border-color: transparent;
+  color: var(--ink-2);
+}
+/* on the keyboard, a used-up letter is dimmer than one not tried yet */
+.wordle-key.wordle-gray {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink-4);
 }
 .wordle-notice {
   text-align: center;
@@ -3256,39 +2515,6 @@ a.mkp-activity-row:hover {
   max-width: 640px;
   margin: 0 auto;
 }
-.quiz-players {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  font-weight: 600;
-}
-.quiz-player {
-  padding: 8px 16px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-.quiz-player.ready {
-  border-color: #2e7d5b;
-}
-.quiz-vs {
-  color: var(--ink-3);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.quiz-live-score {
-  display: flex;
-  gap: 18px;
-  justify-content: center;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-.quiz-live-score .me {
-  color: var(--ink);
-  font-weight: 700;
-}
 .quiz-countdown {
   text-align: center;
   padding: 48px 0;
@@ -3374,56 +2600,6 @@ a.mkp-activity-row:hover {
 .quiz-verdict {
   font-size: 1.6rem;
 }
-.quiz-scoreboard {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.quiz-scoreline {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-.quiz-scoreline.me {
-  border-color: var(--primary, #b8922e);
-}
-.quiz-rank {
-  font-weight: 700;
-  color: var(--ink-3);
-  min-width: 20px;
-}
-.quiz-name {
-  font-weight: 600;
-  flex: 1;
-  text-align: left;
-}
-.quiz-pts {
-  color: var(--ink-2);
-  font-size: 0.9rem;
-}
-.quiz-delta {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.quiz-delta.up {
-  color: #2e7d5b;
-}
-.quiz-delta.down {
-  color: #c0392b;
-}
-.quiz-xp {
-  color: var(--primary, #b8922e);
-  font-weight: 700;
-  font-size: 0.85rem;
-}
 @media (max-width: 520px) {
   .quiz-options {
     grid-template-columns: 1fr;
@@ -3476,55 +2652,11 @@ a.mkp-activity-row:hover {
   flex-direction: column;
   gap: 8px;
 }
-.battle-opponents {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 420px;
-  margin: 0 auto 8px;
-  width: 100%;
-}
-.battle-opp {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.85rem;
-}
-.battle-opp-name {
-  min-width: 80px;
-  color: var(--ink-2);
-}
-.battle-bar {
-  flex: 1;
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.battle-bar-fill {
-  height: 100%;
-  background: #2e7d5b;
-  transition: width 0.3s ease;
-}
-.battle-opp-status {
-  min-width: 72px;
-  text-align: right;
-  color: var(--ink-3);
-}
-
 /* ---- game invite card (in chat) ---------------------------------------- */
 .invite-lead {
   margin: 0 0 8px;
 }
 
-/*
- * Game invite: a rich embed, not a bordered box.
- *
- * It paints its OWN dark surface rather than inheriting the bubble's. Your own
- * bubble is --primary, which is white in this theme, so a translucent card with
- * a --primary border and eyebrow was effectively invisible on invites you sent.
- * Fixed colours here mean it reads identically from either side.
- */
 /*
  * A bubble shrink-wraps its text, so an invite card had no definite width to
  * fill and collapsed to its own content — 185px on a phone, with the blurb
@@ -3540,110 +2672,6 @@ a.mkp-activity-row:hover {
   width: 100%;
   /* the phone rule caps a text bubble at 85%; an embed should use the room */
   max-width: 100%;
-}
-
-.invite-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-  max-width: 320px;
-  margin-top: 2px;
-  padding: 12px 13px;
-  border-radius: 16px;
-  /*
-   * Its own surface, not the bubble's. Your own bubble is --primary, which is
-   * white in this theme, so a translucent card vanished into it.
-   */
-  background: #171a1f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  /* a hairline of light along the top edge — the rim a real material has */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 8px 24px rgba(0, 0, 0, 0.22);
-  color: #fff;
-  text-align: left;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.12s ease;
-}
-.invite-card:hover {
-  background: #1c2026;
-  border-color: rgba(255, 255, 255, 0.16);
-}
-.invite-card:hover .invite-card-chevron {
-  color: rgba(255, 255, 255, 0.55);
-}
-.invite-card:active {
-  transform: scale(0.985);
-}
-
-/* the mark: one line drawing in a neutral rounded tile */
-.invite-card-art {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.invite-card-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-/* hierarchy by weight and opacity, not by colour */
-.invite-card-eyebrow {
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-.invite-card-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.invite-card-blurb {
-  font-size: 0.8rem;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.52);
-  /* two lines is enough for a one-sentence description in a narrow bubble */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-/* the affordance: this row leads somewhere */
-.invite-card-chevron {
-  flex: none;
-  margin-left: auto;
-  color: rgba(255, 255, 255, 0.28);
-  transition: color 0.18s ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .invite-card {
-    transition: none;
-  }
-  .invite-card:active {
-    transform: none;
-  }
 }
 
 /* a "you're in" marker on a group row in Discover */
@@ -3662,37 +2690,6 @@ a.mkp-activity-row:hover {
 }
 
 /* ---- games hub: one box per game + mode chooser ------------------------ */
-.game-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.game-card-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.game-card-head h3 {
-  margin: 0;
-}
-.game-modes-hint {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  list-style: none;
-  margin: 12px 0 16px;
-  padding: 0;
-}
-.game-modes-hint li {
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--ink-3);
-  font-size: 0.76rem;
-  font-weight: 600;
-}
 .mode-chooser .mode-list {
   display: flex;
   flex-direction: column;

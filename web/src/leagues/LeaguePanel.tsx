@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useT } from '../i18n/I18nProvider';
-import { countdown, tierMeta, zoneDestination, zoneFor, type Zone } from './format';
+import { countdown, zoneDestination, zoneFor, type Zone } from './format';
+import { LeagueLadder, leagueName } from '../ui/LeagueLadder';
+import { RankList, RankRow } from '../ui/RankRow';
 
 interface StandingRow {
   userId: string;
@@ -54,45 +56,46 @@ export function LeaguePanel(): React.JSX.Element | null {
   if (failed) return null;
   if (!league) return null;
 
-  const meta = tierMeta(league.tier);
-  const tierLabel = meta.labelKey ? t(meta.labelKey) : meta.label;
   const endsIn = countdown(league.weekKey);
   const total = league.standings.length;
 
+  /*
+   * The front page's picture of a league, made real: when it ends, which league
+   * it is, the ladder around it, and the table. Each row is the same row every
+   * leaderboard in the app uses; a row about to move gets a thin edge and the
+   * name of the league it is heading for.
+   */
   return (
-    <section className="card" style={{ marginBottom: 20 }} aria-labelledby="league-heading">
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <h2 id="league-heading" style={{ margin: 0, fontSize: '1.05rem' }}>
-          {t('leagues.tierName', { emoji: meta.emoji, tier: tierLabel })}
-        </h2>
+    <section className="league-card" aria-labelledby="league-heading">
+      <div className="league-card-head">
         {/* nothing once the week is over: see `countdown` */}
-        {endsIn ? <span className="badge">{t('leagues.endsIn', { time: endsIn })}</span> : null}
+        {endsIn ? <span className="lp-float-kicker">{t('leagues.endsIn', { time: endsIn })}</span> : null}
+        <h2 id="league-heading" className="league-card-title">
+          {leagueName(t, league.tier)}
+        </h2>
       </div>
 
+      <LeagueLadder tier={league.tier} />
+
       {total === 0 ? (
-        <p className="muted" style={{ margin: '12px 0 0' }}>
-          {t('leagues.noLeague')}
-        </p>
+        <p className="muted">{t('leagues.noLeague')}</p>
       ) : (
-        <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+        <RankList>
           {league.standings.map((row) => {
             const zone = zoneFor(row.rank, total, league.promoteCount, league.demoteCount);
             return (
-              <div
+              <RankRow
                 key={row.userId}
-                className={`rank-row${row.isSelf ? ' rank-me' : ''}`}
-                style={{ borderLeft: `4px solid ${edgeColor(zone, meta.color)}` }}
-              >
-                <span className="rank-pos">#{row.rank}</span>
-                <span className="rank-name">{row.isSelf ? t('games.you') : row.username}</span>
-                <span className="rank-score">
-                  {row.weeklyXp.toLocaleString()} {t('rankings.unit.xp')}
-                </span>
-                <Destination tier={league.tier} zone={zone} />
-              </div>
+                rank={row.rank}
+                name={row.isSelf ? t('games.you') : row.username}
+                score={`${row.weeklyXp.toLocaleString()} ${t('rankings.unit.xp')}`}
+                me={row.isSelf}
+                zone={zone === 'safe' ? undefined : zone}
+                trailing={<Destination tier={league.tier} zone={zone} />}
+              />
             );
           })}
-        </div>
+        </RankList>
       )}
     </section>
   );
@@ -111,19 +114,10 @@ function Destination({ tier, zone }: { tier: string; zone: Zone }): React.JSX.El
   const t = useT();
   const dest = zoneDestination(tier, zone);
   if (!dest) return null;
-  const meta = tierMeta(dest);
-  const label = meta.labelKey ? t(meta.labelKey) : meta.label;
   return (
-    <span className="badge" style={{ borderColor: meta.color }}>
+    <span className="badge rank-dest">
       <span aria-hidden="true">{zone === 'promotion' ? '↑' : '↓'}</span>
-      {t('leagues.tierName', { emoji: meta.emoji, tier: label })}
+      {leagueName(t, dest)}
     </span>
   );
-}
-
-/** Promotion and demotion get the edge; a safe row takes the tier's own colour. */
-function edgeColor(zone: Zone, tierColor: string): string {
-  if (zone === 'promotion') return 'var(--success)';
-  if (zone === 'demotion') return 'var(--danger)';
-  return tierColor;
 }

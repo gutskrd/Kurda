@@ -1,0 +1,1119 @@
+/*
+ * The product's own parts, drawn once.
+ *
+ * The front page shows pictures of Hevalo — a profile, a league, a leaderboard,
+ * a battle, an invite — and the app now draws those same things the same way,
+ * from the same components in `src/ui/` and the same rules here. When the
+ * picture and the product disagree, one of them is lying; keeping them in one
+ * file is how neither gets to.
+ */
+
+/* ---- a person: banner, face, name, level --------------------------------- */
+.pc {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+  overflow: hidden;
+  /* the ring round the face is the colour of what is behind it */
+  --pc-ring: #121419;
+}
+.pc-banner {
+  position: relative;
+  height: 132px;
+  /* no background equipped: light from the corner, the page's own light */
+  background:
+    radial-gradient(120% 160% at 15% 0%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.02) 62%),
+    linear-gradient(180deg, #181b21, #0f1115);
+}
+.pc-banner .pcard-bg-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+  pointer-events: none;
+}
+.pc-body {
+  position: relative;
+  display: grid;
+  padding: 0 20px 20px;
+}
+.pc-id {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+}
+.pc-face {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  margin-top: -42px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  border: 3px solid var(--pc-ring);
+  line-height: 0;
+}
+.pc-face-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #dfe4f2;
+}
+.pc-face-glyph {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+/* the premium icon straddles the edge of the face, never baked into it */
+.pc-face .cosmetic-icon-overlay {
+  width: 40px;
+  height: 40px;
+  top: -10px;
+  inset-inline-end: -14px;
+}
+.pc-names {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.pc-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.pc-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.pc .pcard-premium {
+  margin-inline-start: 0;
+}
+.pc-handle {
+  color: var(--ink-3);
+  font-size: 0.92rem;
+}
+.pc-online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--success);
+}
+.pc-aside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* level, the bar toward the next one, and what is left */
+.pcard-level {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.pcard-level-badge {
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--gold-ink);
+}
+.pcard-level-track {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.pcard-level-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gold);
+  transition: width 0.4s ease;
+}
+.pcard-level-next {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+
+/* what the popup adds under the card: a bio, the numbers, the favourites */
+.pc-bio {
+  margin-top: 14px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pc-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 16px 0 0;
+}
+.pc-stat {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  min-width: 0;
+}
+.pc-stat dt {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.pc-stat dd {
+  margin: 4px 0 0;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pc-favs {
+  margin: 14px 0 0;
+  border-top: 1px solid var(--border);
+}
+.pc-fav {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.pc-fav dt {
+  color: var(--ink-3);
+}
+.pc-fav dd {
+  margin: 0;
+  font-weight: 550;
+  text-align: end;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pc-actions {
+  margin-top: 16px;
+}
+
+/* in the popup the card is the panel: the banner runs to the panel's edges */
+.modal-panel:has(.pc-modal) {
+  padding: 0;
+}
+.pc-modal .pc {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.pc-modal .profile-actions {
+  justify-content: flex-start;
+  margin: 0;
+  padding: 0 20px 22px;
+}
+.pc-modal .pc-body {
+  padding-bottom: 18px;
+}
+
+/* the full profile: wider banner, name beside the face on a wide screen */
+.pc--wide .pc-banner {
+  height: clamp(140px, 24vw, 230px);
+}
+.pc--wide .pc-body {
+  padding: 0 clamp(18px, 3vw, 32px) 24px;
+}
+@media (min-width: 720px) {
+  /*
+   * Top-aligned: the face is pulled half over the banner and the names start
+   * just under it. Bottom-aligned, a long name column pushed the face down
+   * until it no longer overlapped anything.
+   */
+  .pc--wide .pc-id {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 22px;
+  }
+  .pc--wide .pc-face {
+    width: 120px;
+    height: 120px;
+    margin-top: -60px;
+    margin-bottom: 0;
+  }
+  .pc--wide .pc-names {
+    padding-top: 14px;
+  }
+  .pc--wide .pc-name {
+    font-size: 1.85rem;
+  }
+  .pc--wide .pc-aside {
+    margin-top: 16px;
+  }
+  .pc--wide .pcard-level {
+    max-width: 440px;
+  }
+}
+
+/* ---- the league ladder ---------------------------------------------------- */
+.ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ladder-rung {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+/* the rail between the rungs */
+.ladder-rung + .ladder-rung::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  inset-inline-end: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--border-strong);
+}
+.ladder-dot {
+  position: relative;
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--app-bg);
+}
+.ladder-rung.is-past .ladder-dot {
+  background: var(--ink-3);
+  border-color: var(--ink-3);
+}
+.ladder-rung.is-current {
+  color: var(--gold-ink);
+  font-weight: 650;
+}
+.ladder-rung.is-current .ladder-dot {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px var(--gold-soft);
+}
+
+/* ---- leaderboards ---------------------------------------------------------- */
+.rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: var(--glass-rim);
+}
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+}
+.rank-pos {
+  flex: none;
+  width: 24px;
+  text-align: center;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.rank-row.is-podium .rank-pos {
+  color: var(--gold-ink);
+}
+.rank-face {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.rank-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #dfe4f2;
+}
+.rank-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.rank-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rank-score {
+  flex: none;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.rank-row.rank-me {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.rank-you {
+  margin-inline-start: 8px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  vertical-align: middle;
+}
+/* a league row about to move gets a thin edge; the chip after it says where */
+.rank-row.is-promotion {
+  box-shadow: inset 2px 0 0 var(--success);
+}
+.rank-row.is-demotion {
+  box-shadow: inset 2px 0 0 var(--danger);
+}
+.rank-row.rank-me.is-promotion {
+  box-shadow: inset 2px 0 0 var(--success), inset 0 0 0 1px var(--border);
+}
+.rank-row.rank-me.is-demotion {
+  box-shadow: inset 2px 0 0 var(--danger), inset 0 0 0 1px var(--border);
+}
+[dir='rtl'] .rank-row.is-promotion {
+  box-shadow: inset -2px 0 0 var(--success);
+}
+[dir='rtl'] .rank-row.is-demotion {
+  box-shadow: inset -2px 0 0 var(--danger);
+}
+[dir='rtl'] .rank-row.rank-me.is-promotion {
+  box-shadow: inset -2px 0 0 var(--success), inset 0 0 0 1px var(--border);
+}
+[dir='rtl'] .rank-row.rank-me.is-demotion {
+  box-shadow: inset -2px 0 0 var(--danger), inset 0 0 0 1px var(--border);
+}
+/* after the score at the end of a game: what it earned, what it cost */
+.rank-xp {
+  flex: none;
+  color: var(--gold-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rank-delta {
+  flex: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rank-delta.up {
+  color: var(--success);
+}
+.rank-delta.down {
+  color: var(--danger);
+}
+.quiz-results .rank-list,
+.quiz-match .players,
+.wordle-battle-play .players {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+.quiz-results .rank-list {
+  text-align: start;
+}
+/* your place on a board whose page of rows does not reach you */
+.rank-standing {
+  margin-bottom: 12px;
+}
+.rank-dest {
+  flex: none;
+}
+@media (max-width: 480px) {
+  .rank-dest {
+    display: none;
+  }
+}
+
+/* the league card: when it ends, the tier, the ladder, the table */
+.league-card {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+}
+.league-card-head {
+  display: grid;
+  gap: 4px;
+}
+.league-card-title {
+  font-size: 1.35rem;
+}
+.league-card .rank-list {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ---- head-to-head: one chip per player ------------------------------------ */
+.players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.player {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.player.is-done {
+  border-color: rgba(134, 226, 164, 0.35);
+}
+.player-face {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.player-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #dfe4f2;
+}
+.player-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+.player-name {
+  font-size: 0.84rem;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-status {
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+.player.is-done .player-status {
+  color: var(--success);
+}
+.player-meter {
+  position: absolute;
+  inset-inline: 10px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.player-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--ink-2);
+  transition: width 0.3s ease;
+}
+
+/* ---- a game invite --------------------------------------------------------- */
+.invite-card {
+  display: grid;
+  gap: 5px;
+  width: min(100%, 300px);
+  padding: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  /* its own surface: your own bubble is white, and a see-through card vanished in it */
+  background: rgba(22, 25, 30, 0.94);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: var(--glass-rim);
+  transition:
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+a.invite-card:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+a.invite-card:active {
+  transform: translateY(1px);
+}
+.invite-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.invite-title {
+  font-size: 0.96rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.invite-blurb {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.invite-action {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ---- the four games, as tiles --------------------------------------------- */
+.game-grid {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 680px) {
+  .game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .game-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .game-tile--wordle,
+  .game-tile--quiz {
+    grid-column: span 7;
+  }
+  .game-tile--rhyme,
+  .game-tile--race {
+    grid-column: span 5;
+  }
+}
+.game-tile {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: rgba(255, 255, 255, 0.025);
+  overflow: hidden;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+/* only a tile that is itself the link lifts; in the app the button is the way in */
+.game-tile:has(.game-stretch):hover {
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.045);
+  transform: translateY(-2px);
+}
+.game-tile-visual {
+  display: grid;
+  place-items: center;
+  min-height: 196px;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  background: radial-gradient(90% 100% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 75%);
+}
+.game-tile-text {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 22px 24px 24px;
+}
+.game-tile-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.game-tile-head h3,
+.game-tile-text h3 {
+  font-family: var(--font-sans);
+  font-size: 1.06rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.game-tile-text p {
+  color: var(--ink-3);
+  font-size: 0.95rem;
+}
+.game-tile .btn {
+  justify-self: start;
+  margin-top: 8px;
+}
+/* the name is the link and the whole tile is its target (front page) */
+.game-stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+@supports selector(:has(*)) {
+  .game-stretch:focus-visible {
+    outline: none;
+  }
+  .game-tile:has(.game-stretch:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+}
+.game-tags {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.game-tags li {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: 0.74rem;
+  color: var(--ink-2);
+}
+.game-tags li.is-locked {
+  color: var(--ink-3);
+  border-style: dashed;
+}
+
+/* ---- pieces of the pictures, shared with the screens ----------------------- */
+.lp-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: var(--glass-rim);
+}
+.lp-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.lp-chip--ok {
+  border-color: rgba(134, 226, 164, 0.35);
+  background: var(--success-soft);
+  color: var(--success);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.86rem;
+  font-family: var(--font-display);
+  padding: 4px 12px;
+}
+.lp-fake-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lp-progress {
+  display: block;
+  flex: 1;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.lp-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink);
+}
+.lp-round {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+.lp-round--light {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.lp-round--gold {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.lp-round--mic {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.08);
+  animation: lp-ring 2.6s ease-out infinite;
+}
+.lp-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.lp-option.is-right {
+  border-color: rgba(46, 125, 91, 0.9);
+  background: rgba(46, 125, 91, 0.2);
+  color: #c6f0d8;
+}
+.lp-option--lg {
+  padding: 12px 14px;
+  border-radius: 13px;
+  font-size: 0.9rem;
+}
+.lp-float-kicker {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.lp-ku {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Wordle tiles in the game's own colours */
+.lp-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  /* a Kurdish word reads left to right on an Arabic or Soranî page too */
+  direction: ltr;
+}
+.lp-tile {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: lowercase;
+  line-height: 1;
+}
+.lp-tile--green {
+  background: #2e7d5b;
+  border-color: #2e7d5b;
+}
+.lp-tile--yellow {
+  background: #b8922e;
+  border-color: #b8922e;
+}
+.lp-tile--gray {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: transparent;
+  color: var(--ink-2);
+}
+
+/* the small pictures on a game tile */
+.lp-mini {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+}
+.lp-mini--wordle .lp-tiles {
+  width: 100%;
+  max-width: 230px;
+}
+.lp-mini--wordle .lp-tile {
+  font-size: 1rem;
+}
+.lp-keys {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  direction: ltr;
+}
+.lp-key {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 44px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.lp-rhyme-prompt {
+  font-size: 2.8rem;
+  line-height: 1;
+}
+.lp-rhyme-found {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.lp-race-text {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  color: var(--ink-4);
+  direction: ltr;
+  white-space: nowrap;
+}
+.lp-race-done {
+  color: var(--ink);
+}
+.lp-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-inline: 1px;
+  vertical-align: -0.15em;
+  background: var(--gold);
+  animation: lp-blink 1.1s steps(1) infinite;
+}
+.lp-race-stats {
+  display: flex;
+  gap: 18px;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.lp-race-stats b {
+  color: var(--ink);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.lp-quiz-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.lp-quiz-score b {
+  font-size: 1.15rem;
+}
+.lp-quiz-dash {
+  width: 12px;
+  height: 2px;
+  background: var(--ink-4);
+}
+.lp-quiz-q {
+  font-size: 1.3rem;
+  direction: ltr;
+}
+.lp-quiz-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.lp-face {
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #dfe4f2;
+}
+
+@keyframes lp-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes lp-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.22);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 14px rgba(255, 255, 255, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-caret,
+  .lp-round--mic {
+    animation: none;
+  }
+}
+
+/* ---- the daily reward ------------------------------------------------------ */
+.zer-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+}
+.zer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.zer-coin {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.zer-balance {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.zer-unit {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--gold-ink);
+}
+.zer-sub {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.zer-action {
+  margin-inline-start: auto;
+}
+.zer-msg {
+  flex-basis: 100%;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+}
+
+/* ---- learn: the course, and what a lesson in it looks like ----------------- */
+.learn-grid {
+  display: grid;
+  gap: 28px;
+  align-items: start;
+}
+@media (min-width: 980px) {
+  .learn-grid {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+.course-card {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+}
+.course-card + .course-card {
+  margin-top: 14px;
+}
+.course-card-title {
+  font-size: 1.5rem;
+}
+.course-card p {
+  color: var(--ink-3);
+}
+.learn-preview {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+.lp-status {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-pill);
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.lp-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-3);
+}
+.learn-preview .lp-status {
+  justify-self: center;
+}

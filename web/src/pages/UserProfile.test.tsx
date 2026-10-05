@@ -53,8 +53,8 @@ describe('UserProfile (other user, full page)', () => {
     // country: real flag image + name under the username
     expect(screen.getByText('Germany')).toBeInTheDocument();
     expect((document.querySelector('.mkp-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
-    expect(document.querySelector('.mkp-hex')?.textContent).toBe('5');
-    expect((document.querySelector('.mkp-bg') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
+    expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 5');
+    expect((document.querySelector('.pc-banner .pcard-bg-media') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // no self-only Edit Profile button; a friend action instead
     expect(screen.queryByRole('link', { name: /edit profile/i })).not.toBeInTheDocument();

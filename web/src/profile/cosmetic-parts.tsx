@@ -29,20 +29,26 @@ export function CosmeticBackground({ background, className }: { background: Prof
   return <img className={cls} src={background.url} alt="" aria-hidden="true" />;
 }
 
-/** Level badge + progress bar toward the next level (derived server-side). */
-export function LevelBar({ level }: { level: LevelInfo }): React.JSX.Element {
+/**
+ * Level, a bar toward the next one, and what is left to earn (all derived
+ * server-side).
+ *
+ * The distance to the next level used to live in a tooltip, which a phone never
+ * shows; it is the most motivating number on the card, so it is now a line of
+ * its own under the bar — the way the front page draws it.
+ */
+export function LevelBar({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'> }): React.JSX.Element {
   const t = useT();
   const pct = Math.round(Math.min(1, Math.max(0, level.progress)) * 100);
   const toNext = Math.max(0, level.nextLevelXp - level.xp);
+  const next = t('profile.xpToLevel', { xp: toNext.toLocaleString(), level: level.level + 1 });
   return (
-    <div className="pcard-level" title={t('profile.xpToLevel', { xp: toNext.toLocaleString(), level: level.level + 1 })}>
-      <div className="pcard-level-head">
-        <span className="pcard-level-badge">{t('profile.levelN', { level: level.level })}</span>
-        <span className="pcard-level-xp">{level.xp.toLocaleString()} XP</span>
-      </div>
-      <div className="pcard-level-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+    <div className="pcard-level">
+      <span className="pcard-level-badge">{t('profile.levelN', { level: level.level })}</span>
+      <div className="pcard-level-track" role="progressbar" aria-label={next} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
         <div className="pcard-level-fill" style={{ width: `${pct}%` }} />
       </div>
+      <span className="pcard-level-next" aria-hidden="true">{next}</span>
     </div>
   );
 }

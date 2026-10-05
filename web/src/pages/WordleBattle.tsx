@@ -8,6 +8,9 @@ import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, KURMANCI_LETTER_RE } from '../components/WordleBoard';
 import { buildInviteUrl } from '../lib/gameInvites';
+import { useRail } from '../social/RailProvider';
+import { PlayerChip } from '../ui/PlayerChip';
+import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -122,6 +125,8 @@ function CreateBattle(): React.JSX.Element {
 function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
+  // your own face, from the poll the nav already runs; a battle shares nobody else's
+  const myAvatar = useRail().data.you?.avatarUrl ?? null;
   const [battle, setBattle] = useState<BattleState | null>(null);
   const [results, setResults] = useState<BattleResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -273,20 +278,26 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
         {results && (
           <>
             <p className="muted">{t('games.wordle.theWordWas', { word: results.target })}</p>
-            <ol className="quiz-scoreboard">
-              {results.ranking.map((r) => (
-                <li key={r.userId} className={`quiz-scoreline${r.userId === user?.id ? ' me' : ''}`}>
-                  <span className="quiz-rank">{r.rank}</span>
-                  <span className="quiz-name">{r.userId === user?.id ? t('games.you') : t('games.opponent')}</span>
-                  <span className="quiz-pts">
-                    {r.solved
-                      ? t('games.battle.solvedIn', { count: r.guessCount })
-                      : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
-                  </span>
-                  {r.xpAwarded ? <span className="quiz-xp">+{r.xpAwarded} XP</span> : null}
-                </li>
-              ))}
-            </ol>
+            <RankList>
+              {results.ranking.map((r) => {
+                const me = r.userId === user?.id;
+                return (
+                  <RankRow
+                    key={r.userId}
+                    rank={r.rank}
+                    name={me ? t('games.you') : t('games.opponent')}
+                    avatarUrl={me ? myAvatar : null}
+                    me={me}
+                    score={
+                      r.solved
+                        ? t('games.battle.solvedIn', { count: r.guessCount })
+                        : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })
+                    }
+                    trailing={r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : undefined}
+                  />
+                );
+              })}
+            </RankList>
           </>
         )}
         <Link to="/app/games/wordle-battle" className="btn btn-primary">{t('games.battle.new')}</Link>
@@ -298,24 +309,36 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const me = battle.me;
   return (
     <div className="wordle-battle-play">
+      {/* the same chips the front page draws above its battle: you, and how close everyone else is */}
       {battle.opponents.length > 0 && (
-        <div className="battle-opponents">
+        <div className="players battle-players">
+          {me && (
+            <PlayerChip
+              name={t('games.you')}
+              avatarUrl={myAvatar}
+              done={me.solved}
+              status={
+                me.solved
+                  ? t('games.battle.solvedIn', { count: me.guesses.length })
+                  : t('games.battle.opponentGuesses', { count: me.guesses.length })
+              }
+            />
+          )}
           {battle.opponents.map((o, i) => (
-            <div className="battle-opp" key={o.userId}>
-              <span className="battle-opp-name">
-                {battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent')}
-              </span>
-              <div className="battle-bar" aria-label={t('games.battle.opponentProgress')}>
-                <div className="battle-bar-fill" style={{ width: `${Math.round((o.progress / battle.targetLength) * 100)}%` }} />
-              </div>
-              <span className="battle-opp-status">
-                {o.solved
+            <PlayerChip
+              key={o.userId}
+              name={battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent')}
+              avatarUrl={null}
+              done={o.solved}
+              progress={o.progress / battle.targetLength}
+              status={
+                o.solved
                   ? t('games.battle.opponentSolved')
                   : o.finished
                     ? t('games.battle.opponentDone')
-                    : t('games.battle.opponentGuesses', { count: o.guessCount })}
-              </span>
-            </div>
+                    : `${t('games.battle.opponentGuesses', { count: o.guessCount })} · ${t('games.battle.lettersProgress', { done: o.progress, total: battle.targetLength })}`
+              }
+            />
           ))}
         </div>
       )}

@@ -22,6 +22,8 @@ import {
   WordleMini,
 } from '../landing/mocks';
 import { HEVAL, HOW_ARE_YOU, KURDISH_LETTERS } from '../landing/samples';
+import { HOME_FAQ } from '../landing/faq';
+import { FaqList } from '../components/FaqList';
 
 /*
  * The front door.
@@ -269,19 +271,19 @@ export function Landing(): React.JSX.Element {
       <section id="games" className="lp-section" aria-labelledby="lp-play">
         <div className="container">
           <SectionHead id="lp-play" kicker="landing.play.kicker" title="landing.play.title" lead="landing.play.lead" />
-          <div className="lp-games">
+          <div className="game-grid">
             {GAMES.map((g) => (
-              <article className={`lp-game lp-game--${g.id} lp-reveal`} key={g.id}>
-                <div className="lp-game-visual">{g.visual}</div>
-                <div className="lp-game-text">
-                  <h3 className="lp-h3">
+              <article className={`game-tile game-tile--${g.id} lp-reveal`} key={g.id}>
+                <div className="game-tile-visual">{g.visual}</div>
+                <div className="game-tile-text">
+                  <h3>
                     {/* the whole tile is the link; the name is what it is called */}
-                    <Link to={g.href} className="lp-stretch">
+                    <Link to={g.href} className="game-stretch">
                       {t(g.name)}
                     </Link>
                   </h3>
-                  <p className="lp-body">{t(g.body)}</p>
-                  <ul className="lp-tags">
+                  <p>{t(g.body)}</p>
+                  <ul className="game-tags">
                     {g.tags.map((tag) => (
                       <li key={tag}>{t(tag)}</li>
                     ))}
@@ -413,6 +415,21 @@ export function Landing(): React.JSX.Element {
                 <p className="lp-body">{t(c.body)}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ---- questions ------------------------------------------------------ */}
+      <section id="faq" className="lp-section" aria-labelledby="lp-faq">
+        <div className="container lp-faq-grid">
+          <div>
+            <SectionHead id="lp-faq" kicker="faq.kicker" title="faq.title" lead="faq.lead" />
+            <Link to="/faq" className="doc-link lp-faq-all">
+              {t('faq.all')}
+            </Link>
+          </div>
+          <div className="lp-reveal">
+            <FaqList entries={HOME_FAQ} />
           </div>
         </div>
       </section>

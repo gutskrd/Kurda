@@ -199,18 +199,23 @@ input[type='password']::-ms-clear {
 
 /* ---- badges / tags ----------------------------------------------------- */
 .badge {
+  /* the front page's chip: an outline and small capitals, not a filled pill */
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 4px 9px;
+  padding: 3px 9px;
   border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--ink-2);
+  background: transparent;
+  color: var(--ink-3);
   border: 1px solid var(--border);
+  white-space: nowrap;
+}
+[dir='rtl'] .badge {
+  letter-spacing: normal;
 }
 .badge-gold {
   background: var(--gold-soft);

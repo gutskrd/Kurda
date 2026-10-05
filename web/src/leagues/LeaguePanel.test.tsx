@@ -35,7 +35,7 @@ describe('LeaguePanel', () => {
     vi.stubGlobal('fetch', answer(cohort('silver', 30, 12)));
     renderApp(<LeaguePanel />);
 
-    expect(await screen.findByRole('heading', { name: '🥈 Silver League' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Silver League' })).toBeInTheDocument();
     expect(screen.getByText(/Ends in/)).toBeInTheDocument();
   });
 
@@ -47,11 +47,11 @@ describe('LeaguePanel', () => {
   it('names the tier above for the promotion zone and below for the demotion zone', async () => {
     vi.stubGlobal('fetch', answer(cohort('silver', 30, 12)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: '🥈 Silver League' });
+    await screen.findByRole('heading', { name: 'Silver League' });
 
     // top ten promote to Gold, bottom five drop to Bronze
-    expect(screen.getAllByText('🥇 Gold League')).toHaveLength(10);
-    expect(screen.getAllByText('🥉 Bronze League')).toHaveLength(5);
+    expect(screen.getAllByText('Gold League')).toHaveLength(10);
+    expect(screen.getAllByText('Bronze League')).toHaveLength(5);
     // the fifteen in between are going nowhere and say so by saying nothing
     expect(screen.getAllByText(/League$/)).toHaveLength(1 + 10 + 5);
   });
@@ -64,9 +64,9 @@ describe('LeaguePanel', () => {
   it('promises no demotion out of the bottom tier', async () => {
     vi.stubGlobal('fetch', answer(cohort('bronze', 30, 28)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: '🥉 Bronze League' });
+    await screen.findByRole('heading', { name: 'Bronze League' });
 
-    expect(screen.getAllByText('🥈 Silver League')).toHaveLength(10);
+    expect(screen.getAllByText('Silver League')).toHaveLength(10);
     // the heading is the only other thing naming a league
     expect(screen.getAllByText(/League$/)).toHaveLength(1 + 10);
   });
@@ -74,16 +74,16 @@ describe('LeaguePanel', () => {
   it('promises no promotion out of the top tier', async () => {
     vi.stubGlobal('fetch', answer(cohort('diamond', 30, 3)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: '💎 Diamond League' });
+    await screen.findByRole('heading', { name: 'Diamond League' });
 
-    expect(screen.getAllByText('⬛ Obsidian League')).toHaveLength(5);
+    expect(screen.getAllByText('Obsidian League')).toHaveLength(5);
     expect(screen.getAllByText(/League$/)).toHaveLength(1 + 5);
   });
 
   it('marks the reader rather than repeating their name', async () => {
     vi.stubGlobal('fetch', answer(cohort('gold', 30, 4)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: '🥇 Gold League' });
+    await screen.findByRole('heading', { name: 'Gold League' });
 
     expect(screen.getByText('You')).toBeInTheDocument();
     expect(screen.queryByText('player4')).not.toBeInTheDocument();
@@ -102,8 +102,8 @@ describe('LeaguePanel', () => {
     vi.stubGlobal('fetch', answer(cohort('silver', 30, 12)));
     renderApp(<LeaguePanel />);
 
-    expect(await screen.findByRole('heading', { name: '🥈 Lîga Zîv' })).toBeInTheDocument();
-    expect(screen.getAllByText('🥇 Lîga Zêrîn')).toHaveLength(10);
+    expect(await screen.findByRole('heading', { name: 'Lîga Zîv' })).toBeInTheDocument();
+    expect(screen.getAllByText('Lîga Zêrîn')).toHaveLength(10);
   });
 
   /**
@@ -113,9 +113,9 @@ describe('LeaguePanel', () => {
   it('promises no demotion in a cohort too small for it', async () => {
     vi.stubGlobal('fetch', answer(cohort('silver', 6, 6)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: '🥈 Silver League' });
+    await screen.findByRole('heading', { name: 'Silver League' });
 
-    expect(screen.queryByText('🥉 Bronze League')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bronze League')).not.toBeInTheDocument();
   });
 
   /*

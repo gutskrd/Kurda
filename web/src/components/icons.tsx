@@ -33,7 +33,6 @@ import { Coin } from '@phosphor-icons/react/dist/icons/Coin';
 import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
 import { EyeSlash } from '@phosphor-icons/react/dist/icons/EyeSlash';
 import { PuzzlePiece } from '@phosphor-icons/react/dist/icons/PuzzlePiece';
-import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
 import { House } from '@phosphor-icons/react/dist/icons/House';
 import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
 import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
@@ -100,7 +99,6 @@ export const FeatherIcon = named(PenNib, 22);
    rhyming, a race to answer — and a gamepad promised the wrong thing. */
 export const GameIcon = named(PuzzlePiece, 22);
 /** Typing, specifically — the race is about keys, not about writing. */
-export const KeyboardIcon = named(Keyboard, 22);
 export const PhotoIcon = named(ImageGlyph, 22);
 export const HeartIcon = named(Heart, 22);
 export const CommentIcon = named(ChatCircle, 22);

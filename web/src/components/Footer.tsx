@@ -60,6 +60,7 @@ export function Footer(): React.JSX.Element {
               {t('footer.company')}
             </h2>
             <Link to="/about">{t('nav.about')}</Link>
+            <Link to="/faq">{t('footer.faq')}</Link>
             <Link to="/privacy">{t('footer.privacy')}</Link>
             <Link to="/terms">{t('footer.terms')}</Link>
           </nav>

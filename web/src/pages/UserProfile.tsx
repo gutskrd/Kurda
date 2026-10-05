@@ -66,6 +66,7 @@ export function UserProfile(): React.JSX.Element {
     background: profile.background ?? null,
     premium: profile.premium,
     level: profile.level?.level ?? 1,
+    levelInfo: profile.level,
     xp: profile.level?.xp ?? profile.xp ?? 0,
     streakDays: profile.streak ?? 0,
     bio: profile.bio,
@@ -135,7 +136,7 @@ function FriendActions({ userId, username, status }: { userId: string; username:
 
   return (
     <div className="mkp-actions">
-      {state === 'self' && <Link to="/app/profile" className="mkp-edit">{t('profile.yours')}</Link>}
+      {state === 'self' && <Link to="/app/profile" className="btn btn-secondary btn-sm">{t('profile.yours')}</Link>}
       {state === 'friends' && message}
       {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? t('profile.sending') : t('profile.addFriend')}</Button>}
       {state === 'pending_out' && <Button size="sm" disabled>{t('profile.requestSent')}</Button>}
