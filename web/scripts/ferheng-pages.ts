@@ -810,6 +810,8 @@ ${/* the headline is the one piece of copy with markup in it â€” a line break â€
 
 <section class="section">
 ${index}
+${/* how each of these letters sounds lives in the app, which explains it against the reader's own language */ ''}
+<p class="pager alphabet-link"><a class="pill" href="/app/alphabet">${labelled('page.index.alphabet', copy.index.alphabet)}</a></p>
 </section>
 
 <section class="section">
@@ -1224,6 +1226,7 @@ main { padding-bottom: 8px; }
   background: var(--surface); color: var(--ink-2); font-size: 0.92rem;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
+.pager.alphabet-link { justify-content: flex-start; margin: 22px 0 0; }
 .pager .pill:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
 
 @media (max-width: 40rem) {

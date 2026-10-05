@@ -1,0 +1,483 @@
+/* ---- the alphabet ---------------------------------------------------------- */
+/*
+ * One thing in focus at a time: a grid of letters to scan, and the letter you
+ * picked open beside it. Gold is the colour this app keeps for "notice this",
+ * so it marks exactly one thing everywhere — the sound inside a comparison
+ * word, and the letter inside the Kurdish word.
+ */
+
+/* Soranî letters in a face made for Arabic script, so the joined forms are the real ones */
+.ab-ar {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-feature-settings: normal;
+}
+
+.ab-layout {
+  display: grid;
+  gap: 28px;
+  align-items: start;
+}
+@media (min-width: 960px) {
+  .ab-layout {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 36px;
+  }
+  .ab-aside {
+    position: sticky;
+    top: calc(var(--nav-h) + 20px);
+  }
+}
+.ab-main {
+  display: grid;
+  gap: 34px;
+  min-width: 0;
+}
+.ab-summary {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1rem + 0.8vw, 1.5rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  max-width: 34ch;
+  text-wrap: balance;
+}
+
+/* ---- a group --------------------------------------------------------------- */
+.ab-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 1.2rem;
+  margin: 0;
+}
+.ab-count {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ab-group-body {
+  margin: 6px 0 14px;
+  color: var(--ink-3);
+  font-size: 0.95rem;
+  max-width: 58ch;
+}
+.ab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 8px;
+}
+
+/* ---- a letter -------------------------------------------------------------- */
+.ab-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 76px;
+  padding: 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.12s ease;
+}
+.ab-tile:hover {
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+}
+.ab-tile:active {
+  transform: translateY(1px);
+}
+.ab-tile.is-on {
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+.ab-tile-glyph {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  line-height: 1;
+}
+.ab-tile-glyph small {
+  margin-inline-start: 2px;
+  font-size: 0.62em;
+  color: var(--ink-3);
+}
+.ab-tile-glyph.ab-ar {
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+.ab-tile-hint {
+  font-size: 0.74rem;
+  font-weight: 650;
+  color: var(--gold-ink);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the false friends: one gold dot, so the group reads as "these" at a glance */
+.ab-group--watch .ab-tile::after,
+.ab-tile.is-kurdish::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+/* ---- the two rules worth more than any one letter ---------------------------- */
+.ab-rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+}
+.ab-rule-pairs,
+.ab-join {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.ab-rule-pairs .ab-sep {
+  width: 14px;
+}
+.ab-arrow {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--ink-4);
+}
+.ab-join-parts {
+  display: inline-flex;
+  gap: 6px;
+  color: var(--ink-3);
+}
+.ab-join-word {
+  color: var(--gold-ink);
+}
+.ab-rule-title {
+  margin: 0;
+  font-size: 1.02rem;
+}
+.ab-rule-body {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: 0.92rem;
+  max-width: 48ch;
+}
+
+/* ---- the open letter ------------------------------------------------------- */
+.ab-card {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: var(--glass-rim);
+}
+.modal-panel .ab-card {
+  padding: 4px 0 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.ab-card-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ab-card-glyph {
+  font-family: var(--font-display);
+  font-size: 4.6rem;
+  line-height: 0.9;
+}
+.ab-card-glyph small {
+  margin-inline-start: 6px;
+  font-size: 0.55em;
+  color: var(--ink-3);
+}
+.ab-card-glyph.ab-ar {
+  font-size: 4.8rem;
+  line-height: 1.1;
+}
+.ab-ipa {
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+}
+.ab-badge {
+  justify-self: start;
+  margin: -6px 0 0;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+.ab-card-row {
+  display: grid;
+  gap: 4px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.ab-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+[dir='rtl'] .ab-card-label {
+  letter-spacing: normal;
+}
+.ab-like {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.35;
+  color: var(--ink-2);
+}
+.ab-like mark,
+.ab-card-word mark {
+  background: transparent;
+  color: var(--gold-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.ab-card-word {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.2;
+}
+.ab-card-word.ab-ar {
+  font-size: 2.1rem;
+}
+.ab-card-meaning {
+  color: var(--ink-3);
+  font-size: 0.95rem;
+}
+.ab-card-partner {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  line-height: 1.2;
+}
+.ab-card-partner.ab-ar {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+.ab-card-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}
+.ab-forms {
+  display: flex;
+  gap: 8px;
+}
+.ab-form {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.ab-form .ab-ar {
+  font-size: 1.7rem;
+  line-height: 1.2;
+}
+.ab-form small {
+  font-size: 0.68rem;
+  color: var(--ink-3);
+}
+.ab-step {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ---- check yourself -------------------------------------------------------- */
+.ab-practice,
+.ab-next {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+}
+.ab-practice .ab-group-body {
+  margin-bottom: 16px;
+}
+.ab-q {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ab-q-progress {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ab-q-ask {
+  margin: 0;
+  color: var(--ink-2);
+}
+.ab-q-prompt {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1.25;
+}
+.ab-q-prompt .ab-like {
+  font-size: inherit;
+  color: var(--ink);
+}
+.ab-q-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 360px;
+}
+.ab-option {
+  min-height: 72px;
+}
+.ab-option:disabled {
+  cursor: default;
+}
+.ab-option.is-right {
+  border-color: rgba(134, 226, 164, 0.6);
+  background: var(--success-soft);
+}
+.ab-option.is-wrong {
+  border-color: rgba(255, 156, 144, 0.6);
+  background: var(--danger-soft);
+}
+.ab-option.is-dim {
+  opacity: 0.45;
+}
+.ab-q-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.ab-right {
+  color: var(--success);
+  font-weight: 600;
+}
+.ab-wrong {
+  color: var(--danger);
+  font-weight: 600;
+}
+.ab-q-score {
+  margin: 12px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+.ab-next-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ab-tile {
+    transition: none;
+  }
+  .ab-tile:active {
+    transform: none;
+  }
+}
+
+/* ---- the way in, from Learn ------------------------------------------------- */
+.ab-start {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-rim);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+.ab-start:hover {
+  border-color: var(--border-strong);
+}
+.ab-start-letters {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-ink);
+  direction: ltr;
+}
+.ab-start-text {
+  display: grid;
+  gap: 2px;
+}
+.ab-start-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+.ab-start-body {
+  color: var(--ink-3);
+  font-size: 0.92rem;
+}
+.dict-alphabet {
+  display: inline-block;
+  margin: 10px 0 4px;
+}
+.lp-alphabet {
+  display: inline-block;
+  margin-top: 18px;
+}
+@media (max-width: 520px) {
+  .ab-start {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* an Arabic-script word on a left-to-right page sits under its label, not against the far edge */
+.ab-card-word,
+.ab-card-partner {
+  justify-self: start;
+}
+/* in a right-to-left page the letters come first on the right, so the arrow points the other way */
+[dir='rtl'] .ab-join .ab-arrow {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+.ab-card-meaning {
+  justify-self: start;
+}

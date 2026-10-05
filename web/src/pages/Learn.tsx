@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useApiGet } from '../lib/useApi';
 import { ErrorState, EmptyState } from '../components/states';
 import { CourseGridSkeleton } from '../components/skeletons';
@@ -10,6 +11,9 @@ interface CourseSummary {
   title: string;
   dialect: string;
 }
+
+/** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
+const ALPHABET_TEASER = 'Aa Çç Êê';
 
 const DIALECT_LABEL: Record<string, string> = {
   kmr: 'Kurmancî',
@@ -28,6 +32,17 @@ export function Learn(): React.JSX.Element {
         <h1 className="page-title">{t('learn.title')}</h1>
         <p className="page-sub">{t('learn.subtitle')}</p>
       </div>
+
+      {/* before any course, the letters it is written in */}
+      <Link to="/app/alphabet" className="ab-start">
+        <span className="ab-start-letters" lang="ku" aria-hidden="true">
+          {ALPHABET_TEASER}
+        </span>
+        <span className="ab-start-text">
+          <span className="ab-start-title">{t('alphabet.title')}</span>
+          <span className="ab-start-body">{t('alphabet.link')}</span>
+        </span>
+      </Link>
 
       {loading ? (
         <CourseGridSkeleton />

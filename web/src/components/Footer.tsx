@@ -52,6 +52,7 @@ export function Footer(): React.JSX.Element {
               that exists.
             */}
             <a href={publishedDictionary(locale)}>{t('nav.dictionary')}</a>
+            <Link to="/app/alphabet">{t('footer.alphabet')}</Link>
             <Link to="/app/rankings">{t('nav.rankings')}</Link>
           </nav>
 

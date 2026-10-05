@@ -79,6 +79,8 @@ export interface Copy {
     selected: string;
     about: string;
     aboutBody: string;
+    /** the way from the letter index to the app's alphabet, where each letter's sound is explained */
+    alphabet: string;
     description: (total: string) => string;
   };
   letter: {
@@ -146,6 +148,7 @@ const KU: Copy = {
     about: 'Derbarê',
     aboutBody:
       'Ev ferheng ji Wîkîferhenga kurdî tê, û her peyv li vir wekî rûpeleke statîk tê weşandin — ji ber vê yekê ew her û her belaş e, çiqas kes jî wê bixwîne.',
+    alphabet: 'Tîp ji te re nû ne? Bibîne her yek çawa tê gotin',
     description: (total) => `${total} peyvên kurdî bi wateyên wan. Belaş, bê hesab û bê reklam.`,
   },
   letter: {
@@ -210,6 +213,7 @@ const EN: Copy = {
     about: 'About',
     aboutBody:
       'This dictionary comes from the Kurdish Wiktionary, and every word here is published as a static page — which is why it stays free however many people read it.',
+    alphabet: 'New to the letters? See how each one sounds',
     description: (total) => `${total} Kurdish words and what they mean. Free, no account, no adverts.`,
   },
   letter: {
@@ -318,6 +322,7 @@ const DE: PageText = {
     about: 'Über das Wörterbuch',
     aboutBody:
       'Dieses Wörterbuch stammt aus dem kurdischen Wiktionary, und jedes Wort hier ist als statische Seite veröffentlicht — deshalb bleibt es kostenlos, ganz gleich, wie viele Menschen es lesen.',
+    alphabet: 'Neu bei den Buchstaben? So klingt jeder einzelne',
     description: (total) => `${total} kurdische Wörter und ihre Bedeutungen. Kostenlos, ohne Konto, ohne Werbung.`,
   },
   letter: {
@@ -384,6 +389,7 @@ const NL: PageText = {
     about: 'Over het woordenboek',
     aboutBody:
       'Dit woordenboek komt uit het Koerdische Wiktionary, en elk woord staat hier als statische pagina — daarom blijft het gratis, hoeveel mensen het ook lezen.',
+    alphabet: 'Nieuw met de letters? Zo klinkt elke letter',
     description: (total) => `${total} Koerdische woorden en hun betekenis. Gratis, zonder account, zonder advertenties.`,
   },
   letter: {
@@ -450,6 +456,7 @@ const ES: PageText = {
     about: 'Sobre el diccionario',
     aboutBody:
       'Este diccionario procede del Wikcionario kurdo, y cada palabra se publica aquí como una página estática; por eso sigue siendo gratis, la lea quien la lea.',
+    alphabet: '¿Nuevo con las letras? Mira cómo suena cada una',
     description: (total) => `${total} palabras kurdas y su significado. Gratis, sin cuenta y sin anuncios.`,
   },
   letter: {
@@ -516,6 +523,7 @@ const FR: PageText = {
     about: 'À propos du dictionnaire',
     aboutBody:
       'Ce dictionnaire provient du Wiktionnaire kurde, et chaque mot y est publié sous forme de page statique — c’est pourquoi il reste gratuit, quel que soit le nombre de lecteurs.',
+    alphabet: 'Vous découvrez les lettres ? Voyez comment chacune se prononce',
     description: (total) => `${total} mots kurdes et leur sens. Gratuit, sans compte, sans publicité.`,
   },
   letter: {
@@ -582,6 +590,7 @@ const TR: PageText = {
     about: 'Sözlük hakkında',
     aboutBody:
       'Bu sözlük Kürtçe Vikisözlük’ten gelir ve buradaki her kelime statik bir sayfa olarak yayımlanır — bu yüzden kaç kişi okursa okusun ücretsiz kalır.',
+    alphabet: 'Harflerde yeni misin? Her birinin nasıl okunduğuna bak',
     description: (total) => `${total} Kürtçe kelime ve anlamları. Ücretsiz, hesapsız, reklamsız.`,
   },
   letter: {
@@ -647,6 +656,7 @@ const AR: PageText = {
     selected: 'كلمات مختارة',
     about: 'عن القاموس',
     aboutBody: 'هذا القاموس مأخوذ من ويكاموس الكردي، وكل كلمة فيه منشورة كصفحة ثابتة — ولهذا يبقى مجانيًا مهما كثر قرّاؤه.',
+    alphabet: 'جديد على الحروف؟ تعرّف على نطق كل حرف',
     description: (total) => `${total} كلمة كردية ومعانيها. مجاني، بلا حساب ولا إعلانات.`,
   },
   letter: {
@@ -713,6 +723,7 @@ const CKB: PageText = {
     about: 'دەربارەی فەرهەنگ',
     aboutBody:
       'ئەم فەرهەنگە لە ویکیفەرهەنگی کوردییەوە هاتووە، و هەموو وشەیەک لێرە وەک پەڕەیەکی جێگیر بڵاو دەکرێتەوە — بۆیە بێبەرامبەر دەمێنێتەوە، هەرچەند کەس بیخوێنێتەوە.',
+    alphabet: 'پیتەکان بۆ تۆ نوێن؟ ببینە هەر یەکەیان چۆن دەگوترێت',
     description: (total) => `${total} وشەی کوردی و واتاکانیان. بێبەرامبەر، بێ هەژمار و بێ ڕیکلام.`,
   },
   letter: {

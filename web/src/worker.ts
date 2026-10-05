@@ -318,6 +318,12 @@ const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: st
       'Is Hevalo free? Which Kurdish does it teach? How do you play with friends, and where are the lessons? Straight answers about learning Kurdish on Hevalo.',
   },
   {
+    path: '/app/alphabet',
+    title: 'The Kurdish alphabet: Kurmanji and Sorani letters · Hevalo',
+    description:
+      'Every Kurmanji and Sorani letter, what it sounds like next to sounds you already know, and a word to remember it by. Free, no account.',
+  },
+  {
     path: '/privacy',
     title: 'Privacy · Hevalo',
     description:

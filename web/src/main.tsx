@@ -11,6 +11,7 @@ import './styles/feed.css';
 import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
+import './styles/alphabet.css';
 import './styles/marketing.css';
 
 const root = document.getElementById('root');
