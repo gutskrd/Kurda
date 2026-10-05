@@ -51,10 +51,9 @@
 # So this block names only what differs, and the shared headers are left to
 # `/*`. The second CSP is deliberate and is the exception: a browser given two
 # policies enforces BOTH, so the result is their intersection and can only be
-# stricter than either. `/*` allows scripts from self; this allows one named
-# file (see below), so the intersection is that file and nothing else — no
-# inline script, no other script on the origin. Same for inline style, which
-# `/*` permits and this does not.
+# stricter than either. Both allow scripts from self and nothing else — no
+# inline script, no other host (see below for why self). Inline style, which
+# `/*` permits, this does not.
 #
 # That is the second of the two things between a stranger's Wiktionary text
 # and code running here. The first is the escaping in web/scripts/escape.ts,
@@ -69,16 +68,21 @@
 # first third party these pages talk to; a file on the edge costs nothing and
 # tells nobody that somebody read a word.
 #
-# `script-src` names exactly one file, by its full URL: chrome.js, which puts
-# the bar and footer into the reader's own language (the pages exist in two,
-# the app in nine — see web/scripts/ferheng-chrome.ts). It is a URL with a
-# path, not 'self', so it does not reopen what the paragraph above closes: an
-# injected <script> is still refused, inline or pointing anywhere else on this
-# origin, and the one file it could name only relabels the bar. Anywhere other
-# than hevalo.app the file is refused too, and the bar simply stays in the
-# page's own language. connect-src is still 'none': it makes no requests.
+# `script-src 'self'` is for chrome.js, which puts the page into the reader's
+# own language — the pages exist in two, the app in nine; see
+# web/scripts/ferheng-chrome.ts. It does not reopen what the paragraph above
+# closes: an injected inline script or handler is still refused, and a
+# <script src> can only name a file on this origin, every one of which is ours
+# (user uploads live on another host, the Worker's pages are HTML, and
+# `X-Content-Type-Options: nosniff` above stops anything not served as
+# JavaScript from running). connect-src is still 'none', so even one of the
+# app's own bundles pulled in by an injection could reach nothing.
+#
+# 'self' rather than chrome.js's full URL, because a URL names a host: pinned
+# to https://hevalo.app/ the file was refused on every preview deployment,
+# which is where the fix gets checked, and the page stayed English there.
 /ferheng/*
-  Content-Security-Policy: default-src 'none'; script-src https://hevalo.app/ferheng/chrome.js; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400
 
@@ -88,6 +92,6 @@
 # names — see web/scripts/ferheng-copy.ts. Every header has to be repeated:
 # `_headers` matches a path, and /dictionary/ does not match /ferheng/*.
 /dictionary/*
-  Content-Security-Policy: default-src 'none'; script-src https://hevalo.app/dictionary/chrome.js; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400

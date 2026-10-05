@@ -626,6 +626,46 @@ describe('what the dictionary copies from the app', () => {
     expect(STYLE).toMatch(/min-width:\s*1180px[\s\S]{0,120}max-width:\s*1440px/);
   });
 
+  /** The value one declaration has in the first rule for `selector` — the base rule, ahead of any media query. */
+  const declOf = (css: string, selector: string, prop: string): string | undefined => {
+    const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const block = new RegExp(`(?:^|\\n)\\s*${esc}\\s*\\{([^}]*)\\}`).exec(css)?.[1];
+    return block ? new RegExp(`(?:^|[;\\s])${prop}\\s*:\\s*([^;]+);`).exec(block)?.[1]?.trim() : undefined;
+  };
+
+  /**
+   * Clicking Dictionary used to move the bar: the dictionary had a copy of the
+   * app's nav from before the app's changed, so the links were dimmer, the
+   * page you were on lost its highlight, and Log in and Get started sat 28px
+   * apart instead of 14 on slightly smaller buttons. The copy has to keep up.
+   */
+  it('draws the bar with the app’s own measurements', () => {
+    const layout = read('layout.css');
+    const ui = read('ui.css');
+    const pairs: Array<[string, string, string]> = [
+      [layout, '.nav-inner', 'gap'],
+      [layout, '.nav-links', 'gap'],
+      [layout, '.nav-link', 'height'],
+      [layout, '.nav-link', 'padding'],
+      [layout, '.nav-link', 'font-size'],
+      [layout, '.nav-link', 'color'],
+      [layout, '.nav-link.active', 'background'],
+      [layout, '.nav-link', 'font-weight'],
+      [layout, '.nav-link-icon', 'color'],
+      [layout, '.nav-actions', 'gap'],
+      [ui, '.btn-sm', 'height'],
+      [ui, '.btn-sm', 'padding'],
+      [ui, '.btn-sm', 'font-size'],
+    ];
+    const wrong = pairs
+      .map(([css, sel, prop]) => [sel, prop, declOf(css, sel, prop), declOf(STYLE, sel, prop)] as const)
+      .filter(([, , app, mine]) => app === undefined || app !== mine)
+      .map(([sel, prop, app, mine]) => `${sel} ${prop}: ${mine} ≠ ${app}`);
+    expect(wrong).toEqual([]);
+    // the page you are on is not bolder: a wider link moves every link after it
+    for (const css of [layout, STYLE]) expect(declOf(css, '.nav-link.active', 'font-weight')).toBeUndefined();
+  });
+
   /** Headings in the display serif is most of why a page looks like Hevalo. */
   it('sets headings in the same family the app sets them in', () => {
     expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);

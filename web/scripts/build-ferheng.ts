@@ -20,9 +20,10 @@
  *
  * The definitions are Wiktionary text: written by strangers, and the one thing
  * on these pages that an attacker controls. It is escaped on the way in (see
- * `escape`), and then the page is served under a policy that forbids scripts
- * outright (`script-src 'none'`, in web/public/_headers). Two independent
- * failures would have to line up for anything to execute, and the second one
+ * `escape`), and then the page is served under a policy that forbids inline
+ * script outright and allows only this origin's own files (`script-src 'self'`,
+ * in web/public/_headers, for chrome.js). Two independent failures would have
+ * to line up for anything an attacker wrote to execute, and the second one
  * does not depend on this file being right.
  *
  * It also means the pages work with JavaScript off, which is how a crawler

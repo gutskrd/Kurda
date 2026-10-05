@@ -57,9 +57,14 @@
   color: var(--ink);
   background: var(--surface-2);
 }
+/*
+ * The page you are on: brighter, on a pill, with a gold glyph — but the same
+ * weight as the others. Bold is wider, so a bold active link pushed every link
+ * after it along by a few pixels, and the bar shifted under the cursor each
+ * time you moved to another page.
+ */
 .nav-link.active {
   color: var(--ink);
-  font-weight: 600;
   background: var(--surface-2);
 }
 .nav-spacer {
@@ -85,7 +90,8 @@
 /* a glyph before each label; the nav reads faster as icon + word than as words */
 .nav-link-icon {
   display: inline-flex;
-  margin-right: 7px;
+  /* the side the word is on, in either direction */
+  margin-inline-end: 7px;
   color: var(--ink-4);
 }
 .nav-link:hover .nav-link-icon,
@@ -272,7 +278,7 @@ button.nav-link {
     padding: 0 10px;
   }
   .nav-link-icon {
-    margin-right: 0;
+    margin-inline-end: 0;
   }
   .nav-inner {
     gap: 16px;
@@ -325,69 +331,6 @@ button.nav-link {
   }
 }
 
-/*
- * The front door's bar (`variant="marketing"`).
- *
- * Words only — it has no glyphs to fall back on — so it never takes the
- * glyphs-only squeeze above. It folds into the menu sooner instead: five words
- * and two buttons fit the full bar in English at 860px, but not in German or
- * French, and a bar that runs off the side takes the whole page with it.
- */
-@media (min-width: 861px) and (max-width: 1179px) {
-  .nav--marketing .nav-link-label {
-    position: static;
-    width: auto;
-    height: auto;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
-  }
-  .nav--marketing .nav-link {
-    padding: 0 11px;
-  }
-}
-@media (min-width: 861px) and (max-width: 1023px) {
-  .nav--marketing .nav-toggle {
-    display: inline-flex;
-  }
-  .nav--marketing .nav-links {
-    position: fixed;
-    inset: var(--nav-h) 0 auto 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2px;
-    padding: 12px 18px 18px;
-    background: rgba(6, 8, 11, 0.98);
-    border-bottom: 1px solid var(--border-strong);
-    box-shadow: var(--shadow);
-    transform: translateY(-8px);
-    opacity: 0;
-    pointer-events: none;
-    transition:
-      opacity 0.16s ease,
-      transform 0.16s ease;
-  }
-  .nav--marketing .nav-links.open {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .nav--marketing .nav-link {
-    height: 44px;
-    font-size: 1rem;
-  }
-  .nav--marketing .nav-desktop-only {
-    display: none;
-  }
-  .nav--marketing .nav-mobile-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: 6px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
-  }
-}
 /* in the menu, Get started is the button it is on the bar, not one more link */
 .nav-mobile-actions .nav-cta {
   justify-content: center;
@@ -526,7 +469,7 @@ button.nav-link {
 /* Unread count on the Messages link — so a message is visible from any page
    without opening Messages to find out. */
 .nav-badge {
-  margin-left: 6px;
+  margin-inline-start: 6px;
   min-width: 18px;
   height: 18px;
   padding: 0 5px;

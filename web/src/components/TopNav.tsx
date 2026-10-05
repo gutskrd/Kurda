@@ -26,14 +26,6 @@ export interface NavItem {
    * router a path it has no route for and draw a 404 over a page that exists.
    */
   external?: boolean;
-  /**
-   * A section of the front page, written `/#learn`.
-   *
-   * A router link, so it moves without reloading, but never a lit one: its
-   * path is `/`, and a NavLink would light it up on every page under `/`,
-   * which is all of them. The front door's layout scrolls to the hash itself.
-   */
-  section?: boolean;
 }
 
 /** Where the shop lives — kept out of `links` so it can sit on its own. */
@@ -64,14 +56,7 @@ function matchesExactly(to: string, all: readonly NavItem[]): boolean {
  * other things you do to your account rather than in the app. Saved moved to
  * your profile for the same reason — it is yours, not a place.
  */
-export function TopNav({
-  links,
-  variant = 'app',
-}: {
-  links: NavItem[];
-  /** `marketing` is the front door's bar: words only, and it folds into the menu sooner */
-  variant?: 'app' | 'marketing';
-}): React.JSX.Element {
+export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
   const { status } = useAuth();
   const [open, setOpen] = useState(false);
   const { unreadTotal } = useMessages();
@@ -92,7 +77,7 @@ export function TopNav({
   }, [open]);
 
   return (
-    <header className={`nav${variant === 'marketing' ? ' nav--marketing' : ''}`}>
+    <header className="nav">
       <div className="container nav-inner">
         {/* signed-in users stay inside the app shell instead of
             landing on the marketing site (which has its own nav) */}
@@ -123,10 +108,6 @@ export function TopNav({
                     <a href={l.to} className="nav-link" onClick={close}>
                       {inner}
                     </a>
-                  ) : l.section ? (
-                    <Link to={l.to} className="nav-link" onClick={close}>
-                      {inner}
-                    </Link>
                   ) : (
                     <NavLink
                       to={l.to}

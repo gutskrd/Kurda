@@ -564,7 +564,8 @@
    * inside either figure — and puts the column back on the window's own centre
    * line, with the strip still clear of it.
    */
-  .app-main {
+  .app-main,
+  .site-main.has-rail {
     padding-left: calc(var(--rail-strip-w) + 16px);
     padding-right: calc(var(--rail-strip-w) + 16px);
   }

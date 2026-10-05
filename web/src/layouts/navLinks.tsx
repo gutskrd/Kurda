@@ -44,13 +44,19 @@ export function publishedDictionary(locale: AppLocale): string {
 }
 
 /**
- * One definition of where you can go, used by both shells.
+ * One definition of where you can go, used by every shell — the app, the front
+ * page, About, the FAQ — and copied into the published dictionary's bar.
  *
  * The landing page and the app used to keep separate lists, and the landing
  * page's held a single entry — Civak. So somebody arriving at hevalo.app was
  * shown one link into a product with a dictionary, games and rankings in it,
  * all of them open to read without an account. The bar was advertising a
  * fraction of what was there.
+ *
+ * It split again later into a front-door bar of words (Learn, Games,
+ * Community, Dictionary, About) and the app's bar of places, and the result
+ * was a bar whose buttons rearranged themselves as you clicked along it. One
+ * list, one bar: the buttons stay where they are whichever page you are on.
  *
  * Built inside a hook rather than at module scope because every label is a
  * word: a list made once at import time keeps whatever language the app
@@ -84,33 +90,5 @@ export function useNavLinks(): NavItem[] {
           { label: t('nav.messages'), to: '/app/messages', icon: <ChatsIcon size={18} /> },
         ]
       : []),
-  ];
-}
-
-/**
- * The front door's bar: what Hevalo is, rather than where in the app to go.
- *
- * The landing page, About, Privacy and Terms used to carry the app's own bar,
- * glyph by glyph, which told a first-time visitor where the rooms were before
- * telling them what the building was. These are the words somebody deciding
- * whether to try Hevalo is looking for: how you learn, what you play, who else
- * is here, the dictionary they can use today, and who is behind it.
- *
- * Words only, no glyphs. The dictionary is still here, for the reason it was
- * put in everyone's bar in the first place — it is the biggest thing open to
- * read without an account — and it goes to the same place `useNavLinks` sends
- * it. Learn points at the lessons section of the front page itself, because
- * the lessons are not in the browser yet and that section says so.
- */
-export function useMarketingLinks(): NavItem[] {
-  const { status } = useAuth();
-  const t = useT();
-  const locale = useLocale();
-  return [
-    { label: t('nav.learn'), to: '/#learn', section: true },
-    { label: t('nav.games'), to: '/app/games' },
-    { label: t('nav.community'), to: '/app' },
-    dictionaryLink(status === 'signedIn', locale, t('nav.dictionary')),
-    { label: t('nav.about'), to: '/about' },
   ];
 }
