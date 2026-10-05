@@ -94,10 +94,15 @@ describe('a page carries no markup it was not given', () => {
     expect(html).toContain('&lt;b&gt;');
   });
 
-  /** Nothing executable, by construction — the policy is the second line, not the first. */
-  it('contains no script and no inline style', () => {
+  /**
+   * Nothing executable but our own file, by construction — the policy is the
+   * second line, not the first. The one script is chrome.js, which relabels
+   * the bar; it is empty-bodied and named by path, and nothing else may be.
+   */
+  it('runs no script but its own chrome file, and no inline style', () => {
     const html = wordsPage({ prefix: 'a', words: [word('av')] }, null, null);
-    expect(html).not.toMatch(/<script/i);
+    expect(html.match(/<script/gi)).toHaveLength(1);
+    expect(html).toContain('<script src="/ferheng/chrome.js"></script>');
     expect(html).not.toMatch(/<style/i);
     expect(html).not.toMatch(/\son\w+=/i); // onclick, onerror, onload…
     expect(html).not.toMatch(/javascript:/i);
@@ -227,9 +232,10 @@ describe('what a page tells a search engine', () => {
     expect(html).toContain('href="/ferheng/b/"');
     expect(html).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
     // what this guards is the INDEX, not the chrome: listing every range put
-    // this page at 145 KB once. The app's nav and footer are a fixed ~4 KB that
-    // every page carries so that none of them looks like a different site.
-    expect(html.length, 'the landing page should not list every range').toBeLessThan(10_000);
+    // this page at 145 KB once. The app's nav and footer are a fixed ~4.5 KB
+    // that every page carries so that none of them looks like a different site
+    // — the labels in them are marked for chrome.js, which is the last 0.5 KB.
+    expect(html.length, 'the landing page should not list every range').toBeLessThan(11_000);
   });
 
   /**
@@ -548,7 +554,8 @@ describe('an address with no page behind it', () => {
     const html = notFoundPage();
     expect(html).toContain('nehat dîtin');
     expect(html).toContain('href="/ferheng/"');
-    expect(html).not.toContain('<script');
+    // only the bar's relabelling, which every page carries; nothing of the app's
+    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">']);
   });
 
   /** The letters are the one thing a re-import never moves. */

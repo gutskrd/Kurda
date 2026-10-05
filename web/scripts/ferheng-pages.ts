@@ -36,6 +36,7 @@ import { escapeHtml as escape } from './escape.js';
 import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../src/brand/zagrosian.js';
 import { alphabetOf, compareKeys, foldLetter } from './ferheng-alphabet.js';
 import { COPY, type Copy } from './ferheng-copy.js';
+import { CHROME_FILE, copyHook, type ChromeKey } from './ferheng-chrome.js';
 import { isInflected, type Entry } from './ferheng-entries.js';
 
 export const ORIGIN = 'https://hevalo.app';
@@ -294,52 +295,70 @@ function footer(c: Copy): string {
 <div class="footer-grid">
 <div class="footer-brand">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
-<p class="muted">${escape(c.footer.tagline)}</p>
+<p class="muted">${labelled('footer.tagline', c.footer.tagline)}</p>
 ${/* not translated anywhere in the app: it is the app's own line, the way a
       masthead keeps its motto */ ''}
 <p class="kurdish" lang="ku">Jiyan bi kurdî xweştire.</p>
 </div>
 <div class="footer-col">
-<h4>${escape(c.footer.learn)}</h4>
-<a href="/learn">${escape(c.footer.lessons)}</a>
-<a href="/app">${escape(c.nav.home)}</a>
-<a href="/games">${escape(c.nav.games)}</a>
-<a href="/${c.base}/">${escape(c.nav.dictionary)}</a>
+<h4>${labelled('nav.learn', c.footer.learn)}</h4>
+<a href="/learn">${labelled('learn.title', c.footer.lessons)}</a>
+<a href="/app">${labelled('nav.home', c.nav.home)}</a>
+<a href="/games">${labelled('nav.games', c.nav.games)}</a>
+<a href="/${c.base}/">${labelled('nav.dictionary', c.nav.dictionary)}</a>
 </div>
 <div class="footer-col">
-<h4>${escape(c.footer.community)}</h4>
-<a href="/rankings">${escape(c.nav.rankings)}</a>
-<a href="/register">${escape(c.footer.join)}</a>
-<a href="/login">${escape(c.nav.login)}</a>
+<h4>${labelled('nav.community', c.footer.community)}</h4>
+<a href="/rankings">${labelled('nav.rankings', c.nav.rankings)}</a>
+<a href="/register">${labelled('footer.join', c.footer.join)}</a>
+<a href="/login">${labelled('nav.login', c.nav.login)}</a>
 </div>
 <div class="footer-col">
-<h4>${escape(c.footer.app)}</h4>
-<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">${escape(c.footer.ios)}</a>
-<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">${escape(c.footer.android)}</a>
+<h4>${labelled('footer.app', c.footer.app)}</h4>
+<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">${labelled('footer.iosSoon', c.footer.ios)}</a>
+<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">${labelled('footer.androidSoon', c.footer.android)}</a>
 </div>
 </div>
 <div class="footer-bottom">
 <span class="footer-bottom-left"><span>© ${new Date().getFullYear()} Hevalo</span><span class="muted">${licence}</span></span>
 ${/* the imprint, drawn exactly as the app draws it — see ZagrosianCredit.tsx */ ''}
-<a class="by-zagrosian" href="${ZAGROSIAN_URL}" target="_blank" rel="noreferrer noopener"><span>${escape(
-    c.footer.byZagrosian,
-  )}</span><svg class="by-zagrosian-mark" viewBox="${ZAGROSIAN_VIEWBOX}" fill="currentColor" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${ZAGROSIAN_MARK}"></path></svg></a>
+<a class="by-zagrosian" href="${ZAGROSIAN_URL}" target="_blank" rel="noreferrer noopener">${labelled('footer.byZagrosian', c.footer.byZagrosian)}<svg class="by-zagrosian-mark" viewBox="${ZAGROSIAN_VIEWBOX}" fill="currentColor" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${ZAGROSIAN_MARK}"></path></svg></a>
 </div>
 </div>
 </footer>`;
 }
 
-/** One nav entry, drawn the way the app draws one: glyph, then word. */
-function navLink(key: string, href: string, label: string, current = false): string {
+/**
+ * A word in the bar or footer that chrome.js may put into the reader's language.
+ *
+ * Always an inline span of its own, never the link or heading around it: the
+ * script sets `dir` on what it relabels, and on a block that would also flip
+ * the block's alignment — Arabic links hard right in an otherwise left-hand
+ * column. On a span it orders the letters and leaves the layout alone.
+ */
+function labelled(key: ChromeKey, text: string): string {
+  return `<span${copyHook(key)}>${escape(text)}</span>`;
+}
+
+/**
+ * One nav entry, drawn the way the app draws one: glyph, then word.
+ *
+ * The word is in a span of its own (see `labelled`) so chrome.js can relabel it
+ * without taking the glyph with it.
+ */
+function navLink(key: string, href: string, label: string, copy: ChromeKey, current = false): string {
   return (
     `<a class="nav-link${current ? ' active' : ''}" href="${escape(href)}"${current ? ' aria-current="page"' : ''}>` +
     `<svg class="nav-link-icon" viewBox="0 0 256 256" width="18" height="18" fill="currentColor" aria-hidden="true">` +
     `<path d="${NAV_ICONS[key]!}"></path></svg>` +
-    `<span>${escape(label)}</span></a>`
+    `${labelled(copy, label)}</a>`
   );
 }
 
-/** The shell every page shares: no scripts, nothing fetched off this origin. */
+/**
+ * The shell every page shares: nothing fetched off this origin, and one script
+ * — chrome.js, which only relabels the bar and footer. See ferheng-chrome.ts.
+ */
 export function document_(opts: {
   title: string;
   description: string;
@@ -377,23 +396,25 @@ ${/* each language points at the other, so a search engine indexes them as one
 <header class="nav">
 <div class="container nav-inner">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
-<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="${escape(c.nav.menu)}">
+<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="${escape(c.nav.menu)}"${copyHook('nav.menu', 'aria-label')}>
 <nav class="nav-links">
-${navLink('mal', '/app', c.nav.home)}
-${navLink('ferheng', `/${c.base}/`, c.nav.dictionary, true)}
-${navLink('listik', '/app/games', c.nav.games)}
-${navLink('rezbendi', '/app/rankings', c.nav.rankings)}
+${navLink('mal', '/app', c.nav.home, 'nav.home')}
+${navLink('ferheng', `/${c.base}/`, c.nav.dictionary, 'nav.dictionary', true)}
+${navLink('listik', '/app/games', c.nav.games, 'nav.games')}
+${navLink('rezbendi', '/app/rankings', c.nav.rankings, 'nav.rankings')}
 <span class="nav-mobile-actions">
-<a class="nav-link" href="/login">${escape(c.nav.login)}</a>
-<a class="nav-link" href="/register">${escape(c.nav.register)}</a>
+<a class="nav-link" href="/login">${labelled('nav.login', c.nav.login)}</a>
+<a class="nav-link" href="/register">${labelled('nav.register', c.nav.register)}</a>
 </span>
 </nav>
 <span class="nav-spacer"></span>
-<a class="btn-sm btn-ghost nav-desktop-only" href="/login">${escape(c.nav.login)}</a>
-<a class="btn-sm nav-desktop-only" href="/register">${escape(c.nav.register)}</a>
+<a class="btn-sm btn-ghost nav-desktop-only" href="/login">${labelled('nav.login', c.nav.login)}</a>
+<a class="btn-sm nav-desktop-only" href="/register">${labelled('nav.register', c.nav.register)}</a>
 <label class="nav-toggle" for="nav-open"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg></label>
 </div>
 </header>
+${/* straight after the bar, so the bar is in the reader's language before it is first painted */ ''}
+<script src="/${c.base}/${CHROME_FILE}"></script>
 <main class="container">
 ${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' · ')[0]!) : ''}
 ${opts.body}

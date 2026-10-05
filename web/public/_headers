@@ -5,6 +5,14 @@
 # update connect-src to match; if the app renders R2/CDN media, img-src/media-src
 # already allow https:.
 #
+# connect-src names the API twice, once per scheme, and both are needed. The
+# realtime gateway (live quiz matches, chat, presence) is a WebSocket on the
+# same host, and an `https://` source does not cover `wss://` — CSP3 lets `ws:`
+# and `wss:` sources match `https:`, never the other way round. With only the
+# https entry Chrome refused the socket outright ("Refused to connect to
+# 'wss://kurda-api.onrender.com/realtime…' … violates connect-src"), so every
+# realtime feature fell back to nothing.
+#
 # style-src carries 'unsafe-inline' because React writes every inline style as
 # a style attribute, and this app has 128 of them across 44 files. Without it
 # the browser blocks the attribute — not only <style> blocks — and drops the
@@ -24,7 +32,7 @@
 # CSP3 attribute support falls back to style-src and silently reproduces
 # exactly this bug, so it is not the safer option it looks like.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -43,10 +51,10 @@
 # So this block names only what differs, and the shared headers are left to
 # `/*`. The second CSP is deliberate and is the exception: a browser given two
 # policies enforces BOTH, so the result is their intersection and can only be
-# stricter than either. `/*` allows scripts from self; this names no
-# script-src at all and falls back to `default-src 'none'`, so the intersection
-# forbids them outright. Same for inline style, which `/*` permits and this
-# does not.
+# stricter than either. `/*` allows scripts from self; this allows one named
+# file (see below), so the intersection is that file and nothing else — no
+# inline script, no other script on the origin. Same for inline style, which
+# `/*` permits and this does not.
 #
 # That is the second of the two things between a stranger's Wiktionary text
 # and code running here. The first is the escaping in web/scripts/escape.ts,
@@ -60,8 +68,17 @@
 # origin. A font from a CDN would need a host named here, which would be the
 # first third party these pages talk to; a file on the edge costs nothing and
 # tells nobody that somebody read a word.
+#
+# `script-src` names exactly one file, by its full URL: chrome.js, which puts
+# the bar and footer into the reader's own language (the pages exist in two,
+# the app in nine — see web/scripts/ferheng-chrome.ts). It is a URL with a
+# path, not 'self', so it does not reopen what the paragraph above closes: an
+# injected <script> is still refused, inline or pointing anywhere else on this
+# origin, and the one file it could name only relabels the bar. Anywhere other
+# than hevalo.app the file is refused too, and the bar simply stays in the
+# page's own language. connect-src is still 'none': it makes no requests.
 /ferheng/*
-  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src https://hevalo.app/ferheng/chrome.js; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400
 
@@ -71,6 +88,6 @@
 # names — see web/scripts/ferheng-copy.ts. Every header has to be repeated:
 # `_headers` matches a path, and /dictionary/ does not match /ferheng/*.
 /dictionary/*
-  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src https://hevalo.app/dictionary/chrome.js; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400

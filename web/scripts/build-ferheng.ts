@@ -48,6 +48,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { publishedFerheng } from '@kurda/shared';
 import { compareKeys } from './ferheng-alphabet.js';
+import { CHROME_FILE, chromeScript } from './ferheng-chrome.js';
 import { COPY, FERHENG_LOCALES } from './ferheng-copy.js';
 import { toEntries } from './ferheng-entries.js';
 import {
@@ -181,6 +182,8 @@ async function main(): Promise<void> {
     }
     write('index.html', indexPage(letters, words.length, pages.length, samples, pageOf, copy));
     write('ferheng.css', STYLE);
+    // the bar and footer in the reader's own language; see ferheng-chrome.ts
+    write(CHROME_FILE, chromeScript());
     // what the Worker serves for an address with no page behind it; see
     // notFoundPage() for why the app's own 404 screen cannot do this job
     write('404.html', notFoundPage(copy));
