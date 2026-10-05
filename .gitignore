@@ -41,3 +41,4 @@ api/.pgdata/
 /Logo/
 /Logos/
 /kurdistan_filter.png
+__pycache__/

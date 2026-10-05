@@ -3,15 +3,17 @@ import { Link, useSearchParams } from 'react-router-dom';
 import '@fontsource-variable/vazirmatn';
 import type { AppLocale } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
+import { latinSound, latinWord, soraniSound, soraniWord } from '../alphabet/audio';
+import { Practice } from '../alphabet/Practice';
+import { Sound } from '../alphabet/Sound';
+import { Meaning } from '../alphabet/Meaning';
 import {
   LATIN,
-  MEANINGS,
   SORANI,
   bandOf,
   compareLocaleOf,
@@ -96,25 +98,6 @@ function KurdishWord({ word, letter }: { word: string; letter: string }): React.
       {word.slice(0, at)}
       <mark>{word.slice(at, at + letter.length)}</mark>
       {word.slice(at + letter.length)}
-    </span>
-  );
-}
-
-/**
- * What the example word means — or, for a reader who already speaks that
- * dialect, the same word in the other one, which is the more useful thing to
- * put under it: a Soranî reader learns the Kurmancî word, and the reverse.
- */
-function Meaning({ meaning, script, locale }: { meaning: keyof typeof MEANINGS; script: Script; locale: AppLocale }): React.JSX.Element {
-  const shown: AppLocale = script === 'kmr' && locale === 'ku' ? 'ckb' : script === 'ckb' && locale === 'ckb' ? 'ku' : locale;
-  const other = shown !== locale;
-  return (
-    <span
-      className={`ab-card-meaning${other && shown === 'ckb' ? ' ab-ar' : ''}`}
-      lang={other ? shown : undefined}
-      dir={other ? (shown === 'ckb' ? 'rtl' : 'ltr') : undefined}
-    >
-      {MEANINGS[meaning][shown]}
     </span>
   );
 }
@@ -286,7 +269,7 @@ export function Alphabet(): React.JSX.Element {
             </>
           )}
 
-          <Practice key={script} script={script} locale={locale} />
+          <Practice key={script} script={script} locale={locale} onOpen={pick} />
 
           <section className="ab-next" aria-labelledby="ab-next">
             <h2 className="ab-group-title" id="ab-next">
@@ -386,8 +369,11 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
           {letter.upper}
           <small>{letter.id}</small>
         </span>
-        <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
-          /{letter.ipa}/
+        <span className="ab-card-tools">
+          <Sound src={latinSound(letter.id)} label={t('alphabet.listen')} size="lg" />
+          <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
+            /{letter.ipa}/
+          </span>
         </span>
       </div>
 
@@ -400,8 +386,11 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
 
       <div className="ab-card-row">
         <span className="ab-card-label">{t('alphabet.rememberBy')}</span>
-        <span className="ab-card-word" dir="ltr">
-          <KurdishWord word={letter.word} letter={letter.id} />
+        <span className="ab-card-word-row">
+          <span className="ab-card-word" dir="ltr">
+            <KurdishWord word={letter.word} letter={letter.id} />
+          </span>
+          <Sound src={latinWord(letter.id)} label={t('alphabet.listenWord')} />
         </span>
         <Meaning meaning={letter.meaning} script="kmr" locale={locale} />
       </div>
@@ -421,6 +410,7 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
       {letter.note === 'rolled' && <p className="ab-card-note">{t('alphabet.note.rolled')}</p>}
 
       <Stepper onStep={onStep} />
+      <p className="ab-voice-note">{t('alphabet.voiceNote')}</p>
     </article>
   );
 }
@@ -435,8 +425,11 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
         <span className="ab-card-glyph ab-ar" lang="ckb" dir="rtl">
           {letter.char}
         </span>
-        <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
-          /{letter.ipa}/
+        <span className="ab-card-tools">
+          <Sound src={soraniSound(letter)} label={t('alphabet.listen')} size="lg" />
+          <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
+            /{letter.ipa}/
+          </span>
         </span>
       </div>
       {locale === 'ar' && letter.kurdishOnly && <p className="ab-badge">{t('alphabet.notInArabic')}</p>}
@@ -481,8 +474,11 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
 
       <div className="ab-card-row">
         <span className="ab-card-label">{t('alphabet.rememberBy')}</span>
-        <span className="ab-card-word ab-ar" lang="ckb" dir="rtl">
-          {letter.word}
+        <span className="ab-card-word-row">
+          <span className="ab-card-word ab-ar" lang="ckb" dir="rtl">
+            {letter.word}
+          </span>
+          <Sound src={soraniWord(letter)} label={t('alphabet.listenWord')} />
         </span>
         <Meaning meaning={letter.meaning} script="ckb" locale={locale} />
       </div>
@@ -494,6 +490,7 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
       )}
 
       <Stepper onStep={onStep} />
+      <p className="ab-voice-note">{t('alphabet.voiceNote')}</p>
     </article>
   );
 }
@@ -504,181 +501,3 @@ const FORM_KEY: Record<'alone' | 'start' | 'middle' | 'end', MessageKey> = {
   middle: 'alphabet.form.middle',
   end: 'alphabet.form.end',
 };
-
-/* ---- check yourself ------------------------------------------------------ */
-
-interface Question {
-  /** what is asked about */
-  prompt: { kind: 'like'; like: Likeness } | { kind: 'glyph'; text: string; script: Script };
-  options: Array<{ id: string; text: string; script: Script }>;
-  answer: string;
-  /** the letter, as it is named on the review list */
-  name: string;
-}
-
-const ROUND = 6;
-
-function shuffle<T>(xs: readonly T[]): T[] {
-  const out = [...xs];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}
-
-/**
- * Six questions, aimed at the letters that trip people up.
- *
- * Retrieval rather than rereading — recalling a letter is what makes it stay —
- * and low stakes on purpose: nothing is scored, saved or ranked, and a miss
- * answers with the right letter at once rather than a red cross alone.
- */
-function makeRound(script: Script, locale: AppLocale): Question[] {
-  const lang = compareLocaleOf(locale);
-  if (script === 'kmr' && lang) {
-    const hard = LATIN.filter((l) => bandOf(l.id, lang) !== 'same');
-    const pool = shuffle(hard.length >= ROUND ? hard : [...hard, ...shuffle(LATIN.filter((l) => !hard.includes(l)))]).slice(0, ROUND);
-    return pool.map((l) => {
-      const others = shuffle(LATIN.filter((o) => o.id !== l.id && o.vowel === l.vowel)).slice(0, 2);
-      return {
-        prompt: { kind: 'like', like: likeFor(l.id, locale)! },
-        options: shuffle([l, ...others]).map((o) => ({ id: o.id, text: o.id, script: 'kmr' })),
-        answer: l.id,
-        name: l.id,
-      };
-    });
-  }
-  // the scripts against each other: Kurmancî letter → Soranî, or the other way for a Soranî reader
-  const paired = SORANI.filter((l) => l.latin && !l.extra);
-  const toLatin = locale === 'ckb';
-  return shuffle(paired)
-    .slice(0, ROUND)
-    .map((l) => {
-      const others = shuffle(paired.filter((o) => o.id !== l.id && o.kind === l.kind)).slice(0, 2);
-      const opts = shuffle([l, ...others]);
-      return toLatin
-        ? {
-            prompt: { kind: 'glyph', text: l.char, script: 'ckb' },
-            options: opts.map((o) => ({ id: o.id, text: o.latin!, script: 'kmr' })),
-            answer: l.id,
-            name: l.char,
-          }
-        : {
-            prompt: { kind: 'glyph', text: l.latin!, script: 'kmr' },
-            options: opts.map((o) => ({ id: o.id, text: o.char, script: 'ckb' })),
-            answer: l.id,
-            name: l.latin!,
-          };
-    });
-}
-
-function Practice({ script, locale }: { script: Script; locale: AppLocale }): React.JSX.Element {
-  const t = useT();
-  const [round, setRound] = useState<Question[] | null>(null);
-  const [at, setAt] = useState(0);
-  const [chosen, setChosen] = useState<string | null>(null);
-  const [missed, setMissed] = useState<string[]>([]);
-
-  const start = (): void => {
-    setRound(makeRound(script, locale));
-    setAt(0);
-    setChosen(null);
-    setMissed([]);
-  };
-
-  const q = round?.[at];
-  const done = round !== null && at >= round.length;
-  const question = q
-    ? q.prompt.kind === 'like'
-      ? t('alphabet.practice.qSound')
-      : q.prompt.script === 'kmr'
-        ? t('alphabet.practice.qToSorani')
-        : t('alphabet.practice.qToLatin')
-    : '';
-
-  return (
-    <section className="ab-practice" aria-labelledby="ab-practice">
-      <h2 className="ab-group-title" id="ab-practice">
-        {t('alphabet.practice.title')}
-      </h2>
-
-      {!round && (
-        <>
-          <p className="ab-group-body">{t('alphabet.practice.body')}</p>
-          <Button onClick={start}>{t('alphabet.practice.start')}</Button>
-        </>
-      )}
-
-      {q && (
-        <div className="ab-q">
-          <p className="ab-q-progress">{t('alphabet.practice.progress', { n: at + 1, total: round!.length })}</p>
-          <p className="ab-q-ask">{question}</p>
-          <p className="ab-q-prompt">
-            {q.prompt.kind === 'like' ? (
-              <Like like={q.prompt.like} />
-            ) : (
-              <span
-                className={q.prompt.script === 'ckb' ? 'ab-ar' : undefined}
-                lang={q.prompt.script === 'ckb' ? 'ckb' : 'ku'}
-              >
-                {q.prompt.text}
-              </span>
-            )}
-          </p>
-          <div className="ab-q-options">
-            {q.options.map((o) => {
-              const state = chosen === null ? '' : o.id === q.answer ? ' is-right' : o.id === chosen ? ' is-wrong' : ' is-dim';
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  className={`ab-tile ab-option${state}`}
-                  disabled={chosen !== null}
-                  onClick={() => {
-                    setChosen(o.id);
-                    if (o.id !== q.answer) setMissed((m) => [...m, q.name]);
-                  }}
-                >
-                  <span className={`ab-tile-glyph${o.script === 'ckb' ? ' ab-ar' : ''}`} lang={o.script === 'ckb' ? 'ckb' : 'ku'}>
-                    {o.text}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {chosen !== null && (
-            <div className="ab-q-feedback" role="status">
-              <span className={chosen === q.answer ? 'ab-right' : 'ab-wrong'}>
-                {chosen === q.answer
-                  ? t('alphabet.practice.right')
-                  : t('alphabet.practice.wrong', { letter: q.options.find((o) => o.id === q.answer)!.text })}
-              </span>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setAt((n) => n + 1);
-                  setChosen(null);
-                }}
-              >
-                {t('alphabet.practice.next')}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {done && (
-        <div className="ab-q-done" role="status">
-          <p className="ab-q-score">{t('alphabet.practice.score', { right: round!.length - missed.length, total: round!.length })}</p>
-          <p className="ab-group-body">
-            {missed.length === 0 ? t('alphabet.practice.perfect') : `${t('alphabet.practice.review')} ${missed.join(' · ')}`}
-          </p>
-          <Button variant="secondary" onClick={start}>
-            {t('alphabet.practice.again')}
-          </Button>
-        </div>
-      )}
-    </section>
-  );
-}

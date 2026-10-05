@@ -53,7 +53,8 @@ export type Meaning =
   | 'heart' | 'today' | 'woman' | 'boy' | 'lip' | 'home' | 'bread' | 'day' | 'book' | 'pen' | 'road'
   | 'apple' | 'milk' | 'sunshine' | 'two' | 'face' | 'love' | 'homeland' | 'sister' | 'one' | 'language'
   | 'tree' | 'cat' | 'you' | 'beautiful' | 'seven' | 'city' | 'garden' | 'elephant' | 'video' | 'wing'
-  | 'friend' | 'far' | 'sun';
+  | 'friend' | 'far' | 'sun' | 'coffee' | 'ear' | 'moon' | 'word'
+  | 'deep' | 'captive' | 'donkey' | 'knife' | 'fight' | 'lion';
 
 /** Sounds that only the Soranî alphabet writes with a letter of their own. */
 export type ExtraSound = 'ḧ' | 'ʿ' | 'ẍ' | 'ł' | 'ř' | 'hamza';
@@ -102,7 +103,7 @@ export const LATIN: readonly LatinLetter[] = [
   { id: 'f', upper: 'F', ipa: 'f', vowel: false, sorani: 'ف', word: 'fêkî', meaning: 'fruit' },
   { id: 'g', upper: 'G', ipa: 'g', vowel: false, sorani: 'گ', word: 'gul', meaning: 'rose' },
   { id: 'h', upper: 'H', ipa: 'h', vowel: false, sorani: 'ھ', word: 'hesp', meaning: 'horse' },
-  { id: 'i', upper: 'I', ipa: 'ɨ', vowel: true, sorani: null, word: 'dil', meaning: 'heart', note: 'notInSorani' },
+  { id: 'i', upper: 'I', ipa: 'ɪ', vowel: true, sorani: null, word: 'dil', meaning: 'heart', note: 'notInSorani' },
   { id: 'î', upper: 'Î', ipa: 'iː', vowel: true, sorani: 'ی', word: 'îro', meaning: 'today', note: 'long' },
   { id: 'j', upper: 'J', ipa: 'ʒ', vowel: false, sorani: 'ژ', word: 'jin', meaning: 'woman' },
   { id: 'k', upper: 'K', ipa: 'k', vowel: false, sorani: 'ک', word: 'kur', meaning: 'boy' },
@@ -112,7 +113,7 @@ export const LATIN: readonly LatinLetter[] = [
   { id: 'o', upper: 'O', ipa: 'oː', vowel: true, sorani: 'ۆ', word: 'roj', meaning: 'day' },
   { id: 'p', upper: 'P', ipa: 'p', vowel: false, sorani: 'پ', word: 'pirtûk', meaning: 'book' },
   { id: 'q', upper: 'Q', ipa: 'q', vowel: false, sorani: 'ق', word: 'qelem', meaning: 'pen' },
-  { id: 'r', upper: 'R', ipa: 'ɾ', vowel: false, sorani: 'ر', word: 'rê', meaning: 'road', note: 'rolled' },
+  { id: 'r', upper: 'R', ipa: 'ɾ ~ r', vowel: false, sorani: 'ر', word: 'rê', meaning: 'road', note: 'rolled' },
   { id: 's', upper: 'S', ipa: 's', vowel: false, sorani: 'س', word: 'sêv', meaning: 'apple' },
   { id: 'ş', upper: 'Ş', ipa: 'ʃ', vowel: false, sorani: 'ش', word: 'şîr', meaning: 'milk' },
   { id: 't', upper: 'T', ipa: 't', vowel: false, sorani: 'ت', word: 'tav', meaning: 'sunshine' },
@@ -147,16 +148,16 @@ export const SORANI: readonly SoraniLetter[] = [
   { id: 'xeyn', char: 'غ', latin: 'ẍ', extra: 'ẍ', ipa: 'ɣ', kind: 'throat', joins: true, word: 'باغ', meaning: 'garden' },
   { id: 'fe', char: 'ف', latin: 'f', ipa: 'f', kind: 'consonant', joins: true, word: 'فیل', meaning: 'elephant' },
   { id: 've', char: 'ڤ', latin: 'v', ipa: 'v', kind: 'consonant', joins: true, kurdishOnly: true, word: 'ڤیدیۆ', meaning: 'video' },
-  { id: 'qaf', char: 'ق', latin: 'q', ipa: 'q', kind: 'throat', joins: true, word: 'قەڵەم', meaning: 'pen' },
+  { id: 'qaf', char: 'ق', latin: 'q', ipa: 'q', kind: 'throat', joins: true, word: 'قاوە', meaning: 'coffee' },
   { id: 'kaf', char: 'ک', latin: 'k', ipa: 'k', kind: 'consonant', joins: true, word: 'کوڕ', meaning: 'boy' },
-  { id: 'gaf', char: 'گ', latin: 'g', ipa: 'g', kind: 'consonant', joins: true, kurdishOnly: true, word: 'گوڵ', meaning: 'rose' },
+  { id: 'gaf', char: 'گ', latin: 'g', ipa: 'g', kind: 'consonant', joins: true, kurdishOnly: true, word: 'گوێ', meaning: 'ear' },
   { id: 'lam', char: 'ل', latin: 'l', ipa: 'l', kind: 'consonant', joins: true, word: 'لێو', meaning: 'lip' },
   { id: 'łam', char: 'ڵ', latin: 'll', extra: 'ł', ipa: 'ɫ', kind: 'consonant', joins: true, kurdishOnly: true, word: 'باڵ', meaning: 'wing' },
-  { id: 'mîm', char: 'م', latin: 'm', ipa: 'm', kind: 'consonant', joins: true, word: 'ماڵ', meaning: 'home' },
+  { id: 'mîm', char: 'م', latin: 'm', ipa: 'm', kind: 'consonant', joins: true, word: 'مانگ', meaning: 'moon' },
   { id: 'nûn', char: 'ن', latin: 'n', ipa: 'n', kind: 'consonant', joins: true, word: 'نان', meaning: 'bread' },
   { id: 'he', char: 'ھ', latin: 'h', ipa: 'h', kind: 'consonant', joins: true, word: 'ھاوڕێ', meaning: 'friend' },
   { id: 'e', char: 'ە', latin: 'e', ipa: 'ɛ', kind: 'vowel', joins: false, kurdishOnly: true, word: 'ئێوارە', meaning: 'evening' },
-  { id: 'waw', char: 'و', latin: 'w', ipa: 'w', kind: 'vowel', joins: false, word: 'وڵات', meaning: 'homeland', alsoVowel: { latin: 'u', word: 'کوڕ' } },
+  { id: 'waw', char: 'و', latin: 'w', ipa: 'w', kind: 'vowel', joins: false, word: 'وشە', meaning: 'word', alsoVowel: { latin: 'u', word: 'کوڕ' } },
   { id: 'ww', char: 'وو', latin: 'û', ipa: 'uː', kind: 'vowel', joins: false, kurdishOnly: true, word: 'دوور', meaning: 'far' },
   { id: 'o', char: 'ۆ', latin: 'o', ipa: 'oː', kind: 'vowel', joins: false, kurdishOnly: true, word: 'خۆر', meaning: 'sun' },
   { id: 'ye', char: 'ی', latin: 'y', ipa: 'j', kind: 'vowel', joins: true, word: 'یەک', meaning: 'one', alsoVowel: { latin: 'î', word: 'شیر' } },
@@ -196,8 +197,8 @@ export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
   en: {
     a: 'f[a]ther', b: '[b]ed', c: '[j]am', ç: '[ch]urch', d: '[d]og', e: 'b[e]d', ê: 'd[ay], held steady',
     f: '[f]ish', g: '[g]o', h: '[h]at', i: 'b[i]t, but shorter', î: 's[ee]', j: 'mea[s]ure', k: '[k]ite',
-    l: '[l]amp', m: '[m]oon', n: '[n]ose', o: 'm[o]re', p: '[p]en', q: 'a k made deep in the throat',
-    r: 'be[tt]er, said the American way', s: '[s]un', ş: '[sh]oe', t: '[t]en', u: 'p[u]t', û: 'm[oo]n',
+    l: '[l]amp', m: '[m]oon', n: '[n]ose', o: 'n[o]te, held pure, without gliding into a w', p: '[p]en', q: 'a k made deep in the throat',
+    r: 'a rolled r, as in Spanish pe[rr]o; between vowels, just one quick tap', s: '[s]un', ş: '[sh]oe', t: '[t]en', u: 'p[u]t', û: 'm[oo]n',
     v: '[v]an', w: '[w]e', x: 'lo[ch], the Scottish way', y: '[y]es', z: '[z]oo',
     ḧ: 'a breathy h from deep in the throat', ʿ: 'a squeeze deep in the throat, like the start of a gulp',
     ẍ: 'the French r in Pa[r]is', ł: 'fu[ll], a heavy l', ř: 'a rolled r, like Spanish pe[rr]o',
@@ -207,7 +208,7 @@ export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
     a: 'V[a]ter', b: '[B]all', c: '[Dsch]ungel', ç: '[Tsch]üss', d: '[D]ach', e: 'B[e]tt', ê: 'S[ee]',
     f: '[F]isch', g: '[G]arten', h: '[H]aus', i: 'b[i]tte, nur kürzer', î: 'L[ie]be', j: '[J]ournal',
     k: '[K]atze', l: '[L]ampe', m: '[M]ond', n: '[N]ase', o: '[O]fen', p: '[P]ost',
-    q: 'ein k ganz hinten im Rachen', r: 'mit der Zungenspitze kurz angeschlagen, wie im Italienischen',
+    q: 'ein k ganz hinten im Rachen', r: 'mit der Zungenspitze gerollt, wie im italienischen „te[rr]a“; zwischen Vokalen nur einmal angeschlagen',
     s: 'Fu[ß], immer stimmlos', ş: '[Sch]ule', t: '[T]isch', u: 'M[u]tter', û: '[U]hr', v: '[W]asser',
     w: 'das englische [w] in „well“', x: 'Ba[ch]', y: '[J]a', z: '[S]onne, summend',
     ḧ: 'ein gehauchtes h tief aus dem Rachen', ʿ: 'ein Pressen tief im Rachen', ẍ: 'das Zäpfchen-[R] in „Rose“',
@@ -218,7 +219,7 @@ export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
     a: '[aa]p', b: '[b]al', c: '[j]eans', ç: '[Tsj]echië', d: '[d]ak', e: 'b[e]d', ê: 'z[ee]', f: '[f]iets',
     g: 'een harde g, zoals in [g]oal', h: '[h]uis', i: 'p[i]t, maar korter', î: 'z[ie]', j: '[g]enre',
     k: '[k]at', l: '[l]amp', m: '[m]aan', n: '[n]eus', o: 'b[oo]m', p: '[p]en',
-    q: 'een k diep achter in de keel', r: 'een korte, gerolde r met de tongpunt', s: '[s]ok', ş: '[sj]aal',
+    q: 'een k diep achter in de keel', r: 'een met de tongpunt gerolde r; tussen klinkers maar één korte tik', s: '[s]ok', ş: '[sj]aal',
     t: '[t]afel', u: 'p[oe]t, maar kort', û: 'b[oe]k', v: '[v]is', w: 'de Engelse [w] in „water“',
     x: 'la[ch]en', y: '[j]as', z: '[z]on',
     ḧ: 'een hese h diep uit de keel', ʿ: 'een knijpen diep in de keel', ẍ: 'de Franse r in „Pa[r]is“',
@@ -229,7 +230,7 @@ export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
     a: 'p[â]te', b: '[b]ateau', c: '[dj]inn', ç: 'ma[tch]', d: '[d]ent', e: 'm[è]re', ê: '[é]té', f: '[f]eu',
     g: '[g]are, toujours dur', h: 'un h qui se prononce, comme dans l’anglais [h]ello', i: 'l[e], très bref',
     î: '[î]le', j: '[j]our', k: '[k]ilo', l: '[l]une', m: '[m]er', n: '[n]ez', o: 'r[o]se', p: '[p]ain',
-    q: 'un k prononcé au fond de la gorge', r: 'un r roulé d’un seul coup de langue, comme en espagnol',
+    q: 'un k prononcé au fond de la gorge', r: 'un r roulé de la pointe de la langue, comme l’espagnol pe[rr]o ; entre deux voyelles, un seul battement',
     s: '[s]el, jamais comme un z', ş: '[ch]at', t: '[t]able', u: 'f[ou], bref', û: 'r[ou]te',
     v: '[v]in', w: '[ou]i', x: 'le ch allemand de Ba[ch]', y: '[y]eux', z: '[z]éro',
     ḧ: 'un h soufflé du fond de la gorge', ʿ: 'une contraction au fond de la gorge', ẍ: 'le r français de [r]ue',
@@ -241,7 +242,7 @@ export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
     ê: 'm[e]s, más larga y cerrada', f: '[f]oca', g: '[g]ato, siempre así', h: 'una h que suena, como en inglés [h]ello',
     i: 'una i muy corta, casi sin sonar', î: 's[í]', j: 'ca[ll]e, como en Argentina', k: '[k]ilo', l: '[l]una',
     m: '[m]ar', n: '[n]ariz', o: 's[o]l', p: '[p]an', q: 'una k pronunciada al fondo de la garganta',
-    r: 'pe[r]o', s: '[s]ol', ş: 'la [sh] inglesa de show', t: '[t]ren', u: 's[u]r, más corta', û: 'l[u]na',
+    r: '[r]osa, fuerte al principio de palabra; entre vocales, suave como en pero', s: '[s]ol', ş: 'la [sh] inglesa de show', t: '[t]ren', u: 's[u]r, más corta', û: 'l[u]na',
     v: 'una v de verdad, con los dientes sobre el labio', w: '[hu]evo', x: '[j]amón', y: '[y]a',
     z: 'una s sonora que zumba, como la [z] inglesa de zoo',
     ḧ: 'una h aspirada desde el fondo de la garganta', ʿ: 'una contracción al fondo de la garganta',
@@ -252,7 +253,7 @@ export const LIKE: Record<CompareLocale | 'ku', Record<SoundKey, string>> = {
     a: '[a]rı', b: '[b]alık', c: '[c]am', ç: '[ç]ay', d: '[d]ağ', e: '[e]l', ê: 'e’nin uzun ve kapalı hali',
     f: '[f]il', g: '[g]öl', h: '[h]alı', i: 'k[ı]z, kısa', î: 'uzatılmış bir i', j: '[j]ilet', k: '[k]edi',
     l: '[l]imon', m: '[m]asa', n: '[n]ar', o: '[o]da', p: '[p]ara', q: 'boğazın gerisinden söylenen bir k',
-    r: '[r]enk', s: '[s]u', ş: '[ş]eker', t: '[t]op', u: '[u]n', û: 'uzatılmış bir u', v: '[v]ar',
+    r: '[r]enk, ama kelime başında dil ucuyla daha güçlü titretilir', s: '[s]u', ş: '[ş]eker', t: '[t]op', u: '[u]n', û: 'uzatılmış bir u', v: '[v]ar',
     w: 'dudaklar yuvarlanarak: İngilizce [w]ater', x: 'boğazdan gelen hırıltılı bir h, Arapçadaki خ gibi',
     y: '[y]ol', z: '[z]il',
     ḧ: 'boğazın derininden gelen nefesli bir h', ʿ: 'boğazda bir sıkışma, Arapçadaki ع gibi',
@@ -322,7 +323,29 @@ export const MEANINGS: Record<Meaning, Record<AppLocale, string>> = {
   friend: { en: 'friend', de: 'Freund', nl: 'vriend', fr: 'ami', es: 'amigo', tr: 'arkadaş', ar: 'صديق', ku: 'heval', ckb: 'ھاوڕێ' },
   far: { en: 'far', de: 'weit', nl: 'ver', fr: 'loin', es: 'lejos', tr: 'uzak', ar: 'بعيد', ku: 'dûr', ckb: 'دوور' },
   sun: { en: 'sun', de: 'Sonne', nl: 'zon', fr: 'soleil', es: 'sol', tr: 'güneş', ar: 'شمس', ku: 'roj', ckb: 'خۆر' },
+  coffee: { en: 'coffee', de: 'Kaffee', nl: 'koffie', fr: 'café', es: 'café', tr: 'kahve', ar: 'قهوة', ku: 'qehwe', ckb: 'قاوە' },
+  ear: { en: 'ear', de: 'Ohr', nl: 'oor', fr: 'oreille', es: 'oreja', tr: 'kulak', ar: 'أذن', ku: 'guh', ckb: 'گوێ' },
+  moon: { en: 'moon', de: 'Mond', nl: 'maan', fr: 'lune', es: 'luna', tr: 'ay', ar: 'قمر', ku: 'heyv', ckb: 'مانگ' },
+  word: { en: 'word', de: 'Wort', nl: 'woord', fr: 'mot', es: 'palabra', tr: 'kelime', ar: 'كلمة', ku: 'peyv', ckb: 'وشە' },
+  deep: { en: 'deep', de: 'tief', nl: 'diep', fr: 'profond', es: 'profundo', tr: 'derin', ar: 'عميق', ku: 'kûr', ckb: 'قووڵ' },
+  captive: { en: 'captive', de: 'Gefangener', nl: 'gevangene', fr: 'captif', es: 'cautivo', tr: 'esir', ar: 'أسير', ku: 'dîl', ckb: 'دیل' },
+  donkey: { en: 'donkey', de: 'Esel', nl: 'ezel', fr: 'âne', es: 'burro', tr: 'eşek', ar: 'حمار', ku: 'ker', ckb: 'کەر' },
+  knife: { en: 'knife', de: 'Messer', nl: 'mes', fr: 'couteau', es: 'cuchillo', tr: 'bıçak', ar: 'سكين', ku: 'kêr', ckb: 'چەقۆ' },
+  fight: { en: 'fight', de: 'Kampf', nl: 'strijd', fr: 'combat', es: 'pelea', tr: 'kavga', ar: 'قتال', ku: 'şer', ckb: 'شەڕ' },
+  lion: { en: 'lion', de: 'Löwe', nl: 'leeuw', fr: 'lion', es: 'león', tr: 'aslan', ar: 'أسد', ku: 'şêr', ckb: 'شێر' },
 };
+
+/**
+ * Minimal pairs: two real words that differ only in one mark. Hearing which is
+ * which is the skill Kurmancî spelling turns on — a hat on a vowel is a
+ * different word, not an accent — so the practice asks for exactly this.
+ */
+export const PAIRS: ReadonlyArray<{ a: { word: string; meaning: Meaning }; b: { word: string; meaning: Meaning } }> = [
+  { a: { word: 'kur', meaning: 'boy' }, b: { word: 'kûr', meaning: 'deep' } },
+  { a: { word: 'dil', meaning: 'heart' }, b: { word: 'dîl', meaning: 'captive' } },
+  { a: { word: 'ker', meaning: 'donkey' }, b: { word: 'kêr', meaning: 'knife' } },
+  { a: { word: 'şer', meaning: 'fight' }, b: { word: 'şêr', meaning: 'lion' } },
+];
 
 /** A comparison split into the text around the sound and the sound itself. */
 export interface Likeness {

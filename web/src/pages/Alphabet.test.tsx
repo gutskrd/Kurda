@@ -58,14 +58,41 @@ describe('Alphabet', () => {
     expect(await screen.findByRole('tab', { name: /سۆرانی/, selected: true })).toBeInTheDocument();
   });
 
-  /** Low stakes: a miss answers with the right letter at once. */
-  it('checks six letters and names the right one on a miss', async () => {
+  /** Low stakes: a miss answers with the right letter at once, and comes back later in the round. */
+  it('runs a round of eight, explains each answer and brings a miss back', async () => {
+    const played = vi.spyOn(HTMLMediaElement.prototype, 'play');
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
-    expect(screen.getByText('Question 1 of 6')).toBeInTheDocument();
+    const dots = screen.getByRole('list', { name: /Question 1 of 8/ });
+    expect(within(dots).getAllByRole('listitem')).toHaveLength(8);
+    // an English reader starts by listening, and the sound plays by itself
+    expect(screen.getByText('Listen. Which letter is it?')).toBeInTheDocument();
+    expect(played).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument();
+
     const options = screen.getAllByRole('button').filter((b) => b.classList.contains('ab-option'));
     expect(options).toHaveLength(3);
-    await userEvent.click(options[0]!);
-    expect(await screen.findByRole('status')).toHaveTextContent(/Right\.|Not quite: it’s/);
+    // answer with the keyboard, the way a desktop reader can
+    await userEvent.keyboard('1');
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent(/Right\.|Not quite: it’s/);
+    const missed = /Not quite/.test(status.textContent ?? '');
+    if (missed) expect(status).toHaveTextContent('It comes back later in this round.');
+    expect(status.querySelector('.ab-explain')).not.toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('list', { name: /Question 2 of 8/ })).toBeInTheDocument();
+  });
+
+  it('ends with a score and a round of just the misses', async () => {
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    // answer every question with the first option until the round ends
+    for (let i = 0; i < 20 && !screen.queryByText(/right first time/); i++) {
+      await userEvent.keyboard('1');
+      await userEvent.click(await screen.findByRole('button', { name: 'Next' }));
+    }
+    expect(screen.getByText(/of 8 right first time/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New round' })).toBeInTheDocument();
   });
 });
