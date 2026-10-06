@@ -87,4 +87,24 @@ describe('kurmanji seed', () => {
       expect(lessons.length).toBeGreaterThanOrEqual(15);
     }
   });
+
+  /**
+   * A multiple-choice item's Kurdish may be quoted in its prompt or be its
+   * options, so the audio studio cannot find it unless the item says which:
+   * the quoted word, or else the right option.
+   */
+  it('names the Kurdish to hear on every multiple-choice item', () => {
+    const raw = JSON.parse(readFileSync(seedPath, 'utf8'));
+    const res = validateContent(raw);
+    if (!res.ok) throw new Error('seed is invalid');
+    const items = res.content.units
+      .flatMap((u) => u.skills.flatMap((s) => s.lessons.flatMap((l) => l.exercises)))
+      .filter((e) => e.type === 'multiple_choice')
+      .map((e) => e.payload as { prompt: string; options: string[]; correctIndex: number; say?: string });
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) {
+      const quoted = /"([^"]+)"/.exec(item.prompt)?.[1];
+      expect([quoted, item.options[item.correctIndex]], item.prompt).toContain(item.say);
+    }
+  });
 });
