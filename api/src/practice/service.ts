@@ -7,6 +7,7 @@ import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
@@ -64,6 +65,7 @@ export class PracticeService {
   private readonly streaks: StreakService;
   private readonly goals: DailyGoalService;
   private readonly reviews: ReviewService;
+  private readonly milestones?: MilestoneRecorder;
 
   constructor(
     private readonly pool: pg.Pool,
@@ -72,12 +74,14 @@ export class PracticeService {
       streaks?: StreakService;
       goals?: DailyGoalService;
       reviews?: ReviewService;
+      milestones?: MilestoneRecorder;
     } = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.goals = deps.goals ?? new DailyGoalService(pool);
     this.reviews = deps.reviews ?? new ReviewService(pool);
+    this.milestones = deps.milestones;
   }
 
   /**
@@ -247,6 +251,7 @@ export class PracticeService {
 
     let xpAwarded = 0;
     let streak: StreakSummary | null = null;
+    let claimedNow = false;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -257,6 +262,7 @@ export class PracticeService {
           [sessionId],
         );
         if ((claimed.rowCount ?? 0) > 0) {
+          claimedNow = true;
           const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
           xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: sessionId }, client);
           await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [sessionId, xpAwarded]);
@@ -272,6 +278,10 @@ export class PracticeService {
       }
     }
     if (streak === null) streak = await this.streaks.get(userId, timeZone);
+    // best-effort, after the commit, idempotent (streak-30)
+    if (this.milestones && claimedNow) {
+      await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+    }
 
     return { correct, total, accuracy, xpAwarded, streak };
   }

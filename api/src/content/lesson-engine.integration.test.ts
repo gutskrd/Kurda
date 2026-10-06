@@ -1,7 +1,7 @@
 /**
  * Lesson results and rewards that should follow learning, not replays, against
  * real Postgres: first completion, revealed mistakes, perfect-lesson Gems,
- * honest spacing on a replay, and speaking kept out of review.
+ * first-perfect, honest spacing on a replay, and speaking kept out of review.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -145,13 +145,16 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   let learner: Player;
   let firstTr: Awaited<ReturnType<typeof reviewState>>;
 
-  it('a perfect first completion is a first completion, and pays Gems', async () => {
+  it('a perfect first completion is a first completion, pays Gems and earns first-perfect', async () => {
     learner = await register('eng1');
     const { graded, results } = await play(learner, true);
     expect(graded.map((g) => g.verdict)).toEqual(['correct', 'correct', 'correct']);
     expect(results).toMatchObject({ correct: 3, total: 3, accuracy: 1, firstCompletion: true, mistakes: [] });
 
     expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
+    const achievements = await authed(learner, 'GET', '/me/achievements');
+    const firstPerfect = achievements.json().achievements.find((a: { id: string }) => a.id === 'first-perfect');
+    expect(firstPerfect.earnedAt).not.toBeNull();
   });
 
   it('a self-rated recording never enters the review schedule; the written answers do', async () => {
@@ -214,4 +217,17 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
   });
 
+  /**
+   * The Gem idempotency key is global, and the achievement grant used to key
+   * on the achievement alone — so only the first person ever to earn one
+   * would have been paid for it.
+   */
+  it('every learner who earns an achievement is paid its Gems', async () => {
+    const second = await register('eng2');
+    const { results } = await play(second, true);
+    expect(results).toMatchObject({ accuracy: 1, firstCompletion: true });
+    expect(await gemsEarned(second.id, 'perfect_lesson')).toBe(5);
+    expect(await gemsEarned(learner.id, 'achievement_milestone')).toBe(15);
+    expect(await gemsEarned(second.id, 'achievement_milestone')).toBe(15);
+  });
 });

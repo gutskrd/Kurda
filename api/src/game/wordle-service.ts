@@ -1,7 +1,8 @@
 import type pg from 'pg';
 import { dictionaryKey } from '@kurda/shared';
 import { XpService } from '../xp/service.js';
-import { StreakService } from '../streaks/service.js';
+import { StreakService, type StreakSummary } from '../streaks/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 import {
   applyGuess,
   initGame,
@@ -85,14 +86,16 @@ export class WordleService {
   private readonly xp: XpService;
   private readonly streaks: StreakService;
   private readonly now: () => Date;
+  private readonly milestones?: MilestoneRecorder;
 
   constructor(
     private readonly pool: pg.Pool,
-    deps: { xp?: XpService; streaks?: StreakService; now?: () => Date } = {},
+    deps: { xp?: XpService; streaks?: StreakService; now?: () => Date; milestones?: MilestoneRecorder } = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.now = deps.now ?? (() => new Date());
+    this.milestones = deps.milestones;
   }
 
   /**
@@ -184,11 +187,17 @@ export class WordleService {
       );
 
       let xpAwarded: number | null = null;
+      let streak: StreakSummary | null = null;
       if (finished) {
-        xpAwarded = await this.finish(client, row, next, timeMs ?? 0);
+        ({ xpAwarded, streak } = await this.finish(client, row, next, timeMs ?? 0));
       }
 
       await client.query('COMMIT');
+      // a daily win that extended the streak may have reached streak-30;
+      // best-effort and idempotent, after the commit
+      if (streak && this.milestones) {
+        await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+      }
       const view = this.toView(updated.rows[0]!);
       view.xpAwarded = xpAwarded;
       return { ok: true, game: view };
@@ -220,7 +229,7 @@ export class WordleService {
     row: GameRow,
     game: WordleGame,
     timeMs: number,
-  ): Promise<number> {
+  ): Promise<{ xpAwarded: number; streak: StreakSummary | null }> {
     const won = game.status === 'won';
     const guesses = game.guesses.length;
     const daily = row.mode === 'daily';
@@ -252,12 +261,13 @@ export class WordleService {
     );
 
     // a daily win also counts toward the global daily streak (#031)
+    let streak: StreakSummary | null = null;
     if (daily && won) {
       const tz = await this.userTimeZone(client, row.user_id);
-      await this.streaks.recordActivity(row.user_id, tz, this.now(), client);
+      streak = await this.streaks.recordActivity(row.user_id, tz, this.now(), client);
     }
 
-    return xpAwarded;
+    return { xpAwarded, streak };
   }
 
   private async saveStats(client: pg.PoolClient, userId: string, s: WordleStats): Promise<void> {

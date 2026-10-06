@@ -23,6 +23,7 @@ import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 import { registerAchievementRoutes } from './achievements/routes.js';
+import { AchievementsService } from './achievements/service.js';
 import fastifyWebsocket from '@fastify/websocket';
 import { GameEngine, type EngineOptions } from './game/engine.js';
 import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
@@ -382,6 +383,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerImageUploadParser(app, mediaLimits(config).maxUploadBytes);
     registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
+    // what lessons, practice, Wordle and tournaments award achievements through
+    const achievements = new AchievementsService(app.db, gemService, activity);
     registerWalletRoutes(app);
 
     // friend + social + activity-feed routes
@@ -469,12 +472,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     };
     const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(economyRollup));
-    registerLessonRoutes(app, gemService, xpService);
+    registerLessonRoutes(app, gemService, xpService, achievements);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
-    registerPracticeRoutes(app, xpService);
-    registerWordleRoutes(app, { xp: xpService });
+    registerPracticeRoutes(app, xpService, achievements);
+    registerWordleRoutes(app, { xp: xpService, milestones: achievements });
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService });
     registerRhymeRoutes(app, { xp: xpService });
@@ -695,7 +698,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerRatingRoutes(app, ratingService);
 
     // tournaments (KUR-060): admin brackets + no-show forfeits
-    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService);
+    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
     registerTournamentRoutes(app, tournaments);
     const noShowSweeper = setInterval(
       () => void tournaments.sweepNoShows().catch((err) => app.log.warn({ err }, 'tournament sweep failed')),

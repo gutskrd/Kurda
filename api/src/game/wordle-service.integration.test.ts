@@ -174,6 +174,19 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     expect(new Set(ledger.rows.map((r) => r.ref_id)).size).toBe(3);
   });
 
+  it('reports a daily win that extends the streak, so streak milestones can be awarded', async () => {
+    const recorded: Array<[string, number]> = [];
+    const milestones = {
+      recordStreak: async (userId: string, current: number) => void recorded.push([userId, current]),
+      recordLessonCompleted: async () => undefined,
+    };
+    const u = await makeUser();
+    const gameId = await insertGame(u, 'daily', 'medium', 'malan', utcDayIndex(new Date('2026-08-06T00:00:00Z')));
+    const res = await new WordleService(pool, { now: () => new Date(), milestones }).guess(u, gameId, 'malan');
+    expect(res.ok).toBe(true);
+    expect(recorded).toEqual([[u, 1]]);
+  });
+
   it('rejects wrong-length and non-dictionary guesses without consuming an attempt', async () => {
     const u = await makeUser();
     const gameId = await insertGame(u, 'practice', 'medium', 'malan', null);

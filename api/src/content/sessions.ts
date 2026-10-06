@@ -7,6 +7,7 @@ import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -102,6 +103,7 @@ export class LessonSessionService {
   private readonly goals: DailyGoalService;
   private readonly reviews: ReviewService;
   private readonly gems?: GemGranter;
+  private readonly milestones?: MilestoneRecorder;
 
   constructor(
     private readonly pool: pg.Pool,
@@ -111,6 +113,7 @@ export class LessonSessionService {
       goals?: DailyGoalService;
       reviews?: ReviewService;
       gems?: GemGranter;
+      milestones?: MilestoneRecorder;
     } = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
@@ -118,6 +121,7 @@ export class LessonSessionService {
     this.goals = deps.goals ?? new DailyGoalService(pool);
     this.reviews = deps.reviews ?? new ReviewService(pool);
     this.gems = deps.gems;
+    this.milestones = deps.milestones;
   }
 
   private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
@@ -324,6 +328,7 @@ export class LessonSessionService {
     let xpAwarded = 0;
     let streak: StreakSummary | null = null;
     let firstCompletion: boolean | null = null;
+    let claimedNow = false;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -335,6 +340,7 @@ export class LessonSessionService {
           [sessionId],
         );
         if ((claimed.rowCount ?? 0) > 0) {
+          claimedNow = true;
           // Repeat = this learner already completed this lesson before.
           const prior = await client.query<{ n: string }>(
             `SELECT count(*)::text n FROM lesson_sessions
@@ -377,6 +383,11 @@ export class LessonSessionService {
         .grant(userId, PERFECT_LESSON_GEM_RULE, `${session.lesson_id}:${userId}`)
         .catch(() => undefined);
     }
+    if (this.milestones && claimedNow) {
+      await this.milestones.recordLessonCompleted(userId, accuracy).catch(() => undefined);
+      await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+    }
+
     return {
       correct,
       total: session.total_count,

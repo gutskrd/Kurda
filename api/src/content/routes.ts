@@ -5,6 +5,7 @@ import { AppError } from '../plugins/errors.js';
 import { ContentRepository } from './repository.js';
 import { LessonSessionService, type GemGranter } from './sessions.js';
 import type { XpService } from '../xp/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 
 const answerBodySchema = z.object({
   exerciseId: z.uuid(),
@@ -16,9 +17,10 @@ export function registerLessonRoutes(
   app: FastifyInstance,
   gems?: GemGranter,
   xp?: XpService,
+  milestones?: MilestoneRecorder,
 ): void {
   // perfect first completions pay Gems (KUR-068) inside `complete`
-  const sessions = new LessonSessionService(app.db, { xp, gems });
+  const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
   const content = new ContentRepository(app.db);
 
   /** A skill's markdown grammar note for the "Tips" tab (KUR-038). */
