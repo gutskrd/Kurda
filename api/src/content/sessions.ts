@@ -69,6 +69,11 @@ export interface SessionResults {
   streak: StreakSummary;
 }
 
+/** The seed a lesson exercise is shuffled and graded with. */
+function exerciseSeed(sessionId: string, exerciseId: string): string {
+  return `${sessionId}:${exerciseId}`;
+}
+
 /**
  * Lesson delivery + grading (KUR-028). Sessions pin a lesson id, grade
  * every answer server-side (KUR-027), and record each answer exactly
@@ -127,7 +132,7 @@ export class LessonSessionService {
         id: ex.id,
         position: ex.position,
         type: ex.type,
-        ...sanitizeExercise(ex.type, ex.payload, `${session.id}:${ex.id}`),
+        ...sanitizeExercise(ex.type, ex.payload, exerciseSeed(session.id, ex.id)),
       })),
       answered,
       grammarMd: grammar.rows[0]?.grammar_md ?? null,
@@ -202,7 +207,7 @@ export class LessonSessionService {
     const ex = exercise.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_LESSON', 404, 'exercise is not in this lesson');
 
-    const result = checkAnswer(ex.type, ex.payload, answer);
+    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
 
     // idempotent per (session, exercise): first answer wins
     const client = await this.pool.connect();

@@ -140,9 +140,28 @@ function seededShuffle<T>(items: T[], seed: string): T[] {
 }
 
 /**
+ * The order a multiple-choice item's options are shown in, for a seed:
+ * `displayed[i] = options[order[i]]`.
+ *
+ * Authored order leaked the answer: every seeded item had it first, and a
+ * learner who noticed stopped recalling and started tapping the top option.
+ * The seed is `${sessionId}:${exerciseId}`, so the order differs between
+ * sessions and between items but is the same every time one session asks for
+ * it — a resumed lesson shows what it showed before, and grading
+ * (`checkAnswer`, same seed) maps the tapped position back to the option.
+ */
+export function optionOrder(count: number, seed: string): number[] {
+  return seededShuffle(
+    Array.from({ length: count }, (_, i) => i),
+    seed,
+  );
+}
+
+/**
  * Strips the correct answer from a stored exercise before it goes to the
  * client (KUR-028). The client never receives correctIndex / accepted /
- * the pairing; match-pairs sides are shuffled independently per session.
+ * the pairing; multiple-choice options and match-pairs sides are shuffled
+ * per session with `seed` (`${sessionId}:${exerciseId}`).
  */
 export function sanitizeExercise(
   type: ExerciseType,
@@ -154,10 +173,10 @@ export function sanitizeExercise(
 
   switch (type) {
     case 'multiple_choice': {
-      // options stay in authored order — the answer is submitted as an
-      // index into this array, so it must match the stored order
+      // the answer comes back as an index into THIS order; grading maps it
+      // back with the same seed
       const p = parsed.data as MultipleChoicePayload;
-      return { prompt: p.prompt, options: p.options };
+      return { prompt: p.prompt, options: optionOrder(p.options.length, seed).map((i) => p.options[i]!) };
     }
     case 'translate': {
       const p = parsed.data as TranslatePayload;
@@ -206,8 +225,10 @@ export interface CheckResult {
   correction?: string;
 }
 
-function checkMultipleChoice(payload: MultipleChoicePayload, choice: number): CheckResult {
-  const correct = choice === payload.correctIndex;
+/** `choice` is a position in the order the learner saw (`optionOrder(…, seed)`). */
+function checkMultipleChoice(payload: MultipleChoicePayload, choice: number, seed: string): CheckResult {
+  const picked = optionOrder(payload.options.length, seed)[choice];
+  const correct = picked === payload.correctIndex;
   return {
     verdict: correct ? 'correct' : 'wrong',
     accepted: correct,
@@ -301,9 +322,11 @@ function checkMatchPairs(
 /**
  * Grades one answer server-side. `payload` and `answer` are the raw
  * stored/submitted JSON; both are validated here so a malformed answer
- * is simply 'wrong', never a crash.
+ * is simply 'wrong', never a crash. `seed` is the one the exercise was
+ * delivered with (`${sessionId}:${exerciseId}`): a multiple-choice answer is a
+ * position in the shuffled order that seed produced.
  */
-export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknown): CheckResult {
+export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknown, seed: string): CheckResult {
   const validPayload = PAYLOAD_SCHEMAS[type].safeParse(payload);
   if (!validPayload.success) throw new Error(`stored payload for ${type} is invalid`);
 
@@ -315,6 +338,7 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
       return checkMultipleChoice(
         validPayload.data as MultipleChoicePayload,
         (parsedAnswer.data as { choice: number }).choice,
+        seed,
       );
     case 'translate':
       return checkTranslate(

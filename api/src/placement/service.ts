@@ -6,6 +6,7 @@ import {
   PLACEMENT_START_LEVEL,
   isComplete,
   nextLevel,
+  pickCandidate,
   placedLevel,
   type PlacementStep,
 } from './placement.js';
@@ -45,11 +46,22 @@ interface SessionRow {
   completed_at: Date | null;
 }
 
+interface ExerciseRow {
+  id: string;
+  type: ExerciseType;
+  payload: unknown;
+}
+
+/** The seed a placement exercise is shuffled and graded with. */
+function exerciseSeed(sessionId: string, exerciseId: string): string {
+  return `${sessionId}:${exerciseId}`;
+}
+
 /**
  * Adaptive placement (KUR-039): walk skill levels (harder on correct, easier
- * on wrong) drawing one question per level, then unlock skills up to the
- * highest level answered correctly. Sessions resume; unlock is written only
- * on completion so quitting never partially unlocks.
+ * on wrong) drawing one question per step from the level's exercises, then
+ * unlock skills up to the highest level answered correctly. Sessions resume;
+ * unlock is written only on completion so quitting never partially unlocks.
  */
 export class PlacementService {
   constructor(private readonly pool: pg.Pool) {}
@@ -66,29 +78,51 @@ export class PlacementService {
     return rows.rows.map((r, i) => ({ skillId: r.id, level: i + 1 }));
   }
 
-  /** Pick a question for a level: an exercise from a published lesson there. */
-  private async questionForLevel(
+  /**
+   * Draw the exercise to ask at a level (`pickCandidate`): any exercise of the
+   * learner-visible (highest published) version of the skill's lessons, except
+   * speaking — a self-rated recording would let anyone climb by tapping "good".
+   * `seed` is the session and the question number, so a resumed question is the
+   * same one.
+   */
+  private async pickExercise(
     skills: Array<{ skillId: string; level: number }>,
     level: number,
     seed: string,
-  ): Promise<PlacementQuestion | null> {
+    alreadyAsked: string[],
+  ): Promise<string | null> {
     const skill = skills.find((s) => s.level === level);
     if (!skill) return null;
-    const ex = await this.pool.query<{ id: string; type: ExerciseType; payload: unknown }>(
-      `SELECT e.id, e.type, e.payload FROM exercises e
+    const ex = await this.pool.query<{ id: string }>(
+      `SELECT e.id FROM exercises e
        JOIN lessons l ON l.id = e.lesson_id
-       WHERE l.skill_id = $1 AND l.status = 'published'
-       ORDER BY l.position ASC, e.position ASC
-       LIMIT 1`,
+       WHERE l.skill_id = $1 AND l.status = 'published' AND e.type <> 'speaking'
+         AND l.version = (
+           SELECT max(l2.version) FROM lessons l2
+           WHERE l2.skill_id = l.skill_id AND l2.position = l.position AND l2.status = 'published'
+         )
+       ORDER BY e.id ASC`,
       [skill.skillId],
     );
-    const row = ex.rows[0];
+    const ids = ex.rows.map((r) => r.id);
+    const index = pickCandidate(ids, seed, alreadyAsked);
+    return index >= 0 ? ids[index]! : null;
+  }
+
+  /** The asked exercise as the client sees it: answer stripped, options shuffled. */
+  private async question(sessionId: string, exerciseId: string | null, level: number): Promise<PlacementQuestion | null> {
+    if (!exerciseId) return null;
+    const res = await this.pool.query<ExerciseRow>(
+      `SELECT id, type, payload FROM exercises WHERE id = $1`,
+      [exerciseId],
+    );
+    const row = res.rows[0];
     if (!row) return null;
     return {
       exerciseId: row.id,
       level,
       type: row.type,
-      ...sanitizeExercise(row.type, row.payload, `${seed}:${row.id}`),
+      ...sanitizeExercise(row.type, row.payload, exerciseSeed(sessionId, row.id)),
     };
   }
 
@@ -125,17 +159,24 @@ export class PlacementService {
 
     if (!session) {
       const level = Math.min(PLACEMENT_START_LEVEL, maxLevel);
-      const q = await this.questionForLevel(skills, level, 'seed');
       const created = await this.pool.query<SessionRow>(
-        `INSERT INTO placement_sessions (user_id, course_id, current_level, current_exercise_id)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO placement_sessions (user_id, course_id, current_level)
+         VALUES ($1, $2, $3)
          RETURNING id, course_id, current_level, current_exercise_id, history, completed_at`,
-        [userId, courseId, level, q?.exerciseId ?? null],
+        [userId, courseId, level],
       );
       session = created.rows[0]!;
+      // the first question is drawn with the new session's own seed
+      const first = await this.pickExercise(skills, level, `${session.id}:0`, []);
+      await this.pool.query(`UPDATE placement_sessions SET current_exercise_id = $2 WHERE id = $1`, [
+        session.id,
+        first,
+      ]);
+      session.current_exercise_id = first;
     }
 
-    const question = await this.questionForLevel(skills, session.current_level, session.id);
+    // resume shows the stored question, never a fresh draw
+    const question = await this.question(session.id, session.current_exercise_id, session.current_level);
     return { sessionId: session.id, asked: session.history.length, maxLevel, question };
   }
 
@@ -159,8 +200,11 @@ export class PlacementService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('WRONG_QUESTION', 404, 'question no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer);
-    const history: PlacementStep[] = [...session.history, { level: session.current_level, correct: result.accepted }];
+    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(sessionId, exerciseId));
+    const history: PlacementStep[] = [
+      ...session.history,
+      { level: session.current_level, correct: result.accepted, exerciseId },
+    ];
 
     const skills = await this.orderedSkills(session.course_id);
     const maxLevel = skills.length;
@@ -185,11 +229,12 @@ export class PlacementService {
     }
 
     const level = nextLevel(session.current_level, result.accepted, maxLevel);
-    const question = await this.questionForLevel(skills, level, `${sessionId}:${history.length}`);
+    const asked = history.flatMap((step) => (step.exerciseId ? [step.exerciseId] : []));
+    const nextId = await this.pickExercise(skills, level, `${sessionId}:${history.length}`, asked);
     await this.pool.query(
       `UPDATE placement_sessions SET history = $2, current_level = $3, current_exercise_id = $4 WHERE id = $1`,
-      [sessionId, JSON.stringify(history), level, question?.exerciseId ?? null],
+      [sessionId, JSON.stringify(history), level, nextId],
     );
-    return { correct: result.accepted, done: false, question };
+    return { correct: result.accepted, done: false, question: await this.question(sessionId, nextId, level) };
   }
 }

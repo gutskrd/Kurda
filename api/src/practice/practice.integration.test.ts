@@ -87,6 +87,8 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
   });
 
   let sessionId: string;
+  /** Options are shuffled per session, so a choice is where an option was shown. */
+  let mcOptions: string[];
 
   it('generates a session from due review items without leaking answers', async () => {
     // make the three exercises overdue for this user
@@ -102,16 +104,18 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     const body = res.json();
     sessionId = body.sessionId;
     expect(body.exercises).toHaveLength(3);
+    mcOptions = body.exercises.find((e: { id: string }) => e.id === ex.mc).options;
     const raw = JSON.stringify(body);
     expect(raw).not.toContain('correctIndex');
     expect(raw).not.toContain('accepted');
   });
 
   it('grades answers and is idempotent per exercise', async () => {
-    expect((await authed('POST', `/practice/sessions/${sessionId}/answers`, { exerciseId: ex.mc, answer: { choice: 0 } })).json())
+    const choice = (option: string) => ({ choice: mcOptions.indexOf(option) });
+    expect((await authed('POST', `/practice/sessions/${sessionId}/answers`, { exerciseId: ex.mc, answer: choice('Apple') })).json())
       .toMatchObject({ verdict: 'correct', accepted: true, duplicate: false });
     // replay with a wrong choice → original correct verdict stands
-    expect((await authed('POST', `/practice/sessions/${sessionId}/answers`, { exerciseId: ex.mc, answer: { choice: 1 } })).json())
+    expect((await authed('POST', `/practice/sessions/${sessionId}/answers`, { exerciseId: ex.mc, answer: choice('Bread') })).json())
       .toMatchObject({ accepted: true, duplicate: true });
     await authed('POST', `/practice/sessions/${sessionId}/answers`, { exerciseId: ex.tr, answer: { text: 'sêv' } });
     await authed('POST', `/practice/sessions/${sessionId}/answers`, {

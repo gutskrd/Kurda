@@ -180,7 +180,7 @@ export class PracticeService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer);
+    const result = checkAnswer(ex.type, ex.payload, answer, `${sessionId}:${ex.id}`);
 
     const client = await this.pool.connect();
     try {

@@ -94,12 +94,19 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
   });
 
   let sessionId: string;
+  /** the multiple-choice options in the order this session shows them */
+  let mcOptions: string[];
+  /** Options are shuffled per session, so a choice is where an option was shown. */
+  const shownMcOptions = (view: { exercises: Array<{ id: string; options?: string[] }> }) =>
+    view.exercises.find((e) => e.id === ex.mc)!.options!;
 
   it('starts a session and never leaks the correct answers', async () => {
     const res = await authed('GET', `/lessons/${lessonId}/session`);
     expect(res.statusCode).toBe(200);
     const body = res.json();
     sessionId = body.sessionId;
+    mcOptions = shownMcOptions(body);
+    expect([...mcOptions].sort()).toEqual(['Apple', 'Bread', 'Water']);
     expect(body.exercises).toHaveLength(3);
     const raw = JSON.stringify(body);
     expect(raw).not.toContain('correctIndex');
@@ -114,7 +121,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
   it('grades a correct multiple-choice answer', async () => {
     const res = await authed('POST', `/sessions/${sessionId}/answers`, {
       exerciseId: ex.mc,
-      answer: { choice: 0 },
+      answer: { choice: mcOptions.indexOf('Apple') },
     });
     expect(res.json()).toMatchObject({ verdict: 'correct', accepted: true, duplicate: false });
   });
@@ -122,7 +129,7 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
   it('answering is idempotent per exercise (first answer wins)', async () => {
     const replay = await authed('POST', `/sessions/${sessionId}/answers`, {
       exerciseId: ex.mc,
-      answer: { choice: 2 }, // different, wrong choice
+      answer: { choice: mcOptions.indexOf('Water') }, // different, wrong choice
     });
     expect(replay.json()).toMatchObject({ verdict: 'correct', accepted: true, duplicate: true });
   });
@@ -148,10 +155,11 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     expect(res.json()).toMatchObject({ verdict: 'correct', accepted: true });
   });
 
-  it('resume shows which exercises were answered', async () => {
+  it('resume shows which exercises were answered, with the options in the same order', async () => {
     const res = await authed('GET', `/sessions/${sessionId}`);
     const answered = res.json().answered as Record<string, unknown>;
     expect(Object.keys(answered).sort()).toEqual([ex.mc, ex.tr, ex.mp].sort());
+    expect(shownMcOptions(res.json())).toEqual(mcOptions);
   });
 
   it('completes with a results summary, awards full XP, and starts a streak', async () => {
@@ -189,7 +197,8 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
     const start = await authed('GET', `/lessons/${lessonId}/session`);
     const sid = start.json().sessionId;
     // answer everything correctly again
-    await authed('POST', `/sessions/${sid}/answers`, { exerciseId: ex.mc, answer: { choice: 0 } });
+    const choice = shownMcOptions(start.json()).indexOf('Apple');
+    await authed('POST', `/sessions/${sid}/answers`, { exerciseId: ex.mc, answer: { choice } });
     await authed('POST', `/sessions/${sid}/answers`, { exerciseId: ex.tr, answer: { text: 'sêv' } });
     await authed('POST', `/sessions/${sid}/answers`, {
       exerciseId: ex.mp,
