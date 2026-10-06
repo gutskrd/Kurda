@@ -126,10 +126,20 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     // perfect lesson would be 20; practice pays half → 10
     expect(res.json()).toMatchObject({ correct: 3, total: 3, accuracy: 1, xpAwarded: 10 });
     expect(res.json().streak).toMatchObject({ current: 1 });
+    // a day learned, and one session of five towards a streak freeze
+    expect(res.json().streak).toMatchObject({ daysLearned: 1, freezeProgress: 1, sessionsPerFreeze: 5 });
+  });
+
+  it('a finished practice session unlocks today’s daily Zêr', async () => {
+    const status = await authed('GET', '/rewards/daily');
+    expect(status.json()).toMatchObject({ learnedToday: true, canClaim: true });
   });
 
   it('re-completing awards no further XP', async () => {
-    expect((await authed('POST', `/practice/sessions/${sessionId}/complete`)).json()).toMatchObject({ xpAwarded: 0 });
+    const again = (await authed('POST', `/practice/sessions/${sessionId}/complete`)).json();
+    expect(again).toMatchObject({ xpAwarded: 0 });
+    // nor counts the session twice towards a freeze
+    expect(again.streak).toMatchObject({ daysLearned: 1, freezeProgress: 1 });
   });
 
   it('practice updated SM-2 so the items are no longer due', async () => {
