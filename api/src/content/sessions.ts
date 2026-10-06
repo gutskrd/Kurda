@@ -5,7 +5,7 @@ import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
-import { ReviewService } from '../review/service.js';
+import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
 
 export const SESSION_TTL_HOURS = 24;
@@ -240,8 +240,12 @@ export class LessonSessionService {
         );
       }
       // Feed the answer into spaced repetition (KUR-033), keyed on the
-      // exercise until a lexeme model exists (KUR-043). First answer only.
-      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict, result.accepted), new Date(), client);
+      // exercise until a lexeme model exists (KUR-043). First answer only;
+      // never a self-rated speaking answer (`feedsReview`).
+      if (feedsReview(ex.type)) {
+        const quality = qualityFromVerdict(result.verdict, result.accepted);
+        await this.reviews.record(userId, exerciseId, quality, new Date(), client);
+      }
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);

@@ -1,8 +1,18 @@
 import type pg from 'pg';
+import type { ExerciseType } from '../content/repository.js';
 import { INITIAL_SM2, scheduleAnswer, type Quality } from './sm2.js';
 
 /** Default cap on the review queue — no overwhelming wall of cards. */
 export const REVIEW_QUEUE_LIMIT = 20;
+
+/**
+ * Whether an answer to this kind of exercise is evidence the scheduler may
+ * use. Speaking is not: the learner rates their own recording and the server
+ * cannot check it, so a self-rated "good" must not push a word weeks away.
+ */
+export function feedsReview(type: ExerciseType): boolean {
+  return type !== 'speaking';
+}
 
 /** Executor: a pool or a client, so a review can join a transaction. */
 type Executor = Pick<pg.Pool, 'query'>;
@@ -116,10 +126,14 @@ export class ReviewService {
    * Items due for review now, most overdue first, capped at `limit`. Dict
    * items (item_id 'dict:<entryId>') only appear while their word is still
    * saved — unsaving stops scheduling but keeps the SM-2 history (KUR-047).
+   * Speaking exercises never appear: their answers no longer move the
+   * schedule (`feedsReview`), so one left over from before would be due
+   * forever.
    */
   async queue(userId: string, now: Date = new Date(), limit = REVIEW_QUEUE_LIMIT): Promise<ReviewQueue> {
     const savedFilter = `AND (item_id NOT LIKE 'dict:%'
-       OR item_id IN (SELECT 'dict:' || entry_id FROM saved_words WHERE user_id = $1))`;
+       OR item_id IN (SELECT 'dict:' || entry_id FROM saved_words WHERE user_id = $1))
+       AND item_id NOT IN (SELECT id::text FROM exercises WHERE type = 'speaking')`;
     const [due, count] = await Promise.all([
       this.pool.query<ItemRow>(
         `SELECT item_id, repetitions, interval_days, easiness, due_at

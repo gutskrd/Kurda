@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { answerKey, foldDiacritics } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
-import { defaultScorer } from './speaking-scorer.js';
+import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
 
 /**
  * Exercise payload schemas + server-side answer checkers (KUR-027).
@@ -129,8 +129,15 @@ export const answerSchemas = {
   }),
   /** listening is transcription — same shape as translate */
   listening: z.object({ text: z.string().max(500) }),
-  /** speaking submits the storage key of the uploaded recording */
-  speaking: z.object({ audioKey: z.string().min(1).max(300) }),
+  /**
+   * speaking submits the storage key of the uploaded recording, and how the
+   * learner judged it after hearing it beside the native model (optional, so
+   * clients from before self-rating still submit)
+   */
+  speaking: z.object({
+    audioKey: z.string().min(1).max(300),
+    selfRating: z.enum(SELF_RATINGS).optional(),
+  }),
   /** free-text writing */
   writing: z.object({ text: z.string().max(1000) }),
 } as const;
@@ -283,14 +290,23 @@ function checkListening(payload: ListeningPayload, text: string): CheckResult {
 }
 
 /**
- * Speaking is graded by the pronunciation scorer (KUR-036), which is a stub
- * that accepts any recording in v1 (real model: KUR-120). An empty audioKey
- * is still wrong so a skipped/failed upload isn't silently a pass.
+ * Speaking is graded by the pronunciation scorer (KUR-036): today the
+ * learner's own judgement after hearing their recording beside the native
+ * model (see speaking-scorer.ts). An empty audioKey is still wrong so a
+ * skipped/failed upload isn't silently a pass.
  */
-function checkSpeaking(payload: SpeakingPayload, audioKey: string): CheckResult {
-  if (!audioKey) return { verdict: 'wrong', accepted: false };
-  const score = defaultScorer.score({ reference: payload.reference, audioKey });
-  return { verdict: score.pass ? 'correct' : 'wrong', accepted: score.pass };
+function checkSpeaking(payload: SpeakingPayload, answer: SpeakingAnswer): CheckResult {
+  if (!answer.audioKey) return { verdict: 'wrong', accepted: false };
+  const score = defaultScorer.score({
+    reference: payload.reference,
+    audioKey: answer.audioKey,
+    selfRating: answer.selfRating,
+  });
+  return {
+    verdict: score.verdict,
+    accepted: score.accepted,
+    correction: score.verdict === 'correct' ? undefined : payload.reference,
+  };
 }
 
 /**
@@ -337,6 +353,8 @@ function checkMatchPairs(
   return { verdict: allRight ? 'correct' : 'wrong', accepted: allRight };
 }
 
+type SpeakingAnswer = z.infer<(typeof answerSchemas)['speaking']>;
+
 /**
  * Grades one answer server-side. `payload` and `answer` are the raw
  * stored/submitted JSON; both are validated here so a malformed answer
@@ -369,10 +387,7 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
         (parsedAnswer.data as { text: string }).text,
       );
     case 'speaking':
-      return checkSpeaking(
-        validPayload.data as SpeakingPayload,
-        (parsedAnswer.data as { audioKey: string }).audioKey,
-      );
+      return checkSpeaking(validPayload.data as SpeakingPayload, parsedAnswer.data as SpeakingAnswer);
     case 'writing':
       return checkWriting(
         validPayload.data as WritingPayload,

@@ -248,16 +248,46 @@ describe('speaking (KUR-036)', () => {
     expect(JSON.stringify(safe)).not.toContain('reference');
   });
 
-  it('the v1 stub scorer accepts any uploaded recording', () => {
-    expect(grade('speaking', payload, { audioKey: 'speaking/abc.m4a' })).toMatchObject({
+  /**
+   * The v1 stub passed every recording. Nothing on the server can hear one, so
+   * the learner rates it after comparing it with the native model.
+   */
+  it('grades by the learner’s own rating: good, close, try again', () => {
+    const key = { audioKey: 'speaking/abc.m4a' };
+    expect(grade('speaking', payload, { ...key, selfRating: 'good' })).toEqual({
       verdict: 'correct',
       accepted: true,
+    });
+    expect(grade('speaking', payload, { ...key, selfRating: 'close' })).toEqual({
+      verdict: 'typo',
+      accepted: true,
+      correction: 'Ez baş im',
+    });
+    expect(grade('speaking', payload, { ...key, selfRating: 'retry' })).toEqual({
+      verdict: 'wrong',
+      accepted: false,
+      correction: 'Ez baş im',
+    });
+  });
+
+  it('a client from before self-rating gets "almost", neither a pass nor a fail', () => {
+    expect(grade('speaking', payload, { audioKey: 'speaking/abc.m4a' })).toMatchObject({
+      verdict: 'typo',
+      accepted: true,
+    });
+  });
+
+  it('rejects a rating outside the three', () => {
+    expect(grade('speaking', payload, { audioKey: 'speaking/abc.m4a', selfRating: 'perfect' })).toEqual({
+      verdict: 'wrong',
+      accepted: false,
     });
   });
 
   it('an empty audioKey is wrong, not a silent pass', () => {
     // schema requires a non-empty key, so a blank submission is rejected → wrong
     expect(grade('speaking', payload, { audioKey: '' })).toMatchObject({ accepted: false });
+    expect(grade('speaking', payload, { audioKey: '', selfRating: 'good' })).toMatchObject({ accepted: false });
   });
 });
 

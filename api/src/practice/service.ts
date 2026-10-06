@@ -5,7 +5,7 @@ import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
-import { ReviewService } from '../review/service.js';
+import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
 
@@ -202,8 +202,13 @@ export class PracticeService {
       if (result.accepted) {
         await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [sessionId]);
       }
-      // feed SM-2 so practice actually strengthens the item (KUR-033)
-      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict, result.accepted), new Date(), client);
+      // feed SM-2 so practice actually strengthens the item (KUR-033); an
+      // item padded in before it was due cannot stretch its own interval
+      // (`ReviewService.record`)
+      if (feedsReview(ex.type)) {
+        const quality = qualityFromVerdict(result.verdict, result.accepted);
+        await this.reviews.record(userId, exerciseId, quality, new Date(), client);
+      }
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
