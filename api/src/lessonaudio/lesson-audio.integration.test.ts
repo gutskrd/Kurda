@@ -84,10 +84,12 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
   let reader = '';
   let learner = '';
   let courseId = '';
+  let unitId = '';
+  let skillId = '';
   let live = '';
   let draft = '';
   let nextVersion = '';
-  const ex: Record<string, string> = {};
+  const ex = { mc: '', tr: '', li: '', mp: '', un: '', sp: '' };
 
   /** the texts this run's lessons use, each unique to the run */
   const T = {
@@ -140,7 +142,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       url: `/admin/lesson-audio?key=${encodeURIComponent(key)}`,
       headers: { authorization: `Bearer ${token}` },
     });
-  const list = async (token = editor): Promise<{ items: Item[]; summary: Record<string, number> }> => {
+  const list = async (token = editor): Promise<{ items: Item[]; summary: { needed: number; recorded: number; missing: number; unused: number } }> => {
     const res = await app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${token}` } });
     expect(res.statusCode, res.body).toBe(200);
     return res.json();
@@ -165,8 +167,8 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     }
 
     courseId = await repo.createCourse({ slug: `la-${s}`, titleKu: 'Deng', titleEn: `Audio course ${s}` });
-    const unitId = await repo.createUnit(courseId, 1, 'Yek', 'Unit one');
-    const skillId = await repo.createSkill(unitId, 1, 'Silav', 'Greetings');
+    unitId = await repo.createUnit(courseId, 1, 'Yek', 'Unit one');
+    skillId = await repo.createSkill(unitId, 1, 'Silav', 'Greetings');
 
     // a published lesson with one exercise of each type
     live = await repo.createLesson(skillId, 1, 'Silav 1', 'Greetings 1');
@@ -253,9 +255,13 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       lessonStatus: 'draft',
       lessonVersion: 2,
       live: true,
+      courseId,
       courseTitle: `Audio course ${s}`,
+      unitId,
       unitTitle: 'Unit one',
+      skillId,
       skillTitle: 'Greetings',
+      lessonPosition: 1,
       exerciseTypes: ['multiple_choice'],
     });
 
@@ -274,7 +280,13 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     // added in the draft only: needed already, not heard by anyone yet
     expect(item(items, T.newInV2)!.usedIn[0]).toMatchObject({ lessonId: nextVersion, lessonStatus: 'draft', live: false });
     // a lesson that was never published
-    expect(item(items, T.draftOnly)!.usedIn[0]).toMatchObject({ lessonId: draft, lessonTitle: 'Greetings 2', lessonStatus: 'draft', live: false });
+    expect(item(items, T.draftOnly)!.usedIn[0]).toMatchObject({
+      lessonId: draft,
+      lessonPosition: 2,
+      lessonTitle: 'Greetings 2',
+      lessonStatus: 'draft',
+      live: false,
+    });
 
     // in course order: the first lesson's items before the second's
     const at = (text: string) => items.findIndex((i) => i.key === lessonAudioKey(text));

@@ -7,8 +7,13 @@ import type { ContentStatus } from '../content/workflow.js';
 export interface LessonAudioUsage {
   courseId: string;
   courseTitle: string;
+  unitId: string;
   unitTitle: string;
+  skillId: string;
   skillTitle: string;
+  /** the lesson's place in its skill: with skillId, the lesson across all its versions */
+  lessonPosition: number;
+  /** the newest version that uses the text */
   lessonId: string;
   lessonTitle: string;
   /** of the newest version that uses the text: a draft, when an editor has added it there */
@@ -42,6 +47,7 @@ export interface LessonAudioList {
 interface ExerciseRow {
   course_id: string;
   course_title: string;
+  unit_id: string;
   unit_title: string;
   skill_id: string;
   skill_title: string;
@@ -89,7 +95,7 @@ export class LessonAudioService {
            (SELECT DISTINCT ON (skill_id, position) id FROM lessons
             WHERE status = 'published' ORDER BY skill_id, position, version DESC)
          )
-         SELECT c.id course_id, c.title_en course_title, u.title_en unit_title,
+         SELECT c.id course_id, c.title_en course_title, u.id unit_id, u.title_en unit_title,
                 s.id skill_id, s.title_en skill_title,
                 l.id lesson_id, l.position lesson_position, l.title_en lesson_title, l.status, l.version,
                 e.type, e.payload
@@ -121,8 +127,11 @@ export class LessonAudioService {
           usage = {
             courseId: row.course_id,
             courseTitle: row.course_title,
+            unitId: row.unit_id,
             unitTitle: row.unit_title,
+            skillId: row.skill_id,
             skillTitle: row.skill_title,
+            lessonPosition: row.lesson_position,
             lessonId: row.lesson_id,
             lessonTitle: row.lesson_title,
             lessonStatus: row.status,
