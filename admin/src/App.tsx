@@ -21,7 +21,7 @@ import { Ops } from './pages/Ops';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
-import { AlphabetAudio } from './pages/AlphabetAudio';
+import { AudioStudio } from './pages/AudioStudio';
 import { Shop } from './pages/Shop';
 
 // `roles` gates the nav link (cosmetic only — the API re-authorizes every
@@ -29,6 +29,9 @@ import { Shop } from './pages/Shop';
 // RBAC-role check (requireAdmin(totp, ...roles)); every other page uses the
 // legacy `admin` role and is always shown.
 type Page = NavItem & { render: () => ReactNode; roles?: string[] };
+
+/** Pages that moved, so an old bookmark still lands: the alphabet's recordings are a tab of the audio studio now. */
+const ALIASES: Record<string, string> = { alphabet: 'audio' };
 
 const PAGES: Page[] = [
   { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
@@ -44,7 +47,7 @@ const PAGES: Page[] = [
   { key: 'ops', label: 'Ops', render: () => <Ops /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'games', label: 'Games', roles: ['superadmin', 'content_editor'], render: () => <Games /> },
-  { key: 'alphabet', label: 'Alphabet audio', roles: ['superadmin', 'content_editor', 'admin'], render: () => <AlphabetAudio /> },
+  { key: 'audio', label: 'Audio studio', roles: ['superadmin', 'content_editor', 'admin'], render: () => <AudioStudio /> },
   { key: 'shop', label: 'Shop', roles: ['superadmin'], render: () => <Shop /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
   { key: 'audit', label: 'Audit', roles: ['superadmin'], render: () => <Audit /> },
@@ -58,7 +61,8 @@ function Workspace(): React.JSX.Element {
   const known = roles.length > 0;
   const visible = PAGES.filter((p) => !p.roles || !known || roles.some((r) => p.roles!.includes(r)));
 
-  const [page, navigate] = useHashRoute(visible[0]!.key);
+  const [route, navigate] = useHashRoute(visible[0]!.key);
+  const page = ALIASES[route] ?? route;
   const [, setTick] = useState(0);
   // render the routed page even if its nav link is hidden — it enforces its own
   // access (a role-gated page shows its own "insufficient permissions" notice)
