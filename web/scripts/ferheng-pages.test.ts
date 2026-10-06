@@ -587,7 +587,15 @@ describe('an address with no page behind it', () => {
   /** The letters are the one thing a re-import never moves. */
   it('sends a reader somewhere that still exists', () => {
     expect(notFoundPage()).toContain('Here ferhengê');
-    expect(notFoundPage()).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
+    expect(notFoundPage()).toContain('href="/ferheng/"');
+  });
+
+  /** A dead address is not a page to index, and it is nobody's twin. */
+  it('asks not to be indexed, and claims no address', () => {
+    const html = notFoundPage();
+    expect(html).toContain('<meta name="robots" content="noindex">');
+    expect(html).not.toContain('rel="canonical"');
+    expect(html).not.toContain('hreflang');
   });
 });
 
@@ -762,6 +770,17 @@ describe('the language around the words', () => {
       const html = indexPage([{ letter: 's', words: 1 }], 1, 1, [], new Map(), c);
       expect(html).toContain('<link rel="alternate" hreflang="ku" href="https://hevalo.app/ferheng/">');
       expect(html).toContain('<link rel="alternate" hreflang="en" href="https://hevalo.app/dictionary/">');
+    }
+  });
+
+  /** Page for page: a page of words names its own twin, not the other front page. */
+  it('names the same page in the other language', () => {
+    for (const c of [COPY.ku, COPY.en]) {
+      const p = pages[0]!.prefix;
+      const html = wordsPage(pages[0]!, null, null, new Map(), c);
+      expect(html).toContain(`<link rel="alternate" hreflang="ku" href="https://hevalo.app/ferheng/${p}/">`);
+      expect(html).toContain(`<link rel="alternate" hreflang="en" href="https://hevalo.app/dictionary/${p}/">`);
+      expect(html).toContain(`<link rel="alternate" hreflang="x-default" href="https://hevalo.app/dictionary/${p}/">`);
     }
   });
 

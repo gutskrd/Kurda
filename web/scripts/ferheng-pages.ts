@@ -310,21 +310,22 @@ ${/* not translated anywhere in the app: it is the app's own line, the way a
 </div>
 <div class="footer-col">
 <h4>${labelled('nav.learn', c.footer.learn)}</h4>
-<a href="/learn">${labelled('learn.title', c.footer.lessons)}</a>
+<a href="/app/learn">${labelled('learn.title', c.footer.lessons)}</a>
 <a href="/app">${labelled('nav.home', c.nav.home)}</a>
-<a href="/games">${labelled('nav.games', c.nav.games)}</a>
+<a href="/app/games">${labelled('nav.games', c.nav.games)}</a>
 <a href="/${c.base}/">${labelled('nav.dictionary', c.nav.dictionary)}</a>
 </div>
 <div class="footer-col">
 <h4>${labelled('nav.community', c.footer.community)}</h4>
-<a href="/rankings">${labelled('nav.rankings', c.nav.rankings)}</a>
+<a href="/app/rankings">${labelled('nav.rankings', c.nav.rankings)}</a>
 <a href="/register">${labelled('footer.join', c.footer.join)}</a>
 <a href="/login">${labelled('nav.login', c.nav.login)}</a>
 </div>
 <div class="footer-col">
 <h4>${labelled('footer.app', c.footer.app)}</h4>
-<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">${labelled('footer.iosSoon', c.footer.ios)}</a>
-<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">${labelled('footer.androidSoon', c.footer.android)}</a>
+${/* plain text until there is a listing, as in the app's Footer.tsx */ ''}
+<span class="footer-soon">${labelled('footer.iosSoon', c.footer.ios)}</span>
+<span class="footer-soon">${labelled('footer.androidSoon', c.footer.android)}</span>
 </div>
 </div>
 <div class="footer-bottom">
@@ -364,6 +365,25 @@ function navLink(key: string, href: string, label: string, copy: ChromeKey, curr
 }
 
 /**
+ * This page in each language it is published in, for a search engine.
+ *
+ * Page for page, not set for set: the words and the paging are the same in
+ * both, so `/ferheng/ab/` and `/dictionary/ab/` are one page in two languages.
+ * Naming the two front pages from every page contradicted each page's own
+ * canonical, and a search engine discards annotations like that. `x-default`
+ * is English, the rule `ferhengLocaleFor` applies to a reader.
+ */
+function alternates(canonical: string, c: Copy): string {
+  const rest = canonical.slice(`${ORIGIN}/${c.base}/`.length);
+  const at = (base: string): string => escape(`${ORIGIN}/${base}/${rest}`);
+  return (
+    `<link rel="alternate" hreflang="ku" href="${at(COPY.ku.base)}">\n` +
+    `<link rel="alternate" hreflang="en" href="${at(COPY.en.base)}">\n` +
+    `<link rel="alternate" hreflang="x-default" href="${at(COPY.en.base)}">`
+  );
+}
+
+/**
  * The shell every page shares: nothing fetched off this origin, and one script
  * — chrome.js, which only relabels the bar and footer. See ferheng-chrome.ts.
  */
@@ -382,6 +402,8 @@ export function document_(opts: {
   hereCopy?: PageKey;
   /** which of the published languages this page is one of */
   copy: Copy;
+  /** the 404: `noindex`, and no claim to an address or a twin */
+  missing?: boolean;
 }): string {
   const c = opts.copy;
   return `<!doctype html>
@@ -391,7 +413,7 @@ export function document_(opts: {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title${opts.titleCopy ? copyHook(opts.titleCopy.key, undefined, opts.titleCopy.vars) : ''}>${escape(opts.title)}</title>
 <meta name="description" content="${escape(opts.description)}">
-<link rel="canonical" href="${escape(opts.canonical)}">
+${opts.missing ? '<meta name="robots" content="noindex">' : `<link rel="canonical" href="${escape(opts.canonical)}">`}
 <link rel="icon" href="/favicon.png" type="image/png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Hevalo">
@@ -399,10 +421,7 @@ export function document_(opts: {
 <meta property="og:title" content="${escape(opts.title)}">
 <meta property="og:description" content="${escape(opts.description)}">
 <link rel="stylesheet" href="/${c.base}/ferheng.css">
-${/* each language points at the other, so a search engine indexes them as one
-      page in two languages rather than as two competing pages */ ''}
-<link rel="alternate" hreflang="ku" href="${ORIGIN}/ferheng/">
-<link rel="alternate" hreflang="en" href="${ORIGIN}/dictionary/">
+${opts.missing ? '' : alternates(opts.canonical, c)}
 </head>
 <body>
 <header class="nav">
@@ -812,6 +831,7 @@ export function notFoundPage(copy: Copy = COPY.ku): string {
     breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/`, copy: 'page.root' }],
     here: copy.notFound.here,
     hereCopy: 'page.notFound.here',
+    missing: true,
     body: `<header class="head">
 <p class="eyebrow">404</p>
 <h1 class="running">${labelled('page.notFound.heading', copy.notFound.heading)}</h1>
@@ -1201,6 +1221,7 @@ img { max-width: 100%; display: block; }
 .footer-col h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; font-weight: 600; }
 .footer-col a { display: block; color: var(--ink-2); font-size: 0.95rem; padding: 4px 0; }
 .footer-col a:hover { color: var(--ink); }
+.footer-soon { display: block; color: var(--ink-3); font-size: 0.95rem; padding: 4px 0; }
 .footer-bottom {
   margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border);
   display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
