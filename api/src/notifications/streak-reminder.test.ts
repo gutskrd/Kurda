@@ -49,8 +49,18 @@ describe('dueReminder', () => {
 });
 
 describe('reminderMessage', () => {
+  // deliberately changed: the copy used to be "Don't lose your streak!" and
+  // "Last chance!"
   it('varies copy by kind and includes the streak length', () => {
-    expect(reminderMessage('primary', 5).body).toContain('5-day');
-    expect(reminderMessage('last_chance', 9).title).toContain('Last chance');
+    expect(reminderMessage('primary', 5).body).toContain('5 days in a row');
+    expect(reminderMessage('primary', 1).body).toContain('1 day in a row');
+    expect(reminderMessage('last_chance', 9)).not.toEqual(reminderMessage('primary', 9));
+  });
+
+  it('never frames a day off as a loss', () => {
+    for (const kind of ['primary', 'last_chance'] as const) {
+      const { title, body } = reminderMessage(kind, 12);
+      expect(`${title} ${body}`).not.toMatch(/lose|lost|last chance|save it|ends|alive|don't/i);
+    }
   });
 });

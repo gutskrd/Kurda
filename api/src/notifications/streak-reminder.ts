@@ -29,8 +29,9 @@ export function preferredHour(historicalHour: number | null): number {
 
 /**
  * The reminder to send right now, or null. Never fires if the user already
- * practiced today or has no live streak. A "last chance" nudge at 22:00 (for
- * streaks ≥ 7) takes precedence over the primary reminder if they coincide.
+ * practiced today or has no live streak. A later nudge at 22:00 (for streaks
+ * ≥ 7, still called `last_chance` in the send log) takes precedence over the
+ * primary reminder if they coincide.
  */
 export function dueReminder(ctx: ReminderContext): ReminderKind | null {
   if (ctx.practicedToday) return null;
@@ -47,16 +48,24 @@ export interface ReminderMessage {
   body: string;
 }
 
-/** Copy for each reminder kind. */
+/**
+ * Copy for each reminder kind.
+ *
+ * An invitation, not a warning. This used to read "Don't lose your streak!"
+ * and "Last chance!", which frames a day off as a loss and leans on guilt — the
+ * pattern the roadmap in docs/research asks us to drop, for learners of every
+ * age. So it says what has been done and how little today needs, and nothing
+ * about what could be lost.
+ */
 export function reminderMessage(kind: ReminderKind, streak: number): ReminderMessage {
   if (kind === 'last_chance') {
     return {
-      title: 'Last chance! ⏰',
-      body: `Your ${streak}-day streak ends at midnight — practice now to save it.`,
+      title: 'There is still time today',
+      body: 'A short practice before midnight counts for today.',
     };
   }
   return {
-    title: "Don't lose your streak! 🔥",
-    body: `You're on a ${streak}-day streak. A quick practice keeps it alive.`,
+    title: 'A few minutes of Kurdish?',
+    body: `You have learned ${streak} ${streak === 1 ? 'day' : 'days'} in a row. One short lesson or practice counts for today.`,
   };
 }
