@@ -62,3 +62,14 @@ export {
   type AlphabetClip,
   type AlphabetClipGroup,
 } from './alphabet-audio.js';
+/**
+ * Which Kurdish texts a lesson wants recorded, and the key a recording is filed
+ * under — the admin's audio studio and the API's lesson delivery must agree.
+ */
+export {
+  LESSON_AUDIO_MAX_SECONDS,
+  LESSON_AUDIO_TEXT_MAX,
+  lessonAudioKey,
+  lessonAudioTargets,
+  primaryAudioTarget,
+} from './lesson-audio.js';
