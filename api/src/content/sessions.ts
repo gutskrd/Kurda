@@ -7,6 +7,7 @@ import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
+import { lessonAudioFor } from '../lessonaudio/delivery.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -43,6 +44,10 @@ export interface SessionView {
     options?: string[];
     lefts?: string[];
     rights?: string[];
+    /** native recordings from the audio studio, where there are any */
+    audioUrl?: string;
+    modelAudioUrl?: string;
+    audio?: Record<string, string>;
   }>;
   /** exercises already answered in this session (resume) */
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
@@ -117,17 +122,19 @@ export class LessonSessionService {
     ]);
     const answered: SessionView['answered'] = {};
     for (const a of answers.rows) answered[a.exercise_id] = { verdict: a.verdict, accepted: a.accepted };
+    const audio = await lessonAudioFor(this.pool, exercises);
 
     return {
       sessionId: session.id,
       lessonId: session.lesson_id,
       expiresAt: new Date(session.expires_at).toISOString(),
       completed: session.completed_at !== null,
-      exercises: exercises.map((ex) => ({
+      exercises: exercises.map((ex, i) => ({
         id: ex.id,
         position: ex.position,
         type: ex.type,
         ...sanitizeExercise(ex.type, ex.payload, `${session.id}:${ex.id}`),
+        ...audio[i],
       })),
       answered,
       grammarMd: grammar.rows[0]?.grammar_md ?? null,

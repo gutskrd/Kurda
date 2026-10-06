@@ -8,6 +8,7 @@ import { DailyGoalService } from '../goals/service.js';
 import { ReviewService } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
+import { lessonAudioFor } from '../lessonaudio/delivery.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
 export const PRACTICE_XP_FACTOR = 0.5;
@@ -26,6 +27,10 @@ export interface PracticeExercise {
   options?: string[];
   lefts?: string[];
   rights?: string[];
+  /** native recordings from the audio studio, where there are any */
+  audioUrl?: string;
+  modelAudioUrl?: string;
+  audio?: Record<string, string>;
 }
 
 export interface PracticeSession {
@@ -106,13 +111,15 @@ export class PracticeService {
       [userId, exercises.map((e) => e.id), exercises.length],
     );
     const sessionId = created.rows[0]!.id;
+    const audio = await lessonAudioFor(this.pool, exercises);
 
     return {
       sessionId,
-      exercises: exercises.map((ex) => ({
+      exercises: exercises.map((ex, i) => ({
         id: ex.id,
         type: ex.type,
         ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
+        ...audio[i],
       })),
     };
   }

@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { checkAnswer, sanitizeExercise } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
+import { lessonAudioFor } from '../lessonaudio/delivery.js';
 import {
   PLACEMENT_START_LEVEL,
   isComplete,
@@ -19,6 +20,9 @@ export interface PlacementQuestion {
   lefts?: string[];
   rights?: string[];
   audioUrl?: string;
+  /** native recordings from the audio studio, where there are any */
+  modelAudioUrl?: string;
+  audio?: Record<string, string>;
 }
 
 export interface PlacementView {
@@ -66,11 +70,16 @@ export class PlacementService {
     return rows.rows.map((r, i) => ({ skillId: r.id, level: i + 1 }));
   }
 
-  /** Pick a question for a level: an exercise from a published lesson there. */
+  /**
+   * Pick a question for a level: an exercise from a published lesson there.
+   * `withAudio` false skips looking up its recordings, for a caller that only
+   * wants to know which exercise it is.
+   */
   private async questionForLevel(
     skills: Array<{ skillId: string; level: number }>,
     level: number,
     seed: string,
+    withAudio = true,
   ): Promise<PlacementQuestion | null> {
     const skill = skills.find((s) => s.level === level);
     if (!skill) return null;
@@ -84,11 +93,13 @@ export class PlacementService {
     );
     const row = ex.rows[0];
     if (!row) return null;
+    const [audio] = withAudio ? await lessonAudioFor(this.pool, [row]) : [];
     return {
       exerciseId: row.id,
       level,
       type: row.type,
       ...sanitizeExercise(row.type, row.payload, `${seed}:${row.id}`),
+      ...audio,
     };
   }
 
@@ -125,7 +136,7 @@ export class PlacementService {
 
     if (!session) {
       const level = Math.min(PLACEMENT_START_LEVEL, maxLevel);
-      const q = await this.questionForLevel(skills, level, 'seed');
+      const q = await this.questionForLevel(skills, level, 'seed', false);
       const created = await this.pool.query<SessionRow>(
         `INSERT INTO placement_sessions (user_id, course_id, current_level, current_exercise_id)
          VALUES ($1, $2, $3, $4)

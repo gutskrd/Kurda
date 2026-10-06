@@ -113,8 +113,9 @@ export function sniffAudioType(bytes: Uint8Array): SniffedAudioType | null {
   // m4a / aac / mp4 audio: "ftyp" box at byte 4
   if (startsWith(bytes, FTYP, 4)) return 'audio/mp4';
   if (startsWith(bytes, EBML) && isWebm(bytes)) return 'audio/webm';
-  // WAV: the RIFF container with "WAVE" at byte 8. Only the alphabet recordings
-  // allow it (see alphabet/routes.ts); voice notes keep their own allow-list.
+  // WAV: the RIFF container with "WAVE" at byte 8. Only the audio studio's
+  // recordings allow it (alphabet/routes.ts, lessonaudio/routes.ts); voice
+  // notes keep their own allow-list.
   if (startsWith(bytes, RIFF) && startsWith(bytes, WAVE, 8)) return 'audio/wav';
   return null;
 }
