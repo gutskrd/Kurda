@@ -241,8 +241,11 @@ export class WordleService {
 
     await this.saveStats(client, row.user_id, nextStats);
 
-    // idempotent award: one per daily day, one per practice game
-    const refId = daily ? `daily:${row.day_index}` : `game:${row.id}`;
+    // idempotent award: one per player per daily day, one per practice game.
+    // (source, ref_id) is unique across ALL users, so the daily key has to
+    // name the player — keyed on the day alone, only the first finisher each
+    // day was credited while everyone was told they had been.
+    const refId = daily ? `daily:${row.day_index}:${row.user_id}` : `game:${row.id}`;
     await this.xp.award(
       { userId: row.user_id, source: 'wordle', amount: xpAwarded, refId },
       client,
