@@ -6,8 +6,9 @@
  * Validates a course-content JSON document (structure + every exercise
  * payload) and imports it. --dry-run writes nothing and reports every
  * validation error with its path. --publish marks each imported lesson
- * version published (so a seed loads as playable). Re-import creates new
- * draft versions; published lessons are never mutated.
+ * version published (so a seed loads as playable). Re-import creates a new
+ * version only for a lesson whose content changed; published lessons are
+ * never mutated.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -46,12 +47,16 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
+    for (const warning of result.warnings) console.warn(`! ${warning.path}: ${warning.message}`);
+
     const s = result.summary;
     const verb = result.dryRun ? 'would import' : 'imported';
     console.log(
       `✓ ${verb}: ${s.units} unit(s), ${s.skills} skill(s), ${s.lessons} lesson(s), ${s.exercises} exercise(s)` +
         (result.dryRun ? ' (dry run — nothing written)' : publish ? ' (published)' : ' (draft)'),
     );
+    // unchanged lessons keep their exercise ids, so review history survives a re-run
+    console.log(`  ${s.versionsCreated} new lesson version(s), ${s.unchanged} lesson(s) unchanged`);
   } finally {
     await pool.end();
   }

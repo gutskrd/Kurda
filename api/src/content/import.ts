@@ -1,13 +1,21 @@
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { ContentRepository } from './repository.js';
-import { InvalidExercisePayloadError, validateExercisePayload } from './exercises.js';
+import { ContentRepository, type StoredLessonVersion } from './repository.js';
+import { InvalidExercisePayloadError, validateExercisePayload, type MultipleChoicePayload } from './exercises.js';
 
 /**
  * Course content import (KUR-041). A structured JSON document (what a
  * content spreadsheet exports to) is validated — structurally and per
  * exercise payload — with every error located by path, then imported.
- * Re-import creates new draft lesson versions; published lessons are never
- * mutated (createLessonVersion + the DB immutability trigger).
+ * Published lessons are never mutated (createLessonVersion + the DB
+ * immutability trigger).
+ *
+ * A lesson gets a new version only when its content changed. Every run used
+ * to version every lesson, and a new version means new exercise ids — while
+ * review history is keyed on exercise ids — so loading content on each
+ * deploy would have reset every learner's review schedule each time. Now
+ * each lesson's content is hashed (`lessonContentHash`) and compared with
+ * what is stored at its slot; an unchanged lesson is left alone.
  */
 
 const exerciseSchema = z.object({
@@ -60,13 +68,51 @@ export interface ImportSummary {
   courseCreated: boolean;
   units: number;
   skills: number;
+  /** lessons in the document */
   lessons: number;
   exercises: number;
+  /** lesson versions the import created (on a dry run: would create) */
+  versionsCreated: number;
+  /** lessons whose content matched what is stored, left as they were */
+  unchanged: number;
 }
 
 export type ValidationResult =
-  | { ok: true; content: CourseContent }
+  | { ok: true; content: CourseContent; warnings: ImportIssue[] }
   | { ok: false; issues: ImportIssue[] };
+
+/** Below this many multiple-choice items, all answers in one position is unremarkable. */
+const ANSWER_POSITION_LINT_MIN = 3;
+
+/**
+ * Lint (a warning, never an error): every multiple-choice answer in the
+ * course sits at the same option. Lessons shuffle options per session, so
+ * learners no longer see it there; but authored order is what any surface
+ * that shows a stored item as written (an editor's preview, an export, a
+ * client that predates the shuffle) shows, and a key that is always "A" is
+ * easy to learn instead of the language.
+ */
+function answerPositionWarnings(content: CourseContent): ImportIssue[] {
+  const positions: number[] = [];
+  for (const unit of content.units) {
+    for (const skill of unit.skills) {
+      for (const lesson of skill.lessons) {
+        for (const ex of lesson.exercises) {
+          if (ex.type === 'multiple_choice') positions.push((ex.payload as MultipleChoicePayload).correctIndex);
+        }
+      }
+    }
+  }
+  if (positions.length < ANSWER_POSITION_LINT_MIN || new Set(positions).size > 1) return [];
+  return [
+    {
+      path: 'units',
+      message:
+        `all ${positions.length} multiple-choice answers are option ${positions[0]}; ` +
+        'vary where the right answer is written (lessons shuffle options, but stored order still shows elsewhere)',
+    },
+  ];
+}
 
 /** Validate structure + every exercise payload, collecting located errors. */
 export function validateContent(raw: unknown): ValidationResult {
@@ -101,7 +147,63 @@ export function validateContent(raw: unknown): ValidationResult {
     });
   });
 
-  return issues.length > 0 ? { ok: false, issues } : { ok: true, content };
+  return issues.length > 0 ? { ok: false, issues } : { ok: true, content, warnings: answerPositionWarnings(content) };
+}
+
+/** JSON with object keys sorted at every depth, so equal content is equal text. */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJson(v)}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+/** A lesson as the hash sees it: what a learner is shown, nothing about where it is stored. */
+export interface HashableLesson {
+  titleKu: string;
+  titleEn: string;
+  exercises: Array<{ position: number; type: string; payload: unknown }>;
+}
+
+/**
+ * A lesson's content hash: its titles and every exercise (position, type and
+ * payload), with payloads read through their schema exactly as `addExercise`
+ * stores them and keys sorted, so the same lesson hashes the same whether it
+ * comes from a JSON file or back out of Postgres.
+ */
+export function lessonContentHash(lesson: HashableLesson): string {
+  const exercises = [...lesson.exercises]
+    .sort((a, b) => a.position - b.position)
+    .map((ex) => {
+      let payload: unknown = ex.payload;
+      try {
+        payload = validateExercisePayload(ex.type as never, ex.payload);
+      } catch {
+        // an invalid payload hashes as it is, so it never matches a valid one
+      }
+      return { position: ex.position, type: ex.type, payload };
+    });
+  return createHash('sha256')
+    .update(canonicalJson({ titleKu: lesson.titleKu, titleEn: lesson.titleEn, exercises }))
+    .digest('hex');
+}
+
+/**
+ * The stored version an incoming lesson is the same as, if any: the one
+ * learners see (the highest published version) first, then the newest
+ * version of any kind, so a re-run neither re-versions published content nor
+ * stacks identical drafts on top of an unpublished one.
+ */
+function matchingVersion(versions: StoredLessonVersion[], hash: string): StoredLessonVersion | null {
+  const live = versions.find((v) => v.status === 'published');
+  if (live && lessonContentHash(live) === hash) return live;
+  const newest = versions[0];
+  if (newest && newest !== live && lessonContentHash(newest) === hash) return newest;
+  return null;
 }
 
 export interface ImportOptions {
@@ -113,6 +215,8 @@ export interface ImportOptions {
 export interface ImportResult {
   dryRun: boolean;
   issues: ImportIssue[];
+  /** lint findings that do not stop the import */
+  warnings: ImportIssue[];
   summary: ImportSummary;
 }
 
@@ -126,14 +230,22 @@ export async function importCourse(
   options: ImportOptions = {},
 ): Promise<ImportResult> {
   const validation = validateContent(raw);
-  const summary: ImportSummary = { courseCreated: false, units: 0, skills: 0, lessons: 0, exercises: 0 };
+  const summary: ImportSummary = {
+    courseCreated: false,
+    units: 0,
+    skills: 0,
+    lessons: 0,
+    exercises: 0,
+    versionsCreated: 0,
+    unchanged: 0,
+  };
 
   if (!validation.ok) {
-    return { dryRun: options.dryRun ?? false, issues: validation.issues, summary };
+    return { dryRun: options.dryRun ?? false, issues: validation.issues, warnings: [], summary };
   }
-  const content = validation.content;
+  const { content, warnings } = validation;
 
-  // count what a real import would create (also the dry-run report)
+  // count what the document holds (also the dry-run report)
   for (const unit of content.units) {
     summary.units += 1;
     for (const skill of unit.skills) {
@@ -146,10 +258,24 @@ export async function importCourse(
   }
 
   if (options.dryRun) {
-    return { dryRun: true, issues: [], summary };
+    // read-only: which lessons would get a new version, against what is stored
+    const courseId = await repo.findCourseBySlug(content.course.slug);
+    for (const unit of content.units) {
+      const unitId = courseId ? await repo.findUnit(courseId, unit.position) : null;
+      for (const skill of unit.skills) {
+        const skillId = unitId ? await repo.findSkill(unitId, skill.position) : null;
+        for (const lesson of skill.lessons) {
+          const versions = skillId ? await repo.lessonVersions(skillId, lesson.position) : [];
+          if (matchingVersion(versions, lessonContentHash(lesson))) summary.unchanged += 1;
+          else summary.versionsCreated += 1;
+        }
+      }
+    }
+    return { dryRun: true, issues: [], warnings, summary };
   }
 
-  // real import — idempotent by (slug / position); new lesson versions only
+  // real import — idempotent by (slug / position); a new lesson version only
+  // where the content changed
   let courseId = await repo.findCourseBySlug(content.course.slug);
   if (!courseId) {
     courseId = await repo.createCourse(content.course);
@@ -167,14 +293,23 @@ export async function importCourse(
       if (skill.grammarMd !== undefined) await repo.setGrammarNote(skillId, skill.grammarMd);
 
       for (const lesson of skill.lessons) {
+        const same = matchingVersion(await repo.lessonVersions(skillId, lesson.position), lessonContentHash(lesson));
+        if (same) {
+          // unchanged: the same exercise ids, so learners' review history
+          // stands. A matching draft goes live if this run publishes.
+          if (options.publish && same.status === 'draft') await repo.publishLesson(same.id);
+          summary.unchanged += 1;
+          continue;
+        }
         const lessonId = await repo.createLessonVersion(skillId, lesson.position, lesson.titleKu, lesson.titleEn);
         for (const ex of lesson.exercises) {
           await repo.addExercise(lessonId, ex.position, ex.type as never, ex.payload as Record<string, unknown>);
         }
         if (options.publish) await repo.publishLesson(lessonId);
+        summary.versionsCreated += 1;
       }
     }
   }
 
-  return { dryRun: false, issues: [], summary };
+  return { dryRun: false, issues: [], warnings, summary };
 }
