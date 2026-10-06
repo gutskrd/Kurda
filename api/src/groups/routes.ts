@@ -46,7 +46,7 @@ export function registerGroupRoutes(
   );
 
   /** Discover open groups + your own. */
-  app.get('/groups', { preHandler: requireAuth }, async () => ({ groups: await groups.discover() }));
+  app.get('/groups', { preHandler: requireAuth }, async (req) => ({ groups: await groups.discover(req.user!.id) }));
   app.get('/me/groups', { preHandler: requireAuth }, async (req) => ({ groups: await groups.myGroups(req.user!.id) }));
 
   /** Group detail with roster. */

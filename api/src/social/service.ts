@@ -5,6 +5,7 @@ import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
+import { isMinorRow, minorSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -81,6 +82,10 @@ function foldForm(input: string): string {
  * in either direction or those hidden from search. A profile's detail respects
  * its owner's visibility (everyone / members / friends / nobody), while identity
  * + the friend-relationship are always enough to send a request.
+ *
+ * Minors are never found by search, and their profile is never on the public
+ * web: 'everyone' is refused when they set it and read as 'members' if an
+ * older setting says so. Both are worked out from age at the moment of asking.
  */
 export class SocialService {
   constructor(
@@ -96,6 +101,8 @@ export class SocialService {
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM users u
         WHERE u.deleted_at IS NULL AND u.id <> $1
           AND u.profile_visibility <> 'nobody'
+          -- strangers cannot look a minor up (they reach friends another way)
+          AND NOT ${minorSql('u')}
           AND translate(lower(u.username::text), 'êîûçş', 'eiucs') LIKE $2 || '%'
           AND NOT EXISTS (
             SELECT 1 FROM blocks b
@@ -112,8 +119,20 @@ export class SocialService {
     }));
   }
 
-  /** Update the caller's profile visibility. */
+  /**
+   * Update the caller's profile visibility. A minor's profile cannot be put on
+   * the public web; every other rung is theirs to choose.
+   */
   async setVisibility(userId: string, visibility: Visibility): Promise<void> {
+    if (visibility === 'everyone') {
+      const age = await this.pool.query<{ birth_year: number | null; birth_month: number | null }>(
+        `SELECT birth_year, birth_month FROM users WHERE id = $1`,
+        [userId],
+      );
+      if (age.rows[0] && isMinorRow(age.rows[0])) {
+        throw new AppError('VISIBILITY_NOT_ALLOWED', 403, 'a profile under 18 cannot be public to everyone');
+      }
+    }
     await this.pool.query(`UPDATE users SET profile_visibility = $2 WHERE id = $1`, [userId, visibility]);
   }
 
@@ -137,6 +156,8 @@ export class SocialService {
       premium_until: Date | null;
       xp: number;
       profile_visibility: Visibility;
+      birth_year: number | null;
+      birth_month: number | null;
       streak: number;
       tier: string;
       rating: number;
@@ -174,6 +195,7 @@ export class SocialService {
       // ownership of each) + favorites. No N+1; the route resolves keys → URLs.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
+              u.birth_year, u.birth_month,
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
@@ -242,11 +264,15 @@ export class SocialService {
 
     const friendStatus: FriendStatus =
       isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
+    // an 'everyone' stored before we knew their age is read as 'members' for a
+    // minor: never the open web
+    const visibility: Visibility =
+      u.profile_visibility === 'everyone' && isMinorRow(u) ? 'members' : u.profile_visibility;
     const canSeeDetail =
       isSelf ||
-      u.profile_visibility === 'everyone' ||
-      (u.profile_visibility === 'members' && viewerId !== null) ||
-      (u.profile_visibility === 'friends' && friendStatus === 'friends');
+      visibility === 'everyone' ||
+      (visibility === 'members' && viewerId !== null) ||
+      (visibility === 'friends' && friendStatus === 'friends');
 
     const base: PublicProfile = {
       userId: targetId,

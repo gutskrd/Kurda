@@ -4,6 +4,7 @@ import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
+import { isMinorUser, minorSql } from '../users/age.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
@@ -87,6 +88,11 @@ interface EdgeRow {
  * request in either direction and hides both users from each other everywhere
  * (searches, lists, friends boards) via `areBlocked`. Friends are capped at 500;
  * pending requests expire after 30 days.
+ *
+ * A minor (13–17, worked out from age when asked) can send requests but cannot
+ * be sent one, so every friendship a minor has is one they started. Nobody is
+ * suggested a minor either. Requests already waiting from before we knew their
+ * age stay theirs to accept or decline.
  */
 export class FriendService {
   constructor(private readonly pool: pg.Pool) {}
@@ -143,6 +149,16 @@ export class FriendService {
       if (edge?.status === 'accepted') {
         await client.query('COMMIT');
         return 'already_friends';
+      }
+      // a minor only ever answers: a request to one goes through only when it
+      // is the reply to theirs (the mutual auto-accept below)
+      const answersTheirs = edge?.status === 'pending' && edge.requested_by === to;
+      if (!answersTheirs && (await isMinorUser(client, to))) {
+        throw new AppError(
+          'NOT_ACCEPTING_REQUESTS',
+          403,
+          'this person is not accepting friend requests',
+        );
       }
       if (edge?.status === 'pending') {
         if (edge.requested_by === from) {
@@ -436,8 +452,9 @@ export class FriendService {
   /**
    * People-you-may-know: friends-of-friends the user isn't already connected to,
    * ranked by number of mutual friends. Excludes self, existing friends, anyone
-   * with a pending request either way, blocked users, and profiles hidden from
-   * discovery. Returns [] for a user with no friends yet.
+   * with a pending request either way, blocked users, profiles hidden from
+   * discovery, and minors, who cannot be sent a request to begin with. Returns
+   * [] for a user with no friends yet.
    */
   async suggestions(user: string, publicUrl: PublicUrl = () => null, limit = 10): Promise<SuggestedFriend[]> {
     const rows = await this.pool.query<FriendRow & { mutual: number }>(
@@ -456,6 +473,7 @@ export class FriendService {
         WHERE u.id <> $1
           AND u.deleted_at IS NULL
           AND u.profile_visibility <> 'nobody'
+          AND NOT ${minorSql('u')}
           AND u.id NOT IN (SELECT fid FROM my_friends)
           AND NOT EXISTS (
             SELECT 1 FROM friendships fp

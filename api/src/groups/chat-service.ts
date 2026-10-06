@@ -1,7 +1,8 @@
 import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import type { GroupService } from './service.js';
+import { openGroupsAdultsOnly, type GroupService } from './service.js';
+import { isMinorUser } from '../users/age.js';
 import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
@@ -50,9 +51,18 @@ export class GroupChatService {
     private readonly moderation?: ChatModeration,
   ) {}
 
+  /**
+   * Membership, and for a minor an invite-only group: one who was in an open
+   * group before we knew their age stays a member (and can leave) but can
+   * neither read nor write its chat.
+   */
   private async requireMember(groupId: string, userId: string): Promise<'owner' | 'moderator' | 'member'> {
     const role = await this.groups.memberRole(groupId, userId);
     if (!role) throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
+    if (await isMinorUser(this.pool, userId)) {
+      const g = await this.pool.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
+      if (g.rows[0]?.privacy === 'open') throw openGroupsAdultsOnly();
+    }
     return role;
   }
 

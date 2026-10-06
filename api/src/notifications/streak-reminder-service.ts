@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { Notification } from '../push/service.js';
 import { dueReminder, reminderMessage, type ReminderKind } from './streak-reminder.js';
+import { minorSql } from '../users/age.js';
 
 /** Enqueue a push for one user — injected so the service doesn't know the queue. */
 export interface ReminderEnqueuer {
@@ -23,7 +24,8 @@ interface CandidateRow {
  * reminder that's due — at the practice hour (fallback 19:00), plus a last-chance
  * nudge at 22:00 for streaks ≥ 7. The send log makes it idempotent, and the
  * per-timezone local-hour match means there's no single global blast. Users who
- * already practiced today are never notified.
+ * already practiced today are never notified, and nor is anyone who has turned
+ * streak reminders off — which a minor has until they turn them on.
  */
 export class StreakReminderService {
   constructor(
@@ -48,7 +50,11 @@ export class StreakReminderService {
          ) AS historical_hour
        FROM user_streaks s
        JOIN users u ON u.id = s.user_id
-       WHERE s.current_streak >= 1 AND s.last_active_on IS NOT NULL`,
+       LEFT JOIN notification_prefs p ON p.user_id = s.user_id
+       WHERE s.current_streak >= 1 AND s.last_active_on IS NOT NULL
+         -- reminders turned off, or never turned on by a minor (off by default
+         -- for them, read from age now): nothing to queue
+         AND COALESCE(p.streak, NOT ${minorSql('u')})`,
       [now.toISOString()],
     );
 

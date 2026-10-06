@@ -65,28 +65,46 @@ export class GdprService {
       [cutoff],
     );
     for (const row of due.rows) {
-      await this.pool.query(
-        `UPDATE users SET
-           email = 'deleted_' || id || '@deleted.kurda.app',
-           username = 'deleted_' || substr(id::text, 1, 8),
-           display_name = NULL, bio = NULL, password_hash = NULL,
-           email_verified_at = NULL,
-           phone_verified_at = NULL, phone_hash = NULL, phone_masked = NULL,
-           token_version = token_version + 1,
-           deleted_at = now()
-         WHERE id = $1`,
-        [row.id],
-      );
-      await this.pool.query(
-        `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
-        [row.id],
-      );
-      await this.pool.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [row.id]);
-      await this.pool.query(`DELETE FROM email_tokens WHERE user_id = $1`, [row.id]);
-      await this.pool.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [row.id]);
+      await this.anonymize(row.id);
       this.deps.log?.info({ userId: row.id }, 'account anonymized after grace period');
     }
     return due.rows.length;
+  }
+
+  /**
+   * Anonymizes one account now, with no grace period and no email.
+   *
+   * For the one case where waiting would be wrong: an account we have just
+   * learned belongs to someone under 13. The fourteen-day grace exists so a
+   * user can change their mind, and that is not a choice this account has.
+   * No email either — the address may be a child's.
+   */
+  async closeNow(userId: string, reason: 'under_minimum_age'): Promise<void> {
+    await this.anonymize(userId);
+    this.deps.log?.info({ userId, reason }, 'account closed and anonymized');
+  }
+
+  private async anonymize(userId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE users SET
+         email = 'deleted_' || id || '@deleted.kurda.app',
+         username = 'deleted_' || substr(id::text, 1, 8),
+         display_name = NULL, bio = NULL, password_hash = NULL,
+         email_verified_at = NULL,
+         phone_verified_at = NULL, phone_hash = NULL, phone_masked = NULL,
+         birth_year = NULL, birth_month = NULL,
+         token_version = token_version + 1,
+         deleted_at = now()
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [userId],
+    );
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
+      [userId],
+    );
+    await this.pool.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [userId]);
+    await this.pool.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
+    await this.pool.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
   }
 
   /** Creates an export request; the worker fulfills it. */

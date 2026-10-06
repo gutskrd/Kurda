@@ -11,6 +11,35 @@ import {
   type CohortMember,
   type Tier,
 } from './league-logic.js';
+import { minorSql } from '../users/age.js';
+
+/**
+ * SQL: the user behind `alias` takes part in leagues right now — their own
+ * choice if they made one, otherwise in for adults and out for minors. Read
+ * from age at the moment it is asked, so a minor who never chose joins in on
+ * their own once they are 18.
+ */
+export function inLeaguesSql(alias: string): string {
+  return `COALESCE(${alias}.leagues_enabled, NOT ${minorSql(alias)})`;
+}
+
+/**
+ * Take a user out of this week's league table.
+ *
+ * Leaving is immediate rather than at the week's end: somebody who has said
+ * they do not want to be ranked should not stay on thirty other people's
+ * screens until Sunday. Earlier weeks are history and stay as they were.
+ */
+export async function leaveThisWeek(
+  executor: Pick<pg.Pool, 'query'>,
+  userId: string,
+  now: Date = new Date(),
+): Promise<void> {
+  await executor.query(`DELETE FROM league_members WHERE user_id = $1 AND week_key = $2`, [
+    userId,
+    weekStart(now),
+  ]);
+}
 
 /** Grants Gems for a rule/refId; injected so leagues stay decoupled (KUR-068). */
 export interface GemGranter {
@@ -31,6 +60,11 @@ export interface StandingRow {
 }
 
 export interface LeagueView {
+  /**
+   * Not taking part (their choice, or a minor who has not chosen): no table,
+   * nothing ranked, and the client offers the way back in.
+   */
+  optedOut: boolean;
   tier: Tier;
   weekKey: string;
   rank: number;
@@ -44,6 +78,10 @@ export interface LeagueView {
  * their first XP of the (UTC) week, ranked by that week's XP (summed from the
  * ledger), and promoted/demoted when the week closes. Promotions pay the
  * config-driven league_promotion Gems (KUR-068).
+ *
+ * Only those taking part (`inLeaguesSql`) are placed, shown or moved: someone
+ * who opts out is never put in a cohort, drops out of the one they were in, and
+ * keeps their tier untouched until they come back.
  */
 export class LeagueService {
   constructor(
@@ -65,7 +103,17 @@ export class LeagueService {
 
   /** XP earned → make sure the user is in a cohort for this week (lazy join). */
   async onXp(userId: string, now: Date = new Date()): Promise<void> {
+    if (!(await this.takesPart(userId))) return;
     await this.ensureMembership(userId, now);
+  }
+
+  /** Whether the user is in the leagues at all right now (see `inLeaguesSql`). */
+  async takesPart(userId: string): Promise<boolean> {
+    const r = await this.pool.query<{ taking_part: boolean }>(
+      `SELECT ${inLeaguesSql('u')} AS taking_part FROM users u WHERE u.id = $1`,
+      [userId],
+    );
+    return r.rows[0]?.taking_part ?? false;
   }
 
   /** Assign the user to a cohort for the current week if not already in one. */
@@ -138,11 +186,30 @@ export class LeagueService {
 
   /** The caller's current cohort standings (ensures membership first). */
   async standings(userId: string, now: Date = new Date()): Promise<LeagueView> {
-    const { cohortId, tier } = await this.ensureMembership(userId, now);
     const weekKey = weekStart(now);
+    if (!(await this.takesPart(userId))) {
+      // reading the page must not join anyone; the tier is kept for their return
+      const kept = await this.pool.query<{ tier: string }>(`SELECT tier FROM user_league WHERE user_id = $1`, [
+        userId,
+      ]);
+      const tier = kept.rows[0]?.tier ?? 'bronze';
+      return {
+        optedOut: true,
+        tier: isTier(tier) ? tier : 'bronze',
+        weekKey,
+        rank: 0,
+        promoteCount: 10,
+        demoteCount: 5,
+        standings: [],
+      };
+    }
+    const { cohortId, tier } = await this.ensureMembership(userId, now);
+    // a member who opted out mid-week left the table (leaveThisWeek); one whose
+    // default changed under them (an adult account found to be a minor's) is
+    // filtered here as well, so nobody is shown who is not taking part
     const rows = await this.pool.query<{ user_id: string; username: string }>(
       `SELECT m.user_id, u.username FROM league_members m JOIN users u ON u.id = m.user_id
-        WHERE m.cohort_id = $1`,
+        WHERE m.cohort_id = $1 AND ${inLeaguesSql('u')}`,
       [cohortId],
     );
     const members: Array<CohortMember & { username: string }> = await Promise.all(
@@ -162,6 +229,7 @@ export class LeagueService {
       isSelf: s.userId === userId,
     }));
     return {
+      optedOut: false,
       tier,
       weekKey,
       rank: standings.find((s) => s.isSelf)?.rank ?? standings.length,
@@ -193,8 +261,10 @@ export class LeagueService {
   }
 
   private async settleCohort(cohortId: string, weekKey: string, tier: Tier): Promise<void> {
+    // only those still taking part are ranked, promoted or demoted
     const members = await this.pool.query<{ user_id: string }>(
-      `SELECT user_id FROM league_members WHERE cohort_id = $1`,
+      `SELECT m.user_id FROM league_members m JOIN users u ON u.id = m.user_id
+        WHERE m.cohort_id = $1 AND ${inLeaguesSql('u')}`,
       [cohortId],
     );
     const withXp: CohortMember[] = await Promise.all(

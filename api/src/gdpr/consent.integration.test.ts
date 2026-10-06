@@ -4,19 +4,31 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { ageOn, CURRENT_POLICY_VERSION, isRestrictedAge } from './consent.js';
+import { CURRENT_POLICY_VERSION } from './consent.js';
 import { activate } from '../test/activate.js';
+import { isBelowConsentAgeRow } from '../users/age.js';
+import { bornYearsAgo } from '../test/age.js';
 
-describe('age math (unit)', () => {
-  it('computes age respecting the birthday boundary', () => {
-    const birth = new Date('2010-07-15');
-    expect(ageOn(birth, new Date('2026-07-14'))).toBe(15);
-    expect(ageOn(birth, new Date('2026-07-15'))).toBe(16);
+/*
+ * The age math itself is @kurda/shared's (age.test.ts); this pins the server's
+ * reading of it — derived from the birth month on every ask, never stored.
+ */
+describe('consent age (unit)', () => {
+  it('is below 16 until the month after the sixteenth birthday month', () => {
+    const now = new Date('2026-07-06T12:00:00Z');
+    expect(isBelowConsentAgeRow({ birth_year: 2010, birth_month: 7 }, now)).toBe(true);
+    expect(isBelowConsentAgeRow({ birth_year: 2010, birth_month: 6 }, now)).toBe(false);
+    expect(isBelowConsentAgeRow({ birth_year: 2000, birth_month: 1 }, now)).toBe(false);
   });
 
-  it('flags under-16 as restricted by default', () => {
-    expect(isRestrictedAge(new Date('2014-01-01'), 16, new Date('2026-07-06'))).toBe(true);
-    expect(isRestrictedAge(new Date('2000-01-01'), 16, new Date('2026-07-06'))).toBe(false);
+  it('ends on its own as time passes, with nothing rewritten', () => {
+    const row = { birth_year: 2012, birth_month: 3 };
+    expect(isBelowConsentAgeRow(row, new Date('2027-01-01T00:00:00Z'))).toBe(true);
+    expect(isBelowConsentAgeRow(row, new Date('2028-04-01T00:00:00Z'))).toBe(false);
+  });
+
+  it('is not assumed without a birth month', () => {
+    expect(isBelowConsentAgeRow({ birth_year: null, birth_month: null })).toBe(false);
   });
 });
 
@@ -75,33 +87,56 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
       '10.15.0.2',
     );
     expect(res.statusCode).toBe(201);
-    const row = await pool.query(
-      `SELECT consent_version, consented_at, restricted_mode FROM users WHERE id = $1`,
-      [res.json().user.id],
-    );
+    const row = await pool.query(`SELECT consent_version, consented_at FROM users WHERE id = $1`, [
+      res.json().user.id,
+    ]);
     expect(row.rows[0].consent_version).toBe(CURRENT_POLICY_VERSION);
     expect(row.rows[0].consented_at).not.toBeNull();
-    expect(row.rows[0].restricted_mode).toBe(false);
   });
 
-  it('under-16 birth date switches restricted_mode on', async () => {
+  // deliberately changed: this sent a 12-year-old's birthDate and expected an
+  // account; under 13 is now refused (auth/age.integration.test.ts), and the
+  // flag is derived from the stored birth month rather than written once
+  it('an under-16 birth month reads as restricted, with analytics off', async () => {
     const res = await register(
       {
-        email: `kid_${suffix}@it.kurda.app`,
-        username: `kid_${suffix}`.slice(0, 30),
-        birthDate: `${new Date().getFullYear() - 12}-01-01`,
+        email: `teen_${suffix}@it.kurda.app`,
+        username: `teen_${suffix}`.slice(0, 30),
+        ...bornYearsAgo(15),
       },
       '10.15.0.3',
     );
     expect(res.statusCode).toBe(201);
+    const token = res.json().tokens.accessToken;
     const me = await app.inject({
       method: 'GET',
       url: '/me',
-      headers: { authorization: `Bearer ${res.json().tokens.accessToken}` },
+      headers: { authorization: `Bearer ${token}` },
       remoteAddress: '10.15.0.4',
     });
     expect(me.json().user.restrictedMode).toBe(true);
     expect(me.json().user.analyticsConsent).toBe(false); // default OFF
+
+    // below 16 that consent is a parent's to give, so it cannot be switched on
+    const optIn = await app.inject({
+      method: 'POST',
+      url: '/me/consent',
+      payload: { analytics: true },
+      headers: { authorization: `Bearer ${token}` },
+      remoteAddress: '10.15.0.4',
+    });
+    expect(optIn.statusCode).toBe(403);
+    expect(optIn.json().code).toBe('PARENTAL_CONSENT_REQUIRED');
+
+    // and the restriction ends by itself once they are 16, nothing rewritten
+    await pool.query(`UPDATE users SET birth_year = birth_year - 1 WHERE id = $1`, [res.json().user.id]);
+    const older = await app.inject({
+      method: 'GET',
+      url: '/me',
+      headers: { authorization: `Bearer ${token}` },
+      remoteAddress: '10.15.0.4',
+    });
+    expect(older.json().user.restrictedMode).toBe(false);
   });
 
   it('policy bump → needsReconsent → POST /me/consent clears it', async () => {

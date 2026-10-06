@@ -43,7 +43,7 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     }),
   );
 
-  /** Set who can see your profile. */
+  /** Set who can see your profile ('everyone' is refused under 18). */
   app.put(
     '/me/privacy',
     {

@@ -4,6 +4,16 @@ import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { isMinorUser } from '../users/age.js';
+import { canonicalPair } from '../friends/pair.js';
+
+/**
+ * Open groups are for adults. Anyone can walk into one and talk to everyone in
+ * it, which is exactly the stranger contact a minor should not get by default.
+ */
+export function openGroupsAdultsOnly(): AppError {
+  return new AppError('OPEN_GROUPS_ADULTS_ONLY', 403, 'open groups are for members aged 18 and over');
+}
 
 export interface Group {
   id: string;
@@ -30,6 +40,12 @@ export interface GroupMember {
  * explicitly; when an owner's account is deleted the reconcile pass promotes the
  * oldest moderator (else oldest member, else archives). Group weekly XP is
  * summed from members' ledgers for the group leaderboard.
+ *
+ * Minors (worked out from age when asked) live in invite-only groups. They
+ * cannot see, join, start or be added to an open one; and since an "invite"
+ * here adds somebody outright rather than asking them, only a friend of the
+ * minor — a friendship the minor started — may add them to anything. That keeps
+ * every group a minor is in one that someone they chose put them in.
  */
 export class GroupService {
   constructor(private readonly pool: pg.Pool) {}
@@ -55,6 +71,9 @@ export class GroupService {
   }
 
   async create(ownerId: string, input: { name: string; description?: string; privacy?: 'open' | 'invite' }): Promise<{ id: string }> {
+    if ((input.privacy ?? 'open') === 'open' && (await isMinorUser(this.pool, ownerId))) {
+      throw openGroupsAdultsOnly();
+    }
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -103,6 +122,7 @@ export class GroupService {
       await client.query('BEGIN');
       const grp = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
       if (grp.rows[0]?.privacy !== 'open') throw new AppError('INVITE_ONLY', 403, 'this group is invite-only');
+      if (await isMinorUser(client, userId)) throw openGroupsAdultsOnly();
       await this.addMember(client, groupId, userId);
       await client.query('COMMIT');
     } catch (err) {
@@ -120,6 +140,7 @@ export class GroupService {
       await client.query('BEGIN');
       const role = await this.requireRole(client, groupId, inviterId);
       if (role !== 'owner' && role !== 'moderator') throw new AppError('FORBIDDEN', 403, 'only staff can invite');
+      if (await isMinorUser(client, targetId)) await this.assertMayAddMinor(client, groupId, inviterId, targetId);
       await this.addMember(client, groupId, targetId);
       await client.query('COMMIT');
     } catch (err) {
@@ -127,6 +148,29 @@ export class GroupService {
       throw err;
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Adding a minor: never to an open group, and only by one of their friends.
+   * One error for both refusals that concern the friendship, so a stranger
+   * learns no more than that this person cannot be added.
+   */
+  private async assertMayAddMinor(
+    client: Pick<pg.Pool, 'query'>,
+    groupId: string,
+    inviterId: string,
+    minorId: string,
+  ): Promise<void> {
+    const g = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
+    if (g.rows[0]?.privacy === 'open') throw openGroupsAdultsOnly();
+    const { lo, hi } = canonicalPair(inviterId, minorId);
+    const friends = await client.query(
+      `SELECT 1 FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'accepted'`,
+      [lo, hi],
+    );
+    if ((friends.rowCount ?? 0) === 0) {
+      throw new AppError('NOT_ACCEPTING_INVITES', 403, 'only their friends can add this person to a group');
     }
   }
 
@@ -259,8 +303,12 @@ export class GroupService {
     }));
   }
 
-  /** Open groups for discovery (not archived, not full). */
-  async discover(limit = 30): Promise<Group[]> {
+  /**
+   * Open groups for discovery (not archived, not full). None for a minor, who
+   * cannot join any of them.
+   */
+  async discover(viewerId: string, limit = 30): Promise<Group[]> {
+    if (await isMinorUser(this.pool, viewerId)) return [];
     const rows = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null; n: number;
     }>(

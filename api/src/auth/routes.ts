@@ -11,6 +11,7 @@ import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
 import { requireAuth } from '../plugins/auth.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
+import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
 function assertPasswordPolicy(password: string): void {
@@ -40,8 +41,16 @@ export const registerBodySchema = z.object({
   captchaToken: z.string().max(3_000).optional(),
   /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */
   acceptTerms: z.literal(true),
-  /** Optional; under-threshold users get restricted_mode (KUR-109). */
-  birthDate: z.iso.date().optional(),
+  /**
+   * Birth month and year, both or neither. The forms ask with no default; an
+   * old client that sends neither gets an account that is asked once after
+   * signing in, the same as Google and Apple sign-up.
+   */
+  birthYear: birthYearSchema.optional(),
+  birthMonth: birthMonthSchema.optional(),
+}).refine((body) => (body.birthYear === undefined) === (body.birthMonth === undefined), {
+  message: 'send birthYear and birthMonth together',
+  path: ['birthMonth'],
 });
 
 /** One generic rejection for every anti-bot check — never reveals
@@ -106,6 +115,11 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof registerBodySchema>;
+      // first, so nothing about a child is checked, scored or stored: under 13,
+      // no account is made at all (COPPA)
+      if (body.birthYear !== undefined && body.birthMonth !== undefined) {
+        assertOldEnough({ year: body.birthYear, month: body.birthMonth });
+      }
       // full username policy (reserved names, structure, length) with a specific
       // reason; the DB citext unique index remains the case-insensitive authority.
       const uname = validateUsername(body.username);

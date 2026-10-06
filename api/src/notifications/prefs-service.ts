@@ -7,6 +7,7 @@ import {
   type NotificationCategory,
   type NotificationPrefs,
 } from './prefs.js';
+import { isMinorUser } from '../users/age.js';
 
 interface PrefsRow {
   streak: boolean;
@@ -55,7 +56,9 @@ export class NotificationPrefsService {
        FROM notification_prefs WHERE user_id = $1`,
       [userId],
     );
-    return res.rows[0] ? toPrefs(res.rows[0]) : defaultPrefs();
+    if (res.rows[0]) return toPrefs(res.rows[0]);
+    // no row: the defaults, which depend on age at the time of asking
+    return defaultPrefs({ minor: await isMinorUser(this.pool, userId) });
   }
 
   /** Upsert the caller's preferences; unspecified fields keep their value. */
