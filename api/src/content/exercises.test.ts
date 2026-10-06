@@ -300,3 +300,96 @@ describe('writing (KUR-037)', () => {
     expect(grade('writing', payload, { text: 'Ez nizanim' })).toMatchObject({ accepted: false });
   });
 });
+
+/**
+ * ê and e, ş and s tell Kurmancî words apart (sêv apple, sev nothing; şer
+ * war, ser head). A spelling or dictation item that forgave them would count
+ * its target errors as successes, so an item can ask for the letter.
+ */
+describe('strict spelling', () => {
+  const translate = { prompt: 'war', accepted: ['şer'], strict: true };
+  const listening = { audioUrl: 'https://cdn.kurda.app/audio/ser.mp3', accepted: ['şer'], strict: true };
+  const writing = { prompt: 'Write: I am learning Kurdish', accepted: ['Ez fêrî kurdî dibim'], strict: true };
+
+  it('is accepted by the payload schemas, optional and boolean', () => {
+    expect(() => validateExercisePayload('translate', translate)).not.toThrow();
+    expect(() => validateExercisePayload('listening', listening)).not.toThrow();
+    expect(() => validateExercisePayload('writing', writing)).not.toThrow();
+    expect(() => validateExercisePayload('translate', { ...translate, strict: 'yes' })).toThrow();
+  });
+
+  it('names a diacritic slip as a typo but does not accept it', () => {
+    expect(grade('translate', translate, { text: 'ser' })).toEqual({ verdict: 'typo', accepted: false, correction: 'şer' });
+    expect(grade('listening', listening, { text: 'ser' })).toEqual({ verdict: 'typo', accepted: false, correction: 'şer' });
+    expect(grade('writing', writing, { text: 'ez feri kurdi dibim' })).toEqual({
+      verdict: 'typo',
+      accepted: false,
+      correction: 'Ez fêrî kurdî dibim',
+    });
+  });
+
+  it('still accepts the right spelling, whatever its case and spacing', () => {
+    expect(grade('translate', translate, { text: ' ŞER ' })).toEqual({ verdict: 'correct', accepted: true });
+    expect(grade('writing', writing, { text: 'Ez fêrî kurdî dibim!' })).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('leaves the lenient default as it was', () => {
+    const lenient = { prompt: 'war', accepted: ['şer'] };
+    expect(grade('translate', lenient, { text: 'ser' })).toEqual({ verdict: 'typo', accepted: true, correction: 'şer' });
+    expect(grade('translate', { ...lenient, strict: false }, { text: 'ser' })).toMatchObject({ accepted: true });
+  });
+
+  it('keeps a wrong word wrong', () => {
+    expect(grade('translate', translate, { text: 'av' })).toMatchObject({ verdict: 'wrong', accepted: false });
+  });
+});
+
+/** Persian-keyboard spelling of ە inside a word: heh + zero-width non-joiner. */
+const ZWNJ = '‌';
+
+/**
+ * A Soranî answer typed on an Arabic or Persian keyboard is the same word in
+ * different code points: ك for ک, ي for ی, ه for ە at the end of a word, ه +
+ * ZWNJ for ە inside one. Graded on the letters, it is right.
+ */
+describe('Soranî answers typed on an Arabic or Persian keyboard', () => {
+  it('translate accepts them as correct, not as typos', () => {
+    const payload = { prompt: 'Good morning', accepted: ['بەیانی باش'] };
+    expect(grade('translate', payload, { text: `به${ZWNJ}ياني باش` })).toEqual({ verdict: 'correct', accepted: true });
+    const kurdistan = { prompt: 'Kurdistan', accepted: ['کوردستان'] };
+    expect(grade('translate', kurdistan, { text: 'كوردستان' })).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('listening accepts them, and strict items too — they are not diacritic slips', () => {
+    const payload = { audioUrl: 'https://cdn.kurda.app/audio/ewe.mp3', accepted: ['ئەمە'], strict: true };
+    expect(grade('listening', payload, { text: `ئه${ZWNJ}مه` })).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('writing accepts them, with Arabic-script punctuation ignored', () => {
+    const payload = { prompt: 'How are you?', accepted: ['چۆنی؟'] };
+    expect(grade('writing', payload, { text: 'چۆني' })).toEqual({ verdict: 'correct', accepted: true });
+    expect(grade('writing', payload, { text: 'چۆنی ؟' })).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('match pairs accepts a pair sent back in other code points', () => {
+    const payload = {
+      pairs: [
+        { left: 'خانە', right: 'house' },
+        { left: 'کتێب', right: 'book' },
+      ],
+    };
+    expect(
+      grade('match_pairs', payload, {
+        matches: [
+          { left: 'خانه', right: 'house' },
+          { left: 'كتێب', right: 'book' },
+        ],
+      }),
+    ).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('keeps different letters different: ڕ is not ر', () => {
+    const payload = { prompt: 'deaf', accepted: ['کەڕ'] };
+    expect(grade('translate', payload, { text: 'کەر' })).toMatchObject({ verdict: 'wrong', accepted: false });
+  });
+});

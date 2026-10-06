@@ -203,7 +203,7 @@ export class PracticeService {
         await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [sessionId]);
       }
       // feed SM-2 so practice actually strengthens the item (KUR-033)
-      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict), new Date(), client);
+      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict, result.accepted), new Date(), client);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);

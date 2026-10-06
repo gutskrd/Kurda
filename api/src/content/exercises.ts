@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import { answerKey, foldDiacritics } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
 import { defaultScorer } from './speaking-scorer.js';
 
@@ -24,10 +24,19 @@ export const multipleChoicePayloadSchema = z
     path: ['correctIndex'],
   });
 
+/**
+ * Strict spelling: a diacritic slip (e for ê, s for ş) is not accepted. Those
+ * letters tell words apart, so a spelling or dictation item that forgave them
+ * would count its target errors as successes. Off by default — beginners keep
+ * the lenient "almost" (see `gradeText`).
+ */
+const strictSchema = z.boolean().optional();
+
 export const translatePayloadSchema = z.object({
   prompt: z.string().min(1).max(500),
   /** All accepted answers; the first is the canonical/shown correction. */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
+  strict: strictSchema,
 });
 
 export const matchPairsPayloadSchema = z.object({
@@ -44,6 +53,7 @@ export const listeningPayloadSchema = z.object({
   prompt: z.string().max(500).optional(),
   /** accepted transcriptions; graded diacritic-tolerantly like translate */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
+  strict: strictSchema,
 });
 
 export const speakingPayloadSchema = z.object({
@@ -57,6 +67,7 @@ export const writingPayloadSchema = z.object({
   prompt: z.string().min(1).max(500),
   /** accepted full-text answers; punctuation/case-insensitive, diacritic-tolerant */
   accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
+  strict: strictSchema,
 });
 
 const PAYLOAD_SCHEMAS = {
@@ -219,7 +230,10 @@ export type Verdict = 'correct' | 'typo' | 'wrong';
 
 export interface CheckResult {
   verdict: Verdict;
-  /** true for correct AND typo (a typo still counts as right, with a nudge). */
+  /**
+   * true for correct, and for a typo unless the item is strict (a typo then
+   * still counts as right, with a nudge). Never true for wrong.
+   */
   accepted: boolean;
   /** Canonical correct answer to show on reveal. */
   correction?: string;
@@ -237,32 +251,35 @@ function checkMultipleChoice(payload: MultipleChoicePayload, choice: number, see
 }
 
 /**
- * Diacritic-tolerant translation check. Exact (normalised) match against
- * any accepted answer → correct. A match only after folding Kurdish
- * diacritics (ê→e, ş→s, …) → accepted, but flagged as a 'typo' so the UI
- * can nudge ("almost — watch the ê"). Otherwise wrong.
+ * Diacritic-tolerant translation check. Answers are compared by `answerKey`,
+ * so case, spacing, invisible formatting and the keyboard a Soranî answer was
+ * typed on do not matter. An exact match against any accepted answer →
+ * correct. A match only after folding Kurdish diacritics (ê→e, ş→s, …) is a
+ * 'typo': accepted with a nudge ("almost — watch the ê"), unless the item is
+ * strict, where the letter is the point and the slip is not accepted.
+ * Otherwise wrong.
  */
-function gradeText(acceptedAnswers: string[], text: string): CheckResult {
-  const answer = normalizeKurdish(text).toLowerCase();
-  const accepted = acceptedAnswers.map((a) => normalizeKurdish(a).toLowerCase());
+function gradeText(acceptedAnswers: string[], text: string, strict = false): CheckResult {
+  const answer = answerKey(text);
+  const accepted = acceptedAnswers.map(answerKey);
   if (accepted.includes(answer)) {
     return { verdict: 'correct', accepted: true };
   }
   const foldedAnswer = foldDiacritics(answer);
   const foldedAccepted = accepted.map((a) => foldDiacritics(a));
   if (answer.length > 0 && foldedAccepted.includes(foldedAnswer)) {
-    return { verdict: 'typo', accepted: true, correction: acceptedAnswers[0] };
+    return { verdict: 'typo', accepted: !strict, correction: acceptedAnswers[0] };
   }
   return { verdict: 'wrong', accepted: false, correction: acceptedAnswers[0] };
 }
 
 function checkTranslate(payload: TranslatePayload, text: string): CheckResult {
-  return gradeText(payload.accepted, text);
+  return gradeText(payload.accepted, text, payload.strict);
 }
 
 /** Listening is graded on the transcription, same rules as translate. */
 function checkListening(payload: ListeningPayload, text: string): CheckResult {
-  return gradeText(payload.accepted, text);
+  return gradeText(payload.accepted, text, payload.strict);
 }
 
 /**
@@ -276,19 +293,22 @@ function checkSpeaking(payload: SpeakingPayload, audioKey: string): CheckResult 
   return { verdict: score.pass ? 'correct' : 'wrong', accepted: score.pass };
 }
 
-/** Normalize free text for comparison: NFC, lowercase, strip punctuation, collapse spaces. */
+/**
+ * Normalize free text for comparison: `answerKey` (NFC, lowercase, keyboard
+ * variants), then punctuation stripped (Latin and Arabic-script) and spaces
+ * collapsed.
+ */
 function normalizeForWriting(text: string): string {
-  return normalizeKurdish(text)
-    .toLowerCase()
-    .replace(/[.,!?;:"'“”‘’()¡¿…—–\-]/g, ' ')
+  return answerKey(text)
+    .replace(/[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 /**
  * Free-text writing (KUR-037): punctuation/case-insensitive, diacritic-
- * tolerant. Copying the prompt back earns no credit (verdict 'wrong'),
- * checked before the accepted answers so it can't sneak a match.
+ * tolerant unless strict. Copying the prompt back earns no credit (verdict
+ * 'wrong'), checked before the accepted answers so it can't sneak a match.
  */
 function checkWriting(payload: WritingPayload, text: string): CheckResult {
   const answer = normalizeForWriting(text);
@@ -301,7 +321,7 @@ function checkWriting(payload: WritingPayload, text: string): CheckResult {
   if (accepted.includes(answer)) return { verdict: 'correct', accepted: true };
   const foldedAccepted = accepted.map((a) => foldDiacritics(a));
   if (foldedAccepted.includes(foldDiacritics(answer))) {
-    return { verdict: 'typo', accepted: true, correction: payload.accepted[0] };
+    return { verdict: 'typo', accepted: !payload.strict, correction: payload.accepted[0] };
   }
   return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
 }
@@ -310,12 +330,10 @@ function checkMatchPairs(
   payload: MatchPairsPayload,
   matches: Array<{ left: string; right: string }>,
 ): CheckResult {
-  const truth = new Map(
-    payload.pairs.map((p) => [normalizeKurdish(p.left), normalizeKurdish(p.right)]),
-  );
+  const truth = new Map(payload.pairs.map((p) => [answerKey(p.left), answerKey(p.right)]));
   const allRight =
     matches.length === payload.pairs.length &&
-    matches.every((m) => truth.get(normalizeKurdish(m.left)) === normalizeKurdish(m.right));
+    matches.every((m) => truth.get(answerKey(m.left)) === answerKey(m.right));
   return { verdict: allRight ? 'correct' : 'wrong', accepted: allRight };
 }
 

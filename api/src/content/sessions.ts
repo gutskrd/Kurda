@@ -241,7 +241,7 @@ export class LessonSessionService {
       }
       // Feed the answer into spaced repetition (KUR-033), keyed on the
       // exercise until a lexeme model exists (KUR-043). First answer only.
-      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict), new Date(), client);
+      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict, result.accepted), new Date(), client);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
