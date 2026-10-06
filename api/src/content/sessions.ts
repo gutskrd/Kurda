@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { checkAnswer, sanitizeExercise, type Verdict } from './exercises.js';
+import { checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
@@ -62,12 +62,29 @@ export interface SessionResults {
   correct: number;
   total: number;
   accuracy: number;
-  mistakes: Array<{ exerciseId: string; verdict: Verdict }>;
+  /**
+   * What was missed, with the question and its right answer, so a results
+   * screen can show the answers rather than only that something was wrong.
+   */
+  mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   /** XP awarded for this completion (0 on a repeat replay). */
   xpAwarded: number;
   /** Streak after this completion counted toward today's goal (KUR-031). */
   streak: StreakSummary;
+  /**
+   * True only for the first time this learner completes this lesson. Rewards
+   * that should not be farmable by replaying an easy lesson key on it.
+   */
+  firstCompletion: boolean;
 }
+
+/** Grants Gems for a rule/refId; injected so content stays decoupled (KUR-068). */
+export interface GemGranter {
+  grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
+}
+
+/** The Gem rule a perfect first completion pays out under (KUR-068). */
+export const PERFECT_LESSON_GEM_RULE = 'perfect_lesson';
 
 /** The seed a lesson exercise is shuffled and graded with. */
 function exerciseSeed(sessionId: string, exerciseId: string): string {
@@ -84,18 +101,23 @@ export class LessonSessionService {
   private readonly streaks: StreakService;
   private readonly goals: DailyGoalService;
   private readonly reviews: ReviewService;
+  private readonly gems?: GemGranter;
 
   constructor(
     private readonly pool: pg.Pool,
-    xp?: XpService,
-    streaks?: StreakService,
-    goals?: DailyGoalService,
-    reviews?: ReviewService,
+    deps: {
+      xp?: XpService;
+      streaks?: StreakService;
+      goals?: DailyGoalService;
+      reviews?: ReviewService;
+      gems?: GemGranter;
+    } = {},
   ) {
-    this.xp = xp ?? new XpService(pool);
-    this.streaks = streaks ?? new StreakService(pool);
-    this.goals = goals ?? new DailyGoalService(pool);
-    this.reviews = reviews ?? new ReviewService(pool);
+    this.xp = deps.xp ?? new XpService(pool);
+    this.streaks = deps.streaks ?? new StreakService(pool);
+    this.goals = deps.goals ?? new DailyGoalService(pool);
+    this.reviews = deps.reviews ?? new ReviewService(pool);
+    this.gems = deps.gems;
   }
 
   private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
@@ -267,17 +289,30 @@ export class LessonSessionService {
    * XP is awarded exactly once, on the transition to completed, keyed on
    * the session id in the ledger. Re-calling returns the same summary but
    * awards no further XP.
+   *
+   * A perfect first completion pays perfect-lesson Gems, keyed on the learner
+   * and the lesson rather than the session: a replay is never a first
+   * completion, so an easy lesson cannot be replayed into the daily Gem cap.
    */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
     const session = await this.loadOwnedSession(sessionId, userId);
-    const answers = await this.pool.query<{ exercise_id: string; verdict: Verdict; accepted: boolean }>(
-      `SELECT exercise_id, verdict, accepted FROM session_answers WHERE session_id = $1`,
+    const answers = await this.pool.query<{
+      exercise_id: string;
+      verdict: Verdict;
+      accepted: boolean;
+      type: ExerciseType;
+      payload: unknown;
+    }>(
+      `SELECT a.exercise_id, a.verdict, a.accepted, e.type, e.payload
+       FROM session_answers a JOIN exercises e ON e.id = a.exercise_id
+       WHERE a.session_id = $1
+       ORDER BY e.position ASC`,
       [sessionId],
     );
     const correct = answers.rows.filter((a) => a.accepted).length;
     const mistakes = answers.rows
       .filter((a) => !a.accepted)
-      .map((a) => ({ exerciseId: a.exercise_id, verdict: a.verdict }));
+      .map((a) => ({ exerciseId: a.exercise_id, verdict: a.verdict, ...revealExercise(a.type, a.payload) }));
     const accuracy = session.total_count > 0 ? correct / session.total_count : 0;
 
     const tz = await this.pool.query<{ timezone: string }>(
@@ -288,6 +323,7 @@ export class LessonSessionService {
 
     let xpAwarded = 0;
     let streak: StreakSummary | null = null;
+    let firstCompletion: boolean | null = null;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -306,6 +342,7 @@ export class LessonSessionService {
             [userId, session.lesson_id, sessionId],
           );
           const isRepeat = Number(prior.rows[0]!.n) > 0;
+          firstCompletion = !isRepeat;
           const amount = lessonCompletionXp(accuracy, isRepeat);
           xpAwarded = await this.xp.award(
             { userId, source: LESSON_XP_SOURCE, amount, refId: sessionId },
@@ -328,7 +365,18 @@ export class LessonSessionService {
 
     // On a replay (already completed) report the current, settled streak.
     if (streak === null) streak = await this.streaks.get(userId, timeZone);
+    // …and whether that earlier completion was the learner's first of this
+    // lesson, so asking twice gives the same answer.
+    if (firstCompletion === null) firstCompletion = await this.wasFirstCompletion(sessionId, userId, session.lesson_id);
 
+    // Best-effort rewards after the commit: a failure here never fails the
+    // completion, and each is idempotent, so a retried call can only fill in
+    // what a failed one missed.
+    if (this.gems && firstCompletion && accuracy === 1) {
+      await this.gems
+        .grant(userId, PERFECT_LESSON_GEM_RULE, `${session.lesson_id}:${userId}`)
+        .catch(() => undefined);
+    }
     return {
       correct,
       total: session.total_count,
@@ -336,6 +384,20 @@ export class LessonSessionService {
       mistakes,
       xpAwarded,
       streak,
+      firstCompletion,
     };
+  }
+
+  /** Whether no other session of this lesson by this learner finished before this one. */
+  private async wasFirstCompletion(sessionId: string, userId: string, lessonId: string): Promise<boolean> {
+    const earlier = await this.pool.query(
+      `SELECT 1 FROM lesson_sessions other
+       JOIN lesson_sessions cur ON cur.id = $3
+       WHERE other.user_id = $1 AND other.lesson_id = $2 AND other.id <> $3
+         AND other.completed_at IS NOT NULL AND other.completed_at < cur.completed_at
+       LIMIT 1`,
+      [userId, lessonId, sessionId],
+    );
+    return (earlier.rowCount ?? 0) === 0;
   }
 }

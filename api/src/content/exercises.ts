@@ -400,3 +400,37 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
       );
   }
 }
+
+/**
+ * What a results screen shows for a missed exercise: the question as it was
+ * asked, and the right answer. Read from the stored payload, so it is only
+ * ever sent once the session is over. A match-pairs item has no prompt; its
+ * answer is every pair.
+ */
+export function revealExercise(type: ExerciseType, payload: unknown): { prompt?: string; correction?: string } {
+  const parsed = PAYLOAD_SCHEMAS[type]?.safeParse(payload);
+  if (!parsed || !parsed.success) return {};
+  switch (type) {
+    case 'multiple_choice': {
+      const p = parsed.data as MultipleChoicePayload;
+      return { prompt: p.prompt, correction: p.options[p.correctIndex] };
+    }
+    case 'translate':
+    case 'writing': {
+      const p = parsed.data as TranslatePayload | WritingPayload;
+      return { prompt: p.prompt, correction: p.accepted[0] };
+    }
+    case 'listening': {
+      const p = parsed.data as ListeningPayload;
+      return { prompt: p.prompt, correction: p.accepted[0] };
+    }
+    case 'speaking': {
+      const p = parsed.data as SpeakingPayload;
+      return { prompt: p.prompt, correction: p.reference };
+    }
+    case 'match_pairs': {
+      const p = parsed.data as MatchPairsPayload;
+      return { correction: p.pairs.map((pair) => `${pair.left} = ${pair.right}`).join(', ') };
+    }
+  }
+}

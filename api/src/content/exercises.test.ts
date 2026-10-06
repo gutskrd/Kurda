@@ -3,6 +3,7 @@ import {
   InvalidExercisePayloadError,
   checkAnswer,
   optionOrder,
+  revealExercise,
   sanitizeExercise,
   validateExercisePayload,
 } from './exercises.js';
@@ -421,5 +422,38 @@ describe('Soranî answers typed on an Arabic or Persian keyboard', () => {
   it('keeps different letters different: ڕ is not ر', () => {
     const payload = { prompt: 'deaf', accepted: ['کەڕ'] };
     expect(grade('translate', payload, { text: 'کەر' })).toMatchObject({ verdict: 'wrong', accepted: false });
+  });
+});
+
+describe('revealExercise', () => {
+  it('gives the question and the right answer of each kind of exercise', () => {
+    expect(revealExercise('multiple_choice', { prompt: 'Sêv?', options: ['Bread', 'Apple'], correctIndex: 1 })).toEqual({
+      prompt: 'Sêv?',
+      correction: 'Apple',
+    });
+    expect(revealExercise('translate', { prompt: 'apple', accepted: ['sêv', 'sêvek'] })).toEqual({
+      prompt: 'apple',
+      correction: 'sêv',
+    });
+    expect(revealExercise('listening', { audioUrl: 'https://cdn.kurda.app/a.mp3', accepted: ['sêv'] })).toEqual({
+      prompt: undefined,
+      correction: 'sêv',
+    });
+    expect(revealExercise('speaking', { prompt: 'Say: I am fine', reference: 'Ez baş im' })).toEqual({
+      prompt: 'Say: I am fine',
+      correction: 'Ez baş im',
+    });
+    expect(
+      revealExercise('match_pairs', {
+        pairs: [
+          { left: 'sêv', right: 'apple' },
+          { left: 'av', right: 'water' },
+        ],
+      }),
+    ).toEqual({ correction: 'sêv = apple, av = water' });
+  });
+
+  it('reveals nothing for a payload it cannot read', () => {
+    expect(revealExercise('translate', { prompt: 'x' })).toEqual({});
   });
 });
