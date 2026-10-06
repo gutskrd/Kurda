@@ -1,7 +1,7 @@
 /**
- * Turning whatever an editor records or picks into a clip learners can be
- * played — a letter on the alphabet page or a sentence in a lesson: one voice,
- * no dead air, the same loudness as the clip next to it.
+ * Turning whatever an editor records or picks into a clip to play to learners
+ * — a letter on the alphabet page or a sentence in a lesson: one voice, no
+ * dead air, the same loudness as the clip next to it.
  *
  * Every recording goes through the same steps, so a phone memo, a studio WAV
  * and a laptop microphone come out alike:

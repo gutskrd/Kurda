@@ -32,6 +32,7 @@ function usage(over: Partial<Usage> = {}): Usage {
     lessonVersion: 1,
     live: true,
     exerciseTypes: ['translate'],
+    listeningNeedsIt: false,
     ...over,
   };
 }
@@ -204,7 +205,9 @@ describe('usage', () => {
   });
 
   it('knows which texts a listening item cannot do without', () => {
-    expect(neededForListening(item('Sêv', { usedIn: [usage({ exerciseTypes: ['listening'] })] }))).toBe(true);
+    expect(neededForListening(item('Sêv', { usedIn: [usage({ exerciseTypes: ['listening'], listeningNeedsIt: true })] }))).toBe(true);
+    // a listening item with a clip of its own plays that meanwhile
+    expect(neededForListening(item('Sêv', { usedIn: [usage({ exerciseTypes: ['listening'] })] }))).toBe(false);
     expect(neededForListening(item('Sêv'))).toBe(false);
   });
 });

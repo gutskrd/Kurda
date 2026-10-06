@@ -21,9 +21,11 @@ export interface Usage {
   lessonTitle: string;
   lessonStatus: 'draft' | 'in_review' | 'published' | 'archived';
   lessonVersion: number;
-  /** learners hear it today: the published version uses it */
+  /** the published version uses it: learners meet it today */
   live: boolean;
   exerciseTypes: ExerciseType[];
+  /** a listening item here has no clip of its own and plays this text: it cannot be done until it is recorded */
+  listeningNeedsIt: boolean;
 }
 
 export interface Item {
@@ -212,7 +214,7 @@ export function describeUsage(u: Usage): string {
   return `${u.lessonTitle} (${u.exerciseTypes.map((t) => TYPE_LABELS[t] ?? t).join(', ')})`;
 }
 
-/** A listening item cannot be answered without its recording, so those come first in the editor's mind. */
+/** A listening item with no clip of its own cannot be done until its text is recorded. */
 export function neededForListening(item: Item): boolean {
-  return item.usedIn.some((u) => u.exerciseTypes.includes('listening'));
+  return item.usedIn.some((u) => u.listeningNeedsIt);
 }

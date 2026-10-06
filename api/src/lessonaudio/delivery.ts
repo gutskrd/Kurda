@@ -11,7 +11,12 @@ type Executor = Pick<pg.Pool, 'query'>;
 export interface DeliveredAudio {
   /** listening: the clip to play — the studio's recording of the transcription, else the payload's own clip */
   audioUrl?: string;
-  /** a native speaker saying the item's primary text (`primaryAudioTarget`), to hear as the model */
+  /**
+   * A native speaker saying the item's primary text (`primaryAudioTarget`).
+   * On translate, writing and multiple choice that text is usually the answer,
+   * so a client plays it once the item is answered; on speaking it is the
+   * model to imitate, and on listening the clip itself.
+   */
   modelAudioUrl?: string;
   /** recordings of the cards a match-pairs item shows, by the exact text on the card */
   audio?: Record<string, string>;

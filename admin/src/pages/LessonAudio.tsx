@@ -100,7 +100,9 @@ export function LessonAudio(): React.JSX.Element {
   }, [selected]);
 
   const startWalk = (): void => {
-    const first = nextMissing(ordered, selected);
+    // start on the row the editor has open, if it is one still to record
+    const open = !walking ? ordered.find((i) => i.key === selected && !i.recorded) : undefined;
+    const first = open ?? nextMissing(ordered, selected);
     if (!first) {
       setWalking(false);
       setNote('Everything is recorded.');
@@ -167,8 +169,8 @@ export function LessonAudio(): React.JSX.Element {
         <p className="subtle la-what">
           Every Kurdish word and sentence the lessons use, drafts included: each item’s “say”, the first accepted answer of a
           translation, writing or listening item, a speaking item’s model sentence, and every match-pairs card. One recording plays
-          wherever its sentence is used. Until a text is recorded, learners hear nothing for it — and a listening item cannot be
-          played at all.
+          wherever its sentence is used. Until a text is recorded learners hear nothing for it, and a listening item with no clip of
+          its own cannot be played at all.
         </p>
       </div>
 
@@ -224,7 +226,7 @@ export function LessonAudio(): React.JSX.Element {
                   <div className="la-lesson-head">
                     <strong>{lesson.title}</strong>
                     <span className="subtle">{lesson.skillTitle}</span>
-                    <span className={`badge${lesson.live ? ' ok' : ''}`}>{lesson.live ? 'Live' : 'Draft'}</span>
+                    <span className={`badge${lesson.live ? ' ok' : ''}`}>{lesson.live ? 'Live' : 'Not published yet'}</span>
                   </div>
                   {lesson.items.map((item) => (
                     <Row

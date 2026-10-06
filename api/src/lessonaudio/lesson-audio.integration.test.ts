@@ -54,6 +54,7 @@ interface Usage {
   unitTitle: string;
   skillTitle: string;
   exerciseTypes: string[];
+  listeningNeedsIt: boolean;
 }
 interface Item {
   key: string;
@@ -104,6 +105,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     newInV2: `Nû ${s}`,
     custom: `Newroz pîroz be ${s}`,
     sorani: `سوپاس ${s}`,
+    ownClip: `Sêv ${s}`,
   };
   const ourKeys = (): string[] => Object.values(T).map(lessonAudioKey);
 
@@ -198,6 +200,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     // a lesson nobody can play yet
     draft = await repo.createLesson(skillId, 2, 'Silav 2', 'Greetings 2');
     await repo.addExercise(draft, 1, 'translate', { prompt: 'book', accepted: [T.draftOnly] });
+    await repo.addExercise(draft, 2, 'listening', { audioUrl: 'https://cdn.test/own.mp3', accepted: [T.ownClip] });
 
     await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1)`, [ourKeys()]);
     editor = await register('laEditor', '10.97.0.1', '{content_editor}');
@@ -268,7 +271,10 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     // only the first accepted answer is asked for
     expect(item(items, T.translate)).toBeDefined();
     expect(item(items, 'Spas')?.usedIn.some((u) => u.lessonId === nextVersion)).not.toBe(true);
-    expect(item(items, T.listening)!.usedIn[0]!.exerciseTypes).toEqual(['listening']);
+    // a listening item without a clip of its own cannot be done until its text is recorded
+    expect(item(items, T.listening)!.usedIn[0]).toMatchObject({ exerciseTypes: ['listening'], listeningNeedsIt: true });
+    expect(item(items, T.ownClip)!.usedIn[0]).toMatchObject({ exerciseTypes: ['listening'], listeningNeedsIt: false });
+    expect(item(items, T.translate)!.usedIn[0]!.listeningNeedsIt).toBe(false);
     expect(item(items, T.left1)!.usedIn[0]!.exerciseTypes).toEqual(['match_pairs']);
     expect(item(items, T.left2)).toBeDefined();
     expect(item(items, T.speaking)!.usedIn[0]!.exerciseTypes).toEqual(['speaking']);

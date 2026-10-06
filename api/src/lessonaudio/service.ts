@@ -19,10 +19,15 @@ export interface LessonAudioUsage {
   /** of the newest version that uses the text: a draft, when an editor has added it there */
   lessonStatus: ContentStatus;
   lessonVersion: number;
-  /** learners hear it today: the published version uses it */
+  /** the published version uses it: learners meet it today */
   live: boolean;
   /** the exercise types in this lesson that use the text, without repeats */
   exerciseTypes: ExerciseType[];
+  /**
+   * A listening item here has no clip of its own and this text is what it
+   * plays: until it is recorded, the item cannot be done at all.
+   */
+  listeningNeedsIt: boolean;
 }
 
 export interface LessonAudioItem {
@@ -66,6 +71,13 @@ interface RecordingRow {
   url: string;
   duration_ms: number;
   updated_at: Date;
+}
+
+/** Whether a listening payload has no clip of its own, and plays the text keyed `key` instead. */
+function playsWithoutClip(payload: unknown, key: string): boolean {
+  const p = (payload ?? {}) as { audioUrl?: unknown; accepted?: unknown };
+  const first = Array.isArray(p.accepted) ? p.accepted[0] : undefined;
+  return !p.audioUrl && typeof first === 'string' && lessonAudioKey(first) === key;
 }
 
 /**
@@ -138,12 +150,14 @@ export class LessonAudioService {
             lessonVersion: row.version,
             live: false,
             exerciseTypes: [],
+            listeningNeedsIt: false,
           };
           usageBySlot.set(slot, usage);
           item.usedIn.push(usage);
         }
         if (row.status === 'published') usage.live = true;
         if (!usage.exerciseTypes.includes(row.type)) usage.exerciseTypes.push(row.type);
+        if (row.type === 'listening' && playsWithoutClip(row.payload, key)) usage.listeningNeedsIt = true;
       }
     }
     const needed = items.size;
