@@ -80,21 +80,36 @@ export class PracticeService {
     this.reviews = deps.reviews ?? new ReviewService(pool);
   }
 
-  /** Build a practice session, or an empty-state suggestion when there's nothing to review. */
+  /**
+   * Build a practice session, or an empty-state suggestion when there's nothing to review.
+   *
+   * Candidates are review items that are exercises — joined to `exercises`, so
+   * only ids that resolve to one are ever cast to a uuid. A saved dictionary
+   * word (`dict:<entryId>`) has no exercise to practise it with: it keeps its
+   * schedule and stays in the review queue, and practice leaves it out rather
+   * than failing the whole session on the cast. Speaking items are left out
+   * too, since their answers cannot move the schedule (`feedsReview`).
+   */
   async start(userId: string): Promise<PracticeSession | EmptyPractice> {
-    const dueQueue = await this.reviews.queue(userId, new Date(), PRACTICE_TARGET);
-    const dueIds = dueQueue.items.map((i) => i.itemId);
+    const due = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.due_at <= $2 AND e.type <> 'speaking'
+       ORDER BY r.due_at ASC LIMIT $3`,
+      [userId, new Date(), PRACTICE_TARGET],
+    );
+    const dueIds = due.rows.map((r) => r.item_id);
 
     // weakest known words (lowest easiness), not necessarily due — used to pad
     const weak = await this.pool.query<{ item_id: string }>(
-      `SELECT item_id FROM review_items
-       WHERE user_id = $1 AND item_id <> ALL($2::text[])
-       ORDER BY easiness ASC, due_at ASC LIMIT $3`,
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.item_id <> ALL($2::text[]) AND e.type <> 'speaking'
+       ORDER BY r.easiness ASC, r.due_at ASC LIMIT $3`,
       [userId, dueIds, PRACTICE_TARGET],
     );
     const chosen = selectPracticeItems(dueIds, weak.rows.map((r) => r.item_id));
 
-    // only item_ids that still resolve to a real exercise
     const exercises = chosen.length > 0 ? await this.loadExercises(chosen) : [];
     if (exercises.length === 0) {
       return { empty: true, suggestion: await this.nextLesson(userId) };

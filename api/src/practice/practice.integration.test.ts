@@ -20,6 +20,7 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
   let lessonId: string;
   const ex: Record<string, string> = {};
   const suffix = Date.now().toString(36);
+  let entryId: string | undefined;
 
   const authed = (method: 'GET' | 'POST', url: string, payload?: unknown) =>
     app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.60.0.1' });
@@ -72,6 +73,7 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
       [courseId],
     );
     await pool.query(`DELETE FROM courses WHERE id = $1`, [courseId]);
+    if (entryId) await pool.query(`DELETE FROM dict_entries WHERE id = $1`, [entryId]);
     await pool.end();
     await app.close();
   });
@@ -141,5 +143,38 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     const stillDue = q.json().items.map((i: { itemId: string }) => i.itemId);
     expect(stillDue).not.toContain(ex.mc);
     expect(stillDue).not.toContain(ex.tr);
+  });
+
+  /**
+   * A saved dictionary word is a review item `dict:<entryId>`, and practice
+   * used to cast every candidate id to a uuid — so anyone who had saved a
+   * word got a server error. It has no exercise to practise it with, so
+   * practice leaves it out and keeps working.
+   */
+  it('works for a learner with saved dictionary words, leaving the words out', async () => {
+    const entry = await pool.query<{ id: string }>(
+      `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect)
+       VALUES ($1, $1, $1, 'kurmanji') RETURNING id`,
+      [`prac${suffix}`],
+    );
+    entryId = entry.rows[0]!.id;
+    await pool.query(`INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2)`, [userId, entryId]);
+    // one due saved word, and one not yet due that the weak-item padding would pick
+    await pool.query(
+      `INSERT INTO review_items (user_id, item_id, repetitions, interval_days, easiness, due_at)
+       VALUES ($1, $2, 0, 0, 1.3, now() - interval '1 day'),
+              ($1, $3, 0, 0, 1.3, now() + interval '3 days')`,
+      [userId, `dict:${entryId}`, `dict:${crypto.randomUUID()}`],
+    );
+
+    const res = await authed('POST', '/practice/session');
+    expect(res.statusCode).toBe(200);
+    const ids = (res.json().exercises ?? []).map((e: { id: string }) => e.id);
+    expect(ids.every((id: string) => !id.startsWith('dict:'))).toBe(true);
+    expect(ids.length).toBeGreaterThan(0); // padded with the learner's lesson items
+
+    // the saved word keeps its place in the review queue
+    const q = await authed('GET', '/review/queue');
+    expect(q.json().items.map((i: { itemId: string }) => i.itemId)).toContain(`dict:${entryId}`);
   });
 });
