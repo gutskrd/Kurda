@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { INITIAL_SM2, dueAfter, review, type Quality, type Sm2State } from './sm2.js';
+import { INITIAL_SM2, scheduleAnswer, type Quality } from './sm2.js';
 
 /** Default cap on the review queue — no overwhelming wall of cards. */
 export const REVIEW_QUEUE_LIMIT = 20;
@@ -51,6 +51,11 @@ export class ReviewService {
    * Record a review outcome for an item and reschedule it. Upserts the
    * item's SM-2 state; runs inside the caller's transaction when an
    * executor is passed.
+   *
+   * Only a spaced review moves the schedule (`scheduleAnswer`): a right answer
+   * to an item that is not yet due — a same-day replay, an early practice item
+   * — leaves it exactly as it was and is returned unchanged. A wrong answer is
+   * always recorded as a lapse.
    */
   async record(
     userId: string,
@@ -64,16 +69,18 @@ export class ReviewService {
        FROM review_items WHERE user_id = $1 AND item_id = $2`,
       [userId, itemId],
     );
-    const prev: Sm2State = existing.rows[0]
-      ? {
-          repetitions: existing.rows[0].repetitions,
-          interval: existing.rows[0].interval_days,
-          easiness: existing.rows[0].easiness,
-        }
-      : INITIAL_SM2;
-
-    const next = review(prev, quality);
-    const dueAt = dueAfter(now, next.interval);
+    const row = existing.rows[0];
+    const next = scheduleAnswer(
+      row
+        ? {
+            state: { repetitions: row.repetitions, interval: row.interval_days, easiness: row.easiness },
+            dueAt: new Date(row.due_at),
+          }
+        : null,
+      quality,
+      now,
+    );
+    if (!next) return toItem(row!);
 
     const saved = await executor.query<ItemRow>(
       `INSERT INTO review_items (user_id, item_id, repetitions, interval_days, easiness, due_at, last_reviewed_at)
@@ -85,7 +92,7 @@ export class ReviewService {
          due_at = EXCLUDED.due_at,
          last_reviewed_at = EXCLUDED.last_reviewed_at
        RETURNING item_id, repetitions, interval_days, easiness, due_at`,
-      [userId, itemId, next.repetitions, next.interval, next.easiness, dueAt, now],
+      [userId, itemId, next.state.repetitions, next.state.interval, next.state.easiness, next.dueAt, now],
     );
     return toItem(saved.rows[0]!);
   }

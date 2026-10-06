@@ -4,9 +4,12 @@ import {
   INITIAL_SM2,
   MIN_EASINESS,
   dueAfter,
+  isSpacedReview,
   nextEasiness,
   qualityFromVerdict,
   review,
+  scheduleAnswer,
+  type Scheduled,
   type Sm2State,
 } from './sm2.js';
 
@@ -91,5 +94,70 @@ describe('dueAfter / qualityFromVerdict', () => {
     expect(qualityFromVerdict('correct')).toBe(5);
     expect(qualityFromVerdict('typo')).toBe(4);
     expect(qualityFromVerdict('wrong')).toBe(2);
+  });
+  it('grades an answer that was not accepted as a lapse, even a typo on a strict item', () => {
+    expect(qualityFromVerdict('typo', false)).toBe(2);
+    expect(qualityFromVerdict('typo', true)).toBe(4);
+    expect(qualityFromVerdict('wrong', false)).toBe(2);
+  });
+});
+
+describe('honest spacing — scheduleAnswer', () => {
+  const day0 = new Date('2026-07-08T09:00:00Z');
+  const at = (days: number, hours = 0) => new Date(day0.getTime() + days * 86_400_000 + hours * 3_600_000);
+  /** An item last reviewed at day 0 with the given interval, so due at day `interval`. */
+  const scheduled = (interval: number, repetitions = 2): Scheduled => ({
+    state: { repetitions, interval, easiness: DEFAULT_EASINESS },
+    dueAt: dueAfter(day0, interval),
+  });
+
+  it('a new item gets its first review, right or wrong', () => {
+    expect(scheduleAnswer(null, 5, day0)).toEqual({ state: review(INITIAL_SM2, 5), dueAt: at(1) });
+    expect(scheduleAnswer(null, 2, day0)?.state).toMatchObject({ repetitions: 0, interval: 1 });
+  });
+
+  it('advances a due item exactly as SM-2 would', () => {
+    const item = scheduled(6);
+    expect(scheduleAnswer(item, 5, at(6))).toEqual({ state: review(item.state, 5), dueAt: dueAfter(at(6), review(item.state, 5).interval) });
+    // overdue is due too
+    expect(scheduleAnswer(item, 4, at(9))?.state.repetitions).toBe(3);
+  });
+
+  it('advances an item once half its interval has passed', () => {
+    const item = scheduled(6);
+    expect(isSpacedReview(item, at(3))).toBe(true);
+    expect(scheduleAnswer(item, 5, at(3))?.state.repetitions).toBe(3);
+  });
+
+  it('a same-day replay does not stretch the interval', () => {
+    const first = scheduleAnswer(null, 5, day0)!; // due tomorrow, interval 1
+    expect(scheduleAnswer(first, 5, at(0, 2))).toBeNull();
+    expect(scheduleAnswer(first, 4, at(0, 11))).toBeNull();
+    // twelve hours on, half of a one-day interval has passed
+    expect(scheduleAnswer(first, 5, at(0, 12))?.state.interval).toBe(6);
+  });
+
+  it('a not-yet-due practice item does not stretch the interval', () => {
+    const item = scheduled(15, 3);
+    expect(isSpacedReview(item, at(7))).toBe(false);
+    expect(scheduleAnswer(item, 5, at(7))).toBeNull();
+    expect(scheduleAnswer(item, 4, at(7, 11))).toBeNull();
+    // seven and a half days into a fifteen-day interval it counts
+    expect(scheduleAnswer(item, 5, at(7, 12))?.state.repetitions).toBe(4);
+  });
+
+  it('a wrong answer is always a lapse, due or not', () => {
+    const item = scheduled(15, 3);
+    const lapsed = scheduleAnswer(item, 2, at(1))!;
+    expect(lapsed.state).toEqual({ repetitions: 0, interval: 1, easiness: nextEasiness(DEFAULT_EASINESS, 2) });
+    expect(lapsed.dueAt).toEqual(at(2));
+    const sameDay = scheduleAnswer(scheduleAnswer(null, 5, day0)!, 2, at(0, 1))!;
+    expect(sameDay.state.repetitions).toBe(0);
+  });
+
+  it('a saved word scheduled due now (interval 0) is reviewable at once', () => {
+    const saved: Scheduled = { state: INITIAL_SM2, dueAt: day0 };
+    expect(isSpacedReview(saved, day0)).toBe(true);
+    expect(scheduleAnswer(saved, 5, day0)?.state.repetitions).toBe(1);
   });
 });
