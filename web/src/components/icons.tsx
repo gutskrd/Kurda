@@ -67,6 +67,7 @@ import { Play } from '@phosphor-icons/react/dist/icons/Play';
 import { Microphone } from '@phosphor-icons/react/dist/icons/Microphone';
 import { SpeakerHigh } from '@phosphor-icons/react/dist/icons/SpeakerHigh';
 import { Check } from '@phosphor-icons/react/dist/icons/Check';
+import { Lock } from '@phosphor-icons/react/dist/icons/Lock';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -117,6 +118,8 @@ export const PlayIcon = named(Play, 22, 'fill');
 export const MicIcon = named(Microphone, 22);
 export const SpeakerIcon = named(SpeakerHigh, 22);
 export const CheckIcon = named(Check, 22, 'bold');
+/** Not open yet: a lesson or a skill the course has not reached. */
+export const LockIcon = named(Lock, 22);
 export const ChevronIcon = named(CaretRight, 18);
 export const GiftIcon = named(Gift, 22);
 /** Passing a post on — the network glyph, not the iOS box-and-arrow, which

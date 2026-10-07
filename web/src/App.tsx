@@ -43,6 +43,10 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => (
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
+const CourseMap = lazy(() => import('./pages/CourseMap').then((m) => ({ default: m.CourseMap })));
+const Lesson = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.Lesson })));
+const Review = lazy(() => import('./pages/Review').then((m) => ({ default: m.Review })));
+const NextLesson = lazy(() => import('./pages/NextLesson').then((m) => ({ default: m.NextLesson })));
 const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
 const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m.Alphabet })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
@@ -170,6 +174,13 @@ export function App(): React.JSX.Element {
           >
             <Route index element={<Civak />} />
             <Route path="learn" element={<RequireAccount what="gate.what.course"><Learn /></RequireAccount>} />
+            {/* the learning loop: a course's map, a lesson, a review, and the
+                lesson a new account starts with (see pages/NextLesson.tsx) */}
+            <Route path="learn/course/:courseId" element={<RequireAccount what="gate.what.course"><CourseMap /></RequireAccount>} />
+            <Route path="learn/lesson/:lessonId" element={<RequireAccount what="gate.what.course"><Lesson /></RequireAccount>} />
+            <Route path="learn/review" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+            <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+            <Route path="learn/next" element={<RequireAccount what="gate.what.course"><NextLesson /></RequireAccount>} />
             <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
             {/* the first thing a beginner needs, and open to everyone — see pages/Alphabet.tsx */}
             <Route path="alphabet" element={<Alphabet />} />

@@ -442,24 +442,71 @@ export function PostSkeleton({ withImage = false }: { withImage?: boolean }): Re
   );
 }
 
-/** The course list on Learn: two columns of cards. */
+/** The course list on Learn: a card per course, with its progress and its two ways in. */
 export function CourseGridSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
-    <SkeletonRegion label={t('common.loading')} className="learn-grid">
-      <div>
-        {times(count, (i) => (
-          <article className="course-card" key={i}>
-            <Skeleton line w={74} />
-            <h2 className="course-card-title">
-              <Skeleton line w="58%" />
-            </h2>
-            <p>
-              <SkeletonText lines={2} lastWidth="52%" />
-            </p>
-          </article>
-        ))}
+    <SkeletonRegion label={t('common.loading')} className="learn-courses">
+      {times(count, (i) => (
+        <article className="course-card" key={i}>
+          <Skeleton line w={74} />
+          <h2 className="course-card-title">
+            <Skeleton line w="58%" />
+          </h2>
+          <div className="course-progress">
+            <Skeleton h={8} radius="var(--r-pill)" w="100%" />
+          </div>
+          <p className="course-next">
+            <Skeleton line w="52%" />
+          </p>
+          <div className="course-card-actions">
+            <Skeleton h={44} w={110} radius="var(--r-sm)" />
+            <Skeleton h={44} w={150} radius="var(--r-sm)" />
+          </div>
+        </article>
+      ))}
+    </SkeletonRegion>
+  );
+}
+
+/** A course map: the title, then a unit of skills, each a card with its lessons. */
+export function CourseMapSkeleton(): React.JSX.Element {
+  const t = useT();
+  return (
+    <SkeletonRegion label={t('common.loading')}>
+      <div className="page-header">
+        <h1 className="page-title">
+          <Skeleton line w="45%" />
+        </h1>
+        <p className="page-sub">
+          <Skeleton line w={160} />
+        </p>
       </div>
+      <section className="cmap-unit">
+        <h2 className="cmap-unit-title">
+          <Skeleton line w={120} />
+        </h2>
+        <ol className="cmap-skills">
+          {times(3, (i) => (
+            <li className="cmap-skill" key={i}>
+              <div className="cmap-skill-head">
+                <h3 className="cmap-skill-title">
+                  <Skeleton line w={140} />
+                </h3>
+              </div>
+              <ol className="cmap-lessons">
+                {times(2, (j) => (
+                  <li className="cmap-lesson" key={j}>
+                    <span className="cmap-lesson-row">
+                      <Skeleton line w="70%" />
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </li>
+          ))}
+        </ol>
+      </section>
     </SkeletonRegion>
   );
 }

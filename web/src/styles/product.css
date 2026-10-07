@@ -1062,17 +1062,7 @@ a.invite-card:active {
   color: var(--ink-2);
 }
 
-/* ---- learn: the course, and what a lesson in it looks like ----------------- */
-.learn-grid {
-  display: grid;
-  gap: 28px;
-  align-items: start;
-}
-@media (min-width: 980px) {
-  .learn-grid {
-    grid-template-columns: minmax(0, 1fr) 340px;
-  }
-}
+/* ---- learn: the courses (the rest is in learn.css) ------------------------- */
 .course-card {
   display: grid;
   gap: 10px;
@@ -1082,19 +1072,11 @@ a.invite-card:active {
   background: rgba(255, 255, 255, 0.04);
   box-shadow: var(--glass-rim);
 }
-.course-card + .course-card {
-  margin-top: 14px;
-}
 .course-card-title {
   font-size: 1.5rem;
 }
 .course-card p {
   color: var(--ink-3);
-}
-.learn-preview {
-  display: grid;
-  justify-items: center;
-  gap: 14px;
 }
 .lp-status {
   display: inline-flex;
@@ -1113,7 +1095,4 @@ a.invite-card:active {
   height: 6px;
   border-radius: 50%;
   border: 1.5px solid var(--ink-3);
-}
-.learn-preview .lp-status {
-  justify-self: center;
 }

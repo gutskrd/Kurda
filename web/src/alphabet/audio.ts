@@ -75,31 +75,7 @@ export function soraniSound(l: SoraniLetter): string | null {
 export const soraniWord = (l: SoraniLetter): string | null => clip(`ckb:word:${l.id}`);
 
 /*
- * One player for the whole page: a new sound stops the last one rather than
- * talking over it, which is what a tap on a second letter means.
+ * One player for the whole page, shared with lessons since they play
+ * recordings too (lib/sound.ts): a new sound stops the last one.
  */
-let player: HTMLAudioElement | null = null;
-let current: string | null = null;
-const listeners = new Set<(src: string | null) => void>();
-
-export function play(src: string): void {
-  if (!player) {
-    player = new Audio();
-    // the events, not the calls, say what is sounding: a pause from switching clips arrives before the new one plays
-    const now = (s: string | null) => () => listeners.forEach((l) => l(s));
-    player.addEventListener('playing', () => listeners.forEach((l) => l(current)));
-    player.addEventListener('ended', now(null));
-    player.addEventListener('pause', now(null));
-    player.addEventListener('error', now(null));
-  }
-  player.pause();
-  current = src;
-  player.src = src;
-  const started = player.play() as Promise<void> | undefined;
-  started?.catch(() => listeners.forEach((l) => l(null)));
-}
-
-export function onPlaying(listener: (src: string | null) => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+export { onPlaying, play } from '../lib/sound';

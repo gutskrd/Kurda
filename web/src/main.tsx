@@ -12,6 +12,7 @@ import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
 import './styles/alphabet.css';
+import './styles/learn.css';
 import './styles/marketing.css';
 
 const root = document.getElementById('root');
