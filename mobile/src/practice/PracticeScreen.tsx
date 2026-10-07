@@ -16,6 +16,7 @@ import { useI18n } from '../i18n/I18nContext';
 
 const PRACTICE_PATHS: SessionPaths = {
   answers: (id) => `/practice/sessions/${id}/answers`,
+  retry: (id) => `/practice/sessions/${id}/retry`,
   complete: (id) => `/practice/sessions/${id}/complete`,
 };
 

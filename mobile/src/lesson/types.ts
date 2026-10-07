@@ -1,26 +1,10 @@
 /** Lesson-player contract — mirrors the server payloads (KUR-028/#28). */
+import type { DeliveredExercise, GradeResult, RecordedAnswer, Verdict } from '@kurda/shared';
 
-export type ExerciseType =
-  | 'multiple_choice'
-  | 'translate'
-  | 'match_pairs'
-  | 'listening'
-  | 'speaking'
-  | 'writing';
-export type Verdict = 'correct' | 'typo' | 'wrong';
+export type { ExerciseType, MatchPair, SelfRating, Verdict } from '@kurda/shared';
 
 /** An exercise as delivered to the client: answer keys stripped server-side. */
-export interface Exercise {
-  id: string;
-  position: number;
-  type: ExerciseType;
-  prompt?: string;
-  options?: string[];
-  lefts?: string[];
-  rights?: string[];
-  /** listening (KUR-035): CDN url of the clip to play */
-  audioUrl?: string;
-}
+export type Exercise = DeliveredExercise;
 
 export interface SessionView {
   sessionId: string;
@@ -28,17 +12,20 @@ export interface SessionView {
   expiresAt: string;
   completed: boolean;
   exercises: Exercise[];
-  answered: Record<string, { verdict: Verdict; accepted: boolean }>;
+  answered: Record<string, RecordedAnswer>;
   /** markdown grammar note for this lesson's skill, if any (KUR-038) */
   grammarMd?: string | null;
+  /** the course's variety of Kurdish; absent on a practice session */
+  dialect?: string | null;
 }
 
-export interface AnswerResult {
-  verdict: Verdict;
-  accepted: boolean;
-  correction?: string;
+/** An answer as `/answers` grades it. */
+export interface AnswerResult extends GradeResult {
   duplicate: boolean;
 }
+
+/** A second try at a missed item, as `/retry` grades it: never recorded. */
+export type RetryResult = Omit<GradeResult, 'duplicate'>;
 
 export interface Streak {
   current: number;
@@ -51,13 +38,8 @@ export interface SessionResults {
   correct: number;
   total: number;
   accuracy: number;
-  mistakes: Array<{ exerciseId: string; verdict: Verdict }>;
+  /** what was missed, with the question and its right answer (a lesson's results; practice has none) */
+  mistakes?: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: Streak;
-}
-
-/** A pair the learner matched, sent to the server for grading. */
-export interface MatchPair {
-  left: string;
-  right: string;
 }

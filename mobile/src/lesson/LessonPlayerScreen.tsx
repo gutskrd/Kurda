@@ -11,7 +11,6 @@ import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
-import { HeartsBar } from './components/HeartsBar';
 import { LessonResults } from './components/LessonResults';
 import { ListeningExercise } from './components/ListeningExercise';
 import { MatchPairsExercise } from './components/MatchPairsExercise';
@@ -21,26 +20,22 @@ import { SpeakingExercise } from './components/SpeakingExercise';
 import { WritingExercise } from './components/WritingExercise';
 import { TranslateExercise } from './components/TranslateExercise';
 import { emptyMatch, type MatchState } from './match';
-import {
-  STARTING_HEARTS,
-  currentExercise,
-  initPlayer,
-  outOfHearts,
-  progress,
-  reduce,
-} from './player';
+import { currentExercise, initPlayer, isReask, progress, reduce } from './player';
 import { AnswerQueue } from './queue';
-import type { AnswerResult, SessionResults, SessionView } from './types';
+import type { AnswerResult, RetryResult, SelfRating, SessionResults, SessionView } from './types';
 import { useI18n } from '../i18n/I18nContext';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
 export interface SessionPaths {
   answers: (sessionId: string) => string;
+  /** a second try at a missed item: graded, never recorded */
+  retry: (sessionId: string) => string;
   complete: (sessionId: string) => string;
 }
 
 const LESSON_PATHS: SessionPaths = {
   answers: (id) => `/sessions/${id}/answers`,
+  retry: (id) => `/sessions/${id}/retry`,
   complete: (id) => `/sessions/${id}/complete`,
 };
 
@@ -122,6 +117,7 @@ export function SessionPlayer({
   const [text, setText] = useState('');
   const [match, setMatch] = useState<MatchState>(emptyMatch);
   const [audioKey, setAudioKey] = useState<string | null>(null);
+  const [selfRating, setSelfRating] = useState<SelfRating | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [offline, setOffline] = useState(false);
   const [results, setResults] = useState<SessionResults | null>(null);
@@ -150,6 +146,7 @@ export function SessionPlayer({
     setText('');
     setMatch(emptyMatch);
     setAudioKey(null);
+    setSelfRating(null);
     setOffline(false);
   }, [state.index]);
 
@@ -165,11 +162,11 @@ export function SessionPlayer({
       case 'writing':
         return { type: 'writing' as const, text };
       case 'speaking':
-        return { type: 'speaking' as const, audioKey };
+        return { type: 'speaking' as const, audioKey, selfRating };
       case 'match_pairs':
         return { type: 'match_pairs' as const, matches: match.matches };
     }
-  }, [ex, choice, text, match, audioKey]);
+  }, [ex, choice, text, match, audioKey, selfRating]);
 
   const canCheck = useMemo(() => {
     if (!ex || !draft) return false;
@@ -181,17 +178,12 @@ export function SessionPlayer({
       case 'writing':
         return draft.text.trim().length > 0;
       case 'speaking':
-        return draft.audioKey !== null;
+        // recorded, heard beside the model, and rated
+        return draft.audioKey !== null && draft.selfRating !== null;
       case 'match_pairs':
         return draft.matches.length === (ex.lefts?.length ?? 0);
     }
   }, [ex, draft]);
-
-  const denySpeaking = useCallback(() => {
-    setSkipSpeaking(true);
-    void client.patch('/me', { skipSpeaking: true });
-    dispatch({ type: 'SKIP' });
-  }, [client]);
 
   // finish → complete the session and show results
   useEffect(() => {
@@ -201,23 +193,44 @@ export function SessionPlayer({
     });
   }, [state.status, results, client, view.sessionId, paths]);
 
+  // what was typed, so the feedback can set it beside the right answer
+  const given =
+    draft?.type === 'translate' || draft?.type === 'listening' || draft?.type === 'writing' ? draft.text.trim() : undefined;
+  const reask = isReask(state);
+
   const check = useCallback(async () => {
     if (!ex || !draft || submitting) return;
     setSubmitting(true);
     const body = { exerciseId: ex.id, answer: encodeAnswer(draft) };
+    // a second try at a miss is graded and never recorded, so it is not queued
+    // for later either: offline, the learner simply tries again
+    if (reask) {
+      const res = await client.post<RetryResult>(paths.retry(view.sessionId), body);
+      setSubmitting(false);
+      if (res.ok) dispatch({ type: 'ANSWERED', result: res.data, given });
+      // refused (the session ended, say): the second try counts for nothing,
+      // so it is let go rather than asked over and over
+      else if (res.error.kind === 'client') dispatch({ type: 'SKIP' });
+      else setOffline(true);
+      return;
+    }
     const res = await client.post<AnswerResult>(paths.answers(view.sessionId), body);
     setSubmitting(false);
     if (res.ok) {
-      dispatch({ type: 'ANSWERED', result: res.data });
+      dispatch({ type: 'ANSWERED', result: res.data, given });
     } else if (res.error.kind === 'network') {
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
       setOffline(true);
     } else {
       setOffline(true); // surface a retry for transient server errors too
     }
-  }, [ex, draft, submitting, client, view.sessionId, queue, paths]);
+  }, [ex, draft, submitting, client, view.sessionId, queue, paths, reask, given]);
 
   const retry = useCallback(async () => {
+    if (queue.isEmpty()) {
+      await check();
+      return;
+    }
     setSubmitting(true);
     const sent = await queue.flush(async (pending) => {
       const res = await client.post<AnswerResult>(paths.answers(view.sessionId), {
@@ -230,19 +243,14 @@ export function SessionPlayer({
     const last = sent[sent.length - 1];
     if (last) {
       setOffline(false);
-      dispatch({ type: 'ANSWERED', result: last });
+      dispatch({ type: 'ANSWERED', result: last, given });
     }
-  }, [queue, client, view.sessionId, paths]);
+  }, [queue, client, view.sessionId, paths, check, given]);
 
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>
-        <LessonResults
-          results={results}
-          exercises={state.exercises}
-          failed={outOfHearts(state)}
-          onDone={onExit}
-        />
+        <LessonResults results={results} exercises={state.exercises} onDone={onExit} />
       </GradientBackground>
     );
   }
@@ -272,8 +280,8 @@ export function SessionPlayer({
               <Icon name="lightbulb" size={22} color={colors.gold} />
             </Pressable>
           ) : null}
-          <HeartsBar hearts={state.hearts} max={STARTING_HEARTS} />
         </View>
+        {reask ? <Text style={[styles.reask, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
@@ -319,7 +327,8 @@ export function SessionPlayer({
           <SpeakingExercise
             exercise={ex}
             onSetAudioKey={setAudioKey}
-            onDenyPermission={denySpeaking}
+            selfRating={selfRating}
+            onRate={setSelfRating}
             onSkip={() => dispatch({ type: 'SKIP' })}
             disabled={state.status !== 'answering'}
           />
@@ -367,6 +376,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   quit: { fontSize: typography.sizes.lg },
+  reask: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   tallying: { fontSize: typography.sizes.md },

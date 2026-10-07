@@ -1,10 +1,12 @@
-/** Speaking-recording validation (KUR-036). Pure, so it's unit-testable. */
+/**
+ * Speaking-recording validation (KUR-036). The thresholds and the check live
+ * in @kurda/shared (lesson-answers.ts), so the browser turns away the same
+ * recordings the phone does; what is left here is the phone's words for them.
+ */
+import { MIN_RECORDING_BYTES, MIN_RECORDING_MS, recordingProblem } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
-/** Recordings shorter than this are almost certainly accidental. */
-export const MIN_RECORDING_MS = 1000;
-/** A plausible clip has at least this many bytes (guards silent/empty blobs). */
-export const MIN_RECORDING_BYTES = 800;
+export { MIN_RECORDING_BYTES, MIN_RECORDING_MS };
 
 export interface RecordingMeta {
   durationMs: number;
@@ -15,8 +17,8 @@ export interface RecordingMeta {
  * Whether a recording is worth uploading. Rejects very short or empty
  * (silent/failed) captures client-side, before spending an upload.
  */
-export function isRecordingUsable({ durationMs, byteSize }: RecordingMeta): boolean {
-  return durationMs >= MIN_RECORDING_MS && byteSize >= MIN_RECORDING_BYTES;
+export function isRecordingUsable(meta: RecordingMeta): boolean {
+  return recordingProblem(meta) === null;
 }
 
 /**
@@ -26,7 +28,12 @@ export function isRecordingUsable({ durationMs, byteSize }: RecordingMeta): bool
  * module stays pure and the screen that has a translator does the looking up.
  */
 export function recordingRejection(meta: RecordingMeta): TranslationKey | null {
-  if (meta.durationMs < MIN_RECORDING_MS) return 'recorder.tooShort';
-  if (meta.byteSize < MIN_RECORDING_BYTES) return 'recorder.silent';
-  return null;
+  switch (recordingProblem(meta)) {
+    case 'tooShort':
+      return 'recorder.tooShort';
+    case 'silent':
+      return 'recorder.silent';
+    case null:
+      return null;
+  }
 }

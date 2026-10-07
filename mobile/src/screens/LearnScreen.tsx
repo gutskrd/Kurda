@@ -15,7 +15,7 @@ import { SkillNodeView } from '../coursemap/SkillNodeView';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { EventBanner } from '../events/EventBanner';
-import { flattenMap, isLaunchable, stateHint, type MapRow } from '../coursemap/node';
+import { flattenMaps, isLaunchable, stateHint, type MapRow } from '../coursemap/node';
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
@@ -24,7 +24,7 @@ import { EmptyState } from '../theme/EmptyState';
 
 /**
  * Learn tab (KUR-040): the daily-goal ring + a scrollable skill-tree map of
- * the course, virtualized for large courses. Tapping an unlocked skill opens
+ * every course, virtualized for large courses. Tapping an unlocked skill opens
  * its next lesson; a locked skill explains its unlock condition.
  */
 /** `onBack` is how you leave: this is a pushed screen, not a tab, since #809. */
@@ -36,7 +36,7 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
-  const [map, setMap] = useState<CourseMap | null>(null);
+  const [maps, setMaps] = useState<CourseMap[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -57,14 +57,12 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           setLoading(false);
           return;
         }
-        const first = list.data.courses[0];
-        if (first) {
-          const m = await client.get<CourseMap>(`/courses/${first.id}/map`);
-          if (!active) return;
-          if (m.ok) setMap(m.data);
-          else setFailed(true);
-        }
-        if (active) setLoading(false);
+        // every course, in the order the server lists them — not only the first
+        const loaded = await Promise.all(list.data.courses.map((c) => client.get<CourseMap>(`/courses/${c.id}/map`)));
+        if (!active) return;
+        if (loaded.some((m) => !m.ok)) setFailed(true);
+        setMaps(loaded.flatMap((m) => (m.ok ? [m.data] : [])));
+        setLoading(false);
       })();
       return () => {
         active = false;
@@ -106,20 +104,21 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
       <EventBanner />
       <DailyRewardCard />
       <WordOfDayCard />
-      {map ? <Text style={[styles.courseTitle, { color: colors.textPrimary }]}>{map.course.title}</Text> : null}
     </View>
   );
 
   const renderRow = ({ item }: { item: MapRow }) =>
-    item.kind === 'header' ? (
+    item.kind === 'course' ? (
+      <Text accessibilityRole="header" style={[styles.courseTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+    ) : item.kind === 'header' ? (
       <Text style={[styles.unitHeader, { color: colors.textSecondary }]}>{item.title}</Text>
     ) : (
       <SkillNodeView node={item.node} onPress={() => onNode(item.node)} />
     );
 
-  const rows = map ? flattenMap(map) : [];
+  const rows = maps ? flattenMaps(maps) : [];
 
-  if (failed && !map) {
+  if (failed && rows.length === 0) {
     return (
       <GradientBackground>
         <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} />

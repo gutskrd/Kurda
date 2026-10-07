@@ -14,8 +14,9 @@ export const STATE_LABEL: Record<SkillState, TranslationKey> = {
   gold: 'coursemap.state.gold',
   decayed: 'coursemap.state.decayed',
 };
-/** A flattened map row for a virtualized list: a unit header or a skill node. */
+/** A flattened map row for a virtualized list: a course title, a unit header or a skill node. */
 export type MapRow =
+  | { kind: 'course'; key: string; title: string }
   | { kind: 'header'; key: string; title: string }
   | { kind: 'node'; key: string; node: SkillNode };
 
@@ -27,6 +28,18 @@ export function flattenMap(map: CourseMap): MapRow[] {
     for (const node of unit.skills) rows.push({ kind: 'node', key: `s:${node.skillId}`, node });
   }
   return rows;
+}
+
+/**
+ * Every course's map in one list, each under its own title. The tab showed
+ * only the first course the server listed, which hid every other one — the
+ * Newroz course among them.
+ */
+export function flattenMaps(maps: CourseMap[]): MapRow[] {
+  return maps.flatMap((map) => [
+    { kind: 'course' as const, key: `c:${map.course.id}`, title: map.course.title },
+    ...flattenMap(map),
+  ]);
 }
 
 /** A locked skill can't be started; everything else launches its lesson. */

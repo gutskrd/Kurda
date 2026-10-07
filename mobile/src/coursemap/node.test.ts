@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATE_LABEL, flattenMap, isLaunchable, stateHint, stateIcon } from './node';
+import { STATE_LABEL, flattenMap, flattenMaps, isLaunchable, stateHint, stateIcon } from './node';
 import type { CourseMap, SkillNode, SkillState } from './types';
 import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
@@ -19,6 +19,21 @@ describe('flattenMap', () => {
     const rows = flattenMap(map);
     expect(rows.map((r) => r.kind)).toEqual(['header', 'node', 'node', 'header', 'node']);
     expect(rows[0]).toMatchObject({ kind: 'header', title: 'Unit 1' });
+  });
+});
+
+describe('flattenMaps', () => {
+  it('lists every course under its own title, not just the first', () => {
+    const map = (id: string, title: string): CourseMap => ({
+      course: { id, title },
+      units: [{ unitId: `${id}-u`, title: 'Unit', skills: [node({ skillId: `${id}-s` })] }],
+    });
+    const rows = flattenMaps([map('a', 'Kurmanji for Beginners'), map('b', 'Newroz')]);
+    expect(rows.map((r) => r.kind)).toEqual(['course', 'header', 'node', 'course', 'header', 'node']);
+    expect(rows.filter((r) => r.kind === 'course').map((r) => (r as { title: string }).title)).toEqual([
+      'Kurmanji for Beginners',
+      'Newroz',
+    ]);
   });
 });
 

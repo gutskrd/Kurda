@@ -509,7 +509,6 @@ export type TranslationKey =
   | 'lesson.notQuite'
   | 'lesson.almostStrict'
   | 'lesson.complete'
-  | 'lesson.outOfHearts'
   | 'notifications.allCaughtUp'
   | 'notifications.pref.streak'
   | 'notifications.pref.friends'
@@ -624,7 +623,6 @@ export type TranslationKey =
   | 'coursemap.state.gold'
   | 'coursemap.state.decayed'
   | 'events.bannerLabel'
-  | 'lesson.livesLabel'
   | 'lesson.write.insertKey'
   | 'library.readLabel'
   | 'practice.startLabel'
@@ -816,7 +814,6 @@ export type TranslationKey =
   | 'edit.sections.likes'
   | 'edit.sections.saved'
   | 'repost.sectionHint'
-  | 'lesson.speak.recorded'
   | 'lesson.speak.saved'
   | 'lesson.syncing'
   | 'recorder.startNote'
@@ -919,7 +916,17 @@ export type TranslationKey =
   | 'time.minutesAgo'
   | 'time.hoursAgo'
   | 'time.daysAgo'
-  | 'library.emptyAction';
+  | 'library.emptyAction'
+  | 'lesson.secondTry'
+  | 'lesson.comesBack'
+  | 'lesson.hearIt'
+  | 'lesson.speak.playModel'
+  | 'lesson.speak.playOwn'
+  | 'lesson.speak.micOff'
+  | 'lesson.speak.rateQuestion'
+  | 'lesson.speak.rateGood'
+  | 'lesson.speak.rateClose'
+  | 'lesson.speak.rateRetry';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -1418,14 +1425,12 @@ const en: Catalog = {
   'leagues.endsIn': 'Ends in {time} · UTC',
   'coursemap.strength': 'Strength {percent}%',
   'coursemap.strengthDecayed': 'Strength {percent}% · rusty',
-  'lesson.speak.recorded': 'Recorded',
   'lesson.speak.saved': 'Recording saved',
   'lesson.syncing': 'Syncing…',
   'recorder.startNote': 'Record a voice note',
   'recorder.recording': 'Recording {time} · tap to stop',
   'library.publish': 'Publish',
   'lesson.complete': 'Lesson complete!',
-  'lesson.outOfHearts': 'Out of hearts',
   'notifications.allCaughtUp': 'You’re all caught up.',
   'notifications.pref.streak': 'Streak reminders',
   'notifications.pref.friends': 'Friend activity',
@@ -1540,7 +1545,6 @@ const en: Catalog = {
   'coursemap.state.gold': 'gold',
   'coursemap.state.decayed': 'rusty',
   'events.bannerLabel': '{name} — event quests',
-  'lesson.livesLabel': '{hearts} of {max} lives',
   'lesson.write.insertKey': 'Insert {letter}',
   'library.readLabel': 'Read {title}',
   'practice.startLabel': 'Start: {title}',
@@ -1800,6 +1804,16 @@ const en: Catalog = {
   'favorites.noPoems': 'No published poems yet.',
   'favorites.noStories': 'No published stories yet.',
   'games.quiz.noOpponent': 'No opponent found right now — try again in a moment.',
+  'lesson.secondTry': 'One more try — practice only, it doesn’t change your score',
+  'lesson.comesBack': 'This one will come back in a moment.',
+  'lesson.hearIt': 'Hear it',
+  'lesson.speak.playModel': 'Hear a native speaker',
+  'lesson.speak.playOwn': 'Hear yourself',
+  'lesson.speak.micOff': 'The microphone is off for Hevalo. Allow it in your device settings to record, or skip this one.',
+  'lesson.speak.rateQuestion': 'How did it sound to you?',
+  'lesson.speak.rateGood': 'Sounded right',
+  'lesson.speak.rateClose': 'Close',
+  'lesson.speak.rateRetry': 'Try again',
 };
 
 const ku: Catalog = {
@@ -2297,14 +2311,12 @@ const ku: Catalog = {
   'leagues.endsIn': 'Di {time} de diqede · UTC',
   'coursemap.strength': 'Hêz {percent}%',
   'coursemap.strengthDecayed': 'Hêz {percent}% · zengarî',
-  'lesson.speak.recorded': 'Hat tomarkirin',
   'lesson.speak.saved': 'Dengê te hat tomarkirin',
   'lesson.syncing': 'Tê hevdemkirin…',
   'recorder.startNote': 'Nîşeyeke dengî tomar bike',
   'recorder.recording': 'Tomar dike {time} · ji bo rawestandinê bitikîne',
   'library.publish': 'Belav bike',
   'lesson.complete': 'Ders qediya!',
-  'lesson.outOfHearts': 'Dil neman',
   'notifications.allCaughtUp': 'Her tişt xwendî ye.',
   'notifications.pref.streak': 'Bîrxistinên rêzê',
   'notifications.pref.friends': 'Çalakiya hevalan',
@@ -2419,7 +2431,6 @@ const ku: Catalog = {
   'coursemap.state.gold': 'zêrîn',
   'coursemap.state.decayed': 'zengarî',
   'events.bannerLabel': '{name} — erkên bûyerê',
-  'lesson.livesLabel': '{hearts} ji {max} jiyanan',
   'lesson.write.insertKey': 'Tîpa {letter} têxe',
   'library.readLabel': '{title} bixwîne',
   'practice.startLabel': 'Dest pê bike: {title}',
@@ -2679,6 +2690,16 @@ const ku: Catalog = {
   'favorites.noPoems': 'Hê helbestên weşandî tune ne.',
   'favorites.noStories': 'Hê çîrokên weşandî tune ne.',
   'games.quiz.noOpponent': 'Niha hevrik nehat dîtin — piştî demekê dîsa biceribîne.',
+  'lesson.secondTry': 'Careke din — tenê ji bo fêrbûnê, nayê hejmartin',
+  'lesson.comesBack': 'Ev pirs piştî çend pirsan dîsa tê.',
+  'lesson.hearIt': 'Guhdarî bike',
+  'lesson.speak.playModel': 'Guh bide axêverekî zikmakî',
+  'lesson.speak.playOwn': 'Guh bide xwe',
+  'lesson.speak.micOff': 'Mîkrofon ji bo Hevalo girtî ye. Ji mîhengên cîhazê destûrê bide, an vê derbas bike.',
+  'lesson.speak.rateQuestion': 'Bi ya te, çawa bû?',
+  'lesson.speak.rateGood': 'Rast bû',
+  'lesson.speak.rateClose': 'Nêzîk bû',
+  'lesson.speak.rateRetry': 'Dîsa biceribîne',
 };
 
 const de: Catalog = {
@@ -3176,14 +3197,12 @@ const de: Catalog = {
   'leagues.endsIn': 'Endet in {time} · UTC',
   'coursemap.strength': 'Stärke {percent} %',
   'coursemap.strengthDecayed': 'Stärke {percent} % · eingerostet',
-  'lesson.speak.recorded': 'Aufgenommen',
   'lesson.speak.saved': 'Aufnahme gespeichert',
   'lesson.syncing': 'Wird synchronisiert…',
   'recorder.startNote': 'Sprachnotiz aufnehmen',
   'recorder.recording': 'Aufnahme {time} · zum Stoppen tippen',
   'library.publish': 'Veröffentlichen',
   'lesson.complete': 'Lektion abgeschlossen!',
-  'lesson.outOfHearts': 'Keine Herzen mehr',
   'notifications.allCaughtUp': 'Du bist auf dem neuesten Stand.',
   'notifications.pref.streak': 'Serien-Erinnerungen',
   'notifications.pref.friends': 'Freunde-Aktivität',
@@ -3298,7 +3317,6 @@ const de: Catalog = {
   'coursemap.state.gold': 'golden',
   'coursemap.state.decayed': 'eingerostet',
   'events.bannerLabel': '{name} — Event-Quests',
-  'lesson.livesLabel': '{hearts} von {max} Leben',
   'lesson.write.insertKey': '{letter} einfügen',
   'library.readLabel': '{title} lesen',
   'practice.startLabel': 'Starten: {title}',
@@ -3558,6 +3576,16 @@ const de: Catalog = {
   'favorites.noPoems': 'Noch keine veröffentlichten Gedichte.',
   'favorites.noStories': 'Noch keine veröffentlichten Geschichten.',
   'games.quiz.noOpponent': 'Gerade kein Gegner gefunden — versuch es gleich noch einmal.',
+  'lesson.secondTry': 'Noch ein Versuch — nur zum Üben, er zählt nicht zur Wertung',
+  'lesson.comesBack': 'Diese Aufgabe kommt gleich noch einmal.',
+  'lesson.hearIt': 'Anhören',
+  'lesson.speak.playModel': 'Muttersprachler anhören',
+  'lesson.speak.playOwn': 'Dich selbst anhören',
+  'lesson.speak.micOff': 'Das Mikrofon ist für Hevalo aus. Erlaube es in den Geräteeinstellungen oder überspringe diese Aufgabe.',
+  'lesson.speak.rateQuestion': 'Wie klang es für dich?',
+  'lesson.speak.rateGood': 'Klang richtig',
+  'lesson.speak.rateClose': 'Fast',
+  'lesson.speak.rateRetry': 'Nochmal',
 };
 
 const es: Catalog = {
@@ -4055,14 +4083,12 @@ const es: Catalog = {
   'leagues.endsIn': 'Termina en {time} · UTC',
   'coursemap.strength': 'Fuerza {percent} %',
   'coursemap.strengthDecayed': 'Fuerza {percent} % · oxidado',
-  'lesson.speak.recorded': 'Grabado',
   'lesson.speak.saved': 'Grabación guardada',
   'lesson.syncing': 'Sincronizando…',
   'recorder.startNote': 'Grabar una nota de voz',
   'recorder.recording': 'Grabando {time} · toca para detener',
   'library.publish': 'Publicar',
   'lesson.complete': '¡Lección completada!',
-  'lesson.outOfHearts': 'Sin corazones',
   'notifications.allCaughtUp': 'Estás al día.',
   'notifications.pref.streak': 'Recordatorios de racha',
   'notifications.pref.friends': 'Actividad de amigos',
@@ -4177,7 +4203,6 @@ const es: Catalog = {
   'coursemap.state.gold': 'oro',
   'coursemap.state.decayed': 'oxidado',
   'events.bannerLabel': '{name} — misiones del evento',
-  'lesson.livesLabel': '{hearts} de {max} vidas',
   'lesson.write.insertKey': 'Insertar {letter}',
   'library.readLabel': 'Leer {title}',
   'practice.startLabel': 'Empezar: {title}',
@@ -4437,6 +4462,16 @@ const es: Catalog = {
   'favorites.noPoems': 'Todavía no hay poemas publicados.',
   'favorites.noStories': 'Todavía no hay relatos publicados.',
   'games.quiz.noOpponent': 'Ahora mismo no hay rival: inténtalo de nuevo en un momento.',
+  'lesson.secondTry': 'Otro intento: solo para practicar, no cambia tu puntuación',
+  'lesson.comesBack': 'Esta volverá a salir en un momento.',
+  'lesson.hearIt': 'Escuchar',
+  'lesson.speak.playModel': 'Escuchar a un hablante nativo',
+  'lesson.speak.playOwn': 'Escucharte',
+  'lesson.speak.micOff': 'El micrófono está desactivado para Hevalo. Permítelo en los ajustes del dispositivo o salta este ejercicio.',
+  'lesson.speak.rateQuestion': '¿Cómo te sonó?',
+  'lesson.speak.rateGood': 'Sonó bien',
+  'lesson.speak.rateClose': 'Casi',
+  'lesson.speak.rateRetry': 'Otra vez',
 };
 
 const tr: Catalog = {
@@ -4934,14 +4969,12 @@ const tr: Catalog = {
   'leagues.endsIn': '{time} sonra bitiyor · UTC',
   'coursemap.strength': 'Güç %{percent}',
   'coursemap.strengthDecayed': 'Güç %{percent} · paslanmış',
-  'lesson.speak.recorded': 'Kaydedildi',
   'lesson.speak.saved': 'Ses kaydın alındı',
   'lesson.syncing': 'Eşitleniyor…',
   'recorder.startNote': 'Sesli not kaydet',
   'recorder.recording': 'Kaydediliyor {time} · durdurmak için dokun',
   'library.publish': 'Yayınla',
   'lesson.complete': 'Ders tamamlandı!',
-  'lesson.outOfHearts': 'Kalp kalmadı',
   'notifications.allCaughtUp': 'Her şeyi gördün.',
   'notifications.pref.streak': 'Seri hatırlatmaları',
   'notifications.pref.friends': 'Arkadaş etkinliği',
@@ -5056,7 +5089,6 @@ const tr: Catalog = {
   'coursemap.state.gold': 'altın',
   'coursemap.state.decayed': 'paslanmış',
   'events.bannerLabel': '{name} — etkinlik görevleri',
-  'lesson.livesLabel': '{max} candan {hearts} tanesi',
   'lesson.write.insertKey': '{letter} ekle',
   'library.readLabel': '{title} oku',
   'practice.startLabel': 'Başla: {title}',
@@ -5316,6 +5348,16 @@ const tr: Catalog = {
   'favorites.noPoems': 'Henüz yayımlanmış şiir yok.',
   'favorites.noStories': 'Henüz yayımlanmış hikâye yok.',
   'games.quiz.noOpponent': 'Şu anda rakip bulunamadı — birazdan tekrar dene.',
+  'lesson.secondTry': 'Bir deneme daha — sadece alıştırma, puanını değiştirmez',
+  'lesson.comesBack': 'Bu soru birazdan tekrar gelecek.',
+  'lesson.hearIt': 'Dinle',
+  'lesson.speak.playModel': 'Anadili konuşanı dinle',
+  'lesson.speak.playOwn': 'Kendini dinle',
+  'lesson.speak.micOff': 'Hevalo için mikrofon kapalı. Cihaz ayarlarından izin ver ya da bunu atla.',
+  'lesson.speak.rateQuestion': 'Sana nasıl geldi?',
+  'lesson.speak.rateGood': 'Doğru geldi',
+  'lesson.speak.rateClose': 'Yakın',
+  'lesson.speak.rateRetry': 'Tekrar dene',
 };
 
 const ar: Catalog = {
@@ -5813,14 +5855,12 @@ const ar: Catalog = {
   'leagues.endsIn': 'ينتهي خلال {time} · UTC',
   'coursemap.strength': 'القوة {percent}٪',
   'coursemap.strengthDecayed': 'القوة {percent}٪ · صدئ',
-  'lesson.speak.recorded': 'تم التسجيل',
   'lesson.speak.saved': 'تم حفظ التسجيل',
   'lesson.syncing': 'تتم المزامنة…',
   'recorder.startNote': 'سجّل ملاحظة صوتية',
   'recorder.recording': 'جارٍ التسجيل {time} · اضغط للإيقاف',
   'library.publish': 'انشر',
   'lesson.complete': 'اكتمل الدرس!',
-  'lesson.outOfHearts': 'نفدت القلوب',
   'notifications.allCaughtUp': 'لقد اطّلعت على كل شيء.',
   'notifications.pref.streak': 'تذكيرات السلسلة',
   'notifications.pref.friends': 'نشاط الأصدقاء',
@@ -5935,7 +5975,6 @@ const ar: Catalog = {
   'coursemap.state.gold': 'ذهبي',
   'coursemap.state.decayed': 'صدئ',
   'events.bannerLabel': '{name} — مهام الفعالية',
-  'lesson.livesLabel': '{hearts} من {max} أرواح',
   'lesson.write.insertKey': 'إدراج {letter}',
   'library.readLabel': 'اقرأ {title}',
   'practice.startLabel': 'ابدأ: {title}',
@@ -6195,6 +6234,16 @@ const ar: Catalog = {
   'favorites.noPoems': 'لا توجد قصائد منشورة بعد.',
   'favorites.noStories': 'لا توجد قصص منشورة بعد.',
   'games.quiz.noOpponent': 'لا يوجد خصم الآن — حاول مرة أخرى بعد قليل.',
+  'lesson.secondTry': 'محاولة أخرى — للتمرين فقط، لا تغيّر نتيجتك',
+  'lesson.comesBack': 'سيعود هذا السؤال بعد قليل.',
+  'lesson.hearIt': 'استمع',
+  'lesson.speak.playModel': 'استمع إلى متحدث أصلي',
+  'lesson.speak.playOwn': 'استمع إلى نفسك',
+  'lesson.speak.micOff': 'الميكروفون متوقف لـ Hevalo. اسمح به من إعدادات الجهاز أو تخطَّ هذا التمرين.',
+  'lesson.speak.rateQuestion': 'كيف بدا لك؟',
+  'lesson.speak.rateGood': 'بدا صحيحًا',
+  'lesson.speak.rateClose': 'قريب',
+  'lesson.speak.rateRetry': 'حاول مجددًا',
 };
 
 const fr: Catalog = {
@@ -6692,14 +6741,12 @@ const fr: Catalog = {
   'leagues.endsIn': 'Se termine dans {time} · UTC',
   'coursemap.strength': 'Force {percent} %',
   'coursemap.strengthDecayed': 'Force {percent} % · rouillé',
-  'lesson.speak.recorded': 'Enregistré',
   'lesson.speak.saved': 'Enregistrement sauvegardé',
   'lesson.syncing': 'Synchronisation…',
   'recorder.startNote': 'Enregistrer une note vocale',
   'recorder.recording': 'Enregistrement {time} · appuyez pour arrêter',
   'library.publish': 'Publier',
   'lesson.complete': 'Leçon terminée !',
-  'lesson.outOfHearts': 'Plus de cœurs',
   'notifications.allCaughtUp': 'Tu es à jour.',
   'notifications.pref.streak': 'Rappels de série',
   'notifications.pref.friends': 'Activité des amis',
@@ -6814,7 +6861,6 @@ const fr: Catalog = {
   'coursemap.state.gold': 'or',
   'coursemap.state.decayed': 'rouillé',
   'events.bannerLabel': '{name} — quêtes de l’événement',
-  'lesson.livesLabel': '{hearts} vies sur {max}',
   'lesson.write.insertKey': 'Insérer {letter}',
   'library.readLabel': 'Lire {title}',
   'practice.startLabel': 'Commencer : {title}',
@@ -7074,6 +7120,16 @@ const fr: Catalog = {
   'favorites.noPoems': 'Aucun poème publié pour l’instant.',
   'favorites.noStories': 'Aucune histoire publiée pour l’instant.',
   'games.quiz.noOpponent': 'Aucun adversaire pour le moment — réessaie dans un instant.',
+  'lesson.secondTry': 'Encore un essai — pour s’entraîner, il ne change pas votre score',
+  'lesson.comesBack': 'Cette question reviendra dans un instant.',
+  'lesson.hearIt': 'Écouter',
+  'lesson.speak.playModel': 'Écouter un locuteur natif',
+  'lesson.speak.playOwn': 'Vous écouter',
+  'lesson.speak.micOff': 'Le micro est désactivé pour Hevalo. Autorisez-le dans les réglages de l’appareil, ou passez cet exercice.',
+  'lesson.speak.rateQuestion': 'Comment cela vous a-t-il semblé ?',
+  'lesson.speak.rateGood': 'C’était juste',
+  'lesson.speak.rateClose': 'Presque',
+  'lesson.speak.rateRetry': 'Réessayer',
 };
 
 const nl: Catalog = {
@@ -7571,14 +7627,12 @@ const nl: Catalog = {
   'leagues.endsIn': 'Eindigt over {time} · UTC',
   'coursemap.strength': 'Sterkte {percent}%',
   'coursemap.strengthDecayed': 'Sterkte {percent}% · verroest',
-  'lesson.speak.recorded': 'Opgenomen',
   'lesson.speak.saved': 'Opname opgeslagen',
   'lesson.syncing': 'Synchroniseren…',
   'recorder.startNote': 'Spraaknotitie opnemen',
   'recorder.recording': 'Opnemen {time} · tik om te stoppen',
   'library.publish': 'Publiceren',
   'lesson.complete': 'Les afgerond!',
-  'lesson.outOfHearts': 'Geen harten meer',
   'notifications.allCaughtUp': 'Je bent helemaal bij.',
   'notifications.pref.streak': 'Reeksherinneringen',
   'notifications.pref.friends': 'Vriendenactiviteit',
@@ -7693,7 +7747,6 @@ const nl: Catalog = {
   'coursemap.state.gold': 'goud',
   'coursemap.state.decayed': 'verroest',
   'events.bannerLabel': '{name} — evenement-quests',
-  'lesson.livesLabel': '{hearts} van {max} levens',
   'lesson.write.insertKey': '{letter} invoegen',
   'library.readLabel': '{title} lezen',
   'practice.startLabel': 'Starten: {title}',
@@ -7953,6 +8006,16 @@ const nl: Catalog = {
   'favorites.noPoems': 'Nog geen gepubliceerde gedichten.',
   'favorites.noStories': 'Nog geen gepubliceerde verhalen.',
   'games.quiz.noOpponent': 'Op dit moment geen tegenstander gevonden — probeer het zo nog eens.',
+  'lesson.secondTry': 'Nog een poging — alleen om te oefenen, je score verandert niet',
+  'lesson.comesBack': 'Deze komt zo nog een keer terug.',
+  'lesson.hearIt': 'Beluisteren',
+  'lesson.speak.playModel': 'Luister naar een moedertaalspreker',
+  'lesson.speak.playOwn': 'Luister naar jezelf',
+  'lesson.speak.micOff': 'De microfoon staat uit voor Hevalo. Sta hem toe in de instellingen van je apparaat, of sla deze over.',
+  'lesson.speak.rateQuestion': 'Hoe klonk het volgens jou?',
+  'lesson.speak.rateGood': 'Klonk goed',
+  'lesson.speak.rateClose': 'Bijna',
+  'lesson.speak.rateRetry': 'Opnieuw',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -8451,14 +8514,12 @@ const ckb: Catalog = {
   'leagues.endsIn': 'لە {time} کۆتایی دێت · UTC',
   'coursemap.strength': 'هێز {percent}%',
   'coursemap.strengthDecayed': 'هێز {percent}% · ژەنگاوی',
-  'lesson.speak.recorded': 'تۆمارکرا',
   'lesson.speak.saved': 'دەنگەکەت تۆمارکرا',
   'lesson.syncing': 'هاوکاتکردن…',
   'recorder.startNote': 'تێبینییەکی دەنگی تۆمار بکە',
   'recorder.recording': 'تۆمارکردن {time} · بۆ وەستاندن دەستی لێبدە',
   'library.publish': 'بڵاوکردنەوە',
   'lesson.complete': 'وانەکە تەواو بوو!',
-  'lesson.outOfHearts': 'دڵەکان تەواو بوون',
   'notifications.allCaughtUp': 'هەموو شتێکت بینیوە.',
   'notifications.pref.streak': 'بیرخستنەوەی زنجیرە',
   'notifications.pref.friends': 'چالاکی هاوڕێکان',
@@ -8573,7 +8634,6 @@ const ckb: Catalog = {
   'coursemap.state.gold': 'زێڕین',
   'coursemap.state.decayed': 'ژەنگاوی',
   'events.bannerLabel': '{name} — ئەرکەکانی بۆنە',
-  'lesson.livesLabel': '{hearts} لە {max} ژیان',
   'lesson.write.insertKey': '{letter} دابنێ',
   'library.readLabel': '{title} بخوێنەوە',
   'practice.startLabel': 'دەستپێبکە: {title}',
@@ -8833,6 +8893,16 @@ const ckb: Catalog = {
   'favorites.noPoems': 'هێشتا شیعری بڵاوکراوە نییە.',
   'favorites.noStories': 'هێشتا چیرۆکی بڵاوکراوە نییە.',
   'games.quiz.noOpponent': 'ئێستا بەرامبەر نەدۆزرایەوە — دوای کەمێک دووبارە هەوڵ بدە.',
+  'lesson.secondTry': 'جارێکی تر — تەنها بۆ ڕاهێنان، ناژمێردرێت',
+  'lesson.comesBack': 'ئەم پرسیارە دوای چەند پرسیارێک دەگەڕێتەوە.',
+  'lesson.hearIt': 'گوێ بگرە',
+  'lesson.speak.playModel': 'گوێ لە قسەکەرێکی ڕەسەن بگرە',
+  'lesson.speak.playOwn': 'گوێ لە خۆت بگرە',
+  'lesson.speak.micOff': 'مایکرۆفۆن بۆ Hevalo داخراوە. لە ڕێکخستنەکانی ئامێرەکەت ڕێگە بدە، یان ئەمە تێپەڕێنە.',
+  'lesson.speak.rateQuestion': 'بە بۆچوونی تۆ چۆن بوو؟',
+  'lesson.speak.rateGood': 'ڕاست بوو',
+  'lesson.speak.rateClose': 'نزیک بوو',
+  'lesson.speak.rateRetry': 'دووبارە هەوڵ بدەرەوە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
