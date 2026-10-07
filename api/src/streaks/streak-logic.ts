@@ -92,6 +92,23 @@ export function grantFreeze(state: StreakState): StreakState {
 export const SESSIONS_PER_FREEZE = 5;
 
 /**
+ * Whether a finished lesson or practice session was learning: at least half
+ * of its items answered, and never fewer than one.
+ *
+ * Finishing is a request anyone can send, with nothing answered at all. Five
+ * of those earned a streak freeze, and one unlocked the daily Zêr — exactly the
+ * pay-for-showing-up the rewards were changed to avoid. Half rather than all,
+ * because a learner may skip a speaking item (no microphone) or a listening one
+ * whose audio would not load, and a lesson with a few of those is still a
+ * lesson. A session that is not learning still finishes and still earns its
+ * XP; it just does not count as a day learned, a day of the streak, a step
+ * towards a freeze or the daily Zêr.
+ */
+export function countsAsLearning(answered: number, total: number): boolean {
+  return answered >= Math.max(1, Math.ceil(total / 2));
+}
+
+/**
  * What learning has added up to, kept beside the streak rather than in it: the
  * streak can be broken, these only grow (or, for the freeze count, fill up).
  */

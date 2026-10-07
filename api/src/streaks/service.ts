@@ -134,7 +134,9 @@ export class StreakService {
    * most once per local day, adds the day to the days-learned total, and moves
    * the next freeze one session closer (see `recordSession`). Runs inside the
    * caller's transaction when an executor is passed — callers do this only on
-   * the transition to completed, so a session is never counted twice.
+   * the transition to completed, so a session is never counted twice, and only
+   * for a session that was learning (`countsAsLearning`), so finishing one with
+   * nothing answered pays for nothing.
    */
   async recordActivity(
     userId: string,

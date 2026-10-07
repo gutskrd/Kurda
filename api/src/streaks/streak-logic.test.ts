@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  countsAsLearning,
   dayDiff,
   EMPTY_TALLY,
   grantFreeze,
@@ -200,5 +201,24 @@ describe('recordSession (days learned and earned freezes)', () => {
     expect(back.freezeEarned).toBe(true);
     expect(back.streak.freezes).toBe(MAX_FREEZES);
     expect(back.tally.freezeProgress).toBe(0);
+  });
+});
+
+describe('countsAsLearning', () => {
+  it('never counts a session with nothing answered', () => {
+    expect(countsAsLearning(0, 10)).toBe(false);
+    expect(countsAsLearning(0, 1)).toBe(false);
+    // not even an empty one: there was nothing to learn from
+    expect(countsAsLearning(0, 0)).toBe(false);
+  });
+
+  it('needs at least half of the items answered', () => {
+    expect(countsAsLearning(4, 10)).toBe(false);
+    expect(countsAsLearning(5, 10)).toBe(true);
+    // odd totals round the half up
+    expect(countsAsLearning(1, 3)).toBe(false);
+    expect(countsAsLearning(2, 3)).toBe(true);
+    expect(countsAsLearning(1, 1)).toBe(true);
+    expect(countsAsLearning(10, 10)).toBe(true);
   });
 });

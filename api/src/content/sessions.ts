@@ -4,6 +4,7 @@ import { checkAnswer, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
+import { countsAsLearning } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
@@ -302,8 +303,12 @@ export class LessonSessionService {
             { userId, source: LESSON_XP_SOURCE, amount, refId: sessionId },
             client,
           );
-          // Finishing a lesson meets the daily goal → count today's streak.
-          streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          // A lesson actually worked through counts as a day learned and for
+          // today's streak; one finished with (nearly) nothing answered does
+          // not, or the freeze and the daily Zêr could be had for nothing.
+          if (countsAsLearning(answers.rows.length, session.total_count)) {
+            streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          }
           // Credit the daily goal if this XP crossed it (KUR-032). Runs in
           // the same txn so it sees the award above; idempotent.
           await this.goals.evaluate(client, userId, timeZone);
