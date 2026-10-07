@@ -180,7 +180,14 @@ export class PlacementService {
     return { sessionId: session.id, asked: session.history.length, maxLevel, question };
   }
 
-  /** Grade the current question and advance (or finish + unlock). */
+  /**
+   * Grade the current question and advance (or finish + unlock).
+   *
+   * Seeds and writes use the stored session's id, never the one in the URL:
+   * Postgres finds a session by its id in capitals too, but a seed is text, and
+   * an answer graded under a seed its options were not shown with is mapped
+   * back to the wrong option.
+   */
   async answer(
     sessionId: string,
     userId: string,
@@ -200,7 +207,7 @@ export class PlacementService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('WRONG_QUESTION', 404, 'question no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(sessionId, exerciseId));
+    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, exerciseId));
     const history: PlacementStep[] = [
       ...session.history,
       { level: session.current_level, correct: result.accepted, exerciseId },
@@ -214,7 +221,7 @@ export class PlacementService {
       await this.pool.query(
         `UPDATE placement_sessions SET history = $2, completed_at = now(), placed_level = $3, current_exercise_id = NULL
          WHERE id = $1`,
-        [sessionId, JSON.stringify(history), placed],
+        [session.id, JSON.stringify(history), placed],
       );
       // unlock — written only here, so a quit never partially unlocks
       await this.pool.query(
@@ -230,11 +237,11 @@ export class PlacementService {
 
     const level = nextLevel(session.current_level, result.accepted, maxLevel);
     const asked = history.flatMap((step) => (step.exerciseId ? [step.exerciseId] : []));
-    const nextId = await this.pickExercise(skills, level, `${sessionId}:${history.length}`, asked);
+    const nextId = await this.pickExercise(skills, level, `${session.id}:${history.length}`, asked);
     await this.pool.query(
       `UPDATE placement_sessions SET history = $2, current_level = $3, current_exercise_id = $4 WHERE id = $1`,
-      [sessionId, JSON.stringify(history), level, nextId],
+      [session.id, JSON.stringify(history), level, nextId],
     );
-    return { correct: result.accepted, done: false, question: await this.question(sessionId, nextId, level) };
+    return { correct: result.accepted, done: false, question: await this.question(session.id, nextId, level) };
   }
 }

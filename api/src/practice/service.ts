@@ -179,7 +179,14 @@ export class PracticeService {
     return session;
   }
 
-  /** Grade one answer, update SM-2, and record it (idempotent per exercise). */
+  /**
+   * Grade one answer, update SM-2, and record it (idempotent per exercise).
+   *
+   * Everything here keys on the stored session's id, never on the one in the
+   * URL: Postgres finds a session by its id in capitals too, but the shuffle
+   * seed is text, and a multiple-choice answer graded under a seed the options
+   * were not shown with is mapped back to the wrong option.
+   */
   async submitAnswer(
     sessionId: string,
     userId: string,
@@ -199,7 +206,7 @@ export class PracticeService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer, `${sessionId}:${ex.id}`);
+    const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
 
     const client = await this.pool.connect();
     try {
@@ -207,19 +214,19 @@ export class PracticeService {
       const inserted = await client.query(
         `INSERT INTO practice_answers (session_id, exercise_id, verdict, accepted)
          VALUES ($1, $2, $3, $4) ON CONFLICT (session_id, exercise_id) DO NOTHING`,
-        [sessionId, exerciseId, result.verdict, result.accepted],
+        [session.id, exerciseId, result.verdict, result.accepted],
       );
       if ((inserted.rowCount ?? 0) === 0) {
         const existing = await client.query<{ verdict: Verdict; accepted: boolean }>(
           `SELECT verdict, accepted FROM practice_answers WHERE session_id = $1 AND exercise_id = $2`,
-          [sessionId, exerciseId],
+          [session.id, exerciseId],
         );
         await client.query('COMMIT');
         const row = existing.rows[0]!;
         return { verdict: row.verdict, accepted: row.accepted, correction: result.correction, duplicate: true };
       }
       if (result.accepted) {
-        await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [sessionId]);
+        await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [session.id]);
       }
       // feed SM-2 so practice actually strengthens the item (KUR-033); an
       // item padded in before it was due cannot stretch its own interval
@@ -259,13 +266,13 @@ export class PracticeService {
         const claimed = await client.query(
           `UPDATE practice_sessions SET completed_at = now()
            WHERE id = $1 AND completed_at IS NULL RETURNING id`,
-          [sessionId],
+          [session.id],
         );
         if ((claimed.rowCount ?? 0) > 0) {
           claimedNow = true;
           const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
-          xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: sessionId }, client);
-          await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [sessionId, xpAwarded]);
+          xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: session.id }, client);
+          await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [session.id, xpAwarded]);
           streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           await this.goals.evaluate(client, userId, timeZone);
         }

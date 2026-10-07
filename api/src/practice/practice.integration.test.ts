@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
+import { optionOrder } from '../content/exercises.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -176,5 +177,34 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     // the saved word keeps its place in the review queue
     const q = await authed('GET', '/review/queue');
     expect(q.json().items.map((i: { itemId: string }) => i.itemId)).toContain(`dict:${entryId}`);
+  });
+
+  /**
+   * Postgres finds a session by its id in capitals too, so the id in the URL
+   * must not be the shuffle seed: graded under it, the tap lands on whichever
+   * option that other order puts there.
+   */
+  it('grades a choice by the order it was shown, whatever case the session id is sent in', async () => {
+    // a session where the capitalised id would put another option under the
+    // tap, so the test can tell the two seeds apart
+    let sid = '';
+    let tapped = -1;
+    for (let i = 0; i < 20 && !sid; i++) {
+      const body = (await authed('POST', '/practice/session')).json();
+      const shown = (body.exercises as Array<{ id: string; options?: string[] }>).find((e) => e.id === ex.mc);
+      if (!shown) continue;
+      const at = shown.options!.indexOf('Apple');
+      if (optionOrder(3, `${body.sessionId.toUpperCase()}:${ex.mc}`)[at] !== 0) {
+        sid = body.sessionId;
+        tapped = at;
+      }
+    }
+    expect(sid).not.toBe('');
+    const res = await authed('POST', `/practice/sessions/${sid.toUpperCase()}/answers`, {
+      exerciseId: ex.mc,
+      answer: { choice: tapped },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ verdict: 'correct', accepted: true });
   });
 });

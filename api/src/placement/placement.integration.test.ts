@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
+import { optionOrder } from '../content/exercises.js';
 import { PLACEMENT_MAX_QUESTIONS } from './placement.js';
 import { activate } from '../test/activate.js';
 
@@ -111,6 +112,35 @@ describe.skipIf(!DATABASE_URL)('placement (integration)', () => {
 
     const strength = await authed('GET', `/courses/${courseId}/skill-strength`);
     expect(strength.json().skills.every((s: { unlocked: boolean }) => !s.unlocked)).toBe(true);
+  });
+
+  /**
+   * Postgres finds a session by its id in capitals too, so the id in the URL
+   * must not be the shuffle seed: graded under it, a tap lands on whichever
+   * option that other order puts there.
+   */
+  it('grades by the order shown, whatever case the session id is sent in', async () => {
+    const differs = (sid: string, exerciseId: string) =>
+      optionOrder(2, `${sid}:${exerciseId}`).join() !== optionOrder(2, `${sid.toUpperCase()}:${exerciseId}`).join();
+    // an attempt where the capitalised id would shuffle the two options the
+    // other way, so the test can tell the two seeds apart
+    let start = await authed('POST', `/courses/${courseId}/placement`, { restart: true });
+    for (let i = 0; i < 20 && !differs(start.json().sessionId, start.json().question.exerciseId); i++) {
+      start = await authed('POST', `/courses/${courseId}/placement`, { restart: true });
+    }
+    const sid = start.json().sessionId as string;
+    const q = start.json().question;
+    expect(differs(sid, q.exerciseId)).toBe(true);
+
+    const res = await authed('POST', `/placement/${sid.toUpperCase()}/answer`, {
+      exerciseId: q.exerciseId,
+      answer: pick(q, 'right'),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ correct: true, done: false });
+    // the next question is shown in the order resuming shows it
+    const resumed = await authed('POST', `/courses/${courseId}/placement`, {});
+    expect(resumed.json().question).toEqual(res.json().question);
   });
 
   it('answering correctly climbs and tests out up to the top level', async () => {
