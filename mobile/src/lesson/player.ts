@@ -1,4 +1,5 @@
-import type { AnswerResult, Exercise, SessionView } from './types';
+import type { TranslationKey } from '../i18n/translations';
+import type { AnswerResult, Exercise, ExerciseType, SessionView } from './types';
 
 /** Lives a learner starts a lesson with. */
 export const STARTING_HEARTS = 5;
@@ -9,6 +10,24 @@ export interface Feedback {
   verdict: AnswerResult['verdict'];
   accepted: boolean;
   correction?: string;
+  /** what was answered: a recording is not graded the way typed text is */
+  exerciseType?: ExerciseType;
+}
+
+/**
+ * The feedback banner's headline, which must be true of the answer.
+ *
+ * 'typo' used to read "typo accepted" whatever else came back. But a strict
+ * spelling item grades the same slip (e for ê) as a typo that is NOT accepted —
+ * the letter is what it tests — and a spoken answer was never typed: the server
+ * cannot check a recording, so its verdict is only the learner's own rating, or
+ * 'typo' when none was sent (this player sends none). A recording that counted
+ * is therefore just that: saved.
+ */
+export function feedbackTitle(feedback: Feedback): TranslationKey {
+  if (feedback.exerciseType === 'speaking') return feedback.accepted ? 'lesson.speak.saved' : 'lesson.notQuite';
+  if (feedback.verdict === 'typo') return feedback.accepted ? 'lesson.almostTypo' : 'lesson.almostStrict';
+  return feedback.accepted ? 'lesson.correct' : 'lesson.notQuite';
 }
 
 export interface PlayerState {
@@ -73,7 +92,7 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
       return {
         ...state,
         status: 'feedback',
-        feedback: { verdict, accepted, correction },
+        feedback: { verdict, accepted, correction, exerciseType: currentExercise(state)?.type },
         hearts: lostHeart ? Math.max(0, state.hearts - 1) : state.hearts,
         answeredCount: duplicate ? state.answeredCount : state.answeredCount + 1,
       };

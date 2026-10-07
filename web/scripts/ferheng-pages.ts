@@ -31,10 +31,10 @@
  * as a grid of controls, and a letter's ranges are named by the words they
  * start and end at instead of by the folded prefix the build happens to use.
  */
-import { letterKey } from '@kurda/shared';
+import { foldLetter, letterKey } from '@kurda/shared';
 import { escapeHtml as escape } from './escape.js';
 import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../src/brand/zagrosian.js';
-import { alphabetOf, compareKeys, foldLetter } from './ferheng-alphabet.js';
+import { alphabetOf, compareKeys } from './ferheng-alphabet.js';
 import { COPY, type Copy } from './ferheng-copy.js';
 import { CHROME_FILE, copyHook, type ChromeKey, type PageKey } from './ferheng-chrome.js';
 import { formOf, isInflected, type Entry } from './ferheng-entries.js';

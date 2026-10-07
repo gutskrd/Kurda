@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { ACHIEVEMENTS, AchievementsService } from './service.js';
+import { ACHIEVEMENTS, AchievementsService, STREAK_ACHIEVEMENT_DAYS } from './service.js';
 import { activate } from '../test/activate.js';
 
 describe('achievement definitions (unit)', () => {
@@ -86,5 +86,43 @@ describe.skipIf(!DATABASE_URL)('achievement awards (integration)', () => {
     expect(all).toHaveLength(ACHIEVEMENTS.length);
     expect(all.find((a) => a.id === 'first-game-win')?.earnedAt).not.toBeNull();
     expect(all.find((a) => a.id === 'streak-30')?.earnedAt).toBeNull();
+  });
+
+  describe('awarded by what the learner does', () => {
+    let learnerId: string;
+    const has = async (achievementId: string) =>
+      (
+        await pool.query(`SELECT 1 FROM user_achievements WHERE user_id = $1 AND achievement_id = $2`, [
+          learnerId,
+          achievementId,
+        ])
+      ).rowCount === 1;
+
+    beforeAll(async () => {
+      const res = await pool.query<{ id: string }>(
+        `INSERT INTO users (email, username) VALUES ($1, $2) RETURNING id`,
+        [`ach2_${suffix}@it.kurda.app`, `ach2_${suffix}`],
+      );
+      learnerId = res.rows[0]!.id;
+    });
+
+    afterAll(async () => {
+      await pool.query(`DELETE FROM users WHERE id = $1`, [learnerId]);
+    });
+
+    it('streak-30 when a streak reaches 30 days, and only then', async () => {
+      await service.recordStreak(learnerId, 29);
+      expect(await has('streak-30')).toBe(false);
+      await service.recordStreak(learnerId, STREAK_ACHIEVEMENT_DAYS);
+      expect(await has('streak-30')).toBe(true);
+      await expect(service.recordStreak(learnerId, 31)).resolves.toBeUndefined(); // already earned: a no-op
+    });
+
+    it('first-perfect for a lesson completed without a mistake, not before', async () => {
+      await service.recordLessonCompleted(learnerId, 0.9);
+      expect(await has('first-perfect')).toBe(false);
+      await service.recordLessonCompleted(learnerId, 1);
+      expect(await has('first-perfect')).toBe(true);
+    });
   });
 });

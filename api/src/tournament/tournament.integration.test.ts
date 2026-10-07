@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { TournamentService } from './service.js';
 import { WalletService } from '../wallet/service.js';
+import { AchievementsService } from '../achievements/service.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -41,7 +42,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    svc = new TournamentService(pool, new WalletService(pool));
+    svc = new TournamentService(pool, new WalletService(pool), undefined, new AchievementsService(pool));
     wallet = new WalletService(pool);
 
     const admin = await register('admin');
@@ -126,6 +127,12 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     expect((await wallet.balances(view.winnerId!)).zer).toBe(500);
     // everyone but the champion is eliminated
     expect(view.participants.filter((p) => !p.eliminated)).toHaveLength(1);
+    // …and only the champion holds tournament-win
+    const holders = await pool.query<{ user_id: string }>(
+      `SELECT user_id FROM user_achievements WHERE achievement_id = 'tournament-win' AND user_id = ANY($1)`,
+      [players.map((p) => p.id)],
+    );
+    expect(holders.rows.map((r) => r.user_id)).toEqual([view.winnerId]);
   });
 
   it('gives the top seed a bye when the field is not a power of two', async () => {

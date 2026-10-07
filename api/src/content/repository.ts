@@ -21,6 +21,17 @@ export interface LessonRow {
   title_en: string;
 }
 
+/** A stored lesson version with its content, as import compares it (KUR-041). */
+export interface StoredLessonVersion {
+  id: string;
+  version: number;
+  /** includes 'in_review' (KUR-100), which `LessonStatus` predates */
+  status: string;
+  titleKu: string;
+  titleEn: string;
+  exercises: Array<{ position: number; type: ExerciseType; payload: unknown }>;
+}
+
 /**
  * Authoring-side content operations (KUR-026). The import pipeline
  * (#41) and admin CMS (#100) sit on top of this; learner-facing reads
@@ -72,8 +83,9 @@ export class ContentRepository {
 
   /**
    * Create the next draft version at (skill, position) with NO exercises —
-   * used by import (KUR-041). First import makes v1; a re-import makes v2+
-   * as a fresh draft, leaving any published version untouched.
+   * used by import (KUR-041). First import makes v1; a re-import of changed
+   * content makes v2+ as a fresh draft, leaving any published version
+   * untouched (unchanged content makes none: see `lessonVersions`).
    */
   async createLessonVersion(skillId: string, position: number, titleKu: string, titleEn: string): Promise<string> {
     const result = await this.pool.query<{ id: string }>(
@@ -85,6 +97,36 @@ export class ContentRepository {
       [skillId, position, titleKu, titleEn],
     );
     return (result.rows[0] as { id: string }).id;
+  }
+
+  /**
+   * Every version at a (skill, position) slot that is not archived, newest
+   * first, each with its exercises — what import compares incoming content
+   * against so an unchanged lesson is not versioned again.
+   */
+  async lessonVersions(skillId: string, position: number): Promise<StoredLessonVersion[]> {
+    const lessons = await this.pool.query<{ id: string; version: number; status: string; title_ku: string; title_en: string }>(
+      `SELECT id, version, status, title_ku, title_en FROM lessons
+       WHERE skill_id = $1 AND position = $2 AND status <> 'archived'
+       ORDER BY version DESC`,
+      [skillId, position],
+    );
+    if (lessons.rows.length === 0) return [];
+    const exercises = await this.pool.query<{ lesson_id: string; position: number; type: ExerciseType; payload: unknown }>(
+      `SELECT lesson_id, position, type, payload FROM exercises
+       WHERE lesson_id = ANY($1::uuid[]) ORDER BY position ASC`,
+      [lessons.rows.map((l) => l.id)],
+    );
+    return lessons.rows.map((l) => ({
+      id: l.id,
+      version: l.version,
+      status: l.status,
+      titleKu: l.title_ku,
+      titleEn: l.title_en,
+      exercises: exercises.rows
+        .filter((e) => e.lesson_id === l.id)
+        .map((e) => ({ position: e.position, type: e.type, payload: e.payload })),
+    }));
   }
 
   async findCourseBySlug(slug: string): Promise<string | null> {

@@ -76,7 +76,8 @@ export type TranslationKey =
   | 'civak.kind.story'
   | 'civak.kind.poem'
   | 'civak.kind.photo'
-  | 'civak.kind.meme'
+  | 'civak.kind.meme'
+
   | 'common.showMore'
   | 'auth.email'
   | 'auth.password'
@@ -109,10 +110,12 @@ export type TranslationKey =
   | 'welcome.signInError'
   | 'common.unknownError'
   | 'auth.reset.sent'
-  | 'auth.reset.backToLogin'
+  | 'auth.reset.backToLogin'
+
   | 'auth.verify.enterCode6'
   | 'auth.register.submit'
-  | 'auth.verify.sendNewIn'
+  | 'auth.verify.sendNewIn'
+
   | 'nav.login'
   | 'onboarding.language.title'
   | 'onboarding.language.help'
@@ -123,8 +126,10 @@ export type TranslationKey =
   | 'onboarding.notify.title'
   | 'onboarding.notify.body'
   | 'onboarding.notify.later'
-  | 'common.continue'
-  | 'common.skip'
+  | 'common.continue'
+
+  | 'common.skip'
+
   | 'nav.register'
   | 'lesson.loadFailed'
   | 'lesson.grammarTips'
@@ -148,13 +153,17 @@ export type TranslationKey =
   | 'net.offline.banner'
   | 'net.loadFailed'
   | 'practice.startFailed'
-  | 'practice.empty.title'
-  | 'practice.empty.body'
+  | 'practice.empty.title'
+
+  | 'practice.empty.body'
+
   | 'common.retry'
   | 'lesson.listen.playShort'
   | 'lesson.translate.prompt'
-  | 'lesson.speak.reRecord'
-  | 'lesson.speak.uploading'
+  | 'lesson.speak.reRecord'
+
+  | 'lesson.speak.uploading'
+
   | 'error.offline'
   | 'games.wordle.name'
   | 'games.wordle.solo'
@@ -175,7 +184,8 @@ export type TranslationKey =
   | 'game.tooLate'
   | 'settings.appearance'
   | 'settings.notifications'
-  | 'settings.notificationCenter'
+  | 'settings.notificationCenter'
+
   | 'profile.changePhoto'
   | 'profile.private'
   | 'friends.noResults'
@@ -200,7 +210,8 @@ export type TranslationKey =
   | 'notifications.quietHoursHelp'
   | 'profile.challenge1v1'
   | 'profile.unavailable'
-  | 'friends.searchToStart'
+  | 'friends.searchToStart'
+
   | 'username.new'
   | 'games.rhyme.rhymeWith'
   | 'games.rhyme.endRound'
@@ -221,7 +232,8 @@ export type TranslationKey =
   | 'tags.noMain'
   | 'tags.yours'
   | 'tags.none'
-  | 'tags.add'
+  | 'tags.add'
+
   | 'tags.sensitiveConsent'
   | 'rankings.title'
   | 'rankings.board.weeklyXp'
@@ -243,7 +255,8 @@ export type TranslationKey =
   | 'rankings.empty.globalBody'
   | 'rankings.unit.xp'
   | 'rankings.everyoneIn'
-  | 'games.you'
+  | 'games.you'
+
   | 'profile.edit'
   | 'edit.eyebrow'
   | 'edit.details'
@@ -259,13 +272,15 @@ export type TranslationKey =
   | 'edit.noAvatar'
   | 'edit.premiumAvatar'
   | 'edit.profileUpdated'
-  | 'edit.photoUpdated'
+  | 'edit.photoUpdated'
+
   | 'edit.avatarCleared'
   | 'games.wordle.enter'
   | 'games.wordle.backspace'
   | 'games.wordle.emptyCell'
   | 'games.wordle.letterCorrect'
-  | 'games.wordle.letterPresent'
+  | 'games.wordle.letterPresent'
+
   | 'games.wordle.letterAbsent'
   | 'games.battle.name'
   | 'games.battle.intro'
@@ -492,6 +507,7 @@ export type TranslationKey =
   | 'lesson.offlineRetry'
   | 'lesson.almostTypo'
   | 'lesson.notQuite'
+  | 'lesson.almostStrict'
   | 'lesson.complete'
   | 'lesson.outOfHearts'
   | 'notifications.allCaughtUp'
@@ -801,6 +817,7 @@ export type TranslationKey =
   | 'edit.sections.saved'
   | 'repost.sectionHint'
   | 'lesson.speak.recorded'
+  | 'lesson.speak.saved'
   | 'lesson.syncing'
   | 'recorder.startNote'
   | 'recorder.recording'
@@ -1370,6 +1387,7 @@ const en: Catalog = {
   'lesson.offlineRetry': 'You’re offline — tap to retry',
   'lesson.almostTypo': 'Almost — typo accepted',
   'lesson.notQuite': 'Not quite',
+  'lesson.almostStrict': 'Almost — every letter counts here',
   'lesson.check': 'Check',
   'nav.menu': 'Menu',
   'nav.menu.discover': 'Discover',
@@ -1401,6 +1419,7 @@ const en: Catalog = {
   'coursemap.strength': 'Strength {percent}%',
   'coursemap.strengthDecayed': 'Strength {percent}% · rusty',
   'lesson.speak.recorded': 'Recorded',
+  'lesson.speak.saved': 'Recording saved',
   'lesson.syncing': 'Syncing…',
   'recorder.startNote': 'Record a voice note',
   'recorder.recording': 'Recording {time} · tap to stop',
@@ -2247,6 +2266,7 @@ const ku: Catalog = {
   'lesson.offlineRetry': 'Tu negirêdayî yî — ji bo dubarekirinê bitikîne',
   'lesson.almostTypo': 'Hema hema — çewtiya nivîsê hate qebûlkirin',
   'lesson.notQuite': 'Ne bi temamî',
+  'lesson.almostStrict': 'Hema hema — li vir her tîp girîng e',
   'lesson.check': 'Kontrol bike',
   'nav.menu': 'Menû',
   'nav.menu.discover': 'Keşf bike',
@@ -2278,6 +2298,7 @@ const ku: Catalog = {
   'coursemap.strength': 'Hêz {percent}%',
   'coursemap.strengthDecayed': 'Hêz {percent}% · zengarî',
   'lesson.speak.recorded': 'Hat tomarkirin',
+  'lesson.speak.saved': 'Dengê te hat tomarkirin',
   'lesson.syncing': 'Tê hevdemkirin…',
   'recorder.startNote': 'Nîşeyeke dengî tomar bike',
   'recorder.recording': 'Tomar dike {time} · ji bo rawestandinê bitikîne',
@@ -3124,6 +3145,7 @@ const de: Catalog = {
   'lesson.offlineRetry': 'Du bist offline — zum Wiederholen tippen',
   'lesson.almostTypo': 'Fast — Tippfehler akzeptiert',
   'lesson.notQuite': 'Nicht ganz',
+  'lesson.almostStrict': 'Fast — hier zählt jeder Buchstabe',
   'lesson.check': 'Prüfen',
   'nav.menu': 'Menü',
   'nav.menu.discover': 'Entdecken',
@@ -3155,6 +3177,7 @@ const de: Catalog = {
   'coursemap.strength': 'Stärke {percent} %',
   'coursemap.strengthDecayed': 'Stärke {percent} % · eingerostet',
   'lesson.speak.recorded': 'Aufgenommen',
+  'lesson.speak.saved': 'Aufnahme gespeichert',
   'lesson.syncing': 'Wird synchronisiert…',
   'recorder.startNote': 'Sprachnotiz aufnehmen',
   'recorder.recording': 'Aufnahme {time} · zum Stoppen tippen',
@@ -4001,6 +4024,7 @@ const es: Catalog = {
   'lesson.offlineRetry': 'Estás sin conexión: toca para reintentar',
   'lesson.almostTypo': 'Casi: se acepta la errata',
   'lesson.notQuite': 'No del todo',
+  'lesson.almostStrict': 'Casi: aquí cuenta cada letra',
   'lesson.check': 'Comprobar',
   'nav.menu': 'Menú',
   'nav.menu.discover': 'Descubrir',
@@ -4032,6 +4056,7 @@ const es: Catalog = {
   'coursemap.strength': 'Fuerza {percent} %',
   'coursemap.strengthDecayed': 'Fuerza {percent} % · oxidado',
   'lesson.speak.recorded': 'Grabado',
+  'lesson.speak.saved': 'Grabación guardada',
   'lesson.syncing': 'Sincronizando…',
   'recorder.startNote': 'Grabar una nota de voz',
   'recorder.recording': 'Grabando {time} · toca para detener',
@@ -4878,6 +4903,7 @@ const tr: Catalog = {
   'lesson.offlineRetry': 'Çevrimdışısın — yeniden denemek için dokun',
   'lesson.almostTypo': 'Neredeyse — yazım hatası kabul edildi',
   'lesson.notQuite': 'Tam değil',
+  'lesson.almostStrict': 'Neredeyse — burada her harf önemli',
   'lesson.check': 'Kontrol et',
   'nav.menu': 'Menü',
   'nav.menu.discover': 'Keşfet',
@@ -4909,6 +4935,7 @@ const tr: Catalog = {
   'coursemap.strength': 'Güç %{percent}',
   'coursemap.strengthDecayed': 'Güç %{percent} · paslanmış',
   'lesson.speak.recorded': 'Kaydedildi',
+  'lesson.speak.saved': 'Ses kaydın alındı',
   'lesson.syncing': 'Eşitleniyor…',
   'recorder.startNote': 'Sesli not kaydet',
   'recorder.recording': 'Kaydediliyor {time} · durdurmak için dokun',
@@ -5755,6 +5782,7 @@ const ar: Catalog = {
   'lesson.offlineRetry': 'أنت غير متصل — اضغط لإعادة المحاولة',
   'lesson.almostTypo': 'تقريبًا — قُبل الخطأ المطبعي',
   'lesson.notQuite': 'ليس تمامًا',
+  'lesson.almostStrict': 'تقريبًا — هنا كل حرف مهم',
   'lesson.check': 'تحقق',
   'nav.menu': 'القائمة',
   'nav.menu.discover': 'استكشف',
@@ -5786,6 +5814,7 @@ const ar: Catalog = {
   'coursemap.strength': 'القوة {percent}٪',
   'coursemap.strengthDecayed': 'القوة {percent}٪ · صدئ',
   'lesson.speak.recorded': 'تم التسجيل',
+  'lesson.speak.saved': 'تم حفظ التسجيل',
   'lesson.syncing': 'تتم المزامنة…',
   'recorder.startNote': 'سجّل ملاحظة صوتية',
   'recorder.recording': 'جارٍ التسجيل {time} · اضغط للإيقاف',
@@ -6632,6 +6661,7 @@ const fr: Catalog = {
   'lesson.offlineRetry': 'Tu es hors ligne — appuie pour réessayer',
   'lesson.almostTypo': 'Presque — faute de frappe acceptée',
   'lesson.notQuite': 'Pas tout à fait',
+  'lesson.almostStrict': 'Presque — ici, chaque lettre compte',
   'lesson.check': 'Vérifier',
   'nav.menu': 'Menu',
   'nav.menu.discover': 'Découvrir',
@@ -6663,6 +6693,7 @@ const fr: Catalog = {
   'coursemap.strength': 'Force {percent} %',
   'coursemap.strengthDecayed': 'Force {percent} % · rouillé',
   'lesson.speak.recorded': 'Enregistré',
+  'lesson.speak.saved': 'Enregistrement sauvegardé',
   'lesson.syncing': 'Synchronisation…',
   'recorder.startNote': 'Enregistrer une note vocale',
   'recorder.recording': 'Enregistrement {time} · appuyez pour arrêter',
@@ -7509,6 +7540,7 @@ const nl: Catalog = {
   'lesson.offlineRetry': 'Je bent offline — tik om opnieuw te proberen',
   'lesson.almostTypo': 'Bijna — typfout geaccepteerd',
   'lesson.notQuite': 'Niet helemaal',
+  'lesson.almostStrict': 'Bijna — hier telt elke letter',
   'lesson.check': 'Controleren',
   'nav.menu': 'Menu',
   'nav.menu.discover': 'Ontdekken',
@@ -7540,6 +7572,7 @@ const nl: Catalog = {
   'coursemap.strength': 'Sterkte {percent}%',
   'coursemap.strengthDecayed': 'Sterkte {percent}% · verroest',
   'lesson.speak.recorded': 'Opgenomen',
+  'lesson.speak.saved': 'Opname opgeslagen',
   'lesson.syncing': 'Synchroniseren…',
   'recorder.startNote': 'Spraaknotitie opnemen',
   'recorder.recording': 'Opnemen {time} · tik om te stoppen',
@@ -8387,6 +8420,7 @@ const ckb: Catalog = {
   'lesson.offlineRetry': 'دەرهێڵیت — دەست لێبدە بۆ هەوڵدانەوە',
   'lesson.almostTypo': 'نزیک بوو — هەڵەی نووسین وەرگیرا',
   'lesson.notQuite': 'تەواو نییە',
+  'lesson.almostStrict': 'نزیک بوو — لێرە هەموو پیتێک گرنگە',
   'lesson.check': 'پشکنین',
   'nav.menu': 'پێڕست',
   'nav.menu.discover': 'دۆزینەوە',
@@ -8418,6 +8452,7 @@ const ckb: Catalog = {
   'coursemap.strength': 'هێز {percent}%',
   'coursemap.strengthDecayed': 'هێز {percent}% · ژەنگاوی',
   'lesson.speak.recorded': 'تۆمارکرا',
+  'lesson.speak.saved': 'دەنگەکەت تۆمارکرا',
   'lesson.syncing': 'هاوکاتکردن…',
   'recorder.startNote': 'تێبینییەکی دەنگی تۆمار بکە',
   'recorder.recording': 'تۆمارکردن {time} · بۆ وەستاندن دەستی لێبدە',

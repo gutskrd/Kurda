@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { dictionaryKey, foldDiacritics, letterCount, letterKey, normalizeKurdish } from './kurdish-text.js';
+import {
+  answerKey,
+  dictionaryKey,
+  foldDiacritics,
+  foldLetter,
+  letterCount,
+  letterKey,
+  normalizeKurdish,
+} from './kurdish-text.js';
 
 // Explicit code points so precomposed vs. decomposed intent is unambiguous.
 const E_CIRC = String.fromCharCode(0xea); // precomposed e-circumflex
@@ -102,5 +110,106 @@ describe('letterKey and dictionaryKey', () => {
   it('leaves a word with no diacritics alone', () => {
     expect(dictionaryKey('roj')).toBe('roj');
     expect(letterKey('roj')).toBe('roj');
+  });
+});
+
+describe('foldLetter', () => {
+  it('folds the Arabic-script variants of one Kurdish letter together', () => {
+    expect(foldLetter('ك')).toBe('ک');
+    expect(foldLetter('ي')).toBe('ی');
+    expect(foldLetter('ى')).toBe('ی');
+    expect(foldLetter('ه')).toBe('ھ');
+    expect(foldLetter('ۀ')).toBe('ە');
+    expect(foldLetter('ı')).toBe('i');
+  });
+
+  it('leaves every other letter alone', () => {
+    for (const ch of ['ک', 'ی', 'ھ', 'ە', 'ڕ', 'ر', 'ڵ', 'ل', 'a', 'ê', 'ş']) {
+      expect(foldLetter(ch), ch).toBe(ch);
+    }
+  });
+});
+
+/** Persian-keyboard spelling of ە inside a word: heh + zero-width non-joiner. */
+const ZWNJ = '‌';
+
+describe('answerKey', () => {
+  /**
+   * The same Soranî word typed on a Kurdish keyboard and on an Arabic or
+   * Persian one. Every pair here is one word, and a learner who typed either
+   * half has typed it right.
+   */
+  it('reads a Soranî word typed on an Arabic or Persian keyboard as the same word', () => {
+    const pairs: Array<[kurdish: string, typed: string]> = [
+      ['کوردستان', 'كوردستان'], // Arabic kaf
+      ['چۆنی', 'چۆني'], // Arabic yeh
+      ['چۆنی', 'چۆنى'], // alef maksura
+      ['ھات', 'هات'], // the consonant h as Arabic heh
+      ['خانە', 'خانه'], // the vowel at the end of a word as heh
+      ['ئەمە', `ئه${ZWNJ}مه`], // ە inside a word as heh + ZWNJ
+      ['بەیانی باش', `به${ZWNJ}ياني باش`],
+      ['ھەڵە', `هه${ZWNJ}ڵه`],
+      ['خانەیەک', 'خانۀیەک'], // heh with yeh above
+    ];
+    for (const [kurdish, typed] of pairs) {
+      expect(answerKey(typed), `${typed} should read as ${kurdish}`).toBe(answerKey(kurdish));
+    }
+  });
+
+  it('keeps letters that are different letters apart', () => {
+    expect(answerKey('کەر')).not.toBe(answerKey('کەڕ')); // donkey / deaf
+    expect(answerKey('گوڵ')).not.toBe(answerKey('گول'));
+    expect(answerKey('ھەر')).not.toBe(answerKey('ئەر'));
+  });
+
+  /**
+   * Only a word's last letter is ambiguous. A letter standing alone is the
+   * letter: "which one is h?" must not accept the vowel.
+   */
+  it('keeps a lone ھ and a lone ە apart', () => {
+    expect(answerKey('ھ')).toBe('ھ');
+    expect(answerKey('ە')).toBe('ە');
+    expect(answerKey('ھ')).not.toBe(answerKey('ە'));
+    expect(answerKey('ه')).toBe('ھ'); // Arabic heh alone is still h
+    expect(answerKey(' ھ ')).toBe('ھ');
+    expect(answerKey('ھ و ە')).toBe('ھ و ە');
+    expect(answerKey(`ه${ZWNJ}`)).toBe('ە'); // how a Persian keyboard types ە alone
+    // …while at the end of a word the three are still one
+    expect(answerKey('خانھ')).toBe(answerKey('خانە'));
+    expect(answerKey('خانه، باش')).toBe(answerKey('خانە، باش'));
+  });
+
+  it('drops invisible formatting a phone puts around right-to-left text', () => {
+    expect(answerKey('‏سڵاو‏')).toBe('سڵاو');
+    expect(answerKey('⁧سڵاو⁩')).toBe('سڵاو');
+    expect(answerKey('سـڵاو')).toBe('سڵاو'); // tatweel
+    expect(answerKey(`زۆر${ZWNJ} سوپاس`)).toBe('زۆر سوپاس');
+  });
+
+  it('reads Persian and Arabic-Indic digits as digits', () => {
+    expect(answerKey('۳')).toBe('3');
+    expect(answerKey('٣')).toBe('3');
+    expect(answerKey('١٠')).toBe('10');
+  });
+
+  /**
+   * ê and e are different letters in Kurmancî. Whether a missing one is
+   * forgiven is the grader's call (lenient or strict), so the key must not
+   * make it for the grader.
+   */
+  it('keeps Kurmancî diacritics', () => {
+    expect(answerKey('sêv')).toBe('sêv');
+    expect(answerKey('sêv')).not.toBe(answerKey('sev'));
+    expect(answerKey('şer')).not.toBe(answerKey('ser'));
+  });
+
+  it('lower-cases, collapses whitespace and composes, as before', () => {
+    expect(answerKey('  Ez  BAŞ im ')).toBe('ez baş im');
+    expect(answerKey('sêv')).toBe('sêv');
+  });
+
+  it('reads Turkish-keyboard i letters as Hawar i', () => {
+    expect(answerKey('BİR')).toBe('bir');
+    expect(answerKey('kurdı')).toBe('kurdi');
   });
 });

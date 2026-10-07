@@ -29,7 +29,8 @@
  * spelled, so the reader learns the spelling by finding the word. A query
  * typed with the marks ranks the words that have them first.
  */
-import { compareKeys, foldLetter } from './ferheng-alphabet.js';
+import { foldLetter } from '@kurda/shared';
+import { compareKeys } from './ferheng-alphabet.js';
 import { formOf, isInflected } from './ferheng-entries.js';
 import { pageKey, type Page } from './ferheng-pages.js';
 

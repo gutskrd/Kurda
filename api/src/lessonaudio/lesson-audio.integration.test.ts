@@ -457,12 +457,21 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       const answer = (exerciseId: string, given: unknown) =>
         authed('POST', `/sessions/${sessionId}/answers`, { exerciseId, answer: given });
 
-      const mc = await answer(ex.mc, { choice: 1 });
+      // options are shuffled per session, so answer by the text on screen
+      const shown = (id: string) =>
+        byId(lesson.json().exercises as Array<Record<string, unknown>>, id).options as string[];
+      const mc = await answer(ex.mc, { choice: shown(ex.mc).indexOf('Spas') });
       expect(mc.statusCode, mc.body).toBe(200);
       expect(mc.json()).toMatchObject({ verdict: 'wrong', correction: T.mcSay, modelAudioUrl: urls.mcSay });
-      expect((await answer(ex.mcq, { choice: 0 })).json()).toMatchObject({ verdict: 'correct', modelAudioUrl: urls.quoted });
+      expect((await answer(ex.mcq, { choice: shown(ex.mcq).indexOf('tea') })).json()).toMatchObject({
+        verdict: 'correct',
+        modelAudioUrl: urls.quoted,
+      });
       // a replay says the same
-      expect((await answer(ex.mc, { choice: 0 })).json()).toMatchObject({ duplicate: true, modelAudioUrl: urls.mcSay });
+      expect((await answer(ex.mc, { choice: shown(ex.mc).indexOf(T.mcSay) })).json()).toMatchObject({
+        duplicate: true,
+        modelAudioUrl: urls.mcSay,
+      });
       // nothing recorded, or nothing to record: no field
       expect((await answer(ex.un, { text: 'x' })).json()).not.toHaveProperty('modelAudioUrl');
       expect((await answer(ex.mp, { matches: [] })).json()).not.toHaveProperty('modelAudioUrl');
@@ -471,10 +480,12 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     it('gives a placement question only what it may hear before answering', async () => {
       const res = await authed('POST', `/courses/${courseId}/placement`, {});
       expect(res.statusCode, res.body).toBe(200);
+      // the question is drawn from the level's exercises, so check the property
+      // rather than the item: nothing in it says an answer before it is given
       const q = res.json().question;
-      expect(q.exerciseId).toBe(ex.mc);
-      expect(q).not.toHaveProperty('modelAudioUrl');
-      expect(q).not.toHaveProperty('audio');
+      expect(q).not.toHaveProperty('say');
+      if (q.exerciseId === ex.mc || q.exerciseId === ex.tr) expect(q).not.toHaveProperty('modelAudioUrl');
+      for (const url of [urls.mcSay, urls.translate]) expect(res.body).not.toContain(url);
     });
 
     it('gives a practice session its recordings', async () => {

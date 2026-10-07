@@ -148,6 +148,45 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     expect(xp.rows[0]!.xp).toBe(100);
   });
 
+  /**
+   * The ledger's (source, ref_id) key is unique across all users, and the
+   * daily key used to be the day alone: the first finisher each day was
+   * credited and everyone after them silently got nothing, while being told
+   * they had earned it.
+   */
+  it('credits every finisher of the same daily word, each once', async () => {
+    const dayIndex = utcDayIndex(new Date('2026-08-05T00:00:00Z'));
+    const players = [await makeUser(), await makeUser(), await makeUser()];
+    const svc = serviceAt(new Date());
+
+    for (const u of players) {
+      const gameId = await insertGame(u, 'daily', 'medium', 'malan', dayIndex);
+      const res = await svc.guess(u, gameId, 'malan');
+      expect(res.ok && res.game.xpAwarded).toBe(100);
+    }
+
+    const xp = await pool.query<{ xp: number }>(`SELECT xp FROM users WHERE id = ANY($1)`, [players]);
+    expect(xp.rows.map((r) => r.xp)).toEqual([100, 100, 100]);
+    const ledger = await pool.query<{ ref_id: string }>(
+      `SELECT ref_id FROM xp_ledger WHERE source = 'wordle' AND user_id = ANY($1)`,
+      [players],
+    );
+    expect(new Set(ledger.rows.map((r) => r.ref_id)).size).toBe(3);
+  });
+
+  it('reports a daily win that extends the streak, so streak milestones can be awarded', async () => {
+    const recorded: Array<[string, number]> = [];
+    const milestones = {
+      recordStreak: async (userId: string, current: number) => void recorded.push([userId, current]),
+      recordLessonCompleted: async () => undefined,
+    };
+    const u = await makeUser();
+    const gameId = await insertGame(u, 'daily', 'medium', 'malan', utcDayIndex(new Date('2026-08-06T00:00:00Z')));
+    const res = await new WordleService(pool, { now: () => new Date(), milestones }).guess(u, gameId, 'malan');
+    expect(res.ok).toBe(true);
+    expect(recorded).toEqual([[u, 1]]);
+  });
+
   it('rejects wrong-length and non-dictionary guesses without consuming an attempt', async () => {
     const u = await makeUser();
     const gameId = await insertGame(u, 'practice', 'medium', 'malan', null);

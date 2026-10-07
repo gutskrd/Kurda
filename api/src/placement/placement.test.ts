@@ -3,6 +3,7 @@ import {
   PLACEMENT_MAX_QUESTIONS,
   isComplete,
   nextLevel,
+  pickCandidate,
   placedLevel,
   type PlacementStep,
 } from './placement.js';
@@ -63,5 +64,31 @@ describe('skillStrength', () => {
     const s = skillStrength([{ easiness: 1.9, repetitions: 2 }]);
     expect(s).toBeGreaterThan(0);
     expect(s).toBeLessThan(100);
+  });
+});
+
+describe('pickCandidate', () => {
+  const candidates = ['ex-a', 'ex-b', 'ex-c', 'ex-d', 'ex-e'];
+
+  it('is stable for one seed, so a resumed placement asks the same question', () => {
+    expect(pickCandidate(candidates, 'session-1:0')).toBe(pickCandidate(candidates, 'session-1:0'));
+  });
+
+  it('does not always ask the first exercise of a level', () => {
+    const picks = new Set(Array.from({ length: 30 }, (_, i) => pickCandidate(candidates, `session-${i}:0`)));
+    expect(picks.size).toBeGreaterThan(2);
+  });
+
+  it('asks something not yet asked while anything is left', () => {
+    for (let i = 0; i < 20; i++) {
+      const picked = candidates[pickCandidate(candidates, `session-${i}:3`, ['ex-a', 'ex-b', 'ex-c', 'ex-d'])];
+      expect(picked).toBe('ex-e');
+    }
+    // all asked: repeat one rather than ask nothing
+    expect(pickCandidate(candidates, 'session-1:9', candidates)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('is -1 for a level with no exercises', () => {
+    expect(pickCandidate([], 'session-1:0')).toBe(-1);
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   STARTING_HEARTS,
   currentExercise,
+  feedbackTitle,
   initPlayer,
   outOfHearts,
   progress,
@@ -162,5 +163,34 @@ describe('reduce', () => {
     s = reduce(s, { type: 'ANSWERED', result: answer() });
     const again = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
     expect(again).toBe(s); // no change
+  });
+});
+
+describe('feedbackTitle', () => {
+  it('says a typo was accepted only when it was', () => {
+    expect(feedbackTitle({ verdict: 'typo', accepted: true, exerciseType: 'translate' })).toBe('lesson.almostTypo');
+    // a strict spelling item: the same slip, not accepted
+    expect(feedbackTitle({ verdict: 'typo', accepted: false, exerciseType: 'writing' })).toBe('lesson.almostStrict');
+  });
+
+  it('calls a recording that counted saved, never a typo or correct', () => {
+    expect(feedbackTitle({ verdict: 'typo', accepted: true, exerciseType: 'speaking' })).toBe('lesson.speak.saved');
+    expect(feedbackTitle({ verdict: 'correct', accepted: true, exerciseType: 'speaking' })).toBe('lesson.speak.saved');
+    expect(feedbackTitle({ verdict: 'wrong', accepted: false, exerciseType: 'speaking' })).toBe('lesson.notQuite');
+  });
+
+  it('reads right and wrong as before', () => {
+    expect(feedbackTitle({ verdict: 'correct', accepted: true, exerciseType: 'multiple_choice' })).toBe('lesson.correct');
+    expect(feedbackTitle({ verdict: 'wrong', accepted: false, exerciseType: 'translate' })).toBe('lesson.notQuite');
+  });
+
+  it('is told what kind of exercise was answered', () => {
+    const speaking: Exercise = { id: 's', position: 1, type: 'speaking', prompt: 'Say it' };
+    const s = reduce(initPlayer(view({ exercises: [speaking] })), {
+      type: 'ANSWERED',
+      result: answer({ verdict: 'typo', accepted: true, correction: 'Ez baş im' }),
+    });
+    expect(s.feedback).toEqual({ verdict: 'typo', accepted: true, correction: 'Ez baş im', exerciseType: 'speaking' });
+    expect(feedbackTitle(s.feedback!)).toBe('lesson.speak.saved');
   });
 });

@@ -59,11 +59,17 @@ export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
+/** Awards an achievement; injected so tournaments stay decoupled. */
+export interface AchievementAwarder {
+  award(userId: string, achievementId: string): Promise<unknown>;
+}
+
 export class TournamentService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly wallet: WalletService,
     private readonly gems?: GemGranter,
+    private readonly achievements?: AchievementAwarder,
   ) {}
 
   async create(adminId: string, input: CreateTournamentInput): Promise<{ id: string }> {
@@ -354,6 +360,8 @@ export class TournamentService {
     }
     // config-driven tournament-win Gem grant (KUR-068), idempotent per tournament
     if (this.gems) await this.gems.grant(userId, 'tournament_win', tournamentId).catch(() => undefined);
+    // the champion's achievement; idempotent, best-effort like the grant above
+    if (this.achievements) await this.achievements.award(userId, 'tournament-win').catch(() => undefined);
   }
 
   /** A player confirms presence for their ready match (guards no-show sweep). */

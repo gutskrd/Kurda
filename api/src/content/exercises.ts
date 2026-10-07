@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import { answerKey, foldDiacritics, normalizeKurdish } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
-import { defaultScorer } from './speaking-scorer.js';
+import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
 
 /**
  * Exercise payload schemas + server-side answer checkers (KUR-027).
@@ -33,11 +33,20 @@ export const multipleChoicePayloadSchema = z
     path: ['correctIndex'],
   });
 
+/**
+ * Strict spelling: a diacritic slip (e for ê, s for ş) is not accepted. Those
+ * letters tell words apart, so a spelling or dictation item that forgave them
+ * would count its target errors as successes. Off by default — beginners keep
+ * the lenient "almost" (see `gradeText`).
+ */
+const strictSchema = z.boolean().optional();
+
 export const translatePayloadSchema = z.object({
   say,
   prompt: z.string().min(1).max(500),
   /** All accepted answers; the first is the canonical/shown correction. */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
+  strict: strictSchema,
 });
 
 export const matchPairsPayloadSchema = z.object({
@@ -59,6 +68,7 @@ export const listeningPayloadSchema = z.object({
   prompt: z.string().max(500).optional(),
   /** accepted transcriptions; graded diacritic-tolerantly like translate */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
+  strict: strictSchema,
 });
 
 export const speakingPayloadSchema = z.object({
@@ -74,6 +84,7 @@ export const writingPayloadSchema = z.object({
   prompt: z.string().min(1).max(500),
   /** accepted full-text answers; punctuation/case-insensitive, diacritic-tolerant */
   accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
+  strict: strictSchema,
 });
 
 const PAYLOAD_SCHEMAS = {
@@ -135,8 +146,15 @@ export const answerSchemas = {
   }),
   /** listening is transcription — same shape as translate */
   listening: z.object({ text: z.string().max(500) }),
-  /** speaking submits the storage key of the uploaded recording */
-  speaking: z.object({ audioKey: z.string().min(1).max(300) }),
+  /**
+   * speaking submits the storage key of the uploaded recording, and how the
+   * learner judged it after hearing it beside the native model (optional, so
+   * clients from before self-rating still submit)
+   */
+  speaking: z.object({
+    audioKey: z.string().min(1).max(300),
+    selfRating: z.enum(SELF_RATINGS).optional(),
+  }),
   /** free-text writing */
   writing: z.object({ text: z.string().max(1000) }),
 } as const;
@@ -157,9 +175,28 @@ function seededShuffle<T>(items: T[], seed: string): T[] {
 }
 
 /**
+ * The order a multiple-choice item's options are shown in, for a seed:
+ * `displayed[i] = options[order[i]]`.
+ *
+ * Authored order leaked the answer: every seeded item had it first, and a
+ * learner who noticed stopped recalling and started tapping the top option.
+ * The seed is `${sessionId}:${exerciseId}`, so the order differs between
+ * sessions and between items but is the same every time one session asks for
+ * it — a resumed lesson shows what it showed before, and grading
+ * (`checkAnswer`, same seed) maps the tapped position back to the option.
+ */
+export function optionOrder(count: number, seed: string): number[] {
+  return seededShuffle(
+    Array.from({ length: count }, (_, i) => i),
+    seed,
+  );
+}
+
+/**
  * Strips the correct answer from a stored exercise before it goes to the
  * client (KUR-028). The client never receives correctIndex / accepted /
- * the pairing; match-pairs sides are shuffled independently per session.
+ * the pairing; multiple-choice options and match-pairs sides are shuffled
+ * per session with `seed` (`${sessionId}:${exerciseId}`).
  */
 export function sanitizeExercise(
   type: ExerciseType,
@@ -171,10 +208,10 @@ export function sanitizeExercise(
 
   switch (type) {
     case 'multiple_choice': {
-      // options stay in authored order — the answer is submitted as an
-      // index into this array, so it must match the stored order
+      // the answer comes back as an index into THIS order; grading maps it
+      // back with the same seed
       const p = parsed.data as MultipleChoicePayload;
-      return { prompt: p.prompt, options: p.options };
+      return { prompt: p.prompt, options: optionOrder(p.options.length, seed).map((i) => p.options[i]!) };
     }
     case 'translate': {
       const p = parsed.data as TranslatePayload;
@@ -217,14 +254,19 @@ export type Verdict = 'correct' | 'typo' | 'wrong';
 
 export interface CheckResult {
   verdict: Verdict;
-  /** true for correct AND typo (a typo still counts as right, with a nudge). */
+  /**
+   * true for correct, and for a typo unless the item is strict (a typo then
+   * still counts as right, with a nudge). Never true for wrong.
+   */
   accepted: boolean;
   /** Canonical correct answer to show on reveal. */
   correction?: string;
 }
 
-function checkMultipleChoice(payload: MultipleChoicePayload, choice: number): CheckResult {
-  const correct = choice === payload.correctIndex;
+/** `choice` is a position in the order the learner saw (`optionOrder(…, seed)`). */
+function checkMultipleChoice(payload: MultipleChoicePayload, choice: number, seed: string): CheckResult {
+  const picked = optionOrder(payload.options.length, seed)[choice];
+  const correct = picked === payload.correctIndex;
   return {
     verdict: correct ? 'correct' : 'wrong',
     accepted: correct,
@@ -233,58 +275,73 @@ function checkMultipleChoice(payload: MultipleChoicePayload, choice: number): Ch
 }
 
 /**
- * Diacritic-tolerant translation check. Exact (normalised) match against
- * any accepted answer → correct. A match only after folding Kurdish
- * diacritics (ê→e, ş→s, …) → accepted, but flagged as a 'typo' so the UI
- * can nudge ("almost — watch the ê"). Otherwise wrong.
+ * Diacritic-tolerant translation check. Answers are compared by `answerKey`,
+ * so case, spacing, invisible formatting and the keyboard a Soranî answer was
+ * typed on do not matter. An exact match against any accepted answer →
+ * correct. A match only after folding Kurdish diacritics (ê→e, ş→s, …) is a
+ * 'typo': accepted with a nudge ("almost — watch the ê"), unless the item is
+ * strict, where the letter is the point and the slip is not accepted.
+ * Otherwise wrong.
  */
-function gradeText(acceptedAnswers: string[], text: string): CheckResult {
-  const answer = normalizeKurdish(text).toLowerCase();
-  const accepted = acceptedAnswers.map((a) => normalizeKurdish(a).toLowerCase());
+function gradeText(acceptedAnswers: string[], text: string, strict = false): CheckResult {
+  const answer = answerKey(text);
+  const accepted = acceptedAnswers.map(answerKey);
   if (accepted.includes(answer)) {
     return { verdict: 'correct', accepted: true };
   }
   const foldedAnswer = foldDiacritics(answer);
   const foldedAccepted = accepted.map((a) => foldDiacritics(a));
   if (answer.length > 0 && foldedAccepted.includes(foldedAnswer)) {
-    return { verdict: 'typo', accepted: true, correction: acceptedAnswers[0] };
+    return { verdict: 'typo', accepted: !strict, correction: acceptedAnswers[0] };
   }
   return { verdict: 'wrong', accepted: false, correction: acceptedAnswers[0] };
 }
 
 function checkTranslate(payload: TranslatePayload, text: string): CheckResult {
-  return gradeText(payload.accepted, text);
+  return gradeText(payload.accepted, text, payload.strict);
 }
 
 /** Listening is graded on the transcription, same rules as translate. */
 function checkListening(payload: ListeningPayload, text: string): CheckResult {
-  return gradeText(payload.accepted, text);
+  return gradeText(payload.accepted, text, payload.strict);
 }
 
 /**
- * Speaking is graded by the pronunciation scorer (KUR-036), which is a stub
- * that accepts any recording in v1 (real model: KUR-120). An empty audioKey
- * is still wrong so a skipped/failed upload isn't silently a pass.
+ * Speaking is graded by the pronunciation scorer (KUR-036): today the
+ * learner's own judgement after hearing their recording beside the native
+ * model (see speaking-scorer.ts). An empty audioKey is still wrong so a
+ * skipped/failed upload isn't silently a pass.
  */
-function checkSpeaking(payload: SpeakingPayload, audioKey: string): CheckResult {
-  if (!audioKey) return { verdict: 'wrong', accepted: false };
-  const score = defaultScorer.score({ reference: payload.reference, audioKey });
-  return { verdict: score.pass ? 'correct' : 'wrong', accepted: score.pass };
+function checkSpeaking(payload: SpeakingPayload, answer: SpeakingAnswer): CheckResult {
+  if (!answer.audioKey) return { verdict: 'wrong', accepted: false };
+  const score = defaultScorer.score({
+    reference: payload.reference,
+    audioKey: answer.audioKey,
+    selfRating: answer.selfRating,
+  });
+  return {
+    verdict: score.verdict,
+    accepted: score.accepted,
+    correction: score.verdict === 'correct' ? undefined : payload.reference,
+  };
 }
 
-/** Normalize free text for comparison: NFC, lowercase, strip punctuation, collapse spaces. */
+/**
+ * Normalize free text for comparison: `answerKey` (NFC, lowercase, keyboard
+ * variants), then punctuation stripped (Latin and Arabic-script) and spaces
+ * collapsed.
+ */
 function normalizeForWriting(text: string): string {
-  return normalizeKurdish(text)
-    .toLowerCase()
-    .replace(/[.,!?;:"'“”‘’()¡¿…—–\-]/g, ' ')
+  return answerKey(text)
+    .replace(/[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 /**
  * Free-text writing (KUR-037): punctuation/case-insensitive, diacritic-
- * tolerant. Copying the prompt back earns no credit (verdict 'wrong'),
- * checked before the accepted answers so it can't sneak a match.
+ * tolerant unless strict. Copying the prompt back earns no credit (verdict
+ * 'wrong'), checked before the accepted answers so it can't sneak a match.
  */
 function checkWriting(payload: WritingPayload, text: string): CheckResult {
   const answer = normalizeForWriting(text);
@@ -297,30 +354,67 @@ function checkWriting(payload: WritingPayload, text: string): CheckResult {
   if (accepted.includes(answer)) return { verdict: 'correct', accepted: true };
   const foldedAccepted = accepted.map((a) => foldDiacritics(a));
   if (foldedAccepted.includes(foldDiacritics(answer))) {
-    return { verdict: 'typo', accepted: true, correction: payload.accepted[0] };
+    return { verdict: 'typo', accepted: !payload.strict, correction: payload.accepted[0] };
   }
   return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
 }
 
+/**
+ * Which of a match-pairs item's texts (one side of it) a submitted text is:
+ * the one it is exactly, else the only one it is under `answerKey`. Null when
+ * it is none of them, or could be more than one.
+ *
+ * Clients send back the cards they were shown, so the exact text normally
+ * decides. `answerKey` is the fallback for a client that re-typed or re-encoded
+ * one (an Arabic kaf for a Kurdish one); it is only trusted when it points at a
+ * single card, because two cards can share a key — "A" and "a" in an alphabet
+ * lesson, or two words that differ only in a final ھ and ە — and a lookup keyed
+ * on it alone let one of those cards overwrite the other, grading a right
+ * matching wrong.
+ */
+function resolveCard(sent: string, cards: string[]): string | null {
+  const exact = normalizeKurdish(sent);
+  if (cards.includes(exact)) return exact;
+  const key = answerKey(sent);
+  const candidates = new Set(cards.filter((card) => answerKey(card) === key));
+  return candidates.size === 1 ? [...candidates][0]! : null;
+}
+
+/**
+ * Right only when every pair the learner made is one of the item's pairs, each
+ * used once, and all of them are made.
+ */
 function checkMatchPairs(
   payload: MatchPairsPayload,
   matches: Array<{ left: string; right: string }>,
 ): CheckResult {
-  const truth = new Map(
-    payload.pairs.map((p) => [normalizeKurdish(p.left), normalizeKurdish(p.right)]),
-  );
+  const pairs = payload.pairs.map((p) => ({ left: normalizeKurdish(p.left), right: normalizeKurdish(p.right) }));
+  const lefts = pairs.map((p) => p.left);
+  const rights = pairs.map((p) => p.right);
+  const unmade = [...pairs];
   const allRight =
-    matches.length === payload.pairs.length &&
-    matches.every((m) => truth.get(normalizeKurdish(m.left)) === normalizeKurdish(m.right));
+    matches.length === pairs.length &&
+    matches.every((m) => {
+      const left = resolveCard(m.left, lefts);
+      const right = resolveCard(m.right, rights);
+      const i = unmade.findIndex((p) => p.left === left && p.right === right);
+      if (left === null || right === null || i < 0) return false;
+      unmade.splice(i, 1);
+      return true;
+    });
   return { verdict: allRight ? 'correct' : 'wrong', accepted: allRight };
 }
+
+type SpeakingAnswer = z.infer<(typeof answerSchemas)['speaking']>;
 
 /**
  * Grades one answer server-side. `payload` and `answer` are the raw
  * stored/submitted JSON; both are validated here so a malformed answer
- * is simply 'wrong', never a crash.
+ * is simply 'wrong', never a crash. `seed` is the one the exercise was
+ * delivered with (`${sessionId}:${exerciseId}`): a multiple-choice answer is a
+ * position in the shuffled order that seed produced.
  */
-export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknown): CheckResult {
+export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknown, seed: string): CheckResult {
   const validPayload = PAYLOAD_SCHEMAS[type].safeParse(payload);
   if (!validPayload.success) throw new Error(`stored payload for ${type} is invalid`);
 
@@ -332,6 +426,7 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
       return checkMultipleChoice(
         validPayload.data as MultipleChoicePayload,
         (parsedAnswer.data as { choice: number }).choice,
+        seed,
       );
     case 'translate':
       return checkTranslate(
@@ -344,10 +439,7 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
         (parsedAnswer.data as { text: string }).text,
       );
     case 'speaking':
-      return checkSpeaking(
-        validPayload.data as SpeakingPayload,
-        (parsedAnswer.data as { audioKey: string }).audioKey,
-      );
+      return checkSpeaking(validPayload.data as SpeakingPayload, parsedAnswer.data as SpeakingAnswer);
     case 'writing':
       return checkWriting(
         validPayload.data as WritingPayload,
@@ -358,5 +450,39 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
         validPayload.data as MatchPairsPayload,
         (parsedAnswer.data as { matches: Array<{ left: string; right: string }> }).matches,
       );
+  }
+}
+
+/**
+ * What a results screen shows for a missed exercise: the question as it was
+ * asked, and the right answer. Read from the stored payload, so it is only
+ * ever sent once the session is over. A match-pairs item has no prompt; its
+ * answer is every pair.
+ */
+export function revealExercise(type: ExerciseType, payload: unknown): { prompt?: string; correction?: string } {
+  const parsed = PAYLOAD_SCHEMAS[type]?.safeParse(payload);
+  if (!parsed || !parsed.success) return {};
+  switch (type) {
+    case 'multiple_choice': {
+      const p = parsed.data as MultipleChoicePayload;
+      return { prompt: p.prompt, correction: p.options[p.correctIndex] };
+    }
+    case 'translate':
+    case 'writing': {
+      const p = parsed.data as TranslatePayload | WritingPayload;
+      return { prompt: p.prompt, correction: p.accepted[0] };
+    }
+    case 'listening': {
+      const p = parsed.data as ListeningPayload;
+      return { prompt: p.prompt, correction: p.accepted[0] };
+    }
+    case 'speaking': {
+      const p = parsed.data as SpeakingPayload;
+      return { prompt: p.prompt, correction: p.reference };
+    }
+    case 'match_pairs': {
+      const p = parsed.data as MatchPairsPayload;
+      return { correction: p.pairs.map((pair) => `${pair.left} = ${pair.right}`).join(', ') };
+    }
   }
 }

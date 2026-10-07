@@ -51,6 +51,45 @@ describe.skipIf(!DATABASE_URL)('review queue (integration)', () => {
     expect(new Date(item.dueAt).getTime()).toBeGreaterThan(Date.now());
   });
 
+  /** Honest spacing: only a spaced review moves the schedule. */
+  it('a right answer before an item is due leaves its schedule exactly as it was', async () => {
+    const t0 = new Date('2026-09-01T08:00:00Z');
+    const hour = 3_600_000;
+    const first = await reviews.record(userId, 'spaced-1', 5, t0);
+    expect(first).toMatchObject({ repetitions: 1, intervalDays: 1 });
+    // a replay an hour later: nothing changes
+    expect(await reviews.record(userId, 'spaced-1', 5, new Date(t0.getTime() + hour))).toEqual(first);
+    // a day later it is due, and counts
+    const due = await reviews.record(userId, 'spaced-1', 5, new Date(t0.getTime() + 24 * hour));
+    expect(due).toMatchObject({ repetitions: 2, intervalDays: 6 });
+  });
+
+  it('a replay twelve hours later on the same day leaves the schedule alone; the learner’s next day counts', async () => {
+    const t0 = new Date('2026-09-02T08:00:00Z');
+    const hour = 3_600_000;
+    const first = await reviews.record(userId, 'spaced-3', 5, t0);
+    // half of the one-day interval has passed, but it is still the 2nd (UTC)
+    expect(await reviews.record(userId, 'spaced-3', 5, new Date(t0.getTime() + 12 * hour))).toEqual(first);
+
+    // in Tokyo the same two instants are 17:00 on the 2nd and 05:00 on the 3rd
+    await pool.query(`UPDATE users SET timezone = 'Asia/Tokyo' WHERE id = $1`, [userId]);
+    try {
+      const t1 = new Date('2026-09-04T08:00:00Z');
+      await reviews.record(userId, 'spaced-4', 5, t1);
+      const next = await reviews.record(userId, 'spaced-4', 5, new Date(t1.getTime() + 12 * hour));
+      expect(next).toMatchObject({ repetitions: 2, intervalDays: 6 });
+    } finally {
+      await pool.query(`UPDATE users SET timezone = 'UTC' WHERE id = $1`, [userId]);
+    }
+  });
+
+  it('a wrong answer is recorded as a lapse even when the item is not due', async () => {
+    const t0 = new Date('2026-09-01T08:00:00Z');
+    await reviews.record(userId, 'spaced-2', 5, t0);
+    const lapsed = await reviews.record(userId, 'spaced-2', 2, new Date(t0.getTime() + 60_000));
+    expect(lapsed).toMatchObject({ repetitions: 0, intervalDays: 1 });
+  });
+
   it('a freshly-scheduled item is not in the due queue yet', async () => {
     const q = await reviews.queue(userId);
     expect(q.items.find((i) => i.itemId === 'word-1')).toBeUndefined();

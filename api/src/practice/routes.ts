@@ -3,14 +3,15 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { PracticeService } from './service.js';
 import type { XpService } from '../xp/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 
 const answerBody = z.object({
   exerciseId: z.uuid(),
   answer: z.unknown(),
 });
 
-export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService): void {
-  const practice = new PracticeService(app.db, { xp });
+export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, milestones?: MilestoneRecorder): void {
+  const practice = new PracticeService(app.db, { xp, milestones });
 
   /** One-tap: generate a review session (or an empty-state suggestion). */
   app.post(
