@@ -380,9 +380,16 @@ function resolveCard(sent: string, cards: string[]): string | null {
   return candidates.size === 1 ? [...candidates][0]! : null;
 }
 
+/** Every pair of a match-pairs item, as feedback and results show the right answer. */
+function pairsText(payload: MatchPairsPayload): string {
+  return payload.pairs.map((pair) => `${pair.left} = ${pair.right}`).join(', ');
+}
+
 /**
  * Right only when every pair the learner made is one of the item's pairs, each
- * used once, and all of them are made.
+ * used once, and all of them are made. A wrong matching comes back with every
+ * right pair, as a wrong typed answer comes back with the right text: "not
+ * yet" alone tells the learner something is wrong and not what is right.
  */
 function checkMatchPairs(
   payload: MatchPairsPayload,
@@ -402,7 +409,7 @@ function checkMatchPairs(
       unmade.splice(i, 1);
       return true;
     });
-  return { verdict: allRight ? 'correct' : 'wrong', accepted: allRight };
+  return allRight ? { verdict: 'correct', accepted: true } : { verdict: 'wrong', accepted: false, correction: pairsText(payload) };
 }
 
 type SpeakingAnswer = z.infer<(typeof answerSchemas)['speaking']>;
@@ -482,7 +489,7 @@ export function revealExercise(type: ExerciseType, payload: unknown): { prompt?:
     }
     case 'match_pairs': {
       const p = parsed.data as MatchPairsPayload;
-      return { correction: p.pairs.map((pair) => `${pair.left} = ${pair.right}`).join(', ') };
+      return { correction: pairsText(p) };
     }
   }
 }

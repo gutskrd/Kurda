@@ -201,6 +201,17 @@ describe('checkAnswer — match_pairs', () => {
     expect(res.accepted).toBe(false);
   });
 
+  it('answers a wrong matching with every right pair', () => {
+    const res = grade('match_pairs', payload, {
+      matches: [
+        { left: 'sêv', right: 'water' },
+        { left: 'av', right: 'apple' },
+        { left: 'nan', right: 'bread' },
+      ],
+    });
+    expect(res).toEqual({ verdict: 'wrong', accepted: false, correction: 'sêv = apple, av = water, nan = bread' });
+  });
+
   it('rejects incomplete matches', () => {
     const res = grade('match_pairs', payload, {
       matches: [{ left: 'sêv', right: 'apple' }],
