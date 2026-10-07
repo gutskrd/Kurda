@@ -18,6 +18,10 @@
  * Both totals are rebuilt from the sessions already finished, each counted on
  * the calendar day it was finished in the learner's timezone. A timezone the
  * database does not know falls back to UTC rather than failing the deploy.
+ * Only sessions that were learning count, by the rule the app uses from now
+ * on (streaks/streak-logic.ts `countsAsLearning`): at least half of the items,
+ * and never fewer than one, answered. A session finished with nothing in it
+ * adds no day here either.
  */
 
 export const up = (pgm) => {
@@ -34,9 +38,15 @@ export const up = (pgm) => {
 
   pgm.sql(`
     WITH finished AS (
-      SELECT user_id, completed_at FROM lesson_sessions WHERE completed_at IS NOT NULL
+      SELECT s.user_id, s.completed_at FROM lesson_sessions s
+       WHERE s.completed_at IS NOT NULL
+         AND (SELECT count(*) FROM session_answers a WHERE a.session_id = s.id)
+             >= GREATEST(1, ceil(s.total_count / 2.0))
       UNION ALL
-      SELECT user_id, completed_at FROM practice_sessions WHERE completed_at IS NOT NULL
+      SELECT p.user_id, p.completed_at FROM practice_sessions p
+       WHERE p.completed_at IS NOT NULL
+         AND (SELECT count(*) FROM practice_answers a WHERE a.session_id = p.id)
+             >= GREATEST(1, ceil(p.total_count / 2.0))
     ),
     learned AS (
       SELECT f.user_id,
