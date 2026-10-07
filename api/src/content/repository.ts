@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { validateExercisePayload } from './exercises.js';
+import { silentListening, type SilentListening } from '../lessonaudio/publish-guard.js';
 
 export type ExerciseType =
   | 'multiple_choice'
@@ -134,6 +135,16 @@ export class ContentRepository {
       [lessonId, position, type, JSON.stringify(validated)],
     );
     return (result.rows[0] as { id: string }).id;
+  }
+
+  /**
+   * The listening items among `exercises` that would have nothing to play
+   * once published (lessonaudio/publish-guard.ts). `publishLesson` does not
+   * check: whoever publishes authored content asks this first, as the import
+   * and the admin's approve do.
+   */
+  silentListening(exercises: ReadonlyArray<{ type: string; payload: unknown }>): Promise<SilentListening[]> {
+    return silentListening(this.pool, exercises);
   }
 
   async publishLesson(lessonId: string): Promise<void> {

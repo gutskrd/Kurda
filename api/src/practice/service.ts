@@ -8,6 +8,7 @@ import { DailyGoalService } from '../goals/service.js';
 import { ReviewService } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
+import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
 export const PRACTICE_XP_FACTOR = 0.5;
@@ -26,6 +27,10 @@ export interface PracticeExercise {
   options?: string[];
   lefts?: string[];
   rights?: string[];
+  /** native recordings from the audio studio, where there are any */
+  audioUrl?: string;
+  modelAudioUrl?: string;
+  audio?: Record<string, string>;
 }
 
 export interface PracticeSession {
@@ -43,6 +48,8 @@ export interface PracticeAnswerResult {
   verdict: Verdict;
   accepted: boolean;
   correction?: string;
+  /** the native recording of the item's Kurdish, now that it is answered (as AnswerResult) */
+  modelAudioUrl?: string;
   duplicate: boolean;
 }
 
@@ -106,13 +113,15 @@ export class PracticeService {
       [userId, exercises.map((e) => e.id), exercises.length],
     );
     const sessionId = created.rows[0]!.id;
+    const audio = await lessonAudioFor(this.pool, exercises);
 
     return {
       sessionId,
-      exercises: exercises.map((ex) => ({
+      exercises: exercises.map((ex, i) => ({
         id: ex.id,
         type: ex.type,
         ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
+        ...audio[i],
       })),
     };
   }
@@ -181,6 +190,8 @@ export class PracticeService {
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
     const result = checkAnswer(ex.type, ex.payload, answer);
+    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    const heard = modelAudioUrl ? { modelAudioUrl } : {};
 
     const client = await this.pool.connect();
     try {
@@ -197,7 +208,7 @@ export class PracticeService {
         );
         await client.query('COMMIT');
         const row = existing.rows[0]!;
-        return { verdict: row.verdict, accepted: row.accepted, correction: result.correction, duplicate: true };
+        return { verdict: row.verdict, accepted: row.accepted, correction: result.correction, ...heard, duplicate: true };
       }
       if (result.accepted) {
         await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [sessionId]);
@@ -212,7 +223,7 @@ export class PracticeService {
       client.release();
     }
 
-    return { verdict: result.verdict, accepted: result.accepted, correction: result.correction, duplicate: false };
+    return { verdict: result.verdict, accepted: result.accepted, correction: result.correction, ...heard, duplicate: false };
   }
 
   /** Finalize: award reduced XP once, credit streak + daily goal. Idempotent. */

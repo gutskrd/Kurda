@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { validateExercisePayload, InvalidExercisePayloadError } from './exercises.js';
 import { ContentRepository, type ExerciseType } from './repository.js';
 import type { ContentStatus } from './workflow.js';
+import { silentListening, type SilentListening } from '../lessonaudio/publish-guard.js';
 
 export interface ExerciseInput {
   position: number;
@@ -26,7 +27,11 @@ type UpdateResult =
   | { ok: false; code: 'NOT_FOUND' | 'NOT_EDITABLE' | 'CONFLICT' }
   | { ok: false; code: 'INVALID'; issues: Array<{ path: string; message: string }> };
 
-type TransitionResult = { ok: true } | { ok: false; code: 'NOT_FOUND' | 'BAD_STATE' };
+type TransitionResult =
+  | { ok: true }
+  | { ok: false; code: 'NOT_FOUND' | 'BAD_STATE' }
+  /** approving would publish a listening item with nothing to play */
+  | { ok: false; code: 'LISTENING_AUDIO_MISSING'; silent: SilentListening[] };
 
 interface LessonRow {
   id: string;
@@ -154,9 +159,40 @@ export class ContentAdminService {
     return this.transition(lessonId, 'draft', "status = 'in_review'");
   }
 
-  /** in_review → published (records published_at). */
-  approve(lessonId: string): Promise<TransitionResult> {
-    return this.transition(lessonId, 'in_review', "status = 'published', published_at = now()");
+  /**
+   * in_review → published (records published_at) — unless a listening item in
+   * it has no clip of its own and its transcription is not recorded yet: it
+   * would reach learners with nothing to play (lessonaudio/publish-guard.ts).
+   * The lesson row and the recordings it relies on stay locked until the
+   * commit, so neither can change between the check and the publish.
+   */
+  async approve(lessonId: string): Promise<TransitionResult> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const cur = await client.query<{ status: ContentStatus }>(`SELECT status FROM lessons WHERE id = $1 FOR UPDATE`, [lessonId]);
+      if (cur.rowCount === 0 || cur.rows[0]!.status !== 'in_review') {
+        await client.query('ROLLBACK');
+        return { ok: false, code: cur.rowCount === 0 ? 'NOT_FOUND' : 'BAD_STATE' };
+      }
+      const exercises = await client.query<{ type: ExerciseType; payload: unknown }>(
+        `SELECT type, payload FROM exercises WHERE lesson_id = $1 ORDER BY position`,
+        [lessonId],
+      );
+      const silent = await silentListening(client, exercises.rows, { lock: true });
+      if (silent.length > 0) {
+        await client.query('ROLLBACK');
+        return { ok: false, code: 'LISTENING_AUDIO_MISSING', silent };
+      }
+      await client.query(`UPDATE lessons SET status = 'published', published_at = now() WHERE id = $1`, [lessonId]);
+      await client.query('COMMIT');
+      return { ok: true };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   /** in_review → draft (send back for changes). */

@@ -45,6 +45,12 @@ describe('the alphabet clip', () => {
     expect(() => shape(take(0.5, 0.05, 0.5))).toThrow(/Too short/);
   });
 
+  it('takes a sentence, when the caller allows one', () => {
+    const out = shape(take(0.3, 9, 0.3), RATE, 15, 'one sentence');
+    expect(out.length / RATE).toBeGreaterThan(9);
+    expect(() => shape(take(0.2, 16, 0.2), RATE, 15, 'one sentence')).toThrow(/Keep it to one sentence — under 15 s/);
+  });
+
   it('writes a WAV the server can read', () => {
     const wav = encodeWav(new Float32Array(RATE));
     const text = (at: number) => String.fromCharCode(...wav.slice(at, at + 4));

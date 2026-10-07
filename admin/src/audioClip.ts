@@ -1,6 +1,7 @@
 /**
- * Turning whatever an editor records or picks into a clip the alphabet page can
- * play: one voice, no dead air, the same loudness as the clip next to it.
+ * Turning whatever an editor records or picks into a clip to play to learners
+ * — a letter on the alphabet page or a sentence in a lesson: one voice, no
+ * dead air, the same loudness as the clip next to it.
  *
  * Every recording goes through the same steps, so a phone memo, a studio WAV
  * and a laptop microphone come out alike:
@@ -50,8 +51,11 @@ export function voicedRange(samples: Float32Array, rate = RATE): [number, number
   return [first * win, Math.min(samples.length, (last + 1) * win)];
 }
 
-/** Trim, level and fade. Throws a ClipError the editor can act on. */
-export function shape(samples: Float32Array, rate = RATE, maxSeconds = 4): Float32Array {
+/**
+ * Trim, level and fade. Throws a ClipError the editor can act on; `what` is
+ * how the error names the thing to say ("one letter or one word").
+ */
+export function shape(samples: Float32Array, rate = RATE, maxSeconds = 4, what = 'one letter or one word'): Float32Array {
   const range = voicedRange(samples, rate);
   if (!range) throw new ClipError('No voice in it — check the microphone is the right one, and speak a little closer.');
   const start = Math.max(0, range[0] - Math.round(LEAD_S * rate));
@@ -59,7 +63,7 @@ export function shape(samples: Float32Array, rate = RATE, maxSeconds = 4): Float
   const out = samples.slice(start, end);
   const seconds = out.length / rate;
   if (seconds > maxSeconds) {
-    throw new ClipError(`That is ${seconds.toFixed(1)} s of sound. Keep it to one letter or one word — under ${maxSeconds} s.`);
+    throw new ClipError(`That is ${seconds.toFixed(1)} s of sound. Keep it to ${what} — under ${maxSeconds} s.`);
   }
   if (range[1] - range[0] < rate * 0.12) throw new ClipError('Too short to hear. Say it once more, clearly.');
 
@@ -106,7 +110,7 @@ export function encodeWav(samples: Float32Array, rate = RATE): Uint8Array {
 }
 
 /** Any audio the browser can decode, as mono samples at RATE. */
-async function decode(data: ArrayBuffer): Promise<Float32Array> {
+async function decode(data: ArrayBuffer, what: string): Promise<Float32Array> {
   const ctx = new AudioContext();
   let decoded: AudioBuffer;
   try {
@@ -118,7 +122,7 @@ async function decode(data: ArrayBuffer): Promise<Float32Array> {
   }
   const frames = Math.ceil(decoded.duration * RATE);
   if (frames === 0) throw new ClipError('That file has no sound in it.');
-  if (decoded.duration > 30) throw new ClipError('That file is long. Cut it down to the one letter or word first.');
+  if (decoded.duration > 30) throw new ClipError(`That file is long. Cut it down to ${what} first.`);
   // an offline render does the mixing to mono and the resampling in one step
   const offline = new OfflineAudioContext(1, frames, RATE);
   const src = offline.createBufferSource();
@@ -136,8 +140,8 @@ export interface Clip {
 }
 
 /** A recording or a file, ready to hear and to upload. */
-export async function prepare(data: ArrayBuffer, maxSeconds: number): Promise<Clip> {
-  const shaped = shape(await decode(data), RATE, maxSeconds);
+export async function prepare(data: ArrayBuffer, maxSeconds: number, what = 'one letter or one word'): Promise<Clip> {
+  const shaped = shape(await decode(data, what), RATE, maxSeconds, what);
   const wav = encodeWav(shaped);
   return { wav, url: URL.createObjectURL(new Blob([wav as BlobPart], { type: 'audio/wav' })), seconds: shaped.length / RATE };
 }

@@ -22,9 +22,9 @@
               "titleKu": "Silav 1",
               "titleEn": "Greetings 1",
               "exercises": [
-                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Hello\" bi kurdî?", "options": ["Silav", "Spas", "Na"], "correctIndex": 0 } },
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Hello\" bi kurdî?", "options": ["Silav", "Spas", "Na"], "correctIndex": 0, "say": "Silav" } },
                 { "position": 2, "type": "translate", "payload": { "prompt": "Thank you", "accepted": ["Spas", "Spas dikim"] } },
-                { "position": 3, "type": "multiple_choice", "payload": { "prompt": "\"Roj baş\" tê çi wateyê?", "options": ["Good day", "Good night", "Goodbye"], "correctIndex": 0 } }
+                { "position": 3, "type": "multiple_choice", "payload": { "prompt": "\"Roj baş\" tê çi wateyê?", "options": ["Good day", "Good night", "Goodbye"], "correctIndex": 0, "say": "Roj baş" } }
               ]
             },
             {
@@ -50,7 +50,7 @@
               "titleEn": "Introductions 1",
               "exercises": [
                 { "position": 1, "type": "translate", "payload": { "prompt": "I am fine", "accepted": ["Ez baş im"] } },
-                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"My name is Dilan\"?", "options": ["Navê min Dilan e", "Navê te Dilan e", "Ez Dilan im na"], "correctIndex": 0 } }
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"My name is Dilan\"?", "options": ["Navê min Dilan e", "Navê te Dilan e", "Ez Dilan im na"], "correctIndex": 0, "say": "Navê min Dilan e" } }
               ]
             },
             {
@@ -75,7 +75,7 @@
               "titleKu": "Jimar 1",
               "titleEn": "Numbers 1",
               "exercises": [
-                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Sê\" çend e?", "options": ["3", "2", "5"], "correctIndex": 0 } },
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Sê\" çend e?", "options": ["3", "2", "5"], "correctIndex": 0, "say": "Sê" } },
                 { "position": 2, "type": "match_pairs", "payload": { "pairs": [ { "left": "yek", "right": "1" }, { "left": "du", "right": "2" }, { "left": "pênc", "right": "5" } ] } }
               ]
             },
@@ -85,7 +85,7 @@
               "titleEn": "Numbers 2",
               "exercises": [
                 { "position": 1, "type": "translate", "payload": { "prompt": "ten", "accepted": ["deh"] } },
-                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"Heft\" çend e?", "options": ["7", "8", "9"], "correctIndex": 0 } }
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"Heft\" çend e?", "options": ["7", "8", "9"], "correctIndex": 0, "say": "Heft" } }
               ]
             }
           ]
@@ -117,7 +117,7 @@
               "titleKu": "Malbat 2",
               "titleEn": "Family 2",
               "exercises": [
-                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"keç\" tê çi wateyê?", "options": ["girl/daughter", "boy/son", "mother"], "correctIndex": 0 } },
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"keç\" tê çi wateyê?", "options": ["girl/daughter", "boy/son", "mother"], "correctIndex": 0, "say": "keç" } },
                 { "position": 2, "type": "writing", "payload": { "prompt": "Write: \"My father\" (min = my, comes after)", "accepted": ["bavê min"] } }
               ]
             }
@@ -135,7 +135,7 @@
               "titleEn": "Food 1",
               "exercises": [
                 { "position": 1, "type": "translate", "payload": { "prompt": "apple", "accepted": ["sêv"] } },
-                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"nan\" tê çi wateyê?", "options": ["bread", "water", "meat"], "correctIndex": 0 } }
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"nan\" tê çi wateyê?", "options": ["bread", "water", "meat"], "correctIndex": 0, "say": "nan" } }
               ]
             },
             {
@@ -160,7 +160,7 @@
               "titleEn": "Drinks 1",
               "exercises": [
                 { "position": 1, "type": "translate", "payload": { "prompt": "water", "accepted": ["av"] } },
-                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"çay\" tê çi wateyê?", "options": ["tea", "milk", "coffee"], "correctIndex": 0 } }
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "\"çay\" tê çi wateyê?", "options": ["tea", "milk", "coffee"], "correctIndex": 0, "say": "çay" } }
               ]
             }
           ]
@@ -192,7 +192,7 @@
               "titleKu": "Reng 2",
               "titleEn": "Colors 2",
               "exercises": [
-                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"spî\" tê çi wateyê?", "options": ["white", "yellow", "red"], "correctIndex": 0 } },
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"spî\" tê çi wateyê?", "options": ["white", "yellow", "red"], "correctIndex": 0, "say": "spî" } },
                 { "position": 2, "type": "writing", "payload": { "prompt": "Write: \"the apple is red\" (sêv ... e)", "accepted": ["sêv sor e"] } }
               ]
             }
@@ -218,7 +218,7 @@
               "titleKu": "Dem 2",
               "titleEn": "Time 2",
               "exercises": [
-                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"şev\" tê çi wateyê?", "options": ["night", "day", "morning"], "correctIndex": 0 } },
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"şev\" tê çi wateyê?", "options": ["night", "day", "morning"], "correctIndex": 0, "say": "şev" } },
                 { "position": 2, "type": "translate", "payload": { "prompt": "day", "accepted": ["roj"] } }
               ]
             }

@@ -162,9 +162,13 @@ describe('listening (KUR-035)', () => {
     accepted: ['sêv'],
   };
 
-  it('validates a well-formed payload and rejects a missing audioUrl', () => {
+  // the audioUrl became optional: a studio recording of the first accepted
+  // transcription is played when the payload has no clip of its own
+  it('validates a well-formed payload, with or without its own audioUrl, and rejects a missing transcription', () => {
     expect(() => validateExercisePayload('listening', payload)).not.toThrow();
-    expect(() => validateExercisePayload('listening', { accepted: ['sêv'] })).toThrow();
+    expect(() => validateExercisePayload('listening', { accepted: ['sêv'] })).not.toThrow();
+    expect(() => validateExercisePayload('listening', { audioUrl: payload.audioUrl })).toThrow();
+    expect(() => validateExercisePayload('listening', { audioUrl: '', accepted: ['sêv'] })).toThrow();
   });
 
   it('sanitization exposes the audio + prompt but never the transcription', () => {
@@ -245,5 +249,36 @@ describe('writing (KUR-037)', () => {
 
   it('marks a genuinely wrong answer wrong', () => {
     expect(checkAnswer('writing', payload, { text: 'Ez nizanim' })).toMatchObject({ accepted: false });
+  });
+});
+
+describe('say — the Kurdish to hear', () => {
+  const payloads = {
+    multiple_choice: { prompt: '"Hello" bi kurdî?', options: ['Silav', 'Spas', 'Na'], correctIndex: 0 },
+    translate: { prompt: 'Thank you', accepted: ['Spas'] },
+    match_pairs: { pairs: [{ left: 'av', right: 'water' }, { left: 'nan', right: 'bread' }] },
+    listening: { accepted: ['sêv'] },
+    speaking: { prompt: 'Say: hello', reference: 'Silav' },
+    writing: { prompt: 'Write: I am fine', accepted: ['Ez baş im'] },
+  } as const;
+
+  it('is optional on every type, and bounded', () => {
+    for (const [type, payload] of Object.entries(payloads)) {
+      expect(() => validateExercisePayload(type as never, payload)).not.toThrow();
+      expect(() => validateExercisePayload(type as never, { ...payload, say: 'Silav' })).not.toThrow();
+      expect(() => validateExercisePayload(type as never, { ...payload, say: '' })).toThrow(InvalidExercisePayloadError);
+      expect(() => validateExercisePayload(type as never, { ...payload, say: 'a'.repeat(301) })).toThrow(InvalidExercisePayloadError);
+    }
+  });
+
+  it('is kept when a payload is validated, so it is stored', () => {
+    expect(validateExercisePayload('multiple_choice', { ...payloads.multiple_choice, say: 'Silav' })).toMatchObject({ say: 'Silav' });
+  });
+
+  it('never reaches the learner with the exercise: on multiple choice it can be the answer', () => {
+    for (const [type, payload] of Object.entries(payloads)) {
+      const safe = sanitizeExercise(type as never, { ...payload, say: 'Silav-say' }, 'seed');
+      expect(JSON.stringify(safe)).not.toContain('Silav-say');
+    }
   });
 });

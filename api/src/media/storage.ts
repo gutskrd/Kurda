@@ -14,7 +14,8 @@ export const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   'audio/mp4': 'm4a',
   // what a browser's MediaRecorder produces on Chrome and Firefox
   'audio/webm': 'webm',
-  // the alphabet recordings: trimmed and levelled in the admin panel, a few seconds each
+  // the audio studio's recordings of letters and lesson sentences: trimmed and
+  // levelled in the admin panel, a few seconds each
   'audio/wav': 'wav',
   'image/png': 'png',
   'image/jpeg': 'jpg',

@@ -7,6 +7,7 @@ import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
+import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -43,6 +44,10 @@ export interface SessionView {
     options?: string[];
     lefts?: string[];
     rights?: string[];
+    /** native recordings from the audio studio, where there are any */
+    audioUrl?: string;
+    modelAudioUrl?: string;
+    audio?: Record<string, string>;
   }>;
   /** exercises already answered in this session (resume) */
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
@@ -54,6 +59,12 @@ export interface AnswerResult {
   verdict: Verdict;
   accepted: boolean;
   correction?: string;
+  /**
+   * The native recording of the item's Kurdish, to hear now that it is
+   * answered — also on items that could not send it beforehand because it
+   * would have said the answer (lessonaudio/delivery.ts).
+   */
+  modelAudioUrl?: string;
   /** true when this exercise was already answered (idempotent replay). */
   duplicate: boolean;
 }
@@ -117,17 +128,19 @@ export class LessonSessionService {
     ]);
     const answered: SessionView['answered'] = {};
     for (const a of answers.rows) answered[a.exercise_id] = { verdict: a.verdict, accepted: a.accepted };
+    const audio = await lessonAudioFor(this.pool, exercises);
 
     return {
       sessionId: session.id,
       lessonId: session.lesson_id,
       expiresAt: new Date(session.expires_at).toISOString(),
       completed: session.completed_at !== null,
-      exercises: exercises.map((ex) => ({
+      exercises: exercises.map((ex, i) => ({
         id: ex.id,
         position: ex.position,
         type: ex.type,
         ...sanitizeExercise(ex.type, ex.payload, `${session.id}:${ex.id}`),
+        ...audio[i],
       })),
       answered,
       grammarMd: grammar.rows[0]?.grammar_md ?? null,
@@ -203,6 +216,8 @@ export class LessonSessionService {
     if (!ex) throw new AppError('EXERCISE_NOT_IN_LESSON', 404, 'exercise is not in this lesson');
 
     const result = checkAnswer(ex.type, ex.payload, answer);
+    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    const heard = modelAudioUrl ? { modelAudioUrl } : {};
 
     // idempotent per (session, exercise): first answer wins
     const client = await this.pool.connect();
@@ -225,6 +240,7 @@ export class LessonSessionService {
           verdict: row.verdict,
           accepted: row.accepted,
           correction: result.correction,
+          ...heard,
           duplicate: true,
         };
       }
@@ -249,6 +265,7 @@ export class LessonSessionService {
       verdict: result.verdict,
       accepted: result.accepted,
       correction: result.correction,
+      ...heard,
       duplicate: false,
     };
   }

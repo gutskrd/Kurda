@@ -13,8 +13,17 @@ import { defaultScorer } from './speaking-scorer.js';
 
 // ---------- payload schemas (authoring-time) ----------
 
+/**
+ * The Kurdish a learner should hear for this item, where it cannot be read off
+ * the payload — a multiple-choice item's Kurdish may be in its prompt or among
+ * its options. Every type takes it; the audio studio asks for a recording of it
+ * (`lessonAudioTargets` in @kurda/shared).
+ */
+const say = z.string().min(1).max(300).optional();
+
 export const multipleChoicePayloadSchema = z
   .object({
+    say,
     prompt: z.string().min(1).max(500),
     options: z.array(z.string().min(1).max(200)).min(2).max(6),
     correctIndex: z.number().int().min(0),
@@ -25,12 +34,14 @@ export const multipleChoicePayloadSchema = z
   });
 
 export const translatePayloadSchema = z.object({
+  say,
   prompt: z.string().min(1).max(500),
   /** All accepted answers; the first is the canonical/shown correction. */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
 });
 
 export const matchPairsPayloadSchema = z.object({
+  say,
   pairs: z
     .array(z.object({ left: z.string().min(1).max(120), right: z.string().min(1).max(120) }))
     .min(2)
@@ -38,8 +49,12 @@ export const matchPairsPayloadSchema = z.object({
 });
 
 export const listeningPayloadSchema = z.object({
-  /** CDN URL of the audio clip to play (KUR-013). */
-  audioUrl: z.string().min(1).max(2000),
+  say,
+  /**
+   * CDN URL of the audio clip to play (KUR-013). Optional: a studio recording
+   * of the first accepted transcription is played in its place when there is one.
+   */
+  audioUrl: z.string().min(1).max(2000).optional(),
   /** optional on-screen hint shown alongside the audio */
   prompt: z.string().max(500).optional(),
   /** accepted transcriptions; graded diacritic-tolerantly like translate */
@@ -47,6 +62,7 @@ export const listeningPayloadSchema = z.object({
 });
 
 export const speakingPayloadSchema = z.object({
+  say,
   /** what the learner is asked to say aloud */
   prompt: z.string().min(1).max(500),
   /** the target phrase, passed to the pronunciation scorer (KUR-120) */
@@ -54,6 +70,7 @@ export const speakingPayloadSchema = z.object({
 });
 
 export const writingPayloadSchema = z.object({
+  say,
   prompt: z.string().min(1).max(500),
   /** accepted full-text answers; punctuation/case-insensitive, diacritic-tolerant */
   accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
