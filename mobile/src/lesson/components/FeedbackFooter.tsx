@@ -4,7 +4,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
 import { useI18n } from '../../i18n/I18nContext';
-import type { Feedback } from '../player';
+import { feedbackTitle, type Feedback } from '../player';
 
 interface Props {
   /** null while the learner is still answering */
@@ -49,7 +49,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
   }
 
   const good = feedback.accepted;
-  const title = feedback.verdict === 'typo' ? t('lesson.almostTypo') : good ? t('lesson.correct') : t('lesson.notQuite');
+  const title = t(feedbackTitle(feedback));
   const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
   return (
