@@ -154,7 +154,7 @@ async function applyMinorDefaults(
       WHERE id = $1 AND profile_visibility IN ('everyone', 'members')`,
     [userId],
   );
-  await executor.query(`UPDATE notification_prefs SET streak = false, updated_at = now() WHERE user_id = $1`, [
+  await executor.query(`UPDATE notification_prefs SET streak = NULL, updated_at = now() WHERE user_id = $1`, [
     userId,
   ]);
   await executor.query(
