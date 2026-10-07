@@ -1,6 +1,7 @@
 /**
  * Lesson results and rewards that should follow learning, not replays, against
- * real Postgres: first completion, revealed mistakes, perfect-lesson Gems,
+ * real Postgres: first completion (of a lesson, whichever version), revealed
+ * mistakes, perfect-lesson Gems at most once per learner and lesson,
  * first-perfect, honest spacing on a replay, and speaking kept out of review.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -10,6 +11,9 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { activate } from '../test/activate.js';
+import { GemService } from '../gems/service.js';
+import { WalletService } from '../wallet/service.js';
+import { lessonCompletionXp } from '../xp/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -215,6 +219,72 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     const again = await authed(learner, 'POST', `/sessions/${first.rows[0]!.id}/complete`);
     expect(again.json()).toMatchObject({ firstCompletion: true, xpAwarded: 0 });
     expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
+  });
+
+  let legacy: Player;
+
+  /**
+   * Perfect-lesson Gems used to be paid per session, under the session id.
+   * Asking again for the results of a session paid that way must not pay the
+   * learner a second time under the key they are paid under now.
+   */
+  it('re-completing a session paid under the old per-session key pays nothing more', async () => {
+    legacy = await register('eng3');
+    const start = await authed(legacy, 'GET', `/lessons/${lessonId}/session`);
+    const sid = start.json().sessionId as string;
+    const options = (start.json().exercises as DeliveredExercise[]).find((e) => e.id === ex.mc)!.options!;
+    for (const a of [
+      { exerciseId: ex.mc, answer: { choice: options.indexOf('Apple') } },
+      { exerciseId: ex.tr, answer: { text: 'sêv' } },
+      { exerciseId: ex.sp, answer: { audioKey: `speaking/${sid}.m4a`, selfRating: 'good' } },
+    ]) {
+      await authed(legacy, 'POST', `/sessions/${sid}/answers`, a);
+    }
+    // completed and paid the way the route used to do it
+    await pool.query(`UPDATE lesson_sessions SET completed_at = now() WHERE id = $1`, [sid]);
+    await new GemService(pool, new WalletService(pool)).grant(legacy.id, 'perfect_lesson', sid);
+    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(5);
+
+    const again = await authed(legacy, 'POST', `/sessions/${sid}/complete`);
+    expect(again.json()).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: 0 });
+    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(5);
+  });
+
+  /**
+   * Importing a corrected lesson makes a new version with a new id at the same
+   * place. To the learner it is the lesson they already finished.
+   */
+  it('a new version of a finished lesson is not a first completion and pays no Gems again', async () => {
+    const unitId = await repo.createUnit(courseId, 2, 'Y2', 'Unit two');
+    const skillId = await repo.createSkill(unitId, 1, 'A', 'Water');
+    const version = async (accepted: string[]) => {
+      const id = await repo.createLessonVersion(skillId, 1, 'Av', 'Water');
+      await repo.addExercise(id, 1, 'translate', { prompt: 'water', accepted });
+      await repo.publishLesson(id);
+      return id;
+    };
+    const finish = async (lesson: string) => {
+      const start = await authed(legacy, 'GET', `/lessons/${lesson}/session`);
+      const sid = start.json().sessionId as string;
+      for (const e of start.json().exercises as DeliveredExercise[]) {
+        await authed(legacy, 'POST', `/sessions/${sid}/answers`, { exerciseId: e.id, answer: { text: 'av' } });
+      }
+      return { sid, results: (await authed(legacy, 'POST', `/sessions/${sid}/complete`)).json() };
+    };
+    const before = await gemsEarned(legacy.id, 'perfect_lesson');
+
+    const v1 = await version(['av']);
+    const first = await finish(v1);
+    expect(first.results).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: lessonCompletionXp(1, false) });
+    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(before + 5);
+
+    const v2 = await version(['av', 'ava']);
+    expect(v2).not.toBe(v1);
+    const second = await finish(v2);
+    expect(second.results).toMatchObject({ accuracy: 1, firstCompletion: false, xpAwarded: lessonCompletionXp(1, true) });
+    expect(await gemsEarned(legacy.id, 'perfect_lesson')).toBe(before + 5);
+    // asked again, the answer is the same
+    expect((await authed(legacy, 'POST', `/sessions/${second.sid}/complete`)).json().firstCompletion).toBe(false);
   });
 
   /**

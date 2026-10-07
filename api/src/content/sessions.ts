@@ -73,10 +73,22 @@ export interface SessionResults {
   /** Streak after this completion counted toward today's goal (KUR-031). */
   streak: StreakSummary;
   /**
-   * True only for the first time this learner completes this lesson. Rewards
-   * that should not be farmable by replaying an easy lesson key on it.
+   * True only for the first time this learner completes this lesson — any
+   * version of it (`LessonSlot`). Rewards that should not be farmable by
+   * replaying an easy lesson key on it.
    */
   firstCompletion: boolean;
+}
+
+/**
+ * Where a lesson sits: its skill and position. Re-importing changed content
+ * makes a new lesson row (a new version, with a new id) at the same place, and
+ * to a learner that is still the lesson they finished, so whether they have
+ * finished it is asked of the place, not of the row.
+ */
+interface LessonSlot {
+  skillId: string;
+  position: number;
 }
 
 /** Grants Gems for a rule/refId; injected so content stays decoupled (KUR-068). */
@@ -90,6 +102,15 @@ export const PERFECT_LESSON_GEM_RULE = 'perfect_lesson';
 /** The seed a lesson exercise is shuffled and graded with. */
 function exerciseSeed(sessionId: string, exerciseId: string): string {
   return `${sessionId}:${exerciseId}`;
+}
+
+/**
+ * The idempotency reference perfect-lesson Gems are paid under: the learner and
+ * the lesson's place, so they are paid at most once per learner per lesson,
+ * whichever version was played and however the completion was reached.
+ */
+function perfectLessonRef(slot: LessonSlot, userId: string): string {
+  return `${slot.skillId}:${slot.position}:${userId}`;
 }
 
 /**
@@ -295,11 +316,17 @@ export class LessonSessionService {
    * awards no further XP.
    *
    * A perfect first completion pays perfect-lesson Gems, keyed on the learner
-   * and the lesson rather than the session: a replay is never a first
-   * completion, so an easy lesson cannot be replayed into the daily Gem cap.
+   * and the lesson's place rather than the session (`perfectLessonRef`): a
+   * replay is never a first completion, so an easy lesson cannot be replayed
+   * into the daily Gem cap, and a corrected version of a lesson is not a new
+   * lesson to be paid for again. Like the XP, they are paid only on the
+   * transition to completed. Sessions completed before this rule were paid
+   * under their session id, so paying on a repeated call would pay a learner
+   * already paid for that completion a second time.
    */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
     const session = await this.loadOwnedSession(sessionId, userId);
+    const slot = await this.slotOf(session.lesson_id);
     const answers = await this.pool.query<{
       exercise_id: string;
       verdict: Verdict;
@@ -311,7 +338,7 @@ export class LessonSessionService {
        FROM session_answers a JOIN exercises e ON e.id = a.exercise_id
        WHERE a.session_id = $1
        ORDER BY e.position ASC`,
-      [sessionId],
+      [session.id],
     );
     const correct = answers.rows.filter((a) => a.accepted).length;
     const mistakes = answers.rows
@@ -337,21 +364,24 @@ export class LessonSessionService {
         const claimed = await client.query(
           `UPDATE lesson_sessions SET completed_at = now()
            WHERE id = $1 AND completed_at IS NULL RETURNING id`,
-          [sessionId],
+          [session.id],
         );
         if ((claimed.rowCount ?? 0) > 0) {
           claimedNow = true;
-          // Repeat = this learner already completed this lesson before.
+          // Repeat = this learner already completed this lesson before, in
+          // this version or any other.
           const prior = await client.query<{ n: string }>(
-            `SELECT count(*)::text n FROM lesson_sessions
-             WHERE user_id = $1 AND lesson_id = $2 AND completed_at IS NOT NULL AND id <> $3`,
-            [userId, session.lesson_id, sessionId],
+            `SELECT count(*)::text n FROM lesson_sessions ls
+             JOIN lessons l ON l.id = ls.lesson_id
+             WHERE ls.user_id = $1 AND l.skill_id = $2 AND l.position = $3
+               AND ls.completed_at IS NOT NULL AND ls.id <> $4`,
+            [userId, slot.skillId, slot.position, session.id],
           );
           const isRepeat = Number(prior.rows[0]!.n) > 0;
           firstCompletion = !isRepeat;
           const amount = lessonCompletionXp(accuracy, isRepeat);
           xpAwarded = await this.xp.award(
-            { userId, source: LESSON_XP_SOURCE, amount, refId: sessionId },
+            { userId, source: LESSON_XP_SOURCE, amount, refId: session.id },
             client,
           );
           // Finishing a lesson meets the daily goal → count today's streak.
@@ -373,15 +403,13 @@ export class LessonSessionService {
     if (streak === null) streak = await this.streaks.get(userId, timeZone);
     // …and whether that earlier completion was the learner's first of this
     // lesson, so asking twice gives the same answer.
-    if (firstCompletion === null) firstCompletion = await this.wasFirstCompletion(sessionId, userId, session.lesson_id);
+    if (firstCompletion === null) firstCompletion = await this.wasFirstCompletion(session.id, userId, slot);
 
-    // Best-effort rewards after the commit: a failure here never fails the
-    // completion, and each is idempotent, so a retried call can only fill in
-    // what a failed one missed.
-    if (this.gems && firstCompletion && accuracy === 1) {
-      await this.gems
-        .grant(userId, PERFECT_LESSON_GEM_RULE, `${session.lesson_id}:${userId}`)
-        .catch(() => undefined);
+    // Best-effort rewards after the commit, for the call that completed the
+    // session only: a failure here never fails the completion, and each is
+    // idempotent besides.
+    if (this.gems && claimedNow && firstCompletion && accuracy === 1) {
+      await this.gems.grant(userId, PERFECT_LESSON_GEM_RULE, perfectLessonRef(slot, userId)).catch(() => undefined);
     }
     if (this.milestones && claimedNow) {
       await this.milestones.recordLessonCompleted(userId, accuracy).catch(() => undefined);
@@ -399,15 +427,30 @@ export class LessonSessionService {
     };
   }
 
-  /** Whether no other session of this lesson by this learner finished before this one. */
-  private async wasFirstCompletion(sessionId: string, userId: string, lessonId: string): Promise<boolean> {
+  /** Where a lesson sits (`LessonSlot`). */
+  private async slotOf(lessonId: string): Promise<LessonSlot> {
+    const res = await this.pool.query<{ skill_id: string; position: number }>(
+      `SELECT skill_id, position FROM lessons WHERE id = $1`,
+      [lessonId],
+    );
+    const row = res.rows[0];
+    if (!row) throw new AppError('LESSON_NOT_FOUND', 404, 'lesson not found');
+    return { skillId: row.skill_id, position: row.position };
+  }
+
+  /**
+   * Whether no other session of this lesson — any version of it — by this
+   * learner finished before this one.
+   */
+  private async wasFirstCompletion(sessionId: string, userId: string, slot: LessonSlot): Promise<boolean> {
     const earlier = await this.pool.query(
       `SELECT 1 FROM lesson_sessions other
-       JOIN lesson_sessions cur ON cur.id = $3
-       WHERE other.user_id = $1 AND other.lesson_id = $2 AND other.id <> $3
+       JOIN lessons l ON l.id = other.lesson_id
+       JOIN lesson_sessions cur ON cur.id = $4
+       WHERE other.user_id = $1 AND l.skill_id = $2 AND l.position = $3 AND other.id <> $4
          AND other.completed_at IS NOT NULL AND other.completed_at < cur.completed_at
        LIMIT 1`,
-      [userId, lessonId, sessionId],
+      [userId, slot.skillId, slot.position, sessionId],
     );
     return (earlier.rowCount ?? 0) === 0;
   }
