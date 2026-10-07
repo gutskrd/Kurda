@@ -1293,7 +1293,7 @@ export const es: Catalogue = {
   'profile.stat.freezes': 'Congeladores de racha',
   'profile.freezeHint': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido. Puedes guardar solo uno a la vez.',
   'settings.leagues.title': 'Ligas semanales',
-  'settings.leagues.help': 'Una liga te clasifica cada semana junto a hasta 30 estudiantes más según los XP que ganas. Es opcional, y tu progreso cuenta igual en ambos casos.',
+  'settings.leagues.help': 'Una liga te clasifica cada semana junto a hasta 29 estudiantes más según los XP que ganas. Es opcional, y tu progreso cuenta igual en ambos casos.',
   'settings.leagues.toggle': 'Participar en las ligas semanales',
   'settings.leagues.minorHint': 'Desactivado salvo que lo actives, porque tienes menos de 18 años.',
   'settings.visibility.minorHint': 'Con menos de 18 años, tu perfil no puede estar abierto a cualquiera en la web.',

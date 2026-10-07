@@ -1293,7 +1293,7 @@ export const tr: Catalogue = {
   'profile.stat.freezes': 'Seri dondurucular',
   'profile.freezeHint': 'Bitirdiğin her {count} ders ya da alıştırma sana bir seri dondurucu kazandırır. Bir dondurucu kaçırılan bir günü kapatır. Aynı anda yalnızca bir tane tutabilirsin.',
   'settings.leagues.title': 'Haftalık ligler',
-  'settings.leagues.help': 'Lig, kazandığın XP’ye göre seni her hafta en fazla 30 öğrenciyle sıralar. İsteğe bağlıdır; ilerlemen her iki durumda da aynı sayılır.',
+  'settings.leagues.help': 'Lig, kazandığın XP’ye göre seni her hafta en fazla 29 öğrenciyle sıralar. İsteğe bağlıdır; ilerlemen her iki durumda da aynı sayılır.',
   'settings.leagues.toggle': 'Haftalık liglere katıl',
   'settings.leagues.minorHint': '18 yaşından küçük olduğun için sen açmadıkça kapalıdır.',
   'settings.visibility.minorHint': '18 yaşın altında profilin internetteki herkese açık olamaz.',

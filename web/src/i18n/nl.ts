@@ -1293,7 +1293,7 @@ export const nl: Catalogue = {
   'profile.stat.freezes': 'Reeksbevriezingen',
   'profile.freezeHint': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag. Je kunt er één tegelijk bewaren.',
   'settings.leagues.title': 'Wekelijkse competities',
-  'settings.leagues.help': 'Een competitie zet je elke week tussen maximaal 30 andere leerlingen op volgorde van de XP die je verdient. Meedoen is vrijwillig, en je voortgang telt in beide gevallen hetzelfde.',
+  'settings.leagues.help': 'Een competitie zet je elke week tussen maximaal 29 andere leerlingen op volgorde van de XP die je verdient. Meedoen is vrijwillig, en je voortgang telt in beide gevallen hetzelfde.',
   'settings.leagues.toggle': 'Meedoen aan wekelijkse competities',
   'settings.leagues.minorHint': 'Uit tenzij je het aanzet, omdat je jonger bent dan 18.',
   'settings.visibility.minorHint': 'Onder de 18 kan je profiel niet voor iedereen op het web zichtbaar zijn.',

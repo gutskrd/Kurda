@@ -1293,7 +1293,7 @@ export const de: Catalogue = {
   'profile.stat.freezes': 'Serien-Einfrierungen',
   'profile.freezeHint': 'Für je {count} abgeschlossene Lektionen oder Übungen bekommst du eine Serien-Einfrierung. Sie überbrückt einen verpassten Tag. Du kannst immer nur eine aufbewahren.',
   'settings.leagues.title': 'Wöchentliche Ligen',
-  'settings.leagues.help': 'Eine Liga ordnet dich jede Woche nach deinen XP unter bis zu 30 anderen Lernenden ein. Sie ist freiwillig, und dein Fortschritt zählt in beiden Fällen gleich.',
+  'settings.leagues.help': 'Eine Liga ordnet dich jede Woche nach deinen XP unter bis zu 29 anderen Lernenden ein. Sie ist freiwillig, und dein Fortschritt zählt in beiden Fällen gleich.',
   'settings.leagues.toggle': 'An wöchentlichen Ligen teilnehmen',
   'settings.leagues.minorHint': 'Aus, solange du es nicht einschaltest, weil du unter 18 bist.',
   'settings.visibility.minorHint': 'Unter 18 kann dein Profil nicht für alle im Netz sichtbar sein.',

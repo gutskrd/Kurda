@@ -1293,7 +1293,7 @@ export const fr: Catalogue = {
   'profile.stat.freezes': 'Gels de série',
   'profile.freezeHint': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué. Tu peux en garder un seul à la fois.',
   'settings.leagues.title': 'Ligues hebdomadaires',
-  'settings.leagues.help': 'Une ligue te classe chaque semaine parmi 30 autres apprenants au plus, selon les XP que tu gagnes. Elle est facultative, et tes progrès comptent pareil dans les deux cas.',
+  'settings.leagues.help': 'Une ligue te classe chaque semaine parmi 29 autres apprenants au plus, selon les XP que tu gagnes. Elle est facultative, et tes progrès comptent pareil dans les deux cas.',
   'settings.leagues.toggle': 'Participer aux ligues hebdomadaires',
   'settings.leagues.minorHint': 'Désactivé tant que tu ne l’actives pas, parce que tu as moins de 18 ans.',
   'settings.visibility.minorHint': 'Avant 18 ans, ton profil ne peut pas être visible par n’importe qui sur le web.',

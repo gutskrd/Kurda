@@ -1302,7 +1302,7 @@ export const ku: Catalogue = {
   'profile.stat.freezes': 'Cemidandina rêzê',
   'profile.freezeHint': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire. Tu dikarî tenê yekê li cem xwe bihêlî.',
   'settings.leagues.title': 'Lîgên heftane',
-  'settings.leagues.help': 'Lîg her hefte te bi heta 30 fêrxwazên din re li gorî XP-ya te rêz dike. Ne mecbûrî ye; pêşketina te her wekî xwe tê hesibandin.',
+  'settings.leagues.help': 'Lîg her hefte te bi heta 29 fêrxwazên din re li gorî XP-ya te rêz dike. Ne mecbûrî ye; pêşketina te her wekî xwe tê hesibandin.',
   'settings.leagues.toggle': 'Beşdarî lîgên heftane bibe',
   'settings.leagues.minorHint': 'Ji ber ku tu di bin 18 salî de yî, ev girtî ye heta ku tu wê vekî.',
   'settings.visibility.minorHint': 'Di bin 18 salî de, profîla te nikare ji her kesî re li ser înternetê vekirî be.',

@@ -1379,7 +1379,7 @@ export const en = {
   'profile.stat.freezes': 'Streak freezes',
   'profile.freezeHint': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day. You can hold one at a time.',
   'settings.leagues.title': 'Weekly leagues',
-  'settings.leagues.help': 'A league ranks you each week against up to 30 other learners by the XP you earn. It’s optional, and your progress counts the same either way.',
+  'settings.leagues.help': 'A league ranks you each week against up to 29 other learners by the XP you earn. It’s optional, and your progress counts the same either way.',
   'settings.leagues.toggle': 'Take part in weekly leagues',
   'settings.leagues.minorHint': 'Off unless you turn it on, because you are under 18.',
   'settings.visibility.minorHint': 'Under 18, your profile can’t be open to everyone on the web.',
