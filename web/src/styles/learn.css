@@ -568,6 +568,20 @@ a.cmap-lesson-row:hover {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+/* on the narrowest phones two columns leave a card little room: give the word
+   what the pair badge does not need */
+@media (max-width: 380px) {
+  .lesson-match {
+    gap: 8px;
+  }
+  .lesson-card {
+    padding-inline: 26px;
+    font-size: 1rem;
+  }
+  .lesson-card-pair {
+    inset-inline-end: 4px;
+  }
+}
 
 /* speaking */
 .lesson-speak {
