@@ -10,6 +10,12 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const CODE_LENGTH = 6;
+/**
+ * Where a newly confirmed account goes: its first lesson (pages/NextLesson.tsx
+ * finds it). It went to /app, the community wall, which is not what most
+ * people sign up to a language app for, and nothing there led to a lesson.
+ */
+const AFTER_VERIFY = '/app/learn/next';
 /** Matches the server's per-IP resend limit (4/hour) — don't invite a 429. */
 const RESEND_COOLDOWN_SEC = 60;
 
@@ -59,7 +65,7 @@ export function VerifyEmail(): React.JSX.Element {
       if (cancelled) return;
       if (res.ok) {
         await refreshUser();
-        navigate('/app', { replace: true });
+        navigate(AFTER_VERIFY, { replace: true });
       } else {
         setError(t('auth.verify.badLink'));
       }
@@ -69,9 +75,9 @@ export function VerifyEmail(): React.JSX.Element {
     };
   }, [linkToken, client, refreshUser, navigate, t]);
 
-  // already verified (e.g. confirmed elsewhere) → don't strand them here
+  // already verified (e.g. confirmed in another tab) → don't strand them here
   useEffect(() => {
-    if (user?.emailVerified) navigate('/app', { replace: true });
+    if (user?.emailVerified) navigate(AFTER_VERIFY, { replace: true });
   }, [user?.emailVerified, navigate]);
 
   const submit = useCallback(
@@ -90,7 +96,7 @@ export function VerifyEmail(): React.JSX.Element {
         // pull the fresh profile so emailVerified flips before we route onward
         await refreshUser();
         setBusy(false);
-        navigate('/app', { replace: true });
+        navigate(AFTER_VERIFY, { replace: true });
         return;
       }
       setBusy(false);

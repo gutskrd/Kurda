@@ -109,6 +109,42 @@ describe('VerifyEmail', () => {
     expect(calls[0]?.body).toMatchObject({ code: '123456' });
   });
 
+  it('sends a newly confirmed account to its first lesson, not the wall', async () => {
+    signedIn();
+    let verified = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/auth/verify-email-code')) {
+          verified = true;
+          return jsonResponse(200, { verified: true });
+        }
+        if (url.includes('/me')) return jsonResponse(200, user(verified));
+        return jsonResponse(200, {});
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/verify-email']}>
+          <ProfileModalProvider>
+            <Routes>
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/app/learn/next" element={<div>Your first lesson</div>} />
+              <Route path="/app" element={<div>The wall</div>} />
+            </Routes>
+          </ProfileModalProvider>
+        </MemoryRouter>
+      </AuthProvider>,
+    );
+
+    await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
+    await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
+
+    expect(await screen.findByText('Your first lesson')).toBeInTheDocument();
+    expect(screen.queryByText('The wall')).not.toBeInTheDocument();
+  });
+
   it('surfaces a wrong code and keeps the user on the screen', async () => {
     signedIn();
     vi.stubGlobal(
