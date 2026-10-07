@@ -38,10 +38,10 @@ describe('Landing', () => {
    * that shows a lesson has to say so, rather than let the picture imply that
    * the lesson is a click away.
    */
-  it('says the lessons are coming, where it shows one', () => {
+  it('says where the lessons are, where it shows one: in the browser now, the apps still to come', () => {
     show();
     const learn = document.getElementById('learn')!;
-    expect(within(learn).getByText(/coming soon to ios and android/i)).toBeInTheDocument();
+    expect(within(learn).getByText(/in your browser now · ios and android apps coming soon/i)).toBeInTheDocument();
   });
 
   it('claims no store availability it does not have', () => {

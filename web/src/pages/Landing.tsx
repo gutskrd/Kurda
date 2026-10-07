@@ -316,7 +316,7 @@ export function Landing(): React.JSX.Element {
                 <li key={p}>{t(p)}</li>
               ))}
             </ul>
-            {/* the lessons are coming; the alphabet is open in the browser now */}
+            {/* the lessons need an account; the alphabet is open to everyone */}
             <Link to="/app/alphabet" className="doc-link lp-alphabet">
               {t('alphabet.link')}
             </Link>

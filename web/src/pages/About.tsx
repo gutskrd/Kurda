@@ -8,9 +8,11 @@ import type { MessageKey } from '../i18n/en';
  *
  * The two lists are the point of the page. A visitor who has just read the
  * front page should be able to tell, without asking, which of those things
- * they can use this afternoon — and the lessons are not one of them yet.
+ * they can use this afternoon — the lessons among them, now that they run in
+ * the browser; the apps are still to come.
  */
 const NOW: MessageKey[] = [
+  'about.now.lessons',
   'about.now.games',
   'about.now.social',
   'about.now.progress',
