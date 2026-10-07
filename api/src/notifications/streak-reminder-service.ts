@@ -15,6 +15,8 @@ interface CandidateRow {
   local_hour: number;
   local_today: string;
   historical_hour: number | null;
+  /** the language the account chose; the reminder is written in it */
+  locale: string | null;
 }
 
 /**
@@ -39,6 +41,7 @@ export class StreakReminderService {
       `SELECT
          s.user_id,
          s.current_streak,
+         u.locale,
          (s.last_active_on = ($1::timestamptz AT TIME ZONE u.timezone)::date) AS practiced_today,
          EXTRACT(HOUR FROM ($1::timestamptz AT TIME ZONE u.timezone))::int AS local_hour,
          (($1::timestamptz AT TIME ZONE u.timezone)::date)::text AS local_today,
@@ -70,7 +73,7 @@ export class StreakReminderService {
       if (await this.markSent(row.user_id, row.local_today, kind)) {
         await this.enqueuer.enqueue(row.user_id, {
           category: 'streak',
-          ...reminderMessage(kind, row.current_streak),
+          ...reminderMessage(kind, row.current_streak, row.locale),
         });
         sent += 1;
       }

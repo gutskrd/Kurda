@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { APP_LOCALE_CODES } from '@kurda/shared';
 import {
   dueReminder,
   FALLBACK_HOUR,
@@ -62,5 +63,25 @@ describe('reminderMessage', () => {
       const { title, body } = reminderMessage(kind, 12);
       expect(`${title} ${body}`).not.toMatch(/lose|lost|last chance|save it|ends|alive|don't/i);
     }
+  });
+
+  it('is written in every language the app speaks, with the number in it', () => {
+    for (const locale of APP_LOCALE_CODES) {
+      const primary = reminderMessage('primary', 12, locale);
+      const late = reminderMessage('last_chance', 12, locale);
+      expect(primary.title.trim(), locale).not.toBe('');
+      expect(primary.body, locale).toContain('12');
+      expect(late.title.trim(), locale).not.toBe('');
+      expect(late, locale).not.toEqual(primary);
+      if (locale !== 'en') expect(primary, locale).not.toEqual(reminderMessage('primary', 12, 'en'));
+    }
+    expect(reminderMessage('primary', 3, 'de').body).toContain('3 Tage');
+    expect(reminderMessage('primary', 1, 'de').body).toContain('1 Tag ');
+    expect(reminderMessage('primary', 1, 'es').body).toContain('1 día seguido');
+  });
+
+  it('falls back to English for a language the app does not speak', () => {
+    expect(reminderMessage('primary', 4, 'xx')).toEqual(reminderMessage('primary', 4, 'en'));
+    expect(reminderMessage('primary', 4, null)).toEqual(reminderMessage('primary', 4));
   });
 });

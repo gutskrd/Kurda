@@ -104,6 +104,17 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     expect(sent.filter((s) => s.userId === atRisk)).toHaveLength(0);
   });
 
+  it('writes the reminder in the language the account chose', async () => {
+    await pool.query(`UPDATE users SET locale = 'de' WHERE id = $1`, [minorOptedIn]);
+    sent.length = 0;
+    // a day of its own, so nothing has been sent yet
+    await service.runHourly(new Date('2026-06-16T08:30:00Z'));
+    const german = sent.find((s) => s.userId === minorOptedIn);
+    expect(german?.notification.title).toBe('Ein paar Minuten Kurdisch?');
+    expect(sent.find((s) => s.userId === atRisk)?.notification.title).toBe('A few minutes of Kurdish?');
+    await pool.query(`UPDATE users SET locale = 'en' WHERE id = $1`, [minorOptedIn]);
+  });
+
   it('never notifies a user who already practiced today', async () => {
     sent.length = 0;
     await service.runHourly(new Date('2026-06-15T08:30:00Z'));
