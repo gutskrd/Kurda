@@ -60,8 +60,12 @@ interface ReminderCopy {
  * An invitation, not a warning. This used to read "Don't lose your streak!"
  * and "Last chance!", in English to everyone, which frames a day off as a loss
  * and leans on guilt — the pattern the roadmap in docs/research asks us to
- * drop, for learners of every age. So it says what has been done and how
+ * drop, for learners of every age. So it says how long the streak is and how
  * little today needs, and nothing about what could be lost.
+ *
+ * It says "your streak is N days", not "you have learned N days in a row": the
+ * streak is kept by a daily Wordle and by a freeze as well as by a lesson, so
+ * the second sentence would not always be true.
  *
  * Where a language changes the noun with the number, the sentence either picks
  * the form (English, German, French, Spanish, Dutch) or is built so the number
@@ -72,7 +76,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   en: {
     primary: (n) => ({
       title: 'A few minutes of Kurdish?',
-      body: `You have learned ${n} ${n === 1 ? 'day' : 'days'} in a row. One short lesson or practice counts for today.`,
+      body: `Your streak is ${n} ${n === 1 ? 'day' : 'days'}. One short lesson or practice counts for today.`,
     }),
     lastChance: {
       title: 'There is still time today',
@@ -82,7 +86,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   ku: {
     primary: (n) => ({
       title: 'Çend deqîqe bi kurdî?',
-      body: `Te ${n} roj li pey hev kurdî xwend. Dersek an temrînek kurt ji bo îro bes e.`,
+      body: `Rêzeya te ${n} roj e. Dersek an temrînek kurt ji bo îro bes e.`,
     }),
     lastChance: {
       title: 'Îro hê dem heye',
@@ -92,7 +96,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   ckb: {
     primary: (n) => ({
       title: 'چەند خولەکێک بە کوردی؟',
-      body: `${n} ڕۆژ لەسەر یەک کوردیت خوێندووە. وانەیەک یان ڕاهێنانێکی کورت بۆ ئەمڕۆ بەسە.`,
+      body: `زنجیرەکەت ${n} ڕۆژە. وانەیەک یان ڕاهێنانێکی کورت بۆ ئەمڕۆ بەسە.`,
     }),
     lastChance: {
       title: 'ئەمڕۆ هێشتا کات هەیە',
@@ -102,7 +106,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   ar: {
     primary: (n) => ({
       title: 'بضع دقائق من الكردية؟',
-      body: `أيام التعلّم المتتالية: ${n}. درس قصير أو تمرين واحد يكفي لليوم.`,
+      body: `أيام سلسلتك: ${n}. درس قصير أو تمرين واحد يكفي لليوم.`,
     }),
     lastChance: {
       title: 'ما زال هناك وقت اليوم',
@@ -112,7 +116,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   tr: {
     primary: (n) => ({
       title: 'Birkaç dakika Kürtçe?',
-      body: `${n} gündür üst üste öğreniyorsun. Kısa bir ders ya da alıştırma bugün için yeterli.`,
+      body: `Serin ${n} gün. Kısa bir ders ya da alıştırma bugün için yeterli.`,
     }),
     lastChance: {
       title: 'Bugün için hâlâ vakit var',
@@ -122,7 +126,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   de: {
     primary: (n) => ({
       title: 'Ein paar Minuten Kurdisch?',
-      body: `Du hast ${n} ${n === 1 ? 'Tag' : 'Tage'} in Folge gelernt. Eine kurze Lektion oder Übung zählt für heute.`,
+      body: `Deine Serie steht bei ${n} ${n === 1 ? 'Tag' : 'Tagen'}. Eine kurze Lektion oder Übung zählt für heute.`,
     }),
     lastChance: {
       title: 'Heute ist noch Zeit',
@@ -132,7 +136,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   fr: {
     primary: (n) => ({
       title: 'Quelques minutes de kurde ?',
-      body: `Tu as appris ${n} ${n === 1 ? 'jour' : 'jours'} d’affilée. Une courte leçon ou un exercice compte pour aujourd’hui.`,
+      body: `Ta série est de ${n} ${n === 1 ? 'jour' : 'jours'}. Une courte leçon ou un exercice compte pour aujourd’hui.`,
     }),
     lastChance: {
       title: 'Il reste du temps aujourd’hui',
@@ -142,7 +146,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   es: {
     primary: (n) => ({
       title: '¿Unos minutos de kurdo?',
-      body: `Llevas ${n} ${n === 1 ? 'día seguido' : 'días seguidos'} aprendiendo. Una lección corta o una práctica cuenta para hoy.`,
+      body: `Tu racha es de ${n} ${n === 1 ? 'día' : 'días'}. Una lección corta o una práctica cuenta para hoy.`,
     }),
     lastChance: {
       title: 'Todavía hay tiempo hoy',
@@ -152,7 +156,7 @@ const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
   nl: {
     primary: (n) => ({
       title: 'Een paar minuten Koerdisch?',
-      body: `Je hebt ${n} ${n === 1 ? 'dag' : 'dagen'} op rij geleerd. Een korte les of oefening telt voor vandaag.`,
+      body: `Je reeks staat op ${n} ${n === 1 ? 'dag' : 'dagen'}. Een korte les of oefening telt voor vandaag.`,
     }),
     lastChance: {
       title: 'Er is vandaag nog tijd',
