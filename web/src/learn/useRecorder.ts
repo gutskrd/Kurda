@@ -21,10 +21,11 @@ export interface Take {
 const MAX_TAKE_MS = 15_000;
 
 /**
- * What to ask the recorder for. The server stores WebM, MP4, MP3 and WAV and
- * checks the bytes; Firefox records Ogg unless asked, which it would refuse,
- * so WebM is asked for where the browser can make it (Chrome, Firefox, Edge)
- * and MP4 where it cannot (Safari). Undefined leaves the browser's own choice.
+ * What to ask the recorder for. The server takes a learner's recording as
+ * WebM, MP4 or MP3 (MEDIA_AUDIO_ALLOWED_TYPES) and checks the bytes; Firefox
+ * records Ogg unless asked, which it would refuse, so WebM is asked for where
+ * the browser can make it (Chrome, Firefox, Edge) and MP4 where it cannot
+ * (Safari). Undefined leaves the browser's own choice.
  */
 function recordingType(): string | undefined {
   const can = (t: string): boolean => typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(t);
@@ -133,10 +134,9 @@ export function useRecorder(): {
  * parameters a recorder adds ("audio/webm;codecs=opus") are dropped and only
  * the container it really is goes up — as the phone's upload does.
  */
-export function uploadType(mime: string): 'audio/webm' | 'audio/mp4' | 'audio/mpeg' | 'audio/wav' {
+export function uploadType(mime: string): 'audio/webm' | 'audio/mp4' | 'audio/mpeg' {
   const m = mime.toLowerCase();
   if (m.includes('webm')) return 'audio/webm';
   if (m.includes('mpeg')) return 'audio/mpeg';
-  if (m.includes('wav')) return 'audio/wav';
   return 'audio/mp4';
 }
