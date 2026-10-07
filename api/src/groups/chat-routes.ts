@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import type { GroupChatService } from './chat-service.js';
 import { MAX_GROUP_MESSAGE_LEN } from './chat-service.js';
 
@@ -14,7 +15,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     {
       schema: { params: idParam, body: z.object({ body: z.string().min(1).max(MAX_GROUP_MESSAGE_LEN) }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req) =>
       chat.send(req.user!.id, (req.params as { id: string }).id, (req.body as { body: string }).body, (k) =>

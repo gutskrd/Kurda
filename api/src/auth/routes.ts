@@ -42,15 +42,14 @@ export const registerBodySchema = z.object({
   /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */
   acceptTerms: z.literal(true),
   /**
-   * Birth month and year, both or neither. The forms ask with no default; an
-   * old client that sends neither gets an account that is asked once after
-   * signing in, the same as Google and Apple sign-up.
+   * Birth month and year, always. The forms ask with no default, and every
+   * protection for minors rests on the answer: an account made without one
+   * would be nobody's age at all, so none is made. (Google and Apple sign-up,
+   * which tell us nothing about age, are asked once after signing in, and
+   * until then are treated as not known to be adults — users/age.ts.)
    */
-  birthYear: birthYearSchema.optional(),
-  birthMonth: birthMonthSchema.optional(),
-}).refine((body) => (body.birthYear === undefined) === (body.birthMonth === undefined), {
-  message: 'send birthYear and birthMonth together',
-  path: ['birthMonth'],
+  birthYear: birthYearSchema,
+  birthMonth: birthMonthSchema,
 });
 
 /** One generic rejection for every anti-bot check — never reveals
@@ -117,9 +116,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       const body = req.body as z.infer<typeof registerBodySchema>;
       // first, so nothing about a child is checked, scored or stored: under 13,
       // no account is made at all (COPPA)
-      if (body.birthYear !== undefined && body.birthMonth !== undefined) {
-        assertOldEnough({ year: body.birthYear, month: body.birthMonth });
-      }
+      assertOldEnough({ year: body.birthYear, month: body.birthMonth });
       // full username policy (reserved names, structure, length) with a specific
       // reason; the DB citext unique index remains the case-insensitive authority.
       const uname = validateUsername(body.username);

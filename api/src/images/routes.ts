@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import { imagePostLimits } from '../media/mediaLimits.js';
@@ -54,7 +55,7 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
@@ -81,7 +82,7 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
 
   app.post(
     '/images',
-    { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireBirthMonth },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
       // the referenced media must have cleared the upload pipeline — a client

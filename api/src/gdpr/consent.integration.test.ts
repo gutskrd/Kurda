@@ -44,7 +44,7 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { password: 'a-strong-password1', acceptTerms: true, ...body },
+      payload: { password: 'a-strong-password1', acceptTerms: true, ...bornYearsAgo(30), ...body },
       remoteAddress: ip,
     });
     // the tests below re-consent and toggle analytics, which an unconfirmed
@@ -95,8 +95,9 @@ describe.skipIf(!DATABASE_URL)('consent (integration)', () => {
   });
 
   // deliberately changed: this sent a 12-year-old's birthDate and expected an
-  // account; under 13 is now refused (auth/age.integration.test.ts), and the
-  // flag is derived from the stored birth month rather than written once
+  // account; under 13 is now refused (users/minors.integration.test.ts, 'makes
+  // no account for someone under 13'), and the flag is derived from the stored
+  // birth month rather than written once
   it('an under-16 birth month reads as restricted, with analytics off', async () => {
     const res = await register(
       {

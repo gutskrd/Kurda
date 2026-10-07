@@ -15,11 +15,13 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
-import { minorSql } from './age.js';
+import { isKnownAdultRow, minorSql, notKnownAdultSql } from './age.js';
 import { LeagueService } from '../leagues/service.js';
 import { weekStart } from '../leagues/league-logic.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
+
+const bornAs = (b: { birthYear: number; birthMonth: number }) => ({ year: b.birthYear, month: b.birthMonth });
 
 describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
@@ -53,12 +55,20 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       remoteAddress: ip(),
     });
 
-  /** A confirmed account of the given age; null = no birth month given. */
+  /**
+   * A confirmed account of the given age. null = no birth month on record: an
+   * account from before we asked (or a Google or Apple sign-up that has not
+   * answered yet). Sign-up itself now needs one, so that state is made the way
+   * it arises — the columns are simply empty.
+   */
   const signUp = async (tag: string, years: number | null): Promise<Account> => {
-    const res = await register(tag, years === null ? undefined : bornYearsAgo(years));
+    const res = await register(tag, bornYearsAgo(years ?? 30));
     if (res.statusCode !== 201) throw new Error(`register ${tag}: ${res.statusCode} ${res.body}`);
     await activate(app, pool, res);
     const body = res.json();
+    if (years === null) {
+      await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [body.user.id]);
+    }
     return { id: body.user.id, token: body.tokens.accessToken, username: body.user.username };
   };
 
@@ -118,6 +128,24 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         expect(r.minor, `${r.year}-${r.month}`).toBe(isMinor({ year: r.year, month: r.month }, now));
       }
     });
+
+    it('takes nobody for an adult before they have said so', async () => {
+      const now = new Date();
+      const cases: Array<{ year: number | null; month: number | null }> = [
+        { year: null, month: null },
+        bornAs(bornYearsAgo(15)),
+        bornAs(bornYearsAgo(30)),
+      ];
+      const rows = await pool.query<{ shielded: boolean }>(
+        `SELECT ${notKnownAdultSql('u')} AS shielded
+           FROM unnest($1::int[], $2::int[]) WITH ORDINALITY AS u(birth_year, birth_month, n) ORDER BY n`,
+        [cases.map((c) => c.year), cases.map((c) => c.month)],
+      );
+      expect(rows.rows.map((r) => r.shielded)).toEqual(
+        cases.map((c) => !isKnownAdultRow({ birth_year: c.year, birth_month: c.month }, now)),
+      );
+      expect(rows.rows.map((r) => r.shielded)).toEqual([true, true, false]);
+    });
   });
 
   describe('signing up', () => {
@@ -176,13 +204,68 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       expect(row.rows[0]).toEqual({ birth_year: birthYear, birth_month: birthMonth, birth_date: null });
     });
 
-    it('an account made without a birth month is asked for one', async () => {
+    // deliberately changed: this made an account with no birth month and
+    // expected it to be asked for one later. Every protection rests on the
+    // answer, so an email sign-up without one is now refused outright
+    it('makes no account without a birth month', async () => {
       const res = await register('noage');
-      expect(res.statusCode).toBe(201);
-      expect(res.json().user.birthDateRequired).toBe(true);
-      await activate(app, pool, res);
-      const me = await call({ id: '', token: res.json().tokens.accessToken, username: '' }, 'GET', '/me');
-      expect(me.json().user.birthDateRequired).toBe(true);
+      expect(res.statusCode).toBe(400);
+      expect(res.json().code).toBe('VALIDATION_ERROR');
+      const row = await pool.query(`SELECT 1 FROM users WHERE email = $1`, [`mn_noage_${suffix}@it.kurda.app`]);
+      expect(row.rowCount).toBe(0);
+    });
+  });
+
+  describe('an account whose age is not on record yet', () => {
+    let waiting: Account;
+    let adult: Account;
+
+    beforeAll(async () => {
+      waiting = await signUp('waiting', null);
+      adult = await signUp('waitadult', 30);
+    });
+
+    it('is asked for it, and can still read', async () => {
+      const me = await call(waiting, 'GET', '/me');
+      expect(me.statusCode).toBe(200);
+      expect(me.json().user).toMatchObject({ birthDateRequired: true, leaguesEnabled: false });
+    });
+
+    it('cannot reach anybody until it answers', async () => {
+      const writes: Array<[string, string, Record<string, unknown> | undefined]> = [
+        ['POST', '/friends/requests', { userId: adult.id }],
+        ['POST', '/groups', { name: `Waiting ${suffix}`, privacy: 'invite' }],
+        ['POST', `/chat/${adult.id}/messages`, { body: 'Silav' }],
+        ['POST', '/library/posts', { type: 'gotin', body: 'Silav' }],
+        ['PUT', '/me/privacy', { visibility: 'everyone' }],
+        ['POST', '/me/consent', { analytics: true }],
+      ];
+      for (const [method, url, payload] of writes) {
+        const res = await call(waiting, method as 'POST' | 'PUT', url, payload);
+        expect(res.statusCode, `${method} ${url}`).toBe(428);
+        expect(res.json().code, `${method} ${url}`).toBe('BIRTH_DATE_REQUIRED');
+      }
+      // making the profile more private is always allowed
+      expect((await call(waiting, 'PUT', '/me/privacy', { visibility: 'friends' })).statusCode).toBe(200);
+    });
+
+    it('is not found by strangers, and is never on the public web', async () => {
+      const hits = (await call(adult, 'GET', `/users/search?q=${encodeURIComponent(waiting.username)}`)).json()
+        .results as Array<{ userId: string }>;
+      expect(hits.map((h) => h.userId)).not.toContain(waiting.id);
+
+      await pool.query(`UPDATE users SET profile_visibility = 'everyone' WHERE id = $1`, [waiting.id]);
+      expect((await call(null, 'GET', `/users/${waiting.id}`)).json().private).toBe(true);
+      // members see what 'members' allows
+      expect((await call(adult, 'GET', `/users/${waiting.id}`)).json().private).toBe(false);
+    });
+
+    it('gets an adult’s defaults once it answers as an adult', async () => {
+      const res = await call(waiting, 'POST', '/me/birth-date', bornYearsAgo(40));
+      expect(res.statusCode).toBe(200);
+      expect(res.json().user).toMatchObject({ birthDateRequired: false, minor: false, leaguesEnabled: true });
+      const sent = await call(waiting, 'POST', '/friends/requests', { userId: adult.id });
+      expect(sent.json().outcome).toBe('requested');
     });
   });
 
@@ -207,7 +290,9 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     });
 
     it('turns on a minor’s defaults for an account made before we asked', async () => {
-      const user = await signUp('late', null);
+      // made as an adult's so that it can act before anyone knew, then its
+      // birth month taken away: an account from before the question
+      const user = await signUp('late', 30);
       const asker = await signUp('asker', 30);
       const asked = await signUp('asked', 30);
       // settings from before anyone knew: public to members, reminders on, in
@@ -217,6 +302,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       await new LeagueService(pool).ensureMembership(user.id);
       expect((await call(asker, 'POST', '/friends/requests', { userId: user.id })).json().outcome).toBe('requested');
       expect((await call(user, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
+      await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [user.id]);
 
       const res = await call(user, 'POST', '/me/birth-date', bornYearsAgo(14));
       expect(res.statusCode).toBe(200);

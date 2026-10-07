@@ -5,7 +5,7 @@ import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
-import { isMinorRow, minorSql } from '../users/age.js';
+import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -85,7 +85,9 @@ function foldForm(input: string): string {
  *
  * Minors are never found by search, and their profile is never on the public
  * web: 'everyone' is refused when they set it and read as 'members' if an
- * older setting says so. Both are worked out from age at the moment of asking.
+ * older setting says so. Both are worked out from age at the moment of asking,
+ * and both treat an account whose age is not on record yet the same way (see
+ * users/age.ts): nobody is taken for an adult before they have said so.
  */
 export class SocialService {
   constructor(
@@ -101,8 +103,9 @@ export class SocialService {
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM users u
         WHERE u.deleted_at IS NULL AND u.id <> $1
           AND u.profile_visibility <> 'nobody'
-          -- strangers cannot look a minor up (they reach friends another way)
-          AND NOT ${minorSql('u')}
+          -- strangers cannot look a minor up (they reach friends another way),
+          -- nor anyone whose age is not on record yet
+          AND NOT ${notKnownAdultSql('u')}
           AND translate(lower(u.username::text), 'êîûçş', 'eiucs') LIKE $2 || '%'
           AND NOT EXISTS (
             SELECT 1 FROM blocks b
@@ -121,7 +124,8 @@ export class SocialService {
 
   /**
    * Update the caller's profile visibility. A minor's profile cannot be put on
-   * the public web; every other rung is theirs to choose.
+   * the public web, nor can one whose age is not on record yet (that is asked
+   * first); every other rung is theirs to choose.
    */
   async setVisibility(userId: string, visibility: Visibility): Promise<void> {
     if (visibility === 'everyone') {
@@ -129,9 +133,11 @@ export class SocialService {
         `SELECT birth_year, birth_month FROM users WHERE id = $1`,
         [userId],
       );
-      if (age.rows[0] && isMinorRow(age.rows[0])) {
+      const row = age.rows[0];
+      if (row && isMinorRow(row)) {
         throw new AppError('VISIBILITY_NOT_ALLOWED', 403, 'a profile under 18 cannot be public to everyone');
       }
+      if (row && !isKnownAdultRow(row)) throw birthDateRequired();
     }
     await this.pool.query(`UPDATE users SET profile_visibility = $2 WHERE id = $1`, [userId, visibility]);
   }
@@ -265,9 +271,9 @@ export class SocialService {
     const friendStatus: FriendStatus =
       isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
     // an 'everyone' stored before we knew their age is read as 'members' for a
-    // minor: never the open web
+    // minor, or for anyone whose age is not on record yet: never the open web
     const visibility: Visibility =
-      u.profile_visibility === 'everyone' && isMinorRow(u) ? 'members' : u.profile_visibility;
+      u.profile_visibility === 'everyone' && !isKnownAdultRow(u) ? 'members' : u.profile_visibility;
     const canSeeDetail =
       isSelf ||
       visibility === 'everyone' ||

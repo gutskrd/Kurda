@@ -4,7 +4,7 @@ import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
-import { isMinorUser } from '../users/age.js';
+import { isMinorUser, isNotKnownAdultUser } from '../users/age.js';
 import { canonicalPair } from '../friends/pair.js';
 
 /**
@@ -305,10 +305,10 @@ export class GroupService {
 
   /**
    * Open groups for discovery (not archived, not full). None for a minor, who
-   * cannot join any of them.
+   * cannot join any of them, nor for an account whose age is not on record yet.
    */
   async discover(viewerId: string, limit = 30): Promise<Group[]> {
-    if (await isMinorUser(this.pool, viewerId)) return [];
+    if (await isNotKnownAdultUser(this.pool, viewerId)) return [];
     const rows = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null; n: number;
     }>(

@@ -36,7 +36,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
-        ...(ageYears === undefined ? {} : bornYearsAgo(ageYears)),
+        ...bornYearsAgo(ageYears ?? 30),
       },
       remoteAddress: ip,
     });

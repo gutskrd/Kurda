@@ -27,6 +27,8 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: `10.13.0.${Math.floor(Math.random() * 200) + 1}`,
     });

@@ -16,7 +16,7 @@ import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { setProfilePhoto } from '../media/profilePhoto.js';
-import { isBelowConsentAgeRow, isMinorRow } from './age.js';
+import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
 import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek } from '../leagues/service.js';
 
@@ -133,8 +133,11 @@ function toMe(row: MeRow) {
      * replaces, which was set once at sign-up and never changed again.
      */
     restrictedMode: isBelowConsentAgeRow(row),
-    /** never chosen → in for adults, out for minors (read from age each time) */
-    leaguesEnabled: row.leagues_enabled ?? !isMinorRow(row),
+    /**
+     * never chosen → in for adults, out for minors and for an account whose age
+     * is not on record yet (read from age each time)
+     */
+    leaguesEnabled: row.leagues_enabled ?? isKnownAdultRow(row),
     xp: row.xp,
     skipSpeaking: row.skip_speaking,
     profileVisibility: row.profile_visibility,
@@ -341,6 +344,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
           if (isBelowConsentAgeRow(age.rows[0]!)) {
             throw new AppError('PARENTAL_CONSENT_REQUIRED', 403, 'this needs a parent’s consent below age 16');
           }
+          // and whether it is a parent's is not known until the age is
+          if (age.rows[0]!.birth_year == null) throw birthDateRequired();
         }
         await app.db.query(`UPDATE users SET analytics_consent = $2 WHERE id = $1`, [
           req.user!.id,

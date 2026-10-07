@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: ip,
     });
     await activate(app, pool, res);

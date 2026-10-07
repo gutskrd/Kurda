@@ -46,7 +46,7 @@ describe.skipIf(!DATABASE_URL)('practice mode (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `prac_${suffix}@it.kurda.app`, username: `prac_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `prac_${suffix}@it.kurda.app`, username: `prac_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.60.0.2',
     });
     await activate(app, pool, reg);

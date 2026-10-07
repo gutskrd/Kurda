@@ -7,7 +7,7 @@ import {
   type NotificationCategory,
   type NotificationPrefs,
 } from './prefs.js';
-import { isMinorUser } from '../users/age.js';
+import { isNotKnownAdultUser } from '../users/age.js';
 
 interface PrefsRow {
   streak: boolean;
@@ -57,8 +57,9 @@ export class NotificationPrefsService {
       [userId],
     );
     if (res.rows[0]) return toPrefs(res.rows[0]);
-    // no row: the defaults, which depend on age at the time of asking
-    return defaultPrefs({ minor: await isMinorUser(this.pool, userId) });
+    // no row: the defaults, which depend on age at the time of asking — a
+    // minor's, too, for an account whose age is not on record yet
+    return defaultPrefs({ minor: await isNotKnownAdultUser(this.pool, userId) });
   }
 
   /** Upsert the caller's preferences; unspecified fields keep their value. */

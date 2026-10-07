@@ -11,16 +11,16 @@ import {
   type CohortMember,
   type Tier,
 } from './league-logic.js';
-import { minorSql } from '../users/age.js';
+import { notKnownAdultSql } from '../users/age.js';
 
 /**
  * SQL: the user behind `alias` takes part in leagues right now — their own
- * choice if they made one, otherwise in for adults and out for minors. Read
- * from age at the moment it is asked, so a minor who never chose joins in on
- * their own once they are 18.
+ * choice if they made one, otherwise in for adults and out for minors (and for
+ * an account whose age is not on record yet). Read from age at the moment it
+ * is asked, so a minor who never chose joins in on their own once they are 18.
  */
 export function inLeaguesSql(alias: string): string {
-  return `COALESCE(${alias}.leagues_enabled, NOT ${minorSql(alias)})`;
+  return `COALESCE(${alias}.leagues_enabled, NOT ${notKnownAdultSql(alias)})`;
 }
 
 /**

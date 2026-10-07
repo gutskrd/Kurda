@@ -54,12 +54,11 @@ export interface RegisterInput {
   timezone?: string;
   deviceName?: string;
   /**
-   * Birth month and year, both or neither. The route has already refused an
-   * impossible month and anyone under 13; without them the account is made and
-   * asked once after signing in, like an account made through Google or Apple.
+   * Birth month and year. The route has already refused an impossible month
+   * and anyone under 13.
    */
-  birthYear?: number;
-  birthMonth?: number;
+  birthYear: number;
+  birthMonth: number;
 }
 
 export interface PublicUser {
@@ -368,10 +367,7 @@ export class AuthService {
     // versioned consent (KUR-109); the route schema guarantees acceptTerms was
     // true. The birth month is kept, never a verdict drawn from it: minor
     // status is worked out from it whenever it is needed (users/age.ts).
-    const birth = {
-      birth_year: input.birthYear ?? null,
-      birth_month: input.birthYear != null ? (input.birthMonth ?? null) : null,
-    };
+    const birth = { birth_year: input.birthYear, birth_month: input.birthMonth };
     const updated = await this.pool.query<UserRow>(
       `UPDATE users SET consent_version = $2, consented_at = now(),
               birth_year = $3, birth_month = $4,

@@ -26,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `cos_${tag}_${s}@it.kurda.app`, username: `cos${tag}${s}`, password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `cos_${tag}_${s}@it.kurda.app`, username: `cos${tag}${s}`, password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: ip,
     });
     await activate(app, pool, res);

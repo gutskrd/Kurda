@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { ImageReactionService, REACTIONS } from './reaction-service.js';
@@ -65,7 +66,7 @@ export function registerImageInteractionRoutes(
   /** Post a comment or reply (rate-limited + trust-gated + auto-screened). */
   app.post(
     '/images/:id/comments',
-    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireBirthMonth },
     async (req, reply) => {
       const postId = (req.params as { id: string }).id;
       const input = req.body as CreateCommentInput;

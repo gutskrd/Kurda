@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { LibraryService } from './service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -57,7 +58,7 @@ export function registerLibraryRoutes(
     {
       schema: { body: createBody },
       config: { rateLimit: { max: 20, windowMs: 60_000 } },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;

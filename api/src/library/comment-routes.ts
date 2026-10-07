@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -43,7 +44,7 @@ export function registerLibraryCommentRoutes(
     {
       schema: { params: postIdParam, body: createBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };

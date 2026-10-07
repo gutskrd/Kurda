@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
-import { isMinorUser } from '../users/age.js';
+import { birthDateRequired, minorSql } from '../users/age.js';
 import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
@@ -52,16 +52,23 @@ export class GroupChatService {
   ) {}
 
   /**
-   * Membership, and for a minor an invite-only group: one who was in an open
-   * group before we knew their age stays a member (and can leave) but can
-   * neither read nor write its chat.
+   * Membership, and for anyone not known to be an adult an invite-only group.
+   * A minor is taken out of open groups when their age is recorded; one still
+   * in one (an older membership) can leave but can neither read nor write its
+   * chat. An account whose age is not on record yet is asked for it first.
    */
   private async requireMember(groupId: string, userId: string): Promise<'owner' | 'moderator' | 'member'> {
     const role = await this.groups.memberRole(groupId, userId);
     if (!role) throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
-    if (await isMinorUser(this.pool, userId)) {
-      const g = await this.pool.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
-      if (g.rows[0]?.privacy === 'open') throw openGroupsAdultsOnly();
+    const g = await this.pool.query<{ privacy: string; minor: boolean; known: boolean }>(
+      `SELECT g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known
+         FROM groups g, users u WHERE g.id = $1 AND u.id = $2`,
+      [groupId, userId],
+    );
+    const row = g.rows[0];
+    if (row?.privacy === 'open') {
+      if (row.minor) throw openGroupsAdultsOnly();
+      if (!row.known) throw birthDateRequired();
     }
     return role;
   }
