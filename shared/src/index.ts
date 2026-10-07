@@ -31,6 +31,66 @@ export {
   type AppLocale,
 } from './locales.js';
 /**
+ * The lesson player: what comes next after an answer, a missed item asked
+ * again, a resumed lesson, and the answer drafts and key bar — the browser and
+ * the phone run the same rules, so they cannot disagree about what counts.
+ */
+export {
+  REASK_GAP,
+  AnswerQueue,
+  currentExercise,
+  currentStep,
+  feedbackKind,
+  initPlayer,
+  isReask,
+  practisableMistakes,
+  progress,
+  reduce,
+  type DeliveredExercise,
+  type ExerciseType,
+  type Feedback,
+  type FeedbackKind,
+  type GradeResult,
+  type PendingAnswer,
+  type PlayableSession,
+  type PlayerAction,
+  type PlayerState,
+  type PlayerStatus,
+  type RecordedAnswer,
+  type ResumeMemory,
+  type SelfRating,
+  type Step,
+  type SubmitFn,
+  type Verdict,
+} from './lesson-player.js';
+export {
+  KURMANJI_KEYS,
+  MIN_RECORDING_BYTES,
+  MIN_RECORDING_MS,
+  SORANI_KEYS,
+  emptyDraft,
+  emptyMatch,
+  encodeAnswer,
+  insertAtSelection,
+  isArabicScript,
+  isDraftComplete,
+  isLeftMatched,
+  isRightMatched,
+  isSoraniDialect,
+  letterDiff,
+  recordingProblem,
+  tapLeft,
+  tapRight,
+  typingKeys,
+  type DiffSegment,
+  type DraftAnswer,
+  type MatchPair,
+  type MatchState,
+  type Selection,
+} from './lesson-answers.js';
+/** Grammar notes ("Tips"), parsed once for the phone and the browser (KUR-038). */
+export { parseInline, parseMarkdown, type Block, type Span } from './grammar-markdown.js';
+/**
  * Group role rules (KUR-084). Here rather than in the API because all three
  * apps decide what to show from them, and three copies of who-can-remove-whom
  * is three chances to disagree about it.
