@@ -104,9 +104,39 @@ export function validateContent(raw: unknown): ValidationResult {
   return issues.length > 0 ? { ok: false, issues } : { ok: true, content };
 }
 
+/**
+ * Publishing puts every imported lesson in front of learners, so none may
+ * carry a listening item with nothing to play: no clip of its own and no
+ * studio recording of its transcription. One query for the whole document.
+ */
+async function silentOnPublish(repo: ContentRepository, content: CourseContent): Promise<ImportIssue[]> {
+  const paths: string[] = [];
+  const exercises: Array<{ type: string; payload: unknown }> = [];
+  content.units.forEach((unit, ui) => {
+    unit.skills.forEach((skill, si) => {
+      skill.lessons.forEach((lesson, li) => {
+        lesson.exercises.forEach((ex, ei) => {
+          if (ex.type !== 'listening') return;
+          paths.push(`units[${ui}].skills[${si}].lessons[${li}].exercises[${ei}].payload.audioUrl`);
+          exercises.push(ex);
+        });
+      });
+    });
+  });
+  if (exercises.length === 0) return [];
+  const silent = await repo.silentListening(exercises);
+  return silent.map((s) => ({
+    path: paths[s.index]!,
+    message: `nothing to play: no clip, and “${s.text}” has no audio-studio recording yet — record it, give the item an audioUrl, or import without --publish`,
+  }));
+}
+
 export interface ImportOptions {
   dryRun?: boolean;
-  /** publish each imported lesson version (seed loads as playable) */
+  /**
+   * publish each imported lesson version (seed loads as playable). Refused,
+   * with nothing written, while a listening item would have nothing to play.
+   */
   publish?: boolean;
 }
 
@@ -132,6 +162,11 @@ export async function importCourse(
     return { dryRun: options.dryRun ?? false, issues: validation.issues, summary };
   }
   const content = validation.content;
+
+  if (options.publish) {
+    const issues = await silentOnPublish(repo, content);
+    if (issues.length > 0) return { dryRun: options.dryRun ?? false, issues, summary };
+  }
 
   // count what a real import would create (also the dry-run report)
   for (const unit of content.units) {

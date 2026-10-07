@@ -36,7 +36,9 @@ const FILTERS: ReadonlyArray<[Filter, string]> = [
  * draft — so an editor can record before a lesson goes live: each item's `say`,
  * the first accepted answer of a translation, writing or listening item, a
  * speaking item's model sentence, and every match-pairs card. A sentence
- * recorded once plays wherever it is used.
+ * recorded once is sent with every exercise that uses it. Which clients play
+ * what is up to them: today only a listening item's clip is played by every
+ * app, so the copy here says what is sent, not what is heard.
  *
  * "Record next missing" walks the missing items in course order: save one and
  * the next comes up. Anything else can be recorded too, through "Add a phrase".
@@ -168,9 +170,9 @@ export function LessonAudio(): React.JSX.Element {
         </div>
         <p className="subtle la-what">
           Every Kurdish word and sentence the lessons use, drafts included: each item’s “say”, the first accepted answer of a
-          translation, writing or listening item, a speaking item’s model sentence, and every match-pairs card. One recording plays
-          wherever its sentence is used. Until a text is recorded learners hear nothing for it, and a listening item with no clip of
-          its own cannot be played at all.
+          translation, writing or listening item, a speaking item’s model sentence, and every match-pairs card. One recording is
+          sent with every exercise that uses its sentence, in any lesson. A listening item without a clip of its own uses the
+          recording as its clip, so its lesson cannot be published until the recording is made.
         </p>
       </div>
 
@@ -226,7 +228,7 @@ export function LessonAudio(): React.JSX.Element {
                   <div className="la-lesson-head">
                     <strong>{lesson.title}</strong>
                     <span className="subtle">{lesson.skillTitle}</span>
-                    <span className={`badge${lesson.live ? ' ok' : ''}`}>{lesson.live ? 'Live' : 'Not published yet'}</span>
+                    <span className={`badge${lesson.live ? ' ok' : ''}`}>{lesson.live ? 'Published' : 'Not published yet'}</span>
                   </div>
                   {lesson.items.map((item) => (
                     <Row
@@ -254,8 +256,8 @@ export function LessonAudio(): React.JSX.Element {
           <h2 className="la-course-title">Not in any lesson</h2>
           <div className="card la-lesson">
             <div className="subtle">
-              Phrases added here, and recordings whose text no lesson uses any more. They play nowhere until a lesson uses the same
-              text.
+              Phrases added here, and recordings whose text no lesson uses any more. They are sent with no exercise until a lesson
+              uses the same text.
             </div>
             {grouped.loose.map((item) => (
               <Row
@@ -346,8 +348,8 @@ function Row({
     isLoose(item)
       ? 'No lesson uses it, so it leaves this list.'
       : listening
-        ? 'Its listening item cannot be played until a new one is saved.'
-        : 'Learners hear no recording of it until a new one is saved.'
+        ? 'A listening item uses it as its clip: until a new one is saved, that item has nothing to play.'
+        : 'The exercises that use it go without a recording until a new one is saved.'
   }`;
 
   return (
@@ -394,7 +396,17 @@ function Row({
             }}
             removePrompt={removePrompt}
             onRemove={async () => {
-              await api(`/admin/lesson-audio?key=${encodeURIComponent(item.key)}`, { method: 'DELETE' });
+              const remove = (force: boolean) =>
+                api(`/admin/lesson-audio?key=${encodeURIComponent(item.key)}${force ? '&force=1' : ''}`, { method: 'DELETE' });
+              try {
+                // the prompt the editor just confirmed already said what a listening item loses
+                await remove(listening);
+              } catch (err) {
+                // a lesson published since the list was loaded: ask again, with what the server knows
+                if (!(err instanceof ApiError && err.code === 'LISTENING_AUDIO_IN_USE')) throw err;
+                if (!confirm(`${err.message}\n\nRemove it anyway?`)) return;
+                await remove(true);
+              }
               onRemoved(item.key);
             }}
           />

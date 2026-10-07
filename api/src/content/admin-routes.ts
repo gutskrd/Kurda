@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from '../admin/routes.js';
 import type { AdminTotpService } from '../admin/totp-service.js';
 import type { ContentAdminService, ExerciseInput } from './admin-service.js';
+import { silentListeningMessage } from '../lessonaudio/publish-guard.js';
 
 const idParam = z.object({ id: z.uuid() });
 
@@ -82,6 +83,13 @@ export function registerContentAdminRoutes(
       const res = await method.call(content, (req.params as z.infer<typeof idParam>).id);
       if (res.ok) return { ok: true };
       if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such lesson' });
+      if (res.code === 'LISTENING_AUDIO_MISSING') {
+        return reply.code(409).send({
+          code: res.code,
+          message: silentListeningMessage(res.silent),
+          missing: [...new Set(res.silent.map((s) => s.text))],
+        });
+      }
       return reply.code(409).send({ code: res.code, message: `cannot ${verb} in the current state` });
     });
   }

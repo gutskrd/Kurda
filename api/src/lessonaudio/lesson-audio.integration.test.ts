@@ -90,7 +90,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
   let live = '';
   let draft = '';
   let nextVersion = '';
-  const ex = { mc: '', tr: '', li: '', mp: '', un: '', sp: '' };
+  const ex = { mc: '', tr: '', li: '', mp: '', un: '', sp: '', mcq: '' };
 
   /** the texts this run's lessons use, each unique to the run */
   const T = {
@@ -106,6 +106,8 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     custom: `Newroz pîroz be ${s}`,
     sorani: `سوپاس ${s}`,
     ownClip: `Sêv ${s}`,
+    quoted: `Çay ${s}`,
+    silent: `Ez li malê me ${s}`,
   };
   const ourKeys = (): string[] => Object.values(T).map(lessonAudioKey);
 
@@ -138,10 +140,10 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       payload: body,
       remoteAddress: '10.97.0.9',
     });
-  const del = (key: string, token = editor) =>
+  const del = (key: string, token = editor, query = '') =>
     app.inject({
       method: 'DELETE',
-      url: `/admin/lesson-audio?key=${encodeURIComponent(key)}`,
+      url: `/admin/lesson-audio?key=${encodeURIComponent(key)}${query}`,
       headers: { authorization: `Bearer ${token}` },
     });
   const list = async (token = editor): Promise<{ items: Item[]; summary: { needed: number; recorded: number; missing: number; unused: number } }> => {
@@ -190,6 +192,13 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     });
     ex.un = await repo.addExercise(live, 5, 'translate', { prompt: 'Not recorded', accepted: [T.unrecorded] });
     ex.sp = await repo.addExercise(live, 6, 'speaking', { prompt: 'Say: good day', reference: T.speaking });
+    // its Kurdish is the question, not an option: hearing it first gives nothing away
+    ex.mcq = await repo.addExercise(live, 8, 'multiple_choice', {
+      prompt: `"${T.quoted}" tê çi wateyê?`,
+      options: ['tea', 'milk'],
+      correctIndex: 0,
+      say: T.quoted,
+    });
     await repo.publishLesson(live);
 
     // its next version, in draft: one item dropped, one added
@@ -392,6 +401,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
         ['listening', 12],
         ['left1', 13],
         ['speaking', 14],
+        ['quoted', 15],
       ] as const) {
         const res = await put(T[name], wav(1, seed));
         expect(res.statusCode, res.body).toBe(201);
@@ -409,9 +419,9 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       expect(res.statusCode, res.body).toBe(200);
       const exercises = res.json().exercises as Array<Record<string, unknown>>;
 
-      // a recorded sentence arrives as the model to hear
-      expect(byId(exercises, ex.tr)).toMatchObject({ modelAudioUrl: urls.translate });
+      // the sentence to imitate, and the Kurdish a question already shows
       expect(byId(exercises, ex.sp)).toMatchObject({ modelAudioUrl: urls.speaking });
+      expect(byId(exercises, ex.mcq)).toMatchObject({ modelAudioUrl: urls.quoted });
       // a listening item with no clip of its own plays the studio's recording
       expect(byId(exercises, ex.li)).toMatchObject({ audioUrl: urls.listening, modelAudioUrl: urls.listening });
       // match-pairs cards, by the text on the card; the unrecorded card has none
@@ -425,24 +435,45 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       expect(unrecorded).not.toHaveProperty('audio');
     });
 
-    it('never names the answer: multiple choice gets the model, not a map to its options', async () => {
+    it('never says the answer before it is given: not in text, not by URL', async () => {
       const res = await authed('GET', `/lessons/${live}/session`);
       const exercises = res.json().exercises as Array<Record<string, unknown>>;
-      const mc = byId(exercises, ex.mc);
-      expect(mc.modelAudioUrl).toBe(urls.mcSay);
-      expect(mc).not.toHaveProperty('audio');
-      expect(mc).not.toHaveProperty('say');
-      // the answers of the other items appear nowhere in the response
+      // recorded, but the translation's model is its answer and the multiple-choice model its right option
+      for (const id of [ex.tr, ex.mc]) {
+        expect(byId(exercises, id)).not.toHaveProperty('modelAudioUrl');
+        expect(byId(exercises, id)).not.toHaveProperty('audio');
+        expect(byId(exercises, id)).not.toHaveProperty('say');
+      }
       const raw = res.body;
+      // the answers of the other items appear nowhere in the response
       for (const answer of [T.translate, T.listening, T.speaking, T.unrecorded]) expect(raw).not.toContain(answer);
+      // nor do the recordings of them, which a card could pair with their text
+      for (const url of [urls.translate, urls.mcSay]) expect(raw).not.toContain(url);
     });
 
-    it('gives a placement question its recordings', async () => {
+    it('sends the model with the grading, right or wrong', async () => {
+      const lesson = await authed('GET', `/lessons/${live}/session`);
+      const sessionId = lesson.json().sessionId as string;
+      const answer = (exerciseId: string, given: unknown) =>
+        authed('POST', `/sessions/${sessionId}/answers`, { exerciseId, answer: given });
+
+      const mc = await answer(ex.mc, { choice: 1 });
+      expect(mc.statusCode, mc.body).toBe(200);
+      expect(mc.json()).toMatchObject({ verdict: 'wrong', correction: T.mcSay, modelAudioUrl: urls.mcSay });
+      expect((await answer(ex.mcq, { choice: 0 })).json()).toMatchObject({ verdict: 'correct', modelAudioUrl: urls.quoted });
+      // a replay says the same
+      expect((await answer(ex.mc, { choice: 0 })).json()).toMatchObject({ duplicate: true, modelAudioUrl: urls.mcSay });
+      // nothing recorded, or nothing to record: no field
+      expect((await answer(ex.un, { text: 'x' })).json()).not.toHaveProperty('modelAudioUrl');
+      expect((await answer(ex.mp, { matches: [] })).json()).not.toHaveProperty('modelAudioUrl');
+    });
+
+    it('gives a placement question only what it may hear before answering', async () => {
       const res = await authed('POST', `/courses/${courseId}/placement`, {});
       expect(res.statusCode, res.body).toBe(200);
       const q = res.json().question;
       expect(q.exerciseId).toBe(ex.mc);
-      expect(q.modelAudioUrl).toBe(urls.mcSay);
+      expect(q).not.toHaveProperty('modelAudioUrl');
       expect(q).not.toHaveProperty('audio');
     });
 
@@ -461,9 +492,67 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       const res = await authed('POST', '/practice/session');
       expect(res.statusCode, res.body).toBe(200);
       const exercises = res.json().exercises as Array<Record<string, unknown>>;
-      expect(byId(exercises, ex.tr).modelAudioUrl).toBe(urls.translate);
       expect(byId(exercises, ex.mp).audio).toEqual({ [T.left1]: urls.left1 });
+      expect(byId(exercises, ex.tr)).not.toHaveProperty('modelAudioUrl');
       expect(byId(exercises, ex.un)).not.toHaveProperty('modelAudioUrl');
+      // the translation's model comes with its grading
+      const graded = await authed('POST', `/practice/sessions/${res.json().sessionId}/answers`, {
+        exerciseId: ex.tr,
+        answer: { text: T.translate },
+      });
+      expect(graded.statusCode, graded.body).toBe(200);
+      expect(graded.json()).toMatchObject({ verdict: 'correct', modelAudioUrl: urls.translate });
+    });
+  });
+
+  /**
+   * A listening item's own clip is optional: without one it plays the
+   * studio's recording of its transcription, so publishing waits for that
+   * recording and removing it needs saying so.
+   */
+  describe('a listening item with no clip of its own', () => {
+    let lessonId = '';
+    const lessonRoute = (verb: string) =>
+      app.inject({ method: 'POST', url: `/admin/content/lessons/${lessonId}/${verb}`, headers: { authorization: `Bearer ${editor}` } });
+
+    beforeAll(async () => {
+      lessonId = await repo.createLesson(skillId, 3, 'Silav 3', 'Greetings 3');
+      await repo.addExercise(lessonId, 1, 'listening', { prompt: 'Type what you hear', accepted: [`${T.silent}.`] });
+      const submitted = await lessonRoute('submit');
+      expect(submitted.statusCode, submitted.body).toBe(200);
+    });
+
+    it('is not published until its transcription is recorded', async () => {
+      const refused = await lessonRoute('approve');
+      expect(refused.statusCode).toBe(409);
+      expect(refused.json()).toMatchObject({ code: 'LISTENING_AUDIO_MISSING', missing: [`${T.silent}.`] });
+      expect(refused.json().message).toContain(`“${T.silent}.”`);
+      // and the studio shows it as what that listening item waits for
+      expect(item((await list()).items, T.silent)!.usedIn[0]).toMatchObject({ lessonId, listeningNeedsIt: true, live: false });
+
+      expect((await put(T.silent, wav(1, 21))).statusCode).toBe(201);
+      const approved = await lessonRoute('approve');
+      expect(approved.statusCode, approved.body).toBe(200);
+      expect((await pool.query(`SELECT status FROM lessons WHERE id = $1`, [lessonId])).rows[0].status).toBe('published');
+    });
+
+    it('keeps the recording it plays from being removed unless the editor insists', async () => {
+      const key = lessonAudioKey(T.silent);
+      const refused = await del(key);
+      expect(refused.statusCode).toBe(409);
+      expect(refused.json()).toMatchObject({ code: 'LISTENING_AUDIO_IN_USE', details: { lessons: [{ lessonId, title: 'Greetings 3' }] } });
+      expect(refused.json().message).toContain('“Greetings 3”');
+      expect(item((await list()).items, T.silent)!.recorded).toBe(true);
+
+      const forced = await del(key, editor, '&force=1');
+      expect(forced.statusCode, forced.body).toBe(200);
+      expect(item((await list()).items, T.silent)!.recorded).toBe(false);
+      const audit = await pool.query(
+        `SELECT reason FROM admin_audit_log WHERE target_id = $1 AND action = 'lesson.audio.remove'`,
+        [key],
+      );
+      expect(audit.rows).toHaveLength(1);
+      expect(audit.rows[0].reason).toContain('1 published lesson');
     });
   });
 });

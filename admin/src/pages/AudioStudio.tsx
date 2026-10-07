@@ -15,9 +15,9 @@ function savedTab(): Tab {
 }
 
 /**
- * The audio studio: one place to record what learners hear in a native
- * voice — the letters and example words on the alphabet page, and the Kurdish
- * in the lessons. Both sides record, trim, level and save the same way
+ * The audio studio: one place to record the Kurdish in a native voice — the
+ * letters and example words on the alphabet page, and the Kurdish the lessons
+ * use. Both sides record, trim, level and save the same way
  * (recorder.tsx); they differ only in what is on the list.
  */
 export function AudioStudio(): React.JSX.Element {
@@ -37,7 +37,7 @@ export function AudioStudio(): React.JSX.Element {
       <div className="toolbar">
         <div>
           <h1>Audio studio</h1>
-          <div className="subtle">Native recordings of what learners hear: the alphabet’s letters and words, and the Kurdish in the lessons.</div>
+          <div className="subtle">Native recordings of the alphabet’s letters and words, and of the Kurdish the lessons use.</div>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 /** Content import against real Postgres (CI job). KUR-041. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
+import { lessonAudioKey } from '@kurda/shared';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { importCourse } from './import.js';
@@ -107,5 +108,62 @@ describe.skipIf(!DATABASE_URL)('importCourse (integration)', () => {
     expect(versions.rows.find((r) => r.version === 2)!.status).toBe('draft');
     // learner still sees the published v1
     expect((await repo.publishedLesson(skillId, 1))?.version).toBe(1);
+  });
+
+  describe('publishing a listening item', () => {
+    const silentSlug = `${slug}-li`;
+    const heard = `Ez li malê me ${slug}`;
+    const withListening = (payload: Record<string, unknown>) => {
+      const doc = structuredClone(content);
+      doc.course.slug = silentSlug;
+      doc.units[0]!.skills[0]!.lessons[0]!.exercises.push({ position: 3, type: 'listening', payload } as never);
+      return doc;
+    };
+
+    afterAll(async () => {
+      await pool.query(`DELETE FROM lesson_audio WHERE key = $1`, [lessonAudioKey(heard)]);
+      const courseId = await repo.findCourseBySlug(silentSlug);
+      if (courseId) {
+        await pool.query(
+          `UPDATE lessons SET status = 'archived' WHERE skill_id IN (
+             SELECT s.id FROM skills s JOIN units u ON u.id = s.unit_id WHERE u.course_id = $1)`,
+          [courseId],
+        );
+        await pool.query(`DELETE FROM courses WHERE id = $1`, [courseId]);
+      }
+    });
+
+    it('refuses to publish one with nothing to play, and writes nothing', async () => {
+      const doc = withListening({ prompt: 'Type what you hear', accepted: [`${heard}.`] });
+      for (const options of [{ publish: true }, { publish: true, dryRun: true }]) {
+        const res = await importCourse(repo, doc, options);
+        expect(res.issues).toHaveLength(1);
+        expect(res.issues[0]!.path).toBe('units[0].skills[0].lessons[0].exercises[2].payload.audioUrl');
+        expect(res.issues[0]!.message).toContain(`${heard}.`);
+      }
+      expect(await repo.findCourseBySlug(silentSlug)).toBeNull();
+    });
+
+    it('imports it as a draft, where it can wait for its recording', async () => {
+      const res = await importCourse(repo, withListening({ accepted: [heard] }), {});
+      expect(res.issues).toHaveLength(0);
+      expect(await repo.findCourseBySlug(silentSlug)).not.toBeNull();
+    });
+
+    it('publishes it once the transcription is recorded, or with a clip of its own', async () => {
+      expect((await importCourse(repo, withListening({ audioUrl: 'https://cdn.test/own.mp3', accepted: [heard] }), { publish: true })).issues).toEqual(
+        [],
+      );
+      await pool.query(
+        `INSERT INTO lesson_audio (key, text, media_key, url, content_type, duration_ms)
+         VALUES ($1, $2, 'test', 'https://cdn.test/lesson-audio/y.wav', 'audio/wav', 1500)`,
+        [lessonAudioKey(heard), heard],
+      );
+      const res = await importCourse(repo, withListening({ accepted: [heard] }), { publish: true });
+      expect(res.issues).toEqual([]);
+      const courseId = (await repo.findCourseBySlug(silentSlug))!;
+      const skillId = (await repo.findSkill((await repo.findUnit(courseId, 1))!, 1))!;
+      expect((await repo.publishedLesson(skillId, 1))?.version).toBe(3);
+    });
   });
 });

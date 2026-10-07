@@ -4,7 +4,7 @@
  *
  *   GET    /admin/lesson-audio            what the lessons need, what is recorded, where each is used
  *   PUT    /admin/lesson-audio?text=…     store a recording of that text (raw audio/wav body)
- *   DELETE /admin/lesson-audio?key=…      remove one
+ *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
  *
  * There is no public list: learners get the recordings with the exercises that
  * use them (lessonaudio/delivery.ts). Any text may be recorded, not only one a
@@ -29,6 +29,7 @@ import { MediaUsageService } from '../media/mediaUsage.js';
 import { ALPHABET_AUDIO_ROLES } from '../alphabet/routes.js';
 import { readWav } from '../alphabet/wav.js';
 import { LessonAudioService } from './service.js';
+import { lessonsPlaying } from './publish-guard.js';
 
 const KIND = 'lesson-audio';
 
@@ -44,7 +45,7 @@ interface Row {
 }
 
 const textQuery = z.object({ text: z.string() });
-const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2) });
+const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2), force: z.string().optional() });
 
 /** The text to record, as typed (NFC, spaces evened out), and its key. */
 function textFrom(query: unknown): { text: string; key: string } {
@@ -148,18 +149,40 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     const parsed = keyQuery.safeParse(req.query);
     if (!parsed.success) throw new AppError('EMPTY_KEY', 400, 'say which recording to remove');
     const { key } = parsed.data;
+    const force = parsed.data.force === '1' || parsed.data.force === 'true';
     const client = await app.db.connect();
     try {
       await client.query('BEGIN');
+      // lock the row before asking who plays it: an approve that has just
+      // checked this recording holds it until it commits, so its lesson is
+      // published (and seen below) before this goes on
+      const found = await client.query(`SELECT 1 FROM lesson_audio WHERE key = $1 FOR UPDATE`, [key]);
+      if (found.rowCount === 0) throw new AppError('NOT_FOUND', 404, 'that text has no recording');
+      // a published listening item with no clip of its own plays this: without it, it plays nothing
+      const lessons = await lessonsPlaying(client, key);
+      if (lessons.length > 0 && !force) {
+        const named = lessons
+          .slice(0, 3)
+          .map((l) => `“${l.title}”`)
+          .join(', ');
+        const more = lessons.length > 3 ? ` and ${lessons.length - 3} more` : '';
+        throw new AppError(
+          'LISTENING_AUDIO_IN_USE',
+          409,
+          `A listening item in ${named}${more} has no clip of its own and plays this recording: without it, learners have nothing to hear.`,
+          { lessons },
+        );
+      }
       const gone = await client.query<Row>(`DELETE FROM lesson_audio WHERE key = $1 RETURNING key, text, url`, [key]);
-      if (!gone.rows[0]) throw new AppError('NOT_FOUND', 404, 'that text has no recording');
+      const removed = gone.rows[0]!;
       await audit.record(client, {
         adminId: req.user!.id,
         action: 'lesson.audio.remove',
         targetType: 'lesson_audio',
         targetId: key,
-        before: { text: gone.rows[0].text, url: gone.rows[0].url },
+        before: { text: removed.text, url: removed.url },
         after: null,
+        reason: lessons.length > 0 ? `a listening item in ${lessons.length} published lesson(s) played it` : null,
         requestId: req.id,
       });
       await client.query('COMMIT');

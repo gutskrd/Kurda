@@ -18,11 +18,13 @@ export const LESSON_AUDIO_TEXT_MAX = 300;
 
 /**
  * Characters that change nothing about what is said: bidi marks that ride in
- * on a copy and paste, zero-width spaces, the soft hyphen, and the Arabic
- * tatweel, which only stretches a letter. The zero-width non-joiner stays — in
- * older Soranî spelling it decides whether ه is the consonant or the vowel.
+ * on a copy and paste (LRM, RLM, the Arabic letter mark that Soranî text
+ * carries most often, embeddings and isolates), zero-width spaces, the soft
+ * hyphen, and the Arabic tatweel, which only stretches a letter. The
+ * zero-width non-joiner stays — in older Soranî spelling it decides whether ه
+ * is the consonant or the vowel.
  */
-const INVISIBLE = /[­ـ​‎‏‪-‮⁠⁦-⁩﻿]/g;
+const INVISIBLE = /[\u00AD\u061C\u0640\u200B\u200E\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/g;
 
 /**
  * Letters that are one letter in Kurdish typed two ways: the Arabic kaf and yeh
@@ -75,9 +77,14 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-/** A string that leaves something to say once keyed. */
+/**
+ * A string that leaves something to say once keyed, and that one recording
+ * can hold. A writing item may accept a 500-character answer; a text past
+ * LESSON_AUDIO_TEXT_MAX could never be saved (the API refuses it as too long),
+ * so it is not asked for at all rather than listed as missing for ever.
+ */
 function sayable(v: unknown): v is string {
-  return typeof v === 'string' && lessonAudioKey(v) !== '';
+  return typeof v === 'string' && normalizeKurdish(v).length <= LESSON_AUDIO_TEXT_MAX && lessonAudioKey(v) !== '';
 }
 
 function firstOf(v: unknown): unknown {

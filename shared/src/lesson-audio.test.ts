@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lessonAudioKey, lessonAudioTargets, primaryAudioTarget } from './lesson-audio.js';
+import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, lessonAudioTargets, primaryAudioTarget } from './lesson-audio.js';
 
 // explicit code points, so precomposed and decomposed are unambiguous
 const E_CIRC_DECOMPOSED = 'e' + String.fromCharCode(0x302);
@@ -52,6 +52,12 @@ describe('lessonAudioKey', () => {
     expect(lessonAudioKey('﻿Silav')).toBe('silav');
     // the tatweel only stretches a letter
     expect(lessonAudioKey('سوپـــاس')).toBe('سوپاس');
+  });
+
+  it('drops the Arabic letter mark, and then the question mark it hid', () => {
+    const ALM = String.fromCharCode(0x61c);
+    expect(lessonAudioKey(`سوپاس؟${ALM}`)).toBe('سوپاس');
+    expect(lessonAudioKey(`${ALM}چۆنی${ALM}؟`)).toBe(lessonAudioKey('چۆنی'));
   });
 
   it('keeps the zero-width non-joiner, which changes the letter in older Soranî spelling', () => {
@@ -122,6 +128,18 @@ describe('lessonAudioTargets', () => {
   it('works for Soranî items', () => {
     expect(lessonAudioTargets('translate', { prompt: 'Thank you', accepted: ['سوپاس'] })).toEqual(['سوپاس']);
     expect(lessonAudioTargets('multiple_choice', { prompt: '?', options: ['a', 'b'], correctIndex: 0, say: 'چۆنی؟' })).toEqual(['چۆنی؟']);
+  });
+
+  it('skips a text too long for one recording, which the studio could never save', () => {
+    const paragraph = `${'Ez xwendekar im û '.repeat(20)}ez li zanîngehê dixwînim`;
+    expect(paragraph.length).toBeGreaterThan(LESSON_AUDIO_TEXT_MAX);
+    expect(lessonAudioTargets('writing', { prompt: 'Write about yourself', accepted: [paragraph] })).toEqual([]);
+    expect(primaryAudioTarget('writing', { prompt: 'Write about yourself', accepted: [paragraph] })).toBeNull();
+    // an author's `say` still names something that can be recorded
+    expect(lessonAudioTargets('writing', { prompt: 'x', accepted: [paragraph], say: 'Ez xwendekar im' })).toEqual(['Ez xwendekar im']);
+    // the bound is the one the API measures: spaces collapsed, ends trimmed
+    const exact = 'a'.repeat(LESSON_AUDIO_TEXT_MAX);
+    expect(lessonAudioTargets('writing', { prompt: 'x', accepted: [`  ${exact}  `] })).toEqual([`  ${exact}  `]);
   });
 
   it('skips texts with nothing to say, and never throws on malformed content', () => {

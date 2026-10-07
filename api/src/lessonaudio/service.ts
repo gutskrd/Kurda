@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { lessonAudioKey, lessonAudioTargets } from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
 import type { ContentStatus } from '../content/workflow.js';
+import { playsRecordingOf } from './publish-guard.js';
 
 /** One lesson that uses a text, and how. */
 export interface LessonAudioUsage {
@@ -75,9 +76,8 @@ interface RecordingRow {
 
 /** Whether a listening payload has no clip of its own, and plays the text keyed `key` instead. */
 function playsWithoutClip(payload: unknown, key: string): boolean {
-  const p = (payload ?? {}) as { audioUrl?: unknown; accepted?: unknown };
-  const first = Array.isArray(p.accepted) ? p.accepted[0] : undefined;
-  return !p.audioUrl && typeof first === 'string' && lessonAudioKey(first) === key;
+  const text = playsRecordingOf(payload);
+  return text !== null && lessonAudioKey(text) === key;
 }
 
 /**
