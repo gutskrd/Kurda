@@ -54,6 +54,17 @@ export interface PracticeAnswerResult {
   duplicate: boolean;
 }
 
+/** A second try at a practice item: graded, never recorded (as the lesson's RetryResult). */
+export type PracticeRetryResult = Omit<PracticeAnswerResult, 'duplicate'>;
+
+/** What practice has to offer right now, for a "Review" entry to show before starting one. */
+export interface PracticeDue {
+  /** items due for review now — what a session takes first */
+  due: number;
+  /** every item practice could draw on, due or not; 0 means a session would come back empty */
+  available: number;
+}
+
 export interface PracticeResults {
   correct: number;
   total: number;
@@ -100,26 +111,14 @@ export class PracticeService {
    * schedule and stays in the review queue, and practice leaves it out rather
    * than failing the whole session on the cast. Speaking items are left out
    * too, since their answers cannot move the schedule (`feedsReview`).
+   *
+   * `only` narrows the session to those exercises — "practise these now" after
+   * a lesson, with the items just missed. They are taken only from the
+   * learner's own review items, under the same rules, so it cannot reach an
+   * exercise the learner has never answered (or one from an unpublished lesson).
    */
-  async start(userId: string): Promise<PracticeSession | EmptyPractice> {
-    const due = await this.pool.query<{ item_id: string }>(
-      `SELECT r.item_id FROM review_items r
-       JOIN exercises e ON e.id::text = r.item_id
-       WHERE r.user_id = $1 AND r.due_at <= $2 AND e.type <> 'speaking'
-       ORDER BY r.due_at ASC LIMIT $3`,
-      [userId, new Date(), PRACTICE_TARGET],
-    );
-    const dueIds = due.rows.map((r) => r.item_id);
-
-    // weakest known words (lowest easiness), not necessarily due — used to pad
-    const weak = await this.pool.query<{ item_id: string }>(
-      `SELECT r.item_id FROM review_items r
-       JOIN exercises e ON e.id::text = r.item_id
-       WHERE r.user_id = $1 AND r.item_id <> ALL($2::text[]) AND e.type <> 'speaking'
-       ORDER BY r.easiness ASC, r.due_at ASC LIMIT $3`,
-      [userId, dueIds, PRACTICE_TARGET],
-    );
-    const chosen = selectPracticeItems(dueIds, weak.rows.map((r) => r.item_id));
+  async start(userId: string, only?: string[]): Promise<PracticeSession | EmptyPractice> {
+    const chosen = only ? await this.ownItems(userId, only) : await this.selectItems(userId);
 
     const exercises = chosen.length > 0 ? await this.loadExercises(chosen) : [];
     if (exercises.length === 0) {
@@ -143,6 +142,58 @@ export class PracticeService {
         ...audio[i],
       })),
     };
+  }
+
+  /** Due items first, padded with the weakest known ones (`selectPracticeItems`). */
+  private async selectItems(userId: string): Promise<string[]> {
+    const due = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.due_at <= $2 AND e.type <> 'speaking'
+       ORDER BY r.due_at ASC LIMIT $3`,
+      [userId, new Date(), PRACTICE_TARGET],
+    );
+    const dueIds = due.rows.map((r) => r.item_id);
+
+    // weakest known words (lowest easiness), not necessarily due — used to pad
+    const weak = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.item_id <> ALL($2::text[]) AND e.type <> 'speaking'
+       ORDER BY r.easiness ASC, r.due_at ASC LIMIT $3`,
+      [userId, dueIds, PRACTICE_TARGET],
+    );
+    return selectPracticeItems(dueIds, weak.rows.map((r) => r.item_id));
+  }
+
+  /** Those of `ids` that are this learner's practisable review items, in the order asked. */
+  private async ownItems(userId: string, ids: string[]): Promise<string[]> {
+    const own = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.item_id = ANY($2::text[]) AND e.type <> 'speaking'`,
+      [userId, ids],
+    );
+    const found = new Set(own.rows.map((r) => r.item_id));
+    return [...new Set(ids)].filter((id) => found.has(id)).slice(0, PRACTICE_TARGET);
+  }
+
+  /**
+   * How many items are due, and how many practice could draw on at all —
+   * counted as `start` chooses them, so the number a "Review" entry shows is
+   * the number a session will find: saved dictionary words and speaking items,
+   * which practice cannot serve, are not in it.
+   */
+  async due(userId: string): Promise<PracticeDue> {
+    const res = await this.pool.query<{ due: string; available: string }>(
+      `SELECT count(*) FILTER (WHERE r.due_at <= $2)::text due, count(*)::text available
+       FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND e.type <> 'speaking'`,
+      [userId, new Date()],
+    );
+    const row = res.rows[0];
+    return { due: Number(row?.due ?? 0), available: Number(row?.available ?? 0) };
   }
 
   private async loadExercises(ids: string[]): Promise<ExerciseRow[]> {
@@ -255,6 +306,39 @@ export class PracticeService {
     }
 
     return { verdict: result.verdict, accepted: result.accepted, correction: result.correction, ...heard, duplicate: false };
+  }
+
+  /**
+   * Grade a second try at an item already answered in this session and record
+   * nothing — the re-ask after a miss, as `LessonSessionService.retry`: no
+   * answer row, no score, no XP, no review. Only an answered item, so the
+   * correction a retry returns is never read before the answer that counts.
+   */
+  async retry(sessionId: string, userId: string, exerciseId: string, answer: unknown): Promise<PracticeRetryResult> {
+    const session = await this.loadSession(sessionId, userId);
+    if (session.completed_at) throw new AppError('PRACTICE_SESSION_COMPLETED', 409, 'session already completed');
+    if (!session.item_ids.includes(exerciseId)) {
+      throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise is not in this practice session');
+    }
+    const answered = await this.pool.query(
+      `SELECT 1 FROM practice_answers WHERE session_id = $1 AND exercise_id = $2`,
+      [session.id, exerciseId],
+    );
+    if ((answered.rowCount ?? 0) === 0) {
+      throw new AppError('EXERCISE_NOT_ANSWERED', 409, 'answer this exercise before trying it again');
+    }
+    const exRes = await this.pool.query<ExerciseRow>(`SELECT id, type, payload FROM exercises WHERE id = $1`, [exerciseId]);
+    const ex = exRes.rows[0];
+    if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
+
+    const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
+    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    return {
+      verdict: result.verdict,
+      accepted: result.accepted,
+      correction: result.correction,
+      ...(modelAudioUrl ? { modelAudioUrl } : {}),
+    };
   }
 
   /** Finalize: award reduced XP once, credit streak + daily goal. Idempotent. */
