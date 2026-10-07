@@ -94,6 +94,12 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     expect(skills[1]).toMatchObject({ level: 2, state: 'locked' }); // gated on skill A
   });
 
+  it('lists each skill’s lessons, none finished yet', async () => {
+    const res = await authed('GET', `/courses/${courseId}/map`);
+    const skillA = res.json().units[0].skills[0];
+    expect(skillA.lessons).toEqual([{ lessonId: skillA.firstLessonId, position: 1, title: 'A1', completed: false }]);
+  });
+
   it('completing skill A marks it completed and unlocks skill B', async () => {
     const map = await authed('GET', `/courses/${courseId}/map`);
     const skillA = map.json().units[0].skills[0];
@@ -108,5 +114,24 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     const skills = after.json().units[0].skills;
     expect(['completed', 'gold', 'decayed']).toContain(skills[0].state); // A done
     expect(skills[1].state).toBe('unlocked'); // B now available
+    expect(skills[0].lessons[0]).toMatchObject({ lessonId: skillA.firstLessonId, completed: true });
+  });
+
+  /**
+   * A corrected lesson is a new row at the same place. Finishing is asked of
+   * the place, so the learner who finished the first version has still
+   * finished it — and the skill after it stays open.
+   */
+  it('keeps a lesson finished when a corrected version of it is published', async () => {
+    const before = (await authed('GET', `/courses/${courseId}/map`)).json();
+    const oldId = before.units[0].skills[0].lessons[0].lessonId as string;
+    const corrected = await repo.newLessonVersion(oldId);
+    await repo.publishLesson(corrected);
+
+    const after = (await authed('GET', `/courses/${courseId}/map`)).json();
+    const [skillA, skillB] = after.units[0].skills;
+    expect(skillA.lessons).toEqual([{ lessonId: corrected, position: 1, title: 'A1', completed: true }]);
+    expect(['completed', 'gold', 'decayed']).toContain(skillA.state);
+    expect(skillB.state).toBe('unlocked');
   });
 });
