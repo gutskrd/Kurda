@@ -9,8 +9,19 @@
  * after.
  *
  * A month and a year are all the age rules need. The day of birth is the part
- * that identifies a person outside the app, so it is not kept: the few existing
- * dates are folded into the new columns and the day is cleared.
+ * that identifies a person outside the app, so it is not kept: the day is
+ * cleared from every row.
+ *
+ * Only an adult's date is folded into the new columns. The old API took any
+ * date at all, and nothing ever acted on it, so a stored date can be before
+ * 1900 (which the new range check refuses), or a child's: it once made
+ * accounts for twelve-year-olds. A date folded in as a minor's or a child's
+ * would skip what answering the question does — closing an account under 13,
+ * a minor's defaults from 13 to 17 — so those, and anything implausible, are
+ * left empty instead, and the account is asked the question like every other
+ * account without one. "Adult" here is the app's own rule (@kurda/shared
+ * `isMinor`, users/age.ts `minorSql`): the birth month itself still counts as
+ * the younger age.
  *
  * NULL means "not given yet" — every account made before this, and accounts
  * made through Google or Apple, which are asked once after signing in. The pair
@@ -36,9 +47,12 @@ export const up = (pgm) => {
   pgm.sql(`
     UPDATE users
        SET birth_year = extract(year FROM birth_date)::smallint,
-           birth_month = extract(month FROM birth_date)::smallint,
-           birth_date = NULL
-     WHERE birth_date IS NOT NULL`);
+           birth_month = extract(month FROM birth_date)::smallint
+     WHERE birth_date >= DATE '1900-01-01'
+       AND extract(year FROM now() AT TIME ZONE 'UTC')::int - extract(year FROM birth_date)::int
+           - CASE WHEN extract(month FROM now() AT TIME ZONE 'UTC')::int <= extract(month FROM birth_date)::int
+                  THEN 1 ELSE 0 END >= 18`);
+  pgm.sql(`UPDATE users SET birth_date = NULL WHERE birth_date IS NOT NULL`);
 
   pgm.sql(
     `COMMENT ON COLUMN users.birth_date IS 'unused: replaced by birth_year + birth_month; drop once no deployed build writes it'`,
