@@ -190,4 +190,53 @@ describe.skipIf(!DATABASE_URL)('practice: due count, chosen items, retry (integr
     expect(closed.statusCode).toBe(409);
     expect(closed.json().code).toBe('PRACTICE_SESSION_COMPLETED');
   });
+
+  it('comes back to a session as it was left: same items, same order, the answers so far', async () => {
+    const player = await register('prview');
+    await schedule(player, [ex.tr, ex.wr, ex.mp], -1);
+    const start = (await authed(player, 'POST', '/practice/session', { exerciseIds: [ex.mp, ex.tr, ex.wr] })).json();
+    const sid = start.sessionId as string;
+    await authed(player, 'POST', `/practice/sessions/${sid}/answers`, { exerciseId: ex.tr, answer: { text: 'sêv' } });
+
+    const res = await authed(player, 'GET', `/practice/sessions/${sid}`);
+    expect(res.statusCode).toBe(200);
+    const view = res.json();
+    expect(view.sessionId).toBe(sid);
+    expect(view.completed).toBe(false);
+    // delivered exactly as at the start: the cards shuffled with the same seed, no answers in it
+    expect(view.exercises).toEqual(start.exercises);
+    expect(JSON.stringify(view.exercises)).not.toContain('accepted');
+    expect(view.answered).toEqual({ [ex.tr]: { verdict: 'correct', accepted: true } });
+
+    await authed(player, 'POST', `/practice/sessions/${sid}/complete`);
+    expect((await authed(player, 'GET', `/practice/sessions/${sid}`)).json().completed).toBe(true);
+
+    // the learner's own, signed in
+    const other = await register('prpeek');
+    expect((await authed(other, 'GET', `/practice/sessions/${sid}`)).statusCode).toBe(404);
+    expect((await authed(null, 'GET', `/practice/sessions/${sid}`)).statusCode).toBe(401);
+  });
+
+  it('ends with the misses and their right answers, as a lesson does', async () => {
+    const player = await register('prmiss');
+    await schedule(player, [ex.tr, ex.wr, ex.mp], -1);
+    const start = (await authed(player, 'POST', '/practice/session', { exerciseIds: [ex.wr, ex.tr, ex.mp] })).json();
+    const sid = start.sessionId as string;
+    await authed(player, 'POST', `/practice/sessions/${sid}/answers`, { exerciseId: ex.tr, answer: { text: 'nan' } });
+    await authed(player, 'POST', `/practice/sessions/${sid}/answers`, { exerciseId: ex.wr, answer: { text: 'xwarin' } });
+    await authed(player, 'POST', `/practice/sessions/${sid}/answers`, {
+      exerciseId: ex.mp,
+      answer: { matches: [{ left: 'sêv', right: 'apple' }, { left: 'av', right: 'water' }] },
+    });
+
+    const results = (await authed(player, 'POST', `/practice/sessions/${sid}/complete`)).json();
+    expect(results.correct).toBe(1);
+    // in the order the session asked them
+    expect(results.mistakes).toEqual([
+      { exerciseId: ex.wr, verdict: 'wrong', prompt: 'Write "water"', correction: 'av' },
+      { exerciseId: ex.tr, verdict: 'wrong', prompt: 'apple', correction: 'sêv' },
+    ]);
+    // and the same again when asked twice
+    expect((await authed(player, 'POST', `/practice/sessions/${sid}/complete`)).json().mistakes).toEqual(results.mistakes);
+  });
 });

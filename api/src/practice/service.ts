@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { checkAnswer, sanitizeExercise, type Verdict } from '../content/exercises.js';
+import { checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
@@ -39,6 +39,16 @@ export interface PracticeSession {
   exercises: PracticeExercise[];
 }
 
+/**
+ * A practice session as it stands, for a client coming back to it: its items
+ * in the order they were chosen, and what has been answered so far — the
+ * lesson's `SessionView`, for practice.
+ */
+export interface PracticeSessionView extends PracticeSession {
+  completed: boolean;
+  answered: Record<string, { verdict: Verdict; accepted: boolean }>;
+}
+
 export interface EmptyPractice {
   empty: true;
   /** the next new lesson to try, if any is available */
@@ -69,6 +79,8 @@ export interface PracticeResults {
   correct: number;
   total: number;
   accuracy: number;
+  /** what was missed, with the question and its right answer (as a lesson's results) */
+  mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: StreakSummary;
 }
@@ -131,16 +143,43 @@ export class PracticeService {
       [userId, exercises.map((e) => e.id), exercises.length],
     );
     const sessionId = created.rows[0]!.id;
-    const audio = await lessonAudioFor(this.pool, exercises);
+    return { sessionId, exercises: await this.deliver(sessionId, exercises) };
+  }
 
+  /** Exercises as a client sees them: answers stripped, options shuffled for this session, recordings attached. */
+  private async deliver(sessionId: string, exercises: ExerciseRow[]): Promise<PracticeExercise[]> {
+    const audio = await lessonAudioFor(this.pool, exercises);
+    return exercises.map((ex, i) => ({
+      id: ex.id,
+      type: ex.type,
+      ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
+      ...audio[i],
+    }));
+  }
+
+  /**
+   * The learner's practice session as it stands, so leaving and coming back
+   * picks up where they were: the same items in the same order, options
+   * shuffled with the same seed, and the answers already given. Without it a
+   * reload started a new session and left the old one unfinished, its answers
+   * counted for the schedule and never for the day.
+   */
+  async view(sessionId: string, userId: string): Promise<PracticeSessionView> {
+    const session = await this.loadSession(sessionId, userId);
+    const [exercises, answers] = await Promise.all([
+      this.loadExercises(session.item_ids),
+      this.pool.query<{ exercise_id: string; verdict: Verdict; accepted: boolean }>(
+        `SELECT exercise_id, verdict, accepted FROM practice_answers WHERE session_id = $1`,
+        [session.id],
+      ),
+    ]);
+    const answered: PracticeSessionView['answered'] = {};
+    for (const a of answers.rows) answered[a.exercise_id] = { verdict: a.verdict, accepted: a.accepted };
     return {
-      sessionId,
-      exercises: exercises.map((ex, i) => ({
-        id: ex.id,
-        type: ex.type,
-        ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
-        ...audio[i],
-      })),
+      sessionId: session.id,
+      completed: session.completed_at !== null,
+      exercises: await this.deliver(session.id, exercises),
+      answered,
     };
   }
 
@@ -347,6 +386,20 @@ export class PracticeService {
     const correct = session.correct_count;
     const total = session.total_count;
     const accuracy = total > 0 ? correct / total : 0;
+    // the misses with their right answers, in the order they were asked, so a
+    // review ends the way a lesson does: with what to fix, not just a score
+    const missed = await this.pool.query<{ exercise_id: string; verdict: Verdict; type: ExerciseType; payload: unknown }>(
+      `SELECT a.exercise_id, a.verdict, e.type, e.payload
+       FROM practice_answers a JOIN exercises e ON e.id = a.exercise_id
+       WHERE a.session_id = $1 AND NOT a.accepted
+       ORDER BY array_position($2::uuid[], a.exercise_id)`,
+      [session.id, session.item_ids],
+    );
+    const mistakes = missed.rows.map((m) => ({
+      exerciseId: m.exercise_id,
+      verdict: m.verdict,
+      ...revealExercise(m.type, m.payload),
+    }));
 
     const tzRes = await this.pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId]);
     const timeZone = tzRes.rows[0]?.timezone ?? 'UTC';
@@ -385,7 +438,7 @@ export class PracticeService {
       await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
     }
 
-    return { correct, total, accuracy, xpAwarded, streak };
+    return { correct, total, accuracy, mistakes, xpAwarded, streak };
   }
 }
 

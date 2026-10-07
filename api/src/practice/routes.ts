@@ -31,6 +31,13 @@ export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, mil
     },
   );
 
+  /** Come back to a practice session: its items, and what has been answered (resume). */
+  app.get(
+    '/practice/sessions/:id',
+    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireAuth },
+    async (req) => practice.view((req.params as { id: string }).id, req.user!.id),
+  );
+
   /** How many items are due, for a "Review" entry to show before one starts. */
   app.get('/practice/due', { preHandler: requireAuth }, async (req) => practice.due(req.user!.id));
 
@@ -56,7 +63,7 @@ export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, mil
     },
   );
 
-  /** Finish the review and get the summary (reduced XP + streak). */
+  /** Finish the review and get the summary: reduced XP, the streak, and the misses with their answers. */
   app.post(
     '/practice/sessions/:id/complete',
     { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: requireAuth },
