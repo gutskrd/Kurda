@@ -141,6 +141,27 @@ describe('Learn', () => {
     expect(within(second).getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
   });
 
+  it('opens the lesson up next under its own name', async () => {
+    serve({
+      'GET /courses': { courses: courses.courses.slice(0, 1) },
+      'GET /courses/c1/map': basics,
+      'GET /practice/due': { due: 0, available: 0 },
+      'GET /lessons/l2/session': {
+        sessionId: 's1',
+        lessonId: 'l2',
+        expiresAt: '2026-10-08T00:00:00Z',
+        completed: false,
+        exercises: [{ id: 'a', position: 1, type: 'translate', prompt: 'goodbye' }],
+        answered: {},
+        grammarMd: null,
+        dialect: 'kurmanji',
+      },
+    });
+    routes('/app/learn');
+    await userEvent.click(await screen.findByRole('link', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Goodbye' })).toBeInTheDocument();
+  });
+
   it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {
     serve({
       'GET /courses': courses,

@@ -543,6 +543,34 @@ describe('a review', () => {
     expect(sent('retry')).toHaveLength(1);
     expect(calls.some((c) => c.path === '/practice/sessions/p1/complete')).toBe(true);
   });
+
+  it('marks a Soranî item’s answer as Soranî in the results, whatever the others are', async () => {
+    serve({
+      'POST /practice/sessions/p1/answers': { verdict: 'wrong', accepted: false, correction: 'ماڵ', duplicate: false },
+      'POST /practice/sessions/p1/retry': right,
+      'POST /practice/sessions/p1/complete': results({
+        correct: 0,
+        total: 1,
+        accuracy: 0,
+        firstCompletion: undefined,
+        mistakes: [{ exerciseId: 't', verdict: 'wrong', prompt: 'house', correction: 'ماڵ' }],
+      }),
+    });
+    play(
+      { sessionId: 'p1', exercises: [{ ...typed('t', 'house'), dialect: 'sorani' }] },
+      { kind: 'practice', paths: PRACTICE_PATHS, dialect: undefined },
+    );
+    await answerTyped('x');
+    await next();
+    await answerTyped('ماڵ');
+    await next();
+    await screen.findByRole('heading', { name: 'Review finished' });
+    const answer = within(screen.getByRole('heading', { name: 'To go over' }).parentElement!).getByText('ماڵ');
+    expect(answer).toHaveAttribute('lang', 'ckb');
+    expect(answer).toHaveAttribute('dir', 'rtl');
+    expect(sent('retry')).toHaveLength(1);
+    expect(calls.some((c) => c.path === '/practice/sessions/p1/complete')).toBe(true);
+  });
 });
 
 describe('Tips', () => {

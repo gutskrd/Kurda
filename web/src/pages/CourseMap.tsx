@@ -166,6 +166,7 @@ export function CourseMap(): React.JSX.Element {
         {progress.next && (
           <LinkButton
             to={`/app/learn/lesson/${progress.next.lessonId}?course=${encodeURIComponent(data.course.id)}`}
+            state={{ title: progress.next.title }}
             className="cmap-continue"
           >
             {progress.done === 0 ? t('learn.start') : t('learn.continue')}

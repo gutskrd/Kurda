@@ -49,8 +49,8 @@ export function Results({
   const practise = practisableMistakes(mistakes, exercises);
   // "80 %", "%80", "٨٠٪": the reader's own way of writing a percentage
   const accuracy = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(results.accuracy);
-  const typeOf = new Map(exercises.map((ex) => [ex.id, ex.type]));
-  const { lang, dir } = kurdishText(dialect);
+  // a review mixes courses, so each item's own variety marks its answer
+  const byId = new Map(exercises.map((ex) => [ex.id, ex]));
 
   useEffect(() => {
     heading.current?.focus();
@@ -90,7 +90,9 @@ export function Results({
           <h3 className="lesson-mistakes-title">{t('lesson.results.mistakes')}</h3>
           <ul>
             {mistakes.map((m) => {
-              const kurdish = KURDISH_ANSWER.has(typeOf.get(m.exerciseId) ?? '');
+              const ex = byId.get(m.exerciseId);
+              const kurdish = KURDISH_ANSWER.has(ex?.type ?? '');
+              const { lang, dir } = kurdishText(ex?.dialect ?? dialect);
               return (
                 <li key={m.exerciseId}>
                   {m.prompt && (

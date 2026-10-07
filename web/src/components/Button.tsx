@@ -40,14 +40,19 @@ export function Button({
 
 export function LinkButton({
   to,
+  state,
   variant = 'primary',
   size = 'md',
   block,
   className,
   children,
-}: BaseProps & { to: string }): React.JSX.Element {
+}: BaseProps & {
+  to: string;
+  /** handed to the page it opens, as a Link's `state` */
+  state?: unknown;
+}): React.JSX.Element {
   return (
-    <Link to={to} className={cls(variant, size, block, className)}>
+    <Link to={to} state={state} className={cls(variant, size, block, className)}>
       {children}
     </Link>
   );

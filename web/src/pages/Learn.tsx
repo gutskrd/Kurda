@@ -91,7 +91,10 @@ function CourseCard({ entry }: { entry: CourseEntry }): React.JSX.Element {
       )}
       <div className="course-card-actions">
         {progress?.next && (
-          <LinkButton to={`/app/learn/lesson/${progress.next.lessonId}?course=${encodeURIComponent(course.id)}`}>
+          <LinkButton
+            to={`/app/learn/lesson/${progress.next.lessonId}?course=${encodeURIComponent(course.id)}`}
+            state={{ title: progress.next.title }}
+          >
             {progress.done === 0 ? t('learn.start') : t('learn.continue')}
           </LinkButton>
         )}
