@@ -38,7 +38,7 @@ export interface SessionResults {
   correct: number;
   total: number;
   accuracy: number;
-  /** what was missed, with the question and its right answer (a lesson's results; practice has none) */
+  /** what was missed, with the question and its right answer (a lesson's results and a review's alike) */
   mistakes?: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: Streak;
