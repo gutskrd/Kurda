@@ -839,6 +839,7 @@ export const de: Catalogue = {
   'lesson.results.streak': 'Tage am Stück',
   'lesson.results.mistakes': 'Zum Anschauen',
   'lesson.results.noMistakes': 'Diesmal keine Fehler.',
+  'lesson.results.skipped': 'Diesmal übersprungen: {count}. Eine übersprungene Übung zählt als nicht beantwortet.',
   'lesson.results.practise': 'Diese jetzt üben',
   'edit.eyebrow': 'Profil',
   'edit.back': '← Zurück zu deinem Profil',

@@ -276,6 +276,7 @@ export function SessionPlayer({
         <Results
           results={results}
           exercises={state.exercises}
+          skipped={state.skipped.length}
           kind={kind}
           dialect={dialect}
           exitTo={exitTo}

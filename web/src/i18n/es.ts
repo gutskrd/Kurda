@@ -839,6 +839,7 @@ export const es: Catalogue = {
   'lesson.results.streak': 'Días seguidos',
   'lesson.results.mistakes': 'Para repasar',
   'lesson.results.noMistakes': 'Esta vez, ningún error.',
+  'lesson.results.skipped': 'Saltados esta vez: {count}. Un ejercicio saltado cuenta como no respondido.',
   'lesson.results.practise': 'Practicar estas ahora',
   'edit.eyebrow': 'Perfil',
   'edit.back': '← Volver a tu perfil',

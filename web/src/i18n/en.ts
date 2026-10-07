@@ -923,6 +923,7 @@ export const en = {
   'lesson.results.streak': 'Days in a row',
   'lesson.results.mistakes': 'To go over',
   'lesson.results.noMistakes': 'No mistakes this time.',
+  'lesson.results.skipped': 'Skipped this time: {count}. A skipped exercise counts as not answered.',
   'lesson.results.practise': 'Practise these now',
 
   // ---- editing your profile ------------------------------------------

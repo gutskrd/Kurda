@@ -845,6 +845,7 @@ export const ku: Catalogue = {
   'lesson.results.streak': 'Rojên li pey hev',
   'lesson.results.mistakes': 'Ji bo dîsa nêrînê',
   'lesson.results.noMistakes': 'Vê carê tu şaşî tune.',
+  'lesson.results.skipped': 'Vê carê derbaskirî: {count}. Temrîneke derbaskirî wek bêbersiv tê hesibandin.',
   'lesson.results.practise': 'Niha van biceribîne',
   'edit.eyebrow': 'Profîl',
   'edit.back': '← Vegere profîla xwe',

@@ -15,10 +15,16 @@ const KURDISH_ANSWER = new Set(['translate', 'writing', 'listening', 'speaking']
  * right answer — a list of misses without their answers tells the learner
  * what went wrong and not what is right — and a way to practise them straight
  * away.
+ *
+ * An exercise put off ("Can't listen now") is not a mistake, but the server
+ * counts every exercise of the session, so it is not right either: the
+ * accuracy is out of all of them. Saying how many were put off keeps "8 of
+ * 10" from reading as two wrong answers.
  */
 export function Results({
   results,
   exercises,
+  skipped = 0,
   kind,
   dialect,
   exitTo,
@@ -27,6 +33,8 @@ export function Results({
 }: {
   results: SessionResults;
   exercises: DeliveredExercise[];
+  /** exercises put off and never answered in this session */
+  skipped?: number;
   kind: 'lesson' | 'practice';
   dialect: string | null | undefined;
   exitTo: string;
@@ -50,9 +58,10 @@ export function Results({
 
   return (
     <section className="lesson-results" aria-labelledby="lesson-results-title">
-      <h1 className="lesson-results-title" id="lesson-results-title" tabIndex={-1} ref={heading}>
+      {/* the page's h1 is the lesson's name; this is the part of it on screen now */}
+      <h2 className="lesson-results-title" id="lesson-results-title" tabIndex={-1} ref={heading}>
         {kind === 'lesson' ? t('lesson.results.lessonDone') : t('lesson.results.reviewDone')}
-      </h1>
+      </h2>
 
       <dl className="lesson-stats">
         <div className="lesson-stat">
@@ -72,12 +81,13 @@ export function Results({
           </dd>
         </div>
       </dl>
+      {skipped > 0 && <p className="lesson-results-note">{t('lesson.results.skipped', { count: skipped })}</p>}
 
       {mistakes.length === 0 ? (
         <p className="lesson-results-note">{t('lesson.results.noMistakes')}</p>
       ) : (
         <div className="lesson-mistakes">
-          <h2 className="lesson-mistakes-title">{t('lesson.results.mistakes')}</h2>
+          <h3 className="lesson-mistakes-title">{t('lesson.results.mistakes')}</h3>
           <ul>
             {mistakes.map((m) => {
               const kurdish = KURDISH_ANSWER.has(typeOf.get(m.exerciseId) ?? '');

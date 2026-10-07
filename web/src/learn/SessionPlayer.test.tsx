@@ -195,6 +195,20 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(onPractise).toHaveBeenCalledWith(['mc']);
   });
 
+  it('plays an option’s recording from a small button beside it, without answering', async () => {
+    serve({});
+    play({
+      sessionId: 's1',
+      exercises: [{ id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], audio: { av: 'https://cdn.test/av.mp3' } }],
+      answered: {},
+    });
+    await userEvent.click(await screen.findByRole('button', { name: 'Hear “av”' }));
+    expect(played.at(-1)?.src).toBe('https://cdn.test/av.mp3');
+    // only the option that has a recording has a button
+    expect(screen.queryByRole('button', { name: 'Hear “nan”' })).not.toBeInTheDocument();
+    expect(sent('answers')).toHaveLength(0);
+  });
+
   it('a miss never ends the lesson: every answer wrong still runs to the results', async () => {
     serve({
       'POST /sessions/s1/answers': { verdict: 'wrong', accepted: false, correction: 'x', duplicate: false },
@@ -281,6 +295,9 @@ describe('listening', () => {
     await screen.findByRole('heading', { name: 'Lesson finished' });
     expect(sent('answers').map((c) => (c.body as { exerciseId: string }).exerciseId)).toEqual(['t']);
     expect(sent('retry')).toHaveLength(0);
+    // not a mistake, but not right either: the results say why the score is out of both
+    expect(screen.getByText('Skipped this time: 1. A skipped exercise counts as not answered.')).toBeInTheDocument();
+    expect(screen.getByText('No mistakes this time.')).toBeInTheDocument();
   });
 
   it('is put off by itself when it has no recording to play', async () => {

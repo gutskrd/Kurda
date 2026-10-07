@@ -844,6 +844,7 @@ export const ar: Catalogue = {
   'lesson.results.streak': 'أيام متتالية',
   'lesson.results.mistakes': 'لمراجعتها',
   'lesson.results.noMistakes': 'لا أخطاء هذه المرة.',
+  'lesson.results.skipped': 'تخطّيت هذه المرة: {count}. التمرين الذي تتخطّاه يُحسب بلا إجابة.',
   'lesson.results.practise': 'تمرّن عليها الآن',
   'edit.eyebrow': 'الملف الشخصي',
   'edit.back': '← العودة إلى ملفك الشخصي',

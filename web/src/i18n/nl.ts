@@ -839,6 +839,7 @@ export const nl: Catalogue = {
   'lesson.results.streak': 'Dagen op rij',
   'lesson.results.mistakes': 'Om nog eens te bekijken',
   'lesson.results.noMistakes': 'Deze keer geen fouten.',
+  'lesson.results.skipped': 'Deze keer overgeslagen: {count}. Een overgeslagen oefening telt als niet beantwoord.',
   'lesson.results.practise': 'Deze nu oefenen',
   'edit.eyebrow': 'Profiel',
   'edit.back': '← Terug naar je profiel',

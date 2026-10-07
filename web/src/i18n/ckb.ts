@@ -850,6 +850,7 @@ export const ckb: Catalogue = {
   'lesson.results.streak': 'ڕۆژی لەسەریەک',
   'lesson.results.mistakes': 'بۆ پێداچوونەوە',
   'lesson.results.noMistakes': 'ئەمجارە هیچ هەڵەیەک نییە.',
+  'lesson.results.skipped': 'ئەمجارە تێپەڕێنراو: {count}. ڕاهێنانێکی تێپەڕێنراو وەک وەڵامنەدراو هەژمار دەکرێت.',
   'lesson.results.practise': 'ئێستا ڕاهێنان لەسەر ئەمانە بکە',
   'edit.eyebrow': 'پرۆفایل',
   'edit.back': '← گەڕانەوە بۆ پرۆفایلەکەت',

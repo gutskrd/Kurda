@@ -839,6 +839,7 @@ export const fr: Catalogue = {
   'lesson.results.streak': 'Jours d’affilée',
   'lesson.results.mistakes': 'À revoir',
   'lesson.results.noMistakes': 'Aucune erreur cette fois.',
+  'lesson.results.skipped': 'Passés cette fois : {count}. Un exercice passé compte comme sans réponse.',
   'lesson.results.practise': 'Les travailler maintenant',
   'edit.eyebrow': 'Profil',
   'edit.back': '← Retour à ton profil',
