@@ -91,8 +91,9 @@ interface EdgeRow {
  *
  * A minor (13–17, worked out from age when asked) can send requests but cannot
  * be sent one, so every friendship a minor has is one they started. Nobody is
- * suggested a minor either. Requests already waiting from before we knew their
- * age stay theirs to accept or decline.
+ * suggested a minor either. A request that reached them before we knew their
+ * age is not one of theirs: it is not listed for them and cannot be accepted
+ * (declining it is always fine), and it is removed when the age is given.
  */
 export class FriendService {
   constructor(private readonly pool: pg.Pool) {}
@@ -211,6 +212,12 @@ export class FriendService {
         throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
       }
       if (accept) {
+        // a request someone else started, waiting from before we knew this is
+        // a minor: accepting it would be a friendship they did not start. It
+        // is not listed for them (incomingRequests), so it answers as absent
+        if (await isMinorUser(client, user)) {
+          throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
+        }
         await this.assertUnderCap(client, user);
         await client.query(
           `UPDATE friendships SET status = 'accepted', responded_at = now() WHERE user_lo = $1 AND user_hi = $2`,
@@ -389,13 +396,18 @@ export class FriendService {
     return r.rows[0]!.n;
   }
 
-  /** Incoming pending requests (not expired, requester not since blocked). */
+  /**
+   * Incoming pending requests (not expired, requester not since blocked).
+   * None for a minor: any there are predate what we know of their age.
+   */
   async incomingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
     const rows = await this.pool.query<FriendRow>(
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at FROM friendships f
          JOIN users u ON u.id = f.requested_by
+         JOIN users me ON me.id = $1
         WHERE f.status = 'pending' AND f.requested_by <> $1
           AND (f.user_lo = $1 OR f.user_hi = $1)
+          AND NOT ${minorSql('me')}
           AND f.created_at > now() - ($2 || ' days')::interval
           AND NOT EXISTS (
             SELECT 1 FROM blocks b

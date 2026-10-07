@@ -208,10 +208,15 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
 
     it('turns on a minor’s defaults for an account made before we asked', async () => {
       const user = await signUp('late', null);
+      const asker = await signUp('asker', 30);
+      const asked = await signUp('asked', 30);
       // settings from before anyone knew: public to members, reminders on, in
-      // this week's league
+      // this week's league, a stranger's friend request waiting, and one of
+      // their own sent
       await call(user, 'PUT', '/me/notification-prefs', { friends: false });
       await new LeagueService(pool).ensureMembership(user.id);
+      expect((await call(asker, 'POST', '/friends/requests', { userId: user.id })).json().outcome).toBe('requested');
+      expect((await call(user, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
 
       const res = await call(user, 'POST', '/me/birth-date', bornYearsAgo(14));
       expect(res.statusCode).toBe(200);
@@ -222,6 +227,15 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         weekStart(new Date()),
       ]);
       expect(league.rowCount).toBe(0);
+
+      // the stranger's request is gone; the one they sent is still theirs
+      expect((await call(user, 'GET', '/friends/requests')).json().requests).toEqual([]);
+      const pending = await pool.query<{ requested_by: string }>(
+        `SELECT requested_by FROM friendships WHERE status = 'pending' AND (user_lo = $1 OR user_hi = $1)`,
+        [user.id],
+      );
+      expect(pending.rows.map((r) => r.requested_by)).toEqual([user.id]);
+      expect((await call(asked, 'POST', `/friends/requests/${user.id}/accept`)).json().result).toBe('accepted');
     });
 
     it('closes the account at once for an answer under 13', async () => {
@@ -287,6 +301,24 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       );
       expect(rows.rowCount).toBe(0);
       expect((await call(minor, 'GET', '/friends/requests')).json().requests).toEqual([]);
+    });
+
+    it('a request that reached a minor before we knew is not theirs to accept', async () => {
+      // e.g. an account whose birth date was already on record when ages
+      // started to count: the request was made while nothing checked
+      const lo = adult.id < minor.id ? adult.id : minor.id;
+      const hi = adult.id < minor.id ? minor.id : adult.id;
+      await pool.query(
+        `INSERT INTO friendships (user_lo, user_hi, status, requested_by) VALUES ($1, $2, 'pending', $3)`,
+        [lo, hi, adult.id],
+      );
+      expect((await call(minor, 'GET', '/friends/requests')).json().requests).toEqual([]);
+      const accept = await call(minor, 'POST', `/friends/requests/${adult.id}/accept`);
+      expect(accept.statusCode).toBe(404);
+      expect((await pool.query(`SELECT status FROM friendships WHERE user_lo = $1 AND user_hi = $2`, [lo, hi])).rows[0])
+        .toEqual({ status: 'pending' });
+      // declining is always fine
+      expect((await call(minor, 'POST', `/friends/requests/${adult.id}/decline`)).json().result).toBe('declined');
     });
 
     it('a minor can send a request, and it can be accepted', async () => {

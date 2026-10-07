@@ -112,6 +112,9 @@ export class BirthMonthService {
  * know. From here on the minor's own choices stand (within the limits the
  * routes enforce). Leagues need nothing written — their default is read from
  * age every time — beyond leaving this week's league, joined as an adult.
+ *
+ * Friend requests other people sent them while we did not know go too: a minor
+ * cannot be sent one, so none is theirs to accept. Requests they sent stay.
  */
 async function applyMinorDefaults(
   executor: Pick<pg.Pool, 'query'>,
@@ -126,6 +129,11 @@ async function applyMinorDefaults(
   await executor.query(`UPDATE notification_prefs SET streak = false, updated_at = now() WHERE user_id = $1`, [
     userId,
   ]);
+  await executor.query(
+    `DELETE FROM friendships
+      WHERE status = 'pending' AND requested_by <> $1 AND (user_lo = $1 OR user_hi = $1)`,
+    [userId],
+  );
   const leagues = await executor.query<{ taking_part: boolean }>(
     `SELECT ${inLeaguesSql('u')} AS taking_part FROM users u WHERE u.id = $1`,
     [userId],
