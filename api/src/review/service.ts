@@ -39,6 +39,12 @@ interface ItemRow {
   due_at: Date;
 }
 
+/** The item as `record` reads it, with what spacing is judged by. */
+interface RecordRow extends ItemRow {
+  last_reviewed_at: Date | null;
+  timezone: string;
+}
+
 function toItem(row: ItemRow): ReviewItem {
   return {
     itemId: row.item_id,
@@ -65,7 +71,8 @@ export class ReviewService {
    * Only a spaced review moves the schedule (`scheduleAnswer`): a right answer
    * to an item that is not yet due — a same-day replay, an early practice item
    * — leaves it exactly as it was and is returned unchanged. A wrong answer is
-   * always recorded as a lapse.
+   * always recorded as a lapse. "Same day" is the learner's day, so their time
+   * zone is read along with the item.
    */
   async record(
     userId: string,
@@ -74,21 +81,26 @@ export class ReviewService {
     now: Date = new Date(),
     executor: Executor = this.pool,
   ): Promise<ReviewItem> {
-    const existing = await executor.query<ItemRow>(
-      `SELECT item_id, repetitions, interval_days, easiness, due_at
-       FROM review_items WHERE user_id = $1 AND item_id = $2`,
+    const existing = await executor.query<RecordRow>(
+      `SELECT u.timezone, r.item_id, r.repetitions, r.interval_days, r.easiness, r.due_at, r.last_reviewed_at
+       FROM users u
+       LEFT JOIN review_items r ON r.user_id = u.id AND r.item_id = $2
+       WHERE u.id = $1`,
       [userId, itemId],
     );
-    const row = existing.rows[0];
+    const found = existing.rows[0];
+    const row = found?.item_id ? found : undefined;
     const next = scheduleAnswer(
       row
         ? {
             state: { repetitions: row.repetitions, interval: row.interval_days, easiness: row.easiness },
             dueAt: new Date(row.due_at),
+            lastReviewedAt: row.last_reviewed_at ? new Date(row.last_reviewed_at) : null,
           }
         : null,
       quality,
       now,
+      found?.timezone ?? 'UTC',
     );
     if (!next) return toItem(row!);
 

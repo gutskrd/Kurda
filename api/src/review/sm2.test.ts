@@ -104,7 +104,8 @@ describe('dueAfter / qualityFromVerdict', () => {
 
 describe('honest spacing — scheduleAnswer', () => {
   const day0 = new Date('2026-07-08T09:00:00Z');
-  const at = (days: number, hours = 0) => new Date(day0.getTime() + days * 86_400_000 + hours * 3_600_000);
+  const at = (days: number, hours = 0, minutes = 0) =>
+    new Date(day0.getTime() + days * 86_400_000 + hours * 3_600_000 + minutes * 60_000);
   /** An item last reviewed at day 0 with the given interval, so due at day `interval`. */
   const scheduled = (interval: number, repetitions = 2): Scheduled => ({
     state: { repetitions, interval, easiness: DEFAULT_EASINESS },
@@ -112,13 +113,17 @@ describe('honest spacing — scheduleAnswer', () => {
   });
 
   it('a new item gets its first review, right or wrong', () => {
-    expect(scheduleAnswer(null, 5, day0)).toEqual({ state: review(INITIAL_SM2, 5), dueAt: at(1) });
+    expect(scheduleAnswer(null, 5, day0)).toEqual({ state: review(INITIAL_SM2, 5), dueAt: at(1), lastReviewedAt: day0 });
     expect(scheduleAnswer(null, 2, day0)?.state).toMatchObject({ repetitions: 0, interval: 1 });
   });
 
   it('advances a due item exactly as SM-2 would', () => {
     const item = scheduled(6);
-    expect(scheduleAnswer(item, 5, at(6))).toEqual({ state: review(item.state, 5), dueAt: dueAfter(at(6), review(item.state, 5).interval) });
+    expect(scheduleAnswer(item, 5, at(6))).toEqual({
+      state: review(item.state, 5),
+      dueAt: dueAfter(at(6), review(item.state, 5).interval),
+      lastReviewedAt: at(6),
+    });
     // overdue is due too
     expect(scheduleAnswer(item, 4, at(9))?.state.repetitions).toBe(3);
   });
@@ -130,11 +135,46 @@ describe('honest spacing — scheduleAnswer', () => {
   });
 
   it('a same-day replay does not stretch the interval', () => {
-    const first = scheduleAnswer(null, 5, day0)!; // due tomorrow, interval 1
+    const first = scheduleAnswer(null, 5, day0)!; // 09:00, due tomorrow, interval 1
     expect(scheduleAnswer(first, 5, at(0, 2))).toBeNull();
     expect(scheduleAnswer(first, 4, at(0, 11))).toBeNull();
-    // twelve hours on, half of a one-day interval has passed
-    expect(scheduleAnswer(first, 5, at(0, 12))?.state.interval).toBe(6);
+    // the same lesson again at nine at night: half of a one-day interval has
+    // passed, but it is still the same day, so it is massed repetition
+    expect(isSpacedReview(first, at(0, 12))).toBe(false);
+    expect(scheduleAnswer(first, 5, at(0, 12))).toBeNull();
+    expect(scheduleAnswer(first, 5, at(0, 14, 59))).toBeNull();
+  });
+
+  it('the next calendar day counts, once half the interval has passed', () => {
+    const first = scheduleAnswer(null, 5, day0)!;
+    // midnight UTC, fifteen hours on
+    expect(scheduleAnswer(first, 5, at(0, 15))?.state.interval).toBe(6);
+    // a late-evening lesson replayed just after midnight is a new day, but not
+    // half a day later: still not spaced
+    const late = scheduleAnswer(null, 5, at(0, 14))!; // 23:00
+    expect(scheduleAnswer(late, 5, at(0, 16))).toBeNull(); // 01:00 next day
+    expect(scheduleAnswer(late, 5, at(1, 2))?.state.interval).toBe(6); // 11:00 next day
+  });
+
+  it('the day is the learner’s, not UTC’s', () => {
+    const first = scheduleAnswer(null, 5, day0)!; // 09:00 UTC
+    // Los Angeles: 02:00 on the 8th, then 17:00 on the 8th — same day
+    expect(scheduleAnswer(first, 5, at(0, 15), 'America/Los_Angeles')).toBeNull();
+    // …and its own midnight, 07:00 UTC on the 9th, starts the next one
+    expect(scheduleAnswer(first, 5, at(0, 22), 'America/Los_Angeles')?.state.interval).toBe(6);
+    // Tokyo: 18:00 on the 8th, then 06:00 on the 9th — a night between them
+    expect(scheduleAnswer(first, 5, at(0, 12), 'Asia/Tokyo')?.state.interval).toBe(6);
+  });
+
+  it('judges the day by when the item was last answered, as stored', () => {
+    const item: Scheduled = {
+      state: { repetitions: 1, interval: 1, easiness: DEFAULT_EASINESS },
+      dueAt: at(1),
+      lastReviewedAt: day0,
+    };
+    expect(isSpacedReview(item, at(0, 13))).toBe(false);
+    expect(isSpacedReview({ ...item, lastReviewedAt: null }, at(0, 13))).toBe(false);
+    expect(isSpacedReview(item, at(0, 15))).toBe(true);
   });
 
   it('a not-yet-due practice item does not stretch the interval', () => {
