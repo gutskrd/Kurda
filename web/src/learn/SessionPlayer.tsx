@@ -249,7 +249,8 @@ export function SessionPlayer({
         <div className="lesson-stage">
           {reask && <p className="lesson-badge">{t('lesson.secondTry')}</p>}
           <ExerciseView
-            key={state.index}
+            // each turn starts afresh — a second try too
+            key={`exercise-${state.index}`}
             exercise={ex}
             dialect={exDialect}
             locked={state.status === 'feedback'}
@@ -268,7 +269,7 @@ export function SessionPlayer({
               )}
             </div>
           )}
-          {feedback && <FeedbackPanel key={state.index} feedback={feedback} dialect={exDialect} onContinue={next} />}
+          {feedback && <FeedbackPanel key={`feedback-${state.index}`} feedback={feedback} dialect={exDialect} onContinue={next} />}
           <p className="lesson-saved">{t('lesson.savedAsYouGo')}</p>
         </div>
       ) : results ? (
