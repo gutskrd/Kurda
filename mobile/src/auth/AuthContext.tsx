@@ -7,6 +7,7 @@ import { describeError } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
 import { createTokenStorage } from './storage';
+import type { AgeStopKind } from './birthMonth';
 
 export interface SessionUser {
   id: string;
@@ -23,6 +24,22 @@ export interface SessionUser {
   profilePhotoUrl: string | null;
   /** Whether the user has proven ownership of their email (KUR-014). */
   emailVerified: boolean;
+  /**
+   * No birth month on record (a Google or Apple sign-up, or an account from
+   * before it was asked): the app asks once before anything else. Absent on
+   * older responses, which reads as "nothing to ask".
+   */
+  birthDateRequired?: boolean;
+  /** 13–17 today, as the server works it out (/me only) */
+  minor?: boolean;
+  /** takes part in the weekly leagues (/me only) */
+  leaguesEnabled?: boolean;
+}
+
+/** A failed request, with the server's code when it sent one. */
+export interface AuthFailure {
+  message: string;
+  code?: string;
 }
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
@@ -34,6 +51,11 @@ interface AuthContextValue {
   /** API origin, used to derive the realtime WebSocket URL (KUR-054). */
   baseUrl: string;
   login(email: string, password: string): Promise<string | null>;
+  /**
+   * Resolves to the failure, or null on success. The code rides along because
+   * one refusal is not a message to show under a form: UNDER_MINIMUM_AGE
+   * replaces the form with an explanation.
+   */
   register(input: {
     email: string;
     username: string;
@@ -47,7 +69,19 @@ interface AuthContextValue {
      * on the web. The browser has always sent it.
      */
     locale?: Locale;
-  }): Promise<string | null>;
+    /** asked on the form with no default; the server refuses under 13 */
+    birthYear: number;
+    birthMonth: number;
+  }): Promise<AuthFailure | null>;
+  /** Re-read the signed-in account (after answering the birth month question). */
+  refreshUser(): Promise<void>;
+  /**
+   * Set when an answer stopped at age, for as long as the app is open: the
+   * explanation stays instead of handing back a form that invites a different
+   * year. 'closed' also signs out — the server has just closed the account.
+   */
+  ageStop: AgeStopKind | null;
+  stopForAge(kind: AgeStopKind): Promise<void>;
   /**
    * Sign in (or create an account) with a provider identity token (KUR-276).
    * The native flow (e.g. Sign in with Apple) obtains the token; we hand it to
@@ -103,6 +137,7 @@ export function AuthProvider({
   const { t } = useI18n();
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [ageStop, setAgeStop] = useState<AgeStopKind | null>(null);
 
   const client = useMemo(
     () =>
@@ -170,9 +205,23 @@ export function AuthProvider({
         ...input,
         acceptTerms: true,
       });
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
       await applyAuth(res.data);
       return null;
+    },
+    refreshUser: async () => {
+      const me = await client.get<{ user: SessionUser }>('/me');
+      if (me.ok) setUser(me.data.user);
+    },
+    ageStop,
+    stopForAge: async (kind) => {
+      setAgeStop(kind);
+      if (kind === 'closed') {
+        // the account is gone and its tokens with it
+        await storage.clear();
+        setUser(null);
+        setStatus('signedOut');
+      }
     },
     oauthSignIn: async (provider, idToken) => {
       const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken });

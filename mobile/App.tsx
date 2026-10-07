@@ -18,6 +18,8 @@ import type { RootNavigation, RootStackParamList } from './src/navigation/rootSt
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
+import { BirthDatePromptScreen } from './src/screens/auth/BirthDatePromptScreen';
+import { AgeStopScreen } from './src/screens/auth/AgeStopScreen';
 import { CivakScreen } from './src/feed/CivakScreen';
 import { SavedScreen } from './src/feed/SavedScreen';
 import { EditProfileScreen } from './src/profile/EditProfileScreen';
@@ -400,11 +402,22 @@ function SignedInRoot() {
 }
 
 function Root() {
-  const { status, user } = useAuth();
+  const { status, user, ageStop } = useAuth();
   const onboarding = useOnboarding();
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
+  }
+
+  // An answer that stopped at age — no account made, or one just closed —
+  // leaves only the explanation for as long as the app is open: no sign-up
+  // form to try a different year on.
+  if (status === 'signedOut' && ageStop) {
+    return (
+      <Entrance>
+        <AgeStopScreen kind={ageStop} />
+      </Entrance>
+    );
   }
 
   if (status === 'signedOut') {
@@ -437,6 +450,17 @@ function Root() {
     return (
       <Entrance>
         <VerifyEmailScreen />
+      </Entrance>
+    );
+  }
+
+  // Then the birth month, asked once of an account that has none (a Google or
+  // Apple sign-up, or one from before it was asked): what the app lets the
+  // account do depends on the answer.
+  if (user?.birthDateRequired === true) {
+    return (
+      <Entrance>
+        <BirthDatePromptScreen />
       </Entrance>
     );
   }

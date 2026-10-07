@@ -5,7 +5,7 @@ import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -24,6 +24,8 @@ interface StandingRow {
   isSelf: boolean;
 }
 interface LeagueView {
+  /** not taking part — their choice, or a minor who has not chosen; absent on older responses */
+  optedOut?: boolean;
   tier: string;
   weekKey: string;
   rank: number;
@@ -128,6 +130,15 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   );
 
   useFocusEffect(useCallback(() => load(0), [load]));
+
+  /** The way back in, one tap from where the table would be (Settings has the other). */
+  const [joining, setJoining] = useState(false);
+  const join = useCallback(async () => {
+    setJoining(true);
+    const res = await client.patch('/me', { leaguesEnabled: true });
+    setJoining(false);
+    if (res.ok) load(0);
+  }, [client, load]);
   // live countdown
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60_000);
@@ -184,7 +195,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
           onRetry={() => load(0)}
         >
           {tab === 'league' ? (
-            <LeagueTab league={league} />
+            <LeagueTab league={league} joining={joining} onJoin={() => void join()} />
           ) : scope === 'country' && board?.country == null ? (
             <Centered>
               <Icon name="globe" size={48} tone="secondary" />
@@ -207,11 +218,25 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
-function LeagueTab({ league }: { league: LeagueView | null }) {
+function LeagueTab({ league, joining, onJoin }: { league: LeagueView | null; joining: boolean; onJoin: () => void }) {
   const { locale } = useI18n();
   const { colors } = useTheme();
   const { t } = useI18n();
   if (!league) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.noLeague')}</Text></Centered>;
+  /*
+   * Out of the leagues: no ladder, no table, and nothing that reads as missing
+   * out. Said once, with the way in; the leaderboards tab is untouched.
+   */
+  if (league.optedOut) {
+    return (
+      <Centered>
+        <Icon name="trophy" size={48} tone="secondary" />
+        <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t('leagues.optedOut.title')}</Text>
+        <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.optedOut.body')}</Text>
+        <ClayButton label={t('leagues.optedOut.join')} busy={joining} onPress={onJoin} style={styles.join} />
+      </Centered>
+    );
+  }
   const meta = tierMeta(league.tier);
   const total = league.standings.length;
   const self = league.standings.find((s) => s.isSelf);
@@ -353,4 +378,5 @@ const styles = StyleSheet.create({
   score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   ctaText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
   dim: { textAlign: 'center' },
+  join: { marginTop: spacing.sm, alignSelf: 'stretch' },
 });

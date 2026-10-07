@@ -15,15 +15,18 @@ import {
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
+import { BirthMonthFields } from '../../auth/BirthMonthFields';
+import { birthMonthOf, EMPTY_BIRTH_MONTH } from '../../auth/birthMonth';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
-  const { register } = useAuth();
+  const { register, stopForAge } = useAuth();
   const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [birth, setBirth] = useState(EMPTY_BIRTH_MONTH);
   const [errors, setErrors] = useState<Record<string, string | null | undefined>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -33,12 +36,14 @@ export function RegisterScreen({ navigation }: Props) {
     const emailError = validateEmail(email);
     const usernameError = validateUsername(username);
     const passwordError = validatePassword(password);
+    const chosen = birthMonthOf(birth);
     setErrors({
       email: emailError ? t(FIELD_ERROR_COPY[emailError], FIELD_ERROR_VARS) : null,
       username: usernameError ? t(FIELD_ERROR_COPY[usernameError], FIELD_ERROR_VARS) : null,
       password: passwordError ? t(FIELD_ERROR_COPY[passwordError], FIELD_ERROR_VARS) : null,
+      birth: chosen ? null : t('age.required'),
     });
-    if (emailError || usernameError || passwordError) return;
+    if (emailError || usernameError || passwordError || !chosen) return;
 
     setBusy(true);
     setFormError(null);
@@ -51,9 +56,13 @@ export function RegisterScreen({ navigation }: Props) {
       // already speak it. The browser has always sent this; the phone asked
       // the question, remembered the answer locally, and never told the server
       locale,
+      ...chosen,
     });
     setBusy(false);
-    if (error) setFormError(error);
+    // under 13 no account was made: the explanation replaces the form (the
+    // app root shows it), and stays for as long as the app is open
+    if (error?.code === 'UNDER_MINIMUM_AGE') void stopForAge('refused');
+    else if (error) setFormError(error.message);
   };
 
   return (
@@ -94,6 +103,7 @@ export function RegisterScreen({ navigation }: Props) {
       {!errors.password ? (
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(PASSWORD_RULES_KEY, FIELD_ERROR_VARS)}</Text>
       ) : null}
+      <BirthMonthFields value={birth} onChange={setBirth} error={errors.birth} disabled={busy} />
       <SubmitButton label={busy ? t('auth.register.submitting') : t('auth.register.submit')} busy={busy} onPress={submit} />
       <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('auth.register.terms')}</Text>
       <LinkText
