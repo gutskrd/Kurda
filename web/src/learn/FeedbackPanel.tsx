@@ -68,11 +68,12 @@ export function FeedbackPanel({
   }, []);
 
   // Enter goes on from anywhere but another control: from the panel, or from
-  // the page after a click elsewhere
+  // the page after a click elsewhere — but not from a dialog (the Tips) open
+  // over the lesson
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Enter' || e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
-      if ((e.target as HTMLElement | null)?.closest?.('button, a, input, textarea, select, [contenteditable]')) return;
+      if ((e.target as HTMLElement | null)?.closest?.('button, a, input, textarea, select, [contenteditable], [role="dialog"]')) return;
       e.preventDefault();
       onContinue();
     };

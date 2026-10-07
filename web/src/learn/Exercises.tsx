@@ -88,7 +88,8 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
   useEffect(() => {
     if (locked || busy) return;
     const onKey = (e: KeyboardEvent): void => {
-      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable]')) return;
+      // not while typing somewhere, and not from inside a dialog (the Tips) over the lesson
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable], [role="dialog"]')) return;
       const n = Number(e.key);
       if (Number.isInteger(n) && n >= 1 && n <= options.length) {
         e.preventDefault();

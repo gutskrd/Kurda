@@ -545,4 +545,26 @@ describe('Tips', () => {
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('takes no answer, and goes on from no feedback, from a key pressed while the Tips are open', async () => {
+    serve({ 'POST /sessions/s1/answers': right });
+    play(
+      { sessionId: 's1', exercises: [{ id: 'mc', type: 'multiple_choice', options: ['a', 'b'] }, typed('t', 'apple')], answered: {} },
+      { grammarMd: '# Silavkirin' },
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Tips' }));
+    await userEvent.keyboard('1');
+    expect(sent('answers')).toHaveLength(0);
+    await act(async () => {
+      await userEvent.keyboard('{Escape}');
+    });
+
+    await userEvent.keyboard('2');
+    await screen.findByRole('region', { name: 'Feedback' });
+    await userEvent.click(screen.getByRole('button', { name: 'Tips' }));
+    await userEvent.keyboard('{Enter}');
+    // still on the feedback behind the dialog
+    expect(screen.getByRole('region', { name: 'Feedback' })).toBeInTheDocument();
+    expect(screen.queryByText('apple')).not.toBeInTheDocument();
+  });
 });
