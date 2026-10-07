@@ -1291,7 +1291,7 @@ export const es: Catalogue = {
   'profile.stat.longestStreak': 'Racha más larga',
   'profile.stat.daysLearned': 'Días de aprendizaje',
   'profile.stat.freezes': 'Congeladores de racha',
-  'profile.freezeHint': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido.',
+  'profile.freezeHint': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido. Puedes guardar solo uno a la vez.',
   'settings.leagues.title': 'Ligas semanales',
   'settings.leagues.help': 'Una liga te clasifica cada semana junto a hasta 30 estudiantes más según los XP que ganas. Es opcional, y tu progreso cuenta igual en ambos casos.',
   'settings.leagues.toggle': 'Participar en las ligas semanales',

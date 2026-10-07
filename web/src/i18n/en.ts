@@ -1377,7 +1377,7 @@ export const en = {
   'profile.stat.longestStreak': 'Longest streak',
   'profile.stat.daysLearned': 'Days learned',
   'profile.stat.freezes': 'Streak freezes',
-  'profile.freezeHint': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day.',
+  'profile.freezeHint': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day. You can hold one at a time.',
   'settings.leagues.title': 'Weekly leagues',
   'settings.leagues.help': 'A league ranks you each week against up to 30 other learners by the XP you earn. It’s optional, and your progress counts the same either way.',
   'settings.leagues.toggle': 'Take part in weekly leagues',

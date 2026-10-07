@@ -1300,7 +1300,7 @@ export const ku: Catalogue = {
   'profile.stat.longestStreak': 'Rêzeya herî dirêj',
   'profile.stat.daysLearned': 'Rojên fêrbûnê',
   'profile.stat.freezes': 'Cemidandina rêzê',
-  'profile.freezeHint': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire.',
+  'profile.freezeHint': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire. Tu dikarî tenê yekê li cem xwe bihêlî.',
   'settings.leagues.title': 'Lîgên heftane',
   'settings.leagues.help': 'Lîg her hefte te bi heta 30 fêrxwazên din re li gorî XP-ya te rêz dike. Ne mecbûrî ye; pêşketina te her wekî xwe tê hesibandin.',
   'settings.leagues.toggle': 'Beşdarî lîgên heftane bibe',

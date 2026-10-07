@@ -1291,7 +1291,7 @@ export const fr: Catalogue = {
   'profile.stat.longestStreak': 'Plus longue série',
   'profile.stat.daysLearned': 'Jours d’apprentissage',
   'profile.stat.freezes': 'Gels de série',
-  'profile.freezeHint': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué.',
+  'profile.freezeHint': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué. Tu peux en garder un seul à la fois.',
   'settings.leagues.title': 'Ligues hebdomadaires',
   'settings.leagues.help': 'Une ligue te classe chaque semaine parmi 30 autres apprenants au plus, selon les XP que tu gagnes. Elle est facultative, et tes progrès comptent pareil dans les deux cas.',
   'settings.leagues.toggle': 'Participer aux ligues hebdomadaires',

@@ -1291,7 +1291,7 @@ export const nl: Catalogue = {
   'profile.stat.longestStreak': 'Langste reeks',
   'profile.stat.daysLearned': 'Leerdagen',
   'profile.stat.freezes': 'Reeksbevriezingen',
-  'profile.freezeHint': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag.',
+  'profile.freezeHint': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag. Je kunt er één tegelijk bewaren.',
   'settings.leagues.title': 'Wekelijkse competities',
   'settings.leagues.help': 'Een competitie zet je elke week tussen maximaal 30 andere leerlingen op volgorde van de XP die je verdient. Meedoen is vrijwillig, en je voortgang telt in beide gevallen hetzelfde.',
   'settings.leagues.toggle': 'Meedoen aan wekelijkse competities',
