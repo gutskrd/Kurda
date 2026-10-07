@@ -1298,4 +1298,5 @@ export const nl: Catalogue = {
   'leagues.optedOut.title': 'Je doet niet mee aan een competitie',
   'leagues.optedOut.body': 'Competities zijn vrijwillig. Je XP, je reeks en je voortgang tellen in beide gevallen hetzelfde.',
   'leagues.optedOut.join': 'Meedoen aan competities',
+  'leagues.unnamed': 'Een leerling',
 };

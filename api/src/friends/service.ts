@@ -4,7 +4,7 @@ import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
-import { isNotKnownAdultUser, notKnownAdultSql } from '../users/age.js';
+import { isNotKnownAdultUser, notKnownAdultSql, shownToSql } from '../users/age.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
@@ -357,26 +357,36 @@ export class FriendService {
    * `total` rides along on the page through `count(*) OVER ()`, so "and 328
    * more" costs no second query and is the true number rather than the length
    * of whatever happened to arrive.
+   *
+   * `viewer` is who is looking — the owner (the default) or, on somebody's
+   * profile, anyone at all, null when signed out. Someone else's list leaves
+   * out every friend who is a minor or whose age is not on record yet, unless
+   * the viewer is that friend or one of their friends (users/age.ts
+   * `shownToSql`): a list of an adult's friends was a way to find the minors
+   * among them, signed in or not. The count leaves them out too, so it never
+   * says that somebody is missing.
    */
   async list(
     user: string,
     publicUrl: PublicUrl = () => null,
     limit: number = FRIENDS_PAGE_MAX,
     offset = 0,
+    viewer: string | null = user,
   ): Promise<{ total: number; friends: FriendSummary[] }> {
     const rows = await this.pool.query<FriendRow & { total: number }>(
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at,
               count(*) OVER ()::int AS total FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
+          AND ($4::uuid = $1 OR ${shownToSql('u', '$4::uuid')})
         ORDER BY u.username
         LIMIT $2 OFFSET $3`,
-      [user, Math.min(Math.max(limit, 1), FRIENDS_PAGE_MAX), Math.max(offset, 0)],
+      [user, Math.min(Math.max(limit, 1), FRIENDS_PAGE_MAX), Math.max(offset, 0), viewer],
     );
     const now = new Date();
     // a page past the end carries no row to hold the count, and a bare 0 there
     // would say the list is empty when it is only finished
-    const total = rows.rows[0]?.total ?? (offset > 0 ? await this.activeFriendCount(user) : 0);
+    const total = rows.rows[0]?.total ?? (offset > 0 ? await this.activeFriendCount(user, viewer) : 0);
     return { total, friends: rows.rows.map((r) => toFriendSummary(r, publicUrl, now)) };
   }
 
@@ -388,12 +398,13 @@ export class FriendService {
    * still occupying a slot is the answer you want. This one has to agree with
    * a page, or the heading contradicts the list underneath it.
    */
-  private async activeFriendCount(user: string): Promise<number> {
+  private async activeFriendCount(user: string, viewer: string | null): Promise<number> {
     const r = await this.pool.query<{ n: number }>(
       `SELECT count(*)::int n FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
-        WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL`,
-      [user],
+        WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
+          AND ($2::uuid = $1 OR ${shownToSql('u', '$2::uuid')})`,
+      [user, viewer],
     );
     return r.rows[0]!.n;
   }

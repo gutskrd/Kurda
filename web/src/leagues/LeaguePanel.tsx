@@ -7,8 +7,9 @@ import { RankList, RankRow } from '../ui/RankRow';
 import { Button } from '../components/Button';
 
 interface StandingRow {
-  userId: string;
-  username: string;
+  /** null for a member the server does not name to you (a minor you are not friends with) */
+  userId: string | null;
+  username: string | null;
   weeklyXp: number;
   rank: number;
   isSelf: boolean;
@@ -115,13 +116,13 @@ export function LeaguePanel(): React.JSX.Element | null {
         <p className="muted">{t('leagues.noLeague')}</p>
       ) : (
         <RankList>
-          {league.standings.map((row) => {
+          {league.standings.map((row, i) => {
             const zone = zoneFor(row.rank, total, league.promoteCount, league.demoteCount);
             return (
               <RankRow
-                key={row.userId}
+                key={row.userId ?? `unnamed-${i}`}
                 rank={row.rank}
-                name={row.isSelf ? t('games.you') : row.username}
+                name={row.isSelf ? t('games.you') : (row.username ?? t('leagues.unnamed'))}
                 score={`${row.weeklyXp.toLocaleString()} ${t('rankings.unit.xp')}`}
                 me={row.isSelf}
                 zone={zone === 'safe' ? undefined : zone}

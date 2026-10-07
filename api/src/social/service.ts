@@ -209,11 +209,13 @@ export class SocialService {
               COALESCE(r.rating, 1000) AS rating,
               (r.user_id IS NOT NULL) AS has_rating,
               -- competition ranking, matching the leaderboard: strictly higher
-              -- ratings place above, and shadow-flagged cheats are not counted
+              -- ratings place above, and shadow-flagged cheats are not counted,
+              -- nor minors, who are not on the public board either
               (SELECT count(*)::int + 1
                  FROM player_ratings r2 JOIN users u2 ON u2.id = r2.user_id
                 WHERE r2.rating > COALESCE(r.rating, 1000)
                   AND u2.deleted_at IS NULL
+                  AND NOT ${notKnownAdultSql('u2')}
                   AND NOT EXISTS (
                     SELECT 1 FROM cheat_reviews cr
                      WHERE cr.user_id = u2.id AND cr.shadow_flagged = true

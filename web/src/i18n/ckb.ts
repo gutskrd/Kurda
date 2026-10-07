@@ -1301,4 +1301,5 @@ export const ckb: Catalogue = {
   'leagues.optedOut.title': 'لە هیچ لیگێکدا نیت',
   'leagues.optedOut.body': 'لیگەکان ناچاری نین. XP و زنجیرە و پێشکەوتنت هەر وەک خۆیان دەژمێردرێن.',
   'leagues.optedOut.join': 'بەشداری لیگەکان بکە',
+  'leagues.unnamed': 'فێرخوازێک',
 };

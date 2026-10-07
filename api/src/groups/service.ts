@@ -4,7 +4,7 @@ import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
-import { isMinorUser, isNotKnownAdultUser } from '../users/age.js';
+import { isMinorUser, isNotKnownAdultUser, shownToSql } from '../users/age.js';
 import { canonicalPair } from '../friends/pair.js';
 
 /**
@@ -247,6 +247,18 @@ export class GroupService {
     await this.pool.query(`DELETE FROM groups WHERE id = $1`, [groupId]);
   }
 
+  /**
+   * A group with its roster, for any signed-in viewer.
+   *
+   * The roster names a minor (or an account whose age is not on record yet)
+   * only to the people already around them: themselves, their friends, and the
+   * other members of an invite-only group they are in — a group someone they
+   * chose put them in. Anyone else reading any group's roster, which takes no
+   * more than its id, sees the adults only (users/age.ts `shownToSql`) — and
+   * no `ownerId` either when the owner is one they may not see, or the id
+   * would name the one person the roster leaves out. `memberCount` stays the
+   * group's real size, the number every list of groups shows.
+   */
   async get(
     groupId: string,
     viewerId: string,
@@ -254,17 +266,27 @@ export class GroupService {
   ): Promise<Group & { members: GroupMember[]; myRole: Role | null }> {
     const g = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null;
-    }>(`SELECT id, name, description, privacy, owner_id, archived_at FROM groups WHERE id = $1`, [groupId]);
+      n: number;
+    }>(
+      `SELECT id, name, description, privacy, owner_id, archived_at,
+              (SELECT count(*)::int FROM group_members x WHERE x.group_id = groups.id) AS n
+         FROM groups WHERE id = $1`,
+      [groupId],
+    );
     const grp = g.rows[0];
     if (!grp) throw new AppError('GROUP_NOT_FOUND', 404, 'no such group');
+    const myRole = await this.roleOf(this.pool, groupId, viewerId);
+    const seesEveryone = myRole !== null && grp.privacy === 'invite';
+    const ownerShown = seesEveryone || (await this.ownerShownTo(grp.owner_id, viewerId));
     const members = await this.pool.query<{
       user_id: string; username: string; role: string; joined_at: Date;
       profile_photo_key: string | null; selected_avatar_key: string | null;
     }>(
       `SELECT m.user_id, u.username, m.role, m.joined_at, u.profile_photo_key, u.selected_avatar_key
          FROM group_members m JOIN users u ON u.id = m.user_id
-        WHERE m.group_id = $1 ORDER BY m.role = 'owner' DESC, m.role = 'moderator' DESC, u.username`,
-      [groupId],
+        WHERE m.group_id = $1 AND ($3::boolean OR ${shownToSql('u', '$2::uuid')})
+        ORDER BY m.role = 'owner' DESC, m.role = 'moderator' DESC, u.username`,
+      [groupId, viewerId, seesEveryone],
     );
     const list: GroupMember[] = members.rows.map((r) => ({
       userId: r.user_id,
@@ -278,12 +300,22 @@ export class GroupService {
       name: grp.name,
       description: grp.description,
       privacy: grp.privacy,
-      ownerId: grp.owner_id,
+      ownerId: ownerShown ? grp.owner_id : null,
       archivedAt: grp.archived_at ? grp.archived_at.toISOString() : null,
-      memberCount: list.length,
+      memberCount: grp.n,
       members: list,
-      myRole: list.find((m) => m.userId === viewerId)?.role ?? null,
+      myRole,
     };
+  }
+
+  /** Whether a group's owner may be named to `viewerId` (see `get`); no owner hides nobody. */
+  private async ownerShownTo(ownerId: string | null, viewerId: string): Promise<boolean> {
+    if (ownerId === null) return true;
+    const r = await this.pool.query<{ shown: boolean }>(
+      `SELECT ${shownToSql('u', '$2::uuid')} AS shown FROM users u WHERE u.id = $1`,
+      [ownerId, viewerId],
+    );
+    return r.rows[0]?.shown ?? false;
   }
 
   /** Groups the user belongs to. */
@@ -313,12 +345,16 @@ export class GroupService {
     const rows = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null; n: number;
     }>(
-      `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, g.archived_at,
+      // an open group's owner is a known adult (a minor's are handed on when
+      // their age is recorded), but one whose age is not on record yet is not named
+      `SELECT g.id, g.name, g.description, g.privacy,
+              CASE WHEN o.id IS NULL OR ${shownToSql('o', '$2::uuid')} THEN g.owner_id END AS owner_id,
+              g.archived_at,
               (SELECT count(*)::int FROM group_members x WHERE x.group_id = g.id) AS n
-         FROM groups g
+         FROM groups g LEFT JOIN users o ON o.id = g.owner_id
         WHERE g.privacy = 'open' AND g.archived_at IS NULL
         ORDER BY n DESC LIMIT $1`,
-      [limit],
+      [limit, viewerId],
     );
     return rows.rows.map((r) => ({
       id: r.id, name: r.name, description: r.description, privacy: r.privacy, ownerId: r.owner_id,

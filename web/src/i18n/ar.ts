@@ -1303,4 +1303,5 @@ export const ar: Catalogue = {
   'leagues.optedOut.title': 'أنت لست في دوري',
   'leagues.optedOut.body': 'الدوريات اختيارية. تُحتسب نقاط XP والتتابع وتقدّمك بالطريقة نفسها في الحالتين.',
   'leagues.optedOut.join': 'انضم إلى الدوريات',
+  'leagues.unnamed': 'متعلّم',
 };

@@ -106,6 +106,7 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
       sort: q.sort === 'popular' ? 'popular' : 'newest',
       limit: q.limit ? Number(q.limit) : undefined,
       offset: q.offset ? Number(q.offset) : undefined,
+      viewerId: req.user?.id ?? null,
     });
     // a wall of pictures with no names is not a community; the byline comes
     // from the same loader the library uses, so one person has one face
@@ -113,7 +114,7 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
   });
 
   app.get('/images/:id', { schema: { params: idParam } }, async (req, reply) => {
-    const post = await images.get((req.params as { id: string }).id);
+    const post = await images.get((req.params as { id: string }).id, req.user?.id ?? null);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
     return withUrl((await images.withAuthors([post], publicUrl))[0]!);
   });

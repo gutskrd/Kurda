@@ -1298,4 +1298,5 @@ export const es: Catalogue = {
   'leagues.optedOut.title': 'No estás en ninguna liga',
   'leagues.optedOut.body': 'Las ligas son opcionales. Tus XP, tu racha y tu progreso cuentan igual en ambos casos.',
   'leagues.optedOut.join': 'Unirse a las ligas',
+  'leagues.unnamed': 'Un estudiante',
 };

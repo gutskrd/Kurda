@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
+import { writtenForSql } from '../users/age.js';
 
 // posts and comments both re-export these, so a caller importing from here
 // still gets the one shared loader
@@ -81,6 +82,8 @@ export interface ListFilters {
   sort?: 'newest' | 'popular';
   limit?: number;
   offset?: number;
+  /** who is reading: a minor's posts are listed only for them and their friends */
+  viewerId?: string | null;
 }
 
 export type CreateResult = { ok: true; post: LibraryPost } | { ok: false; reason: 'invalid' };
@@ -97,6 +100,11 @@ interface Row {
  * optional; admins and signed-in users author, guests only read. Text is
  * control-char-stripped on input (#108, newlines preserved for poems); web/admin
  * surfaces escape on render. Removal is soft (retained for moderation #285).
+ *
+ * What a minor publishes is read by them and their friends only: to anyone
+ * else, signed in or not, it is not there (users/age.ts `writtenForSql`). A
+ * public byline was a way to find minors, and a stranger's reply a way to
+ * reach one. It is worked out when read, so it ends by itself at 18.
  */
 export class LibraryService {
   constructor(private readonly pool: pg.Pool) {}
@@ -133,8 +141,8 @@ export class LibraryService {
   /** Browse published posts (paginated, filterable). */
 
   async list(filters: ListFilters = {}): Promise<LibraryPost[]> {
-    const conds = [`status = 'published'`];
-    const params: unknown[] = [];
+    const params: unknown[] = [filters.viewerId ?? null];
+    const conds = [`status = 'published'`, writtenForSql('library_posts.author_id', '$1::uuid')];
     if (filters.type) { params.push(filters.type); conds.push(`type = $${params.length}`); }
     if (filters.language) { params.push(filters.language); conds.push(`language = $${params.length}`); }
     if (filters.authorId) { params.push(filters.authorId); conds.push(`author_id = $${params.length}`); }
@@ -151,11 +159,12 @@ export class LibraryService {
   }
 
   /** Read a single published post and increment its view count. */
-  async get(id: string): Promise<LibraryPost | null> {
+  async get(id: string, viewerId: string | null = null): Promise<LibraryPost | null> {
     const res = await this.pool.query<Row>(
       `UPDATE library_posts SET view_count = view_count + 1
-       WHERE id = $1 AND status = 'published' RETURNING *`,
-      [id],
+       WHERE id = $1 AND status = 'published' AND ${writtenForSql('library_posts.author_id', '$2::uuid')}
+       RETURNING *`,
+      [id, viewerId],
     );
     return res.rows[0] ? toPost(res.rows[0]) : null;
   }

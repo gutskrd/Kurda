@@ -11,7 +11,7 @@ import {
   type CohortMember,
   type Tier,
 } from './league-logic.js';
-import { notKnownAdultSql } from '../users/age.js';
+import { notKnownAdultSql, shownToSql } from '../users/age.js';
 
 /**
  * SQL: the user behind `alias` takes part in leagues right now — their own
@@ -52,8 +52,14 @@ export interface ActivityPublisher {
 }
 
 export interface StandingRow {
-  userId: string;
-  username: string;
+  /**
+   * null for somebody the viewer may not be shown by name: a minor who chose
+   * to take part, or an account whose age is not on record yet, unless they
+   * are the viewer's friend. Their row, place and XP stay — the table decides
+   * who moves up, so it cannot have holes — but nothing that identifies them.
+   */
+  userId: string | null;
+  username: string | null;
   weeklyXp: number;
   rank: number;
   isSelf: boolean;
@@ -207,11 +213,15 @@ export class LeagueService {
     // a member who opted out mid-week left the table (leaveThisWeek); one whose
     // default changed under them (an adult account found to be a minor's) is
     // filtered here as well, so nobody is shown who is not taking part
-    const rows = await this.pool.query<{ user_id: string; username: string }>(
-      `SELECT m.user_id, u.username FROM league_members m JOIN users u ON u.id = m.user_id
+    // thirty people who mostly do not know each other read this table, so a
+    // minor in it is named only to themselves and their friends (`shownToSql`)
+    const rows = await this.pool.query<{ user_id: string; username: string; shown: boolean }>(
+      `SELECT m.user_id, u.username, ${shownToSql('u', '$2::uuid')} AS shown
+         FROM league_members m JOIN users u ON u.id = m.user_id
         WHERE m.cohort_id = $1 AND ${inLeaguesSql('u')}`,
-      [cohortId],
+      [cohortId, userId],
     );
+    const shown = new Set(rows.rows.filter((r) => r.shown).map((r) => r.user_id));
     const members: Array<CohortMember & { username: string }> = await Promise.all(
       rows.rows.map(async (r) => ({
         userId: r.user_id,
@@ -222,8 +232,8 @@ export class LeagueService {
     const ranked = resolveStandings(members);
     const byId = new Map(members.map((m) => [m.userId, m.username]));
     const standings: StandingRow[] = ranked.map((s) => ({
-      userId: s.userId,
-      username: byId.get(s.userId) ?? '',
+      userId: shown.has(s.userId) ? s.userId : null,
+      username: shown.has(s.userId) ? (byId.get(s.userId) ?? '') : null,
       weeklyXp: s.weeklyXp,
       rank: s.rank,
       isSelf: s.userId === userId,

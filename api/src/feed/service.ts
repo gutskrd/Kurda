@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
+import { writtenForSql } from '../users/age.js';
 import {
   EngagementService,
   NO_ENGAGEMENT,
@@ -16,6 +17,12 @@ import {
  * times — same authors, same comments, same shape of card. Merging them is not
  * only tidier to look at: a poem posted this morning was invisible to anyone who
  * happened to be browsing pictures.
+ *
+ * Every query here goes through the same rule as the library and the picture
+ * wall: what a minor posts is shown to them and their friends only
+ * (users/age.ts `writtenForSql`). The wall, somebody's profile tabs and the
+ * cards somebody liked are all ways of reading the same posts, and a byline on
+ * any of them would be a way to find a minor.
  */
 
 /**
@@ -112,6 +119,7 @@ const FEED_SQL = `
      WHERE l.status = 'published'
        AND ($1 = 'all' OR $1 = 'gotin')
        AND ($2::text IS NULL OR l.type = $2)
+       AND ${writtenForSql('l.author_id', '$5::uuid')}
     UNION ALL
     SELECT 'image', i.id, i.author_id, i.category, NULL, i.caption,
            i.image_media_id, i.created_at, i.view_count, i.comment_count
@@ -119,6 +127,7 @@ const FEED_SQL = `
      WHERE i.status = 'published'
        AND ($1 = 'all' OR $1 = 'dimen')
        AND ($2::text IS NULL OR i.category = $2)
+       AND ${writtenForSql('i.author_id', '$5::uuid')}
   ) AS wall
   ORDER BY at DESC, id DESC
   LIMIT $3 OFFSET $4`;
@@ -135,12 +144,12 @@ const BY_IDS_SQL = `
            NULL::text AS media, COALESCE(l.published_at, l.created_at) AS at,
            l.view_count, l.comment_count
       FROM library_posts l
-     WHERE l.status = 'published' AND l.id = ANY($1)
+     WHERE l.status = 'published' AND l.id = ANY($1) AND ${writtenForSql('l.author_id', '$3::uuid')}
     UNION ALL
     SELECT 'image', i.id, i.author_id, i.category, NULL, i.caption,
            i.image_media_id, i.created_at, i.view_count, i.comment_count
       FROM image_posts i
-     WHERE i.status = 'published' AND i.id = ANY($2)
+     WHERE i.status = 'published' AND i.id = ANY($2) AND ${writtenForSql('i.author_id', '$3::uuid')}
   ) AS chosen`;
 
 /**
@@ -156,12 +165,12 @@ const BY_AUTHOR_SQL = `
            NULL::text AS media, COALESCE(l.published_at, l.created_at) AS at,
            l.view_count, l.comment_count
       FROM library_posts l
-     WHERE l.status = 'published' AND l.author_id = $1
+     WHERE l.status = 'published' AND l.author_id = $1 AND ${writtenForSql('l.author_id', '$4::uuid')}
     UNION ALL
     SELECT 'image', i.id, i.author_id, i.category, NULL, i.caption,
            i.image_media_id, i.created_at, i.view_count, i.comment_count
       FROM image_posts i
-     WHERE i.status = 'published' AND i.author_id = $1
+     WHERE i.status = 'published' AND i.author_id = $1 AND ${writtenForSql('i.author_id', '$4::uuid')}
   ) AS mine
   ORDER BY at DESC, id DESC
   LIMIT $2 OFFSET $3`;
@@ -189,7 +198,7 @@ export class FeedService {
     const offset = Math.max(0, opts.offset ?? 0);
     const publicUrl = opts.publicUrl ?? (() => null);
 
-    const rows = await this.pool.query<FeedRow>(FEED_SQL, [resolved.section, resolved.dbType, limit, offset]);
+    const rows = await this.pool.query<FeedRow>(FEED_SQL, [resolved.section, resolved.dbType, limit, offset, viewerId]);
     return this.hydrate(rows.rows, viewerId, publicUrl);
   }
 
@@ -235,6 +244,7 @@ export class FeedService {
     const rows = await this.pool.query<FeedRow>(BY_IDS_SQL, [
       refs.filter((r) => r.targetType === 'library').map((r) => r.targetId),
       refs.filter((r) => r.targetType === 'image').map((r) => r.targetId),
+      opts.viewerId ?? null,
     ]);
 
     const items = await this.hydrate(rows.rows, opts.viewerId ?? null, publicUrl);
@@ -254,7 +264,7 @@ export class FeedService {
     const offset = Math.max(0, opts.offset ?? 0);
     const publicUrl = opts.publicUrl ?? (() => null);
 
-    const rows = await this.pool.query<FeedRow>(BY_AUTHOR_SQL, [authorId, limit, offset]);
+    const rows = await this.pool.query<FeedRow>(BY_AUTHOR_SQL, [authorId, limit, offset, opts.viewerId ?? null]);
     return this.hydrate(rows.rows, opts.viewerId ?? null, publicUrl);
   }
 

@@ -1307,4 +1307,5 @@ export const ku: Catalogue = {
   'leagues.optedOut.title': 'Tu ne di lîgekê de yî',
   'leagues.optedOut.body': 'Lîg ne mecbûrî ne. XP, rêze û pêşketina te her wekî xwe tên hesibandin.',
   'leagues.optedOut.join': 'Beşdarî lîgan bibe',
+  'leagues.unnamed': 'Fêrxwazek',
 };

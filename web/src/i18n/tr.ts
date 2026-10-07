@@ -1298,4 +1298,5 @@ export const tr: Catalogue = {
   'leagues.optedOut.title': 'Bir ligde değilsin',
   'leagues.optedOut.body': 'Ligler isteğe bağlıdır. XP’n, serin ve ilerlemen her iki durumda da aynı sayılır.',
   'leagues.optedOut.join': 'Liglere katıl',
+  'leagues.unnamed': 'Bir öğrenci',
 };

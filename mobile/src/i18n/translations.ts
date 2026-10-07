@@ -73,6 +73,7 @@ export type TranslationKey =
   | 'leagues.optedOut.title'
   | 'leagues.optedOut.body'
   | 'leagues.optedOut.join'
+  | 'leagues.unnamed'
   | 'age.stop.welcomeBack'
   | 'common.back'
   | 'nav.learn'
@@ -1871,6 +1872,7 @@ const en: Catalog = {
   'leagues.optedOut.title': 'You’re not in a league',
   'leagues.optedOut.body': 'Leagues are optional. Your XP, streak and progress count the same either way.',
   'leagues.optedOut.join': 'Join the leagues',
+  'leagues.unnamed': 'A learner',
   'age.stop.welcomeBack': 'You’re welcome back when you’re 13.',
 };
 
@@ -2794,6 +2796,7 @@ const ku: Catalog = {
   'leagues.optedOut.title': 'Tu ne di lîgekê de yî',
   'leagues.optedOut.body': 'Lîg ne mecbûrî ne. XP, rêze û pêşketina te her wekî xwe tên hesibandin.',
   'leagues.optedOut.join': 'Beşdarî lîgan bibe',
+  'leagues.unnamed': 'Fêrxwazek',
   'age.stop.welcomeBack': 'Dema tu bibî 13 salî, dîsa were.',
 };
 
@@ -3717,6 +3720,7 @@ const de: Catalog = {
   'leagues.optedOut.title': 'Du bist in keiner Liga',
   'leagues.optedOut.body': 'Ligen sind freiwillig. Deine XP, deine Serie und dein Fortschritt zählen in beiden Fällen gleich.',
   'leagues.optedOut.join': 'Bei den Ligen mitmachen',
+  'leagues.unnamed': 'Jemand, der lernt',
   'age.stop.welcomeBack': 'Mit 13 bist du herzlich willkommen.',
 };
 
@@ -4640,6 +4644,7 @@ const es: Catalog = {
   'leagues.optedOut.title': 'No estás en ninguna liga',
   'leagues.optedOut.body': 'Las ligas son opcionales. Tus XP, tu racha y tu progreso cuentan igual en ambos casos.',
   'leagues.optedOut.join': 'Unirse a las ligas',
+  'leagues.unnamed': 'Un estudiante',
   'age.stop.welcomeBack': 'Vuelve cuando tengas 13 años.',
 };
 
@@ -5563,6 +5568,7 @@ const tr: Catalog = {
   'leagues.optedOut.title': 'Bir ligde değilsin',
   'leagues.optedOut.body': 'Ligler isteğe bağlıdır. XP’n, serin ve ilerlemen her iki durumda da aynı sayılır.',
   'leagues.optedOut.join': 'Liglere katıl',
+  'leagues.unnamed': 'Bir öğrenci',
   'age.stop.welcomeBack': '13 yaşına geldiğinde yine bekleriz.',
 };
 
@@ -6486,6 +6492,7 @@ const ar: Catalog = {
   'leagues.optedOut.title': 'أنت لست في دوري',
   'leagues.optedOut.body': 'الدوريات اختيارية. تُحتسب نقاط XP والتتابع وتقدّمك بالطريقة نفسها في الحالتين.',
   'leagues.optedOut.join': 'انضم إلى الدوريات',
+  'leagues.unnamed': 'متعلّم',
   'age.stop.welcomeBack': 'يسعدنا أن تعود عندما تبلغ 13 عامًا.',
 };
 
@@ -7409,6 +7416,7 @@ const fr: Catalog = {
   'leagues.optedOut.title': 'Tu n’es dans aucune ligue',
   'leagues.optedOut.body': 'Les ligues sont facultatives. Tes XP, ta série et tes progrès comptent pareil dans les deux cas.',
   'leagues.optedOut.join': 'Rejoindre les ligues',
+  'leagues.unnamed': 'Un apprenant',
   'age.stop.welcomeBack': 'Reviens quand tu auras 13 ans.',
 };
 
@@ -8332,6 +8340,7 @@ const nl: Catalog = {
   'leagues.optedOut.title': 'Je doet niet mee aan een competitie',
   'leagues.optedOut.body': 'Competities zijn vrijwillig. Je XP, je reeks en je voortgang tellen in beide gevallen hetzelfde.',
   'leagues.optedOut.join': 'Meedoen aan competities',
+  'leagues.unnamed': 'Een leerling',
   'age.stop.welcomeBack': 'Kom terug als je 13 bent.',
 };
 
@@ -9256,6 +9265,7 @@ const ckb: Catalog = {
   'leagues.optedOut.title': 'لە هیچ لیگێکدا نیت',
   'leagues.optedOut.body': 'لیگەکان ناچاری نین. XP و زنجیرە و پێشکەوتنت هەر وەک خۆیان دەژمێردرێن.',
   'leagues.optedOut.join': 'بەشداری لیگەکان بکە',
+  'leagues.unnamed': 'فێرخوازێک',
   'age.stop.welcomeBack': 'کاتێک بوویت بە 13 ساڵ، بەخێربێیتەوە.',
 };
 

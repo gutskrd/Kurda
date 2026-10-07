@@ -17,8 +17,9 @@ import { formatCompact } from '../i18n/format';
 import { countdown, tierMeta, zoneFor, type Zone } from './format';
 
 interface StandingRow {
-  userId: string;
-  username: string;
+  /** null for a member the server does not name to you (a minor you are not friends with) */
+  userId: string | null;
+  username: string | null;
   weeklyXp: number;
   rank: number;
   isSelf: boolean;
@@ -246,7 +247,7 @@ function LeagueTab({ league, joining, onJoin }: { league: LeagueView | null; joi
   return (
     <FlatList
       data={league.standings}
-      keyExtractor={(s) => s.userId}
+      keyExtractor={(s, i) => s.userId ?? `unnamed-${i}`}
       contentContainerStyle={styles.list}
       ListHeaderComponent={
         <View style={styles.leagueHead}>
@@ -272,8 +273,8 @@ function LeagueTab({ league, joining, onJoin }: { league: LeagueView | null; joi
             ]}
           >
             <Text style={[styles.rank, { color: colors.textSecondary }]}>{item.rank}</Text>
-            <InitialsAvatar name={item.username} id={item.userId} size={28} />
-            <Text style={[styles.name, { color: colors.textPrimary }, item.isSelf && styles.nameSelf]} numberOfLines={1}>{item.username}</Text>
+            <InitialsAvatar name={item.username ?? t('leagues.unnamed')} id={item.userId ?? `unnamed-${item.rank}`} size={28} />
+            <Text style={[styles.name, { color: colors.textPrimary }, item.isSelf && styles.nameSelf]} numberOfLines={1}>{item.username ?? t('leagues.unnamed')}</Text>
             <Text style={[styles.score, { color: colors.textPrimary }]}>{formatCompact(item.weeklyXp, locale)} XP</Text>
           </View>
         );

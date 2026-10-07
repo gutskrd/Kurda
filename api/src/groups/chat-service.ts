@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
-import { birthDateRequired, minorSql } from '../users/age.js';
+import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
 import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
@@ -137,16 +137,22 @@ export class GroupChatService {
     await this.requireMember(groupId, userId);
     // grant this member access to the live room for the WS join
     await this.hub.invite(room(groupId), userId, ROOM_TTL).catch(() => undefined);
+    // An open group is strangers. Anything a minor said in one before their
+    // age was known (they are taken out when it is recorded) is shown to their
+    // friends only, as their posts are (users/age.ts `writtenForSql`); in an
+    // invite-only group everybody was put there by somebody they chose.
     const rows = await this.pool.query<{
       id: string; sender_id: string; username: string; profile_photo_key: string | null;
       selected_avatar_key: string | null; body: string; created_at: Date; deleted_at: Date | null;
     }>(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
               m.body, m.created_at, m.deleted_at
-         FROM group_messages m JOIN users u ON u.id = m.sender_id
-        WHERE m.group_id = $1 ${before ? 'AND m.created_at < $3::timestamptz' : ''}
+         FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
+        WHERE m.group_id = $1
+          AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
+          ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $2`,
-      before ? [groupId, limit, before] : [groupId, limit],
+      before ? [groupId, limit, userId, before] : [groupId, limit, userId],
     );
     return rows.rows
       .map((r) => ({
