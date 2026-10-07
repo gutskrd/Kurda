@@ -46,9 +46,23 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
   const call = (who: Account, method: 'GET' | 'PATCH', url: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: { authorization: `Bearer ${who.token}` }, remoteAddress: '10.141.0.1' });
 
+  // deliberately changed: leaving used to delete the week's row, so this
+  // asked whether there was one; the row is now kept, marked as left, and
+  // being in the week's table means a row that is not
   const inWeek = async (userId: string, weekKey = weekStart(new Date())): Promise<boolean> =>
-    ((await pool.query(`SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2`, [userId, weekKey]))
-      .rowCount ?? 0) > 0;
+    ((
+      await pool.query(`SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2 AND left_at IS NULL`, [
+        userId,
+        weekKey,
+      ])
+    ).rowCount ?? 0) > 0;
+  const cohortOf = async (userId: string): Promise<string | undefined> =>
+    (
+      await pool.query<{ cohort_id: string }>(
+        `SELECT cohort_id FROM league_members WHERE user_id = $1 AND week_key = $2`,
+        [userId, weekStart(new Date())],
+      )
+    ).rows[0]?.cohort_id;
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -101,6 +115,33 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     const view = (await call(returner, 'GET', '/me/league')).json();
     expect(view.optedOut).toBe(false);
     expect(await inWeek(returner.id)).toBe(true);
+  });
+
+  it('coming back the same week is a return to the same table, not a new draw', async () => {
+    const hopper = await signUp('hopper');
+    await leagues.onXp(hopper.id);
+    const first = await cohortOf(hopper.id);
+    expect(first).toBeDefined();
+
+    // a fresh, empty cohort of the same tier is open, the first place a new
+    // arrival would go
+    const tier = (await pool.query<{ tier: string }>(`SELECT tier FROM league_cohorts WHERE id = $1`, [first])).rows[0]!.tier;
+    const empty = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO league_cohorts (week_key, tier, created_at) VALUES ($1, $2, now() - interval '30 days') RETURNING id`,
+        [weekStart(new Date()), tier],
+      )
+    ).rows[0]!.id;
+    try {
+      await call(hopper, 'PATCH', '/me', { leaguesEnabled: false });
+      expect(await inWeek(hopper.id)).toBe(false);
+      await call(hopper, 'PATCH', '/me', { leaguesEnabled: true });
+      const back = (await call(hopper, 'GET', '/me/league')).json();
+      expect(back.standings.some((s: { isSelf: boolean }) => s.isSelf)).toBe(true);
+      expect(await cohortOf(hopper.id)).toBe(first);
+    } finally {
+      await pool.query(`DELETE FROM league_cohorts WHERE id = $1`, [empty]);
+    }
   });
 
   it('a minor is out by default, and can choose to join', async () => {

@@ -29,16 +29,21 @@ export function inLeaguesSql(alias: string): string {
  * Leaving is immediate rather than at the week's end: somebody who has said
  * they do not want to be ranked should not stay on thirty other people's
  * screens until Sunday. Earlier weeks are history and stay as they were.
+ *
+ * Their place is kept, marked as left (`left_at`), rather than deleted: coming
+ * back the same week returns them to the same cohort (`ensureMembership`). A
+ * fresh placement would let two taps swap a strong cohort for an empty one
+ * late in the week, and a top-ten finish there pays a promotion.
  */
 export async function leaveThisWeek(
   executor: Pick<pg.Pool, 'query'>,
   userId: string,
   now: Date = new Date(),
 ): Promise<void> {
-  await executor.query(`DELETE FROM league_members WHERE user_id = $1 AND week_key = $2`, [
-    userId,
-    weekStart(now),
-  ]);
+  await executor.query(
+    `UPDATE league_members SET left_at = now() WHERE user_id = $1 AND week_key = $2 AND left_at IS NULL`,
+    [userId, weekStart(now)],
+  );
 }
 
 /** Grants Gems for a rule/refId; injected so leagues stay decoupled (KUR-068). */
@@ -122,14 +127,24 @@ export class LeagueService {
     return r.rows[0]?.taking_part ?? false;
   }
 
-  /** Assign the user to a cohort for the current week if not already in one. */
+  /**
+   * Assign the user to a cohort for the current week if not already in one —
+   * or, for one who left this week and is back, return them to the one they
+   * left (see `leaveThisWeek`).
+   */
   async ensureMembership(userId: string, now: Date = new Date()): Promise<{ cohortId: string; tier: Tier }> {
     const weekKey = weekStart(now);
-    const existing = await this.pool.query<{ cohort_id: string; tier: string }>(
-      `SELECT cohort_id, tier FROM league_members WHERE week_key = $1 AND user_id = $2`,
+    const existing = await this.pool.query<{ cohort_id: string; tier: string; left: boolean }>(
+      `SELECT cohort_id, tier, left_at IS NOT NULL AS left FROM league_members WHERE week_key = $1 AND user_id = $2`,
       [weekKey, userId],
     );
     if (existing.rows[0]) {
+      if (existing.rows[0].left) {
+        await this.pool.query(`UPDATE league_members SET left_at = NULL WHERE week_key = $1 AND user_id = $2`, [
+          weekKey,
+          userId,
+        ]);
+      }
       const t = existing.rows[0].tier;
       return { cohortId: existing.rows[0].cohort_id, tier: isTier(t) ? t : 'bronze' };
     }
@@ -218,7 +233,7 @@ export class LeagueService {
     const rows = await this.pool.query<{ user_id: string; username: string; shown: boolean }>(
       `SELECT m.user_id, u.username, ${shownToSql('u', '$2::uuid')} AS shown
          FROM league_members m JOIN users u ON u.id = m.user_id
-        WHERE m.cohort_id = $1 AND ${inLeaguesSql('u')}`,
+        WHERE m.cohort_id = $1 AND m.left_at IS NULL AND ${inLeaguesSql('u')}`,
       [cohortId, userId],
     );
     const shown = new Set(rows.rows.filter((r) => r.shown).map((r) => r.user_id));
@@ -274,7 +289,7 @@ export class LeagueService {
     // only those still taking part are ranked, promoted or demoted
     const members = await this.pool.query<{ user_id: string }>(
       `SELECT m.user_id FROM league_members m JOIN users u ON u.id = m.user_id
-        WHERE m.cohort_id = $1 AND ${inLeaguesSql('u')}`,
+        WHERE m.cohort_id = $1 AND m.left_at IS NULL AND ${inLeaguesSql('u')}`,
       [cohortId],
     );
     const withXp: CohortMember[] = await Promise.all(

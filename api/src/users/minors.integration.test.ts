@@ -351,10 +351,12 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         [theirs, owned, alone].map((id): [string, string] => [`group:${id}`, user.id]).sort(),
       );
       expect((await call(user, 'GET', '/me/notification-prefs')).json()).toMatchObject({ streak: false, friends: false });
-      const league = await pool.query(`SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2`, [
-        user.id,
-        weekStart(new Date()),
-      ]);
+      // out of this week's table (the row is kept, marked as left, so that
+      // choosing to come back returns them to the same one)
+      const league = await pool.query(
+        `SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2 AND left_at IS NULL`,
+        [user.id, weekStart(new Date())],
+      );
       expect(league.rowCount).toBe(0);
 
       // the stranger's request is gone; the one they sent is still theirs
