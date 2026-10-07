@@ -415,6 +415,51 @@ describe.skipIf(!DATABASE_URL)('minors are on no list a stranger can read (integ
     });
   });
 
+  describe("an adult's public profile", () => {
+    it('does not name a minor who sent a gift worn on it, nor show a minor’s post as a favourite', async () => {
+      const sku = `ul-bg-${suffix}`;
+      await pool.query(
+        `INSERT INTO shop_items (sku, name, category, currency, price, asset_key) VALUES ($1, 'Çiya', 'background', 'zer', 0, 'bg/ul.png')`,
+        [sku],
+      );
+      await pool.query(`INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1, $2, 'gift')`, [pal.id, sku]);
+      await pool.query(`INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency) VALUES ($1, $2, $3, 0, 'zer')`, [
+        minor.id,
+        pal.id,
+        sku,
+      ]);
+      const poem = (
+        await pool.query<{ id: string }>(
+          `INSERT INTO library_posts (author_id, author_role, type, title, body, status, published_at)
+           VALUES ($1, 'user', 'poem', 'Helbesta min', 'Çiya û çem', 'published', now()) RETURNING id`,
+          [minor.id],
+        )
+      ).rows[0]!.id;
+      await pool.query(`UPDATE users SET equipped_background_sku = $2, favorite_poem_id = $3 WHERE id = $1`, [
+        pal.id,
+        sku,
+        poem,
+      ]);
+      try {
+        for (const viewer of [null, stranger]) {
+          const profile = (await call(viewer, 'GET', `/users/${pal.id}`)).json();
+          expect(profile.private).toBe(false);
+          expect(profile.background.giftedBy).toBeNull();
+          expect(profile.favoritePoem).toBeNull();
+          expect(mentions(profile, minor.id)).toBe(false);
+        }
+        const byMinor = (await call(minor, 'GET', `/users/${pal.id}`)).json();
+        expect(byMinor.background.giftedBy).toMatchObject({ id: minor.id });
+        expect(byMinor.favoritePoem).toMatchObject({ id: poem });
+      } finally {
+        await pool.query(`UPDATE users SET equipped_background_sku = NULL, favorite_poem_id = NULL WHERE id = $1`, [pal.id]);
+        await pool.query(`DELETE FROM gifts WHERE sku = $1`, [sku]);
+        await pool.query(`DELETE FROM user_entitlements WHERE sku = $1`, [sku]);
+        await pool.query(`DELETE FROM shop_items WHERE sku = $1`, [sku]);
+      }
+    });
+  });
+
   describe("a profile's tags", () => {
     it('show only the main tag when the profile itself is private to the reader', async () => {
       const tag = (
