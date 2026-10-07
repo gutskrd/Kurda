@@ -7,7 +7,7 @@
  * then check each rule from the outside — what an adult stranger can and cannot
  * do to reach a minor.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { isMinor } from '@kurda/shared';
@@ -302,11 +302,54 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       await new LeagueService(pool).ensureMembership(user.id);
       expect((await call(asker, 'POST', '/friends/requests', { userId: user.id })).json().outcome).toBe('requested');
       expect((await call(user, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
+      // analytics switched on, and open groups: one an adult started, one they
+      // started that somebody else joined, one nobody joined, and an
+      // invite-only one of their own
+      expect((await call(user, 'POST', '/me/consent', { analytics: true })).statusCode).toBe(200);
+      const group = async (owner: Account, name: string, privacy: 'open' | 'invite') =>
+        (await call(owner, 'POST', '/groups', { name: `${name} ${suffix}`, privacy })).json().id as string;
+      const theirs = await group(asker, 'Late theirs', 'open');
+      const owned = await group(user, 'Late owned', 'open');
+      const alone = await group(user, 'Late alone', 'open');
+      const closed = await group(user, 'Late closed', 'invite');
+      expect((await call(user, 'POST', `/groups/${theirs}/join`)).statusCode).toBe(200);
+      expect((await call(asked, 'POST', `/groups/${owned}/join`)).statusCode).toBe(200);
+      await call(user, 'GET', `/groups/${theirs}/chat`); // a live-room invite, as the app gets one
       await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [user.id]);
+      const revoked: Array<[string, string]> = [];
+      const revoke = vi.spyOn(app.realtime, 'revoke').mockImplementation(async (room, who) => {
+        revoked.push([room, who]);
+      });
 
       const res = await call(user, 'POST', '/me/birth-date', bornYearsAgo(14));
+      revoke.mockRestore();
       expect(res.statusCode).toBe(200);
-      expect(res.json().user).toMatchObject({ minor: true, profileVisibility: 'friends', leaguesEnabled: false });
+      expect(res.json().user).toMatchObject({
+        minor: true,
+        profileVisibility: 'friends',
+        leaguesEnabled: false,
+        analyticsConsent: false,
+      });
+
+      // out of every open group, with the one somebody joined handed to them
+      // and the empty one archived; the invite-only one is still theirs
+      const member = await pool.query<{ group_id: string }>(`SELECT group_id FROM group_members WHERE user_id = $1`, [
+        user.id,
+      ]);
+      expect(member.rows.map((r) => r.group_id)).toEqual([closed]);
+      const groups = await pool.query<{ id: string; owner_id: string | null; archived: boolean }>(
+        `SELECT id, owner_id, archived_at IS NOT NULL AS archived FROM groups WHERE id = ANY($1::uuid[])`,
+        [[owned, alone, closed]],
+      );
+      const byId = new Map(groups.rows.map((g) => [g.id, g]));
+      expect(byId.get(owned)).toMatchObject({ owner_id: asked.id, archived: false });
+      expect(byId.get(alone)).toMatchObject({ owner_id: null, archived: true });
+      expect(byId.get(closed)).toMatchObject({ owner_id: user.id, archived: false });
+      expect((await call(asked, 'GET', `/groups/${owned}`)).json().myRole).toBe('owner');
+      // and out of those groups' live chat
+      expect(revoked.sort()).toEqual(
+        [theirs, owned, alone].map((id): [string, string] => [`group:${id}`, user.id]).sort(),
+      );
       expect((await call(user, 'GET', '/me/notification-prefs')).json()).toMatchObject({ streak: false, friends: false });
       const league = await pool.query(`SELECT 1 FROM league_members WHERE user_id = $1 AND week_key = $2`, [
         user.id,

@@ -381,22 +381,51 @@ export class GroupService {
     const orphans = await this.pool.query<{ id: string }>(
       `SELECT id FROM groups WHERE owner_id IS NULL AND archived_at IS NULL`,
     );
-    let healed = 0;
-    for (const g of orphans.rows) {
-      const candidate = await this.pool.query<{ user_id: string }>(
-        `SELECT user_id FROM group_members WHERE group_id = $1
-          ORDER BY role = 'moderator' DESC, joined_at ASC LIMIT 1`,
-        [g.id],
-      );
-      const next = candidate.rows[0]?.user_id;
-      if (next) {
-        await this.pool.query(`UPDATE group_members SET role = 'owner' WHERE group_id = $1 AND user_id = $2`, [g.id, next]);
-        await this.pool.query(`UPDATE groups SET owner_id = $2 WHERE id = $1`, [g.id, next]);
-      } else {
-        await this.pool.query(`UPDATE groups SET archived_at = now() WHERE id = $1`, [g.id]);
-      }
-      healed += 1;
-    }
-    return healed;
+    for (const g of orphans.rows) await handOnGroup(this.pool, g.id);
+    return orphans.rows.length;
   }
+}
+
+/**
+ * Give a group with no owner a new one: the oldest moderator, else the oldest
+ * member, else the group is archived. Runs in the caller's transaction when
+ * given one. Used for an owner whose account was deleted, and for one taken
+ * out of an open group because they turned out to be a minor.
+ */
+export async function handOnGroup(executor: Pick<pg.Pool, 'query'>, groupId: string): Promise<void> {
+  const candidate = await executor.query<{ user_id: string }>(
+    `SELECT user_id FROM group_members WHERE group_id = $1
+      ORDER BY role = 'moderator' DESC, joined_at ASC LIMIT 1`,
+    [groupId],
+  );
+  const next = candidate.rows[0]?.user_id;
+  if (next) {
+    await executor.query(`UPDATE group_members SET role = 'owner' WHERE group_id = $1 AND user_id = $2`, [groupId, next]);
+    await executor.query(`UPDATE groups SET owner_id = $2 WHERE id = $1`, [groupId, next]);
+  } else {
+    await executor.query(`UPDATE groups SET owner_id = NULL, archived_at = now() WHERE id = $1`, [groupId]);
+  }
+}
+
+/**
+ * Take a user out of every open group they are in, handing on any they own,
+ * and say which groups they left so the caller can close their live rooms.
+ *
+ * For the day an account is found to be a minor's: minors cannot be in an
+ * open group, and one left in it would stay on the roster everybody reads, or
+ * be the owner of a group whose chat they can no longer open.
+ */
+export async function leaveOpenGroups(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<string[]> {
+  const left = await executor.query<{ group_id: string; role: string }>(
+    `DELETE FROM group_members m USING groups g
+      WHERE m.group_id = g.id AND g.privacy = 'open' AND m.user_id = $1
+      RETURNING m.group_id, m.role`,
+    [userId],
+  );
+  for (const row of left.rows) {
+    if (row.role !== 'owner') continue;
+    await executor.query(`UPDATE groups SET owner_id = NULL WHERE id = $1 AND owner_id = $2`, [row.group_id, userId]);
+    await handOnGroup(executor, row.group_id);
+  }
+  return left.rows.map((r) => r.group_id);
 }

@@ -358,7 +358,10 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   );
 
   const gdpr = new GdprService(app.db, { storage: app.storage, jobs: app.jobs, log: app.log });
-  const birthMonths = new BirthMonthService(app.db, gdpr);
+  // read when it is called: the realtime gateway is set up after these routes
+  const birthMonths = new BirthMonthService(app.db, gdpr, {
+    revoke: (room, userId) => app.realtime.revoke(room, userId),
+  });
 
   /**
    * The one-time birth month answer, for an account that has none (Google and

@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { z } from 'zod';
 import {
   EARLIEST_BIRTH_YEAR,
+  isBelowConsentAge,
   isBelowMinimumAge,
   isMinor,
   isPlausibleBirthMonth,
@@ -11,6 +12,13 @@ import {
 import { AppError } from '../plugins/errors.js';
 import type { GdprService } from '../gdpr/service.js';
 import { inLeaguesSql, leaveThisWeek } from '../leagues/service.js';
+import { leaveOpenGroups } from '../groups/service.js';
+import { groupRoom } from '../groups/chat-service.js';
+
+/** Takes a user's place in a live room back (the realtime gateway's `revoke`). */
+export interface RoomRevoker {
+  revoke(roomId: string, userId: string): Promise<void>;
+}
 
 export const birthYearSchema = z.number().int().min(EARLIEST_BIRTH_YEAR).max(9999);
 export const birthMonthSchema = z.number().int().min(1).max(12);
@@ -56,6 +64,7 @@ export class BirthMonthService {
   constructor(
     private readonly pool: pg.Pool,
     private readonly gdpr: Pick<GdprService, 'closeNow'>,
+    private readonly rooms?: RoomRevoker,
   ) {}
 
   async set(userId: string, birth: BirthMonth, now: Date = new Date()): Promise<void> {
@@ -65,6 +74,7 @@ export class BirthMonthService {
 
     const client = await this.pool.connect();
     let closeAccount = false;
+    let leftGroups: string[] = [];
     try {
       await client.query('BEGIN');
       const current = await client.query<{ birth_year: number | null }>(
@@ -87,7 +97,12 @@ export class BirthMonthService {
           birth.year,
           birth.month,
         ]);
-        if (isMinor(birth, now)) await applyMinorDefaults(client, userId, now);
+        if (isMinor(birth, now)) leftGroups = await applyMinorDefaults(client, userId, now);
+        // analytics consent given before we knew needed a parent's below 16,
+        // which POST /me/consent now asks for; until then it is off
+        if (isBelowConsentAge(birth, now)) {
+          await client.query(`UPDATE users SET analytics_consent = false WHERE id = $1`, [userId]);
+        }
       }
       await client.query('COMMIT');
     } catch (err) {
@@ -100,6 +115,11 @@ export class BirthMonthService {
     if (closeAccount) {
       await this.gdpr.closeNow(userId, 'under_minimum_age');
       throw underMinimumAge({ accountClosed: true });
+    }
+    // out of the open groups' live chat too, not only their member lists; a
+    // missed revoke leaves a socket that the next history read cannot renew
+    for (const groupId of leftGroups) {
+      await this.rooms?.revoke(groupRoom(groupId), userId).catch(() => undefined);
     }
   }
 }
@@ -115,12 +135,20 @@ export class BirthMonthService {
  *
  * Friend requests other people sent them while we did not know go too: a minor
  * cannot be sent one, so none is theirs to accept. Requests they sent stay.
+ *
+ * And they leave every open group: a minor cannot be in one, and staying would
+ * keep them on a roster strangers read, or as the owner of a group whose chat
+ * they can no longer open. A group they own is handed on as when an owner's
+ * account is deleted (the oldest moderator, else the oldest member, else it is
+ * archived). Returns the groups they left, whose live rooms the caller closes
+ * once this has committed. Invite-only groups stay: somebody they chose put
+ * them there.
  */
 async function applyMinorDefaults(
   executor: Pick<pg.Pool, 'query'>,
   userId: string,
   now: Date,
-): Promise<void> {
+): Promise<string[]> {
   await executor.query(
     `UPDATE users SET profile_visibility = 'friends'
       WHERE id = $1 AND profile_visibility IN ('everyone', 'members')`,
@@ -139,4 +167,5 @@ async function applyMinorDefaults(
     [userId],
   );
   if (!leagues.rows[0]?.taking_part) await leaveThisWeek(executor, userId, now);
+  return leaveOpenGroups(executor, userId);
 }

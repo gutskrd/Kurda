@@ -33,7 +33,9 @@ export interface GroupMessage {
   deleted: boolean;
 }
 
-const room = (groupId: string): string => `group:${groupId}`;
+/** The realtime room a group's chat fans out to. */
+export const groupRoom = (groupId: string): string => `group:${groupId}`;
+const room = groupRoom;
 const ROOM_TTL = 7 * 24 * 60 * 60; // a week
 
 /**
