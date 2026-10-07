@@ -111,15 +111,38 @@ describe.skipIf(!DATABASE_URL)('practice: due count, chosen items, retry (integr
 
   it('counts what practice can serve: due exercises, never saved words or speaking', async () => {
     const player = await register('prdue');
-    expect((await authed(player, 'GET', '/practice/due')).json()).toEqual({ due: 0, available: 0 });
+    expect((await authed(player, 'GET', '/practice/due')).json()).toEqual({ due: 0, available: 0, open: null });
 
     await schedule(player, [ex.tr, ex.sp, `dict:${crypto.randomUUID()}`], -1); // due yesterday
     await schedule(player, [ex.wr], 3); // known, not yet due
     const res = await authed(player, 'GET', '/practice/due');
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ due: 1, available: 2 });
+    expect(res.json()).toEqual({ due: 1, available: 2, open: null });
 
     expect((await authed(null, 'GET', '/practice/due')).statusCode).toBe(401);
+  });
+
+  it('offers the review left unfinished, the latest one, until it is finished or a day old', async () => {
+    const player = await register('propen');
+    await schedule(player, [ex.tr, ex.wr], -1);
+    const first = (await authed(player, 'POST', '/practice/session', { exerciseIds: [ex.tr] })).json().sessionId as string;
+    const second = (await authed(player, 'POST', '/practice/session', { exerciseIds: [ex.wr] })).json().sessionId as string;
+    expect((await authed(player, 'GET', '/practice/due')).json().open).toBe(second);
+
+    // finished: the one before it is the one left open
+    await authed(player, 'POST', `/practice/sessions/${second}/complete`);
+    expect((await authed(player, 'GET', '/practice/due')).json().open).toBe(first);
+
+    // a day old: a new review chooses afresh
+    await pool.query(`UPDATE practice_sessions SET created_at = now() - interval '25 hours' WHERE id = $1`, [first]);
+    expect((await authed(player, 'GET', '/practice/due')).json().open).toBeNull();
+
+    // only the learner's own: somebody else's review, started just now, is not offered
+    const other = await register('propeek');
+    await schedule(other, [ex.tr], -1);
+    const theirs = (await authed(other, 'POST', '/practice/session', { exerciseIds: [ex.tr] })).json().sessionId as string;
+    expect((await authed(player, 'GET', '/practice/due')).json().open).toBeNull();
+    expect((await authed(other, 'GET', '/practice/due')).json().open).toBe(theirs);
   });
 
   it('starts a session of exactly the items asked for, from the learner’s own', async () => {

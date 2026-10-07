@@ -80,7 +80,17 @@ export interface PracticeDue {
   due: number;
   /** every item practice could draw on, due or not; 0 means a session would come back empty */
   available: number;
+  /** a review this learner started recently and has not finished, to go back to; null when there is none */
+  open: string | null;
 }
+
+/**
+ * How long a review left unfinished is offered to go back to — a lesson's
+ * session lasts as long (SESSION_TTL_HOURS in content/sessions.ts). After
+ * that the items it chose may no longer be the ones due, and a new review
+ * chooses afresh.
+ */
+const OPEN_REVIEW_HOURS = 24;
 
 export interface PracticeResults {
   correct: number;
@@ -230,17 +240,32 @@ export class PracticeService {
    * counted as `start` chooses them, so the number a "Review" entry shows is
    * the number a session will find: saved dictionary words and speaking items,
    * which practice cannot serve, are not in it.
+   *
+   * And the review the learner left unfinished, if they started one in the
+   * last day. A lesson is picked up where it stopped because opening it
+   * resumes its session; a review is not opened by anything but its own
+   * address, so without this a learner who left one and came back through
+   * "Review" started another, and the first stayed unfinished — its answers
+   * moved the schedule and never counted for the day.
    */
   async due(userId: string): Promise<PracticeDue> {
-    const res = await this.pool.query<{ due: string; available: string }>(
-      `SELECT count(*) FILTER (WHERE r.due_at <= $2)::text due, count(*)::text available
-       FROM review_items r
-       JOIN exercises e ON e.id::text = r.item_id
-       WHERE r.user_id = $1 AND e.type <> 'speaking'`,
-      [userId, new Date()],
-    );
-    const row = res.rows[0];
-    return { due: Number(row?.due ?? 0), available: Number(row?.available ?? 0) };
+    const [counts, open] = await Promise.all([
+      this.pool.query<{ due: string; available: string }>(
+        `SELECT count(*) FILTER (WHERE r.due_at <= $2)::text due, count(*)::text available
+         FROM review_items r
+         JOIN exercises e ON e.id::text = r.item_id
+         WHERE r.user_id = $1 AND e.type <> 'speaking'`,
+        [userId, new Date()],
+      ),
+      this.pool.query<{ id: string }>(
+        `SELECT id FROM practice_sessions
+         WHERE user_id = $1 AND completed_at IS NULL AND created_at > now() - make_interval(hours => $2)
+         ORDER BY created_at DESC LIMIT 1`,
+        [userId, OPEN_REVIEW_HOURS],
+      ),
+    ]);
+    const row = counts.rows[0];
+    return { due: Number(row?.due ?? 0), available: Number(row?.available ?? 0), open: open.rows[0]?.id ?? null };
   }
 
   private async loadExercises(ids: string[]): Promise<ExerciseRow[]> {

@@ -38,7 +38,7 @@ export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, mil
     async (req) => practice.view((req.params as { id: string }).id, req.user!.id),
   );
 
-  /** How many items are due, for a "Review" entry to show before one starts. */
+  /** How many items are due, and any review left unfinished, for a "Review" entry to show before one starts. */
   app.get('/practice/due', { preHandler: requireAuth }, async (req) => practice.due(req.user!.id));
 
   /** A second try at an item already answered here: graded, never recorded. */
