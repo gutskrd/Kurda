@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import { Profile } from './Profile';
 import { renderApp, routedFetch } from '../test/utils';
+import { en } from '../i18n/en';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -50,6 +51,37 @@ describe('Profile view (full, read-only)', () => {
     // the edit form / avatar picker are NOT on the view
     expect(screen.queryByLabelText('Display name')).not.toBeInTheDocument();
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+  });
+
+  /**
+   * The streak is the one number a missed day takes to zero. Beside it, the
+   * two that a missed day never takes away, and the freezes learning earns.
+   */
+  it('shows the longest streak and the days learned beside the current streak', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/friends': { friends: [], total: 0 },
+          '/me': {
+            user: {
+              ...meUser,
+              streak: { current: 0, longest: 12, freezes: 1, lastActiveOn: '2026-08-20', daysLearned: 41, freezeProgress: 2, sessionsPerFreeze: 5 },
+            },
+          },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+
+    const row = (label: string) => screen.getByText(label, { selector: '.mkp-info-row .l' }).nextElementSibling?.textContent;
+    expect(row(en['profile.stat.streak'])).toBe('0');
+    expect(row(en['profile.stat.longestStreak'])).toBe('12');
+    expect(row(en['profile.stat.daysLearned'])).toBe('41');
+    expect(row(en['profile.stat.freezes'])).toBe('1');
+    expect(screen.getByText(en['profile.freezeHint'].replace('{count}', '5'))).toBeInTheDocument();
   });
 
   it('renders the equipped background, resolved avatar, premium and level', async () => {

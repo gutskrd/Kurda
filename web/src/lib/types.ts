@@ -34,6 +34,16 @@ export interface SessionUser {
   avatarUrl?: string | null;
   /** the interface language this account chose; absent on older responses */
   locale?: string | null;
+  /**
+   * No birth month on record (a Google/Apple sign-up, or an account from before
+   * it was asked): the app asks once before anything else. Absent on older
+   * responses, which reads as "nothing to ask".
+   */
+  birthDateRequired?: boolean;
+  /** 13–17 today, as the server works it out (/me only) */
+  minor?: boolean;
+  /** takes part in the weekly leagues (/me only) */
+  leaguesEnabled?: boolean;
 }
 
 export interface AuthPayload {
@@ -50,6 +60,11 @@ export interface StreakSummary {
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
+  /** days with a finished lesson or practice session, ever; absent on older responses */
+  daysLearned?: number;
+  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  freezeProgress?: number;
+  sessionsPerFreeze?: number;
 }
 
 /**
@@ -438,6 +453,11 @@ export interface DailyRewardStatus {
   schedule: number[];
   alreadyClaimedToday: boolean;
   cycleDay: number;
+  /**
+   * A lesson or practice session was finished today — what a claim needs.
+   * Absent on older responses, where canClaim alone decides.
+   */
+  learnedToday?: boolean;
 }
 
 /** Result of POST /rewards/daily/claim. */

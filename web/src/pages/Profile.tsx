@@ -94,6 +94,12 @@ export function Profile(): React.JSX.Element {
     levelInfo: me.level,
     xp: me.level?.xp ?? me.xp,
     streakDays: me.streak.current,
+    learning: {
+      longest: me.streak.longest,
+      daysLearned: me.streak.daysLearned ?? 0,
+      freezes: me.streak.freezes,
+      sessionsPerFreeze: me.streak.sessionsPerFreeze ?? 5,
+    },
     bio: me.bio,
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
