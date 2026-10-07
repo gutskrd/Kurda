@@ -36,9 +36,11 @@ const FILTERS: ReadonlyArray<[Filter, string]> = [
  * draft — so an editor can record before a lesson goes live: each item's `say`,
  * the first accepted answer of a translation, writing or listening item, a
  * speaking item's model sentence, and every match-pairs card. A sentence
- * recorded once is sent with every exercise that uses it. Which clients play
- * what is up to them: today only a listening item's clip is played by every
- * app, so the copy here says what is sent, not what is heard.
+ * recorded once is sent with every exercise that uses it — with the exercise,
+ * or once it is answered where hearing it first would give the answer away
+ * (api/src/lessonaudio/delivery.ts). Which clients play what is up to them:
+ * today the mobile app plays only a listening item's clip and the web has no
+ * lesson player, so the copy here says what is sent, not what is heard.
  *
  * "Record next missing" walks the missing items in course order: save one and
  * the next comes up. Anything else can be recorded too, through "Add a phrase".
@@ -169,10 +171,11 @@ export function LessonAudio(): React.JSX.Element {
           <div className="progress-bar" style={{ width: `${done.needed ? (done.recorded / done.needed) * 100 : 0}%` }} />
         </div>
         <p className="subtle la-what">
-          Every Kurdish word and sentence the lessons use, drafts included: each item’s “say”, the first accepted answer of a
-          translation, writing or listening item, a speaking item’s model sentence, and every match-pairs card. One recording is
-          sent with every exercise that uses its sentence, in any lesson. A listening item without a clip of its own uses the
-          recording as its clip, so its lesson cannot be published until the recording is made.
+          Every Kurdish word and sentence the lessons use, up to {LESSON_AUDIO_TEXT_MAX} characters, drafts included: each item’s
+          “say”, the first accepted answer of a translation, writing or listening item, a speaking item’s model sentence, and
+          every match-pairs card. One recording is sent with every exercise that uses its sentence, in any lesson: with the
+          exercise, or once it is answered where hearing it first would give the answer away. A listening item without a clip of
+          its own uses the recording as its clip, so its lesson cannot be published until the recording is made.
         </p>
       </div>
 

@@ -15,7 +15,8 @@ export interface DeliveredAudio {
    * A native speaker saying the item's primary text (`primaryAudioTarget`),
    * sent with the item only when hearing it before answering gives nothing
    * away: on listening and speaking, where hearing it is the exercise, and on
-   * an item whose Kurdish is already in its prompt ("Sê" çend e?). Its
+   * an item whose Kurdish is already in its prompt ("Sê" çend e?), unless a
+   * listening item in the same response plays the same recording. Its
    * presence is what tells a client it may play it straight away. Where the
    * text is the answer — a translation, the right option — it comes back with
    * the grading instead (`modelAudioAfterAnswer`).
@@ -122,9 +123,11 @@ function planFor(type: ExerciseType, payload: unknown): Plan {
  * recording are set, so a listening item keeps its own clip when the studio
  * has none.
  *
- * A batch is one response, which is where URLs could be matched up: a card
- * whose text a listening item in the same batch plays goes without its audio,
- * or the card would name the transcription.
+ * A batch is one response, which is where URLs could be matched up. A
+ * recording that travels beside the text it says — a card, a word the prompt
+ * quotes, a speaking item's sentence — goes without when a listening item in
+ * the same batch plays the same recording, or it would name the
+ * transcription. Such a model still comes with the grading.
  */
 export async function lessonAudioFor(
   db: Executor,
@@ -133,11 +136,17 @@ export async function lessonAudioFor(
   const plans = exercises.map((ex) => planFor(ex.type, ex.payload));
   const heardAsAnswer = new Set(plans.flatMap((plan) => plan.answerBearing));
   const cardKey = (key: string): boolean => !heardAsAnswer.has(key);
+  // a listening item's own model is its clip, which names nothing
+  const modelKey = (plan: Plan): string | null =>
+    plan.primary !== null && plan.modelBeforeAnswer && (plan.answerBearing.includes(plan.primary) || cardKey(plan.primary))
+      ? plan.primary
+      : null;
 
   const keys = new Set<string>();
   for (const plan of plans) {
     if (plan.listening) keys.add(plan.listening);
-    if (plan.primary && plan.modelBeforeAnswer) keys.add(plan.primary);
+    const model = modelKey(plan);
+    if (model) keys.add(model);
     for (const [, key] of plan.shown) if (cardKey(key)) keys.add(key);
   }
   if (keys.size === 0) return plans.map(() => ({}));
@@ -152,7 +161,8 @@ export async function lessonAudioFor(
     const out: DeliveredAudio = {};
     const listening = plan.listening ? urls.get(plan.listening) : undefined;
     if (listening) out.audioUrl = listening;
-    const model = plan.primary && plan.modelBeforeAnswer ? urls.get(plan.primary) : undefined;
+    const modelAt = modelKey(plan);
+    const model = modelAt ? urls.get(modelAt) : undefined;
     if (model) out.modelAudioUrl = model;
     const audio: Record<string, string> = {};
     for (const [text, key] of plan.shown) {

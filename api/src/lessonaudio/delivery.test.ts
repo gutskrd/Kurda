@@ -113,6 +113,22 @@ describe('lessonAudioFor', () => {
     expect(pairs).toEqual({ audio: { Av: URL('av') } });
   });
 
+  it('never lets a model shown beside its text name what a listening item in the same response plays', async () => {
+    const db = fakeDb({ silav: URL('silav'), 'roj baş': URL('roj') });
+    const [listening, quoted, speaking, otherSpeaking] = await lessonAudioFor(db as never, [
+      { type: 'listening', payload: { accepted: ['Silav!'] } },
+      { type: 'multiple_choice', payload: { prompt: '"Silav" çi ye?', options: ['hello', 'thanks'], correctIndex: 0, say: 'Silav' } },
+      { type: 'speaking', payload: { prompt: 'Bêje: Silav', reference: 'Silav' } },
+      { type: 'speaking', payload: { prompt: 'Bêje: Roj baş', reference: 'Roj baş' } },
+    ]);
+    // the listening item's own model is its clip, and names nothing
+    expect(listening).toEqual({ audioUrl: URL('silav'), modelAudioUrl: URL('silav') });
+    // each would put "Silav" beside the clip's URL: they come with the grading instead
+    expect(quoted).toEqual({});
+    expect(speaking).toEqual({});
+    expect(otherSpeaking).toEqual({ modelAudioUrl: URL('roj') });
+  });
+
   it('never sends a URL that a card in the same response pairs with an answer', async () => {
     // practice mixes lessons: the Silav card can sit beside the item whose right option is Silav
     const db = fakeDb({ silav: URL('silav'), îro: URL('iro') });
