@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { answerKey, foldDiacritics } from '@kurda/shared';
+import { answerKey, foldDiacritics, normalizeKurdish } from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
 import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
 
@@ -342,14 +342,49 @@ function checkWriting(payload: WritingPayload, text: string): CheckResult {
   return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
 }
 
+/**
+ * Which of a match-pairs item's texts (one side of it) a submitted text is:
+ * the one it is exactly, else the only one it is under `answerKey`. Null when
+ * it is none of them, or could be more than one.
+ *
+ * Clients send back the cards they were shown, so the exact text normally
+ * decides. `answerKey` is the fallback for a client that re-typed or re-encoded
+ * one (an Arabic kaf for a Kurdish one); it is only trusted when it points at a
+ * single card, because two cards can share a key — "A" and "a" in an alphabet
+ * lesson, or two words that differ only in a final ھ and ە — and a lookup keyed
+ * on it alone let one of those cards overwrite the other, grading a right
+ * matching wrong.
+ */
+function resolveCard(sent: string, cards: string[]): string | null {
+  const exact = normalizeKurdish(sent);
+  if (cards.includes(exact)) return exact;
+  const key = answerKey(sent);
+  const candidates = new Set(cards.filter((card) => answerKey(card) === key));
+  return candidates.size === 1 ? [...candidates][0]! : null;
+}
+
+/**
+ * Right only when every pair the learner made is one of the item's pairs, each
+ * used once, and all of them are made.
+ */
 function checkMatchPairs(
   payload: MatchPairsPayload,
   matches: Array<{ left: string; right: string }>,
 ): CheckResult {
-  const truth = new Map(payload.pairs.map((p) => [answerKey(p.left), answerKey(p.right)]));
+  const pairs = payload.pairs.map((p) => ({ left: normalizeKurdish(p.left), right: normalizeKurdish(p.right) }));
+  const lefts = pairs.map((p) => p.left);
+  const rights = pairs.map((p) => p.right);
+  const unmade = [...pairs];
   const allRight =
-    matches.length === payload.pairs.length &&
-    matches.every((m) => truth.get(answerKey(m.left)) === answerKey(m.right));
+    matches.length === pairs.length &&
+    matches.every((m) => {
+      const left = resolveCard(m.left, lefts);
+      const right = resolveCard(m.right, rights);
+      const i = unmade.findIndex((p) => p.left === left && p.right === right);
+      if (left === null || right === null || i < 0) return false;
+      unmade.splice(i, 1);
+      return true;
+    });
   return { verdict: allRight ? 'correct' : 'wrong', accepted: allRight };
 }
 

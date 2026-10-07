@@ -207,6 +207,87 @@ describe('checkAnswer — match_pairs', () => {
     });
     expect(res.accepted).toBe(false);
   });
+
+  it('rejects one right pair sent twice in place of another', () => {
+    const res = grade('match_pairs', payload, {
+      matches: [
+        { left: 'sêv', right: 'apple' },
+        { left: 'sêv', right: 'apple' },
+        { left: 'nan', right: 'bread' },
+      ],
+    });
+    expect(res.accepted).toBe(false);
+  });
+
+  it('accepts a card sent back in another case, as before', () => {
+    const res = grade('match_pairs', payload, {
+      matches: [
+        { left: 'Sêv', right: 'Apple' },
+        { left: 'av', right: 'water' },
+        { left: 'NAN', right: 'bread' },
+      ],
+    });
+    expect(res).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  /**
+   * Cards the grading key cannot tell apart are still different cards: the
+   * letters h and e, or a capital and a small letter in an alphabet lesson.
+   */
+  it('grades cards that share a grading key by what they are', () => {
+    const letters = {
+      pairs: [
+        { left: 'ھ', right: 'h' },
+        { left: 'ە', right: 'e' },
+      ],
+    };
+    expect(grade('match_pairs', letters, { matches: letters.pairs })).toEqual({ verdict: 'correct', accepted: true });
+    expect(
+      grade('match_pairs', letters, {
+        matches: [
+          { left: 'ھ', right: 'e' },
+          { left: 'ە', right: 'h' },
+        ],
+      }).accepted,
+    ).toBe(false);
+
+    const cases = {
+      pairs: [
+        { left: 'A', right: 'capital' },
+        { left: 'a', right: 'small' },
+      ],
+    };
+    expect(grade('match_pairs', cases, { matches: [...cases.pairs].reverse() })).toEqual({
+      verdict: 'correct',
+      accepted: true,
+    });
+    expect(
+      grade('match_pairs', cases, {
+        matches: [
+          { left: 'A', right: 'small' },
+          { left: 'a', right: 'capital' },
+        ],
+      }).accepted,
+    ).toBe(false);
+
+    // two words that differ only in a final ھ / ە: each card is still itself…
+    const endings = {
+      pairs: [
+        { left: 'خانھ', right: 'one' },
+        { left: 'خانە', right: 'two' },
+      ],
+    };
+    expect(grade('match_pairs', endings, { matches: endings.pairs }).accepted).toBe(true);
+    // …and a re-encoded card that could be either is not guessed at
+    expect(
+      grade('match_pairs', endings, {
+        matches: [
+          { left: 'خانه', right: 'one' },
+          { left: 'خانە', right: 'two' },
+        ],
+      }).accepted,
+    ).toBe(false);
+  });
 });
 
 describe('listening (KUR-035)', () => {
