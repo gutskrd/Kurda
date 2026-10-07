@@ -722,6 +722,8 @@ export const nl: Catalogue = {
   'review.due': 'Nu aan de beurt: {count}',
   'review.none': 'Wat je in lessen beantwoordt, komt hier terug, verspreid over dagen zodat het blijft hangen.',
   'review.notDue': 'Er is nu niets aan de beurt. Je kunt nog steeds oefenen met wat je al kent.',
+  'review.open': 'Je bent halverwege een herhaling gestopt. Je antwoorden tot nu toe zijn bewaard.',
+  'review.continue': 'Verder met herhalen',
   'review.dueFailed': 'Wat aan de beurt is, kon niet worden geladen.',
   'review.start': 'Begin met herhalen',
   'review.practise': 'Oefenen',

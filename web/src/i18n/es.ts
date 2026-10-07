@@ -722,6 +722,8 @@ export const es: Catalogue = {
   'review.due': 'Para repasar ahora: {count}',
   'review.none': 'Lo que respondes en las lecciones vuelve aquí, repartido en días para que se quede.',
   'review.notDue': 'No hay nada pendiente ahora. Aun así puedes practicar lo que ya sabes.',
+  'review.open': 'Dejaste un repaso a medias. Tus respuestas hasta ahora están guardadas.',
+  'review.continue': 'Seguir con el repaso',
   'review.dueFailed': 'No se pudo cargar lo pendiente.',
   'review.start': 'Empezar el repaso',
   'review.practise': 'Practicar',

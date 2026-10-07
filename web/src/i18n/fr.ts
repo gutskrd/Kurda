@@ -722,6 +722,8 @@ export const fr: Catalogue = {
   'review.due': 'À revoir maintenant : {count}',
   'review.none': 'Ce que tu réponds dans les leçons revient ici, réparti sur plusieurs jours pour que ça reste.',
   'review.notDue': 'Rien n’est à revoir pour l’instant. Tu peux quand même t’entraîner sur ce que tu sais.',
+  'review.open': 'Tu as laissé une révision en cours. Tes réponses jusqu’ici sont enregistrées.',
+  'review.continue': 'Reprendre la révision',
   'review.dueFailed': 'Impossible de charger ce qui est à revoir.',
   'review.start': 'Commencer la révision',
   'review.practise': 'S’entraîner',

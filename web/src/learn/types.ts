@@ -74,6 +74,8 @@ export interface EmptyPractice {
 export interface PracticeDue {
   due: number;
   available: number;
+  /** a review started in the last day and left unfinished, to go back to */
+  open?: string | null;
 }
 
 export interface Mistake {

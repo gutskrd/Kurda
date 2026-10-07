@@ -728,6 +728,8 @@ export const ku: Catalogue = {
   'review.due': 'Niha dem hatiye: {count}',
   'review.none': 'Tiştên ku tu di dersan de bersiv didî, li vir dîsa tên, belavî rojan, da ku di bîra te de bimînin.',
   'review.notDue': 'Niha tiştek ne di dema xwe de ye. Tu dikarî dîsa jî tiştên ku dizanî biceribînî.',
+  'review.open': 'Te dubarekirinek di nîvî de hiştiye. Bersivên te yên heta niha tomarkirî ne.',
+  'review.continue': 'Dubarekirinê bidomîne',
   'review.dueFailed': 'Nehat barkirin ka çi di dema xwe de ye.',
   'review.start': 'Dubarekirinê dest pê bike',
   'review.practise': 'Biceribîne',

@@ -141,6 +141,17 @@ describe('Learn', () => {
     expect(within(second).getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
   });
 
+  it('offers a review left part-way through before a new one', async () => {
+    serve({
+      'GET /courses': { courses: [] },
+      'GET /practice/due': { due: 4, available: 9, open: 'p1' },
+    });
+    routes('/app/learn');
+    expect(await screen.findByText('You left a review part-way through. Your answers so far are saved.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Continue review' })).toHaveAttribute('href', '/app/learn/review/p1');
+    expect(screen.queryByRole('link', { name: 'Start review' })).not.toBeInTheDocument();
+  });
+
   it('opens the lesson up next under its own name', async () => {
     serve({
       'GET /courses': { courses: courses.courses.slice(0, 1) },

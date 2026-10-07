@@ -15,7 +15,9 @@ const ALPHABET_TEASER = 'Aa Çç Êê';
 /**
  * Review, before the courses: what is due now, and the way in. The number is
  * the one a session will find (GET /practice/due counts as a session chooses),
- * so "3 due" never opens a review of five.
+ * so "3 due" never opens a review of five. A review left part-way through is
+ * offered first, at its own address, so coming back picks it up rather than
+ * starting another beside it.
  */
 function ReviewEntry(): React.JSX.Element {
   const t = useT();
@@ -27,6 +29,13 @@ function ReviewEntry(): React.JSX.Element {
   } else if (error || !data) {
     body = t('review.dueFailed');
     action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
+  } else if (data.open) {
+    body = t('review.open');
+    action = (
+      <LinkButton to={`/app/learn/review/${encodeURIComponent(data.open)}`} size="sm">
+        {t('review.continue')}
+      </LinkButton>
+    );
   } else if (data.available === 0) {
     body = t('review.none');
   } else if (data.due > 0) {

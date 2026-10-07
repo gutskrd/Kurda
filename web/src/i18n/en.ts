@@ -806,6 +806,8 @@ export const en = {
   'review.due': 'Due now: {count}',
   'review.none': 'What you answer in lessons comes back here, spread over days so it stays.',
   'review.notDue': 'Nothing is due now. You can still practise what you know.',
+  'review.open': 'You left a review part-way through. Your answers so far are saved.',
+  'review.continue': 'Continue review',
   'review.dueFailed': 'What is due could not be loaded.',
   'review.start': 'Start review',
   'review.practise': 'Practise',

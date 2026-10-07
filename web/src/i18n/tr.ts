@@ -722,6 +722,8 @@ export const tr: Catalogue = {
   'review.due': 'Şimdi sırası gelen: {count}',
   'review.none': 'Derslerde yanıtladıkların buraya geri gelir; kalıcı olsun diye günlere yayılır.',
   'review.notDue': 'Şu an sırası gelen bir şey yok. Yine de bildiklerinle alıştırma yapabilirsin.',
+  'review.open': 'Bir tekrarı yarıda bıraktın. Şimdiye kadarki yanıtların kayıtlı.',
+  'review.continue': 'Tekrara devam et',
   'review.dueFailed': 'Sırası gelenler yüklenemedi.',
   'review.start': 'Tekrara başla',
   'review.practise': 'Alıştırma yap',

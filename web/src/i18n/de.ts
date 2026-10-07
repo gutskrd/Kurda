@@ -722,6 +722,8 @@ export const de: Catalogue = {
   'review.due': 'Jetzt fällig: {count}',
   'review.none': 'Was du in Lektionen beantwortest, kommt hier wieder — über Tage verteilt, damit es bleibt.',
   'review.notDue': 'Gerade ist nichts fällig. Du kannst trotzdem üben, was du schon kannst.',
+  'review.open': 'Du hast eine Wiederholung mittendrin verlassen. Deine bisherigen Antworten sind gespeichert.',
+  'review.continue': 'Wiederholung fortsetzen',
   'review.dueFailed': 'Was fällig ist, konnte nicht geladen werden.',
   'review.start': 'Wiederholung starten',
   'review.practise': 'Üben',
