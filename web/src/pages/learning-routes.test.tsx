@@ -249,6 +249,27 @@ describe('review', () => {
     expect(calls.some((c) => c.path === '/practice/session')).toBe(false);
   });
 
+  it('“Practise these now” at the end of a review starts a new one, not the one it came from', async () => {
+    serve({
+      'GET /practice/sessions/p1': { ...session, answered: { x: { verdict: 'wrong', accepted: false } }, completed: true },
+      'POST /practice/sessions/p1/complete': {
+        correct: 0,
+        total: 1,
+        accuracy: 0,
+        mistakes: [{ exerciseId: 'x', verdict: 'wrong', prompt: 'apple', correction: 'sêv' }],
+        xpAwarded: 0,
+        streak: { current: 1, longest: 1 },
+      },
+      'POST /practice/session': { sessionId: 'p2', exercises: [{ id: 'x', type: 'translate', prompt: 'apple again' }] },
+    });
+    routes('/app/learn/review/p1');
+    await userEvent.click(await screen.findByRole('button', { name: 'Practise these now' }));
+
+    expect(await screen.findByText('apple again')).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/review/p2');
+    expect(calls.filter((c) => c.method === 'POST' && c.path === '/practice/session').map((c) => c.body)).toEqual([{ exerciseIds: ['x'] }]);
+  });
+
   it('with nothing to review, points to a lesson', async () => {
     serve({ 'POST /practice/session': { empty: true, suggestion: { lessonId: 'l1', title: 'Hello' } } });
     routes('/app/learn/review');

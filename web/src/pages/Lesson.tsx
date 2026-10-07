@@ -14,9 +14,15 @@ import type { LessonSessionView } from '../learn/types';
  * goes; the name the map showed comes along in the navigation state.
  */
 export function Lesson(): React.JSX.Element {
+  const { lessonId = '' } = useParams();
+  // one lesson per page: going from one lesson's address to another's starts
+  // the other afresh rather than showing the first while it loads
+  return <LessonPage key={lessonId} lessonId={lessonId} />;
+}
+
+function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
-  const { lessonId = '' } = useParams();
   const [params] = useSearchParams();
   const { state } = useLocation();
   const course = params.get('course');

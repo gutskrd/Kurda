@@ -30,12 +30,23 @@ function passedState(state: unknown): Passed {
  * mistakes just made. The session then gets its own address
  * (/app/learn/review/:sessionId), so leaving and coming back, or a reload,
  * picks it up where it stopped instead of starting another.
+ *
+ * Both addresses render this same element, so the router keeps one instance
+ * across them; keyed by the session (or, before there is one, by the visit),
+ * each is a page of its own. Otherwise the session just started was fetched
+ * again under its new address, and "practise these now" at the end of a
+ * review reopened the review it came from instead of starting one.
  */
 export function Review(): React.JSX.Element {
+  const { sessionId } = useParams();
+  const { key } = useLocation();
+  return <ReviewPage key={sessionId ?? `start:${key}`} sessionId={sessionId} />;
+}
+
+function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
   const { client } = useAuth();
-  const { sessionId } = useParams();
   const { state } = useLocation();
   const passed = passedState(state);
   const [view, setView] = useState<PracticeSessionView | null>(
