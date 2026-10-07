@@ -127,11 +127,15 @@ export class GdprService {
     return (created.rows[0] as { id: string }).id;
   }
 
-  /** Gathers everything we store about the user into one document. */
+  /**
+   * Gathers everything we store about the user into one document — the birth
+   * month and year included, which are personal data like the rest.
+   */
   async buildExport(userId: string): Promise<Record<string, unknown>> {
     const user = await this.pool.query(
       `SELECT id, email, username, display_name, bio, locale, timezone, roles,
               email_verified_at, phone_verified_at, phone_masked,
+              birth_year, birth_month,
               created_at, updated_at, deletion_requested_at
        FROM users WHERE id = $1`,
       [userId],

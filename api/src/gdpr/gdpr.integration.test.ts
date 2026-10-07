@@ -111,6 +111,13 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(again).toBe(0);
   });
 
+  it('the export carries the birth month and year it was given', async () => {
+    const user = await makeUser('exportage');
+    await pool.query(`UPDATE users SET birth_year = 1990, birth_month = 4 WHERE id = $1`, [user.id]);
+    const doc = await new GdprService(pool).buildExport(user.id);
+    expect(doc.user).toMatchObject({ birth_year: 1990, birth_month: 4 });
+  });
+
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
     const user = await makeUser('export');
     // loadConfig() from process.env so the CI job's S3_* vars are seen
