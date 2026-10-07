@@ -142,6 +142,14 @@ const INVISIBLE = /[​-‏‪-‮⁦-⁩؜﻿ـ]/g;
  *   write the consonant h. A grader cannot tell those apart, so at the end of a
  *   word it does not try: `ه`, `ھ` and `ە` there are one letter.
  *
+ *   Only at the end of a word, though — after a letter. A `ھ` standing alone
+ *   is not the end of a word but the letter h itself, the answer to "which
+ *   letter is h?", and `ە` alone is the vowel: folding one into the other would
+ *   grade exactly the confusion such an item is there to catch as correct, and
+ *   would make a match-pairs card for each letter one card. (A Persian keyboard
+ *   types a lone `ە` as `ه` plus a zero-width non-joiner, which is read as `ە`
+ *   above.)
+ *
  * Kurmancî diacritics are **kept**. ê and e are different letters, and whether
  * a missing one is forgiven is the grader's decision (lenient or strict), made
  * with `foldDiacritics` on top of this key, never here.
@@ -155,7 +163,7 @@ export function answerKey(input: string): string {
     .toLowerCase()
     .replace(/i̇/g, 'i') // 'İ'.toLowerCase() keeps the dot as a combining mark
     .replace(/./gu, (ch) => foldLetter(ch))
-    .replace(/ھ(?=$|[^\p{L}\p{M}])/gu, 'ە')
+    .replace(/(?<=\p{L}\p{M}*)ھ(?=$|[^\p{L}\p{M}])/gu, 'ە')
     .replace(/[۰-۹٠-٩]/g, (d) => {
       const code = d.charCodeAt(0);
       return String(code - (code >= 0x06f0 ? 0x06f0 : 0x0660));

@@ -162,6 +162,23 @@ describe('answerKey', () => {
     expect(answerKey('ھەر')).not.toBe(answerKey('ئەر'));
   });
 
+  /**
+   * Only a word's last letter is ambiguous. A letter standing alone is the
+   * letter: "which one is h?" must not accept the vowel.
+   */
+  it('keeps a lone ھ and a lone ە apart', () => {
+    expect(answerKey('ھ')).toBe('ھ');
+    expect(answerKey('ە')).toBe('ە');
+    expect(answerKey('ھ')).not.toBe(answerKey('ە'));
+    expect(answerKey('ه')).toBe('ھ'); // Arabic heh alone is still h
+    expect(answerKey(' ھ ')).toBe('ھ');
+    expect(answerKey('ھ و ە')).toBe('ھ و ە');
+    expect(answerKey(`ه${ZWNJ}`)).toBe('ە'); // how a Persian keyboard types ە alone
+    // …while at the end of a word the three are still one
+    expect(answerKey('خانھ')).toBe(answerKey('خانە'));
+    expect(answerKey('خانه، باش')).toBe(answerKey('خانە، باش'));
+  });
+
   it('drops invisible formatting a phone puts around right-to-left text', () => {
     expect(answerKey('‏سڵاو‏')).toBe('سڵاو');
     expect(answerKey('⁧سڵاو⁩')).toBe('سڵاو');
