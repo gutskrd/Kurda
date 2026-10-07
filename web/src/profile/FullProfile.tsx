@@ -18,6 +18,11 @@ export interface FullProfileView {
   levelInfo?: LevelInfo;
   xp: number;
   streakDays: number;
+  /**
+   * Your own profile only: the two numbers a missed day never takes away,
+   * shown beside the streak that it does, and the freezes learning has earned.
+   */
+  learning?: { longest: number; daysLearned: number; freezes: number; sessionsPerFreeze: number };
   bio?: string | null;
   favPoem?: FavoriteRef | null;
   favStory?: FavoriteRef | null;
@@ -122,6 +127,14 @@ export function FullProfile({
               <div className="mkp-info-row"><span className="l">{t('profile.stat.level')}</span><span className="n">{view.level}</span></div>
               <div className="mkp-info-row"><span className="l">XP</span><span className="n">{view.xp.toLocaleString()}</span></div>
               <div className="mkp-info-row"><span className="l">{t('profile.stat.streak')}</span><span className="n">{view.streakDays}</span></div>
+              {view.learning && (
+                <>
+                  <div className="mkp-info-row"><span className="l">{t('profile.stat.longestStreak')}</span><span className="n">{view.learning.longest}</span></div>
+                  <div className="mkp-info-row"><span className="l">{t('profile.stat.daysLearned')}</span><span className="n">{view.learning.daysLearned}</span></div>
+                  <div className="mkp-info-row"><span className="l">{t('profile.stat.freezes')}</span><span className="n">{view.learning.freezes}</span></div>
+                  <p className="field-hint" style={{ margin: '4px 0 0' }}>{t('profile.freezeHint', { count: view.learning.sessionsPerFreeze })}</p>
+                </>
+              )}
 
               {sidebarExtra}
             </div>

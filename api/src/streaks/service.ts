@@ -1,9 +1,13 @@
 import type pg from 'pg';
 import {
+  EMPTY_TALLY,
   grantFreeze,
   localDate,
   record,
+  recordSession,
+  SESSIONS_PER_FREEZE,
   settle,
+  type LearningTally,
   type StreakState,
 } from './streak-logic.js';
 
@@ -16,6 +20,14 @@ export interface StreakSummary {
   freezes: number;
   /** 'YYYY-MM-DD' in the user's tz, or null if never active */
   lastActiveOn: string | null;
+  /**
+   * Days with a finished lesson or practice session, ever. Shown beside the
+   * current streak because, unlike it, a missed day never takes it away.
+   */
+  daysLearned: number;
+  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  freezeProgress: number;
+  sessionsPerFreeze: number;
 }
 
 interface StreakRow {
@@ -23,29 +35,51 @@ interface StreakRow {
   longest_streak: number;
   last_active_on: string | null;
   freezes: number;
+  days_learned: number;
+  last_learned_on: string | null;
+  freeze_progress: number;
 }
 
 const EMPTY: StreakState = { currentStreak: 0, longestStreak: 0, lastActiveOn: null, freezes: 0 };
+
+/**
+ * pg returns DATE as 'YYYY-MM-DD' when the column is read as text; when it
+ * comes back as a Date, normalize to the calendar date string.
+ */
+function dateText(value: string | Date | null): string | null {
+  if (value == null) return null;
+  return typeof value === 'string' ? value : new Date(value).toISOString().slice(0, 10);
+}
 
 function rowToState(row: StreakRow | undefined): StreakState {
   if (!row) return EMPTY;
   return {
     currentStreak: row.current_streak,
     longestStreak: row.longest_streak,
-    // pg returns DATE as 'YYYY-MM-DD' when the column is read as text; when
-    // it comes back as a Date, normalize to the calendar date string.
-    lastActiveOn:
-      row.last_active_on == null
-        ? null
-        : typeof row.last_active_on === 'string'
-          ? row.last_active_on
-          : new Date(row.last_active_on).toISOString().slice(0, 10),
+    lastActiveOn: dateText(row.last_active_on),
     freezes: row.freezes,
   };
 }
 
-function toSummary(s: StreakState): StreakSummary {
-  return { current: s.currentStreak, longest: s.longestStreak, freezes: s.freezes, lastActiveOn: s.lastActiveOn };
+function rowToTally(row: StreakRow | undefined): LearningTally {
+  if (!row) return EMPTY_TALLY;
+  return {
+    daysLearned: row.days_learned,
+    lastLearnedOn: dateText(row.last_learned_on),
+    freezeProgress: row.freeze_progress,
+  };
+}
+
+function toSummary(s: StreakState, t: LearningTally): StreakSummary {
+  return {
+    current: s.currentStreak,
+    longest: s.longestStreak,
+    freezes: s.freezes,
+    lastActiveOn: s.lastActiveOn,
+    daysLearned: t.daysLearned,
+    freezeProgress: t.freezeProgress,
+    sessionsPerFreeze: SESSIONS_PER_FREEZE,
+  };
 }
 
 /**
@@ -53,18 +87,23 @@ function toSummary(s: StreakState): StreakSummary {
  * calendar date; a stored freeze auto-covers a single missed day. State is
  * settled lazily on read and on activity, so a missed day is reflected the
  * next time the user is seen — no scheduled job required.
+ *
+ * Beside the run it keeps what learning has added up to (`LearningTally`):
+ * days learned in total, the last of them, and finished sessions counting
+ * towards the next freeze — one per five, which is how freezes are earned.
  */
 export class StreakService {
   constructor(private readonly pool: pg.Pool) {}
 
-  /** Read `last_active_on` as text so the DATE never drifts across tz. */
-  private async load(executor: Executor, userId: string): Promise<StreakState> {
+  /** Read the DATE columns as text so they never drift across tz. */
+  private async load(executor: Executor, userId: string): Promise<{ state: StreakState; tally: LearningTally }> {
     const res = await executor.query<StreakRow>(
-      `SELECT current_streak, longest_streak, last_active_on::text AS last_active_on, freezes
+      `SELECT current_streak, longest_streak, last_active_on::text AS last_active_on, freezes,
+              days_learned, last_learned_on::text AS last_learned_on, freeze_progress
        FROM user_streaks WHERE user_id = $1`,
       [userId],
     );
-    return rowToState(res.rows[0]);
+    return { state: rowToState(res.rows[0]), tally: rowToTally(res.rows[0]) };
   }
 
   private async save(executor: Executor, userId: string, s: StreakState): Promise<void> {
@@ -81,10 +120,23 @@ export class StreakService {
     );
   }
 
+  /** Called after `save`, which guarantees the row exists. */
+  private async saveTally(executor: Executor, userId: string, t: LearningTally): Promise<void> {
+    await executor.query(
+      `UPDATE user_streaks SET days_learned = $2, last_learned_on = $3, freeze_progress = $4, updated_at = now()
+        WHERE user_id = $1`,
+      [userId, t.daysLearned, t.lastLearnedOn, t.freezeProgress],
+    );
+  }
+
   /**
-   * Record a goal-meeting activity (e.g. finishing a lesson). Increments
-   * the streak at most once per local day. Runs inside the caller's
-   * transaction when an executor is passed.
+   * Record a finished lesson or practice session. Counts today's streak at
+   * most once per local day, adds the day to the days-learned total, and moves
+   * the next freeze one session closer (see `recordSession`). Runs inside the
+   * caller's transaction when an executor is passed — callers do this only on
+   * the transition to completed, so a session is never counted twice, and only
+   * for a session that was learning (`countsAsLearning`), so finishing one with
+   * nothing answered pays for nothing.
    */
   async recordActivity(
     userId: string,
@@ -94,9 +146,29 @@ export class StreakService {
   ): Promise<StreakSummary> {
     const today = localDate(now, timeZone);
     const before = await this.load(executor, userId);
-    const { state } = record(before, today);
+    const { streak, tally } = recordSession(before.state, before.tally, today);
+    await this.save(executor, userId, streak);
+    await this.saveTally(executor, userId, tally);
+    return toSummary(streak, tally);
+  }
+
+  /**
+   * Keep today's streak for something that is not a lesson or a practice
+   * session (a daily Wordle win). The day counts for the streak only: it is not
+   * a day learned, it does not earn towards a freeze, and it does not unlock
+   * the daily Zêr, which are all paid for learning.
+   */
+  async recordPlayDay(
+    userId: string,
+    timeZone: string,
+    now: Date = new Date(),
+    executor: Executor = this.pool,
+  ): Promise<StreakSummary> {
+    const today = localDate(now, timeZone);
+    const before = await this.load(executor, userId);
+    const { state } = record(before.state, today);
     await this.save(executor, userId, state);
-    return toSummary(state);
+    return toSummary(state, before.tally);
   }
 
   /**
@@ -107,21 +179,26 @@ export class StreakService {
   async get(userId: string, timeZone: string, now: Date = new Date()): Promise<StreakSummary> {
     const today = localDate(now, timeZone);
     const before = await this.load(this.pool, userId);
-    const settled = settle(before, today);
+    const settled = settle(before.state, today);
     if (
-      settled.currentStreak !== before.currentStreak ||
-      settled.freezes !== before.freezes ||
-      settled.lastActiveOn !== before.lastActiveOn
+      settled.currentStreak !== before.state.currentStreak ||
+      settled.freezes !== before.state.freezes ||
+      settled.lastActiveOn !== before.state.lastActiveOn
     ) {
       await this.save(this.pool, userId, settled);
     }
-    return toSummary(settled);
+    return toSummary(settled, before.tally);
+  }
+
+  /** The user's tz-local date of their last finished lesson or practice session. */
+  async lastLearnedOn(userId: string, executor: Executor = this.pool): Promise<string | null> {
+    return (await this.load(executor, userId)).tally.lastLearnedOn;
   }
 
   /** Grant a streak freeze (capped at 1). Returns the new balance. */
   async grantFreeze(userId: string, executor: Executor = this.pool): Promise<number> {
     const before = await this.load(executor, userId);
-    const after = grantFreeze(before);
+    const after = grantFreeze(before.state);
     await this.save(executor, userId, after);
     return after.freezes;
   }

@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
+import { writtenForSql } from '../users/age.js';
 import { stripControlChars } from '@kurda/shared';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
@@ -50,6 +51,8 @@ export interface ListFilters {
   sort?: 'newest' | 'popular';
   limit?: number;
   offset?: number;
+  /** who is looking: a minor's pictures are listed only for them and their friends */
+  viewerId?: string | null;
 }
 
 export type CreateResult = { ok: true; post: ImagePost } | { ok: false; reason: 'invalid' };
@@ -67,6 +70,9 @@ interface Row {
  * view. Caption is control-char-stripped on input (#108); web/mobile escape on
  * render. Removal is soft (retained for moderation #292). Auto image-scan (#294)
  * and reports (#292) are wired separately.
+ *
+ * A minor's pictures, like their library posts, are for them and their friends
+ * only; to anyone else they are not there (users/age.ts `writtenForSql`).
  */
 export class ImagePostService {
   constructor(private readonly pool: pg.Pool) {}
@@ -85,8 +91,8 @@ export class ImagePostService {
   }
 
   async list(filters: ListFilters = {}): Promise<ImagePost[]> {
-    const conds = [`status = 'published'`];
-    const params: unknown[] = [];
+    const params: unknown[] = [filters.viewerId ?? null];
+    const conds = [`status = 'published'`, writtenForSql('image_posts.author_id', '$1::uuid')];
     if (filters.category) { params.push(filters.category); conds.push(`category = $${params.length}`); }
     if (filters.language) { params.push(filters.language); conds.push(`language = $${params.length}`); }
     if (filters.authorId) { params.push(filters.authorId); conds.push(`author_id = $${params.length}`); }
@@ -107,10 +113,12 @@ export class ImagePostService {
     return posts.map((p) => ({ ...p, author: authors.get(p.authorId) ?? unknownAuthor(p.authorId) }));
   }
 
-  async get(id: string): Promise<ImagePost | null> {
+  async get(id: string, viewerId: string | null = null): Promise<ImagePost | null> {
     const res = await this.pool.query<Row>(
-      `UPDATE image_posts SET view_count = view_count + 1 WHERE id = $1 AND status = 'published' RETURNING *`,
-      [id],
+      `UPDATE image_posts SET view_count = view_count + 1
+        WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+        RETURNING *`,
+      [id, viewerId],
     );
     return res.rows[0] ? toPost(res.rows[0]) : null;
   }

@@ -56,6 +56,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+      birthYear: 1990,
+      birthMonth: 6,
       },
       remoteAddress: '10.31.0.2',
     });

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { BLOCKS_PAGE_MAX, FRIENDS_PAGE_MAX, type FriendService } from './service.js';
 
 const targetParam = z.object({ userId: z.uuid() });
@@ -53,14 +54,14 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   /** Send a friend request (auto-accepts a mutual pending request). */
   app.post(
     '/friends/requests',
-    { schema: { body: z.object({ userId: z.uuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: requireAuth },
+    { schema: { body: z.object({ userId: z.uuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: requireBirthMonth },
     async (req) => ({ outcome: await friends.request(req.user!.id, (req.body as { userId: string }).userId) }),
   );
 
   /** Accept / decline a request from :userId. */
   app.post(
     '/friends/requests/:userId/accept',
-    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireBirthMonth },
     async (req) => ({ result: await friends.respond(req.user!.id, (req.params as { userId: string }).userId, true) }),
   );
   app.post(

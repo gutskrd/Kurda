@@ -24,6 +24,8 @@ describe.skipIf(!DATABASE_URL)('daily goals (integration)', () => {
         username: `goal_${suffix}_${ip}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: `10.40.0.${ip}`,
     });

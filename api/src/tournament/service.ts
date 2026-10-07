@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
+import { shownToSql } from '../users/age.js';
 import {
   firstRoundMatches,
   nextPowerOfTwo,
@@ -437,15 +438,26 @@ export class TournamentService {
     return ranked[0]?.user_id ?? m.player_a;
   }
 
-  /** Full bracket view for the live UI (KUR-060). */
-  async bracket(tournamentId: string): Promise<{
+  /**
+   * Full bracket view for the live UI (KUR-060).
+   *
+   * Any signed-in player can read any bracket, so it names a minor (or an
+   * account whose age is not on record yet) only to themselves and their
+   * friends (users/age.ts `shownToSql`). To anyone else that entrant is a
+   * place in the draw with no name or id — `userId` and `username` null, and
+   * null wherever a match or the result would have carried their id — which
+   * keeps the bracket's shape without making it a list of children to look
+   * up. `viewerId` undefined is the staff view (the admin routes), with
+   * every name.
+   */
+  async bracket(tournamentId: string, viewerId?: string): Promise<{
     id: string;
     name: string;
     status: string;
     startsAt: Date;
     rounds: number | null;
     winnerId: string | null;
-    participants: Array<{ userId: string; username: string; seed: number | null; eliminated: boolean }>;
+    participants: Array<{ userId: string | null; username: string | null; seed: number | null; eliminated: boolean }>;
     matches: BracketMatchView[];
   }> {
     const t = await this.pool.query<{
@@ -467,12 +479,16 @@ export class TournamentService {
       username: string;
       seed: number | null;
       eliminated: boolean;
+      shown: boolean;
     }>(
-      `SELECT p.user_id, u.username, p.seed, p.eliminated
+      `SELECT p.user_id, u.username, p.seed, p.eliminated,
+              ($2::boolean OR ${shownToSql('u', '$3::uuid')}) AS shown
          FROM tournament_participants p JOIN users u ON u.id = p.user_id
         WHERE p.tournament_id = $1 ORDER BY p.seed NULLS LAST`,
-      [tournamentId],
+      [tournamentId, viewerId === undefined, viewerId ?? null],
     );
+    const hidden = new Set(parts.rows.filter((p) => !p.shown).map((p) => p.user_id));
+    const named = (id: string | null): string | null => (id !== null && hidden.has(id) ? null : id);
     const matches = await this.pool.query<MatchRow>(
       `SELECT id, round, slot, player_a, player_b, winner, status
          FROM tournament_matches WHERE tournament_id = $1 ORDER BY round, slot`,
@@ -485,10 +501,10 @@ export class TournamentService {
       status: tourn.status,
       startsAt: tourn.starts_at,
       rounds: tourn.rounds,
-      winnerId: tourn.winner_id,
+      winnerId: named(tourn.winner_id),
       participants: parts.rows.map((p) => ({
-        userId: p.user_id,
-        username: p.username,
+        userId: p.shown ? p.user_id : null,
+        username: p.shown ? p.username : null,
         seed: p.seed,
         eliminated: p.eliminated,
       })),
@@ -496,9 +512,9 @@ export class TournamentService {
         id: m.id,
         round: m.round,
         slot: m.slot,
-        playerA: m.player_a,
-        playerB: m.player_b,
-        winner: m.winner,
+        playerA: named(m.player_a),
+        playerB: named(m.player_b),
+        winner: named(m.winner),
         status: m.status,
       })),
     };

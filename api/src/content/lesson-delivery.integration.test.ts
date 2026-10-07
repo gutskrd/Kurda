@@ -63,6 +63,8 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
         username: `del_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.30.0.2',
     });
@@ -291,6 +293,8 @@ describe.skipIf(!DATABASE_URL)('lesson delivery (integration)', () => {
         username: `del2_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.30.0.3',
     });

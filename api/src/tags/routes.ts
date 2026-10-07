@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { TagService } from './service.js';
+import { SocialService } from '../social/service.js';
+import { FriendService } from '../friends/service.js';
 
 const claimBody = z.object({
   key: z.string().min(1).max(40),
@@ -24,10 +26,23 @@ const keyParam = z.object({ key: z.string().min(1).max(40) });
  * owner claims/hides sensitive claimable tags; admins/founder curate the catalog.
  */
 export function registerTagRoutes(app: FastifyInstance, tags = new TagService(app.db)): void {
-  /** A user's effective main tag + displayed claimable tags (profiles #82). */
-  app.get('/users/:id/tags', { schema: { params: z.object({ id: z.uuid() }) } }, async (req) =>
-    tags.profileTags((req.params as { id: string }).id),
-  );
+  const social = new SocialService(app.db, new FriendService(app.db));
+
+  /**
+   * A user's effective main tag + displayed claimable tags (profiles #82).
+   *
+   * The claimed tags are things a person says about themselves, so they follow
+   * the profile's own privacy, as its friend list and its tabs do: a profile
+   * you may not see the detail of shows its main tag and nothing they chose to
+   * add. The profile call resolves blocks and visibility (and a minor's
+   * profile, never on the public web), rather than a second copy of the rules.
+   */
+  app.get('/users/:id/tags', { schema: { params: z.object({ id: z.uuid() }) } }, async (req) => {
+    const id = (req.params as { id: string }).id;
+    const profile = await social.profile(req.user?.id ?? null, id);
+    const shown = await tags.profileTags(id);
+    return profile.private ? { ...shown, claimable: [] } : shown;
+  });
 
   /** My own tags. */
   app.get('/me/tags', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) =>

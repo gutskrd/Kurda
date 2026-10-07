@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { LeaguePanel } from './LeaguePanel';
 import { renderApp, jsonResponse } from '../test/utils';
+import { en } from '../i18n/en';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -90,6 +92,23 @@ describe('LeaguePanel', () => {
   });
 
   /**
+   * A minor who chose to take part is a place in the table with no name for
+   * anyone but their friends: the server sends no id or username for them,
+   * and the row says "A learner" — two of them as two rows, not one.
+   */
+  it('shows a member the server does not name as a learner, keeping their place', async () => {
+    const view = cohort('gold', 6, 1);
+    for (const i of [2, 4]) Object.assign(view.standings[i]!, { userId: null, username: null });
+    vi.stubGlobal('fetch', answer(view));
+    const { container } = renderApp(<LeaguePanel />);
+    await screen.findByRole('heading', { name: 'Gold League' });
+
+    expect(screen.getAllByText(en['leagues.unnamed'])).toHaveLength(2);
+    expect(container.querySelectorAll('.rank-row')).toHaveLength(6);
+    expect(screen.getByText('player2')).toBeInTheDocument();
+  });
+
+  /**
    * Kurmancî puts the tier after the word for league — "Lîga Zîv", not "Zîv
    * League" — which is why the whole phrase is one key and not two joined at
    * the call site.
@@ -116,6 +135,36 @@ describe('LeaguePanel', () => {
     await screen.findByRole('heading', { name: 'Silver League' });
 
     expect(screen.queryByText('Bronze League')).not.toBeInTheDocument();
+  });
+
+  /**
+   * Out of the leagues — by choice, or a minor who has not chosen to join. No
+   * ladder and no table, nothing that reads as missing out: one sentence, and
+   * the way in.
+   */
+  it('shows no table to someone out of the leagues, and lets them join in one tap', async () => {
+    let joined = false;
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes('/me/league')) {
+        return jsonResponse(200, joined ? cohort('bronze', 30, 30) : { ...cohort('bronze', 0, 0), optedOut: true });
+      }
+      if (url.endsWith('/me') && init?.method === 'PATCH') {
+        joined = true;
+        return jsonResponse(200, { user: { id: 'me', leaguesEnabled: true } });
+      }
+      return jsonResponse(200, { user: { id: 'me' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<LeaguePanel />);
+
+    expect(await screen.findByRole('heading', { name: en['leagues.optedOut.title'] })).toBeInTheDocument();
+    expect(screen.getByText(en['leagues.optedOut.body'])).toBeInTheDocument();
+    expect(screen.queryByText(/Ends in/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: en['leagues.optedOut.join'] }));
+    expect(await screen.findByRole('heading', { name: 'Bronze League' })).toBeInTheDocument();
+    const patch = fetchMock.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH');
+    expect(JSON.parse(String((patch![1] as RequestInit).body))).toEqual({ leaguesEnabled: true });
   });
 
   /*

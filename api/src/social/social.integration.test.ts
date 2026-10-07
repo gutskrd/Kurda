@@ -36,6 +36,8 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
         username: uname[tag]!,
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: ip,
     });
@@ -151,6 +153,8 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
           username: `${tag}${suffix}`.slice(0, 30),
           password: 'a-strong-password1',
           acceptTerms: true,
+          birthYear: 1990,
+          birthMonth: 6,
         },
         remoteAddress: ip,
       });

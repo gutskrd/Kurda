@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
 import { weekStart } from '../leagues/league-logic.js';
+import { notKnownAdultSql } from '../users/age.js';
 import {
   rankForScore,
   withRanks,
@@ -52,6 +53,12 @@ function keyFor(type: BoardType, now: Date): string {
  * Friends and country boards always come from Postgres: a sorted set cannot be
  * filtered by who you know or where you live without reading it all back, which
  * would cost more than the query it replaces.
+ *
+ * The global and country boards are readable by anyone, signed in or not, so
+ * they name only people known to be adults: a minor, or an account whose age
+ * is not on record yet, is never on them (users/age.ts). They still see their
+ * own score and place, worked out against everyone else, as a shadow-flagged
+ * player does. The friends board is about people you know, and shows them all.
  */
 export class LeaderboardService {
   constructor(
@@ -71,7 +78,10 @@ export class LeaderboardService {
     now: Date,
     filter?: { ids?: string[]; country?: string },
   ): Promise<ScoreRow[]> {
-    const notFlagged = `NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)`;
+    // the public boards (everything but a friends list) name adults only
+    const notFlagged = `NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)${
+      filter?.ids ? '' : ` AND NOT ${notKnownAdultSql('u')}`
+    }`;
     // an empty allow-list means "no such people", not "everyone"
     if (filter?.ids && filter.ids.length === 0) return [];
 
@@ -192,16 +202,32 @@ export class LeaderboardService {
     const key = keyFor(type, now);
     if ((await this.redis!.zcard(key)) === 0) await this.rebuild(type, now);
 
-    const flat = await this.redis!.zrevrange(key, offset, offset + limit - 1, 'WITHSCORES');
-    const ids: string[] = [];
-    const scores: number[] = [];
-    for (let i = 0; i < flat.length; i += 2) {
-      ids.push(flat[i]!);
-      scores.push(Number(flat[i + 1]));
+    // The sorted set was built at some moment and is read for a long time
+    // after (the rating board until the next rebuild). Somebody on it then may
+    // not be listable now — an account found since to be a minor's, or gone —
+    // so each page is checked as it is read, and anyone who may not be shown
+    // is taken off the set for good, which keeps the ranks without gaps.
+    let ids: string[] = [];
+    let scores: number[] = [];
+    let names = new Map<string, string>();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const flat = await this.redis!.zrevrange(key, offset, offset + limit - 1, 'WITHSCORES');
+      ids = [];
+      scores = [];
+      for (let i = 0; i < flat.length; i += 2) {
+        ids.push(flat[i]!);
+        scores.push(Number(flat[i + 1]));
+      }
+      names = await this.listable(ids);
+      const gone = ids.filter((id) => !names.has(id));
+      if (gone.length === 0) break;
+      await this.redis!.zrem(key, ...gone);
     }
-    const names = await this.usernames(ids);
     const top = withRanks(
-      ids.map((id, i) => ({ userId: id, username: names.get(id) ?? '', score: scores[i]! })),
+      ids.flatMap((id, i) => {
+        const username = names.get(id);
+        return username === undefined ? [] : [{ userId: id, username, score: scores[i]! }];
+      }),
       offset,
     );
 
@@ -251,10 +277,15 @@ export class LeaderboardService {
     return sum > 0 ? sum : null;
   }
 
-  private async usernames(ids: string[]): Promise<Map<string, string>> {
+  /**
+   * Usernames of those among `ids` who may be on a public board right now: a
+   * live account known to be an adult. Anyone missing from the map may not be.
+   */
+  private async listable(ids: string[]): Promise<Map<string, string>> {
     if (ids.length === 0) return new Map();
     const rows = await this.pool.query<{ id: string; username: string }>(
-      `SELECT id, username FROM users WHERE id = ANY($1)`,
+      `SELECT u.id, u.username FROM users u
+        WHERE u.id = ANY($1) AND u.deleted_at IS NULL AND NOT ${notKnownAdultSql('u')}`,
       [ids],
     );
     return new Map(rows.rows.map((r) => [r.id, r.username]));

@@ -34,6 +34,8 @@ describe.skipIf(!DATABASE_URL)('shop catalog (integration)', () => {
         username: `shopcat_${tag}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.69.0.1',
     });

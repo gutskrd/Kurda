@@ -43,7 +43,7 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `sw_${suffix}@it.kurda.app`, username: `sw_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `sw_${suffix}@it.kurda.app`, username: `sw_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.96.0.2',
     });
     await activate(app, pool, reg);

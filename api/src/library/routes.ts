@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { LibraryService } from './service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -57,7 +58,7 @@ export function registerLibraryRoutes(
     {
       schema: { body: createBody },
       config: { rateLimit: { max: 20, windowMs: 60_000 } },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
@@ -100,6 +101,7 @@ export function registerLibraryRoutes(
       sort: q.sort === 'popular' ? 'popular' : 'newest',
       limit: q.limit ? Number(q.limit) : undefined,
       offset: q.offset ? Number(q.offset) : undefined,
+      viewerId: req.user?.id ?? null,
     });
     const withAuthor = await library.withAuthors(posts, (k) => (app.storage ? app.storage.publicUrl(k) : null));
     return { posts: withAuthor.map(withAudioUrl) };
@@ -107,7 +109,7 @@ export function registerLibraryRoutes(
 
   /** Read one post + increment views (public). */
   app.get('/library/posts/:id', { schema: { params: idParam } }, async (req, reply) => {
-    const post = await library.get((req.params as { id: string }).id);
+    const post = await library.get((req.params as { id: string }).id, req.user?.id ?? null);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such post' });
     const [withAuthor] = await library.withAuthors([post], (k) =>
       app.storage ? app.storage.publicUrl(k) : null,

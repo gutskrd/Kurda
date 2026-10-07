@@ -17,6 +17,12 @@ describe('defaultPrefs', () => {
     expect(p.marketing).toBe(false);
     expect([p.streak, p.friends, p.games, p.events]).toEqual([true, true, true, true]);
   });
+
+  it('starts a minor with streak reminders off, and nothing else changed', () => {
+    const p = defaultPrefs({ minor: true });
+    expect(p.streak).toBe(false);
+    expect([p.friends, p.games, p.events, p.marketing]).toEqual([true, true, true, false]);
+  });
 });
 
 describe('minuteOfDayInTz', () => {

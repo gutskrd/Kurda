@@ -120,6 +120,8 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
         username: `${name}_${s}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+      birthYear: 1990,
+      birthMonth: 6,
       },
       remoteAddress: ip,
     });

@@ -96,6 +96,15 @@ export const VISIBILITY_HINT: Record<Visibility, TranslationKey> = {
   nobody: 'settings.visibility.nobodyHint',
 };
 
+/**
+ * Whether a rung is offered at all. Under 18 a profile is never on the open
+ * web: the server refuses 'everyone' for a minor, so the phone does not offer
+ * it either.
+ */
+export function visibilityOffered(visibility: Visibility, minor: boolean): boolean {
+  return !(minor && visibility === 'everyone');
+}
+
 export const VISIBILITY_LABEL: Record<Visibility, TranslationKey> = {
   everyone: 'settings.visibility.everyone',
   members: 'settings.visibility.members',

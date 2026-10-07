@@ -11,6 +11,8 @@ export const RESUME_TTL_SECONDS = 300;
 /** Close codes (4xxx = application-defined). */
 export const CLOSE_CONNECTED_ELSEWHERE = 4001;
 export const CLOSE_BAD_TICKET = 4003;
+/** Bus-only instruction for `revoke`: handled by each node, never delivered. */
+const REVOKE_EVENT = 'rt_revoke';
 
 export interface GatewayOptions {
   heartbeatIntervalMs?: number;
@@ -78,6 +80,17 @@ export class RealtimeGateway {
   /** Features authorize a user for a room before they can join it. */
   async invite(roomId: string, userId: string, ttlSeconds = 3_600): Promise<void> {
     await this.kv.set(`rt:invite:${roomId}:${userId}`, '1', ttlSeconds);
+  }
+
+  /**
+   * Take back a user's place in a room: the invite goes, so they cannot join
+   * or resume into it, and a connection of theirs already in it leaves it on
+   * whichever node holds it (the bus carries the instruction, and no client
+   * ever sees it).
+   */
+  async revoke(roomId: string, userId: string): Promise<void> {
+    await this.kv.del(`rt:invite:${roomId}:${userId}`);
+    await this.bus.publish(roomId, { type: REVOKE_EVENT, userId });
   }
 
   /** Server-side event fan-out to everyone in the room (all nodes). */
@@ -179,13 +192,17 @@ export class RealtimeGateway {
     socket.on('close', () => this.dropConnection(conn));
 
     // resume: rejoin previous rooms (token is single-use)
-    let resumedRooms: string[] = [];
+    const resumedRooms: string[] = [];
     if (resume) {
       const state = await this.kv.take(`rt:resume:${resume}`);
       if (state) {
         const parsed = JSON.parse(state) as { userId: string; rooms: string[] };
         if (parsed.userId === userId) {
-          resumedRooms = parsed.rooms;
+          // only rooms the user may still be in: an invite taken back while
+          // they were away (`revoke`) is not undone by reconnecting
+          for (const room of parsed.rooms) {
+            if (await this.kv.get(`rt:invite:${room}:${userId}`)) resumedRooms.push(room);
+          }
           for (const room of resumedRooms) this.joinLocal(conn, room);
         }
       }
@@ -263,6 +280,14 @@ export class RealtimeGateway {
 
   private deliverLocal(roomId: string, event: RoomEvent): void {
     const members = this.roomMembers.get(roomId);
+    if (event.type === REVOKE_EVENT) {
+      for (const conn of [...(members ?? [])]) {
+        if (conn.userId !== event.userId) continue;
+        this.leaveLocal(conn, roomId);
+        void this.persistResumeState(conn).catch(() => undefined);
+      }
+      return;
+    }
     if (!members) return;
     for (const conn of members) {
       this.send(conn, { type: 'event', room: roomId, event });

@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
+import { writtenForSql } from '../users/age.js';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
 export const MAX_COMMENT_LEN = 2_000;
@@ -51,6 +52,10 @@ interface Row {
  * loads top-level-first with per-branch load-more, soft-delete tombstones the node
  * so a removed parent keeps its subtree. Post `comment_count` and parent
  * `reply_count` are kept in step inside each mutation's transaction.
+ *
+ * A minor's comments are read by them and their friends only, as in the
+ * library (users/age.ts `writtenForSql`), and nobody comments on a picture they
+ * cannot see or replies to a comment they cannot read.
  */
 export class ImageCommentService {
   constructor(private readonly pool: pg.Pool) {}
@@ -62,14 +67,22 @@ export class ImageCommentService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const post = await client.query(`SELECT id FROM image_posts WHERE id = $1 AND status = 'published' FOR UPDATE`, [postId]);
+      const post = await client.query(
+        `SELECT id FROM image_posts
+          WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+          FOR UPDATE`,
+        [postId, authorId],
+      );
       if (post.rowCount === 0) { await client.query('ROLLBACK'); return { ok: false, reason: 'post-not-found' }; }
 
       let depth = 0;
       if (input.parentId) {
         const parent = await client.query<{ depth: number }>(
-          `SELECT depth FROM image_comments WHERE id = $1 AND post_id = $2 AND status = 'visible' FOR UPDATE`,
-          [input.parentId, postId],
+          `SELECT depth FROM image_comments
+            WHERE id = $1 AND post_id = $2 AND status = 'visible'
+              AND ${writtenForSql('image_comments.author_id', '$3::uuid')}
+            FOR UPDATE`,
+          [input.parentId, postId, authorId],
         );
         if (parent.rowCount === 0) { await client.query('ROLLBACK'); return { ok: false, reason: 'parent-not-found' }; }
         depth = parent.rows[0]!.depth + 1;
@@ -92,16 +105,19 @@ export class ImageCommentService {
     }
   }
 
-  /** Top-level comments of a post (paginated). */
-  async topLevel(postId: string, page: Page = {}): Promise<Comment[]> {
-    return this.fetchChildren(postId, null, page);
+  /** Top-level comments of a post (paginated), as `viewerId` may read them. */
+  async topLevel(postId: string, page: Page = {}, viewerId: string | null = null): Promise<Comment[]> {
+    return this.fetchChildren(postId, null, page, viewerId);
   }
 
   /** Direct replies to a comment (paginated, oldest-first by default). */
-  async replies(parentId: string, page: Page = {}): Promise<Comment[]> {
-    const parent = await this.pool.query<{ post_id: string }>(`SELECT post_id FROM image_comments WHERE id = $1`, [parentId]);
+  async replies(parentId: string, page: Page = {}, viewerId: string | null = null): Promise<Comment[]> {
+    const parent = await this.pool.query<{ post_id: string }>(
+      `SELECT post_id FROM image_comments WHERE id = $1 AND ${writtenForSql('image_comments.author_id', '$2::uuid')}`,
+      [parentId, viewerId],
+    );
     if (parent.rowCount === 0) return [];
-    return this.fetchChildren(parent.rows[0]!.post_id, parentId, { sort: 'oldest', ...page });
+    return this.fetchChildren(parent.rows[0]!.post_id, parentId, { sort: 'oldest', ...page }, viewerId);
   }
 
   /** Attach authors, using the loader posts use so the same face appears twice. */
@@ -110,15 +126,24 @@ export class ImageCommentService {
     return comments.map((c) => ({ ...c, author: authors.get(c.authorId) ?? unknownAuthor(c.authorId) }));
   }
 
-  private async fetchChildren(postId: string, parentId: string | null, page: Page): Promise<Comment[]> {
+  private async fetchChildren(
+    postId: string,
+    parentId: string | null,
+    page: Page,
+    viewerId: string | null,
+  ): Promise<Comment[]> {
     const limit = Math.min(100, Math.max(1, page.limit ?? 20));
     const offset = Math.max(0, page.offset ?? 0);
     const order = page.sort === 'oldest' ? 'created_at ASC' : 'created_at DESC';
     const res = await this.pool.query<Row>(
       `SELECT * FROM image_comments
-       WHERE post_id = $1 AND parent_comment_id ${parentId === null ? 'IS NULL' : '= $4'}
+       WHERE post_id = $1 AND parent_comment_id ${parentId === null ? 'IS NULL' : '= $5'}
+         AND ${writtenForSql('image_comments.author_id', '$4::uuid')}
+         AND EXISTS (
+           SELECT 1 FROM image_posts ip
+            WHERE ip.id = image_comments.post_id AND ${writtenForSql('ip.author_id', '$4::uuid')})
        ORDER BY ${order} LIMIT $2 OFFSET $3`,
-      parentId === null ? [postId, limit, offset] : [postId, limit, offset, parentId],
+      parentId === null ? [postId, limit, offset, viewerId] : [postId, limit, offset, viewerId, parentId],
     );
     return res.rows.map(toComment);
   }
