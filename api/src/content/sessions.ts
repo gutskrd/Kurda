@@ -54,6 +54,12 @@ export interface SessionView {
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
   /** markdown grammar note for this lesson's skill, if any (KUR-038) */
   grammarMd: string | null;
+  /**
+   * The course's variety of Kurdish ('kurmanji', 'sorani', …), so a client
+   * offers the letters this lesson is typed in: ê î û ç ş for Kurmancî, the
+   * Soranî letters for a Soranî lesson.
+   */
+  dialect: string | null;
 }
 
 export interface AnswerResult {
@@ -69,6 +75,12 @@ export interface AnswerResult {
   /** true when this exercise was already answered (idempotent replay). */
   duplicate: boolean;
 }
+
+/**
+ * A second try at an item, graded exactly as an answer is but never recorded
+ * (`retry`), so it carries no `duplicate`: there is nothing it could duplicate.
+ */
+export type RetryResult = Omit<AnswerResult, 'duplicate'>;
 
 export interface SessionResults {
   correct: number;
@@ -172,9 +184,14 @@ export class LessonSessionService {
         `SELECT exercise_id, verdict, accepted FROM session_answers WHERE session_id = $1`,
         [session.id],
       ),
-      // grammar note lives on the lesson's skill (KUR-038)
-      this.pool.query<{ grammar_md: string | null }>(
-        `SELECT s.grammar_md FROM lessons l JOIN skills s ON s.id = l.skill_id WHERE l.id = $1`,
+      // grammar note lives on the lesson's skill (KUR-038); the variety on its course
+      this.pool.query<{ grammar_md: string | null; dialect: string | null }>(
+        `SELECT s.grammar_md, c.dialect
+         FROM lessons l
+         JOIN skills s ON s.id = l.skill_id
+         JOIN units u ON u.id = s.unit_id
+         JOIN courses c ON c.id = u.course_id
+         WHERE l.id = $1`,
         [session.lesson_id],
       ),
     ]);
@@ -196,6 +213,7 @@ export class LessonSessionService {
       })),
       answered,
       grammarMd: grammar.rows[0]?.grammar_md ?? null,
+      dialect: grammar.rows[0]?.dialect ?? null,
     };
   }
 
@@ -248,24 +266,34 @@ export class LessonSessionService {
     return this.buildView(await this.loadOwnedSession(sessionId, userId));
   }
 
-  async submitAnswer(
-    sessionId: string,
-    userId: string,
-    exerciseId: string,
-    answer: unknown,
-  ): Promise<AnswerResult> {
+  /** The learner's session, still open to answers: not completed, not expired. */
+  private async loadOpenSession(sessionId: string, userId: string): Promise<SessionRow> {
     const session = await this.loadOwnedSession(sessionId, userId);
     if (session.completed_at) throw new AppError('SESSION_COMPLETED', 409, 'session already completed');
     if (new Date(session.expires_at).getTime() < Date.now()) {
       throw new AppError('SESSION_EXPIRED', 409, 'session has expired');
     }
+    return session;
+  }
 
+  private async lessonExercise(session: SessionRow, exerciseId: string): Promise<ExerciseRow> {
     const exercise = await this.pool.query<ExerciseRow>(
       `SELECT id, position, type, payload FROM exercises WHERE id = $1 AND lesson_id = $2`,
       [exerciseId, session.lesson_id],
     );
     const ex = exercise.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_LESSON', 404, 'exercise is not in this lesson');
+    return ex;
+  }
+
+  async submitAnswer(
+    sessionId: string,
+    userId: string,
+    exerciseId: string,
+    answer: unknown,
+  ): Promise<AnswerResult> {
+    const session = await this.loadOpenSession(sessionId, userId);
+    const ex = await this.lessonExercise(session, exerciseId);
 
     const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
     const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
@@ -323,6 +351,40 @@ export class LessonSessionService {
       correction: result.correction,
       ...heard,
       duplicate: false,
+    };
+  }
+
+  /**
+   * Grade a second try at an item and record nothing: no answer row, no
+   * accuracy, no XP, no review, no Gems. This is the re-ask a client makes a
+   * few exercises after a miss — a retrieval with the right answer still fresh,
+   * which is practice, and which the score and the schedule must not count as
+   * if it were the first attempt. Graded with the same seed as the answer, so a
+   * multiple-choice position means the option it meant the first time.
+   *
+   * Only an item already answered in this session can be retried. Grading
+   * hands back the correction and the model recording, so a retry before the
+   * first answer would read every right answer off the server, and the first
+   * answer — the one that counts — could then never be wrong.
+   */
+  async retry(sessionId: string, userId: string, exerciseId: string, answer: unknown): Promise<RetryResult> {
+    const session = await this.loadOpenSession(sessionId, userId);
+    const ex = await this.lessonExercise(session, exerciseId);
+    const answered = await this.pool.query(
+      `SELECT 1 FROM session_answers WHERE session_id = $1 AND exercise_id = $2`,
+      [session.id, ex.id],
+    );
+    if ((answered.rowCount ?? 0) === 0) {
+      throw new AppError('EXERCISE_NOT_ANSWERED', 409, 'answer this exercise before trying it again');
+    }
+
+    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
+    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    return {
+      verdict: result.verdict,
+      accepted: result.accepted,
+      correction: result.correction,
+      ...(modelAudioUrl ? { modelAudioUrl } : {}),
     };
   }
 

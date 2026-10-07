@@ -64,6 +64,24 @@ export function registerLessonRoutes(
   );
 
   /**
+   * A second try at an item already answered in this session — the re-ask a
+   * client makes a few exercises after a miss. Graded like an answer; records
+   * nothing, so it moves no score, XP, review or Gems (see `retry`).
+   */
+  app.post(
+    '/sessions/:id/retry',
+    {
+      schema: { params: z.object({ id: z.uuid() }), body: answerBodySchema },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const body = req.body as z.infer<typeof answerBodySchema>;
+      return sessions.retry(id, req.user!.id, body.exerciseId, body.answer);
+    },
+  );
+
+  /**
    * Finish the session and get the results summary. A perfect first
    * completion pays Gems; a replay never does (see `complete`).
    */
