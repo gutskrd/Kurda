@@ -1281,8 +1281,6 @@ export const de: Catalogue = {
   'error.code.underMinimumAge': 'Hevalo ist für Menschen ab 13 Jahren.',
   'error.code.invalidBirthMonth': 'Dieser Monat und dieses Jahr sind nicht möglich. Prüfe sie und versuch es noch einmal.',
   'error.code.birthDateAlreadySet': 'Dein Geburtsmonat und -jahr sind bereits gespeichert.',
-  'error.code.notAcceptingRequests': 'Diese Person nimmt keine Freundschaftsanfragen an.',
-  'error.code.notAcceptingInvites': 'Nur Freunde dieser Person können sie zu einer Gruppe hinzufügen.',
   'error.code.openGroupsAdultsOnly': 'Offene Gruppen sind für Mitglieder ab 18 Jahren.',
   'error.code.visibilityNotAllowed': 'Unter 18 kann ein Profil nicht für alle im Netz sichtbar sein.',
   'error.code.learnFirst': 'Schließ zuerst eine Lektion oder eine Übung ab, dann hol dir die Belohnung von heute.',

@@ -1286,8 +1286,6 @@ export const ar: Catalogue = {
   'error.code.underMinimumAge': 'Hevalo مخصّص لمن بلغوا 13 عامًا فأكثر.',
   'error.code.invalidBirthMonth': 'هذا الشهر وهذه السنة غير ممكنين. تحقّق منهما وحاول مرة أخرى.',
   'error.code.birthDateAlreadySet': 'شهر وسنة ميلادك محفوظان بالفعل.',
-  'error.code.notAcceptingRequests': 'هذا الشخص لا يستقبل طلبات الصداقة.',
-  'error.code.notAcceptingInvites': 'لا يمكن إضافة هذا الشخص إلى مجموعة إلا من قِبل أصدقائه.',
   'error.code.openGroupsAdultsOnly': 'المجموعات المفتوحة مخصّصة للأعضاء من عمر 18 عامًا فأكثر.',
   'error.code.visibilityNotAllowed': 'لمن هم دون 18 عامًا، لا يمكن أن يكون الملف الشخصي مفتوحًا لأي شخص على الويب.',
   'error.code.learnFirst': 'أكمل درسًا أو جلسة تمرين أولًا، ثم استلم مكافأة اليوم.',

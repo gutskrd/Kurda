@@ -1281,8 +1281,6 @@ export const tr: Catalogue = {
   'error.code.underMinimumAge': 'Hevalo 13 yaş ve üzeri içindir.',
   'error.code.invalidBirthMonth': 'Bu ay ve yıl mümkün değil. Kontrol edip yeniden dene.',
   'error.code.birthDateAlreadySet': 'Doğum ayın ve yılın zaten kayıtlı.',
-  'error.code.notAcceptingRequests': 'Bu kişi arkadaşlık isteği kabul etmiyor.',
-  'error.code.notAcceptingInvites': 'Bu kişiyi bir gruba yalnızca arkadaşları ekleyebilir.',
   'error.code.openGroupsAdultsOnly': 'Açık gruplar 18 yaş ve üzeri üyeler içindir.',
   'error.code.visibilityNotAllowed': '18 yaşın altında profil internetteki herkese açık olamaz.',
   'error.code.learnFirst': 'Önce bir dersi ya da alıştırmayı bitir, sonra bugünün ödülünü al.',

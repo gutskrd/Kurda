@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { GroupService } from './service.js';
+import { FriendService } from '../friends/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -69,11 +70,25 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
     expect(g.myRole).toBe('owner');
   });
 
-  it('invite-only groups reject joins but accept staff invites', async () => {
+  // deliberately changed: staff could add anybody, by id, to any group. An
+  // invite adds someone outright, so it is now for friends only, and only into
+  // an invite-only group — the same rules whoever is invited
+  it('invite-only groups reject joins but accept staff invites of friends', async () => {
     const { id: gid } = await groups.create(id.a!, { name: `Secret ${suffix}`, privacy: 'invite' });
     await expect(groups.join(id.b!, gid)).rejects.toThrow(/invite-only/i);
+    // not friends yet: nobody is added
+    await expect(groups.invite(id.a!, gid, id.b!)).rejects.toMatchObject({ code: 'NOT_FRIENDS' });
+    const friends = new FriendService(pool);
+    await friends.request(id.a!, id.b!);
+    await friends.respond(id.b!, id.a!, true);
     await groups.invite(id.a!, gid, id.b!);
     expect((await groups.get(gid, id.a!)).memberCount).toBe(2);
+  });
+
+  it('nobody is added to an open group: anyone can join one themselves', async () => {
+    const { id: gid } = await groups.create(id.a!, { name: `Opened ${suffix}`, privacy: 'open' });
+    // a and b are friends (above), and still
+    await expect(groups.invite(id.a!, gid, id.b!)).rejects.toMatchObject({ code: 'OPEN_GROUP_NO_INVITES' });
   });
 
   it('roles: owner promotes/removes; a moderator cannot promote', async () => {

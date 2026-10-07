@@ -1284,8 +1284,6 @@ export const ckb: Catalogue = {
   'error.code.underMinimumAge': 'Hevalo بۆ کەسانی 13 ساڵ و سەرووترە.',
   'error.code.invalidBirthMonth': 'ئەم مانگ و ساڵە گونجاو نین. بیانپشکنە و دووبارە هەوڵ بدەرەوە.',
   'error.code.birthDateAlreadySet': 'مانگ و ساڵی لەدایکبوونت پێشتر پاشەکەوت کراون.',
-  'error.code.notAcceptingRequests': 'ئەم کەسە داواکاریی هاوڕێیەتی وەرناگرێت.',
-  'error.code.notAcceptingInvites': 'تەنها هاوڕێکانی ئەم کەسە دەتوانن زیادی بکەن بۆ گروپێک.',
   'error.code.openGroupsAdultsOnly': 'گروپە کراوەکان بۆ ئەندامانی 18 ساڵ و سەرووترن.',
   'error.code.visibilityNotAllowed': 'لە خوار تەمەنی 18 ساڵ، پرۆفایل ناتوانێت بۆ هەموو کەس لە ئینتەرنێتدا کراوە بێت.',
   'error.code.learnFirst': 'سەرەتا وانەیەک یان ڕاهێنانێک تەواو بکە، پاشان خەڵاتی ئەمڕۆ وەربگرە.',

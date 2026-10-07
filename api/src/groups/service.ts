@@ -42,10 +42,16 @@ export interface GroupMember {
  * summed from members' ledgers for the group leaderboard.
  *
  * Minors (worked out from age when asked) live in invite-only groups. They
- * cannot see, join, start or be added to an open one; and since an "invite"
- * here adds somebody outright rather than asking them, only a friend of the
- * minor — a friendship the minor started — may add them to anything. That keeps
- * every group a minor is in one that someone they chose put them in.
+ * cannot see, join or start an open one, and are taken out of any they were
+ * in when their age is recorded.
+ *
+ * An "invite" here adds somebody outright rather than asking them, so it is
+ * for friends only — anybody's, not just a minor's — and only into an
+ * invite-only group: an open one anyone can join for themselves. Both rules
+ * are the same for every account, so the answer to an invite says nothing
+ * about the age of the person invited; and since every friendship a minor has
+ * is one they started, every group a minor is in is one that someone they
+ * chose put them in.
  */
 export class GroupService {
   constructor(private readonly pool: pg.Pool) {}
@@ -133,14 +139,32 @@ export class GroupService {
     }
   }
 
-  /** Owner/moderator adds a member (works for invite-only groups). */
+  /**
+   * Owner/moderator adds one of their friends to an invite-only group.
+   *
+   * The same two rules for everybody (see the class note): the group must be
+   * invite-only, and the person added a friend of whoever adds them. Neither
+   * looks at the age of the person being added, so no answer here can tell a
+   * minor's account from an adult's.
+   */
   async invite(inviterId: string, groupId: string, targetId: string): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       const role = await this.requireRole(client, groupId, inviterId);
       if (role !== 'owner' && role !== 'moderator') throw new AppError('FORBIDDEN', 403, 'only staff can invite');
-      if (await isMinorUser(client, targetId)) await this.assertMayAddMinor(client, groupId, inviterId, targetId);
+      const g = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
+      if (g.rows[0]?.privacy === 'open') {
+        throw new AppError('OPEN_GROUP_NO_INVITES', 409, 'anyone can join an open group; there is no one to add');
+      }
+      const { lo, hi } = canonicalPair(inviterId, targetId);
+      const friends = await client.query(
+        `SELECT 1 FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'accepted'`,
+        [lo, hi],
+      );
+      if ((friends.rowCount ?? 0) === 0) {
+        throw new AppError('NOT_FRIENDS', 403, 'you can only add your friends to a group');
+      }
       await this.addMember(client, groupId, targetId);
       await client.query('COMMIT');
     } catch (err) {
@@ -148,29 +172,6 @@ export class GroupService {
       throw err;
     } finally {
       client.release();
-    }
-  }
-
-  /**
-   * Adding a minor: never to an open group, and only by one of their friends.
-   * One error for both refusals that concern the friendship, so a stranger
-   * learns no more than that this person cannot be added.
-   */
-  private async assertMayAddMinor(
-    client: Pick<pg.Pool, 'query'>,
-    groupId: string,
-    inviterId: string,
-    minorId: string,
-  ): Promise<void> {
-    const g = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
-    if (g.rows[0]?.privacy === 'open') throw openGroupsAdultsOnly();
-    const { lo, hi } = canonicalPair(inviterId, minorId);
-    const friends = await client.query(
-      `SELECT 1 FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'accepted'`,
-      [lo, hi],
-    );
-    if ((friends.rowCount ?? 0) === 0) {
-      throw new AppError('NOT_ACCEPTING_INVITES', 403, 'only their friends can add this person to a group');
     }
   }
 

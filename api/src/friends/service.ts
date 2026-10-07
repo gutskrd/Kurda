@@ -4,7 +4,7 @@ import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
-import { isMinorUser, minorSql } from '../users/age.js';
+import { isNotKnownAdultUser, notKnownAdultSql } from '../users/age.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
@@ -89,11 +89,20 @@ interface EdgeRow {
  * (searches, lists, friends boards) via `areBlocked`. Friends are capped at 500;
  * pending requests expire after 30 days.
  *
- * A minor (13–17, worked out from age when asked) can send requests but cannot
- * be sent one, so every friendship a minor has is one they started. Nobody is
- * suggested a minor either. A request that reached them before we knew their
- * age is not one of theirs: it is not listed for them and cannot be accepted
- * (declining it is always fine), and it is removed when the age is given.
+ * A minor (13–17, worked out from age when asked) can send requests but never
+ * receives one, so every friendship a minor has is one they started. Nobody is
+ * suggested a minor either. The same holds for an account whose age is not on
+ * record yet, until it answers (users/age.ts `notKnownAdultSql`).
+ *
+ * The sender is never told. A request to a minor is stored and answered
+ * exactly like a request to an adult who has not responded — 'requested', and
+ * listed among the sender's outgoing requests until it expires — but it never
+ * reaches the minor: it is not in their incoming list, not offered on the
+ * sender's profile, and cannot be accepted. A refusal that only minors gave
+ * would tell any adult which accounts belong to children. Only the minor's own
+ * request back to that person turns it into a friendship (the mutual
+ * auto-accept below), because then the minor chose it. When an account turns
+ * out to be a minor's, the requests waiting for it are removed.
  */
 export class FriendService {
   constructor(private readonly pool: pg.Pool) {}
@@ -151,16 +160,9 @@ export class FriendService {
         await client.query('COMMIT');
         return 'already_friends';
       }
-      // a minor only ever answers: a request to one goes through only when it
-      // is the reply to theirs (the mutual auto-accept below)
-      const answersTheirs = edge?.status === 'pending' && edge.requested_by === to;
-      if (!answersTheirs && (await isMinorUser(client, to))) {
-        throw new AppError(
-          'NOT_ACCEPTING_REQUESTS',
-          403,
-          'this person is not accepting friend requests',
-        );
-      }
+      // No check of the recipient's age here, on purpose: a request to a minor
+      // is made and answered like any other and simply never reaches them (see
+      // the class note), so the reply cannot tell an adult who is a child.
       if (edge?.status === 'pending') {
         if (edge.requested_by === from) {
           await client.query('COMMIT');
@@ -212,10 +214,10 @@ export class FriendService {
         throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
       }
       if (accept) {
-        // a request someone else started, waiting from before we knew this is
-        // a minor: accepting it would be a friendship they did not start. It
-        // is not listed for them (incomingRequests), so it answers as absent
-        if (await isMinorUser(client, user)) {
+        // a request to someone not known to be an adult never reached them
+        // (incomingRequests does not list it): accepting it would be a
+        // friendship they did not start, so it answers as absent
+        if (await isNotKnownAdultUser(client, user)) {
           throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
         }
         await this.assertUnderCap(client, user);
@@ -398,7 +400,8 @@ export class FriendService {
 
   /**
    * Incoming pending requests (not expired, requester not since blocked).
-   * None for a minor: any there are predate what we know of their age.
+   * None for a minor, or for an account whose age is not on record yet: a
+   * request to one is held where they never see it (see the class note).
    */
   async incomingRequests(user: string, publicUrl: PublicUrl = () => null): Promise<FriendSummary[]> {
     const rows = await this.pool.query<FriendRow>(
@@ -407,7 +410,7 @@ export class FriendService {
          JOIN users me ON me.id = $1
         WHERE f.status = 'pending' AND f.requested_by <> $1
           AND (f.user_lo = $1 OR f.user_hi = $1)
-          AND NOT ${minorSql('me')}
+          AND NOT ${notKnownAdultSql('me')}
           AND f.created_at > now() - ($2 || ' days')::interval
           AND NOT EXISTS (
             SELECT 1 FROM blocks b
@@ -465,8 +468,8 @@ export class FriendService {
    * People-you-may-know: friends-of-friends the user isn't already connected to,
    * ranked by number of mutual friends. Excludes self, existing friends, anyone
    * with a pending request either way, blocked users, profiles hidden from
-   * discovery, and minors, who cannot be sent a request to begin with. Returns
-   * [] for a user with no friends yet.
+   * discovery, and anyone not known to be an adult, whom a request would never
+   * reach. Returns [] for a user with no friends yet.
    */
   async suggestions(user: string, publicUrl: PublicUrl = () => null, limit = 10): Promise<SuggestedFriend[]> {
     const rows = await this.pool.query<FriendRow & { mutual: number }>(
@@ -485,7 +488,7 @@ export class FriendService {
         WHERE u.id <> $1
           AND u.deleted_at IS NULL
           AND u.profile_visibility <> 'nobody'
-          AND NOT ${minorSql('u')}
+          AND NOT ${notKnownAdultSql('u')}
           AND u.id NOT IN (SELECT fid FROM my_friends)
           AND NOT EXISTS (
             SELECT 1 FROM friendships fp
@@ -505,7 +508,13 @@ export class FriendService {
     return rows.rows.map((r) => ({ ...toFriendSummary(r, publicUrl, now), mutualCount: r.mutual }));
   }
 
-  /** Relationship of `viewer` to `target` — powers friend buttons (KUR-082). */
+  /**
+   * Relationship of `viewer` to `target` — powers friend buttons (KUR-082).
+   *
+   * A request held for a viewer not known to be an adult reads as 'none': it
+   * never reached them, so their button offers a request of their own (which,
+   * being mutual, then makes the friendship) rather than an accept.
+   */
   async statusBetween(
     viewer: string,
     target: string,
@@ -519,7 +528,8 @@ export class FriendService {
     const edge = row.rows[0];
     if (!edge) return 'none';
     if (edge.status === 'accepted') return 'friends';
-    return edge.requested_by === viewer ? 'pending_out' : 'pending_in';
+    if (edge.requested_by === viewer) return 'pending_out';
+    return (await isNotKnownAdultUser(this.pool, viewer)) ? 'none' : 'pending_in';
   }
 
   /** Accepted friend ids — for the friends leaderboard (KUR-063 follow-on). */

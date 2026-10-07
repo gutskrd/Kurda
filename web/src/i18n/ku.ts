@@ -1290,8 +1290,6 @@ export const ku: Catalogue = {
   'error.code.underMinimumAge': 'Hevalo ji bo kesên 13 salî û mezintir e.',
   'error.code.invalidBirthMonth': 'Ev meh û sal ne gengaz in. Kontrol bike û dîsa biceribîne.',
   'error.code.birthDateAlreadySet': 'Meh û sala jidayikbûna te jixwe hatine tomarkirin.',
-  'error.code.notAcceptingRequests': 'Ev kes daxwazên hevaltiyê qebûl nake.',
-  'error.code.notAcceptingInvites': 'Tenê hevalên vî kesî dikarin wî li komekê zêde bikin.',
   'error.code.openGroupsAdultsOnly': 'Komên vekirî ji bo endamên 18 salî û mezintir in.',
   'error.code.visibilityNotAllowed': 'Di bin 18 salî de, profîl nikare ji her kesî re li ser înternetê vekirî be.',
   'error.code.learnFirst': 'Pêşî dersekê an temrînekê biqedîne, paşê xelata îro bistîne.',

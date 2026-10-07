@@ -57,8 +57,6 @@ export type TranslationKey =
   | 'error.code.underMinimumAge'
   | 'error.code.invalidBirthMonth'
   | 'error.code.birthDateAlreadySet'
-  | 'error.code.notAcceptingRequests'
-  | 'error.code.notAcceptingInvites'
   | 'error.code.openGroupsAdultsOnly'
   | 'error.code.visibilityNotAllowed'
   | 'error.code.learnFirst'
@@ -1857,8 +1855,6 @@ const en: Catalog = {
   'error.code.underMinimumAge': 'Hevalo is for people aged 13 and over.',
   'error.code.invalidBirthMonth': 'That month and year aren’t possible. Check them and try again.',
   'error.code.birthDateAlreadySet': 'Your month and year of birth are already saved.',
-  'error.code.notAcceptingRequests': 'This person isn’t accepting friend requests.',
-  'error.code.notAcceptingInvites': 'Only their friends can add this person to a group.',
   'error.code.openGroupsAdultsOnly': 'Open groups are for members aged 18 and over.',
   'error.code.visibilityNotAllowed': 'Under 18, a profile can’t be open to everyone on the web.',
   'error.code.learnFirst': 'Finish a lesson or a practice session first, then claim today’s reward.',
@@ -2782,8 +2778,6 @@ const ku: Catalog = {
   'error.code.underMinimumAge': 'Hevalo ji bo kesên 13 salî û mezintir e.',
   'error.code.invalidBirthMonth': 'Ev meh û sal ne gengaz in. Kontrol bike û dîsa biceribîne.',
   'error.code.birthDateAlreadySet': 'Meh û sala jidayikbûna te jixwe hatine tomarkirin.',
-  'error.code.notAcceptingRequests': 'Ev kes daxwazên hevaltiyê qebûl nake.',
-  'error.code.notAcceptingInvites': 'Tenê hevalên vî kesî dikarin wî li komekê zêde bikin.',
   'error.code.openGroupsAdultsOnly': 'Komên vekirî ji bo endamên 18 salî û mezintir in.',
   'error.code.visibilityNotAllowed': 'Di bin 18 salî de, profîl nikare ji her kesî re li ser înternetê vekirî be.',
   'error.code.learnFirst': 'Pêşî dersekê an temrînekê biqedîne, paşê xelata îro bistîne.',
@@ -3707,8 +3701,6 @@ const de: Catalog = {
   'error.code.underMinimumAge': 'Hevalo ist für Menschen ab 13 Jahren.',
   'error.code.invalidBirthMonth': 'Dieser Monat und dieses Jahr sind nicht möglich. Prüfe sie und versuch es noch einmal.',
   'error.code.birthDateAlreadySet': 'Dein Geburtsmonat und -jahr sind bereits gespeichert.',
-  'error.code.notAcceptingRequests': 'Diese Person nimmt keine Freundschaftsanfragen an.',
-  'error.code.notAcceptingInvites': 'Nur Freunde dieser Person können sie zu einer Gruppe hinzufügen.',
   'error.code.openGroupsAdultsOnly': 'Offene Gruppen sind für Mitglieder ab 18 Jahren.',
   'error.code.visibilityNotAllowed': 'Unter 18 kann ein Profil nicht für alle im Netz sichtbar sein.',
   'error.code.learnFirst': 'Schließ zuerst eine Lektion oder eine Übung ab, dann hol dir die Belohnung von heute.',
@@ -4632,8 +4624,6 @@ const es: Catalog = {
   'error.code.underMinimumAge': 'Hevalo es para personas de 13 años o más.',
   'error.code.invalidBirthMonth': 'Ese mes y ese año no son posibles. Revísalos e inténtalo de nuevo.',
   'error.code.birthDateAlreadySet': 'Tu mes y año de nacimiento ya están guardados.',
-  'error.code.notAcceptingRequests': 'Esta persona no acepta solicitudes de amistad.',
-  'error.code.notAcceptingInvites': 'Solo sus amigos pueden añadir a esta persona a un grupo.',
   'error.code.openGroupsAdultsOnly': 'Los grupos abiertos son para miembros de 18 años o más.',
   'error.code.visibilityNotAllowed': 'Con menos de 18 años, un perfil no puede estar abierto a cualquiera en la web.',
   'error.code.learnFirst': 'Termina primero una lección o una práctica y luego reclama la recompensa de hoy.',
@@ -5557,8 +5547,6 @@ const tr: Catalog = {
   'error.code.underMinimumAge': 'Hevalo 13 yaş ve üzeri içindir.',
   'error.code.invalidBirthMonth': 'Bu ay ve yıl mümkün değil. Kontrol edip yeniden dene.',
   'error.code.birthDateAlreadySet': 'Doğum ayın ve yılın zaten kayıtlı.',
-  'error.code.notAcceptingRequests': 'Bu kişi arkadaşlık isteği kabul etmiyor.',
-  'error.code.notAcceptingInvites': 'Bu kişiyi bir gruba yalnızca arkadaşları ekleyebilir.',
   'error.code.openGroupsAdultsOnly': 'Açık gruplar 18 yaş ve üzeri üyeler içindir.',
   'error.code.visibilityNotAllowed': '18 yaşın altında profil internetteki herkese açık olamaz.',
   'error.code.learnFirst': 'Önce bir dersi ya da alıştırmayı bitir, sonra bugünün ödülünü al.',
@@ -6482,8 +6470,6 @@ const ar: Catalog = {
   'error.code.underMinimumAge': 'Hevalo مخصّص لمن بلغوا 13 عامًا فأكثر.',
   'error.code.invalidBirthMonth': 'هذا الشهر وهذه السنة غير ممكنين. تحقّق منهما وحاول مرة أخرى.',
   'error.code.birthDateAlreadySet': 'شهر وسنة ميلادك محفوظان بالفعل.',
-  'error.code.notAcceptingRequests': 'هذا الشخص لا يستقبل طلبات الصداقة.',
-  'error.code.notAcceptingInvites': 'لا يمكن إضافة هذا الشخص إلى مجموعة إلا من قِبل أصدقائه.',
   'error.code.openGroupsAdultsOnly': 'المجموعات المفتوحة مخصّصة للأعضاء من عمر 18 عامًا فأكثر.',
   'error.code.visibilityNotAllowed': 'لمن هم دون 18 عامًا، لا يمكن أن يكون الملف الشخصي مفتوحًا لأي شخص على الويب.',
   'error.code.learnFirst': 'أكمل درسًا أو جلسة تمرين أولًا، ثم استلم مكافأة اليوم.',
@@ -7407,8 +7393,6 @@ const fr: Catalog = {
   'error.code.underMinimumAge': 'Hevalo est réservé aux personnes de 13 ans et plus.',
   'error.code.invalidBirthMonth': 'Ce mois et cette année ne sont pas possibles. Vérifie-les et réessaie.',
   'error.code.birthDateAlreadySet': 'Ton mois et ton année de naissance sont déjà enregistrés.',
-  'error.code.notAcceptingRequests': 'Cette personne n’accepte pas les demandes d’ami.',
-  'error.code.notAcceptingInvites': 'Seuls ses amis peuvent ajouter cette personne à un groupe.',
   'error.code.openGroupsAdultsOnly': 'Les groupes ouverts sont réservés aux membres de 18 ans et plus.',
   'error.code.visibilityNotAllowed': 'Avant 18 ans, un profil ne peut pas être visible par n’importe qui sur le web.',
   'error.code.learnFirst': 'Termine d’abord une leçon ou un entraînement, puis récupère la récompense du jour.',
@@ -8332,8 +8316,6 @@ const nl: Catalog = {
   'error.code.underMinimumAge': 'Hevalo is voor mensen van 13 jaar en ouder.',
   'error.code.invalidBirthMonth': 'Die maand en dat jaar kunnen niet. Controleer ze en probeer het opnieuw.',
   'error.code.birthDateAlreadySet': 'Je geboortemaand en -jaar zijn al opgeslagen.',
-  'error.code.notAcceptingRequests': 'Deze persoon accepteert geen vriendschapsverzoeken.',
-  'error.code.notAcceptingInvites': 'Alleen vrienden van deze persoon kunnen die aan een groep toevoegen.',
   'error.code.openGroupsAdultsOnly': 'Open groepen zijn voor leden van 18 jaar en ouder.',
   'error.code.visibilityNotAllowed': 'Onder de 18 kan een profiel niet voor iedereen op het web zichtbaar zijn.',
   'error.code.learnFirst': 'Rond eerst een les of een oefensessie af en haal dan de beloning van vandaag op.',
@@ -9258,8 +9240,6 @@ const ckb: Catalog = {
   'error.code.underMinimumAge': 'Hevalo بۆ کەسانی 13 ساڵ و سەرووترە.',
   'error.code.invalidBirthMonth': 'ئەم مانگ و ساڵە گونجاو نین. بیانپشکنە و دووبارە هەوڵ بدەرەوە.',
   'error.code.birthDateAlreadySet': 'مانگ و ساڵی لەدایکبوونت پێشتر پاشەکەوت کراون.',
-  'error.code.notAcceptingRequests': 'ئەم کەسە داواکاریی هاوڕێیەتی وەرناگرێت.',
-  'error.code.notAcceptingInvites': 'تەنها هاوڕێکانی ئەم کەسە دەتوانن زیادی بکەن بۆ گروپێک.',
   'error.code.openGroupsAdultsOnly': 'گروپە کراوەکان بۆ ئەندامانی 18 ساڵ و سەرووترن.',
   'error.code.visibilityNotAllowed': 'لە خوار تەمەنی 18 ساڵ، پرۆفایل ناتوانێت بۆ هەموو کەس لە ئینتەرنێتدا کراوە بێت.',
   'error.code.learnFirst': 'سەرەتا وانەیەک یان ڕاهێنانێک تەواو بکە، پاشان خەڵاتی ئەمڕۆ وەربگرە.',

@@ -1281,8 +1281,6 @@ export const nl: Catalogue = {
   'error.code.underMinimumAge': 'Hevalo is voor mensen van 13 jaar en ouder.',
   'error.code.invalidBirthMonth': 'Die maand en dat jaar kunnen niet. Controleer ze en probeer het opnieuw.',
   'error.code.birthDateAlreadySet': 'Je geboortemaand en -jaar zijn al opgeslagen.',
-  'error.code.notAcceptingRequests': 'Deze persoon accepteert geen vriendschapsverzoeken.',
-  'error.code.notAcceptingInvites': 'Alleen vrienden van deze persoon kunnen die aan een groep toevoegen.',
   'error.code.openGroupsAdultsOnly': 'Open groepen zijn voor leden van 18 jaar en ouder.',
   'error.code.visibilityNotAllowed': 'Onder de 18 kan een profiel niet voor iedereen op het web zichtbaar zijn.',
   'error.code.learnFirst': 'Rond eerst een les of een oefensessie af en haal dan de beloning van vandaag op.',

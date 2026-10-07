@@ -357,12 +357,18 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     let minor: Account;
     let otherMinor: Account;
 
+    let quiet: Account;
+    let eager: Account;
+
     beforeAll(async () => {
       adult = await signUp('stranger', 35);
       friendOfMinor = await signUp('pal', 22);
       other = await signUp('other', 40);
       minor = await signUp('kid', 16);
       otherMinor = await signUp('kid2', 15);
+      // an adult who simply never answers, to compare a minor with
+      quiet = await signUp('quiet', 33);
+      eager = await signUp('eager', 45);
     });
 
     it('an adult cannot find a minor by name, but finds an adult', async () => {
@@ -374,37 +380,79 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       expect(await hits(other.username)).toContain(other.id);
     });
 
-    it('an adult cannot send a minor a friend request, nor can another minor', async () => {
-      const res = await call(adult, 'POST', '/friends/requests', { userId: minor.id });
-      expect(res.statusCode).toBe(403);
-      expect(res.json().code).toBe('NOT_ACCEPTING_REQUESTS');
-      const fromMinor = await call(otherMinor, 'POST', '/friends/requests', { userId: minor.id });
-      expect(fromMinor.statusCode).toBe(403);
+    /** What a reply says, without the parts that differ on every request. */
+    const answer = (res: { statusCode: number; json: () => Record<string, unknown> }) => {
+      const body = { ...res.json() };
+      delete body.requestId;
+      return { status: res.statusCode, body };
+    };
 
-      const rows = await pool.query(
-        `SELECT 1 FROM friendships WHERE requested_by = ANY($1::uuid[]) AND (user_lo = $2 OR user_hi = $2)`,
-        [[adult.id, otherMinor.id], minor.id],
-      );
-      expect(rows.rowCount).toBe(0);
-      expect((await call(minor, 'GET', '/friends/requests')).json().requests).toEqual([]);
-    });
+    // deliberately changed: this pinned a 403 NOT_ACCEPTING_REQUESTS for a
+    // request to a minor, which an adult could not get for an adult — so it
+    // told anyone which accounts belong to children
+    it('a request to a minor is answered exactly like one to an adult who has not replied', async () => {
+      // the same privacy as the minor's, so nothing but age differs
+      await call(quiet, 'PUT', '/me/privacy', { visibility: 'friends' });
 
-    it('a request that reached a minor before we knew is not theirs to accept', async () => {
-      // e.g. an account whose birth date was already on record when ages
-      // started to count: the request was made while nothing checked
-      const lo = adult.id < minor.id ? adult.id : minor.id;
-      const hi = adult.id < minor.id ? minor.id : adult.id;
-      await pool.query(
-        `INSERT INTO friendships (user_lo, user_hi, status, requested_by) VALUES ($1, $2, 'pending', $3)`,
-        [lo, hi, adult.id],
+      const toMinor = await call(adult, 'POST', '/friends/requests', { userId: minor.id });
+      const toQuiet = await call(adult, 'POST', '/friends/requests', { userId: quiet.id });
+      expect(answer(toMinor)).toEqual(answer(toQuiet));
+      expect(answer(toMinor)).toEqual({ status: 200, body: { outcome: 'requested' } });
+
+      // asked again, the same again
+      expect(answer(await call(adult, 'POST', '/friends/requests', { userId: minor.id }))).toEqual(
+        answer(await call(adult, 'POST', '/friends/requests', { userId: quiet.id })),
       );
+
+      // the sender's own lists and the profile button read the same for both
+      const outgoing = (await call(adult, 'GET', '/friends/requests/outgoing')).json().requests as Array<
+        Record<string, unknown>
+      >;
+      const shapeOf = (id: string) => {
+        const row = outgoing.find((r) => r.userId === id);
+        return row ? Object.keys(row).sort() : null;
+      };
+      expect(shapeOf(minor.id)).not.toBeNull();
+      expect(shapeOf(minor.id)).toEqual(shapeOf(quiet.id));
+      const seen = async (id: string) => {
+        const { friendStatus, private: hidden } = (await call(adult, 'GET', `/users/${id}`)).json();
+        return { friendStatus, hidden };
+      };
+      expect(await seen(minor.id)).toEqual(await seen(quiet.id));
+      expect((await seen(minor.id)).friendStatus).toBe('pending_out');
+
+      // …and it never reaches the minor: not listed, not offered, not acceptable
       expect((await call(minor, 'GET', '/friends/requests')).json().requests).toEqual([]);
+      expect((await call(minor, 'GET', `/users/${adult.id}`)).json().friendStatus).toBe('none');
       const accept = await call(minor, 'POST', `/friends/requests/${adult.id}/accept`);
       expect(accept.statusCode).toBe(404);
-      expect((await pool.query(`SELECT status FROM friendships WHERE user_lo = $1 AND user_hi = $2`, [lo, hi])).rows[0])
-        .toEqual({ status: 'pending' });
-      // declining is always fine
-      expect((await call(minor, 'POST', `/friends/requests/${adult.id}/decline`)).json().result).toBe('declined');
+      expect(accept.json().code).toBe('NO_REQUEST');
+      // while the adult it was sent to sees theirs
+      const quietSees = (await call(quiet, 'GET', '/friends/requests')).json().requests as Array<{ userId: string }>;
+      expect(quietSees.map((r) => r.userId)).toContain(adult.id);
+
+      // another minor's request is held the same way
+      expect((await call(otherMinor, 'POST', '/friends/requests', { userId: minor.id })).json().outcome).toBe(
+        'requested',
+      );
+      expect((await call(minor, 'GET', '/friends/requests')).json().requests).toEqual([]);
+      const friendships = await pool.query(
+        `SELECT 1 FROM friendships WHERE status = 'accepted' AND requested_by = ANY($1::uuid[]) AND (user_lo = $2 OR user_hi = $2)`,
+        [[adult.id, otherMinor.id], minor.id],
+      );
+      expect(friendships.rowCount).toBe(0);
+    });
+
+    it('only the minor’s own request turns a held one into a friendship', async () => {
+      expect((await call(eager, 'POST', '/friends/requests', { userId: minor.id })).json().outcome).toBe('requested');
+      // the minor chooses this person themselves: being mutual, it is accepted
+      const mine = await call(minor, 'POST', '/friends/requests', { userId: eager.id });
+      expect(mine.json().outcome).toBe('accepted');
+      expect((await call(minor, 'GET', `/users/${eager.id}`)).json().friendStatus).toBe('friends');
+    });
+
+    it('a held request can still be declined, and nothing says it was held', async () => {
+      expect((await call(minor, 'POST', `/friends/requests/${otherMinor.id}/decline`)).json().result).toBe('declined');
     });
 
     it('a minor can send a request, and it can be accepted', async () => {
@@ -494,24 +542,39 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         expect(res.statusCode).toBe(200);
       });
 
-      it('only a friend of the minor can add them, and never to an open group', async () => {
-        const byStranger = await call(adult, 'POST', `/groups/${strangersGroup}/invite`, { userId: minor.id });
-        expect(byStranger.statusCode).toBe(403);
-        expect(byStranger.json().code).toBe('NOT_ACCEPTING_INVITES');
+      // deliberately changed: this pinned a 403 NOT_ACCEPTING_INVITES for a
+      // minor, while an adult stranger was added outright — another way to
+      // tell which accounts are children's
+      it('adding someone to a group answers the same whatever their age', async () => {
+        // a stranger adding a minor, and adding an adult: one refusal for both
+        const minorByStranger = await call(adult, 'POST', `/groups/${strangersGroup}/invite`, { userId: minor.id });
+        const adultByStranger = await call(adult, 'POST', `/groups/${strangersGroup}/invite`, { userId: quiet.id });
+        expect(answer(minorByStranger)).toEqual(answer(adultByStranger));
+        expect(minorByStranger.statusCode).toBe(403);
+        expect(minorByStranger.json().code).toBe('NOT_FRIENDS');
 
-        // adult and minor are not friends; friendOfMinor is
-        const byFriend = await call(friendOfMinor, 'POST', `/groups/${friendsGroup}/invite`, { userId: minor.id });
-        expect(byFriend.statusCode).toBe(200);
+        // a friend adds either to an invite-only group
+        const minorByFriend = await call(friendOfMinor, 'POST', `/groups/${friendsGroup}/invite`, { userId: minor.id });
+        const adultByFriend = await call(friendOfMinor, 'POST', `/groups/${friendsGroup}/invite`, { userId: other.id });
+        expect(answer(minorByFriend)).toEqual(answer(adultByFriend));
+        expect(minorByFriend.statusCode).toBe(200);
 
-        // even a friend who runs an open group cannot put a minor in it
+        // and nobody is added to an open group, which anyone joins for themselves
         await call(friendOfMinor, 'POST', `/groups/${openGroup}/join`);
         await pool.query(`UPDATE group_members SET role = 'moderator' WHERE group_id = $1 AND user_id = $2`, [
           openGroup,
           friendOfMinor.id,
         ]);
-        const intoOpen = await call(friendOfMinor, 'POST', `/groups/${openGroup}/invite`, { userId: minor.id });
-        expect(intoOpen.statusCode).toBe(403);
-        expect(intoOpen.json().code).toBe('OPEN_GROUPS_ADULTS_ONLY');
+        const minorIntoOpen = await call(friendOfMinor, 'POST', `/groups/${openGroup}/invite`, { userId: minor.id });
+        const adultIntoOpen = await call(friendOfMinor, 'POST', `/groups/${openGroup}/invite`, { userId: other.id });
+        expect(answer(minorIntoOpen)).toEqual(answer(adultIntoOpen));
+        expect(minorIntoOpen.json().code).toBe('OPEN_GROUP_NO_INVITES');
+
+        const memberships = await pool.query(
+          `SELECT group_id FROM group_members WHERE user_id = $1 AND group_id = ANY($2::uuid[])`,
+          [minor.id, [strangersGroup, openGroup]],
+        );
+        expect(memberships.rowCount).toBe(0);
       });
 
       it('a minor chats in an invite-only group, but not in an open one joined before we knew', async () => {
