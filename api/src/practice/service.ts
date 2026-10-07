@@ -19,6 +19,8 @@ interface ExerciseRow {
   id: string;
   type: ExerciseType;
   payload: unknown;
+  /** the variety of Kurdish of the course the exercise is in */
+  dialect?: string;
 }
 
 export interface PracticeExercise {
@@ -32,6 +34,11 @@ export interface PracticeExercise {
   audioUrl?: string;
   modelAudioUrl?: string;
   audio?: Record<string, string>;
+  /**
+   * The variety of Kurdish of the item's course. A review mixes courses, so
+   * each item says its own, and a client offers the letters it is typed in.
+   */
+  dialect?: string;
 }
 
 export interface PracticeSession {
@@ -154,6 +161,7 @@ export class PracticeService {
       type: ex.type,
       ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
       ...audio[i],
+      ...(ex.dialect ? { dialect: ex.dialect } : {}),
     }));
   }
 
@@ -237,7 +245,13 @@ export class PracticeService {
 
   private async loadExercises(ids: string[]): Promise<ExerciseRow[]> {
     const rows = await this.pool.query<ExerciseRow>(
-      `SELECT id, type, payload FROM exercises WHERE id = ANY($1::uuid[])`,
+      `SELECT e.id, e.type, e.payload, c.dialect
+       FROM exercises e
+       JOIN lessons l ON l.id = e.lesson_id
+       JOIN skills s ON s.id = l.skill_id
+       JOIN units u ON u.id = s.unit_id
+       JOIN courses c ON c.id = u.course_id
+       WHERE e.id = ANY($1::uuid[])`,
       [ids],
     );
     // preserve the selected order

@@ -206,6 +206,8 @@ describe.skipIf(!DATABASE_URL)('practice: due count, chosen items, retry (integr
     // delivered exactly as at the start: the cards shuffled with the same seed, no answers in it
     expect(view.exercises).toEqual(start.exercises);
     expect(JSON.stringify(view.exercises)).not.toContain('accepted');
+    // a review mixes courses, so each item says which Kurdish it is typed in
+    expect(view.exercises.map((e: { dialect?: string }) => e.dialect)).toEqual(['kurmanji', 'kurmanji', 'kurmanji']);
     expect(view.answered).toEqual({ [ex.tr]: { verdict: 'correct', accepted: true } });
 
     await authed(player, 'POST', `/practice/sessions/${sid}/complete`);

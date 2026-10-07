@@ -50,6 +50,11 @@ export interface DeliveredExercise {
   modelAudioUrl?: string;
   /** match pairs: recordings of the Kurdish cards, by the card's exact text */
   audio?: Record<string, string>;
+  /**
+   * The variety of Kurdish the item's course is in. A review mixes items from
+   * any course, so each says its own; a lesson's session says it once for all.
+   */
+  dialect?: string;
 }
 
 /** An answer the server has already recorded in this session. */
