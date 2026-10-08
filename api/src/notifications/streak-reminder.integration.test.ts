@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { StreakReminderService, type ReminderEnqueuer } from './streak-reminder-service.js';
 import type { Notification } from '../push/service.js';
+import { bornYearsAgo } from '../test/age.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -23,8 +24,10 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
   let service: StreakReminderService;
   let atRisk = '';
   let practiced = '';
+  let minor = '';
+  let minorOptedIn = '';
 
-  async function register(name: string, ip: string): Promise<string> {
+  async function register(name: string, ip: string, ageYears?: number): Promise<string> {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -33,6 +36,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        ...bornYearsAgo(ageYears ?? 30),
       },
       remoteAddress: ip,
     });
@@ -64,6 +68,12 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     practiced = await register('streakB', '10.96.0.2');
     await seed(atRisk, 5, '2026-06-14'); // streak alive, not practiced on the 15th
     await seed(practiced, 5, '2026-06-15'); // already practiced on the 15th
+    minor = await register('streakM', '10.96.0.3', 15);
+    minorOptedIn = await register('streakN', '10.96.0.4', 16);
+    await seed(minor, 5, '2026-06-14');
+    await seed(minorOptedIn, 5, '2026-06-14');
+    // a minor who chose to have them
+    await pool.query(`INSERT INTO notification_prefs (user_id, streak) VALUES ($1, true)`, [minorOptedIn]);
   });
 
   afterAll(async () => {
@@ -94,10 +104,41 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     expect(sent.filter((s) => s.userId === atRisk)).toHaveLength(0);
   });
 
+  it('writes the reminder in the language the account chose', async () => {
+    await pool.query(`UPDATE users SET locale = 'de' WHERE id = $1`, [minorOptedIn]);
+    sent.length = 0;
+    // a day of its own, so nothing has been sent yet
+    await service.runHourly(new Date('2026-06-16T08:30:00Z'));
+    const german = sent.find((s) => s.userId === minorOptedIn);
+    expect(german?.notification.title).toBe('Ein paar Minuten Kurdisch?');
+    expect(sent.find((s) => s.userId === atRisk)?.notification.title).toBe('A few minutes of Kurdish?');
+    await pool.query(`UPDATE users SET locale = 'en' WHERE id = $1`, [minorOptedIn]);
+  });
+
   it('never notifies a user who already practiced today', async () => {
     sent.length = 0;
     await service.runHourly(new Date('2026-06-15T08:30:00Z'));
     expect(sent.some((s) => s.userId === practiced)).toBe(false);
+  });
+
+  it('sends a minor no streak reminders unless they turned them on', async () => {
+    sent.length = 0;
+    // a day of its own: the first test already sent the 15th's reminders
+    await service.runHourly(new Date('2026-06-17T08:30:00Z'));
+    expect(sent.some((s) => s.userId === minor)).toBe(false);
+    expect(sent.some((s) => s.userId === minorOptedIn)).toBe(true);
+  });
+
+  it('never queues a reminder for anyone who turned them off', async () => {
+    await pool.query(
+      `INSERT INTO notification_prefs (user_id, streak) VALUES ($1, false)
+       ON CONFLICT (user_id) DO UPDATE SET streak = false`,
+      [atRisk],
+    );
+    sent.length = 0;
+    await service.runHourly(new Date('2026-06-18T08:30:00Z'));
+    expect(sent.some((s) => s.userId === atRisk)).toBe(false);
+    await pool.query(`DELETE FROM notification_prefs WHERE user_id = $1`, [atRisk]);
   });
 
   it('does not fire the primary reminder outside the practice hour', async () => {

@@ -1,7 +1,8 @@
 import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import type { GroupService } from './service.js';
+import { openGroupsAdultsOnly, type GroupService } from './service.js';
+import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
 import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 
@@ -32,7 +33,9 @@ export interface GroupMessage {
   deleted: boolean;
 }
 
-const room = (groupId: string): string => `group:${groupId}`;
+/** The realtime room a group's chat fans out to. */
+export const groupRoom = (groupId: string): string => `group:${groupId}`;
+const room = groupRoom;
 const ROOM_TTL = 7 * 24 * 60 * 60; // a week
 
 /**
@@ -50,9 +53,25 @@ export class GroupChatService {
     private readonly moderation?: ChatModeration,
   ) {}
 
+  /**
+   * Membership, and for anyone not known to be an adult an invite-only group.
+   * A minor is taken out of open groups when their age is recorded; one still
+   * in one (an older membership) can leave but can neither read nor write its
+   * chat. An account whose age is not on record yet is asked for it first.
+   */
   private async requireMember(groupId: string, userId: string): Promise<'owner' | 'moderator' | 'member'> {
     const role = await this.groups.memberRole(groupId, userId);
     if (!role) throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
+    const g = await this.pool.query<{ privacy: string; minor: boolean; known: boolean }>(
+      `SELECT g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known
+         FROM groups g, users u WHERE g.id = $1 AND u.id = $2`,
+      [groupId, userId],
+    );
+    const row = g.rows[0];
+    if (row?.privacy === 'open') {
+      if (row.minor) throw openGroupsAdultsOnly();
+      if (!row.known) throw birthDateRequired();
+    }
     return role;
   }
 
@@ -120,16 +139,22 @@ export class GroupChatService {
     await this.requireMember(groupId, userId);
     // grant this member access to the live room for the WS join
     await this.hub.invite(room(groupId), userId, ROOM_TTL).catch(() => undefined);
+    // An open group is strangers. Anything a minor said in one before their
+    // age was known (they are taken out when it is recorded) is shown to their
+    // friends only, as their posts are (users/age.ts `writtenForSql`); in an
+    // invite-only group everybody was put there by somebody they chose.
     const rows = await this.pool.query<{
       id: string; sender_id: string; username: string; profile_photo_key: string | null;
       selected_avatar_key: string | null; body: string; created_at: Date; deleted_at: Date | null;
     }>(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
               m.body, m.created_at, m.deleted_at
-         FROM group_messages m JOIN users u ON u.id = m.sender_id
-        WHERE m.group_id = $1 ${before ? 'AND m.created_at < $3::timestamptz' : ''}
+         FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
+        WHERE m.group_id = $1
+          AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
+          ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $2`,
-      before ? [groupId, limit, before] : [groupId, limit],
+      before ? [groupId, limit, userId, before] : [groupId, limit, userId],
     );
     return rows.rows
       .map((r) => ({

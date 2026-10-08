@@ -6,13 +6,28 @@ import { useT } from '../i18n/I18nProvider';
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
+export interface RegisterInput {
+  email: string;
+  username: string;
+  password: string;
+  locale?: string;
+  /** asked on the form with no default; the server refuses under 13 */
+  birthYear: number;
+  birthMonth: number;
+}
+
 interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
   client: ApiClient;
   /** Resolve to an error message, or null on success. */
   login(email: string, password: string, remember: boolean): Promise<string | null>;
-  register(input: { email: string; username: string; password: string; locale?: string }): Promise<string | null>;
+  /**
+   * Resolve to the error, or null on success. The code rides along because one
+   * refusal is not a message to show under a form: UNDER_MINIMUM_AGE replaces
+   * the form with an explanation.
+   */
+  register(input: RegisterInput): Promise<{ message: string; code?: string } | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
   /** Re-fetch the profile (e.g. after editing it elsewhere). */
@@ -89,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     },
     register: async (input) => {
       const res = await client.post<AuthPayload>('/auth/register', { ...input, acceptTerms: true });
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
       applyAuth(res.data, true);
       return null;
     },

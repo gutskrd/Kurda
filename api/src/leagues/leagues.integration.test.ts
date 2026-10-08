@@ -31,6 +31,8 @@ describe.skipIf(!DATABASE_URL)('weekly leagues (integration)', () => {
         username: `lg_${i}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       // distinct IPs so 12 signups don't trip per-IP anti-bot limits
       remoteAddress: `10.62.${i}.1`,

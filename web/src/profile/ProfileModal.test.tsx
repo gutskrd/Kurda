@@ -38,7 +38,7 @@ describe('ProfileModal', () => {
             xp: 1234,
             // /me returns the streak as an OBJECT, not a number (regression for
             // React error #31 — rendering the object directly used to crash).
-            streak: { current: 7, longest: 12, freezes: 1, lastActiveOn: '2026-08-20' },
+            streak: { current: 7, longest: 12, freezes: 1, lastActiveOn: '2026-08-20', daysLearned: 30 },
             profileVisibility: 'everyone',
             profilePhotoUrl: null,
             createdAt: '2026-01-01T00:00:00.000Z',
@@ -56,6 +56,11 @@ describe('ProfileModal', () => {
     expect(screen.getByText('1,234')).toBeInTheDocument(); // XP
     // renders streak.current (not the object) — no crash, no error state
     expect(screen.getByText('7 days')).toBeInTheDocument();
+    // and beside it, the two numbers a missed day never takes away
+    expect(screen.getByText('12 days')).toBeInTheDocument();
+    expect(screen.getByText('Longest streak')).toBeInTheDocument();
+    expect(screen.getByText('Days learned')).toBeInTheDocument();
+    expect(screen.getByText('30')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     // Saved is a section of the full profile, not a button on the card — this
     // is a glance at who you are, not a place to keep every link

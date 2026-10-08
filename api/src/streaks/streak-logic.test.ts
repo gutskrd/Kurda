@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  countsAsLearning,
   dayDiff,
+  EMPTY_TALLY,
   grantFreeze,
   localDate,
+  MAX_FREEZES,
   record,
+  recordSession,
+  SESSIONS_PER_FREEZE,
   settle,
   shiftDate,
+  type LearningTally,
   type StreakState,
 } from './streak-logic.js';
 
@@ -138,5 +144,81 @@ describe('settle (read-time)', () => {
     const a = settle(s, '2026-07-10');
     const b = settle(a, '2026-07-10');
     expect(b).toEqual(a);
+  });
+});
+
+describe('recordSession (days learned and earned freezes)', () => {
+  type Both = { streak: StreakState; tally: LearningTally };
+  /** One session a day for `n` consecutive days from 2026-07-01. */
+  const sessions = (n: number): Both => {
+    let s: Both = { streak: fresh, tally: EMPTY_TALLY };
+    for (let i = 0; i < n; i++) s = recordSession(s.streak, s.tally, shiftDate('2026-07-01', i));
+    return s;
+  };
+
+  it('counts each day learned once, however many sessions it had', () => {
+    let s: Both = { streak: fresh, tally: EMPTY_TALLY };
+    for (let i = 0; i < 3; i++) s = recordSession(s.streak, s.tally, '2026-07-01');
+    s = recordSession(s.streak, s.tally, '2026-07-02');
+    expect(s.tally.daysLearned).toBe(2);
+    expect(s.tally.lastLearnedOn).toBe('2026-07-02');
+    expect(s.streak.currentStreak).toBe(2);
+  });
+
+  it('keeps counting days learned through a broken streak', () => {
+    let s = sessions(3);
+    s = recordSession(s.streak, s.tally, '2026-07-20');
+    expect(s.streak.currentStreak).toBe(1);
+    expect(s.streak.longestStreak).toBe(3);
+    expect(s.tally.daysLearned).toBe(4);
+  });
+
+  it('earns a freeze on every fifth session', () => {
+    let s = sessions(4);
+    expect(s.streak.freezes).toBe(0);
+    expect(s.tally.freezeProgress).toBe(4);
+    const fifth = recordSession(s.streak, s.tally, '2026-07-05');
+    expect(fifth.freezeEarned).toBe(true);
+    expect(fifth.streak.freezes).toBe(1);
+    expect(fifth.tally.freezeProgress).toBe(0);
+    s = fifth;
+    expect(s.streak.currentStreak).toBe(5);
+  });
+
+  it('holds a full count at the cap and pays it once a freeze is spent', () => {
+    // a freeze at session 5; sessions 6–10 fill the count to the top
+    const full = sessions(10);
+    expect(full.streak.freezes).toBe(MAX_FREEZES);
+    expect(full.tally.freezeProgress).toBe(SESSIONS_PER_FREEZE);
+
+    const extra = recordSession(full.streak, full.tally, '2026-07-10');
+    expect(extra.freezeEarned).toBe(false);
+    expect(extra.streak.freezes).toBe(MAX_FREEZES);
+
+    // miss the 11th: the freeze covers it, and the next session earns it back
+    const back = recordSession(extra.streak, extra.tally, '2026-07-12');
+    expect(back.streak.currentStreak).toBe(11);
+    expect(back.freezeEarned).toBe(true);
+    expect(back.streak.freezes).toBe(MAX_FREEZES);
+    expect(back.tally.freezeProgress).toBe(0);
+  });
+});
+
+describe('countsAsLearning', () => {
+  it('never counts a session with nothing answered', () => {
+    expect(countsAsLearning(0, 10)).toBe(false);
+    expect(countsAsLearning(0, 1)).toBe(false);
+    // not even an empty one: there was nothing to learn from
+    expect(countsAsLearning(0, 0)).toBe(false);
+  });
+
+  it('needs at least half of the items answered', () => {
+    expect(countsAsLearning(4, 10)).toBe(false);
+    expect(countsAsLearning(5, 10)).toBe(true);
+    // odd totals round the half up
+    expect(countsAsLearning(1, 3)).toBe(false);
+    expect(countsAsLearning(2, 3)).toBe(true);
+    expect(countsAsLearning(1, 1)).toBe(true);
+    expect(countsAsLearning(10, 10)).toBe(true);
   });
 });

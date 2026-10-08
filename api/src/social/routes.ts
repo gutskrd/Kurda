@@ -43,7 +43,7 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     }),
   );
 
-  /** Set who can see your profile. */
+  /** Set who can see your profile ('everyone' is refused under 18). */
   app.put(
     '/me/privacy',
     {
@@ -76,7 +76,9 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
    * The privacy rules are the profile's own: the profile call already resolves
    * blocks and the everyone/members/friends setting, so it is reused rather
    * than reimplemented where the two could drift apart. A profile you may not
-   * see the detail of has no friend list either.
+   * see the detail of has no friend list either. And the list never names a
+   * minor to somebody who is not their friend (FriendService.list), so it
+   * cannot be used to find one.
    */
   app.get(
     '/users/:id/friends',
@@ -94,7 +96,7 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       const { limit, offset } = req.query as { limit?: number; offset?: number };
       const profile = await social.profile(req.user?.id ?? null, id);
       if (profile.private) return { friends: [], total: 0 };
-      return friends.list(id, publicUrl, limit, offset);
+      return friends.list(id, publicUrl, limit, offset, req.user?.id ?? null);
     },
   );
 

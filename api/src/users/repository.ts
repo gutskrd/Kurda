@@ -14,6 +14,9 @@ export interface UserRow {
   token_version: number;
   roles: string[];
   email_verified_at: Date | null;
+  /** both null until given — see migration 1751000140000 */
+  birth_year: number | null;
+  birth_month: number | null;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

@@ -19,7 +19,7 @@ describe.skipIf(!DATABASE_URL)('image reactions & comments (integration)', () =>
   const register = async (tag: string, ip: string): Promise<{ token: string; id: string }> => {
     const res = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `ix_${tag}_${suffix}@it.kurda.app`, username: `ix_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `ix_${tag}_${suffix}@it.kurda.app`, username: `ix_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: ip,
     });
     await activate(app, pool, res);

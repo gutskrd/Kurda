@@ -20,9 +20,14 @@ export interface NotificationPrefs {
   quietEndMin: number | null;
 }
 
-export function defaultPrefs(): NotificationPrefs {
+/**
+ * The preferences of someone who has never changed them. For a minor, streak
+ * reminders start off: a daily nudge to keep a run going is the kind of
+ * engagement prompt that should be a young person's choice, not a default.
+ */
+export function defaultPrefs(opts: { minor?: boolean } = {}): NotificationPrefs {
   return {
-    streak: true,
+    streak: !opts.minor,
     friends: true,
     games: true,
     events: true,

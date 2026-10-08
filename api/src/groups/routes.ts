@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import type { GroupService } from './service.js';
 import type { TrustService } from '../trust/service.js';
 
@@ -24,7 +25,7 @@ export function registerGroupRoutes(
           privacy: z.enum(['open', 'invite']).optional(),
         }),
       },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req, reply) => {
       if (trust) {
@@ -46,7 +47,7 @@ export function registerGroupRoutes(
   );
 
   /** Discover open groups + your own. */
-  app.get('/groups', { preHandler: requireAuth }, async () => ({ groups: await groups.discover() }));
+  app.get('/groups', { preHandler: requireAuth }, async (req) => ({ groups: await groups.discover(req.user!.id) }));
   app.get('/me/groups', { preHandler: requireAuth }, async (req) => ({ groups: await groups.myGroups(req.user!.id) }));
 
   /** Group detail with roster. */
@@ -58,7 +59,7 @@ export function registerGroupRoutes(
 
   const ok = { ok: true } as const;
 
-  app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+  app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth }, async (req) => {
     await groups.join(req.user!.id, (req.params as { id: string }).id);
     return ok;
   });
@@ -68,7 +69,7 @@ export function registerGroupRoutes(
   });
   app.post(
     '/groups/:id/invite',
-    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: requireBirthMonth },
     async (req) => {
       await groups.invite(req.user!.id, (req.params as { id: string }).id, (req.body as { userId: string }).userId);
       return ok;

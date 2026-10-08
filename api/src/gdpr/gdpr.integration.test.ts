@@ -27,6 +27,8 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: `10.13.0.${Math.floor(Math.random() * 200) + 1}`,
     });
@@ -109,6 +111,13 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     // rerun is idempotent for this user
     const again = await service.anonymizeExpired();
     expect(again).toBe(0);
+  });
+
+  it('the export carries the birth month and year it was given', async () => {
+    const user = await makeUser('exportage');
+    await pool.query(`UPDATE users SET birth_year = 1990, birth_month = 4 WHERE id = $1`, [user.id]);
+    const doc = await new GdprService(pool).buildExport(user.id);
+    expect(doc.user).toMatchObject({ birth_year: 1990, birth_month: 4 });
   });
 
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {

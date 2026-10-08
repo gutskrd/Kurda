@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -43,7 +44,7 @@ export function registerLibraryCommentRoutes(
     {
       schema: { params: postIdParam, body: createBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
@@ -95,11 +96,15 @@ export function registerLibraryCommentRoutes(
   app.get('/library/posts/:postId/comments', { schema: { params: postIdParam } }, async (req) => {
     const { postId } = req.params as { postId: string };
     const q = req.query as Record<string, string | undefined>;
-    const rows = await comments.topLevel(postId, {
-      limit: q.limit ? Number(q.limit) : undefined,
-      offset: q.offset ? Number(q.offset) : undefined,
-      sort: q.sort === 'oldest' ? 'oldest' : 'newest',
-    });
+    const rows = await comments.topLevel(
+      postId,
+      {
+        limit: q.limit ? Number(q.limit) : undefined,
+        offset: q.offset ? Number(q.offset) : undefined,
+        sort: q.sort === 'oldest' ? 'oldest' : 'newest',
+      },
+      req.user?.id ?? null,
+    );
     const authored = await comments.withAuthors(rows, (k) => (app.storage ? app.storage.publicUrl(k) : null));
     return { comments: authored.map(withAudioUrl) };
   });
@@ -108,10 +113,11 @@ export function registerLibraryCommentRoutes(
   app.get('/library/comments/:id/replies', { schema: { params: idParam } }, async (req) => {
     const { id } = req.params as { id: string };
     const q = req.query as Record<string, string | undefined>;
-    const rows = await comments.replies(id, {
-      limit: q.limit ? Number(q.limit) : undefined,
-      offset: q.offset ? Number(q.offset) : undefined,
-    });
+    const rows = await comments.replies(
+      id,
+      { limit: q.limit ? Number(q.limit) : undefined, offset: q.offset ? Number(q.offset) : undefined },
+      req.user?.id ?? null,
+    );
     const authored = await comments.withAuthors(rows, (k) => (app.storage ? app.storage.publicUrl(k) : null));
     return { comments: authored.map(withAudioUrl) };
   });
