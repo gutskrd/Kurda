@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { DocPage, MadeBy } from '../components/DocPage';
 import { useT } from '../i18n/I18nProvider';
@@ -34,6 +35,17 @@ export function About(): React.JSX.Element {
       metaDescription="meta.about.description"
       sections={[
         { title: 'about.nameTitle', body: 'about.nameBody' },
+        {
+          title: 'teach.title',
+          body: (
+            <p>
+              {t('about.teachBody')}{' '}
+              <Link className="doc-link" to="/how-hevalo-teaches">
+                {t('footer.teach')}
+              </Link>
+            </p>
+          ),
+        },
         {
           title: 'about.nowTitle',
           body: (

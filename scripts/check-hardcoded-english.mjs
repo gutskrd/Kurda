@@ -187,6 +187,17 @@ const NOT_LITERAL = [
 const NOT_READER_FACING = [/[\\/]worker\.ts$/];
 
 /**
+ * Files whose English is a citation, not copy.
+ *
+ * The reference list "How Hevalo teaches" cites: each study's title, authors
+ * and journal, as they were printed. A reference names a paper, and a German
+ * title for an English paper would cite something nobody wrote, so these are
+ * the one place where English text is meant to reach every reader as it is.
+ * The sentences around them are in the catalogues like every other word.
+ */
+const CITATIONS = [/[\\/]teaching[\\/]sources\.ts$/];
+
+/**
  * Where a capitalised phrase is code rather than copy.
  *
  * A module specifier, a comparison against a literal, and a catalogue key —
@@ -450,6 +461,7 @@ const problems = [];
 
 for (const file of sources(SRC)) {
   if (NOT_READER_FACING.some((re) => re.test(file))) continue;
+  if (CITATIONS.some((re) => re.test(file))) continue;
   const src = withoutComments(readFileSync(file, 'utf8'));
   const lines = src.split(/\r?\n/);
   const asProp = new Set();

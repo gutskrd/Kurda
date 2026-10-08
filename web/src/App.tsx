@@ -61,6 +61,9 @@ const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
 const Faq = lazy(() => import('./pages/Faq').then((m) => ({ default: m.Faq })));
+const HowHevaloTeaches = lazy(() =>
+  import('./pages/HowHevaloTeaches').then((m) => ({ default: m.HowHevaloTeaches })),
+);
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -121,6 +124,8 @@ export function App(): React.JSX.Element {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/faq" element={<Faq />} />
+            {/* what the lessons are built on, with the studies; see teaching/principles.ts */}
+            <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
@@ -195,9 +200,12 @@ export function App(): React.JSX.Element {
             <Route path="dimen" element={<Navigate to="/app/civak?section=dimen" replace />} />
             <Route path="dimen/:id" element={<DimenPost />} />
             <Route path="games" element={<Games />} />
-            <Route path="games/wordle" element={<Wordle />} />
-            <Route path="games/rhyme" element={<Rhyme />} />
-            <Route path="games/race" element={<Race />} />
+            {/* the games played alone need an account too: every round is
+                scored on the server against the player (api/src/game), so a
+                guest is asked here rather than shown a game that cannot start */}
+            <Route path="games/wordle" element={<RequireAccount what="gate.what.play"><Wordle /></RequireAccount>} />
+            <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
+            <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
             <Route
               path="games/quiz"
               element={<RequireAccount what="gate.what.playOthers"><Quiz /></RequireAccount>}

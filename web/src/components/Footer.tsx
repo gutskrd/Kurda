@@ -61,6 +61,8 @@ export function Footer(): React.JSX.Element {
               {t('footer.company')}
             </h2>
             <Link to="/about">{t('nav.about')}</Link>
+            {/* also in the published dictionary's footer (web/scripts/ferheng-pages.ts) */}
+            <Link to="/how-hevalo-teaches">{t('footer.teach')}</Link>
             <Link to="/faq">{t('footer.faq')}</Link>
             <Link to="/privacy">{t('footer.privacy')}</Link>
             <Link to="/terms">{t('footer.terms')}</Link>

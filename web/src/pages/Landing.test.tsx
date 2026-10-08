@@ -17,8 +17,10 @@ describe('Landing', () => {
     expect(h1).toHaveTextContent(/learn kurdish/i);
     expect(h1).toHaveTextContent(/play together/i);
     expect(screen.getByRole('link', { name: /start learning kurdish/i })).toHaveAttribute('href', '/register');
-    // a visitor can play before they sign up, because solo games really are open
-    expect(screen.getByRole('link', { name: /play a game first/i })).toHaveAttribute('href', '/app/games');
+    // the games are a look around, not a promise to play without signing up:
+    // every game needs an account (deliberately changed from "Play a game first")
+    expect(screen.getByRole('link', { name: /see the games/i })).toHaveAttribute('href', '/app/games');
+    expect(screen.getByText(/the games need a free account/i)).toBeInTheDocument();
   });
 
   it('links every game to the place it is played', () => {

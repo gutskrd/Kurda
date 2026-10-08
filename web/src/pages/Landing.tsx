@@ -123,9 +123,10 @@ const TOGETHER: ReadonlyArray<{ title: MessageKey; body: MessageKey; visual: Rea
 /**
  * The four games, each linked to where it is played.
  *
- * Wordle, Rhyme and the race open for a guest; the quiz is played against
- * somebody, so it asks for an account when you get there — which is what the
- * Games page itself does.
+ * Every game needs an account, the solo rounds too — the server keeps the
+ * score against the player — so a guest who follows one is asked to make one
+ * when they get there, which is what the Games page itself says. The note
+ * under the tiles says so before they click.
  */
 const GAMES: ReadonlyArray<{
   id: string;
@@ -181,6 +182,19 @@ const SPEAK: ReadonlyArray<{ step: 'see' | 'hear' | 'say' | 'use'; title: Messag
   { step: 'hear', title: 'landing.speak.hear', body: 'landing.speak.hearBody' },
   { step: 'say', title: 'landing.speak.say', body: 'landing.speak.sayBody' },
   { step: 'use', title: 'landing.speak.use', body: 'landing.speak.useBody' },
+];
+
+/**
+ * Four of the principles "How Hevalo teaches" sets out, each card a link to
+ * its section there. The titles are the page's own, so the card and the
+ * section it opens are called the same thing; the line under each says only
+ * what Hevalo does, and the page carries the studies.
+ */
+const SCIENCE: ReadonlyArray<{ id: string; title: MessageKey; body: MessageKey }> = [
+  { id: 'retrieval', title: 'teach.retrieval.title', body: 'landing.science.retrieval' },
+  { id: 'spacing', title: 'teach.spacing.title', body: 'landing.science.spacing' },
+  { id: 'feedback', title: 'teach.feedback.title', body: 'landing.science.feedback' },
+  { id: 'voices', title: 'teach.voices.title', body: 'landing.science.voices' },
 ];
 
 /** Learn → Earn → Customize → Play, and round again. */
@@ -338,6 +352,31 @@ export function Landing(): React.JSX.Element {
             ))}
           </ol>
           <p className="lp-footnote">{t('landing.speak.note')}</p>
+        </div>
+      </section>
+
+      {/* ---- how it teaches ------------------------------------------------- */}
+      <section id="how-it-teaches" className="lp-section" aria-labelledby="lp-science">
+        <div className="container">
+          <SectionHead id="lp-science" kicker="teach.kicker" title="landing.science.title" lead="landing.science.lead" />
+          <div className="lp-columns">
+            {SCIENCE.map((p) => (
+              <div className="lp-column lp-principle lp-reveal" key={p.id}>
+                <h3 className="lp-h3">
+                  {/* the whole card is the link; the principle is what it is called */}
+                  <Link to={`/how-hevalo-teaches#${p.id}`} className="lp-principle-link">
+                    {t(p.title)}
+                  </Link>
+                </h3>
+                <p className="lp-body">{t(p.body)}</p>
+              </div>
+            ))}
+          </div>
+          <div className="lp-section-foot">
+            <LinkButton to="/how-hevalo-teaches" variant="secondary">
+              {t('landing.science.cta')}
+            </LinkButton>
+          </div>
         </div>
       </section>
 

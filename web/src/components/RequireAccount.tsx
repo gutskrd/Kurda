@@ -9,9 +9,10 @@ import type { MessageKey } from '../i18n/en';
  * A page that needs an account.
  *
  * Most of the app is open to read — the community's wall, its posts, its
- * rankings, the games you play alone. This wraps the parts that are about *you*
- * or about reaching other people: your messages, your saved posts, your
- * settings, and playing against someone.
+ * rankings, the alphabet. This wraps the parts that are about *you* or about
+ * reaching other people: your messages, your saved posts, your settings, your
+ * lessons, and the games, which the server scores against an account whether
+ * you play alone or against someone.
  *
  * A signed-out visitor is asked rather than bounced. Being redirected to a login
  * form, with no explanation and no way back, is how you lose someone who was
