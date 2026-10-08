@@ -250,7 +250,7 @@ export function SessionPlayer({
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>
-        <LessonResults results={results} exercises={state.exercises} onDone={onExit} />
+        <LessonResults results={results} exercises={state.exercises} skipped={state.skipped.length} onDone={onExit} />
       </GradientBackground>
     );
   }

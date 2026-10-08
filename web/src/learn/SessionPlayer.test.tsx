@@ -295,8 +295,8 @@ describe('listening', () => {
     await screen.findByRole('heading', { name: 'Lesson finished' });
     expect(sent('answers').map((c) => (c.body as { exerciseId: string }).exerciseId)).toEqual(['t']);
     expect(sent('retry')).toHaveLength(0);
-    // not a mistake, but not right either: the results say why the score is out of both
-    expect(screen.getByText('Skipped this time: 1. A skipped exercise counts as not answered.')).toBeInTheDocument();
+    // not a mistake, and out of the score: the results say so beside it
+    expect(screen.getByText('Skipped this time: 1. Skipped exercises don’t count towards your score.')).toBeInTheDocument();
     expect(screen.getByText('No mistakes this time.')).toBeInTheDocument();
   });
 

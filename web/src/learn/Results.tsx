@@ -16,10 +16,10 @@ const KURDISH_ANSWER = new Set(['translate', 'writing', 'listening', 'speaking']
  * what went wrong and not what is right — and a way to practise them straight
  * away.
  *
- * An exercise put off ("Can't listen now") is not a mistake, but the server
- * counts every exercise of the session, so it is not right either: the
- * accuracy is out of all of them. Saying how many were put off keeps "8 of
- * 10" from reading as two wrong answers.
+ * An exercise put off ("Can't listen now", "Can't speak now") is neither a
+ * mistake nor a right answer: the server leaves it out of the score, so "8 of
+ * 8" with two put off is a perfect score of the eight answered. Saying how many
+ * were put off keeps a lesson of ten from reading as "8 of 8" with two lost.
  */
 export function Results({
   results,

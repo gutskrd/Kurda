@@ -841,7 +841,7 @@ export const tr: Catalogue = {
   'lesson.results.streak': 'Üst üste gün',
   'lesson.results.mistakes': 'Üzerinden geçilecekler',
   'lesson.results.noMistakes': 'Bu kez hiç hata yok.',
-  'lesson.results.skipped': 'Bu kez atlanan: {count}. Atlanan bir alıştırma yanıtlanmamış sayılır.',
+  'lesson.results.skipped': 'Bu kez atlanan: {count}. Atlanan alıştırmalar sonucuna sayılmaz.',
   'lesson.results.practise': 'Bunları şimdi çalış',
   'edit.eyebrow': 'Profil',
   'edit.back': '← Profiline dön',

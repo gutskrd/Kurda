@@ -653,6 +653,7 @@ export type TranslationKey =
   | 'chat.messagePlaceholder'
   | 'lesson.accuracy'
   | 'lesson.correct'
+  | 'lesson.skipped'
   | 'library.titlePlaceholder'
   | 'notifications.quietFrom'
   | 'notifications.quietTo'
@@ -1575,6 +1576,7 @@ const en: Catalog = {
   'chat.messagePlaceholder': 'Message…',
   'lesson.accuracy': 'Accuracy',
   'lesson.correct': 'Correct',
+  'lesson.skipped': 'Skipped this time: {count}. Skipped exercises don’t count towards your score.',
   'library.titlePlaceholder': 'Title',
   'notifications.quietFrom': 'From',
   'notifications.quietTo': 'To',
@@ -2508,6 +2510,7 @@ const ku: Catalog = {
   'chat.messagePlaceholder': 'Peyam…',
   'lesson.accuracy': 'Rastbûn',
   'lesson.correct': 'Rast',
+  'lesson.skipped': 'Vê carê derbaskirî: {count}. Temrînên derbaskirî di encamê de nayên hesibandin.',
   'library.titlePlaceholder': 'Sernav',
   'notifications.quietFrom': 'Ji',
   'notifications.quietTo': 'Heta',
@@ -3441,6 +3444,7 @@ const de: Catalog = {
   'chat.messagePlaceholder': 'Nachricht…',
   'lesson.accuracy': 'Genauigkeit',
   'lesson.correct': 'Richtig',
+  'lesson.skipped': 'Diesmal übersprungen: {count}. Übersprungene Übungen zählen nicht für dein Ergebnis.',
   'library.titlePlaceholder': 'Titel',
   'notifications.quietFrom': 'Von',
   'notifications.quietTo': 'Bis',
@@ -4374,6 +4378,7 @@ const es: Catalog = {
   'chat.messagePlaceholder': 'Mensaje…',
   'lesson.accuracy': 'Precisión',
   'lesson.correct': 'Correctas',
+  'lesson.skipped': 'Saltados esta vez: {count}. Los ejercicios saltados no cuentan para tu puntuación.',
   'library.titlePlaceholder': 'Título',
   'notifications.quietFrom': 'Desde',
   'notifications.quietTo': 'Hasta',
@@ -5307,6 +5312,7 @@ const tr: Catalog = {
   'chat.messagePlaceholder': 'Mesaj…',
   'lesson.accuracy': 'Doğruluk',
   'lesson.correct': 'Doğru',
+  'lesson.skipped': 'Bu kez atlanan: {count}. Atlanan alıştırmalar sonucuna sayılmaz.',
   'library.titlePlaceholder': 'Başlık',
   'notifications.quietFrom': 'Başlangıç',
   'notifications.quietTo': 'Bitiş',
@@ -6240,6 +6246,7 @@ const ar: Catalog = {
   'chat.messagePlaceholder': 'رسالة…',
   'lesson.accuracy': 'الدقة',
   'lesson.correct': 'صحيح',
+  'lesson.skipped': 'تخطّيت هذه المرة: {count}. التمارين التي تتخطّاها لا تُحسب في نتيجتك.',
   'library.titlePlaceholder': 'العنوان',
   'notifications.quietFrom': 'من',
   'notifications.quietTo': 'إلى',
@@ -7173,6 +7180,7 @@ const fr: Catalog = {
   'chat.messagePlaceholder': 'Message…',
   'lesson.accuracy': 'Précision',
   'lesson.correct': 'Correct',
+  'lesson.skipped': 'Passés cette fois : {count}. Les exercices passés ne comptent pas dans ton score.',
   'library.titlePlaceholder': 'Titre',
   'notifications.quietFrom': 'De',
   'notifications.quietTo': 'À',
@@ -8106,6 +8114,7 @@ const nl: Catalog = {
   'chat.messagePlaceholder': 'Bericht…',
   'lesson.accuracy': 'Nauwkeurigheid',
   'lesson.correct': 'Correct',
+  'lesson.skipped': 'Deze keer overgeslagen: {count}. Overgeslagen oefeningen tellen niet mee voor je score.',
   'library.titlePlaceholder': 'Titel',
   'notifications.quietFrom': 'Van',
   'notifications.quietTo': 'Tot',
@@ -9040,6 +9049,7 @@ const ckb: Catalog = {
   'chat.messagePlaceholder': 'نامە…',
   'lesson.accuracy': 'وردی',
   'lesson.correct': 'ڕاست',
+  'lesson.skipped': 'ئەمجارە تێپەڕێنراو: {count}. ڕاهێنانە تێپەڕێنراوەکان لە ئەنجامەکەدا هەژمار ناکرێن.',
   'library.titlePlaceholder': 'ناونیشان',
   'notifications.quietFrom': 'لە',
   'notifications.quietTo': 'بۆ',

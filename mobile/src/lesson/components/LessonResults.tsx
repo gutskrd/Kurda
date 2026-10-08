@@ -11,6 +11,8 @@ import type { Exercise, SessionResults } from '../types';
 interface Props {
   results: SessionResults;
   exercises: Exercise[];
+  /** exercises put off ("can't listen now") and never answered this time */
+  skipped?: number;
   onDone: () => void;
 }
 
@@ -18,8 +20,12 @@ interface Props {
  * End-of-lesson summary: XP, accuracy, streak, and every mistake with the
  * question and its right answer — a list of misses without their answers
  * told the learner what they got wrong and not what was right.
+ *
+ * An exercise put off is neither a mistake nor a right answer: the server
+ * leaves it out of the score, so "3/3" with one put off is a perfect score of
+ * the three answered. The note says how many were put off, as the web's does.
  */
-export function LessonResults({ results, exercises, onDone }: Props) {
+export function LessonResults({ results, exercises, skipped = 0, onDone }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const pct = Math.round(results.accuracy * 100);
@@ -38,6 +44,10 @@ export function LessonResults({ results, exercises, onDone }: Props) {
       </View>
 
       <StreakBadge streak={results.streak} />
+
+      {skipped > 0 ? (
+        <Text style={[styles.note, { color: colors.textSecondary }]}>{t('lesson.skipped', { count: skipped })}</Text>
+      ) : null}
 
       {mistakes.length > 0 ? (
         <View style={[styles.mistakes, { backgroundColor: colors.controlTrack }]}>
@@ -81,6 +91,7 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   title: { ...display(typography.sizes.xxl) },
+  note: { fontSize: typography.sizes.sm, textAlign: 'center' },
   stats: { flexDirection: 'row', gap: spacing.lg },
   stat: { alignItems: 'center', minWidth: 72 },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
