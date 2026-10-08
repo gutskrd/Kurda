@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
+import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
@@ -423,11 +423,21 @@ export class PracticeService {
   /**
    * Finalize: award reduced XP once, credit the daily goal, and — when enough
    * was answered to be learning — the streak. Idempotent.
+   *
+   * A listening item put off and never answered ("Can't listen now") is left
+   * out of the score, as in a lesson (`SKIPPABLE_TYPES`): the accuracy and the
+   * XP are out of the items answered or that could have been.
    */
   async complete(sessionId: string, userId: string): Promise<PracticeResults> {
     const session = await this.loadSession(sessionId, userId);
     const correct = session.correct_count;
-    const total = session.total_count;
+    const putOff = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM exercises e
+       WHERE e.id = ANY($1::uuid[]) AND e.type = ANY($3::text[])
+         AND NOT EXISTS (SELECT 1 FROM practice_answers a WHERE a.session_id = $2 AND a.exercise_id = e.id)`,
+      [session.item_ids, session.id, SKIPPABLE_TYPES],
+    );
+    const total = Math.max(0, session.total_count - putOff.rows[0]!.n);
     const accuracy = total > 0 ? correct / total : 0;
     // the misses with their right answers, in the order they were asked, so a
     // review ends the way a lesson does: with what to fix, not just a score
@@ -470,7 +480,8 @@ export class PracticeService {
             `SELECT count(*)::int n FROM practice_answers WHERE session_id = $1`,
             [session.id],
           );
-          if (countsAsLearning(answered.rows[0]!.n, total)) {
+          // (out of every item, put off or not: being learning is about what was done)
+          if (countsAsLearning(answered.rows[0]!.n, session.total_count)) {
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
           await this.goals.evaluate(client, userId, timeZone);

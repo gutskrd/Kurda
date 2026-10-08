@@ -461,6 +461,17 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
 }
 
 /**
+ * The kinds of exercise a learner may put off without it counting against
+ * them: listening ("Can't listen now", or a clip that will not play) and
+ * speaking ("Can't speak now", or the course-wide "skip speaking" setting).
+ * Both need something the learner may not have at that moment — sound, a
+ * microphone, a quiet room — and not having it is not a wrong answer. One put
+ * off and never answered is left out of the score rather than counted as
+ * missed (`LessonSessionService.complete`, `PracticeService.complete`).
+ */
+export const SKIPPABLE_TYPES: readonly ExerciseType[] = ['listening', 'speaking'];
+
+/**
  * What a results screen shows for a missed exercise: the question as it was
  * asked, and the right answer. Read from the stored payload, so it is only
  * ever sent once the session is over. A match-pairs item has no prompt; its

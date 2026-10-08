@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
+import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
@@ -85,7 +85,12 @@ export type RetryResult = Omit<AnswerResult, 'duplicate'>;
 
 export interface SessionResults {
   correct: number;
+  /**
+   * The exercises the score is out of: the lesson's, less any listening or
+   * speaking item put off and never answered (`SKIPPABLE_TYPES`).
+   */
   total: number;
+  /** `correct / total` */
   accuracy: number;
   /**
    * What was missed, with the question and its right answer, so a results
@@ -403,6 +408,14 @@ export class LessonSessionService {
    * transition to completed. Sessions completed before this rule were paid
    * under their session id, so paying on a repeated call would pay a learner
    * already paid for that completion a second time.
+   *
+   * A listening or speaking item put off and never answered ("Can't listen
+   * now", `SKIPPABLE_TYPES`) is left out of the score: the accuracy, and the
+   * XP that follows it, are out of the exercises that were answered or could
+   * have been, so putting one off costs nothing. It earns nothing either: a
+   * lesson with anything put off is not a perfect one, for the Gems or for
+   * the first-perfect milestone — otherwise putting off the items that might
+   * go wrong would be the way to a perfect lesson.
    */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
     const session = await this.loadOwnedSession(sessionId, userId);
@@ -424,7 +437,15 @@ export class LessonSessionService {
     const mistakes = answers.rows
       .filter((a) => !a.accepted)
       .map((a) => ({ exerciseId: a.exercise_id, verdict: a.verdict, ...revealExercise(a.type, a.payload) }));
-    const accuracy = session.total_count > 0 ? correct / session.total_count : 0;
+    const putOff = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM exercises e
+       WHERE e.lesson_id = $1 AND e.type = ANY($3::text[])
+         AND NOT EXISTS (SELECT 1 FROM session_answers a WHERE a.session_id = $2 AND a.exercise_id = e.id)`,
+      [session.lesson_id, session.id, SKIPPABLE_TYPES],
+    );
+    const skipped = putOff.rows[0]!.n;
+    const scored = Math.max(0, session.total_count - skipped);
+    const accuracy = scored > 0 ? correct / scored : 0;
 
     const tz = await this.pool.query<{ timezone: string }>(
       `SELECT timezone FROM users WHERE id = $1`,
@@ -492,17 +513,21 @@ export class LessonSessionService {
     // Best-effort rewards after the commit, for the call that completed the
     // session only: a failure here never fails the completion, and each is
     // idempotent besides.
-    if (this.gems && claimedNow && firstCompletion && accuracy === 1) {
+    // perfect: every exercise answered, and answered right
+    const perfect = skipped === 0 && accuracy === 1;
+    if (this.gems && claimedNow && firstCompletion && perfect) {
       await this.gems.grant(userId, PERFECT_LESSON_GEM_RULE, perfectLessonRef(slot, userId)).catch(() => undefined);
     }
     if (this.milestones && claimedNow) {
-      await this.milestones.recordLessonCompleted(userId, accuracy).catch(() => undefined);
+      // out of the whole lesson, so a lesson with something put off is never "perfect"
+      const wholeLesson = session.total_count > 0 ? correct / session.total_count : 0;
+      await this.milestones.recordLessonCompleted(userId, wholeLesson).catch(() => undefined);
       await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
     }
 
     return {
       correct,
-      total: session.total_count,
+      total: scored,
       accuracy,
       mistakes,
       xpAwarded,
