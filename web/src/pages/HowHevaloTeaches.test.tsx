@@ -130,6 +130,24 @@ describe('How Hevalo teaches', () => {
   });
 
   /**
+   * Where Hevalo does less than a study did, or what a study cautions about,
+   * the section says so, rather than set the two side by side as though one
+   * answered the other.
+   */
+  it('says where Hevalo falls short of the research it cites', () => {
+    show();
+    const voices = section('voices');
+    expect(within(voices).getByText(/the first course has no listening or speaking exercises yet/i)).toBeInTheDocument();
+    expect(within(voices).getByText(/one recording for now/i)).toBeInTheDocument();
+    for (const k of ['teach.voices.does2', 'teach.voices.does3'] as const) {
+      expect(en[k], k).toMatch(/^In lessons that have them, /);
+    }
+    const rewards = section('rewards');
+    expect(within(rewards).getByText(/still a reward for finishing something, the kind the caution above is about/i)).toBeInTheDocument();
+    expect(rewards.textContent).not.toMatch(/daily zêr is for learning/i);
+  });
+
+  /**
    * The words around the references are the reader's; a reference itself
    * names a paper the way it was printed, so it stays English, and says so.
    */

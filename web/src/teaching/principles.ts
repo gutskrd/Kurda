@@ -32,6 +32,22 @@ import type { SourceId } from './sources';
  * The third finding of "younger" says outright that the studies were of
  * younger children than Hevalo's learners, who are all 13 or over.
  *
+ * Where Hevalo does less than a study did, or the opposite of what it cautions
+ * against, the section says so rather than letting the two sit side by side as
+ * if one answered the other:
+ *
+ *  - voices: the listening and speaking exercises exist in the player, but the
+ *    first course (api/content/kurmanji-seed.json) uses neither yet, so each
+ *    sentence about them says "in lessons that have them" and does3 says the
+ *    course has none. Each text has one recording (`lesson_audio.key` is the
+ *    primary key), not the varied voices the HVPT studies trained with, and
+ *    nothing practises saying single sounds (does6). When the course gains
+ *    those exercises, or a text gains more voices, those lines change.
+ *  - rewards: the daily Zêr is paid for finishing a lesson or review, which is
+ *    the expected, completion-contingent kind of reward Deci, Koestner & Ryan
+ *    caution about, and its seven-day cycle pays more on the last day. does2
+ *    says that plainly instead of offering the claim rule as an answer to it.
+ *
  * Every word is a catalogue key; the references are in sources.ts and are not
  * translated.
  */
@@ -98,6 +114,7 @@ export const PRINCIPLES: ReadonlyArray<Principle> = [
       'teach.voices.does3',
       'teach.voices.does4',
       'teach.voices.does5',
+      'teach.voices.does6',
     ],
     sources: ['uchihara2025', 'saitoPlonsky2019'],
   },
