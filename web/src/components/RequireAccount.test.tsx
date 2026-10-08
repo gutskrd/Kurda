@@ -47,6 +47,14 @@ describe('RequireAccount', () => {
     expect(await screen.findByText(/to play against other people you have to sign in/i)).toBeInTheDocument();
   });
 
+  /** A solo round is scored against an account too, so a guest is asked rather than shown an error. */
+  it('asks a guest who opens a game played alone', async () => {
+    guest();
+    renderApp(<RequireAccount what="gate.what.play">{inside}</RequireAccount>, ['/app/games/wordle']);
+    expect(await screen.findByText(/to play the games you have to sign in/i)).toBeInTheDocument();
+    expect(screen.queryByText('the protected thing')).not.toBeInTheDocument();
+  });
+
   it('offers both doors and a way back to what is open', async () => {
     guest();
     renderApp(<RequireAccount what="gate.what.savePosts">{inside}</RequireAccount>, ['/app/saved']);

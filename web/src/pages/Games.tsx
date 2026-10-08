@@ -18,8 +18,6 @@ interface GameMode {
   labelKey: MessageKey;
   blurbKey: MessageKey;
   href: string;
-  /** played against other people, so it needs an account */
-  online?: boolean;
 }
 
 interface GameCard {
@@ -42,7 +40,7 @@ const GAMES: GameCard[] = [
     bodyKey: 'games.wordle.body',
     modes: [
       { labelKey: 'games.mode.solo', blurbKey: 'games.wordle.solo', href: '/app/games/wordle' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/wordle-battle', online: true },
+      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/wordle-battle' },
     ],
   },
   {
@@ -52,7 +50,7 @@ const GAMES: GameCard[] = [
     bodyKey: 'games.rhyme.body',
     modes: [
       { labelKey: 'games.mode.solo', blurbKey: 'games.rhyme.solo', href: '/app/games/rhyme' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.rhyme.online', href: '/app/games/rhyme-match', online: true },
+      { labelKey: 'games.mode.online', blurbKey: 'games.rhyme.online', href: '/app/games/rhyme-match' },
     ],
   },
   {
@@ -74,7 +72,7 @@ const GAMES: GameCard[] = [
     nameKey: 'games.quiz.name',
     bodyKey: 'games.quiz.body',
     modes: [
-      { labelKey: 'games.mode.online', blurbKey: 'games.quiz.online', href: '/app/games/quiz', online: true },
+      { labelKey: 'games.mode.online', blurbKey: 'games.quiz.online', href: '/app/games/quiz' },
     ],
   },
 ];
@@ -83,6 +81,12 @@ const GAMES: GameCard[] = [
  * Games overview. Every game is one box; clicking it asks how you want to play
  * (solo vs online) instead of scattering each mode across its own card. All
  * games are server-authoritative — the client never scores itself.
+ *
+ * Which is also why every game needs an account, the solo rounds included:
+ * the server keeps the score against the player (every route in api/src/game
+ * asks who is playing). This page used to offer guests the solo modes, and a
+ * guest who took the offer got an error instead of a game. Now a guest sees
+ * every game, every mode marked as needing an account, and the way to make one.
  */
 export function Games(): React.JSX.Element {
   const { status } = useAuth();
@@ -101,10 +105,8 @@ export function Games(): React.JSX.Element {
       {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
       <div className="game-grid">
         {GAMES.map((g) => {
-          // a guest can play anything they play alone; only the modes against
-          // other people need an account, so a game is only closed to them when
-          // every way of playing it is
-          const playable = g.modes.filter((m) => signedIn || !m.online);
+          // nothing is playable without an account (see the note above)
+          const playable = signedIn ? g.modes : [];
           const single = playable.length === 1 ? playable[0] : undefined;
           return (
             <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
@@ -119,7 +121,7 @@ export function Games(): React.JSX.Element {
                 <p>{t(g.bodyKey)}</p>
                 <ul className="game-tags">
                   {g.modes.map((m) => {
-                    const locked = !signedIn && m.online;
+                    const locked = !signedIn;
                     return (
                       <li key={m.href} className={locked ? 'is-locked' : undefined}>
                         {t(m.labelKey)}

@@ -189,9 +189,12 @@ export function App(): React.JSX.Element {
             <Route path="dimen" element={<Navigate to="/app/civak?section=dimen" replace />} />
             <Route path="dimen/:id" element={<DimenPost />} />
             <Route path="games" element={<Games />} />
-            <Route path="games/wordle" element={<Wordle />} />
-            <Route path="games/rhyme" element={<Rhyme />} />
-            <Route path="games/race" element={<Race />} />
+            {/* the games played alone need an account too: every round is
+                scored on the server against the player (api/src/game), so a
+                guest is asked here rather than shown a game that cannot start */}
+            <Route path="games/wordle" element={<RequireAccount what="gate.what.play"><Wordle /></RequireAccount>} />
+            <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
+            <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
             <Route
               path="games/quiz"
               element={<RequireAccount what="gate.what.playOthers"><Quiz /></RequireAccount>}

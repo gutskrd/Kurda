@@ -123,9 +123,10 @@ const TOGETHER: ReadonlyArray<{ title: MessageKey; body: MessageKey; visual: Rea
 /**
  * The four games, each linked to where it is played.
  *
- * Wordle, Rhyme and the race open for a guest; the quiz is played against
- * somebody, so it asks for an account when you get there — which is what the
- * Games page itself does.
+ * Every game needs an account, the solo rounds too — the server keeps the
+ * score against the player — so a guest who follows one is asked to make one
+ * when they get there, which is what the Games page itself says. The note
+ * under the tiles says so before they click.
  */
 const GAMES: ReadonlyArray<{
   id: string;
