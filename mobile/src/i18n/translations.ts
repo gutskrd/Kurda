@@ -219,6 +219,7 @@ export type TranslationKey =
   | 'settings.privacy.title'
   | 'settings.delete.title'
   | 'learn.noCourses'
+  | 'learn.mapFailed'
   | 'appearance.help'
   | 'appearance.glass.name'
   | 'appearance.glass.help'
@@ -1113,6 +1114,7 @@ const en: Catalog = {
   'settings.privacy.title': 'Profile visibility',
   'settings.delete.title': 'Delete account',
   'learn.noCourses': 'No courses available yet',
+  'learn.mapFailed': 'Your progress in this course could not be loaded.',
   'appearance.help': 'Choose light, dark, or follow your device.',
   'appearance.glass.name': 'Liquid glass',
   'appearance.glass.help': 'Frosted surfaces float over a spatial gradient with a soft catch-light and a hairline edge.',
@@ -2047,6 +2049,7 @@ const ku: Catalog = {
   'settings.privacy.title': 'Xuyabûna profîlê',
   'settings.delete.title': 'Hesabê xwe jê bibe',
   'learn.noCourses': 'Hê kurs tune ne',
+  'learn.mapFailed': 'Pêşketina te di vê kursê de nehat barkirin.',
   'appearance.help': 'Ronahî, tarî, an li gorî amûra xwe hilbijêre.',
   'appearance.glass.name': 'Şûşeya herikbar',
   'appearance.glass.help': 'Rûyên qeşagirtî li ser derecereng û bi ronahiyek nerm û kêlekek zirav diherikin.',
@@ -2981,6 +2984,7 @@ const de: Catalog = {
   'settings.privacy.title': 'Sichtbarkeit des Profils',
   'settings.delete.title': 'Konto löschen',
   'learn.noCourses': 'Noch keine Kurse verfügbar',
+  'learn.mapFailed': 'Dein Fortschritt in diesem Kurs konnte nicht geladen werden.',
   'appearance.help': 'Wähle hell, dunkel oder folge deinem Gerät.',
   'appearance.glass.name': 'Flüssiges Glas',
   'appearance.glass.help': 'Matte Flächen schweben über einem räumlichen Verlauf, mit sanftem Lichtreflex und haarfeiner Kante.',
@@ -3915,6 +3919,7 @@ const es: Catalog = {
   'settings.privacy.title': 'Visibilidad del perfil',
   'settings.delete.title': 'Eliminar la cuenta',
   'learn.noCourses': 'Todavía no hay cursos disponibles',
+  'learn.mapFailed': 'No se pudo cargar tu progreso en este curso.',
   'appearance.help': 'Elige claro, oscuro o seguir tu dispositivo.',
   'appearance.glass.name': 'Cristal líquido',
   'appearance.glass.help': 'Superficies esmeriladas flotan sobre un degradado espacial, con un brillo suave y un borde finísimo.',
@@ -4849,6 +4854,7 @@ const tr: Catalog = {
   'settings.privacy.title': 'Profil görünürlüğü',
   'settings.delete.title': 'Hesabı sil',
   'learn.noCourses': 'Henüz kurs yok',
+  'learn.mapFailed': 'Bu kurstaki ilerlemen yüklenemedi.',
   'appearance.help': 'Açık, koyu ya da cihazını takip et.',
   'appearance.glass.name': 'Akışkan cam',
   'appearance.glass.help': 'Buzlu yüzeyler, yumuşak bir ışık yansıması ve kıl inceliğinde bir kenarla uzamsal bir geçişin üzerinde süzülür.',
@@ -5783,6 +5789,7 @@ const ar: Catalog = {
   'settings.privacy.title': 'ظهور الملف الشخصي',
   'settings.delete.title': 'حذف الحساب',
   'learn.noCourses': 'لا توجد دورات متاحة بعد',
+  'learn.mapFailed': 'تعذّر تحميل تقدّمك في هذه الدورة.',
   'appearance.help': 'اختر الفاتح أو الداكن أو اتّبع جهازك.',
   'appearance.glass.name': 'زجاج سائل',
   'appearance.glass.help': 'أسطح ضبابية تطفو فوق تدرّج مكاني، بلمعة ناعمة وحافة رفيعة للغاية.',
@@ -6717,6 +6724,7 @@ const fr: Catalog = {
   'settings.privacy.title': 'Visibilité du profil',
   'settings.delete.title': 'Supprimer le compte',
   'learn.noCourses': 'Aucun cours disponible pour l’instant',
+  'learn.mapFailed': 'Impossible de charger ta progression dans ce cours.',
   'appearance.help': 'Choisissez clair, sombre, ou suivez votre appareil.',
   'appearance.glass.name': 'Verre liquide',
   'appearance.glass.help': 'Des surfaces dépolies flottent sur un dégradé spatial, avec un reflet doux et un liseré très fin.',
@@ -7651,6 +7659,7 @@ const nl: Catalog = {
   'settings.privacy.title': 'Zichtbaarheid van je profiel',
   'settings.delete.title': 'Account verwijderen',
   'learn.noCourses': 'Nog geen cursussen beschikbaar',
+  'learn.mapFailed': 'Je voortgang in deze cursus kon niet worden geladen.',
   'appearance.help': 'Kies licht, donker of volg je apparaat.',
   'appearance.glass.name': 'Vloeiend glas',
   'appearance.glass.help': 'Matte vlakken zweven over een ruimtelijk verloop met een zacht lichtpunt en een haarfijne rand.',
@@ -8586,6 +8595,7 @@ const ckb: Catalog = {
   'settings.privacy.title': 'دەرکەوتنی پرۆفایل',
   'settings.delete.title': 'هەژمارە بسڕەوە',
   'learn.noCourses': 'هێشتا خول بەردەست نییە',
+  'learn.mapFailed': 'پێشکەوتنت لەم خولەدا باری نەکرا.',
   'appearance.help': 'ڕووناک، تاریک، یان بەدوای ئامێرەکەت بکەوە.',
   'appearance.glass.name': 'شووشەی ڕەوان',
   'appearance.glass.help': 'ڕووە شەختەکان لەسەر ڕەنگاوڕەنگێکی مەودایی دەسوڕێنەوە، بە ڕووناکییەکی نەرم و لێوارێکی تەنک.',

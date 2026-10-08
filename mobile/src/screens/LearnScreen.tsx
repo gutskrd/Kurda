@@ -15,7 +15,7 @@ import { SkillNodeView } from '../coursemap/SkillNodeView';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { EventBanner } from '../events/EventBanner';
-import { flattenMaps, isLaunchable, stateHint, type MapRow } from '../coursemap/node';
+import { courseRows, isLaunchable, stateHint, type CourseEntry, type MapRow } from '../coursemap/node';
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
@@ -36,7 +36,7 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
-  const [maps, setMaps] = useState<CourseMap[] | null>(null);
+  const [courses, setCourses] = useState<CourseEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -57,11 +57,16 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           setLoading(false);
           return;
         }
-        // every course, in the order the server lists them — not only the first
+        // every course, in the order the server lists them — not only the
+        // first; one whose map did not load stays listed, saying so (`courseRows`)
         const loaded = await Promise.all(list.data.courses.map((c) => client.get<CourseMap>(`/courses/${c.id}/map`)));
         if (!active) return;
-        if (loaded.some((m) => !m.ok)) setFailed(true);
-        setMaps(loaded.flatMap((m) => (m.ok ? [m.data] : [])));
+        setCourses(
+          list.data.courses.map((c, i) => {
+            const map = loaded[i]!;
+            return { course: { id: c.id, title: c.title }, map: map.ok ? map.data : null };
+          }),
+        );
         setLoading(false);
       })();
       return () => {
@@ -110,13 +115,18 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
   const renderRow = ({ item }: { item: MapRow }) =>
     item.kind === 'course' ? (
       <Text accessibilityRole="header" style={[styles.courseTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+    ) : item.kind === 'failed' ? (
+      <View style={styles.failed}>
+        <Text style={[styles.failedText, { color: colors.textSecondary }]}>{t('learn.mapFailed')}</Text>
+        <ClayButton label={t('common.retry')} variant="outline" onPress={() => setReloadKey((k) => k + 1)} />
+      </View>
     ) : item.kind === 'header' ? (
       <Text style={[styles.unitHeader, { color: colors.textSecondary }]}>{item.title}</Text>
     ) : (
       <SkillNodeView node={item.node} onPress={() => onNode(item.node)} />
     );
 
-  const rows = maps ? flattenMaps(maps) : [];
+  const rows = courses ? courseRows(courses) : [];
 
   if (failed && rows.length === 0) {
     return (
@@ -159,6 +169,8 @@ const styles = StyleSheet.create({
   goalCard: { alignItems: 'center', gap: spacing.md, alignSelf: 'stretch' },
   practice: { alignSelf: 'stretch' },
   courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.sm },
+  failed: { gap: spacing.sm, alignItems: 'flex-start', marginTop: spacing.xs },
+  failedText: { fontSize: typography.sizes.sm },
   unitHeader: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,
