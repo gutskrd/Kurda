@@ -79,6 +79,9 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(result.created).toBe(true);
     expect(result.tokens.accessToken).toBeDefined();
     expect(result.user.username.length).toBeGreaterThanOrEqual(3);
+    // Google tells us nothing about age, so the account is asked once after
+    // signing in, before anything else (POST /me/birth-date)
+    expect(result.user.birthDateRequired).toBe(true);
 
     const identity = await pool.query(
       `SELECT user_id FROM oauth_identities WHERE provider = 'google' AND provider_user_id = $1`,

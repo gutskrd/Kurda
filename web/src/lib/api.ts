@@ -240,6 +240,13 @@ export const CODE_COPY: Record<string, MessageKey> = {
   SIGNUP_REJECTED: 'error.code.signupRejected',
   TOO_MANY_ATTEMPTS: 'error.code.tooManyAttempts',
   USERNAME_TAKEN: 'error.code.usernameTaken',
+  // age and the protections that follow from it
+  UNDER_MINIMUM_AGE: 'error.code.underMinimumAge',
+  INVALID_BIRTH_MONTH: 'error.code.invalidBirthMonth',
+  BIRTH_DATE_ALREADY_SET: 'error.code.birthDateAlreadySet',
+  OPEN_GROUPS_ADULTS_ONLY: 'error.code.openGroupsAdultsOnly',
+  VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
+  LEARN_FIRST: 'error.code.learnFirst',
 };
 export function describeError(error: ApiError, t: Translate): string {
   // A live countdown beats any sentence, so it wins when the server sent one.

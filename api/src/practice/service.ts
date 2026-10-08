@@ -4,6 +4,7 @@ import { checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
+import { countsAsLearning } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
@@ -419,7 +420,10 @@ export class PracticeService {
     };
   }
 
-  /** Finalize: award reduced XP once, credit streak + daily goal. Idempotent. */
+  /**
+   * Finalize: award reduced XP once, credit the daily goal, and — when enough
+   * was answered to be learning — the streak. Idempotent.
+   */
   async complete(sessionId: string, userId: string): Promise<PracticeResults> {
     const session = await this.loadSession(sessionId, userId);
     const correct = session.correct_count;
@@ -460,7 +464,15 @@ export class PracticeService {
           const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
           xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: session.id }, client);
           await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [session.id, xpAwarded]);
-          streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          // learning only when the items were actually worked through: see
+          // countsAsLearning — the XP above stands either way
+          const answered = await client.query<{ n: number }>(
+            `SELECT count(*)::int n FROM practice_answers WHERE session_id = $1`,
+            [session.id],
+          );
+          if (countsAsLearning(answered.rows[0]!.n, total)) {
+            streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          }
           await this.goals.evaluate(client, userId, timeZone);
         }
         await client.query('COMMIT');

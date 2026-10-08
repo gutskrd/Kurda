@@ -12,6 +12,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { activate } from '../test/activate.js';
+import { bornYearsAgo } from '../test/age.js';
 import { lessonCompletionXp } from '../xp/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -54,6 +55,7 @@ describe.skipIf(!DATABASE_URL)('lesson retry (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        ...bornYearsAgo(30),
       },
       // one address each: sign-up is rate limited per address
       remoteAddress: `10.32.1.${players.length + 1}`,

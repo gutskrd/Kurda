@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
     app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { acceptTerms: true, ...body },
+      payload: { acceptTerms: true, birthYear: 1990, birthMonth: 6, ...body },
       remoteAddress: ip,
     });
 
@@ -42,6 +42,8 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
       username: uname('rojda'),
       password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       displayName: 'Rojda',
     });
     expect(res.statusCode).toBe(201);

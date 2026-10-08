@@ -66,6 +66,8 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: `10.20.0.${Math.floor(Math.random() * 200) + 1}`,
     });
@@ -181,6 +183,37 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     await app.realtime.publish(room, { type: 'still-here' });
     const event = await waitFor(second.ws, (m) => m.type === 'event');
     expect((event.event as { type: string }).type).toBe('still-here');
+  });
+
+  it('a revoked user leaves the room, cannot join it again, and does not resume into it', async () => {
+    const user = await makeUser('revoked');
+    const room = `group:${suffix}:revoked`;
+    await app.realtime.invite(room, user.id);
+
+    const first = await connect(user.token);
+    const seen: string[] = [];
+    first.ws.on('message', (raw) => {
+      const msg = JSON.parse(raw.toString()) as WsMessage;
+      if (msg.type === 'event') seen.push((msg.event as { type: string }).type);
+    });
+    first.ws.send(JSON.stringify({ type: 'join', room }));
+    await waitFor(first.ws, (m) => m.type === 'joined');
+
+    await app.realtime.revoke(room, user.id);
+    await app.realtime.publish(room, { type: 'after-revoke' });
+    // a round trip after the publish, so anything it sent has arrived
+    first.ws.send(JSON.stringify({ type: 'ping' }));
+    await waitFor(first.ws, (m) => m.type === 'pong');
+    expect(seen).toEqual([]);
+
+    first.ws.send(JSON.stringify({ type: 'join', room }));
+    const refused = await waitFor(first.ws, (m) => m.type === 'error');
+    expect(refused.code).toBe('NOT_INVITED');
+
+    // the room was in the resume state before the revoke; it stays left
+    first.ws.terminate();
+    const second = await connect(user.token, first.hello.resumeToken as string);
+    expect(second.hello.resumedRooms).toEqual([]);
   });
 
   it('application-level ping gets a pong', async () => {

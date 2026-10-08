@@ -48,6 +48,8 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
         username: `econ_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.74.0.1',
     });

@@ -260,11 +260,13 @@ export class WordleService {
       client,
     );
 
-    // a daily win also counts toward the global daily streak (#031)
+    // a daily win also counts toward the global daily streak (#031) — but not
+    // as a day learned, nor towards a freeze or the daily Zêr: those are paid
+    // for lessons and practice. The streak it returns still feeds streak-30.
     let streak: StreakSummary | null = null;
     if (daily && won) {
       const tz = await this.userTimeZone(client, row.user_id);
-      streak = await this.streaks.recordActivity(row.user_id, tz, this.now(), client);
+      streak = await this.streaks.recordPlayDay(row.user_id, tz, this.now(), client);
     }
 
     return { xpAwarded, streak };

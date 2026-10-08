@@ -151,6 +151,11 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favStory = me.favoriteStory ?? null;
     stats.push({ label: 'XP', value: me.xp.toLocaleString() });
     stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: me.streak.current }) });
+    // beside the streak, the two numbers a missed day never takes away
+    stats.push({ label: t('profile.stat.longestStreak'), value: t('profile.stat.streakDays', { count: me.streak.longest }) });
+    if (me.streak.daysLearned !== undefined) {
+      stats.push({ label: t('profile.stat.daysLearned'), value: `${me.streak.daysLearned}` });
+    }
   } else {
     if (!other) return unavailable;
     name = other.displayName || other.username;

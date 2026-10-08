@@ -141,3 +141,21 @@ export {
   lessonAudioTargets,
   primaryAudioTarget,
 } from './lesson-audio.js';
+
+/**
+ * Age from a birth month and year, for the same reason again: the API decides
+ * who is a minor, and both sign-up forms must ask and refuse alike.
+ */
+export {
+  ADULT_AGE,
+  DIGITAL_CONSENT_AGE,
+  EARLIEST_BIRTH_YEAR,
+  MIN_SIGNUP_AGE,
+  ageInYears,
+  birthYearChoices,
+  isBelowConsentAge,
+  isBelowMinimumAge,
+  isMinor,
+  isPlausibleBirthMonth,
+  type BirthMonth,
+} from './age.js';

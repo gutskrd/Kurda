@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import type { ChallengeService } from './challenge-service.js';
 
 const userParam = z.object({ userId: z.uuid() });
@@ -13,7 +14,7 @@ export function registerChallengeRoutes(app: FastifyInstance, challenges: Challe
     {
       schema: { body: z.object({ userId: z.uuid() }) },
       config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireBirthMonth,
     },
     async (req) => challenges.challenge(req.user!.id, (req.body as { userId: string }).userId),
   );

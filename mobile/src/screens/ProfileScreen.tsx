@@ -20,7 +20,7 @@ import { countryName } from '@kurda/shared';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { useI18n } from '../i18n/I18nContext';
-import type { Streak } from '../streak/format';
+import { learningStats, type Streak } from '../streak/format';
 
 /** How big the face is. TikTok's is about this, and so is Instagram's. */
 const AVATAR = 96;
@@ -272,6 +272,14 @@ export function ProfileScreen() {
         ) : null}
 
         {/*
+          Beside the streak, which one missed day takes to zero: the two
+          numbers a missed day never takes away, and the freezes learning has
+          earned. Smaller than the three above — they answer "how far have I
+          come", which is the question to ask after a lapse, not the first one.
+        */}
+        {streak ? <LearningRow streak={streak} /> : null}
+
+        {/*
           One wide button and one square one, which is the arrangement every
           app with a profile has arrived at: the thing you came to do, and the
           one shortcut worth a tap beside it.
@@ -309,6 +317,40 @@ export function ProfileScreen() {
         {user?.id ? <ProfileActivity userId={user.id} own /> : null}
       </ScrollView>
     </GradientBackground>
+  );
+}
+
+/** The longest run, the days learned and the freezes, with how a freeze is earned. */
+function LearningRow({ streak }: { streak: Streak }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const stats = learningStats(streak);
+  const cells = [
+    { label: t('profile.stat.longestStreak'), value: stats.longest },
+    { label: t('profile.stat.daysLearned'), value: stats.daysLearned },
+    { label: t('profile.stat.freezes'), value: stats.freezes },
+  ];
+  return (
+    <View style={styles.learning}>
+      <View style={styles.learningRow}>
+        {cells.map((cell) => (
+          <View
+            key={cell.label}
+            style={styles.learningCell}
+            accessible
+            accessibilityLabel={`${cell.value} ${cell.label}`}
+          >
+            <Text style={[styles.learningValue, { color: colors.textPrimary }]}>{cell.value.toLocaleString()}</Text>
+            <Text style={[styles.learningLabel, { color: colors.textSecondary }]} numberOfLines={2}>
+              {cell.label}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <Text style={[styles.learningHint, { color: colors.textSecondary }]}>
+        {t('profile.freezeHint', { count: stats.sessionsPerFreeze })}
+      </Text>
+    </View>
   );
 }
 
@@ -374,6 +416,13 @@ const styles = StyleSheet.create({
   statDivider: { width: StyleSheet.hairlineWidth, height: 28 },
 
   aside: { fontSize: typography.sizes.sm, marginTop: spacing.xs },
+
+  learning: { alignSelf: 'stretch', marginTop: spacing.sm, gap: spacing.xs },
+  learningRow: { flexDirection: 'row', justifyContent: 'center' },
+  learningCell: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
+  learningValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  learningLabel: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  learningHint: { fontSize: typography.sizes.xs, textAlign: 'center', lineHeight: 16 },
 
   actions: { alignSelf: 'stretch', flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   edit: {

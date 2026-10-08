@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ClaimResult, DailyRewardStatus, WalletBalances } from '../lib/types';
@@ -10,6 +11,10 @@ import { useT } from '../i18n/I18nProvider';
  * Daily Zêr reward — mirrors the mobile daily claim. Shows the Zêr balance and,
  * when today's reward is claimable, a claim button (POST /rewards/daily/claim,
  * server-authoritative — the client never sets the amount).
+ *
+ * The reward is paid for learning: until a lesson or practice session has been
+ * finished today, the tile says so and points at Learn rather than offering a
+ * claim the server would refuse.
  */
 export function DailyReward(): React.JSX.Element | null {
   const t = useT();
@@ -57,6 +62,8 @@ export function DailyReward(): React.JSX.Element | null {
   if (failed && balance === null) return null;
 
   const canClaim = status?.canClaim ?? false;
+  // explicitly false only: an older server sends no learnedToday at all
+  const learnFirst = status !== null && !status.alreadyClaimedToday && status.learnedToday === false;
 
   return (
     <div className="zer-card">
@@ -71,7 +78,9 @@ export function DailyReward(): React.JSX.Element | null {
           <div className="zer-sub">
             {canClaim
               ? t('daily.dayReward', { day: status?.claimableDay ?? 1, amount: status?.reward ?? 0 })
-              : t('daily.comeBack')}
+              : learnFirst
+                ? t('daily.learnFirst', { amount: status?.reward ?? 0 })
+                : t('daily.comeBack')}
           </div>
         </div>
       </div>
@@ -80,6 +89,10 @@ export function DailyReward(): React.JSX.Element | null {
           <Button onClick={claim} disabled={busy}>
             {busy ? t('daily.claiming') : t('daily.claim')}
           </Button>
+        ) : learnFirst ? (
+          <Link to="/app/learn" className="btn btn-secondary">
+            {t('daily.goLearn')}
+          </Link>
         ) : (
           <span className="badge badge-gold">{t('daily.claimedToday')}</span>
         )}

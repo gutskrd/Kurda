@@ -11,6 +11,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
 import { activate } from '../test/activate.js';
+import { bornYearsAgo } from '../test/age.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -48,6 +49,7 @@ describe.skipIf(!DATABASE_URL)('practice: due count, chosen items, retry (integr
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        ...bornYearsAgo(30),
       },
       // one address each: sign-up is rate limited per address
       remoteAddress: `10.33.1.${players.length + 1}`,

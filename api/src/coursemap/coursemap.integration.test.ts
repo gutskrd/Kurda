@@ -50,7 +50,7 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `map_${suffix}@it.kurda.app`, username: `map_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `map_${suffix}@it.kurda.app`, username: `map_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.90.0.2',
     });
     await activate(app, pool, reg);

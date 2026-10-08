@@ -37,11 +37,11 @@ export function registerTournamentRoutes(app: FastifyInstance, tournaments: Tour
     async (req) => ({ tournaments: await tournaments.list((req.query as { status?: string }).status) }),
   );
 
-  /** Live bracket view. */
+  /** Live bracket view, as the caller may see it (minors are named to their friends only). */
   app.get(
     '/tournaments/:id',
     { schema: { params: idParam }, preHandler: requireAuth },
-    async (req) => tournaments.bracket((req.params as { id: string }).id),
+    async (req) => tournaments.bracket((req.params as { id: string }).id, req.user!.id),
   );
 
   /** Register the caller. */

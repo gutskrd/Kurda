@@ -4,6 +4,16 @@ import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { isMinorUser, isNotKnownAdultUser, shownToSql } from '../users/age.js';
+import { canonicalPair } from '../friends/pair.js';
+
+/**
+ * Open groups are for adults. Anyone can walk into one and talk to everyone in
+ * it, which is exactly the stranger contact a minor should not get by default.
+ */
+export function openGroupsAdultsOnly(): AppError {
+  return new AppError('OPEN_GROUPS_ADULTS_ONLY', 403, 'open groups are for members aged 18 and over');
+}
 
 export interface Group {
   id: string;
@@ -30,6 +40,18 @@ export interface GroupMember {
  * explicitly; when an owner's account is deleted the reconcile pass promotes the
  * oldest moderator (else oldest member, else archives). Group weekly XP is
  * summed from members' ledgers for the group leaderboard.
+ *
+ * Minors (worked out from age when asked) live in invite-only groups. They
+ * cannot see, join or start an open one, and are taken out of any they were
+ * in when their age is recorded.
+ *
+ * An "invite" here adds somebody outright rather than asking them, so it is
+ * for friends only — anybody's, not just a minor's — and only into an
+ * invite-only group: an open one anyone can join for themselves. Both rules
+ * are the same for every account, so the answer to an invite says nothing
+ * about the age of the person invited; and since every friendship a minor has
+ * is one they started, every group a minor is in is one that someone they
+ * chose put them in.
  */
 export class GroupService {
   constructor(private readonly pool: pg.Pool) {}
@@ -55,6 +77,9 @@ export class GroupService {
   }
 
   async create(ownerId: string, input: { name: string; description?: string; privacy?: 'open' | 'invite' }): Promise<{ id: string }> {
+    if ((input.privacy ?? 'open') === 'open' && (await isMinorUser(this.pool, ownerId))) {
+      throw openGroupsAdultsOnly();
+    }
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -103,6 +128,7 @@ export class GroupService {
       await client.query('BEGIN');
       const grp = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
       if (grp.rows[0]?.privacy !== 'open') throw new AppError('INVITE_ONLY', 403, 'this group is invite-only');
+      if (await isMinorUser(client, userId)) throw openGroupsAdultsOnly();
       await this.addMember(client, groupId, userId);
       await client.query('COMMIT');
     } catch (err) {
@@ -113,13 +139,32 @@ export class GroupService {
     }
   }
 
-  /** Owner/moderator adds a member (works for invite-only groups). */
+  /**
+   * Owner/moderator adds one of their friends to an invite-only group.
+   *
+   * The same two rules for everybody (see the class note): the group must be
+   * invite-only, and the person added a friend of whoever adds them. Neither
+   * looks at the age of the person being added, so no answer here can tell a
+   * minor's account from an adult's.
+   */
   async invite(inviterId: string, groupId: string, targetId: string): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       const role = await this.requireRole(client, groupId, inviterId);
       if (role !== 'owner' && role !== 'moderator') throw new AppError('FORBIDDEN', 403, 'only staff can invite');
+      const g = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
+      if (g.rows[0]?.privacy === 'open') {
+        throw new AppError('OPEN_GROUP_NO_INVITES', 409, 'anyone can join an open group; there is no one to add');
+      }
+      const { lo, hi } = canonicalPair(inviterId, targetId);
+      const friends = await client.query(
+        `SELECT 1 FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'accepted'`,
+        [lo, hi],
+      );
+      if ((friends.rowCount ?? 0) === 0) {
+        throw new AppError('NOT_FRIENDS', 403, 'you can only add your friends to a group');
+      }
       await this.addMember(client, groupId, targetId);
       await client.query('COMMIT');
     } catch (err) {
@@ -202,6 +247,18 @@ export class GroupService {
     await this.pool.query(`DELETE FROM groups WHERE id = $1`, [groupId]);
   }
 
+  /**
+   * A group with its roster, for any signed-in viewer.
+   *
+   * The roster names a minor (or an account whose age is not on record yet)
+   * only to the people already around them: themselves, their friends, and the
+   * other members of an invite-only group they are in — a group someone they
+   * chose put them in. Anyone else reading any group's roster, which takes no
+   * more than its id, sees the adults only (users/age.ts `shownToSql`) — and
+   * no `ownerId` either when the owner is one they may not see, or the id
+   * would name the one person the roster leaves out. `memberCount` stays the
+   * group's real size, the number every list of groups shows.
+   */
   async get(
     groupId: string,
     viewerId: string,
@@ -209,17 +266,27 @@ export class GroupService {
   ): Promise<Group & { members: GroupMember[]; myRole: Role | null }> {
     const g = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null;
-    }>(`SELECT id, name, description, privacy, owner_id, archived_at FROM groups WHERE id = $1`, [groupId]);
+      n: number;
+    }>(
+      `SELECT id, name, description, privacy, owner_id, archived_at,
+              (SELECT count(*)::int FROM group_members x WHERE x.group_id = groups.id) AS n
+         FROM groups WHERE id = $1`,
+      [groupId],
+    );
     const grp = g.rows[0];
     if (!grp) throw new AppError('GROUP_NOT_FOUND', 404, 'no such group');
+    const myRole = await this.roleOf(this.pool, groupId, viewerId);
+    const seesEveryone = myRole !== null && grp.privacy === 'invite';
+    const ownerShown = seesEveryone || (await this.ownerShownTo(grp.owner_id, viewerId));
     const members = await this.pool.query<{
       user_id: string; username: string; role: string; joined_at: Date;
       profile_photo_key: string | null; selected_avatar_key: string | null;
     }>(
       `SELECT m.user_id, u.username, m.role, m.joined_at, u.profile_photo_key, u.selected_avatar_key
          FROM group_members m JOIN users u ON u.id = m.user_id
-        WHERE m.group_id = $1 ORDER BY m.role = 'owner' DESC, m.role = 'moderator' DESC, u.username`,
-      [groupId],
+        WHERE m.group_id = $1 AND ($3::boolean OR ${shownToSql('u', '$2::uuid')})
+        ORDER BY m.role = 'owner' DESC, m.role = 'moderator' DESC, u.username`,
+      [groupId, viewerId, seesEveryone],
     );
     const list: GroupMember[] = members.rows.map((r) => ({
       userId: r.user_id,
@@ -233,12 +300,22 @@ export class GroupService {
       name: grp.name,
       description: grp.description,
       privacy: grp.privacy,
-      ownerId: grp.owner_id,
+      ownerId: ownerShown ? grp.owner_id : null,
       archivedAt: grp.archived_at ? grp.archived_at.toISOString() : null,
-      memberCount: list.length,
+      memberCount: grp.n,
       members: list,
-      myRole: list.find((m) => m.userId === viewerId)?.role ?? null,
+      myRole,
     };
+  }
+
+  /** Whether a group's owner may be named to `viewerId` (see `get`); no owner hides nobody. */
+  private async ownerShownTo(ownerId: string | null, viewerId: string): Promise<boolean> {
+    if (ownerId === null) return true;
+    const r = await this.pool.query<{ shown: boolean }>(
+      `SELECT ${shownToSql('u', '$2::uuid')} AS shown FROM users u WHERE u.id = $1`,
+      [ownerId, viewerId],
+    );
+    return r.rows[0]?.shown ?? false;
   }
 
   /** Groups the user belongs to. */
@@ -259,17 +336,25 @@ export class GroupService {
     }));
   }
 
-  /** Open groups for discovery (not archived, not full). */
-  async discover(limit = 30): Promise<Group[]> {
+  /**
+   * Open groups for discovery (not archived, not full). None for a minor, who
+   * cannot join any of them, nor for an account whose age is not on record yet.
+   */
+  async discover(viewerId: string, limit = 30): Promise<Group[]> {
+    if (await isNotKnownAdultUser(this.pool, viewerId)) return [];
     const rows = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null; n: number;
     }>(
-      `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, g.archived_at,
+      // an open group's owner is a known adult (a minor's are handed on when
+      // their age is recorded), but one whose age is not on record yet is not named
+      `SELECT g.id, g.name, g.description, g.privacy,
+              CASE WHEN o.id IS NULL OR ${shownToSql('o', '$2::uuid')} THEN g.owner_id END AS owner_id,
+              g.archived_at,
               (SELECT count(*)::int FROM group_members x WHERE x.group_id = g.id) AS n
-         FROM groups g
+         FROM groups g LEFT JOIN users o ON o.id = g.owner_id
         WHERE g.privacy = 'open' AND g.archived_at IS NULL
         ORDER BY n DESC LIMIT $1`,
-      [limit],
+      [limit, viewerId],
     );
     return rows.rows.map((r) => ({
       id: r.id, name: r.name, description: r.description, privacy: r.privacy, ownerId: r.owner_id,
@@ -296,22 +381,51 @@ export class GroupService {
     const orphans = await this.pool.query<{ id: string }>(
       `SELECT id FROM groups WHERE owner_id IS NULL AND archived_at IS NULL`,
     );
-    let healed = 0;
-    for (const g of orphans.rows) {
-      const candidate = await this.pool.query<{ user_id: string }>(
-        `SELECT user_id FROM group_members WHERE group_id = $1
-          ORDER BY role = 'moderator' DESC, joined_at ASC LIMIT 1`,
-        [g.id],
-      );
-      const next = candidate.rows[0]?.user_id;
-      if (next) {
-        await this.pool.query(`UPDATE group_members SET role = 'owner' WHERE group_id = $1 AND user_id = $2`, [g.id, next]);
-        await this.pool.query(`UPDATE groups SET owner_id = $2 WHERE id = $1`, [g.id, next]);
-      } else {
-        await this.pool.query(`UPDATE groups SET archived_at = now() WHERE id = $1`, [g.id]);
-      }
-      healed += 1;
-    }
-    return healed;
+    for (const g of orphans.rows) await handOnGroup(this.pool, g.id);
+    return orphans.rows.length;
   }
+}
+
+/**
+ * Give a group with no owner a new one: the oldest moderator, else the oldest
+ * member, else the group is archived. Runs in the caller's transaction when
+ * given one. Used for an owner whose account was deleted, and for one taken
+ * out of an open group because they turned out to be a minor.
+ */
+export async function handOnGroup(executor: Pick<pg.Pool, 'query'>, groupId: string): Promise<void> {
+  const candidate = await executor.query<{ user_id: string }>(
+    `SELECT user_id FROM group_members WHERE group_id = $1
+      ORDER BY role = 'moderator' DESC, joined_at ASC LIMIT 1`,
+    [groupId],
+  );
+  const next = candidate.rows[0]?.user_id;
+  if (next) {
+    await executor.query(`UPDATE group_members SET role = 'owner' WHERE group_id = $1 AND user_id = $2`, [groupId, next]);
+    await executor.query(`UPDATE groups SET owner_id = $2 WHERE id = $1`, [groupId, next]);
+  } else {
+    await executor.query(`UPDATE groups SET owner_id = NULL, archived_at = now() WHERE id = $1`, [groupId]);
+  }
+}
+
+/**
+ * Take a user out of every open group they are in, handing on any they own,
+ * and say which groups they left so the caller can close their live rooms.
+ *
+ * For the day an account is found to be a minor's: minors cannot be in an
+ * open group, and one left in it would stay on the roster everybody reads, or
+ * be the owner of a group whose chat they can no longer open.
+ */
+export async function leaveOpenGroups(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<string[]> {
+  const left = await executor.query<{ group_id: string; role: string }>(
+    `DELETE FROM group_members m USING groups g
+      WHERE m.group_id = g.id AND g.privacy = 'open' AND m.user_id = $1
+      RETURNING m.group_id, m.role`,
+    [userId],
+  );
+  for (const row of left.rows) {
+    if (row.role !== 'owner') continue;
+    await executor.query(`UPDATE groups SET owner_id = NULL WHERE id = $1 AND owner_id = $2`, [row.group_id, userId]);
+    await handOnGroup(executor, row.group_id);
+  }
+  return left.rows.map((r) => r.group_id);
 }

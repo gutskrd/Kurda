@@ -36,7 +36,7 @@ describe.skipIf(!DATABASE_URL)('input sanitization (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `san_${suffix}@it.kurda.app`, username: `san_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `san_${suffix}@it.kurda.app`, username: `san_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.108.0.1',
     });
     await activate(app, pool, res);

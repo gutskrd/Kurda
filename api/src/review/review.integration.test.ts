@@ -31,6 +31,8 @@ describe.skipIf(!DATABASE_URL)('review queue (integration)', () => {
         username: `rev_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.50.0.1',
     });

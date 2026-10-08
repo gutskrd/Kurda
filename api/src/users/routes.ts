@@ -16,6 +16,9 @@ import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { setProfilePhoto } from '../media/profilePhoto.js';
+import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
+import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
+import { leaveThisWeek } from '../leagues/service.js';
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
 /** Profile photos are small; cap tighter than the global media limit (KUR-177). */
@@ -72,6 +75,8 @@ export const patchMeBodySchema = z
     skipSpeaking: z.boolean().optional(),
     /** ISO-3166 alpha-2 country, or '' to clear */
     country: z.string().regex(/^[A-Za-z]{2}$/).or(z.literal('')).optional(),
+    /** take part in the weekly leagues; false leaves this week's league at once */
+    leaguesEnabled: z.boolean().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'no fields to update' });
 
@@ -88,7 +93,9 @@ interface MeRow {
   username_changed_at: Date | null;
   consent_version: string | null;
   analytics_consent: boolean;
-  restricted_mode: boolean;
+  birth_year: number | null;
+  birth_month: number | null;
+  leagues_enabled: boolean | null;
   xp: number;
   skip_speaking: boolean;
   profile_visibility: string;
@@ -116,7 +123,21 @@ function toMe(row: MeRow) {
     consentVersion: row.consent_version,
     needsReconsent: row.consent_version !== CURRENT_POLICY_VERSION,
     analyticsConsent: row.analytics_consent,
-    restrictedMode: row.restricted_mode,
+    /** no birth month on record yet: the clients ask once before anything else */
+    birthDateRequired: row.birth_year == null,
+    /** 13–17 today, worked out now rather than stored (users/age.ts) */
+    minor: isMinorRow(row),
+    /**
+     * Under the age of digital consent (16) today, so consent-based choices
+     * such as analytics need a parent. The name is kept from the flag it
+     * replaces, which was set once at sign-up and never changed again.
+     */
+    restrictedMode: isBelowConsentAgeRow(row),
+    /**
+     * never chosen → in for adults, out for minors and for an account whose age
+     * is not on record yet (read from age each time)
+     */
+    leaguesEnabled: row.leagues_enabled ?? isKnownAdultRow(row),
     xp: row.xp,
     skipSpeaking: row.skip_speaking,
     profileVisibility: row.profile_visibility,
@@ -313,6 +334,19 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         );
       }
       if (body.analytics !== undefined) {
+        if (body.analytics) {
+          const age = await app.db.query<{ birth_year: number | null; birth_month: number | null }>(
+            `SELECT birth_year, birth_month FROM users WHERE id = $1`,
+            [req.user!.id],
+          );
+          // below 16 the consent is a parent's to give (GDPR art. 8), and there
+          // is no way yet for a parent to give it — so it stays off
+          if (isBelowConsentAgeRow(age.rows[0]!)) {
+            throw new AppError('PARENTAL_CONSENT_REQUIRED', 403, 'this needs a parent’s consent below age 16');
+          }
+          // and whether it is a parent's is not known until the age is
+          if (age.rows[0]!.birth_year == null) throw birthDateRequired();
+        }
         await app.db.query(`UPDATE users SET analytics_consent = $2 WHERE id = $1`, [
           req.user!.id,
           body.analytics,
@@ -324,6 +358,31 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   );
 
   const gdpr = new GdprService(app.db, { storage: app.storage, jobs: app.jobs, log: app.log });
+  // read when it is called: the realtime gateway is set up after these routes
+  const birthMonths = new BirthMonthService(app.db, gdpr, {
+    revoke: (room, userId) => app.realtime.revoke(room, userId),
+  });
+
+  /**
+   * The one-time birth month answer, for an account that has none (Google and
+   * Apple sign-ups, and every account made before it was asked). Once only —
+   * see BirthMonthService. Under 13 closes the account, so the client must
+   * drop its tokens on UNDER_MINIMUM_AGE.
+   */
+  app.post(
+    '/me/birth-date',
+    {
+      schema: { body: birthDateBodySchema },
+      config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { birthYear, birthMonth } = req.body as z.infer<typeof birthDateBodySchema>;
+      await birthMonths.set(req.user!.id, { year: birthYear, month: birthMonth });
+      const row = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
+      return { user: toMe(row.rows[0] as MeRow) };
+    },
+  );
 
   /** GDPR: start the 14-day deletion grace period (KUR-024). */
   app.delete('/me', { preHandler: requireAuth }, async (req) => {
@@ -384,6 +443,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       if (body.locale !== undefined) add('locale', body.locale);
       if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);
       if (body.country !== undefined) add('country', body.country === '' ? null : body.country.toUpperCase());
+      if (body.leaguesEnabled !== undefined) add('leagues_enabled', body.leaguesEnabled);
 
       if (body.timezone !== undefined) {
         const cur = await app.db.query<{ timezone: string; timezone_changed_at: Date | null }>(
@@ -449,6 +509,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
           `UPDATE users SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
           values,
         );
+        // leaving takes effect now, not at the end of the week: the point is
+        // not to be in this week's table
+        if (body.leaguesEnabled === false) await leaveThisWeek(app.db, userId);
         return { user: toMe(updated.rows[0] as MeRow) };
       } catch (err) {
         if ((err as { constraint?: string }).constraint === 'users_username_active_uniq') {

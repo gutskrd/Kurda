@@ -14,7 +14,7 @@ import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
 import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
-import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, type Visibility } from '../social/format';
+import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -29,18 +29,29 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const { t, locale, setLocale } = useI18n();
   const [visibility, setVisibility] = useState<Visibility>('everyone');
   const [username, setUsername] = useState<string | null>(null);
+  // 13–17 as the server works it out today; it decides what is offered here
+  const [minor, setMinor] = useState(false);
+  // null until /me answers, so the switch never shows a guess
+  const [leagues, setLeagues] = useState<boolean | null>(null);
 
-  // Profile visibility + username live server-side on /me; load them so the hub
-  // reflects the saved values rather than defaulting every time it opens.
+  // Profile visibility, username, age and leagues live server-side on /me; load
+  // them so the hub reflects the saved values rather than defaulting every
+  // time it opens.
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      void client.get<{ user: { profileVisibility: Visibility; username: string } }>('/me').then((res) => {
-        if (active && res.ok) {
-          setVisibility(res.data.user.profileVisibility);
-          setUsername(res.data.user.username);
-        }
-      });
+      void client
+        .get<{
+          user: { profileVisibility: Visibility; username: string; minor?: boolean; leaguesEnabled?: boolean };
+        }>('/me')
+        .then((res) => {
+          if (active && res.ok) {
+            setVisibility(res.data.user.profileVisibility);
+            setUsername(res.data.user.username);
+            setMinor(res.data.user.minor === true);
+            setLeagues(res.data.user.leaguesEnabled !== false);
+          }
+        });
       return () => {
         active = false;
       };
@@ -48,8 +59,31 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   );
 
   const changeVisibility = (v: Visibility) => {
+    if (!visibilityOffered(v, minor)) return;
+    const before = visibility;
     setVisibility(v);
-    void client.put('/me/privacy', { visibility: v });
+    void client.put('/me/privacy', { visibility: v }).then((res) => {
+      if (!res.ok) {
+        setVisibility(before);
+        Alert.alert(t('settings.privacy.title'), describeError(res.error, t));
+      }
+    });
+  };
+
+  /**
+   * In or out of the weekly leagues, in one tap. A league ranks you against
+   * strangers by XP every week, which suits some people and puts others off
+   * learning; leaving takes you out of this week's table at once and changes
+   * nothing else you have earned.
+   */
+  const changeLeagues = (on: boolean) => {
+    setLeagues(on);
+    void client.patch('/me', { leaguesEnabled: on }).then((res) => {
+      if (!res.ok) {
+        setLeagues(!on);
+        Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
+      }
+    });
   };
 
   /**
@@ -109,17 +143,29 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     );
   };
 
-  const Pill = ({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) => (
+  const Pill = ({
+    label,
+    active,
+    onPress,
+    disabled = false,
+  }: {
+    label: string;
+    active: boolean;
+    onPress: () => void;
+    disabled?: boolean;
+  }) => (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
-      accessibilityState={{ selected: active }}
+      accessibilityState={{ selected: active, disabled }}
       style={[
         styles.pill,
         {
           backgroundColor: colors.controlTrack,
           borderColor: active ? colors.textPrimary : colors.glassBorder,
         },
+        disabled && styles.pillDisabled,
       ]}
     >
       <Text style={[styles.pillText, { color: active ? colors.textPrimary : colors.textSecondary }, active && styles.pillTextActive]}>
@@ -170,11 +216,41 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.privacy.title')}</Text>
           <View style={styles.pillRow}>
             {VISIBILITIES.map((v) => (
-              <Pill key={v} label={t(VISIBILITY_LABEL[v])} active={visibility === v} onPress={() => changeVisibility(v)} />
+              <Pill
+                key={v}
+                label={t(VISIBILITY_LABEL[v])}
+                active={visibility === v}
+                onPress={() => changeVisibility(v)}
+                disabled={!visibilityOffered(v, minor)}
+              />
             ))}
           </View>
           {/* a setting about who sees you is worth a sentence, not just a word */}
           <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
+          {minor ? (
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.visibility.minorHint')}</Text>
+          ) : null}
+        </GlassCard>
+
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.leagues.title')}</Text>
+        <GlassCard>
+          <GlassRow
+            icon="trophy"
+            title={t('settings.leagues.toggle')}
+            trailing={
+              <Switch
+                value={leagues === true}
+                disabled={leagues === null}
+                onValueChange={changeLeagues}
+                accessibilityLabel={t('settings.leagues.toggle')}
+                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+              />
+            }
+          />
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.leagues.help')}</Text>
+          {minor ? (
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.leagues.minorHint')}</Text>
+          ) : null}
         </GlassCard>
 
         {/*
@@ -232,4 +308,5 @@ const styles = StyleSheet.create({
   pillText: { fontSize: typography.sizes.sm },
   hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
   pillTextActive: { fontWeight: typography.weights.bold },
+  pillDisabled: { opacity: 0.4 },
 });
