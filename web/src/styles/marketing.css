@@ -1144,6 +1144,17 @@
   text-decoration-color: var(--border-strong);
   text-underline-offset: 3px;
 }
+/* the focus ring goes round the card the link covers, as on the game tiles */
+@supports selector(:has(*)) {
+  .lp-principle-link:focus-visible {
+    outline: none;
+  }
+  .lp-principle:has(.lp-principle-link:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 6px;
+    border-radius: 4px;
+  }
+}
 
 /* ---- motion -------------------------------------------------------------- */
 @keyframes lp-flip {

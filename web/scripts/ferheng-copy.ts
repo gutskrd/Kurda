@@ -57,6 +57,8 @@ export interface Copy {
     tagline: string;
     learn: string;
     lessons: string;
+    /** the link to "How Hevalo teaches", in the words the app's footer uses */
+    teach: string;
     community: string;
     join: string;
     app: string;
@@ -134,6 +136,7 @@ const KU: Copy = {
     tagline: 'Fêrî kurdî bibe — ders, çîrok, helbest û lîstik.',
     learn: 'Fêrbûn',
     lessons: 'Ders',
+    teach: 'Hevalo çawa hîn dike',
     community: 'Civak',
     join: 'Tevlî Hevalo bibe',
     app: 'Sepan',
@@ -203,6 +206,7 @@ const EN: Copy = {
     tagline: 'Learn Kurdish — lessons, stories, poems and play.',
     learn: 'Learn',
     lessons: 'Lessons',
+    teach: 'How Hevalo teaches',
     community: 'Community',
     join: 'Join Hevalo',
     app: 'App',

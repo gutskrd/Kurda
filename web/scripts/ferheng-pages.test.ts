@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { escapeHtml } from './escape';
 import { HAWAR, SORANI, alphabetOf, compareKeys } from './ferheng-alphabet';
+import { BAR_KEYS } from './ferheng-chrome';
 import { COPY, ferhengLocaleFor } from './ferheng-copy';
 import { definitionsOf, isInflected, toEntries } from './ferheng-entries';
 import {
@@ -19,6 +20,8 @@ import {
   wordsPage,
   type Word,
 } from './ferheng-pages';
+import { en } from '../src/i18n/en';
+import { ku } from '../src/i18n/ku';
 
 const word = (headword: string, key = headword, definition = 'wate'): Word => ({
   headword,
@@ -721,6 +724,37 @@ describe('what the dictionary copies from the app', () => {
   it('sets headings in the same family the app sets them in', () => {
     expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
     expect(STYLE).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
+  });
+});
+
+/**
+ * The footer under the words is the app's footer, so a page the app's footer
+ * links to is linked from here too, in the words the app uses for it — read
+ * from the same catalogue key, so chrome.js can put it in the reader's
+ * language like the rest of the footer.
+ */
+describe('the dictionary’s footer, beside the app’s', () => {
+  const sev = word('sêv', 'sev');
+  const footerOf = (html: string): string => html.slice(html.indexOf('<footer class="footer">'), html.indexOf('</footer>'));
+
+  it('links to How Hevalo teaches in both published languages', () => {
+    for (const [copy, catalogue] of [
+      [COPY.ku, ku],
+      [COPY.en, en],
+    ] as const) {
+      const label = catalogue['footer.teach'];
+      expect(label, copy.base).toBeTruthy();
+      const footer = footerOf(wordsPage(paginate([sev])[0]!, null, null, new Map(), copy));
+      expect(footer, copy.base).toContain(
+        `<a href="/how-hevalo-teaches"><span data-copy="footer.teach">${escapeHtml(label ?? '')}</span></a>`,
+      );
+      // the words are the app's own, not a second translation of them
+      expect(copy.footer.teach, copy.base).toBe(label);
+    }
+  });
+
+  it('is relabelled with the rest of the footer', () => {
+    expect(BAR_KEYS).toContain('footer.teach');
   });
 });
 

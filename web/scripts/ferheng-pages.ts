@@ -311,6 +311,8 @@ ${/* not translated anywhere in the app: it is the app's own line, the way a
 <div class="footer-col">
 <h4>${labelled('nav.learn', c.footer.learn)}</h4>
 <a href="/app/learn">${labelled('learn.title', c.footer.lessons)}</a>
+${/* the app's footer has it under Company, beside About and the FAQ */ ''}
+<a href="/how-hevalo-teaches">${labelled('footer.teach', c.footer.teach)}</a>
 <a href="/app">${labelled('nav.home', c.nav.home)}</a>
 <a href="/app/games">${labelled('nav.games', c.nav.games)}</a>
 <a href="/${c.base}/">${labelled('nav.dictionary', c.nav.dictionary)}</a>

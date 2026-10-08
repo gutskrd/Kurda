@@ -80,6 +80,7 @@ export const BAR_KEYS = [
   'nav.learn',
   'nav.community',
   'learn.title',
+  'footer.teach',
   'footer.tagline',
   'footer.join',
   'footer.app',
