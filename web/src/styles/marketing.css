@@ -1068,6 +1068,82 @@
   padding-top: 28px;
   border-top: 1px solid var(--border);
 }
+/* a section reached by its link lands below the sticky bar, not under it */
+.doc-section[id] {
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+
+/* ---- How Hevalo teaches -------------------------------------------------- */
+/* the three parts of each principle, labelled the way the footer's columns are */
+.teach-label {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 22px;
+}
+.doc-section .teach-label:first-child {
+  margin-top: 0;
+}
+.doc-section .teach-label + p,
+.doc-section .teach-label + ul {
+  margin-top: 8px;
+}
+[dir='rtl'] .teach-label {
+  letter-spacing: normal;
+}
+.teach-contents {
+  max-width: 760px;
+  margin-bottom: clamp(32px, 5vw, 56px);
+}
+.teach-contents ol {
+  margin: 12px 0 0;
+  padding-inline-start: 1.4em;
+  display: grid;
+  gap: 6px;
+  color: var(--ink-3);
+}
+.teach-refs,
+.teach-sources {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.doc-section .teach-refs li {
+  padding: 3px 0;
+  font-size: 0.93rem;
+}
+.teach-ref-title {
+  color: var(--ink-3);
+}
+/* a reference list hangs each entry from its first author, as a printed one does */
+.doc-section .teach-sources li {
+  padding: 7px 0;
+  padding-inline-start: 1.6em;
+  text-indent: -1.6em;
+  font-size: 0.93rem;
+  overflow-wrap: anywhere;
+}
+.teach-sources cite {
+  font-style: italic;
+}
+
+/* the front page's four principles: each card is its link */
+.lp-principle {
+  position: relative;
+}
+.lp-principle-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.lp-principle:hover .lp-h3 {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
 
 /* ---- motion -------------------------------------------------------------- */
 @keyframes lp-flip {

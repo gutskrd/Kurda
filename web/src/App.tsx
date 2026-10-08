@@ -57,6 +57,9 @@ const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
 const Faq = lazy(() => import('./pages/Faq').then((m) => ({ default: m.Faq })));
+const HowHevaloTeaches = lazy(() =>
+  import('./pages/HowHevaloTeaches').then((m) => ({ default: m.HowHevaloTeaches })),
+);
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -117,6 +120,8 @@ export function App(): React.JSX.Element {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/faq" element={<Faq />} />
+            {/* what the lessons are built on, with the studies; see teaching/principles.ts */}
+            <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
