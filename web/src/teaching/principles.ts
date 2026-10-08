@@ -43,7 +43,7 @@ export interface Principle {
   found: ReadonlyArray<MessageKey>;
   /** what Hevalo does about it */
   does: ReadonlyArray<MessageKey>;
-  /** the studies behind `found`, in the order the sentences use them */
+  /** the studies the section cites, in the order its sentences use them (a "does" may cite one too, as SM-2's does) */
   sources: ReadonlyArray<SourceId>;
 }
 
