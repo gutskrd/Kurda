@@ -48,4 +48,20 @@ describe('translation catalogs', () => {
     expect(LOCALES).toContain('es');
     for (const { code, nativeName } of APP_LOCALES) expect(LOCALE_LABEL[code]).toBe(nativeName);
   });
+
+  /**
+   * Onboarding promised "a Kurdish story every day … one a day" and no job
+   * sends a story. What the server does send is a streak reminder, in the
+   * account's language, on a day the streak is still waiting
+   * (api/src/notifications/streak-reminder-service.ts) — so that is all the
+   * slide may say, in any language.
+   */
+  it('promises no daily story in the notifications slide', () => {
+    expect(TRANSLATIONS.en['onboarding.notify.title']).not.toMatch(/story/i);
+    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/streak/i);
+    for (const locale of LOCALES) {
+      const slide = `${TRANSLATIONS[locale]['onboarding.notify.title']} ${TRANSLATIONS[locale]['onboarding.notify.body']}`;
+      expect(slide, locale).not.toMatch(/story|çîrok|Geschichte|relato|öykü|قصة|récit|verhaal|چیرۆک/i);
+    }
+  });
 });
