@@ -379,6 +379,44 @@ describe('speaking', () => {
     expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'sp', answer: { audioKey: 'speaking/abc', selfRating: 'close' } });
   });
 
+  it('keeps the keyboard focus on the next step: Stop, then “Hear yourself”, then the feedback', async () => {
+    microphone(async () => ({ getTracks: () => [] }));
+    serve(
+      { 'POST /sessions/s1/answers': { verdict: 'correct', accepted: true, correction: 'Silav', duplicate: false } },
+      (call) => (call.path === '/media/uploads' ? jsonResponse(201, { key: 'speaking/abc' }) : null),
+    );
+    play({ sessionId: 's1', exercises: [speaking], answered: {} });
+
+    // keys only: every button pressed here goes away when pressed
+    (await screen.findByRole('button', { name: 'Record' })).focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Stop' })).toHaveFocus());
+    now += 2000;
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Hear yourself' })).toHaveFocus());
+    await userEvent.tab();
+    expect(screen.getByRole('button', { name: 'Hear a native speaker' })).toHaveFocus();
+    await userEvent.tab();
+    await userEvent.tab();
+    expect(screen.getByRole('button', { name: 'Sounded right' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    expect(await verdict('You said it sounded right')).toBeInTheDocument();
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('gives the focus back to Record when a take is turned away', async () => {
+    microphone(async () => ({ getTracks: () => [] }));
+    serve({});
+    play({ sessionId: 's1', exercises: [speaking], answered: {} });
+    (await screen.findByRole('button', { name: 'Record' })).focus();
+    await userEvent.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Stop' })).toHaveFocus());
+    now += 200;
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByText('That was very short. Record the whole phrase.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toHaveFocus());
+  });
+
   it('turns away a slipped tap before spending an upload', async () => {
     microphone(async () => ({ getTracks: () => [] }));
     serve({});

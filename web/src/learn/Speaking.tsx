@@ -79,6 +79,36 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
   };
 
   const phase = recorder.phase;
+
+  // Keyboard focus follows the recording. Each step replaces the button just
+  // pressed — Record gives way to Stop, Stop to "Saving…" and then the ratings
+  // — and a focused button that goes away leaves the focus on the page itself,
+  // so a keyboard or screen-reader user would have to find their way back from
+  // the top. The step's first button takes it instead: Stop while recording,
+  // "Hear yourself" once the take is saved, Record (or the microphone again)
+  // after a problem. Only focus the flow itself lost is moved: never away from
+  // wherever the learner has gone meanwhile.
+  const root = useRef<HTMLDivElement>(null);
+  const controls = useRef<HTMLDivElement>(null);
+  const step = !supported
+    ? null
+    : phase === 'recording'
+      ? 'stop'
+      : phase === 'denied' || phase === 'noMic' || phase === 'failed'
+        ? 'microphone'
+        : phase === 'asking'
+          ? null
+          : upload.status === 'ready'
+            ? 'listen'
+            : upload.status === 'problem'
+              ? 'record'
+              : null;
+  useEffect(() => {
+    if (!step) return;
+    const active = document.activeElement;
+    if (active && active !== document.body && !root.current?.contains(active)) return;
+    controls.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }, [step]);
   let body: React.ReactNode;
   if (!supported) {
     body = <p className="lesson-note">{t('lesson.speak.unsupported')}</p>;
@@ -152,7 +182,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
   }
 
   return (
-    <div className="lesson-exercise">
+    <div className="lesson-exercise" ref={root}>
       <Ask focus>{t('lesson.speak.ask')}</Ask>
       <Prompt text={exercise.prompt} />
       {exercise.modelAudioUrl && upload.status !== 'ready' && (
@@ -160,7 +190,9 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
           <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} />
         </div>
       )}
-      <div className="lesson-speak">{body}</div>
+      <div className="lesson-speak" ref={controls}>
+        {body}
+      </div>
       {upload.status === 'problem' && (
         <p className="lesson-note" role="alert">
           {t(upload.message)}
