@@ -214,7 +214,9 @@ describe('a course map', () => {
     await userEvent.click(tips);
     expect(tips).toHaveAttribute('aria-expanded', 'true');
     const note = await screen.findByRole('region', { name: 'Tips for Greetings' });
-    expect(await within(note).findByRole('heading', { name: 'Silavkirin' })).toBeInTheDocument();
+    // the note's headings sit under the skill's own h3
+    expect(screen.getByRole('heading', { level: 3, name: 'Greetings' })).toBeInTheDocument();
+    expect(await within(note).findByRole('heading', { level: 4, name: 'Silavkirin' })).toBeInTheDocument();
     expect(calls.filter((c) => c.path === '/skills/greet/grammar')).toHaveLength(1);
 
     await userEvent.click(screen.getByRole('link', { name: 'Continue' }));

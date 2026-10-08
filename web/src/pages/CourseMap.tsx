@@ -65,7 +65,8 @@ function SkillTips({ skill }: { skill: SkillNode }): React.JSX.Element {
           ) : 'error' in note ? (
             <p className="msg msg-error">{note.error}</p>
           ) : (
-            <GrammarNote source={note.md} />
+            // under the skill's own h3
+            <GrammarNote source={note.md} headingLevel={4} />
           ))}
       </div>
     </div>

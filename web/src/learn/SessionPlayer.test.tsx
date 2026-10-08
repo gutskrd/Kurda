@@ -616,13 +616,18 @@ describe('Tips', () => {
     serve({});
     play(
       { sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} },
-      { grammarMd: '# Silavkirin\n\n- **Silav** — hello\n\n<img src=x onerror=alert(1)>' },
+      { grammarMd: '# Silavkirin\n\n- **Silav** — hello\n\nSay it to anyone.\n\nسڵاو بۆ هەمووان.\n\n<img src=x onerror=alert(1)>' },
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Tips' }));
     const dialog = screen.getByRole('dialog', { name: 'Tips' });
-    expect(within(dialog).getByRole('heading', { name: 'Silavkirin' })).toBeInTheDocument();
+    // one level under the dialog's own "Tips" heading
+    expect(within(dialog).getByRole('heading', { level: 3, name: 'Silavkirin' })).toBeInTheDocument();
     expect(within(dialog).getByText('Silav').tagName).toBe('STRONG');
     expect(dialog.querySelector('img')).toBeNull();
+    // each line finds its own direction: a Soranî line after an English one is not set left to right
+    expect(within(dialog).getByText('Say it to anyone.').closest('p')).toHaveAttribute('dir', 'auto');
+    expect(within(dialog).getByText('سڵاو بۆ هەمووان.').closest('p')).toHaveAttribute('dir', 'auto');
+    expect(dialog.querySelector('.grammar-note')).not.toHaveAttribute('dir');
     await act(async () => {
       await userEvent.keyboard('{Escape}');
     });

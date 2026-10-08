@@ -249,11 +249,11 @@ a.cmap-lesson-row:hover {
 .grammar-note > * {
   margin: 0;
 }
-.grammar-note h3 {
+.grammar-note .grammar-head {
   font-size: 1.15rem;
   color: var(--ink);
 }
-.grammar-note h4 {
+.grammar-note .grammar-subhead {
   font-size: 1rem;
   color: var(--ink);
 }
