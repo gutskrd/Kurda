@@ -59,10 +59,12 @@ export function HowHevaloTeaches(): React.JSX.Element {
    * The front page links to a principle by its anchor. The layout scrolls to
    * an anchor when the address changes, but this page is fetched the first time
    * somebody opens it, so on that first visit the section is not there yet when
-   * the layout looks. It looks again once the page is.
+   * the layout looks. It looks again once the page is. The anchors are plain
+   * ASCII, so the hash is looked up as it is: decoding a hand-typed `#%E0`
+   * would throw, and a link to a section is no reason to break the page.
    */
   useEffect(() => {
-    if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
   }, [hash]);
 
   const sections: DocSection[] = [

@@ -10,10 +10,27 @@ import type { SourceId } from './sources';
  * summary supports — the wording was checked against each paper, and the
  * research roadmap in docs/research explains why that line is held so firmly
  * (its fact-checks cut more than one popular figure down to size). What Hevalo
- * does is only what the code does: the review schedule in api/src/review/sm2.ts,
- * the second try in shared/src/lesson-player.ts, the rewards and the age rules
- * on the server. When one of those changes, the sentence about it changes too,
- * or comes out.
+ * does is only what the code does, and each sentence was checked against it:
+ *
+ *  - retrieval: `optionOrder` in api/src/content/exercises.ts, the
+ *    multiple-choice shuffle seeded per session
+ *  - spacing: api/src/review/sm2.ts (`scheduleAnswer`, `isSpacedReview`) and
+ *    `feedsReview`, which keeps self-rated speaking out of the schedule
+ *  - asking again: `REASK_GAP` in shared/src/lesson-player.ts, graded by the
+ *    retry endpoint that records nothing; `COMEBACK` in web/src/alphabet
+ *  - feedback: the verdicts and `strict` in api/src/content/exercises.ts
+ *  - voices: the lesson-audio studio (api/src/lessonaudio), the 0.75× button
+ *    in web/src/learn, the minimal pairs and the "computer voice" note in the
+ *    alphabet
+ *  - rewards: api/src/rewards/daily-cycle.ts, api/src/streaks (one freeze per
+ *    five sessions, held one at a time), the league opt-out, and Gems paid on a
+ *    first completion only
+ *  - younger learners: api/src/users/age.ts and the rules that read it
+ *    (sign-up, search, friend requests, groups, leagues, reminders)
+ *
+ * When one of those changes, the sentence about it changes too, or comes out.
+ * The third finding of "younger" says outright that the studies were of
+ * younger children than Hevalo's learners, who are all 13 or over.
  *
  * Every word is a catalogue key; the references are in sources.ts and are not
  * translated.
@@ -100,7 +117,7 @@ export const PRINCIPLES: ReadonlyArray<Principle> = [
   {
     id: 'younger',
     title: 'teach.younger.title',
-    found: ['teach.younger.found1', 'teach.younger.found2'],
+    found: ['teach.younger.found1', 'teach.younger.found2', 'teach.younger.found3'],
     does: [
       'teach.younger.does1',
       'teach.younger.does2',
