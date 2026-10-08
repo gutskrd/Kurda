@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
+import { Route, Routes } from 'react-router-dom';
 import { HowHevaloTeaches } from './HowHevaloTeaches';
+import { MarketingLayout } from '../layouts/MarketingLayout';
 import { renderApp } from '../test/utils';
 import { en } from '../i18n/en';
 import { LIMITS, PRINCIPLES } from '../teaching/principles';
@@ -92,9 +94,39 @@ describe('How Hevalo teaches', () => {
     expect(hrefs).toEqual([...PRINCIPLES.map((p) => `#${p.id}`), '#limits', '#sources']);
   });
 
+  /**
+   * Through the layout, as the route serves it: the layout decodes the anchor
+   * too, and a hand-typed or cut-short one does not decode. That used to throw
+   * from the layout's effect, with nothing above it to catch it, and the page
+   * went blank.
+   */
   it('survives an anchor nobody wrote', () => {
-    show('/how-hevalo-teaches#%E0%A4%A');
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    renderApp(
+      <Routes>
+        <Route element={<MarketingLayout />}>
+          <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
+        </Route>
+      </Routes>,
+      ['/how-hevalo-teaches#%E0%A4%A'],
+    );
+    expect(screen.getByRole('heading', { level: 1, name: 'How Hevalo teaches' })).toBeInTheDocument();
+  });
+
+  it('still lands on a section its link names', () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    try {
+      renderApp(
+        <Routes>
+          <Route element={<MarketingLayout />}>
+            <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
+          </Route>
+        </Routes>,
+        ['/how-hevalo-teaches#spacing'],
+      );
+      expect(scroll.mock.contexts).toContain(section('spacing'));
+    } finally {
+      scroll.mockRestore();
+    }
   });
 
   /**

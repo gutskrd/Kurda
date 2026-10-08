@@ -60,8 +60,9 @@ export function HowHevaloTeaches(): React.JSX.Element {
    * an anchor when the address changes, but this page is fetched the first time
    * somebody opens it, so on that first visit the section is not there yet when
    * the layout looks. It looks again once the page is. The anchors are plain
-   * ASCII, so the hash is looked up as it is: decoding a hand-typed `#%E0`
-   * would throw, and a link to a section is no reason to break the page.
+   * ASCII, so the hash is looked up as it is, with no decoding to go wrong.
+   * (The layout does decode it, and keeps a malformed one as written, so a
+   * hand-typed `#%E0` breaks neither; the test goes through the layout.)
    */
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();

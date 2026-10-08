@@ -36,10 +36,22 @@ export function MarketingLayout(): React.JSX.Element {
    * restore, and it puts you back where you were. The jump to the top is
    * instant because the site scrolls smoothly, and a page that glides up from
    * where the last one left off reads as the old page moving, not a new one.
+   *
+   * The anchor is decoded so an id written in Kurdish letters still matches,
+   * but an address somebody typed or cut short (`#%E0%A4%A`) does not decode,
+   * and `decodeURIComponent` throws. Nothing above the layout would catch
+   * that, so the whole page went blank; such an anchor is looked up as it was
+   * written, finds nothing, and the page stays.
    */
   useEffect(() => {
     if (hash) {
-      document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+      let id = hash.slice(1);
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        /* not percent-encoding after all: look it up as written */
+      }
+      document.getElementById(id)?.scrollIntoView();
       return;
     }
     if (navigation !== 'POP') window.scrollTo({ top: 0, behavior: 'instant' });
