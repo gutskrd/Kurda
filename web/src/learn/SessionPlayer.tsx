@@ -113,7 +113,9 @@ interface Problem {
  * a few exercises later through `/retry`, which records nothing.
  *
  * Every answer is saved as it is given, so leaving costs nothing: the lesson
- * picks up at the first unanswered exercise when it is opened again.
+ * picks up at the first unanswered exercise when it is opened again — within a
+ * day, while its session lasts (SESSION_TTL_HOURS on the server); after that
+ * opening it starts a new one.
  */
 export function SessionPlayer({
   session,
@@ -242,7 +244,9 @@ export function SessionPlayer({
       {closed ? (
         <ErrorState
           title={t('lesson.closed.title')}
-          message={t('lesson.closed.body')}
+          // a lesson's session lapses after a day (SESSION_TTL_HOURS); a review's
+          // never does, and closes only when it is finished
+          message={kind === 'lesson' ? t('lesson.closed.body') : t('review.closed.body')}
           onRetry={onRestart}
         />
       ) : state.status !== 'finished' && ex ? (

@@ -537,8 +537,20 @@ describe('when the server says no', () => {
     const { onRestart } = play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} });
     await answerTyped('sêv');
     expect(await screen.findByText('This session has closed')).toBeInTheDocument();
+    expect(screen.getByText(/left open for more than a day/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRestart).toHaveBeenCalled();
+  });
+
+  it('says a closed review was finished, not that it lapsed: a review never does', async () => {
+    serve({
+      'POST /practice/sessions/p1/answers': jsonResponse(409, { code: 'PRACTICE_SESSION_COMPLETED', message: 'session already completed' }),
+    });
+    play({ sessionId: 'p1', exercises: [typed('t', 'apple')] }, { kind: 'practice', paths: PRACTICE_PATHS });
+    await answerTyped('sêv');
+    expect(await screen.findByText('This session has closed')).toBeInTheDocument();
+    expect(screen.getByText(/^It was finished somewhere else\./)).toBeInTheDocument();
+    expect(screen.queryByText(/more than a day/)).not.toBeInTheDocument();
   });
 
   it('lets a second try go when the server will not grade it', async () => {
