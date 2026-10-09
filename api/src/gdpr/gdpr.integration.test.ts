@@ -8,6 +8,7 @@ import { loadConfig } from '../config/env.js';
 import { createStorage } from '../media/storage.js';
 import { GdprService, DELETION_GRACE_DAYS } from './service.js';
 import { activate } from '../test/activate.js';
+import { bornYearsAgo } from '../test/age.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const S3_READY = Boolean(process.env.S3_ENDPOINT);
@@ -18,7 +19,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
   let pool: pg.Pool;
   const suffix = Date.now().toString(36);
 
-  async function makeUser(name: string) {
+  async function makeUser(name: string, birth: { birthYear: number; birthMonth: number } = { birthYear: 1990, birthMonth: 6 }) {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -27,8 +28,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
-        birthYear: 1990,
-        birthMonth: 6,
+        ...birth,
       },
       remoteAddress: `10.13.0.${Math.floor(Math.random() * 200) + 1}`,
     });
@@ -111,6 +111,34 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     // rerun is idempotent for this user
     const again = await service.anonymizeExpired();
     expect(again).toBe(0);
+  });
+
+  it('a minor’s deletion removes what they posted, so nothing friends-only becomes public', async () => {
+    const teen = await makeUser('delteen', bornYearsAgo(15));
+    const post = await app.inject({
+      method: 'POST',
+      url: '/library/posts',
+      headers: { authorization: `Bearer ${teen.token}` },
+      payload: { type: 'gotin', body: 'Silav hevalno' },
+      remoteAddress: '10.13.1.20',
+    });
+    expect(post.statusCode, post.body).toBe(201);
+    const postId = post.json().id as string;
+    // a stranger cannot read it while its author is a minor
+    expect((await app.inject({ method: 'GET', url: `/library/posts/${postId}`, remoteAddress: '10.13.1.21' })).statusCode).toBe(404);
+
+    await pool.query(
+      `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
+      [teen.id],
+    );
+    await new GdprService(pool).anonymizeExpired();
+
+    // the account is anonymized, and the post is gone rather than public
+    const row = await pool.query(`SELECT deleted_at, birth_year FROM users WHERE id = $1`, [teen.id]);
+    expect(row.rows[0].deleted_at).not.toBeNull();
+    expect(row.rows[0].birth_year).toBeNull();
+    expect((await pool.query(`SELECT 1 FROM library_posts WHERE id = $1`, [postId])).rowCount).toBe(0);
+    expect((await app.inject({ method: 'GET', url: `/library/posts/${postId}`, remoteAddress: '10.13.1.22' })).statusCode).toBe(404);
   });
 
   it('the export carries the birth month and year it was given', async () => {

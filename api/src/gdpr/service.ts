@@ -5,6 +5,7 @@ import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
+import { isMinorRow } from '../users/age.js';
 import { handOnGroup } from '../groups/service.js';
 
 export const DELETION_GRACE_DAYS = 14;
@@ -59,13 +60,23 @@ export class GdprService {
    */
   async anonymizeExpired(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - DELETION_GRACE_DAYS * 24 * 3_600_000);
-    const due = await this.pool.query<{ id: string }>(
-      `SELECT id FROM users
+    const due = await this.pool.query<{ id: string; birth_year: number | null; birth_month: number | null }>(
+      `SELECT id, birth_year, birth_month FROM users
        WHERE deletion_requested_at < $1 AND deleted_at IS NULL
        LIMIT 200`,
       [cutoff],
     );
     for (const row of due.rows) {
+      // A minor's friends-only posts are hidden because of their birth date,
+      // and anonymizing clears it: left behind under a "deleted_…" name, what
+      // a 15-year-old shared with friends would become readable by anyone.
+      // So a minor's deletion removes what they put in, as a child's closure
+      // does, instead of leaving it.
+      if (isMinorRow(row, now)) {
+        await this.eraseAndAnonymize(row.id);
+        this.deps.log?.info({ userId: row.id }, 'minor account deleted after grace period, with its content');
+        continue;
+      }
       await this.anonymize(row.id);
       this.deps.log?.info({ userId: row.id }, 'account anonymized after grace period');
     }
@@ -99,6 +110,12 @@ export class GdprService {
    * people's safety.
    */
   async closeNow(userId: string, reason: 'under_minimum_age'): Promise<void> {
+    const files = await this.eraseAndAnonymize(userId);
+    this.deps.log?.info({ userId, reason, files }, 'account closed and its data removed');
+  }
+
+  /** `eraseChildData` and the anonymizing in one transaction, then the files. */
+  private async eraseAndAnonymize(userId: string): Promise<number> {
     const client = await this.pool.connect();
     let files: string[] = [];
     try {
@@ -114,7 +131,7 @@ export class GdprService {
       client.release();
     }
     await this.deleteFiles(files);
-    this.deps.log?.info({ userId, reason, files: files.length }, 'account closed and its data removed');
+    return files.length;
   }
 
   /**
