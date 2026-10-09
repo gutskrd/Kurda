@@ -5,9 +5,12 @@ import {
   optionOrder,
   revealExercise,
   sanitizeExercise,
+  setShuffleKey,
   validateExercisePayload,
 } from './exercises.js';
 import type { ExerciseType } from './repository.js';
+import { createHash } from 'node:crypto';
+import { DEV_JWT_SECRET } from '../config/env.js';
 
 /** A delivery seed, `${sessionId}:${exerciseId}` in production. */
 const SEED = 'session-1:exercise-1';
@@ -103,6 +106,26 @@ describe('multiple-choice shuffle', () => {
   it('is stable for one seed, so a resumed session shows the same order', () => {
     for (const seed of seeds) expect(shown(seed)).toEqual(shown(seed));
     expect(optionOrder(4, SEED)).toEqual(optionOrder(4, SEED));
+  });
+
+  it('cannot be recomputed from the ids the client is sent', () => {
+    // what the order used to be: sha1 of the seed and position, both public
+    const unkeyed = (seed: string) =>
+      [0, 1, 2, 3]
+        .map((i) => ({ i, k: createHash('sha1').update(`${seed}:${i}`).digest('hex') }))
+        .sort((a, b) => (a.k < b.k ? -1 : 1))
+        .map((x) => x.i);
+    const matches = seeds.filter((seed) => optionOrder(4, seed).join() === unkeyed(seed).join()).length;
+    expect(matches).toBeLessThan(seeds.length / 2);
+    // and it follows the server's key: another key, another order
+    const before = seeds.map((seed) => optionOrder(4, seed).join());
+    setShuffleKey('another-server-secret-that-is-long-enough');
+    try {
+      const after = seeds.map((seed) => optionOrder(4, seed).join());
+      expect(after).not.toEqual(before);
+    } finally {
+      setShuffleKey(DEV_JWT_SECRET);
+    }
   });
 
   it('differs across seeds, and does not leave the answer first', () => {

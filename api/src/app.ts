@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
 import { registerAuthRoutes } from './auth/routes.js';
+import { setShuffleKey } from './content/exercises.js';
 import { Cache } from './cache/cache.js';
 import { JobQueue } from './jobs/queue.js';
 import { createStorage, type MediaStorage } from './media/storage.js';
@@ -190,6 +191,8 @@ export interface BuildAppOptions {
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
+  // the lesson shuffle is keyed with a server secret, never with what the client sees
+  setShuffleKey(config.JWT_SECRET);
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,

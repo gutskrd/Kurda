@@ -161,14 +161,30 @@ export const answerSchemas = {
 
 // ---------- client-safe sanitization ----------
 
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
+import { DEV_JWT_SECRET } from '../config/env.js';
+
+/**
+ * The key the per-session shuffle is made with. A plain hash of the seed was
+ * not enough: the seed is a session id and an exercise id, both of which the
+ * client is sent, so anyone could recompute the authored order — and with it
+ * the right option and the match-pairs pairing — from the response alone.
+ * Keyed with a server secret, the order is still the same every time a session
+ * asks for it (resume and grading agree) and on every instance, but cannot be
+ * reproduced outside the server. Set from the app's JWT secret at start-up.
+ */
+let shuffleKey: string = DEV_JWT_SECRET;
+
+export function setShuffleKey(key: string): void {
+  shuffleKey = key;
+}
 
 /** Deterministic shuffle by a seed, so a resumed session sees the same order. */
 function seededShuffle<T>(items: T[], seed: string): T[] {
   return items
     .map((value, i) => ({
       value,
-      key: createHash('sha1').update(`${seed}:${i}`).digest('hex'),
+      key: createHmac('sha256', shuffleKey).update(`option-shuffle:${seed}:${i}`).digest('hex'),
     }))
     .sort((a, b) => (a.key < b.key ? -1 : 1))
     .map((x) => x.value);
