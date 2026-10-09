@@ -6,16 +6,10 @@
  * Validates a course-content JSON document (structure + every exercise
  * payload) and imports it. --dry-run writes nothing and reports every
  * validation error with its path. --publish marks each imported lesson
-<<<<<<< HEAD
  * version published (so a seed loads as playable); it refuses, writing
  * nothing, while a listening item has no clip and no audio-studio recording
- * of its transcription. Re-import creates new draft versions; published
- * lessons are never mutated.
-=======
- * version published (so a seed loads as playable). Re-import creates a new
- * version only for a lesson whose content changed; published lessons are
- * never mutated.
->>>>>>> wip/lesson-engine-done
+ * of its transcription. Re-import creates a new version only for a lesson
+ * whose content changed; published lessons are never mutated.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

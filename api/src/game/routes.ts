@@ -6,14 +6,7 @@ import type { GameEngine } from './engine.js';
 import type { MatchmakingService } from './matchmaking.js';
 import type { PrivateRoomService } from './private-room-service.js';
 import type { RematchService } from './rematch-service.js';
-import { MODE_CONFIG, type GameMode } from './modes.js';
 import { isValidCode, normalizeCode } from './private-room.js';
-
-const partyBody = z.object({
-  mode: z.enum(['1v1', '2v2', 'ffa']),
-  /** the full lobby roster (party members first); caller must be included */
-  userIds: z.array(z.uuid()).min(2).max(8),
-});
 
 export function registerMatchmakingRoutes(
   app: FastifyInstance,
@@ -31,32 +24,13 @@ export function registerMatchmakingRoutes(
     async (req) => matchmaking.enqueue(req.user!.id),
   );
 
-  /**
-   * Party / lobby start (KUR-055): begin a team or FFA game from a known
-   * roster — the pre-req hook a party of friends (KUR-088) uses to queue as a
-   * duo and launch together. The caller must be in the roster and the count
-   * must match the mode.
+  /*
+   * There was a POST /matchmaking/party here, which started a game from any
+   * roster the caller named: no friendship, block, consent or age check, so a
+   * stranger could pull a minor who had blocked them straight into a match
+   * (their phone navigates on match_found). No client called it. Friends play
+   * together through /challenges and private rooms, which do ask.
    */
-  app.post(
-    '/matchmaking/party',
-    { schema: { body: partyBody }, preHandler: requireAuth },
-    async (req) => {
-      const { mode, userIds } = req.body as z.infer<typeof partyBody>;
-      if (!userIds.includes(req.user!.id)) {
-        throw new AppError('NOT_IN_PARTY', 403, 'you must be part of the roster');
-      }
-      const need = MODE_CONFIG[mode as GameMode].players;
-      if (userIds.length !== need) {
-        throw new AppError('BAD_ROSTER', 409, `${mode} needs exactly ${need} players`);
-      }
-      if (new Set(userIds).size !== userIds.length) {
-        throw new AppError('BAD_ROSTER', 409, 'duplicate players in the roster');
-      }
-      const record = await matchmaking.createDirectMatch(userIds, mode as GameMode);
-      return { roomId: record.roomId, mode: record.mode, teams: record.teams };
-    },
-  );
-
   app.post(
     '/matchmaking/cancel',
     { config: { skipValidation: true }, preHandler: requireAuth },
