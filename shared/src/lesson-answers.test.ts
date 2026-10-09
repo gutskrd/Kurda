@@ -25,24 +25,26 @@ describe('drafts', () => {
   it('start empty for every type', () => {
     expect(emptyDraft('multiple_choice')).toEqual({ type: 'multiple_choice', choice: null });
     expect(emptyDraft('listening')).toEqual({ type: 'listening', text: '' });
-    expect(emptyDraft('speaking')).toEqual({ type: 'speaking', audioKey: null });
+    expect(emptyDraft('speaking')).toEqual({ type: 'speaking', recorded: false });
     expect(emptyDraft('match_pairs')).toEqual({ type: 'match_pairs', matches: [] });
   });
 
   it('are complete once there is something to grade', () => {
     expect(isDraftComplete({ type: 'writing', text: '  ' }, 0)).toBe(false);
     expect(isDraftComplete({ type: 'writing', text: 'av' }, 0)).toBe(true);
-    expect(isDraftComplete({ type: 'speaking', audioKey: null }, 0)).toBe(false);
-    expect(isDraftComplete({ type: 'speaking', audioKey: 'speaking/x' }, 0)).toBe(true);
+    expect(isDraftComplete({ type: 'speaking', recorded: false }, 0)).toBe(false);
+    // recorded but not yet rated: the rating is the answer
+    expect(isDraftComplete({ type: 'speaking', recorded: true }, 0)).toBe(false);
+    expect(isDraftComplete({ type: 'speaking', recorded: true, selfRating: 'good' }, 0)).toBe(true);
     expect(isDraftComplete({ type: 'match_pairs', matches: [{ left: 'a', right: 'b' }] }, 2)).toBe(false);
   });
 
   it('encode to the wire shape, a spoken answer with the learner’s own rating', () => {
     expect(encodeAnswer({ type: 'translate', text: ' sêv ' })).toEqual({ text: 'sêv' });
     expect(encodeAnswer({ type: 'multiple_choice', choice: 1 })).toEqual({ choice: 1 });
-    expect(encodeAnswer({ type: 'speaking', audioKey: 'k', selfRating: 'close' })).toEqual({ audioKey: 'k', selfRating: 'close' });
-    // a client with no rating sends none, which the server reads as a legacy answer
-    expect(encodeAnswer({ type: 'speaking', audioKey: 'k' })).toEqual({ audioKey: 'k' });
+    expect(encodeAnswer({ type: 'speaking', recorded: true, selfRating: 'close' })).toEqual({ selfRating: 'close' });
+    // with no rating there is nothing to send: the server reads that as no answer
+    expect(encodeAnswer({ type: 'speaking', recorded: true })).toEqual({});
   });
 });
 

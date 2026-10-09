@@ -127,16 +127,3 @@ export function useRecorder(): {
 
   return { phase, take, start, stop };
 }
-
-/**
- * The content type to upload a take under: the server reads the body by its
- * declared audio type and then checks the bytes themselves, so the codec
- * parameters a recorder adds ("audio/webm;codecs=opus") are dropped and only
- * the container it really is goes up — as the phone's upload does.
- */
-export function uploadType(mime: string): 'audio/webm' | 'audio/mp4' | 'audio/mpeg' {
-  const m = mime.toLowerCase();
-  if (m.includes('webm')) return 'audio/webm';
-  if (m.includes('mpeg')) return 'audio/mpeg';
-  return 'audio/mp4';
-}

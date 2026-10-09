@@ -409,6 +409,13 @@ describe('speaking (KUR-036)', () => {
     expect(grade('speaking', payload, { audioKey: '' })).toMatchObject({ accepted: false });
     expect(grade('speaking', payload, { audioKey: '', selfRating: 'good' })).toMatchObject({ accepted: false });
   });
+
+  it('takes the rating alone: the recording never leaves the learner’s device', () => {
+    expect(grade('speaking', payload, { selfRating: 'good' })).toMatchObject({ verdict: 'correct', accepted: true });
+    expect(grade('speaking', payload, { selfRating: 'retry' })).toMatchObject({ verdict: 'wrong', accepted: false });
+    // nothing at all is a skipped take, never a pass
+    expect(grade('speaking', payload, {})).toMatchObject({ verdict: 'wrong', accepted: false });
+  });
 });
 
 describe('writing (KUR-037)', () => {

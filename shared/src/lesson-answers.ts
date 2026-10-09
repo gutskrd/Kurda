@@ -25,8 +25,11 @@ export type DraftAnswer =
   | { type: 'translate'; text: string }
   | { type: 'listening'; text: string }
   | { type: 'writing'; text: string }
-  /** the uploaded recording's key, and how the learner rated it beside the model */
-  | { type: 'speaking'; audioKey: string | null; selfRating?: SelfRating | null }
+  /**
+   * whether a take has been recorded (it stays on the device), and how the
+   * learner rated it beside the model
+   */
+  | { type: 'speaking'; recorded: boolean; selfRating?: SelfRating | null }
   | { type: 'match_pairs'; matches: MatchPair[] };
 
 export function emptyDraft(type: ExerciseType): DraftAnswer {
@@ -38,7 +41,7 @@ export function emptyDraft(type: ExerciseType): DraftAnswer {
     case 'writing':
       return { type, text: '' };
     case 'speaking':
-      return { type, audioKey: null };
+      return { type, recorded: false };
     case 'match_pairs':
       return { type, matches: [] };
   }
@@ -54,9 +57,9 @@ export function isDraftComplete(draft: DraftAnswer, pairCount: number): boolean 
     case 'writing':
       return draft.text.trim().length > 0;
     case 'speaking':
-      // uploaded; a client asks for the learner's rating before it sends one
-      // (the server reads an answer without a rating as an older client's)
-      return draft.audioKey !== null;
+      // recorded and rated: the rating is the answer, the take never leaves
+      // the device
+      return draft.recorded && Boolean(draft.selfRating);
     case 'match_pairs':
       return draft.matches.length === pairCount;
   }
@@ -72,7 +75,7 @@ export function encodeAnswer(draft: DraftAnswer): unknown {
     case 'writing':
       return { text: draft.text.trim() };
     case 'speaking':
-      return draft.selfRating ? { audioKey: draft.audioKey, selfRating: draft.selfRating } : { audioKey: draft.audioKey };
+      return draft.selfRating ? { selfRating: draft.selfRating } : {};
     case 'match_pairs':
       return { matches: draft.matches };
   }

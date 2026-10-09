@@ -147,12 +147,14 @@ export const answerSchemas = {
   /** listening is transcription — same shape as translate */
   listening: z.object({ text: z.string().max(500) }),
   /**
-   * speaking submits the storage key of the uploaded recording, and how the
-   * learner judged it after hearing it beside the native model (optional, so
-   * clients from before self-rating still submit)
+   * speaking submits how the learner judged their take after hearing it beside
+   * the native model. The take itself stays on their device: nothing on the
+   * server listens to it, and a stored copy of every learner's voice — minors'
+   * included — was data kept for no use. `audioKey` is still read from clients
+   * from before self-rating, which uploaded the take and sent no rating.
    */
   speaking: z.object({
-    audioKey: z.string().min(1).max(300),
+    audioKey: z.string().min(1).max(300).optional(),
     selfRating: z.enum(SELF_RATINGS).optional(),
   }),
   /** free-text writing */
@@ -325,14 +327,13 @@ function checkListening(payload: ListeningPayload, text: string): CheckResult {
 /**
  * Speaking is graded by the pronunciation scorer (KUR-036): today the
  * learner's own judgement after hearing their recording beside the native
- * model (see speaking-scorer.ts). An empty audioKey is still wrong so a
- * skipped/failed upload isn't silently a pass.
+ * model (see speaking-scorer.ts). An answer with neither a rating nor (from an
+ * older client) a recording is wrong, so a skipped take is never a pass.
  */
 function checkSpeaking(payload: SpeakingPayload, answer: SpeakingAnswer): CheckResult {
-  if (!answer.audioKey) return { verdict: 'wrong', accepted: false };
+  if (!answer.selfRating && !answer.audioKey) return { verdict: 'wrong', accepted: false };
   const score = defaultScorer.score({
     reference: payload.reference,
-    audioKey: answer.audioKey,
     selfRating: answer.selfRating,
   });
   return {

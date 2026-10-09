@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useAuth } from '../../auth/AuthContext';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { recordingRejection } from '../recording';
 import type { Exercise, SelfRating } from '../types';
-import { uploadRecording } from '../upload';
 import { useAudio } from '../useAudio';
 import { useRecorder } from '../useRecorder';
 import { useI18n } from '../../i18n/I18nContext';
@@ -15,8 +13,8 @@ import type { TranslationKey } from '../../i18n/translations';
 
 interface Props {
   exercise: Exercise;
-  /** report the uploaded recording key (or null to clear the draft) */
-  onSetAudioKey: (key: string | null) => void;
+  /** report whether there is a take to rate (it stays on the device) */
+  onSetRecorded: (recorded: boolean) => void;
   /** the learner's own rating of the recording, once they have given one */
   selfRating: SelfRating | null;
   onRate: (rating: SelfRating | null) => void;
@@ -44,18 +42,19 @@ function blobUrl(blob: Blob | undefined): string | undefined {
  * Speaking (KUR-036): record, hear your recording beside the native speaker,
  * and say how close it was — "Sounded right / Close / Try again". The server
  * cannot check a recording, so the learner's ear is the judge, and the rating
- * is what is submitted with it. Comparing your own attempt with a model is the
+ * is what is submitted. The take itself never leaves the phone: nothing on the
+ * server would listen to it, and a stored copy of every learner's voice was
+ * data kept for no use. Comparing your own attempt with a model is the
  * practice.
  *
  * A refused microphone used to switch speaking off for the whole course, with
  * no way to turn it back on. It now says so and offers to skip this one.
  */
-export function SpeakingExercise({ exercise, onSetAudioKey, selfRating, onRate, onSkip, disabled }: Props) {
-  const { client } = useAuth();
+export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, onSkip, disabled }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const recorder = useRecorder();
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'ready' | 'rejected' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'ready' | 'rejected'>('idle');
   const [message, setMessage] = useState<string | null>(null);
   const processed = useRef<unknown>(null);
   const own = useMemo(() => blobUrl(recorder.result?.blob), [recorder.result]);
@@ -65,7 +64,7 @@ export function SpeakingExercise({ exercise, onSetAudioKey, selfRating, onRate, 
     if (own) blobUrls()?.revokeObjectURL?.(own);
   }, [own]);
 
-  // a fresh recording arrived → validate, then upload
+  // a fresh recording arrived → validate it, then it is ready to rate
   useEffect(() => {
     const r = recorder.result;
     if (!r || processed.current === r.blob) return;
@@ -76,23 +75,14 @@ export function SpeakingExercise({ exercise, onSetAudioKey, selfRating, onRate, 
     if (reject) {
       setStatus('rejected');
       setMessage(t(reject));
-      onSetAudioKey(null);
+      onSetRecorded(false);
       recorder.reset();
       return;
     }
-    setStatus('uploading');
-    onSetAudioKey(null);
-    void uploadRecording(client, r.blob, r.mimeType).then((key) => {
-      if (key) {
-        onSetAudioKey(key);
-        setStatus('ready');
-        setMessage(null);
-      } else {
-        setStatus('error');
-        setMessage(t('lesson.speak.uploadFailed'));
-      }
-    });
-  }, [recorder, client, onSetAudioKey, onRate, t]);
+    onSetRecorded(true);
+    setStatus('ready');
+    setMessage(null);
+  }, [recorder, onSetRecorded, onRate, t]);
 
   const micOff = recorder.permission === 'denied';
 
@@ -121,11 +111,6 @@ export function SpeakingExercise({ exercise, onSetAudioKey, selfRating, onRate, 
             <Icon name="stop" size={14} color={colors.background} />
             <Text style={[styles.stopText, { color: colors.background }]}>{t('lesson.speak.stop')}</Text>
           </Pressable>
-        </View>
-      ) : status === 'uploading' ? (
-        <View style={styles.recordingBox}>
-          <ActivityIndicator color={colors.primary} />
-          <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('lesson.speak.uploading')}</Text>
         </View>
       ) : status === 'ready' ? (
         <View style={styles.recordingBox}>

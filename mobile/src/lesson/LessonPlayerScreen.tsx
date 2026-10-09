@@ -116,7 +116,7 @@ export function SessionPlayer({
   const [choice, setChoice] = useState<number | null>(null);
   const [text, setText] = useState('');
   const [match, setMatch] = useState<MatchState>(emptyMatch);
-  const [audioKey, setAudioKey] = useState<string | null>(null);
+  const [recorded, setRecorded] = useState(false);
   const [selfRating, setSelfRating] = useState<SelfRating | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [offline, setOffline] = useState(false);
@@ -145,7 +145,7 @@ export function SessionPlayer({
     setChoice(null);
     setText('');
     setMatch(emptyMatch);
-    setAudioKey(null);
+    setRecorded(false);
     setSelfRating(null);
     setOffline(false);
   }, [state.index]);
@@ -162,11 +162,11 @@ export function SessionPlayer({
       case 'writing':
         return { type: 'writing' as const, text };
       case 'speaking':
-        return { type: 'speaking' as const, audioKey, selfRating };
+        return { type: 'speaking' as const, recorded, selfRating };
       case 'match_pairs':
         return { type: 'match_pairs' as const, matches: match.matches };
     }
-  }, [ex, choice, text, match, audioKey, selfRating]);
+  }, [ex, choice, text, match, recorded, selfRating]);
 
   const canCheck = useMemo(() => {
     if (!ex || !draft) return false;
@@ -179,7 +179,7 @@ export function SessionPlayer({
         return draft.text.trim().length > 0;
       case 'speaking':
         // recorded, heard beside the model, and rated
-        return draft.audioKey !== null && draft.selfRating !== null;
+        return draft.recorded && draft.selfRating !== null;
       case 'match_pairs':
         return draft.matches.length === (ex.lefts?.length ?? 0);
     }
@@ -326,7 +326,7 @@ export function SessionPlayer({
         {ex?.type === 'speaking' ? (
           <SpeakingExercise
             exercise={ex}
-            onSetAudioKey={setAudioKey}
+            onSetRecorded={setRecorded}
             selfRating={selfRating}
             onRate={setSelfRating}
             onSkip={() => dispatch({ type: 'SKIP' })}

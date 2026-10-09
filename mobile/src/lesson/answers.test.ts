@@ -32,7 +32,7 @@ describe('encodeAnswer', () => {
     expect(encodeAnswer({ type: 'multiple_choice', choice: 2 })).toEqual({ choice: 2 });
     expect(encodeAnswer({ type: 'translate', text: '  sêv ' })).toEqual({ text: 'sêv' });
     expect(encodeAnswer({ type: 'listening', text: ' sêv' })).toEqual({ text: 'sêv' });
-    expect(encodeAnswer({ type: 'speaking', audioKey: 'speaking/abc.m4a' })).toEqual({ audioKey: 'speaking/abc.m4a' });
+    expect(encodeAnswer({ type: 'speaking', recorded: true, selfRating: 'good' })).toEqual({ selfRating: 'good' });
     const matches = [{ left: 'sêv', right: 'apple' }];
     expect(encodeAnswer({ type: 'match_pairs', matches })).toEqual({ matches });
   });
@@ -40,7 +40,7 @@ describe('encodeAnswer', () => {
 
 describe('speaking draft', () => {
   it('is incomplete until a recording is uploaded', () => {
-    expect(isDraftComplete({ type: 'speaking', audioKey: null }, 0)).toBe(false);
-    expect(isDraftComplete({ type: 'speaking', audioKey: 'speaking/x.m4a' }, 0)).toBe(true);
+    expect(isDraftComplete({ type: 'speaking', recorded: false }, 0)).toBe(false);
+    expect(isDraftComplete({ type: 'speaking', recorded: true, selfRating: 'close' }, 0)).toBe(true);
   });
 });

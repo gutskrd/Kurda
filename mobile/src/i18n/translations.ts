@@ -208,8 +208,6 @@ export type TranslationKey =
   | 'lesson.translate.prompt'
   | 'lesson.speak.reRecord'
 
-  | 'lesson.speak.uploading'
-
   | 'error.offline'
   | 'games.wordle.name'
   | 'games.wordle.solo'
@@ -453,7 +451,6 @@ export type TranslationKey =
   | 'upload.tooOften'
   | 'recorder.tooShort'
   | 'recorder.silent'
-  | 'lesson.speak.uploadFailed'
   | 'profile.addFriend'
   | 'profile.acceptRequest'
   | 'settings.visibility.friends'
@@ -1104,7 +1101,6 @@ const en: Catalog = {
   'lesson.listen.playShort': 'Play',
   'lesson.translate.prompt': 'Translate',
   'lesson.speak.reRecord': 'Re-record',
-  'lesson.speak.uploading': 'Uploading…',
   'error.offline': 'Can’t reach Hevalo right now. Check your connection and try again.',
   'games.wordle.name': 'Kurdish Wordle',
   'games.wordle.solo': 'Today’s daily puzzle, plus unlimited practice rounds across three difficulties.',
@@ -1342,7 +1338,6 @@ const en: Catalog = {
   'upload.tooOften': 'You’re changing your photo too often. Please wait a moment and try again.',
   'recorder.tooShort': 'Too short — hold to record a little longer.',
   'recorder.silent': 'We couldn’t hear anything — try again.',
-  'lesson.speak.uploadFailed': 'Upload failed — please try again.',
   'profile.addFriend': 'Add friend',
   'profile.acceptRequest': 'Accept request',
   'settings.visibility.friends': 'Friends only',
@@ -2039,7 +2034,6 @@ const ku: Catalog = {
   'lesson.listen.playShort': 'Lêxe',
   'lesson.translate.prompt': 'Wergerîne',
   'lesson.speak.reRecord': 'Dîsa tomar bike',
-  'lesson.speak.uploading': 'Tê barkirin…',
   'error.offline': 'Niha em nagihîjin Hevalo. Girêdana xwe kontrol bike û dîsa biceribîne.',
   'games.wordle.name': 'Wordle ya kurdî',
   'games.wordle.solo': 'Mamikê îro, û bêsînor temrîn di sê astan de.',
@@ -2277,7 +2271,6 @@ const ku: Catalog = {
   'upload.tooOften': 'Tu pir caran wêneyê xwe diguherînî. Ji kerema xwe hinekî bisekine û dîsa biceribîne.',
   'recorder.tooShort': 'Pir kurt e — hinekî dirêjtir bigire û tomar bike.',
   'recorder.silent': 'Me tiştek nebihîst — dîsa biceribîne.',
-  'lesson.speak.uploadFailed': 'Barkirin bi ser neket — ji kerema xwe dîsa biceribîne.',
   'profile.addFriend': 'Wek heval lê zêde bike',
   'profile.acceptRequest': 'Daxwazê qebûl bike',
   'settings.visibility.friends': 'Tenê heval',
@@ -2974,7 +2967,6 @@ const de: Catalog = {
   'lesson.listen.playShort': 'Abspielen',
   'lesson.translate.prompt': 'Übersetze',
   'lesson.speak.reRecord': 'Neu aufnehmen',
-  'lesson.speak.uploading': 'Wird hochgeladen…',
   'error.offline': 'Hevalo ist gerade nicht erreichbar. Prüfe deine Verbindung und versuch es erneut.',
   'games.wordle.name': 'Kurdisches Wordle',
   'games.wordle.solo': 'Das Rätsel des Tages, dazu unbegrenzte Übungsrunden in drei Schwierigkeitsgraden.',
@@ -3212,7 +3204,6 @@ const de: Catalog = {
   'upload.tooOften': 'Du änderst dein Foto zu oft. Bitte warte einen Moment und versuche es erneut.',
   'recorder.tooShort': 'Zu kurz — halte etwas länger gedrückt.',
   'recorder.silent': 'Wir haben nichts gehört — versuche es erneut.',
-  'lesson.speak.uploadFailed': 'Upload fehlgeschlagen — bitte versuche es erneut.',
   'profile.addFriend': 'Als Freund hinzufügen',
   'profile.acceptRequest': 'Anfrage annehmen',
   'settings.visibility.friends': 'Nur Freunde',
@@ -3909,7 +3900,6 @@ const es: Catalog = {
   'lesson.listen.playShort': 'Reproducir',
   'lesson.translate.prompt': 'Traduce',
   'lesson.speak.reRecord': 'Grabar otra vez',
-  'lesson.speak.uploading': 'Subiendo…',
   'error.offline': 'Ahora mismo no se puede conectar con Hevalo. Comprueba tu conexión e inténtalo de nuevo.',
   'games.wordle.name': 'Wordle kurdo',
   'games.wordle.solo': 'El reto diario, más rondas de práctica ilimitadas en tres dificultades.',
@@ -4147,7 +4137,6 @@ const es: Catalog = {
   'upload.tooOften': 'Estás cambiando tu foto demasiado a menudo. Espera un momento e inténtalo de nuevo.',
   'recorder.tooShort': 'Demasiado corto: mantén pulsado un poco más.',
   'recorder.silent': 'No hemos oído nada: inténtalo de nuevo.',
-  'lesson.speak.uploadFailed': 'La subida falló: inténtalo de nuevo.',
   'profile.addFriend': 'Añadir amigo',
   'profile.acceptRequest': 'Aceptar la solicitud',
   'settings.visibility.friends': 'Solo amigos',
@@ -4844,7 +4833,6 @@ const tr: Catalog = {
   'lesson.listen.playShort': 'Oynat',
   'lesson.translate.prompt': 'Çevir',
   'lesson.speak.reRecord': 'Yeniden kaydet',
-  'lesson.speak.uploading': 'Yükleniyor…',
   'error.offline': 'Şu anda Hevalo’ya ulaşılamıyor. Bağlantını kontrol edip tekrar dene.',
   'games.wordle.name': 'Kürtçe Wordle',
   'games.wordle.solo': 'Günün bulmacası ve üç zorlukta sınırsız alıştırma turu.',
@@ -5082,7 +5070,6 @@ const tr: Catalog = {
   'upload.tooOften': 'Fotoğrafını çok sık değiştiriyorsun. Lütfen biraz bekleyip tekrar dene.',
   'recorder.tooShort': 'Çok kısa — biraz daha uzun basılı tut.',
   'recorder.silent': 'Hiçbir şey duyamadık — tekrar dene.',
-  'lesson.speak.uploadFailed': 'Yükleme başarısız oldu — lütfen tekrar dene.',
   'profile.addFriend': 'Arkadaş ekle',
   'profile.acceptRequest': 'İsteği kabul et',
   'settings.visibility.friends': 'Yalnızca arkadaşlar',
@@ -5779,7 +5766,6 @@ const ar: Catalog = {
   'lesson.listen.playShort': 'تشغيل',
   'lesson.translate.prompt': 'تَرجِم',
   'lesson.speak.reRecord': 'إعادة التسجيل',
-  'lesson.speak.uploading': 'جارٍ الرفع…',
   'error.offline': 'تعذّر الوصول إلى Hevalo الآن. تحقق من اتصالك وحاول مرة أخرى.',
   'games.wordle.name': 'وردل الكردية',
   'games.wordle.solo': 'لغز اليوم، مع جولات تدريب بلا حدود على ثلاثة مستويات.',
@@ -6017,7 +6003,6 @@ const ar: Catalog = {
   'upload.tooOften': 'أنت تغيّر صورتك كثيرًا. يُرجى الانتظار قليلًا ثم المحاولة مرة أخرى.',
   'recorder.tooShort': 'قصير جدًا — استمر بالضغط قليلًا أطول.',
   'recorder.silent': 'لم نسمع شيئًا — حاول مرة أخرى.',
-  'lesson.speak.uploadFailed': 'فشل الرفع — يُرجى المحاولة مرة أخرى.',
   'profile.addFriend': 'إضافة صديق',
   'profile.acceptRequest': 'قبول الطلب',
   'settings.visibility.friends': 'الأصدقاء فقط',
@@ -6714,7 +6699,6 @@ const fr: Catalog = {
   'lesson.listen.playShort': 'Lire',
   'lesson.translate.prompt': 'Traduisez',
   'lesson.speak.reRecord': 'Réenregistrer',
-  'lesson.speak.uploading': 'Envoi…',
   'error.offline': 'Impossible de joindre Hevalo pour l’instant. Vérifie ta connexion et réessaie.',
   'games.wordle.name': 'Wordle kurde',
   'games.wordle.solo': 'L’énigme du jour, plus des entraînements illimités sur trois niveaux.',
@@ -6952,7 +6936,6 @@ const fr: Catalog = {
   'upload.tooOften': 'Tu changes ta photo trop souvent. Attends un instant et réessaie.',
   'recorder.tooShort': 'Trop court — maintiens un peu plus longtemps.',
   'recorder.silent': 'Nous n’avons rien entendu — réessaie.',
-  'lesson.speak.uploadFailed': 'Échec de l’envoi — réessaie.',
   'profile.addFriend': 'Ajouter en ami',
   'profile.acceptRequest': 'Accepter la demande',
   'settings.visibility.friends': 'Amis seulement',
@@ -7649,7 +7632,6 @@ const nl: Catalog = {
   'lesson.listen.playShort': 'Afspelen',
   'lesson.translate.prompt': 'Vertaal',
   'lesson.speak.reRecord': 'Opnieuw opnemen',
-  'lesson.speak.uploading': 'Uploaden…',
   'error.offline': 'Hevalo is nu niet bereikbaar. Controleer je verbinding en probeer het opnieuw.',
   'games.wordle.name': 'Koerdische Wordle',
   'games.wordle.solo': 'De puzzel van vandaag, plus onbeperkt oefenen in drie moeilijkheidsgraden.',
@@ -7887,7 +7869,6 @@ const nl: Catalog = {
   'upload.tooOften': 'Je verandert je foto te vaak. Wacht even en probeer het opnieuw.',
   'recorder.tooShort': 'Te kort — houd iets langer ingedrukt.',
   'recorder.silent': 'We hoorden niets — probeer het opnieuw.',
-  'lesson.speak.uploadFailed': 'Uploaden is mislukt — probeer het opnieuw.',
   'profile.addFriend': 'Vriend toevoegen',
   'profile.acceptRequest': 'Verzoek accepteren',
   'settings.visibility.friends': 'Alleen vrienden',
@@ -8585,7 +8566,6 @@ const ckb: Catalog = {
   'lesson.listen.playShort': 'لێبدە',
   'lesson.translate.prompt': 'وەربگێڕە',
   'lesson.speak.reRecord': 'دووبارە تۆمار بکە',
-  'lesson.speak.uploading': 'بارکردن…',
   'error.offline': 'ئێستا ناتوانرێت بگات بە Hevalo. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدە.',
   'games.wordle.name': 'وۆردڵی کوردی',
   'games.wordle.solo': 'مەتەڵی ئەمڕۆ، لەگەڵ ڕاهێنانی بێسنوور لە سێ ئاستدا.',
@@ -8823,7 +8803,6 @@ const ckb: Catalog = {
   'upload.tooOften': 'زۆر جار وێنەکەت دەگۆڕیت. تکایە کەمێک چاوەڕێ بکە و دووبارە هەوڵ بدەوە.',
   'recorder.tooShort': 'زۆر کورتە — کەمێک زیاتر دایبگرە.',
   'recorder.silent': 'هیچمان نەبیست — دووبارە هەوڵ بدەوە.',
-  'lesson.speak.uploadFailed': 'بارکردن سەرکەوتوو نەبوو — تکایە دووبارە هەوڵ بدەوە.',
   'profile.addFriend': 'وەک هاوڕێ زیادی بکە',
   'profile.acceptRequest': 'داواکاری قبووڵ بکە',
   'settings.visibility.friends': 'تەنها هاوڕێکان',

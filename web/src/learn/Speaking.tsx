@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { recordingProblem, type SelfRating } from '@kurda/shared';
-import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { MicIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { Ask, Prompt, type ExerciseProps } from './Exercises';
 import { PlayButton } from './PlayButton';
-import { recorderSupported, uploadType, useRecorder } from './useRecorder';
+import { recorderSupported, useRecorder } from './useRecorder';
 
 const RATINGS: Array<{ rating: SelfRating; label: MessageKey }> = [
   { rating: 'good', label: 'lesson.speak.rateGood' },
@@ -15,10 +14,9 @@ const RATINGS: Array<{ rating: SelfRating; label: MessageKey }> = [
   { rating: 'retry', label: 'lesson.speak.rateRetry' },
 ];
 
-type Upload =
+type Take =
   | { status: 'none' }
-  | { status: 'uploading' }
-  | { status: 'ready'; key: string }
+  | { status: 'ready' }
   | { status: 'problem'; message: MessageKey };
 
 /**
@@ -26,17 +24,17 @@ type Upload =
  * speaker, and say how close it was — "Sounded right / Close / Try again".
  *
  * Nothing on the server can judge a recording, and saying "correct" to every
- * one taught nothing, so the learner's ear is the judge: the rating goes in
- * with the recording, and comparing one's own attempt with the model is the
- * practice. "Try again" brings the phrase back later in the lesson, like any
+ * one taught nothing, so the learner's ear is the judge: the rating is the
+ * answer, and comparing one's own attempt with the model is the practice. The
+ * take never leaves the browser — nothing on the server would listen to it,
+ * and a stored copy of every learner's voice was data kept for no use. "Try again" brings the phrase back later in the lesson, like any
  * miss. A refused microphone is said plainly, with how to allow it, and never
  * switches speaking off for good; "Can't speak now" puts this one off.
  */
 export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseProps): React.JSX.Element {
   const t = useT();
-  const { client } = useAuth();
   const recorder = useRecorder();
-  const [upload, setUpload] = useState<Upload>({ status: 'none' });
+  const [taken, setTaken] = useState<Take>({ status: 'none' });
   const supported = recorderSupported();
   const take = recorder.take;
   const own = useMemo(() => (take ? URL.createObjectURL(take.blob) : null), [take]);
@@ -47,34 +45,21 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
     [own],
   );
 
-  const mounted = useRef(true);
+  // a new take: check it is a take at all, then it is ready to hear and rate
+  const seen = useRef<Blob | null>(null);
   useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-
-  // a new take: check it is a take at all, then send it
-  const sent = useRef<Blob | null>(null);
-  useEffect(() => {
-    if (!take || sent.current === take.blob) return;
-    sent.current = take.blob;
+    if (!take || seen.current === take.blob) return;
+    seen.current = take.blob;
     const problem = recordingProblem({ durationMs: take.durationMs, byteSize: take.blob.size });
-    if (problem) {
-      setUpload({ status: 'problem', message: problem === 'tooShort' ? 'lesson.speak.tooShort' : 'lesson.speak.silent' });
-      return;
-    }
-    setUpload({ status: 'uploading' });
-    const body = new Blob([take.blob], { type: uploadType(take.blob.type) });
-    void client.uploadBytes<{ key: string }>('/media/uploads', body).then((res) => {
-      if (!mounted.current || sent.current !== take.blob) return;
-      setUpload(res.ok ? { status: 'ready', key: res.data.key } : { status: 'problem', message: 'lesson.speak.uploadFailed' });
-    });
-  }, [take, client]);
+    setTaken(
+      problem
+        ? { status: 'problem', message: problem === 'tooShort' ? 'lesson.speak.tooShort' : 'lesson.speak.silent' }
+        : { status: 'ready' },
+    );
+  }, [take]);
 
   const record = (): void => {
-    setUpload({ status: 'none' });
+    setTaken({ status: 'none' });
     void recorder.start();
   };
 
@@ -98,9 +83,9 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
         ? 'microphone'
         : phase === 'asking'
           ? null
-          : upload.status === 'ready'
+          : taken.status === 'ready'
             ? 'listen'
-            : upload.status === 'problem'
+            : taken.status === 'problem'
               ? 'record'
               : null;
   useEffect(() => {
@@ -139,13 +124,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
         <Button onClick={recorder.stop}>{t('lesson.speak.stop')}</Button>
       </>
     );
-  } else if (upload.status === 'uploading') {
-    body = (
-      <p className="lesson-note" role="status">
-        {t('lesson.speak.saving')}
-      </p>
-    );
-  } else if (upload.status === 'ready') {
+  } else if (taken.status === 'ready') {
     body = (
       <>
         <div className="lesson-listen">
@@ -164,7 +143,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
               key={rating}
               variant="secondary"
               disabled={locked || busy}
-              onClick={() => onAnswer({ audioKey: upload.key, selfRating: rating })}
+              onClick={() => onAnswer({ selfRating: rating })}
             >
               {t(label)}
             </Button>
@@ -185,7 +164,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
     <div className="lesson-exercise" ref={root}>
       <Ask focus>{t('lesson.speak.ask')}</Ask>
       <Prompt text={exercise.prompt} />
-      {exercise.modelAudioUrl && upload.status !== 'ready' && (
+      {exercise.modelAudioUrl && taken.status !== 'ready' && (
         <div className="lesson-listen">
           <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} />
         </div>
@@ -193,9 +172,9 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
       <div className="lesson-speak" ref={controls}>
         {body}
       </div>
-      {upload.status === 'problem' && (
+      {taken.status === 'problem' && (
         <p className="lesson-note" role="alert">
-          {t(upload.message)}
+          {t(taken.message)}
         </p>
       )}
       {!locked && (

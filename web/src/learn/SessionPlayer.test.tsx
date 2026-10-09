@@ -344,16 +344,12 @@ describe('speaking', () => {
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
   });
 
-  it('records after a tap, uploads, plays both voices and sends the learner’s own rating', async () => {
+  it('records after a tap, plays both voices and sends only the learner’s own rating', async () => {
     const track = { stop: vi.fn() };
     microphone(async () => ({ getTracks: () => [track] }));
-    serve(
-      {
-        'POST /media/uploads': { key: 'speaking/abc', url: 'https://cdn.test/speaking/abc', contentType: 'audio/webm' },
-        'POST /sessions/s1/answers': { verdict: 'typo', accepted: true, correction: 'Silav', duplicate: false },
-      },
-      (call) => (call.path === '/media/uploads' ? jsonResponse(201, { key: 'speaking/abc' }) : null),
-    );
+    serve({
+      'POST /sessions/s1/answers': { verdict: 'typo', accepted: true, correction: 'Silav', duplicate: false },
+    });
     play({ sessionId: 's1', exercises: [speaking], answered: {} });
 
     expect(await screen.findByText('Say it aloud')).toBeInTheDocument();
@@ -365,25 +361,23 @@ describe('speaking', () => {
     now += 2000;
     await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
 
-    // the microphone is handed back, the take goes up as plain WebM
+    // the microphone is handed back, and the take stays in the browser
     expect(track.stop).toHaveBeenCalled();
     expect(await screen.findByText('How did it sound to you?')).toBeInTheDocument();
-    const upload = calls.find((c) => c.path === '/media/uploads')!;
-    expect(upload.headers['content-type']).toBe('audio/webm');
+    expect(calls.some((c) => c.path === '/media/uploads')).toBe(false);
 
     await userEvent.click(screen.getByRole('button', { name: 'Hear yourself' }));
     expect(played.at(-1)?.src).toBe('blob:take');
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(await verdict('You said it was close')).toBeInTheDocument();
-    expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'sp', answer: { audioKey: 'speaking/abc', selfRating: 'close' } });
+    expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'sp', answer: { selfRating: 'close' } });
   });
 
   it('keeps the keyboard focus on the next step: Stop, then “Hear yourself”, then the feedback', async () => {
     microphone(async () => ({ getTracks: () => [] }));
     serve(
       { 'POST /sessions/s1/answers': { verdict: 'correct', accepted: true, correction: 'Silav', duplicate: false } },
-      (call) => (call.path === '/media/uploads' ? jsonResponse(201, { key: 'speaking/abc' }) : null),
     );
     play({ sessionId: 's1', exercises: [speaking], answered: {} });
 

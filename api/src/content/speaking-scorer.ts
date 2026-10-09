@@ -20,8 +20,6 @@ export type SelfRating = (typeof SELF_RATINGS)[number];
 export interface PronunciationInput {
   /** the target phrase the learner was asked to say */
   reference: string;
-  /** storage key of the uploaded recording */
-  audioKey: string;
   /** the learner's own judgement, absent from clients older than self-rating */
   selfRating?: SelfRating;
 }
