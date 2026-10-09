@@ -122,6 +122,23 @@ describe.skipIf(!DATABASE_URL)('empty sessions are not learning (integration)', 
     expect((await authed('GET', '/rewards/daily')).json().learnedToday).toBe(false);
   });
 
+  it('answers given on an earlier day count for that day, not for the day it is finished', async () => {
+    const start = await authed('GET', `/lessons/${lessonId}/session`);
+    const sessionId = start.json().sessionId as string;
+    for (const id of ex.slice(0, 3)) {
+      await authed('POST', `/sessions/${sessionId}/answers`, { exerciseId: id, answer: { text: 'sêv' } });
+    }
+    // a sitting kept open and finished two days later
+    await pool.query(
+      `UPDATE session_answers SET answered_at = answered_at - interval '2 days' WHERE session_id = $1`,
+      [sessionId],
+    );
+    const done = await authed('POST', `/sessions/${sessionId}/complete`);
+    expect(done.statusCode).toBe(200);
+    expect(done.json().streak).toMatchObject({ current: 0, daysLearned: 0 });
+    expect((await authed('GET', '/rewards/daily')).json().learnedToday).toBe(false);
+  });
+
   it('a lesson worked through counts as it always did', async () => {
     const res = await lessonWith(2);
     expect(res.streak).toMatchObject({ current: 1, daysLearned: 1, freezeProgress: 1 });
@@ -146,6 +163,8 @@ describe.skipIf(!DATABASE_URL)('empty sessions are not learning (integration)', 
     expect(done.statusCode).toBe(200);
     // still the one session from the lesson above
     expect(done.json().streak).toMatchObject({ daysLearned: 1, freezeProgress: 1 });
+    // and pays no XP: a review can be started on one item at will
+    expect(done.json().xpAwarded).toBe(0);
     const row = await pool.query(`SELECT freeze_progress FROM user_streaks WHERE user_id = $1`, [userId]);
     expect(row.rows[0].freeze_progress).toBe(1);
   });

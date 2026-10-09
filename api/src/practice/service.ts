@@ -4,7 +4,7 @@ import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Ve
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
-import { countsAsLearning } from '../streaks/streak-logic.js';
+import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
@@ -471,17 +471,21 @@ export class PracticeService {
         );
         if ((claimed.rowCount ?? 0) > 0) {
           claimedNow = true;
-          const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
-          xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: session.id }, client);
-          await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [session.id, xpAwarded]);
-          // learning only when the items were actually worked through: see
-          // countsAsLearning — the XP above stands either way
-          const answered = await client.query<{ n: number }>(
-            `SELECT count(*)::int n FROM practice_answers WHERE session_id = $1`,
-            [session.id],
-          );
-          // (out of every item, put off or not: being learning is about what was done)
-          if (countsAsLearning(answered.rows[0]!.n, session.total_count)) {
+          // Learning only when the items were actually worked through today
+          // (see countsAsLearning and answeredTodaySql), out of every item, put
+          // off or not. Practice pays its XP only then: a review can be started
+          // on a single item at will, so XP for an empty one was XP on demand.
+          const tz = safeTimeZone(timeZone);
+          const answered = await client.query<{ n: number }>(answeredTodaySql('practice_answers'), [
+            session.id,
+            tz,
+            localDate(new Date(), tz),
+          ]);
+          const learning = countsAsLearning(answered.rows[0]!.n, session.total_count);
+          if (learning) {
+            const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
+            xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: session.id }, client);
+            await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [session.id, xpAwarded]);
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
           await this.goals.evaluate(client, userId, timeZone);

@@ -4,7 +4,7 @@ import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Ve
 import type { ExerciseType } from './repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
-import { countsAsLearning } from '../streaks/streak-logic.js';
+import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
@@ -469,6 +469,12 @@ export class LessonSessionService {
         );
         if ((claimed.rowCount ?? 0) > 0) {
           claimedNow = true;
+          // One completion of this lesson slot at a time per learner: without
+          // it, sessions completed in parallel each counted no prior completion
+          // and each was paid first-time XP.
+          await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
+            `lesson-complete:${userId}:${slot.skillId}:${slot.position}`,
+          ]);
           // Repeat = this learner already completed this lesson before, in
           // this version or any other.
           const prior = await client.query<{ n: string }>(
@@ -488,7 +494,13 @@ export class LessonSessionService {
           // A lesson actually worked through counts as a day learned and for
           // today's streak; one finished with (nearly) nothing answered does
           // not, or the freeze and the daily Zêr could be had for nothing.
-          if (countsAsLearning(answers.rows.length, session.total_count)) {
+          const tz = safeTimeZone(timeZone);
+          const today = await client.query<{ n: number }>(answeredTodaySql('session_answers'), [
+            session.id,
+            tz,
+            localDate(new Date(), tz),
+          ]);
+          if (countsAsLearning(today.rows[0]!.n, session.total_count)) {
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
           // Credit the daily goal if this XP crossed it (KUR-032). Runs in

@@ -119,6 +119,18 @@ export const SESSIONS_PER_FREEZE = 5;
  * XP; it just does not count as a day learned, a day of the streak, a step
  * towards a freeze or the daily Zêr.
  */
+/**
+ * How many of a session's answers were given on the learner's today, in SQL.
+ * `$1` is the session id, `$2` the time zone (pass it through safeTimeZone),
+ * `$3` today's 'YYYY-MM-DD'. Learning is credited to the day it happened: a
+ * sitting's answers kept in an open session and completed on later days would
+ * otherwise buy a streak day and the daily Zêr on each of them.
+ */
+export function answeredTodaySql(table: 'session_answers' | 'practice_answers'): string {
+  return `SELECT count(*)::int n FROM ${table}
+          WHERE session_id = $1 AND (answered_at AT TIME ZONE $2)::date = $3::date`;
+}
+
 export function countsAsLearning(answered: number, total: number): boolean {
   return answered >= Math.max(1, Math.ceil(total / 2));
 }
