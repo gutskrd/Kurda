@@ -231,17 +231,24 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       expect(me.json().user).toMatchObject({ birthDateRequired: true, leaguesEnabled: false });
     });
 
+    const NOBODY = '00000000-0000-4000-8000-000000000000';
+
     it('cannot reach anybody until it answers', async () => {
       const writes: Array<[string, string, Record<string, unknown> | undefined]> = [
         ['POST', '/friends/requests', { userId: adult.id }],
         ['POST', '/groups', { name: `Waiting ${suffix}`, privacy: 'invite' }],
         ['POST', `/chat/${adult.id}/messages`, { body: 'Silav' }],
         ['POST', '/library/posts', { type: 'gotin', body: 'Silav' }],
+        // editing or publishing puts words in front of readers just as posting does
+        ['PATCH', `/library/posts/${NOBODY}`, { body: 'Silav' }],
+        ['POST', `/library/posts/${NOBODY}/publish`, undefined],
+        ['PATCH', `/images/${NOBODY}`, { caption: 'Silav' }],
+        ['PATCH', `/library/comments/${NOBODY}`, { body: 'Silav' }],
         ['PUT', '/me/privacy', { visibility: 'everyone' }],
         ['POST', '/me/consent', { analytics: true }],
       ];
       for (const [method, url, payload] of writes) {
-        const res = await call(waiting, method as 'POST' | 'PUT', url, payload);
+        const res = await call(waiting, method as 'POST' | 'PUT' | 'PATCH', url, payload);
         expect(res.statusCode, `${method} ${url}`).toBe(428);
         expect(res.json().code, `${method} ${url}`).toBe('BIRTH_DATE_REQUIRED');
       }

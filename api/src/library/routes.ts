@@ -120,7 +120,9 @@ export function registerLibraryRoutes(
   /** Edit (author or admin). */
   app.patch(
     '/library/posts/:id',
-    { schema: { params: idParam, body: updateBody }, preHandler: requireAuth },
+    // an edit can put new words in front of readers, so it waits for a birth
+    // month like a new post does; unpublish and delete never do
+    { schema: { params: idParam, body: updateBody }, preHandler: requireBirthMonth },
     async (req, reply) => {
       const res = await library.update((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as z.infer<typeof updateBody>);
       return respond(reply, res);
@@ -137,7 +139,7 @@ export function registerLibraryRoutes(
   /** Publish a draft (author or admin). */
   app.post(
     '/library/posts/:id/publish',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth },
     async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, isAdmin(req), 'published')),
   );
 

@@ -121,7 +121,7 @@ export function registerImagePostRoutes(app: FastifyInstance, config: AppConfig,
 
   app.patch(
     '/images/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: requireAuth },
+    { schema: { params: idParam, body: editBody }, preHandler: requireBirthMonth },
     async (req, reply) =>
       respond(reply, await images.editCaption((req.params as { id: string }).id, req.user!.id, isAdmin(req), (req.body as z.infer<typeof editBody>).caption)),
   );

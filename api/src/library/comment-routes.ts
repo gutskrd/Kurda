@@ -125,7 +125,7 @@ export function registerLibraryCommentRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/library/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: requireAuth },
+    { schema: { params: idParam, body: editBody }, preHandler: requireBirthMonth },
     async (req, reply) =>
       respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as CreateCommentInput)),
   );
