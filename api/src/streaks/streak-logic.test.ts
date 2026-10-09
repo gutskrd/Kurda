@@ -8,6 +8,7 @@ import {
   MAX_FREEZES,
   record,
   recordSession,
+  safeTimeZone,
   SESSIONS_PER_FREEZE,
   settle,
   shiftDate,
@@ -31,6 +32,14 @@ describe('localDate', () => {
     // Europe spring-forward night 2026-03-29; 00:30 local is still the 29th
     const t = new Date('2026-03-29T01:30:00+02:00'); // after the skip
     expect(localDate(t, 'Europe/Berlin')).toBe('2026-03-29');
+  });
+
+  it('reads an unknown or missing zone as UTC instead of throwing', () => {
+    const t = new Date('2026-03-01T23:30:00Z');
+    expect(localDate(t, 'Mars/Olympus')).toBe('2026-03-01');
+    expect(safeTimeZone('Mars/Olympus')).toBe('UTC');
+    expect(safeTimeZone(null)).toBe('UTC');
+    expect(safeTimeZone('Europe/Berlin')).toBe('Europe/Berlin');
   });
 });
 

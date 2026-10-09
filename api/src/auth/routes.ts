@@ -11,6 +11,7 @@ import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
 import { requireAuth } from '../plugins/auth.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
+import { safeTimeZone } from '../streaks/streak-logic.js';
 import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
@@ -36,7 +37,13 @@ export const registerBodySchema = z.object({
   /* every language the interface is offered in — one list, so the picker
        cannot offer something the server would refuse */
     locale: z.enum(APP_LOCALE_CODES).optional(),
-  timezone: z.string().max(50).optional(),
+  // an unknown zone is dropped (the account gets UTC) rather than stored:
+  // see safeTimeZone in streaks/streak-logic.ts for what one used to break
+  timezone: z
+    .string()
+    .max(50)
+    .optional()
+    .transform((tz) => (tz && safeTimeZone(tz) === tz ? tz : undefined)),
   deviceName: z.string().max(80).optional(),
   captchaToken: z.string().max(3_000).optional(),
   /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */

@@ -15,12 +15,27 @@ export interface StreakState {
 
 export const MAX_FREEZES = 1;
 
+/**
+ * A zone Intl can use, or UTC. Sign-up once stored whatever string it was
+ * sent, and an unknown zone made Intl throw — every lesson completion and the
+ * daily reward then failed with a 500 for that learner, for good.
+ */
+export function safeTimeZone(timeZone: string | null | undefined): string {
+  if (!timeZone) return 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-CA', { timeZone });
+    return timeZone;
+  } catch {
+    return 'UTC';
+  }
+}
+
 /** The user's local calendar date for an instant, as 'YYYY-MM-DD'. */
 export function localDate(now: Date, timeZone: string): string {
   // en-CA formats as YYYY-MM-DD; the tz makes it the user's calendar day,
   // so DST shifts never move the date boundary.
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
+    timeZone: safeTimeZone(timeZone),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
