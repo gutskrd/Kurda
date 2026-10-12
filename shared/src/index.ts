@@ -166,3 +166,12 @@ export {
  * the API sends — so the API, both apps and the admin editor cannot disagree.
  */
 export * from './stories.js';
+
+/**
+ * Inviting friends to any online game and playing again (play), gifts that
+ * arrive in the chat (gifts), and the chat messages that carry them
+ * (chat-cards) — the same names, states and limits in the API and both apps.
+ */
+export * from './play.js';
+export * from './gifts.js';
+export * from './chat-cards.js';
