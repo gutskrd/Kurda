@@ -63,6 +63,10 @@
     {
       "key": "default-16",
       "requiresPremium": false
+    },
+    {
+      "key": "default-17",
+      "requiresPremium": false
     }
   ],
   "icons": [

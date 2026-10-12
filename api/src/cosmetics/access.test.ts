@@ -65,7 +65,7 @@ describe('resolveCosmetics — avatar priority', () => {
     );
     expect(r.avatarUrl).toBe('/cosmetics/avatars/default-05.png');
   });
-  it('falls back to default-01 when nothing is set (never null/silhouette)', () => {
+  it('falls back to default-01 when nothing is set (never null)', () => {
     const r = resolveCosmetics(
       { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: null, icon: null },
       url,
