@@ -1,0 +1,1838 @@
+{
+  "stories": [
+    {
+      "slug": "kmr-qelema-sin",
+      "dialect": "kurmanci",
+      "level": 1,
+      "title": "Qelema Şîn",
+      "summary": "Roja Rojînê ya yekem li dibistana nû, û qelemeke şîn.",
+      "body": "Îro Rojîn cara yekem diçe dibistana nû. Ew deh salî ye. Rojîn li wir kesî nas nake û hinekî şerm dike.\n\nMamoste dibêje: “Zarokno, defterên xwe vekin û navê xwe binivîsin.” Rojîn li qelema xwe digere. Lê qelema wê li malê maye! Rûyê Rojînê sor dibe.\n\nKeçikek li kêleka wê rûniştiye. Navê wê Şîlan e. Şîlan qelemeke şîn dide Rojînê û dibêje: “Fermo, du qelemên min hene.” Rojîn dibişire: “Gelek spas!”\n\nDi bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin. Êvarê Rojîn ji diya xwe re dibêje: “Dayê, min îro hevaleke nû dît!” Sibê ew ê qelema şîn û sêveke sor bide Şîlanê.",
+      "glossary": [
+        {
+          "term": "şerm dike",
+          "meanings": {
+            "en": "is shy, feels embarrassed"
+          }
+        },
+        {
+          "term": "Zarokno",
+          "meanings": {
+            "en": "children! (calling to a group of children)"
+          }
+        },
+        {
+          "term": "li kêleka",
+          "meanings": {
+            "en": "next to, beside"
+          }
+        },
+        {
+          "term": "rûniştiye",
+          "meanings": {
+            "en": "is sitting"
+          }
+        },
+        {
+          "term": "Fermo",
+          "meanings": {
+            "en": "here you are (said when giving something)"
+          }
+        },
+        {
+          "term": "dibişire",
+          "meanings": {
+            "en": "smiles"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Rojîn çend salî ye?",
+          "promptEn": "How old is Rojîn?",
+          "options": [
+            "Heşt salî ye",
+            "Deh salî ye",
+            "Diwanzdeh salî ye"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Ew deh salî ye.”",
+          "explanationEn": "The story says: “She is ten years old.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Rojîn li dibistana nû gelek zarokan nas dike.",
+          "promptEn": "True or false? Rojîn knows many children at the new school.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Çîrok dibêje: “Rojîn li wir kesî nas nake.”",
+          "explanationEn": "False. The story says: “Rojîn doesn’t know anyone there.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Mamoste ji zarokan çi dixwaze?",
+          "promptEn": "What does the teacher ask the children to do?",
+          "options": [
+            "Bi hev re bilîzin",
+            "Sêvên xwe bixwin",
+            "Navê xwe binivîsin"
+          ],
+          "correctIndex": 2,
+          "explanation": "Mamoste dibêje: “Defterên xwe vekin û navê xwe binivîsin.”",
+          "explanationEn": "The teacher says: “Open your notebooks and write your names.”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima rûyê Rojînê sor dibe?",
+          "promptEn": "Why does Rojîn’s face turn red?",
+          "options": [
+            "Ji ber ku qelema wê li malê maye",
+            "Ji ber ku Şîlan pê dikene",
+            "Ji ber ku mamoste navê wê dipirse"
+          ],
+          "correctIndex": 0,
+          "explanation": "Qelema wê li malê maye û ew nikare binivîse, loma şerm dike.",
+          "explanationEn": "Her pen is at home and she can’t write, so she feels embarrassed.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Şîlan çi dide Rojînê?",
+          "promptEn": "What does Şîlan give Rojîn?",
+          "options": [
+            "Qelemeke şîn",
+            "Sêveke sor",
+            "Deftereke nû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Şîlan qelemeke şîn dide Rojînê, ji ber ku du qelemên wê hene.",
+          "explanationEn": "Şîlan gives Rojîn a blue pen, because she has two pens.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Kîjan pêşî diqewime?",
+          "promptEn": "Which happens first?",
+          "options": [
+            "Şîlan qelemekê dide Rojînê.",
+            "Rojîn û Şîlan bi hev re dilîzin.",
+            "Rojîn li qelema xwe digere."
+          ],
+          "correctIndex": 2,
+          "explanation": "Pêşî Rojîn li qelema xwe digere. Paşê Şîlan qelemekê dide wê. Paşê ew bi hev re dilîzin.",
+          "explanationEn": "First Rojîn looks for her pen. Then Şîlan gives her a pen. Then they play together.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Di bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin.” “Bêhnvedan” çi ye?",
+          "promptEn": "“Di bêhnvedanê de Rojîn û Şîlan bi hev re dilîzin.” What is “bêhnvedan”?",
+          "options": [
+            "Dema ku mamoste dersê dide",
+            "Navbera dersan, dema lîstikê",
+            "Dema ku zarok diçin malê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Bêhnvedan navbera dersan e. Zarok wê demê dilîzin.",
+          "explanationEn": "“Bêhnvedan” is the break between lessons. Children play then.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Sibê Rojîn dê çi bide Şîlanê?",
+          "promptEn": "What will Rojîn give Şîlan tomorrow?",
+          "options": [
+            "Qelema şîn û sêveke sor",
+            "Du qelemên nû",
+            "Deftera xwe ya nû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Sibê ew ê qelema şîn û sêveke sor bide Şîlanê.”",
+          "explanationEn": "The story says: “Tomorrow she will give Şîlan the blue pen and a red apple.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok bi giştî li ser çi ye?",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "Keçikek di roja xwe ya yekem de hevaleke nû dibîne.",
+            "Keçikek qelema xwe winda dike û mamoste lê dixeyide.",
+            "Du xwişk bi hev re diçin dibistanê."
+          ],
+          "correctIndex": 0,
+          "explanation": "Roja yekem Rojîn kesî nas nake, lê di dawiyê de Şîlan dibe hevala wê.",
+          "explanationEn": "On her first day Rojîn knows nobody, but by the end Şîlan has become her friend.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-bacansor-penir-nan",
+      "dialect": "kurmanci",
+      "level": 1,
+      "title": "Bacansor, Penîr, Nan",
+      "summary": "Azad diçe bazarê da ku sê tiştan bikire. Gelo ew ê her sêyan bîne bîra xwe?",
+      "body": "Diya Azad dibêje: “Azad, here bazarê. Du kîlo bacansor, nîv kîlo penîr û nan bikire.” Ew pereyan dide wî.\n\nDi rê de Azad dibêje: “Bacansor, penîr, nan. Bacansor, penîr, nan.” Bazar pir bi deng e. Firoşkar bang dikin: “Sêv! Tirî! Hinar!”\n\nAzad du kîlo bacansor û nîv kîlo penîr dikire. Firoşkarê penîr sêveke sor jî dide wî û dibêje: “Ev ji bo te ye.” Azad bi kêfxweşî vedigere malê.\n\nDiya wî dipirse: “Nan li ku ye?” Azad li destên xwe dinêre. Nan tune ye! Ew dikene, sêva sor dide diya xwe û dîsa dibeze bazarê. Vê carê ew di rê de tenê dibêje: “Nan, nan, nan!”",
+      "glossary": [
+        {
+          "term": "bacansor",
+          "meanings": {
+            "en": "tomatoes"
+          }
+        },
+        {
+          "term": "bi deng",
+          "meanings": {
+            "en": "noisy"
+          }
+        },
+        {
+          "term": "bang dikin",
+          "meanings": {
+            "en": "call out, shout"
+          }
+        },
+        {
+          "term": "Hinar",
+          "meanings": {
+            "en": "pomegranates"
+          }
+        },
+        {
+          "term": "bi kêfxweşî",
+          "meanings": {
+            "en": "happily"
+          }
+        },
+        {
+          "term": "dibeze",
+          "meanings": {
+            "en": "runs"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Divê Azad çend kîlo bacansor bikire?",
+          "promptEn": "How many kilos of tomatoes must Azad buy?",
+          "options": [
+            "Nîv kîlo",
+            "Du kîlo",
+            "Pênc kîlo"
+          ],
+          "correctIndex": 1,
+          "explanation": "Diya wî dibêje: “Du kîlo bacansor, nîv kîlo penîr û nan bikire.”",
+          "explanationEn": "His mother says: “Buy two kilos of tomatoes, half a kilo of cheese and bread.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Azad di rê de dibêje: “Bacansor, penîr, nan”?",
+          "promptEn": "Why does Azad say “Bacansor, penîr, nan” on the way?",
+          "options": [
+            "Da ku wan ji bîr neke",
+            "Ji ber ku ew stranekê dibêje",
+            "Ji ber ku firoşkar ji wî dipirsin"
+          ],
+          "correctIndex": 0,
+          "explanation": "Ew sê tiştan dubare dike da ku ji bîr neke ka divê çi bikire.",
+          "explanationEn": "He repeats the three things so that he doesn’t forget what he has to buy.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Firoşkar bang dikin: Sêv! Tirî! Hinar!” “Firoşkar” kî ne?",
+          "promptEn": "“Firoşkar bang dikin: Sêv! Tirî! Hinar!” Who are the “firoşkar”?",
+          "options": [
+            "Kesên ku li bazarê tiştan dikirin",
+            "Kesên ku li bazarê tiştan difiroşin",
+            "Zarokên ku li bazarê dilîzin"
+          ],
+          "correctIndex": 1,
+          "explanation": "Firoşkar ew kes e ku tiştan difiroşe.",
+          "explanationEn": "A “firoşkar” is a person who sells things.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Firoşkarê penîr çi dide Azad?",
+          "promptEn": "What does the cheese seller give Azad?",
+          "options": [
+            "Sêveke sor",
+            "Hinarek",
+            "Nanekî germ"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Firoşkarê penîr sêveke sor jî dide wî.”",
+          "explanationEn": "The story says: “The cheese seller also gives him a red apple.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rast an şaş? Azad li bazarê nan jî dikire.",
+          "promptEn": "True or false? Azad buys bread at the market too.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Ew tenê bacansor û penîr dikire; nan ji bîr dike.",
+          "explanationEn": "False. He buys only tomatoes and cheese; he forgets the bread.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Azad kengî dibîne ku nan tune ye?",
+          "promptEn": "When does Azad notice that there is no bread?",
+          "options": [
+            "Gava firoşkar sêvê dide wî",
+            "Gava ew di rê de diçe bazarê",
+            "Gava diya wî dipirse: “Nan li ku ye?”"
+          ],
+          "correctIndex": 2,
+          "explanation": "Li malê diya wî dipirse. Paşê Azad li destên xwe dinêre û dibîne ku nan tune ye.",
+          "explanationEn": "At home his mother asks. Then Azad looks at his hands and sees that there is no bread.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Azad sêva sor dide kê?",
+          "promptEn": "Who does Azad give the red apple to?",
+          "options": [
+            "Firoşkarê penîr",
+            "Diya xwe",
+            "Firoşkarê hinaran"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Ew sêva sor dide diya xwe.”",
+          "explanationEn": "The story says: “He gives the red apple to his mother.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima vê carê Azad tenê dibêje: “Nan, nan, nan”?",
+          "promptEn": "Why does Azad only say “Nan, nan, nan” this time?",
+          "options": [
+            "Ji ber ku ew pir birçî ye",
+            "Ji ber ku diya wî li wî xeyidiye",
+            "Ji ber ku niha tenê nan divê bikire"
+          ],
+          "correctIndex": 2,
+          "explanation": "Bacansor û penîr li malê ne. Tenê nan maye ku bikire.",
+          "explanationEn": "The tomatoes and cheese are already at home. Only the bread is left to buy.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok bi giştî li ser çi ye?",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "Azad nan ji bîr dike û dîsa diçe bazarê.",
+            "Azad pereyên xwe li bazarê winda dike.",
+            "Azad û diya wî bi hev re diçin bazarê."
+          ],
+          "correctIndex": 0,
+          "explanation": "Azad tiştan dikire, lê nan ji bîr dike. Ji ber vê yekê ew dîsa diçe bazarê.",
+          "explanationEn": "Azad buys things but forgets the bread. That is why he goes back to the market.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-nameya-dapire",
+      "dialect": "kurmanci",
+      "level": 2,
+      "title": "Nameya Dapîrê",
+      "summary": "Dapîr ji gund nameyekê ji neviya xwe Hêlînê re dinivîse.",
+      "body": "Hêlîna min a delal, silav! Ev name ji gund tê. Min gelek bêriya te kiriye.\n\nHefteya borî tu bi telefonê li min geriyayî, lê min dengê te baş nebihîst. Telefona min kevn e, guhên min jî kevn in! Ez gelek xemgîn bûm.\n\nPaşê Rêzan, kurê cîranê me, hat. Wî telefona min bi înternetê ve girê da û got: “Dapîr, niha tu dikarî Hêlînê bibînî jî!”\n\nÊdî em dikarin bi vîdeoyê biaxivin! Belkî ev nameya min a dawî be. Roja înê, piştî nîvro, bi vîdeoyê li min bigere. Ez ê kincên xwe yên Newrozê li xwe bikim û li benda te bim.\n\nBi hezkirin, Dapîra te Xecê",
+      "glossary": [
+        {
+          "term": "delal",
+          "meanings": {
+            "en": "dear"
+          }
+        },
+        {
+          "term": "bêriya te kiriye",
+          "meanings": {
+            "en": "have missed you"
+          }
+        },
+        {
+          "term": "li min geriyayî",
+          "meanings": {
+            "en": "you called me (on the phone)"
+          }
+        },
+        {
+          "term": "girê da",
+          "meanings": {
+            "en": "connected"
+          }
+        },
+        {
+          "term": "li min bigere",
+          "meanings": {
+            "en": "call me"
+          }
+        },
+        {
+          "term": "li benda te bim",
+          "meanings": {
+            "en": "wait for you"
+          }
+        },
+        {
+          "term": "Bi hezkirin",
+          "meanings": {
+            "en": "with love (to end a letter)"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Ev name ji ku tê?",
+          "promptEn": "Where does this letter come from?",
+          "options": [
+            "Ji bajêr",
+            "Ji gund",
+            "Ji dibistanê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dapîr dinivîse: “Ev name ji gund tê.”",
+          "explanationEn": "Grandma writes: “This letter comes from the village.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Kîjan pêşî qewimî?",
+          "promptEn": "Which happened first?",
+          "options": [
+            "Hêlîn bi telefonê li Dapîrê geriya.",
+            "Rêzan telefona Dapîrê bi înternetê ve girê da.",
+            "Dapîrê ev name nivîsî."
+          ],
+          "correctIndex": 0,
+          "explanation": "Pêşî Hêlîn li Dapîrê geriya. Paşê Rêzan hat û telefon bi înternetê ve girê da. Paşê Dapîrê ev name nivîsî.",
+          "explanationEn": "First Hêlîn called Grandma. Then Rêzan came and connected the phone to the internet. Then Grandma wrote this letter.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çima Dapîrê dengê Hêlînê baş nebihîst?",
+          "promptEn": "Why didn’t Grandma hear Hêlîn’s voice well?",
+          "options": [
+            "Ji ber ku telefon û guhên wê kevn in",
+            "Ji ber ku Rêzan li cem wê diaxivî",
+            "Ji ber ku Hêlîn pir hêdî diaxivî"
+          ],
+          "correctIndex": 0,
+          "explanation": "Dapîr dinivîse: “Telefona min kevn e, guhên min jî kevn in!”",
+          "explanationEn": "Grandma writes: “My phone is old, and my ears are old too!”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ez gelek xemgîn bûm.” “Xemgîn” tê çi wateyê?",
+          "promptEn": "“Ez gelek xemgîn bûm.” What does “xemgîn” mean?",
+          "options": [
+            "Pir kêfxweş",
+            "Ne kêfxweş",
+            "Pir birçî"
+          ],
+          "correctIndex": 1,
+          "explanation": "Xemgîn yanî ne kêfxweş. Dapîr xemgîn bû, ji ber ku nikaribû Hêlînê baş bibihîze.",
+          "explanationEn": "“Xemgîn” means unhappy, sad. Grandma was sad because she couldn’t hear Hêlîn well.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rêzan kî ye?",
+          "promptEn": "Who is Rêzan?",
+          "options": [
+            "Birayê Hêlînê",
+            "Bavê Hêlînê",
+            "Kurê cîranê Dapîrê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Dapîr dinivîse: “Paşê Rêzan, kurê cîranê me, hat.”",
+          "explanationEn": "Grandma writes: “Then Rêzan, our neighbour’s son, came.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rêzan ji bo Dapîrê çi kir?",
+          "promptEn": "What did Rêzan do for Grandma?",
+          "options": [
+            "Telefoneke nû jê re kirî",
+            "Telefona wê bi înternetê ve girê da",
+            "Ew bir bajêr, cem Hêlînê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dapîr dinivîse: “Wî telefona min bi înternetê ve girê da.”",
+          "explanationEn": "Grandma writes: “He connected my phone to the internet.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Dapîr dibêje: “Belkî ev nameya min a dawî be”?",
+          "promptEn": "Why does Grandma say: “Maybe this is my last letter”?",
+          "options": [
+            "Ji ber ku ew ê ji gund biçe",
+            "Ji ber ku Rêzan êdî nayê",
+            "Ji ber ku niha ew dikare bi vîdeoyê biaxive"
+          ],
+          "correctIndex": 2,
+          "explanation": "Niha Dapîr dikare bi vîdeoyê bi Hêlînê re biaxive, loma êdî name ne hewce ne.",
+          "explanationEn": "Now Grandma can talk with Hêlîn by video, so letters are no longer needed.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Divê Hêlîn kengî li Dapîrê bigere?",
+          "promptEn": "When should Hêlîn call Grandma?",
+          "options": [
+            "Roja înê, piştî nîvro",
+            "Roja Newrozê, êvarê",
+            "Hefteya bê, sibê zû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Dapîr dinivîse: “Roja înê, piştî nîvro, bi vîdeoyê li min bigere.”",
+          "explanationEn": "Grandma writes: “On Friday, in the afternoon, call me by video.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "gist",
+          "prompt": "Dapîr çima vê nameyê dinivîse?",
+          "promptEn": "Why does Grandma write this letter?",
+          "options": [
+            "Da ku ji Hêlînê telefoneke nû bixwaze",
+            "Da ku Hêlîn bi vîdeoyê li wê bigere",
+            "Da ku behsa Newroza gund bike"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dapîr dixwaze bibêje ku êdî dikare bi vîdeoyê biaxive, û dixwaze ku Hêlîn roja înê li wê bigere.",
+          "explanationEn": "Grandma wants to say that she can now talk by video, and she wants Hêlîn to call her on Friday.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-sorbeya-niske",
+      "dialect": "kurmanci",
+      "level": 1,
+      "title": "Şorbeya Nîskê",
+      "summary": "Zana bi dapîra xwe re şorbeya nîskê çêdike, lê xwê pir dibe.",
+      "body": "Êvara zivistanê ye. Li derve berf dibare. Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye. Dapîr dibêje: “Zana, îro tu yê şorbeya nîskê çêkî. Ez ê alîkariya te bikim.”\n\nPêşî Zana nîskê di avê de dişo. Paşê ew pîvazekê hûr dike. Çavên wî tije hêsir dibin. Dapîr dikene: “Pîvaz her kesî digirîne.”\n\nDapîr dibêje: “Niha rûn têxe beroşê û pîvazê sor bike.” Zana pîvazê di rûn de sor dike. Bîneke xweş li malê belav dibe. Paşê ew nîskê û avê dixe beroşê. Piştî demekê şorbe dikele.\n\nDapîr dibêje: “Niha kevçiyek xwê bike nav şorbeyê.” Lê Zana sê kevçî xwê dike nav! Ew tama şorbeyê dike û rûyê xwe tirş dike: “Dapîr, şorbe pir şor e!”\n\nDapîr aram e. Ew dibêje: “Xem neke. Em ê avê û nîskê zêde bikin.” Ew du qedeh av û kulmek nîsk dixe beroşê. Piştî nîv saetê şorbe xweş dibe. Lê niha şorbe pir zêde ye!\n\nDapîr dibêje: “Here, gazî cîranan bike!” Wê êvarê Xaltîka Gulê û zarokên wê jî tên. Hemû bi hev re şorbeyê dixwin. Xaltîka Gulê dibêje: “Zana, tu aşpêjekî baş î!” Zana li Dapîrê dinêre û dikene. Herdu jî behsa xwêyê nakin.",
+      "glossary": [
+        {
+          "term": "nîsk",
+          "meanings": {
+            "en": "lentils"
+          }
+        },
+        {
+          "term": "hûr dike",
+          "meanings": {
+            "en": "chops finely"
+          }
+        },
+        {
+          "term": "hêsir",
+          "meanings": {
+            "en": "tears"
+          }
+        },
+        {
+          "term": "sor bike",
+          "meanings": {
+            "en": "fry until golden"
+          }
+        },
+        {
+          "term": "dikele",
+          "meanings": {
+            "en": "boils"
+          }
+        },
+        {
+          "term": "aram",
+          "meanings": {
+            "en": "calm"
+          }
+        },
+        {
+          "term": "kulmek",
+          "meanings": {
+            "en": "a handful"
+          }
+        },
+        {
+          "term": "aşpêjekî baş",
+          "meanings": {
+            "en": "a good cook"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Ev çîrok di kîjan demsalê de diqewime?",
+          "promptEn": "In which season does this story take place?",
+          "options": [
+            "Bihar",
+            "Zivistan",
+            "Havîn"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Êvara zivistanê ye. Li derve berf dibare.”",
+          "explanationEn": "The story says: “It is a winter evening. Outside, snow is falling.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Zana bi kê re li malê ye?",
+          "promptEn": "Who is Zana at home with?",
+          "options": [
+            "Bi diya xwe re",
+            "Bi Xaltîka Gulê re",
+            "Bi dapîra xwe re"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye.”",
+          "explanationEn": "The story says: “Zana is twelve years old and is at home with his grandmother.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Zana pêşî çi dike?",
+          "promptEn": "What does Zana do first?",
+          "options": [
+            "Nîskê dişo",
+            "Pîvazê sor dike",
+            "Xwê dike nav şorbeyê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Pêşî Zana nîskê di avê de dişo. Paşê pîvazê hûr dike û sor dike.",
+          "explanationEn": "First Zana washes the lentils in water. Then he chops the onion and fries it.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima çavên Zana tije hêsir dibin?",
+          "promptEn": "Why do Zana’s eyes fill with tears?",
+          "options": [
+            "Ji ber ku ew xemgîn e",
+            "Ji ber pîvazê",
+            "Ji ber ku şorbe pir şor e"
+          ],
+          "correctIndex": 1,
+          "explanation": "Ew pîvazê hûr dike, û Dapîr dibêje: “Pîvaz her kesî digirîne.”",
+          "explanationEn": "He is chopping an onion, and Grandma says: “Onions make everyone cry.”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Zana pîvazê di çi de sor dike?",
+          "promptEn": "What does Zana fry the onion in?",
+          "options": [
+            "Di avê de",
+            "Di rûn de",
+            "Di şorbeyê de"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Zana pîvazê di rûn de sor dike.”",
+          "explanationEn": "The story says: “Zana fries the onion in the oil.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Niha rûn têxe beroşê.” “Beroş” çi ye?",
+          "promptEn": "“Niha rûn têxe beroşê.” What is a “beroş”?",
+          "options": [
+            "Tiştek ku em xwarinê tê de çêdikin",
+            "Tiştek ku em pê av vedixwin",
+            "Tiştek ku em pê xwê dixin"
+          ],
+          "correctIndex": 0,
+          "explanation": "Beroş ew e ku şorbe tê de çêdibe. Zana rûn, pîvaz, nîsk û av dixe beroşê.",
+          "explanationEn": "A “beroş” is what the soup is cooked in (a pot). Zana puts oil, onion, lentils and water into it.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Zana çend kevçî xwê dike nav şorbeyê?",
+          "promptEn": "How many spoonfuls of salt does Zana put in the soup?",
+          "options": [
+            "Yek kevçî",
+            "Du kevçî",
+            "Sê kevçî"
+          ],
+          "correctIndex": 2,
+          "explanation": "Dapîr dibêje kevçiyek, lê Zana sê kevçî xwê dike nav.",
+          "explanationEn": "Grandma says one spoonful, but Zana puts in three spoonfuls of salt.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Dapîr, şorbe pir şor e!” “Şor” tê çi wateyê?",
+          "promptEn": "“Dapîr, şorbe pir şor e!” What does “şor” mean?",
+          "options": [
+            "Pir sar",
+            "Pir şîrîn",
+            "Bi gelek xwê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Zana sê kevçî xwê dike nav şorbeyê, loma şorbe şor e: xwêya wê pir e.",
+          "explanationEn": "Zana puts three spoonfuls of salt in the soup, so it is “şor”: it has too much salt in it.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dapîr çi dixe beroşê da ku şorbe xweş bibe?",
+          "promptEn": "What does Grandma put in the pot to make the soup taste good?",
+          "options": [
+            "Xwê û rûn",
+            "Av û nîsk",
+            "Pîvaz û xwê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Ew du qedeh av û kulmek nîsk dixe beroşê.”",
+          "explanationEn": "The story says: “She puts two glasses of water and a handful of lentils into the pot.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima di dawiyê de şorbe pir zêde ye?",
+          "promptEn": "Why is there so much soup in the end?",
+          "options": [
+            "Ji ber ku Dapîrê av û nîsk zêde kirin",
+            "Ji ber ku Xaltîka Gulê şorbe anî",
+            "Ji ber ku Zana du beroş şorbe çêkirin"
+          ],
+          "correctIndex": 0,
+          "explanation": "Da ku şorbe ne şor be, Dapîr av û nîskê zêde dike. Loma şorbe pir zêde dibe.",
+          "explanationEn": "To make the soup less salty, Grandma adds water and lentils. That is why there is so much soup.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kî tên mala Zana?",
+          "promptEn": "Who comes to Zana’s house?",
+          "options": [
+            "Diya Zana û bavê wî",
+            "Xaltîka Gulê û zarokên wê",
+            "Hevalên Zana yên dibistanê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Wê êvarê Xaltîka Gulê û zarokên wê jî tên.”",
+          "explanationEn": "The story says: “That evening Aunt Gulê and her children come too.”",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "Xaltîka Gulê ji şorbeyê hez dike. Em vê yekê ji ku dizanin?",
+          "promptEn": "Aunt Gulê likes the soup. How do we know?",
+          "options": [
+            "Ew xwê dixe nav şorbeyê",
+            "Ew şorbeyê dibe mala xwe",
+            "Ew dibêje ku Zana aşpêjekî baş e"
+          ],
+          "correctIndex": 2,
+          "explanation": "Ew dibêje: “Zana, tu aşpêjekî baş î!” Ev tê wê wateyê ku şorbe xweş e.",
+          "explanationEn": "She says: “Zana, you are a good cook!” That means the soup is good.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok bi giştî li ser çi ye?",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "Zana û Dapîr şorbeyê çêdikin û xeletiyekê çareser dikin.",
+            "Zana û Dapîr diçin bazarê û nîsk dikirin.",
+            "Zana û Dapîr diçin mala Xaltîka Gulê."
+          ],
+          "correctIndex": 0,
+          "explanation": "Zana şorbeyê pir şor dike, lê Dapîr bi av û nîskê wê xweş dike.",
+          "explanationEn": "Zana makes the soup too salty, but Grandma fixes it with water and lentils.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-top-u-ape-mehmud",
+      "dialect": "kurmanci",
+      "level": 2,
+      "title": "Top û Apê Mehmûd",
+      "summary": "Top dikeve baxçeyê cîranê herî hişk ê taxê. Kî dê biçe pey wê?",
+      "body": "Taxa me biçûk e, lê kolana wê dirêj e. Her êvar em zarokên taxê li wê kolanê futbol dilîzin. Navê min Zîlan e. Ez yazdeh salî me û ez dergevan im.\n\nDuh Azad bi hêz li topê xist. Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd. Hemû zarok bêdeng man. Apê Mehmûd mirovekî pîr û hişk e. Kesî qet kenê wî nedîtiye, û zarok jê ditirsin.\n\nKesî nexwest biçe wir. Hingê min got: “Ez ê biçim.” Ez jî hinekî ditirsiyam, lê ez çûm û min li derî xist.\n\nApê Mehmûd derî vekir. Top di destê wî de bû. Min bi dengekî nizm got: “Bibore, Apo. Em ê careke din baldar bin.” Ew li min nexeyidî. Wî li topê nêrî û got: “Di ciwaniya xwe de ez jî dergevan bûm. Ez dergevanê herî baş ê gund bûm!”\n\nPaşê Apê Mehmûd bi min re hat kolanê. Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire. Zarok ecêbmayî man. Wê êvarê Apê Mehmûd bû dadwer.\n\nDi dawiya lîstikê de Azad dîsa bi hêz li topê xist, lê vê carê min top girt! Apê Mehmûd ji dil kenî û li çepikan xist. Me cara yekem kenê wî dît. Niha her êvar ew li ber deriyê xwe rûdine û li me temaşe dike.",
+      "glossary": [
+        {
+          "term": "Taxa",
+          "meanings": {
+            "en": "the neighbourhood (of)"
+          }
+        },
+        {
+          "term": "dergevan",
+          "meanings": {
+            "en": "goalkeeper"
+          }
+        },
+        {
+          "term": "hişk",
+          "meanings": {
+            "en": "stern, strict"
+          }
+        },
+        {
+          "term": "bêdeng man",
+          "meanings": {
+            "en": "went quiet"
+          }
+        },
+        {
+          "term": "bi dengekî nizm",
+          "meanings": {
+            "en": "in a quiet voice"
+          }
+        },
+        {
+          "term": "ciwaniya",
+          "meanings": {
+            "en": "youth (of)"
+          }
+        },
+        {
+          "term": "dadwer",
+          "meanings": {
+            "en": "referee"
+          }
+        },
+        {
+          "term": "li çepikan xist",
+          "meanings": {
+            "en": "clapped"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Zîlan di lîstikê de çi ye?",
+          "promptEn": "What is Zîlan in the game?",
+          "options": [
+            "Dadwer",
+            "Dergevan",
+            "Temaşevan"
+          ],
+          "correctIndex": 1,
+          "explanation": "Zîlan dibêje: “Ez dergevan im.”",
+          "explanationEn": "Zîlan says: “I am the goalkeeper.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Zarok her êvar li ku futbol dilîzin?",
+          "promptEn": "Where do the children play football every evening?",
+          "options": [
+            "Li kolana taxê",
+            "Li baxçeyê Apê Mehmûd",
+            "Li hewşa dibistanê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Zîlan dibêje: “Her êvar em zarokên taxê li wê kolanê futbol dilîzin.”",
+          "explanationEn": "Zîlan says: “Every evening we, the children of the neighbourhood, play football in that street.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Top ket ku derê?",
+          "promptEn": "Where did the ball land?",
+          "options": [
+            "Ber deriyê Zîlanê",
+            "Baxçeyê Apê Mehmûd",
+            "Kolana din"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd.”",
+          "explanationEn": "The story says: “The ball flew over the wall and fell into Uncle Mehmûd’s garden.”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima zarok bêdeng man?",
+          "promptEn": "Why did the children go quiet?",
+          "options": [
+            "Ji ber ku Azad gol avêt",
+            "Ji ber ku êvar bû û diçûn malê",
+            "Ji ber ku ji Apê Mehmûd ditirsiyan"
+          ],
+          "correctIndex": 2,
+          "explanation": "Top ket baxçeyê Apê Mehmûd, û zarok ji wî ditirsin.",
+          "explanationEn": "The ball fell into Uncle Mehmûd’s garden, and the children are afraid of him.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Kî çû mala Apê Mehmûd?",
+          "promptEn": "Who went to Uncle Mehmûd’s house?",
+          "options": [
+            "Zîlan",
+            "Azad",
+            "Hemû zarok"
+          ],
+          "correctIndex": 0,
+          "explanation": "Kesî nexwest biçe wir. Zîlanê got: “Ez ê biçim.” Paşê ew çû ber derî.",
+          "explanationEn": "Nobody wanted to go there. Zîlan said: “I’ll go.” Then she went to the door.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Em ê careke din baldar bin.” “Baldar” tê çi wateyê?",
+          "promptEn": "“Em ê careke din baldar bin.” What does “baldar” mean?",
+          "options": [
+            "Bi hêz, da ku em gol bavêjin",
+            "Hişyar, da ku top dîsa nekeve baxçe",
+            "Bêdeng, da ku Apo me nebihîze"
+          ],
+          "correctIndex": 1,
+          "explanation": "Zîlan soz dide ku ew ê hişyar bin, da ku top dîsa nekeve baxçeyê wî.",
+          "explanationEn": "Zîlan promises they will be careful, so that the ball won’t fall into his garden again.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Apê Mehmûd çawa bersiv da Zîlanê?",
+          "promptEn": "How did Uncle Mehmûd respond to Zîlan?",
+          "options": [
+            "Xeyidî û derî girt",
+            "Bêdeng ma û top neda",
+            "Nexeyidî û behsa ciwaniya xwe kir"
+          ],
+          "correctIndex": 2,
+          "explanation": "Zîlan dibêje: “Ew li min nexeyidî.” Wî li topê nêrî û behsa ciwaniya xwe kir.",
+          "explanationEn": "Zîlan says: “He didn’t get angry with me.” He looked at the ball and talked about his youth.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Apê Mehmûd di ciwaniya xwe de çi bû?",
+          "promptEn": "What was Uncle Mehmûd when he was young?",
+          "options": [
+            "Dergevanê herî baş ê gund",
+            "Dadwerê lîstikên gund",
+            "Mamosteyê futbolê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Wî got: “Ez dergevanê herî baş ê gund bûm!”",
+          "explanationEn": "He said: “I was the best goalkeeper in the village!”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Piştî ku Apê Mehmûd hat kolanê, wî çi kir?",
+          "promptEn": "After Uncle Mehmûd came to the street, what did he do?",
+          "options": [
+            "Top avêt baxçeyê xwe",
+            "Nîşanî zarokan da ka dergevan çawa topê digire",
+            "Zarok şandin malên wan"
+          ],
+          "correctIndex": 1,
+          "explanation": "Zîlan dibêje: “Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire.”",
+          "explanationEn": "Zîlan says: “He showed us how a goalkeeper stands and how he catches the ball.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Zarok ecêbmayî man.” Ev tê çi wateyê?",
+          "promptEn": "“Zarok ecêbmayî man.” What does this mean?",
+          "options": [
+            "Zarok gelek şaş man",
+            "Zarok gelek xeyidîn",
+            "Zarok gelek westiyan"
+          ],
+          "correctIndex": 0,
+          "explanation": "Ecêbmayî yanî gelek şaş mayî. Zarokan bawer nedikir ku Apê Mehmûd wisa ye.",
+          "explanationEn": "“Ecêbmayî” means very surprised. The children couldn’t believe Uncle Mehmûd was like that.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Wê êvarê Apê Mehmûd bû çi?",
+          "promptEn": "What did Uncle Mehmûd become that evening?",
+          "options": [
+            "Dergevan",
+            "Temaşevan",
+            "Dadwer"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Wê êvarê Apê Mehmûd bû dadwer.”",
+          "explanationEn": "The story says: “That evening Uncle Mehmûd became the referee.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Di dawiya lîstikê de çi bû?",
+          "promptEn": "What happened at the end of the game?",
+          "options": [
+            "Azad gol avêt",
+            "Zîlanê top girt",
+            "Top dîsa ket baxçe"
+          ],
+          "correctIndex": 1,
+          "explanation": "Zîlan dibêje: “Azad dîsa bi hêz li topê xist, lê vê carê min top girt!”",
+          "explanationEn": "Zîlan says: “Azad kicked the ball hard again, but this time I caught it!”",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "“Me cara yekem kenê wî dît.” Ev çi nîşan dide?",
+          "promptEn": "“Me cara yekem kenê wî dît.” What does this show?",
+          "options": [
+            "Apê Mehmûd her roj dikenî",
+            "Berê Apê Mehmûd qet nedikenî",
+            "Zarok berê nediçûn kolanê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Berê kesî kenê wî nedîtibû. Wê êvarê ew cara yekem li ber zarokan kenî.",
+          "explanationEn": "Nobody had ever seen him laugh before. That evening he laughed in front of the children for the first time.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok bi giştî li ser çi ye?",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "Zîlan li bajêr dibe dergevaneke navdar.",
+            "Zîlan diçe ba cîranekî ku zarok jê ditirsin, û ew dibin heval.",
+            "Azad topa xwe winda dike û yeke nû dikire."
+          ],
+          "correctIndex": 1,
+          "explanation": "Ji ber topê Zîlan diçe ba Apê Mehmûd. Ew ne ewqas hişk derdikeve û dibe hevalê zarokan.",
+          "explanationEn": "Because of the ball Zîlan goes to Uncle Mehmûd. He turns out not to be so stern, and becomes the children’s friend.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-barana-newroze",
+      "dialect": "kurmanci",
+      "level": 2,
+      "title": "Barana Newrozê",
+      "summary": "Sibeha Newrozê baran dibare û Berfîn xemgîn e. Lê Bapîrê wê tiştekî dizane.",
+      "body": "Sibeha Newrozê Berfîn zû şiyar bû. Wê kirasê xwe yê nû û kesk li xwe kir. Diya wê di metbexê de dolme çêdikir. Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan, nêzî bajêr.\n\nLê gava Berfînê ji pencereyê li derve nêrî, dilê wê şikest. Baran dibariya û ewr reş bûn. Berfînê dest bi girî kir û got: “Êdî em naçin seyranê!”\n\nBapîrê wê hat û li kêleka wê rûnişt. Wî got: “Keça min, baran bereket e. Bihar bi baranê tê. Heta nîvro bisekine.”\n\nBapîr rast derket. Nêzî nîvro baran sekinî û roj derket. Wan bi lez xwarin û çay hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan.\n\nLi Girê Kulîlkan her der kesk bû. Kulîlkên zer û sor vebûbûn. Bi sedan mirov hatibûn. Hinekan def û zirne lêdixistin, hinekan jî govend digirt. Berfînê destê Bapîrê xwe girt û herdu ketin nav govendê.\n\nÊvarê agirê Newrozê hat vêxistin. Ciwanan yek bi yek xwe di ser agir re avêt. Berfîn û Bapîr li ber agir rûniştin. Berfînê got: “Bapîr, te rast got. Baran bereket e!” Bapîr kenî û got: “Newroza te pîroz be, keça min.”",
+      "glossary": [
+        {
+          "term": "şiyar bû",
+          "meanings": {
+            "en": "woke up"
+          }
+        },
+        {
+          "term": "metbexê",
+          "meanings": {
+            "en": "the kitchen"
+          }
+        },
+        {
+          "term": "dilê wê şikest",
+          "meanings": {
+            "en": "her heart sank (literally: broke)"
+          }
+        },
+        {
+          "term": "bereket",
+          "meanings": {
+            "en": "a blessing, plenty"
+          }
+        },
+        {
+          "term": "vebûbûn",
+          "meanings": {
+            "en": "had opened, were in bloom"
+          }
+        },
+        {
+          "term": "def û zirne",
+          "meanings": {
+            "en": "drum and zurna (a folk oboe)"
+          }
+        },
+        {
+          "term": "govend",
+          "meanings": {
+            "en": "the Kurdish circle dance"
+          }
+        },
+        {
+          "term": "pîroz be",
+          "meanings": {
+            "en": "be blessed; “happy …” as a greeting"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Sibeha Newrozê Berfînê çi li xwe kir?",
+          "promptEn": "What did Berfîn put on on Newroz morning?",
+          "options": [
+            "Kirasekî kevn û sor",
+            "Kirasê xwe yê nû û kesk",
+            "Kincên xwe yên dibistanê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Wê kirasê xwe yê nû û kesk li xwe kir.”",
+          "explanationEn": "The story says: “She put on her new green dress.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Malbatê dixwest wê rojê çi bike?",
+          "promptEn": "What did the family want to do that day?",
+          "options": [
+            "Li malê dolme bixwe",
+            "Biçe seyranê, li Girê Kulîlkan",
+            "Biçe gund, mala Bapîr"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan.”",
+          "explanationEn": "The story says: “The family wanted to go for a seyran that day, to Flower Hill.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Malbatê dixwest biçe seyranê.” “Seyran” çi ye?",
+          "promptEn": "“Malbatê dixwest biçe seyranê.” What is a “seyran”?",
+          "options": [
+            "Xwarineke taybet a Newrozê",
+            "Rojek li derve, li xwezayê, bi xwarin û kêfê",
+            "Cejneke dibistanê ya biharê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Seyran yanî derketina derve, li xwezayê. Malbat xwarin û çay hildigire û diçe Girê Kulîlkan.",
+          "explanationEn": "A “seyran” is an outing into nature. The family takes food and tea and goes to Flower Hill.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Gava Berfînê ji pencereyê nêrî, wê çi dît?",
+          "promptEn": "When Berfîn looked out of the window, what did she see?",
+          "options": [
+            "Baran dibariya û ewr reş bûn",
+            "Roj derketibû û her der kesk bû",
+            "Berf dibariya û her der spî bû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Baran dibariya û ewr reş bûn.”",
+          "explanationEn": "The story says: “Rain was falling and the clouds were dark.”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Berfînê dest bi girî kir?",
+          "promptEn": "Why did Berfîn start to cry?",
+          "options": [
+            "Ji ber ku kirasê wê şil bû",
+            "Ji ber ku Bapîr li wê xeyidî",
+            "Ji ber ku difikirî ku ew ê neçin seyranê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Baran dibariya, û wê got: “Êdî em naçin seyranê!”",
+          "explanationEn": "It was raining, and she said: “Now we won’t go on our outing!”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Bapîr ji Berfînê re çi got?",
+          "promptEn": "What did Grandpa tell Berfîn?",
+          "options": [
+            "“Baran bereket e. Heta nîvro bisekine.”",
+            "“Îro em naçin seyranê.”",
+            "“Kirasê xwe biguherîne.”"
+          ],
+          "correctIndex": 0,
+          "explanation": "Bapîr got ku baran bereket e û divê ew heta nîvro bisekine.",
+          "explanationEn": "Grandpa said that rain is a blessing and that she should wait until noon.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Bapîr rast derket.” Ev tê çi wateyê?",
+          "promptEn": "“Bapîr rast derket.” What does this mean?",
+          "options": [
+            "Bapîr ji malê derket",
+            "Gotina Bapîr rast bû",
+            "Bapîr çû Girê Kulîlkan"
+          ],
+          "correctIndex": 1,
+          "explanation": "Bapîr got: “Heta nîvro bisekine.” Nêzî nîvro baran sekinî. Gotina wî rast bû.",
+          "explanationEn": "Grandpa said: “Wait until noon.” Around noon the rain stopped. What he said was right.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Piştî ku baran sekinî, malbatê çi kir?",
+          "promptEn": "After the rain stopped, what did the family do?",
+          "options": [
+            "Xwarin û çay hilgirtin û çûn Girê Kulîlkan",
+            "Li malê man û dolme xwarin",
+            "Çûn mala cîranan"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Wan bi lez xwarin û çay hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan.”",
+          "explanationEn": "The story says: “They quickly packed food and tea. Then they all went to Flower Hill together.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Li Girê Kulîlkan kulîlkên çi rengî vebûbûn?",
+          "promptEn": "What colour were the flowers that had opened on Flower Hill?",
+          "options": [
+            "Spî û şîn",
+            "Reş û kesk",
+            "Zer û sor"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Kulîlkên zer û sor vebûbûn.”",
+          "explanationEn": "The story says: “Yellow and red flowers had opened.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Li Girê Kulîlkan mirov bi çi mijûl bûn?",
+          "promptEn": "What were the people on Flower Hill busy with?",
+          "options": [
+            "Bi muzîk û govendê",
+            "Bi futbol û lîstikan",
+            "Bi xwendin û nivîsandinê"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Hinekan def û zirne lêdixistin, hinekan jî govend digirt.”",
+          "explanationEn": "The story says: “Some were playing the drum and zurna, and some were dancing the govend.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Berfîn bi kê re ket nav govendê?",
+          "promptEn": "Who did Berfîn join the dance with?",
+          "options": [
+            "Bi diya xwe re",
+            "Bi Bapîrê xwe re",
+            "Bi hevalên xwe re"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Berfînê destê Bapîrê xwe girt û herdu ketin nav govendê.”",
+          "explanationEn": "The story says: “Berfîn took her grandfather’s hand and the two of them joined the dance.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Êvarê kê xwe di ser agir re avêt?",
+          "promptEn": "In the evening, who jumped over the fire?",
+          "options": [
+            "Berfînê",
+            "Ciwanan",
+            "Bapîr"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Ciwanan yek bi yek xwe di ser agir re avêt.” Berfîn û Bapîr li ber agir rûniştin.",
+          "explanationEn": "The story says: “One by one the young people jumped over the fire.” Berfîn and Grandpa sat by the fire.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "Di dawiyê de Berfîn li ser baranê çi difikire?",
+          "promptEn": "In the end, what does Berfîn think about the rain?",
+          "options": [
+            "Ku baran bereket e û Bapîr rast got",
+            "Ku baranê roja wê xera kir",
+            "Ku baran wê dîsa bibare"
+          ],
+          "correctIndex": 0,
+          "explanation": "Berfînê got: “Bapîr, te rast got. Baran bereket e!”",
+          "explanationEn": "Berfîn said: “Grandpa, you were right. Rain is a blessing!”",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok bi giştî li ser çi ye?",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "Keçikek kirasê xwe yê nû winda dike.",
+            "Bapîrek fêrî zarokan govendê dike.",
+            "Rojeke Newrozê bi baranê dest pê dike û bi şahiyê diqede."
+          ],
+          "correctIndex": 2,
+          "explanation": "Sibehê baran dibare û Berfîn xemgîn e. Paşê roj derdikeve û malbat Newrozê li Girê Kulîlkan pîroz dike.",
+          "explanationEn": "In the morning it rains and Berfîn is sad. Then the sun comes out and the family celebrates Newroz on Flower Hill.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-reya-gund",
+      "dialect": "kurmanci",
+      "level": 2,
+      "title": "Rêya Gund",
+      "summary": "Otobûsa gund li ser rê xera dibe. Dilan û Rênas dê çawa bigihîjin mala dapîra xwe?",
+      "body": "Havîn bû û dibistan girtî bû. Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî. Wê rojê ew bi diya xwe re ji bajêr çûn gundê Kaniyaspî, mala dapîra xwe. Rênas pir kêfxweş bû, ji ber ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.\n\nEw siwarî otobûsa gund bûn. Rê dirêj û germ bû. Li ser rê wan gund, çem û çiyayên bilind dîtin. Rênas ji pencereyê li derve dinêrî û her pênc deqîqeyan carekê dipirsî: “Em gihîştin?” Diya wî dikenî û digot: “Hê na, kurê min.”\n\nNêzî nîvro, li ser rêyeke teng di navbera çiyayan de, otobûs ji nişka ve sekinî. Dûmanek spî ji motorê derket. Ajovan daket, li motorê nêrî û serê xwe hejand. Wî got: “Motor xera bûye. Divê em li benda alîkariyê bimînin. Belkî heta êvarê.” Rêwiyên din jî daketin û li ber siya darekê rûniştin.\n\nRênas dest bi girî kir: “Ez naxwazim li vir bimînim! Ez birçî me!” Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”\n\nPiştî demekê, şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû. Wî pirsî: “Hûn diçin ku derê?” Diya Dilanê got: “Em diçin Kaniyaspî, mala Zelîxayê.” Şivan kenî: “Ez Zelîxayê baş nas dikim! Gund ne dûr e, bi peyatî saetek e. Werin, ez ê rê nîşanî we bidim.”\n\nApê Xelîl çenteyên wan li ser pişta kerê xwe danîn. Rênas jî siwarî kerê Apê Xelîl bû û êdî negirî. Ew di nav zeviyên genim re meşiyan. Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin. Carinan wî bi bilûra xwe stranek jî lêdixist. Dilanê ji bîr kir ku ew westiyayî ye.\n\nDema roj diçû ava, ew gihîştin gund. Dapîra wan li ber derî li benda wan bû. Wê ew yek bi yek hembêz kirin û got: “Ez ji nîvro ve li benda we me!”\n\nBîna nanê tenûrê li hewşê belav bûbû. Rênas got: “Dapîr, otobûs xera bû, lê kerê Apê Xelîl xera nebû!” Hemû kenîn. Wê şevê wan nanê germ bi penîr û hingiv xwar, û Apê Xelîl jî bû mêvanê wan.",
+      "glossary": [
+        {
+          "term": "nanê tenûrê",
+          "meanings": {
+            "en": "bread baked in a tandoor (a clay oven)"
+          }
+        },
+        {
+          "term": "Hê na",
+          "meanings": {
+            "en": "not yet"
+          }
+        },
+        {
+          "term": "ji nişka ve",
+          "meanings": {
+            "en": "suddenly"
+          }
+        },
+        {
+          "term": "Dûmanek",
+          "meanings": {
+            "en": "a cloud of smoke"
+          }
+        },
+        {
+          "term": "Şivan",
+          "meanings": {
+            "en": "shepherd"
+          }
+        },
+        {
+          "term": "bi peyatî",
+          "meanings": {
+            "en": "on foot"
+          }
+        },
+        {
+          "term": "bilûra",
+          "meanings": {
+            "en": "the shepherd’s flute (of)"
+          }
+        },
+        {
+          "term": "hembêz kirin",
+          "meanings": {
+            "en": "hugged"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Dilan çend salî bû?",
+          "promptEn": "How old was Dilan?",
+          "options": [
+            "Heft salî",
+            "Sêzdeh salî",
+            "Deh salî"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî.”",
+          "explanationEn": "The story says: “Dilan was thirteen, and her brother Rênas seven.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çima Rênas pir kêfxweş bû?",
+          "promptEn": "Why was Rênas very happy?",
+          "options": [
+            "Ji ber nanê tenûrê yê dapîrê",
+            "Ji ber ku ew ê siwarî ker bibe",
+            "Ji ber ku dibistan vedibû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.",
+          "explanationEn": "The story says that every summer their grandmother baked tandoor bread for them.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima Rênas her pênc deqîqeyan carekê dipirsî: “Em gihîştin?”",
+          "promptEn": "Why did Rênas ask “Are we there?” every five minutes?",
+          "options": [
+            "Ji ber ku ditirsiya",
+            "Ji ber ku bêsebir bû û dixwest zû bigihîje",
+            "Ji ber ku diya wî jê pirsî"
+          ],
+          "correctIndex": 1,
+          "explanation": "Rê dirêj bû û Rênas dixwest zû bigihîje mala dapîrê, loma dîsa û dîsa dipirsî.",
+          "explanationEn": "The road was long and Rênas wanted to reach Grandma’s house soon, so he kept asking.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Ajovan daket, li motorê nêrî.” “Ajovan” kî ye?",
+          "promptEn": "“Ajovan daket, li motorê nêrî.” Who is the “ajovan”?",
+          "options": [
+            "Kesê ku pez diçêrîne",
+            "Kesê ku nan çêdike",
+            "Kesê ku otobûsê dajo"
+          ],
+          "correctIndex": 2,
+          "explanation": "Ajovan ew kes e ku otobûsê dajo. Gava otobûs sekinî, ew daket û li motorê nêrî.",
+          "explanationEn": "The “ajovan” is the person who drives the bus. When the bus stopped, he got out and looked at the engine.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çima otobûs sekinî?",
+          "promptEn": "Why did the bus stop?",
+          "options": [
+            "Ji ber ku motor xera bû",
+            "Ji ber ku rê girtî bû",
+            "Ji ber ku Rênas birçî bû"
+          ],
+          "correctIndex": 0,
+          "explanation": "Ajovan got: “Motor xera bûye.”",
+          "explanationEn": "The story says: “Motor xera bûye” — the engine has broken down.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Gava Rênas girî, Dilanê çi kir?",
+          "promptEn": "When Rênas cried, what did Dilan do?",
+          "options": [
+            "Ew jî bi dengekî bilind girî",
+            "Destê wî girt û dilê wî rehet kir",
+            "Bi tenê çû ku alîkariyê bibîne"
+          ],
+          "correctIndex": 1,
+          "explanation": "Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”",
+          "explanationEn": "Dilan was upset too, but she took her brother’s hand and said: “Don’t be afraid, we’ll find a way.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "Apê Xelîl kî bû?",
+          "promptEn": "Who was Uncle Xelîl?",
+          "options": [
+            "Ajovanê otobûsê",
+            "Bapîrê Dilanê",
+            "Şivanekî pîr"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû.”",
+          "explanationEn": "The story says: “An old shepherd came up to them with his donkey. His name was Uncle Xelîl.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Li gorî Apê Xelîl, gund çiqas dûr bû?",
+          "promptEn": "According to Uncle Xelîl, how far was the village?",
+          "options": [
+            "Bi peyatî saetek",
+            "Bi otobûsê du saet",
+            "Bi peyatî nîv saet"
+          ],
+          "correctIndex": 0,
+          "explanation": "Wî got: “Gund ne dûr e, bi peyatî saetek e.”",
+          "explanationEn": "He said: “The village isn’t far, it’s an hour on foot.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Di rê de Apê Xelîl ji zarokan re çi digot?",
+          "promptEn": "On the way, what did Uncle Xelîl tell the children?",
+          "options": [
+            "Çîrokên gundê xwe",
+            "Navên kulîlk û çivîkan",
+            "Navên gundên din"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin.”",
+          "explanationEn": "The story says: “Uncle Xelîl told the children the names of the flowers and birds.”",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Dilanê ji bîr kir ku ew westiyayî ye.” “Westiyayî” tê çi wateyê?",
+          "promptEn": "“Dilanê ji bîr kir ku ew westiyayî ye.” What does “westiyayî” mean?",
+          "options": [
+            "Bêhêz piştî rêveçûneke dirêj",
+            "Pir birçî û tî",
+            "Pir kêfxweş û bi ken"
+          ],
+          "correctIndex": 0,
+          "explanation": "Westiyayî yanî kesê ku piştî karekî dirêj hêza wî kêm bûye. Ew gelek meşiyabûn.",
+          "explanationEn": "“Westiyayî” means someone whose strength is low after a long effort: tired. They had walked a lot.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Kîjan pêşî qewimî?",
+          "promptEn": "Which happened first?",
+          "options": [
+            "Rênas siwarî kerê Apê Xelîl bû.",
+            "Otobûs ji nişka ve sekinî.",
+            "Dapîrê ew hembêz kirin."
+          ],
+          "correctIndex": 1,
+          "explanation": "Pêşî otobûs sekinî. Paşê Rênas siwarî kerê Apê Xelîl bû. Di dawiyê de Dapîrê ew hembêz kirin.",
+          "explanationEn": "First the bus stopped. Then Rênas rode Uncle Xelîl’s donkey. At the end Grandma hugged them.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Dapîra wan ji kengî ve li benda wan bû?",
+          "promptEn": "Since when had their grandmother been waiting for them?",
+          "options": [
+            "Ji sibê zû ve",
+            "Ji nîvro ve",
+            "Ji êvarê ve"
+          ],
+          "correctIndex": 1,
+          "explanation": "Wê got: “Ez ji nîvro ve li benda we me!”",
+          "explanationEn": "She said: “I’ve been waiting for you since noon!”",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima hemû kenîn?",
+          "promptEn": "Why did everyone laugh?",
+          "options": [
+            "Ji ber ku Apê Xelîl ji ser kerê xwe ket",
+            "Ji ber ku nanê dapîrê şewitîbû",
+            "Ji ber gotina Rênas a li ser ker û otobûsê"
+          ],
+          "correctIndex": 2,
+          "explanation": "Rênas got: “Otobûs xera bû, lê kerê Apê Xelîl xera nebû!” Ev henekeke xweş bû.",
+          "explanationEn": "Rênas said: “The bus broke down, but Uncle Xelîl’s donkey didn’t!” It was a funny joke.",
+          "evidenceParagraph": 7
+        },
+        {
+          "kind": "detail",
+          "prompt": "Wê şevê wan çi xwar?",
+          "promptEn": "What did they eat that night?",
+          "options": [
+            "Şorbeya nîskê",
+            "Nanê germ bi penîr û hingiv",
+            "Dolme û mast"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Wê şevê wan nanê germ bi penîr û hingiv xwar.”",
+          "explanationEn": "The story says: “That night they ate the warm bread with cheese and honey.”",
+          "evidenceParagraph": 7
+        },
+        {
+          "kind": "gist",
+          "prompt": "Ev çîrok bi giştî li ser çi ye?",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "Rêwîtiyek ber bi gund ve, ku bi alîkariya şivanekî xweş diqede.",
+            "Malbatek ku ji gund bar dike bajêr.",
+            "Ajovanek ku bi tenê motora otobûsê çêdike."
+          ],
+          "correctIndex": 0,
+          "explanation": "Otobûs xera dibe, lê Apê Xelîl alîkariya wan dike û ew bi şahî digihîjin mala dapîrê.",
+          "explanationEn": "The bus breaks down, but Uncle Xelîl helps them and they reach Grandma’s house happily.",
+          "evidenceParagraph": null
+        }
+      ]
+    },
+    {
+      "slug": "kmr-rovi-u-hirc",
+      "dialect": "kurmanci",
+      "level": 3,
+      "title": "Rovî û Hirç",
+      "summary": "Çîrokeke gelêrî: roviyekî jîr û hirçeke bi hêz bi hev re zeviyekê diçînin.",
+      "body": "Di zemanekî kevn de, li quntara çiyayekî bilind, roviyek û hirçek cîranên hev bûn. Hirç mezin û bi hêz bû, lê ne pir jîr bû. Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.\n\nBiharekê rovî çû cem hirçê û got: “Cîrana delal, were em bi hev re zeviyekê biçînin. Tu bi hêz î, tu yê erdê bikolî. Ez jî jîr im, ez ê berhemê bi dadî parve bikim.” Hirçê bêyî ku bifikire qebûl kir.\n\nWê salê wan kartol çandin. Payîzê rovî got: “Niha tu hilbijêre: tu yên li ser erdê dixwazî, an yên di bin erdê de?” Hirçê li zeviyê nêrî. Pelên kartolan mezin û kesk bûn. Wê got: “Ez yên li ser erdê dixwazim!”\n\nHirçê hemû pel birin mala xwe, lê pel tal bûn û nedihatin xwarin. Rovî jî kartolên mezin ji bin erdê derxistin û tevahiya zivistanê bi kêf xwarin.\n\nBihara din hirç dîsa hat. Wê got: “Îsal ez yên di bin erdê de dixwazim!” Rovî got: “Bi serçavan.” Wê salê wan genim çand. Havînê hirçê kokên genim birin, lê kok hişk û bêtam bûn. Rovî jî simbilên zer birin û ji wan ar û nan çêkirin.\n\nHirç xeyidî. Wê got: “Te ez du caran xapandim! Sala bê ez hem yên jor hem yên jêr dixwazim!” Rovî bişirî: “Baş e, cîrana delal. Wê demê navîn ji min re be.”\n\nSala sêyem wan garis çand. Garis bilind bû, ji hirçê jî bilindtir. Payîzê hirçê pelên jor û kokên jêr birin. Lê simbilên mezin û şîrîn di navînê de bûn, û ew hemû para rovî bûn.\n\nVê carê hirç nexeyidî. Ew rûnişt û kenî. Wê got: “Roviyo, tu ji min jîrtir î. Lê bêyî min, zeviya te tune.” Rovî serê xwe xwar kir û got: “Tu rast dibêjî. Ji îro pê ve em ê her tiştî nîv bi nîv parve bikin.”\n\nJi wê rojê û pê ve, hirçê erd dikola û rovî tov diçand. Her payîz wan berhem nîv bi nîv parve dikir. Herdu cîran bûn hevalên baş, û çîroka me jî li vir qediya.",
+      "glossary": [
+        {
+          "term": "quntara",
+          "meanings": {
+            "en": "the slope (of)"
+          }
+        },
+        {
+          "term": "lawaz",
+          "meanings": {
+            "en": "thin, weak"
+          }
+        },
+        {
+          "term": "bi dadî",
+          "meanings": {
+            "en": "fairly"
+          }
+        },
+        {
+          "term": "tal",
+          "meanings": {
+            "en": "bitter"
+          }
+        },
+        {
+          "term": "simbilên",
+          "meanings": {
+            "en": "the ears (of grain)"
+          }
+        },
+        {
+          "term": "xapandim",
+          "meanings": {
+            "en": "tricked me"
+          }
+        },
+        {
+          "term": "garis",
+          "meanings": {
+            "en": "maize, corn"
+          }
+        },
+        {
+          "term": "nîv bi nîv",
+          "meanings": {
+            "en": "half and half"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "detail",
+          "prompt": "Hirç çawa bû?",
+          "promptEn": "What was the bear like?",
+          "options": [
+            "Biçûk û lawaz",
+            "Mezin û bi hêz",
+            "Pîr û nexweş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Hirç mezin û bi hêz bû, lê ne pir jîr bû.”",
+          "explanationEn": "The story says: “Hirç mezin û bi hêz bû” — the bear was big and strong.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.” “Jîr” tê çi wateyê?",
+          "promptEn": "“Rovî biçûk û lawaz bû, lê ji her kesî jîrtir bû.” What does “jîr” mean?",
+          "options": [
+            "Bi aqil, zû fêm dike",
+            "Bi hêz, giran hildigire",
+            "Bi lez, zû direve"
+          ],
+          "correctIndex": 0,
+          "explanation": "Jîr yanî bi aqil. Rovî ne bi hêz bû, lê bi aqilê xwe hirç xapand.",
+          "explanationEn": "“Jîr” means clever. The fox was not strong, but he tricked the bear with his wits.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "Rovî ji hirçê çi xwest?",
+          "promptEn": "What did the fox ask of the bear?",
+          "options": [
+            "Ku hirç jê re malekê çêke",
+            "Ku ew bi hev re zeviyekê biçînin",
+            "Ku ew bi hev re kartolan bikirin"
+          ],
+          "correctIndex": 1,
+          "explanation": "Rovî got: “Were em bi hev re zeviyekê biçînin.”",
+          "explanationEn": "The fox said: “Come, let’s sow a field together.”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Sala yekem wan çi çand?",
+          "promptEn": "What did they plant in the first year?",
+          "options": [
+            "Genim",
+            "Garis",
+            "Kartol"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Wê salê wan kartol çandin.”",
+          "explanationEn": "The story says: “That year they planted potatoes.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima hirçê yên li ser erdê hilbijartin?",
+          "promptEn": "Why did the bear choose what grew above the ground?",
+          "options": [
+            "Ji ber ku pelên kartolan mezin û kesk bûn",
+            "Ji ber ku rovî jê re got wan hilbijêre",
+            "Ji ber ku hirçê ji kartolan hez nedikir"
+          ],
+          "correctIndex": 0,
+          "explanation": "Hirçê li zeviyê nêrî. Pel mezin û kesk bûn, loma wê ew hilbijartin.",
+          "explanationEn": "The bear looked at the field. The leaves were big and green, so she chose them.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Çima hirçê pel nexwarin?",
+          "promptEn": "Why didn’t the bear eat the leaves?",
+          "options": [
+            "Ji ber ku pel pir biçûk bûn",
+            "Ji ber ku rovî pel birin",
+            "Ji ber ku pel tal bûn"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Pel tal bûn û nedihatin xwarin.”",
+          "explanationEn": "The story says: “The leaves were bitter and could not be eaten.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "“Rovî got: Bi serçavan.” Ev tê çi wateyê?",
+          "promptEn": "“Rovî got: Bi serçavan.” What does this mean?",
+          "options": [
+            "Na, qet nabe",
+            "Bi kêfxweşî, erê",
+            "Ez hê nizanim"
+          ],
+          "correctIndex": 1,
+          "explanation": "“Bi serçavan” yanî “bi kêfxweşî, erê”. Rovî bi dilxweşî qebûl kir.",
+          "explanationEn": "“Bi serçavan” means “gladly, yes”. The fox happily agreed.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "Sala duyem hirçê çi bir?",
+          "promptEn": "What did the bear take in the second year?",
+          "options": [
+            "Kokên genim",
+            "Simbilên genim",
+            "Kartolên mezin"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Havînê hirçê kokên genim birin.”",
+          "explanationEn": "The story says: “In summer the bear took the roots of the wheat.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "Rovî got ku ew ê berhemê “bi dadî” parve bike. Gelo wî wisa kir?",
+          "promptEn": "The fox said he would share the harvest “fairly”. Did he?",
+          "options": [
+            "Erê, ji destpêkê ve nîv bi nîv parve kir",
+            "Na, wî çend caran hirç xapand",
+            "Erê, hemû kartol dan hirçê"
+          ],
+          "correctIndex": 1,
+          "explanation": "Na. Hirçê got: “Te ez du caran xapandim!” Rovî para baş ji xwe re hilda.",
+          "explanationEn": "No. The bear said: “You have tricked me twice!” The fox kept the good share for himself.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "Hirçê ji bo sala bê çi xwest?",
+          "promptEn": "What did the bear want for the next year?",
+          "options": [
+            "Tenê yên di bin erdê de",
+            "Tenê navîn",
+            "Hem yên jor hem yên jêr"
+          ],
+          "correctIndex": 2,
+          "explanation": "Wê got: “Sala bê ez hem yên jor hem yên jêr dixwazim!”",
+          "explanationEn": "She said: “Next year I want both the top and the bottom!”",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Wan bi kîjan rêzê ev tişt çandin?",
+          "promptEn": "In what order did they plant these crops?",
+          "options": [
+            "Kartol, paşê genim, paşê garis",
+            "Genim, paşê kartol, paşê garis",
+            "Garis, paşê genim, paşê kartol"
+          ],
+          "correctIndex": 0,
+          "explanation": "Sala yekem kartol, sala duyem genim, sala sêyem garis.",
+          "explanationEn": "The first year potatoes, the second year wheat, the third year maize.",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima sala sêyem jî rovî bi ser ket?",
+          "promptEn": "Why did the fox win in the third year too?",
+          "options": [
+            "Ji ber ku hirç nehat zeviyê",
+            "Ji ber ku simbil di navînê de bûn",
+            "Ji ber ku garis zû hişk bû"
+          ],
+          "correctIndex": 1,
+          "explanation": "Rovî navîn ji xwe re xwest, û simbilên mezin û şîrîn di navînê de bûn.",
+          "explanationEn": "The fox had asked for the middle, and the big, sweet ears were in the middle.",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "detail",
+          "prompt": "Vê carê hirçê çi kir?",
+          "promptEn": "What did the bear do this time?",
+          "options": [
+            "Rûnişt û kenî",
+            "Xeyidî û çû mala xwe",
+            "Girî û reviya"
+          ],
+          "correctIndex": 0,
+          "explanation": "Çîrok dibêje: “Vê carê hirç nexeyidî. Ew rûnişt û kenî.”",
+          "explanationEn": "The story says: “This time the bear didn’t get angry. She sat down and laughed.”",
+          "evidenceParagraph": 7
+        },
+        {
+          "kind": "inference",
+          "prompt": "Çima rovî got: “Tu rast dibêjî”?",
+          "promptEn": "Why did the fox say: “You’re right”?",
+          "options": [
+            "Ji ber ku ew ji hirçê ditirsiya",
+            "Ji ber ku bêyî hirçê zeviya wî tune",
+            "Ji ber ku hirç ji wî jîrtir bû"
+          ],
+          "correctIndex": 1,
+          "explanation": "Hirçê got: “Bêyî min, zeviya te tune.” Rovî fêm kir ku ew hewceyî hev in.",
+          "explanationEn": "The bear said: “Without me, you have no field.” The fox understood that they need each other.",
+          "evidenceParagraph": 7
+        },
+        {
+          "kind": "detail",
+          "prompt": "Ji wê rojê û pê ve, wan berhem çawa parve dikir?",
+          "promptEn": "From that day on, how did they share the harvest?",
+          "options": [
+            "Hemû ji rovî re",
+            "Hemû ji hirçê re",
+            "Nîv bi nîv"
+          ],
+          "correctIndex": 2,
+          "explanation": "Çîrok dibêje: “Her payîz wan berhem nîv bi nîv parve dikir.”",
+          "explanationEn": "The story says: “Every autumn they shared the harvest half and half.”",
+          "evidenceParagraph": 8
+        },
+        {
+          "kind": "gist",
+          "prompt": "Peyama vê çîrokê çi ye?",
+          "promptEn": "What is the message of this story?",
+          "options": [
+            "Kar bi hev re û bi dadî ji xapandinê baştir e.",
+            "Yê bi hêz her tim bi ser dikeve.",
+            "Kartol ji genim xweştir e."
+          ],
+          "correctIndex": 0,
+          "explanation": "Rovî çend caran hirç xapand, lê di dawiyê de herduyan fêm kir ku kar bi hev re û bi dadî baştir e.",
+          "explanationEn": "The fox tricked the bear several times, but in the end both understood that working together fairly is better.",
+          "evidenceParagraph": null
+        }
+      ]
+    }
+  ]
+}
