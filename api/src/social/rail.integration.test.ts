@@ -140,14 +140,14 @@ describe.skipIf(!DATABASE_URL)('social rail (integration)', () => {
     expect(shown.friends.find((f: { userId: string }) => f.userId === ids.mate).activity.game).toBe('Wordle');
   });
 
-  it('surfaces a game invite without being told who sent it', async () => {
-    expect((await call('POST', '/challenges', tokens.mate!, { userId: ids.me })).statusCode).toBe(200);
-
+  // Challenges were invites to the ranked quiz, which Stories replaced. The
+  // fields stay on the wire, always empty, for phone builds already installed.
+  it('keeps the challenge fields for installed apps, always empty', async () => {
     const body = await rail('me');
-    expect(body.challenges.map((c: { userId: string }) => c.userId)).toEqual([ids.mate]);
-    expect(body.unread.challenges).toBe(1);
-    // the sender's own rail shows nothing: an invite you sent is not an invite
-    expect((await rail('mate')).challenges).toEqual([]);
+    expect(body.challenges).toEqual([]);
+    expect(body.unread.challenges).toBe(0);
+    // and there is nothing left to send one with
+    expect((await call('POST', '/challenges', tokens.mate!, { userId: ids.me })).statusCode).toBe(404);
   });
 
   it('counts friend requests waiting on you', async () => {
