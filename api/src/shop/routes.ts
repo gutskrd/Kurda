@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireBirthMonth } from '../users/age.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import type { ShopService } from './service.js';
-import type { FriendService } from '../friends/service.js';
-import type { InboxService } from '../notifications/inbox-service.js';
+import type { GiftService, SkipReason } from '../gifts/service.js';
 
 const itemBody = z.object({
   sku: z.string().min(1).max(80),
@@ -40,11 +40,24 @@ const purchaseBody = z.object({
   expectedPrice: z.number().int().min(0).max(10_000_000).optional(),
 });
 
+/**
+ * How the shop's gift button says no, for the one friend it gifts. It has
+ * always answered a refusal with an error, and phone builds in people's hands
+ * read those codes; the chat's own route (`POST /gifts`) lists the skipped
+ * instead, since a group gift can reach some friends and not others.
+ */
+const SHOP_GIFT_REFUSALS: Readonly<Record<SkipReason, () => AppError>> = {
+  already_owned: () => new AppError('ALREADY_OWNED', 409, 'they already own this item'),
+  not_allowed: () =>
+    new AppError('GIFT_NOT_ALLOWED', 403, 'a gift to a new friend can be sent once you have been friends for a day'),
+  daily_limit: () => new AppError('GIFT_DAILY_LIMIT', 429, 'that is all the gifts for today'),
+};
+
 /** Shop catalog + purchase + gifting + inventory (KUR-071). */
 export function registerShopRoutes(
   app: FastifyInstance,
   shop: ShopService,
-  deps: { friends?: FriendService; inbox?: InboxService } = {},
+  deps: { gifts?: GiftService } = {},
 ): void {
   /** Admin: create/update a catalog item. */
   app.post(
@@ -109,53 +122,44 @@ export function registerShopRoutes(
    * Friends only, deliberately. An unsolicited gift from a stranger is a way to
    * put your name in front of someone who has not agreed to hear from you — the
    * same reason direct messages are friends-only. It also means the notification
-   * below can never be used to reach a stranger.
+   * it sends can never be used to reach a stranger.
+   *
+   * The same send as the chat's gift button (`GiftService`), with its rules,
+   * and like every gift it arrives in the chat between the two of you — which
+   * is why it now asks for the birth month a message asks for. The answer
+   * keeps the shape this route has always had.
    */
-  app.post(
-    '/shop/gift',
-    {
-      schema: { body: giftBody },
-      config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
-    },
-    async (req) => {
-      const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
-      const from = req.user!.id;
-
-      // checked before friendship: "you cannot gift yourself" is the accurate
-      // answer, and nobody is friends with themselves
-      if (from === toUserId) throw new AppError('GIFT_TO_SELF', 400, 'you cannot gift to yourself');
-
-      if (deps.friends) {
-        const status = await deps.friends.statusBetween(from, toUserId);
-        if (status !== 'friends') {
-          throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
-        }
-      }
-
-      const result = await shop.gift(from, toUserId, sku, idempotencyKey, new Date(), expectedPrice);
-
-      // outside the transaction on purpose: a notification that fails to send is
-      // not a reason to undo someone's present
-      if (!result.duplicate && deps.inbox) {
-        const sender = await app.db.query<{ username: string }>(
-          `SELECT username FROM users WHERE id = $1`,
-          [from],
-        );
-        const who = sender.rows[0]?.username ?? 'Someone';
-        await deps.inbox
-          .record(toUserId, {
-            category: 'friends',
-            title: 'You have a gift',
-            body: `${who} sent you ${result.name}.`,
-            data: { kind: 'gift', giftId: result.giftId, sku: result.sku, fromUserId: from },
-          })
-          .catch(() => undefined);
-      }
-
-      return { gifted: true, duplicate: result.duplicate, sku: result.sku, balance: result.balance };
-    },
-  );
+  if (deps.gifts) {
+    const gifts = deps.gifts;
+    app.post(
+      '/shop/gift',
+      {
+        schema: { body: giftBody },
+        config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
+        preHandler: requireBirthMonth,
+      },
+      async (req) => {
+        const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
+        const result = await gifts.send({
+          fromId: req.user!.id,
+          toIds: [toUserId],
+          sku,
+          chat: null,
+          idempotencyKey,
+          expectedPrice,
+        });
+        const refused = result.skipped[0];
+        if (refused) throw SHOP_GIFT_REFUSALS[refused.reason]();
+        return {
+          gifted: true,
+          duplicate: result.duplicate,
+          sku: result.item.sku,
+          // in the item's own currency, as it always was
+          balance: result.balance[result.item.currency],
+        };
+      },
+    );
+  }
 
   /** Gifts the caller has received, and how many are unopened. */
   app.get('/me/gifts', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
@@ -169,9 +173,11 @@ export function registerShopRoutes(
   /**
    * Just the count.
    *
-   * Every signed-in tab asks for this once a minute to draw the badge, and the
+   * Every signed-in tab asked for this once a minute to draw the badge, and the
    * full list joins shop_items and users for up to fifty rows to answer a
-   * question that is really "any?".
+   * question that is really "any?". The count now rides on `/me/social`
+   * (`unread.gifts`), which the apps already poll; this stays for the phone
+   * builds in people's hands that still ask here.
    */
   app.get('/me/gifts/unseen', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
     unseen: await shop.unseenGiftCount(req.user!.id),

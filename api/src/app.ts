@@ -41,6 +41,8 @@ import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { GiftService } from './gifts/service.js';
+import { registerGiftRoutes } from './gifts/routes.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
@@ -443,11 +445,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       6 * 60 * 60 * 1000,
     );
     app.addHook('onClose', async () => clearInterval(requestExpiry));
-    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache), {
-      // gifting is friends-only, and tells the recipient it arrived
-      friends,
-      inbox: new InboxService(app.db),
-    });
+    // the shop is registered with gifts, below the chats a gift is posted in
     // Profile cosmetics: equip (server-verified access) + favorites (KUR profile)
     registerCosmeticsRoutes(app, new CosmeticsService(app.db));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
@@ -636,6 +634,29 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     registerGroupChatRoutes(app, groupChat);
 
+    // shop + gifts: a gift is bought in the shop or from a chat's gift button,
+    // and arrives as a message in the chat either way, so it needs both chats
+    const shopWallet = new WalletService(app.db);
+    const shop = new ShopService(app.db, shopWallet, app.cache);
+    const gifts = new GiftService(
+      app.db,
+      {
+        wallet: shopWallet,
+        shop,
+        friends,
+        groupChat,
+        realtime: {
+          notifyUser: (uid, ev) => realtime.notifyUser(uid, ev),
+          publish: (r, ev) => realtime.publish(r, ev),
+        },
+        inbox,
+        log: app.log,
+      },
+      (k) => (app.storage ? app.storage.publicUrl(k) : null),
+    );
+    registerShopRoutes(app, shop, { gifts });
+    registerGiftRoutes(app, gifts);
+
     // matchmaking (KUR-050): atomic queue + widening sweeper
     const matchQueue = app.redis
       ? new RedisMatchQueue(app.redis, options.matchmaking?.queueKeyPrefix)
@@ -655,7 +676,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, challenges });
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, challenges, gifts });
     const sweeper = setInterval(
       () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
       matchmaking.sweepIntervalMs,
