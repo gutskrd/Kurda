@@ -182,3 +182,9 @@ export * from './chat-cards.js';
  * server and both apps.
  */
 export * from './typing.js';
+
+/**
+ * The one-time rating box, "Send feedback", the native store prompt that is
+ * never tied to the stars, and the admin's feedback inbox.
+ */
+export * from './feedback.js';
