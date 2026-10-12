@@ -159,3 +159,10 @@ export {
   isPlausibleBirthMonth,
   type BirthMonth,
 } from './age.js';
+
+/**
+ * Stories and their quizzes (they replaced the ranked quiz): the presets, the
+ * word bands, how a story is cut into paragraphs and sentences, and the shapes
+ * the API sends — so the API, both apps and the admin editor cannot disagree.
+ */
+export * from './stories.js';

@@ -16,10 +16,11 @@ describe('game invites', () => {
     // link stops resolving, so they are asserted rather than derived
     expect(invitePath({ type: 'wordle-battle', id: 'abc123' })).toBe('/app/games/wordle-battle?id=abc123');
     expect(invitePath({ type: 'rhyme-match', id: 'abc123' })).toBe('/app/games/rhyme-match?id=abc123');
+    expect(invitePath({ type: 'stories', id: 'abc123' })).toBe('/app/games/stories?id=abc123');
   });
 
   it('round-trips every game type through a shareable URL', () => {
-    for (const type of ['wordle-battle', 'rhyme-match'] as const) {
+    for (const type of ['wordle-battle', 'rhyme-match', 'stories'] as const) {
       const url = buildInviteUrl(type, 'b7f2c1a4-9e3d-4a11-8c55-0f6d2e9a7b31');
       expect(parseInvite(url)).toEqual({ type, id: 'b7f2c1a4-9e3d-4a11-8c55-0f6d2e9a7b31' });
     }
