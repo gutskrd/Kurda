@@ -5,7 +5,18 @@
  * own — and because this is the part that must not be taken from the client.
  * A racer reports what they typed; the server decides how fast and how well,
  * from a start time it recorded itself.
+ *
+ * What counts as typed right is @kurda/shared `compareTyping`, the same
+ * function the apps colour the text with as it is typed, so the result can
+ * never disagree with what the racer saw.
  */
+import {
+  compareTyping,
+  DEFAULT_ACCENT_MODE,
+  normalizeTyping,
+  type AccentMode,
+  type TypingDialect,
+} from '@kurda/shared';
 
 /** Characters per "word", the long-standing convention for words per minute. */
 const CHARS_PER_WORD = 5;
@@ -29,57 +40,67 @@ export const MIN_RACE_MS = 1000;
 export const HUMAN_WPM_CEILING = 350;
 
 export interface RaceScore {
-  /** correctly typed characters, counted position by position */
+  /** characters of the text that count as typed (`compareTyping`) */
   correctChars: number;
-  /** how much of the target was reproduced exactly, 0..1 */
+  /** correct characters over the text's length plus any characters typed that it does not have, 0..1 */
   accuracy: number;
   /** words per minute, on correct characters only */
   wpm: number;
   /** what the race is ranked on: speed weighted by how right it was */
   score: number;
-  /** every character of the target matched */
+  /** the whole text, exactly: no mistake, nothing extra, no accent left out */
   perfect: boolean;
   /** faster than a person can type — reported honestly, but worth nothing */
   implausible: boolean;
+  /** accented letters typed without the accent (counted in every mode but `hidden`) */
+  accentMisses: number;
+  /** accented letters of the text the racer reached */
+  accented: number;
+  /** characters wrong or left out, and characters typed that the text does not have */
+  errors: number;
 }
 
 /**
- * Compare what was typed against the target, position by position.
+ * How many characters of the target were typed exactly (strict mode).
  *
- * Deliberately NOT an edit distance. A racer who drops one character early
- * would score near zero under strict positional matching with alignment, but
- * edit distance would reward wandering text that merely contains the right
- * letters. Position matching is what typing tests use and what a racer can
- * predict: type it right and it counts, type it wrong and it does not.
+ * Aligned, not positional. This used to compare the i-th character with the
+ * i-th, which a racer cannot predict at all once they slip: one missed letter
+ * early on made every later one wrong, and a run that only dropped its first
+ * letter scored 0 of 26. An alignment counts the slip once. It does not reward
+ * wandering text that merely contains the right letters, because only letters
+ * in order count, and every character typed that the text does not have counts
+ * against the accuracy (`scoreRace`).
  */
 export function countCorrect(target: string, typed: string): number {
-  const t = [...target];
-  const u = [...typed];
-  let correct = 0;
-  for (let i = 0; i < Math.min(t.length, u.length); i++) {
-    if (t[i] === u[i]) correct++;
-  }
-  return correct;
+  return compareTyping(target, typed, 'strict', { final: true }).correct;
 }
 
 /**
  * Score one finished race.
  *
  * `elapsedMs` is measured server-side. Accuracy is against the TARGET, not
- * against what was typed: stopping after three words should not read as 100%.
+ * against what was typed: stopping after three words should not read as 100%;
+ * and what was typed beyond it counts against it, so neither does typing the
+ * text with rubbish in between.
  */
 export function scoreRace({
   target,
   typed,
   elapsedMs,
+  accentMode = DEFAULT_ACCENT_MODE,
+  dialect = 'kurmanci',
 }: {
   target: string;
   typed: string;
   elapsedMs: number;
+  accentMode?: AccentMode;
+  dialect?: TypingDialect;
 }): RaceScore {
-  const targetLength = [...target].length;
-  const correctChars = countCorrect(target, typed);
-  const accuracy = targetLength === 0 ? 0 : correctChars / targetLength;
+  const targetLength = [...normalizeTyping(target, dialect)].length;
+  const compared = compareTyping(target, typed, accentMode, { dialect, final: true });
+  const correctChars = compared.correct;
+  const extra = compared.extra.reduce((n, run) => n + [...run.text].length, 0);
+  const accuracy = targetLength === 0 ? 0 : correctChars / (targetLength + extra);
 
   // clamp the clock rather than dividing by something absurd: a race that
   // reports no time at all would otherwise produce an infinite speed
@@ -97,8 +118,16 @@ export function scoreRace({
     // reaches ranks at nothing at all — the reading is still reported, so the
     // result can say what happened rather than silently showing a zero.
     score: implausible ? 0 : Math.round(wpm * accuracy),
-    perfect: !implausible && targetLength > 0 && correctChars === targetLength && [...typed].length === targetLength,
+    perfect:
+      !implausible &&
+      compared.done &&
+      correctChars === targetLength &&
+      compared.errors === 0 &&
+      compared.accentMisses === 0,
     implausible,
+    accentMisses: compared.accentMisses,
+    accented: compared.accented,
+    errors: compared.errors,
   };
 }
 

@@ -30,6 +30,126 @@ describe('countCorrect', () => {
   it('gives nothing for an empty attempt', () => {
     expect(countCorrect('welat', '')).toBe(0);
   });
+
+  /*
+   * The regression that made a race unwinnable after one slip: positions were
+   * compared one by one, so one missed letter early on made every later letter
+   * wrong — a run that only missed its first letter scored 0 of 26.
+   */
+  it('counts one missed letter once, not against everything after it', () => {
+    const text = 'ez ji welatê xwe hez dikim';
+    expect(countCorrect(text, text.slice(1))).toBe(25);
+    expect(countCorrect(text, 'ez ji wlatê xwe hez dikim')).toBe(25);
+    // one letter too many, or a space too many, costs nothing that was typed right
+    expect(countCorrect(text, 'ez ji wellatê xwe hez dikim')).toBe(26);
+    expect(countCorrect(text, 'ez ji wel atê xwe hez dikim')).toBe(26);
+  });
+
+  it('only counts letters in order, so wandering text does not score', () => {
+    // every letter of the text is in here, just not in its order
+    expect(countCorrect('welat', 'talew')).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('scoring what a keyboard actually sends', () => {
+  const target = 'ez ji welatê xwe hez dikim';
+
+  /*
+   * A race text saved decomposed (e + U+0302) could never be typed: every
+   * keyboard sends the precomposed ê, so it read 27 characters against 26 and
+   * scored 0.41 for a perfect run.
+   */
+  it('scores a perfect run on a text stored decomposed as perfect', () => {
+    const s = scoreRace({ target: 'ez ji welatê xwe hez dikim', typed: target, elapsedMs: 30_000 });
+    expect(s.accuracy).toBe(1);
+    expect(s.perfect).toBe(true);
+    expect(s.correctChars).toBe(26);
+  });
+
+  it('scores a curly apostrophe, a dash and a no-break space as the characters a keyboard has', () => {
+    const s = scoreRace({
+      target: 'Ez’ê bêm — sibê were, heval.',
+      typed: "Ez'ê bêm - sibê were, heval.",
+      elapsedMs: 30_000,
+    });
+    expect(s.accuracy).toBe(1);
+    expect(s.perfect).toBe(true);
+  });
+
+  it('reads a Turkish keyboard’s ı as i', () => {
+    expect(scoreRace({ target: 'dibistan û malbat', typed: 'dıbıstan û malbat', elapsedMs: 10_000 }).perfect).toBe(true);
+  });
+
+  it('scores one missed letter as one letter missed', () => {
+    const s = scoreRace({ target, typed: target.slice(1), elapsedMs: 30_000 });
+    expect(s.correctChars).toBe(25);
+    expect(s.accuracy).toBeCloseTo(25 / 26, 5);
+    expect(s.errors).toBe(1);
+    expect(s.perfect).toBe(false);
+    expect(s.score).toBeGreaterThan(0);
+  });
+
+  /*
+   * The race ended the moment a dead key's ˆ arrived on a text ending in î,
+   * before the i did. The app should not send it; if it does, the accent is
+   * not a character, and the letter it was waiting for is simply missing.
+   */
+  it('does not score a dead key’s accent as a character', () => {
+    const s = scoreRace({ target: 'ez kurd im û ez kurdî', typed: 'ez kurd im û ez kurdˆ', elapsedMs: 10_000 });
+    expect(s.correctChars).toBe(20);
+    expect(s.errors).toBe(0);
+    expect(s.perfect).toBe(false);
+  });
+
+  it('counts what was typed beyond the text against the accuracy', () => {
+    const clean = scoreRace({ target, typed: target, elapsedMs: 30_000 });
+    const padded = scoreRace({ target, typed: `${target} xxxxxx`, elapsedMs: 30_000 });
+    expect(padded.correctChars).toBe(clean.correctChars);
+    expect(padded.accuracy).toBeLessThan(clean.accuracy);
+  });
+
+  describe('accent modes', () => {
+    const plain = 'ez ji welate xwe hez dikim';
+
+    it('strict: ê typed as e is a mistake', () => {
+      const s = scoreRace({ target, typed: plain, elapsedMs: 30_000, accentMode: 'strict' });
+      expect(s.correctChars).toBe(25);
+      expect(s.accentMisses).toBe(1);
+      expect(s.perfect).toBe(false);
+    });
+
+    it('forgiving: ê typed as e counts, the miss is counted, and the run is not perfect', () => {
+      const s = scoreRace({ target, typed: plain, elapsedMs: 30_000, accentMode: 'forgiving' });
+      expect(s.correctChars).toBe(26);
+      expect(s.accuracy).toBe(1);
+      expect(s.accentMisses).toBe(1);
+      expect(s.accented).toBe(1);
+      expect(s.perfect).toBe(false);
+    });
+
+    it('hidden: the accents are not compared at all', () => {
+      const s = scoreRace({ target, typed: plain, elapsedMs: 30_000, accentMode: 'hidden' });
+      expect(s.correctChars).toBe(26);
+      expect(s.accentMisses).toBe(0);
+      expect(s.perfect).toBe(true);
+    });
+
+    it('is forgiving when a caller does not say', () => {
+      expect(scoreRace({ target, typed: plain, elapsedMs: 30_000 }).correctChars).toBe(26);
+    });
+
+    it('folds the Soranî pairs in a Soranî race', () => {
+      const s = scoreRace({
+        target: 'ڕێگای گوڵ و باخچە',
+        typed: 'ریگای گول و باخچە',
+        elapsedMs: 10_000,
+        dialect: 'sorani',
+        accentMode: 'forgiving',
+      });
+      expect(s.accuracy).toBe(1);
+      expect(s.accentMisses).toBe(3);
+    });
+  });
 });
 
 describe('scoreRace', () => {
