@@ -77,10 +77,17 @@ describe('validateStory', () => {
     expect(storyLengthFor('kurmanci', words)).toBeNull();
     const draft = validateStory(between, 'draft');
     expect(codes(draft.errors)).toEqual([]);
-    expect(draft.warnings.find((w) => w.code === 'LENGTH_BETWEEN_BANDS')?.message).toBe(
+    expect(draft.warnings.find((w) => w.code === 'WORD_COUNT_OUTSIDE_BANDS')?.message).toBe(
       `${words} words is between the lengths: the nearest is medium (150–250 words)`,
     );
-    expect(codes(validateStory(between, 'publish').errors)).toEqual(['LENGTH_BETWEEN_BANDS']);
+    expect(codes(validateStory(between, 'publish').errors)).toEqual(['WORD_COUNT_OUTSIDE_BANDS']);
+    // below the shortest and past the longest say so
+    const message = (body: string): string | undefined =>
+      validateStory(story({ body }), 'draft').warnings.find((w) => w.code === 'WORD_COUNT_OUTSIDE_BANDS')?.message;
+    expect(message('Rojîn deh salî ye.')).toBe('4 words is too few: the shortest length is short (60–120 words)');
+    expect(message(Array.from({ length: 6 }, () => BODY).join('\n\n'))).toBe(
+      '492 words is too many: the longest length is long (300–450 words)',
+    );
 
     // too few questions for a short story
     const few = story({ questions: story().questions.slice(0, 5) });

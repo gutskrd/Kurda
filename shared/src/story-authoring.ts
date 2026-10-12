@@ -140,7 +140,7 @@ export interface StoryValidation {
 export type StoryValidationStage = 'draft' | 'publish';
 
 /** Problems a draft may have and a submitted or published story may not. */
-const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'LENGTH_BETWEEN_BANDS', 'BANK_TOO_SMALL']);
+const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'WORD_COUNT_OUTSIDE_BANDS', 'BANK_TOO_SMALL']);
 
 /**
  * Abbreviations that end in a full stop. The reader and the audio studio cut a
@@ -231,10 +231,15 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
     length = storyLengthFor(story.dialect, words);
     if (!length) {
       const near = nearestLength(story.dialect, words);
+      const band = `${LENGTH_NAME[near.length]} (${near.min}–${near.max} words)`;
       error(
-        'LENGTH_BETWEEN_BANDS',
+        'WORD_COUNT_OUTSIDE_BANDS',
         'body',
-        `${words} words is between the lengths: the nearest is ${LENGTH_NAME[near.length]} (${near.min}–${near.max} words)`,
+        words < near.min && near.length === 'short'
+          ? `${words} words is too few: the shortest length is ${band}`
+          : words > near.max && near.length === 'long'
+            ? `${words} words is too many: the longest length is ${band}`
+            : `${words} words is between the lengths: the nearest is ${band}`,
       );
     }
   }
