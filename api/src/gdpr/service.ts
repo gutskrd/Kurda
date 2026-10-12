@@ -173,6 +173,11 @@ export class GdprService {
     await executor.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
+    // what they wrote in the rating box or Send feedback is their words; the
+    // stars and chips stay in the counts, tied to an anonymised account
+    await executor.query(`UPDATE app_feedback SET comment = NULL WHERE user_id = $1 AND comment IS NOT NULL`, [
+      userId,
+    ]);
   }
 
   /** Creates an export request; the worker fulfills it. */
@@ -217,12 +222,26 @@ export class GdprService {
       `SELECT provider, email_at_link, created_at FROM oauth_identities WHERE user_id = $1`,
       [userId],
     );
+    // when they were asked for a rating, and their answers as they gave them;
+    // the inbox's status and staff notes are the team's working state, not
+    // something they told us
+    const prompts = await this.pool.query(
+      `SELECT app_feedback_prompted_at, store_review_prompted_at, store_review_count, store_review_version
+         FROM users WHERE id = $1`,
+      [userId],
+    );
+    const feedback = await this.pool.query(
+      `SELECT stars, categories, comment, source, platform, app_version, locale, created_at
+         FROM app_feedback WHERE user_id = $1 ORDER BY created_at`,
+      [userId],
+    );
     return {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
       user: user.rows[0] ?? null,
       sessions: sessions.rows,
       oauthIdentities: identities.rows,
+      appFeedback: { ...prompts.rows[0], answers: feedback.rows },
     };
   }
 
@@ -378,6 +397,7 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   await q(`DELETE FROM activity_congrats WHERE user_id = $1`);
   await q(`DELETE FROM activity_events WHERE actor_id = $1`);
   await q(`DELETE FROM analytics_events WHERE user_id = $1`);
+  await q(`DELETE FROM app_feedback WHERE user_id = $1`);
   await q(`DELETE FROM user_tags WHERE user_id = $1`);
   await q(`DELETE FROM saved_words WHERE user_id = $1`);
   await q(`DELETE FROM user_exports WHERE user_id = $1`);

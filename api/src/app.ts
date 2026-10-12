@@ -150,6 +150,8 @@ import { registerAuditLog } from './admin/audit-routes.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
+import { FeedbackService } from './feedback/service.js';
+import { registerFeedbackRoutes } from './feedback/routes.js';
 import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
@@ -583,6 +585,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     const analytics = new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) });
     registerAnalyticsRoutes(app, analytics);
+    // the one-time rating box, Send feedback, the store prompt's limits, and
+    // the admin's feedback inbox (contract-2 §F)
+    registerFeedbackRoutes(app, new FeedbackService(app.db, { secret: config.JWT_SECRET }));
     // transactional email (KUR-098): bounce/complaint webhook feeds suppression;
     // sends themselves run in the worker's send-email job
     registerEmailWebhookRoutes(
