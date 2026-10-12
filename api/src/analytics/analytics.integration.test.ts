@@ -64,16 +64,53 @@ describe.skipIf(!DATABASE_URL)('analytics ingest (integration)', () => {
     expect(replay).toEqual({ accepted: 0, dropped: 0, duplicates: 1 });
   });
 
-  it('accepts a batch over HTTP and reports counts', async () => {
-    const res = await app.inject({
+  const track = async (token: string, eventId: string) =>
+    app.inject({
       method: 'POST',
       url: '/events/track',
-      headers: { authorization: `Bearer ${(await login())}` },
-      payload: { events: [{ eventId: randomUUID(), type: 'screen_view', payload: { screen: 'Learn' } }] },
+      headers: { authorization: `Bearer ${token}` },
+      payload: { events: [{ eventId, type: 'screen_view', payload: { screen: 'Learn' } }] },
       remoteAddress: '10.105.0.1',
     });
+  const stored = async (eventId: string) =>
+    (await pool.query(`SELECT 1 FROM analytics_events WHERE event_id = $1`, [eventId])).rowCount;
+  const setConsent = async (token: string, analytics: boolean) => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/me/consent',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { analytics },
+      remoteAddress: '10.105.0.1',
+    });
+    expect(res.statusCode, res.body).toBe(200);
+  };
+
+  /*
+   * This used to store every event it was sent. Analytics consent is off until
+   * the person turns it on, and the consent migration said the pipeline had to
+   * gate on it; now it does.
+   */
+  it('stores nothing over HTTP for an account that has not agreed to analytics', async () => {
+    const eventId = randomUUID();
+    const res = await track(await login(), eventId);
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ accepted: 1, dropped: 0, duplicates: 0 });
+    expect(res.json()).toEqual({ accepted: 0, dropped: 0, duplicates: 0, consent: false });
+    expect(await stored(eventId)).toBe(0);
+  });
+
+  it('accepts a batch over HTTP once the account agrees, and stops when it withdraws', async () => {
+    const token = await login();
+    await setConsent(token, true);
+    const first = randomUUID();
+    const res = await track(token, first);
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ accepted: 1, dropped: 0, duplicates: 0, consent: true });
+    expect(await stored(first)).toBe(1);
+
+    await setConsent(token, false);
+    const after = randomUUID();
+    expect((await track(token, after)).json()).toMatchObject({ accepted: 0, consent: false });
+    expect(await stored(after)).toBe(0);
   });
 
   async function login(): Promise<string> {
