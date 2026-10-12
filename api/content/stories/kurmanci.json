@@ -58,7 +58,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Ew deh salî ye.”",
           "explanationEn": "The story says: “She is ten years old.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -71,7 +72,8 @@
           "correctIndex": 1,
           "explanation": "Şaş e. Çîrok dibêje: “Rojîn li wir kesî nas nake.”",
           "explanationEn": "False. The story says: “Rojîn doesn’t know anyone there.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -85,7 +87,8 @@
           "correctIndex": 2,
           "explanation": "Mamoste dibêje: “Defterên xwe vekin û navê xwe binivîsin.”",
           "explanationEn": "The teacher says: “Open your notebooks and write your names.”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -99,7 +102,8 @@
           "correctIndex": 0,
           "explanation": "Qelema wê li malê maye û ew nikare binivîse, loma şerm dike.",
           "explanationEn": "Her pen is at home and she can’t write, so she feels embarrassed.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -113,7 +117,8 @@
           "correctIndex": 0,
           "explanation": "Şîlan qelemeke şîn dide Rojînê, ji ber ku du qelemên wê hene.",
           "explanationEn": "Şîlan gives Rojîn a blue pen, because she has two pens.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -127,7 +132,8 @@
           "correctIndex": 2,
           "explanation": "Pêşî Rojîn li qelema xwe digere. Paşê Şîlan qelemekê dide wê. Paşê ew bi hev re dilîzin.",
           "explanationEn": "First Rojîn looks for her pen. Then Şîlan gives her a pen. Then they play together.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -141,7 +147,8 @@
           "correctIndex": 1,
           "explanation": "Bêhnvedan navbera dersan e. Zarok wê demê dilîzin.",
           "explanationEn": "“Bêhnvedan” is the break between lessons. Children play then.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -155,7 +162,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Sibe ew ê qelema şîn û sêveke sor bide Şîlanê.”",
           "explanationEn": "The story says: “Tomorrow she will give Şîlan the blue pen and a red apple.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "gist",
@@ -169,7 +177,8 @@
           "correctIndex": 0,
           "explanation": "Roja yekem Rojîn kesî nas nake, lê di dawiyê de Şîlan dibe hevala wê.",
           "explanationEn": "On her first day Rojîn knows nobody, but by the end Şîlan has become her friend.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -231,7 +240,8 @@
           "correctIndex": 1,
           "explanation": "Diya wî dibêje: “Du kîlo bacansor, nîv kîlo penîr û nan bikire.”",
           "explanationEn": "His mother says: “Buy two kilos of tomatoes, half a kilo of cheese and bread.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -245,7 +255,8 @@
           "correctIndex": 0,
           "explanation": "Ew sê tiştan dubare dike da ku ji bîr neke ka divê çi bikire.",
           "explanationEn": "He repeats the three things so that he doesn’t forget what he has to buy.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -259,7 +270,8 @@
           "correctIndex": 1,
           "explanation": "Firoşkar ew kes e ku tiştan difiroşe.",
           "explanationEn": "A “firoşkar” is a person who sells things.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -273,7 +285,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Firoşkarê penîr sêveke sor jî dide wî.”",
           "explanationEn": "The story says: “The cheese seller also gives him a red apple.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -286,7 +299,8 @@
           "correctIndex": 1,
           "explanation": "Şaş e. Ew tenê bacansor û penîr dikire; nan ji bîr dike.",
           "explanationEn": "False. He buys only tomatoes and cheese; he forgets the bread.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "sequence",
@@ -300,7 +314,8 @@
           "correctIndex": 2,
           "explanation": "Li malê diya wî dipirse. Paşê Azad li destên xwe dinêre û dibîne ku nan tune ye.",
           "explanationEn": "At home his mother asks. Then Azad looks at his hands and sees that there is no bread.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -314,7 +329,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Ew sêva sor dide diya xwe.”",
           "explanationEn": "The story says: “He gives the red apple to his mother.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "inference",
@@ -328,7 +344,8 @@
           "correctIndex": 2,
           "explanation": "Bacansor û penîr li malê ne. Tenê nan maye ku bikire.",
           "explanationEn": "The tomatoes and cheese are already at home. Only the bread is left to buy.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "gist",
@@ -342,7 +359,8 @@
           "correctIndex": 0,
           "explanation": "Azad tiştan dikire, lê nan ji bîr dike. Ji ber vê yekê ew dîsa diçe bazarê.",
           "explanationEn": "Azad buys things but forgets the bread. That is why he goes back to the market.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -410,7 +428,8 @@
           "correctIndex": 1,
           "explanation": "Dapîr dinivîse: “Ev name ji gund tê.”",
           "explanationEn": "Grandma writes: “This letter comes from the village.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "sequence",
@@ -424,7 +443,8 @@
           "correctIndex": 0,
           "explanation": "Pêşî Hêlînê telefonî Dapîrê kir. Paşê Rêzan hat û telefon bi înternetê ve girê da. Paşê Dapîrê ev name nivîsî.",
           "explanationEn": "First Hêlîn called Grandma. Then Rêzan came and connected the phone to the internet. Then Grandma wrote this letter.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -438,7 +458,8 @@
           "correctIndex": 0,
           "explanation": "Dapîr dinivîse: “Telefona min kevn e, guhên min jî kevn in!”",
           "explanationEn": "Grandma writes: “My phone is old, and my ears are old too!”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -452,7 +473,8 @@
           "correctIndex": 1,
           "explanation": "Xemgîn yanî ne kêfxweş. Dapîr xemgîn bû, ji ber ku nikaribû Hêlînê baş bibihîze.",
           "explanationEn": "“Xemgîn” means unhappy, sad. Grandma was sad because she couldn’t hear Hêlîn well.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -466,7 +488,8 @@
           "correctIndex": 2,
           "explanation": "Dapîr dinivîse: “Paşê Rêzan, kurê cîranê me, hat.”",
           "explanationEn": "Grandma writes: “Then Rêzan, our neighbour’s son, came.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -480,7 +503,8 @@
           "correctIndex": 1,
           "explanation": "Dapîr dinivîse: “Wî telefona min bi înternetê ve girê da.”",
           "explanationEn": "Grandma writes: “He connected my phone to the internet.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -494,7 +518,8 @@
           "correctIndex": 2,
           "explanation": "Niha Dapîr dikare bi vîdeoyê bi Hêlînê re biaxive, loma êdî name ne hewce ne.",
           "explanationEn": "Now Grandma can talk with Hêlîn by video, so letters are no longer needed.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -508,7 +533,8 @@
           "correctIndex": 0,
           "explanation": "Dapîr dinivîse: “Roja înê, piştî nîvro, bi vîdeoyê telefonî min bike.”",
           "explanationEn": "Grandma writes: “On Friday, in the afternoon, call me by video.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "gist",
@@ -522,7 +548,8 @@
           "correctIndex": 1,
           "explanation": "Dapîr dixwaze bibêje ku êdî dikare bi vîdeoyê biaxive, û dixwaze ku Hêlîn roja înê telefonî wê bike.",
           "explanationEn": "Grandma wants to say that she can now talk by video, and she wants Hêlîn to call her on Friday.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -596,7 +623,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Êvareke zivistanê ye. Li derve berf dibare.”",
           "explanationEn": "The story says: “It is a winter evening. Outside, snow is falling.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -610,7 +638,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Zana diwanzdeh salî ye û bi dapîra xwe re li malê ye.”",
           "explanationEn": "The story says: “Zana is twelve years old and is at home with his grandmother.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -624,7 +653,8 @@
           "correctIndex": 0,
           "explanation": "Pêşî Zana nîskê di avê de dişo. Paşê pîvazê hûr dike û sor dike.",
           "explanationEn": "First Zana washes the lentils in water. Then he chops the onion and fries it.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -638,7 +668,8 @@
           "correctIndex": 1,
           "explanation": "Zana pîvazê hûr dike û çavên wî tije hêsir dibin. Dapîr dikene û dibêje: “Pîvaz her kesî digirîne.”",
           "explanationEn": "Zana is chopping an onion and his eyes fill with tears. Grandma laughs and says: “Onions make everyone cry.”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -652,7 +683,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Zana pîvazê di rûn de sor dike.”",
           "explanationEn": "The story says: “Zana fries the onion in the oil.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -666,7 +698,8 @@
           "correctIndex": 0,
           "explanation": "Beroş ew e ku şorbe tê de çêdibe. Zana rûn, pîvaz, nîsk û av dixe beroşê.",
           "explanationEn": "A “beroş” is what the soup is cooked in (a pot). Zana puts oil, onion, lentils and water into it.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -680,7 +713,8 @@
           "correctIndex": 2,
           "explanation": "Dapîr dibêje kevçiyek, lê Zana sê kevçî xwê dike nav.",
           "explanationEn": "Grandma says one spoonful, but Zana puts in three spoonfuls of salt.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -694,7 +728,8 @@
           "correctIndex": 2,
           "explanation": "Zana sê kevçî xwê dike nav şorbeyê, loma şorbe şor e: xwêya wê pir e.",
           "explanationEn": "Zana puts three spoonfuls of salt in the soup, so it is “şor”: it has too much salt in it.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -708,7 +743,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Ew du qedeh av û kulmek nîsk dixe beroşê.”",
           "explanationEn": "The story says: “She puts two glasses of water and a handful of lentils into the pot.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
         },
         {
           "kind": "inference",
@@ -722,7 +758,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Lê niha şorbe pir zêde ye!” Zana û Dapîr bi tenê nikarin hemû şorbeyê bixwin, loma ew cîranan vedixwînin.",
           "explanationEn": "The story says: “But now there is far too much soup!” Zana and Grandma can’t eat it all by themselves, so they invite the neighbours.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 5
         },
         {
           "kind": "detail",
@@ -736,7 +773,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Wê êvarê Xaltîka Gulê û zarokên wê jî tên.”",
           "explanationEn": "The story says: “That evening Aunt Gulê and her children come too.”",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -750,7 +788,8 @@
           "correctIndex": 2,
           "explanation": "Ew dibêje: “Zana, tu aşpêjekî baş î!” Ev tê wê wateyê ku şorbe xweş e.",
           "explanationEn": "She says: “Zana, you are a good cook!” That means the soup is good.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
         },
         {
           "kind": "gist",
@@ -764,7 +803,8 @@
           "correctIndex": 0,
           "explanation": "Zana şorbeyê pir şor dike, lê Dapîr bi av û nîskê wê xweş dike.",
           "explanationEn": "Zana makes the soup too salty, but Grandma fixes it with water and lentils.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -838,7 +878,8 @@
           "correctIndex": 1,
           "explanation": "Zîlan dibêje: “Ez dergevan im.”",
           "explanationEn": "Zîlan says: “I am the goalkeeper.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -852,7 +893,8 @@
           "correctIndex": 0,
           "explanation": "Zîlan dibêje: “Her êvar em zarokên taxê li wê kolanê futbol dilîzin.”",
           "explanationEn": "Zîlan says: “Every evening we, the children of the neighbourhood, play football in that street.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -866,7 +908,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Top di ser dîwar re firiya û ket baxçeyê Apê Mehmûd.”",
           "explanationEn": "The story says: “The ball flew over the wall and fell into Uncle Mehmûd’s garden.”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -880,7 +923,8 @@
           "correctIndex": 2,
           "explanation": "Top ket baxçeyê Apê Mehmûd, û zarok ji wî ditirsin.",
           "explanationEn": "The ball fell into Uncle Mehmûd’s garden, and the children are afraid of him.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 4
         },
         {
           "kind": "detail",
@@ -894,7 +938,8 @@
           "correctIndex": 0,
           "explanation": "Kesî nexwest biçe wir. Zîlanê got: “Ez ê biçim.” Paşê ew çû ber derî.",
           "explanationEn": "Nobody wanted to go there. Zîlan said: “I’ll go.” Then she went to the door.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         },
         {
           "kind": "vocabulary",
@@ -908,7 +953,8 @@
           "correctIndex": 1,
           "explanation": "Zîlan soz dide ku ew ê hişyar bin, da ku top dîsa nekeve baxçeyê wî.",
           "explanationEn": "Zîlan promises they will be careful, so that the ball won’t fall into his garden again.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -922,7 +968,8 @@
           "correctIndex": 2,
           "explanation": "Zîlan dibêje: “Ew li min nexeyidî.” Wî li topê nêrî û behsa ciwaniya xwe kir.",
           "explanationEn": "Zîlan says: “He didn’t get angry with me.” He looked at the ball and talked about his youth.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 4
         },
         {
           "kind": "detail",
@@ -936,7 +983,8 @@
           "correctIndex": 0,
           "explanation": "Wî got: “Ez dergevanê herî baş ê gund bûm!”",
           "explanationEn": "He said: “I was the best goalkeeper in the village!”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 6
         },
         {
           "kind": "sequence",
@@ -950,7 +998,8 @@
           "correctIndex": 1,
           "explanation": "Zîlan dibêje: “Wî nîşanî me da ka dergevan çawa disekine û çawa topê digire.”",
           "explanationEn": "Zîlan says: “He showed us how a goalkeeper stands and how he catches the ball.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -964,7 +1013,8 @@
           "correctIndex": 0,
           "explanation": "Ecêbmayî yanî gelek şaş mayî. Zarokan bawer nedikir ku Apê Mehmûd wisa ye.",
           "explanationEn": "“Ecêbmayî” means very surprised. The children couldn’t believe Uncle Mehmûd was like that.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -978,7 +1028,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Wê êvarê Apê Mehmûd bû dadwer.”",
           "explanationEn": "The story says: “That evening Uncle Mehmûd became the referee.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -992,7 +1043,8 @@
           "correctIndex": 1,
           "explanation": "Zîlan dibêje: “Azad dîsa bi hêz li topê xist, lê vê carê min top girt!”",
           "explanationEn": "Zîlan says: “Azad kicked the ball hard again, but this time I caught it!”",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -1006,7 +1058,8 @@
           "correctIndex": 1,
           "explanation": "Berê kesî kenê wî nedîtibû. Wê êvarê ew cara yekem li ber zarokan kenî.",
           "explanationEn": "Nobody had ever seen him laugh before. That evening he laughed in front of the children for the first time.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
         },
         {
           "kind": "gist",
@@ -1020,7 +1073,8 @@
           "correctIndex": 1,
           "explanation": "Ji ber topê Zîlan diçe ba Apê Mehmûd. Ew ne ewqas hişk derdikeve û dibe hevalê zarokan.",
           "explanationEn": "Because of the ball Zîlan goes to Uncle Mehmûd. He turns out not to be so stern, and becomes the children’s friend.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -1094,7 +1148,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Wê kirasê xwe yê nû û kesk li xwe kir.”",
           "explanationEn": "The story says: “She put on her new green dress.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1108,7 +1163,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan.”",
           "explanationEn": "The story says: “The family wanted to go for a seyran that day, to Flower Hill.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
         },
         {
           "kind": "vocabulary",
@@ -1122,7 +1178,8 @@
           "correctIndex": 1,
           "explanation": "Seyran yanî derketina derve, li xwezayê. Malbatê dixwest biçe Girê Kulîlkan, nêzî bajêr.",
           "explanationEn": "A “seyran” is an outing into nature. The family wanted to go to Flower Hill, near the town.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1136,7 +1193,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Baran dibariya û ewr reş bûn.”",
           "explanationEn": "The story says: “Rain was falling and the clouds were dark.”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -1150,7 +1208,8 @@
           "correctIndex": 2,
           "explanation": "Baran dibariya, û wê got: “Êdî em naçin seyranê!”",
           "explanationEn": "It was raining, and she said: “Now we won’t go on our outing!”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -1164,7 +1223,8 @@
           "correctIndex": 1,
           "explanation": "Baran dibariya û Berfîn xemgîn bû. Bapîr dizane ku baran dê bisekine, loma dibêje: “Heta nîvro bisekine.”",
           "explanationEn": "It was raining and Berfîn was sad. Grandpa knows the rain will stop, so he says: “Wait until noon.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 3
         },
         {
           "kind": "vocabulary",
@@ -1178,7 +1238,8 @@
           "correctIndex": 1,
           "explanation": "Bapîr got: “Heta nîvro bisekine.” Nêzî nîvro baran sekinî. Gotina wî rast bû.",
           "explanationEn": "Grandpa said: “Wait until noon.” Around noon the rain stopped. What he said was right.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "sequence",
@@ -1192,7 +1253,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Wan bi lez çay û xwarin hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan.”",
           "explanationEn": "The story says: “They quickly packed tea and food. Then they all went to Flower Hill together.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1206,7 +1268,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Kulîlkên zer û sor vebûbûn.”",
           "explanationEn": "The story says: “Yellow and red flowers had opened.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1220,7 +1283,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Hinekan def û zirne lêdixistin, hinekan jî govend digirt.”",
           "explanationEn": "The story says: “Some were playing the drum and zurna, and some were dancing the govend.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1234,7 +1298,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Berfînê destê Bapîrê xwe girt û herdu ketin nav govendê.”",
           "explanationEn": "The story says: “Berfîn took her grandfather’s hand and the two of them joined the dance.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 4
         },
         {
           "kind": "detail",
@@ -1248,7 +1313,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Ciwanan yek bi yek xwe di ser agir re avêt.” Berfîn û Bapîr li ber agir rûniştin.",
           "explanationEn": "The story says: “One by one the young people jumped over the fire.” Berfîn and Grandpa sat by the fire.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1262,7 +1328,8 @@
           "correctIndex": 0,
           "explanation": "Berfînê got: “Bapîro, te rast got. Baran bereket e!”",
           "explanationEn": "Berfîn said: “Grandpa, you were right. Rain is a blessing!”",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 4
         },
         {
           "kind": "gist",
@@ -1276,7 +1343,8 @@
           "correctIndex": 2,
           "explanation": "Sibehê baran dibare û Berfîn xemgîn e. Paşê roj derdikeve û malbat Newrozê li Girê Kulîlkan pîroz dike.",
           "explanationEn": "In the morning it rains and Berfîn is sad. Then the sun comes out and the family celebrates Newroz on Flower Hill.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -1350,7 +1418,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Dilan sêzdeh salî bû, birayê wê Rênas jî heft salî.”",
           "explanationEn": "The story says: “Dilan was thirteen, and her brother Rênas seven.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1364,7 +1433,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje ku dapîra wan her havîn nanê tenûrê ji wan re çêdikir.",
           "explanationEn": "The story says that every summer their grandmother baked tandoor bread for them.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
         },
         {
           "kind": "inference",
@@ -1378,7 +1448,8 @@
           "correctIndex": 1,
           "explanation": "Rê dirêj bû û Rênas dixwest zû bigihîje mala dapîrê, loma dîsa û dîsa dipirsî.",
           "explanationEn": "The road was long and Rênas wanted to reach Grandma’s house soon, so he kept asking.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
         },
         {
           "kind": "vocabulary",
@@ -1392,7 +1463,8 @@
           "correctIndex": 2,
           "explanation": "Ajovan ew kes e ku otobûsê dajo. Gava otobûs sekinî, ew daket û li motorê nêrî.",
           "explanationEn": "The “ajovan” is the person who drives the bus. When the bus stopped, he got out and looked at the engine.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1406,7 +1478,8 @@
           "correctIndex": 0,
           "explanation": "Wî got: “Motor xera bûye.”",
           "explanationEn": "He said: “The engine has broken down.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 3
         },
         {
           "kind": "inference",
@@ -1420,7 +1493,8 @@
           "correctIndex": 1,
           "explanation": "Dilan jî xemgîn bû, lê wê destê birayê xwe girt û got: “Netirse, em ê rêyekê bibînin.”",
           "explanationEn": "Dilan was upset too, but she took her brother’s hand and said: “Don’t be afraid, we’ll find a way.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1434,7 +1508,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Şivanekî pîr bi kerê xwe re hat ba wan. Navê wî Apê Xelîl bû.”",
           "explanationEn": "The story says: “An old shepherd came up to them with his donkey. His name was Uncle Xelîl.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1448,7 +1523,8 @@
           "correctIndex": 0,
           "explanation": "Wî got: “Gund ne dûr e, bi peyatî saetek e.”",
           "explanationEn": "He said: “The village isn’t far, it’s an hour on foot.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 5
         },
         {
           "kind": "detail",
@@ -1462,7 +1538,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Apê Xelîl navên kulîlk û çivîkan ji zarokan re digotin.”",
           "explanationEn": "The story says: “Uncle Xelîl told the children the names of the flowers and birds.”",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
         },
         {
           "kind": "vocabulary",
@@ -1476,7 +1553,8 @@
           "correctIndex": 0,
           "explanation": "Westiyayî yanî kesê ku piştî karekî dirêj hêza wî kêm bûye. Ew gelek meşiyabûn.",
           "explanationEn": "“Westiyayî” means someone whose strength is low after a long effort: tired. They had walked a lot.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 5
         },
         {
           "kind": "sequence",
@@ -1490,7 +1568,8 @@
           "correctIndex": 1,
           "explanation": "Pêşî otobûs sekinî. Paşê Rênas siwarî kerê Apê Xelîl bû. Di dawiyê de Dapîrê ew hembêz kirin.",
           "explanationEn": "First the bus stopped. Then Rênas rode Uncle Xelîl’s donkey. At the end Grandma hugged them.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1504,7 +1583,8 @@
           "correctIndex": 1,
           "explanation": "Wê got: “Ez ji nîvro ve li benda we me!”",
           "explanationEn": "She said: “I’ve been waiting for you since noon!”",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -1518,7 +1598,8 @@
           "correctIndex": 2,
           "explanation": "Rênas got: “Otobûs xera bû, lê kerê Apê Xelîl xera nebû!” Ev henekekî xweş bû.",
           "explanationEn": "Rênas said: “The bus broke down, but Uncle Xelîl’s donkey didn’t!” It was a funny joke.",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1532,7 +1613,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Wê şevê wan nanê germ bi penîr û hingiv xwar.”",
           "explanationEn": "The story says: “That night they ate the warm bread with cheese and honey.”",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 3
         },
         {
           "kind": "gist",
@@ -1546,7 +1628,8 @@
           "correctIndex": 0,
           "explanation": "Otobûs xera dibe, lê Apê Xelîl alîkariya wan dike û ew bi şahî digihîjin mala dapîrê.",
           "explanationEn": "The bus breaks down, but Uncle Xelîl helps them and they reach Grandma’s house happily.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     },
@@ -1620,7 +1703,8 @@
           "correctIndex": 1,
           "explanation": "Çîrok dibêje: “Hirç mezin û bi hêz bû …”",
           "explanationEn": "The story says: “The bear was big and strong …”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -1634,7 +1718,8 @@
           "correctIndex": 0,
           "explanation": "Jîr yanî bi aqil. Rovî ne bi hêz bû, lê bi aqilê xwe hirç xapand.",
           "explanationEn": "“Jîr” means clever. The fox was not strong, but he tricked the bear with his wits.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1648,7 +1733,8 @@
           "correctIndex": 1,
           "explanation": "Rovî got: “Were em bi hev re zeviyekê biçînin.”",
           "explanationEn": "The fox said: “Come, let’s sow a field together.”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1662,7 +1748,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Wê salê wan kartol çandin.”",
           "explanationEn": "The story says: “That year they planted potatoes.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -1676,7 +1763,8 @@
           "correctIndex": 0,
           "explanation": "Hirçê li zeviyê nêrî. Pel mezin û kesk bûn, loma wê ew hilbijartin.",
           "explanationEn": "The bear looked at the field. The leaves were big and green, so she chose them.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1690,7 +1778,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Pel tal bûn û nedihatin xwarin.”",
           "explanationEn": "The story says: “The leaves were bitter and could not be eaten.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -1704,7 +1793,8 @@
           "correctIndex": 1,
           "explanation": "“Bi ser çavan” yanî “bi kêfxweşî, erê”. Rovî bi dilxweşî qebûl kir.",
           "explanationEn": "“Bi ser çavan” means “gladly, yes”. The fox happily agreed.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1718,7 +1808,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Havînê hirçê kokên genim birin.”",
           "explanationEn": "The story says: “In summer the bear took the roots of the wheat.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 4
         },
         {
           "kind": "inference",
@@ -1732,7 +1823,8 @@
           "correctIndex": 1,
           "explanation": "Na. Hirçê got: “Te ez du caran xapandim!” Rovî para baş ji xwe re hilda.",
           "explanationEn": "No. The bear said: “You have tricked me twice!” The fox kept the good share for himself.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1746,7 +1838,8 @@
           "correctIndex": 2,
           "explanation": "Wê got: “Sala bê ez hem yên jor hem yên jêr dixwazim!”",
           "explanationEn": "She said: “Next year I want both the top and the bottom!”",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -1760,7 +1853,8 @@
           "correctIndex": 0,
           "explanation": "Sala yekem kartol, sala duyem genim, sala sêyem garis.",
           "explanationEn": "The first year potatoes, the second year wheat, the third year maize.",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -1774,7 +1868,8 @@
           "correctIndex": 1,
           "explanation": "Rovî navîn ji xwe re xwest, û simbilên mezin û şîrîn di navînê de bûn.",
           "explanationEn": "The fox had asked for the middle, and the big, sweet ears were in the middle.",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1788,7 +1883,8 @@
           "correctIndex": 0,
           "explanation": "Çîrok dibêje: “Vê carê hirç nexeyidî. Ew rûnişt û kenî.”",
           "explanationEn": "The story says: “This time the bear didn’t get angry. She sat down and laughed.”",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -1802,7 +1898,8 @@
           "correctIndex": 1,
           "explanation": "Hirçê got: “Bêyî min, zeviya te tune.” Rovî fêm kir ku ew hewceyî hev in.",
           "explanationEn": "The bear said: “Without me, you have no field.” The fox understood that they need each other.",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1816,7 +1913,8 @@
           "correctIndex": 2,
           "explanation": "Çîrok dibêje: “Her payîz wan berhem nîv bi nîv parve dikir.”",
           "explanationEn": "The story says: “Every autumn they shared the harvest half and half.”",
-          "evidenceParagraph": 8
+          "evidenceParagraph": 8,
+          "evidenceSentence": 1
         },
         {
           "kind": "gist",
@@ -1830,7 +1928,8 @@
           "correctIndex": 0,
           "explanation": "Rovî çend caran hirç xapand, lê di dawiyê de herduyan fêm kir ku kar bi hev re û bi dadî baştir e.",
           "explanationEn": "The fox tricked the bear several times, but in the end both understood that working together fairly is better.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         }
       ]
     }

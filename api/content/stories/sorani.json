@@ -46,7 +46,8 @@
           "correctIndex": 1,
           "explanation": "هەموو خێزانەکە بەدوای کلیلی ماڵەوەدا دەگەڕێن، تا دەردەکەوێت کە لای ژینۆیە.",
           "explanationEn": "The whole family looks for the house key until it turns out that Jîno has it.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -60,7 +61,8 @@
           "correctIndex": 1,
           "explanation": "چیرۆکەکە دەڵێت: «کاتژمێر حەوت و نیوە.»",
           "explanationEn": "The story says: “It is half past seven.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -73,7 +75,8 @@
           "correctIndex": 0,
           "explanation": "ڕاستە. دایکی لە پەلەدایە، چونکە دەبێت بچێتە سەر کار.",
           "explanationEn": "True. She is in a hurry because she has to go to work.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -87,7 +90,8 @@
           "correctIndex": 0,
           "explanation": "ژینۆ پێدەکەنێت و کلیلەکە لە دەستیدایە.",
           "explanationEn": "Jîno laughs, and the key is in her hand.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -101,7 +105,8 @@
           "correctIndex": 2,
           "explanation": "ژینۆ دەڵێت: «ئەمە هی منە! یاری پێ دەکەم.»",
           "explanationEn": "Jîno says: “It’s mine! I’m playing with it.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 4
         },
         {
           "kind": "vocabulary",
@@ -115,7 +120,8 @@
           "correctIndex": 0,
           "explanation": "بەدوای شتێکدا گەڕان واتە هەوڵدان بۆ دۆزینەوەی. بۆیە سەیری سەر مێزەکە و ناو جانتاکە دەکەن.",
           "explanationEn": "To look for something means to try to find it. That is why they check the table and the bag.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "sequence",
@@ -129,7 +135,8 @@
           "correctIndex": 2,
           "explanation": "لە کۆتاییدا دایکی کلیلەکە لە تەنیشت دەرگاکە هەڵدەواسێت.",
           "explanationEn": "At the end, the mother hangs the key up next to the door.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -143,7 +150,8 @@
           "correctIndex": 0,
           "explanation": "دایکی پێدەکەنێت و ماچی ژینۆ دەکات، کەواتە توڕە نییە و دڵخۆشە.",
           "explanationEn": "She laughs and kisses Jîno, so she is not angry but happy.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
         }
       ]
     },
@@ -205,7 +213,8 @@
           "correctIndex": 2,
           "explanation": "ئاراس هەر ئەو ڕۆژە پارەکەی گەڕاندەوە و وەستا کەریم پێی وت کوڕێکی ڕاستگۆیە.",
           "explanationEn": "Aras paid the money back that same day, and Westa Kerîm told him he was an honest boy.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -219,7 +228,8 @@
           "correctIndex": 2,
           "explanation": "ئاراس دەڵێت: «تەمەنم نۆ ساڵە.»",
           "explanationEn": "Aras says: “I am nine years old.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -233,7 +243,8 @@
           "correctIndex": 0,
           "explanation": "وەستا کەریم پێنج نانی خستە ناو کیسەیەکەوە.",
           "explanationEn": "Westa Kerîm put five loaves in a bag.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -247,7 +258,8 @@
           "correctIndex": 1,
           "explanation": "«بۆنخۆش» واتە بۆنێکی خۆشی هەیە، وەک نانی تازە.",
           "explanationEn": "«بۆنخۆش» means it smells good, like fresh bread.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -260,7 +272,8 @@
           "correctIndex": 1,
           "explanation": "هەڵەیە. ئاراس پارەکەی لە ماڵەوە بەجێ هێشتبوو.",
           "explanationEn": "False. Aras had left the money at home.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -274,7 +287,8 @@
           "correctIndex": 1,
           "explanation": "وەستا کەریم وتی: «نانەکە ببە و پارەکە سبەینێ بهێنە.»",
           "explanationEn": "Westa Kerîm said: “Take the bread and bring the money tomorrow.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
         },
         {
           "kind": "sequence",
@@ -288,7 +302,8 @@
           "correctIndex": 0,
           "explanation": "وەستا کەریم نانەکانی خستە ناو کیسەیەکەوە و دایە دەستی ئاراس. پاشان ئاراس دەستی کردە گیرفانی.",
           "explanationEn": "Westa Kerîm put the loaves in a bag and handed it to Aras. Then Aras put his hand in his pocket.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -302,7 +317,8 @@
           "correctIndex": 0,
           "explanation": "وەستا کەریم پێی وابوو ئاراس سبەینێ پارەکە دەهێنێت، بەڵام ئاراس هەر ئەو نیوەڕۆیە هێنایەوە.",
           "explanationEn": "Westa Kerîm expected the money the next day, but Aras brought it back that same noon.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         }
       ]
     },
@@ -358,7 +374,8 @@
           "correctIndex": 0,
           "explanation": "نووسەر لە ڕۆژی یەکەمدا تەنیا بوو، بەڵام شیلان هاتە لای و بوون بە هاوڕێ.",
           "explanationEn": "The writer was alone on the first day, but Shîlan came over and they became friends.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -372,7 +389,8 @@
           "correctIndex": 2,
           "explanation": "نووسەر دەڵێت: «یەکەم ڕۆژم بوو لە قوتابخانە نوێیەکەم لە هەولێر.»",
           "explanationEn": "The writer says: “It was my first day at my new school in Hewlêr (Erbil).”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -386,7 +404,8 @@
           "correctIndex": 1,
           "explanation": "نووسەر کەسی نەدەناسی، بۆیە نیگەران بوو و دەترسا.",
           "explanationEn": "The writer didn’t know anyone, so felt worried and afraid.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -400,7 +419,8 @@
           "correctIndex": 1,
           "explanation": "نووسەر دەڵێت: «ساندویچەکەم لە ماڵەوە بەجێ مابوو، بۆیە زۆر برسی بووم.»",
           "explanationEn": "The writer says: “My sandwich had been left at home, so I was very hungry.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -414,7 +434,8 @@
           "correctIndex": 0,
           "explanation": "شیلان ساندویچەکەی خۆی کردە دوو بەش و بەشێکی دایە نووسەر.",
           "explanationEn": "Shîlan split her own sandwich in two and gave one part to the writer.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -428,7 +449,8 @@
           "correctIndex": 1,
           "explanation": "شیلان وتی کە پار ئەویش قوتابیی نوێ بووە و هیچ هاوڕێیەکی نەبووە، بۆیە ئەو هەستە دەناسێت.",
           "explanationEn": "Shîlan said she was a new student herself last year and had no friends, so she knows that feeling.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
         },
         {
           "kind": "sequence",
@@ -442,7 +464,8 @@
           "correctIndex": 0,
           "explanation": "دوای پشووەکە، لە پۆلدا لە تەنیشت یەکتر دانیشتن.",
           "explanationEn": "After the break, they sat next to each other in class.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -456,7 +479,8 @@
           "correctIndex": 2,
           "explanation": "نووسەر دەڵێت سبەینێ دوو ساندویچ دەبات: یەکێک بۆ خۆی و یەکێک بۆ شیلان.",
           "explanationEn": "The writer will take two sandwiches tomorrow: one for the writer and one for Shîlan.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 0
         }
       ]
     },
@@ -530,7 +554,8 @@
           "correctIndex": 2,
           "explanation": "داپیرە هەنگاو بە هەنگاو هێرۆی فێر کرد و لە کۆتاییدا خاڵی وتی ئەمە خۆشترین دۆڵمەیە کە تا ئێستا خواردوویەتی.",
           "explanationEn": "Grandmother taught Hêro step by step, and in the end her uncle said it was the best dolma he had ever eaten.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -544,7 +569,8 @@
           "correctIndex": 2,
           "explanation": "لە سەرەتادا هاتووە کە خاڵی هێرۆ و ژن و منداڵەکانی دەهاتنە ماڵیان.",
           "explanationEn": "At the start we read that Hêro’s uncle (her mother’s brother) and his wife and children were coming.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -558,7 +584,8 @@
           "correctIndex": 2,
           "explanation": "داپیرە سەیری دۆڵابەکەی کرد: گەڵای مێو هەبوو، بەڵام برنج نەمابوو.",
           "explanationEn": "Grandmother looked in the cupboard: there were vine leaves, but no rice was left.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -572,7 +599,8 @@
           "correctIndex": 0,
           "explanation": "چیرۆکەکە دەڵێت: «پوورە زێڕین دراوسێیان بوو.» «پوورە» لێرەدا وشەیەکی ڕێزە بۆ ژنێکی بەتەمەن.",
           "explanationEn": "The story says: “Pûre Zêrîn was their neighbour.” Here «پوورە» (auntie) is a respectful way to address an older woman.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 4
         },
         {
           "kind": "detail",
@@ -586,7 +614,8 @@
           "correctIndex": 0,
           "explanation": "پوورە زێڕین وتی: «ئەگەر قاپێکم بۆ بهێنیت، زۆر دڵخۆش دەبم!»",
           "explanationEn": "Pûre Zêrîn said: “If you bring me a plate, I’ll be very happy!”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -600,7 +629,8 @@
           "correctIndex": 1,
           "explanation": "«خەمت نەبێت» واتە نیگەران مەبە. هێرۆ دەیەوێت داپیرەی دڵنیا بکاتەوە کە خۆی کێشەکە چارە دەکات.",
           "explanationEn": "«خەمت نەبێت» means don’t worry. Hêro wants to reassure her grandmother that she will sort the problem out herself.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -614,7 +644,8 @@
           "correctIndex": 1,
           "explanation": "یەکەم جار گەڵاکانیان شوشت، پاشان برنجەکەیان تێکەڵ کرد، ئینجا هێرۆ گەڵاکانی پێچایەوە.",
           "explanationEn": "First they washed the leaves, then they mixed the rice, and then Hêro rolled the leaves.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -628,7 +659,8 @@
           "correctIndex": 2,
           "explanation": "برنجەکەیان لەگەڵ تەماتە و پیاز و خوێ و ڕۆن تێکەڵ کرد.",
           "explanationEn": "They mixed the rice with tomato, onion, salt and oil.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "vocabulary",
@@ -642,7 +674,8 @@
           "correctIndex": 1,
           "explanation": "سەرەتا گەڵاکان لە دەستی هێرۆدا پارچە پارچە دەبوون، چونکە هێشتا فێر نەبووبوو.",
           "explanationEn": "At first the leaves were tearing apart in Hêro’s hands, because she had not learned how yet.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -656,7 +689,8 @@
           "correctIndex": 0,
           "explanation": "داپیرە پێی وت: «زۆر برنج مەخەرە ناوی.» کەواتە هێرۆ برنجی زۆری دەخستە ناو گەڵاکان.",
           "explanationEn": "Grandmother told her: “Don’t put too much rice in it.” So Hêro was putting too much rice in the leaves.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -670,7 +704,8 @@
           "correctIndex": 1,
           "explanation": "مەنجەڵەکە یەک کاتژمێر لەسەر ئاگر مایەوە.",
           "explanationEn": "The pot stayed on the fire for one hour.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -683,7 +718,8 @@
           "correctIndex": 1,
           "explanation": "هەڵەیە. داپیرە وتی: «ئەمجارە هێرۆ دروستی کردووە.»",
           "explanationEn": "False. Grandmother said: “This time Hêro made it.”",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -697,7 +733,8 @@
           "correctIndex": 0,
           "explanation": "کاتێک پوورە زێڕین برنجەکەی دا، داوای قاپێک دۆڵمەی کرد و هێرۆ بەڵێنی پێدا.",
           "explanationEn": "When Pûre Zêrîn gave her the rice, she asked for a plate of dolma, and Hêro promised her one.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         }
       ]
     },
@@ -765,7 +802,8 @@
           "correctIndex": 0,
           "explanation": "تۆپێک کە کەوتە ناو باخچەکەی، مام ڕەحیمی کرد بە ڕاهێنەر و هاوڕێی منداڵەکان.",
           "explanationEn": "A ball that landed in his garden made Mam Rehîm the children’s coach and friend.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -779,7 +817,8 @@
           "correctIndex": 1,
           "explanation": "چیرۆکەکە دەڵێت: هەموو هەینییەک، دوای نیوەڕۆ، تۆپی پێ دەکەن.",
           "explanationEn": "The story says they play every Friday afternoon.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -793,7 +832,8 @@
           "correctIndex": 1,
           "explanation": "چیرۆکەکە دەڵێت: «دوو بەرد گۆڵی هەر تیمێکن.»",
           "explanationEn": "The story says: “Two stones are each team’s goal.”",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -807,7 +847,8 @@
           "correctIndex": 2,
           "explanation": "ئەنجامەکە دوو بە دوو بوو و تەنیا یەک خولەک مابوو.",
           "explanationEn": "The score was two–two, with only one minute left.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -821,7 +862,8 @@
           "correctIndex": 0,
           "explanation": "سامان تۆپەکەی بە هەموو هێزی خۆیەوە بەرەو گۆڵەکەی نارین لێدا.",
           "explanationEn": "Saman kicked the ball with all his strength towards Narîn’s goal.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -835,7 +877,8 @@
           "correctIndex": 2,
           "explanation": "مام ڕەحیم پیاوێکی پیر بوو و بە تەنیا دەژیا.",
           "explanationEn": "Mam Rehîm was an old man who lived alone.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "inference",
@@ -849,7 +892,8 @@
           "correctIndex": 0,
           "explanation": "مام ڕەحیم کەم قسەی دەکرد و منداڵەکان کەمێک لێی دەترسان.",
           "explanationEn": "Mam Rehîm rarely spoke, and the children were a little afraid of him.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -863,7 +907,8 @@
           "correctIndex": 2,
           "explanation": "نارین وتی: «تۆپەکە هی ئێمەیە، کەواتە دەبێت خۆمان بیهێنینەوە.»",
           "explanationEn": "Narîn said: “The ball is ours, so we have to fetch it ourselves.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -877,7 +922,8 @@
           "correctIndex": 2,
           "explanation": "زەردەخەنە پێکەنینێکی نەرم و بێدەنگە.",
           "explanationEn": "A «زەردەخەنە» (a smile) is a soft, silent laugh.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -891,7 +937,8 @@
           "correctIndex": 1,
           "explanation": "مام ڕەحیم وتی: «تۆ زۆر لە گۆڵەکەت دوور وەستابوویت، بۆیە نەتتوانی بیگریت.»",
           "explanationEn": "He said: “You stood too far from your goal, so you couldn’t catch it.”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
         },
         {
           "kind": "inference",
@@ -905,7 +952,8 @@
           "correctIndex": 0,
           "explanation": "مام ڕەحیم وتی هەموو هەینییەک لە پەنجەرەکەوە سەیری یارییەکەیان دەکات، بۆیە لێدانەکەی بینیبوو.",
           "explanationEn": "Mam Rehîm said he watches their game from his window every Friday, so he had seen the shot.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -919,7 +967,8 @@
           "correctIndex": 0,
           "explanation": "«بێدەنگ بوون» واتە هیچ کەسێک قسەی نەکرد و هیچ دەنگێک نەهات.",
           "explanationEn": "«بێدەنگ بوون» means nobody said a word and there was no sound at all.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -933,7 +982,8 @@
           "correctIndex": 1,
           "explanation": "مام ڕەحیم وتی: «پێش چل ساڵ، من گۆڵپارێزی یانەی شار بووم.»",
           "explanationEn": "He said: “Forty years ago, I was the goalkeeper of the city club.”",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
         },
         {
           "kind": "sequence",
@@ -947,7 +997,8 @@
           "correctIndex": 2,
           "explanation": "تا ئێوارە لە تەنیشت زەوییەکە دانیشت و فێری کردن چۆن تۆپ بگرن.",
           "explanationEn": "He sat by the field until evening and taught them how to catch the ball.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -961,7 +1012,8 @@
           "correctIndex": 1,
           "explanation": "ئێستا پێی دەڵێن «ڕاهێنەرەکەمان»، ئیتر لێی ناترسن.",
           "explanationEn": "Now they call him “our coach”; they are no longer afraid of him.",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 1
         }
       ]
     },
@@ -1035,7 +1087,8 @@
           "correctIndex": 0,
           "explanation": "کراسەکەی ڕۆژان بۆی کورت بوو، بۆیە کراسە کۆنەکەی داپیرەی بۆ نەورۆز لەبەر کرد.",
           "explanationEn": "Rojan’s dress was too short for her, so she wore her grandmother’s old dress for Newroz.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -1049,7 +1102,8 @@
           "correctIndex": 2,
           "explanation": "ماڵی ڕۆژان بڕیاریان دابوو بەیانی بچن بۆ سەیران لە دەرەوەی شار.",
           "explanationEn": "Rojan’s family had decided to go on a picnic outside the city in the morning.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1063,7 +1117,8 @@
           "correctIndex": 1,
           "explanation": "کراسەکە بۆی زۆر کورت بوو، چونکە ڕۆژان لە ساڵی ڕابردووەوە گەورەتر بووبوو.",
           "explanationEn": "The dress was too short for her, because Rojan had grown since last year.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1077,7 +1132,8 @@
           "correctIndex": 0,
           "explanation": "ڕۆژان وتی: «هەموو دووکانەکان داخراون.»",
           "explanationEn": "Rojan said: “All the shops are closed.”",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 3
         },
         {
           "kind": "vocabulary",
@@ -1091,7 +1147,8 @@
           "correctIndex": 2,
           "explanation": "«چاوەکانی پڕ بوون لە فرمێسک» واتە خەریک بوو بگری.",
           "explanationEn": "“Her eyes filled with tears” means she was about to cry.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1105,7 +1162,8 @@
           "correctIndex": 1,
           "explanation": "داپیرە سندووقێکی کۆنی کردەوە و کراسە سوورەکەی لێ دەرهێنا.",
           "explanationEn": "Grandmother opened an old chest and took the red dress out of it.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1119,7 +1177,8 @@
           "correctIndex": 0,
           "explanation": "داپیرە وتی: «ئەمە کراسی نەورۆزی خۆم بوو، کاتێک هاوتەمەنی تۆ بووم.»",
           "explanationEn": "Grandmother said: “This was my own Newroz dress when I was your age.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1133,7 +1192,8 @@
           "correctIndex": 1,
           "explanation": "داپیرە و دایکی ڕۆژان تا درەنگانی شەو بە دەرزی و دەزوو بچووکیان کردەوە.",
           "explanationEn": "Grandmother and Rojan’s mother took it in with needle and thread until late at night.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 1
         },
         {
           "kind": "sequence",
@@ -1147,7 +1207,8 @@
           "correctIndex": 2,
           "explanation": "ڕۆژان لە پەنجەرەکەوە سەیری ئاگرەکانی نەورۆزی دەکرد.",
           "explanationEn": "Rojan was watching the Newroz fires from the window.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 2
         },
         {
           "kind": "vocabulary",
@@ -1161,7 +1222,8 @@
           "correctIndex": 0,
           "explanation": "واتە کراسەکە نە گەورە بوو و نە بچووک، ڕێک بە قەبارەی ڕۆژان بوو.",
           "explanationEn": "It means the dress was neither too big nor too small: it fitted Rojan exactly.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1175,7 +1237,8 @@
           "correctIndex": 0,
           "explanation": "ژنە پیرەکە پرسی: «ئەم کراسە جوانەت لە کوێ کڕیوە؟»",
           "explanationEn": "The old woman asked: “Where did you buy this beautiful dress?”",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 3
         },
         {
           "kind": "sequence",
@@ -1189,7 +1252,8 @@
           "correctIndex": 2,
           "explanation": "لە کۆتاییدا ڕۆژان دەستی داپیرەی گرت و پێکەوە چوونە ناو هەڵپەڕکێکەوە.",
           "explanationEn": "At the end, Rojan took her grandmother’s hand and they joined the dance together.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -1203,7 +1267,8 @@
           "correctIndex": 1,
           "explanation": "کراسەکە تەمەنی پەنجا ساڵ بوو، بۆیە شێوازەکەی کۆن بوو.",
           "explanationEn": "The dress was fifty years old, so it was an old style.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         }
       ]
     },
@@ -1277,7 +1342,8 @@
           "correctIndex": 0,
           "explanation": "ڕێوی شیرەکەی پیرێژنی خواردەوە، بەڵام بە ماندوویی شیری بۆ هێنایەوە و بەڵێنەکەی بەجێ هێنا.",
           "explanationEn": "The fox drank the old woman’s milk, but worked hard to bring milk back and kept his promise.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -1291,7 +1357,8 @@
           "correctIndex": 0,
           "explanation": "شیرەکەی لە مەنجەڵێکدا لەبەر دەرگاکە دادەنا تا سارد بێتەوە.",
           "explanationEn": "She put the milk in a pot in front of the door to cool.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 2
         },
         {
           "kind": "detail",
@@ -1305,7 +1372,8 @@
           "correctIndex": 0,
           "explanation": "ڕۆژێک پیرێژن چوو دار کۆ بکاتەوە.",
           "explanationEn": "One day the old woman went out to gather firewood.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1319,7 +1387,8 @@
           "correctIndex": 1,
           "explanation": "پیرێژن خێرا کلکی ڕێوییەکەی گرت.",
           "explanationEn": "The old woman quickly grabbed the fox by the tail.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
@@ -1333,7 +1402,8 @@
           "correctIndex": 2,
           "explanation": "پیرێژن ویستی ڕێوی بگەڕێتەوە: ئەگەر نەگەڕێتەوە، هەموو گیانلەبەران دەزانن کە بەڵێنی خۆی بەجێ ناهێنێت.",
           "explanationEn": "She wanted the fox to come back: if he didn’t, all the animals would know that he doesn’t keep his word.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 4
         },
         {
           "kind": "sequence",
@@ -1347,7 +1417,8 @@
           "correctIndex": 2,
           "explanation": "ڕێوی سەرەتا ڕایکرد بۆ لای مانگا ڕەشەکەی سەر گردەکە، پاشان چووە لای مێرگەکە.",
           "explanationEn": "The fox first ran to the black cow on the hill, and only then to the meadow.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1361,7 +1432,8 @@
           "correctIndex": 1,
           "explanation": "مانگاکە وتی: «ئەگەر گیای سەوزم بۆ بهێنیت، شیرت پێ دەدەم.»",
           "explanationEn": "The cow said: “If you bring me green grass, I’ll give you milk.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "vocabulary",
@@ -1375,7 +1447,8 @@
           "correctIndex": 1,
           "explanation": "«تینوو» واتە پێویستت بە ئاو هەیە. بۆیە مێرگەکە داوای ئاوی کرد.",
           "explanationEn": "«تینوو» means thirsty, in need of water. That is why the meadow asked for water.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1389,7 +1462,8 @@
           "correctIndex": 2,
           "explanation": "ڕێوی بینی بەردێکی گەورە کەوتووەتە سەر دەمی کانییەکە.",
           "explanationEn": "The fox saw that a big stone had fallen onto the mouth of the spring.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1403,7 +1477,8 @@
           "correctIndex": 0,
           "explanation": "شوانەکە وتی: «بەرخێکم ون کردووە.»",
           "explanationEn": "The shepherd said: “I have lost a lamb.”",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -1417,7 +1492,8 @@
           "correctIndex": 0,
           "explanation": "ڕێوی هەموو شوێنێکی شاراوەی دۆڵەکەی دەناسی، بۆیە زوو بەرخەکەی دۆزییەوە.",
           "explanationEn": "The fox knew every hidden corner of the valley, so he found the lamb quickly.",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1431,7 +1507,8 @@
           "correctIndex": 2,
           "explanation": "ڕێوی نەیتوانی، بەڵام شوانەکە بە گۆچانەکەی بەردەکەی لابرد.",
           "explanationEn": "The fox couldn’t, but the shepherd moved the stone with his staff.",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 3
         },
         {
           "kind": "sequence",
@@ -1445,7 +1522,8 @@
           "correctIndex": 1,
           "explanation": "ئاو بە خوڕ هاتە خوارەوە و مێرگەکە سەوز بووەوە. دۆزینەوەی بەرخەکە و لابردنی بەردەکە پێشتر ڕوویان دابوو.",
           "explanationEn": "The water gushed down and the meadow turned green. Finding the lamb and moving the stone had happened before that.",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 0
         },
         {
           "kind": "inference",
@@ -1459,7 +1537,8 @@
           "correctIndex": 1,
           "explanation": "پیرێژن وتی ڕێوی بەڵێنی خۆی بەجێ هێنا و لەو ڕۆژەوە هەموو بەیانییەک کاسەیەک شیری بۆ دادەنا.",
           "explanationEn": "She said the fox had kept his promise, and from that day on she put out a bowl of milk for him every morning.",
-          "evidenceParagraph": 8
+          "evidenceParagraph": 8,
+          "evidenceSentence": 1
         }
       ]
     },
@@ -1533,7 +1612,8 @@
           "correctIndex": 0,
           "explanation": "پاسەکەی دارا لە قوڕدا چەقی و دارا ڕێگاکەی بە پێ تەواو کرد تا گەیشتە لای باپیری.",
           "explanationEn": "Dara’s bus got stuck in the mud, and he finished the journey on foot until he reached his grandfather.",
-          "evidenceParagraph": null
+          "evidenceParagraph": null,
+          "evidenceSentence": null
         },
         {
           "kind": "detail",
@@ -1547,7 +1627,8 @@
           "correctIndex": 0,
           "explanation": "دارا دەڵێت هەموو ساڵێک لە کۆتایی بەهاردا، کاتێک زانکۆ دادەخرێت، دوو هەفتە دەچێتە لای باپیری.",
           "explanationEn": "Dara says that every year at the end of spring, when the university closes, he goes to his grandfather for two weeks.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1561,7 +1642,8 @@
           "correctIndex": 1,
           "explanation": "باوکی دارا چەندین جار داوای لێ کردووە بێتە شار و لەگەڵیان بژی، بەڵام باپیر هەرگیز ڕازی نەبووە.",
           "explanationEn": "Dara’s father has asked him many times to come to the city and live with them, but Grandfather has never agreed.",
-          "evidenceParagraph": 0
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",
@@ -1575,7 +1657,8 @@
           "correctIndex": 1,
           "explanation": "دوو کاتژمێر لەسەر جادەی قیر و کاتژمێرێک لەسەر ڕێگا خۆڵاوییەکە: بە گشتی سێ کاتژمێر.",
           "explanationEn": "Two hours on the asphalt road and one hour on the dirt road: three hours in all.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "vocabulary",
@@ -1589,7 +1672,8 @@
           "correctIndex": 1,
           "explanation": "ڕێگای خۆڵاوی ڕێگایەکی خاکە و قیر نەکراوە، بۆیە کە باران دەبارێت دەبێتە قوڕ.",
           "explanationEn": "A dirt road is made of earth and has no asphalt, so it turns to mud when it rains.",
-          "evidenceParagraph": 1
+          "evidenceParagraph": 1,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1603,7 +1687,8 @@
           "correctIndex": 2,
           "explanation": "شۆفێرەکە وتی: «دەبێت چاوەڕێی تراکتۆرێک بکەین تا بمانکێشێتە دەرەوە.»",
           "explanationEn": "The driver said: “We have to wait for a tractor to pull us out.”",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 4
         },
         {
           "kind": "sequence",
@@ -1617,7 +1702,8 @@
           "correctIndex": 0,
           "explanation": "هێشتا نیوەی ڕێگا خۆڵاوییەکەیان نەبڕیبوو کە پاسەکە چەقی.",
           "explanationEn": "They had not yet covered half of the dirt road when the bus got stuck.",
-          "evidenceParagraph": 2
+          "evidenceParagraph": 2,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1631,7 +1717,8 @@
           "correctIndex": 2,
           "explanation": "دارا دەڵێت: «لەوێ مۆبایل هێڵی نەبوو.»",
           "explanationEn": "Dara says: “There was no phone signal there.”",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "sequence",
@@ -1645,7 +1732,8 @@
           "correctIndex": 2,
           "explanation": "دارا کۆڵەپشتەکەی هەڵگرت و لەگەڵ پیاوە بەتەمەنەکە کەوتنە ڕێ.",
           "explanationEn": "Dara picked up his backpack and set off on foot with the old man.",
-          "evidenceParagraph": 3
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "inference",
@@ -1659,7 +1747,8 @@
           "correctIndex": 1,
           "explanation": "ڕێگاکان درێژتر بوون، بەڵام خەڵک بە ئارامی و بێ پەلە دەژیان.",
           "explanationEn": "The roads were longer, but people lived calmly, without rushing.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1673,7 +1762,8 @@
           "correctIndex": 0,
           "explanation": "ڕێگاکە بۆنی گوڵی کێوی و خاکی تەڕی لێ دەهات.",
           "explanationEn": "The path smelled of wild flowers and wet earth.",
-          "evidenceParagraph": 4
+          "evidenceParagraph": 4,
+          "evidenceSentence": 2
         },
         {
           "kind": "vocabulary",
@@ -1687,7 +1777,8 @@
           "correctIndex": 2,
           "explanation": "«ئاوابوونی خۆر» کاتی ئێوارەیە، کاتێک خۆر لە پشت چیاکانەوە دەچێتە خوارەوە.",
           "explanationEn": "Sunset is evening time, when the sun goes down behind the mountains.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 0
         },
         {
           "kind": "detail",
@@ -1701,7 +1792,8 @@
           "correctIndex": 1,
           "explanation": "دارا لە دوورەوە باپیری بینی کە لەسەر بانی ماڵەکەی وەستابوو.",
           "explanationEn": "From afar, Dara saw his grandfather standing on the roof of his house.",
-          "evidenceParagraph": 5
+          "evidenceParagraph": 5,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1715,7 +1807,8 @@
           "correctIndex": 0,
           "explanation": "باپیر وتی لێرە هەموو کەس دەزانێت کە دوای باران پاسەکە لە قوڕدا دەچەقێت و میوانەکان بە پێ دێن.",
           "explanationEn": "He said everyone there knows that after rain the bus gets stuck in the mud and guests arrive on foot.",
-          "evidenceParagraph": 6
+          "evidenceParagraph": 6,
+          "evidenceSentence": 5
         },
         {
           "kind": "inference",
@@ -1729,7 +1822,8 @@
           "correctIndex": 0,
           "explanation": "باپیر بە بینینی باران زانی کە دارا درەنگ و بە پێ دێت. خەڵکی گوند لە سروشت تێدەگەن، بەڵام لە شار هەمیشە پەلەیانە.",
           "explanationEn": "From the rain alone, Grandfather knew Dara would come late and on foot. Village people understand nature, while in the city people are always in a hurry.",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 1
         },
         {
           "kind": "detail",
@@ -1743,7 +1837,8 @@
           "correctIndex": 2,
           "explanation": "لەسەر بانەکە نانی تیری گەرم و ماستیان خوارد.",
           "explanationEn": "On the roof they ate warm tîrî bread and yogurt.",
-          "evidenceParagraph": 7
+          "evidenceParagraph": 7,
+          "evidenceSentence": 0
         }
       ]
     }
