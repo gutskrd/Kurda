@@ -161,11 +161,12 @@ export function StoryEditor({
   };
 
   /** Show a story as stored: the form, what counts as unsaved, and the version to send back. */
-  const show = (next: AdminStory, previous?: StoryForm): void => {
+  const show = (next: AdminStory, previous?: StoryForm): StoryForm => {
     const f = formFromStory(next, { previous });
     setStory(next);
     setLoaded(f);
     dispatchForm({ type: 'load', form: f });
+    return f;
   };
 
   useEffect(() => {
@@ -174,11 +175,7 @@ export function StoryEditor({
     getStory(id)
       .then((s) => {
         if (!live) return;
-        const f = formFromStory(s);
-        setStory(s);
-        setLoaded(f);
-        dispatchForm({ type: 'load', form: f });
-        setOpen(initiallyOpen(f));
+        setOpen(initiallyOpen(show(s)));
         setPhase('ready');
       })
       .catch((err: unknown) => {
@@ -276,7 +273,8 @@ export function StoryEditor({
     setBusy('reload');
     try {
       const fresh = await getStory(story.id);
-      show(fresh);
+      // someone else's version may have other questions: open what a first load would
+      setOpen(initiallyOpen(show(fresh)));
       setConflict(null);
       setServer(null);
       setNotice({ tone: 'ok', text: 'Reloaded: this is the story as it is saved now.' });
