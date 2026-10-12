@@ -16,7 +16,7 @@
  * chooses between them.
  */
 import type pg from 'pg';
-import { rhymePrefix } from './rhyme.js';
+import { rhymePrefix, type Dialect } from './rhyme.js';
 
 /** How many random candidates to consider before settling for the first. */
 const TRIES = 5;
@@ -29,24 +29,38 @@ interface Candidate {
 }
 
 /**
+ * The dictionary files Kurmancî under 'kurmanji' (the spelling the courses
+ * use); a rhyme game says 'kurmanci', as Stories do.
+ */
+const DICTIONARY_DIALECT: Record<Dialect, string> = { kurmanci: 'kurmanji', sorani: 'sorani' };
+
+/**
  * A random prompt from the pool that something in the dictionary rhymes with.
  *
- * Returns null only when the pool is empty. If none of the candidates has a
- * partner — which takes a dictionary with nothing else ending in any of their
- * last letters — it returns the first anyway: a thin round is worse than a good
- * one and better than no game at all.
+ * With a `dialect`, only words of that dialect are candidates, and only words
+ * of that dialect count as partners: a Soranî match used to be handed a
+ * Kurmancî prompt in the Latin alphabet, which no Soranî answer could rhyme
+ * with. Without one, any word will do (solo training, as before).
+ *
+ * Returns null only when the pool (of that dialect) is empty. If none of the
+ * candidates has a partner — which takes a dictionary with nothing else ending
+ * in any of their last letters — it returns the first anyway: a thin round is
+ * worse than a good one and better than no game at all.
  */
-export async function pickRhymePrompt(executor: Executor): Promise<string | null> {
+export async function pickRhymePrompt(executor: Executor, dialect?: Dialect): Promise<string | null> {
+  const dict = dialect ? DICTIONARY_DIALECT[dialect] : null;
   const candidates = await executor.query<Candidate>(
     `SELECT headword, headword_normalized FROM dict_entries
-      WHERE headword_normalized <> '' AND in_games
+      WHERE headword_normalized <> '' AND in_games AND ($2::text IS NULL OR dialect = $2)
         -- prefer curated prompts; fall back to the game pool while none are
         -- marked, so rounds keep working before anyone has curated. The
         -- fallback is bounded by in_games: without it an imported lexicon
         -- would hand players a prompt nobody would recognise (1751000112000).
-        AND (is_rhyme_prompt OR NOT EXISTS (SELECT 1 FROM dict_entries WHERE is_rhyme_prompt AND in_games))
+        AND (is_rhyme_prompt OR NOT EXISTS (
+              SELECT 1 FROM dict_entries
+               WHERE is_rhyme_prompt AND in_games AND ($2::text IS NULL OR dialect = $2)))
       ORDER BY random() LIMIT $1`,
-    [TRIES],
+    [TRIES, dict],
   );
   const first = candidates.rows[0];
   if (!first) return null;
@@ -58,8 +72,8 @@ export async function pickRhymePrompt(executor: Executor): Promise<string | null
     // range rather than the table being read; EXISTS stops at the first hit
     const partner = await executor.query(
       `SELECT 1 FROM dict_entries
-        WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $2 LIMIT 1`,
-      [prefix, candidate.headword_normalized],
+        WHERE rhyme_key LIKE $1 || '%' AND headword_normalized <> $2 AND ($3::text IS NULL OR dialect = $3) LIMIT 1`,
+      [prefix, candidate.headword_normalized, dict],
     );
     if (partner.rowCount) return candidate.headword;
   }
