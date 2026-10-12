@@ -180,6 +180,8 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       const bad = [
         base, // says nothing
         { ...base, comment: '   ' },
+        // nothing but control characters, which are not kept
+        { ...base, comment: String.fromCharCode(7, 8, 0x7f) },
         { ...base, categories: [] },
         { ...base, stars: 0 },
         { ...base, stars: 6 },

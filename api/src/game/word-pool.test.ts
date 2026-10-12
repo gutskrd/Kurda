@@ -7,7 +7,7 @@ describe('isWordleWord', () => {
   });
 
   it('reads a word the way the game does: decomposed letters, case, and the odd hyphen', () => {
-    expect(isWordleWord('çîrok')).toBe(true);
+    expect(isWordleWord('çi\u0302rok')).toBe(true);
     expect(isWordleWord('ser-av')).toBe(true);
   });
 

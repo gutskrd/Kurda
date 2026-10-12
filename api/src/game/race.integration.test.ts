@@ -332,7 +332,7 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   });
 
   it('saves a pasted text the way a keyboard types it, and warns about what nobody can type', async () => {
-    const pasted = 'Ew dibêje: “Kafé û çay”— ji bo te…';
+    const pasted = 'Ew\u00a0dibêje: “Kafe\u0301 û çay”— ji bo te…';
     const res = await call('POST', '/admin/race/texts', adminToken, {
       title: `it_${suffix}  pasted `,
       body: pasted,

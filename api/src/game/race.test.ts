@@ -60,7 +60,7 @@ describe('scoring what a keyboard actually sends', () => {
    * scored 0.41 for a perfect run.
    */
   it('scores a perfect run on a text stored decomposed as perfect', () => {
-    const s = scoreRace({ target: 'ez ji welatê xwe hez dikim', typed: target, elapsedMs: 30_000 });
+    const s = scoreRace({ target: 'ez ji welate\u0302 xwe hez dikim', typed: target, elapsedMs: 30_000 });
     expect(s.accuracy).toBe(1);
     expect(s.perfect).toBe(true);
     expect(s.correctChars).toBe(26);
@@ -68,7 +68,7 @@ describe('scoring what a keyboard actually sends', () => {
 
   it('scores a curly apostrophe, a dash and a no-break space as the characters a keyboard has', () => {
     const s = scoreRace({
-      target: 'Ez’ê bêm — sibê were, heval.',
+      target: 'Ez’ê bêm — sibê\u00a0were, heval.',
       typed: "Ez'ê bêm - sibê were, heval.",
       elapsedMs: 30_000,
     });

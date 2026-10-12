@@ -9,6 +9,7 @@ import {
   APP_FEEDBACK_STATUSES,
   APP_LOCALE_CODES,
   APP_PLATFORMS,
+  stripControlChars,
   type AppFeedbackRequest,
 } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
@@ -44,9 +45,13 @@ const feedbackBody = z
     appVersion,
     locale: z.enum(APP_LOCALE_CODES).optional(),
   })
-  // "not now" is /dismiss; an answer has to say something
+  // "not now" is /dismiss; an answer has to say something, and a comment of
+  // nothing but control characters is kept as nothing (service `cleanText`)
   .refine(
-    (b) => b.stars !== undefined || (b.categories?.length ?? 0) > 0 || (b.comment ?? '').trim().length > 0,
+    (b) =>
+      b.stars !== undefined ||
+      (b.categories?.length ?? 0) > 0 ||
+      stripControlChars(b.comment ?? '').trim().length > 0,
     { message: 'stars, a category or a comment' },
   );
 

@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import {
   ACCENT_MODES,
+  DEFAULT_ACCENT_MODE,
   findUntypeable,
   normalizeTyping,
   typingDialectOf,
@@ -77,7 +78,7 @@ export class RaceService {
    */
   async start(userId: string, options: StartOptions = {}): Promise<RaceGame | null> {
     const dialect = options.dialect ?? 'kurmanci';
-    const accentMode = options.accentMode ?? 'forgiving';
+    const accentMode = options.accentMode ?? DEFAULT_ACCENT_MODE;
     const text = await this.pool.query<{
       id: string;
       title: string;
@@ -103,8 +104,8 @@ export class RaceService {
       text: {
         id: row.id,
         title: row.title,
-        // texts saved before they were normalised on save are normalised here,
-        // so the racer is never shown a character nobody can type
+        // texts saved before saving normalised them are normalised here, so
+        // the racer is shown the text in the form it is compared in
         body: normalizeTyping(row.body, dialect),
         difficulty: row.difficulty as RaceLength,
         language: row.language,
@@ -189,7 +190,7 @@ export class RaceService {
    * A racer's best runs, best first — the "how am I doing" list — and the best
    * in each accent mode, since a forgiving run and a strict one are not the
    * same race. A run worth nothing (nothing typed right, or a speed nobody
-   * types at) is nobody's best.
+   * types at) is in the list but is nobody's personal best.
    */
   async best(
     userId: string,
@@ -197,21 +198,21 @@ export class RaceService {
     limit = 10,
   ): Promise<RaceBestView> {
     const params = [userId, filter.accentMode ?? null, filter.dialect ?? null];
-    const where = `g.user_id = $1 AND g.finished_at IS NOT NULL AND g.score > 0
+    const where = `g.user_id = $1 AND g.finished_at IS NOT NULL
        AND ($2::text IS NULL OR g.accent_mode = $2) AND ($3::text IS NULL OR g.dialect = $3)`;
     const [runs, bests] = await Promise.all([
       this.pool.query<RunRow>(
         `SELECT t.title, g.wpm, g.accuracy, g.score, g.accent_mode, g.dialect, g.finished_at
            FROM race_games g JOIN race_texts t ON t.id = g.text_id
           WHERE ${where}
-          ORDER BY g.score DESC, g.finished_at DESC
+          ORDER BY g.score DESC NULLS LAST, g.finished_at DESC
           LIMIT $4`,
         [...params, limit],
       ),
       this.pool.query<RunRow>(
         `SELECT DISTINCT ON (g.accent_mode) t.title, g.wpm, g.accuracy, g.score, g.accent_mode, g.dialect, g.finished_at
            FROM race_games g JOIN race_texts t ON t.id = g.text_id
-          WHERE ${where}
+          WHERE ${where} AND g.score > 0
           ORDER BY g.accent_mode, g.score DESC, g.finished_at DESC`,
         params,
       ),
@@ -226,6 +227,7 @@ interface RunRow {
   title: string;
   wpm: string;
   accuracy: string;
+  /** set on every finished race (null only on one never finished, which is never listed) */
   score: number;
   accent_mode: AccentMode;
   dialect: TypingDialect;
