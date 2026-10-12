@@ -43,6 +43,21 @@ const VARIANTS: Record<string, string> = {
 };
 const VARIANT_CHARS = new RegExp(`[${Object.keys(VARIANTS).join('')}]`, 'g');
 
+/**
+ * One character with the letter variants above folded, for matching text typed
+ * on different keyboards (a glossary term against a story, say) without
+ * changing its length: the caller keeps indices into the original.
+ */
+export function foldVariantChar(ch: string): string {
+  return VARIANTS[ch] ?? ch;
+}
+
+/** Whether a character is one of the invisible ones above. */
+export function isInvisibleChar(ch: string): boolean {
+  INVISIBLE.lastIndex = 0;
+  return INVISIBLE.test(ch);
+}
+
 /** Quotation marks around the whole text, which nobody says aloud. */
 const EDGE_QUOTES = /^["“”«»„]+|["“”«»„]+$/g;
 /** Sentence punctuation at the end, Latin and Arabic-script alike. */
