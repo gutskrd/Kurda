@@ -175,3 +175,10 @@ export * from './stories.js';
 export * from './play.js';
 export * from './gifts.js';
 export * from './chat-cards.js';
+
+/**
+ * Typing Kurdish (the race, Wordle's keyboard, the keyboard guide): how a
+ * typed text is read and scored, and the race's shapes — one reading for the
+ * server and both apps.
+ */
+export * from './typing.js';
