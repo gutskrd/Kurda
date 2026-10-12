@@ -57,6 +57,10 @@ export class GdprService {
    * Anonymizes accounts whose grace period ended: PII scrubbed, sessions
    * and linked identities destroyed, row kept for aggregate statistics.
    * Idempotent — sets deleted_at, so a rerun skips processed rows.
+   *
+   * Gifts stay as they are, given and received: the friend keeps the present,
+   * and since the row is kept its sender still points at it — shown as from a
+   * former member, never by the "deleted_…" name (shop `giftsReceived`).
    */
   async anonymizeExpired(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - DELETION_GRACE_DAYS * 24 * 3_600_000);
@@ -351,9 +355,24 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   );
   await q(`DELETE FROM image_reactions WHERE user_id = $1`);
 
-  // messages, both sides of every conversation they were in
+  // messages, both sides of every conversation they were in — the gifts in
+  // them with the rest
   await q(`DELETE FROM dm_messages WHERE user_lo = $1 OR user_hi = $1`);
   await q(`DELETE FROM group_messages WHERE sender_id = $1`);
+  // and a gift posted in a group for them alone, a message about nobody else;
+  // one to several friends stays for the others, its card no longer listing a
+  // closed account (gifts/cards.ts)
+  await q(
+    `DELETE FROM group_messages m
+      WHERE m.gift_batch_id IN (SELECT g.batch_id FROM gifts g WHERE g.to_user_id = $1)
+        AND NOT EXISTS (SELECT 1 FROM gifts o WHERE o.batch_id = m.gift_batch_id AND o.to_user_id <> $1)`,
+  );
+  // The gift rows stay: what they gave is the recipient's, and what they were
+  // given stays with the anonymized account as its other history does (its
+  // row is kept, so the foreign keys' own clean-up never runs). Only the line
+  // from someone else's present back to this account goes, so it reads as
+  // from a former member.
+  await q(`UPDATE gifts SET from_user_id = NULL WHERE from_user_id = $1`);
 
   // groups: hand on the ones they own, then leave them all
   const owned = await executor.query<{ group_id: string }>(

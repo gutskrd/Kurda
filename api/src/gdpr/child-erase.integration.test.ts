@@ -20,6 +20,7 @@ import { bornYearsAgo } from '../test/age.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { MediaStorage } from '../media/storage.js';
 import { GdprService } from './service.js';
+import { giftCards } from '../gifts/cards.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -224,6 +225,7 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     } finally {
       client.release();
     }
+    await pool.query(`DELETE FROM shop_items WHERE sku = $1`, [`erase_gift_${suffix}`]);
     await pool.end();
     await app.close();
   });
@@ -307,6 +309,88 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       remoteAddress: ip(),
     });
     expect(me.statusCode).toBe(401);
+  });
+
+  /**
+   * A gift is a message in a chat, and a present someone owns. The messages
+   * about the child go with the rest of their messages; the presents stay
+   * with whoever was given them, no longer pointing back at the child.
+   */
+  it('takes the gift messages that were theirs, and leaves the presents', async () => {
+    const child = await signUp('giftkid');
+    const friend = await signUp('giftpal');
+    const other = await signUp('giftother');
+    closed.push(child.id);
+    const sku = `erase_gift_${suffix}`;
+    await pool.query(
+      `INSERT INTO shop_items (sku, name, category, currency, price, is_unique, active, in_stock)
+       VALUES ($1, 'Erase Test Gift', 'powerup', 'zer', 10, false, true, true)`,
+      [sku],
+    );
+    const group = (
+      await pool.query<{ id: string }>(
+        `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, 'invite', $2) RETURNING id`,
+        [`Child ${suffix} gifts`, friend.id],
+      )
+    ).rows[0]!.id;
+    await pool.query(
+      `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner'), ($1, $3, 'member'), ($1, $4, 'member')`,
+      [group, friend.id, child.id, other.id],
+    );
+
+    /** One send, as the gift service stores it: a row per recipient and one message. */
+    const send = async (from: Account, to: Account[], where: 'dm' | 'group'): Promise<string> => {
+      const batch = (await pool.query<{ id: string }>(`SELECT gen_random_uuid() AS id`)).rows[0]!.id;
+      for (const t of to) {
+        await pool.query(
+          `INSERT INTO gifts (from_user_id, to_user_id, sku, price, currency, batch_id) VALUES ($1, $2, $3, 10, 'zer', $4)`,
+          [from.id, t.id, sku, batch],
+        );
+      }
+      if (where === 'group') {
+        await pool.query(`INSERT INTO group_messages (group_id, sender_id, kind, gift_batch_id) VALUES ($1, $2, 'gift', $3)`, [
+          group,
+          from.id,
+          batch,
+        ]);
+      } else {
+        const { lo, hi } = canonicalPair(from.id, to[0]!.id);
+        await pool.query(
+          `INSERT INTO dm_messages (user_lo, user_hi, sender_id, kind, gift_batch_id) VALUES ($1, $2, $3, 'gift', $4)`,
+          [lo, hi, from.id, batch],
+        );
+      }
+      return batch;
+    };
+    const toChild = await send(friend, [child], 'dm');
+    const fromChild = await send(child, [friend], 'dm');
+    const childAlone = await send(friend, [child], 'group');
+    const shared = await send(friend, [child, other], 'group');
+    const childInGroup = await send(child, [other], 'group');
+    const batches = [toChild, fromChild, childAlone, shared, childInGroup];
+
+    await new GdprService(pool).closeNow(child.id, 'under_minimum_age');
+
+    // the messages: in the direct messages both ways, theirs in the group, and
+    // the one in the group that was about them alone
+    expect(await count(`SELECT 1 FROM dm_messages WHERE gift_batch_id = ANY($1::uuid[])`, [batches])).toBe(0);
+    const left = await pool.query<{ gift_batch_id: string }>(
+      `SELECT gift_batch_id FROM group_messages WHERE group_id = $1`,
+      [group],
+    );
+    expect(left.rows.map((r) => r.gift_batch_id)).toEqual([shared]);
+
+    // the presents: every one still there, the child's no longer naming them as the giver
+    expect(await count(`SELECT 1 FROM gifts WHERE batch_id = ANY($1::uuid[])`, [batches])).toBe(6);
+    const fromRows = await pool.query<{ from_user_id: string | null }>(
+      `SELECT from_user_id FROM gifts WHERE batch_id = ANY($1::uuid[])`,
+      [[fromChild, childInGroup]],
+    );
+    expect(fromRows.rows).toEqual([{ from_user_id: null }, { from_user_id: null }]);
+
+    // and the gift that stays lists only the friend still here
+    const card = (await giftCards(pool, [shared], { id: other.id, seesEveryone: true })).get(shared)!;
+    expect(card.recipients).toEqual([expect.objectContaining({ name: expect.stringContaining('ce_giftother'), isMe: true })]);
   });
 
   it('deletes the files from storage at once, leaving any it could not to the sweep', async () => {
