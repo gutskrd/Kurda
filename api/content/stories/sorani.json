@@ -1497,6 +1497,21 @@
         },
         {
           "kind": "detail",
+          "prompt": "ڕێوی بەرخەکەی لە کوێ دۆزییەوە؟",
+          "promptEn": "Where did the fox find the lamb?",
+          "options": [
+            "لە ناو مێرگەکەدا",
+            "لەسەر گردەکە",
+            "لە پشت دارێکەوە"
+          ],
+          "correctIndex": 2,
+          "explanation": "چیرۆکەکە دەڵێت: «زۆری پێ نەچوو بەرخەکەی لە پشت دارێکەوە دۆزییەوە.»",
+          "explanationEn": "The story says: “Before long he found the lamb behind a tree.”",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
           "prompt": "کێ بەردەکەی لە دەمی کانییەکە لابرد؟",
           "promptEn": "Who moved the stone away from the mouth of the spring?",
           "options": [
@@ -1524,6 +1539,21 @@
           "explanationEn": "The water gushed down and the meadow turned green. Finding the lamb and moving the stone had happened before that.",
           "evidenceParagraph": 7,
           "evidenceSentence": 0
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«تێر خواردی» واتە مانگاکە:",
+          "promptEn": "«تێر خواردی» means that the cow:",
+          "options": [
+            "بە خێرایی خواردی و ڕۆیشت",
+            "خواردی تا ئیتر برسی نەبوو",
+            "تەنیا کەمێکی لێ خوارد"
+          ],
+          "correctIndex": 1,
+          "explanation": "مانگاکە برسی بوو، بەڵام دوای خواردنی گیاکە ئیتر برسی نەبوو.",
+          "explanationEn": "The cow had been hungry, but after eating the grass it was hungry no more: it had eaten its fill.",
+          "evidenceParagraph": 7,
+          "evidenceSentence": 2
         },
         {
           "kind": "inference",
