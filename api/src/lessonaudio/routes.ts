@@ -7,7 +7,8 @@
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
  *
  * There is no public list: learners get the recordings with the exercises that
- * use them (lessonaudio/delivery.ts). Any text may be recorded, not only one a
+ * use them (lessonaudio/delivery.ts), and with the stories that say them
+ * (GET /stories/:idOrSlug). Any text may be recorded, not only one a
  * lesson uses today, so an editor can record a phrase before the lesson that
  * needs it is written.
  *
@@ -30,6 +31,7 @@ import { ALPHABET_AUDIO_ROLES } from '../alphabet/routes.js';
 import { readWav } from '../alphabet/wav.js';
 import { LessonAudioService } from './service.js';
 import { lessonsPlaying } from './publish-guard.js';
+import { bustStoryLists } from '../stories/service.js';
 
 const KIND = 'lesson-audio';
 
@@ -135,6 +137,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       } finally {
         client.release();
       }
+      // a story's "fully narrated" badge may have just changed
+      await bustStoryLists(app.cache);
       return reply.code(201).send({
         key: saved.key,
         text: saved.text,
@@ -192,6 +196,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     } finally {
       client.release();
     }
+    await bustStoryLists(app.cache);
     // the file stays in storage: it is content-addressed and may be put back
     return { key, removed: true };
   });
