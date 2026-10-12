@@ -8,7 +8,13 @@ import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from '@kurda/shared';
 
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing';
 
-/** One lesson that uses a text (GET /admin/lesson-audio). */
+/**
+ * One lesson that uses a text (GET /admin/lesson-audio) — or one story: the
+ * API lists every sentence of every story that is not archived in the same
+ * shape, a story filed as a course of its own per variety ("Stories —
+ * Kurmancî", courseId `stories:<variety>`) with the story as both its unit
+ * and its one lesson, and no exercise types.
+ */
 export interface Usage {
   courseId: string;
   courseTitle: string;
@@ -92,6 +98,8 @@ export function scriptOf(text: string): { lang: 'ckb' | 'ku'; dir: 'rtl' | 'ltr'
 export interface LessonGroup {
   /** the lesson across its versions: skill and position */
   id: string;
+  /** a story rather than a lesson: its title is the whole of its heading */
+  story: boolean;
   title: string;
   skillTitle: string;
   status: Usage['lessonStatus'];
@@ -131,7 +139,15 @@ export function group(items: readonly Item[]): { courses: CourseGroup[]; loose: 
     let lesson = unit.lessons.find((l) => l.id === lessonId);
     if (!lesson) {
       unit.lessons.push(
-        (lesson = { id: lessonId, title: first.lessonTitle, skillTitle: first.skillTitle, status: first.lessonStatus, live: first.live, items: [] }),
+        (lesson = {
+          id: lessonId,
+          story: isStoryUsage(first),
+          title: first.lessonTitle,
+          skillTitle: first.skillTitle,
+          status: first.lessonStatus,
+          live: first.live,
+          items: [],
+        }),
       );
     }
     lesson.live ||= first.live;
@@ -209,8 +225,14 @@ const TYPE_LABELS: Record<ExerciseType, string> = {
   writing: 'writing',
 };
 
-/** "Greetings 1 (multiple choice, translate)" — where a text is used, for the row. */
+/** A story's sentence rather than a lesson's text (see Usage). */
+export function isStoryUsage(u: Pick<Usage, 'courseId'>): boolean {
+  return u.courseId.startsWith('stories:');
+}
+
+/** "Greetings 1 (multiple choice, translate)", or "Şorbeya Nîskê (story)" — where a text is used, for the row. */
 export function describeUsage(u: Usage): string {
+  if (isStoryUsage(u)) return `${u.lessonTitle} (story)`;
   return `${u.lessonTitle} (${u.exerciseTypes.map((t) => TYPE_LABELS[t] ?? t).join(', ')})`;
 }
 

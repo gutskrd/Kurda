@@ -37,7 +37,7 @@ export function AudioStudio(): React.JSX.Element {
       <div className="toolbar">
         <div>
           <h1>Audio studio</h1>
-          <div className="subtle">Native recordings of the alphabet’s letters and words, and of the Kurdish the lessons use.</div>
+          <div className="subtle">Native recordings of the alphabet’s letters and words, and of the Kurdish the lessons and stories use.</div>
         </div>
       </div>
 
