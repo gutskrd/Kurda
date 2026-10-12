@@ -16,6 +16,7 @@
     "seed:cosmetics": "tsx scripts/seed-cosmetics.ts",
     "cosmetics:upload": "tsx scripts/upload-cosmetics.ts",
     "content:import": "tsx scripts/import-content.ts",
+    "stories:import": "tsx scripts/import-stories.ts",
     "dict:import": "tsx scripts/import-lexicon.ts",
     "events:seed": "tsx scripts/seed-events.ts",
     "worker": "tsx src/workers/main.ts",
