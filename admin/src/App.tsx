@@ -23,6 +23,7 @@ import { Security } from './pages/Security';
 import { Games } from './pages/Games';
 import { AudioStudio } from './pages/AudioStudio';
 import { Shop } from './pages/Shop';
+import { Stories } from './pages/Stories';
 
 // `roles` gates the nav link (cosmetic only — the API re-authorizes every
 // action). It's set for the three pages whose server guard is a single clean
@@ -47,6 +48,7 @@ const PAGES: Page[] = [
   { key: 'ops', label: 'Ops', render: () => <Ops /> },
   { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
   { key: 'games', label: 'Games', roles: ['superadmin', 'content_editor'], render: () => <Games /> },
+  { key: 'stories', label: 'Stories', roles: ['superadmin', 'content_editor', 'admin'], render: () => <Stories /> },
   { key: 'audio', label: 'Audio studio', roles: ['superadmin', 'content_editor', 'admin'], render: () => <AudioStudio /> },
   { key: 'shop', label: 'Shop', roles: ['superadmin'], render: () => <Shop /> },
   { key: 'tags', label: 'Tags', render: () => <Tags /> },
@@ -62,7 +64,9 @@ function Workspace(): React.JSX.Element {
   const visible = PAGES.filter((p) => !p.roles || !known || roles.some((r) => p.roles!.includes(r)));
 
   const [route, navigate] = useHashRoute(visible[0]!.key);
-  const page = ALIASES[route] ?? route;
+  // a page may have addresses of its own below it (#/stories/<id>); the first part names the page
+  const [section = ''] = route.split('/');
+  const page = ALIASES[section] ?? section;
   const [, setTick] = useState(0);
   // render the routed page even if its nav link is hidden — it enforces its own
   // access (a role-gated page shows its own "insufficient permissions" notice)
