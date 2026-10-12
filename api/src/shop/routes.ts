@@ -57,7 +57,7 @@ const SHOP_GIFT_REFUSALS: Readonly<Record<SkipReason, () => AppError>> = {
 export function registerShopRoutes(
   app: FastifyInstance,
   shop: ShopService,
-  deps: { gifts?: GiftService } = {},
+  deps: { gifts: GiftService },
 ): void {
   /** Admin: create/update a catalog item. */
   app.post(
@@ -129,37 +129,34 @@ export function registerShopRoutes(
    * is why it now asks for the birth month a message asks for. The answer
    * keeps the shape this route has always had.
    */
-  if (deps.gifts) {
-    const gifts = deps.gifts;
-    app.post(
-      '/shop/gift',
-      {
-        schema: { body: giftBody },
-        config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
-        preHandler: requireBirthMonth,
-      },
-      async (req) => {
-        const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
-        const result = await gifts.send({
-          fromId: req.user!.id,
-          toIds: [toUserId],
-          sku,
-          chat: null,
-          idempotencyKey,
-          expectedPrice,
-        });
-        const refused = result.skipped[0];
-        if (refused) throw SHOP_GIFT_REFUSALS[refused.reason]();
-        return {
-          gifted: true,
-          duplicate: result.duplicate,
-          sku: result.item.sku,
-          // in the item's own currency, as it always was
-          balance: result.balance[result.item.currency],
-        };
-      },
-    );
-  }
+  app.post(
+    '/shop/gift',
+    {
+      schema: { body: giftBody },
+      config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireBirthMonth,
+    },
+    async (req) => {
+      const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
+      const result = await deps.gifts.send({
+        fromId: req.user!.id,
+        toIds: [toUserId],
+        sku,
+        chat: null,
+        idempotencyKey,
+        expectedPrice,
+      });
+      const refused = result.skipped[0];
+      if (refused) throw SHOP_GIFT_REFUSALS[refused.reason]();
+      return {
+        gifted: true,
+        duplicate: result.duplicate,
+        sku: result.item.sku,
+        // in the item's own currency, as it always was
+        balance: result.balance[result.item.currency],
+      };
+    },
+  );
 
   /** Gifts the caller has received, and how many are unopened. */
   app.get('/me/gifts', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({

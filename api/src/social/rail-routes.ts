@@ -18,7 +18,7 @@ interface RailDeps {
   inbox: InboxService;
   challenges: ChallengeService;
   /** the unopened-gift badge, so the apps need not poll `/me/gifts/unseen` for it */
-  gifts?: Pick<GiftService, 'unseenCount'>;
+  gifts: Pick<GiftService, 'unseenCount'>;
 }
 
 /**
@@ -48,7 +48,7 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       deps.groupChat.unread(me),
       deps.inbox.list(me),
       deps.inbox.unreadCount(me),
-      deps.gifts ? deps.gifts.unseenCount(me) : 0,
+      deps.gifts.unseenCount(me),
     ]);
 
     // activity and invites both need the friend list, so they wait for it;

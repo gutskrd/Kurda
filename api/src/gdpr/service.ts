@@ -364,7 +364,8 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   // closed account (gifts/cards.ts)
   await q(
     `DELETE FROM group_messages m
-      WHERE m.gift_batch_id IN (SELECT g.batch_id FROM gifts g WHERE g.to_user_id = $1)
+      WHERE m.gift_batch_id IS NOT NULL
+        AND m.gift_batch_id IN (SELECT g.batch_id FROM gifts g WHERE g.to_user_id = $1)
         AND NOT EXISTS (SELECT 1 FROM gifts o WHERE o.batch_id = m.gift_batch_id AND o.to_user_id <> $1)`,
   );
   // The gift rows stay: what they gave is the recipient's, and what they were
