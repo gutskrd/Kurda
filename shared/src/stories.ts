@@ -621,9 +621,12 @@ export interface StoryGameView {
   /** server clock when this view was made, so clients can correct their own */
   serverNow: string;
   /**
-   * When the current phase ends on its own for this viewer, if it is shown as a
-   * countdown: a timed question (later for a player with extra time). Null while
-   * reading and for untimed questions — nobody is shown a clock there.
+   * When the open question closes on its own for this viewer: a timed question's
+   * deadline (later for a player with extra time), shown as a countdown; or an
+   * untimed duo/group question's cap (`settings.timerSeconds` is 0), never shown
+   * as a clock — only as "This question closes soon" in its last 30 seconds.
+   * Null otherwise: while reading, for an untimed solo question, and outside
+   * questions — nobody is shown a clock there.
    */
   phaseEndsAt: string | null;
   /** reading phase: from when the host may start the questions early */

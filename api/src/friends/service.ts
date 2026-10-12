@@ -105,7 +105,20 @@ interface EdgeRow {
  * out to be a minor's, the requests waiting for it are removed.
  */
 export class FriendService {
+  private readonly blockListeners: Array<(blocker: string, blocked: string) => Promise<void> | void> = [];
+
   constructor(private readonly pool: pg.Pool) {}
+
+  /**
+   * Run `listener` after every block has committed — for what a block undoes
+   * elsewhere (the story games part a blocked pair in the lobbies they
+   * share). After the commit and outside it, so a game's own locks are never
+   * taken inside this transaction; a listener that fails does not undo the
+   * block.
+   */
+  onBlocked(listener: (blocker: string, blocked: string) => Promise<void> | void): void {
+    this.blockListeners.push(listener);
+  }
 
   /** Are these two users blocked from each other (in either direction)? */
   async areBlocked(a: string, b: string, executor: Pick<pg.Pool, 'query'> = this.pool): Promise<boolean> {
@@ -268,6 +281,11 @@ export class FriendService {
       throw err;
     } finally {
       client.release();
+    }
+    for (const listener of this.blockListeners) {
+      await Promise.resolve()
+        .then(() => listener(blocker, blocked))
+        .catch(() => undefined);
     }
   }
 

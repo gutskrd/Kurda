@@ -85,6 +85,7 @@ import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
 import { registerRaceRoutes } from './game/race-routes.js';
 import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
+import { registerStoryGameRoutes } from './story-games/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -627,6 +628,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
     registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
+
+    // story games (Stories, which replaced the ranked quiz): Postgres is the
+    // game; long-polls are woken across instances over the room bus
+    registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
 
     // skill-rating reads (KUR-061). Nothing writes a rating since the ranked
     // quiz went (Stories replaced it), but the ratings people earned stay

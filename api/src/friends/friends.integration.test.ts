@@ -132,6 +132,21 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
     expect(await friends.areBlocked(id.a!, id.b!)).toBe(false);
   });
 
+  it('tells block listeners after the block has committed, and a failing one does not undo it', async () => {
+    const seen: Array<[string, string, boolean]> = [];
+    friends.onBlocked(async (blocker, blocked) => {
+      // committed already: another connection sees it
+      seen.push([blocker, blocked, await friends.areBlocked(blocker, blocked)]);
+    });
+    friends.onBlocked(() => {
+      throw new Error('a listener that fails');
+    });
+    await friends.block(id.c!, id.d!);
+    expect(seen).toEqual([[id.c!, id.d!, true]]);
+    expect(await friends.areBlocked(id.c!, id.d!)).toBe(true);
+    await friends.unblock(id.c!, id.d!);
+  });
+
   /**
    * The blocklist. Its own users throughout: the a–e graph is mutated by the
    * tests above and a list that has to be exhaustive cannot share it.
