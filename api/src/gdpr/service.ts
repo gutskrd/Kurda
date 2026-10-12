@@ -7,6 +7,7 @@ import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { isMinorRow } from '../users/age.js';
 import { handOnGroup } from '../groups/service.js';
+import { StoryGamesService } from '../story-games/service.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -14,13 +15,19 @@ export interface GdprDeps {
   storage?: MediaStorage | null;
   jobs?: JobQueue;
   log?: { info: (obj: unknown, msg: string) => void; warn: (obj: unknown, msg: string) => void };
+  /** takes a closing account out of the story games it is still in (one without timers by default) */
+  storyGames?: Pick<StoryGamesService, 'leaveAll'>;
 }
 
 export class GdprService {
+  private readonly storyGames: Pick<StoryGamesService, 'leaveAll'>;
+
   constructor(
     private readonly pool: pg.Pool,
     private readonly deps: GdprDeps = {},
-  ) {}
+  ) {
+    this.storyGames = deps.storyGames ?? new StoryGamesService(pool, { timers: false, log: deps.log });
+  }
 
   /** Starts the 14-day grace period; logging in again cancels it. */
   async requestDeletion(userId: string): Promise<void> {
@@ -67,6 +74,7 @@ export class GdprService {
       [cutoff],
     );
     for (const row of due.rows) {
+      await this.leaveStoryGames(row.id);
       // A minor's friends-only posts are hidden because of their birth date,
       // and anonymizing clears it: left behind under a "deleted_…" name, what
       // a 15-year-old shared with friends would become readable by anyone.
@@ -97,8 +105,8 @@ export class GdprService {
    * under a "deleted_…" name. For a child that is not enough: what we know
    * about them is to be deleted, their voice above all. So `eraseChildData`
    * also deletes their posts, pictures, comments, voice notes, messages,
-   * friendships, groups, devices, notifications, analytics and consent
-   * records, in one transaction with the anonymizing — either the account is
+   * friendships, groups, story games, devices, notifications, analytics and
+   * consent records, in one transaction with the anonymizing — either the account is
    * gone or none of it is, and the client is told it was closed only after it
    * was. Their files are deleted from storage after the commit; any the
    * storage cannot delete at once are left to the orphan sweep, which deletes
@@ -110,8 +118,22 @@ export class GdprService {
    * people's safety.
    */
   async closeNow(userId: string, reason: 'under_minimum_age'): Promise<void> {
+    await this.leaveStoryGames(userId);
     const files = await this.eraseAndAnonymize(userId);
     this.deps.log?.info({ userId, reason, files }, 'account closed and its data removed');
+  }
+
+  /**
+   * A closing account leaves the story games it is still in first, through
+   * the games' own leave path — each game locked on its own, after nothing
+   * else is held — so a lobby it hosts closes and a running game stops
+   * waiting for a player who will never come back. Finished games stay as
+   * learning history (a child's are erased with the rest, below).
+   */
+  private async leaveStoryGames(userId: string): Promise<void> {
+    await this.storyGames.leaveAll(userId).catch((err) => {
+      this.deps.log?.warn({ err, userId }, 'could not take a closing account out of its story games');
+    });
   }
 
   /** `eraseChildData` and the anonymizing in one transaction, then the files. */
@@ -217,12 +239,22 @@ export class GdprService {
       `SELECT provider, email_at_link, created_at FROM oauth_identities WHERE user_id = $1`,
       [userId],
     );
+    // their story games, as they played them — nothing about the other players
+    const storyGames = await this.pool.query(
+      `SELECT g.mode, COALESCE(g.story_snapshot->>'title', s.title) AS story_title, g.status, g.finished_at,
+              g.question_count, p.score, p.correct, p.answered, p.xp_awarded
+         FROM story_game_players p JOIN story_games g ON g.id = p.game_id
+         LEFT JOIN stories s ON s.id = g.story_id
+        WHERE p.user_id = $1 ORDER BY g.created_at DESC LIMIT 1000`,
+      [userId],
+    );
     return {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
       user: user.rows[0] ?? null,
       sessions: sessions.rows,
       oauthIdentities: identities.rows,
+      storyGames: storyGames.rows,
     };
   }
 
@@ -350,6 +382,14 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
        FROM image_reactions r WHERE r.post_id = p.id AND r.user_id = $1`,
   );
   await q(`DELETE FROM image_reactions WHERE user_id = $1`);
+
+  // story games: their name off the games they hosted, then their answers and
+  // seats (they left the unfinished ones through the leave path before this
+  // transaction). The games first: a game's own transactions lock it before
+  // its players, and this takes them in the same order.
+  await q(`UPDATE story_games SET host_id = NULL WHERE host_id = $1`);
+  await q(`DELETE FROM story_game_answers WHERE user_id = $1`);
+  await q(`DELETE FROM story_game_players WHERE user_id = $1`);
 
   // messages, both sides of every conversation they were in
   await q(`DELETE FROM dm_messages WHERE user_lo = $1 OR user_hi = $1`);

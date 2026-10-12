@@ -9,6 +9,7 @@ import { createStorage } from '../media/storage.js';
 import { GdprService, DELETION_GRACE_DAYS } from './service.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
+import { deleteStories, insertStory } from '../test/story-fixtures.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const S3_READY = Boolean(process.env.S3_ENDPOINT);
@@ -146,6 +147,62 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     await pool.query(`UPDATE users SET birth_year = 1990, birth_month = 4 WHERE id = $1`, [user.id]);
     const doc = await new GdprService(pool).buildExport(user.id);
     expect(doc.user).toMatchObject({ birth_year: 1990, birth_month: 4 });
+  });
+
+  it('an adult’s deletion leaves their unfinished story games and keeps the finished ones as history', async () => {
+    const user = await makeUser('anongames');
+    const story = await insertStory(pool, { slug: `gdpr-anon-${Date.now().toString(36)}` });
+    try {
+      const game = async (status: string) =>
+        (
+          await pool.query<{ id: string }>(
+            `INSERT INTO story_games (mode, host_id, story_id, dialect, level, length, question_count, timer_seconds, status,
+                                      finished_at)
+             VALUES ('group', $1, $2, 'kurmanci', 1, 'short', 3, 60, $3, CASE WHEN $3 = 'finished' THEN now() END) RETURNING id`,
+            [user.id, story.id, status],
+          )
+        ).rows[0]!.id;
+      const finished = await game('finished');
+      const lobby = await game('lobby');
+      for (const id of [finished, lobby]) {
+        await pool.query(`INSERT INTO story_game_players (game_id, user_id, seat, score) VALUES ($1, $2, 1, 200)`, [id, user.id]);
+      }
+      await pool.query(
+        `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
+        [user.id],
+      );
+      await new GdprService(pool).anonymizeExpired();
+      expect((await pool.query(`SELECT status FROM story_games WHERE id = $1`, [lobby])).rows[0].status).toBe('cancelled');
+      const kept = await pool.query(`SELECT score FROM story_game_players WHERE game_id = $1 AND user_id = $2`, [finished, user.id]);
+      expect(kept.rows).toEqual([{ score: 200 }]);
+    } finally {
+      await deleteStories(pool, [story.id]);
+    }
+  });
+
+  it('the export lists their story games as they played them, and nothing about the other players', async () => {
+    const user = await makeUser('exportgames');
+    const other = await makeUser('exportother');
+    const story = await insertStory(pool, { slug: `gdpr-export-${Date.now().toString(36)}` });
+    try {
+      const game = await pool.query<{ id: string }>(
+        `INSERT INTO story_games (mode, host_id, story_id, dialect, level, length, question_count, timer_seconds, status, finished_at)
+         VALUES ('duo', $1, $2, 'kurmanci', 1, 'short', 3, 60, 'finished', now()) RETURNING id`,
+        [other.id, story.id],
+      );
+      await pool.query(
+        `INSERT INTO story_game_players (game_id, user_id, seat, score, correct, answered, xp_awarded)
+         VALUES ($1, $2, 1, 300, 3, 3, 20), ($1, $3, 2, 200, 2, 3, 15)`,
+        [game.rows[0]!.id, other.id, user.id],
+      );
+      const doc = await new GdprService(pool).buildExport(user.id);
+      expect(doc.storyGames).toEqual([
+        expect.objectContaining({ mode: 'duo', story_title: story.title, status: 'finished', score: 200, correct: 2, answered: 3 }),
+      ]);
+      expect(JSON.stringify(doc.storyGames)).not.toContain(other.id);
+    } finally {
+      await deleteStories(pool, [story.id]);
+    }
   });
 
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
