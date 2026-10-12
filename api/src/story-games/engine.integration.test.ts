@@ -332,6 +332,22 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       expect(after.version).toBeGreaterThan(q.version);
     });
 
+    it('the stand-in holds the controls, but cannot remove the host', async () => {
+      const presence = new Presence({ startGraceMs: 0 });
+      const { svc } = instance(new LocalRoomBus(), { presence });
+      const { gameId, host, others } = await groupLobby(svc, 3);
+      await pool.query(`UPDATE story_game_players SET last_seen_at = now() - interval '60 seconds' WHERE game_id = $1 AND user_id = $2`, [
+        gameId,
+        host,
+      ]);
+      presence.setSeenForTest(gameId, host, Date.now() - 60_000);
+      expect((await svc.view(gameId, others[0]!)).isHost).toBe(true);
+      await expect(svc.remove(gameId, others[0]!, 1)).rejects.toMatchObject({ code: 'NOT_HOST' });
+      // the others, yes
+      const v = await svc.remove(gameId, others[0]!, 3);
+      expect(v.players.map((p) => p.seat)).toEqual([1, 2]);
+    });
+
     it('an away player does not count towards starting', async () => {
       const presence = new Presence({ startGraceMs: 0 });
       const { svc } = instance(new LocalRoomBus(), { presence });

@@ -962,6 +962,9 @@ export class StoryGamesService {
       const target = t.players.find((p) => p.seat === seat && !p.removed);
       if (!target) throw new AppError('NO_SUCH_SEAT', 404, 'nobody is in that seat');
       if (target.user_id === userId) throw new AppError('CANNOT_REMOVE_SELF', 400, 'leave the game instead');
+      // the stand-in holds the controls while the host's phone is locked — not
+      // the power to take the game away from them
+      if (target.user_id === t.game.host_id) throw new AppError('NOT_HOST', 403, 'the host cannot be removed');
       await this.removeInTx(t, target.user_id);
     });
     return this.view(gameId, userId);

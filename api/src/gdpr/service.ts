@@ -106,11 +106,11 @@ export class GdprService {
    * about them is to be deleted, their voice above all. So `eraseChildData`
    * also deletes their posts, pictures, comments, voice notes, messages,
    * friendships, groups, story games, devices, notifications, analytics and
-   * consent records, in one transaction with the anonymizing — either the account is
-   * gone or none of it is, and the client is told it was closed only after it
-   * was. Their files are deleted from storage after the commit; any the
-   * storage cannot delete at once are left to the orphan sweep, which deletes
-   * them on its next run.
+   * consent records, in one transaction with the anonymizing — either the
+   * account is gone or none of it is, and the client is told it was closed
+   * only after it was. Their files are deleted from storage after the commit;
+   * any the storage cannot delete at once are left to the orphan sweep, which
+   * deletes them on its next run.
    *
    * What stays is the anonymized row with the learning history every deleted
    * account keeps (XP, lessons, streaks, ledgers) — numbers tied to no name,
