@@ -24,8 +24,7 @@ import { z } from 'zod';
 import { STORY_DIALECTS } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { storyInputFrom } from './schema.js';
-import { storyContentSchema, storySlugSchema } from './schema.js';
+import { storyContentSchema, storyInputFrom, storySlugSchema } from './schema.js';
 import type { StoryAdminService } from './admin-service.js';
 
 /** Who writes stories: whoever edits lessons and records their audio. */
