@@ -360,7 +360,9 @@ function Row({
       ? 'No lesson or story uses it, so it leaves this list.'
       : listening
         ? 'A listening item uses it as its clip: until a new one is saved, that item has nothing to play.'
-        : 'The exercises that use it go without a recording until a new one is saved.'
+        : item.usedIn.every(isStoryUsage)
+          ? 'The stories that use it go without a recording of it until a new one is saved.'
+          : 'The exercises that use it go without a recording until a new one is saved.'
   }`;
 
   return (
@@ -386,7 +388,9 @@ function Row({
               ` · also ${
                 more.length === 1
                   ? describeUsage(more[0]!)
-                  : `in ${more.length} more ${more.some(isStoryUsage) ? 'lessons and stories' : 'lessons'}`
+                  : `in ${more.length} more ${
+                      more.every(isStoryUsage) ? 'stories' : more.some(isStoryUsage) ? 'lessons and stories' : 'lessons'
+                    }`
               }`}
           </span>
         </button>
