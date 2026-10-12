@@ -294,6 +294,8 @@ export class StoryGamesService {
     const touched: Tx[] = [];
     try {
       await client.query('BEGIN');
+      // closing the host's oldest lobby locks it: wait no longer than any game transaction does
+      await client.query(`SET LOCAL lock_timeout = '5s'`);
       const t = await this.insertGame(client, touched, userId, story, {
         ...input,
         access,
@@ -305,7 +307,7 @@ export class StoryGamesService {
       return t.game.id;
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
+      throw busyOr(err);
     } finally {
       client.release();
     }
@@ -1210,6 +1212,11 @@ export class StoryGamesService {
    * removed (that would tell); their names are hidden from each other by the
    * identity rule, and neither can join a lobby the other is in. Game rows are
    * locked one at a time in id order, never inside the block's transaction.
+   *
+   * There is no such hook for an account found to be a minor's, on purpose: a
+   * birth month is set once (from none, never changed), and creating or joining
+   * a game needs one, so nobody already in a game can later turn out to be a
+   * minor. A hook for it would be code that never runs.
    */
   async onBlock(blockerId: string, blockedId: string): Promise<void> {
     const games = await this.pool.query<{ id: string }>(
@@ -1386,6 +1393,8 @@ export class StoryGamesService {
       if (existing) clearTimeout(existing.timer);
       this.timers.delete(gameId);
       this.lastState.delete(gameId);
+      // nothing will ever fire for it here: nothing to compare presence against either
+      if (at === null) this.awaySnap.delete(gameId);
       return;
     }
     if (existing?.at === at) return;
@@ -1480,8 +1489,7 @@ export class StoryGamesService {
         await client.query('ROLLBACK').catch(() => undefined);
         const code = (err as { code?: string }).code;
         if (attempt === 0 && (code === '40P01' || code === '40001')) continue;
-        if (code === '55P03') throw new AppError('GAME_BUSY', 503, 'this game is busy; try again', { retryAfterSec: 1 });
-        throw err;
+        throw busyOr(err);
       } finally {
         client.release();
       }
@@ -1790,6 +1798,14 @@ export class StoryGamesService {
       throw new AppError('NOT_HOST', 403, 'only the host can do that');
     }
   }
+}
+
+/** A lock wait that ran out (lock_timeout) is "try again", not a server error. */
+function busyOr(err: unknown): unknown {
+  if ((err as { code?: string }).code === '55P03') {
+    return new AppError('GAME_BUSY', 503, 'this game is busy; try again', { retryAfterSec: 1 });
+  }
+  return err;
 }
 
 function phaseLite(p: PlayerRow): PhasePlayer {
