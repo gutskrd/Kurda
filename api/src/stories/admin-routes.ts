@@ -36,7 +36,15 @@ const STATUSES = ['draft', 'in_review', 'published', 'archived'] as const;
 const idParam = z.object({ id: z.uuid() });
 const listQuery = z.object({ status: z.enum(STATUSES).optional(), dialect: z.enum(STORY_DIALECTS).optional() });
 const createBody = storyContentSchema.extend({ slug: storySlugSchema.nullish() });
-const updateBody = storyContentSchema.extend({ slug: storySlugSchema, lockVersion: z.number().int().min(0) });
+// the whole draft, every field: a client that leaves the questions out must not have deleted them
+const updateBody = storyContentSchema.extend({
+  slug: storySlugSchema,
+  summary: storyContentSchema.shape.summary.unwrap(),
+  body: storyContentSchema.shape.body.unwrap(),
+  glossary: storyContentSchema.shape.glossary.unwrap(),
+  questions: storyContentSchema.shape.questions.unwrap(),
+  lockVersion: z.number().int().min(0),
+});
 // a status change may come with no body at all (Fastify then hands over null)
 const lockBody = z
   .object({ lockVersion: z.number().int().min(0).optional() })

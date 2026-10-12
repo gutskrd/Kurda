@@ -212,7 +212,7 @@ function listItem(r: ListRow): StoryListItem {
 /**
  * Published stories, for the reading API and for the story games.
  *
- * The games (api/src/story-games) use two methods, by these names:
+ * The story games use two methods, by these names:
  *
  *   getPublishedForGame(storyId, executor?)  the story and its whole bank, or
  *                                            null unless it is published now
@@ -267,25 +267,25 @@ export class StoriesService {
    * One published story to read, by id or by slug. The two are told apart
    * before the query: a slug compared with a uuid column would be a cast
    * error, not a miss.
+   *
+   * Its recordings are looked up from the sentences as the reader cuts them
+   * now, not from the keys stored at its last save: the reader matches audio
+   * to the sentences it shows, so this is the set that has to be right.
    */
   async detail(idOrSlug: string): Promise<StoryDetail | null> {
     const byId = UUID_RE.test(idOrSlug);
     if (!byId && !/^[a-z0-9-]{3,80}$/.test(idOrSlug)) return null;
-    const res = await this.pool.query<ListRow & { body: string; glossary: StoryGlossEntry[]; sentence_keys: string[] }>(
-      `SELECT s.id, s.slug, s.title, s.summary, s.dialect, s.level, s.length, s.word_count, s.body, s.glossary,
-              s.sentence_keys, ${FULLY_NARRATED_SQL} AS fully_narrated
+    const res = await this.pool.query<Omit<ListRow, 'fully_narrated'> & { body: string; glossary: StoryGlossEntry[] }>(
+      `SELECT s.id, s.slug, s.title, s.summary, s.dialect, s.level, s.length, s.word_count, s.body, s.glossary
        FROM stories s
        WHERE ${byId ? 's.id = $1::uuid' : 's.slug = $1'} AND s.status = 'published'`,
       [idOrSlug],
     );
     const row = res.rows[0];
     if (!row) return null;
-    return {
-      ...listItem(row),
-      paragraphs: storyParagraphs(row.body),
-      glossary: row.glossary,
-      audio: await this.recordings(row.sentence_keys),
-    };
+    const paragraphs = storyParagraphs(row.body);
+    const { audio, fullyNarrated } = await this.audioFor(paragraphs);
+    return { ...listItem({ ...row, fully_narrated: fullyNarrated }), paragraphs, glossary: row.glossary, audio };
   }
 
   /**
@@ -352,7 +352,8 @@ export class StoriesService {
    * already finished come last, so the surprise is a new story while there is
    * one. Published stories always carry at least MIN_QUESTION_BANK questions
    * (publishing checks it), so any of them can be played at any count its
-   * length offers.
+   * length offers. Null when there is none — or, rarely, when the one picked
+   * was unpublished in the same instant; the caller treats both as no story.
    */
   async pickRandomPublished(options: PickRandomOptions, executor: Executor = this.pool): Promise<PublishedStory | null> {
     const params: unknown[] = [options.dialect, options.length, options.level ?? null];

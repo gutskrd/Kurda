@@ -193,6 +193,11 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       expect(clash.json().code).toBe('SLUG_TAKEN');
       const missingLock = await call('PUT', `/admin/stories/${id}`, edited);
       expect(missingLock.statusCode).toBe(400);
+      // the whole draft or nothing: leaving the questions out does not delete them
+      const withoutQuestions: Partial<TestStory> = { ...edited };
+      delete withoutQuestions.questions;
+      expect((await put(id, withoutQuestions as TestStory, lockVersion + 1)).statusCode).toBe(400);
+      expect((await call('GET', `/admin/stories/${id}`)).json().questions).toHaveLength(7);
     });
 
     it('answers 404 for a story that is not there', async () => {
