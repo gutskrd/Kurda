@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { stripControlChars, type ChatGameRef, type ChatMessageKind, type PlayGame } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
@@ -29,10 +29,15 @@ export interface DmMessage {
   username: string;
   /** already resolved (uploaded photo -> chosen avatar); null when unknown */
   avatarUrl: string | null;
-  body: string;
+  /** the text; null for a card, which has none */
+  body: string | null;
   createdAt: string;
   deliveredAt: string | null;
   readAt: string | null;
+  /** 'text', or a card (@kurda/shared `chat-cards`) */
+  kind: ChatMessageKind;
+  /** a game card's lobby; its live state is fetched (GET /play/cards/:game/:lobbyId) */
+  game: ChatGameRef | null;
 }
 
 export interface Conversation {
@@ -82,6 +87,8 @@ export class ChatService {
         createdAt: new Date().toISOString(),
         deliveredAt: null,
         readAt: null,
+        kind: 'text',
+        game: null,
       };
     }
     if ((await this.friends.statusBetween(from, to)) !== 'friends') {
@@ -122,6 +129,8 @@ export class ChatService {
       createdAt: row.rows[0]!.created_at.toISOString(),
       deliveredAt: null,
       readAt: null,
+      kind: 'text',
+      game: null,
     };
     await this.notifier
       .notifyUser(to, {
@@ -130,6 +139,72 @@ export class ChatService {
         fromUsername: row.rows[0]!.username,
         message,
       })
+      .catch(() => undefined);
+    return message;
+  }
+
+  /**
+   * A game card from `from` to `to` (contract §B3): a message that points at
+   * a lobby instead of holding text, so it can show the lobby's live state.
+   * The text pipeline — length, the profanity mask, trust and AI screening —
+   * has nothing to read and is skipped. Who may message whom is not: friends
+   * only, a block drops it silently (the sender sees it as sent, as with any
+   * message), and an escalation mute applies as it does to text. Delivered live
+   * like any DM.
+   */
+  async sendCard(from: string, to: string, card: ChatGameRef, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
+    if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
+    if (this.moderation && (await this.moderation.isChatMuted(from))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
+    }
+    if (await this.friends.areBlocked(from, to)) {
+      return {
+        id: randomUUID(),
+        senderId: from,
+        username: '',
+        avatarUrl: null,
+        body: null,
+        createdAt: new Date().toISOString(),
+        deliveredAt: null,
+        readAt: null,
+        kind: 'game',
+        game: card,
+      };
+    }
+    if ((await this.friends.statusBetween(from, to)) !== 'friends') {
+      throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
+    }
+    const { lo, hi } = canonicalPair(from, to);
+    const row = await this.pool.query<{
+      id: string;
+      created_at: Date;
+      username: string;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
+    }>(
+      `WITH ins AS (
+         INSERT INTO dm_messages (user_lo, user_hi, sender_id, kind, game, game_lobby_id)
+         VALUES ($1, $2, $3, 'game', $4, $5)
+         RETURNING id, created_at, sender_id
+       )
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+         FROM ins JOIN users u ON u.id = ins.sender_id`,
+      [lo, hi, from, card.game, card.lobbyId],
+    );
+    const message: DmMessage = {
+      id: row.rows[0]!.id,
+      senderId: from,
+      username: row.rows[0]!.username,
+      avatarUrl: resolveAvatarUrl(row.rows[0]!.profile_photo_key, row.rows[0]!.selected_avatar_key, publicUrl),
+      body: null,
+      createdAt: row.rows[0]!.created_at.toISOString(),
+      deliveredAt: null,
+      readAt: null,
+      kind: 'game',
+      game: card,
+    };
+    await this.notifier
+      .notifyUser(to, { type: 'dm', from, fromUsername: row.rows[0]!.username, message })
       .catch(() => undefined);
     return message;
   }
@@ -150,13 +225,16 @@ export class ChatService {
       username: string;
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
-      body: string;
+      body: string | null;
       created_at: Date;
       delivered_at: Date | null;
       read_at: Date | null;
+      kind: ChatMessageKind;
+      game: string | null;
+      game_lobby_id: string | null;
     }>(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.delivered_at, m.read_at
+              m.body, m.created_at, m.delivered_at, m.read_at, m.kind, m.game, m.game_lobby_id
          FROM dm_messages m JOIN users u ON u.id = m.sender_id
         WHERE m.user_lo = $1 AND m.user_hi = $2 ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $3`,
@@ -173,6 +251,8 @@ export class ChatService {
         createdAt: r.created_at.toISOString(),
         deliveredAt: r.delivered_at ? r.delivered_at.toISOString() : null,
         readAt: r.read_at ? r.read_at.toISOString() : null,
+        kind: r.kind,
+        game: gameRef(r),
       }))
       .reverse(); // ascending for display
   }
@@ -216,7 +296,7 @@ export class ChatService {
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
       last_seen_at: Date | null;
-      body: string;
+      body: string | null;
       created_at: Date;
       sender_id: string;
       unread: number;
@@ -246,10 +326,17 @@ export class ChatService {
       username: r.username,
       avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
       online: isOnline(r.last_seen_at, now),
-      lastMessage: r.body,
+      // a card has no text: '' rather than null for the phone builds that print it
+      lastMessage: r.body ?? '',
       lastAt: r.created_at.toISOString(),
       lastFromMe: r.sender_id === user,
       unread: r.unread,
     }));
   }
+}
+
+/** A stored game card's reference, or null for any other kind of message. */
+export function gameRef(r: { kind: string; game: string | null; game_lobby_id: string | null }): ChatGameRef | null {
+  if (r.kind !== 'game' || !r.game || !r.game_lobby_id) return null;
+  return { game: r.game as PlayGame, lobbyId: r.game_lobby_id };
 }
