@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { courseContentSchema } from '../content/import.js';
 import { validateExercisePayload } from '../content/exercises.js';
 import { upcomingOccurrences } from './recurrence.js';
+import { parseQuests } from './quest-logic.js';
 
 const read = (rel: string) =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../../content/events/${rel}`, import.meta.url)), 'utf8'));
@@ -35,6 +36,14 @@ describe('newroz event template', () => {
   it('is a valid annual template anchored on 21 March', () => {
     expect(template.month).toBe(3);
     expect(template.day).toBe(21);
+  });
+
+  // a quest of a type the engine does not know is silently left out of the
+  // event — which is what a template still asking for ranked-quiz wins would get
+  it('has only quests the quest engine can measure', () => {
+    const quests = template.quests ?? [];
+    expect(parseQuests(quests)).toHaveLength(quests.length);
+    expect(parseQuests(quests).map((q) => q.type)).toContain('story_quizzes');
   });
 
   it('expands into concrete future windows', () => {
