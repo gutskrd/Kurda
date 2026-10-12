@@ -94,7 +94,7 @@ export function kurmanciLetter(key: string): string | null {
  * tatweel, the stretch that lengthens a joined Arabic-script letter.
  * (The zero-width non-joiner is dealt with on its own, below.)
  */
-const INVISIBLE = /[­؜ـ​‍-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+const INVISIBLE = /[\u00ad\u061c\u0640\u200b\u200d-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g;
 
 /**
  * Characters a keyboard has no key for, as the character it does have. Typing
@@ -102,54 +102,54 @@ const INVISIBLE = /[­؜ـ​‍-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
  * what both the text and the typing are read as.
  */
 const TYPOGRAPHIC: Record<string, string> = {
-  '‘': "'", // ‘
-  '’': "'", // ’
-  '‚': "'", // ‚
-  '‛': "'", // ‛
-  '′': "'", // ′
-  'ʼ': "'", // ʼ
-  '‹': "'", // ‹
-  '›': "'", // ›
-  '“': '"', // “
-  '”': '"', // ”
-  '„': '"', // „
-  '‟': '"', // ‟
-  '″': '"', // ″
-  '«': '"', // «
-  '»': '"', // »
-  '‐': '-', // hyphen
-  '‑': '-', // non-breaking hyphen
-  '‒': '-', // figure dash
-  '–': '-', // –
-  '—': '-', // —
-  '―': '-', // horizontal bar
-  '−': '-', // minus sign
-  '…': '...', // …
+  '\u2018': "'", // ‘
+  '\u2019': "'", // ’
+  '\u201a': "'", // ‚
+  '\u201b': "'", // ‛
+  '\u2032': "'", // ′
+  '\u02bc': "'", // ʼ
+  '\u2039': "'", // ‹
+  '\u203a': "'", // ›
+  '\u201c': '"', // “
+  '\u201d': '"', // ”
+  '\u201e': '"', // „
+  '\u201f': '"', // ‟
+  '\u2033': '"', // ″
+  '\u00ab': '"', // «
+  '\u00bb': '"', // »
+  '\u2010': '-', // hyphen
+  '\u2011': '-', // non-breaking hyphen
+  '\u2012': '-', // figure dash
+  '\u2013': '-', // –
+  '\u2014': '-', // —
+  '\u2015': '-', // horizontal bar
+  '\u2212': '-', // minus sign
+  '\u2026': '...', // …
   /*
    * The Turkish dotted and dotless i. Hawar has no ı, and a Turkish Q keyboard
    * — the one Windows offers for Kurmancî — types it on the i key.
    */
-  'ı': 'i',
-  'İ': 'I',
+  '\u0131': 'i',
+  '\u0130': 'I',
   /*
    * Arabic and Persian keyboards type these where a Kurdish one types the
    * Kurdish letter: the same letter, another code point (kurdish-text.ts).
    */
-  'ك': 'ک', // ك arabic kaf → ک keheh
-  'ي': 'ی', // ي arabic yeh → ی farsi yeh
-  'ى': 'ی', // ى alef maksura → ی
-  'ۀ': 'ە', // ۀ heh with yeh above → ە
+  '\u0643': '\u06a9', // ك arabic kaf → ک keheh
+  '\u064a': '\u06cc', // ي arabic yeh → ی farsi yeh
+  '\u0649': '\u06cc', // ى alef maksura → ی
+  '\u06c0': '\u06d5', // ۀ heh with yeh above → ە
 };
 
 const TYPOGRAPHIC_RE = new RegExp(`[${Object.keys(TYPOGRAPHIC).join('')}]`, 'g');
 
 /** Persian (extended Arabic-Indic) digits as the Arabic-Indic digits Soranî is written with. */
-const PERSIAN_DIGIT = /[۰-۹]/g;
+const PERSIAN_DIGIT = /[\u06f0-\u06f9]/g;
 /** Either Arabic-script digit as the Latin digit Kurmancî is written with. */
-const ARABIC_DIGIT = /[٠-٩۰-۹]/g;
+const ARABIC_DIGIT = /[\u0660-\u0669\u06f0-\u06f9]/g;
 
 /** Arabic punctuation as the Latin mark a Kurmancî keyboard types. */
-const ARABIC_PUNCTUATION: Record<string, string> = { '،': ',', '؛': ';', '؟': '?' };
+const ARABIC_PUNCTUATION: Record<string, string> = { '\u060c': ',', '\u061b': ';', '\u061f': '?' };
 
 export interface NormalizeTypingOptions {
   /**
@@ -187,12 +187,12 @@ export function normalizeTyping(
   options: NormalizeTypingOptions = {},
 ): string {
   let out = text
-    .replace(/ه‌/g, 'ە')
-    .replace(/‌/g, '')
+    .replace(/\u0647\u200c/g, '\u06d5')
+    .replace(/\u200c/g, '')
     .replace(INVISIBLE, '')
     .normalize('NFC')
     // 'İ'.toLowerCase() is i + a combining dot, which no NFC form absorbs
-    .replace(/i̇/g, 'i')
+    .replace(/i\u0307/g, 'i')
     .replace(TYPOGRAPHIC_RE, (ch) => TYPOGRAPHIC[ch] ?? ch);
   out =
     dialect === 'sorani'
@@ -202,7 +202,7 @@ export function normalizeTyping(
             const code = d.charCodeAt(0);
             return String(code - (code >= 0x06f0 ? 0x06f0 : 0x0660));
           })
-          .replace(/[،؛؟]/g, (ch) => ARABIC_PUNCTUATION[ch] ?? ch);
+          .replace(/[\u060c\u061b\u061f]/g, (ch) => ARABIC_PUNCTUATION[ch] ?? ch);
   out = out.replace(/\s+/g, ' ');
   return options.partial ? out.trimStart() : out.trim();
 }
@@ -240,10 +240,10 @@ const ACCENT_FOLD: Record<string, string> = {
   Î: 'I',
   Ş: 'S',
   Û: 'U',
-  'ێ': 'ی', // ێ → ی
-  'ۆ': 'و', // ۆ → و
-  'ڕ': 'ر', // ڕ → ر
-  'ڵ': 'ل', // ڵ → ل
+  '\u06ce': '\u06cc', // ێ → ی
+  '\u06c6': '\u0648', // ۆ → و
+  '\u0695': '\u0631', // ڕ → ر
+  '\u06b5': '\u0644', // ڵ → ل
 };
 
 /** One character without its accent (itself when it has none). */
@@ -301,7 +301,7 @@ export function applyBacktickShortcut(prev: string, nextChar: string): string {
  * spacing accents, and a lone combining mark): not a character yet. A race
  * whose last letter is î ended the moment ˆ arrived, before the i did.
  */
-const DEAD_KEY = /[\^`~¨¯´¸ˆˇ˘-˝̀-ͯ]$/;
+const DEAD_KEY = /[\^`~\u00a8\u00af\u00b4\u00b8\u02c6\u02c7\u02d8-\u02dd\u0300-\u036f]$/;
 
 // ---------- comparing what was typed with the text ----------
 
@@ -373,7 +373,7 @@ const OP_INS = 5; // a character typed that the text does not have
  * ە at the end of a word, and showing it as ھ there would misspell them.
  */
 function charKey(ch: string): string {
-  return ch === 'ه' ? 'ھ' : ch;
+  return ch === '\u0647' ? '\u06be' : ch;
 }
 
 /**
@@ -695,11 +695,11 @@ const ASCII_PRINTABLE = /^[\x20-\x7e]$/;
  * Arabic-Indic digits — what a Soranî keyboard has keys for.
  */
 const SORANI_TYPEABLE = new Set<string>([
-  ...'ئابپتجچحخدرڕزژسشعغفڤقکگلڵمنھهەوۆیێ',
-  '،',
-  '؛',
-  '؟',
-  ...'٠١٢٣٤٥٦٧٨٩',
+  ...'\u0626\u0627\u0628\u067e\u062a\u062c\u0686\u062d\u062e\u062f\u0631\u0695\u0632\u0698\u0633\u0634\u0639\u063a\u0641\u06a4\u0642\u06a9\u06af\u0644\u06b5\u0645\u0646\u06be\u0647\u06d5\u0648\u06c6\u06cc\u06ce',
+  '\u060c',
+  '\u061b',
+  '\u061f',
+  ...'\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669',
 ]);
 
 const KURMANCI_TYPEABLE = new Set<string>([...KURMANCI_SPECIAL, ...KURMANCI_SPECIAL.map((c) => c.toUpperCase())]);
@@ -967,8 +967,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
     kurmanci: [
       {
         key: 'keyboardGuide.mac.open',
-        en: 'Open {0} → {1}, and under {2} choose {3}.',
-        ui: ['System Settings', 'Keyboard', 'Text Input', 'Edit'],
+        en: 'Open {0} → {1}, and under {2} choose {3} → {4}.',
+        ui: ['System Settings', 'Keyboard', 'Text Input', 'Input Sources', 'Edit'],
       },
       {
         key: 'keyboardGuide.mac.kurmanci',
@@ -987,8 +987,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
     sorani: [
       {
         key: 'keyboardGuide.mac.open',
-        en: 'Open {0} → {1}, and under {2} choose {3}.',
-        ui: ['System Settings', 'Keyboard', 'Text Input', 'Edit'],
+        en: 'Open {0} → {1}, and under {2} choose {3} → {4}.',
+        ui: ['System Settings', 'Keyboard', 'Text Input', 'Input Sources', 'Edit'],
       },
       {
         key: 'keyboardGuide.mac.sorani',

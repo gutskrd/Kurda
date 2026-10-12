@@ -37,8 +37,8 @@ const TEXT = 'ez ji welatê xwe hez dikim'; // 26 characters, one accent
 
 describe('normalizeTyping', () => {
   it('composes a decomposed letter, so e + U+0302 is the ê every keyboard sends', () => {
-    expect(normalizeTyping('welatê')).toBe('welatê');
-    expect([...normalizeTyping('welatê')]).toHaveLength(6);
+    expect(normalizeTyping('welate\u0302')).toBe('welatê');
+    expect([...normalizeTyping('welate\u0302')]).toHaveLength(6);
   });
 
   it('reads the Turkish ı and İ as the i and I of Hawar', () => {
@@ -54,13 +54,13 @@ describe('normalizeTyping', () => {
   });
 
   it('makes every run of spaces, tabs, line breaks and no-break spaces one space, and trims', () => {
-    expect(normalizeTyping('  ez ji\t\twelat\n\nxwe   ')).toBe('ez ji welat xwe');
+    expect(normalizeTyping('  ez\u00a0ji\t\twelat\n\nxwe\u202f  ')).toBe('ez ji welat xwe');
   });
 
   it('removes invisible formatting and tatweel', () => {
-    expect(normalizeTyping('we​lat‏')).toBe('welat');
-    expect(normalizeTyping('‫کوردی‬')).toBe('کوردی');
-    expect(normalizeTyping('کـــورد', 'sorani')).toBe('کورد');
+    expect(normalizeTyping('we\u200blat\u200f')).toBe('welat');
+    expect(normalizeTyping('\u202bکوردی\u202c')).toBe('کوردی');
+    expect(normalizeTyping('ک\u0640\u0640\u0640ورد', 'sorani')).toBe('کورد');
   });
 
   it('writes Soranî lookalikes as the Kurdish letter', () => {
@@ -69,7 +69,7 @@ describe('normalizeTyping', () => {
     expect(normalizeTyping('ى', 'sorani')).toBe('ی');
     // ۀ, and ه + zero-width non-joiner (a Persian keyboard's ە), as ە
     expect(normalizeTyping('ۀ', 'sorani')).toBe('ە');
-    expect(normalizeTyping('به‌رد', 'sorani')).toBe('بەرد');
+    expect(normalizeTyping('به\u200cرد', 'sorani')).toBe('بەرد');
   });
 
   it('keeps ه as written, since some texts spell the vowel with it', () => {
@@ -89,11 +89,11 @@ describe('normalizeTyping', () => {
 
   it('keeps one trailing space while the text is still being typed', () => {
     expect(normalizeTyping('  ez ji  ', 'kurmanci', { partial: true })).toBe('ez ji ');
-    expect(normalizeTyping('ez ji ', 'kurmanci', { partial: true })).toBe('ez ji ');
+    expect(normalizeTyping('ez ji\u00a0', 'kurmanci', { partial: true })).toBe('ez ji ');
   });
 
   it('is idempotent', () => {
-    const samples = ['Ez’ê bêm — sibê…', 'welatê  ız', 'به‌رد كتيب ٢', ' “x” '];
+    const samples = ['Ez’ê bêm — sibê…', 'welate\u0302  ız', 'به\u200cرد كتيب ٢', ' “x” '];
     for (const s of samples) {
       for (const dialect of ['kurmanci', 'sorani'] as const) {
         const once = normalizeTyping(s, dialect);
@@ -132,7 +132,7 @@ describe('kurmanciLetter (Wordle’s physical keyboard)', () => {
     expect(kurmanciLetter('a')).toBe('a');
     expect(kurmanciLetter('Ş')).toBe('ş'); // Shift
     expect(kurmanciLetter('ç')).toBe('ç'); // Option+c on a Mac, AltGr on Windows
-    expect(kurmanciLetter('ê')).toBe('ê'); // a dead key that sent the parts
+    expect(kurmanciLetter('e\u0302')).toBe('ê'); // a dead key that sent the parts
     expect(kurmanciLetter('ı')).toBe('i'); // the Turkish Q i key
     expect(kurmanciLetter('İ')).toBe('i');
     expect(kurmanciLetter('X')).toBe('x');
@@ -219,7 +219,7 @@ describe('compareTyping', () => {
 
   it('a decomposed text is typed perfectly on a keyboard that sends ê', () => {
     // the race text was saved as e + U+0302; every keyboard types the one code point
-    const r = compareTyping('ez ji welatê xwe', 'ez ji welatê xwe', 'strict', { final: true });
+    const r = compareTyping('ez ji welate\u0302 xwe', 'ez ji welatê xwe', 'strict', { final: true });
     expect(r.chars).toHaveLength(16);
     expect(r.correct).toBe(16);
     expect(r.done).toBe(true);
@@ -227,7 +227,7 @@ describe('compareTyping', () => {
   });
 
   it('a curly apostrophe, a dash and a no-break space in the text cost nothing', () => {
-    const r = compareTyping('Ez’ê bêm — sibê were.', "Ez'ê bêm - sibê were.", 'strict', { final: true });
+    const r = compareTyping('Ez’ê bêm — sibê\u00a0were.', "Ez'ê bêm - sibê were.", 'strict', { final: true });
     expect(r.errors).toBe(0);
     expect(r.done).toBe(true);
     // a double space typed is one space
@@ -329,7 +329,7 @@ describe('compareTyping', () => {
      * before the i did, and scored the last letter wrong.
      */
     it('is not done while a dead key is still waiting for its letter', () => {
-      for (const dead of ['ˆ', '^', '¨', '´', '`', '̂']) {
+      for (const dead of ['ˆ', '^', '¨', '´', '`', '\u0302']) {
         const r = compareTyping('ez kurd im, ne kurdî', `ez kurd im, ne kurd${dead}`, 'strict');
         expect(r.done, dead).toBe(false);
         expect(r.chars.at(-1), dead).toBe('pending');
