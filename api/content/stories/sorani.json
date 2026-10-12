@@ -1,0 +1,1751 @@
+{
+  "stories": [
+    {
+      "slug": "ckb-the-house-key",
+      "dialect": "sorani",
+      "level": 1,
+      "title": "کلیلی ماڵەوە",
+      "summary": "بەیانییە و دایکی هێمن لە پەلەدایە، بەڵام کلیلی ماڵەوە ون بووە.",
+      "body": "بەیانییە و کاتژمێر حەوت و نیوە. دایکی هێمن لە پەلەدایە، چونکە دەبێت بچێتە سەر کار.\n\nدایکی دەپرسێت: «هێمن، کلیلی ماڵەوەت بینیوە؟» هێمن دەڵێت: «نەخێر دایە، نەمبینیوە.»\n\nهەموویان بەدوای کلیلەکەدا دەگەڕێن. کلیلەکە لەسەر مێزەکە نییە. لە ناو جانتاکەشدا نییە.\n\nلەناکاو ژینۆ پێدەکەنێت. ژینۆ خوشکە بچووکەکەی هێمنە. کلیلەکە لە دەستیدایە! ژینۆ دەڵێت: «ئەمە هی منە! یاری پێ دەکەم.»\n\nدایکی پێدەکەنێت و ماچی دەکات. پاشان کلیلەکە لە تەنیشت دەرگاکە هەڵدەواسێت و دەڵێت: «لەمەودوا شوێنی کلیلەکە ئێرەیە.»",
+      "glossary": [
+        {
+          "term": "لە پەلەدایە",
+          "meanings": {
+            "en": "is in a hurry"
+          }
+        },
+        {
+          "term": "لەناکاو",
+          "meanings": {
+            "en": "suddenly"
+          }
+        },
+        {
+          "term": "هەڵدەواسێت",
+          "meanings": {
+            "en": "hangs (it) up"
+          }
+        },
+        {
+          "term": "لەمەودوا",
+          "meanings": {
+            "en": "from now on"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم چیرۆکە دەربارەی چییە؟",
+          "promptEn": "What is this story about?",
+          "options": [
+            "یارییەکی نوێی ژینۆ",
+            "گەڕان بەدوای کلیلی ماڵەوەدا",
+            "یەکەم ڕۆژی کاری دایکی هێمن"
+          ],
+          "correctIndex": 1,
+          "explanation": "هەموو خێزانەکە بەدوای کلیلی ماڵەوەدا دەگەڕێن، تا دەردەکەوێت کە لای ژینۆیە.",
+          "explanationEn": "The whole family looks for the house key until it turns out that Jîno has it.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "کاتژمێر چەندە؟",
+          "promptEn": "What time is it?",
+          "options": [
+            "هەشت و نیو",
+            "حەوت و نیو",
+            "شەش و نیو"
+          ],
+          "correctIndex": 1,
+          "explanation": "چیرۆکەکە دەڵێت: «کاتژمێر حەوت و نیوە.»",
+          "explanationEn": "The story says: “It is half past seven.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕاستە یان هەڵە: دایکی هێمن دەبێت بچێتە سەر کار.",
+          "promptEn": "True or false: Hêmin’s mother has to go to work.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە"
+          ],
+          "correctIndex": 0,
+          "explanation": "ڕاستە. دایکی لە پەلەدایە، چونکە دەبێت بچێتە سەر کار.",
+          "explanationEn": "True. She is in a hurry because she has to go to work.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "کلیلەکە لای کێیە؟",
+          "promptEn": "Who has the key?",
+          "options": [
+            "ژینۆ",
+            "هێمن",
+            "دایکی هێمن"
+          ],
+          "correctIndex": 0,
+          "explanation": "ژینۆ پێدەکەنێت و کلیلەکە لە دەستیدایە.",
+          "explanationEn": "Jîno laughs, and the key is in her hand.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "بۆچی ژینۆ کلیلەکەی بردووە؟",
+          "promptEn": "Why has Jîno taken the key?",
+          "options": [
+            "بۆ ئەوەی بیدات بە هێمن",
+            "بۆ ئەوەی دەرگاکە بکاتەوە",
+            "بۆ ئەوەی یاری پێ بکات"
+          ],
+          "correctIndex": 2,
+          "explanation": "ژینۆ دەڵێت: «ئەمە هی منە! یاری پێ دەکەم.»",
+          "explanationEn": "Jîno says: “It’s mine! I’m playing with it.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«لە پەلەدایە» واتای چییە؟",
+          "promptEn": "What does «لە پەلەدایە» mean?",
+          "options": [
+            "کاتی کەمە",
+            "زۆر ماندووە",
+            "زۆر دڵخۆشە"
+          ],
+          "correctIndex": 0,
+          "explanation": "«لە پەلەدایە» واتە کاتی کەمە و دەبێت خێرا بێت، چونکە دەبێت بچێتە سەر کار.",
+          "explanationEn": "«لە پەلەدایە» means she is short of time and must be quick, because she has to go to work.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "sequence",
+          "prompt": "کامەیان لە کۆتایی چیرۆکەکەدا ڕوودەدات؟",
+          "promptEn": "Which of these happens at the end of the story?",
+          "options": [
+            "هەموویان بەدوای کلیلەکەدا دەگەڕێن",
+            "دایکی پرسیار لە هێمن دەکات",
+            "دایکی کلیلەکە هەڵدەواسێت"
+          ],
+          "correctIndex": 2,
+          "explanation": "لە کۆتاییدا دایکی کلیلەکە لە تەنیشت دەرگاکە هەڵدەواسێت.",
+          "explanationEn": "At the end, the mother hangs the key up next to the door.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی دایکی کلیلەکە لە تەنیشت دەرگاکە هەڵدەواسێت؟",
+          "promptEn": "Why does the mother hang the key next to the door?",
+          "options": [
+            "بۆ ئەوەی جارێکی تر ون نەبێت",
+            "بۆ ئەوەی ژینۆ یاری پێ بکات",
+            "بۆ ئەوەی هێمن لەگەڵ خۆی بیبات"
+          ],
+          "correctIndex": 0,
+          "explanation": "دایکی دەڵێت: «لەمەودوا شوێنی کلیلەکە ئێرەیە.» واتە نایەوێت کلیلەکە دیسان ون بێت.",
+          "explanationEn": "She says: “From now on, the key’s place is here.” She doesn’t want it to get lost again.",
+          "evidenceParagraph": 4
+        }
+      ]
+    },
+    {
+      "slug": "ckb-warm-bread",
+      "dialect": "sorani",
+      "level": 1,
+      "title": "نانی گەرم",
+      "summary": "ئاراس پارەی نانەکەی لە ماڵەوە بەجێ دەهێڵێت، بەڵام وەستای نانەواخانەکە متمانەی پێ دەکات.",
+      "body": "ناوم ئاراسە و تەمەنم نۆ ساڵە. هەموو بەیانییەک دەچمە نانەواخانەکەی کۆڵانەکەمان و نان دەکڕم.\n\nئەمڕۆ نانەکە زۆر گەرم و بۆنخۆش بوو. وەستا کەریم پێنج نانی خستە ناو کیسەیەکەوە و دایە دەستم.\n\nدەستم کردە گیرفانم، بەڵام پارەکە لەوێ نەبوو! پارەکەم لە ماڵەوە بەجێ هێشتبوو. زۆر شەرمم کرد.\n\nوەستا کەریم پێکەنی و وتی: «هیچ نییە کوڕم. نانەکە ببە و پارەکە سبەینێ بهێنە.»\n\nبەڵام من چاوەڕێی سبەینێم نەکرد. نیوەڕۆ لەگەڵ باوکم گەڕامەوە بۆ نانەواخانەکە و پارەکەم دایە وەستا کەریم. وەستا کەریم وتی: «کوڕێکی ڕاستگۆ و باشیت.» ئەو ڕۆژە نانەکە لە هەموو ڕۆژێک خۆشتر بوو.",
+      "glossary": [
+        {
+          "term": "نانەواخانەکە",
+          "meanings": {
+            "en": "the bakery"
+          }
+        },
+        {
+          "term": "بۆنخۆش",
+          "meanings": {
+            "en": "sweet-smelling, fragrant"
+          }
+        },
+        {
+          "term": "وەستا",
+          "meanings": {
+            "en": "master — a respectful title for a craftsman such as a baker"
+          }
+        },
+        {
+          "term": "بەجێ هێشتبوو",
+          "meanings": {
+            "en": "had left behind"
+          }
+        },
+        {
+          "term": "شەرمم کرد",
+          "meanings": {
+            "en": "I felt embarrassed"
+          }
+        },
+        {
+          "term": "ڕاستگۆ",
+          "meanings": {
+            "en": "honest"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "باشترین ناونیشانی تر بۆ ئەم چیرۆکە کامەیە؟",
+          "promptEn": "Which is the best other title for this story?",
+          "options": [
+            "نانەواخانە نوێیەکە",
+            "باوکە دڵخۆشەکە",
+            "کوڕە ڕاستگۆکە"
+          ],
+          "correctIndex": 2,
+          "explanation": "ئاراس هەر ئەو ڕۆژە پارەکەی گەڕاندەوە و وەستا کەریم پێی وت کوڕێکی ڕاستگۆیە.",
+          "explanationEn": "Aras paid the money back that same day, and Westa Kerîm told him he was an honest boy.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "ئاراس تەمەنی چەندە؟",
+          "promptEn": "How old is Aras?",
+          "options": [
+            "پێنج ساڵ",
+            "حەوت ساڵ",
+            "نۆ ساڵ"
+          ],
+          "correctIndex": 2,
+          "explanation": "ئاراس دەڵێت: «تەمەنم نۆ ساڵە.»",
+          "explanationEn": "Aras says: “I am nine years old.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "وەستا کەریم چەند نانی خستە ناو کیسەکەوە؟",
+          "promptEn": "How many loaves did Westa Kerîm put in the bag?",
+          "options": [
+            "پێنج",
+            "نۆ",
+            "دوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "وەستا کەریم پێنج نانی خستە ناو کیسەیەکەوە.",
+          "explanationEn": "Westa Kerîm put five loaves in a bag.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«بۆنخۆش» واتای چییە؟",
+          "promptEn": "What does «بۆنخۆش» mean?",
+          "options": [
+            "گەرمییەکی زۆری هەیە",
+            "بۆنێکی خۆشی هەیە",
+            "ڕەنگێکی جوانی هەیە"
+          ],
+          "correctIndex": 1,
+          "explanation": "«بۆنخۆش» واتە بۆنێکی خۆشی هەیە، وەک نانی تازە.",
+          "explanationEn": "«بۆنخۆش» means it smells good, like fresh bread.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕاستە یان هەڵە: پارەکە لە گیرفانی ئاراسدا بوو.",
+          "promptEn": "True or false: The money was in Aras’s pocket.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە"
+          ],
+          "correctIndex": 1,
+          "explanation": "هەڵەیە. ئاراس پارەکەی لە ماڵەوە بەجێ هێشتبوو.",
+          "explanationEn": "False. Aras had left the money at home.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "وەستا کەریم بە ئاراسی وت چی بکات؟",
+          "promptEn": "What did Westa Kerîm tell Aras to do?",
+          "options": [
+            "لەگەڵ باوکی بگەڕێتەوە",
+            "پارەکە سبەینێ بهێنێت",
+            "نانەکە لێرە دابنێت"
+          ],
+          "correctIndex": 1,
+          "explanation": "وەستا کەریم وتی: «نانەکە ببە و پارەکە سبەینێ بهێنە.»",
+          "explanationEn": "Westa Kerîm said: “Take the bread and bring the money tomorrow.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "ئاراس کەی پارەکەی دایە وەستا کەریم؟",
+          "promptEn": "When did Aras give the money to Westa Kerîm?",
+          "options": [
+            "هەمان ڕۆژ، نیوەڕۆ",
+            "ڕۆژی دواتر، بەیانی",
+            "دوای هەفتەیەک"
+          ],
+          "correctIndex": 0,
+          "explanation": "ئاراس چاوەڕێی سبەینێی نەکرد. نیوەڕۆ لەگەڵ باوکی گەڕایەوە بۆ نانەواخانەکە.",
+          "explanationEn": "Aras did not wait for the next day. At noon he went back to the bakery with his father.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی وەستا کەریم وتی ئاراس کوڕێکی ڕاستگۆیە؟",
+          "promptEn": "Why did Westa Kerîm say Aras was an honest boy?",
+          "options": [
+            "هەمان ڕۆژ پارەکەی هێنایەوە",
+            "هەموو بەیانییەک نان دەکڕێت",
+            "لەگەڵ باوکیدا گەڕابووەوە"
+          ],
+          "correctIndex": 0,
+          "explanation": "وەستا کەریم پێی وابوو ئاراس سبەینێ پارەکە دەهێنێت، بەڵام ئاراس هەر ئەو نیوەڕۆیە هێنایەوە.",
+          "explanationEn": "Westa Kerîm expected the money the next day, but Aras brought it back that same noon.",
+          "evidenceParagraph": 4
+        }
+      ]
+    },
+    {
+      "slug": "ckb-first-day-diary",
+      "dialect": "sorani",
+      "level": 2,
+      "title": "ڕۆژی یەکەم",
+      "summary": "قوتابییەک لە ڕۆژنووسەکەیدا باسی یەکەم ڕۆژی خۆی لە قوتابخانەیەکی نوێ دەکات.",
+      "body": "یەکشەممە، ئێوارە\n\nئەمڕۆ یەکەم ڕۆژم بوو لە قوتابخانە نوێیەکەم لە هەولێر. ئێمە تازە لە سلێمانییەوە هاتووین. هیچ کەسێکم نەدەناسی و زۆر دڵەڕاوکێم هەبوو.\n\nلە پشووی نێوان وانەکاندا، بە تەنیا لە گۆشەیەکی حەوشەکەدا دانیشتم. ساندویچەکەم لە ماڵەوە بەجێ مابوو، بۆیە زۆر برسی بووم.\n\nلەناکاو کچێک هاتە لام و وتی: «سڵاو، من شیلانم. دەتوانم لێرە دابنیشم؟» پاشان ساندویچەکەی خۆی کردە دوو بەش و بەشێکی دایە من.\n\nشیلان پێی وتم کە ئەویش پار قوتابیی نوێ بووە و هیچ هاوڕێیەکی نەبووە. دوای پشووەکە، لە پۆلدا لە تەنیشت یەکتر دانیشتین.\n\nسبەینێ دوو ساندویچ دەبەم: یەکێک بۆ خۆم و یەکێکیش بۆ شیلان.",
+      "glossary": [
+        {
+          "term": "دڵەڕاوکێم",
+          "meanings": {
+            "en": "my anxiety, nervousness"
+          }
+        },
+        {
+          "term": "پشووی نێوان وانەکاندا",
+          "meanings": {
+            "en": "in the break between lessons"
+          }
+        },
+        {
+          "term": "گۆشەیەکی حەوشەکەدا",
+          "meanings": {
+            "en": "in a corner of the schoolyard"
+          }
+        },
+        {
+          "term": "بەجێ مابوو",
+          "meanings": {
+            "en": "had been left behind"
+          }
+        },
+        {
+          "term": "پار",
+          "meanings": {
+            "en": "last year"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم ڕۆژنووسە زیاتر دەربارەی چییە؟",
+          "promptEn": "What is this diary entry mainly about?",
+          "options": [
+            "چۆن نووسەر لە ڕۆژی یەکەمدا هاوڕێیەکی دۆزییەوە",
+            "چۆن خێزانەکەی نووسەر هاتنە هەولێر",
+            "وانەکانی یەکەم ڕۆژی قوتابخانە"
+          ],
+          "correctIndex": 0,
+          "explanation": "نووسەر لە ڕۆژی یەکەمدا تەنیا بوو، بەڵام شیلان هاتە لای و بوون بە هاوڕێ.",
+          "explanationEn": "The writer was alone on the first day, but Shîlan came over and they became friends.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "قوتابخانە نوێیەکەی نووسەر لە کام شارە؟",
+          "promptEn": "Which city is the writer’s new school in?",
+          "options": [
+            "سلێمانی",
+            "دهۆک",
+            "هەولێر"
+          ],
+          "correctIndex": 2,
+          "explanation": "نووسەر دەڵێت: «یەکەم ڕۆژم بوو لە قوتابخانە نوێیەکەم لە هەولێر.»",
+          "explanationEn": "The writer says: “It was my first day at my new school in Hewlêr (Erbil).”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«دڵەڕاوکێ» نزیکترین واتای چییە؟",
+          "promptEn": "What is the closest meaning of «دڵەڕاوکێ»?",
+          "options": [
+            "دڵخۆشی و پێکەنین",
+            "نیگەرانی و ترس",
+            "ماندوویی و خەو"
+          ],
+          "correctIndex": 1,
+          "explanation": "نووسەر کەسی نەدەناسی، بۆیە نیگەران بوو و دەترسا.",
+          "explanationEn": "The writer didn’t know anyone, so felt worried and afraid.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "بۆچی نووسەر برسی بوو؟",
+          "promptEn": "Why was the writer hungry?",
+          "options": [
+            "پشووەکە زۆر کورت بوو",
+            "ساندویچەکەی لە ماڵەوە مابوو",
+            "شیلان ساندویچەکەی خواردبوو"
+          ],
+          "correctIndex": 1,
+          "explanation": "نووسەر دەڵێت: «ساندویچەکەم لە ماڵەوە بەجێ مابوو، بۆیە زۆر برسی بووم.»",
+          "explanationEn": "The writer says: “My sandwich had been left at home, so I was very hungry.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "شیلان چی دایە نووسەر؟",
+          "promptEn": "What did Shîlan give the writer?",
+          "options": [
+            "نیوەی ساندویچەکەی",
+            "ساندویچێکی تەواو",
+            "دوو ساندویچ"
+          ],
+          "correctIndex": 0,
+          "explanation": "شیلان ساندویچەکەی خۆی کردە دوو بەش و بەشێکی دایە نووسەر.",
+          "explanationEn": "Shîlan split her own sandwich in two and gave one part to the writer.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی شیلان باش لە هەستی نووسەر تێدەگات؟",
+          "promptEn": "Why does Shîlan understand the writer’s feelings so well?",
+          "options": [
+            "ئەویش لە سلێمانییەوە هاتووە",
+            "پار ئەویش قوتابیی نوێ بووە",
+            "ئەویش ساندویچەکەی لەبیر چووە"
+          ],
+          "correctIndex": 1,
+          "explanation": "شیلان وتی کە پار ئەویش قوتابیی نوێ بووە و هیچ هاوڕێیەکی نەبووە، بۆیە ئەو هەستە دەناسێت.",
+          "explanationEn": "Shîlan said she was a new student herself last year and had no friends, so she knows that feeling.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "sequence",
+          "prompt": "دوای پشووەکە چی ڕوویدا؟",
+          "promptEn": "What happened after the break?",
+          "options": [
+            "لە پۆلدا پێکەوە دانیشتن",
+            "شیلان چووە ماڵەوە",
+            "نووسەر لە حەوشەکەدا مایەوە"
+          ],
+          "correctIndex": 0,
+          "explanation": "دوای پشووەکە، لە پۆلدا لە تەنیشت یەکتر دانیشتن.",
+          "explanationEn": "After the break, they sat next to each other in class.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "نووسەر سبەینێ چی دەکات؟",
+          "promptEn": "What will the writer do tomorrow?",
+          "options": [
+            "لە گۆشەی حەوشەکە دادەنیشێت",
+            "لە ماڵەوە دەمێنێتەوە",
+            "دوو ساندویچ دەبات بۆ قوتابخانە"
+          ],
+          "correctIndex": 2,
+          "explanation": "نووسەر دەڵێت سبەینێ دوو ساندویچ دەبات: یەکێک بۆ خۆی و یەکێک بۆ شیلان.",
+          "explanationEn": "The writer will take two sandwiches tomorrow: one for the writer and one for Shîlan.",
+          "evidenceParagraph": 5
+        }
+      ]
+    },
+    {
+      "slug": "ckb-grandmas-dolma",
+      "dialect": "sorani",
+      "level": 1,
+      "title": "دۆڵمەی داپیرە",
+      "summary": "هێرۆ لەگەڵ داپیرەی بۆ میوانەکان دۆڵمە دروست دەکات، بەڵام سەرەتا برنجیان نییە.",
+      "body": "ڕۆژی هەینی بوو. ئێوارە خاڵی هێرۆ و ژن و منداڵەکانی دەهاتنە ماڵیان. داپیرە وتی: «هێرۆ گیان، وەرە با پێکەوە دۆڵمە دروست بکەین. پێویستمان بە گەڵای مێو و برنج هەیە.»\n\nداپیرە سەیری دۆڵابەکەی کرد. گەڵای مێو هەبوو، بەڵام برنج نەمابوو! هێرۆ وتی: «خەمت نەبێت داپیرە. دەچم لە ماڵی پوورە زێڕین برنج دەهێنم.» پوورە زێڕین دراوسێیان بوو.\n\nپوورە زێڕین کیسەیەک برنجی دایە هێرۆ و وتی: «دۆڵمەی داپیرەت ناوبانگی هەیە. ئەگەر قاپێکم بۆ بهێنیت، زۆر دڵخۆش دەبم!» هێرۆ پێکەنی و بەڵێنی پێدا.\n\nلە ماڵەوە داپیرە هەنگاو بە هەنگاو فێری کرد. یەکەم، گەڵاکانیان شوشت. دووەم، برنجەکەیان لەگەڵ تەماتە و پیاز و خوێ و ڕۆن تێکەڵ کرد. سێیەم، هێرۆ گەڵاکانی دانە دانە پێچایەوە.\n\nسەرەتا گەڵاکان لە دەستی هێرۆدا دەدڕان. داپیرە وتی: «زۆر برنج مەخەرە ناوی.» دواتر هێرۆ فێر بوو و دۆڵمەکانی جوان و ڕێک بوون.\n\nپاشان دۆڵمەکانیان لە مەنجەڵێکی گەورەدا ڕیز کرد. مەنجەڵەکە یەک کاتژمێر لەسەر ئاگر مایەوە.\n\nئێوارە میوانەکان هاتن. خاڵی هێرۆ دۆڵمەیەکی خوارد و وتی: «ئەمە خۆشترین دۆڵمەیە کە تا ئێستا خواردوومە!» داپیرە وتی: «ئەمجارە هێرۆ دروستی کردووە.» هێرۆ زۆر دڵخۆش بوو. پاشان قاپێک دۆڵمەی بۆ پوورە زێڕین برد.",
+      "glossary": [
+        {
+          "term": "دۆڵمە",
+          "meanings": {
+            "en": "dolma: vine leaves and vegetables stuffed with rice"
+          }
+        },
+        {
+          "term": "گەڵای مێو",
+          "meanings": {
+            "en": "vine leaves"
+          }
+        },
+        {
+          "term": "نەمابوو",
+          "meanings": {
+            "en": "there was none left"
+          }
+        },
+        {
+          "term": "ناوبانگی هەیە",
+          "meanings": {
+            "en": "is famous"
+          }
+        },
+        {
+          "term": "هەنگاو بە هەنگاو",
+          "meanings": {
+            "en": "step by step"
+          }
+        },
+        {
+          "term": "پێچایەوە",
+          "meanings": {
+            "en": "rolled (them) up"
+          }
+        },
+        {
+          "term": "دەدڕان",
+          "meanings": {
+            "en": "were tearing"
+          }
+        },
+        {
+          "term": "مەنجەڵەکە",
+          "meanings": {
+            "en": "the cooking pot"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم چیرۆکە زیاتر دەربارەی چییە؟",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "هێرۆ و پوورە زێڕین بۆ برنج دەچنە بازاڕ",
+            "خاڵی هێرۆ فێری دروستکردنی دۆڵمە دەبێت",
+            "هێرۆ و داپیرەی بۆ میوانەکان دۆڵمە دروست دەکەن"
+          ],
+          "correctIndex": 2,
+          "explanation": "هێرۆ لەگەڵ داپیرەی بۆ میوانەکان دۆڵمە دروست دەکات و هەمووان پێیان خۆشە.",
+          "explanationEn": "Hêro makes dolma for the guests with her grandmother, and everyone loves it.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "ئەو ئێوارەیە کێ دەهاتنە ماڵی هێرۆ؟",
+          "promptEn": "Who was coming to Hêro’s home that evening?",
+          "options": [
+            "پوورە زێڕین و منداڵەکانی",
+            "مامی و ژن و منداڵەکانی",
+            "خاڵی و ژن و منداڵەکانی"
+          ],
+          "correctIndex": 2,
+          "explanation": "لە سەرەتادا هاتووە کە خاڵی هێرۆ و ژن و منداڵەکانی دەهاتنە ماڵیان.",
+          "explanationEn": "At the start we read that Hêro’s uncle (her mother’s brother) and his wife and children were coming.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "چی لە ماڵەوە نەمابوو؟",
+          "promptEn": "What had run out at home?",
+          "options": [
+            "گەڵای مێو",
+            "تەماتە",
+            "برنج"
+          ],
+          "correctIndex": 2,
+          "explanation": "داپیرە سەیری دۆڵابەکەی کرد: گەڵای مێو هەبوو، بەڵام برنج نەمابوو.",
+          "explanationEn": "Grandmother looked in the cupboard: there were vine leaves, but no rice was left.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "پوورە زێڕین کێیە؟",
+          "promptEn": "Who is Pûre Zêrîn?",
+          "options": [
+            "دراوسێیانە",
+            "مامۆستای هێرۆیە",
+            "هاوڕێی خاڵی هێرۆیە"
+          ],
+          "correctIndex": 0,
+          "explanation": "چیرۆکەکە دەڵێت: «پوورە زێڕین دراوسێیان بوو.» «پوورە» لێرەدا ناوێکی ڕێزە بۆ ژنێکی بەتەمەن.",
+          "explanationEn": "The story says: “Pûre Zêrîn was their neighbour.” Here «پوورە» (auntie) is a respectful way to address an older woman.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "پوورە زێڕین چی داوا کرد؟",
+          "promptEn": "What did Pûre Zêrîn ask for?",
+          "options": [
+            "قاپێک دۆڵمە",
+            "کیسەیەک برنج",
+            "هەندێک گەڵای مێو"
+          ],
+          "correctIndex": 0,
+          "explanation": "پوورە زێڕین وتی: «ئەگەر قاپێکم بۆ بهێنیت، زۆر دڵخۆش دەبم!»",
+          "explanationEn": "Pûre Zêrîn said: “If you bring me a plate, I’ll be very happy!”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«ناوبانگی هەیە» واتای چییە؟",
+          "promptEn": "What does «ناوبانگی هەیە» mean?",
+          "options": [
+            "کەم کەس دەیخوات",
+            "زۆر کەس دەیناسن",
+            "زۆر کەس دروستی دەکەن"
+          ],
+          "correctIndex": 1,
+          "explanation": "«ناوبانگی هەیە» واتە زۆر کەس دەیناسن و باسی دەکەن.",
+          "explanationEn": "«ناوبانگی هەیە» means many people know it and talk about it: it is famous.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "یەکەم هەنگاوی دروستکردنی دۆڵمەکە چی بوو؟",
+          "promptEn": "What was the first step in making the dolma?",
+          "options": [
+            "تێکەڵکردنی برنجەکە",
+            "شوشتنی گەڵاکان",
+            "پێچانەوەی گەڵاکان"
+          ],
+          "correctIndex": 1,
+          "explanation": "یەکەم جار گەڵاکانیان شوشت، پاشان برنجەکەیان تێکەڵ کرد، ئینجا هێرۆ گەڵاکانی پێچایەوە.",
+          "explanationEn": "First they washed the leaves, then they mixed the rice, and then Hêro rolled the leaves.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "برنجەکەیان لەگەڵ چی تێکەڵ کرد؟",
+          "promptEn": "What did they mix the rice with?",
+          "options": [
+            "گۆشت و پیاز و خوێ و ڕۆن",
+            "تەماتە و ماست و خوێ و ڕۆن",
+            "تەماتە و پیاز و خوێ و ڕۆن"
+          ],
+          "correctIndex": 2,
+          "explanation": "برنجەکەیان لەگەڵ تەماتە و پیاز و خوێ و ڕۆن تێکەڵ کرد.",
+          "explanationEn": "They mixed the rice with tomato, onion, salt and oil.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«دەدڕان» لێرەدا واتای چییە؟",
+          "promptEn": "What does «دەدڕان» mean here?",
+          "options": [
+            "زۆر گەرم دەبوون",
+            "پارچە پارچە دەبوون",
+            "زۆر بچووک دەبوون"
+          ],
+          "correctIndex": 1,
+          "explanation": "سەرەتا گەڵاکان لە دەستی هێرۆدا پارچە پارچە دەبوون، چونکە هێشتا فێر نەبووبوو.",
+          "explanationEn": "At first the leaves were tearing apart in Hêro’s hands, because she had not learned how yet.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی سەرەتا گەڵاکان دەدڕان؟",
+          "promptEn": "Why were the leaves tearing at first?",
+          "options": [
+            "هێرۆ زۆر برنجی دەخستە ناویان",
+            "هێرۆ گەڵاکانی نەشوشتبوو",
+            "مەنجەڵەکە زۆر گەرم بوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "داپیرە پێی وت: «زۆر برنج مەخەرە ناوی.» کەواتە هێرۆ برنجی زۆری دەخستە ناو گەڵاکان.",
+          "explanationEn": "Grandmother told her: “Don’t put too much rice in it.” So Hêro was putting too much rice in the leaves.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "مەنجەڵەکە چەند لەسەر ئاگر مایەوە؟",
+          "promptEn": "How long did the pot stay on the fire?",
+          "options": [
+            "دوو کاتژمێر",
+            "یەک کاتژمێر",
+            "نیو کاتژمێر"
+          ],
+          "correctIndex": 1,
+          "explanation": "مەنجەڵەکە یەک کاتژمێر لەسەر ئاگر مایەوە.",
+          "explanationEn": "The pot stayed on the fire for one hour.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕاستە یان هەڵە: داپیرە وتی خۆی دۆڵمەکەی دروست کردووە.",
+          "promptEn": "True or false: Grandmother said she had made the dolma herself.",
+          "options": [
+            "ڕاستە",
+            "هەڵەیە"
+          ],
+          "correctIndex": 1,
+          "explanation": "هەڵەیە. داپیرە وتی: «ئەمجارە هێرۆ دروستی کردووە.»",
+          "explanationEn": "False. Grandmother said: “This time Hêro made it.”",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی هێرۆ لە کۆتاییدا قاپێک دۆڵمەی بۆ پوورە زێڕین برد؟",
+          "promptEn": "Why did Hêro take a plate of dolma to Pûre Zêrîn at the end?",
+          "options": [
+            "چونکە بەڵێنی پێدابوو",
+            "چونکە پوورە زێڕین میوانیان بوو",
+            "چونکە دۆڵمەکە زیادی کردبوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "کاتێک پوورە زێڕین برنجەکەی دا، داوای قاپێک دۆڵمەی کرد و هێرۆ بەڵێنی پێدا.",
+          "explanationEn": "When Pûre Zêrîn gave her the rice, she asked for a plate of dolma, and Hêro promised her one.",
+          "evidenceParagraph": 2
+        }
+      ]
+    },
+    {
+      "slug": "ckb-the-ball-in-the-garden",
+      "dialect": "sorani",
+      "level": 2,
+      "title": "تۆپەکەی ناو باخچەکە",
+      "summary": "تۆپی منداڵانی کۆڵان دەکەوێتە ناو باخچەی مام ڕەحیم، پیاوێکی پیر کە منداڵەکان لێی دەترسن.",
+      "body": "هەموو هەینییەک، دوای نیوەڕۆ، منداڵانی کۆڵانەکە لە زەوییە بەتاڵەکەی کۆتایی کۆڵان تۆپی پێ دەکەن. دوو بەرد گۆڵی هەر تیمێکن.\n\nئەو هەینییە یارییەکە زۆر گەرم بوو. ئەنجامەکە دوو بە دوو بوو و تەنیا یەک خولەک مابوو. سامان تۆپەکەی بە هەموو هێزییەوە بەرەو گۆڵەکەی نارین لێدا. تۆپەکە بەسەر سەری نارین و دیوارەکەدا فڕی و کەوتە ناو باخچەی مام ڕەحیم.\n\nهەموو منداڵەکان بێدەنگ بوون. مام ڕەحیم پیاوێکی پیر بوو و بە تەنیا دەژیا. کەم قسەی دەکرد و منداڵەکان کەمێک لێی دەترسان. سامان وتی: «من ناچم!» کەسی تریش نەیدەویست بچێت.\n\nلە کۆتاییدا نارینی گۆڵپارێز وتی: «تۆپەکە هی ئێمەیە، کەواتە دەبێت خۆمان بیهێنینەوە. من دەچم.» چوو و لە دەرگای مام ڕەحیمی دا.\n\nمام ڕەحیم دەرگاکەی کردەوە و تۆپەکە لە دەستیدا بوو. نارین بە شەرمەوە وتی: «ببورە مامە، تۆپەکەمان کەوتە ناو باخچەکەتەوە.» مام ڕەحیم زەردەخەنەیەکی کرد و وتی: «لێدانێکی جوان بوو. بەڵام تۆ زۆر لە گۆڵەکەت دوور وەستابوویت، بۆیە نەتتوانی بیگریت.»\n\nنارین سەری سوڕما. مام ڕەحیم وتی: «هەموو هەینییەک لە پەنجەرەکەوە سەیری یارییەکەتان دەکەم. پێش چل ساڵ، من گۆڵپارێزی یانەی شار بووم.» ئەو ڕۆژە تا ئێوارە لە تەنیشت زەوییەکە دانیشت و فێری کردن چۆن تۆپ بگرن.\n\nلەو ڕۆژەوە، هەموو هەینییەک مام ڕەحیم کورسییەکەی دەهێنێتە دەرەوە و سەیری یارییەکە دەکات. ئێستا منداڵەکان پێی دەڵێن «ڕاهێنەرەکەمان».",
+      "glossary": [
+        {
+          "term": "تۆپی پێ",
+          "meanings": {
+            "en": "football (soccer)"
+          }
+        },
+        {
+          "term": "خولەک",
+          "meanings": {
+            "en": "minute"
+          }
+        },
+        {
+          "term": "گۆڵپارێز",
+          "meanings": {
+            "en": "goalkeeper"
+          }
+        },
+        {
+          "term": "زەردەخەنەیەکی کرد",
+          "meanings": {
+            "en": "smiled"
+          }
+        },
+        {
+          "term": "سەری سوڕما",
+          "meanings": {
+            "en": "was amazed"
+          }
+        },
+        {
+          "term": "یانەی شار",
+          "meanings": {
+            "en": "the city (football) club"
+          }
+        },
+        {
+          "term": "ڕاهێنەرەکەمان",
+          "meanings": {
+            "en": "our coach"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم چیرۆکە زیاتر دەربارەی چییە؟",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "چۆن منداڵەکان و مام ڕەحیم بوون بە هاوڕێ",
+            "چۆن تیمەکەی نارین یارییەکەی بردەوە",
+            "چۆن سامان بوو بە گۆڵپارێزێکی باش"
+          ],
+          "correctIndex": 0,
+          "explanation": "تۆپێک کە کەوتە ناو باخچەکەی، مام ڕەحیمی کرد بە ڕاهێنەر و هاوڕێی منداڵەکان.",
+          "explanationEn": "A ball that landed in his garden made Mam Rehîm the children’s coach and friend.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "منداڵەکان کەی تۆپی پێ دەکەن؟",
+          "promptEn": "When do the children play football?",
+          "options": [
+            "هەموو ڕۆژێک بەیانی زوو",
+            "هەموو هەینییەک دوای نیوەڕۆ",
+            "هەموو شەممەیەک دوای قوتابخانە"
+          ],
+          "correctIndex": 1,
+          "explanation": "چیرۆکەکە دەڵێت: هەموو هەینییەک، دوای نیوەڕۆ، تۆپی پێ دەکەن.",
+          "explanationEn": "The story says they play every Friday afternoon.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "گۆڵی هەر تیمێک چی بوو؟",
+          "promptEn": "What was each team’s goal?",
+          "options": [
+            "دوو کورسی",
+            "دوو بەرد",
+            "دوو دار"
+          ],
+          "correctIndex": 1,
+          "explanation": "چیرۆکەکە دەڵێت: «دوو بەرد گۆڵی هەر تیمێکن.»",
+          "explanationEn": "The story says: “Two stones are each team’s goal.”",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "کاتێک تۆپەکە فڕی، ئەنجامەکە چەند بوو؟",
+          "promptEn": "What was the score when the ball flew away?",
+          "options": [
+            "یەک بە یەک",
+            "دوو بە یەک",
+            "دوو بە دوو"
+          ],
+          "correctIndex": 2,
+          "explanation": "ئەنجامەکە دوو بە دوو بوو و تەنیا یەک خولەک مابوو.",
+          "explanationEn": "The score was two–two, with only one minute left.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "کێ تۆپەکەی لێدا؟",
+          "promptEn": "Who kicked the ball?",
+          "options": [
+            "سامان",
+            "نارین",
+            "مام ڕەحیم"
+          ],
+          "correctIndex": 0,
+          "explanation": "سامان تۆپەکەی بە هەموو هێزییەوە بەرەو گۆڵەکەی نارین لێدا.",
+          "explanationEn": "Saman kicked the ball with all his strength towards Narîn’s goal.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "مام ڕەحیم چۆن دەژیا؟",
+          "promptEn": "How did Mam Rehîm live?",
+          "options": [
+            "لەگەڵ خێزانەکەی",
+            "لەگەڵ کوڕەکەی",
+            "بە تەنیا"
+          ],
+          "correctIndex": 2,
+          "explanation": "مام ڕەحیم پیاوێکی پیر بوو و بە تەنیا دەژیا.",
+          "explanationEn": "Mam Rehîm was an old man who lived alone.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی کەس نەیدەویست بچێت تۆپەکە بهێنێتەوە؟",
+          "promptEn": "Why did nobody want to go and fetch the ball?",
+          "options": [
+            "لە مام ڕەحیم دەترسان",
+            "یارییەکە تەواو بووبوو",
+            "دەرگای باخچەکە داخرابوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "مام ڕەحیم کەم قسەی دەکرد و منداڵەکان کەمێک لێی دەترسان.",
+          "explanationEn": "Mam Rehîm rarely spoke, and the children were a little afraid of him.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "نارین بۆچی وتی دەبێت خۆیان تۆپەکە بهێننەوە؟",
+          "promptEn": "Why did Narîn say they had to fetch the ball themselves?",
+          "options": [
+            "مام ڕەحیم بانگی کردبوون",
+            "سامان نەیدەویست یاری بکات",
+            "تۆپەکە هی ئەوان بوو"
+          ],
+          "correctIndex": 2,
+          "explanation": "نارین وتی: «تۆپەکە هی ئێمەیە، کەواتە دەبێت خۆمان بیهێنینەوە.»",
+          "explanationEn": "Narîn said: “The ball is ours, so we have to fetch it ourselves.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«زەردەخەنەیەکی کرد» واتای چییە؟",
+          "promptEn": "What does «زەردەخەنەیەکی کرد» mean?",
+          "options": [
+            "بە توڕەیی قسەی کرد",
+            "دەرگاکەی داخست",
+            "بە نەرمی پێکەنی"
+          ],
+          "correctIndex": 2,
+          "explanation": "زەردەخەنە پێکەنینێکی نەرم و بێدەنگە.",
+          "explanationEn": "A «زەردەخەنە» is a soft, quiet smile.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "مام ڕەحیم بە نارینی وت هەڵەکەی چی بوو؟",
+          "promptEn": "What did Mam Rehîm tell Narîn her mistake was?",
+          "options": [
+            "زۆر لە گۆڵەکەی نزیک وەستابوو",
+            "زۆر لە گۆڵەکەی دوور وەستابوو",
+            "تۆپەکەی زۆر بەهێز لێدابوو"
+          ],
+          "correctIndex": 1,
+          "explanation": "مام ڕەحیم وتی: «تۆ زۆر لە گۆڵەکەت دوور وەستابوویت، بۆیە نەتتوانی بیگریت.»",
+          "explanationEn": "He said: “You stood too far from your goal, so you couldn’t catch it.”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "inference",
+          "prompt": "مام ڕەحیم چۆن دەیزانی نارین لە گۆڵەکەی دوور وەستابوو؟",
+          "promptEn": "How did Mam Rehîm know that Narîn had stood far from her goal?",
+          "options": [
+            "لە پەنجەرەکەوە سەیری یارییەکەی دەکرد",
+            "سامان لە دەرگاکەوە پێی وتبوو",
+            "نارین بە شەرمەوە پێی وتبوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "مام ڕەحیم وتی هەموو هەینییەک لە پەنجەرەکەوە سەیری یارییەکەیان دەکات، بۆیە لێدانەکەی بینیبوو.",
+          "explanationEn": "Mam Rehîm said he watches their game from his window every Friday, so he had seen the shot.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«نارین سەری سوڕما» واتە نارین:",
+          "promptEn": "«نارین سەری سوڕما» means that Narîn:",
+          "options": [
+            "زۆر سەرسام بوو",
+            "زۆر ترسا",
+            "زۆر ماندوو بوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "«سەری سوڕما» واتە شتێکی چاوەڕواننەکراوی بیست و سەرسام بوو.",
+          "explanationEn": "«سەری سوڕما» means she heard something unexpected and was amazed.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "مام ڕەحیم پێش چل ساڵ چی بوو؟",
+          "promptEn": "What was Mam Rehîm forty years ago?",
+          "options": [
+            "ڕاهێنەری یانەی شار",
+            "گۆڵپارێزی یانەی شار",
+            "یاریزانی تیمی کۆڵان"
+          ],
+          "correctIndex": 1,
+          "explanation": "مام ڕەحیم وتی: «پێش چل ساڵ، من گۆڵپارێزی یانەی شار بووم.»",
+          "explanationEn": "He said: “Forty years ago, I was the goalkeeper of the city club.”",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "sequence",
+          "prompt": "ئەو ڕۆژە، دوای ئەوەی مام ڕەحیم باسی ڕابردووی کرد، چی کرد؟",
+          "promptEn": "That day, after Mam Rehîm told them about his past, what did he do?",
+          "options": [
+            "دەرگاکەی داخست و چووە ژوورەوە",
+            "تۆپەکەی بۆ خۆی هێشتەوە",
+            "تا ئێوارە فێری کردن چۆن تۆپ بگرن"
+          ],
+          "correctIndex": 2,
+          "explanation": "تا ئێوارە لە تەنیشت زەوییەکە دانیشت و فێری کردن چۆن تۆپ بگرن.",
+          "explanationEn": "He sat by the field until evening and taught them how to catch the ball.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "منداڵەکان ئێستا مام ڕەحیم چۆن دەبینن؟",
+          "promptEn": "How do the children see Mam Rehîm now?",
+          "options": [
+            "وەک پیاوێکی ترسناک",
+            "وەک ڕاهێنەری خۆیان",
+            "وەک دراوسێیەکی بێدەنگ"
+          ],
+          "correctIndex": 1,
+          "explanation": "ئێستا پێی دەڵێن «ڕاهێنەرەکەمان»، ئیتر لێی ناترسن.",
+          "explanationEn": "Now they call him “our coach”; they are no longer afraid of him.",
+          "evidenceParagraph": 6
+        }
+      ]
+    },
+    {
+      "slug": "ckb-a-dress-for-newroz",
+      "dialect": "sorani",
+      "level": 2,
+      "title": "کراسێک بۆ نەورۆز",
+      "summary": "کراسە کوردییەکەی ڕۆژان بۆی کورت بووە و دووکانەکان داخراون، بەڵام داپیرەی چارەیەکی هەیە.",
+      "body": "ئێوارەی پێش نەورۆز بوو. ماڵی ڕۆژان بڕیاریان دابوو بەیانی بچن بۆ سەیران لە دەرەوەی شار. ڕۆژان چوو کراسە کوردییە سەوزەکەی لەبەر بکات.\n\nبەڵام کراسەکە بۆی زۆر کورت بوو! ڕۆژان لە ساڵی ڕابردووەوە زۆر گەورەتر بووبوو. چاوەکانی پڕ بوون لە فرمێسک و وتی: «ئێستا چی لەبەر بکەم؟ هەموو دووکانەکان داخراون.»\n\nداپیرەی لە ژوورەکەی خۆیەوە بانگی کرد: «ڕۆژان گیان، وەرە ئێرە.» داپیرە سندووقێکی کۆنی کردەوە و کراسێکی سووری جوانی لێ دەرهێنا. وتی: «ئەمە کراسی نەورۆزی خۆم بوو، کاتێک هاوتەمەنی تۆ بووم.»\n\nکراسەکە کەمێک گەورە بوو. داپیرە و دایکی ڕۆژان تا درەنگانی شەو بە دەرزی و دەزوو بچووکیان کردەوە. ڕۆژانیش لە پەنجەرەکەوە سەیری ئاگرەکانی نەورۆزی دەکرد کە لەسەر چیاکان دەگەشانەوە.\n\nبەیانی ڕۆژان کراسە سوورەکەی لەبەر کرد. کراسەکە ڕێک بە بەژنی بوو. لە سەیرانەکەدا خەڵکێکی زۆر هەڵپەڕکێیان دەکرد. ژنێکی پیر لێی پرسی: «کچم، ئەم کراسە جوانەت لە کوێ کڕیوە؟ ئێستا کەس کراسی وا دروست ناکات.»\n\nڕۆژان بە شانازییەوە وتی: «نەمکڕیوە. هی داپیرەمە و تەمەنی پەنجا ساڵە!» پاشان دەستی داپیرەی گرت و پێکەوە چوونە ناو هەڵپەڕکێکەوە.",
+      "glossary": [
+        {
+          "term": "سەیران",
+          "meanings": {
+            "en": "a picnic or outing in the countryside"
+          }
+        },
+        {
+          "term": "فرمێسک",
+          "meanings": {
+            "en": "tears"
+          }
+        },
+        {
+          "term": "هاوتەمەنی",
+          "meanings": {
+            "en": "the same age as"
+          }
+        },
+        {
+          "term": "دەرزی و دەزوو",
+          "meanings": {
+            "en": "needle and thread"
+          }
+        },
+        {
+          "term": "دەگەشانەوە",
+          "meanings": {
+            "en": "were glowing, shining"
+          }
+        },
+        {
+          "term": "ڕێک بە بەژنی بوو",
+          "meanings": {
+            "en": "fitted her exactly"
+          }
+        },
+        {
+          "term": "هەڵپەڕکێیان دەکرد",
+          "meanings": {
+            "en": "were dancing the Kurdish line dance"
+          }
+        },
+        {
+          "term": "بە شانازییەوە",
+          "meanings": {
+            "en": "proudly"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم چیرۆکە زیاتر دەربارەی چییە؟",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "کراسێکی کۆن کە دەبێتە کراسی نەورۆزی ڕۆژان",
+            "کچێک کە لە دووکان کراسێکی نوێ دەکڕێت",
+            "خێزانێک کە سەیرانی نەورۆز دوا دەخات"
+          ],
+          "correctIndex": 0,
+          "explanation": "کراسەکەی ڕۆژان بۆی کورت بوو، بۆیە کراسە کۆنەکەی داپیرەی بۆ نەورۆز لەبەر کرد.",
+          "explanationEn": "Rojan’s dress was too short for her, so she wore her grandmother’s old dress for Newroz.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "ماڵی ڕۆژان بڕیاریان دابوو بەیانیی نەورۆز چی بکەن؟",
+          "promptEn": "What had Rojan’s family decided to do on Newroz morning?",
+          "options": [
+            "لە ماڵەوە هەڵپەڕکێ بکەن",
+            "بچن بۆ دووکانەکانی ناو شار",
+            "بچن بۆ سەیران لە دەرەوەی شار"
+          ],
+          "correctIndex": 2,
+          "explanation": "ماڵی ڕۆژان بڕیاریان دابوو بەیانی بچن بۆ سەیران لە دەرەوەی شار.",
+          "explanationEn": "Rojan’s family had decided to go on a picnic outside the city in the morning.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "کێشەی کراسە سەوزەکە چی بوو؟",
+          "promptEn": "What was the problem with the green dress?",
+          "options": [
+            "بۆ ڕۆژان زۆر گەورە بوو",
+            "بۆ ڕۆژان زۆر کورت بوو",
+            "ڕەنگەکەی کاڵ بووبووەوە"
+          ],
+          "correctIndex": 1,
+          "explanation": "کراسەکە بۆی زۆر کورت بوو، چونکە ڕۆژان لە ساڵی ڕابردووەوە گەورەتر بووبوو.",
+          "explanationEn": "The dress was too short for her, because Rojan had grown since last year.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "بۆچی ڕۆژان نەیدەتوانی کراسێکی نوێ بکڕێت؟",
+          "promptEn": "Why couldn’t Rojan buy a new dress?",
+          "options": [
+            "دووکانەکان داخرابوون",
+            "پارەی پێ نەبوو",
+            "دایکی ڕێگای نەدا"
+          ],
+          "correctIndex": 0,
+          "explanation": "ڕۆژان وتی: «هەموو دووکانەکان داخراون.»",
+          "explanationEn": "Rojan said: “All the shops are closed.”",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«فرمێسک» چییە؟",
+          "promptEn": "What is «فرمێسک»?",
+          "options": [
+            "جۆرە کراسێکی کوردیی کۆن",
+            "ئاگرێکی بچووک لەسەر چیا",
+            "ئاوی چاو کاتێک مرۆڤ دەگری"
+          ],
+          "correctIndex": 2,
+          "explanation": "«چاوەکانی پڕ بوون لە فرمێسک» واتە خەریک بوو بگری.",
+          "explanationEn": "“Her eyes filled with tears” means she was about to cry.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "داپیرە کراسە سوورەکەی لە کوێ دەرهێنا؟",
+          "promptEn": "Where did Grandmother take the red dress out of?",
+          "options": [
+            "لە دۆڵابی ڕۆژان",
+            "لە سندووقێکی کۆن",
+            "لە دووکانێکی نزیک"
+          ],
+          "correctIndex": 1,
+          "explanation": "داپیرە سندووقێکی کۆنی کردەوە و کراسە سوورەکەی لێ دەرهێنا.",
+          "explanationEn": "Grandmother opened an old chest and took the red dress out of it.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "داپیرە کەی ئەو کراسە سوورەی لەبەر دەکرد؟",
+          "promptEn": "When did Grandmother wear that red dress?",
+          "options": [
+            "لە نەورۆز، کاتێک هاوتەمەنی ڕۆژان بوو",
+            "ڕۆژی هاوسەرگیرییەکەی خۆی",
+            "پار لە سەیرانی نەورۆزدا"
+          ],
+          "correctIndex": 0,
+          "explanation": "داپیرە وتی: «ئەمە کراسی نەورۆزی خۆم بوو، کاتێک هاوتەمەنی تۆ بووم.»",
+          "explanationEn": "Grandmother said: “This was my own Newroz dress when I was your age.”",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "کێ کراسەکەیان بچووک کردەوە؟",
+          "promptEn": "Who made the dress smaller?",
+          "options": [
+            "ڕۆژان و دایکی",
+            "داپیرە و دایکی ڕۆژان",
+            "ژنە پیرەکەی سەیرانەکە"
+          ],
+          "correctIndex": 1,
+          "explanation": "داپیرە و دایکی ڕۆژان تا درەنگانی شەو بە دەرزی و دەزوو بچووکیان کردەوە.",
+          "explanationEn": "Grandmother and Rojan’s mother took it in with needle and thread until late at night.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "ڕۆژان چی دەکرد کاتێک داپیرە و دایکی کراسەکەیان چاک دەکرد؟",
+          "promptEn": "What was Rojan doing while her grandmother and mother were altering the dress?",
+          "options": [
+            "کراسە سەوزەکەی لەبەر دەکرد",
+            "لە سەیرانەکەدا هەڵپەڕکێی دەکرد",
+            "سەیری ئاگرەکانی نەورۆزی دەکرد"
+          ],
+          "correctIndex": 2,
+          "explanation": "ڕۆژان لە پەنجەرەکەوە سەیری ئاگرەکانی نەورۆزی دەکرد.",
+          "explanationEn": "Rojan was watching the Newroz fires from the window.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«ڕێک بە بەژنی بوو» واتە کراسەکە:",
+          "promptEn": "«ڕێک بە بەژنی بوو» means that the dress:",
+          "options": [
+            "قەبارەکەی بۆ ڕۆژان ڕێک بوو",
+            "بۆ ڕۆژان زۆر درێژ بوو",
+            "بۆ ڕۆژان زۆر کورت بوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "واتە کراسەکە نە گەورە بوو و نە بچووک، ڕێک بە قەبارەی ڕۆژان بوو.",
+          "explanationEn": "It means the dress was neither too big nor too small: it fitted Rojan exactly.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "ژنە پیرەکە چی لە ڕۆژان پرسی؟",
+          "promptEn": "What did the old woman ask Rojan?",
+          "options": [
+            "کراسەکەی لە کوێ کڕیوە",
+            "داپیرەی لە کوێیە",
+            "هەڵپەڕکێی لە کوێ فێر بووە"
+          ],
+          "correctIndex": 0,
+          "explanation": "ژنە پیرەکە پرسی: «ئەم کراسە جوانەت لە کوێ کڕیوە؟»",
+          "explanationEn": "The old woman asked: “Where did you buy this beautiful dress?”",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "sequence",
+          "prompt": "کامەیان لە کۆتایی چیرۆکەکەدا ڕوودەدات؟",
+          "promptEn": "Which of these happens at the end of the story?",
+          "options": [
+            "ڕۆژان کراسە سەوزەکەی لەبەر دەکات",
+            "داپیرە سندووقە کۆنەکەی دەکاتەوە",
+            "ڕۆژان و داپیرەی دەچنە ناو هەڵپەڕکێکەوە"
+          ],
+          "correctIndex": 2,
+          "explanation": "لە کۆتاییدا ڕۆژان دەستی داپیرەی گرت و پێکەوە چوونە ناو هەڵپەڕکێکەوە.",
+          "explanationEn": "At the end, Rojan took her grandmother’s hand and they joined the dance together.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "inference",
+          "prompt": "لە کۆتاییدا ڕۆژان چ هەستێکی بەرامبەر کراسە کۆنەکە هەیە؟",
+          "promptEn": "At the end, how does Rojan feel about the old dress?",
+          "options": [
+            "شەرمی لێ دەکات",
+            "شانازیی پێوە دەکات",
+            "پێی ناخۆشە کە کۆنە"
+          ],
+          "correctIndex": 1,
+          "explanation": "ڕۆژان بە شانازییەوە وتی کراسەکە هی داپیرەیەتی و تەمەنی پەنجا ساڵە.",
+          "explanationEn": "Rojan proudly said the dress was her grandmother’s and fifty years old.",
+          "evidenceParagraph": 5
+        }
+      ]
+    },
+    {
+      "slug": "ckb-the-fox-and-the-old-woman",
+      "dialect": "sorani",
+      "level": 2,
+      "title": "پیرێژن و ڕێوی",
+      "summary": "چیرۆکێکی میللی بە شێوەیەکی سادە: ڕێوییەک شیری پیرێژنێک دەخواتەوە و بەڵێن دەدات بۆی بگەڕێنێتەوە.",
+      "body": "هەبوو نەبوو، لە گوندێکی بچووکدا پیرێژنێک دەژیا. پیرێژن مانگایەکی هەبوو. هەموو بەیانییەک مانگاکەی دەدۆشی و شیرەکەی لە مەنجەڵێکدا لەبەر دەرگاکە دادەنا تا سارد بێتەوە.\n\nڕۆژێک پیرێژن چوو دار کۆ بکاتەوە. کاتێک گەڕایەوە، بینی ڕێوییەک سەری لە ناو مەنجەڵەکەدایە و شیرەکە دەخواتەوە. پیرێژن خێرا کلکی ڕێوییەکەی گرت.\n\nڕێوی هاواری کرد: «ببورە دایە گیان، بەرم بدە!» پیرێژن وتی: «بەرت نادەم تا شیرەکەم بۆ نەهێنیتەوە.» ڕێوی وتی: «بەڵێنت پێ دەدەم شیرەکەت بۆ بهێنمەوە.» پیرێژن بیری کردەوە و وتی: «باشە، بڕۆ. بەڵام ئەگەر نەگەڕێیتەوە، هەموو گیانلەبەرانی دۆڵەکە دەزانن کە ڕێوی بەڵێنی خۆی بەجێ ناهێنێت.»\n\nڕێوی ڕایکرد بۆ سەر گردێک کە مانگایەکی ڕەش لەسەری دەلەوەڕا. وتی: «مانگا گیان، تکایە کەمێک شیرم پێ بدە.» مانگاکە وتی: «من برسیمە و گیای ئێرە وشکە. ئەگەر گیای سەوزم بۆ بهێنیت، شیرت پێ دەدەم.»\n\nڕێوی چوو بۆ لای مێرگەکەی خوار گردەکە. مێرگەکە وتی: «من تینوومە. چەند ڕۆژە ئاوی کانییەکەی سەر چیاکە نەگەیشتووەتە لام. ئەگەر ئاوم بۆ بهێنیت، گیات پێ دەدەم.»\n\nڕێوی بە ماندوویی چووە سەر چیاکە. بینی بەردێکی گەورە کەوتووەتە سەر دەمی کانییەکە و ئاوەکە ناڕوات. ڕێوی هەوڵی دا بەردەکە لاببات، بەڵام زۆر قورس بوو.\n\nلەو کاتەدا شوانێکی گەنج بە گریانەوە هات و وتی: «بەرخێکم ون کردووە.» ڕێوی هەموو کون و کەلەبەرێکی دۆڵەکەی دەناسی. زۆری پێ نەچوو بەرخەکەی لە پشت دارێکەوە دۆزییەوە. شوانەکە زۆر دڵخۆش بوو و بە گۆچانەکەی بەردەکەی لە دەمی کانییەکە لابرد.\n\nئاو بە خوڕ هاتە خوارەوە و مێرگەکە سەوز بووەوە. ڕێوی گیای سەوزی بۆ مانگاکە برد. مانگاکە تێر خواردی و مەنجەڵێک شیری دایە ڕێوی.\n\nئێوارە ڕێوی گەیشتەوە ماڵی پیرێژن. پیرێژن کە مەنجەڵە پڕەکەی بینی، پێکەنی و وتی: «ئێستا دەزانم ڕێوییش هەیە بەڵێنی خۆی بەجێ دەهێنێت.» لەو ڕۆژەوە هەموو بەیانییەک کاسەیەک شیری بۆ ڕێوی دادەنا.",
+      "glossary": [
+        {
+          "term": "پیرێژن",
+          "meanings": {
+            "en": "old woman"
+          }
+        },
+        {
+          "term": "ڕێوی",
+          "meanings": {
+            "en": "fox"
+          }
+        },
+        {
+          "term": "دەدۆشی",
+          "meanings": {
+            "en": "milked (every day)"
+          }
+        },
+        {
+          "term": "گیانلەبەرانی",
+          "meanings": {
+            "en": "the animals (of)"
+          }
+        },
+        {
+          "term": "دەلەوەڕا",
+          "meanings": {
+            "en": "was grazing"
+          }
+        },
+        {
+          "term": "مێرگەکە",
+          "meanings": {
+            "en": "the meadow"
+          }
+        },
+        {
+          "term": "کون و کەلەبەرێکی",
+          "meanings": {
+            "en": "every nook and cranny (of)"
+          }
+        },
+        {
+          "term": "بە خوڕ",
+          "meanings": {
+            "en": "gushing, in a rush"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم چیرۆکە زیاتر دەربارەی چییە؟",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "ڕێوییەک کە بەڵێنی خۆی بەجێ دەهێنێت",
+            "پیرێژنێک کە مانگاکەی ون دەکات",
+            "شوانێک کە بەرخەکەی دەفرۆشێت"
+          ],
+          "correctIndex": 0,
+          "explanation": "ڕێوی شیرەکەی پیرێژنی خواردەوە، بەڵام بە ماندوویی شیری بۆ هێنایەوە و بەڵێنەکەی بەجێ هێنا.",
+          "explanationEn": "The fox drank the old woman’s milk, but worked hard to bring milk back and kept his promise.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "پیرێژن شیرەکەی لە کوێ دادەنا تا سارد بێتەوە؟",
+          "promptEn": "Where did the old woman put the milk to cool?",
+          "options": [
+            "لەبەر دەرگاکە",
+            "لە ناو ژوورەکە",
+            "لەسەر بانەکە"
+          ],
+          "correctIndex": 0,
+          "explanation": "شیرەکەی لە مەنجەڵێکدا لەبەر دەرگاکە دادەنا تا سارد بێتەوە.",
+          "explanationEn": "She put the milk in a pot in front of the door to cool.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "پیرێژن بۆچی لە ماڵەوە نەبوو؟",
+          "promptEn": "Why was the old woman not at home?",
+          "options": [
+            "چووبوو دار کۆ بکاتەوە",
+            "چووبوو مانگاکەی بدۆشێت",
+            "چووبوو ئاو لە کانی بهێنێت"
+          ],
+          "correctIndex": 0,
+          "explanation": "ڕۆژێک پیرێژن چوو دار کۆ بکاتەوە.",
+          "explanationEn": "One day the old woman went out to gather firewood.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "پیرێژن چۆن ڕێوییەکەی گرت؟",
+          "promptEn": "How did the old woman catch the fox?",
+          "options": [
+            "گوێی گرت",
+            "کلکی گرت",
+            "قاچی گرت"
+          ],
+          "correctIndex": 1,
+          "explanation": "پیرێژن خێرا کلکی ڕێوییەکەی گرت.",
+          "explanationEn": "The old woman quickly grabbed the fox by the tail.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی پیرێژن باسی گیانلەبەرانی دۆڵەکەی کرد؟",
+          "promptEn": "Why did the old woman mention the animals of the valley?",
+          "options": [
+            "تا ڕێوی بچێتە لای ئەوان",
+            "تا ڕێوی شیر لەوان وەربگرێت",
+            "تا ڕێوی لە ناوی خراپ بترسێت"
+          ],
+          "correctIndex": 2,
+          "explanation": "پیرێژن ویستی ڕێوی بگەڕێتەوە: ئەگەر نەگەڕێتەوە، هەموو گیانلەبەران دەزانن کە بەڵێنی خۆی بەجێ ناهێنێت.",
+          "explanationEn": "She wanted the fox to come back: if he didn’t, all the animals would know that he doesn’t keep his word.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "ڕێوی یەکەم جار چووە لای کێ؟",
+          "promptEn": "Who did the fox go to first?",
+          "options": [
+            "مێرگەکە",
+            "شوانەکە",
+            "مانگا ڕەشەکە"
+          ],
+          "correctIndex": 2,
+          "explanation": "ڕێوی سەرەتا ڕایکرد بۆ لای مانگا ڕەشەکەی سەر گردەکە، پاشان چووە لای مێرگەکە.",
+          "explanationEn": "The fox first ran to the black cow on the hill, and only then to the meadow.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "detail",
+          "prompt": "مانگاکە چی ویست؟",
+          "promptEn": "What did the cow want?",
+          "options": [
+            "ئاوی کانی",
+            "گیای سەوز",
+            "مەنجەڵێک شیر"
+          ],
+          "correctIndex": 1,
+          "explanation": "مانگاکە وتی: «ئەگەر گیای سەوزم بۆ بهێنیت، شیرت پێ دەدەم.»",
+          "explanationEn": "The cow said: “If you bring me green grass, I’ll give you milk.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "مێرگەکە وتی: «من تینوومە.» واتە:",
+          "promptEn": "The meadow said: «من تینوومە». That means:",
+          "options": [
+            "پێویستی بە خواردنە",
+            "پێویستی بە ئاوە",
+            "پێویستی بە پشووە"
+          ],
+          "correctIndex": 1,
+          "explanation": "«تینوو» واتە پێویستت بە ئاو هەیە. بۆیە مێرگەکە داوای ئاوی کرد.",
+          "explanationEn": "«تینوو» means thirsty, in need of water. That is why the meadow asked for water.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "بۆچی ئاوی کانییەکە نەدەڕۆیشت؟",
+          "promptEn": "Why wasn’t the water of the spring flowing?",
+          "options": [
+            "کانییەکە لە هاویندا وشک بووبوو",
+            "شوانەکە ڕێگای ئاوەکەی گرتبوو",
+            "بەردێکی گەورە کەوتبووە سەر دەمی"
+          ],
+          "correctIndex": 2,
+          "explanation": "ڕێوی بینی بەردێکی گەورە کەوتووەتە سەر دەمی کانییەکە.",
+          "explanationEn": "The fox saw that a big stone had fallen onto the mouth of the spring.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "شوانە گەنجەکە بۆچی دەگریا؟",
+          "promptEn": "Why was the young shepherd crying?",
+          "options": [
+            "بەرخێکی ون کردبوو",
+            "گۆچانەکەی شکابوو",
+            "مەڕەکانی برسی بوون"
+          ],
+          "correctIndex": 0,
+          "explanation": "شوانەکە وتی: «بەرخێکم ون کردووە.»",
+          "explanationEn": "The shepherd said: “I have lost a lamb.”",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«کون و کەلەبەر» واتای چییە؟",
+          "promptEn": "What does «کون و کەلەبەر» mean?",
+          "options": [
+            "هەموو شوێنە بچووک و شاراوەکان",
+            "هەموو بەرد و دارە گەورەکان",
+            "هەموو ڕێگا و جادە درێژەکان"
+          ],
+          "correctIndex": 0,
+          "explanation": "ڕێوی هەموو شوێنێکی شاراوەی دۆڵەکەی دەناسی، بۆیە زوو بەرخەکەی دۆزییەوە.",
+          "explanationEn": "The fox knew every hidden corner of the valley, so he found the lamb quickly.",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "detail",
+          "prompt": "کێ بەردەکەی لە دەمی کانییەکە لابرد؟",
+          "promptEn": "Who moved the stone away from the mouth of the spring?",
+          "options": [
+            "ڕێوی",
+            "پیرێژن",
+            "شوانەکە"
+          ],
+          "correctIndex": 2,
+          "explanation": "ڕێوی نەیتوانی، بەڵام شوانەکە بە گۆچانەکەی بەردەکەی لابرد.",
+          "explanationEn": "The fox couldn’t, but the shepherd moved the stone with his staff.",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "sequence",
+          "prompt": "یەکسەر دوای ئەوەی ئاوەکە هاتە خوارەوە، چی ڕوویدا؟",
+          "promptEn": "What happened right after the water came down?",
+          "options": [
+            "ڕێوی بەرخەکەی دۆزییەوە",
+            "مێرگەکە سەوز بووەوە",
+            "ڕێوی هەوڵی دا بەردەکە لاببات"
+          ],
+          "correctIndex": 1,
+          "explanation": "ئاو بە خوڕ هاتە خوارەوە و مێرگەکە سەوز بووەوە. بەرخەکە و بەردەکە پێشتر بوون.",
+          "explanationEn": "The water gushed down and the meadow turned green. The lamb and the stone came before that.",
+          "evidenceParagraph": 7
+        },
+        {
+          "kind": "inference",
+          "prompt": "لە کۆتاییدا پیرێژن چۆن سەیری ڕێوی دەکات؟",
+          "promptEn": "At the end, how does the old woman see the fox?",
+          "options": [
+            "وەک دزێک کە دەبێت بیگرێت",
+            "وەک هاوڕێیەک کە متمانەی پێیەتی",
+            "وەک میوانێک کە دەبێت بڕوات"
+          ],
+          "correctIndex": 1,
+          "explanation": "پیرێژن وتی ڕێوی بەڵێنی خۆی بەجێ هێنا و لەو ڕۆژەوە هەموو بەیانییەک کاسەیەک شیری بۆ دادەنا.",
+          "explanationEn": "She said the fox had kept his promise, and from that day on she put out a bowl of milk for him every morning.",
+          "evidenceParagraph": 8
+        }
+      ]
+    },
+    {
+      "slug": "ckb-the-road-to-the-village",
+      "dialect": "sorani",
+      "level": 3,
+      "title": "ڕێگای گوند",
+      "summary": "دارا بەرەو گوندی باپیری دەچێت، بەڵام پاسەکە لە قوڕدا دەچەقێت و دەبێت ڕێگاکە بە پێ تەواو بکات.",
+      "body": "ناوم دارایە. هەموو هاوینێک، کاتێک زانکۆ دادەخرێت، دوو هەفتە دەچمە لای باپیرم لە گوندی بەردەسوور. باپیرم تەمەنی هەشتا ساڵە. هەرچەندە باوکم چەندین جار داوای لێ کردووە بێتە شار و لەگەڵ ئێمە بژی، ئەو هەرگیز ڕازی نەبووە گوندەکەی بەجێ بهێڵێت.\n\nئەمساڵ بەیانییەکی زوو لە گەراجی سلێمانی سواری پاسێکی بچووک بووم. ڕێگاکە زۆرجار سێ کاتژمێر دەخایەنێت: دوو کاتژمێر لەسەر جادەی قیر و کاتژمێرێکیش لەسەر ڕێگایەکی خۆڵاوی کە بە ناو دۆڵ و گرددا دەڕوات.\n\nشەوی پێشوو بارانێکی زۆر باریبوو. هێشتا نیوەی ڕێگا خۆڵاوییەکەمان نەبڕیبوو کە پاسەکە لە قوڕدا چەقی. شۆفێرەکە چەند جارێک هەوڵی دا، بەڵام تایەکان تەنیا لە جێی خۆیاندا دەسووڕانەوە. لە کۆتاییدا وتی: «ببورن، لێرەوە ناتوانم بڕۆم. دەبێت چاوەڕێی تراکتۆرێک بکەین تا بمانکێشێتە دەرەوە.»\n\nلەوێ مۆبایل هێڵی نەبوو، بۆیە نەمدەتوانی بە باپیرم بڵێم کە دوا دەکەوم. پیاوێکی بەتەمەن کە لە پاسەکەدا لە تەنیشتم دانیشتبوو، وتی: «گوندەکەی ئێوە زۆر دوور نییە. ئەگەر بە ڕێگای کانییەکاندا بڕۆین، پێش ئاوابوونی خۆر دەگەین.» منیش کۆڵەپشتەکەم هەڵگرت و پێکەوە کەوتینە ڕێ.\n\nبە درێژایی ڕێگاکە، پیاوەکە باسی ئەو ڕۆژگارانەی بۆ کردم کە خەڵک بە پێ یان بە ئێستر لە گوندێکەوە دەچوون بۆ گوندێکی تر. وتی: «ئەو کاتە ڕێگاکان درێژتر بوون، بەڵام کەس پەلەی نەبوو.» ڕێگاکە بۆنی گوڵی کێوی و خاکی تەڕی لێ دەهات و جووتێک کەو لە نێو بەردەکاندا دەیانخوێند.\n\nکاتێک خۆر ئاوا دەبوو، گەیشتینە سەر ئەو گردەی کە دەڕوانێتە سەر گوندەکە. لە دوورەوە باپیرم بینی کە لەسەر بانی ماڵەکەی وەستابوو و چاوی لە ڕێگاکە بوو. پیاوەکە ماڵئاوایی لێ کردم و بە ڕێگای خۆیدا ڕۆیشت.\n\nباپیرم باوەشی پێدا کردم و وتی: «دارا گیان، هەر لە نیوەڕۆوە چاوەڕێتم. دەمزانی دێیت.» پرسیم: «چۆن دەتزانی؟ خۆ نەمتوانی تەلەفۆنت بۆ بکەم.» پێکەنی و وتی: «دوێنێ شەو باران باری. لێرە هەموو کەس دەزانێت کە دوای باران پاسەکە لە قوڕدا دەچەقێت و میوانەکان بە پێ دێن.»\n\nئەو شەوە لەسەر بانەکە، لە ژێر ئەستێرەکاندا، نانی تیری گەرم و ماستمان خوارد. بیرم کردەوە کە لە شار ئێمە خولەکەکان دەژمێرین، بەڵام لێرە خەڵک ئاسمان دەخوێننەوە.",
+      "glossary": [
+        {
+          "term": "دەخایەنێت",
+          "meanings": {
+            "en": "takes (time), lasts"
+          }
+        },
+        {
+          "term": "خۆڵاوی",
+          "meanings": {
+            "en": "dusty, unpaved (of a road)"
+          }
+        },
+        {
+          "term": "چەقی",
+          "meanings": {
+            "en": "got stuck"
+          }
+        },
+        {
+          "term": "کۆڵەپشتەکەم",
+          "meanings": {
+            "en": "my backpack"
+          }
+        },
+        {
+          "term": "کەوتینە ڕێ",
+          "meanings": {
+            "en": "we set off"
+          }
+        },
+        {
+          "term": "ئێستر",
+          "meanings": {
+            "en": "mule"
+          }
+        },
+        {
+          "term": "کەو",
+          "meanings": {
+            "en": "partridge"
+          }
+        },
+        {
+          "term": "نانی تیری",
+          "meanings": {
+            "en": "tîrî: thin village flatbread"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "kind": "gist",
+          "prompt": "ئەم چیرۆکە زیاتر دەربارەی چییە؟",
+          "promptEn": "What is this story mainly about?",
+          "options": [
+            "گەشتێکی سەخت بۆ گوند کە بە پێ تەواو دەبێت",
+            "خوێندکارێک کە باپیری دەهێنێتە شار",
+            "پیاوێکی بەتەمەن کە ڕێگاکەی ون دەکات"
+          ],
+          "correctIndex": 0,
+          "explanation": "پاسەکەی دارا لە قوڕدا چەقی و دارا ڕێگاکەی بە پێ تەواو کرد تا گەیشتە لای باپیری.",
+          "explanationEn": "Dara’s bus got stuck in the mud, and he finished the journey on foot until he reached his grandfather.",
+          "evidenceParagraph": null
+        },
+        {
+          "kind": "detail",
+          "prompt": "دارا کەی دەچێتە لای باپیری؟",
+          "promptEn": "When does Dara go to his grandfather’s?",
+          "options": [
+            "هەموو هاوینێک کە زانکۆ دادەخرێت",
+            "هەموو بەهارێک لە پشووی نەورۆزدا",
+            "هەموو مانگێک بۆ دوو ڕۆژ"
+          ],
+          "correctIndex": 0,
+          "explanation": "دارا دەڵێت هەموو هاوینێک، کاتێک زانکۆ دادەخرێت، دوو هەفتە دەچێتە لای باپیری.",
+          "explanationEn": "Dara says that every summer, when the university closes, he goes to his grandfather for two weeks.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "باوکی دارا چی لە باپیر داوا کردووە؟",
+          "promptEn": "What has Dara’s father asked Grandfather to do?",
+          "options": [
+            "ماڵەکەی گوند بفرۆشێت",
+            "بێتە شار و لەگەڵیان بژی",
+            "هەموو هاوینێک بێتە سلێمانی"
+          ],
+          "correctIndex": 1,
+          "explanation": "باوکی دارا چەندین جار داوای لێ کردووە بێتە شار و لەگەڵیان بژی، بەڵام باپیر هەرگیز ڕازی نەبووە.",
+          "explanationEn": "Dara’s father has asked him many times to come to the city and live with them, but Grandfather has never agreed.",
+          "evidenceParagraph": 0
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕێگاکە زۆرجار چەند دەخایەنێت؟",
+          "promptEn": "How long does the journey usually take?",
+          "options": [
+            "دوو کاتژمێر",
+            "سێ کاتژمێر",
+            "یەک کاتژمێر"
+          ],
+          "correctIndex": 1,
+          "explanation": "دوو کاتژمێر لەسەر جادەی قیر و کاتژمێرێک لەسەر ڕێگا خۆڵاوییەکە: بە گشتی سێ کاتژمێر.",
+          "explanationEn": "Two hours on the asphalt road and one hour on the dirt road: three hours in all.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«ڕێگای خۆڵاوی» چ جۆرە ڕێگایەکە؟",
+          "promptEn": "What kind of road is a «ڕێگای خۆڵاوی»?",
+          "options": [
+            "ڕێگایەک کە زۆر تەسکە",
+            "ڕێگایەک کە قیر نەکراوە",
+            "ڕێگایەک کە زۆر درێژە"
+          ],
+          "correctIndex": 1,
+          "explanation": "ڕێگای خۆڵاوی ڕێگایەکی خاکە و قیر نەکراوە، بۆیە کە باران دەبارێت دەبێتە قوڕ.",
+          "explanationEn": "A dirt road is made of earth and has no asphalt, so it turns to mud when it rains.",
+          "evidenceParagraph": 1
+        },
+        {
+          "kind": "inference",
+          "prompt": "بۆچی پاسەکە لە قوڕدا چەقی؟",
+          "promptEn": "Why did the bus get stuck in the mud?",
+          "options": [
+            "شۆفێرەکە ڕێگاکەی نەدەزانی",
+            "تایەکانی پاسەکە کۆن بوون",
+            "شەوی پێشوو بارانێکی زۆر باریبوو"
+          ],
+          "correctIndex": 2,
+          "explanation": "شەوی پێشوو بارانێکی زۆر باریبوو و ڕێگا خۆڵاوییەکە بووبووە قوڕ.",
+          "explanationEn": "It had rained heavily the night before, and the dirt road had turned to mud.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "پاسەکە لە کوێ چەقی؟",
+          "promptEn": "Where did the bus get stuck?",
+          "options": [
+            "لە نیوەی یەکەمی ڕێگا خۆڵاوییەکەدا",
+            "لە نیوەی دووەمی ڕێگا خۆڵاوییەکەدا",
+            "لەسەر جادەی قیر، پێش ڕێگا خۆڵاوییەکە"
+          ],
+          "correctIndex": 0,
+          "explanation": "هێشتا نیوەی ڕێگا خۆڵاوییەکەیان نەبڕیبوو کە پاسەکە چەقی.",
+          "explanationEn": "They had not yet covered half of the dirt road when the bus got stuck.",
+          "evidenceParagraph": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "بۆچی دارا نەیتوانی بە باپیری بڵێت کە دوا دەکەوێت؟",
+          "promptEn": "Why couldn’t Dara tell his grandfather that he would be late?",
+          "options": [
+            "ژمارەی باپیری لەبیر چووبوو",
+            "مۆبایلەکەی لە پاسەکەدا مابوو",
+            "مۆبایل لەوێ هێڵی نەبوو"
+          ],
+          "correctIndex": 2,
+          "explanation": "دارا دەڵێت: «لەوێ مۆبایل هێڵی نەبوو.»",
+          "explanationEn": "Dara says: “There was no phone signal there.”",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "sequence",
+          "prompt": "دوای ئەوەی پاسەکە چەقی، دارا چی کرد؟",
+          "promptEn": "After the bus got stuck, what did Dara do?",
+          "options": [
+            "لە پاسەکەدا چاوەڕێی تراکتۆرەکەی کرد",
+            "بە پاسێکی تر گەڕایەوە بۆ سلێمانی",
+            "لەگەڵ پیاوێکی بەتەمەن بە پێ ڕۆیشت"
+          ],
+          "correctIndex": 2,
+          "explanation": "دارا کۆڵەپشتەکەی هەڵگرت و لەگەڵ پیاوە بەتەمەنەکە کەوتنە ڕێ.",
+          "explanationEn": "Dara picked up his backpack and set off on foot with the old man.",
+          "evidenceParagraph": 3
+        },
+        {
+          "kind": "inference",
+          "prompt": "پیاوە بەتەمەنەکە مەبەستی چی بوو کاتێک وتی «کەس پەلەی نەبوو»؟",
+          "promptEn": "What did the old man mean when he said “nobody was in a hurry”?",
+          "options": [
+            "ڕێگاکان ئەو کاتە کورتتر بوون",
+            "خەڵک ئەو کاتە بە ئارامی دەژیان",
+            "خەڵک ئەو کاتە ئێستریان نەبوو"
+          ],
+          "correctIndex": 1,
+          "explanation": "ڕێگاکان درێژتر بوون، بەڵام خەڵک بە ئارامی و بێ پەلە دەژیان.",
+          "explanationEn": "The roads were longer, but people lived calmly, without rushing.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "detail",
+          "prompt": "ڕێگاکە بۆنی چی لێ دەهات؟",
+          "promptEn": "What did the path smell of?",
+          "options": [
+            "گوڵی کێوی و خاکی تەڕ",
+            "نانی گەرم و ماست",
+            "دووکەڵی پاس و تراکتۆر"
+          ],
+          "correctIndex": 0,
+          "explanation": "ڕێگاکە بۆنی گوڵی کێوی و خاکی تەڕی لێ دەهات.",
+          "explanationEn": "The path smelled of wild flowers and wet earth.",
+          "evidenceParagraph": 4
+        },
+        {
+          "kind": "vocabulary",
+          "prompt": "«خۆر ئاوا دەبوو» واتای چییە؟",
+          "promptEn": "What does «خۆر ئاوا دەبوو» mean?",
+          "options": [
+            "بەیانی بوو و خۆر هەڵدەهات",
+            "نیوەڕۆ بوو و خۆر زۆر گەرم بوو",
+            "ئێوارە بوو و خۆر دەچووە خوارەوە"
+          ],
+          "correctIndex": 2,
+          "explanation": "«ئاوابوونی خۆر» کاتی ئێوارەیە، کاتێک خۆر لە پشت چیاکانەوە دەچێتە خوارەوە.",
+          "explanationEn": "Sunset is evening time, when the sun goes down behind the mountains.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "کاتێک گەیشتنە سەر گردەکە، باپیر لە کوێ بوو؟",
+          "promptEn": "When they reached the hill, where was Grandfather?",
+          "options": [
+            "لەبەردەم دەرگای ماڵەکەی",
+            "لەسەر بانی ماڵەکەی",
+            "لەسەر ڕێگا خۆڵاوییەکە"
+          ],
+          "correctIndex": 1,
+          "explanation": "دارا لە دوورەوە باپیری بینی کە لەسەر بانی ماڵەکەی وەستابوو.",
+          "explanationEn": "From afar, Dara saw his grandfather standing on the roof of his house.",
+          "evidenceParagraph": 5
+        },
+        {
+          "kind": "detail",
+          "prompt": "باپیر چۆن زانی کە دارا بە پێ دێت؟",
+          "promptEn": "How did Grandfather know that Dara would arrive on foot?",
+          "options": [
+            "دەیزانی دوای باران پاس لە قوڕدا دەچەقێت",
+            "پیاوە بەتەمەنەکە پێشتر پێی وتبوو",
+            "دارا لە ڕێگاوە تەلەفۆنی بۆ کردبوو"
+          ],
+          "correctIndex": 0,
+          "explanation": "باپیر وتی لێرە هەموو کەس دەزانێت کە دوای باران پاسەکە لە قوڕدا دەچەقێت و میوانەکان بە پێ دێن.",
+          "explanationEn": "He said everyone there knows that after rain the bus gets stuck in the mud and guests arrive on foot.",
+          "evidenceParagraph": 6
+        },
+        {
+          "kind": "inference",
+          "prompt": "مەبەستی دارا چییە کاتێک دەڵێت «لە شار ئێمە خولەکەکان دەژمێرین، بەڵام لێرە خەڵک ئاسمان دەخوێننەوە»؟",
+          "promptEn": "What does Dara mean by “in the city we count the minutes, but here people read the sky”?",
+          "options": [
+            "لە شار پەلە دەکەن و لە گوند لە سروشت تێدەگەن",
+            "خەڵکی شار کاتژمێری باشتریان هەیە",
+            "خەڵکی گوند ئەستێرەکان دەژمێرن"
+          ],
+          "correctIndex": 0,
+          "explanation": "باپیر بە بینینی باران زانی کە دارا درەنگ و بە پێ دێت. خەڵکی گوند لە سروشت تێدەگەن، بەڵام لە شار هەمیشە پەلەیانە.",
+          "explanationEn": "From the rain alone, Grandfather knew Dara would come late and on foot. Village people understand nature, while in the city people are always in a hurry.",
+          "evidenceParagraph": 7
+        },
+        {
+          "kind": "detail",
+          "prompt": "ئەو شەوە چییان خوارد؟",
+          "promptEn": "What did they eat that night?",
+          "options": [
+            "دۆڵمەی گەرم و ماست",
+            "نانی تیری گەرم و هێلکە",
+            "نانی تیری گەرم و ماست"
+          ],
+          "correctIndex": 2,
+          "explanation": "لەسەر بانەکە نانی تیری گەرم و ماستیان خوارد.",
+          "explanationEn": "On the roof they ate warm tîrî bread and yogurt.",
+          "evidenceParagraph": 7
+        }
+      ]
+    }
+  ]
+}
