@@ -1,6 +1,8 @@
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { stripControlChars, type ChatMessageExtras } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { gameRef, type KindColumns } from '../chat/kinds.js';
+import { giftCards } from '../gifts/cards.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
 import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
 import { canManage } from '@kurda/shared';
@@ -22,13 +24,18 @@ export interface ChatModeration {
   recordOffense(userId: string): Promise<unknown>;
 }
 
-export interface GroupMessage {
+/**
+ * A message in a group's channel: text, or a gift or a game card (shared
+ * `ChatMessageExtras`) with no body. A deleted message carries nothing.
+ */
+export interface GroupMessage extends ChatMessageExtras {
   id: string;
   senderId: string;
   username: string;
   /** already resolved (uploaded photo -> chosen avatar); null when unknown */
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card; '' once deleted */
+  body: string | null;
   createdAt: string;
   deleted: boolean;
 }
@@ -84,17 +91,41 @@ export class GroupChatService {
     return (r.rowCount ?? 0) > 0;
   }
 
+  /**
+   * Whether this person may post to the group's channel right now — a member
+   * who may use its chat, not muted in the group, not muted from chat — or
+   * the refusal that says why not. Text goes through it, and so does anything
+   * else posted to the channel (a gift), so the rules cannot drift apart.
+   */
+  async assertCanPost(groupId: string, userId: string): Promise<void> {
+    await this.requireMember(groupId, userId);
+    if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
+    if (this.moderation && (await this.moderation.isChatMuted(userId))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
+    }
+  }
+
+  /**
+   * Whether this person may read the group's channel right now: a member, and
+   * in an open group a known adult. Who a gift in the channel can go to.
+   */
+  async canRead(groupId: string, userId: string): Promise<boolean> {
+    try {
+      await this.requireMember(groupId, userId);
+      return true;
+    } catch (err) {
+      if (err instanceof AppError) return false;
+      throw err;
+    }
+  }
+
   async send(
     userId: string,
     groupId: string,
     rawBody: string,
     publicUrl: PublicUrl = () => null,
   ): Promise<GroupMessage> {
-    await this.requireMember(groupId, userId);
-    if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
-    if (this.moderation && (await this.moderation.isChatMuted(userId))) {
-      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
-    }
+    await this.assertCanPost(groupId, userId);
     const trimmed = stripControlChars(rawBody).trim();
     if (!trimmed || trimmed.length > MAX_GROUP_MESSAGE_LEN) {
       throw new AppError('BAD_MESSAGE', 400, `message must be 1–${MAX_GROUP_MESSAGE_LEN} characters`);
@@ -123,6 +154,9 @@ export class GroupChatService {
       body,
       createdAt: row.rows[0]!.created_at.toISOString(),
       deleted: false,
+      kind: 'text',
+      gift: null,
+      game: null,
     };
     await this.hub.publish(room(groupId), { type: 'group_msg', groupId, message }).catch(() => undefined);
     return message;
@@ -143,12 +177,15 @@ export class GroupChatService {
     // age was known (they are taken out when it is recorded) is shown to their
     // friends only, as their posts are (users/age.ts `writtenForSql`); in an
     // invite-only group everybody was put there by somebody they chose.
-    const rows = await this.pool.query<{
-      id: string; sender_id: string; username: string; profile_photo_key: string | null;
-      selected_avatar_key: string | null; body: string; created_at: Date; deleted_at: Date | null;
-    }>(
+    const rows = await this.pool.query<
+      KindColumns & {
+        id: string; sender_id: string; username: string; profile_photo_key: string | null;
+        selected_avatar_key: string | null; body: string | null; created_at: Date; deleted_at: Date | null;
+        privacy: string;
+      }
+    >(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.deleted_at
+              m.body, m.created_at, m.deleted_at, m.kind, m.gift_batch_id, m.game, m.game_lobby_id, g.privacy
          FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
         WHERE m.group_id = $1
           AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
@@ -156,16 +193,31 @@ export class GroupChatService {
         ORDER BY m.created_at DESC LIMIT $2`,
       before ? [groupId, limit, userId, before] : [groupId, limit, userId],
     );
+    // The gifts on this page as this member sees them: their own to open, and
+    // the other recipients named by the roster's rule — everyone, to a member
+    // of an invite-only group (the reader is one: checked above).
+    const cards = await giftCards(
+      this.pool,
+      rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id && !r.deleted_at ? [r.gift_batch_id] : [])),
+      { id: userId, seesEveryone: rows.rows[0]?.privacy === 'invite' },
+      publicUrl,
+    );
     return rows.rows
-      .map((r) => ({
-        id: r.id,
-        senderId: r.sender_id,
-        username: r.username,
-        avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
-        body: r.deleted_at ? '' : r.body,
-        createdAt: r.created_at.toISOString(),
-        deleted: r.deleted_at !== null,
-      }))
+      .map((r) => {
+        const live = r.deleted_at === null;
+        return {
+          id: r.id,
+          senderId: r.sender_id,
+          username: r.username,
+          avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+          body: live ? r.body : '',
+          createdAt: r.created_at.toISOString(),
+          deleted: !live,
+          kind: r.kind,
+          gift: live && r.kind === 'gift' && r.gift_batch_id ? cards.get(r.gift_batch_id) ?? null : null,
+          game: live ? gameRef(r) : null,
+        };
+      })
       .reverse();
   }
 
