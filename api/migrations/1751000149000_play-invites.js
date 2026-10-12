@@ -73,6 +73,8 @@ export const up = (pgm) => {
   pgm.createIndex('play_invites', ['host_id', 'created_at']);
   // expiring a lobby's invites when it starts, fills or is called off
   pgm.createIndex('play_invites', ['game', 'lobby_id']);
+  // the sweep that expires invites past their time looks only at pending ones
+  pgm.createIndex('play_invites', 'expires_at', { name: 'play_invites_pending_expiry', where: "status = 'pending'" });
 
   pgm.createTable('play_rematches', {
     game: { type: 'text', notNull: true, check: `game IN ${GAMES}` },

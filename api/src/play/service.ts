@@ -35,8 +35,8 @@ export interface PlayDeps {
   events: PlayEvents;
   friends: Pick<FriendService, 'statusBetween'>;
   inbox: { record(userId: string, notification: Notification): Promise<void> };
-  chat: { sendCard(from: string, to: string, card: ChatGameRef): Promise<unknown> };
-  groupChat: { sendCard(userId: string, groupId: string, card: ChatGameRef): Promise<unknown> };
+  chat: { sendCard(from: string, to: string, card: ChatGameRef, publicUrl?: PublicUrl): Promise<unknown> };
+  groupChat: { sendCard(userId: string, groupId: string, card: ChatGameRef, publicUrl?: PublicUrl): Promise<unknown> };
   groups: { memberRole(groupId: string, userId: string): Promise<string | null> };
   now?: () => Date;
   log?: Log;
@@ -52,8 +52,10 @@ const GAME_NAMES: Record<PlayGame, string> = {
 
 /** Answered invites stay in the host's list this long, so "can't play right now" is seen. */
 const OUTGOING_HOURS = 1;
-/** Invites and rematch offers are kept this long, then deleted by the sweep. */
+/** Answered invites are kept this long, then deleted by the sweep. */
 const KEEP_INVITE_DAYS = 30;
+/** Deleting old invites and offers is not urgent: once an hour is plenty. */
+const CLEANUP_EVERY_MS = 60 * 60 * 1000;
 
 interface InviteRow {
   id: string;
@@ -106,6 +108,7 @@ export class PlayService {
   private readonly now: () => Date;
   private readonly log: Log;
   private readonly publicUrl: PublicUrl;
+  private lastCleanup = 0;
 
   constructor(
     private readonly pool: pg.Pool,
@@ -144,7 +147,7 @@ export class PlayService {
     const lobbyId = await adapter.create(hostId, input.settings, { chatGroupId: groupId });
     if (groupId) {
       try {
-        await this.deps.groupChat.sendCard(hostId, groupId, { game: input.game, lobbyId });
+        await this.deps.groupChat.sendCard(hostId, groupId, { game: input.game, lobbyId }, this.publicUrl);
       } catch (err) {
         await adapter.cancel?.(hostId, lobbyId).catch(() => undefined);
         throw err;
@@ -285,7 +288,7 @@ export class PlayService {
    */
   private async deliver(row: InviteRow, host: { name: string; avatarUrl: string | null }, summary: InviteSummary): Promise<void> {
     const card: ChatGameRef = { game: row.game, lobbyId: row.lobby_id };
-    await this.deps.chat.sendCard(row.host_id, row.invitee_id, card).catch((err: unknown) => {
+    await this.deps.chat.sendCard(row.host_id, row.invitee_id, card, this.publicUrl).catch((err: unknown) => {
       this.log.warn({ err }, 'invite card not posted');
     });
     await this.deps.events.tell(row.invitee_id, { type: 'play_invite', invite: toIncoming(row, host, summary) });
@@ -550,8 +553,8 @@ export class PlayService {
 
   /**
    * On a timer: the games close idle lobbies and end games that are over;
-   * invites past their time expire (both sides told); old invites and offers
-   * are deleted.
+   * invites past their time expire (both sides told); and, once an hour, old
+   * invites and rematch offers are deleted.
    */
   async sweep(): Promise<void> {
     for (const a of this.adapters.values()) {
@@ -568,11 +571,14 @@ export class PlayService {
       await this.deps.events.tell(r.host_id, { type: 'play_invite_update', inviteId: r.id, status: 'expired' });
       await this.deps.events.tell(r.invitee_id, { type: 'play_invite_update', inviteId: r.id, status: 'expired' });
     }
+    if (now.getTime() - this.lastCleanup < CLEANUP_EVERY_MS) return;
+    this.lastCleanup = now.getTime();
     await this.pool.query(
       `DELETE FROM play_invites WHERE id IN (
          SELECT id FROM play_invites WHERE status <> 'pending' AND created_at < $1::timestamptz - ($2 || ' days')::interval LIMIT 1000)`,
       [now, String(KEEP_INVITE_DAYS)],
     );
+    // an offer means nothing after REMATCH_OFFER_SECONDS; a day is generous
     await this.pool.query(`DELETE FROM play_rematches WHERE created_at < $1::timestamptz - interval '1 day'`, [now]);
   }
 
