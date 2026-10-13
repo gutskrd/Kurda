@@ -730,13 +730,21 @@ export class StoryGamesService {
         count = DEFAULT_QUESTION_COUNT[length];
       }
       const access = patch.access ?? t.game.access;
-      if (access === 'open' && t.game.access !== 'open') {
-        // Opening a lobby to strangers is only for an adult host — and only
-        // while nobody else is in it: the friends already there may be
-        // children, and the refusal must not depend on whether they are.
+      if (access !== t.game.access) {
+        // Everyone in a lobby got in under its access: the host's friends (any
+        // of them may be a child) in a friends game, known adults who may be
+        // strangers to each other in an open one. Switching either way with
+        // anyone else in it would put the two together — a lobby holding the
+        // host's fifteen-year-old friend opened to strangers, or the host's
+        // teenage friends let into one strangers already sit in. So the access
+        // changes only while the host is alone in the lobby, whoever is in it:
+        // the refusal must not depend on whether anyone there is a child.
         const others = t.players.filter((p) => !p.removed && p.user_id !== userId);
-        if (others.length > 0 || !(await isKnownAdult(t.client, userId))) {
-          throw new AppError('OPEN_NOT_ALLOWED', 403, 'a game can be opened only by an adult host, before anyone joins');
+        if (others.length > 0) {
+          throw new AppError('ACCESS_LOCKED', 409, 'who can join can be changed only before anyone else has joined');
+        }
+        if (access === 'open' && !(await isKnownAdult(t.client, userId))) {
+          throw new AppError('OPEN_NOT_ALLOWED', 403, 'only an adult can open a game to people who are not friends');
         }
       }
       await this.bump(

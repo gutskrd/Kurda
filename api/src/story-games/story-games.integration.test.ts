@@ -470,7 +470,35 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
       // a friends lobby with someone else in it cannot be opened afterwards
       const f = await lobby(host, [teen], { mode: 'group' });
       const opened = await call(host, 'PATCH', `/story-games/${f.view.id}/settings`, { access: 'open' });
-      expect(opened.statusCode).toBe(403);
+      expect({ statusCode: opened.statusCode, code: opened.json().code }).toEqual({ statusCode: 409, code: 'ACCESS_LOCKED' });
+      expect((await getView(host, f.view.id)).settings.access).toBe('friends');
+    });
+
+    it('changes who can join a lobby only while the host is alone in it, either way', async () => {
+      const host = await signUp('lkh');
+      const teen = await signUp('lkt', 15);
+      const stranger = await signUp('lks');
+      await befriend(host, teen);
+      const settings = (id: string, body: object) => call(host, 'PATCH', `/story-games/${id}/settings`, body);
+
+      // alone, the host may switch back and forth
+      const { view } = await lobby(host, [], { mode: 'group' });
+      expect((await settings(view.id, { access: 'open' })).json().settings.access).toBe('open');
+      expect((await settings(view.id, { access: 'friends' })).json().settings.access).toBe('friends');
+      expect((await settings(view.id, { access: 'open' })).json().settings.access).toBe('open');
+
+      // An adult stranger joins the open lobby. Making it a friends game now
+      // would let the host's teenage friend in next to them: refused, and the
+      // teenager still cannot join.
+      expect((await call(stranger, 'POST', '/story-games/join', { code: view.code })).statusCode).toBe(200);
+      const closed = await settings(view.id, { access: 'friends' });
+      expect({ statusCode: closed.statusCode, code: closed.json().code }).toEqual({ statusCode: 409, code: 'ACCESS_LOCKED' });
+      expect((await getView(host, view.id)).settings.access).toBe('open');
+      expect((await call(teen, 'POST', '/story-games/join', { code: view.code })).statusCode).toBe(404);
+      // the other settings still change, and repeating the access it has is no change
+      const same = await settings(view.id, { access: 'open', timerSeconds: 30 });
+      expect(same.statusCode).toBe(200);
+      expect(same.json().settings).toMatchObject({ access: 'open', timerSeconds: 30 });
     });
 
     it('lets the members of an invite-only group chat the game was shared into join, and nobody from an open one', async () => {
