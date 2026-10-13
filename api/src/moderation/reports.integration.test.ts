@@ -76,6 +76,11 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
   });
 
   afterAll(async () => {
+    // an appeal names its case and must name something, so it goes first
+    await pool.query(
+      `DELETE FROM appeals WHERE case_id IN (SELECT id FROM moderation_cases WHERE subject_user_id = ANY($1))`,
+      [userIds],
+    );
     await pool.query(`DELETE FROM moderation_cases WHERE subject_user_id = ANY($1)`, [userIds]);
     await pool.query(`DELETE FROM users WHERE email LIKE $1`, [`%_${kit.suffix}@it.kurda.app`]);
     await pool.end();
@@ -210,7 +215,13 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     expect(decided.statusCode).toBe(200);
 
     const mine = (await call('GET', '/me/reports', reporter.token)).json() as { reports: MyReport[] };
-    expect(mine.reports.find((r) => r.id === first.report.id)).toMatchObject({ status: 'no_violation', canAppeal: true });
+    const decidedReport = mine.reports.find((r) => r.id === first.report.id);
+    expect(decidedReport).toMatchObject({ status: 'no_violation', canAppeal: true, caseId: firstCase });
+    // the list says which case to appeal, and the appeal it names is taken — once
+    const appeal = await call('POST', '/me/appeals', reporter.token, { caseId: decidedReport!.caseId, text: 'They keep doing it.' });
+    expect(appeal.statusCode).toBe(201);
+    const after = (await call('GET', '/me/reports', reporter.token)).json() as { reports: MyReport[] };
+    expect(after.reports.find((r) => r.id === first.report.id)).toMatchObject({ canAppeal: false, caseId: firstCase });
     const inbox = await pool.query<{ data: { kind: string; outcome: string; reportIds: string[] } }>(
       `SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = 'report_outcome'`,
       [reporter.id],
