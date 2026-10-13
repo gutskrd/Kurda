@@ -206,9 +206,11 @@ export function registerLibraryRoutes(
       if (!(await audioOk(patch.audioMediaId))) return reply.code(422).send(audioRefused);
       // new words or new pictures on a published post put something new in
       // front of readers, so the edit is gated like a post; a draft's are
-      // gated whole when it is published
+      // gated whole when it is published. Staff editing somebody's post are
+      // not posting, and their words are not the author's (trust/post-gate.ts)
       const words = changedWords(current, patch);
-      const gated = current.status === 'published' && (words !== '' || added.length > 0);
+      const own = current.authorId === req.user!.id;
+      const gated = own && current.status === 'published' && (words !== '' || added.length > 0);
       if (gated) {
         const refused = await gate.check(req.user!.id, words);
         if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
@@ -233,14 +235,20 @@ export function registerLibraryRoutes(
     async (req, reply) => {
       const current = await editable(req, reply);
       if (!current) return reply;
-      // a draft going up is a post reaching readers for the first time
+      // a draft going up is a post reaching readers for the first time. Staff
+      // putting up somebody's draft are not posting: nothing is counted
+      // against them, and the author's words are screened as the author's
       const goingUp = current.status === 'draft';
-      if (goingUp) {
+      const own = current.authorId === req.user!.id;
+      if (goingUp && own) {
         const refused = await gate.check(req.user!.id, postWords(current));
         if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
       }
       const res = await library.setStatus(current.id, req.user!.id, isAdmin(req), 'published');
-      if (res.ok && goingUp) await gate.passed(req.user!.id, screened(res.post));
+      if (res.ok && goingUp) {
+        if (own) await gate.passed(req.user!.id, screened(res.post));
+        else await gate.screen(current.authorId, screened(res.post));
+      }
       return respond(reply, res);
     },
   );

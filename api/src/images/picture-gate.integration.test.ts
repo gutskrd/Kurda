@@ -48,6 +48,19 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on picture posts (integra
     return { id, token: res.json().tokens.accessToken };
   }
 
+  /** Staff: a new account (two posts an hour, if anything were counted) with the admin role. */
+  async function staff(tag: string): Promise<{ id: string; token: string }> {
+    const me = await person(tag);
+    await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [me.id]);
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `ig_${tag}_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
+      remoteAddress: ip(),
+    });
+    return { id: me.id, token: login.json().tokens.accessToken }; // a fresh token carries the role
+  }
+
   let k = 0;
   const upload = (owner: { id: string }) => seedPictureUpload(pool, `image-post/ig-${suffix}-${++k}.webp`, owner.id);
   const call = (method: 'POST' | 'PATCH', url: string, token: string, payload?: Record<string, unknown>) =>
@@ -121,5 +134,24 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on picture posts (integra
     expect(edit.statusCode).toBe(429);
     expect(edit.json().code).toBe('TRUST_VELOCITY');
     expect((await call('PATCH', `/images/${picture.id}`, me.token, { caption: null })).statusCode).toBe(200);
+  });
+
+  it('does not count staff editing somebody’s caption as the staff member posting', async () => {
+    const author = await person('captioned', 'established');
+    const admin = await staff('capstaff');
+    const pictures: Array<{ id: string }> = [];
+    for (let i = 0; i < 6; i++) {
+      pictures.push((await call('POST', '/images', author.token, { imageMediaId: await upload(author), caption: `Wêne ${i}` })).json());
+    }
+    for (const picture of pictures) {
+      expect((await call('PATCH', `/images/${picture.id}`, admin.token, { caption: SCAM })).statusCode).toBe(200);
+    }
+    const flagged = await pool.query(
+      `SELECT 1 FROM moderation_flags WHERE content_ref = ANY($1) OR author_id = $2`,
+      [pictures.map((p) => p.id), admin.id],
+    );
+    expect(flagged.rowCount).toBe(0);
+    // the staff member's own posting is untouched
+    expect((await call('POST', '/images', admin.token, { imageMediaId: await upload(admin) })).statusCode).toBe(201);
   });
 });

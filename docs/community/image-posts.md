@@ -47,7 +47,8 @@ after, so a picture whose post was deleted can be posted again.
   `MEDIA_IN_USE` when it is already on a post.
 - A picture post and a changed caption go through the same gate as written
   posts (`trust/post-gate.ts`): velocity cap, spam check on the caption, AI
-  screening of the caption after it lands.
+  screening of the caption after it lands. Staff changing somebody's caption
+  are not posting, so the gate leaves that alone.
 - **Guests cannot upload** (401); reads need no auth.
 - `author_role` is derived from RBAC (#099/#286): `founder` role → `founder`,
   admin roles → `admin`, else `user`.

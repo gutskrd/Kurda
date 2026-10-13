@@ -59,7 +59,8 @@ export function registerImagePostRoutes(
 
   /**
    * Edit a caption (author or admin). A changed caption is new words in front
-   * of readers, so it is gated like a post; taking one off is not.
+   * of readers, so it is gated like a post; taking one off is not, and nor is
+   * staff editing somebody's caption (trust/post-gate.ts).
    */
   const editCaption = async (req: FastifyRequest, reply: FastifyReply): Promise<unknown> => {
     const { id } = req.params as { id: string };
@@ -69,12 +70,13 @@ export function registerImagePostRoutes(
     if (current.authorId !== req.user!.id && !isAdmin(req)) return reply.code(403).send({ code: 'FORBIDDEN', message: 'not your image' });
     const words = caption?.trim() ?? '';
     const changed = words !== '' && words !== (current.caption ?? '');
-    if (changed) {
+    const gated = changed && current.authorId === req.user!.id;
+    if (gated) {
       const refused = await gate.check(req.user!.id, words);
       if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
     }
     const res = await images.editCaption(id, req.user!.id, isAdmin(req), caption);
-    if (res.ok && changed) await gate.passed(req.user!.id, captionScreened(res.post));
+    if (res.ok && gated) await gate.passed(req.user!.id, captionScreened(res.post));
     return respond(reply, res);
   };
 

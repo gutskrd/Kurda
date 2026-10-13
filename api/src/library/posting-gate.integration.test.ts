@@ -52,6 +52,19 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on written posts (integra
     return { id, token: res.json().tokens.accessToken };
   }
 
+  /** Staff: a new account (two posts an hour, if anything were counted) with the admin role. */
+  async function staff(tag: string): Promise<{ id: string; token: string }> {
+    const me = await person(tag);
+    await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [me.id]);
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `pg_${tag}_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
+      remoteAddress: ip(),
+    });
+    return { id: me.id, token: login.json().tokens.accessToken }; // a fresh token carries the role
+  }
+
   let k = 0;
   const upload = (owner: { id: string }) => seedPictureUpload(pool, `image-post/pg-${suffix}-${++k}.webp`, owner.id);
   const call = (method: 'POST' | 'PATCH', url: string, token: string, payload?: Record<string, unknown>) =>
@@ -160,5 +173,33 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on written posts (integra
     expect(await flags(draft.id)).toEqual([]); // nobody can read a draft
     await call('POST', `/library/posts/${draft.id}/publish`, me.token);
     expect(await flags(draft.id)).toEqual([{ surface: 'library' }]);
+  });
+
+  it('does not count staff editing or publishing somebody’s post as the staff member posting', async () => {
+    const author = await person('staffed', 'established');
+    const admin = await staff('staff');
+    const posts: Array<{ id: string }> = [];
+    for (let i = 0; i < 6; i++) posts.push((await call('POST', '/library/posts', author.token, { body: `Nivîsa ${i}` })).json());
+
+    // the same correction on each: as the staff member's own posting it would
+    // be over a new account's cap, and repeats for the spam check
+    for (const post of posts) {
+      expect((await call('PATCH', `/library/posts/${post.id}`, admin.token, { body: SCAM })).statusCode).toBe(200);
+    }
+    // the author's draft, put up by staff
+    const draft = (await call('POST', '/library/posts', author.token, { body: `${SCAM}!`, publish: false })).json();
+    expect((await call('POST', `/library/posts/${draft.id}/publish`, admin.token)).statusCode).toBe(200);
+
+    // nothing is flagged under the staff member's name, nor a staff edit under
+    // the author's; the draft's words are the author's, and screened as theirs
+    const flagged = await pool.query<{ author_id: string; content_ref: string }>(
+      `SELECT author_id, content_ref FROM moderation_flags WHERE content_ref = ANY($1) OR author_id = $2`,
+      [[...posts.map((p) => p.id), draft.id], admin.id],
+    );
+    expect(flagged.rows).toEqual([{ author_id: author.id, content_ref: draft.id }]);
+    // and the staff member's own posting has a new account's two an hour still
+    expect((await call('POST', '/library/posts', admin.token, { body: 'Ya min' })).statusCode).toBe(201);
+    expect((await call('POST', '/library/posts', admin.token, { body: 'Ya min a din' })).statusCode).toBe(201);
+    expect((await call('POST', '/library/posts', admin.token, { body: 'Ya sêyem' })).statusCode).toBe(429);
   });
 });

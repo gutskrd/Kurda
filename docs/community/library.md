@@ -123,6 +123,12 @@ AI screening (#293) after the post lands, which flags for the review queue and
 never blocks. A draft is counted when it is published, not when it is saved; a
 post refused for its shape or its pictures is refused before it counts.
 
+The gate is for people posting. Staff (admin roles) editing somebody else's
+post or caption are not: nothing is counted against them or remembered as their
+words, and their edit is not flagged under the author's name. Staff publishing
+somebody's draft put the author's words up, so those are screened as the
+author's, and counted against nobody.
+
 ## On the wall (`GET /feed`)
 
 A written post is a card with `targetType: 'library'` and `href:

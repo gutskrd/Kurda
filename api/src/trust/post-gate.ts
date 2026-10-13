@@ -33,6 +33,14 @@ interface Log {
  * AI screening after it lands (which flags for review and never blocks —
  * reviewers decide, as they always have for written posts).
  *
+ * It is for people posting: an author's own post, edit or publish. Staff
+ * editing somebody else's post are not posting, so nothing of it is counted
+ * against them or remembered as their words — and the post's author did not
+ * write the edit, so it is not flagged under the author's name either (staff
+ * edits were never gated). Staff publishing somebody's draft put the author's
+ * own words up: those are screened as the author's (`screen`), and counted
+ * against nobody.
+ *
  * Without a trust service (no Redis in a test app) the gate is open, as the
  * trust checks have always been.
  */
@@ -68,9 +76,18 @@ export class PostGate {
   /** After the write: count it toward the cap and screen what readers now see. */
   async passed(userId: string, screened: Screened | null): Promise<void> {
     if (this.trust) await this.trust.recordAction(userId, 'post');
+    await this.screen(userId, screened);
+  }
+
+  /**
+   * Screen words that went up without counting them as anybody's post: a
+   * draft staff published for its author. A flag names `authorId`, who wrote
+   * them.
+   */
+  async screen(authorId: string, screened: Screened | null): Promise<void> {
     if (this.aiMod && screened?.text) {
       await this.aiMod
-        .moderate({ ...screened, authorId: userId })
+        .moderate({ ...screened, authorId })
         .catch((err) => this.log.warn({ err, surface: screened.surface }, 'auto-moderation failed'));
     }
   }
