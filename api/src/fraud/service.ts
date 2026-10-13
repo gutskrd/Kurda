@@ -8,6 +8,8 @@ type Executor = Pick<pg.PoolClient, 'query'>;
 export interface FraudReview {
   id: string;
   userId: string;
+  /** who it is, for the admin's list; null once the account is gone */
+  username: string | null;
   receiptId: string | null;
   flags: FraudFlag[];
   evidence: Record<string, unknown>;
@@ -88,13 +90,16 @@ export class FraudService {
       evidence: Record<string, unknown>;
       status: string;
       created_at: Date;
+      username: string | null;
     }>(
-      `SELECT id, user_id, receipt_id, flags, evidence, status, created_at
-         FROM fraud_reviews WHERE status = 'open' ORDER BY created_at`,
+      `SELECT r.id, r.user_id, r.receipt_id, r.flags, r.evidence, r.status, r.created_at, u.username
+         FROM fraud_reviews r LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.status = 'open' ORDER BY r.created_at`,
     );
     return rows.rows.map((r) => ({
       id: r.id,
       userId: r.user_id,
+      username: r.username,
       receiptId: r.receipt_id,
       flags: r.flags,
       evidence: r.evidence,

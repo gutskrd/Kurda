@@ -244,7 +244,7 @@ describe('the audit log', () => {
 });
 
 describe('Fraud', () => {
-  const review = { id: 'r1', userId: 'u1', receiptId: 'rcpt-1', flags: ['VELOCITY'], evidence: { purchasesLastHour: 9 }, status: 'open', createdAt: '2026-10-13T10:00:00.000Z' };
+  const review = { id: 'r1', userId: 'u1', username: 'rojin', receiptId: 'rcpt-1', flags: ['VELOCITY'], evidence: { purchasesLastHour: 9 }, status: 'open', createdAt: '2026-10-13T10:00:00.000Z' };
 
   it('gives the held Gems only after asking', async () => {
     const user = userEvent.setup();
@@ -254,6 +254,7 @@ describe('Fraud', () => {
     );
     renderUi(<Fraud />);
     expect(await screen.findByText('Many purchases fast')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '@rojin' })).toHaveAttribute('href', '#/users/u1');
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
     await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancel' }));

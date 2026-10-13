@@ -7,6 +7,8 @@ type FraudFlag = 'VELOCITY' | 'REFUND_ABUSE' | 'RECEIPT_REUSE';
 interface FraudReview {
   id: string;
   userId: string;
+  /** null once the account is gone */
+  username?: string | null;
   receiptId: string | null;
   flags: FraudFlag[];
   evidence: Record<string, unknown>;
@@ -68,7 +70,7 @@ export function Fraud(): React.JSX.Element {
   }
 
   const columns: Column<FraudReview>[] = [
-    { key: 'user', header: 'Account', card: 'title', cell: (r) => <UserLink user={{ id: r.userId }} /> },
+    { key: 'user', header: 'Account', card: 'title', cell: (r) => <UserLink user={{ id: r.userId, username: r.username ?? null }} /> },
     {
       key: 'flags',
       header: 'Why it was held',
@@ -124,7 +126,7 @@ export function Fraud(): React.JSX.Element {
             <div className="facts-row">
               <dt>Account</dt>
               <dd>
-                <UserLink user={{ id: looking.userId }} />
+                <UserLink user={{ id: looking.userId, username: looking.username ?? null }} />
               </dd>
             </div>
             <div className="facts-row">
