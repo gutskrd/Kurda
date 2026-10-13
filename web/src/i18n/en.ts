@@ -958,6 +958,8 @@ export const en = {
   'edit.notEnoughZer': 'Not enough Zêr',
   'edit.buyFor': 'Buy · {price} Zêr',
   'edit.purchased': 'Purchased {name}.',
+  'edit.getFree': 'Get it free',
+  'edit.gotFree': '{name} is yours.',
   'edit.photo.title': 'Profile picture',
   'edit.photo.use': 'Use this picture',
   'edit.photo.uploadAnyway': 'Upload it anyway',

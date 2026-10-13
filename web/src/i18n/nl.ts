@@ -872,6 +872,8 @@ export const nl: Catalogue = {
   'edit.notEnoughZer': 'Niet genoeg Zêr',
   'edit.buyFor': 'Kopen · {price} Zêr',
   'edit.purchased': '{name} gekocht.',
+  'edit.getFree': 'Gratis ophalen',
+  'edit.gotFree': '{name} is van jou.',
   'edit.photo.title': 'Profielfoto',
   'edit.photo.use': 'Deze foto gebruiken',
   'edit.photo.uploadAnyway': 'Toch uploaden',

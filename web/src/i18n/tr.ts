@@ -872,6 +872,8 @@ export const tr: Catalogue = {
   'edit.notEnoughZer': 'Yeterli Zêr yok',
   'edit.buyFor': 'Satın al · {price} Zêr',
   'edit.purchased': '{name} satın alındı.',
+  'edit.getFree': 'Ücretsiz al',
+  'edit.gotFree': '{name} artık senin.',
   'edit.photo.title': 'Profil fotoğrafı',
   'edit.photo.use': 'Bu fotoğrafı kullan',
   'edit.photo.uploadAnyway': 'Yine de yükle',

@@ -878,6 +878,8 @@ export const ku: Catalogue = {
   'edit.notEnoughZer': 'Zêr têrê nake',
   'edit.buyFor': 'Bikire · {price} Zêr',
   'edit.purchased': '{name} hat kirîn.',
+  'edit.getFree': 'Belaş bistîne',
+  'edit.gotFree': '{name} ya te ye.',
   'edit.photo.title': 'Wêneyê profîlê',
   'edit.photo.use': 'Vî wêneyî bi kar bîne',
   'edit.photo.uploadAnyway': 'Dîsa jî bar bike',

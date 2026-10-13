@@ -146,6 +146,19 @@ describe.skipIf(!DATABASE_URL)('shop (integration)', () => {
     expect(reward).toMatchObject({ applied: true, duplicate: false, balance: 85 });
   });
 
+  it('gives a free item without touching the wallet, and still says what the buyer has', async () => {
+    const starter = `starter_${suffix}`;
+    await shop.createItem({ sku: starter, name: 'Starter', currency: 'zer', price: 0, isUnique: true });
+    const before = (await wallet.balances(userId)).zer;
+    expect(before).toBeGreaterThan(0);
+    const res = await shop.purchase(userId, starter, `get-starter-${suffix}`);
+    expect(res).toEqual({ purchased: true, duplicate: false, sku: starter, balance: before });
+    expect((await wallet.balances(userId)).zer).toBe(before);
+    expect((await shop.inventory(userId)).find((i) => i.sku === starter)).toBeTruthy();
+    const moved = await pool.query(`SELECT count(*)::int n FROM wallet_ledger WHERE user_id = $1 AND ref_id = $2`, [userId, starter]);
+    expect(moved.rows[0].n).toBe(0);
+  });
+
   it('HTTP: item creation is admin-only; catalog + purchase work for users', async () => {
     const denied = await app.inject({
       method: 'POST',

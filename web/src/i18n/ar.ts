@@ -877,6 +877,8 @@ export const ar: Catalogue = {
   'edit.notEnoughZer': 'لا يكفي من Zêr',
   'edit.buyFor': 'اشترِ · {price} Zêr',
   'edit.purchased': 'تم شراء {name}.',
+  'edit.getFree': 'احصل عليه مجانًا',
+  'edit.gotFree': '{name} أصبح لك.',
   'edit.photo.title': 'صورة الملف الشخصي',
   'edit.photo.use': 'استخدم هذه الصورة',
   'edit.photo.uploadAnyway': 'ارفعها على أي حال',

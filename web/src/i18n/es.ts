@@ -872,6 +872,8 @@ export const es: Catalogue = {
   'edit.notEnoughZer': 'No tienes suficiente Zêr',
   'edit.buyFor': 'Comprar · {price} Zêr',
   'edit.purchased': 'Has comprado {name}.',
+  'edit.getFree': 'Consíguelo gratis',
+  'edit.gotFree': '{name} ya es tuyo.',
   'edit.photo.title': 'Foto de perfil',
   'edit.photo.use': 'Usar esta foto',
   'edit.photo.uploadAnyway': 'Subirla igualmente',

@@ -307,6 +307,9 @@ export class ShopService {
           await client.query('COMMIT');
           return { purchased: true, duplicate: true, sku, balance };
         }
+      } else {
+        // a free item moves no money, but the answer still says what they have
+        balance = (await this.wallet.balances(userId))[item.currency];
       }
 
       await client.query(

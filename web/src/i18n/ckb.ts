@@ -883,6 +883,8 @@ export const ckb: Catalogue = {
   'edit.notEnoughZer': 'Zêr بەشی ناکات',
   'edit.buyFor': 'بیکڕە · {price} Zêr',
   'edit.purchased': '{name} کڕدرا.',
+  'edit.getFree': 'بە خۆڕایی وەریبگرە',
+  'edit.gotFree': '{name} هی تۆیە.',
   'edit.photo.title': 'وێنەی پرۆفایل',
   'edit.photo.use': 'ئەم وێنەیە بەکاربهێنە',
   'edit.photo.uploadAnyway': 'بەهەرحاڵ باری بکە',

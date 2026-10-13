@@ -84,6 +84,44 @@ describe('CosmeticCustomizer', () => {
     expect((buy?.body as { idempotencyKey: string }).idempotencyKey.length).toBeGreaterThanOrEqual(8);
   });
 
+  it('offers a free item to everyone, even with no Zêr, rather than marking it Premium', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+        const body = init?.body ? JSON.parse(init.body as string) : null;
+        if (url.includes('/shop/purchase')) {
+          calls.push({ url, body });
+          return jsonResponse(200, { purchased: true, duplicate: false, sku: 'bg-free', balance: 0 });
+        }
+        if (url.includes('/me/inventory')) return jsonResponse(200, { items: [] });
+        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0 } });
+        if (url.includes('/shop')) {
+          return jsonResponse(200, {
+            items: [
+              { sku: 'bg-free', name: 'Daybreak', description: null, category: 'background', currency: 'zer', price: 0, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/backgrounds/d.webp' },
+              { sku: 'bg-paid', name: 'Red kilim', description: null, category: 'background', currency: 'zer', price: 600, isUnique: true, premiumOnly: true, assetUrl: '/cosmetics/backgrounds/k.webp' },
+            ],
+          });
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
+
+    const freeTile = (await screen.findByText('Daybreak')).closest('figure')!;
+    expect(within(freeTile).queryByText('Premium')).not.toBeInTheDocument();
+    const get = within(freeTile).getByRole('button', { name: 'Get it free' });
+    expect(get).toBeEnabled();
+    // a priced one still needs the Zêr
+    const paidTile = screen.getByText('Red kilim').closest('figure')!;
+    expect(within(paidTile).getByRole('button', { name: 'Not enough Zêr' })).toBeDisabled();
+
+    await userEvent.click(get);
+    expect(await screen.findByText('Daybreak is yours.')).toBeInTheDocument();
+    expect(calls[0]?.body).toMatchObject({ sku: 'bg-free', expectedPrice: 0 });
+  });
+
   it('shows empty states when the catalog is not seeded', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
