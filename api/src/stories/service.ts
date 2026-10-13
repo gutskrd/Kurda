@@ -11,11 +11,9 @@
  * Questions never leave through the reading API. The games read them through
  * `getPublishedForGame` / `pickRandomPublished` and keep them server-side.
  */
+import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
 import {
-  STORY_DIALECTS,
-  STORY_LENGTHS,
-  STORY_LEVELS,
   countStoryWords,
   lessonAudioKey,
   readingMinutes,
@@ -78,27 +76,37 @@ export interface StoryListFilter {
  * The published list is cached for a few minutes, one entry per filter —
  * the hub asks the same few questions over and over, and the answer only
  * changes when a story is published, unpublished, archived or deleted, or a
- * sentence is recorded (fully narrated). Each of those busts every entry.
+ * sentence is recorded (fully narrated).
+ *
+ * Each of those starts a new generation of the list rather than deleting the
+ * entries, and every entry's key names the generation it was loaded in.
+ * Deleting would race: a request that missed just before an unpublish
+ * committed reads the old list (its query's snapshot still has the story) and
+ * writes it back after the deletes, so a story a reviewer pulled would stay
+ * in the hub for the whole five minutes — and every request after the delete
+ * would join that load while it is in flight. A load from an older
+ * generation now writes under a key nobody reads any more.
  */
 const LIST_CACHE_DOMAIN = 'stories';
 const LIST_CACHE_TTL_SECONDS = 300;
+const GENERATION_ID = 'list-generation';
+/** Outlives every entry; should it expire, a new generation starts and the old entries go unread. */
+const GENERATION_TTL_SECONDS = 7 * 24 * 3600;
 /** More than the hub will show for a long while; a bound, not a page size. */
 const LIST_MAX = 200;
 
-function listCacheId(f: StoryListFilter): string {
-  return `list:${f.dialect ?? '*'}:${f.length ?? '*'}:${f.level ?? '*'}`;
+function listCacheId(generation: string, f: StoryListFilter): string {
+  return `list:${generation}:${f.dialect ?? '*'}:${f.length ?? '*'}:${f.level ?? '*'}`;
 }
 
-/** Forget every cached list (48 small keys; best-effort, like every cache write). */
+/**
+ * Make every cached list stale at once by starting a new generation. One
+ * write, best-effort like every cache write: with Redis down it is lost, and
+ * so is everything it would have made stale.
+ */
 export async function bustStoryLists(cache: Cache | null | undefined): Promise<void> {
   if (!cache) return;
-  const ids: string[] = [];
-  for (const dialect of [undefined, ...STORY_DIALECTS]) {
-    for (const length of [undefined, ...STORY_LENGTHS]) {
-      for (const level of [undefined, ...STORY_LEVELS]) ids.push(listCacheId({ dialect, length, level }));
-    }
-  }
-  await Promise.all(ids.map((id) => cache.del(LIST_CACHE_DOMAIN, id)));
+  await cache.set(LIST_CACHE_DOMAIN, GENERATION_ID, randomBytes(9).toString('base64url'), GENERATION_TTL_SECONDS);
 }
 
 /** A question as a game uses it: the right answer included, so it never leaves the server. */
@@ -257,9 +265,14 @@ export class StoriesService {
       );
       return { stories: res.rows.map(listItem) };
     };
-    const { stories } = this.cache
-      ? await this.cache.withCache(LIST_CACHE_DOMAIN, listCacheId(filter), LIST_CACHE_TTL_SECONDS, load)
-      : await load();
+    if (!this.cache) return (await load()).stories;
+    const generation = await this.cache.get<string>(LIST_CACHE_DOMAIN, GENERATION_ID);
+    if (!generation) {
+      // none yet (or it expired, or Redis cannot be reached): start one for the next request, answer from the database
+      await bustStoryLists(this.cache);
+      return (await load()).stories;
+    }
+    const { stories } = await this.cache.withCache(LIST_CACHE_DOMAIN, listCacheId(generation, filter), LIST_CACHE_TTL_SECONDS, load);
     return stories;
   }
 

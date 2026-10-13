@@ -1,10 +1,11 @@
+import type pg from 'pg';
 import { describe, expect, it } from 'vitest';
 import { lessonAudioKey, validateStory, type StoryDialect, type StoryLength } from '@kurda/shared';
 import { Cache, type CacheClient } from '../cache/cache.js';
 import { testStory } from '../test/stories.js';
 import { tidyStory } from './admin-service.js';
 import { storyInputFrom } from './schema.js';
-import { bustStoryLists, storyTextFacts } from './service.js';
+import { StoriesService, bustStoryLists, storyTextFacts } from './service.js';
 
 describe('storyTextFacts', () => {
   it('counts the words, names the length and keys every sentence the reader can play, once', () => {
@@ -25,36 +26,113 @@ describe('storyTextFacts', () => {
   });
 });
 
-describe('bustStoryLists', () => {
-  it('forgets the list for every filter, the unfiltered one included', async () => {
-    const deleted: string[] = [];
-    const client: CacheClient = {
-      get: async () => null,
-      set: async () => 'OK',
-      del: async (key) => {
-        deleted.push(key);
-        return 1;
-      },
+/** Redis as the cache sees it, in memory; `down` makes every command fail. */
+function memoryRedis(): CacheClient & { store: Map<string, string>; down: boolean } {
+  const store = new Map<string, string>();
+  const up = () => {
+    if (redis.down) throw new Error('redis is down');
+  };
+  const redis = {
+    store,
+    down: false,
+    get: async (key: string) => (up(), store.get(key) ?? null),
+    set: async (key: string, value: string) => (up(), store.set(key, value), 'OK'),
+    del: async (key: string) => (up(), store.delete(key), 1),
+  };
+  return redis;
+}
+
+/** A pool whose list queries wait until the test answers them, in order. */
+function heldPool() {
+  const pending: Array<(rows: unknown[]) => void> = [];
+  return {
+    pending,
+    pool: { query: () => new Promise((resolve) => pending.push((rows) => resolve({ rows }))) } as unknown as pg.Pool,
+  };
+}
+
+const listRow = (slug: string) => ({
+  id: `00000000-0000-4000-8000-${slug.padStart(12, '0')}`,
+  slug,
+  title: slug,
+  summary: null,
+  dialect: 'kurmanci',
+  level: 1,
+  length: 'short',
+  word_count: 82,
+  fully_narrated: false,
+});
+
+/** Let the service's awaits run until `ready()` holds. */
+async function until(ready: () => boolean): Promise<void> {
+  for (let i = 0; i < 50 && !ready(); i++) await new Promise((r) => setImmediate(r));
+  expect(ready()).toBe(true);
+}
+
+describe('the cached story list', () => {
+  it('is cached per filter until a change starts a new generation', async () => {
+    const redis = memoryRedis();
+    const { pool, pending } = heldPool();
+    const service = new StoriesService(pool, new Cache(redis));
+    const answer = async (list: Promise<unknown>, rows: unknown[]) => {
+      await until(() => pending.length > 0);
+      pending.shift()!(rows);
+      return list;
     };
-    await bustStoryLists(new Cache(client));
-    // 3 dialect choices (either, or none) × 4 lengths × 4 levels
-    expect(deleted).toHaveLength(48);
-    expect(new Set(deleted).size).toBe(48);
-    expect(deleted).toContain('kurda:stories:list:*:*:*');
-    expect(deleted).toContain('kurda:stories:list:sorani:long:3');
-    expect(deleted).toContain('kurda:stories:list:kurmanci:*:1');
+
+    // the first request finds no generation: it starts one and answers from the database
+    expect(await answer(service.list(), [listRow('a')])).toHaveLength(1);
+    expect([...redis.store.keys()]).toEqual(['kurda:stories:list-generation']);
+    // then each filter is loaded once and served from the cache
+    expect(await answer(service.list(), [listRow('a')])).toHaveLength(1);
+    expect(await service.list()).toHaveLength(1);
+    expect(await answer(service.list({ dialect: 'sorani' }), [])).toEqual([]);
+    expect(await service.list({ dialect: 'sorani' })).toEqual([]);
+    expect(pending).toHaveLength(0);
+
+    await bustStoryLists(new Cache(redis));
+    expect(await answer(service.list(), [listRow('a'), listRow('b')])).toHaveLength(2);
+    expect(await answer(service.list({ dialect: 'sorani' }), [])).toEqual([]);
   });
 
-  it('does nothing without a cache, and survives one that fails', async () => {
+  it('never serves a list read before a change to a request made after it', async () => {
+    const redis = memoryRedis();
+    const cache = new Cache(redis);
+    const { pool, pending } = heldPool();
+    const service = new StoriesService(pool, cache);
+    await bustStoryLists(cache);
+
+    // a request misses, and its query reads the hub while the story is still published
+    const before = service.list();
+    await until(() => pending.length === 1);
+    // the reviewer unpublishes it, and the change empties the list
+    await bustStoryLists(cache);
+    // a request made after that does not join the load in flight
+    const after = service.list();
+    await until(() => pending.length === 2);
+    pending[0]!([listRow('pulled')]);
+    pending[1]!([]);
+    expect(await before).toHaveLength(1);
+    expect(await after).toEqual([]);
+    // and what the old load wrote back is never read: the next request is served the new list from the cache
+    expect(await service.list()).toEqual([]);
+    expect(pending).toHaveLength(2);
+  });
+
+  it('answers from the database while Redis is down, and a change then is simply lost with it', async () => {
+    const redis = memoryRedis();
+    const { pool, pending } = heldPool();
+    const service = new StoriesService(pool, new Cache(redis));
+    redis.down = true;
+    for (const rows of [[listRow('a')], []]) {
+      const list = service.list();
+      await until(() => pending.length > 0);
+      pending.shift()!(rows);
+      expect(await list).toHaveLength(rows.length);
+    }
+    await expect(bustStoryLists(new Cache(redis))).resolves.toBeUndefined();
     await expect(bustStoryLists(null)).resolves.toBeUndefined();
-    const broken: CacheClient = {
-      get: async () => null,
-      set: async () => 'OK',
-      del: async () => {
-        throw new Error('redis is down');
-      },
-    };
-    await expect(bustStoryLists(new Cache(broken))).resolves.toBeUndefined();
+    expect(redis.store.size).toBe(0);
   });
 });
 
