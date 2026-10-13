@@ -11,7 +11,7 @@ const searchQuery = z.object({
   adminId: z.uuid().optional(),
   action: z.string().max(120).optional(),
   targetId: z.string().max(200).optional(),
-  before: z.string().datetime().optional(),
+  beforeId: z.uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 
@@ -48,7 +48,7 @@ export function registerAuditLog(app: FastifyInstance, audit: AuditService, totp
     { schema: { querystring: searchQuery }, preHandler: [requireAuth, requireAdmin(totp, 'superadmin')] },
     async (req) => {
       const q = req.query as z.infer<typeof searchQuery>;
-      return { entries: await audit.search({ ...q, before: q.before ? new Date(q.before) : undefined }) };
+      return { entries: await audit.search(q) };
     },
   );
 }

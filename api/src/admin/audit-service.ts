@@ -21,8 +21,13 @@ export interface AuditFilters {
   adminId?: string;
   action?: string;
   targetId?: string;
-  /** only entries older than this (the last row of the page before), for paging */
-  before?: Date;
+  /**
+   * Only the entries after this one, newest first: the last row of the page
+   * before, for paging. An id rather than a time, because rows share a time
+   * (pg answers to the millisecond, the table holds microseconds) and a time
+   * cursor skipped the rest of a millisecond's rows.
+   */
+  beforeId?: string;
   limit?: number;
 }
 
@@ -84,9 +89,10 @@ export class AuditService {
       params.push(filters.targetId);
       clauses.push(`a.target_id = $${params.length}`);
     }
-    if (filters.before) {
-      params.push(filters.before);
-      clauses.push(`a.created_at < $${params.length}`);
+    if (filters.beforeId) {
+      params.push(filters.beforeId);
+      // an id that is not in the trail compares as null: nothing older to show
+      clauses.push(`(a.created_at, a.id) < (SELECT created_at, id FROM admin_audit_log WHERE id = $${params.length})`);
     }
     const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
     params.push(limit);
@@ -98,7 +104,7 @@ export class AuditService {
       `SELECT a.id, a.admin_id, u.username AS admin_username, a.action, a.target_type, a.target_id, a.before, a.after,
               a.reason, a.request_id, a.created_at
        FROM admin_audit_log a LEFT JOIN users u ON u.id = a.admin_id
-       ${where} ORDER BY a.created_at DESC LIMIT $${params.length}`,
+       ${where} ORDER BY a.created_at DESC, a.id DESC LIMIT $${params.length}`,
       params,
     );
     return res.rows.map((r) => ({

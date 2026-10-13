@@ -105,16 +105,34 @@ describe.skipIf(!DATABASE_URL)('admin audit log (integration)', () => {
     await expect(pool.query(`DELETE FROM admin_audit_log WHERE action = 'test.immutable'`)).rejects.toThrow(/append-only/);
   });
 
-  it('names the admin, and pages back through older entries', async () => {
+  it('names the admin, and pages back through older entries without skipping one', async () => {
+    // several rows in the same instant: a time cursor dropped the rest of them
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let i = 0; i < 4; i++) await audit.record(client, { adminId, action: 'test.same-instant', targetId: `t${i}` });
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
+    const all = await audit.search({ adminId, limit: 200 });
     const [newest] = await audit.search({ adminId, limit: 1 });
     expect(newest!.adminUsername).toBe(`auditadm_${suffix}`.slice(0, 30));
-    const older = await audit.search({ adminId, before: newest!.createdAt });
-    expect(older.every((e) => e.createdAt.getTime() < newest!.createdAt.getTime())).toBe(true);
-    expect(older.some((e) => e.id === newest!.id)).toBe(false);
 
-    const res = await authed('GET', `/admin/audit?adminId=${adminId}&before=${encodeURIComponent(newest!.createdAt.toISOString())}`);
+    const pages: string[] = [];
+    let cursor: string | undefined;
+    for (;;) {
+      const page = await audit.search({ adminId, limit: 2, beforeId: cursor });
+      if (page.length === 0) break;
+      pages.push(...page.map((e) => e.id));
+      cursor = page[page.length - 1]!.id;
+    }
+    expect(pages).toEqual(all.map((e) => e.id));
+    expect(new Set(pages).size).toBe(pages.length);
+
+    const res = await authed('GET', `/admin/audit?adminId=${adminId}&beforeId=${newest!.id}`);
     expect(res.statusCode).toBe(200);
-    expect((res.json() as { entries: Array<{ id: string }> }).entries.map((e) => e.id)).toEqual(older.map((e) => e.id));
+    expect((res.json() as { entries: Array<{ id: string }> }).entries.map((e) => e.id)).toEqual(all.slice(1).map((e) => e.id));
   });
 
   it('records a shop catalogue write, which lives outside /admin, against its item', async () => {
