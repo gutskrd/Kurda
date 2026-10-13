@@ -6,7 +6,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { HELPLINE_URL, REPORTS_PER_DAY, type CaseDetail, type MyReport, type ReportReceipt } from '@kurda/shared';
+import {
+  HELPLINE_URL,
+  REPORTS_PER_DAY,
+  type CaseDetail,
+  type EvidenceSnapshot,
+  type MyReport,
+  type ReportReceipt,
+} from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { FriendService } from '../friends/service.js';
@@ -14,6 +21,7 @@ import { GroupService } from '../groups/service.js';
 import { bornYearsAgo } from '../test/age.js';
 import { seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
+import { deleteStories, insertStory } from '../test/story-fixtures.js';
 import { resolveTarget } from './evidence.js';
 import { ReportsService } from './reports-service.js';
 
@@ -35,22 +43,10 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
   const userIds: string[] = [];
 
   const report = (who: Person, body: Record<string, unknown>) => call('POST', '/reports', who.token, body);
-  /**
-   * A player row, with the seat when the table has that column (the shared
-   * lobby rules add it on another branch) — so these tests hold before and
-   * after it lands.
-   */
+  /** A player row in its seat (the shared lobby rules' `seat` column, migration 1751000149000). */
   async function addPlayer(db: Pick<pg.Pool, 'query'>, table: string, fk: string, gameId: string, userId: string, seat: number): Promise<void> {
-    const hasSeat = (
-      await db.query<{ ok: boolean }>(
-        `SELECT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = to_regclass($1) AND attname = 'seat' AND NOT attisdropped) AS ok`,
-        [table],
-      )
-    ).rows[0]!.ok;
     await db.query(
-      hasSeat
-        ? `INSERT INTO ${table} (${fk}, user_id, joined_at, seat) VALUES ($1, $2, now() + make_interval(secs => $3::int), $3::int)`
-        : `INSERT INTO ${table} (${fk}, user_id, joined_at) VALUES ($1, $2, now() + make_interval(secs => $3::int))`,
+      `INSERT INTO ${table} (${fk}, user_id, joined_at, seat) VALUES ($1, $2, now() + make_interval(secs => $3::int), $3::int)`,
       [gameId, userId, seat],
     );
   }
@@ -339,7 +335,7 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     expect(row.rows[0]!.evidence.game.players.map((p) => p.username)).toEqual([reporter.username, author.username]);
   });
 
-  it('reports a Rhyme Match player by seat, and reads real seats where a game keeps them', async () => {
+  it('reports a Rhyme Match player by seat, and seats are the game’s own, not the join order', async () => {
     const match = await pool.query<{ id: string }>(
       `INSERT INTO rhyme_matches (created_by, prompt, window_ms, status) VALUES ($1, 'dil', 60000, 'finished') RETURNING id`,
       [other.id],
@@ -355,11 +351,10 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     );
     expect(row.rows[0]).toEqual({ subject_user_id: other.id, target_id: `rhyme-match:${id}:1` });
 
-    // a seat column, when there is one, wins over join order: seat 2 left, and seat 3 is still seat 3
+    // a seat is never handed on: seat 2 left the lobby, and seat 3 is still seat 3
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query(`ALTER TABLE rhyme_match_players ADD COLUMN IF NOT EXISTS seat smallint`);
       const m2 = (await client.query<{ id: string }>(
         `INSERT INTO rhyme_matches (created_by, prompt, window_ms, status) VALUES ($1, 'av', 60000, 'active') RETURNING id`,
         [reporter.id],
@@ -376,30 +371,60 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     }
   });
 
-  it('reports a Stories player once the Stories tables exist, and nothing before', async () => {
-    const client = await pool.connect();
+  it('reports a Stories player by seat, and never tells the reporter who they are', async () => {
+    // people of its own: the suite's reporter has reported the author elsewhere
+    // (and the report route allows twenty a minute)
+    const [seated, player] = [await kit.person('seated'), await kit.person('player')];
+    userIds.push(seated.id, player.id);
+    const story = await insertStory(pool, { slug: `rp-story-${kit.suffix}` });
     try {
-      await client.query('BEGIN');
-      // shadow (or stand in for) the Stories tables for this transaction only
-      await client.query(`CREATE TEMP TABLE story_games (id uuid PRIMARY KEY, status text NOT NULL) ON COMMIT DROP`);
-      await client.query(`CREATE TEMP TABLE story_game_players (game_id uuid, user_id uuid, seat smallint) ON COMMIT DROP`);
-      const gameId = '00000000-0000-4000-8000-0000000000b1';
-      await client.query(`INSERT INTO story_games (id, status) VALUES ($1, 'reveal')`, [gameId]);
-      await client.query(`INSERT INTO story_game_players (game_id, user_id, seat) VALUES ($1, $2, 1), ($1, $3, 2)`, [gameId, reporter.id, author.id]);
-      const res = await resolveTarget(client, 'game_player', gameId, { reporterId: reporter.id, game: 'stories', seat: 2, now: new Date() });
-      expect(res).toMatchObject({
-        subjectUserId: author.id,
-        evidence: { game: { game: 'stories', status: 'reveal', seat: 2, players: [{ seat: 1, username: reporter.username }, { seat: 2, username: author.username }] } },
+      const game = await pool.query<{ id: string }>(
+        `INSERT INTO story_games (mode, host_id, story_id, dialect, level, length, question_count, timer_seconds, status)
+         VALUES ('group', $1, $2, 'kurmanci', 1, 'short', 3, 60, 'question') RETURNING id`,
+        [seated.id, story.id],
+      );
+      const gameId = game.rows[0]!.id;
+      // seat 2 left the game part-way; what they did before is still reportable
+      await pool.query(
+        `INSERT INTO story_game_players (game_id, user_id, seat, left_at) VALUES ($1, $2, 1, NULL), ($1, $3, 2, now()), ($1, $4, 3, NULL)`,
+        [gameId, seated.id, player.id, other.id],
+      );
+      const seat = (n: number, who: Person = seated) =>
+        report(who, { targetType: 'game_player', targetId: gameId, game: 'stories', seat: n, category: 'harassment' });
+      expect((await seat(1)).json().code).toBe('SELF_REPORT');
+      expect((await seat(4)).statusCode).toBe(404);
+      expect((await seat(2, stranger)).statusCode).toBe(404); // not in that game
+
+      const filed = await seat(2);
+      expect(filed.statusCode).toBe(201);
+      const id = (filed.json() as ReportReceipt).report.id;
+      const row = await pool.query<{ target_id: string; subject_user_id: string; evidence: EvidenceSnapshot }>(
+        `SELECT target_id, subject_user_id, evidence FROM reports WHERE id = $1`,
+        [id],
+      );
+      expect(row.rows[0]).toMatchObject({ target_id: `stories:${gameId}:2`, subject_user_id: player.id });
+      // the moderator gets the game as it was, with every player's name
+      expect(row.rows[0]!.evidence.game).toMatchObject({
+        game: 'stories',
+        status: 'question',
+        seat: 2,
+        players: [
+          { seat: 1, username: seated.username },
+          { seat: 2, username: player.username },
+          { seat: 3, username: other.username },
+        ],
       });
+
+      // "Player 2" stays Player 2 for the reporter: neither the receipt nor
+      // "My reports" says who was in that seat
+      expect((filed.json() as ReportReceipt).report.targetLabel).toBeNull();
+      const mine = await call('GET', '/me/reports', seated.token);
+      const listed = (mine.json() as { reports: MyReport[] }).reports.find((r) => r.id === id)!;
+      expect(listed).toMatchObject({ targetType: 'game_player', targetLabel: null });
+      expect(mine.body).not.toContain(player.username);
+      expect(mine.body).not.toContain(player.id);
     } finally {
-      await client.query('ROLLBACK');
-      client.release();
-    }
-    // without them (this branch, before the Stories engine lands) there is no such game
-    const exists = (await pool.query<{ ok: boolean }>(`SELECT to_regclass('story_games') IS NOT NULL AS ok`)).rows[0]!.ok;
-    if (!exists) {
-      const res = await report(reporter, { targetType: 'game_player', targetId: '00000000-0000-4000-8000-0000000000b2', game: 'stories', seat: 1, category: 'spam' });
-      expect(res.statusCode).toBe(404);
+      await deleteStories(pool, [story.id]);
     }
   });
 
@@ -415,7 +440,7 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     });
     expect(posted.statusCode).toBe(201);
     const postId = (posted.json() as { id: string }).id;
-    const filed = await report(reporter, { targetType: 'library_post', targetId: postId, category: 'sexual' });
+    const filed = await report(stranger, { targetType: 'library_post', targetId: postId, category: 'sexual' });
     expect(filed.statusCode).toBe(201);
     const caseId = await caseOf((filed.json() as ReportReceipt).report.id);
     const expected = {

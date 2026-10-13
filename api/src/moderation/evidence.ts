@@ -439,24 +439,19 @@ export function hasGameSeats(game: string): boolean {
 }
 
 /**
- * Wordle Battle and Rhyme Match seats. The shared lobby rules (built on another
- * branch, migration 1751000149000) give their players a real `seat` column,
- * filled in join order and never reused, and that is what their views show;
- * until it exists here, a seat is the place in join order — the same numbers
- * the column starts from.
+ * Wordle Battle and Rhyme Match seats: the `seat` column the shared lobby
+ * rules give their players (migration 1751000149000), handed out in join
+ * order and never given to a second person, which is what their views show
+ * ("Player 2"). A player who left a started game keeps theirs (`left_at`);
+ * leaving a lobby before it started deletes the row, so there is nobody to
+ * report there.
  */
 function battleSeats(gameTable: string, playerTable: string, fk: string): GameSeatsReader {
   return async (db, gameId) => {
     const g = await db.query<{ status: string }>(`SELECT status FROM ${gameTable} WHERE id = $1`, [gameId]);
     if (!g.rows[0]) return null;
-    const col = await db.query<{ ok: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM pg_attribute
-                       WHERE attrelid = to_regclass($1) AND attname = 'seat' AND NOT attisdropped) AS ok`,
-      [playerTable],
-    );
-    const seat = col.rows[0]?.ok ? 'seat' : 'row_number() OVER (ORDER BY joined_at, user_id)';
     const p = await db.query<{ seat: number; user_id: string }>(
-      `SELECT ${seat} AS seat, user_id FROM ${playerTable} WHERE ${fk} = $1 ORDER BY 1`,
+      `SELECT seat, user_id FROM ${playerTable} WHERE ${fk} = $1 ORDER BY seat`,
       [gameId],
     );
     return { status: g.rows[0].status, players: p.rows.map((r) => ({ seat: Number(r.seat), userId: r.user_id })) };
@@ -467,16 +462,12 @@ registerGameSeats('wordle-battle', battleSeats('wordle_battles', 'wordle_battle_
 registerGameSeats('rhyme-match', battleSeats('rhyme_matches', 'rhyme_match_players', 'match_id'));
 
 /**
- * Stories keeps real seats (`story_game_players.seat`, never reused within a
- * game), so they are read as they are. Its tables arrive with the Stories
- * engine (migration 1751000147000), which is built on another branch: until
- * they exist here, a Stories game is "not found", and once they do this reader
- * works with no further change. A player who left or was removed keeps their
- * seat: what they did before leaving is still reportable.
+ * Stories keeps real seats (`story_game_players.seat`, migration
+ * 1751000147000, never reused within a game), so they are read as they are. A
+ * player who left or was removed keeps their seat: what they did before
+ * leaving is still reportable.
  */
 registerGameSeats('stories', async (db, gameId) => {
-  const exists = await db.query<{ ok: boolean }>(`SELECT to_regclass('story_game_players') IS NOT NULL AS ok`);
-  if (!exists.rows[0]?.ok) return null;
   const g = await db.query<{ status: string }>(`SELECT status FROM story_games WHERE id = $1`, [gameId]);
   if (!g.rows[0]) return null;
   const p = await db.query<{ seat: number; user_id: string }>(
