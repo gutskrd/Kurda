@@ -240,3 +240,4 @@
 .rhyme-list select { width: auto; min-width: 170px; }
 @media (max-width: 420px) { .rhyme-list select { flex: 1 1 100%; } }
 .nowrap { white-space: nowrap; }
+.crash-message { width: 100%; max-width: 60ch; text-align: start; }

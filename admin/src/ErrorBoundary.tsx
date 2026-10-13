@@ -42,18 +42,18 @@ export class ErrorBoundary extends Component<Props, State> {
     const { error } = this.state;
     if (!error) return this.props.children;
     return (
-      <div className="card">
-        <div className="section-title" style={{ marginTop: 0 }}>
-          This page hit an error
+      <div className="state state-error card" role="alert">
+        <div className="state-title">This page hit an error</div>
+        <div className="state-text">
+          The rest of the admin still works — pick another page from the menu. If it keeps happening, the message below is the
+          useful part of a bug report.
         </div>
-        <p className="subtle" style={{ marginTop: 0 }}>
-          The rest of the admin still works — pick another section from the menu. If it keeps
-          happening, the message below is the useful part of a bug report.
-        </p>
-        <pre className="signals-json" style={{ maxWidth: '100%' }}>
-          {error.message || String(error)}
-        </pre>
-        <button onClick={() => this.setState({ error: null })}>Try again</button>
+        <pre className="code-block crash-message">{error.message || String(error)}</pre>
+        <div className="state-action">
+          <button type="button" onClick={() => this.setState({ error: null })}>
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
