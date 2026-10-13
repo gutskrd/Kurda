@@ -8,8 +8,8 @@ export type PictureClaimFailure =
   /**
    * Not a picture its author uploaded for a post, or not one that cleared the
    * scan — an unknown key, somebody else's upload or profile photo, a voice
-   * note, an upload from before uploads had owners. One answer for all of them:
-   * the reason a key is not yours is not the caller's business.
+   * note, an upload from before uploads had owners. One answer for all of
+   * them, so the answer never tells anyone whose a key is.
    */
   | 'INVALID_MEDIA'
   /** already on a post, this one's or another's */
@@ -83,7 +83,10 @@ async function inspect(
     scan_status: string; confirmed: boolean; width: number | null; height: number | null;
   }>(
     `SELECT key, uploader_id, kind, content_type, scan_status, confirmed_at IS NOT NULL AS confirmed, width, height
-       FROM media_uploads WHERE key = ANY($1::text[])${lock ? ' FOR UPDATE' : ''}`,
+       FROM media_uploads WHERE key = ANY($1::text[])
+      -- always the same order, so two claims on overlapping pictures queue
+      -- behind each other instead of deadlocking
+      ORDER BY key${lock ? ' FOR UPDATE' : ''}`,
     [keys],
   );
   const byKey = new Map(rows.rows.map((r) => [r.key, r]));
@@ -110,9 +113,11 @@ async function inspect(
  */
 export async function releasePostPictures(executor: Pick<pg.PoolClient, 'query'>, keys: readonly string[]): Promise<void> {
   if (keys.length === 0) return;
-  // TODO(moderation): a picture held as report evidence must survive this; the
-  // moderation branch's media_uploads.preserve_evidence makes the sweep skip
-  // it, and its evidence snapshot of a library post should carry these keys.
+  // TODO(moderation): a picture held as report evidence must survive this. The
+  // moderation work's media_uploads.preserve_evidence makes the sweep skip it,
+  // and its evidence snapshot of a library post (moderation/evidence.ts) should
+  // carry the post's library_post_media keys and alt texts, as it carries the
+  // narration's key, so a reported picture is preserved.
   await executor.query(
     `UPDATE media_uploads SET confirmed_at = NULL, created_at = now() WHERE key = ANY($1::text[])`,
     [keys],

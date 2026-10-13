@@ -219,9 +219,16 @@ export interface FeedImage {
 
 /**
  * The codes `POST`/`PATCH /library/posts` (and `POST /images`) answer with when
- * a post is refused, beyond the shape problems above: a picture that is not the
- * author's own unused upload, or not a cleared picture; posting too fast; an
- * account restricted for spam.
+ * a post is refused, beyond the shape problems above:
+ *
+ * - INVALID_MEDIA: a picture that is not the author's own upload for a post,
+ *   or one the scan did not clear (with `mediaKey`);
+ * - MEDIA_IN_USE: a picture already on a post, or twice in this one (with
+ *   `mediaKey`). Uploading the same file again gives back the same upload, so
+ *   it is the same answer: one picture, one post;
+ * - INVALID_POST: the old picture route's answer for an unusable picture;
+ * - TRUST_VELOCITY (429): posting faster than the account may yet;
+ * - AUTO_MODERATED (403): the account was just restricted for spam.
  */
 export const POST_ERROR_CODES = [
   'EMPTY_POST',

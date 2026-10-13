@@ -120,7 +120,8 @@ export async function storeImageMedia(
    * Sign before the key is derived. The key is a hash of the stored bytes, and
    * two people posting the same photo must not collide onto one object now that
    * each carries a different name — the signature is part of what is stored, so
-   * it has to be part of what is hashed.
+   * it has to be part of what is hashed. (An owned upload hashes its owner in
+   * too, for the picture that goes up without a name on it.)
    */
   let stored = proc.webp;
   let signed = false;
