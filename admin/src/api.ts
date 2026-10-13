@@ -40,6 +40,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    /** the envelope's `details`, when the API sent any (a refused story's problems, say) */
+    readonly details?: unknown,
   ) {
     super(message);
   }
@@ -72,7 +74,7 @@ export async function api<T>(
     location.reload();
   }
   if (!res.ok) {
-    throw new ApiError(res.status, String(data.code ?? 'ERROR'), String(data.message ?? res.statusText));
+    throw new ApiError(res.status, String(data.code ?? 'ERROR'), String(data.message ?? res.statusText), data.details);
   }
   return data as T;
 }

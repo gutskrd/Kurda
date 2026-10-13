@@ -21,3 +21,30 @@ export function useHashRoute(fallback: string): [string, (page: string) => void]
   };
   return [page, navigate];
 }
+
+/**
+ * Asked before the address changes, by a page with unsaved work; true lets it
+ * change. The back button, a link in the nav and a typed #/… address change
+ * only the hash, which `beforeunload` never hears of, so without this they
+ * would throw the work away without a word. One at a time: the page on screen
+ * sets it while it has something to lose, and clears it before it moves on
+ * by itself (after asking in its own words).
+ */
+let leaveGuard: (() => boolean) | null = null;
+
+export function setLeaveGuard(guard: (() => boolean) | null): void {
+  leaveGuard = guard;
+}
+
+// Added when this module loads, so ahead of every useHashRoute listener (they
+// are added by effects, later): a refused change never reaches them. The old
+// address comes back as a new history entry, with the refused one kept behind
+// it — so Back after a "no" to Back still goes back (and asks again), where
+// putting the old address in the refused entry's place would lose that entry.
+if (typeof window !== 'undefined') {
+  window.addEventListener('hashchange', (e) => {
+    if (!leaveGuard || leaveGuard()) return;
+    e.stopImmediatePropagation();
+    history.pushState(null, '', e.oldURL);
+  });
+}

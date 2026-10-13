@@ -5,6 +5,7 @@ import {
   describeUsage,
   displayOrder,
   group,
+  isStoryUsage,
   matches,
   neededForListening,
   neighbour,
@@ -196,6 +197,41 @@ describe('after saving and removing', () => {
     const items = [item('Silav', recorded), item('Loose', { ...recorded, usedIn: [], unused: true })];
     expect(withoutRecording(items, 'silav')[0]).toMatchObject({ text: 'Silav', recorded: false, url: null, durationMs: null });
     expect(withoutRecording(items, 'loose').map((i) => i.text)).toEqual(['Silav']);
+  });
+});
+
+describe('stories in the studio', () => {
+  // the API lists a story's sentences in the lesson shape: the story is its own unit and its one lesson
+  const story = (over: Partial<Usage> = {}): Usage =>
+    usage({
+      courseId: 'stories:kurmanci',
+      courseTitle: 'Stories — Kurmancî',
+      unitId: 'st1',
+      unitTitle: 'Şorbeya Nîskê',
+      skillId: 'st1',
+      skillTitle: 'Şorbeya Nîskê',
+      lessonPosition: 0,
+      lessonId: 'st1',
+      lessonTitle: 'Şorbeya Nîskê',
+      lessonStatus: 'draft',
+      live: false,
+      exerciseTypes: [],
+      ...over,
+    });
+
+  it('files a story as a lesson of its own, marked as a story, after the lessons', () => {
+    const { courses } = group([item('Silav'), item('Êvareke zivistanê ye.', { usedIn: [story()] })]);
+    expect(courses.map((c) => c.title)).toEqual(['Kurmanji for Beginners', 'Stories — Kurmancî']);
+    expect(courses[1]!.units[0]!.lessons).toEqual([
+      expect.objectContaining({ story: true, title: 'Şorbeya Nîskê', live: false, items: [expect.objectContaining({ text: 'Êvareke zivistanê ye.' })] }),
+    ]);
+    expect(courses[0]!.units[0]!.lessons[0]!.story).toBe(false);
+  });
+
+  it('says a story uses a text, not an empty list of exercise types', () => {
+    expect(describeUsage(story())).toBe('Şorbeya Nîskê (story)');
+    expect(isStoryUsage(story())).toBe(true);
+    expect(isStoryUsage(usage())).toBe(false);
   });
 });
 

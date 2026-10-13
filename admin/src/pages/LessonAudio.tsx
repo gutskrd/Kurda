@@ -9,6 +9,7 @@ import {
   displayOrder,
   group,
   isLoose,
+  isStoryUsage,
   matches,
   neededForListening,
   neighbour,
@@ -25,7 +26,7 @@ import {
 const FILTERS: ReadonlyArray<[Filter, string]> = [
   ['missing', 'Still to record'],
   ['recorded', 'Recorded'],
-  ['unused', 'Not in any lesson'],
+  ['unused', 'Not in a lesson or story'],
   ['all', 'All'],
 ];
 
@@ -177,6 +178,10 @@ export function LessonAudio(): React.JSX.Element {
           exercise, or once it is answered where hearing it first would give the answer away. A listening item without a clip of
           its own uses the recording as its clip, so its lesson cannot be published until the recording is made.
         </p>
+        <p className="subtle la-what">
+          Every sentence of every story that is not archived is here too, drafts included, as the story reader cuts it: a story
+          is sent with the recordings of its sentences.
+        </p>
       </div>
 
       {walking && (
@@ -211,11 +216,11 @@ export function LessonAudio(): React.JSX.Element {
       {loaded && shown.length === 0 && (
         <div className="empty">
           {items.length === 0
-            ? 'No lesson has any Kurdish to record yet.'
+            ? 'No lesson or story has any Kurdish to record yet.'
             : filter === 'missing'
               ? 'Everything is recorded.'
               : filter === 'unused'
-                ? 'Every recording is used by a lesson.'
+                ? 'Every recording is used by a lesson or a story.'
                 : 'Nothing recorded yet.'}
         </div>
       )}
@@ -225,12 +230,15 @@ export function LessonAudio(): React.JSX.Element {
           <h2 className="la-course-title">{course.title}</h2>
           {course.units.map((unit) => (
             <div key={unit.id}>
-              <div className="section-title">{unit.title}</div>
+              {/* a story is its own unit and lesson: its card says its title once */}
+              {!unit.lessons.every((l) => l.story) && <div className="section-title">{unit.title}</div>}
               {unit.lessons.map((lesson) => (
                 <div key={lesson.id} className="card la-lesson">
                   <div className="la-lesson-head">
-                    <strong>{lesson.title}</strong>
-                    <span className="subtle">{lesson.skillTitle}</span>
+                    <strong lang={lesson.story ? scriptOf(lesson.title).lang : undefined} dir={lesson.story ? scriptOf(lesson.title).dir : undefined}>
+                      {lesson.title}
+                    </strong>
+                    <span className="subtle">{lesson.story ? 'Story' : lesson.skillTitle}</span>
                     <span className={`badge${lesson.live ? ' ok' : ''}`}>{lesson.live ? 'Published' : 'Not published yet'}</span>
                   </div>
                   {lesson.items.map((item) => (
@@ -256,11 +264,11 @@ export function LessonAudio(): React.JSX.Element {
 
       {grouped.loose.length > 0 && (
         <section className="la-course">
-          <h2 className="la-course-title">Not in any lesson</h2>
+          <h2 className="la-course-title">Not in a lesson or story</h2>
           <div className="card la-lesson">
             <div className="subtle">
-              Phrases added here, and recordings whose text no lesson uses any more. They are sent with no exercise until a lesson
-              uses the same text.
+              Phrases added here, and recordings whose text no lesson or story uses any more. They are sent with nothing until a
+              lesson or a story uses the same text.
             </div>
             {grouped.loose.map((item) => (
               <Row
@@ -284,7 +292,7 @@ export function LessonAudio(): React.JSX.Element {
         <label htmlFor="la-phrase" className="aa-say-label">
           Add a phrase
         </label>
-        <div className="subtle">Record something before a lesson uses it. Kurmancî or Soranî, as learners will read it.</div>
+        <div className="subtle">Record something before a lesson or a story uses it. Kurmancî or Soranî, as learners will read it.</div>
         <form
           className="row la-add-form"
           onSubmit={(e) => {
@@ -349,10 +357,12 @@ function Row({
         : { label: 'Missing', tone: ' mid' };
   const removePrompt = `Remove the recording of “${item.text}”?\n\n${
     isLoose(item)
-      ? 'No lesson uses it, so it leaves this list.'
+      ? 'No lesson or story uses it, so it leaves this list.'
       : listening
         ? 'A listening item uses it as its clip: until a new one is saved, that item has nothing to play.'
-        : 'The exercises that use it go without a recording until a new one is saved.'
+        : item.usedIn.every(isStoryUsage)
+          ? 'The stories that use it go without a recording of it until a new one is saved.'
+          : 'The exercises that use it go without a recording until a new one is saved.'
   }`;
 
   return (
@@ -373,8 +383,15 @@ function Row({
             {item.text}
           </span>
           <span className="subtle la-used">
-            {first ? describeUsage(first) : 'Not in any lesson'}
-            {more.length > 0 && ` · also ${more.length === 1 ? describeUsage(more[0]!) : `in ${more.length} more lessons`}`}
+            {first ? describeUsage(first) : 'Not in a lesson or story'}
+            {more.length > 0 &&
+              ` · also ${
+                more.length === 1
+                  ? describeUsage(more[0]!)
+                  : `in ${more.length} more ${
+                      more.every(isStoryUsage) ? 'stories' : more.some(isStoryUsage) ? 'lessons and stories' : 'lessons'
+                    }`
+              }`}
           </span>
         </button>
         <span className={`badge${status.tone}`}>{status.label}</span>
