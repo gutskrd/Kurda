@@ -241,3 +241,5 @@
 @media (max-width: 420px) { .rhyme-list select { flex: 1 1 100%; } }
 .nowrap { white-space: nowrap; }
 .crash-message { width: 100%; max-width: 60ch; text-align: start; }
+/* a name and the badge beside it, apart, wrapping under it when there is no room */
+.with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }

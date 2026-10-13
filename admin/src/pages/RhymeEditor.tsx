@@ -203,7 +203,7 @@ export function RhymeEditor(): React.JSX.Element {
       header: 'Word',
       card: 'title',
       cell: (w) => (
-        <>
+        <span className="with-badge">
           <button type="button" className="link" onClick={() => setOpen(w.headword)} dir="auto">
             <strong>{w.headword}</strong>
           </button>
@@ -212,7 +212,7 @@ export function RhymeEditor(): React.JSX.Element {
               Not marked
             </Badge>
           )}
-        </>
+        </span>
       ),
     },
     {

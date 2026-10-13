@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ratioLabel } from '../format';
 import { api } from '../api';
+import { Bars } from './Analytics';
 import { Badge, Button, EmptyState, ErrorState, Loading, PageHeader, Section, Stat, Table, Tabs, errorLine, useLoad, useToast, type Column } from '../ui';
 
 type Currency = 'zer' | 'gems';
@@ -120,12 +121,7 @@ export function Economy(): React.JSX.Element {
                 The server counts the daily totals from the wallet ledger every six hours.
               </EmptyState>
             ) : (
-              <div className="bars" role="img" aria-label={`${name} in circulation over ${points.length} days, now ${latest!.supply.toLocaleString()}.`}>
-                {points.map((p) => {
-                  const max = Math.max(1, ...points.map((x) => Math.abs(x.supply)));
-                  return <div key={p.day} className="b" style={{ height: `${(Math.abs(p.supply) / max) * 100}%` }} title={`${p.day}: ${p.supply.toLocaleString()}`} />;
-                })}
-              </div>
+              <Bars points={points.map((p) => ({ day: p.day, value: p.supply }))} unit={name} total={false} />
             )}
           </Section>
 

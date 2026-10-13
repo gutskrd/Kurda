@@ -150,8 +150,12 @@ export function Analytics(): React.JSX.Element {
   );
 }
 
-/** A bar per day, with the highest value and the first and last day written beside it. */
-function Bars({ points, unit }: { points: Array<{ day: string; value: number }>; unit: string }): React.JSX.Element {
+/**
+ * A bar per day, with the highest value and the first and last day written
+ * beside it, and the total under it unless it is a level rather than a count
+ * (`total={false}`: what is in circulation is not summed over days).
+ */
+export function Bars({ points, unit, total: showTotal = true }: { points: Array<{ day: string; value: number }>; unit: string; total?: boolean }): React.JSX.Element {
   if (points.length === 0) return <EmptyState title="Nothing in this range." compact icon="chart" />;
   const max = Math.max(1, ...points.map((p) => p.value));
   const total = points.reduce((n, p) => n + p.value, 0);
@@ -169,14 +173,15 @@ function Bars({ points, unit }: { points: Array<{ day: string; value: number }>;
           aria-label={`${points.length} days, from ${dayLabel(points[0]!.day)} to ${dayLabel(points[points.length - 1]!.day)}. Highest: ${peak.value.toLocaleString()} ${unit} on ${dayLabel(peak.day)}.`}
         >
           {points.map((p) => (
-            <div key={p.day} className="b" style={{ height: `${(p.value / max) * 100}%` }} title={`${dayLabel(p.day)}: ${p.value.toLocaleString()} ${unit}`} />
+            <div key={p.day} className="b" style={{ height: `${(Math.max(0, p.value) / max) * 100}%` }} title={`${dayLabel(p.day)}: ${p.value.toLocaleString()} ${unit}`} />
           ))}
         </div>
       </div>
       <figcaption className="chart-x">
         <span>{dayLabel(points[0]!.day)}</span>
-        <span className="subtle">{total.toLocaleString()} in all</span>
-        <span>{dayLabel(points[points.length - 1]!.day)}</span>
+        {showTotal ? <span className="subtle">{total.toLocaleString()} in all</span> : <span />}
+        {/* one day is named once */}
+        <span>{points.length > 1 ? dayLabel(points[points.length - 1]!.day) : ''}</span>
       </figcaption>
     </figure>
   );
