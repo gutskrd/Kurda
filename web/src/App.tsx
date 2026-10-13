@@ -70,6 +70,7 @@ const MyReports = lazy(() => import('./reports/MyReports').then((m) => ({ defaul
 const AccountStanding = lazy(() => import('./reports/AccountStanding').then((m) => ({ default: m.AccountStanding })));
 import { SuspensionGate } from './reports/SuspensionGate';
 import { StandingWarnings } from './reports/StandingWarnings';
+import { GiftArrivals } from './gifts/GiftArrivals';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -122,6 +123,8 @@ export function App(): React.JSX.Element {
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
         <StandingWarnings />
+        {/* "Rojda sent you a gift — Open", anywhere in the app */}
+        <GiftArrivals />
         <SuspensionGate>
         <Routes>
           {/* the landing page, the pages about Hevalo itself, and old public

@@ -9,6 +9,7 @@ import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { SafetyCard } from '../reports/SafetyCard';
+import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -81,6 +82,9 @@ export function Settings(): React.JSX.Element {
       {/* the other half of "who reaches me": privacy above says who may see
           you, this says what the app is allowed to interrupt you about */}
       <NotificationPrefsCard />
+
+      {/* what the app may make a sound for: opening a gift */}
+      <GiftSoundSetting />
 
       <Leagues enabled={data.user.leaguesEnabled !== false} minor={data.user.minor === true} />
 

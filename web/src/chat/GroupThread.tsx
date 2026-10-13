@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { canManage as canManageRole, canSetRole as canSetRoleShared, roleRank } from '@kurda/shared';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -21,6 +21,7 @@ import { Modal } from '../components/Modal';
 import { ArrowIcon, CloseIcon, FlagIcon } from '../components/icons';
 import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
+import { useChatGifts } from '../gifts/useChatGifts';
 import { useT } from '../i18n/I18nProvider';
 import { Avatar } from '../components/Avatar';
 
@@ -67,6 +68,39 @@ export function GroupThread({
 
   // join the live room for as long as this channel is open (ref-counted, cross-tab)
   useRealtimeRoom(`group:${groupId}`);
+
+  // gifts: only ever between friends, so the picker offers your friends among
+  // the members (the roster you can see, met with your friends list)
+  const gifts = useChatGifts<GroupMessage>({
+    chat: useMemo(() => ({ kind: 'group' as const, groupId }), [groupId]),
+    loadPeople: useCallback(async () => {
+      const res = await client.get<{ friends: Array<{ userId: string; username: string; avatarUrl: string | null }> }>(
+        '/friends?limit=500',
+      );
+      const friends = new Set((res.ok ? (res.data.friends ?? []) : []).map((f) => f.userId));
+      return (detail?.members ?? [])
+        .filter((m) => m.userId !== user?.id && friends.has(m.userId))
+        .map((m) => ({ userId: m.userId, name: m.username, avatarUrl: m.avatarUrl }));
+    }, [client, detail?.members, user?.id]),
+    setMessages,
+    sendText: useCallback(
+      async (body: string) => {
+        const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
+        if (!res.ok) {
+          setSendErr(res.error);
+          return false;
+        }
+        setMessages((m) => {
+          const list = m ?? [];
+          return list.some((x) => x.id === res.data.id) ? list : [...list, res.data];
+        });
+        return true;
+      },
+      [client, groupId],
+    ),
+    threadRef: scrollRef,
+    onSentScroll: () => scrollToBottom('smooth'),
+  });
 
   /** Clear this group's unread badge; on open and on each arrival while open. */
   const markRead = useCallback(async () => {
@@ -203,6 +237,7 @@ export function GroupThread({
             myId={user?.id}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
             onReport={setReporting}
+            renderBody={gifts.renderBody}
           />
         )}
       </div>
@@ -243,7 +278,9 @@ export function GroupThread({
         onSubmit={() => void send()}
         sending={sending}
         placeholder={t('chat.messageTheGroup')}
+        tools={gifts.button}
       />
+      {gifts.overlays}
     </div>
   );
 }

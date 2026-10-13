@@ -199,4 +199,27 @@ describe('TopNav', () => {
       document.documentElement.dir = '';
     }
   });
+
+  /**
+   * The unopened-gift count rides on /me/social now; the minute-by-minute poll
+   * of /me/gifts/unseen from every tab is gone.
+   */
+  it('badges the Shop with unopened gifts from the rail, without polling for them', async () => {
+    signIn();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/me/social')) {
+        return jsonResponse(200, {
+          you: you(),
+          friends: [], requests: [], challenges: [], groups: [], notifications: [],
+          unread: { notifications: 0, groups: 0, requests: 0, challenges: 0, gifts: 2 },
+        });
+      }
+      if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada' } });
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    show();
+    expect(await screen.findByLabelText('Shop — 2 gifts waiting')).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes('/me/gifts/unseen'))).toBe(false);
+  });
 });

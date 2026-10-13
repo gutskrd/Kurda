@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -20,6 +20,7 @@ import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, CloseIcon } from '../components/icons';
 import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
+import { useChatGifts } from '../gifts/useChatGifts';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -101,6 +102,31 @@ export function DmThread({
   const signalTyping = useTypingSignal(
     useCallback(() => void client.post(`/chat/${otherId}/typing`).catch(() => undefined), [client, otherId]),
   );
+
+  // gifts: the composer's button, the bubbles, and the moments around them
+  const gifts = useChatGifts<DmMessage>({
+    chat: useMemo(() => ({ kind: 'dm' as const, userId: otherId }), [otherId]),
+    loadPeople: useCallback(
+      async () => [{ userId: otherId, name: otherName ?? t('chat.thisPerson'), avatarUrl: null }],
+      [otherId, otherName, t],
+    ),
+    setMessages,
+    sendText: useCallback(
+      async (body: string) => {
+        const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
+        if (!res.ok) {
+          setSendErr(res.error);
+          return false;
+        }
+        setMessages((m) => [...(m ?? []), res.data]);
+        onSent();
+        return true;
+      },
+      [client, otherId, onSent],
+    ),
+    threadRef: scrollRef,
+    onSentScroll: () => scrollToBottom('smooth'),
+  });
 
   const load = useCallback(async () => {
     const res = await client.get<{ messages?: DmMessage[] }>(`/chat/${otherId}/messages`);
@@ -236,6 +262,7 @@ export function DmThread({
             renderStatus={(m) => <ReadReceipt message={m} />}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
             onReport={setReporting}
+            renderBody={gifts.renderBody}
           />
         )}
       </div>
@@ -273,7 +300,9 @@ export function DmThread({
         onSubmit={() => void send()}
         sending={sending}
         placeholder={t('chat.writeAMessage')}
+        tools={gifts.button}
       />
+      {gifts.overlays}
     </div>
   );
 }

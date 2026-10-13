@@ -30,12 +30,14 @@ const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 
  * `group:<groupId>` (the API's `data.chat`), with `gift=<giftId>` so the
  * thread unwraps it on arrival.
  */
-export function giftChatPath(chat: string | null, giftId: string | null): string | null {
+export function giftChatPath(chat: string | null, giftId: string | null, name?: string): string | null {
   if (!chat) return null;
   const [kind, id] = chat.split(':');
   if (!id) return null;
   const gift = giftId ? `&gift=${encodeURIComponent(giftId)}` : '';
-  if (kind === 'dm') return `/app/messages?to=${encodeURIComponent(id)}${gift}`;
+  // a direct thread titles itself with the name it was opened with
+  const named = name ? `&name=${encodeURIComponent(name)}` : '';
+  if (kind === 'dm') return `/app/messages?to=${encodeURIComponent(id)}${named}${gift}`;
   if (kind === 'group') return `/app/messages?group=${encodeURIComponent(id)}${gift}`;
   return null;
 }
