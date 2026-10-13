@@ -7,7 +7,8 @@ import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { isMinorRow } from '../users/age.js';
 import { handOnGroup } from '../groups/service.js';
-import { StoryGamesService } from '../story-games/service.js';
+import type { StoryGamesService } from '../story-games/service.js';
+import { standaloneStoryGames } from '../story-games/standalone.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -15,7 +16,11 @@ export interface GdprDeps {
   storage?: MediaStorage | null;
   jobs?: JobQueue;
   log?: { info: (obj: unknown, msg: string) => void; warn: (obj: unknown, msg: string) => void };
-  /** takes a closing account out of the story games it is still in (one without timers by default) */
+  /**
+   * Takes a closing account out of the story games it is still in. The API
+   * passes its own; by default one that pays rewards as the API does but wakes
+   * nobody (the worker passes one that tells the API instances, over Redis).
+   */
   storyGames?: Pick<StoryGamesService, 'leaveAll'>;
 }
 
@@ -26,7 +31,7 @@ export class GdprService {
     private readonly pool: pg.Pool,
     private readonly deps: GdprDeps = {},
   ) {
-    this.storyGames = deps.storyGames ?? new StoryGamesService(pool, { timers: false, log: deps.log });
+    this.storyGames = deps.storyGames ?? standaloneStoryGames(pool, { log: deps.log });
   }
 
   /** Starts the 14-day grace period; logging in again cancels it. */

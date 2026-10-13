@@ -19,6 +19,13 @@ import type { FriendService } from '../friends/service.js';
 import { StoryGameNotifier } from './notifier.js';
 import { StoryGamesService } from './service.js';
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** Present when DATABASE_URL is configured. */
+    storyGames: StoryGamesService;
+  }
+}
+
 const idParam = z.object({ id: z.uuid() });
 const STATUSES = ['lobby', 'reading', 'question', 'reveal', 'finished', 'cancelled'] as const;
 
@@ -96,6 +103,10 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   // a block parts the pair in the lobbies they share — after it commits
   deps.friends?.onBlocked((blocker, blocked) => games.onBlock(blocker, blocked));
+
+  // for what this process does to games outside these routes (an account
+  // closed now takes its player out through here, waking everyone's polls)
+  app.decorate('storyGames', games);
 
   // On shutdown Fastify waits for requests in flight before it closes; a
   // waiting poll would hold that up for 20 s. They are answered first.

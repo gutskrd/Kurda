@@ -10,7 +10,7 @@
  * does, and checks that each of them is gone, while other people's posts,
  * replies and groups stay whole and files somebody else uses stay stored.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
@@ -276,6 +276,9 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
 
   it('an answer under 13 removes what the child wrote, recorded and uploaded', async () => {
     const s = await seedChild('route');
+    // the child leaves its games through the API's own story games, which wake
+    // the other players' waiting polls (a separate service would not)
+    const leaveAll = vi.spyOn(app.storyGames, 'leaveAll');
     const res = await app.inject({
       method: 'POST',
       url: '/me/birth-date',
@@ -285,6 +288,8 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     });
     expect(res.statusCode).toBe(403);
     expect(res.json().details).toEqual({ accountClosed: true });
+    expect(leaveAll).toHaveBeenCalledWith(s.child.id);
+    leaveAll.mockRestore();
 
     const id = [s.child.id];
     // the account itself: no name, address, photo, country, birth or consent

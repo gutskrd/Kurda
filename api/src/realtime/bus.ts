@@ -50,6 +50,28 @@ export class RedisRoomBus implements RoomBus {
   }
 }
 
+/**
+ * Publishing only, for a process that delivers to no room itself — the job
+ * worker telling the API instances that something changed. The same channel
+ * as RedisRoomBus, without a subscriber connection: listeners are never
+ * called. The caller owns the connection.
+ */
+export class RedisRoomPublisher implements RoomBus {
+  constructor(private readonly publisher: Redis) {}
+
+  async publish(roomId: string, event: RoomEvent): Promise<void> {
+    await this.publisher.publish(CHANNEL, JSON.stringify({ roomId, event }));
+  }
+
+  onEvent(): void {
+    // nothing is delivered here
+  }
+
+  async close(): Promise<void> {
+    // the connection is the caller's
+  }
+}
+
 export class LocalRoomBus implements RoomBus {
   private readonly emitter = new EventEmitter();
 
