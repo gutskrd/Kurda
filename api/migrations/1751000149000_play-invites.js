@@ -114,6 +114,8 @@ export const up = (pgm) => {
     // a deleted game nulls the pointers to it: without these, a scan per deleted row
     pgm.createIndex(table, 'next_lobby_id', { where: 'next_lobby_id IS NOT NULL' });
     pgm.createIndex(table, 'rematch_of', { where: 'rematch_of IS NOT NULL' });
+    // and a deleted group (they are deleted, not archived) nulls its games' pointers
+    pgm.createIndex(table, 'chat_group_id', { where: 'chat_group_id IS NOT NULL' });
 
     pgm.addColumns(players, {
       seat: { type: 'smallint' },
@@ -156,6 +158,7 @@ export const down = (pgm) => {
     pgm.dropIndex(players, 'user_id');
     pgm.dropConstraint(players, `${players}_seat_uniq`);
     pgm.dropColumns(players, ['seat', 'left_at', 'removed']);
+    pgm.dropIndex(table, 'chat_group_id', { where: 'chat_group_id IS NOT NULL' });
     pgm.dropIndex(table, 'rematch_of', { where: 'rematch_of IS NOT NULL' });
     pgm.dropIndex(table, 'next_lobby_id', { where: 'next_lobby_id IS NOT NULL' });
     pgm.dropIndex(table, ['status', 'updated_at']);
