@@ -467,6 +467,119 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     });
   });
 
+  describe('a key used before in another chat', () => {
+    // A retry is the same request in the same chat. Taken as one elsewhere, a
+    // key would add people to a gift posted somewhere else: listed on a card
+    // in a chat they are not in, and told of a gift in a chat that never got it.
+    let ole: Account;
+    let pia: Account;
+    let kit: Account; // fifteen; ole's friend, not pia's
+    let g1 = '';
+    let g2 = '';
+
+    beforeAll(async () => {
+      ole = await signUp('ole');
+      pia = await signUp('pia');
+      kit = await signUp('kit', bornYearsAgo(15));
+      await befriend(ole, pia);
+      await befriend(kit, ole, 25);
+      await fund(ole);
+      g1 = await group('Key club one', ole, [pia, kit]);
+      g2 = await group('Key club two', ole, [pia, kit]);
+    });
+
+    // each test on a day of its own, so the caps stay out of it
+    beforeEach(async () => {
+      await pool.query(`UPDATE gifts SET created_at = created_at - interval '25 hours' WHERE from_user_id = $1`, [ole.id]);
+    });
+
+    /** Nothing more given, paid, posted or told than before the refused send. */
+    const expectNothingMore = async (before: { zer: number; gifts: number; messages: number }) => {
+      expect(await zer(ole)).toBe(before.zer);
+      expect(await giftRows(ole)).toHaveLength(before.gifts);
+      expect(await groupMessages()).toBe(before.messages);
+      expect(pushed).toEqual([]);
+      expect(published).toEqual([]);
+    };
+    const groupMessages = async () =>
+      (await pool.query<{ n: number }>(`SELECT count(*)::int n FROM group_messages WHERE group_id = ANY($1::uuid[])`, [[g1, g2]]))
+        .rows[0]!.n;
+    const state = async () => ({ zer: await zer(ole), gifts: (await giftRows(ole)).length, messages: await groupMessages() });
+
+    it('from a direct message, is refused in a group, and adds nobody to the first gift', async () => {
+      const k = key();
+      const first = await giftDm(ole, pia, POWER, k);
+      expect(first.json().sent).toEqual([pia.id]);
+      pushed = [];
+      published = [];
+
+      const before = await state();
+      const res = await giftGroup(ole, g1, [pia, kit], POWER, k);
+      expect(res.statusCode).toBe(409);
+      expect(res.json().code).toBe('IDEMPOTENCY_REUSED');
+      await expectNothingMore(before);
+
+      // the direct message's card still lists pia alone, for pia
+      const asPia = (await call('GET', `/chat/${ole.id}/messages`, pia)).json().messages;
+      const card = asPia.find((m: { gift: { batchId: string } | null }) => m.gift?.batchId === first.json().batchId);
+      expect(card.gift.recipients).toEqual([expect.objectContaining({ name: pia.username, isMe: true })]);
+    });
+
+    it('from one group, is refused in another', async () => {
+      const k = key();
+      expect((await giftGroup(ole, g1, [pia], POWER, k)).json().sent).toEqual([pia.id]);
+      pushed = [];
+      published = [];
+      const before = await state();
+      const res = await giftGroup(ole, g2, [pia, kit], POWER, k);
+      expect(res.statusCode).toBe(409);
+      expect(res.json().code).toBe('IDEMPOTENCY_REUSED');
+      await expectNothingMore(before);
+    });
+
+    it('from a group, is refused in a direct message', async () => {
+      const k = key();
+      expect((await giftGroup(ole, g2, [kit], POWER, k)).json().sent).toEqual([kit.id]);
+      pushed = [];
+      published = [];
+      const before = await state();
+      const res = await giftDm(ole, kit, POWER, k);
+      expect(res.statusCode).toBe(409);
+      expect(res.json().code).toBe('IDEMPOTENCY_REUSED');
+      await expectNothingMore(before);
+    });
+
+    it('is refused when it was used for two gifts, which no one request made', async () => {
+      // one key, two sends in the same group to different friends: two gifts,
+      // each with its own message — and then a request naming both is a
+      // retry of neither
+      const k = key();
+      const a = await giftGroup(ole, g1, [kit], POWER, k);
+      const b = await giftGroup(ole, g1, [pia], POWER, k);
+      expect(a.json().batchId).not.toBe(b.json().batchId);
+      pushed = [];
+      published = [];
+      const res = await giftGroup(ole, g1, [kit, pia], POWER, k);
+      expect(res.statusCode).toBe(409);
+      expect(res.json().code).toBe('IDEMPOTENCY_REUSED');
+    });
+
+    it('in the same group, still reaches a friend the first try skipped, on the message it posted', async () => {
+      const k = key();
+      // kit is skipped the first time (a friendship of an hour, with a minor)…
+      await befriend(kit, ole, 1);
+      const first = await giftGroup(ole, g2, [pia, kit], BG, k);
+      expect(first.json()).toMatchObject({ sent: [pia.id], skipped: [{ userId: kit.id, reason: 'not_allowed' }] });
+      // …and reached by the retry, once the day has passed
+      await befriend(kit, ole, 25);
+      const again = await giftGroup(ole, g2, [pia, kit], BG, k);
+      expect(again.statusCode).toBe(200);
+      expect(again.json()).toMatchObject({ batchId: first.json().batchId, sent: [pia.id, kit.id], message: null });
+      const messages = await pool.query(`SELECT 1 FROM group_messages WHERE gift_batch_id = $1`, [first.json().batchId]);
+      expect(messages.rowCount).toBe(1);
+    });
+  });
+
   describe('two friends gifting the same thing at once', () => {
     it('gives it once: one is sent, the other is told they own it, and only one pays', async () => {
       const rae = await signUp('rae');

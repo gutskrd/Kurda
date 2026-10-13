@@ -23,7 +23,7 @@ import type { DmMessage } from '../chat/service.js';
 import { groupRoom, type GroupChatService, type GroupMessage } from '../groups/chat-service.js';
 import type { Notification } from '../push/service.js';
 import { notKnownAdultSql } from '../users/age.js';
-import { batchChat, giftCards, type CardViewer } from './cards.js';
+import { batchChat, giftCards, type BatchChat, type CardViewer } from './cards.js';
 
 export type SkipReason = SendGiftResult['skipped'][number]['reason'];
 
@@ -207,8 +207,16 @@ export class GiftService {
           WHERE from_user_id = $1 AND idempotency_key = ANY($2::text[])`,
         [fromId, toIds.map((to) => recipientKey(idempotencyKey, to))],
       );
-      if (prior.rows.some((r) => r.sku !== sku)) {
-        throw new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
+      // A retry is the same request: the same item, one gift it made, and the
+      // same chat. A key matched on its own would let a send in one chat add
+      // friends to a gift posted in another — listed on a card in a chat they
+      // are not in, to people who may not see their name, and told of a gift
+      // in a chat that never got its message.
+      const reused = () => new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
+      if (prior.rows.some((r) => r.sku !== sku)) throw reused();
+      if (new Set(prior.rows.map((r) => r.batch_id)).size > 1) throw reused();
+      if (prior.rows.length > 0 && !postedIn(await batchChat(client, prior.rows[0]!.batch_id), chat, fromId, toIds[0]!)) {
+        throw reused();
       }
       const had = new Set(prior.rows.map((r) => r.to_user_id));
       const batchId = prior.rows[0]?.batch_id ?? randomUUID();
@@ -296,7 +304,7 @@ export class GiftService {
           refId: giftId,
           idempotencyKey: `gift:${fromId}:${recipientKey(idempotencyKey, to)}`,
         });
-        if (debit.duplicate) throw new AppError('IDEMPOTENCY_REUSED', 409, 'that request key was already used');
+        if (debit.duplicate) throw reused();
         await client.query(
           `INSERT INTO user_entitlements (user_id, sku, source)
            VALUES ($1, $2, 'gift')
@@ -644,4 +652,18 @@ export class GiftService {
 
 function giftNotFound(): AppError {
   return new AppError('GIFT_NOT_FOUND', 404, 'no such gift');
+}
+
+/**
+ * Is a gift posted at `where` one this send could have made — the same group,
+ * or (a direct message, or the shop, which posts to one) the same two people?
+ * A gift with no message is from before gifts had them, when only the shop
+ * gave them: a direct-message send may be its retry, a group's cannot.
+ */
+function postedIn(where: BatchChat | null, chat: GiftChatRef | null, fromId: string, toId: string): boolean {
+  if (chat?.kind === 'group') return where?.kind === 'group' && where.groupId === chat.groupId;
+  if (!where) return true;
+  if (where.kind !== 'dm') return false;
+  const { lo, hi } = canonicalPair(fromId, toId);
+  return where.userLo === lo && where.userHi === hi;
 }
