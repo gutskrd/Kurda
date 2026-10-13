@@ -102,9 +102,10 @@ export function StandingSummary({ standing }: { standing: AccountStanding }): Re
           {scopes.map((scope) => {
             const until = standing.restrictions[scope]?.until ?? null;
             return (
-              <View key={scope} style={[styles.limitRow, { flexDirection: dir.row }]}>
+              // what, then until when under it: side by side, a phone's width folds the name in two
+              <View key={scope} style={styles.limitRow}>
                 <Text style={[styles.limitName, dir.text, { color: colors.textPrimary }]}>{t(SCOPE_LABEL[scope])}</Text>
-                <Text style={[styles.limitUntil, { color: colors.textSecondary }]}>
+                <Text style={[styles.limitUntil, dir.text, { color: colors.textSecondary }]}>
                   {until ? t('standing.until', { when: formatUntil(until, locale) }) : t('standing.noEnd')}
                 </Text>
               </View>
@@ -259,8 +260,8 @@ const styles = StyleSheet.create({
   badge: { width: 52, height: 52, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   summaryText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, lineHeight: 22 },
   limits: { marginTop: spacing.md, gap: spacing.xs },
-  limitRow: { alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.md, minHeight: 28 },
-  limitName: { flex: 1, fontSize: typography.sizes.md },
+  limitRow: { gap: 2, paddingVertical: spacing.xs },
+  limitName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   limitUntil: { fontSize: typography.sizes.sm },
   section: { ...sectionLabel, marginTop: spacing.sm },
   empty: { fontSize: typography.sizes.sm },

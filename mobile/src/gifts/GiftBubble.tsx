@@ -60,7 +60,14 @@ export function GiftBubble({
   const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: senderName }) : [title, hint, status].filter(Boolean).join('. ');
 
   const body = (
-    <View style={[styles.bubble, { backgroundColor: colors.glassFill, borderColor: colors.gold }]}>
+    <View
+      style={[
+        styles.bubble,
+        // the art leads on the reading side, and the roomier edge is the text's
+        { flexDirection: dir.row, backgroundColor: colors.glassFill, borderColor: colors.gold },
+        dir.row === 'row-reverse' ? styles.textLeft : styles.textRight,
+      ]}
+    >
       <View style={styles.art}>{wrapped ? <Breathing card={card} /> : <ItemThumb card={card} />}</View>
       <View style={styles.text}>
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
@@ -152,16 +159,16 @@ function ItemThumb({ card }: { card: GiftCard }): React.JSX.Element {
 
 const styles = StyleSheet.create({
   bubble: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.sm,
-    paddingEnd: spacing.md,
     borderRadius: radii.lg,
     borderWidth: 1.5,
     minWidth: 220,
     maxWidth: 280,
   },
+  textRight: { paddingRight: spacing.md },
+  textLeft: { paddingLeft: spacing.md },
   art: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
   title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

@@ -23,6 +23,7 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
+import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
 
 /** A friend a gift can go to. */
@@ -364,20 +365,22 @@ function WhatStep({
                   <Icon name="gift" size={34} color={colors.gold} />
                 )}
                 {item.tier !== 'common' ? (
-                  <View style={[styles.tier, { backgroundColor: colors.gold }]}>
+                  <View style={[styles.tier, dir.rtl ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
                     <Text style={[styles.tierText, { color: colors.textOnPrimary }]}>{t(TIER_LABEL[item.tier])}</Text>
                   </View>
                 ) : null}
               </View>
-              <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>
+              <Text style={[styles.itemName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
                 {item.name}
               </Text>
-              <View style={styles.priceRow}>
+              <View style={[styles.priceRow, { flexDirection: dir.row }]}>
                 <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.accent} />
                 <Text style={[styles.price, { color: colors.textPrimary }]}>{item.price}</Text>
               </View>
-              {ownedLine ? <Text style={[styles.owned, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
-              {!canPay && !everyone ? <Text style={[styles.owned, { color: colors.textSecondary }]}>{t('gift.picker.cantAfford')}</Text> : null}
+              {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
+              {!canPay && !everyone ? (
+                <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.cantAfford')}</Text>
+              ) : null}
             </Pressable>
           );
         })}
@@ -444,7 +447,16 @@ function giftErrorText(error: ApiError, t: (key: TranslationKey) => string): str
 const styles = StyleSheet.create({
   flex: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  sheet: { maxHeight: '88%', borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, paddingTop: spacing.sm, paddingBottom: spacing.lg },
+  sheet: {
+    width: '100%',
+    maxWidth: SHEET_MAX_WIDTH,
+    alignSelf: 'center',
+    maxHeight: '88%',
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
   grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radii.pill, marginBottom: spacing.sm },
   header: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   headerBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.sm },
@@ -462,14 +474,17 @@ const styles = StyleSheet.create({
   balanceLabel: { fontSize: typography.sizes.sm },
   chip: { alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: spacing.sm, borderRadius: radii.pill },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  grid: { flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-  item: { width: '47.5%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
+  // two columns edge to edge: the gap between them is what is left over, so both line up with the header
+  grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  item: { width: '48.5%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
   itemArt: { height: 72, alignItems: 'center', justifyContent: 'center' },
   itemImage: { width: 64, height: 64 },
-  tier: { position: 'absolute', top: 0, end: 0, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.pill },
+  tier: { position: 'absolute', top: 0, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.pill },
+  tierRight: { right: 0 },
+  tierLeft: { left: 0 },
   tierText: { fontSize: 10, fontWeight: typography.weights.bold },
   itemName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  priceRow: { alignItems: 'center', gap: 4 },
   price: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   owned: { fontSize: typography.sizes.xs },
   limits: { fontSize: typography.sizes.xs },

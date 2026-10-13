@@ -24,6 +24,7 @@ import { Icon } from '../theme/Icon';
 import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
+import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { openGift, wearGift } from './api';
 import { GiftBox, NewrozFlame, Seed, Spark } from './art';
 import { unwrapPlan, type Particle } from './motion';
@@ -401,6 +402,7 @@ const styles = StyleSheet.create({
   card: { width: '100%', maxWidth: 340, borderRadius: radii.xl, padding: spacing.lg, alignItems: 'center' },
   sheet: {
     width: '100%',
+    maxWidth: SHEET_MAX_WIDTH,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     padding: spacing.lg,

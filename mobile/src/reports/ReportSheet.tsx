@@ -40,6 +40,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { fileReport } from './api';
 import { CATEGORY_LABEL } from './labels';
 import { useDirection } from './direction';
+import { SHEET_MAX_WIDTH } from './sheet';
 
 /**
  * What is being reported. The sheet turns it into `POST /reports`.
@@ -523,6 +524,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   sheet: {
+    width: '100%',
+    maxWidth: SHEET_MAX_WIDTH,
+    alignSelf: 'center',
     maxHeight: '90%',
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
