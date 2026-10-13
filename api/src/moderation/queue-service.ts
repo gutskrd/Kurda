@@ -535,8 +535,13 @@ export class ModerationQueueService {
     }
     const limit = Math.min(Math.max(filters.limit ?? QUEUE_PAGE_SIZE, 1), 200);
     params.push(limit + 1);
-    const res = await this.pool.query<CaseRow & CasePersonColumns>(
-      `SELECT c.*, ${CASE_PERSON_SELECT}
+    // The cursor carries the time as Postgres has it, to the microsecond: a
+    // JavaScript Date keeps milliseconds only, and a case reported in the same
+    // millisecond as the last row (or migrated with microseconds) would then
+    // come round again on the next page.
+    const res = await this.pool.query<CaseRow & CasePersonColumns & { cursor_at: string }>(
+      `SELECT c.*, ${CASE_PERSON_SELECT},
+              to_char(c.first_reported_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_at
          FROM moderation_cases c ${CASE_PERSON_JOIN}
         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
         ORDER BY c.priority, c.first_reported_at, c.id
@@ -557,7 +562,7 @@ export class ModerationQueueService {
     const last = rows[rows.length - 1];
     const nextCursor =
       res.rows.length > limit && last
-        ? encodeCursor({ priority: last.priority, firstReportedAt: new Date(last.first_reported_at).toISOString(), id: last.id })
+        ? encodeCursor({ priority: last.priority, firstReportedAt: last.cursor_at, id: last.id })
         : null;
     return { cases, nextCursor };
   }

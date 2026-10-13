@@ -156,6 +156,34 @@ describe.skipIf(!DATABASE_URL)('moderation queue (integration)', () => {
     expect(r.rows[0]!.reviewed_by).toBe(moderator);
   });
 
+  it('pages cases reported in the same millisecond without repeating any', async () => {
+    const tag = `cur${suffix}`;
+    const ids: string[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const c = await pool.query<{ id: string }>(
+        `INSERT INTO moderation_cases (source, source_ref, severity, summary, evidence, source_created_at, priority,
+                                       first_reported_at, last_reported_at)
+         VALUES ('report', $1, 40, $2, '{}'::jsonb, now(), 3, $3::timestamptz, $3::timestamptz) RETURNING id`,
+        // microseconds Postgres keeps and a JavaScript Date does not
+        [`user:${tag}-${i}`, `Case ${tag}`, `2026-01-01T10:00:00.1234${i}0Z`],
+      );
+      ids.push(c.rows[0]!.id);
+    }
+    try {
+      const seen: string[] = [];
+      let cursor: string | undefined;
+      for (let n = 0; n < 6; n++) {
+        const page = await svc.queue({ q: tag, limit: 1, cursor });
+        seen.push(...page.cases.map((c) => c.id));
+        if (!page.nextCursor) break;
+        cursor = page.nextCursor;
+      }
+      expect(seen).toEqual(ids);
+    } finally {
+      await pool.query(`DELETE FROM moderation_cases WHERE id = ANY($1)`, [ids]);
+    }
+  });
+
   it('reports an SLA median over decided cases, counted from the first report', async () => {
     const sla = await svc.sla();
     expect(sla.resolved).toBeGreaterThanOrEqual(1);
