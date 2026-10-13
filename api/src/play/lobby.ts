@@ -89,10 +89,16 @@ export async function seatsOf(executor: Executor, t: BattleTables, id: string): 
   return res.rows;
 }
 
-/** The seat a new player takes: after every seat ever handed out that is still on record. */
-export async function nextSeat(executor: Executor, t: BattleTables, id: string): Promise<number> {
+/**
+ * The seat a new player takes: the one after every seat the game has ever
+ * handed out. Not after the seats still on record — leaving a lobby deletes
+ * the row, and the next joiner would sit in the seat just left, so a host's
+ * "remove seat 3" from a screen a moment old would take out somebody else.
+ * Call it under the game row's lock (the join's FOR UPDATE).
+ */
+export async function takeSeat(executor: Executor, t: BattleTables, id: string): Promise<number> {
   const res = await executor.query<{ seat: number }>(
-    `SELECT COALESCE(max(seat), 0)::int + 1 AS seat FROM ${t.players} WHERE ${t.fk} = $1`,
+    `UPDATE ${t.table} SET seats_issued = seats_issued + 1 WHERE id = $1 RETURNING seats_issued AS seat`,
     [id],
   );
   return res.rows[0]!.seat;

@@ -25,7 +25,9 @@
  *   them (never a user id), so a host can remove someone without learning who
  *   they are. `left_at` marks a player who left a started game (leaving a lobby
  *   deletes the row), and `removed` one the host took out of a lobby — kept, so
- *   they cannot simply join again.
+ *   they cannot simply join again. The game counts the seats it has handed out
+ *   (`seats_issued`), so a seat is never given to a second person: a host's
+ *   "remove seat 3" can only ever mean the one person who had it.
  * - Wordle Battle gains `ends_at`, and its players `last_seen_at`: a battle
  *   ends at that time, or as soon as nobody still racing is around, instead of
  *   waiting for a player who closed the tab.
@@ -121,6 +123,13 @@ export const up = (pgm) => {
        WHERE s.${fk} = p.${fk} AND s.user_id = p.user_id`);
     pgm.alterColumn(players, 'seat', { notNull: true });
     pgm.addConstraint(players, `${players}_seat_uniq`, { unique: [fk, 'seat'] });
+    // the highest seat handed out so far; a new player takes the next one,
+    // even when whoever sat in the last one has since left the lobby
+    pgm.addColumns(table, { seats_issued: { type: 'smallint', notNull: true, default: 1 } });
+    pgm.sql(`
+      UPDATE ${table} t SET seats_issued = s.n
+        FROM (SELECT ${fk} AS id, max(seat) AS n FROM ${players} GROUP BY ${fk}) s
+       WHERE s.id = t.id`);
     // "my games", blocks and account erasure look players up by user
     pgm.createIndex(players, 'user_id');
   }
@@ -133,6 +142,7 @@ export const down = (pgm) => {
   pgm.dropColumns('wordle_battle_players', ['last_seen_at']);
   pgm.dropColumns('wordle_battles', ['ends_at']);
   for (const { table, players } of BATTLES) {
+    pgm.dropColumns(table, ['seats_issued']);
     pgm.dropIndex(players, 'user_id');
     pgm.dropConstraint(players, `${players}_seat_uniq`);
     pgm.dropColumns(players, ['seat', 'left_at', 'removed']);

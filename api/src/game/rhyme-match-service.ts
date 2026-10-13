@@ -13,12 +13,12 @@ import {
   lobbyCard,
   lobbyIdle,
   mayJoin,
-  nextSeat,
   present,
   rematchChain,
   seatPlayers,
   seatsOf,
   tallySeries,
+  takeSeat,
   type LobbyRow,
   type SeatPlayer,
   type SeatRow,
@@ -205,7 +205,7 @@ export class RhymeMatchService {
       if (!(await mayJoin(client, match, seats, userId))) return { ok: false, reason: 'not-found' };
       if (match.status !== 'lobby') return { ok: false, reason: 'not-open' };
       if (present(seats).length >= match.max_players) return { ok: false, reason: 'full' };
-      const seat = await nextSeat(client, T, matchId);
+      const seat = await takeSeat(client, T, matchId);
       await client.query(`INSERT INTO rhyme_match_players (match_id, user_id, seat) VALUES ($1,$2,$3)`, [matchId, userId, seat]);
       await client.query(`UPDATE rhyme_matches SET updated_at = $2 WHERE id = $1`, [matchId, now]);
       return null;
@@ -498,8 +498,8 @@ export class RhymeMatchService {
       if (!allowed) return { ok: false, reason: 'not-found' };
       const m = await client.query<{ id: string }>(
         `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id,
-                                    rematch_of, status, started_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$9) RETURNING id`,
+                                    rematch_of, status, started_at, updated_at, seats_issued)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$9,2) RETURNING id`,
         [host.user_id, match.dialect, prompt, match.window_ms, match.max_players, access, match.chat_group_id, matchId, now],
       );
       created = m.rows[0]!.id;

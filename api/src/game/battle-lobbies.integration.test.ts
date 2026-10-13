@@ -237,6 +237,24 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
       expect(await wordle.remove(id, host, 2)).toEqual({ ok: false, reason: 'not-lobby' });
     });
 
+    it('a seat is never handed out twice, even after its player left the lobby', async () => {
+      const host = await makeUser();
+      const a = await makeUser();
+      const x = await makeUser();
+      const id = await battleWith(host, a, x); // x sits in seat 3, the last one
+      expect(await wordle.leave(id, x)).toEqual({ ok: true });
+      const y = await makeUser();
+      await befriend(pool, host, y);
+      const joined = await wordle.join(id, y);
+      expect(joined.ok && joined.battle.me!.seat).toBe(4);
+      // the host's "remove seat 3", from a screen that still shows x, takes out nobody
+      expect(await wordle.remove(id, host, 3)).toEqual({ ok: false, reason: 'no-seat' });
+      expect(await wordle.isMember(id, y)).toBe(true);
+      // and x coming back is a new seat as well
+      const back = await wordle.join(id, x);
+      expect(back.ok && back.battle.me!.seat).toBe(5);
+    });
+
     it(`a lobby nobody starts closes after ${LOBBY_IDLE_MINUTES} minutes`, async () => {
       const host = await makeUser();
       const a = await makeUser();
@@ -453,15 +471,22 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
       expect(quiet).toEqual([id]);
     });
 
-    it('the host removes by seat in the lobby, and an idle lobby closes', async () => {
+    it('the host removes by seat in the lobby, seats are never handed out twice, and an idle lobby closes', async () => {
       const host = await makeUser();
       const a = await makeUser();
+      const b = await makeUser();
       await befriend(pool, host, a);
+      await befriend(pool, host, b);
       const created = await rhyme.create(host, {});
       if (!created.ok) throw new Error(created.reason);
       const id = created.match.id;
-      await rhyme.join(id, a);
-      expect((await rhyme.remove(id, host, 2)).ok).toBe(true);
+      // b takes seat 2 and leaves; a comes after, into seat 3 — never b's
+      await rhyme.join(id, b);
+      await rhyme.leave(id, b);
+      const joined = await rhyme.join(id, a);
+      expect(joined.ok && joined.match.me!.seat).toBe(3);
+      expect((await rhyme.remove(id, host, 2)).ok).toBe(false);
+      expect((await rhyme.remove(id, host, 3)).ok).toBe(true);
       expect(await rhyme.read(id, a)).toEqual({ ok: false, reason: 'not-found' });
       expect(await rhyme.join(id, a)).toEqual({ ok: false, reason: 'not-found' });
       later((LOBBY_IDLE_MINUTES + 1) * 60_000);

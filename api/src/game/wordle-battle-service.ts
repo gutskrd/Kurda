@@ -12,13 +12,13 @@ import {
   lobbyCard,
   lobbyIdle,
   mayJoin,
-  nextSeat,
   present,
   rematchChain,
   seatId,
   seatPlayers,
   seatsOf,
   tallySeries,
+  takeSeat,
   type LobbyRow,
   type SeatPlayer,
   type SeatRow,
@@ -270,7 +270,7 @@ export class WordleBattleService {
       if (!(await mayJoin(client, battle, seats, userId))) return { ok: false, reason: 'not-found' };
       if (battle.status !== 'lobby') return { ok: false, reason: 'not-open' };
       if (present(seats).length >= battle.max_players) return { ok: false, reason: 'full' };
-      const seat = await nextSeat(client, T, battleId);
+      const seat = await takeSeat(client, T, battleId);
       await client.query(`INSERT INTO wordle_battle_players (battle_id, user_id, seat) VALUES ($1,$2,$3)`, [battleId, userId, seat]);
       await client.query(`UPDATE wordle_battles SET updated_at = $2 WHERE id = $1`, [battleId, now]);
       return null;
@@ -596,8 +596,8 @@ export class WordleBattleService {
       if (!allowed) return { ok: false, reason: 'not-found' };
       const b = await client.query<{ id: string }>(
         `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id,
-                                     rematch_of, status, started_at, ends_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10,$9) RETURNING id`,
+                                     rematch_of, status, started_at, ends_at, updated_at, seats_issued)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10,$9,2) RETURNING id`,
         [host.user_id, picked.difficulty, picked.target, toLetters(picked.target).length, battle.max_players, access,
           battle.chat_group_id, battleId, now, minutesAfter(now, BATTLE_MINUTES)],
       );
