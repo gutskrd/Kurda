@@ -1,7 +1,8 @@
 import type pg from 'pg';
-import { driftRatio, isDrifting, EXCLUDED_REASONS } from './metrics.js';
+import { driftRatio, isDrifting, EXCLUDED_REASONS, REFUND_REASONS } from './metrics.js';
 
 const EXCLUDED = [...EXCLUDED_REASONS];
+const REFUNDS = [...REFUND_REASONS];
 
 export interface DailyPoint {
   day: string;
@@ -18,7 +19,8 @@ export interface DriftReport {
   faucet: number;
   sink: number;
   /**
-   * faucet/sink, or null when nothing was ever spent so the ratio is infinite.
+   * faucet/sink, or null when nothing was spent (net of refunds) so the ratio
+   * is infinite.
    *
    * Nullable rather than Infinity because JSON has no infinity: JSON.stringify
    * emits null for it regardless, which crashed the dashboard the moment a
@@ -41,18 +43,19 @@ export class EconomyService {
 
   /**
    * Aggregate one UTC day of ledger activity into economy_daily. Idempotent —
-   * a re-run overwrites that day. `day` is truncated to a date.
+   * a re-run overwrites that day. `day` is truncated to a date. Refunds come
+   * off the day's sink rather than adding to its faucet, as in `faucetSink`.
    */
   async aggregateDay(day: Date): Promise<void> {
     const rows = await this.pool.query<{ currency: string; faucet: string; sink: string }>(
       `SELECT currency,
-              COALESCE(SUM(amount) FILTER (WHERE amount > 0), 0) AS faucet,
-              COALESCE(SUM(-amount) FILTER (WHERE amount < 0), 0) AS sink
+              COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND NOT (reason = ANY($3))), 0) AS faucet,
+              COALESCE(SUM(-amount) FILTER (WHERE amount < 0 OR reason = ANY($3)), 0) AS sink
          FROM wallet_ledger
         WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day')
           AND NOT (reason = ANY($2))
         GROUP BY currency`,
-      [day, EXCLUDED],
+      [day, EXCLUDED, REFUNDS],
     );
 
     for (const r of rows.rows) {

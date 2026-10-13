@@ -17,6 +17,8 @@ const dayISO = (agoDays: number): string => {
 };
 const D3 = dayISO(3);
 const D5 = dayISO(5);
+// outside the 7-day drift window, inside the 30-day supply series
+const D10 = dayISO(10);
 
 describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
@@ -71,7 +73,7 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM economy_daily WHERE day IN ($1::date, $2::date)`, [D3, D5]);
+    await pool.query(`DELETE FROM economy_daily WHERE day IN ($1::date, $2::date, $3::date)`, [D3, D5, D10]);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -142,6 +144,19 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
 
     // and it survives the round trip the browser actually makes
     expect(JSON.parse(JSON.stringify(d)).ratio).toBeNull();
+  });
+
+  it('counts a refund as spending undone, not as currency created', async () => {
+    // a 500 purchase handed back the same day: nothing was created, and
+    // nothing is left spent
+    await ledger(D10, -500, 'shop_purchase');
+    await ledger(D10, 500, 'shop_return');
+    await economy.aggregateDay(new Date(`${D10}T12:00:00Z`));
+    const row = await pool.query<{ faucet: string; sink: string; net: string }>(
+      `SELECT faucet, sink, net FROM economy_daily WHERE day = $1::date AND currency = 'zer'`,
+      [D10],
+    );
+    expect(row.rows[0]).toEqual({ faucet: '0', sink: '0', net: '0' });
   });
 
   it('the dashboard endpoints are admin-only', async () => {
