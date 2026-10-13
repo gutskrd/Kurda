@@ -310,9 +310,11 @@ export function SetupSheet({
             {error}
           </p>
         )}
-        <Button type="submit" size="lg" block disabled={busy || (!fixed && available.length === 0)}>
-          {lobby ? t('stories.setup.save') : mode === 'solo' ? t('stories.setup.start') : t('stories.setup.create')}
-        </Button>
+        <div className="story-setup-submit">
+          <Button type="submit" size="lg" block disabled={busy || (!fixed && available.length === 0)}>
+            {lobby ? t('stories.setup.save') : mode === 'solo' ? t('stories.setup.start') : t('stories.setup.create')}
+          </Button>
+        </div>
       </form>
     </Modal>
   );

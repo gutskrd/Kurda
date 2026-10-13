@@ -19,8 +19,12 @@ export interface Evidence {
   sentence: number | null;
 }
 
-/** One run of a paragraph: plain text, or a word from the glossary. */
-type Piece = { text: string; gloss?: StoryGlossEntry };
+/**
+ * One run of a paragraph: plain text, or a word from the glossary — with the
+ * quote or comma that touches it, so a line never breaks between “ and the
+ * word (a button is laid out as a block of its own, and would let it).
+ */
+type Piece = { text: string; gloss?: StoryGlossEntry; lead?: string; trail?: string };
 
 interface Sentence {
   index: number;
@@ -53,6 +57,22 @@ export function paragraphSentences(paragraph: string, glossary: readonly StoryGl
       at = span.end;
     }
     if (at < end) pieces.push({ text: text.slice(at, end) });
+    // the characters glued to a glossary word go with it
+    pieces.forEach((piece, i) => {
+      if (!piece.gloss) return;
+      const before = pieces[i - 1];
+      const after = pieces[i + 1];
+      if (before && !before.gloss) {
+        const glued = /\S+$/.exec(before.text)?.[0] ?? '';
+        piece.lead = glued;
+        before.text = before.text.slice(0, before.text.length - glued.length);
+      }
+      if (after && !after.gloss) {
+        const glued = /^\S+/.exec(after.text)?.[0] ?? '';
+        piece.trail = glued;
+        after.text = after.text.slice(glued.length);
+      }
+    });
     out.push({ index, lead: text.slice(cursor, start), pieces });
     cursor = end;
   });
@@ -144,13 +164,16 @@ export function StoryText({
                     >
                       {s.pieces.map((piece, i) =>
                         piece.gloss ? (
-                          <GlossWord
-                            key={i}
-                            text={piece.text}
-                            entry={piece.gloss}
-                            expanded={open?.key === `${p}:${s.index}:${i}`}
-                            onOpen={(anchor) => setOpen({ key: `${p}:${s.index}:${i}`, entry: piece.gloss!, anchor })}
-                          />
+                          <span key={i} className="story-gloss-hold">
+                            {piece.lead}
+                            <GlossWord
+                              text={piece.text}
+                              entry={piece.gloss}
+                              expanded={open?.key === `${p}:${s.index}:${i}`}
+                              onOpen={(anchor) => setOpen({ key: `${p}:${s.index}:${i}`, entry: piece.gloss!, anchor })}
+                            />
+                            {piece.trail}
+                          </span>
                         ) : (
                           <span key={i}>{piece.text}</span>
                         ),

@@ -36,6 +36,7 @@ const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
 const StoriesHub = lazy(() => import('./stories/StoriesHub').then((m) => ({ default: m.StoriesHub })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
+const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
@@ -212,6 +213,10 @@ export function App(): React.JSX.Element {
             <Route path="games/quiz" element={<Navigate to="/app/games/stories" replace />} />
             <Route path="games/stories" element={<StoriesHub />} />
             <Route path="games/stories/:slug" element={<StoryReader />} />
+            <Route
+              path="games/stories/play/:gameId"
+              element={<RequireAccount what="gate.what.play"><StoryGame /></RequireAccount>}
+            />
             {/* the two games played against other people */}
             <Route
               path="games/wordle-battle"

@@ -81,7 +81,7 @@ export interface Call {
   body: unknown;
 }
 
-type Answer = unknown | Response | ((call: Call) => unknown | Response);
+type Answer = unknown | Response | ((call: Call) => unknown | Response | Promise<unknown>);
 
 /**
  * A fetch that answers by "METHOD /path" (the longest matching prefix wins),
@@ -114,7 +114,7 @@ export function fakeApi(routes: Record<string, Answer>, opts: { signedIn?: boole
         .sort((a, b) => b.length - a.length)[0];
       if (!match) return jsonResponse(200, {});
       const answer = all[match];
-      const value = typeof answer === 'function' ? (answer as (c: Call) => unknown)(call) : answer;
+      const value = await (typeof answer === 'function' ? (answer as (c: Call) => unknown)(call) : answer);
       return value instanceof Response ? value : jsonResponse(200, value);
     }),
   );
@@ -123,3 +123,12 @@ export function fakeApi(routes: Record<string, Answer>, opts: { signedIn?: boole
 
 export const notFound = (): Response => jsonResponse(404, { code: 'NOT_FOUND', message: 'not found' });
 export const refused = (status: number, code: string): Response => jsonResponse(status, { code, message: code });
+
+/** A long-poll that waits until the test says so (or for ever). */
+export function heldPoll(): { answer: (call: Call) => Promise<unknown>; release: (view: unknown) => void } {
+  const waiting: Array<(v: unknown) => void> = [];
+  return {
+    answer: () => new Promise((resolve) => waiting.push(resolve)),
+    release: (view) => waiting.splice(0).forEach((r) => r(view)),
+  };
+}
