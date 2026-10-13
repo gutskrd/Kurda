@@ -14,6 +14,7 @@ import {
   TextInput,
   Textarea,
   errorLine,
+  toLocalInput,
   useDialogs,
   useLoad,
   useToast,
@@ -44,13 +45,6 @@ export function lifecycle(e: Pick<GameEvent, 'enabled' | 'startsAt' | 'endsAt'>,
   if (now < Date.parse(e.startsAt)) return { text: 'Upcoming', tone: 'info' };
   if (now > Date.parse(e.endsAt)) return { text: 'Ended', tone: 'neutral' };
   return { text: 'Live', tone: 'ok' };
-}
-
-/** ISO string → value for <input type="datetime-local"> (local, minute precision). */
-function toLocalInput(iso: string): string {
-  const d = new Date(iso);
-  const off = d.getTimezoneOffset();
-  return new Date(d.getTime() - off * 60_000).toISOString().slice(0, 16);
 }
 
 /** The same JSON whatever order its keys were written in. */

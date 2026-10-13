@@ -239,3 +239,4 @@
 .rhyme-list li > div { display: grid; gap: 2px; min-width: 0; flex: 1 1 180px; }
 .rhyme-list select { width: auto; min-width: 170px; }
 @media (max-width: 420px) { .rhyme-list select { flex: 1 1 100%; } }
+.nowrap { white-space: nowrap; }

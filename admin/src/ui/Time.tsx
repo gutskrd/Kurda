@@ -45,6 +45,24 @@ export function duration(seconds: number): string {
   return `${Math.round(hours / 24)} days`;
 }
 
+/**
+ * A moment as an <input type="datetime-local"> wants it: local time, to the
+ * minute ("2026-10-13T18:30"). The input has no time zone, so an ISO string
+ * put in as it is would show the UTC hour as if it were local.
+ */
+export function toLocalInput(value: string | Date): string {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Date(d.getTime() - d.getTimezoneOffset() * MINUTE).toISOString().slice(0, 16);
+}
+
+/** What a datetime-local input holds, back to an ISO string; empty stays null. */
+export function fromLocalInput(value: string): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export function Time({
   value,
   mode = 'relative',

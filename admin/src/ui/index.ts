@@ -10,6 +10,6 @@ export { ActionMenu, type MenuItem } from './Menu';
 export { EmptyState, ErrorState, Loading } from './states';
 export { Pagination, Table, type Column, type Paging, type SortState } from './Table';
 export { TabPanel, Tabs, type TabItem } from './Tabs';
-export { Time, absoluteTime, duration, relativeTime, shortDate } from './Time';
+export { Time, absoluteTime, duration, fromLocalInput, relativeTime, shortDate, toLocalInput } from './Time';
 export { ToastProvider, useToast, TOAST_MS, type ToastTone } from './Toast';
 export { UserLink, userHref, type UserRef } from './UserLink';
