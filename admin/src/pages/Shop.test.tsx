@@ -156,6 +156,18 @@ describe('the shop', () => {
     expect(screen.getByText('No item matches these filters.')).toBeInTheDocument();
   });
 
+  it('lists what is not retired first, and finds the retired on request', async () => {
+    const user = userEvent.setup();
+    fakeApi(...shop([item(), item({ sku: 'bg-old', name: 'Old hills', active: false })]));
+    renderUi(<Shop />);
+    expect(await screen.findByText('Items (1 of 2)')).toBeInTheDocument();
+    expect(screen.queryByText('Old hills')).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Filter by status'), 'hidden');
+    expect(screen.getByText('Old hills')).toBeInTheDocument();
+    // a retired item has nothing to take off sale, only Edit
+    expect(screen.queryByRole('button', { name: 'Put on sale' })).not.toBeInTheDocument();
+  });
+
   it('says a failed load is a failure, not an empty shop', async () => {
     fakeApi(on('GET', '/admin/shop/items', failure(403, 'FORBIDDEN', 'insufficient permissions')), on('GET', '/admin/config/changes', json({ pending: [] })));
     renderUi(<Shop />);

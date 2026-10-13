@@ -80,6 +80,13 @@ describe('Table', () => {
     expect(within(first).getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
 
+  it('turns into cards sooner when it has many columns', () => {
+    const { container } = renderUi(<Table caption="Shop items" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} wide />);
+    expect(container.querySelector('.table-wrap')).toHaveClass('is-wide');
+    renderUi(<Table caption="Tags" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
+    expect(screen.getByRole('table', { name: 'Tags' }).parentElement).not.toHaveClass('is-wide');
+  });
+
   it('says it is loading, rather than drawing an empty table', () => {
     const { container } = renderUi(<Table caption="Shop items" columns={COLUMNS} rows={null} rowKey={(i) => i.id} />);
     expect(within(container).getByRole('status')).toHaveTextContent('Loading…');

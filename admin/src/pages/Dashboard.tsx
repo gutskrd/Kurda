@@ -3,6 +3,7 @@ import { api } from '../api';
 import { useAuth } from '../auth';
 import { canOpen, isKnownPage, NAV, type SessionAccess } from '../navigation';
 import { useSession } from '../session';
+import { describeAction } from './Audit';
 import { isStoryUsage, type Listing } from '../lessonAudio';
 import type { AdminStorySummary } from '../stories';
 import { Badge, Button, ErrorState, Icon, Loading, PageHeader, Section, Stat, Time, UserLink, duration, useLoad } from '../ui';
@@ -334,7 +335,9 @@ function RecentAudit(): React.JSX.Element {
             <li key={e.id}>
               <Time value={e.createdAt} />
               <UserLink user={{ id: e.adminId, username: e.adminUsername }} />
-              <code className="dash-audit-action">{e.action}</code>
+              <span className="dash-audit-action" title={e.action}>
+                {(({ verb, where }) => `${verb} · ${where}`)(describeAction(e.action))}
+              </span>
             </li>
           ))}
         </ul>

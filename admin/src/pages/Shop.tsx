@@ -99,7 +99,8 @@ function windowText(item: ShopItem): string | null {
   return null;
 }
 
-type StateFilter = 'all' | SaleState;
+/** 'listed' is everything not retired: what the shop has, or will have, on its shelves. */
+type StateFilter = 'listed' | 'all' | SaleState;
 
 /**
  * The shop's catalogue: what is on sale, at what price, and when.
@@ -123,7 +124,7 @@ export function Shop(): React.JSX.Element {
   );
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
-  const [state, setState] = useState<StateFilter>('all');
+  const [state, setState] = useState<StateFilter>('listed');
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<ShopItem | 'new' | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -141,7 +142,7 @@ export function Shop(): React.JSX.Element {
     return all.filter(
       (i) =>
         (category === 'all' || i.category === category) &&
-        (state === 'all' || saleState(i) === state) &&
+        (state === 'all' || (state === 'listed' ? saleState(i) !== 'hidden' : saleState(i) === state)) &&
         words.every((w) => `${i.name} ${i.sku} ${i.description ?? ''}`.toLowerCase().includes(w)),
     );
   }, [all, q, category, state]);
@@ -206,7 +207,6 @@ export function Shop(): React.JSX.Element {
     },
   ];
 
-  const filtered = q.trim() !== '' || category !== 'all' || state !== 'all';
 
   return (
     <div>
@@ -238,7 +238,7 @@ export function Shop(): React.JSX.Element {
         <Stat label="Retired" value={all ? counts.hidden.toLocaleString() : '…'} />
       </div>
 
-      <Section flush title={shown ? `Items (${total.toLocaleString()}${filtered ? ` of ${(all?.length ?? 0).toLocaleString()}` : ''})` : 'Items'}>
+      <Section flush title={shown && all ? `Items (${total.toLocaleString()}${total !== all.length ? ` of ${all.length.toLocaleString()}` : ''})` : 'Items'}>
         <div className="table-tools">
           <div className="search-box">
             <Icon name="search" size={16} />
@@ -276,6 +276,7 @@ export function Shop(): React.JSX.Element {
               setPage(0);
             }}
           >
+            <option value="listed">Listed (not retired)</option>
             <option value="all">Any status</option>
             {(Object.keys(STATE) as SaleState[]).map((k) => (
               <option key={k} value={k}>
@@ -293,18 +294,19 @@ export function Shop(): React.JSX.Element {
           error={items.error}
           onRetry={() => void items.reload()}
           what="the shop"
-          empty={filtered ? 'No item matches these filters.' : 'No items yet. Add one with New item.'}
+          empty={all && all.length > 0 ? 'No item matches these filters.' : 'No items yet. Add one with New item.'}
           paging={{ page: at, pageCount, onPage: setPage, total, pageSize: PAGE }}
           actions={(i) => (
+            // Edit last, so it sits in the same place on every row
             <>
-              <Button onClick={() => setEditing(i)} aria-label={`Edit “${i.name}”`}>
-                Edit
-              </Button>
               {i.active && (
                 <Button onClick={() => void toggleSale(i)} busy={busy === i.sku}>
                   {i.inStock ? 'Take off sale' : 'Put on sale'}
                 </Button>
               )}
+              <Button onClick={() => setEditing(i)} aria-label={`Edit “${i.name}”`}>
+                Edit
+              </Button>
             </>
           )}
         />

@@ -761,7 +761,7 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
 .st-coverage-row strong { min-width: 84px; }
 .st-open { color: var(--text); }
 .st-open:hover strong { text-decoration: underline; text-underline-offset: 3px; }
-.st-starter { display: inline-block; margin-inline-start: 8px; }
+.st-starter { display: block; margin-top: 4px; }
 .st-conflict, .st-notice, .st-banner { margin-bottom: 14px; padding: 12px 16px; display: grid; gap: 8px; }
 .st-conflict { border-color: color-mix(in srgb, var(--bad) 45%, var(--glass-border)); background: var(--bad-bg); }
 .st-conflict > div:last-child { justify-self: start; }

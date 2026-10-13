@@ -56,6 +56,7 @@ export function Table<T>({
   paging,
   rowClassName,
   what,
+  wide = false,
 }: {
   columns: ReadonlyArray<Column<T>>;
   /** null while the first load is running */
@@ -74,6 +75,8 @@ export function Table<T>({
   rowClassName?: (row: T) => string | undefined;
   /** for the error's "your role doesn't include …" */
   what?: string;
+  /** many columns: cards below 960 px rather than 640, so a tablet never cuts the row off */
+  wide?: boolean;
 }): React.JSX.Element {
   const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
   const span = columns.length + (actions ? 1 : 0);
@@ -144,7 +147,7 @@ export function Table<T>({
   }
 
   return (
-    <div className="table-wrap">
+    <div className={`table-wrap${wide ? ' is-wide' : ''}`}>
       {error != null && rows && rows.length > 0 && (
         <div className="table-refresh-error">
           <ErrorState error={error} onRetry={onRetry} what={what} compact />

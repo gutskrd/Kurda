@@ -160,9 +160,30 @@
   .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; }
   .kit-table td.is-end { text-align: start; }
   .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
-  .row-actions > button { flex: 1 1 auto; min-height: var(--target); }
+  .row-actions > button, .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
 }
 
+
+/* a table with many columns turns into cards sooner: on a tablet it would not fit as a table */
+@container (max-width: 960px) {
+  .is-wide > .kit-table, .is-wide > .kit-table tbody, .is-wide > .kit-table tr, .is-wide > .kit-table td { display: block; }
+  .is-wide > .kit-table thead { display: none; }
+  .is-wide > .kit-table tbody tr {
+    margin: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline); background: var(--surface-strong);
+  }
+  .is-wide > .kit-table tbody tr.table-state, .is-wide > .kit-table tbody tr.table-loading { margin: 0; padding: 0; border: none; background: none; }
+  .is-wide > .kit-table tbody tr:hover td { background: none; }
+  .is-wide > .kit-table td { padding: 3px 0; border: none !important; text-align: start; }
+  .is-wide > .kit-table td[data-label] { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  .is-wide > .kit-table td[data-label]::before { content: attr(data-label); color: var(--text-dim); font-size: 12.5px; }
+  .is-wide > .kit-table td.is-card-title { font-size: 15px; padding-bottom: 6px; }
+  .is-wide > .kit-table td.is-card-hidden { display: none; }
+  .is-wide > .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; }
+  .is-wide > .kit-table td.is-end { text-align: start; }
+  .is-wide .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
+  .is-wide .row-actions > button, .is-wide .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
+}
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--separator); }
 .pagination-at { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 

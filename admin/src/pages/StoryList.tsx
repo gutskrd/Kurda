@@ -182,21 +182,34 @@ const columns: Column<AdminStorySummary>[] = [
       );
     },
   },
-  { key: 'variety', header: 'Variety', sort: (a, b) => a.dialect.localeCompare(b.dialect), cell: (s) => DIALECT_NAME[s.dialect] },
-  { key: 'level', header: 'Level', sort: (a, b) => a.level - b.level, cell: (s) => <Badge>{s.level}</Badge> },
+  {
+    key: 'variety',
+    header: 'Variety',
+    sort: (a, b) => a.dialect.localeCompare(b.dialect) || a.level - b.level,
+    cell: (s) => (
+      <>
+        {DIALECT_NAME[s.dialect]}
+        <span className="cell-sub">Level {s.level}</span>
+      </>
+    ),
+  },
   {
     key: 'length',
     header: 'Length',
-    cell: (s) =>
-      s.length ? (
-        <Badge>{LENGTH_NAME[s.length]}</Badge>
-      ) : (
-        <Badge tone="warn" title="The word count is in no length's band">
-          No length
-        </Badge>
-      ),
+    sort: (a, b) => a.wordCount - b.wordCount,
+    cell: (s) => (
+      <>
+        {s.length ? (
+          <Badge>{LENGTH_NAME[s.length]}</Badge>
+        ) : (
+          <Badge tone="warn" title="The word count is in no length's band">
+            No length
+          </Badge>
+        )}
+        <span className="cell-sub">{s.wordCount.toLocaleString()} words</span>
+      </>
+    ),
   },
-  { key: 'words', header: 'Words', align: 'end', sort: (a, b) => a.wordCount - b.wordCount, cell: (s) => s.wordCount.toLocaleString() },
   {
     key: 'questions',
     header: 'Questions',
@@ -247,6 +260,7 @@ export function StoryTable({
       onRetry={onRetry}
       what="writing stories"
       empty={empty}
+      wide
       actions={(s) => (
         <>
           <a className="button-link" href={`#/stories/${s.id}`} aria-label={`Open “${s.title || 'Untitled'}”`}>
