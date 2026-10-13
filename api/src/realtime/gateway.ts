@@ -8,6 +8,12 @@ import type { RealtimeKV } from './kv.js';
 
 export const TICKET_TTL_SECONDS = 30;
 export const RESUME_TTL_SECONDS = 300;
+/**
+ * Live connections one person may have at once: a phone, a tablet and a few
+ * browser tabs. Enough that one never pushes another off; bounded so a
+ * runaway client cannot pile up sockets.
+ */
+export const MAX_CONNECTIONS_PER_USER = 5;
 /** Close codes (4xxx = application-defined). */
 export const CLOSE_CONNECTED_ELSEWHERE = 4001;
 export const CLOSE_BAD_TICKET = 4003;
@@ -56,10 +62,15 @@ export type ClientMessageHandler = (
  * - ROOMS: membership is invite-based (features call invite() before a
  *   user may join); events fan out via the RoomBus so any node can
  *   serve any room.
- * - One live connection per user: the newest wins (4001 on the old).
+ * - Up to MAX_CONNECTIONS_PER_USER live connections per user, each joined to
+ *   the user's own channel, so `notifyUser` reaches every device and tab. It
+ *   used to be one: the newest won, and a web tab and a phone took turns
+ *   pushing each other off (4001) — whichever lost missed its invites. A
+ *   sixth connection now closes the OLDEST with 4001.
  */
 export class RealtimeGateway {
-  private readonly connections = new Map<string, Connection>();
+  /** each user's live connections on this node, oldest first */
+  private readonly connections = new Map<string, Set<Connection>>();
   private readonly roomMembers = new Map<string, Set<Connection>>();
   private readonly customHandlers = new Map<string, ClientMessageHandler>();
   private readonly disconnectListeners: Array<(userId: string) => void> = [];
@@ -103,12 +114,14 @@ export class RealtimeGateway {
     await this.bus.publish(`user:${userId}`, event);
   }
 
-  /** Last measured RTT (ms) for a user's live connection, or null (KUR-057). */
+  /** Last measured RTT (ms) for a user's newest live connection, or null (KUR-057). */
   rttFor(userId: string): number | null {
-    return this.connections.get(userId)?.rttMs ?? null;
+    const conns = this.connections.get(userId);
+    if (!conns) return null;
+    return [...conns].at(-1)?.rttMs ?? null;
   }
 
-  /** Fires when a user's live connection drops (game disconnect, KUR-057). */
+  /** Fires when a user's last live connection on this node drops (game disconnect, KUR-057). */
   onDisconnect(listener: (userId: string) => void): void {
     this.disconnectListeners.push(listener);
   }
@@ -121,8 +134,11 @@ export class RealtimeGateway {
     this.customHandlers.set(type, handler);
   }
 
+  /** Live connections on this node, every user's together. */
   connectionCount(): number {
-    return this.connections.size;
+    let n = 0;
+    for (const conns of this.connections.values()) n += conns.size;
+    return n;
   }
 
   registerRoutes(app: FastifyInstance): void {
@@ -156,7 +172,7 @@ export class RealtimeGateway {
     this.sweepTimer = setInterval(() => this.sweep(), this.heartbeatIntervalMs);
     app.addHook('onClose', async () => {
       clearInterval(this.sweepTimer);
-      for (const conn of this.connections.values()) {
+      for (const conn of this.allConnections()) {
         conn.socket.terminate();
       }
       await this.bus.close();
@@ -164,11 +180,16 @@ export class RealtimeGateway {
   }
 
   private async accept(socket: WebSocket, userId: string, resume?: string): Promise<void> {
-    // newest connection wins
-    const existing = this.connections.get(userId);
-    if (existing) {
-      existing.socket.close(CLOSE_CONNECTED_ELSEWHERE, 'connected elsewhere');
-      this.dropConnection(existing);
+    let conns = this.connections.get(userId);
+    if (!conns) {
+      conns = new Set();
+      this.connections.set(userId, conns);
+    }
+    // room for this one: the oldest connections give way (a Set keeps insertion order)
+    while (conns.size >= MAX_CONNECTIONS_PER_USER) {
+      const oldest = conns.values().next().value!;
+      oldest.socket.close(CLOSE_CONNECTED_ELSEWHERE, 'connected elsewhere');
+      this.dropConnection(oldest);
     }
 
     const conn: Connection = {
@@ -178,7 +199,9 @@ export class RealtimeGateway {
       resumeToken: randomBytes(24).toString('base64url'),
       lastPongAt: Date.now(),
     };
-    this.connections.set(userId, conn);
+    // dropping the oldest may have emptied and removed the set
+    this.connections.set(userId, conns);
+    conns.add(conn);
     // personal channel for server→user pushes (match found, invites, ...)
     this.joinLocal(conn, `user:${userId}`);
 
@@ -295,15 +318,18 @@ export class RealtimeGateway {
   }
 
   private dropConnection(conn: Connection): void {
-    const wasLive = this.connections.get(conn.userId) === conn;
-    if (wasLive) {
-      this.connections.delete(conn.userId);
-    }
+    const conns = this.connections.get(conn.userId);
+    const wasLive = conns?.delete(conn) ?? false;
+    const lastOne = wasLive && conns!.size === 0;
+    if (lastOne) this.connections.delete(conn.userId);
     for (const roomId of conn.rooms) {
-      this.roomMembers.get(roomId)?.delete(conn);
+      const members = this.roomMembers.get(roomId);
+      members?.delete(conn);
+      if (members && members.size === 0) this.roomMembers.delete(roomId);
     }
-    // notify features (game auto-wrong on mid-question disconnect, KUR-057)
-    if (wasLive) {
+    // notify features (game auto-wrong on mid-question disconnect, KUR-057) —
+    // only once the user has no connection left on this node
+    if (lastOne) {
       for (const listener of this.disconnectListeners) listener(conn.userId);
     }
     // resume state stays in the KV for RESUME_TTL so a quick reconnect
@@ -323,7 +349,7 @@ export class RealtimeGateway {
   /** Terminates connections that missed the heartbeat window. */
   sweep(now = Date.now()): number {
     let reaped = 0;
-    for (const conn of this.connections.values()) {
+    for (const conn of this.allConnections()) {
       if (now - conn.lastPongAt > this.heartbeatTimeoutMs) {
         conn.socket.terminate();
         this.dropConnection(conn);
@@ -338,6 +364,11 @@ export class RealtimeGateway {
       }
     }
     return reaped;
+  }
+
+  /** Every live connection on this node, as a copy (callers drop some while iterating). */
+  private allConnections(): Connection[] {
+    return [...this.connections.values()].flatMap((conns) => [...conns]);
   }
 
   private send(conn: Connection, payload: Record<string, unknown>): void {

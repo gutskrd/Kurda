@@ -87,6 +87,8 @@ import { registerRhymeRoutes } from './game/rhyme-routes.js';
 import { registerRaceRoutes } from './game/race-routes.js';
 import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
 import { registerStoryGameRoutes } from './story-games/routes.js';
+import { PlayEvents } from './play/events.js';
+import { registerPlayRoutes } from './play/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -479,13 +481,24 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, achievements);
     registerWordleRoutes(app, { xp: xpService, milestones: achievements });
+    // `play_changed` after every change to a lobby (play/events.ts), so clients
+    // stop polling. The gateway it speaks through is set up further down, so it
+    // is looked up when there is something to say.
+    const playEvents = new PlayEvents(
+      app.db,
+      {
+        notifyUser: (uid, ev) => app.realtime.notifyUser(uid, ev as never),
+        publish: (room, ev) => app.realtime.publish(room, ev as never),
+      },
+      { log: app.log },
+    );
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
-    registerWordleBattleRoutes(app, { xp: xpService });
+    registerWordleBattleRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
     registerRhymeRoutes(app, { xp: xpService });
     // typing race (solo time trial) over admin-curated texts
     registerRaceRoutes(app, { xp: xpService });
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
-    registerRhymeMatchRoutes(app, { xp: xpService });
+    registerRhymeMatchRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
@@ -644,13 +657,26 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     registerGroupChatRoutes(app, groupChat);
 
+    // story games (Stories, which replaced the ranked quiz): Postgres is the
+    // game; long-polls are woken across instances over the room bus
+    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
+
+    // inviting friends to any online game, game cards in chats, and playing
+    // again (contract §B): one join rule and one invite flow for every game
+    registerPlayRoutes(app, {
+      events: playEvents,
+      xp: xpService,
+      friends,
+      groups,
+      inbox,
+      chat: new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
+      groupChat,
+      stories: storyGames,
+    });
+
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
     registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
-
-    // story games (Stories, which replaced the ranked quiz): Postgres is the
-    // game; long-polls are woken across instances over the room bus
-    registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
 
     // skill-rating reads (KUR-061). Nothing writes a rating since the ranked
     // quiz went (Stories replaced it), but the ratings people earned stay

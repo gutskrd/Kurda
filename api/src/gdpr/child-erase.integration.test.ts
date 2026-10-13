@@ -193,6 +193,16 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       `tok-${tag}-${suffix}`,
     ]);
     await pool.query(`INSERT INTO notification_prefs (user_id) VALUES ($1)`, [child.id]);
+    // a game invite each way, and a rematch offer
+    await pool.query(
+      `INSERT INTO play_invites (game, lobby_id, host_id, invitee_id, expires_at)
+       VALUES ('wordle-battle', gen_random_uuid(), $1, $2, now() + interval '15 minutes'),
+              ('rhyme-match', gen_random_uuid(), $2, $1, now() + interval '15 minutes')`,
+      [child.id, friend.id],
+    );
+    await pool.query(`INSERT INTO play_rematches (game, lobby_id, user_id) VALUES ('wordle-battle', gen_random_uuid(), $1)`, [
+      child.id,
+    ]);
     await pool.query(
       `INSERT INTO analytics_events (event_id, user_id, type, payload) VALUES ($1, $2, 'lesson_started', '{}'::jsonb)`,
       [`ev-${tag}-${suffix}`, child.id],
@@ -334,6 +344,9 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       expect(await count(`SELECT 1 FROM ${table} WHERE user_id = $1`, id), table).toBe(0);
     }
     expect(await count(`SELECT 1 FROM friendships WHERE user_lo = $1 OR user_hi = $1`, id)).toBe(0);
+    // the games they asked others to and were asked to, and their rematch offers
+    expect(await count(`SELECT 1 FROM play_invites WHERE host_id = $1 OR invitee_id = $1`, id)).toBe(0);
+    expect(await count(`SELECT 1 FROM play_rematches WHERE user_id = $1`, id)).toBe(0);
 
     // their story games: answers and seats gone, their name off the games they
     // hosted; the lobby they hosted closed (through the leave path, first), and

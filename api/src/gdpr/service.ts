@@ -433,6 +433,10 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   await q(`DELETE FROM device_tokens WHERE user_id = $1`);
   await q(`DELETE FROM notification_prefs WHERE user_id = $1`);
   await q(`DELETE FROM notifications WHERE user_id = $1`);
+  // game invites from and to them, and their rematch offers: the account is
+  // anonymized, not deleted, so the foreign keys' cascade never runs
+  await q(`DELETE FROM play_invites WHERE host_id = $1 OR invitee_id = $1`);
+  await q(`DELETE FROM play_rematches WHERE user_id = $1`);
   await q(`DELETE FROM streak_reminders_sent WHERE user_id = $1`);
   await q(`DELETE FROM activity_congrats WHERE user_id = $1`);
   await q(`DELETE FROM activity_events WHERE actor_id = $1`);

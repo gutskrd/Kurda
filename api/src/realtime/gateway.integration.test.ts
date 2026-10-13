@@ -5,7 +5,7 @@ import pg from 'pg';
 import WebSocket from 'ws';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { CLOSE_BAD_TICKET, CLOSE_CONNECTED_ELSEWHERE } from './gateway.js';
+import { CLOSE_BAD_TICKET, CLOSE_CONNECTED_ELSEWHERE, MAX_CONNECTIONS_PER_USER } from './gateway.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -157,13 +157,40 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     await waitFor(ws, (m) => m.type === 'left');
   });
 
-  it('newest connection wins: the older socket closes with 4001', async () => {
+  // Changed on purpose: one connection per user used to win (the newest), so a
+  // phone and a browser tab pushed each other off and the loser missed its
+  // events. Several devices now stay connected, and every one hears the user's
+  // events; only a connection past the limit pushes the oldest off.
+  it('a person stays connected on several devices, and each gets their events', async () => {
+    const user = await makeUser('devices');
+    const phone = await connect(user.token);
+    const tab = await connect(user.token);
+    expect(phone.ws.readyState).toBe(WebSocket.OPEN);
+    expect(tab.ws.readyState).toBe(WebSocket.OPEN);
+
+    const onPhone = waitFor(phone.ws, (m) => m.type === 'event');
+    const onTab = waitFor(tab.ws, (m) => m.type === 'event');
+    await app.realtime.notifyUser(user.id, { type: 'play_changed', game: 'wordle-battle', lobbyId: 'x' });
+    for (const msg of [await onPhone, await onTab]) {
+      expect(msg.room).toBe(`user:${user.id}`);
+      expect((msg.event as { type: string }).type).toBe('play_changed');
+    }
+  });
+
+  it(`a connection past ${MAX_CONNECTIONS_PER_USER} closes the oldest with 4001`, async () => {
     const user = await makeUser('dupe');
-    const first = await connect(user.token);
-    const closePromise = waitForClose(first.ws);
-    const second = await connect(user.token);
-    expect(await closePromise).toBe(CLOSE_CONNECTED_ELSEWHERE);
-    expect(second.ws.readyState).toBe(WebSocket.OPEN);
+    const open: Array<{ ws: WebSocket }> = [];
+    for (let i = 0; i < MAX_CONNECTIONS_PER_USER; i++) open.push(await connect(user.token));
+    const oldestClosed = waitForClose(open[0]!.ws);
+    const newest = await connect(user.token);
+    expect(await oldestClosed).toBe(CLOSE_CONNECTED_ELSEWHERE);
+    expect(newest.ws.readyState).toBe(WebSocket.OPEN);
+    for (const c of open.slice(1)) expect(c.ws.readyState).toBe(WebSocket.OPEN);
+
+    // the survivors still hear the user's events; the closed one is gone from the fan-out
+    const heard = waitFor(newest.ws, (m) => m.type === 'event');
+    await app.realtime.notifyUser(user.id, { type: 'ping-all' });
+    expect(((await heard).event as { type: string }).type).toBe('ping-all');
   });
 
   it('reconnect with the resume token rejoins the same rooms', async () => {

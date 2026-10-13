@@ -1,10 +1,11 @@
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { stripControlChars, type ChatGameRef, type ChatMessageKind } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
 import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
 import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { gameRef } from '../chat/service.js';
 
 export const MAX_GROUP_MESSAGE_LEN = 2000;
 export type MuteDuration = '1h' | '24h' | 'perm';
@@ -28,9 +29,14 @@ export interface GroupMessage {
   username: string;
   /** already resolved (uploaded photo -> chosen avatar); null when unknown */
   avatarUrl: string | null;
-  body: string;
+  /** the text; null for a card, which has none ('' once deleted) */
+  body: string | null;
   createdAt: string;
   deleted: boolean;
+  /** 'text', or a card (@kurda/shared `chat-cards`) */
+  kind: ChatMessageKind;
+  /** a game card's lobby; its live state is fetched (GET /play/cards/:game/:lobbyId) */
+  game: ChatGameRef | null;
 }
 
 /** The realtime room a group's chat fans out to. */
@@ -123,6 +129,53 @@ export class GroupChatService {
       body,
       createdAt: row.rows[0]!.created_at.toISOString(),
       deleted: false,
+      kind: 'text',
+      game: null,
+    };
+    await this.hub.publish(room(groupId), { type: 'group_msg', groupId, message }).catch(() => undefined);
+    return message;
+  }
+
+  /**
+   * A game card posted to the group (contract §B3): the host shared a lobby
+   * here. No text, so the text pipeline is skipped; membership, the group's
+   * own mutes and an escalation mute apply exactly as to a message, and it is
+   * published to the room like one.
+   */
+  async sendCard(
+    userId: string,
+    groupId: string,
+    card: ChatGameRef,
+    publicUrl: PublicUrl = () => null,
+  ): Promise<GroupMessage> {
+    await this.requireMember(groupId, userId);
+    if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
+    if (this.moderation && (await this.moderation.isChatMuted(userId))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
+    }
+    const row = await this.pool.query<{
+      id: string; created_at: Date; username: string;
+      profile_photo_key: string | null; selected_avatar_key: string | null;
+    }>(
+      `WITH ins AS (
+         INSERT INTO group_messages (group_id, sender_id, kind, game, game_lobby_id)
+         VALUES ($1, $2, 'game', $3, $4)
+         RETURNING id, sender_id, created_at
+       )
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+         FROM ins JOIN users u ON u.id = ins.sender_id`,
+      [groupId, userId, card.game, card.lobbyId],
+    );
+    const message: GroupMessage = {
+      id: row.rows[0]!.id,
+      senderId: userId,
+      username: row.rows[0]!.username,
+      avatarUrl: resolveAvatarUrl(row.rows[0]!.profile_photo_key, row.rows[0]!.selected_avatar_key, publicUrl),
+      body: null,
+      createdAt: row.rows[0]!.created_at.toISOString(),
+      deleted: false,
+      kind: 'game',
+      game: card,
     };
     await this.hub.publish(room(groupId), { type: 'group_msg', groupId, message }).catch(() => undefined);
     return message;
@@ -145,10 +198,11 @@ export class GroupChatService {
     // invite-only group everybody was put there by somebody they chose.
     const rows = await this.pool.query<{
       id: string; sender_id: string; username: string; profile_photo_key: string | null;
-      selected_avatar_key: string | null; body: string; created_at: Date; deleted_at: Date | null;
+      selected_avatar_key: string | null; body: string | null; created_at: Date; deleted_at: Date | null;
+      kind: ChatMessageKind; game: string | null; game_lobby_id: string | null;
     }>(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.deleted_at
+              m.body, m.created_at, m.deleted_at, m.kind, m.game, m.game_lobby_id
          FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
         WHERE m.group_id = $1
           AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
@@ -165,6 +219,8 @@ export class GroupChatService {
         body: r.deleted_at ? '' : r.body,
         createdAt: r.created_at.toISOString(),
         deleted: r.deleted_at !== null,
+        kind: r.kind,
+        game: r.deleted_at ? null : gameRef(r),
       }))
       .reverse();
   }

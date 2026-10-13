@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
 import { WordleBattleService } from './wordle-battle-service.js';
+import { befriend } from '../test/social.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -60,6 +61,8 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
   it('runs a full match: same word, hidden opponents, placement + XP', async () => {
     const host = await makeUser();
     const p2 = await makeUser();
+    // a battle is for the host's friends (play/access.ts)
+    await befriend(pool, host, p2);
     const created = await svc.create(host, { difficulty: 'medium' });
     expect(created.ok).toBe(true);
     if (!created.ok) return;
@@ -78,6 +81,7 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
 
     // can't join once active
     const late = await makeUser();
+    await befriend(pool, host, late);
     const lateJoin = await svc.join(battleId, late);
     expect(lateJoin.ok).toBe(false);
     if (!lateJoin.ok) expect(lateJoin.reason).toBe('not-open');
@@ -89,8 +93,10 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     expect(win.ok).toBe(true);
     if (win.ok) {
       expect(win.battle.me!.solved).toBe(true);
-      // opponents expose progress/finish only — never their letters
-      const opp = win.battle.opponents.find((o) => o.userId === p2)!;
+      // opponents expose progress/finish only — never their letters, nor their
+      // account id: they are known by seat
+      expect(win.battle.opponents.map((o) => o.userId)).toEqual(['seat:2']);
+      const opp = win.battle.opponents[0]!;
       expect(opp).toBeTruthy();
       expect(opp).not.toHaveProperty('guesses');
       // target still hidden — the match isn't over (p2 still playing)
@@ -111,8 +117,9 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     // results: host wins (rank 1) with more XP than the non-solver
     const results = await svc.results(battleId, host);
     expect(results).toBeTruthy();
+    // the viewer's own row carries their id; everyone else's is a seat
     const hostRow = results!.ranking.find((r) => r.userId === host)!;
-    const p2Row = results!.ranking.find((r) => r.userId === p2)!;
+    const p2Row = results!.ranking.find((r) => r.userId === 'seat:2')!;
     expect(hostRow.rank).toBe(1);
     expect(hostRow.solved).toBe(true);
     expect(p2Row.solved).toBe(false);
@@ -133,9 +140,11 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     expect(start.ok).toBe(false);
     if (!start.ok) expect(start.reason).toBe('need-two');
 
+    // to someone not in it, the battle does not exist at all (it used to say
+    // "not started yet", which told a stranger it was there)
     const stranger = await makeUser();
     const g = await svc.guess(created.battle.id, stranger, MEDIUM[0]!);
     expect(g.ok).toBe(false);
-    if (!g.ok) expect(g.reason).toBe('not-active'); // not started yet
+    if (!g.ok) expect(g.reason).toBe('not-found');
   });
 });
