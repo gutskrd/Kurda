@@ -188,39 +188,44 @@ export class RaceService {
   }
 
   /**
-   * A racer's best runs, best first — the "how am I doing" list — and the best
-   * in each accent mode, since a forgiving run and a strict one are not the
-   * same race. A run worth nothing (nothing typed right, or a speed nobody
-   * types at) is in the list but is nobody's personal best.
+   * A racer's best runs in each accent mode, best first — the "how am I doing"
+   * lists — and each mode's personal best. Ranked only within a mode: a
+   * forgiving run (e counts for ê) at the speed of a strict one scores higher
+   * and is not the same race, so one list across modes put it above the strict
+   * run, as the personal best never would. A run worth nothing (nothing typed
+   * right, or a speed nobody types at) is in its list but is nobody's personal
+   * best — and as the lists are by score, a mode's personal best is the top of
+   * its list whenever that is worth anything.
    */
   async best(
     userId: string,
     filter: { accentMode?: AccentMode; dialect?: TypingDialect } = {},
     limit = 10,
   ): Promise<RaceBestView> {
-    const params = [userId, filter.accentMode ?? null, filter.dialect ?? null];
-    const where = `g.user_id = $1 AND g.finished_at IS NOT NULL
-       AND ($2::text IS NULL OR g.accent_mode = $2) AND ($3::text IS NULL OR g.dialect = $3)`;
-    const [runs, bests] = await Promise.all([
-      this.pool.query<RunRow>(
-        `SELECT t.title, g.wpm, g.accuracy, g.score, g.accent_mode, g.dialect, g.finished_at
-           FROM race_games g JOIN race_texts t ON t.id = g.text_id
-          WHERE ${where}
-          ORDER BY g.score DESC NULLS LAST, g.finished_at DESC
-          LIMIT $4`,
-        [...params, limit],
-      ),
-      this.pool.query<RunRow>(
-        `SELECT DISTINCT ON (g.accent_mode) t.title, g.wpm, g.accuracy, g.score, g.accent_mode, g.dialect, g.finished_at
-           FROM race_games g JOIN race_texts t ON t.id = g.text_id
-          WHERE ${where} AND g.score > 0
-          ORDER BY g.accent_mode, g.score DESC, g.finished_at DESC`,
-        params,
-      ),
-    ]);
-    const personalBests = Object.fromEntries(ACCENT_MODES.map((m) => [m, null])) as Record<AccentMode, RaceRun | null>;
-    for (const r of bests.rows) personalBests[r.accent_mode] = toRun(r);
-    return { races: runs.rows.map(toRun), personalBests };
+    const runs = await this.pool.query<RunRow>(
+      `SELECT title, wpm, accuracy, score, accent_mode, dialect, finished_at
+         FROM (SELECT t.title, g.wpm, g.accuracy, g.score, g.accent_mode, g.dialect, g.finished_at,
+                      row_number() OVER (PARTITION BY g.accent_mode
+                                         ORDER BY g.score DESC NULLS LAST, g.finished_at DESC) AS place
+                 FROM race_games g JOIN race_texts t ON t.id = g.text_id
+                WHERE g.user_id = $1 AND g.finished_at IS NOT NULL
+                  AND ($2::text IS NULL OR g.accent_mode = $2) AND ($3::text IS NULL OR g.dialect = $3)) ranked
+        WHERE place <= $4
+        ORDER BY accent_mode, place`,
+      [userId, filter.accentMode ?? null, filter.dialect ?? null, limit],
+    );
+    const racesByMode = Object.fromEntries(ACCENT_MODES.map((m) => [m, [] as RaceRun[]])) as Record<
+      AccentMode,
+      RaceRun[]
+    >;
+    for (const r of runs.rows) racesByMode[r.accent_mode].push(toRun(r));
+    const personalBests = Object.fromEntries(
+      ACCENT_MODES.map((m) => {
+        const top = racesByMode[m][0];
+        return [m, top && top.score > 0 ? top : null];
+      }),
+    ) as Record<AccentMode, RaceRun | null>;
+    return { racesByMode, personalBests };
   }
 }
 

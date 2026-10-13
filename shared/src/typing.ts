@@ -976,9 +976,20 @@ export interface RaceRun {
   at: string;
 }
 
-/** `GET /race/best[?accentMode=&dialect=]`: best runs, and the best in each accent mode. */
+/**
+ * `GET /race/best[?accentMode=&dialect=]`: each accent mode's best runs, and
+ * its personal best. Filtered to one mode, the others are empty and null; to
+ * one variety, only its races count.
+ */
 export interface RaceBestView {
-  races: RaceRun[];
+  /**
+   * Each mode's best runs (up to 10), best first, ranked only against runs in
+   * the same mode — e counts for ê in a forgiving or hidden run, so one is not
+   * the same race as a strict one and never outranks it. Empty for a mode with
+   * no finished race.
+   */
+  racesByMode: Record<AccentMode, RaceRun[]>;
+  /** each mode's best run worth anything: the top of its list, unless that scored 0 */
   personalBests: Record<AccentMode, RaceRun | null>;
 }
 

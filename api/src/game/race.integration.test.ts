@@ -203,8 +203,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   it('lists a racer best runs', async () => {
     const res = await call('GET', '/race/best', playerToken);
     expect(res.statusCode).toBe(200);
-    expect(res.json().races.length).toBeGreaterThan(0);
-    expect(res.json().races[0]).toHaveProperty('wpm');
+    expect(res.json().racesByMode.forgiving.length).toBeGreaterThan(0);
+    expect(res.json().racesByMode.forgiving[0]).toHaveProperty('wpm');
   });
 
   it('refuses a text too short to be a race', async () => {
@@ -320,14 +320,45 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect((await call('POST', `/race/${slower.id}/finish`, playerToken, { typed: TEXT })).json().personalBest).toBe(false);
 
     const best = (await call('GET', '/race/best?accentMode=hidden', playerToken)).json();
-    expect(best.races.every((r: { accentMode: string }) => r.accentMode === 'hidden')).toBe(true);
-    expect(best.personalBests.hidden.score).toBe(best.races[0].score);
-    expect(best.personalBests.strict).toBeNull(); // filtered to one mode
+    expect(best.racesByMode.hidden).toHaveLength(3);
+    expect(best.racesByMode.hidden.every((r: { accentMode: string }) => r.accentMode === 'hidden')).toBe(true);
+    expect(best.personalBests.hidden).toEqual(best.racesByMode.hidden[0]);
+    // filtered to one mode
+    expect(best.personalBests.strict).toBeNull();
+    expect(best.racesByMode.strict).toEqual([]);
 
     const all = (await call('GET', '/race/best', playerToken)).json();
     expect(Object.keys(all.personalBests).sort()).toEqual(['forgiving', 'hidden', 'strict']);
+    expect(Object.keys(all.racesByMode).sort()).toEqual(['forgiving', 'hidden', 'strict']);
     expect(all.personalBests.hidden).not.toBeNull();
     expect(all.personalBests.forgiving).not.toBeNull();
+  });
+
+  /*
+   * The best-runs list without a mode used to rank every mode together, so a
+   * forgiving run (e counts for ê) outranked a strict one at the same speed —
+   * the comparison the personal best was already kept apart from.
+   */
+  it('ranks best runs only against runs in the same accent mode', async () => {
+    const strict = await race({ length: 3, accentMode: 'strict' });
+    await typedFor(strict.id, 60);
+    const slow = (await call('POST', `/race/${strict.id}/finish`, playerToken, { typed: TEXT })).json();
+    const forgiving = await race({ length: 3, accentMode: 'forgiving' });
+    await typedFor(forgiving.id, 6);
+    const fast = (await call('POST', `/race/${forgiving.id}/finish`, playerToken, { typed: PLAIN })).json();
+    expect(fast.score).toBeGreaterThan(slow.score);
+
+    const { racesByMode, personalBests } = (await call('GET', '/race/best', playerToken)).json();
+    for (const mode of ['strict', 'forgiving', 'hidden'] as const) {
+      const runs = racesByMode[mode] as Array<{ accentMode: string; score: number }>;
+      expect(runs.every((r) => r.accentMode === mode), mode).toBe(true);
+      expect(runs.map((r) => r.score), mode).toEqual(runs.map((r) => r.score).sort((x, y) => y - x));
+      expect(personalBests[mode], mode).toEqual(runs[0]?.score ? runs[0] : null);
+    }
+    // the fast forgiving run tops its own list, and the strict list is topped
+    // by a strict run that scored less
+    expect(racesByMode.forgiving[0].score).toBe(fast.score);
+    expect(personalBests.strict.score).toBeLessThan(fast.score);
   });
 
   it('scores one missed letter as one letter, not the rest of the text', async () => {

@@ -92,7 +92,7 @@ export function registerRaceRoutes(app: FastifyInstance, deps: { xp?: XpService 
     },
   );
 
-  /** Your best runs, and your best in each accent mode (optionally in one mode or variety). */
+  /** Your best runs and your personal best, each accent mode on its own (optionally one mode or variety). */
   app.get('/race/best', { schema: { querystring: bestQuery }, preHandler: requireAuth }, async (req) =>
     race.best(req.user!.id, req.query as z.infer<typeof bestQuery>),
   );
