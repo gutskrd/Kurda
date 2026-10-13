@@ -4,6 +4,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import type { ShopService } from './service.js';
+import type { ItemReturns } from './returns.js';
 import type { FriendService } from '../friends/service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 
@@ -44,7 +45,7 @@ const purchaseBody = z.object({
 export function registerShopRoutes(
   app: FastifyInstance,
   shop: ShopService,
-  deps: { friends?: FriendService; inbox?: InboxService } = {},
+  deps: { friends?: FriendService; inbox?: InboxService; returns?: ItemReturns } = {},
 ): void {
   /** Admin: create/update a catalog item. */
   app.post(
@@ -182,11 +183,53 @@ export function registerShopRoutes(
     seen: await shop.markGiftsSeen(req.user!.id),
   }));
 
-  /** The caller's owned items, incl. a resolved cosmetic `assetUrl`. */
-  app.get('/me/inventory', { preHandler: requireAuth }, async (req) => ({
-    items: (await shop.inventory(req.user!.id)).map((i) => ({
-      ...i,
-      assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
-    })),
-  }));
+  /**
+   * The caller's owned items, incl. a resolved cosmetic `assetUrl`.
+   *
+   * Items whose art was replaced also say what returning them gives back
+   * (`refund`, null when nothing would), and `refreshedItems` lists the ones
+   * the caller has not been told about yet — see shared/src/cosmetics.ts.
+   */
+  app.get('/me/inventory', { preHandler: requireAuth }, async (req) => {
+    const userId = req.user!.id;
+    const [items, refunds, refreshedItems] = await Promise.all([
+      shop.inventory(userId),
+      deps.returns?.refunds(userId),
+      deps.returns?.unnoticed(userId),
+    ]);
+    return {
+      items: items.map((i) => ({
+        ...i,
+        assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+        refund: refunds?.get(i.sku) ?? null,
+      })),
+      refreshedItems: refreshedItems ?? [],
+    };
+  });
+
+  const returns = deps.returns;
+  if (returns) {
+    /** The one-time "we refreshed your items" notice has been shown. */
+    app.post(
+      '/me/inventory/refreshed/seen',
+      { config: { skipValidation: true }, preHandler: requireAuth },
+      async (req) => ({ seen: await returns.markNoticed(req.user!.id) }),
+    );
+
+    /**
+     * Return an item whose art was replaced, for what was paid for it. Only
+     * the replaced items, only by an owner who bought one, and only once — a
+     * repeat answers `duplicate: true` and pays nothing.
+     */
+    app.post(
+      '/shop/items/:sku/return',
+      {
+        // no body: the item is in the path, and the refund was settled when its art changed
+        schema: { params: z.object({ sku: z.string().min(1).max(80) }) },
+        config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
+        preHandler: requireAuth,
+      },
+      async (req) => returns.returnItem(req.user!.id, (req.params as { sku: string }).sku),
+    );
+  }
 }

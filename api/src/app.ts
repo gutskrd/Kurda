@@ -41,6 +41,7 @@ import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { ItemReturns } from './shop/returns.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
@@ -447,6 +448,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // gifting is friends-only, and tells the recipient it arrived
       friends,
       inbox: new InboxService(app.db),
+      // owners of items whose art was replaced: the notice, and returns
+      returns: new ItemReturns(app.db, new WalletService(app.db)),
     });
     // Profile cosmetics: equip (server-verified access) + favorites (KUR profile)
     registerCosmeticsRoutes(app, new CosmeticsService(app.db));

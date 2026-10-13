@@ -122,6 +122,19 @@ export {
   type TagKind,
   type TagRow,
 } from './tags.js';
+/**
+ * Refreshed shop items: the one-time notice and returning an item for what was
+ * paid, after the shop's art was replaced.
+ */
+export {
+  ITEM_RETURN_ERRORS,
+  shouldShowRefreshNotice,
+  type ItemRefund,
+  type ItemReturnError,
+  type RefreshedInventory,
+  type RefundCurrency,
+  type ReturnItemResult,
+} from './cosmetics.js';
 export {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_GROUPS,
