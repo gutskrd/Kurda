@@ -33,8 +33,8 @@ export function GiftSheet({
 }: {
   item: { sku: string; name: string; price: number; currency: string };
   onClose: () => void;
-  /** `to`: the friend it went to — the gift is in your chat with them now */
-  onSent: (balance: number, to: { userId: string; username: string }) => void;
+  /** `to`: the friend it went to (`name` as the list showed them) — the gift is in your chat with them now */
+  onSent: (balance: number, to: { userId: string; username: string; name: string }) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -69,7 +69,7 @@ export function GiftSheet({
         idempotencyKey: `gift-${item.sku}-${to.userId}-${Date.now()}`,
       }).then((res) => {
         setBusy(null);
-        if (res.ok) onSent(res.data.balance, { userId: to.userId, username: to.username });
+        if (res.ok) onSent(res.data.balance, { userId: to.userId, username: to.username, name: to.displayName || to.username });
         // a limit on the account (a gift is a chat message) says what and until when
         else setError(sendErrorOf(res.error, t, locale).message);
       });

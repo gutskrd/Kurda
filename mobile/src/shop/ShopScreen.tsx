@@ -55,7 +55,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const [busy, setBusy] = useState(false);
   const [gifting, setGifting] = useState<ShopItem | null>(null);
   // a gift from the shop goes into your chat with that friend: fly it there, then say where it is
-  const [sentGift, setSentGift] = useState<{ item: ShopItem; to: { userId: string; username: string }; flying: boolean } | null>(null);
+  const [sentGift, setSentGift] = useState<{ item: ShopItem; to: { userId: string; username: string; name: string }; flying: boolean } | null>(null);
   const navigation = useNavigation<RootNavigation>();
 
   const load = useCallback(() => {
@@ -213,13 +213,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             // the shop's list does not say which items are limited, so a Newroz
             // item flies as a rare one here; the recipient's unwrap has its real tier
             tier={giftTierFor({ currency: sentGift.item.currency, price: sentGift.item.price, limited: false })}
-            announce={t('gift.sent', { name: sentGift.to.username })}
+            announce={t('gift.sent', { name: sentGift.to.name })}
             onDone={() => setSentGift((g) => (g ? { ...g, flying: false } : g))}
           />
         ) : sentGift ? (
           <GiftSentNote
             itemName={sentGift.item.name}
-            to={sentGift.to.username}
+            to={sentGift.to.name}
             onOpenChat={() => {
               const to = sentGift.to;
               setSentGift(null);
