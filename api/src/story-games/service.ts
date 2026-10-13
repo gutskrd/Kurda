@@ -316,7 +316,9 @@ export class StoryGamesService {
   /**
    * Insert a game and its host, inside the caller's transaction. Duo and group
    * games count against the host's limit of unfinished games: a fourth closes
-   * the oldest lobby, or is refused when none of the three is a lobby.
+   * the oldest lobby, or is refused when none of the three is a lobby. A game
+   * the host has left does not count — the others may play it on for a while,
+   * but the host is no longer in it.
    */
   private async insertGame(
     client: pg.PoolClient,
@@ -329,9 +331,11 @@ export class StoryGamesService {
     if (!solo) {
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended('story-host:' || $1, 0))`, [hostId]);
       const hosted = await client.query<{ id: string; status: StoryGameStatus }>(
-        `SELECT id, status FROM story_games
+        `SELECT id, status FROM story_games g
           WHERE host_id = $1 AND mode <> 'solo' AND status = ANY($2::text[]) AND finished_at IS NULL
             AND updated_at > now() - make_interval(hours => $3)
+            AND EXISTS (SELECT 1 FROM story_game_players p
+                         WHERE p.game_id = g.id AND p.user_id = $1 AND p.left_at IS NULL AND NOT p.removed)
           ORDER BY created_at`,
         [hostId, LIVE, STALE_HOURS],
       );

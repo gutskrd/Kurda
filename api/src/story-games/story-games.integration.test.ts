@@ -950,6 +950,12 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
       const fifth = await make();
       expect(fifth.statusCode).toBe(409);
       expect(fifth.json().code).toBe('TOO_MANY_GAMES');
+      // a game the host has left, which the others play on without them, does not count
+      await pool.query(`UPDATE story_game_players SET left_at = now() WHERE game_id = $1 AND user_id = $2`, [ids[2], host.id]);
+      const afterLeaving = await make();
+      expect(afterLeaving.statusCode).toBe(201);
+      await pool.query(`UPDATE story_games SET status = 'reading' WHERE id = $1`, [afterLeaving.json().id]);
+      expect((await make()).json().code).toBe('TOO_MANY_GAMES');
       // a game idle for over six hours does not count
       await pool.query(`UPDATE story_games SET updated_at = now() - interval '7 hours' WHERE id = $1`, [ids[1]]);
       expect((await make()).statusCode).toBe(201);
