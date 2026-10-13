@@ -115,6 +115,37 @@ describe.skipIf(!DATABASE_URL)('shop (integration)', () => {
     expect((await wallet.balances(userId)).zer).toBe(before - 20);
   });
 
+  it('a key is the buyer’s own: another member may send the same one, and none takes a key the server pays under', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        email: `shop2_${suffix}@it.kurda.app`,
+        username: `shop2_${suffix}`.slice(0, 30),
+        password: 'a-strong-password1',
+        acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
+      },
+      remoteAddress: '10.71.0.9',
+    });
+    const otherId = res.json().user.id as string;
+    await wallet.credit({ userId: otherId, currency: 'zer', amount: 100, reason: 'admin_adjustment' });
+
+    // the same key from two members is two purchases, each paid and each granted
+    const key = `same-key-${suffix}`;
+    const mine = (await wallet.balances(userId)).zer;
+    expect(await shop.purchase(userId, potion, key)).toMatchObject({ duplicate: false, balance: mine - 20 });
+    expect(await shop.purchase(otherId, potion, key)).toMatchObject({ duplicate: false, balance: 80 });
+    expect((await shop.inventory(otherId)).find((i) => i.sku === potion)).toBeTruthy();
+
+    // a key shaped like the other member's daily reward does not stop it being paid
+    const daily = `daily:${otherId}:2099-01-01`;
+    expect(await shop.purchase(userId, potion, daily)).toMatchObject({ duplicate: false });
+    const reward = await wallet.credit({ userId: otherId, currency: 'zer', amount: 5, reason: 'daily_reward', idempotencyKey: daily });
+    expect(reward).toMatchObject({ applied: true, duplicate: false, balance: 85 });
+  });
+
   it('HTTP: item creation is admin-only; catalog + purchase work for users', async () => {
     const denied = await app.inject({
       method: 'POST',
