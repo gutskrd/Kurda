@@ -65,6 +65,11 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   ];
   if (deps.stories) {
     adapters.push(new StoriesAdapter(app.db, deps.stories));
+    // The story games tell us only that a game changed, not whether a chat
+    // card could show it, so every answer and "continue" reaches the room of a
+    // group the game was shared into (play/events.ts). Once the service says
+    // which changes are moves in a game under way, pass `{ card: false }` for
+    // those, as Wordle Battle and Rhyme Match do.
     deps.stories.onChange((id) => deps.events.changed('stories', id));
   }
   const play = new PlayService(app.db, {
