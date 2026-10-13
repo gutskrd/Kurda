@@ -429,6 +429,27 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     expect((await call('GET', '/me/library/drafts', me.token)).json().posts).toEqual([]);
   });
 
+  it('keeps at most twenty unfinished drafts per person', async () => {
+    const me = await person('hoarder');
+    await pool.query(
+      `INSERT INTO library_posts (author_id, author_role, type, body, status)
+       SELECT $1, 'user', 'gotin', 'Pêşnivîs ' || g, 'draft' FROM generate_series(1, 19) g`,
+      [me.id],
+    );
+    const twentieth = (await call('POST', '/library/posts', me.token, { body: 'Bîstem', publish: false })).json();
+    expect(twentieth.status).toBe('draft');
+
+    const more = await call('POST', '/library/posts', me.token, { body: 'Yek zêde', publish: false });
+    expect(more.statusCode).toBe(429);
+    expect(more.json().code).toBe('DRAFT_LIMIT');
+    // a post that goes up is not a draft, and is not stopped by them
+    expect((await call('POST', '/library/posts', me.token, { body: 'Rasterast' })).statusCode).toBe(201);
+
+    // finishing one makes room for another
+    expect((await call('POST', `/library/posts/${twentieth.id}/publish`, me.token)).statusCode).toBe(200);
+    expect((await call('POST', '/library/posts', me.token, { body: 'Yek zêde', publish: false })).statusCode).toBe(201);
+  });
+
   it('refuses a picture as a narration', async () => {
     const me = await person('narrator');
     const picture = await upload(me);

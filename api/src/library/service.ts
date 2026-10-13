@@ -41,6 +41,15 @@ export type PostStatus = 'draft' | 'published' | 'removed';
 export const MAX_TITLE_LEN = POST_TITLE_MAX;
 export const MAX_BODY_LEN = POST_BODY_MAX;
 
+/**
+ * Unfinished server drafts one person may keep at once. A draft reaches
+ * nobody, so saving one is not gated like a post; this is what bounds them
+ * instead — without it a new account could store drafts as fast as the route
+ * takes them, for good. Only the apps installed before drafts moved onto the
+ * device save them, and a person finishing their writing has a handful.
+ */
+export const MAX_OPEN_DRAFTS = 20;
+
 /** A picture as a request names it: an upload, and what it shows. */
 export interface PostMediaInput {
   mediaKey: string;
@@ -285,6 +294,15 @@ export class LibraryService {
       [authorId, limit, offset],
     );
     return this.hydrate(res.rows);
+  }
+
+  /** How many unfinished server drafts this person has. */
+  async draftCount(authorId: string): Promise<number> {
+    const res = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM library_posts WHERE author_id = $1 AND status = 'draft'`,
+      [authorId],
+    );
+    return res.rows[0]!.n;
   }
 
   /** Read a single published post and increment its view count. */

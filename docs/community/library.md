@@ -89,7 +89,8 @@ post after its first post was deleted (the removed post keeps its own file).
 - **Drafts**: the new composer keeps drafts on the device. The server's
   `draft` status stays for the apps installed before it, and
   `GET /me/library/drafts` is how a draft one of them saved is found, finished
-  and published.
+  and published. A draft is not gated when it is saved (it reaches nobody);
+  instead a person keeps at most 20 unfinished ones (`MAX_OPEN_DRAFTS`).
 - **Guests cannot author** (401); reads need no auth.
 - **Ownership**: only the author or an admin may edit/unpublish/remove (others 403).
 - Removed posts are hidden from lists and unreadable but retained.
@@ -107,6 +108,7 @@ post after its first post was deleted (the removed post keeps its own file).
 | 422 | `MEDIA_IN_USE` | already on a post, or twice in this one; with `mediaKey` |
 | 422 | `INVALID_AUDIO` | the narration is not a confirmed audio upload |
 | 429 | `TRUST_VELOCITY` | posting faster than the account's trust level allows |
+| 429 | `DRAFT_LIMIT` | saving a draft with 20 unfinished ones already |
 | 403 | `AUTO_MODERATED` | the account was just restricted for spam |
 
 An invalid edit answers 422 with its reason (it used to answer 403 "not your
