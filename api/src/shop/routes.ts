@@ -12,7 +12,9 @@ const itemBody = z.object({
   sku: z.string().min(1).max(80),
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
-  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'misc']).optional(),
+  // 'tag' is the Kurdish identity tag the tags migration sells (tag_kurdish):
+  // without it here the item could be listed but never saved again
+  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'misc']).optional(),
   currency: z.enum(['zer', 'gems']),
   price: z.number().int().min(0).max(10_000_000),
   isUnique: z.boolean().optional(),

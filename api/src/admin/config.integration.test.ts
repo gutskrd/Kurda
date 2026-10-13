@@ -107,6 +107,54 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
     expect((await pool.query(`SELECT 1 FROM events WHERE key = $1`, [`cfg_${suffix}_newroz`])).rowCount).toBe(1);
   });
 
+  it('changes only what a shop proposal names, keeping the rest of the item', async () => {
+    const sku = `cfg_keep_${suffix}`; skus.push(sku);
+    await pool.query(
+      `INSERT INTO shop_items (sku, name, description, category, currency, price, asset_key, premium_only, display_order,
+                               available_from, available_to)
+       VALUES ($1, 'Kept', 'A picture', 'background', 'zer', 300, 'cosmetics/bg/keep.webp', true, 7,
+               '2030-01-01T00:00:00Z', '2030-02-01T00:00:00Z')`,
+      [sku],
+    );
+    const res = await call('POST', '/admin/config/changes', adminTok, {
+      target: 'shop_item',
+      payload: { sku, name: 'Kept', currency: 'zer', price: 250 },
+    });
+    expect(res.json().status).toBe('applied');
+    const row = (await pool.query(`SELECT * FROM shop_items WHERE sku = $1`, [sku])).rows[0]!;
+    expect(row).toMatchObject({
+      price: 250,
+      description: 'A picture',
+      category: 'background',
+      asset_key: 'cosmetics/bg/keep.webp',
+      premium_only: true,
+      display_order: 7,
+    });
+    expect((row.available_from as Date).toISOString()).toBe('2030-01-01T00:00:00.000Z');
+    expect((row.available_to as Date).toISOString()).toBe('2030-02-01T00:00:00.000Z');
+
+    // a field the proposal does name is changed, cleared windows included
+    await call('POST', '/admin/config/changes', adminTok, {
+      target: 'shop_item',
+      payload: { sku, name: 'Kept', currency: 'zer', price: 250, premiumOnly: false, availableTo: null },
+    });
+    const after = (await pool.query(`SELECT premium_only, available_to, asset_key FROM shop_items WHERE sku = $1`, [sku])).rows[0]!;
+    expect(after).toMatchObject({ premium_only: false, available_to: null, asset_key: 'cosmetics/bg/keep.webp' });
+  });
+
+  it('saves the Kurdish tag, a shop item of the tag category, through the catalogue route', async () => {
+    const sku = `cfg_tag_${suffix}`; skus.push(sku);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/shop/items',
+      headers: { authorization: `Bearer ${adminTok}` },
+      payload: { sku, name: 'A tag', category: 'tag', currency: 'zer', price: 500 },
+      remoteAddress: '10.80.0.9',
+    });
+    expect(res.statusCode).toBe(200);
+    expect((await pool.query(`SELECT category FROM shop_items WHERE sku = $1`, [sku])).rows[0]!.category).toBe('tag');
+  });
+
   it('lists pending changes and can reject one', async () => {
     const sku = `cfg_reject_${suffix}`; skus.push(sku);
     const p = await call('POST', '/admin/config/changes', adminTok, {
