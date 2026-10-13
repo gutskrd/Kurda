@@ -163,10 +163,11 @@ export function useChatGifts<M extends ChatMessage>({
           actions={actions}
           autoOpen={autoGift !== null && m.gift.myGiftId === autoGift}
           onAutoOpened={autoOpened}
+          inGroup={chat.kind === 'group'}
         />
       );
     },
-    [actions, autoGift, autoOpened, user?.id],
+    [actions, autoGift, autoOpened, chat.kind, user?.id],
   );
 
   const button = (

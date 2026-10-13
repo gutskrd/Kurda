@@ -30,10 +30,13 @@ export function GiftBubble({
   actions,
   autoOpen = false,
   onAutoOpened,
+  inGroup = false,
 }: {
   card: GiftCard;
   /** the viewer sent it */
   mine: boolean;
+  /** it was given in a group chat, where who it was for is not obvious */
+  inGroup?: boolean;
   senderName: string;
   actions: GiftActions;
   /** open it as soon as it is on screen (arrived from a notification or the banner) */
@@ -116,7 +119,7 @@ export function GiftBubble({
             {/* the item's name is the sender's to know; to anyone else it is a surprise */}
             {mine ? t('gift.youSent', { item: card.name }) : t('gift.someoneSent', { name: senderName })}
           </span>
-          <Recipients recipients={card.recipients} />
+          <Recipients recipients={card.recipients} named={inGroup} />
         </span>
       </div>
     );
@@ -192,10 +195,14 @@ export function GiftBubble({
   );
 }
 
-/** Who a gift was for, and who has opened theirs. */
-function Recipients({ recipients }: { recipients: GiftRecipient[] }): React.JSX.Element {
+/**
+ * Who a gift was for, and who has opened theirs. In a direct chat there is
+ * only one person it can have been for, so it is just "Opened ✓"; in a group
+ * each recipient is named, even when there is only one.
+ */
+function Recipients({ recipients, named }: { recipients: GiftRecipient[]; named: boolean }): React.JSX.Element {
   const t = useT();
-  if (recipients.length === 1) {
+  if (recipients.length === 1 && !named) {
     const r = recipients[0]!;
     return (
       <span className="gift-bubble-sub">

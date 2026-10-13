@@ -114,6 +114,13 @@ function PickerFlow({
   // one key per attempt at one choice: a retry of the same send never pays twice
   const [key, setKey] = useState(() => requestId());
 
+  // in a direct message the one friend is the recipient as soon as they are known
+  // (the list arrives a moment after the sheet opens)
+  const only = !group ? people?.[0]?.userId : undefined;
+  useEffect(() => {
+    if (only) setChosen((now) => (now.length === 0 ? [only] : now));
+  }, [only]);
+
   const nameOf = useMemo(() => new Map((people ?? []).map((p) => [p.userId, p.name])), [people]);
   const fmt = (n: number): string => n.toLocaleString(locale);
 

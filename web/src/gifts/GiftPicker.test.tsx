@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { useEffect, useState } from 'react';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { GiftCatalogItem } from '@kurda/shared';
@@ -79,6 +80,23 @@ describe('GiftPicker in a direct message', () => {
     });
     expect((sent.body as { idempotencyKey: string }).idempotencyKey.length).toBeGreaterThanOrEqual(8);
     expect(onSent).toHaveBeenCalledWith(expect.objectContaining({ batchId: 'b1', item: expect.objectContaining({ sku: 'bg-sunset' }) }));
+  });
+
+  it('finds its recipient when the friend arrives after the sheet has opened', async () => {
+    // the chat opens the sheet at once; who the friend is comes a moment later
+    const calls = stub([item()]);
+    function Thread(): React.JSX.Element {
+      const [people, setPeople] = useState<(typeof rojda)[] | null>(null);
+      useEffect(() => {
+        const id = window.setTimeout(() => setPeople([rojda]), 10);
+        return () => window.clearTimeout(id);
+      }, []);
+      return <GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={people} onSent={() => undefined} />;
+    }
+    renderApp(<Thread />);
+
+    expect(await screen.findByText('Sunset over Amed')).toBeInTheDocument();
+    expect(calls.some((c) => c.url.includes('/gifts/catalog?to=u-rojda'))).toBe(true);
   });
 
   it('says why nobody could be given it, and stays open', async () => {

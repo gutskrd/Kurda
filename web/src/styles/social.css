@@ -744,8 +744,25 @@
   border: 0;
   white-space: normal;
 }
+/*
+ * A gift is a card, not a sentence: like an invite card it gets a real width
+ * rather than shrink-wrapping (and the phone rule that caps a text bubble at
+ * 85% would cut its edge off).
+ */
 .chat-run:has(.gift-bubble) {
+  width: 100%;
   max-width: min(100%, 340px);
+}
+.chat-run:has(.gift-bubble) .chat-run-body,
+.bubble.is-card {
+  width: 100%;
+  max-width: 100%;
+}
+.bubble-line:has(.is-card) {
+  width: 100%;
+}
+.bubble-line > .bubble.is-card {
+  flex: 1;
 }
 .gift-bubble {
   display: flex;
@@ -1172,6 +1189,16 @@ button.gift-bubble:active {
 }
 .gift-stage-legendary .gift-stage-play {
   gap: 22px;
+}
+/* the fire rises from behind the box, out of its open top */
+.gift-stage-play > .gift-box,
+.gift-stage-play > .gift-stage-label,
+.gift-stage-play > .gift-skip {
+  position: relative;
+  z-index: 1;
+}
+.gift-stage-play > .newroz-flame {
+  z-index: 0;
 }
 .gift-stage-legendary .gift-opening .gift-lid {
   animation-delay: 0.7s;

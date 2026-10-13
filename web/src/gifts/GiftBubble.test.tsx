@@ -155,4 +155,20 @@ describe('GiftBubble, to everyone else', () => {
     expect(screen.getByText('a group member')).toBeInTheDocument();
     expect(screen.queryByText(/Sunset/)).not.toBeInTheDocument();
   });
+
+  it('names the one person a group gift was for', () => {
+    // in a group "Opened ✓" alone would not say whose — the sender may have
+    // picked one friend, or the others may have been skipped
+    renderApp(
+      <GiftBubble
+        card={card({ myGiftId: null, recipients: [{ name: 'dilan', avatarUrl: null, isMe: false, opened: true }] })}
+        mine={false}
+        senderName="rojda"
+        actions={actions()}
+        inGroup
+      />,
+    );
+    expect(screen.getByText('dilan')).toBeInTheDocument();
+    expect(screen.getByText('Opened')).toBeInTheDocument();
+  });
 });
