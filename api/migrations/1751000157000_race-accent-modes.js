@@ -10,9 +10,12 @@
  * And a race is run in an accent mode (strict, forgiving or hidden, see
  * @kurda/shared `typing`), which changes what counts: a racer's best is per
  * mode, so the mode is stored with the race. Races run before this were scored
- * exactly as typed, which is `strict`; new ones always say which mode they
- * were run in, so the column has no default. The dialect is stored too, because
- * a text can be edited or retired after the race it was used for.
+ * exactly as typed, which is `strict`. The dialect is stored too, because a
+ * text can be edited or retired after the race it was used for. The new code
+ * always says both, but the columns keep their defaults all the same: this
+ * runs while the previous release is still serving (and stays serving if the
+ * new one fails its health check), and that one starts a race without either —
+ * scoring it exactly as typed, which is what `strict` records.
  *
  * `accent_misses` (accented letters typed without the accent) and `errors` are
  * what the result screen reports; they are null on races scored before them.
@@ -37,8 +40,6 @@ export const up = (pgm) => {
        SET dialect = 'sorani'
       FROM race_texts t
      WHERE t.id = g.text_id AND t.language = 'ckb'`);
-  pgm.alterColumn('race_games', 'accent_mode', { default: null });
-  pgm.alterColumn('race_games', 'dialect', { default: null });
   pgm.addConstraint('race_games', 'race_games_accent_mode_check', {
     check: "accent_mode IN ('strict', 'forgiving', 'hidden')",
   });

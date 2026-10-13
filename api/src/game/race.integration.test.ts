@@ -281,6 +281,24 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect(row.rows[0]).toEqual({ accent_mode: 'strict', accent_misses: 6, errors: 6 });
   });
 
+  /*
+   * Migrations run while the previous release is still serving, and it starts
+   * a race without saying a mode or a variety. It must still be able to, and
+   * the race is then scored as that release scored it: exactly as typed.
+   */
+  it('takes a race started the way the previous release starts one, and scores it strictly', async () => {
+    const text = await pool.query<{ id: string }>(`SELECT id FROM race_texts WHERE title = $1`, [`it_${suffix} welat`]);
+    const started = await pool.query<{ id: string; accent_mode: string; dialect: string }>(
+      `INSERT INTO race_games (user_id, text_id) VALUES ($1, $2) RETURNING id, accent_mode, dialect`,
+      [playerId, text.rows[0]!.id],
+    );
+    expect(started.rows[0]).toMatchObject({ accent_mode: 'strict', dialect: 'kurmanci' });
+    await typedFor(started.rows[0]!.id, 25);
+    const done = (await call('POST', `/race/${started.rows[0]!.id}/finish`, playerToken, { typed: PLAIN })).json();
+    expect(done).toMatchObject({ accentMode: 'strict', accentMisses: 6 });
+    expect(done.accuracy).toBeLessThan(1);
+  });
+
   it('refuses an accent mode or a variety it does not know', async () => {
     expect((await call('POST', '/race', playerToken, { accentMode: 'lazy' })).statusCode).toBe(400);
     expect((await call('POST', '/race', playerToken, { dialect: 'zazaki' })).statusCode).toBe(400);
