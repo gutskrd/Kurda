@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { StoryDetail, StoryGlossEntry } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
@@ -11,6 +11,15 @@ import { storyTextProps, storyTextStyle } from './storyText';
 /** The reader's body size before the text-size control and the system's Dynamic Type. */
 export const STORY_BODY_SIZE = 18;
 
+/**
+ * The spacing between lines for a body size: generous, for reading. The
+ * system's text size is not in it — React Native applies that to the line
+ * height itself, as it does to the letters.
+ */
+export function storyLineHeight(fontSize: number): number {
+  return Math.round(fontSize * 1.6);
+}
+
 export interface TextPoint {
   paragraph: number;
   sentence: number | null;
@@ -20,9 +29,10 @@ export interface TextPoint {
  * A story's paragraphs, as the reader and the game's "Story" sheet show them.
  *
  * Body text follows the system text size (Dynamic Type) on top of the
- * reader's own control; React Native scales the letters but not the line
- * height, so the spacing is scaled here by the same factor or large text
- * would overlap.
+ * reader's own control. React Native scales the line height by the system
+ * factor together with the letters (iOS multiplies it, Android reads it in
+ * sp), so the spacing is given here for the reader's size only: scaling it
+ * again by the system factor spread large text out to twice its spacing.
  *
  * Glossary words are underlined and open their meaning when tapped. A word
  * inside a paragraph cannot be reached on its own with VoiceOver or TalkBack,
@@ -61,8 +71,7 @@ export function StoryText({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const { fontScale } = useWindowDimensions();
-  const lineHeight = Math.round(fontSize * Math.max(1, fontScale) * 1.6);
+  const lineHeight = storyLineHeight(fontSize);
   const textStyle = storyTextStyle(story.dialect);
   const textProps = storyTextProps(story.dialect);
   const rtl = textStyle.writingDirection === 'rtl';
