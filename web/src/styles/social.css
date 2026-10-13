@@ -549,6 +549,21 @@
 .standing-warning-item {
   margin-top: 14px;
 }
+/* the dialog's ✕ sits at the top right in either direction, so the heading
+   keeps clear of it on that side — in Soranî and Arabic too */
+.standing-warning .report-heading {
+  padding-right: 40px;
+}
+/* "I understand" first and full width, the way to the reasons under it: the
+   two side by side wrapped unevenly in every language longer than English */
+.standing-warning .report-actions {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+.standing-warning .report-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
 
 /* the suspension screen, in place of the app */
 .suspension {
