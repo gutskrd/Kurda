@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from '../admin/routes.js';
 import type { AdminTotpService } from '../admin/totp-service.js';
-import type { ContentAdminService, ExerciseInput } from './admin-service.js';
+import { LESSON_LIST_MAX, type ContentAdminService, type ExerciseInput } from './admin-service.js';
+import type { ContentStatus } from './workflow.js';
 import { silentListeningMessage } from '../lessonaudio/publish-guard.js';
 
 const idParam = z.object({ id: z.uuid() });
@@ -15,6 +16,12 @@ const createBody = z.object({
   position: z.number().int().min(1),
   titleKu: z.string().min(1).max(200),
   titleEn: z.string().min(1).max(200),
+});
+
+const listQuery = z.object({
+  status: z.enum(['draft', 'in_review', 'published', 'archived', 'all'] as const satisfies ReadonlyArray<ContentStatus | 'all'>).optional(),
+  q: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(LESSON_LIST_MAX).optional(),
 });
 
 const updateBody = z.object({
@@ -41,6 +48,21 @@ export function registerContentAdminRoutes(
   // content_editor + superadmin both hold content.edit/content.publish
   const guard = { preHandler: [requireAuth, requireAdmin(totp, 'superadmin', 'content_editor')] };
   const guardNoValidation = { config: { skipValidation: true }, preHandler: guard.preHandler };
+
+  /**
+   * The lessons, one row per slot (its newest version), and the skills a new
+   * one can go in — so the panel lists lessons by title instead of asking for
+   * a pasted id. `status` filters on the newest version (`all` includes
+   * archived slots, which are left out otherwise); `q` matches titles or an id.
+   */
+  app.get('/admin/content/lessons', { schema: { querystring: listQuery }, preHandler: guard.preHandler }, async (req) => {
+    const q = req.query as z.infer<typeof listQuery>;
+    const [list, skills] = await Promise.all([
+      content.listLessons({ status: q.status, q: q.q, limit: q.limit }),
+      content.skillOptions(),
+    ]);
+    return { ...list, skills };
+  });
 
   app.post('/admin/content/lessons', { schema: { body: createBody }, preHandler: guard.preHandler }, async (req, reply) => {
     const b = req.body as z.infer<typeof createBody>;
