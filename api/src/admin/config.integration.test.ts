@@ -155,6 +155,30 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
     expect((await pool.query(`SELECT category FROM shop_items WHERE sku = $1`, [sku])).rows[0]!.category).toBe('tag');
   });
 
+  it('will not set a price that needs a second admin through the catalogue route', async () => {
+    const sku = `cfg_door_${suffix}`; skus.push(sku);
+    const post = (payload: Record<string, unknown>) =>
+      app.inject({ method: 'POST', url: '/shop/items', headers: { authorization: `Bearer ${adminTok}` }, payload, remoteAddress: '10.80.0.9' });
+
+    // a new item at 1,000 or more, and a cheap item raised to it, are both refused
+    const fresh = await post({ sku, name: 'Dear', currency: 'gems', price: 1000 });
+    expect(fresh.statusCode).toBe(409);
+    expect(fresh.json().code).toBe('PRICE_NEEDS_APPROVAL');
+    expect((await pool.query(`SELECT 1 FROM shop_items WHERE sku = $1`, [sku])).rowCount).toBe(0);
+    expect((await post({ sku, name: 'Dear', currency: 'gems', price: 999 })).statusCode).toBe(200);
+    expect((await post({ sku, name: 'Dear', currency: 'gems', price: 1500 })).statusCode).toBe(409);
+    expect((await pool.query(`SELECT price FROM shop_items WHERE sku = $1`, [sku])).rows[0]!.price).toBe(999);
+
+    // once a second admin has approved the price, the rest of the item is still edited here
+    const proposed = await call('POST', '/admin/config/changes', adminTok, { target: 'shop_item', payload: { sku, name: 'Dear', currency: 'gems', price: 1500 } });
+    expect((await call('POST', `/admin/config/changes/${proposed.json().id}/approve`, admin2Tok)).statusCode).toBe(200);
+    const renamed = await post({ sku, name: 'Dearer', currency: 'gems', price: 1500 });
+    expect(renamed.statusCode).toBe(200);
+    // the same number in the other currency is a new price
+    expect((await post({ sku, name: 'Dearer', currency: 'zer', price: 1500 })).statusCode).toBe(409);
+    expect((await pool.query(`SELECT name, price, currency FROM shop_items WHERE sku = $1`, [sku])).rows[0]).toEqual({ name: 'Dearer', price: 1500, currency: 'gems' });
+  });
+
   it('lists pending changes and can reject one', async () => {
     const sku = `cfg_reject_${suffix}`; skus.push(sku);
     const p = await call('POST', '/admin/config/changes', adminTok, {
