@@ -22,9 +22,15 @@
  *                         the credit, and the credit's ledger key is made from
  *                         the row's `id` — unique, and never shown to anyone,
  *                         so no request can take that key first.
+ *
+ * Going down sets `cosmetic_refreshes` aside rather than dropping it: it is a
+ * record of money given back and of who has been told, and a rollback followed
+ * by a fresh deploy should not tell everyone again. Going up picks it back up.
  */
 
-export const up = (pgm) => {
+const KEPT = 'cosmetic_refreshes_rolled_back';
+
+export const up = async (pgm) => {
   pgm.createTable('cosmetic_replacements', {
     sku: { type: 'text', primaryKey: true, references: 'shop_items', onDelete: 'CASCADE' },
     previous_asset_key: { type: 'text' },
@@ -34,10 +40,17 @@ export const up = (pgm) => {
     replaced_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
   });
 
+  const kept = await pgm.db.query(`SELECT to_regclass($1) IS NOT NULL AS kept`, [KEPT]);
+  if (kept.rows[0].kept) {
+    // its keys and constraints travel with it, names and all
+    pgm.renameTable(KEPT, 'cosmetic_refreshes');
+    return;
+  }
+
   pgm.createTable('cosmetic_refreshes', {
     /** the refund's ledger key is made from this; it never leaves the server */
     id: { type: 'uuid', notNull: true, unique: true, default: pgm.func('gen_random_uuid()') },
-    user_id:{ type: 'uuid', notNull: true, references: 'users', onDelete: 'CASCADE' },
+    user_id: { type: 'uuid', notNull: true, references: 'users', onDelete: 'CASCADE' },
     sku: { type: 'text', notNull: true, references: 'shop_items', onDelete: 'CASCADE' },
     /** what returning it gives back: the owner's own purchase, never a gift's price */
     refund_currency: { type: 'text', notNull: true },
@@ -55,6 +68,6 @@ export const up = (pgm) => {
 };
 
 export const down = (pgm) => {
-  pgm.dropTable('cosmetic_refreshes');
+  pgm.renameTable('cosmetic_refreshes', KEPT);
   pgm.dropTable('cosmetic_replacements');
 };

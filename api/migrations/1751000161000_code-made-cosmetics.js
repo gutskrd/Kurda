@@ -214,6 +214,16 @@ export const up = async (pgm) => {
     );
   }
 
+  // Somebody who returned an item and has it again — bought back while a
+  // rollback had it on sale — owns it afresh: their old record goes, and the
+  // insert below writes a new one, with what they paid this time and a new key
+  // for its refund. Everyone else's record, noticed or returned, is kept.
+  await db.query(
+    `DELETE FROM cosmetic_refreshes rf
+      WHERE rf.returned_at IS NOT NULL
+        AND EXISTS (SELECT 1 FROM user_entitlements e WHERE e.user_id = rf.user_id AND e.sku = rf.sku)`,
+  );
+
   // what each owner paid: the latest debit for this item in their own ledger
   // that did not pay for a gift to somebody else
   await db.query(
@@ -246,8 +256,9 @@ export const up = async (pgm) => {
  *
  * A made piece somebody has bought stays: deleting it would take their
  * purchase with it. `cosmetic_refreshes` is left alone — without a matching
- * `cosmetic_replacements` row nothing reads it — so going up again keeps who
- * has seen the notice and who has already been refunded.
+ * `cosmetic_replacements` row nothing reads it — and the previous migration's
+ * down sets it aside rather than dropping it, so going up again, after either
+ * rollback, keeps who has seen the notice and who has already been refunded.
  */
 export const down = async (pgm) => {
   const db = pgm.db;
