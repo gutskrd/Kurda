@@ -11,8 +11,8 @@ import type { Currency, WalletService } from '../wallet/service.js';
  * shop (migration 1751000161000). Every owner of one has a row in
  * `cosmetic_refreshes`, written when the art changed, with what they paid —
  * their own purchase, never a present they bought for somebody else. Nothing
- * is worked out again at return time: the price an item had then is the price
- * given back, however the catalogue has moved since.
+ * is worked out again at return time: what the ledger says they paid is what
+ * is given back, however the catalogue's prices have moved since.
  *
  * Only items bought by the person returning them can be returned. A present is
  * an item, never currency (shared/src/gifts.ts), so someone given a replaced
