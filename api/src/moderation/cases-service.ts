@@ -1039,6 +1039,8 @@ export class CasesService {
   }
 
   private async lockUnconfirmedBan(db: Executor, sanctionId: string): Promise<SanctionRow> {
+    // the person first, then the ban (the sanctions service's lock order)
+    await this.sanctions.lockOwnerOf(db, sanctionId);
     const r = await db.query<SanctionRow>(`SELECT * FROM sanctions WHERE id = $1 FOR UPDATE`, [sanctionId]);
     const s = r.rows[0];
     if (!s || s.kind !== 'permanent_ban' || s.revoked_at || s.approved_at || s.single_approved) {

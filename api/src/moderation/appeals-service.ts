@@ -138,6 +138,8 @@ export class AppealsService {
       if (!appeal) throw new AppError('NOT_FOUND', 404, 'no such appeal');
       if (appeal.status !== 'open') throw new AppError('ALREADY_DECIDED', 409, 'this appeal was already answered');
 
+      // the person first, then their sanction (the sanctions service's lock order)
+      if (appeal.sanction_id) await this.sanctions.lockOwnerOf(client, appeal.sanction_id);
       const sanction = appeal.sanction_id
         ? (await client.query<SanctionRow>(`SELECT * FROM sanctions WHERE id = $1 FOR UPDATE`, [appeal.sanction_id])).rows[0] ?? null
         : null;

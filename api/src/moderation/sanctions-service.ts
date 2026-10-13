@@ -33,6 +33,14 @@ import { inTransaction, type Executor } from './tx.js';
  * the person was told, the enforced state before and after) and, unless it is
  * waiting for a second admin, a notice in the person's inbox: the statement of
  * reasons (see notices.ts).
+ *
+ * Every change to one person's sanctions starts by locking their `users` row
+ * (`lockPerson`), so two changes at once — a suspension and an unmute, or the
+ * spam engine's mute arriving with an admin's ban — run one after the other.
+ * Without it, the second transaction's re-derivation read the sanctions as
+ * they were before the first committed, waited on the row, and then wrote its
+ * stale answer over the first's: a suspension recorded but not enforced.
+ * Lock order is always the person first, then any sanction row.
  */
 
 /** The longest a timed sanction can run; anything longer is a permanent ban, with its own rules. */
@@ -303,6 +311,7 @@ export class SanctionsService {
       throw new AppError('DURATION_REQUIRED', 400, 'a suspension needs an end; use a permanent ban for none');
     }
 
+    if (!(await this.lockPerson(db, input.userId))) throw new AppError('NOT_FOUND', 404, 'no such user');
     const before = await enforcedState(db, input.userId);
     if (!before) throw new AppError('NOT_FOUND', 404, 'no such user');
 
@@ -388,6 +397,7 @@ export class SanctionsService {
     reason: string,
     opts: { notify?: boolean; auditAction?: string } = {},
   ): Promise<CaseSanctionView> {
+    await this.lockOwnerOf(db, sanctionId);
     const found = await db.query<SanctionRow>(`SELECT * FROM sanctions WHERE id = $1 FOR UPDATE`, [sanctionId]);
     const row = found.rows[0];
     if (!row) throw new AppError('NOT_FOUND', 404, 'no such sanction');
@@ -502,6 +512,22 @@ export class SanctionsService {
     );
   }
 
+  /**
+   * Take the lock every change to this person's sanctions starts with (see the
+   * top of this file). False when there is no such person.
+   */
+  async lockPerson(db: Executor, userId: string): Promise<boolean> {
+    const r = await db.query(`SELECT 1 FROM users WHERE id = $1 FOR UPDATE`, [userId]);
+    return (r.rowCount ?? 0) > 0;
+  }
+
+  /** The same lock, for a change that starts from a sanction: its person first, then the row. */
+  async lockOwnerOf(db: Executor, sanctionId: string): Promise<void> {
+    const owner = await db.query<{ user_id: string | null }>(`SELECT user_id FROM sanctions WHERE id = $1`, [sanctionId]);
+    const userId = owner.rows[0]?.user_id;
+    if (userId) await this.lockPerson(db, userId);
+  }
+
   /** End every session: access tokens die on the next request, refresh tokens at once. */
   async endSessions(db: Executor, userId: string): Promise<number> {
     await db.query(`UPDATE users SET token_version = token_version + 1 WHERE id = $1`, [userId]);
@@ -540,9 +566,9 @@ export class SanctionsService {
     );
   }
 
+  /** The person exists, and is locked for the change that follows. */
   private async requireUser(db: Executor, userId: string): Promise<void> {
-    const r = await db.query(`SELECT 1 FROM users WHERE id = $1`, [userId]);
-    if (!r.rowCount) throw new AppError('NOT_FOUND', 404, 'no such user');
+    if (!(await this.lockPerson(db, userId))) throw new AppError('NOT_FOUND', 404, 'no such user');
   }
 
   /** A sanction row, for routes that act on one. */

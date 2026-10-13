@@ -143,16 +143,10 @@ export class TrustService {
    * says so; a second sanction is recorded without repeating it. Each is skipped
    * while one of its kind is already in force — one sanction and one notice per
    * incident, not one per message — so someone an admin muted in chat who now
-   * spams the library is still stopped there.
+   * spams the library is still stopped there. The check runs under the
+   * person's lock, so a burst of messages arriving at once mutes them once.
    */
   private async autoMute(userId: string): Promise<void> {
-    const kinds = (
-      await Promise.all([
-        activeRestriction(this.pool, userId, 'chat').then((r) => (r ? null : ('chat_mute' as const))),
-        activeRestriction(this.pool, userId, 'post').then((r) => (r ? null : ('post_mute' as const))),
-      ])
-    ).filter((k): k is 'chat_mute' | 'post_mute' => k !== null);
-    if (kinds.length === 0) return;
     const common = {
       userId,
       policy: 'spam' as const,
@@ -164,6 +158,10 @@ export class TrustService {
       auditAction: 'auto_mute',
     };
     await inTransaction(this.pool, async (client) => {
+      if (!(await this.sanctions.lockPerson(client, userId))) return;
+      const kinds: Array<'chat_mute' | 'post_mute'> = [];
+      if (!(await activeRestriction(client, userId, 'chat'))) kinds.push('chat_mute');
+      if (!(await activeRestriction(client, userId, 'post'))) kinds.push('post_mute');
       for (const [i, kind] of kinds.entries()) await this.sanctions.apply(client, { ...common, kind, notify: i === 0 });
     });
   }
