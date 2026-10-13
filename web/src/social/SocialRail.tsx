@@ -11,6 +11,8 @@ import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
 import { useT } from '../i18n/I18nProvider';
+import { playNotification } from '../play/notifications';
+import { usePlayInvites } from '../play/PlayProvider';
 
 /**
  * What the dock beside the rail is showing.
@@ -374,6 +376,8 @@ function Notifications({
   const t = useT();
   const [going, setGoing] = useState<Set<string>>(new Set());
   const unread = items.filter((n) => n.readAt === null).length;
+  // who sent a game invite, in the reader's words, while the app still has it
+  const incoming = usePlayInvites().lists?.incoming;
 
   async function dismiss(id: string): Promise<void> {
     setGoing((prev) => new Set(prev).add(id));
@@ -388,28 +392,42 @@ function Notifications({
 
   return (
     <>
-      {items.map((n) => (
-        <div
-          key={n.id}
-          className={`rail-note${n.readAt === null && !going.has(n.id) ? ' is-unread' : ''}`}
-        >
-          <span className="rail-note-title">{n.title}</span>
-          {n.body && <span className="rail-note-body">{n.body}</span>}
-          <span className="rail-note-foot">
-            <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt, t)}</time>
-            {n.readAt === null && !going.has(n.id) && (
-              <button
-                type="button"
-                className="rail-note-dismiss"
-                aria-label={t('rail.dismissWhat', { what: n.title })}
-                onClick={() => void dismiss(n.id)}
-              >
-                <CloseIcon size={13} />
-              </button>
-            )}
-          </span>
-        </div>
-      ))}
+      {items.map((n) => {
+        // the reader's words and a way in, for the kinds that have them (play/notifications.ts)
+        const view = playNotification(n, t, incoming);
+        const title = view?.title ?? n.title;
+        const body = view ? view.body : n.body;
+        return (
+          <div
+            key={n.id}
+            className={`rail-note${n.readAt === null && !going.has(n.id) ? ' is-unread' : ''}`}
+          >
+            <span className="rail-note-title">
+              {view?.to ? (
+                <Link to={view.to} className="rail-note-link" onClick={() => n.readAt === null && void dismiss(n.id)}>
+                  {title}
+                </Link>
+              ) : (
+                title
+              )}
+            </span>
+            {body && <span className="rail-note-body">{body}</span>}
+            <span className="rail-note-foot">
+              <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt, t)}</time>
+              {n.readAt === null && !going.has(n.id) && (
+                <button
+                  type="button"
+                  className="rail-note-dismiss"
+                  aria-label={t('rail.dismissWhat', { what: title })}
+                  onClick={() => void dismiss(n.id)}
+                >
+                  <CloseIcon size={13} />
+                </button>
+              )}
+            </span>
+          </div>
+        );
+      })}
 
       {unread > 1 && (
         <button type="button" className="rail-note-clear" onClick={() => void dismissAll()}>

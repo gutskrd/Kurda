@@ -160,6 +160,54 @@ describe('SocialRail', () => {
     expect(screen.queryByText('Friend request')).not.toBeInTheDocument();
   });
 
+  it('opens the game a game invite in the notifications is for, said in the reader’s words', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          {
+            id: 'n1',
+            category: 'games',
+            title: 'Game invite',
+            body: 'Rojda invited you to play Wordle Battle.',
+            createdAt: new Date().toISOString(),
+            readAt: null,
+            data: { kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' },
+          },
+        ],
+        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/i }));
+    expect(screen.getByRole('link', { name: 'Wordle Battle invite' })).toHaveAttribute('href', '/app/games/wordle-battle?id=b1');
+    // not the server's English fallback
+    expect(screen.queryByText('Rojda invited you to play Wordle Battle.')).not.toBeInTheDocument();
+  });
+
+  it('leaves a new game invite to its own banner rather than a second toast', async () => {
+    signIn();
+    const now = new Date().toISOString();
+    railFetch([
+      rail(),
+      rail({
+        notifications: [
+          { id: 'n1', category: 'games', title: 'Game invite', body: 'x', createdAt: now, readAt: null, data: { kind: 'play_invite', inviteId: 'i1', game: 'rhyme-match', lobbyId: 'r1' } },
+          { id: 'n2', category: 'streak', title: 'Keep your streak going', body: null, createdAt: now, readAt: null },
+        ],
+        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+
+    await screen.findByText('Online');
+    // the tab comes back: the rail reads again, and two notifications are new
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(await screen.findByText('Keep your streak going')).toBeInTheDocument();
+    expect(screen.queryByText('Game invite')).not.toBeInTheDocument();
+  });
+
   it('is about other people — your own face is on the bar, not in here', async () => {
     signIn();
     railFetch([rail({ you: self() })]);
