@@ -288,6 +288,20 @@ describe('the editor', () => {
     expect([...c.querySelectorAll('.st-actions button')].map((b) => text(b))).toEqual(['Unpublish', 'Archive', 'Delete']);
   });
 
+  it('keeps pointing out an address in random letters, and asks before publishing it', async () => {
+    const random = storyFixture({ slug: 'kurmanci-k3m9xq' });
+    const api = listApi([random]);
+    api.use(on('POST', `${AT}/publish`, json({ ...random, status: 'published', lockVersion: 5 })));
+    const c = await open(`#/stories/${STORY_ID}`);
+    expect(text(c.querySelector('#story-slug-problems'))).toContain('Check: the address ends in random letters');
+    confirm.mockReturnValueOnce(false);
+    await click(button(c, 'Publish'));
+    expect(confirm.mock.calls[0]![0]).toContain('Its address ends in random letters (kurmanci-k3m9xq).');
+    expect(api.calls.filter((call) => call.method === 'POST')).toEqual([]);
+    await click(button(c, 'Publish'));
+    expect(api.calls.at(-1)).toEqual({ method: 'POST', path: `${AT}/publish`, body: { lockVersion: 4 } });
+  });
+
   it('does not publish a starter when the editor says no', async () => {
     const api = listApi();
     const c = await open(`#/stories/${starter.id}`);

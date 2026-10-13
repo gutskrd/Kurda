@@ -204,9 +204,17 @@ export function autoSlug(form: Pick<StoryForm, 'title' | 'dialect' | 'slugSeed'>
   return storySlugFor(form.title, form.dialect, seeded(form.slugSeed));
 }
 
-/** The random fallback this form would use, whatever its title. */
-function fallbackSlug(form: Pick<StoryForm, 'dialect' | 'slugSeed'>): string {
-  return storySlugFor('', form.dialect, seeded(form.slugSeed));
+// what storySlugFor falls back to: the variety, then six characters from its alphabet (no l, o, 0 or 1)
+const RANDOM_SLUG = new RegExp(`^(?:${STORY_DIALECTS.join('|')})-[a-km-np-z2-9]{6}$`);
+
+/**
+ * Whether an address is the random one a story starts with ("sorani-k3m9xq").
+ * Told by its shape, not by where it came from, so it is still noticed after
+ * the story is saved and opened again. (A real six-letter word after the
+ * variety looks the same; it is only ever a reason to take a look.)
+ */
+export function looksRandomSlug(slug: string): boolean {
+  return RANDOM_SLUG.test(slug);
 }
 
 export function blankQuestion(): QuestionForm {
@@ -618,7 +626,7 @@ export function liveChecks(form: StoryForm, opts: { publishedBefore?: boolean; s
       path: 'slug',
       message: 'use 3 to 80 lower-case Latin letters, digits and dashes',
     });
-  } else if (!form.slugEdited && draft.slug === fallbackSlug(form)) {
+  } else if (looksRandomSlug(draft.slug)) {
     warnings.unshift({
       code: 'SLUG_RANDOM',
       path: 'slug',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUESTION_EXPLANATION_MAX, countStoryWords, validateStory } from '@kurda/shared';
+import { QUESTION_EXPLANATION_MAX, STORY_DIALECTS, countStoryWords, storySlugFor, validateStory } from '@kurda/shared';
 import {
   autoSlug,
   availableActions,
@@ -17,6 +17,7 @@ import {
   isDirty,
   isEditable,
   liveChecks,
+  looksRandomSlug,
   needsNativeReview,
   problemLabel,
   problemsAt,
@@ -118,6 +119,29 @@ describe('the slug', () => {
     expect(codes(checks.warnings)).toContain('SLUG_RANDOM@slug');
     expect(checks.blocking.filter((p) => p.path === 'slug')).toEqual([]);
     expect(codes(liveChecks(edit(typed, { type: 'slug', value: 'sorani-house-key' })).warnings)).not.toContain('SLUG_RANDOM@slug');
+  });
+
+  it('still warns about the random letters once the story is saved and opened again', () => {
+    for (const dialect of STORY_DIALECTS) {
+      const saved = blankForm(dialect, fixed).slug;
+      expect(codes(liveChecks(formFromStory(storyFixture({ dialect, slug: saved }))).warnings)).toContain('SLUG_RANDOM@slug');
+    }
+    const reopened = formFromStory(storyFixture({ dialect: 'sorani', slug: 'sorani-k3m9xq' }));
+    expect(codes(liveChecks(reopened).warnings)).toContain('SLUG_RANDOM@slug');
+    expect(codes(liveChecks(edit(reopened, { type: 'slug', value: 'sorani-house-key' })).warnings)).not.toContain('SLUG_RANDOM@slug');
+  });
+
+  it('tells a random address by its shape: every one storySlugFor makes, and nothing readable', () => {
+    let n = 7;
+    const lcg = (): number => (n = (n * 9301 + 49297) % 233280) / 233280;
+    for (const random of [lcg, () => 0, () => 0.999999]) {
+      for (let i = 0; i < 200; i++) {
+        for (const dialect of STORY_DIALECTS) expect(looksRandomSlug(storySlugFor('', dialect, random))).toBe(true);
+      }
+    }
+    for (const slug of ['ckb-the-house-key', 'kmr-qelema-sin', 'sorani-house-key', 'kurmanci-qelema', 'sorani-k3m9xq-2', 'reya-dibistane']) {
+      expect(looksRandomSlug(slug)).toBe(false);
+    }
   });
 
   it('refuses what the stories table would refuse, before the request', () => {

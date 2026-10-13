@@ -42,6 +42,7 @@ import {
   kindTally,
   liveChecks,
   localeName,
+  looksRandomSlug,
   needsNativeReview,
   opening,
   problemsAt,
@@ -311,12 +312,19 @@ export function StoryEditor({
         return confirm(
           `Delete “${title}”?\n\nThis cannot be undone here. A story a game has used cannot be deleted: archive it instead.${lost}`,
         );
-      case 'publish':
-        return story && needsNativeReview(story)
-          ? confirm(
-              `Publish “${title}”?\n\nThis is a starter story that no native speaker has published yet. Publish it only once a native speaker has read the text and every question.`,
-            )
-          : true;
+      case 'publish': {
+        const slug = form.slug.trim();
+        const reasons = [
+          story && needsNativeReview(story)
+            ? 'This is a starter story that no native speaker has published yet. Publish it only once a native speaker has read the text and every question.'
+            : null,
+          // the address is the story's for good once learners have it: changing it later breaks their links
+          looksRandomSlug(slug)
+            ? `Its address ends in random letters (${slug}). Once it is published, changing it breaks the links learners have to it.`
+            : null,
+        ].filter((r) => r !== null);
+        return reasons.length === 0 || confirm(`Publish “${title}”?\n\n${reasons.join('\n\n')}`);
+      }
       default:
         return true;
     }
