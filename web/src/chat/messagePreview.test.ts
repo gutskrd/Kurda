@@ -80,18 +80,11 @@ describe('truncate', () => {
  * empty line, and the server's English stand-in in every language.
  */
 describe('messagePreview for every kind of message', () => {
-  it('names a gift, by its item when the card is at hand', () => {
+  it('names a gift — by its item only once the reader has unwrapped it, so a banner never spoils it', () => {
+    const gift = { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary' as const, recipients: [], myGiftId: 'g1', myOpened: false, equippable: null };
     expect(messagePreview({ body: null, kind: 'gift' }, t)).toBe('🎁 Gift');
-    expect(
-      messagePreview(
-        {
-          body: null,
-          kind: 'gift',
-          gift: { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary', recipients: [], myGiftId: null, myOpened: false, equippable: null },
-        },
-        t,
-      ),
-    ).toBe('🎁 Newroz fire');
+    expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('🎁 Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('🎁 Newroz fire');
     expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('🎁 Diyarî');
   });
 
