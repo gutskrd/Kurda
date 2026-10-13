@@ -15,19 +15,22 @@ import { ExtraTimeToggle, FromMemoryNote, SettingsLine, playerName, type Act, ty
  * who is in, and — for the host — the settings, removing a player and Start
  * (contract §A1). Everyone else waits for the host and can leave.
  *
- * `invite` is the "Invite friends" part, from the play layer, so every game's
- * lobby asks friends the same way.
+ * `invite` is the "Invite friends" button and `invited` the list of friends
+ * asked, both from the play layer, so every game's lobby asks friends the
+ * same way.
  */
 export function GameLobby({
   view,
   act,
   announce,
   invite,
+  invited,
 }: {
   view: StoryGameView;
   act: Act;
   announce: Announce;
   invite?: React.ReactNode;
+  invited?: React.ReactNode;
 }): React.JSX.Element {
   const t = useT();
   const [settings, setSettings] = useState(false);
@@ -111,6 +114,8 @@ export function GameLobby({
           )}
         </div>
       )}
+
+      {invited}
 
       <FromMemoryNote view={view} />
 

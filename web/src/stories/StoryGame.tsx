@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // Soranî in a face made for Arabic script
 import '@fontsource-variable/vazirmatn';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { storyTextDirection, type StoryGameView } from '@kurda/shared';
+import { MAX_PLAYERS, storyTextDirection, type StoryGameView } from '@kurda/shared';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { ErrorState, Loading } from '../components/states';
 import { ArrowIcon } from '../components/icons';
@@ -12,6 +12,9 @@ import { STORIES_HUB } from './api';
 import { GameLobby } from './GameLobby';
 import { GameQuestion, GameReading, GameReveal } from './GamePlay';
 import { GameResults } from './GameResults';
+import { playerName } from './GameParts';
+import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
+import { RematchPanel } from '../play/RematchPanel';
 import { MODE_KEY } from './SetupSheet';
 import { useGameStory, useStoryGame } from './useStoryGame';
 
@@ -66,7 +69,12 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
           {view.status === 'cancelled' ? (
             <GameEnded title={t('stories.game.cancelledTitle')} body={t('stories.game.cancelled')} />
           ) : view.status === 'lobby' ? (
-            <GameLobby view={view} act={game.act} announce={announce} />
+            <GameLobby
+              view={view}
+              act={game.act}
+              announce={announce}
+              {...lobbyInvites(view)}
+            />
           ) : view.status === 'reading' ? (
             <GameReading view={view} story={story} act={game.act} skew={game.skew} announce={announce} />
           ) : view.status === 'question' ? (
@@ -82,11 +90,44 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
           ) : view.status === 'reveal' ? (
             <GameReveal key={view.reveal?.index ?? -1} view={view} story={story} act={game.act} announce={announce} />
           ) : (
-            <GameResults view={view} story={story} announce={announce} />
+            <GameResults view={view} story={story} announce={announce} again={<PlayAgain view={view} />} />
           )}
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The host's "Invite friends" and the list of friends asked (the play
+ * layer's, as in every game's lobby). Only the host asks: the server takes
+ * invites from the host alone.
+ */
+function lobbyInvites(view: StoryGameView): { invite?: React.ReactNode; invited?: React.ReactNode } {
+  // the host themself, not whoever holds the controls while the host is away
+  if (!view.players.some((p) => p.isMe && p.isHost)) return {};
+  const room = Math.max(0, MAX_PLAYERS[view.mode] - view.players.filter((p) => !p.gone).length);
+  return {
+    invite: <InviteFriendsButton game="stories" lobbyId={view.id} room={room} />,
+    invited: <InvitedList game="stories" lobbyId={view.id} room={room} />,
+  };
+}
+
+/**
+ * Playing again from the results: a duo's rematch both ask for, a group's
+ * next round the host opens (play/RematchPanel). Solo has its own Try again.
+ */
+function PlayAgain({ view }: { view: StoryGameView }): React.JSX.Element | null {
+  const t = useT();
+  if (view.mode === 'solo') return null;
+  const other = view.players.find((p) => !p.isMe);
+  return (
+    <RematchPanel
+      game="stories"
+      lobbyId={view.id}
+      otherName={other ? playerName(other, t) : t('games.opponent')}
+      isHost={view.isHost}
+    />
   );
 }
 
