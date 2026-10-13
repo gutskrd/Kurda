@@ -57,6 +57,10 @@ import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
+import { MyReportsScreen } from './src/reports/MyReportsScreen';
+import { AccountStandingScreen } from './src/reports/AccountStandingScreen';
+import { SuspensionScreen } from './src/reports/SuspensionScreen';
+import { SocialOverlays } from './src/reports/SocialOverlays';
 import { WordleScreen } from './src/wordle/WordleScreen';
 import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
@@ -296,6 +300,12 @@ function SignedInRoot() {
       <RootStack.Screen name="BlockedUsers" options={{ presentation: 'card' }}>
         {({ navigation }) => <BlockedUsersScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
+      <RootStack.Screen name="MyReports" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MyReportsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="AccountStanding" options={{ presentation: 'card' }}>
+        {({ navigation }) => <AccountStandingScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
       <RootStack.Screen name="GroupMembers" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (
@@ -397,16 +407,28 @@ function SignedInRoot() {
         {({ navigation }) => <LibraryComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
+      {/* over every screen: a gift that arrives, a warning to read once */}
+      <SocialOverlays />
     </>
   );
 }
 
 function Root() {
-  const { status, user, ageStop } = useAuth();
+  const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
+  }
+
+  // Refused at sign-in or refresh because the account is suspended: the reasons
+  // and a way to ask for a review, instead of a sign-in form that cannot work.
+  if (status === 'signedOut' && suspension) {
+    return (
+      <Entrance>
+        <SuspensionScreen details={suspension} baseUrl={baseUrl} onBack={clearSuspension} />
+      </Entrance>
+    );
   }
 
   // An answer that stopped at age — no account made, or one just closed —

@@ -78,6 +78,13 @@ const MAP = {
   bookmark: { glyph: 'BookmarkSimple', note: 'web BookmarkIcon — Saved, and a word you keep' },
   'bookmark-fill': { glyph: 'BookmarkSimple', weight: 'fill', note: 'the same bookmark, already kept' },
 
+  // --- gifts in the chat, and keeping people safe (reports, account standing) ---
+  gift: { glyph: 'Gift', note: 'web GiftIcon — a present, in the chat and in the shop; the gem stood in for it' },
+  more: { glyph: 'DotsThree', weight: 'bold', note: 'more things you can do with this — report, block — behind one quiet button' },
+  shield: { glyph: 'ShieldCheck', note: 'your account standing: what is limited, why, and asking for a review' },
+  lifebuoy: { glyph: 'Lifebuoy', note: 'help, shown first when someone may hurt themselves' },
+  block: { glyph: 'Prohibit', note: 'block someone — ends it for you, tells nobody' },
+
   // --- named here, because the browser has no counterpart yet ---
   'chevron-left': { glyph: 'CaretLeft', note: 'back, the mirror of ChevronIcon' },
   'chevron-down': { glyph: 'CaretDown', note: 'a section that opens' },
