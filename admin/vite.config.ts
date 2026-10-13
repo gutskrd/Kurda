@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -11,4 +12,8 @@ for (const p of API_PREFIXES) proxy[p] = { target: API_TARGET, changeOrigin: tru
 export default defineConfig({
   plugins: [react()],
   server: { port: 5173, proxy },
+  test: {
+    // each test file picks its environment (`// @vitest-environment jsdom` for the DOM)
+    setupFiles: ['./src/test/setup.ts'],
+  },
 });
