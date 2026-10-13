@@ -162,7 +162,7 @@ describe('WarningDialog', () => {
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
     expect(await screen.findByText('A note from Hevalo')).toBeTruthy();
-    expect(screen.getByText('This is a warning about one of our rules: Scam or spam. Nothing on your account is limited.')).toBeTruthy();
+    expect(screen.getByText('This is a warning about one of our rules: Scam or spam. A warning doesn’t limit anything on your account.')).toBeTruthy();
     expect(screen.getByText('Please stop posting links.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'I understand' }));
     await waitFor(() => expect(screen.queryByText('A note from Hevalo')).toBeNull());

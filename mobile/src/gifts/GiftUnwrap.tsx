@@ -17,7 +17,8 @@ import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
-import { useTheme } from '../theme/ThemeProvider';
+import { DarkScheme, useTheme } from '../theme/ThemeProvider';
+import { PALETTES } from '../theme/palette';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { display } from '../theme/fonts';
@@ -69,12 +70,15 @@ export function GiftUnwrap({
   onThanks: () => Promise<boolean>;
 }): React.JSX.Element {
   const { client } = useAuth();
-  const { colors } = useTheme();
+  const theme = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
   const card = target.card;
   const plan = useMemo(() => unwrapPlan(card.tier, reduce), [card.tier, reduce]);
+  // the full-screen moment is staged on night-dark in either scheme
+  const full = plan.stage === 'full';
+  const colors = full ? PALETTES.dark : theme.colors;
   const progress = useRef(new Animated.Value(0)).current;
   const details = useRef(new Animated.Value(0)).current;
   const [revealed, setRevealed] = useState(false);
@@ -154,89 +158,92 @@ export function GiftUnwrap({
     void onThanks().then((ok) => setThanked(ok ? 'done' : 'idle'));
   };
 
-  const full = plan.stage === 'full';
   const art = full ? 220 : plan.stage === 'sheet' ? 180 : 140;
+
+  const content = (
+    <View
+      style={[
+        styles.backdrop,
+        plan.stage === 'sheet' && styles.backdropSheet,
+        { backgroundColor: full ? colors.background : colors.scrim },
+      ]}
+    >
+      <View
+        style={[
+          plan.stage === 'card' ? styles.card : plan.stage === 'sheet' ? styles.sheet : styles.fullStage,
+          !full && { backgroundColor: colors.background },
+        ]}
+        accessibilityViewIsModal
+      >
+        <Pressable
+          onPress={revealed ? undefined : reveal}
+          disabled={revealed}
+          accessibilityRole="button"
+          accessibilityLabel={revealed ? undefined : t('common.skip')}
+          style={[styles.stage, { height: art + spacing.xl }]}
+        >
+          {plan.flame ? <Flame progress={progress} size={art * 1.25} item={art * 0.62} gold={colors.gold} /> : null}
+          {plan.particles.map((p, i) => (
+            <Burst key={i} particle={p} progress={progress} popAt={plan.popAt} gold={colors.gold} />
+          ))}
+          {reduce ? null : <Box progress={progress} size={art * 0.8} card={card} gold={colors.gold} />}
+          <ItemArt card={card} size={art * 0.62} progress={progress} reduce={reduce} gold={colors.gold} />
+        </Pressable>
+
+        <Animated.View style={[styles.details, { opacity: details }]} pointerEvents={revealed ? 'auto' : 'none'}>
+          <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
+            {card.name}
+          </Text>
+          <Text style={[styles.from, { color: colors.textSecondary }]}>
+            {t('gift.unwrap.from', { name: target.fromName })}
+          </Text>
+          {openError ? (
+            <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityRole="alert">
+              {openError}
+            </Text>
+          ) : (
+            <View style={styles.actions}>
+              {equippable ? (
+                <ClayButton
+                  label={worn === 'done' ? t('gift.unwrap.wearing') : t('gift.unwrap.wear')}
+                  icon={worn === 'done' ? 'check' : undefined}
+                  tone="primary"
+                  size="large"
+                  busy={worn === 'busy'}
+                  disabled={worn === 'done'}
+                  onPress={wear}
+                  style={styles.stretch}
+                />
+              ) : null}
+              <ClayButton
+                label={thanked === 'done' ? t('gift.unwrap.thanked') : t('gift.unwrap.thanks')}
+                icon={thanked === 'done' ? 'check' : 'heart'}
+                tone={equippable ? 'neutral' : 'primary'}
+                variant={equippable ? 'outline' : 'solid'}
+                size="large"
+                busy={thanked === 'busy'}
+                disabled={thanked === 'done'}
+                onPress={thank}
+                style={styles.stretch}
+              />
+            </View>
+          )}
+          {actionError ? (
+            <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
+              {actionError}
+            </Text>
+          ) : null}
+          <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
+            <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
+          </Pressable>
+        </Animated.View>
+      </View>
+    </View>
+  );
 
   return (
     <Modal visible transparent animationType={reduce ? 'none' : 'fade'} onRequestClose={onClose}>
-      <View
-        style={[
-          styles.backdrop,
-          plan.stage === 'sheet' && styles.backdropSheet,
-          { backgroundColor: full ? 'rgba(10,14,32,0.92)' : colors.scrim },
-        ]}
-      >
-        <View
-          style={[
-            plan.stage === 'card' ? styles.card : plan.stage === 'sheet' ? styles.sheet : styles.fullStage,
-            !full && { backgroundColor: colors.background },
-          ]}
-          accessibilityViewIsModal
-        >
-          <Pressable
-            onPress={revealed ? undefined : reveal}
-            disabled={revealed}
-            accessibilityRole="button"
-            accessibilityLabel={revealed ? undefined : t('common.skip')}
-            style={[styles.stage, { height: art + spacing.xl }]}
-          >
-            {plan.flame ? <Flame progress={progress} size={art * 1.1} gold={colors.gold} /> : null}
-            {plan.particles.map((p, i) => (
-              <Burst key={i} particle={p} progress={progress} popAt={plan.popAt} gold={colors.gold} />
-            ))}
-            {reduce ? null : <Box progress={progress} size={art * 0.8} card={card} gold={colors.gold} />}
-            <ItemArt card={card} size={art * 0.62} progress={progress} reduce={reduce} gold={colors.gold} />
-          </Pressable>
-
-          <Animated.View style={[styles.details, { opacity: details }]} pointerEvents={revealed ? 'auto' : 'none'}>
-            <Text style={[styles.name, { color: full ? '#FFFFFF' : colors.textPrimary }]} accessibilityRole="header">
-              {card.name}
-            </Text>
-            <Text style={[styles.from, { color: full ? 'rgba(255,255,255,0.8)' : colors.textSecondary }]}>
-              {t('gift.unwrap.from', { name: target.fromName })}
-            </Text>
-            {openError ? (
-              <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityRole="alert">
-                {openError}
-              </Text>
-            ) : (
-              <View style={styles.actions}>
-                {equippable ? (
-                  <ClayButton
-                    label={worn === 'done' ? t('gift.unwrap.wearing') : t('gift.unwrap.wear')}
-                    icon={worn === 'done' ? 'check' : undefined}
-                    tone="primary"
-                    size="large"
-                    busy={worn === 'busy'}
-                    disabled={worn === 'done'}
-                    onPress={wear}
-                    style={styles.stretch}
-                  />
-                ) : null}
-                <ClayButton
-                  label={thanked === 'done' ? t('gift.unwrap.thanked') : t('gift.unwrap.thanks')}
-                  icon={thanked === 'done' ? 'check' : 'heart'}
-                  tone={equippable ? 'neutral' : 'primary'}
-                  variant={equippable ? 'outline' : 'solid'}
-                  size="large"
-                  busy={thanked === 'busy'}
-                  disabled={thanked === 'done'}
-                  onPress={thank}
-                  style={styles.stretch}
-                />
-              </View>
-            )}
-            {actionError ? (
-              <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert">
-                {actionError}
-              </Text>
-            ) : null}
-            <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
-              <Text style={[styles.closeText, { color: full ? '#FFFFFF' : colors.textSecondary }]}>{t('social.close')}</Text>
-            </Pressable>
-          </Animated.View>
-        </View>
-      </View>
+      {full ? <DarkScheme>{content}</DarkScheme> : content}
     </Modal>
   );
 }
@@ -317,15 +324,31 @@ function Burst({
   );
 }
 
-function Flame({ progress, size, gold }: { progress: Animated.Value; size: number; gold: string }): React.JSX.Element {
-  const opacity = progress.interpolate({ inputRange: [0.3, 0.5, 1], outputRange: [0, 0.9, 0.75], extrapolate: 'clamp' });
-  const scale = progress.interpolate({ inputRange: [0.3, 0.6], outputRange: [0.6, 1.15], extrapolate: 'clamp' });
+/**
+ * The Newroz fire, rising behind the item: its base sits level with the
+ * item's, so the item stands in front of the fire rather than inside it, and
+ * it settles to a glow once the item is out.
+ */
+function Flame({
+  progress,
+  size,
+  item,
+  gold,
+}: {
+  progress: Animated.Value;
+  size: number;
+  item: number;
+  gold: string;
+}): React.JSX.Element {
+  const opacity = progress.interpolate({ inputRange: [0.3, 0.5, 1], outputRange: [0, 0.9, 0.55], extrapolate: 'clamp' });
+  const scale = progress.interpolate({ inputRange: [0.3, 0.6], outputRange: [0.6, 1], extrapolate: 'clamp' });
+  const lift = -(size - item) / 2;
   return (
     <Animated.View
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.layer, { opacity, transform: [{ scale }] }]}
+      style={[styles.layer, { opacity, transform: [{ translateY: lift }, { scale }] }]}
     >
       <NewrozFlame size={size} gold={gold} />
     </Animated.View>
