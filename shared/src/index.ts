@@ -175,3 +175,10 @@ export * from './stories.js';
 export * from './play.js';
 export * from './gifts.js';
 export * from './chat-cards.js';
+
+/**
+ * Reports, moderation cases, sanctions and appeals: the categories and their
+ * priorities, what can be reported, what each sanction stops, the standing and
+ * appeal shapes the apps show, and the case shapes the admin panel reads.
+ */
+export * from './reports.js';
