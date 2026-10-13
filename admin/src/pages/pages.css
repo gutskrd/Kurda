@@ -1,0 +1,68 @@
+/**
+ * Styles for the pages themselves: the parts a page has that the kit
+ * (ui/kit.css) does not — the dashboard's lists, the 2FA screens, the lesson
+ * editor's exercise cards. Built on the tokens in styles.css.
+ */
+
+/* a link that looks like a button: "Open the queue", "Record what's missing" */
+.button-link {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: var(--control-h); padding: 7px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline); background: var(--surface-strong); color: var(--text);
+  font-weight: 500; box-shadow: var(--shadow-sm); white-space: nowrap;
+}
+.button-link:hover { background: var(--glass-hover); color: var(--text); }
+.button-link.primary { background: var(--primary); color: var(--primary-ink); border-color: transparent; }
+.button-link.primary:hover { background: var(--primary-hover); color: var(--primary-ink); }
+
+/* ---- the dashboard ------------------------------------------------------------ */
+.stats.is-flat { margin-bottom: 0; }
+.stats.is-flat .stat { box-shadow: none; background: var(--surface-strong); border-color: var(--hairline); }
+.section .stats { margin-bottom: 0; }
+.section .stat { box-shadow: none; background: var(--surface-strong); border-color: var(--hairline); }
+
+.dash-rec-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.dash-rec {
+  display: grid; align-items: center; gap: 8px 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 220px) auto;
+  padding: 10px 0; border-top: 1px solid var(--separator);
+}
+.dash-rec:first-child { border-top: none; }
+.dash-rec-text { display: grid; gap: 2px; min-width: 0; }
+.dash-rec-label { font-weight: 600; color: var(--text); }
+.dash-rec-n { font-size: 17px; }
+.dash-rec .progress { min-width: 0; }
+@media (max-width: 640px) {
+  .dash-rec { grid-template-columns: minmax(0, 1fr) auto; }
+  .dash-rec .progress { grid-column: 1 / -1; grid-row: 2; }
+}
+
+.dash-facts { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--text-2); }
+.dash-facts .is-bad strong { color: var(--bad); }
+.dash-facts .is-warn strong { color: var(--warn); }
+
+.dash-audit { list-style: none; margin: 0; padding: 0; display: grid; }
+.dash-audit li {
+  display: grid; grid-template-columns: 96px minmax(0, 180px) minmax(0, 1fr); gap: 4px 14px; align-items: baseline;
+  padding: 8px 0; border-top: 1px solid var(--separator);
+}
+.dash-audit li:first-child { border-top: none; }
+.dash-audit-action { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) {
+  .dash-audit li { grid-template-columns: auto minmax(0, 1fr); }
+  .dash-audit-action { grid-column: 1 / -1; white-space: normal; }
+}
+
+/* ---- the 2FA steps before the workspace -------------------------------------- */
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.gate-card { width: 460px; max-width: 100%; display: grid; gap: 12px; padding: 28px; background: var(--surface-strong); }
+.gate-card .brand { padding: 0 0 4px; }
+.gate-title { font-size: 21px; display: flex; align-items: center; gap: 8px; }
+.gate-busy { animation: spin 1s linear infinite; }
+.gate-text { margin: 0; color: var(--text-2); }
+.gate-qr { display: flex; justify-content: center; margin: 6px 0; }
+.qr { background: #fff; border-radius: 8px; padding: 4px; }
+.gate-form { display: grid; gap: 10px; margin-top: 4px; }
+.gate-form label { font-weight: 600; }
+.code-input { letter-spacing: 0.35em; font-size: 22px !important; text-align: center; font-variant-numeric: tabular-nums; min-height: 52px; }
+@media (prefers-reduced-motion: reduce) { .gate-busy { animation: none; } }

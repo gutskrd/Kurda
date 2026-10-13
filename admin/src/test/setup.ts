@@ -47,6 +47,7 @@ if (typeof window !== 'undefined') {
     return Promise.resolve();
   };
   HTMLMediaElement.prototype.pause = function pause(): void {};
+  window.scrollTo = function scrollTo(): void {};
 }
 
 afterEach(() => {

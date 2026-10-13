@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
+import { go, useRoute } from '../nav';
 import { ItemActions, WalletActions } from './UserEconomy';
 
 type BanState = 'active' | 'temp_banned' | 'perm_banned';
@@ -112,6 +113,16 @@ export function Users(): React.JSX.Element {
     }
   }
 
+  // a person has an address of their own (#/users/<id>): a link from anywhere
+  // in the admin (a UserLink) opens them, and Back returns to the list
+  const route = useRoute();
+  const linked = route.page === 'users' ? route.rest[0] : undefined;
+  useEffect(() => {
+    if (linked) void open(linked);
+    else setSelected(null);
+    // open is recreated each render; the address is what decides
+  }, [linked]);
+
   if (needs2fa) {
     return (
       <div>
@@ -194,7 +205,7 @@ export function Users(): React.JSX.Element {
                           <span className={`badge ${b.cls}`}>{b.text}</span>
                         </td>
                         <td>
-                          <button onClick={() => void open(u.id)}>Open</button>
+                          <button onClick={() => go(`users/${encodeURIComponent(u.id)}`)}>Open</button>
                         </td>
                       </tr>
                     );

@@ -1,10 +1,13 @@
-import { useState, type ReactNode } from 'react';
-import { AuthProvider, hasSession, useAuth } from './auth';
-import { useHashRoute } from './nav';
+import { useEffect, useState, type ReactNode } from 'react';
+import { AuthProvider, hasSession } from './auth';
+import { useRoute } from './nav';
 import { ErrorBoundary } from './ErrorBoundary';
+import { isKnownPage, landingRoute, mayOpenPage, type Route } from './navigation';
+import { useSession } from './session';
+import { DialogProvider, EmptyState, ToastProvider } from './ui';
 import { TwoFactorGate } from './pages/TwoFactorGate';
 import { Login } from './pages/Login';
-import { Shell, type NavItem } from './pages/Shell';
+import { Shell } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
 import { Config } from './pages/Config';
 import { Analytics } from './pages/Analytics';
@@ -24,73 +27,93 @@ import { Games } from './pages/Games';
 import { AudioStudio } from './pages/AudioStudio';
 import { Shop } from './pages/Shop';
 import { Stories } from './pages/Stories';
+import { Dashboard } from './pages/Dashboard';
 
-// `roles` gates the nav link (cosmetic only — the API re-authorizes every
-// action). It's set for the three pages whose server guard is a single clean
-// RBAC-role check (requireAdmin(totp, ...roles)); every other page uses the
-// legacy `admin` role and is always shown.
-type Page = NavItem & { render: () => ReactNode; roles?: string[] };
+/**
+ * Each page by its key (navigation.ts has who may open it and where it sits
+ * in the nav). A page gets the route, for the parts of the address below it:
+ * #/users/<id>, #/moderation/<caseId>, #/audio/lessons?show=missing.
+ */
+const PAGES: Record<string, (route: Route) => ReactNode> = {
+  dashboard: () => <Dashboard />,
+  analytics: () => <Analytics />,
+  audio: () => <AudioStudio />,
+  users: () => <Users />,
+  moderation: () => <Moderation />,
+  aimod: () => <AiModeration />,
+  antibot: () => <Antibot />,
+  lessons: () => <Content />,
+  stories: () => <Stories />,
+  tags: () => <Tags />,
+  events: () => <Events />,
+  words: () => <Games />,
+  wordle: () => <Games />,
+  rhyme: () => <Games />,
+  race: () => <Games />,
+  economy: () => <Economy />,
+  shop: () => <Shop />,
+  'gem-rules': () => <Ops />,
+  fraud: () => <Fraud />,
+  approvals: () => <Config />,
+  flags: () => <Experiments />,
+  audit: () => <Audit />,
+  security: () => <Security />,
+  system: () => <Ops />,
+};
 
-/** Pages that moved, so an old bookmark still lands: the alphabet's recordings are a tab of the audio studio now. */
-const ALIASES: Record<string, string> = { alphabet: 'audio' };
+function Workspace({ onSignOut }: { onSignOut: () => void }): React.JSX.Element {
+  const session = useSession();
+  const route = useRoute();
+  const landing = landingRoute(session);
 
-const PAGES: Page[] = [
-  { key: 'moderation', label: 'Moderation', render: () => <Moderation /> },
-  { key: 'antibot', label: 'Antibot', render: () => <Antibot /> },
-  { key: 'aimod', label: 'AI Mod', render: () => <AiModeration /> },
-  { key: 'users', label: 'Users', roles: ['superadmin', 'moderator', 'support'], render: () => <Users /> },
-  { key: 'content', label: 'Content', roles: ['superadmin', 'content_editor'], render: () => <Content /> },
-  { key: 'config', label: 'Config', render: () => <Config /> },
-  { key: 'analytics', label: 'Analytics', render: () => <Analytics /> },
-  { key: 'experiments', label: 'Experiments', render: () => <Experiments /> },
-  { key: 'events', label: 'Events', render: () => <Events /> },
-  { key: 'economy', label: 'Economy', render: () => <Economy /> },
-  { key: 'ops', label: 'Ops', render: () => <Ops /> },
-  { key: 'fraud', label: 'Fraud', render: () => <Fraud /> },
-  { key: 'games', label: 'Games', roles: ['superadmin', 'content_editor'], render: () => <Games /> },
-  { key: 'stories', label: 'Stories', roles: ['superadmin', 'content_editor', 'admin'], render: () => <Stories /> },
-  { key: 'audio', label: 'Audio studio', roles: ['superadmin', 'content_editor', 'admin'], render: () => <AudioStudio /> },
-  { key: 'shop', label: 'Shop', roles: ['superadmin'], render: () => <Shop /> },
-  { key: 'tags', label: 'Tags', render: () => <Tags /> },
-  { key: 'audit', label: 'Audit', roles: ['superadmin'], render: () => <Audit /> },
-  { key: 'security', label: 'Security', render: () => <Security /> },
-];
+  // no address, or the bare #/: start on the first page this role can open
+  useEffect(() => {
+    if (!route.page) location.replace(`#/${landing}`);
+  }, [route.page, landing]);
 
-function Workspace(): React.JSX.Element {
-  const { me } = useAuth();
-  const roles = me?.roles ?? [];
-  // until roles are known (empty), show everything — never wrongly hide a link
-  const known = roles.length > 0;
-  const visible = PAGES.filter((p) => !p.roles || !known || roles.some((r) => p.roles!.includes(r)));
+  let content: ReactNode;
+  if (!route.page) content = null;
+  else if (!isKnownPage(route.page) || !PAGES[route.page]) {
+    content = (
+      <EmptyState title="There is no page here" icon="search" action={<a href={`#/${landing}`}>Go to the start page</a>}>
+        The address may be mistyped, or the page has moved. Every page is in the menu.
+      </EmptyState>
+    );
+  } else if (!mayOpenPage(route.page, session)) {
+    content = (
+      <EmptyState title="Your role can’t open this page" icon="lock" action={<a href={`#/${landing}`}>Go to the start page</a>}>
+        Your account is signed in, but this page is for other roles. A superadmin can change your role.
+      </EmptyState>
+    );
+  } else {
+    content = PAGES[route.page]!(route);
+  }
 
-  const [route, navigate] = useHashRoute(visible[0]!.key);
-  // a page may have addresses of its own below it (#/stories/<id>); the first part names the page
-  const [section = ''] = route.split('/');
-  const page = ALIASES[section] ?? section;
-  const [, setTick] = useState(0);
-  // render the routed page even if its nav link is hidden — it enforces its own
-  // access (a role-gated page shows its own "insufficient permissions" notice)
-  const active = PAGES.find((p) => p.key === page) ?? visible[0]!;
   return (
-    <Shell nav={visible} page={active.key} onNav={navigate} onLogout={() => setTick((t) => t + 1)}>
-      <ErrorBoundary resetKey={active.key}>{active.render()}</ErrorBoundary>
+    <Shell route={route} onSignOut={onSignOut}>
+      <ErrorBoundary resetKey={route.page}>{content}</ErrorBoundary>
     </Shell>
   );
 }
 
 export function App(): React.JSX.Element {
   const [, setTick] = useState(0);
+  const refresh = (): void => setTick((t) => t + 1);
   return (
     <AuthProvider>
-      {hasSession() ? (
-        // the API refuses every /admin route without 2FA, so the workspace must
-        // not render before this session has cleared it
-        <TwoFactorGate>
-          <Workspace />
-        </TwoFactorGate>
-      ) : (
-        <Login onDone={() => setTick((t) => t + 1)} />
-      )}
+      <ToastProvider>
+        <DialogProvider>
+          {hasSession() ? (
+            // the API refuses every /admin route without 2FA, so the workspace must
+            // not render before this session has cleared it
+            <TwoFactorGate>
+              <Workspace onSignOut={refresh} />
+            </TwoFactorGate>
+          ) : (
+            <Login onDone={refresh} />
+          )}
+        </DialogProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

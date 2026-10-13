@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { parseRoute, type Route } from './navigation';
 
 /**
  * Minimal hash-based navigation (no react-router — it carries high-severity
@@ -20,6 +21,25 @@ export function useHashRoute(fallback: string): [string, (page: string) => void]
     location.hash = `/${next}`;
   };
   return [page, navigate];
+}
+
+/**
+ * The address, read: which page, the parts below it, and its query
+ * (#/audio/lessons?show=missing), with old page names translated (navigation.ts).
+ */
+export function useRoute(): Route {
+  const [route, setRoute] = useState(() => parseRoute(location.hash));
+  useEffect(() => {
+    const onChange = (): void => setRoute(parseRoute(location.hash));
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return route;
+}
+
+/** Go to an address: go('audio/lessons') or go('#/audio/lessons'). */
+export function go(to: string): void {
+  location.hash = `/${to.replace(/^#?\/?/, '')}`;
 }
 
 /**
