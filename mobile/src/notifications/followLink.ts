@@ -55,6 +55,12 @@ export async function followDeepLink(link: DeepLink, navigation: RootNavigation,
       if (group) navigation.navigate('GroupThread', { groupId: group.id, name: group.name });
       return;
     }
+    default: {
+      // a screen another part of the app adds to DeepLink (reports, account
+      // standing) opens by its own name, with its own params
+      const other = link as { screen: string; params?: object };
+      (navigation.navigate as (screen: string, params?: object) => void)(other.screen, other.params);
+    }
   }
 }
 

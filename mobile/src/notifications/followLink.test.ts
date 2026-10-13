@@ -45,6 +45,12 @@ describe('followDeepLink', () => {
     await followDeepLink({ screen: 'GiftChat', params: { chat: { kind: 'group', groupId: 'g1' } } }, f.navigation, f.client);
     expect(f.went).toEqual([['GroupThread', { groupId: 'g1', name: 'Hevalên Kurmancî' }]]);
   });
+
+  it('opens a screen it has no rule for by that screen’s own name', async () => {
+    const f = fakes();
+    await followDeepLink({ screen: 'MyReports' } as never, f.navigation, f.client);
+    expect(f.went).toEqual([['MyReports', undefined]]);
+  });
 });
 
 describe('notificationText', () => {
