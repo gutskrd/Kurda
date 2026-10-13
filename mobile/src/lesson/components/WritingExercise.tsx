@@ -1,72 +1,37 @@
-import { useState } from 'react';
-import {
-  type NativeSyntheticEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  type TextInputSelectionChangeEventData,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
-import { KURDISH_KEYS, insertAtSelection } from '../kurdishKeys';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
+import { KurdishAnswerInput } from './KurdishAnswerInput';
 
 interface Props {
   exercise: Exercise;
   text: string;
   onChangeText: (text: string) => void;
   disabled: boolean;
+  /** the course's variety of Kurdish, for the key bar */
+  dialect?: string | null;
 }
 
-/** Free-text writing with a Kurdish special-character hint bar (KUR-037). */
-export function WritingExercise({ exercise, text, onChangeText, disabled }: Props) {
+/** Free-text writing with the Kurdish key bar (KUR-037), in the course's variety. */
+export function WritingExercise({ exercise, text, onChangeText, disabled, dialect }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const [selection, setSelection] = useState({ start: 0, end: 0 });
-
-  const onSelectionChange = (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) =>
-    setSelection(e.nativeEvent.selection);
-
-  const insertKey = (key: string) => {
-    const { text: next, caret } = insertAtSelection(text, selection, key);
-    onChangeText(next);
-    setSelection({ start: caret, end: caret });
-  };
 
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.write.prompt')}</Text>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
-      {/* Kurdish keyboard hint bar */}
-      <View style={styles.keys}>
-        {KURDISH_KEYS.map((key) => (
-          <Pressable
-            key={key}
-            disabled={disabled}
-            onPress={() => insertKey(key)}
-            accessibilityLabel={t('lesson.write.insertKey', { letter: key })}
-            style={[styles.key, { backgroundColor: colors.controlTrack }, disabled && styles.dim]}
-          >
-            <Text style={[styles.keyText, { color: colors.textPrimary }]}>{key}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <TextInput
-        value={text}
+      <KurdishAnswerInput
+        text={text}
         onChangeText={onChangeText}
-        onSelectionChange={onSelectionChange}
-        selection={selection}
-        editable={!disabled}
+        dialect={dialect}
+        disabled={disabled}
         multiline
         placeholder={t('lesson.write.placeholder')}
         placeholderTextColor={colors.textSecondary}
-        autoCapitalize="none"
-        autoCorrect={false}
         style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.write.answerLabel')}
       />
@@ -78,14 +43,6 @@ const styles = StyleSheet.create({
   container: { gap: spacing.md },
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
-  keys: { flexDirection: 'row', gap: spacing.sm },
-  key: {
-    minWidth: 40,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.sm,
-    alignItems: 'center',
-  },
-  keyText: { fontSize: typography.sizes.lg },
   input: {
     minHeight: 96,
     borderRadius: radii.md,

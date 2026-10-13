@@ -139,11 +139,13 @@ export function KeyboardSettingsSheet({
  * The same settings in Settings, with Wordle's layout and the keyboard guide —
  * one line in SettingsScreen, so the screen's other sections are untouched.
  */
-export function KeyboardSettingsSection({ dialect = 'kurmanci' }: { dialect?: TypingDialect }): React.JSX.Element {
+export function KeyboardSettingsSection(): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const [guide, setGuide] = useState(false);
+  // the guide for the variety last raced in, else the one the app is read in
+  const dialect: TypingDialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
   return (
     <>
       <Text style={[styles.section, { color: colors.textSecondary }]}>{t('keyboard.settings.title')}</Text>

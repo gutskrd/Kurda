@@ -16,6 +16,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
 import { CREDIT_LINES } from './credits';
+import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -205,6 +206,9 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             trailing={<Switch value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
           />
         </GlassCard>
+
+        {/* accents, the key bar, the backtick, Wordle's layout and the keyboard guide (keyboard/) */}
+        <KeyboardSettingsSection />
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.notifications')}</Text>
         <GlassCard padding="tight">

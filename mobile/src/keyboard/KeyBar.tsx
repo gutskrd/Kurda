@@ -24,18 +24,23 @@ import { useI18n } from '../i18n/I18nContext';
 export function KeyBar({
   dialect,
   onKey,
+  keys = specialKeys(dialect),
+  withShift = true,
   disabled = false,
   style,
 }: {
   dialect: TypingDialect;
   onKey: (letter: string) => void;
+  /** the letters, when not the variety's usual set (the lessons keep their own order) */
+  keys?: readonly string[];
+  /** a shift key for Kurmancî capitals; a lesson answer is not case-sensitive */
+  withShift?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const [shift, setShift] = useState(false);
-  const keys = specialKeys(dialect);
   const sorani = dialect === 'sorani';
 
   return (
@@ -66,7 +71,7 @@ export function KeyBar({
           </Pressable>
         );
       })}
-      {!sorani ? (
+      {!sorani && withShift ? (
         <Pressable
           disabled={disabled}
           onPress={() => setShift((s) => !s)}

@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
@@ -33,6 +34,7 @@ import { WordleKeyboard } from './WordleKeyboard';
 import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
+import { reportGameFinished } from '../feedback/gameFinished';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -98,6 +100,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const { colors } = useTheme();
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
+  const insets = useSafeAreaInsets();
 
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [game, setGame] = useState<WordleGameView | null>(null);
@@ -180,6 +183,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       if (res.data.status !== 'playing') {
         loadStats();
         void fetchEducation(res.data.target);
+        // this guess ended it — a daily reopened after it was played is not a finish
+        reportGameFinished({ moment: res.data.status === 'won' ? 'won' : 'other' });
       }
     } else {
       // a rejected guess consumes no attempt — keep the draft, explain inline
@@ -238,7 +243,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   return (
     <GradientBackground>
       <ScreenHeader title={t('games.wordle.name')} onBack={onExit} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {!game ? (
           <GlassCard style={styles.startCard}>
@@ -286,12 +291,20 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 onPractice={() => start('practice')}
                 stats={stats}
               />
-            ) : (
-              <WordleKeyboard keyboard={game.keyboard} onKey={onKey} disabled={submitting} />
-            )}
+            ) : null}
           </>
         )}
       </ScrollView>
+      {/*
+        The keyboard stays at the bottom of the screen, edge to edge, while the
+        board scrolls above it: inside the scroller it moved with the board and
+        lost a third of its width to the screen's margins.
+      */}
+      {game && !finished ? (
+        <View style={[styles.keyboardDock, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
+          <WordleKeyboard keyboard={game.keyboard} onKey={onKey} disabled={submitting} />
+        </View>
+      ) : null}
     </GradientBackground>
   );
 }
@@ -389,7 +402,9 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  keyboardDock: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, alignItems: 'center' },
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
   // kurdî" is three
