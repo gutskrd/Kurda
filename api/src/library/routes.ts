@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
-import { requireUnrestricted } from '../moderation/restrictions.js';
+import { requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
 import { LibraryService } from './service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -47,11 +47,11 @@ export function registerLibraryRoutes(
   });
 
   /** An attached voice note must have cleared the upload pipeline (KUR-282) —
-   *  a client can't reference an arbitrary/unconfirmed audio key. */
-  const audioOk = async (key: string | null | undefined): Promise<boolean> => {
+   *  a client can't reference an arbitrary/unconfirmed audio key — and its
+   *  author must not be barred from media (403 MUTED). */
+  const audioOk = async (req: FastifyRequest, key: string | null | undefined): Promise<boolean> => {
     if (!key) return true; // audio is optional
-    const res = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`, [key]);
-    return (res.rowCount ?? 0) > 0;
+    return voiceAttachable(app.db, req.user!.id, key);
   };
   /** Create a story/poem (text required, audio optional). */
   app.post(
@@ -63,7 +63,7 @@ export function registerLibraryRoutes(
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
-      if (!(await audioOk(body.audioMediaId))) {
+      if (!(await audioOk(req, body.audioMediaId))) {
         return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
       }
       if (trust) {
@@ -125,6 +125,10 @@ export function registerLibraryRoutes(
     // month like a new post does; unpublish and delete never do
     { schema: { params: idParam, body: updateBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
+      // a new voice rendition is checked like one attached to a new post
+      if (!(await audioOk(req, (req.body as z.infer<typeof updateBody>).audioMediaId))) {
+        return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
+      }
       const res = await library.update((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as z.infer<typeof updateBody>);
       return respond(reply, res);
     },

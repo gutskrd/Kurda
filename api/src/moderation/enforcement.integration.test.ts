@@ -169,6 +169,17 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       }
       const edit = await call('PATCH', `/library/posts/${postId}`, muted.token, { body: 'x' });
       expect(edit.statusCode).toBe(403);
+      // nor publish words some other way: a profile's name and bio, a new group
+      for (const change of [{ bio: 'insults' }, { displayName: 'insults' }, { username: `insult${kit.suffix}`.slice(0, 30) }]) {
+        const res = await call('PATCH', '/me', muted.token, change);
+        expect(res.statusCode).toBe(403);
+        expect(res.json().details.scope).toBe('post');
+      }
+      const group = await call('POST', '/groups', muted.token, { name: 'Insults', description: 'insults' });
+      expect(group.statusCode).toBe(403);
+      expect(group.json().details.scope).toBe('post');
+      // settings that publish nothing still change
+      expect((await call('PATCH', '/me', muted.token, { skipSpeaking: true })).statusCode).toBe(200);
     });
 
     it('cannot upload voice or pictures under a feature limit', async () => {
@@ -182,6 +193,48 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       const photo = await call('POST', '/me/profile-picture', muted.token);
       expect(photo.statusCode).toBe(403);
       expect(photo.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
+      // nor through the speaking-practice upload
+      const practice = await call('POST', '/media/uploads', muted.token);
+      expect(practice.statusCode).toBe(403);
+      expect(practice.json().details.scope).toBe('media');
+    });
+
+    it('cannot publish voice uploaded before (or elsewhere) under a feature limit', async () => {
+      const limited = await kit.person('limited');
+      ids.push(limited.id);
+      const key = `voice-note/limited_${kit.suffix}.webm`;
+      await pool.query(
+        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at) VALUES ($1, 'audio/webm', 10, now())`,
+        [key],
+      );
+      // fine before the limit
+      const before = await call('POST', `/library/posts/${postId}/comments`, limited.token, { audioMediaId: key });
+      expect(before.statusCode).toBe(201);
+      await call('POST', `/admin/users/${limited.id}/sanctions`, modA.token, {
+        kind: 'feature_limit', durationHours: 24, policy: 'sexual', statement: 'An explicit recording.',
+      });
+      const asComment = await call('POST', `/library/posts/${postId}/comments`, limited.token, { audioMediaId: key });
+      expect(asComment.statusCode).toBe(403);
+      expect(asComment.json().details.scope).toBe('media');
+      const asPost = await call('POST', '/library/posts', limited.token, { type: 'gotin', body: 'Gotin.', audioMediaId: key });
+      expect(asPost.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
+      const edited = await call('PATCH', `/library/comments/${(before.json() as { id: string }).id}`, limited.token, { audioMediaId: key });
+      expect(edited.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
+      // text alone is still theirs to post
+      expect((await call('POST', `/library/posts/${postId}/comments`, limited.token, { body: 'words only' })).statusCode).toBe(201);
+    });
+
+    it('cannot attach a voice file moderation took down', async () => {
+      const key = `voice-note/blocked_${kit.suffix}.webm`;
+      await pool.query(
+        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status) VALUES ($1, 'audio/webm', 10, now(), 'blocked')`,
+        [key],
+      );
+      const res = await call('POST', `/library/posts/${postId}/comments`, friend.token, { audioMediaId: key });
+      expect(res.statusCode).toBe(422);
+      expect(res.json().code).toBe('INVALID_AUDIO');
+      const edit = await call('PATCH', `/library/posts/${postId}`, friend.token, { audioMediaId: key });
+      expect(edit.json().code).toBe('INVALID_AUDIO');
     });
 
     it('sees all of it on the standing page', async () => {
