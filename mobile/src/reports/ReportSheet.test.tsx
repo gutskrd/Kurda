@@ -148,6 +148,15 @@ describe('ReportSheet', () => {
     expect((screen.getByLabelText('Anything else we should know? (optional)') as HTMLTextAreaElement).value).toBe('odd');
   });
 
+  it('says in words, not the server’s, that your own cannot be reported', async () => {
+    testAuth.client = fakeClient({ 'POST /reports': fail({ code: 'SELF_REPORT', status: 400, message: 'you cannot report yourself' }) });
+    renderWithProviders(<ReportSheet visible target={{ type: 'group', groupId: 'g1' }} onClose={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Scam or spam' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
+    expect(await screen.findByText('This is yours, so it can’t be reported.')).toBeTruthy();
+    expect(screen.queryByText('you cannot report yourself')).toBeNull();
+  });
+
   it('starts again when it is opened again', () => {
     testAuth.client = fakeClient();
     const { rerender } = renderWithProviders(

@@ -68,3 +68,30 @@ describe('GroupThreadScreen gifts', () => {
     expect(screen.queryByText('azad already has it.')).toBeNull();
   });
 });
+
+describe('GroupThreadScreen header', () => {
+  const thread = (myRole: string) =>
+    fakeClient({
+      'GET /groups/g1/chat': ok({ messages: [] }),
+      'POST /groups/g1/chat/read': ok({ ok: true }),
+      'GET /groups/g1': ok({ id: 'g1', name: 'Newroz club', members: [], myRole }),
+    });
+
+  it('offers a member a way to report the group', async () => {
+    testAuth.client = thread('member');
+    renderWithProviders(
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+    );
+    expect(await screen.findByRole('button', { name: 'Report this group' })).toBeTruthy();
+  });
+
+  it('does not offer its owner to report their own group', async () => {
+    const client = thread('owner');
+    testAuth.client = client;
+    renderWithProviders(
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+    );
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/groups/g1')).toBe(true));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Report this group' })).toBeNull());
+  });
+});

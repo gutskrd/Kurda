@@ -838,6 +838,7 @@ export type TranslationKey =
   | 'report.done.left'
   | 'report.error.limit'
   | 'report.error.gone'
+  | 'report.error.self'
   | 'reports.title'
   | 'reports.empty'
   | 'reports.target.user'
@@ -1943,6 +1944,7 @@ const en: Catalog = {
   'report.done.left': 'You left the group',
   'report.error.limit': 'You’ve sent a lot of reports today. Please try again tomorrow.',
   'report.error.gone': 'This can’t be reported any more. It may have been removed.',
+  'report.error.self': 'This is yours, so it can’t be reported.',
   'reports.title': 'My reports',
   'reports.empty': 'Nothing reported yet. When you report something, you can follow it here.',
   'reports.target.user': 'A person',
@@ -3036,6 +3038,7 @@ const ku: Catalog = {
   'report.done.left': 'Te kom terk kir',
   'report.error.limit': 'Te îro gelek rapor şandine. Ji kerema xwe sibê dîsa biceribîne.',
   'report.error.gone': 'Ev êdî nayê ragihandin. Dibe ku hatibe rakirin.',
+  'report.error.self': 'Ev ya te ye, loma nayê ragihandin.',
   'reports.title': 'Raporên min',
   'reports.empty': 'Hêj tiştek nehatiye ragihandin. Gava tu tiştekî ragihînî, tu dikarî li vir bişopînî.',
   'reports.target.user': 'Kesek',
@@ -4129,6 +4132,7 @@ const de: Catalog = {
   'report.done.left': 'Du hast die Gruppe verlassen',
   'report.error.limit': 'Du hast heute schon viele Meldungen gesendet. Bitte versuch es morgen wieder.',
   'report.error.gone': 'Das kann nicht mehr gemeldet werden. Vielleicht wurde es entfernt.',
+  'report.error.self': 'Das gehört dir, deshalb kann es nicht gemeldet werden.',
   'reports.title': 'Meine Meldungen',
   'reports.empty': 'Noch nichts gemeldet. Wenn du etwas meldest, kannst du es hier verfolgen.',
   'reports.target.user': 'Eine Person',
@@ -5222,6 +5226,7 @@ const es: Catalog = {
   'report.done.left': 'Saliste del grupo',
   'report.error.limit': 'Has enviado muchas denuncias hoy. Vuelve a intentarlo mañana.',
   'report.error.gone': 'Ya no se puede denunciar. Puede que se haya eliminado.',
+  'report.error.self': 'Es tuyo, así que no se puede denunciar.',
   'reports.title': 'Mis denuncias',
   'reports.empty': 'Aún no has denunciado nada. Cuando lo hagas, podrás seguirlo aquí.',
   'reports.target.user': 'Una persona',
@@ -6315,6 +6320,7 @@ const tr: Catalog = {
   'report.done.left': 'Gruptan ayrıldın',
   'report.error.limit': 'Bugün çok fazla bildirim gönderdin. Lütfen yarın tekrar dene.',
   'report.error.gone': 'Bu artık bildirilemez. Kaldırılmış olabilir.',
+  'report.error.self': 'Bu senin, bu yüzden bildirilemez.',
   'reports.title': 'Raporlarım',
   'reports.empty': 'Henüz bir şey bildirmedin. Bir şey bildirdiğinde buradan takip edebilirsin.',
   'reports.target.user': 'Bir kişi',
@@ -7408,6 +7414,7 @@ const ar: Catalog = {
   'report.done.left': 'غادرت المجموعة',
   'report.error.limit': 'أرسلت الكثير من البلاغات اليوم. حاول مرة أخرى غدًا.',
   'report.error.gone': 'لم يعد ممكنًا الإبلاغ عن هذا. ربما تمت إزالته.',
+  'report.error.self': 'هذا يخصّك، لذا لا يمكن الإبلاغ عنه.',
   'reports.title': 'بلاغاتي',
   'reports.empty': 'لا بلاغات بعد. عندما تبلغ عن شيء، يمكنك متابعته هنا.',
   'reports.target.user': 'شخص',
@@ -8501,6 +8508,7 @@ const fr: Catalog = {
   'report.done.left': 'Tu as quitté le groupe',
   'report.error.limit': 'Tu as envoyé beaucoup de signalements aujourd’hui. Réessaie demain.',
   'report.error.gone': 'Impossible de le signaler maintenant. Il a peut-être été supprimé.',
+  'report.error.self': 'C’est à toi, tu ne peux donc pas le signaler.',
   'reports.title': 'Mes signalements',
   'reports.empty': 'Aucun signalement pour l’instant. Quand tu signales quelque chose, tu peux le suivre ici.',
   'reports.target.user': 'Une personne',
@@ -9594,6 +9602,7 @@ const nl: Catalog = {
   'report.done.left': 'Je hebt de groep verlaten',
   'report.error.limit': 'Je hebt vandaag veel meldingen verstuurd. Probeer het morgen opnieuw.',
   'report.error.gone': 'Dit kan niet meer gemeld worden. Misschien is het verwijderd.',
+  'report.error.self': 'Dit is van jou, dus je kunt het niet melden.',
   'reports.title': 'Mijn meldingen',
   'reports.empty': 'Nog niets gemeld. Als je iets meldt, kun je het hier volgen.',
   'reports.target.user': 'Een persoon',
@@ -10688,6 +10697,7 @@ const ckb: Catalog = {
   'report.done.left': 'گرووپەکەت بەجێهێشت',
   'report.error.limit': 'ئەمڕۆ ڕاپۆرتی زۆرت ناردووە. تکایە سبەی دووبارە هەوڵ بدەرەوە.',
   'report.error.gone': 'ئیتر ناتوانرێت ئەمە ڕاپۆرت بکرێت. لەوانەیە لابرابێت.',
+  'report.error.self': 'ئەمە هی خۆتە، بۆیە ناتوانرێت ڕاپۆرت بکرێت.',
   'reports.title': 'ڕاپۆرتەکانم',
   'reports.empty': 'هێشتا هیچ ڕاپۆرت نەکراوە. کاتێک شتێک ڕاپۆرت دەکەیت، لێرە دەتوانیت بەدوایدا بچیت.',
   'reports.target.user': 'کەسێک',

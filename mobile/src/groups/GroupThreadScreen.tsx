@@ -91,6 +91,8 @@ export function GroupThreadScreen({
   const [error, setError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
+  // null until the club says: the report button waits rather than flash at its owner
+  const [owner, setOwner] = useState<boolean | null>(null);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
   const [flying, setFlying] = useState<{ tier: GiftTier; count: number; key: number } | null>(null);
@@ -144,10 +146,18 @@ export function GroupThreadScreen({
     );
   }, [client, groupId, me, nameParam]);
 
-  // the header needs a name when the way in did not bring one
+  // the header's name when the way in did not bring one, and whether the club
+  // is yours — its owner is the one person who cannot report it
   useEffect(() => {
-    if (nameParam) return;
-    void groupDetail(client, groupId).then((res) => res.ok && setName(res.data.name));
+    let active = true;
+    void groupDetail(client, groupId).then((res) => {
+      if (!active || !res.ok) return;
+      if (!nameParam) setName(res.data.name);
+      setOwner(res.data.myRole === 'owner');
+    });
+    return () => {
+      active = false;
+    };
   }, [client, groupId, nameParam]);
 
   /** Older messages, from the top. The list is inverted, so "end" is the past. */
@@ -287,15 +297,17 @@ export function GroupThreadScreen({
               >
                 <Icon name="people" size={20} tone="primary" />
               </Pressable>
-              <Pressable
-                onPress={() => setReporting({ target: { type: 'group', groupId } })}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel={t('report.title.group')}
-                style={styles.headerBtn}
-              >
-                <Icon name="more" size={20} tone="secondary" />
-              </Pressable>
+              {owner !== false ? null : (
+                <Pressable
+                  onPress={() => setReporting({ target: { type: 'group', groupId } })}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('report.title.group')}
+                  style={styles.headerBtn}
+                >
+                  <Icon name="more" size={20} tone="secondary" />
+                </Pressable>
+              )}
             </View>
           }
         />

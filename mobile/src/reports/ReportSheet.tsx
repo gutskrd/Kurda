@@ -517,6 +517,7 @@ export function requestFor(target: ReportTarget, category: ReportCategory, note:
 function reportErrorText(error: ApiError, t: (key: TranslationKey, vars?: Record<string, string | number>) => string): string {
   if (error.code === 'REPORT_LIMIT') return t('report.error.limit');
   if (error.code === 'TARGET_NOT_FOUND') return t('report.error.gone');
+  if (error.code === 'SELF_REPORT') return t('report.error.self');
   return describeError(error, t);
 }
 
