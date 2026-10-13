@@ -345,4 +345,28 @@ describe('SocialRail', () => {
     expect(screen.getByRole('link', { name: 'About your report' })).toHaveAttribute('href', '/app/settings/reports');
     expect(screen.getByRole('link', { name: 'A decision about your account' })).toHaveAttribute('href', '/app/settings/standing');
   });
+
+  it('opens a caring message’s helpline in a new tab, and counts it as read', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n9', category: 'system', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'caring_message', helplineUrl: 'https://findahelpline.com' } },
+        ],
+        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    const link = screen.getByRole('link', { name: 'A message from Hevalo' });
+    expect(link).toHaveAttribute('href', 'https://findahelpline.com');
+    expect(link).toHaveAttribute('target', '_blank');
+    link.addEventListener('click', (e) => e.preventDefault()); // no navigation in a test
+    await userEvent.click(link);
+    await waitFor(() =>
+      expect(
+        vi.mocked(fetch).mock.calls.some(([u, init]) => String(u).includes('/me/notifications/n9/read') && init?.method === 'POST'),
+      ).toBe(true),
+    );
+  });
 });

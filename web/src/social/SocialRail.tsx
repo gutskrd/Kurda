@@ -444,7 +444,13 @@ function Notifications({
                   {title}
                 </Link>
               ) : view?.href ? (
-                <a href={view.href} className="rail-note-link" target="_blank" rel="noopener noreferrer">
+                <a
+                  href={view.href}
+                  className="rail-note-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => n.readAt === null && void dismiss(n.id)}
+                >
                   {title}
                 </a>
               ) : (
