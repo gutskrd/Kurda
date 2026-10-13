@@ -114,7 +114,6 @@ const MAP = {
   'audio-pause': { glyph: 'Pause', weight: 'fill', note: 'pause a recording' },
   'skip-back': { glyph: 'SkipBack', note: 'the sentence before' },
   'skip-forward': { glyph: 'SkipForward', note: 'the sentence after' },
-  copy: { glyph: 'Copy', note: 'copy a link or a code' },
   timer: { glyph: 'Timer', note: 'a question with a clock, and extra time' },
   'user-plus': { glyph: 'UserPlus', note: 'invite a friend to play' },
   crown: { glyph: 'Crown', note: 'the host of a game' },
