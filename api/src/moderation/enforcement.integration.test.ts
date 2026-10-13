@@ -11,6 +11,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { FriendService } from '../friends/service.js';
 import { GroupService } from '../groups/service.js';
+import { seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { OFFENSE_PERM } from './service.js';
 
@@ -262,6 +263,49 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       expect(edited.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
       // text alone is still theirs to post
       expect((await call('POST', `/library/posts/${postId}/comments`, limited.token, { body: 'words only' })).statusCode).toBe(201);
+    });
+
+    it('cannot put a picture uploaded before a feature limit on a post, new or in an edit', async () => {
+      const limited = await kit.person('piclimit');
+      ids.push(limited.id);
+      const [kept, later] = [
+        await seedPictureUpload(pool, `image-post/pl1_${kit.suffix}.webp`, limited.id),
+        await seedPictureUpload(pool, `image-post/pl2_${kit.suffix}.webp`, limited.id),
+      ];
+      try {
+        const posted = await call('POST', '/library/posts', limited.token, { body: 'Wêne', media: [{ mediaKey: kept }] });
+        expect(posted.statusCode).toBe(201);
+        const id = (posted.json() as { id: string }).id;
+        await call('POST', `/admin/users/${limited.id}/sanctions`, modA.token, {
+          kind: 'feature_limit', durationHours: 24, policy: 'sexual', statement: 'An explicit picture.',
+        });
+        const asPost = await call('POST', '/library/posts', limited.token, { body: 'Dîsa', media: [{ mediaKey: later }] });
+        expect(asPost.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
+        const added = await call('PATCH', `/library/posts/${id}`, limited.token, { media: [{ mediaKey: kept }, { mediaKey: later }] });
+        expect(added.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
+        // still unclaimed
+        const row = await pool.query<{ confirmed_at: Date | null }>(`SELECT confirmed_at FROM media_uploads WHERE key = $1`, [later]);
+        expect(row.rows[0]!.confirmed_at).toBeNull();
+        // words, and the picture the post already has, are still theirs to change
+        expect((await call('PATCH', `/library/posts/${id}`, limited.token, { body: 'Peyvên nû', media: [{ mediaKey: kept, altText: 'çiya' }] })).statusCode).toBe(200);
+        expect((await call('POST', '/library/posts', limited.token, { body: 'Tenê peyv' })).statusCode).toBe(201);
+      } finally {
+        await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [[kept, later]]);
+      }
+    });
+
+    it('cannot attach a picture as a voice note', async () => {
+      // a posted picture is a confirmed upload too, and its key is in its address
+      const key = await seedPictureUpload(pool, `image-post/notvoice_${kit.suffix}.webp`, friend.id);
+      try {
+        expect((await call('POST', '/library/posts', friend.token, { body: 'Wêne', media: [{ mediaKey: key }] })).statusCode).toBe(201);
+        const res = await call('POST', `/library/posts/${postId}/comments`, friend.token, { audioMediaId: key });
+        expect(res.statusCode).toBe(422);
+        expect(res.json().code).toBe('INVALID_AUDIO');
+      } finally {
+        await pool.query(`DELETE FROM library_posts WHERE id IN (SELECT post_id FROM library_post_media WHERE media_key = $1)`, [key]);
+        await pool.query(`DELETE FROM media_uploads WHERE key = $1`, [key]);
+      }
     });
 
     it('cannot attach a voice file moderation took down', async () => {

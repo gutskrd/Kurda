@@ -206,6 +206,10 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     await refused(await upload(me, { scanStatus: 'gated' }));
     await refused(await upload(me, { scanStatus: 'blocked' }));
     await refused(await upload(me, { scanStatus: 'pending' }));
+    // taken off the public bucket by moderation, though the scan cleared it
+    const quarantined = await upload(me);
+    await pool.query(`UPDATE media_uploads SET quarantine_state = 'pending', preserve_evidence = true WHERE key = $1`, [quarantined]);
+    await refused(quarantined);
 
     // a profile photo (its key is in its public address), a voice note, and an
     // upload from before uploads had owners
