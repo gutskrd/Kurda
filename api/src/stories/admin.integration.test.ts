@@ -246,12 +246,25 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       expect(row.rows[0].published_by).toBe(editorId);
       expect((await publicList()).some((st) => st.id === id)).toBe(true);
 
+      // the audit keeps what the reviewer approved, word for word: the row itself may later be unpublished and rewritten
       const audit = await pool.query(`SELECT action, before, after FROM admin_audit_log WHERE target_id = $1 AND action LIKE 'story.%'`, [id]);
+      const approved = testStory(slug('review'), { level: 2 });
       expect(audit.rows).toEqual([
         {
           action: 'story.publish',
           before: { status: 'in_review', slug: slug('review'), title: `Çîrok ${slug('review')}`, lockVersion: inReview.json().lockVersion },
-          after: { status: 'published', slug: slug('review'), title: `Çîrok ${slug('review')}`, lockVersion: inReview.json().lockVersion + 1 },
+          after: {
+            status: 'published',
+            slug: slug('review'),
+            title: approved.title,
+            lockVersion: inReview.json().lockVersion + 1,
+            dialect: 'kurmanci',
+            level: 2,
+            summary: approved.summary,
+            body: approved.body,
+            glossary: approved.glossary,
+            questions: approved.questions.map((q, i) => ({ ...q, id: published.json().questions[i].id })),
+          },
         },
       ]);
 
@@ -290,6 +303,16 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
         { action: 'story.publish', from: 'draft', to: 'published' },
         { action: 'story.archive', from: 'published', to: 'archived' },
       ]);
+      // what learners were reading when it was pulled is kept with each pull
+      const pulls = await pool.query(
+        `SELECT before, after FROM admin_audit_log WHERE target_id = $1 AND action IN ('story.unpublish', 'story.archive')`,
+        [id],
+      );
+      for (const { before, after } of pulls.rows) {
+        expect(before).toMatchObject({ status: 'published', body: testStory('x').body, glossary: [{ term: 'cotkar', meanings: { en: 'farmer' } }] });
+        expect(before.questions).toHaveLength(6);
+        expect(after).not.toHaveProperty('body');
+      }
 
       // nothing leaves the archive but a delete
       for (const action of ['publish', 'submit', 'unpublish', 'archive']) {

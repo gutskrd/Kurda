@@ -17,7 +17,8 @@
  * below, so all three write a story the same way.
  *
  * Publishing, unpublishing, archiving and deleting are audited with the story
- * before and after, beside the automatic one-line audit of every admin call.
+ * before and after — the whole of it, text and questions, on the side where it
+ * is live — beside the automatic one-line audit of every admin call.
  */
 import type pg from 'pg';
 import {
@@ -176,6 +177,25 @@ function storyInput(row: StoryRow, questions: readonly StoryQuestionInput[]): St
   };
 }
 
+/**
+ * A story as the audit keeps it on one side of a status change. Stories have
+ * no version history — unpublishing, editing and publishing again overwrites
+ * the row — so on the side where a story is live (just published, or about
+ * to be unpublished or archived) the audit keeps the whole of it, questions
+ * included: which text a reviewer approved, and what learners read until it
+ * was pulled, can always be told afterwards. A draft or a story in review is
+ * noted by its status alone; its content is on the other side of the entry.
+ */
+function auditState(
+  row: StoryRow,
+  status: StoryStatus,
+  lockVersion: number,
+  questions: readonly AdminStoryQuestion[] | null,
+): Record<string, unknown> {
+  const head = { status, slug: row.slug, title: row.title, lockVersion };
+  return status === 'published' && questions ? { ...head, ...storyInput(row, questions) } : head;
+}
+
 function invalid(validation: StoryValidation): AppError {
   const n = validation.errors.length;
   return new AppError('INVALID', 422, `the story has ${n} problem${n === 1 ? '' : 's'} to fix first`, validation);
@@ -284,6 +304,8 @@ const DONE: Record<Transition, string> = {
 export interface ActionContext {
   adminId: string;
   requestId?: string | null;
+  /** why, for the audit (the importer says it was the import) */
+  reason?: string | null;
 }
 
 export class StoryAdminService {
@@ -461,40 +483,57 @@ export class StoryAdminService {
   }
 
   async transition(id: string, action: Transition, ctx: ActionContext & { lockVersion: number }): Promise<AdminStory> {
-    const rule = TRANSITIONS[action];
-    let wasOrIsPublished = false;
-    await this.tx(async (client) => {
-      const row = await this.lockStory(client, id, ctx.lockVersion);
-      if (!rule.from.includes(row.status)) {
-        throw new AppError('BAD_STATE', 409, `a story that is ${row.status.replace('_', ' ')} cannot be ${DONE[action]}`);
-      }
-      if (rule.whole) {
-        const questions = (await this.questionsOf(client, [id])).get(id) ?? [];
-        const validation = validateStory(storyInput(row, questions), 'publish');
-        if (validation.errors.length > 0) throw invalid(validation);
-      }
-      const publishing = rule.to === 'published';
-      const after = await client.query<{ lock_version: number }>(
-        `UPDATE stories SET status = $2, lock_version = lock_version + 1, updated_by = $3
-                ${publishing ? ', published_by = $3, published_at = now()' : ''}
-         WHERE id = $1 RETURNING lock_version`,
-        [id, rule.to, ctx.adminId],
-      );
-      wasOrIsPublished = row.status === 'published' || publishing;
-      if (rule.audited) {
-        await this.audit.record(client, {
-          adminId: ctx.adminId,
-          action: `story.${action}`,
-          targetType: 'story',
-          targetId: id,
-          before: { status: row.status, slug: row.slug, title: row.title, lockVersion: row.lock_version },
-          after: { status: rule.to, slug: row.slug, title: row.title, lockVersion: after.rows[0]!.lock_version },
-          requestId: ctx.requestId ?? null,
-        });
-      }
-    });
-    if (wasOrIsPublished) await bustStoryLists(this.cache);
+    const listChanged = await this.tx((client) => this.transitionIn(client, id, action, ctx));
+    if (listChanged) await bustStoryLists(this.cache);
     return (await this.get(id))!;
+  }
+
+  /**
+   * A status change inside the caller's transaction, with every check and
+   * the audit of `transition`. Answers whether the published list changed
+   * (the story was published, or now is): the caller empties the list cache
+   * after it commits, as `transition` does. The importer's --publish goes
+   * through here, so a story published from a file is checked, attributed
+   * and audited exactly as one published in the admin panel.
+   */
+  async transitionIn(
+    client: Executor,
+    id: string,
+    action: Transition,
+    ctx: ActionContext & { lockVersion: number },
+  ): Promise<boolean> {
+    const rule = TRANSITIONS[action];
+    const row = await this.lockStory(client, id, ctx.lockVersion);
+    if (!rule.from.includes(row.status)) {
+      throw new AppError('BAD_STATE', 409, `a story that is ${row.status.replace('_', ' ')} cannot be ${DONE[action]}`);
+    }
+    const publishing = rule.to === 'published';
+    // the bank is needed to check a whole story, and for the audit of a live one
+    const questions =
+      rule.whole || (rule.audited && row.status === 'published') ? ((await this.questionsOf(client, [id])).get(id) ?? []) : null;
+    if (rule.whole) {
+      const validation = validateStory(storyInput(row, questions!), 'publish');
+      if (validation.errors.length > 0) throw invalid(validation);
+    }
+    const after = await client.query<{ lock_version: number }>(
+      `UPDATE stories SET status = $2, lock_version = lock_version + 1, updated_by = $3
+              ${publishing ? ', published_by = $3, published_at = now()' : ''}
+       WHERE id = $1 RETURNING lock_version`,
+      [id, rule.to, ctx.adminId],
+    );
+    if (rule.audited) {
+      await this.audit.record(client, {
+        adminId: ctx.adminId,
+        action: `story.${action}`,
+        targetType: 'story',
+        targetId: id,
+        before: auditState(row, row.status, row.lock_version, questions),
+        after: auditState(row, rule.to, after.rows[0]!.lock_version, questions),
+        reason: ctx.reason ?? null,
+        requestId: ctx.requestId ?? null,
+      });
+    }
+    return row.status === 'published' || publishing;
   }
 
   /**
