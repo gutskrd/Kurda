@@ -67,6 +67,12 @@ import { inTransaction, type Executor } from './tx.js';
  *   with the hotlines' links — admins file by hand.
  * - **Reopen**, **escalate**, **notes**, and the full **detail** the case view
  *   reads.
+ *
+ * Nobody handles a case they are part of — the reported person or one of its
+ * reporters (`assertNotParty`): they cannot open it (the detail names the
+ * reporters), claim it (a lease held for ever would block everyone else),
+ * note, decide, escalate, reopen it, or confirm or turn down a ban on it; and
+ * the queue does not show a moderator the cases about themselves.
  */
 
 export interface CaseRow extends CaseSourceRow {
@@ -205,6 +211,9 @@ export class CasesService {
 
   /** Claim (or refresh) the lease. Another admin's live lease is a 409. */
   async claim(caseId: string, adminId: string): Promise<{ leaseUntil: string }> {
+    const found = await this.find(this.pool, caseId);
+    if (!found) throw new AppError('NOT_FOUND', 404, 'no such case');
+    await this.assertNotParty(this.pool, found, adminId);
     const res = await this.pool.query<{ lease_until: Date }>(
       `UPDATE moderation_cases
           SET claimed_by = $2,
@@ -242,7 +251,9 @@ export class CasesService {
   async addNote(caseId: string, adminId: string, text: string): Promise<CaseNote> {
     const body = text.trim();
     if (!body) throw new AppError('NOTE_REQUIRED', 400, 'a note needs some text');
-    if (!(await this.find(this.pool, caseId))) throw new AppError('NOT_FOUND', 404, 'no such case');
+    const c = await this.find(this.pool, caseId);
+    if (!c) throw new AppError('NOT_FOUND', 404, 'no such case');
+    await this.assertNotParty(this.pool, c, adminId);
     const r = await this.pool.query<{ id: string; created_at: Date }>(
       `INSERT INTO moderation_case_notes (case_id, author_id, body) VALUES ($1, $2, $3) RETURNING id, created_at`,
       [caseId, adminId, body.slice(0, 4000)],
@@ -590,6 +601,7 @@ export class CasesService {
     await inTransaction(this.pool, async (client) => {
       const c = await this.find(client, caseId, true);
       if (!c) throw new AppError('NOT_FOUND', 404, 'no such case');
+      await this.assertNotParty(client, c, adminId);
       if (c.status !== 'actioned' && c.status !== 'no_violation') throw new AppError('CASE_OPEN', 409, 'this case is not closed');
       const other = await client.query<{ id: string }>(
         `SELECT id FROM moderation_cases WHERE source = $1 AND source_ref = $2 AND id <> $3
@@ -845,6 +857,15 @@ export class CasesService {
     opts: { allowUntypedSingle?: boolean; auditAction?: string } = {},
   ): Promise<ApplySanctionResult> {
     if (userId === adminId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot sanction yourself');
+    // nor someone whose report about you is still open: that is retaliation,
+    // whatever it is called
+    const reportedMe = await this.pool.query(
+      `SELECT 1 FROM reports WHERE reporter_id = $1 AND subject_user_id = $2 AND status = 'open' LIMIT 1`,
+      [userId, adminId],
+    );
+    if (reportedMe.rowCount) {
+      throw new AppError('CONFLICT_OF_INTEREST', 403, 'this person has an open report about you; another moderator must handle them');
+    }
     return inTransaction(this.pool, async (client) => {
       const u = await client.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [userId]);
       if (!u.rows[0]) throw new AppError('NOT_FOUND', 404, 'no such user');
@@ -911,11 +932,16 @@ export class CasesService {
     }));
   }
 
-  /** A second admin confirms a permanent ban. The one who asked for it cannot. */
+  /**
+   * A second admin confirms a permanent ban. The one who asked for it cannot,
+   * nor can anyone the ban's case is about or was reported by — a reporter is
+   * not a second opinion on the person they reported.
+   */
   async approve(sanctionId: string, adminId: string): Promise<CaseSanctionView> {
     return inTransaction(this.pool, async (client) => {
       const s = await this.lockUnconfirmedBan(client, sanctionId);
       if (s.created_by === adminId) throw new AppError('SAME_ADMIN', 403, 'a second admin has to confirm this ban');
+      await this.assertNotPartyToBan(client, s, adminId);
       if (s.pending_approval && s.created_at.getTime() + SECOND_APPROVAL_HOURS * 3_600_000 < Date.now()) {
         throw new AppError('APPROVAL_EXPIRED', 409, 'the 72 hours to confirm this ban have passed');
       }
@@ -976,6 +1002,7 @@ export class CasesService {
   async reject(sanctionId: string, adminId: string, reason: string): Promise<CaseSanctionView> {
     return inTransaction(this.pool, async (client) => {
       const s = await this.lockUnconfirmedBan(client, sanctionId);
+      await this.assertNotPartyToBan(client, s, adminId);
       const view = await this.withdrawBan(client, s, adminId, reason);
       await logAdminAction(client, {
         targetUserId: s.user_id,
@@ -1038,6 +1065,13 @@ export class CasesService {
     return view;
   }
 
+  /** The banned person, and the people in the ban's case, do not confirm or turn it down. */
+  private async assertNotPartyToBan(db: Executor, s: SanctionRow, adminId: string): Promise<void> {
+    if (s.user_id === adminId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'this ban is about you; another moderator must handle it');
+    const c = s.case_id ? await this.find(db, s.case_id) : null;
+    if (c) await this.assertNotParty(db, c, adminId);
+  }
+
   private async lockUnconfirmedBan(db: Executor, sanctionId: string): Promise<SanctionRow> {
     // the person first, then the ban (the sanctions service's lock order)
     await this.sanctions.lockOwnerOf(db, sanctionId);
@@ -1053,14 +1087,18 @@ export class CasesService {
   // Detail
   // ---------------------------------------------------------------------------
 
-  /** Everything the case view shows. */
-  async detail(caseId: string): Promise<CaseDetail | null> {
+  /**
+   * Everything the case view shows. With a viewer, it is refused to someone
+   * the case is about or was reported by: it names the reporters.
+   */
+  async detail(caseId: string, viewerId?: string): Promise<CaseDetail | null> {
     const r = await this.pool.query<CaseRow & CasePersonColumns>(
       `SELECT c.*, ${CASE_PERSON_SELECT} FROM moderation_cases c ${CASE_PERSON_JOIN} WHERE c.id = $1`,
       [caseId],
     );
     const row = r.rows[0];
     if (!row) return null;
+    if (viewerId) await this.assertNotParty(this.pool, row, viewerId);
     const now = new Date();
 
     const [reports, subject, notes, audit, sanctions, escalations] = await Promise.all([

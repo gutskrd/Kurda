@@ -149,6 +149,13 @@ export class AppealsService {
             [appeal.case_id],
           )).rows[0] ?? null
         : null;
+      // never your own appeal, nor one from a case you are part of (as the
+      // reported person or a reporter)
+      if (appeal.user_id === adminId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot review your own appeal');
+      const caseId = sanction?.case_id ?? appeal.case_id;
+      const related = caseId ? await this.cases.find(client, caseId) : null;
+      if (related) await this.cases.assertNotParty(client, related, adminId);
+
       const decider = sanction?.created_by ?? decided?.resolved_by ?? null;
       // someone not involved reviews it, whenever there is someone else
       if (decider === adminId && (await this.sanctions.moderatorCount()) >= 2) {

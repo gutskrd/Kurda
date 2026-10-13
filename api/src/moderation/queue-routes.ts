@@ -107,6 +107,7 @@ export function registerModerationQueueRoutes(
       ...q,
       priority: q.priority as ReportPriority | undefined,
       source: q.source as QueueFilters['source'] | CaseSourceGroup | undefined,
+      viewerId: req.user!.id,
     };
     return { added, ...(await queue.queue(filters)) };
   });
@@ -118,7 +119,7 @@ export function registerModerationQueueRoutes(
   // ---- one case ----------------------------------------------------------------
 
   app.get('/admin/moderation/cases/:id', { schema: { params: idParam }, preHandler: guard }, async (req) => {
-    const detail = await cases.detail((req.params as { id: string }).id);
+    const detail = await cases.detail((req.params as { id: string }).id, req.user!.id);
     if (!detail) throw new AppError('NOT_FOUND', 404, 'no such case');
     return detail;
   });

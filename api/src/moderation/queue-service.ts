@@ -57,7 +57,10 @@ interface IngestRow {
 type IngestMode = 'once' | 'refresh';
 
 /** The queue's filters: the shared `CaseQueueQuery` (see @kurda/shared for what each means). */
-export type QueueFilters = CaseQueueQuery;
+export interface QueueFilters extends CaseQueueQuery {
+  /** the moderator reading: cases about them are not shown to them */
+  viewerId?: string;
+}
 
 export const QUEUE_PAGE_SIZE = 50;
 
@@ -507,6 +510,7 @@ export class ModerationQueueService {
     if (status === 'open') where.push(`c.${OPEN_CASE_PREDICATE}`);
     else if (status === 'closed') where.push(`c.status IN ('actioned','no_violation')`);
     else if (status !== 'all') add((n) => `c.status = $${n}`, status);
+    if (filters.viewerId) add((n) => `c.subject_user_id IS DISTINCT FROM $${n}::uuid`, filters.viewerId);
     if (filters.priority !== undefined) add((n) => `c.priority = $${n}`, filters.priority);
     if (filters.category) add((n) => `c.category = $${n}`, filters.category);
     if (filters.source) {

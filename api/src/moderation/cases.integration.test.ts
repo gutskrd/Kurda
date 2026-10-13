@@ -584,4 +584,51 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
     const refresh = await call('POST', '/auth/refresh', null, { refreshToken: victim.refreshToken });
     expect(refresh.statusCode).toBe(401);
   });
+
+  it('nobody handles a case about themselves, lifts their own sanctions, or reviews their own appeal', async () => {
+    const accuser = await kit.person('accuser');
+    created.push(accuser.id);
+    const caseId = await reportCase(accuser, { targetType: 'user', targetId: modA.id, category: 'harassment', note: 'the moderator insulted me' });
+    const conflict = (res: { statusCode: number; json: () => { code: string } }) => {
+      expect(res.statusCode).toBe(403);
+      expect(res.json().code).toBe('CONFLICT_OF_INTEREST');
+    };
+
+    // not in their queue, and they cannot open, hold or annotate it
+    const mine = (await call('GET', `/admin/moderation/queue?q=${caseId}`, modA.token)).json() as CaseQueuePage;
+    expect(mine.cases).toHaveLength(0);
+    expect(((await call('GET', `/admin/moderation/queue?q=${caseId}`, modB.token)).json() as CaseQueuePage).cases).toHaveLength(1);
+    conflict(await call('GET', `/admin/moderation/cases/${caseId}`, modA.token));
+    conflict(await call('POST', `/admin/moderation/cases/${caseId}/claim`, modA.token));
+    conflict(await call('POST', `/admin/moderation/cases/${caseId}/note`, modA.token, { text: 'nothing happened' }));
+    // nor retaliate against the person who reported them
+    conflict(await call('POST', `/admin/users/${accuser.id}/sanctions`, modA.token, { kind: 'warning', policy: 'spam', statement: 'Stop.' }));
+
+    // another moderator mutes them; they cannot lift it themselves, by any route
+    const muted = await call('POST', `/admin/users/${modA.id}/sanctions`, modB.token, {
+      kind: 'post_mute', durationHours: 24, policy: 'harassment', statement: 'Insults in comments.',
+    });
+    expect(muted.statusCode).toBe(201);
+    const muteOnA = (muted.json() as { sanctions: Array<{ id: string }> }).sanctions[0]!.id;
+    conflict(await call('POST', `/admin/sanctions/${muteOnA}/revoke`, modA.token, { reason: 'mistake' }));
+    conflict(await call('POST', `/admin/users/${modA.id}/unmute`, modA.token, { reason: 'mistake' }));
+    conflict(await call('POST', `/admin/users/${modA.id}/chat-mute/lift`, modA.token, { reason: 'mistake' }));
+    // nor answer their own appeal
+    const appeal = (await call('POST', '/me/appeals', modA.token, { sanctionId: muteOnA, text: 'I did nothing wrong.' })).json() as { id: string };
+    conflict(await call('POST', `/admin/appeals/${appeal.id}/decide`, modA.token, { outcome: 'overturned', note: 'agreed' }));
+
+    // decided by someone else, it cannot be reopened by the person it was about
+    expect((await decide(modB, caseId, { outcome: 'no_violation' })).statusCode).toBe(200);
+    conflict(await call('POST', `/admin/moderation/cases/${caseId}/reopen`, modA.token, { reason: 'look again' }));
+
+    // a reporter is no second opinion on a ban of the person they reported
+    const offender = await target('coiban');
+    const banCase = await reportCase(modA, { targetType: 'user', targetId: offender.id, category: 'harassment' });
+    await decide(modB, banCase, { outcome: 'actioned', policy: 'harassment', actions: [{ target: 'subject', kind: 'permanent_ban', statement: 'Abuse.' }] });
+    const pending = ((await call('GET', '/admin/moderation/approvals', legacy.token)).json() as { approvals: PendingApproval[] }).approvals.find(
+      (a) => a.caseId === banCase,
+    )!;
+    conflict(await call('POST', `/admin/moderation/approvals/${pending.sanction.id}/approve`, modA.token));
+    expect((await call('POST', `/admin/moderation/approvals/${pending.sanction.id}/approve`, legacy.token)).statusCode).toBe(200);
+  });
 });

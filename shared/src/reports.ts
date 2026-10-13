@@ -886,7 +886,12 @@ export interface CsamActionResult {
  *   403 MUTED (MutedErrorDetails) from any route that creates text or media while restricted;
  *   403 ACCOUNT_SUSPENDED (SuspendedErrorDetails) from sign-in, refresh and social sign-in.
  *
- * Admins with `moderation.act` (moderator, superadmin, legacy admin; 2FA verified):
+ * Admins with `moderation.act` (moderator, superadmin, legacy admin; 2FA verified).
+ * A moderator who is a case's reported person or one of its reporters gets 403
+ * CONFLICT_OF_INTEREST from every route about that case (detail, claim, note,
+ * decide, escalate, reopen, CSAM, approving or rejecting its ban) and does not see
+ * it in the queue; nobody sanctions themselves or someone with an open report about
+ * them, lifts their own sanction, or reviews their own appeal (same 403):
  *   GET  /admin/moderation/queue      CaseQueueQuery → CaseQueuePage
  *   GET  /admin/moderation/summary    → ModerationSummary
  *   GET  /admin/moderation/sla        → { medianSeconds: number | null; resolved: number }

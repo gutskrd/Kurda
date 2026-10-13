@@ -311,6 +311,10 @@ export class SanctionsService {
       throw new AppError('DURATION_REQUIRED', 400, 'a suspension needs an end; use a permanent ban for none');
     }
 
+    // nobody sanctions themselves, by any route
+    if (input.createdBy !== null && input.createdBy === input.userId) {
+      throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot sanction yourself');
+    }
     if (!(await this.lockPerson(db, input.userId))) throw new AppError('NOT_FOUND', 404, 'no such user');
     const before = await enforcedState(db, input.userId);
     if (!before) throw new AppError('NOT_FOUND', 404, 'no such user');
@@ -401,6 +405,10 @@ export class SanctionsService {
     const found = await db.query<SanctionRow>(`SELECT * FROM sanctions WHERE id = $1 FOR UPDATE`, [sanctionId]);
     const row = found.rows[0];
     if (!row) throw new AppError('NOT_FOUND', 404, 'no such sanction');
+    // nor lifts their own, by any route (the revoke button, unmute, an appeal)
+    if (adminId !== null && row.user_id === adminId) {
+      throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot lift a sanction on yourself');
+    }
     if (row.revoked_at) throw new AppError('ALREADY_REVOKED', 409, 'this sanction was already lifted');
     const wasInForce = isInForce(row, new Date());
     const before = row.user_id ? await enforcedState(db, row.user_id) : null;
@@ -447,6 +455,7 @@ export class SanctionsService {
 
   /** Unban: lift every suspension and permanent ban, including one still waiting for approval. */
   async unban(adminId: string, userId: string, reason: string): Promise<number> {
+    notSelf(adminId, userId);
     return inTransaction(this.pool, async (client) => {
       await this.requireUser(client, userId);
       const n = await this.revokeAllOf(client, userId, ['suspension', 'permanent_ban'], adminId, reason, 'unban');
@@ -457,6 +466,7 @@ export class SanctionsService {
 
   /** Unmute: lift every chat mute, post mute and feature limit. */
   async unmute(adminId: string, userId: string, reason: string): Promise<number> {
+    notSelf(adminId, userId);
     return inTransaction(this.pool, async (client) => {
       await this.requireUser(client, userId);
       const n = await this.revokeAllOf(client, userId, ['chat_mute', 'post_mute', 'feature_limit'], adminId, reason, 'unmute');
@@ -471,6 +481,7 @@ export class SanctionsService {
    * the count too, so one more slip does not put them straight back on it.
    */
   async liftChatOffenses(adminId: string, userId: string, reason: string): Promise<boolean> {
+    notSelf(adminId, userId);
     return inTransaction(this.pool, async (client) => {
       await this.requireUser(client, userId);
       const res = await client.query<{ perm_muted: boolean; muted_until: Date | null; offense_count: number }>(
@@ -688,6 +699,11 @@ export class SanctionsService {
     );
     return res.rowCount ?? 0;
   }
+}
+
+/** A moderator never lifts their own restrictions. */
+function notSelf(adminId: string, userId: string): void {
+  if (adminId === userId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot lift your own restrictions');
 }
 
 export interface CurrentBan {
