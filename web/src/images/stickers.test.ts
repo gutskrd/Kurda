@@ -32,3 +32,21 @@ describe('picture stickers', () => {
     }
   });
 });
+
+/**
+ * The emoji are Noto's images, which come under the Apache License — it asks
+ * for a copy of the licence beside them and a note of what was changed.
+ */
+const notice = Object.values(
+  import.meta.glob<string>('/public/emoji/NOTICE.txt', { query: '?raw', import: 'default', eager: true }),
+)[0];
+
+describe('the emoji notice', () => {
+  it('carries the Apache License and says the images were changed', () => {
+    expect(notice).toMatch(/Licence:\s+Apache License, Version 2\.0/);
+    expect(notice).toContain('TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION');
+    expect(notice).toContain('END OF TERMS AND CONDITIONS');
+    expect(notice).toMatch(/resized and re-encoded/);
+    expect(notice).not.toMatch(/No changes were made/);
+  });
+});

@@ -164,6 +164,17 @@ export function buildIconPaths() {
 
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules/@phosphor-icons/react/package.json'), 'utf8'));
 
+  // The glyphs are Phosphor's work under the MIT licence, which asks that its
+  // notice travel with every copy — and this file is a copy. Read from the
+  // package rather than typed out, so it is the notice that came with them.
+  const licence = fs
+    .readFileSync(path.join(ROOT, 'node_modules/@phosphor-icons/react/LICENSE'), 'utf8')
+    .replace(/\r\n/g, '\n')
+    .trim()
+    .split('\n')
+    .map((line) => (line ? ` * ${line}` : ' *'))
+    .join('\n');
+
   const file = `/**
  * GENERATED — do not edit by hand.
  *
@@ -173,6 +184,10 @@ export function buildIconPaths() {
  * script and run it again.
  *
  * The viewBox is Phosphor's own 256×256, not 24×24.
+ *
+ * Phosphor Icons are used under the MIT licence:
+ *
+${licence}
  */
 
 /** The size of the box every path below is drawn in. */

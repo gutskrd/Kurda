@@ -7,9 +7,11 @@
  * same post made on a Mac carried Apple's. One picture, made twice, coming out
  * differently. Drawing from files makes the export identical everywhere.
  *
- * The artwork is Noto Color Emoji (SIL OFL 1.1). Apple's set is not licensed
- * for use off Apple's own platforms and cannot be shipped in a web app; Noto is
- * the closest freely redistributable one. See web/public/emoji/NOTICE.txt.
+ * The emoji artwork is Noto Emoji's images, which the project licenses under
+ * the Apache License 2.0 (its fonts are OFL; these are not the fonts), resized
+ * and re-encoded as WebP. Apple's set is not licensed for use off Apple's own
+ * platforms and cannot be shipped in a web app; Noto is the closest freely
+ * redistributable one. See web/public/emoji/NOTICE.txt for the licence.
  *
  * Everything lives under this app's own origin. That is not incidental:
  * drawing a cross-origin image onto a canvas taints it, and a tainted canvas
