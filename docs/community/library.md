@@ -112,7 +112,7 @@ post after its first post was deleted (the removed post keeps its own file).
 | 429 | `TRUST_VELOCITY` | posting faster than the account's trust level allows |
 | 429 | `DRAFT_LIMIT` | saving a draft with 20 unfinished ones already |
 | 403 | `AUTO_MODERATED` | the account was just restricted for spam |
-| 403 | `MUTED` | a post mute (posting, editing, publishing), or a feature limit when the post or the edit adds pictures or a voice note; `details: { scope, until }` |
+| 403 | `MUTED` | a post mute (posting, editing, publishing), or a feature limit when the post or the edit adds pictures or a voice note, or a draft carrying them is published; `details: { scope, until }` |
 
 An invalid edit answers 422 with its reason (it used to answer 403 "not your
 post"). Nothing of a refused post is kept, and none of its pictures are claimed.

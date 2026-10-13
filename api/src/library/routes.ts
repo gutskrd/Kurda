@@ -255,6 +255,12 @@ export function registerLibraryRoutes(
       // against them, and the author's words are screened as the author's
       const goingUp = current.status === 'draft';
       const own = current.authorId === req.user!.id;
+      // its pictures and voice note go up with it: a feature limit stops that
+      // as it stops attaching them, or a draft saved before the limit (or a
+      // post unpublished for the purpose) would be the way round it
+      if (goingUp && (current.media.length > 0 || current.audioMediaId)) {
+        await assertUnrestricted(app.db, req.user!.id, 'media');
+      }
       if (goingUp && own) {
         const refused = await gate.check(req.user!.id, postWords(current));
         if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });

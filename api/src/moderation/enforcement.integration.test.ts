@@ -289,6 +289,13 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
         // words, and the picture the post already has, are still theirs to change
         expect((await call('PATCH', `/library/posts/${id}`, limited.token, { body: 'Peyvên nû', media: [{ mediaKey: kept, altText: 'çiya' }] })).statusCode).toBe(200);
         expect((await call('POST', '/library/posts', limited.token, { body: 'Tenê peyv' })).statusCode).toBe(201);
+        // nor does taking the post down and putting it up again bring its picture back up
+        expect((await call('POST', `/library/posts/${id}/unpublish`, limited.token)).statusCode).toBe(200);
+        const republished = await call('POST', `/library/posts/${id}/publish`, limited.token);
+        expect(republished.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
+        // a draft of words alone still goes up
+        const draft = (await call('POST', '/library/posts', limited.token, { body: 'Pêşnivîs', publish: false })).json() as { id: string };
+        expect((await call('POST', `/library/posts/${draft.id}/publish`, limited.token)).statusCode).toBe(200);
       } finally {
         await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [[kept, later]]);
       }
