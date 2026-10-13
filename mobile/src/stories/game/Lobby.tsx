@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import {
+  MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
   buildInviteUrl,
   formatJoinCode,
@@ -145,10 +146,10 @@ export function Lobby({
           <Text style={[styles.codeHint, { color: colors.textSecondary }]}>
             {s.access === 'open' ? t('stories.lobby.codeOpen') : t('stories.lobby.codeFriends')}
           </Text>
-          <View style={styles.row}>
-            <ClayButton label={t('stories.lobby.invite')} icon="user-plus" tone="primary" onPress={() => setInviting(true)} style={styles.grow} />
-            <ClayButton label={t('share.title')} icon="share" onPress={share} style={styles.grow} />
-          </View>
+          {active < MAX_PLAYERS[view.mode] ? (
+            <ClayButton label={t('stories.lobby.invite')} icon="user-plus" tone="primary" onPress={() => setInviting(true)} />
+          ) : null}
+          <ClayButton label={t('share.title')} icon="share" onPress={share} />
           <Text selectable style={[styles.link, { color: colors.textSecondary }]} accessibilityLabel={t('games.inviteLink')}>
             {link}
           </Text>
@@ -156,7 +157,7 @@ export function Lobby({
       ) : null}
 
       <Card style={styles.card}>
-        <SectionLabel>{t('stories.lobby.players', { count: active, max: view.mode === 'duo' ? 2 : 8 })}</SectionLabel>
+        <SectionLabel>{t('stories.lobby.players', { count: active, max: MAX_PLAYERS[view.mode] })}</SectionLabel>
         {view.players
           .filter((p) => !p.gone)
           .map((p) => {
@@ -315,8 +316,6 @@ const styles = StyleSheet.create({
   settings: { fontSize: typography.sizes.sm, lineHeight: 20 },
   code: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, letterSpacing: 4, textAlign: 'center', writingDirection: 'ltr' },
   codeHint: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  row: { flexDirection: 'row', gap: spacing.sm },
-  grow: { flex: 1 },
   link: { fontSize: typography.sizes.xs, textAlign: 'center', writingDirection: 'ltr' },
   player: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
   playerMain: { flex: 1, gap: 2 },

@@ -134,10 +134,12 @@ export function RematchPanel({
   const series = state?.series;
   return (
     <View style={styles.wrap}>
-      {series && series.me + series.other + series.draws > 0 ? (
-        <Text style={[styles.series, { color: colors.textPrimary }]} accessibilityLabel={t('play.rematch.seriesLabel', { me: series.me, other: series.other, name: other })}>
-          {t('play.rematch.series', { me: series.me, other: series.other })}
-        </Text>
+      {/* the running score, once there has been a rematch: after one game it is only that game's result */}
+      {series && series.me + series.other + series.draws >= 2 ? (
+        <View accessible accessibilityLabel={t('play.rematch.seriesLabel', { me: series.me, other: series.other, name: other })}>
+          <Text style={[styles.series, { color: colors.textPrimary }]}>{t('play.rematch.series', { me: series.me, other: series.other })}</Text>
+          <Text style={[styles.line, { color: colors.textSecondary }]}>{t('play.rematch.seriesLabel', { me: series.me, other: series.other, name: other })}</Text>
+        </View>
       ) : null}
       {view.kind === 'pair-offer' ? (
         <ClayButton label={t('play.rematch.offer')} icon="repost" tone="primary" size="large" busy={busy} onPress={() => void run(() => offerRematch(client, game, lobbyId))} />

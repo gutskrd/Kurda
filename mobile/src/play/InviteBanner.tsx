@@ -118,7 +118,7 @@ export function InviteBanner(): React.JSX.Element | null {
         accessibilityLiveRegion="polite"
       >
         <View style={styles.head}>
-          <InitialsAvatar name={invite.from.name} id={invite.id} size={40} photoUrl={invite.from.avatarUrl} />
+          <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
           <View style={styles.text}>
             <Text style={[styles.headline, { color: colors.textPrimary }]}>{headline}</Text>
             {details ? (

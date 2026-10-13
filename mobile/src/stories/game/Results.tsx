@@ -115,7 +115,11 @@ export function Results({
       {layout === 'duo' ? (
         <Card style={styles.card}>
           <Text style={[styles.duo, { color: colors.textPrimary }]}>
-            {results.standings.map((s) => `${nameOf(s, t)} ${s.correct}/${total}`).join(' · ')}
+            {/* you first, then the other: two people need no places */}
+            {[...results.standings]
+              .sort((a, b) => Number(b.isMe) - Number(a.isMe))
+              .map((s) => `${nameOf(s, t)} ${s.correct}/${total}`)
+              .join(' · ')}
           </Text>
           <Text style={[styles.together, { color: colors.textSecondary }]}>
             {t('stories.results.together', duoTotals(results.standings, total))}

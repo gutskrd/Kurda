@@ -72,7 +72,8 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
     ),
   );
 
-  const shown = invitees.filter((i) => i.status !== 'cancelled');
+  // a friend who came in is in the players list already; one taken back is nobody's business
+  const shown = invitees.filter((i) => i.status !== 'cancelled' && i.status !== 'accepted');
   if (shown.length === 0) return null;
 
   const act = async (invite: OutgoingInviteState): Promise<void> => {
