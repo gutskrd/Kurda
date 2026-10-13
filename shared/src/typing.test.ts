@@ -36,6 +36,19 @@ function marks(r: TypingComparison): string {
 
 const TEXT = 'ez ji welatê xwe hez dikim'; // 26 characters, one accent
 
+/** A Stories text (kmr-barana-newroze), as written: paragraphs, curly quotes; 993 characters normalised. */
+const NEWROZ =
+  'Sibeha Newrozê Berfîn zû şiyar bû. Wê kirasê xwe yê nû û kesk li xwe kir. Diya wê di metbexê de dolme ' +
+  'çêdikir. Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan, nêzî bajêr.\n\nLê gava Berfînê ji pencereyê ' +
+  'li derve nêrî, dilê wê şikest. Baran dibariya û ewr reş bûn. Berfînê dest bi girî kir û got: “Êdî em naçin ' +
+  'seyranê!”\n\nBapîrê wê hat û li kêleka wê rûnişt. Wî got: “Keça min, baran bereket e. Bihar bi baranê tê. ' +
+  'Heta nîvro bisekine.”\n\nBapîr rast derket. Nêzî nîvro baran sekinî û roj derket. Wan bi lez çay û xwarin ' +
+  'hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan.\n\nLi Girê Kulîlkan her der kesk bû. Kulîlkên zer û sor ' +
+  'vebûbûn. Bi sedan mirov hatibûn. Hinekan def û zirne lêdixistin, hinekan jî govend digirt. Berfînê destê ' +
+  'Bapîrê xwe girt û herdu ketin nav govendê.\n\nÊvarê agirê Newrozê hat vêxistin. Ciwanan yek bi yek xwe di ser ' +
+  'agir re avêt. Berfîn û Bapîr li ber agir rûniştin. Berfînê got: “Bapîro, te rast got. Baran bereket e!” ' +
+  'Bapîr kenî û got: “Newroza te pîroz be, keça min.”';
+
 describe('normalizeTyping', () => {
   it('composes a decomposed letter, so e + U+0302 is the ê every keyboard sends', () => {
     expect(normalizeTyping('welate\u0302')).toBe('welatê');
@@ -504,10 +517,14 @@ describe('compareTyping', () => {
     expect(r.correct).toBe(26);
     expect(r.errors).toBe(5);
     expect(r.extra).toEqual([{ before: 26, text: ' xxxx' }]);
-    // far past it, too
-    const far = compareTyping('ez ji welat', `ez ji welat${'x'.repeat(TYPING_WINDOW * 2)}`, 'strict', { final: true });
+    // far past it, too — past the window, and past twice the text, where the
+    // rest is not compared at all
+    const far = compareTyping('ez ji welat', `ez ji welat${'x'.repeat(TYPING_WINDOW.ahead * 3)}`, 'strict', {
+      final: true,
+    });
     expect(far.correct).toBe(11);
-    expect(far.errors).toBe(TYPING_WINDOW * 2);
+    expect(far.errors).toBe(TYPING_WINDOW.ahead * 3);
+    expect(far.extra).toEqual([{ before: 11, text: 'x'.repeat(TYPING_WINDOW.ahead * 3) }]);
   });
 
   it('handles an empty text and an empty typing', () => {
@@ -523,6 +540,98 @@ describe('compareTyping', () => {
     expect(Date.now() - started).toBeLessThan(500);
     expect(r.correct).toBe(1900);
     expect(r.accentMisses).toBe(r.accented);
+  });
+
+  /*
+   * The comparison used to look for the racer within 64 characters of the
+   * diagonal — the typing's length against the text's, from the start — so
+   * the slips of a long text added up: once the letters left out and typed
+   * twice came to more than 64 between them, everything typed after was wrong,
+   * however right, and a race typed to the end could never finish. These are a
+   * real text of almost a thousand characters, which never repeats itself (a
+   * repeated text would let a skip line up with a later copy of itself).
+   */
+  describe('slips anywhere in a long text', () => {
+    const t = [...normalizeTyping(NEWROZ)];
+    const n = t.length;
+    /** every other word, changed by `change` */
+    const everyOtherWord = (change: (word: string) => string): string =>
+      normalizeTyping(NEWROZ)
+        .split(' ')
+        .map((word, i) => (i % 2 === 0 ? change(word) : word))
+        .join(' ');
+
+    it('is a text long enough to have broken it', () => {
+      expect(n).toBeGreaterThan(900);
+      expect(compareTyping(NEWROZ, NEWROZ, 'strict', { final: true })).toMatchObject({ correct: n, errors: 0 });
+    });
+
+    it('costs a line skipped only that line, and the race still finishes', () => {
+      // 70 characters is a line of the race text on a wide screen
+      const skipped = [...t.slice(0, 300), ...t.slice(370)].join('');
+      for (const final of [false, true]) {
+        const r = compareTyping(NEWROZ, skipped, 'strict', { final });
+        expect(r, `final ${final}`).toMatchObject({ correct: n - 70, errors: 70, done: true, caret: n });
+        // the line is one run of wrong, and everything either side of it is
+        // right — no letter the line happens to share with what came next
+        // shown as typed in the middle of it
+        expect(marks(r), `final ${final}`).toBe('o'.repeat(300) + 'X'.repeat(70) + 'o'.repeat(n - 370));
+      }
+    });
+
+    it('finds the racer again after a stretch of 100 characters skipped or typed twice', () => {
+      const skipped = compareTyping(NEWROZ, [...t.slice(0, 300), ...t.slice(400)].join(''), 'strict', { final: true });
+      expect(skipped).toMatchObject({ correct: n - 100, errors: 100, done: true });
+      const twice = compareTyping(NEWROZ, [...t.slice(0, 500), ...t.slice(400)].join(''), 'strict', { final: true });
+      expect(twice).toMatchObject({ correct: n, errors: 100, done: true });
+      expect(twice.chars.every((c) => c === 'ok')).toBe(true);
+    });
+
+    it('costs a letter typed twice in every other word only those letters', () => {
+      const doubled = everyOtherWord((word) => word[0] + word);
+      const extra = [...doubled].length - n;
+      expect(extra).toBeGreaterThan(64);
+      for (const final of [false, true]) {
+        const r = compareTyping(NEWROZ, doubled, 'strict', { final });
+        expect(r, `final ${final}`).toMatchObject({ correct: n, errors: extra, done: true });
+        expect(r.chars.every((c) => c === 'ok'), `final ${final}`).toBe(true);
+        expect(r.extra.reduce((sum, run) => sum + run.text.length, 0)).toBe(extra);
+      }
+    });
+
+    it('costs a letter left out of every other word only those letters', () => {
+      // as an English keyboard without ş or ç leaves them out, but everywhere
+      const dropped = everyOtherWord((word) => (word.length > 1 ? word.slice(1) : word));
+      const missing = n - [...dropped].length;
+      expect(missing).toBeGreaterThan(64);
+      for (const final of [false, true]) {
+        const r = compareTyping(NEWROZ, dropped, 'strict', { final });
+        expect(r, `final ${final}`).toMatchObject({ correct: n - missing, errors: missing, done: true, caret: n });
+        expect(r.chars.filter((c) => c === 'wrong'), `final ${final}`).toHaveLength(missing);
+        expect(r.chars.filter((c) => c === 'pending'), `final ${final}`).toHaveLength(0);
+      }
+    });
+
+    it('in forgiving mode, counts every accent left out of a long text, and only those', () => {
+      const plain = [...normalizeTyping(NEWROZ)].map(foldAccent).join('');
+      const accents = t.filter((c) => foldAccent(c) !== c).length;
+      expect(accents).toBeGreaterThan(64);
+      const r = compareTyping(NEWROZ, plain, 'forgiving', { final: true });
+      expect(r).toMatchObject({ correct: n, accentMisses: accents, accented: accents, errors: 0, done: true });
+    });
+
+    it('gives the same answer key by key as all at once, after a skip', () => {
+      const typed = [...t.slice(0, 300), ...t.slice(370)];
+      const all = compareTyping(NEWROZ, typed.join(''), 'forgiving');
+      compareTyping('something else entirely', 'some', 'forgiving');
+      let last: TypingComparison | undefined;
+      for (let i = 0; i <= typed.length; i++) last = compareTyping(NEWROZ, typed.slice(0, i).join(''), 'forgiving');
+      expect(last).toEqual(all);
+      // and back again, as backspace does: the same as worked out afresh
+      const back = compareTyping(NEWROZ, typed.slice(0, 350).join(''), 'forgiving');
+      compareTyping('something else entirely', 'some', 'forgiving');
+      expect(compareTyping(NEWROZ, typed.slice(0, 350).join(''), 'forgiving')).toEqual(back);
+    });
   });
 });
 

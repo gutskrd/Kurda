@@ -101,6 +101,50 @@ describe('scoring what a keyboard actually sends', () => {
     expect(s.perfect).toBe(false);
   });
 
+  /*
+   * Slips used to add up over a long text: once the letters left out and typed
+   * twice came to more than 64 between them, every letter typed after that
+   * scored wrong, and a race typed to its end was scored as not finished.
+   */
+  describe('a long text with slips all through it', () => {
+    // a Stories text (kmr-barana-newroze), which never repeats itself
+    const story =
+      'Sibeha Newrozê Berfîn zû şiyar bû. Wê kirasê xwe yê nû û kesk li xwe kir. Diya wê di metbexê de dolme ' +
+      'çêdikir. Malbatê dixwest wê rojê biçe seyranê, li Girê Kulîlkan, nêzî bajêr. Lê gava Berfînê ji pencereyê ' +
+      'li derve nêrî, dilê wê şikest. Baran dibariya û ewr reş bûn. Berfînê dest bi girî kir û got: "Êdî em naçin ' +
+      'seyranê!" Bapîrê wê hat û li kêleka wê rûnişt. Wî got: "Keça min, baran bereket e. Bihar bi baranê tê. ' +
+      'Heta nîvro bisekine." Bapîr rast derket. Nêzî nîvro baran sekinî û roj derket. Wan bi lez çay û xwarin ' +
+      'hilgirtin. Paşê ew hemû bi hev re çûn Girê Kulîlkan. Li Girê Kulîlkan her der kesk bû. Kulîlkên zer û sor ' +
+      'vebûbûn. Bi sedan mirov hatibûn. Hinekan def û zirne lêdixistin, hinekan jî govend digirt. Berfînê destê ' +
+      'Bapîrê xwe girt û herdu ketin nav govendê. Êvarê agirê Newrozê hat vêxistin. Ciwanan yek bi yek xwe di ser ' +
+      'agir re avêt. Berfîn û Bapîr li ber agir rûniştin. Berfînê got: "Bapîro, te rast got. Baran bereket e!" ' +
+      'Bapîr kenî û got: "Newroza te pîroz be, keça min."';
+    const n = [...story].length;
+
+    it('scores a letter typed twice in every other word as only those letters extra', () => {
+      const doubled = story
+        .split(' ')
+        .map((word, i) => (i % 2 === 0 ? word[0] + word : word))
+        .join(' ');
+      const extra = [...doubled].length - n;
+      expect(extra).toBeGreaterThan(64);
+      const s = scoreRace({ target: story, typed: doubled, elapsedMs: 300_000, accentMode: 'strict' });
+      expect(s.correctChars).toBe(n);
+      expect(s.errors).toBe(extra);
+      expect(s.accuracy).toBeCloseTo(n / (n + extra), 5);
+    });
+
+    it('scores a line skipped as that line missed, and the rest as typed', () => {
+      const chars = [...story];
+      const skipped = [...chars.slice(0, 300), ...chars.slice(370)].join('');
+      const s = scoreRace({ target: story, typed: skipped, elapsedMs: 300_000, accentMode: 'strict' });
+      expect(s.correctChars).toBe(n - 70);
+      expect(s.errors).toBe(70);
+      expect(s.accuracy).toBeCloseTo((n - 70) / n, 5);
+      expect(s.perfect).toBe(false);
+    });
+  });
+
   it('counts what was typed beyond the text against the accuracy', () => {
     const clean = scoreRace({ target, typed: target, elapsedMs: 30_000 });
     const padded = scoreRace({ target, typed: `${target} xxxxxx`, elapsedMs: 30_000 });

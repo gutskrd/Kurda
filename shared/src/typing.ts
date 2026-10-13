@@ -417,12 +417,27 @@ export interface CompareTypingOptions {
 export const BACKTICK_WAIT_MS = 800;
 
 /**
- * How far typing may drift from the text — characters left out or added in
- * total, before the comparison stops looking for where the racer really is.
- * Skipping more than this at once (a whole line) is not a slip, it is a
- * different text.
+ * How far from where the racer had got to, one key before, the comparison
+ * looks for where they are now: this many characters on into the text, and
+ * `behind` back. It bounds the stretch of text that can be left out at once (an
+ * eye that jumped a line) or typed twice and still be found again afterwards —
+ * about 100 characters either way, which is more than a line of the race text
+ * on a wide screen (about 70) and two or three on a phone.
+ *
+ * It is further ahead than back because of what typing looks like before the
+ * comparison can tell a stretch was skipped: what follows it does not match the
+ * text where the racer seemed to be, and typing that matches nothing is read
+ * as falling behind (about one character in three) — so a stretch left out ends
+ * up further ahead of where the racer seems to be than one typed twice ends up
+ * behind.
+ *
+ * It is measured from where the racer was, never from the start of the text,
+ * so slips spread through a text add up to nothing: the window moves on with
+ * the racer. (It used to be 64 either way from the start, and once a long
+ * text's skipped and doubled letters came to more than that between them,
+ * everything typed after that was wrong and the race could never finish.)
  */
-export const TYPING_WINDOW = 64;
+export const TYPING_WINDOW = { ahead: 160, behind: 96 } as const;
 
 // edit costs, in quarters, so a forgiven accent can sit between a match and a slip
 const EDIT = 4; // a character wrong, left out or added
@@ -450,10 +465,19 @@ function charKey(ch: string): string {
 /**
  * The alignment of a typed text with its target, column by typed character.
  *
+ * Each column holds only the rows (characters of the text) within
+ * `TYPING_WINDOW` of where the racer had got to one key before — the best end
+ * of the previous column — starting at row `lo[j]`. So the band follows the
+ * racer through the text, and a racer can be any distance from the diagonal
+ * (the typing's length against the text's) after enough small slips. A text
+ * shorter than the band is compared whole.
+ *
  * Kept between calls (see `aligner`): a racer only ever adds or removes
  * characters at the end, so each keystroke computes one new column instead of
  * the whole table — the difference between instant and a visible lag on a
- * long text on a slow phone.
+ * long text on a slow phone. A column depends only on the ones before it, the
+ * placing of its band included, so the columns of an unchanged prefix stay
+ * right.
  */
 interface Alignment {
   key: string;
@@ -466,6 +490,8 @@ interface Alignment {
   mode: AccentMode;
   width: number;
   capacity: number;
+  /** the row of each column's first cell */
+  lo: Int32Array;
   cost: Int32Array;
   matches: Int32Array;
   op: Uint8Array;
@@ -473,8 +499,18 @@ interface Alignment {
 
 let cached: Alignment | null = null;
 
+/**
+ * How much typing of a text of `n` characters is compared with it: twice the
+ * text, and the window. Typing more than that is not typing the text, so what
+ * comes after is all extra — and a runaway input cannot make the table grow
+ * without end.
+ */
+function typingLimit(n: number): number {
+  return 2 * n + TYPING_WINDOW.ahead;
+}
+
 function newAlignment(key: string, target: string[], mode: AccentMode): Alignment {
-  const width = 2 * TYPING_WINDOW + 1;
+  const width = TYPING_WINDOW.behind + 1 + TYPING_WINDOW.ahead;
   const capacity = Math.max(64, target.length + 1);
   const targetKeys = target.map(charKey);
   return {
@@ -488,6 +524,7 @@ function newAlignment(key: string, target: string[], mode: AccentMode): Alignmen
     mode,
     width,
     capacity,
+    lo: new Int32Array(capacity),
     cost: new Int32Array(capacity * width),
     matches: new Int32Array(capacity * width),
     op: new Uint8Array(capacity * width),
@@ -496,31 +533,78 @@ function newAlignment(key: string, target: string[], mode: AccentMode): Alignmen
 
 function ensureCapacity(a: Alignment, columns: number): void {
   if (columns <= a.capacity) return;
-  let capacity = a.capacity;
-  while (capacity < columns) capacity *= 2;
+  // doubling, so that typing on rarely copies, but never past the most columns
+  // a comparison makes (`typingLimit`)
+  const capacity = Math.max(columns, Math.min(a.capacity * 2, typingLimit(a.target.length) + 1));
   const grow = <T extends Int32Array | Uint8Array>(old: T, make: (n: number) => T): T => {
     const next = make(capacity * a.width);
     next.set(old);
     return next;
   };
+  const lo = new Int32Array(capacity);
+  lo.set(a.lo);
+  a.lo = lo;
   a.cost = grow(a.cost, (n) => new Int32Array(n));
   a.matches = grow(a.matches, (n) => new Int32Array(n));
   a.op = grow(a.op, (n) => new Uint8Array(n));
   a.capacity = capacity;
 }
 
-/** Fill column `j` of the band: the typing's first `j` characters against every row in reach. */
+/**
+ * Where the typing's first `j` characters have got to in the text: the offset
+ * in column `j` of the cheapest end, then the one with the most letters right,
+ * then the furthest — so when a key is either a wrong letter or one too many,
+ * it is read as the wrong letter, and each key moves the caret on as on any
+ * typing test (and a race whose last letter was mistyped is over). The part of
+ * the text after the end is not reached yet and costs nothing.
+ *
+ * Every column reaches some row (its band always holds the row its placing
+ * was taken from, and that row can be reached by one character too many), so
+ * this is never -1 for a filled column.
+ */
+function bestEnd(a: Alignment, j: number): number {
+  const base = j * a.width;
+  let end = -1;
+  for (let k = 0; k < a.width; k++) {
+    const cell = base + k;
+    if (a.cost[cell]! >= INF) continue;
+    const best = base + end;
+    if (
+      end < 0 ||
+      a.cost[cell]! < a.cost[best]! ||
+      (a.cost[cell] === a.cost[best] && a.matches[cell]! >= a.matches[best]!)
+    ) {
+      end = k;
+    }
+  }
+  return end;
+}
+
+/**
+ * Fill column `j`: the typing's first `j` characters against every row of the
+ * text in reach — `TYPING_WINDOW` around the row after where the first `j - 1`
+ * had got to (`bestEnd`), which is the row the next key most likely types.
+ * Where that would reach past the end of the text (or before its start), the
+ * band stops at the end (or the start) and reaches the other way further
+ * instead.
+ */
 function fillColumn(a: Alignment, j: number): void {
-  const B = TYPING_WINDOW;
   const n = a.target.length;
   const forgiving = a.mode === 'forgiving';
   const hidden = a.mode === 'hidden';
   const base = j * a.width;
   const prev = base - a.width; // column j - 1
+  const prevLo = j > 0 ? a.lo[j - 1]! : 0;
+  let lo = 0;
+  if (j > 0) {
+    const next = prevLo + Math.max(0, bestEnd(a, j - 1)) + 1;
+    lo = Math.max(0, Math.min(next - TYPING_WINDOW.behind, n + 1 - a.width));
+  }
+  a.lo[j] = lo;
   for (let k = 0; k < a.width; k++) {
-    const i = j + k - B;
+    const i = lo + k;
     const cell = base + k;
-    if (i < 0 || i > n) {
+    if (i > n) {
       a.cost[cell] = INF;
       a.matches[cell] = 0;
       a.op[cell] = OP_NONE;
@@ -539,9 +623,10 @@ function fillColumn(a: Alignment, j: number): void {
     let bestMatches = 0;
     let bestOp = OP_NONE;
     if (i >= 1) {
-      // the diagonal, from (i - 1, j - 1): the same offset k one column back
-      const from = prev + k;
-      if (a.cost[from]! < INF) {
+      // the diagonal, from (i - 1, j - 1), if the previous column's band holds it
+      const kd = i - 1 - prevLo;
+      const from = prev + kd;
+      if (kd >= 0 && kd < a.width && a.cost[from]! < INF) {
         bestCost = a.cost[from]!;
         bestMatches = a.matches[from]!;
         if (a.targetKeys[i - 1] === a.typedKeys[j - 1]) {
@@ -565,7 +650,7 @@ function fillColumn(a: Alignment, j: number): void {
           bestOp = OP_SUB;
         }
       }
-      // a character of the text left out, from (i - 1, j): this column, offset k - 1
+      // a character of the text left out, from (i - 1, j): this column, the cell before
       const left = base + k - 1;
       if (k >= 1 && a.cost[left]! < INF) {
         const cost = a.cost[left]! + EDIT;
@@ -576,9 +661,11 @@ function fillColumn(a: Alignment, j: number): void {
         }
       }
     }
-    // a character typed that the text does not have, from (i, j - 1): offset k + 1
-    const up = prev + k + 1;
-    if (k + 1 < a.width && a.cost[up]! < INF) {
+    // a character typed that the text does not have, from (i, j - 1), if the
+    // previous column's band holds it
+    const ku = i - prevLo;
+    const up = prev + ku;
+    if (ku >= 0 && ku < a.width && a.cost[up]! < INF) {
       const cost = a.cost[up]! + EDIT;
       if (cost < bestCost || (cost === bestCost && a.matches[up]! > bestMatches)) {
         bestCost = cost;
@@ -616,10 +703,11 @@ function aligner(target: string[], typed: string[], mode: AccentMode): Alignment
  * included — is one mistake, and everything after it is still compared with
  * what it was meant to be. The old scoring compared the i-th character with the
  * i-th, so one missed letter made the whole rest of the race wrong (a run that
- * missed only its first letter scored 0 of 26). This is an edit alignment in a
- * window of `TYPING_WINDOW` characters, the typing against the start of the
- * text — the part of the text not reached yet costs nothing and is `pending`.
- * When two readings are equally good, the one with more letters right wins.
+ * missed only its first letter scored 0 of 26). This is an edit alignment
+ * within `TYPING_WINDOW` characters of where the racer had got to, which moves
+ * on with them, so slips anywhere in a text of any length cost only themselves
+ * — the part of the text not reached yet costs nothing and is `pending`. When
+ * two readings are equally good, the one with more letters right wins.
  *
  * Both texts are normalised here (`normalizeTyping`), so `chars` lines up with
  * the normalised target; show the racer `displayTarget`.
@@ -644,38 +732,17 @@ export function compareTyping(
     composing = !final;
   }
 
-  // past the end of the text by more than the window, the rest is all extra
   let overflow: string[] = [];
-  if (u.length > n + TYPING_WINDOW) {
-    overflow = u.slice(n + TYPING_WINDOW);
-    u = u.slice(0, n + TYPING_WINDOW);
+  const limit = typingLimit(n);
+  if (u.length > limit) {
+    overflow = u.slice(limit);
+    u = u.slice(0, limit);
   }
   const m = u.length;
 
   const a = aligner(t, u, mode);
-  const B = TYPING_WINDOW;
-  const col = m * a.width;
-
-  // where the typing has got to: the cheapest end, then the most letters
-  // right, then the furthest — when a key is either a wrong letter or one too
-  // many, it is read as the wrong letter, so each key moves the caret on as on
-  // any typing test (and a race whose last letter was mistyped is over)
-  let end = -1;
-  for (let k = 0; k < a.width; k++) {
-    const i = m + k - B;
-    if (i < 0 || i > n) continue;
-    const cell = col + k;
-    if (a.cost[cell]! >= INF) continue;
-    const best = col + end;
-    if (
-      end < 0 ||
-      a.cost[cell]! < a.cost[best]! ||
-      (a.cost[cell] === a.cost[best] && a.matches[cell]! >= a.matches[best]!)
-    ) {
-      end = k;
-    }
-  }
-  const iEnd = m + end - B;
+  // where the typing has got to (`bestEnd`); a column always reaches a row
+  const iEnd = a.lo[m]! + bestEnd(a, m);
 
   const chars: CharState[] = new Array<CharState>(n).fill('pending');
   let correct = 0;
@@ -700,8 +767,30 @@ export function compareTyping(
   // so it is not an accent missed yet — nor, in strict mode, a mistake
   const awaitsBacktick = (at: number): boolean =>
     backtickShortcut && j === m && i === iEnd && BACKTICK[a.typedKeys[j - 1]!] === a.targetKeys[at];
+  /**
+   * The cell (pi, pj) is in its column's band and reaches (i, j) with one
+   * character left out or added, as cheaply and with as many letters right as
+   * the way stored for (i, j) — the same reading, as far as the score goes.
+   */
+  const asGoodBy = (pi: number, pj: number): boolean => {
+    const k = pi - a.lo[pj]!;
+    if (k < 0 || k >= a.width) return false;
+    const from = pj * a.width + k;
+    const here = j * a.width + (i - a.lo[j]!);
+    return a.cost[from]! + EDIT === a.cost[here] && a.matches[from] === a.matches[here];
+  };
+  // A run of characters left out (or typed extra) goes on for as long as that
+  // is as good a reading as the one stored: when a line is skipped, any letter
+  // in it that the next one typed happens to share could equally have been
+  // "typed" there, and the line would show with right letters scattered
+  // through it. Read on, it is one run — the same score, and what happened.
+  let run = OP_NONE;
   while (i > 0 || j > 0) {
-    const op = a.op[j * a.width + (i - j + B)]!;
+    // every step was taken from a cell in its column's band
+    let op = a.op[j * a.width + (i - a.lo[j]!)]!;
+    if (run === OP_DEL && i > 0 && asGoodBy(i - 1, j)) op = OP_DEL;
+    else if (run === OP_INS && j > 0 && asGoodBy(i, j - 1)) op = OP_INS;
+    run = op;
     if (op === OP_MATCH || op === OP_ACCENT) {
       const at = i - 1;
       if (op === OP_ACCENT && awaitsBacktick(at)) {
