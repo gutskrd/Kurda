@@ -94,8 +94,9 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
     const c = (await queue.queue({ q: audioComment.id })).cases.find((x) => x.source === 'report')!;
     expect(c).toBeTruthy();
 
-    // ban the comment author from the queue
-    expect(await queue.resolve(c.id, modId, 'ban')).toBe(true);
+    // ban the comment author from the queue (typing their username, which the
+    // only moderator must; with two or more the ban waits under a suspension)
+    expect(await queue.resolve(c.id, modId, 'ban', `lm_author_${suffix}`.slice(0, 30))).toBe(true);
     const u = await pool.query<{ banned_at: Date | null }>(`SELECT banned_at FROM users WHERE id = $1`, [audioComment.authorId]);
     expect(u.rows[0]!.banned_at).not.toBeNull();
   });
