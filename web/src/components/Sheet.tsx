@@ -25,6 +25,29 @@ import { useT } from '../i18n/I18nProvider';
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Keep Tab and Shift+Tab inside `box`: past its last control to its first,
+ * and back. For a dialog that is not a Sheet but must hold focus the same way
+ * (the stage a rare or legendary gift opens on).
+ */
+export function wrapTab(e: KeyboardEvent, box: HTMLElement): void {
+  if (e.key !== 'Tab') return;
+  const items = [...box.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+    (el) => !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true',
+  );
+  if (items.length === 0) return;
+  const first = items[0]!;
+  const last = items[items.length - 1]!;
+  const active = document.activeElement;
+  if (e.shiftKey && (active === first || active === box || !box.contains(active))) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && (active === last || !box.contains(active))) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
 export function Sheet({
   open,
   onClose,
@@ -59,21 +82,7 @@ export function Sheet({
         closeRef.current();
         return;
       }
-      if (e.key !== 'Tab' || !panelRef.current) return;
-      const items = [...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-        (el) => !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true',
-      );
-      if (items.length === 0) return;
-      const first = items[0]!;
-      const last = items[items.length - 1]!;
-      const active = document.activeElement;
-      if (e.shiftKey && (active === first || active === panelRef.current)) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
+      if (panelRef.current) wrapTab(e, panelRef.current);
     };
     // the capture phase at the window runs before any other keydown listener
     window.addEventListener('keydown', onKey, true);

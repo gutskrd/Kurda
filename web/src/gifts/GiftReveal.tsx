@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { GiftCard, GiftTier } from '@kurda/shared';
 import { Button } from '../components/Button';
+import { wrapTab } from '../components/Sheet';
 import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { Confetti, GiftBox, GiftItemArt, NewrozFlame } from './GiftArt';
@@ -129,15 +130,25 @@ export function GiftStage({
 }): React.JSX.Element {
   const t = useT();
   const restore = useRef<HTMLElement | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const skipRef = useRef<HTMLButtonElement>(null);
+  // Escape skips while it plays and closes once the item is shown; read
+  // through a ref so the keyboard listener is set up once, not per phase
+  const escape = useRef(onSkip);
+  escape.current = revealed ? onClose : onSkip;
 
   useEffect(() => {
     restore.current = document.activeElement as HTMLElement | null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    // on the stage at once, on Skip: Enter or Space ends the moment early
+    skipRef.current?.focus();
     const onKey = (e: KeyboardEvent): void => {
+      // focus stays on the stage while it is up, as in any dialog
+      if (stageRef.current) wrapTab(e, stageRef.current);
       if (e.key !== 'Escape') return;
       e.stopPropagation();
-      onClose();
+      escape.current();
     };
     window.addEventListener('keydown', onKey, true);
     return () => {
@@ -149,6 +160,7 @@ export function GiftStage({
 
   return createPortal(
     <div
+      ref={stageRef}
       className={`gift-stage gift-stage-${tier}${revealed ? ' is-revealed' : ''}`}
       role="dialog"
       aria-modal="true"
@@ -165,6 +177,7 @@ export function GiftStage({
               {t('gift.unwrapping')}
             </p>
             <button
+              ref={skipRef}
               type="button"
               className="gift-skip"
               onClick={(e) => {

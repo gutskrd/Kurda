@@ -67,7 +67,8 @@ describe('GiftBubble, to its recipient', () => {
     expect(a.calls).toEqual(['open:g1', 'wear:bg-sunset', 'thank']);
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
-    expect(screen.getByRole('button', { name: 'See Sunset over Amed again' })).toBeInTheDocument();
+    // and the keyboard is back on the gift, not lost at the top of the page
+    expect(screen.getByRole('button', { name: 'See Sunset over Amed again' })).toHaveFocus();
   });
 
   it('opens a rare gift on its own stage, which a tap can skip', async () => {
@@ -77,6 +78,23 @@ describe('GiftBubble, to its recipient', () => {
     expect(within(stage).getByText('Unwrapping…')).toBeInTheDocument();
     await userEvent.click(within(stage).getByRole('button', { name: 'Skip' }));
     expect(await within(stage).findByRole('heading', { name: 'Sunset over Amed' })).toBeInTheDocument();
+  });
+
+  it('holds the keyboard on its stage: Skip first, Escape skips, then Escape closes', async () => {
+    renderApp(<GiftBubble card={card({ tier: 'rare' })} mine={false} senderName="rojda" actions={actions(card({ tier: 'rare', myOpened: true }))} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
+    const stage = screen.getByRole('dialog', { name: 'A gift from rojda' });
+    expect(within(stage).getByRole('button', { name: 'Skip' })).toHaveFocus();
+    // Tab stays on the stage
+    await userEvent.tab();
+    expect(stage.contains(document.activeElement)).toBe(true);
+
+    // while it plays, Escape is a skip — not a close the timer would undo
+    await userEvent.keyboard('{Escape}');
+    expect(await within(stage).findByRole('heading', { name: 'Sunset over Amed' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'See Sunset over Amed again' })).toHaveFocus();
   });
 
   it('gives a legendary gift the whole screen and its Newroz fire', async () => {

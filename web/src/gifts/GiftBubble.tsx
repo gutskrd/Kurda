@@ -97,10 +97,18 @@ export function GiftBubble({
     onAutoOpened?.();
   }, [autoOpen, onAutoOpened]);
 
+  // back on the gift once its reveal closes — after the bubble is drawn
+  // again, since an everyday gift's reveal stands in the bubble's place
+  const refocus = useRef(false);
   const close = useCallback(() => {
+    refocus.current = true;
     setPhase('idle');
-    bubbleRef.current?.focus();
   }, []);
+  useEffect(() => {
+    if (phase !== 'idle' || !refocus.current) return;
+    refocus.current = false;
+    bubbleRef.current?.focus();
+  }, [phase]);
 
   // ---- the sender's view, and a group member's who was not given one ----
   if (!recipient) {
