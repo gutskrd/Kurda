@@ -106,13 +106,18 @@ export class ModerationService {
     }
   }
 
-  /** Open reports from the old table, oldest first (the old admin feed; new reports are cases). */
-  async pendingReports(): Promise<ReportRow[]> {
+  /**
+   * Open reports from the old table, oldest first (the old admin feed; new
+   * reports are cases). A moderator is not shown the ones about themselves:
+   * they name the reporter, as the case view does.
+   */
+  async pendingReports(viewerId: string | null = null): Promise<ReportRow[]> {
     const rows = await this.pool.query<{
       id: string; reporter_id: string; reported_user_id: string | null; message_type: MessageType; message_id: string; context: unknown; status: string; created_at: Date;
     }>(
       `SELECT id, reporter_id, reported_user_id, message_type, message_id, context, status, created_at
-         FROM chat_reports WHERE status = 'open' ORDER BY created_at`,
+         FROM chat_reports WHERE status = 'open' AND reported_user_id IS DISTINCT FROM $1::uuid ORDER BY created_at`,
+      [viewerId],
     );
     return rows.rows.map((r) => ({
       id: r.id, reporterId: r.reporter_id, reportedUserId: r.reported_user_id, messageType: r.message_type,
@@ -125,12 +130,16 @@ export class ModerationService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const r = await client.query<{ reported_user_id: string | null; status: string }>(
-        `SELECT reported_user_id, status FROM chat_reports WHERE id = $1 FOR UPDATE`,
+      const r = await client.query<{ reporter_id: string | null; reported_user_id: string | null; status: string }>(
+        `SELECT reporter_id, reported_user_id, status FROM chat_reports WHERE id = $1 FOR UPDATE`,
         [reportId],
       );
       const report = r.rows[0];
       if (!report) throw new AppError('REPORT_NOT_FOUND', 404, 'no such report');
+      // nobody decides a report they are part of, on this old route either
+      if (report.reported_user_id === adminId || report.reporter_id === adminId) {
+        throw new AppError('CONFLICT_OF_INTEREST', 403, 'you are part of this report; another moderator must handle it');
+      }
       if (report.status !== 'open') throw new AppError('ALREADY_RESOLVED', 409, 'report already resolved');
       await client.query(
         `UPDATE chat_reports SET status = $2, reviewed_at = now(), reviewed_by = $3 WHERE id = $1`,

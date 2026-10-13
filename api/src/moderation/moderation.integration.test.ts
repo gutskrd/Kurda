@@ -121,8 +121,14 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
     );
     const reportId = legacy.rows[0]!.id;
 
+    // neither the reporter nor the reported person decides it
+    await expect(mod.resolveReport(reportId, 'dismissed', id.b!)).rejects.toMatchObject({ code: 'CONFLICT_OF_INTEREST' });
+    await expect(mod.resolveReport(reportId, 'dismissed', id.a!)).rejects.toMatchObject({ code: 'CONFLICT_OF_INTEREST' });
+    expect((await mod.pendingReports(id.a!)).some((r) => r.id === reportId)).toBe(false);
+    expect((await mod.pendingReports(id.c!)).some((r) => r.id === reportId)).toBe(true);
+
     const before = await pool.query<{ offense_count: number }>(`SELECT offense_count FROM chat_offenses WHERE user_id = $1`, [id.a!]);
-    await mod.resolveReport(reportId, 'actioned', id.b!);
+    await mod.resolveReport(reportId, 'actioned', id.c!);
     const after = await pool.query<{ offense_count: number }>(`SELECT offense_count FROM chat_offenses WHERE user_id = $1`, [id.a!]);
     expect(after.rows[0]!.offense_count).toBe((before.rows[0]?.offense_count ?? 0) + 1);
   });

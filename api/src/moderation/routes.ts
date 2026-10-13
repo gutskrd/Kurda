@@ -30,8 +30,8 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
   );
 
   /** Admin: open moderation queue with context. */
-  app.get('/admin/moderation/reports', { preHandler: moderators }, async () => ({
-    reports: await moderation.pendingReports(),
+  app.get('/admin/moderation/reports', { preHandler: moderators }, async (req) => ({
+    reports: await moderation.pendingReports(req.user!.id),
   }));
 
   /** Admin: resolve a report ('actioned' records an offense against the author). */
