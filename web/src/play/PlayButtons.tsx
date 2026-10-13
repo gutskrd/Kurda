@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { PlayGame } from '@kurda/shared';
 import { GameIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { InviteSheet, type InviteTarget } from './InviteSheet';
@@ -35,29 +34,6 @@ export function PlayWithButton({
         {!iconOnly && t('play.button')}
       </button>
       <InviteSheet open={open} onClose={() => setOpen(false)} target={{ kind: 'new', friend: { userId, name } }} />
-    </>
-  );
-}
-
-/**
- * "Play with friends" on a game's own page: the invite sheet with that game
- * chosen and its presets showing.
- */
-export function PlayWithFriendsButton({
-  game,
-  className = 'btn btn-secondary btn-lg',
-}: {
-  game?: PlayGame;
-  className?: string;
-}): React.JSX.Element {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button type="button" className={className} onClick={() => setOpen(true)}>
-        {t('stories.playFriends')}
-      </button>
-      <InviteSheet open={open} onClose={() => setOpen(false)} target={{ kind: 'new', game }} lockGame={game !== undefined} />
     </>
   );
 }

@@ -60,6 +60,20 @@ describe('messagePreview', () => {
   });
 });
 
+describe('messagePreview — a message that is a card', () => {
+  it('names a game card by its game, with no text to show', () => {
+    expect(messagePreview({ body: null, kind: 'game', game: { game: 'stories', lobbyId: 's1' } }, t)).toBe('Stories invite');
+  });
+
+  it('says a game invite when a conversation row knows only the kind', () => {
+    expect(messagePreview({ body: '', kind: 'game' }, t)).toBe('Game invite');
+  });
+
+  it('reads a text message the same whether given the message or its text', () => {
+    expect(messagePreview({ body: `join! ${rhyme}`, kind: 'text' }, t)).toBe(messagePreview(`join! ${rhyme}`, t));
+  });
+});
+
 describe('truncate', () => {
   it('leaves a short string alone', () => {
     expect(truncate('short', 10)).toBe('short');
