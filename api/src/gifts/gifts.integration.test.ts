@@ -511,6 +511,32 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     });
   });
 
+  describe('a failure after the gift is made', () => {
+    it('still tells the recipient, before the answer to the sender is built', async () => {
+      // The gift is committed by then, and the sender's retry replays it
+      // without telling anyone: so the telling cannot wait on the answer.
+      const tia = await signUp('tia');
+      const uli = await signUp('uli');
+      await befriend(tia, uli);
+      await fund(tia);
+      vi.spyOn(WalletService.prototype, 'balances').mockRejectedValueOnce(new Error('timeout exceeded when trying to connect'));
+      const k = key();
+      const res = await giftDm(tia, uli, POWER, k);
+      expect(res.statusCode).toBe(500);
+
+      expect(pushedTo(uli.id, 'dm')).toHaveLength(1);
+      expect(pushedTo(uli.id, 'gift_received')).toHaveLength(1);
+      const note = await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'kind' = 'gift'`, [uli.id]);
+      expect(note.rowCount).toBe(1);
+
+      // and the retry gets the answer, from what was done
+      const again = await giftDm(tia, uli, POWER, k);
+      expect(again.statusCode).toBe(200);
+      expect(again.json()).toMatchObject({ sent: [uli.id], skipped: [], balance: { zer: 10_000 - 20 } });
+      expect(pushedTo(uli.id, 'gift_received')).toHaveLength(1);
+    });
+  });
+
   describe('a key used before in another chat', () => {
     // A retry is the same request in the same chat. Taken as one elsewhere, a
     // key would add people to a gift posted somewhere else: listed on a card

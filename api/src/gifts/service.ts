@@ -161,15 +161,20 @@ export class GiftService {
     }
 
     const settled = await this.settle(input, toIds, outsideGroup, now);
-    const sender = await this.sender(fromId);
-    const balance = await this.deps.wallet.balances(fromId);
-    const message = settled.posted ? await this.senderView(settled, input, sender, groupPrivacy) : null;
 
+    // Telling people comes straight after the commit, and on its own. The
+    // gift has happened, and a retry of this request replays it without
+    // telling anyone, so nothing the sender's answer needs (their balance,
+    // their view of the message) may fail first and leave the friends never
+    // told of a present that is theirs.
     if (settled.given.length > 0) {
-      await this.deliver(settled, input, sender, groupPrivacy).catch((err) =>
+      await this.deliver(settled, input, groupPrivacy).catch((err) =>
         this.deps.log?.warn({ err, batchId: settled.batchId }, 'a gift was given but telling people failed'),
       );
     }
+
+    const balance = await this.deps.wallet.balances(fromId);
+    const message = settled.posted ? await this.senderView(settled, input, groupPrivacy) : null;
 
     return {
       batchId: settled.batchId,
@@ -439,10 +444,10 @@ export class GiftService {
   private async senderView(
     settled: Settled,
     input: SendGiftInput,
-    sender: Sender,
     groupPrivacy: string | null,
   ): Promise<DmMessage | GroupMessage> {
     const inGroup = input.chat?.kind === 'group';
+    const sender = await this.sender(input.fromId);
     const card = await this.card(settled.batchId, {
       id: input.fromId,
       seesEveryone: !inGroup || groupPrivacy === 'invite',
@@ -461,9 +466,10 @@ export class GiftService {
    * one another, and in an open group a recipient has to be someone who may
    * read its chat, which only a known adult may.
    */
-  private async deliver(settled: Settled, input: SendGiftInput, sender: Sender, groupPrivacy: string | null): Promise<void> {
+  private async deliver(settled: Settled, input: SendGiftInput, groupPrivacy: string | null): Promise<void> {
     const { fromId, chat } = input;
     const { realtime, inbox } = this.deps;
+    const sender = await this.sender(fromId);
     const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, batchId: settled.batchId }, what);
     const inGroup = chat?.kind === 'group';
 
