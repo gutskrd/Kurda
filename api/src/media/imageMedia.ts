@@ -161,13 +161,19 @@ export async function storeImageMedia(
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
   }
 
-  // the same bytes again: what the scan said about them still stands
-  const existing = await pool.query<{ scan_status: string; confirmed: boolean }>(
-    `SELECT scan_status, confirmed_at IS NOT NULL AS confirmed FROM media_uploads WHERE key = $1`,
+  // the same bytes again: what the scan said about them still stands — but a
+  // hold that only stands for the scanner being down (moderation/image-scan.ts
+  // `onScannerError`, recorded as model 'unavailable') is no verdict on the
+  // picture, so that one is scanned again
+  const existing = await pool.query<{ scan_status: string; confirmed: boolean; unscanned: boolean | null }>(
+    `SELECT m.scan_status, m.confirmed_at IS NOT NULL AS confirmed,
+            (SELECT s.model_version = 'unavailable' FROM image_scans s
+              WHERE s.media_key = m.key ORDER BY s.created_at DESC LIMIT 1) AS unscanned
+       FROM media_uploads m WHERE m.key = $1`,
     [key],
   );
   const prior = existing.rows[0];
-  if (prior?.scan_status === 'blocked' || prior?.scan_status === 'gated') {
+  if (prior?.scan_status === 'blocked' || (prior?.scan_status === 'gated' && prior.unscanned !== true)) {
     return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');
   }
   if (options.ownerId && prior?.confirmed) {
