@@ -16,6 +16,13 @@ export interface ApiError {
   retryAfterSec?: number;
   requestId?: string;
   status?: number;
+  /**
+   * The envelope's `details`, as the server sent them: what a refusal knows
+   * beyond its code — until when a mute lasts (shared `MutedErrorDetails`),
+   * why an account is suspended (`SuspendedErrorDetails`). Unknown on purpose:
+   * a reader checks the shape before trusting it.
+   */
+  details?: unknown;
 }
 
 export interface TokenPair {

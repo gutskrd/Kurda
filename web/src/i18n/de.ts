@@ -366,6 +366,20 @@ export const de: Catalogue = {
   'moderation.category.hate': 'Hass oder Beleidigungen',
   'moderation.category.selfHarm': 'Selbstverletzung oder jemand in Gefahr',
   'moderation.category.other': 'Etwas anderes',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'Du kannst gerade keine Nachrichten senden.',
+  'restriction.chatUntil': 'Du kannst bis {time} keine Nachrichten senden.',
+  'restriction.post': 'Du kannst gerade nichts posten oder kommentieren.',
+  'restriction.postUntil': 'Du kannst bis {time} nichts posten oder kommentieren.',
+  'restriction.media': 'Du kannst gerade keine Bilder oder Sprachaufnahmen hinzufügen.',
+  'restriction.mediaUntil': 'Du kannst bis {time} keine Bilder oder Sprachaufnahmen hinzufügen.',
+  'restriction.groupMuted': 'Die Admins der Gruppe haben dich in dieser Gruppe stummgeschaltet.',
+  'restriction.chatMuted': 'Deine Nachrichten sind eine Weile pausiert, weil unser Filter einige deiner letzten Nachrichten markiert hat.',
+  'restriction.suspended': 'Dein Konto ist gesperrt.',
+  'restriction.suspendedUntil': 'Dein Konto ist bis {time} gesperrt.',
+  'restriction.seeStanding': 'Deinen Kontostatus ansehen',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',
   'profile.levelN': 'Stufe {level}',
@@ -446,7 +460,6 @@ export const de: Catalogue = {
   'chat.day.earlier': 'Früher',
   'chat.error.tooFast': 'Du sendest zu schnell Nachrichten — bitte langsamer.',
   'chat.error.restricted': 'Dein Konto wurde wegen spamartiger Aktivität eingeschränkt.',
-  'chat.error.muted': 'Du bist im Chat stummgeschaltet.',
   'chat.error.blocked': 'Diese Nachricht wurde von der Moderation blockiert.',
   'chat.error.notFriends': 'Du kannst nur Leuten schreiben, mit denen du befreundet bist.',
   'chat.thatDidNotWork': 'Das hat nicht funktioniert.',

@@ -5,7 +5,8 @@ import { Modal } from '../components/Modal';
 import { FriendListSkeleton } from '../components/skeletons';
 import { ShareIcon, LinkIcon, SendIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
-import type { FeedItem, UserSummary } from '../lib/types';
+import type { ApiError, FeedItem, UserSummary } from '../lib/types';
+import { SendError } from '../reports/SendError';
 
 /**
  * Passing a post on — inside Hevalo, or out of it.
@@ -137,7 +138,7 @@ function SendToFriend({
   const [q, setQ] = useState('');
   const [sending, setSending] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<ApiError | null>(null);
 
   const signedIn = status === 'signedIn';
 
@@ -154,12 +155,12 @@ function SendToFriend({
   async function send(friend: UserSummary): Promise<void> {
     if (sending) return;
     setSending(friend.userId);
-    setFailed(false);
+    setFailed(null);
     const body = shareText(item) ? `${shareText(item)}\n${url}` : url;
     const res = await client.post(`/chat/${friend.userId}/messages`, { body });
     setSending(null);
     if (!res.ok) {
-      setFailed(true);
+      setFailed(res.error);
       return;
     }
     setSentTo(friend.username);
@@ -191,7 +192,7 @@ function SendToFriend({
               style={{ marginBottom: 10 }}
             />
           )}
-          {failed && <p className="msg msg-error">{t('share.sendFailed')}</p>}
+          <SendError error={failed} describe={() => t('share.sendFailed')} />
           <ul className="gift-friends">
             {friends
               .filter((f) => f.username.toLowerCase().includes(q.trim().toLowerCase()))

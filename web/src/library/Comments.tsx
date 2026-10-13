@@ -7,6 +7,8 @@ import { ErrorState } from '../components/states';
 import { CommentsSkeleton } from '../components/skeletons';
 import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
+import { SendError } from '../reports/SendError';
+import type { ApiError } from '../lib/types';
 
 /**
  * Threaded comments on a post.
@@ -261,7 +263,7 @@ function CommentForm({
   const { client } = useAuth();
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -279,7 +281,7 @@ function CommentForm({
       onAdded();
       await onDone();
     } else {
-      setError(describeError(res.error, t));
+      setError(res.error);
     }
   }
 
@@ -294,7 +296,7 @@ function CommentForm({
         onChange={(e) => setBody(e.target.value)}
         aria-label={placeholder}
       />
-      {error && <div className="msg msg-error">{error}</div>}
+      <SendError error={error} />
       <div className="comment-form-actions">
         <Button type="submit" size="sm" disabled={busy || body.trim().length === 0}>
           {busy ? t('comments.posting') : parentId ? t('comments.reply') : t('comments.submit')}

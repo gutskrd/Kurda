@@ -366,6 +366,20 @@ export const fr: Catalogue = {
   'moderation.category.hate': 'Haine ou insultes',
   'moderation.category.selfHarm': 'Automutilation ou personne en danger',
   'moderation.category.other': 'Autre chose',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'Tu ne peux pas envoyer de messages pour le moment.',
+  'restriction.chatUntil': 'Tu ne peux pas envoyer de messages jusqu’au {time}.',
+  'restriction.post': 'Tu ne peux pas publier ni commenter pour le moment.',
+  'restriction.postUntil': 'Tu ne peux pas publier ni commenter jusqu’au {time}.',
+  'restriction.media': 'Tu ne peux pas ajouter d’images ni d’audio pour le moment.',
+  'restriction.mediaUntil': 'Tu ne peux pas ajouter d’images ni d’audio jusqu’au {time}.',
+  'restriction.groupMuted': 'Les admins du groupe t’ont mis en sourdine dans ce groupe.',
+  'restriction.chatMuted': 'Tes messages sont en pause pour un moment, car notre filtre a signalé certains de tes derniers messages.',
+  'restriction.suspended': 'Ton compte est suspendu.',
+  'restriction.suspendedUntil': 'Ton compte est suspendu jusqu’au {time}.',
+  'restriction.seeStanding': 'Voir l’état de ton compte',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'En ligne actuellement',
   'profile.offline': 'Hors ligne',
   'profile.levelN': 'Niveau {level}',
@@ -446,7 +460,6 @@ export const fr: Catalogue = {
   'chat.day.earlier': 'Plus tôt',
   'chat.error.tooFast': 'Tu envoies des messages trop vite — ralentis.',
   'chat.error.restricted': 'Ton compte a été restreint pour activité de type spam.',
-  'chat.error.muted': 'Tu es réduit au silence dans le chat.',
   'chat.error.blocked': 'Ce message a été bloqué par la modération.',
   'chat.error.notFriends': 'Tu ne peux écrire qu’aux personnes avec qui tu es ami.',
   'chat.thatDidNotWork': 'Ça n’a pas marché.',

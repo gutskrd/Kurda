@@ -366,6 +366,20 @@ export const nl: Catalogue = {
   'moderation.category.hate': 'Haat of scheldwoorden',
   'moderation.category.selfHarm': 'Zelfbeschadiging of iemand in gevaar',
   'moderation.category.other': 'Iets anders',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'Je kunt nu geen berichten sturen.',
+  'restriction.chatUntil': 'Je kunt tot {time} geen berichten sturen.',
+  'restriction.post': 'Je kunt nu niets plaatsen of reageren.',
+  'restriction.postUntil': 'Je kunt tot {time} niets plaatsen of reageren.',
+  'restriction.media': 'Je kunt nu geen afbeeldingen of geluid toevoegen.',
+  'restriction.mediaUntil': 'Je kunt tot {time} geen afbeeldingen of geluid toevoegen.',
+  'restriction.groupMuted': 'De beheerders van de groep hebben je in deze groep gedempt.',
+  'restriction.chatMuted': 'Je berichten staan even op pauze, omdat ons filter een paar van je laatste berichten heeft gemarkeerd.',
+  'restriction.suspended': 'Je account is geschorst.',
+  'restriction.suspendedUntil': 'Je account is geschorst tot {time}.',
+  'restriction.seeStanding': 'Bekijk de status van je account',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',
   'profile.levelN': 'Niveau {level}',
@@ -446,7 +460,6 @@ export const nl: Catalogue = {
   'chat.day.earlier': 'Eerder',
   'chat.error.tooFast': 'Je stuurt te snel berichten — rustig aan.',
   'chat.error.restricted': 'Je account is beperkt vanwege spamachtig gedrag.',
-  'chat.error.muted': 'Je bent gedempt in de chat.',
   'chat.error.blocked': 'Dat bericht is geblokkeerd door de moderatie.',
   'chat.error.notFriends': 'Je kunt alleen mensen berichten sturen met wie je bevriend bent.',
   'chat.thatDidNotWork': 'Dat werkte niet.',

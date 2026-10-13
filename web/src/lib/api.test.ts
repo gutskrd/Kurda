@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ApiClient, CODE_COPY, describeError } from './api';
-import { createTokenStorage } from './tokenStorage';
+import { createTokenStorage, persistTokens } from './tokenStorage';
 import { englishOnly as t, translator } from '../i18n/I18nProvider';
 import { fr } from '../i18n/fr';
 import { en } from '../i18n/en';
@@ -104,6 +104,42 @@ describe('ApiClient', () => {
     const res = await client.get('/thing');
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error.kind).toBe('network');
+  });
+
+  it('keeps the envelope’s details, so a refusal can say until when', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(403, { code: 'MUTED', message: 'no', details: { scope: 'chat', until: null } })),
+    );
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    const res = await client.post('/chat/x/messages', { body: 'hi' });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.details).toEqual({ scope: 'chat', until: null });
+  });
+
+  /**
+   * A ban that lands while someone is signed in answers every request with a
+   * bare ACCOUNT_DISABLED. The refresh is where the reasons and the appeal
+   * token are, so the client asks it once and hands them to the app.
+   */
+  it('finds out why when the account is suspended mid-session', async () => {
+    persistTokens({ accessToken: 'a', refreshToken: 'r' }, true);
+    const suspended = { until: null, policy: 'spam', statement: 'Spam.', appealable: true, appealToken: 'appeal' };
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith('/auth/refresh')
+        ? jsonResponse(403, { code: 'ACCOUNT_SUSPENDED', message: 'suspended', details: suspended })
+        : jsonResponse(403, { code: 'ACCOUNT_DISABLED', message: 'disabled' }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const onSuspended = vi.fn();
+    const storage = createTokenStorage();
+    const client = new ApiClient('https://api.test', storage, () => {}, onSuspended);
+
+    const res = await client.get('/me');
+    expect(res.ok).toBe(false);
+    expect(onSuspended).toHaveBeenCalledWith(suspended);
+    // the API ended the sessions; nothing is left that could be replayed
+    expect(storage.get()).toBeNull();
   });
 
   it('attaches an Idempotency-Key to mutating requests', async () => {

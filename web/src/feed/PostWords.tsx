@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import { GOTIN_KINDS, titleRequired } from './postKinds';
+import { SendError } from '../reports/SendError';
+import type { ApiError } from '../lib/types';
 
 const MAX_TITLE = 200;
 const MAX_BODY = 50_000;
@@ -26,7 +27,7 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   const needsTitle = titleRequired(postAs);
   const ready = body.trim().length > 0 && (!needsTitle || title.trim().length > 0);
@@ -42,7 +43,7 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
     });
     setBusy(false);
     if (res.ok) onPosted();
-    else setError(describeError(res.error, t));
+    else setError(res.error);
   }
 
   return (
@@ -89,7 +90,7 @@ export function PostWords({ onPosted }: { onPosted: () => void }): React.JSX.Ele
         style={{ marginTop: 12 }}
       />
 
-      {error && <div className="msg msg-error" role="status">{error}</div>}
+      <SendError error={error} role="status" />
 
       <div className="comment-form-actions">
         <Button size="sm" onClick={() => void submit()} disabled={!ready || busy}>

@@ -371,6 +371,20 @@ export const ar: Catalogue = {
   'moderation.category.hate': 'كراهية أو شتائم',
   'moderation.category.selfHarm': 'إيذاء النفس أو شخص في خطر',
   'moderation.category.other': 'شيء آخر',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'لا يمكنك إرسال الرسائل الآن.',
+  'restriction.chatUntil': 'لا يمكنك إرسال الرسائل حتى {time}.',
+  'restriction.post': 'لا يمكنك النشر أو التعليق الآن.',
+  'restriction.postUntil': 'لا يمكنك النشر أو التعليق حتى {time}.',
+  'restriction.media': 'لا يمكنك إضافة صور أو تسجيلات صوتية الآن.',
+  'restriction.mediaUntil': 'لا يمكنك إضافة صور أو تسجيلات صوتية حتى {time}.',
+  'restriction.groupMuted': 'كتمك مشرفو المجموعة في هذه المجموعة.',
+  'restriction.chatMuted': 'رسائلك متوقفة لبعض الوقت، لأن المرشّح لدينا علّم بعض رسائلك الأخيرة.',
+  'restriction.suspended': 'حسابك معلّق.',
+  'restriction.suspendedUntil': 'حسابك معلّق حتى {time}.',
+  'restriction.seeStanding': 'اطّلع على حالة حسابك',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',
   'profile.levelN': 'المستوى {level}',
@@ -451,7 +465,6 @@ export const ar: Catalogue = {
   'chat.day.earlier': 'سابقًا',
   'chat.error.tooFast': 'أنت ترسل الرسائل بسرعة كبيرة — من فضلك تمهّل.',
   'chat.error.restricted': 'قُيّد حسابك بسبب نشاط شبيه بالرسائل المزعجة.',
-  'chat.error.muted': 'تم كتم صوتك في الدردشة.',
   'chat.error.blocked': 'حجبت الإشراف هذه الرسالة.',
   'chat.error.notFriends': 'يمكنك مراسلة الأشخاص الذين تصادقهم فقط.',
   'chat.thatDidNotWork': 'لم ينجح ذلك.',

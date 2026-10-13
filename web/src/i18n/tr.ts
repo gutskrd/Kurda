@@ -366,6 +366,20 @@ export const tr: Catalogue = {
   'moderation.category.hate': 'Nefret veya hakaret',
   'moderation.category.selfHarm': 'Kendine zarar verme veya tehlikedeki biri',
   'moderation.category.other': 'Başka bir şey',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'Şu anda mesaj gönderemezsin.',
+  'restriction.chatUntil': '{time} tarihine kadar mesaj gönderemezsin.',
+  'restriction.post': 'Şu anda paylaşım yapamaz veya yorum yazamazsın.',
+  'restriction.postUntil': '{time} tarihine kadar paylaşım yapamaz veya yorum yazamazsın.',
+  'restriction.media': 'Şu anda resim veya ses ekleyemezsin.',
+  'restriction.mediaUntil': '{time} tarihine kadar resim veya ses ekleyemezsin.',
+  'restriction.groupMuted': 'Grubun yöneticileri seni bu grupta susturdu.',
+  'restriction.chatMuted': 'Filtremiz son mesajlarından bazılarını işaretlediği için mesajların bir süreliğine durduruldu.',
+  'restriction.suspended': 'Hesabın askıya alındı.',
+  'restriction.suspendedUntil': 'Hesabın {time} tarihine kadar askıya alındı.',
+  'restriction.seeStanding': 'Hesap durumuna bak',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',
   'profile.levelN': 'Seviye {level}',
@@ -446,7 +460,6 @@ export const tr: Catalogue = {
   'chat.day.earlier': 'Daha önce',
   'chat.error.tooFast': 'Çok hızlı mesaj gönderiyorsun — lütfen yavaşla.',
   'chat.error.restricted': 'Hesabın spam benzeri etkinlik nedeniyle kısıtlandı.',
-  'chat.error.muted': 'Sohbette susturuldun.',
   'chat.error.blocked': 'Bu mesaj denetim tarafından engellendi.',
   'chat.error.notFriends': 'Yalnızca arkadaş olduğun kişilere mesaj gönderebilirsin.',
   'chat.thatDidNotWork': 'Bu işe yaramadı.',

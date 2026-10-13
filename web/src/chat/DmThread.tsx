@@ -18,6 +18,7 @@ import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, CloseIcon } from '../components/icons';
+import { SendError } from '../reports/SendError';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -37,15 +38,17 @@ function byTime<T extends { createdAt: string }>(msgs: readonly T[] | undefined 
   return [...msgs].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
 }
 
-/** Map moderation/anti-bot server codes to human copy (server stays authoritative). */
+/**
+ * Map moderation/anti-bot server codes to human copy (server stays authoritative).
+ * A limit on the account (a mute, the automatic chat pause) is not here: it is
+ * said the same way on every send path, by reports/SendError.
+ */
 export function sendError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'TRUST_VELOCITY':
       return t('chat.error.tooFast');
     case 'AUTO_MODERATED':
       return t('chat.error.restricted');
-    case 'CHAT_MUTED':
-      return t('chat.error.muted');
     case 'CONTENT_BLOCKED':
       return t('chat.error.blocked');
     case 'NOT_FRIENDS':
@@ -89,7 +92,7 @@ export function DmThread({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [sendMsg, setSendMsg] = useState<string | null>(null);
+  const [sendErr, setSendErr] = useState<ApiError | null>(null);
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
@@ -181,7 +184,7 @@ export function DmThread({
     const body = text.trim();
     if (!body) return;
     setSending(true);
-    setSendMsg(null);
+    setSendErr(null);
     const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
     setSending(false);
     if (res.ok) {
@@ -190,7 +193,7 @@ export function DmThread({
       scrollToBottom('smooth'); // your own message always brings you back down
       onSent();
     } else {
-      setSendMsg(sendError(res.error, t));
+      setSendErr(res.error);
     }
   }
 
@@ -250,7 +253,7 @@ export function DmThread({
         </button>
       )}
 
-      {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
+      <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
       <Composer
         value={text}
         onChange={(next) => {

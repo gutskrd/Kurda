@@ -1,0 +1,30 @@
+/*
+ * Gifts in the chat, reporting, and account standing.
+ *
+ * One file for the three because they meet in the same places — a chat
+ * bubble can be a present, and the menu beside it reports it — and because
+ * they arrived together: kept apart from pages.css, the merge with the work
+ * on games in the same chat stays a matter of two files side by side.
+ *
+ * Colours are the app's tokens. Gold is meaning, and a gift is the one place
+ * in the chat where it is meant: it is what the Zêr it was bought with looks
+ * like.
+ */
+
+/* ---- a limit on the account, said calmly -------------------------------- */
+.send-error.is-limit {
+  color: var(--ink);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  border-inline-start: 3px solid var(--gold);
+}
+.send-error-link {
+  color: var(--gold-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.send-error-link:hover {
+  color: var(--ink);
+}

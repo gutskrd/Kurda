@@ -19,6 +19,7 @@ import { ThreadSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { ArrowIcon, CloseIcon } from '../components/icons';
+import { SendError } from '../reports/SendError';
 import { useT } from '../i18n/I18nProvider';
 import { Avatar } from '../components/Avatar';
 
@@ -52,7 +53,7 @@ export function GroupThread({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [sendMsg, setSendMsg] = useState<string | null>(null);
+  const [sendErr, setSendErr] = useState<ApiError | null>(null);
   const { refreshUnread } = useMessages();
   const { openProfile } = useProfileModal();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
@@ -138,7 +139,7 @@ export function GroupThread({
     const body = text.trim();
     if (!body) return;
     setSending(true);
-    setSendMsg(null);
+    setSendErr(null);
     const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
     setSending(false);
     if (res.ok) {
@@ -150,7 +151,7 @@ export function GroupThread({
       });
       scrollToBottom('smooth');
     } else {
-      setSendMsg(sendError(res.error, t));
+      setSendErr(res.error);
     }
   }
 
@@ -219,7 +220,7 @@ export function GroupThread({
         </button>
       )}
 
-      {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
+      <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
       <Composer
         value={text}
         onChange={(next) => {

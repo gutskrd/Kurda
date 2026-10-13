@@ -377,6 +377,20 @@ export const ckb: Catalogue = {
   'moderation.category.hate': 'ڕق یان جنێو',
   'moderation.category.selfHarm': 'ئازاردانی خود یان کەسێک لە مەترسیدا',
   'moderation.category.other': 'شتێکی تر',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'ئێستا ناتوانیت نامە بنێریت.',
+  'restriction.chatUntil': 'تا {time} ناتوانیت نامە بنێریت.',
+  'restriction.post': 'ئێستا ناتوانیت شت بڵاو بکەیتەوە یان لێدوان بنووسیت.',
+  'restriction.postUntil': 'تا {time} ناتوانیت شت بڵاو بکەیتەوە یان لێدوان بنووسیت.',
+  'restriction.media': 'ئێستا ناتوانیت وێنە یان دەنگ زیاد بکەیت.',
+  'restriction.mediaUntil': 'تا {time} ناتوانیت وێنە یان دەنگ زیاد بکەیت.',
+  'restriction.groupMuted': 'بەڕێوەبەرانی گرووپەکە لەم گرووپەدا بێدەنگیان کردوویت.',
+  'restriction.chatMuted': 'نامەکانت بۆ ماوەیەک ڕاگیراون، چونکە فلتەرەکەمان هەندێک لە نامە دواییەکانتی نیشانە کرد.',
+  'restriction.suspended': 'هەژمارەکەت ڕاگیراوە.',
+  'restriction.suspendedUntil': 'هەژمارەکەت تا {time} ڕاگیراوە.',
+  'restriction.seeStanding': 'باری هەژمارەکەت ببینە',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',
   'profile.levelN': 'ئاستی {level}',
@@ -457,7 +471,6 @@ export const ckb: Catalogue = {
   'chat.day.earlier': 'پێشتر',
   'chat.error.tooFast': 'زۆر بە خێرایی نامە دەنێریت — تکایە هێواش ببەوە.',
   'chat.error.restricted': 'هەژمارەکەت بەهۆی چالاکی لەجۆری سپامەوە سنووردار کرا.',
-  'chat.error.muted': 'لە گفتوگۆ بێدەنگ کراویت.',
   'chat.error.blocked': 'ئەو نامەیە لەلایەن چاودێرییەوە ڕێگری لێکرا.',
   'chat.error.notFriends': 'تەنها دەتوانیت نامە بۆ ئەو کەسانە بنێریت کە هاوڕێتن.',
   'chat.thatDidNotWork': 'ئەوە کاری نەکرد.',

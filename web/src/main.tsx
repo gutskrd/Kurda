@@ -14,6 +14,8 @@ import './styles/product.css';
 import './styles/alphabet.css';
 import './styles/learn.css';
 import './styles/marketing.css';
+// gifts in chat, reporting, account standing
+import './styles/social.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

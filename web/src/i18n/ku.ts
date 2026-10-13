@@ -372,6 +372,20 @@ export const ku: Catalogue = {
   'moderation.category.hate': 'Nefret an çêr',
   'moderation.category.selfHarm': 'Xwe-birîndarkirin an kesekî di xetereyê de',
   'moderation.category.other': 'Tiştekî din',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'Tu niha nikarî peyaman bişînî.',
+  'restriction.chatUntil': 'Tu heta {time} nikarî peyaman bişînî.',
+  'restriction.post': 'Tu niha nikarî tiştekî biweşînî an şîrove bikî.',
+  'restriction.postUntil': 'Tu heta {time} nikarî tiştekî biweşînî an şîrove bikî.',
+  'restriction.media': 'Tu niha nikarî wêne an deng zêde bikî.',
+  'restriction.mediaUntil': 'Tu heta {time} nikarî wêne an deng zêde bikî.',
+  'restriction.groupMuted': 'Rêvebirên komê tu di vê komê de bêdeng kirî.',
+  'restriction.chatMuted': 'Peyamên te ji bo demekê hatine rawestandin, ji ber ku parzûna me hin peyamên te yên dawî nîşan kirin.',
+  'restriction.suspended': 'Hesabê te hatiye rawestandin.',
+  'restriction.suspendedUntil': 'Hesabê te heta {time} hatiye rawestandin.',
+  'restriction.seeStanding': 'Rewşa hesabê xwe bibîne',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',
   'profile.levelN': 'Asta {level}',
@@ -452,7 +466,6 @@ export const ku: Catalogue = {
   'chat.day.earlier': 'Berê',
   'chat.error.tooFast': 'Tu peyaman pir bilez dişînî — ji kerema xwe hêdî bike.',
   'chat.error.restricted': 'Hesabê te ji ber çalakiya spam-ê hat sînordarkirin.',
-  'chat.error.muted': 'Tu ji suhbetê hatî bêdengkirin.',
   'chat.error.blocked': 'Ew peyam ji aliyê moderasyonê ve hat astengkirin.',
   'chat.error.notFriends': 'Tu tenê dikarî ji kesên ku hevalên te ne re peyaman bişînî.',
   'chat.thatDidNotWork': 'Ew nexebitî.',

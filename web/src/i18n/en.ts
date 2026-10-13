@@ -428,6 +428,20 @@ export const en = {
   'moderation.category.hate': 'Hate or slurs',
   'moderation.category.selfHarm': 'Self-harm or someone in danger',
   'moderation.category.other': 'Something else',
+  // ---- web-social: gifts in chat, reports and account standing ----
+  // what a limit on the account stops, and until when (reports/restriction.ts)
+  'restriction.chat': 'You can’t send messages right now.',
+  'restriction.chatUntil': 'You can’t send messages until {time}.',
+  'restriction.post': 'You can’t post or comment right now.',
+  'restriction.postUntil': 'You can’t post or comment until {time}.',
+  'restriction.media': 'You can’t add pictures or voice right now.',
+  'restriction.mediaUntil': 'You can’t add pictures or voice until {time}.',
+  'restriction.groupMuted': 'The group’s admins have muted you in this group.',
+  'restriction.chatMuted': 'Your messages are paused for a while, because our filter flagged some of your recent ones.',
+  'restriction.suspended': 'Your account is suspended.',
+  'restriction.suspendedUntil': 'Your account is suspended until {time}.',
+  'restriction.seeStanding': 'See your account standing',
+  // ---- end web-social ----
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',
   'profile.levelN': 'Level {level}',
@@ -512,7 +526,6 @@ export const en = {
   'chat.day.earlier': 'Earlier',
   'chat.error.tooFast': 'You’re sending messages too fast — please slow down.',
   'chat.error.restricted': 'Your account has been restricted for spam-like activity.',
-  'chat.error.muted': 'You’re muted from chat.',
   'chat.error.blocked': 'That message was blocked by moderation.',
   'chat.error.notFriends': 'You can only message people you’re friends with.',
   'chat.thatDidNotWork': 'That did not work.',

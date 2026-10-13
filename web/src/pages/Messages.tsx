@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { Conversation, Group, MyGroup } from '../lib/types';
+import type { ApiError, Conversation, Group, MyGroup } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
@@ -13,6 +13,7 @@ import { ConversationsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
+import { SendError } from '../reports/SendError';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -242,7 +243,7 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
   const [description, setDescription] = useState('');
   const [privacy, setPrivacy] = useState<'open' | 'invite'>('open');
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState<string | ApiError | null>(null);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -259,14 +260,14 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
       onDone();
       navigate(`/app/messages?group=${res.data.id}`);
     } else {
-      setErr(res.error.code === 'TRUST_VELOCITY' ? t('groups.newAccountLimit') : describeError(res.error, t));
+      setErr(res.error.code === 'TRUST_VELOCITY' ? t('groups.newAccountLimit') : res.error);
     }
   }
 
   return (
     <form className="compose" onSubmit={submit}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('groups.new')}</h2>
-      {err && <div className="msg msg-error">{err}</div>}
+      <SendError error={err} />
       <div className="field">
         <label className="field-label" htmlFor="g-name">{t('groups.name')}</label>
         <input id="g-name" className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={t('groups.namePlaceholder')} />
