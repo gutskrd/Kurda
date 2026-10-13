@@ -10,6 +10,13 @@ export interface ApiError {
   retryAfterSec?: number;
   requestId?: string;
   status?: number;
+  /**
+   * The envelope's `details`, as the server sent them. Most refusals have
+   * none; the ones that say *until when* do — 403 MUTED (shared
+   * `MutedErrorDetails`) and 403 ACCOUNT_SUSPENDED (`SuspendedErrorDetails`) —
+   * and a calm answer needs them (see `moderation/sendErrors.ts`).
+   */
+  details?: unknown;
 }
 
 export interface TokenPair {

@@ -229,6 +229,63 @@ describe('ApiClient', () => {
     expect(fetchFn.mock.calls[0]![1].headers['idempotency-key']).toBeUndefined();
     expect(fetchFn.mock.calls[1]![1].headers['idempotency-key']).toBeDefined();
   });
+
+  it("keeps a refusal's details, which say until when", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse(403, { code: 'MUTED', message: "you can't send messages right now", details: { until: '2026-10-20T10:00:00.000Z', scope: 'chat' } }),
+      );
+    const { client, ready } = makeClient(fetchFn);
+    await ready;
+    const res = await client.post('/chat/u/messages', { body: 'hi' });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe('MUTED');
+    expect(res.error.details).toEqual({ until: '2026-10-20T10:00:00.000Z', scope: 'chat' });
+  });
+
+  /**
+   * A ban revokes the session, so the phone hears of it at its next refresh —
+   * which must hand the reasons and the appeal token to the suspension screen
+   * before signing out, not read as a session that simply ran out.
+   */
+  it('passes a suspension on refresh to onSuspended, then signs out', async () => {
+    const details = { until: null, policy: 'harassment', statement: 'Repeated bullying.', appealable: true, appealToken: 'appeal-1' };
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'ACCOUNT_SUSPENDED', message: 'this account is suspended', details }));
+    const storage = new MemoryTokenStorage();
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    const order: string[] = [];
+    const onSuspended = vi.fn(() => order.push('suspended'));
+    const client = new ApiClient({
+      baseUrl: 'https://api.test',
+      storage,
+      onLogout: () => order.push('logout'),
+      onSuspended,
+      fetchFn: fetchFn as never,
+    });
+    const res = await client.get('/me');
+    expect(res.ok).toBe(false);
+    expect(onSuspended).toHaveBeenCalledWith(details);
+    expect(order).toEqual(['suspended', 'logout']);
+    expect(await storage.get()).toBeNull();
+  });
+
+  it('does not report a suspension for any other refused refresh', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'ACCOUNT_DISABLED', message: 'disabled' }));
+    const storage = new MemoryTokenStorage();
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    const onSuspended = vi.fn();
+    const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout: () => undefined, onSuspended, fetchFn: fetchFn as never });
+    await client.get('/me');
+    expect(onSuspended).not.toHaveBeenCalled();
+  });
 });
 
 describe('apiBaseUrl', () => {

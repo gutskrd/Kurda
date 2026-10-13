@@ -1,3 +1,5 @@
+import type { SuspendedErrorDetails } from '@kurda/shared';
+import { suspendedDetails } from '../reports/suspension';
 import type { ApiError, ApiResult, TokenPair, TokenStorage } from './types';
 
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
@@ -7,6 +9,14 @@ export interface ApiClientOptions {
   storage: TokenStorage;
   /** Called when the session is unrecoverable (refresh failed). */
   onLogout: () => void;
+  /**
+   * Called, before `onLogout`, when the refresh was refused because the
+   * account is suspended or banned (403 ACCOUNT_SUSPENDED). A ban revokes the
+   * session, so the phone's next refresh is where it hears of it — and it must
+   * land on the suspension screen with its reasons, not on the sign-in form as
+   * though the session had simply run out.
+   */
+  onSuspended?: (details: SuspendedErrorDetails) => void;
   fetchFn?: FetchLike;
   /** Injectable for tests. */
   idGenerator?: () => string;
@@ -204,7 +214,14 @@ export class ApiClient {
     } catch {
       return false;
     }
-    if (!res.ok) return false;
+    if (!res.ok) {
+      if (res.status === 403) {
+        const body = (await res.json().catch(() => null)) as { code?: string; details?: unknown } | null;
+        const details = body?.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(body.details) : null;
+        if (details) this.opts.onSuspended?.(details);
+      }
+      return false;
+    }
     const next = (await res.json()) as TokenPair;
     await this.opts.storage.set(next);
     return true;
@@ -225,7 +242,7 @@ export class ApiClient {
       return { ok: true, data };
     }
 
-    let envelope: { code?: string; message?: string; requestId?: string } = {};
+    let envelope: { code?: string; message?: string; requestId?: string; details?: unknown } = {};
     try {
       envelope = (await res.json()) as typeof envelope;
     } catch {
@@ -255,6 +272,7 @@ export class ApiClient {
         message: envelope.message ?? `request failed (${res.status})`,
         requestId: envelope.requestId,
         status: res.status,
+        ...(envelope.details !== undefined ? { details: envelope.details } : {}),
       },
     };
   }
