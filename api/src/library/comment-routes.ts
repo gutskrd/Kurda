@@ -127,8 +127,14 @@ export function registerLibraryCommentRoutes(
     { schema: { params: idParam, body: editBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const input = req.body as CreateCommentInput;
-      // a voice note added in an edit is checked like one on a new comment
-      if (input.audioMediaId && !(await voiceAttachable(app.db, req.user!.id, input.audioMediaId))) {
+      // a voice note added in an edit is checked like one on a new comment (the
+      // one it already has is not "attached" again by an edit that resends it)
+      const current = input.audioMediaId
+        ? (await app.db.query<{ audio_media_id: string | null }>(`SELECT audio_media_id FROM library_comments WHERE id = $1`, [
+            (req.params as { id: string }).id,
+          ])).rows[0]?.audio_media_id
+        : null;
+      if (input.audioMediaId && input.audioMediaId !== current && !(await voiceAttachable(app.db, req.user!.id, input.audioMediaId))) {
         return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
       }
       return respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), input));

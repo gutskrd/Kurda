@@ -125,8 +125,15 @@ export function registerLibraryRoutes(
     // month like a new post does; unpublish and delete never do
     { schema: { params: idParam, body: updateBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
-      // a new voice rendition is checked like one attached to a new post
-      if (!(await audioOk(req, (req.body as z.infer<typeof updateBody>).audioMediaId))) {
+      // a new voice rendition is checked like one attached to a new post (the
+      // one it already has is not "attached" again by an edit that resends it)
+      const audio = (req.body as z.infer<typeof updateBody>).audioMediaId;
+      const current = audio
+        ? (await app.db.query<{ audio_media_id: string | null }>(`SELECT audio_media_id FROM library_posts WHERE id = $1`, [
+            (req.params as { id: string }).id,
+          ])).rows[0]?.audio_media_id
+        : null;
+      if (audio !== current && !(await audioOk(req, audio))) {
         return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
       }
       const res = await library.update((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as z.infer<typeof updateBody>);

@@ -249,7 +249,16 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       expect(asComment.json().details.scope).toBe('media');
       const asPost = await call('POST', '/library/posts', limited.token, { type: 'gotin', body: 'Gotin.', audioMediaId: key });
       expect(asPost.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
-      const edited = await call('PATCH', `/library/comments/${(before.json() as { id: string }).id}`, limited.token, { audioMediaId: key });
+      // resending the voice a comment already has is no new attachment
+      const commentId = (before.json() as { id: string }).id;
+      expect((await call('PATCH', `/library/comments/${commentId}`, limited.token, { body: 'and words', audioMediaId: key })).statusCode).toBe(200);
+      // a different one is
+      const another = `voice-note/limited2_${kit.suffix}.webm`;
+      await pool.query(
+        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at) VALUES ($1, 'audio/webm', 10, now())`,
+        [another],
+      );
+      const edited = await call('PATCH', `/library/comments/${commentId}`, limited.token, { audioMediaId: another });
       expect(edited.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
       // text alone is still theirs to post
       expect((await call('POST', `/library/posts/${postId}/comments`, limited.token, { body: 'words only' })).statusCode).toBe(201);
