@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 
@@ -21,6 +21,7 @@ export function Composer({
   sending,
   placeholder,
   maxLength = 2000,
+  tools,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -28,6 +29,12 @@ export function Composer({
   sending: boolean;
   placeholder: string;
   maxLength?: number;
+  /**
+   * Buttons before the box — the game button (play/PlayButtons), and
+   * whatever else a thread offers. Kept outside the form's own controls so
+   * pressing one never submits the message.
+   */
+  tools?: ReactNode;
 }): React.JSX.Element {
   const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -53,6 +60,7 @@ export function Composer({
         if (!empty && !sending) onSubmit();
       }}
     >
+      {tools && <div className="chat-compose-tools">{tools}</div>}
       <textarea
         ref={ref}
         className="input chat-compose-input"

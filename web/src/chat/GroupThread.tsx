@@ -9,6 +9,8 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from './MessagesProvider';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
+import { ChatGameButton } from '../play/PlayButtons';
+import { gameCardBody } from '../play/ChatGameCard';
 import { useStickyScroll } from './useStickyScroll';
 import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
@@ -198,6 +200,7 @@ export function GroupThread({
             messages={messages}
             myId={user?.id}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+            renderBody={gameCardBody}
           />
         )}
       </div>
@@ -229,6 +232,7 @@ export function GroupThread({
         onSubmit={() => void send()}
         sending={sending}
         placeholder={t('chat.messageTheGroup')}
+        tools={<ChatGameButton target={{ kind: 'group', groupId, groupName: name }} />}
       />
     </div>
   );

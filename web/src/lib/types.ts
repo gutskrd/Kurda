@@ -5,6 +5,8 @@
  * no new/duplicated backend logic.
  */
 
+import type { ChatGameRef, ChatMessageKind } from '@kurda/shared';
+
 /** Every API call returns a result — callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
 
@@ -283,15 +285,26 @@ export interface AvatarOption {
   requiresPremium: boolean;
 }
 
+/**
+ * What a chat message carries besides text (shared `ChatMessageExtras`): a
+ * game card here. Optional because a message from an older server, or a
+ * fixture, has none — it is then a plain text message.
+ */
+export interface ChatExtras {
+  kind?: ChatMessageKind;
+  game?: ChatGameRef | null;
+}
+
 /** A 1:1 direct message (chat). */
-export interface DmMessage {
+export interface DmMessage extends ChatExtras {
   id: string;
   senderId: string;
   /** who wrote it — the thread shows a name per burst, not per message */
   username: string;
   /** resolved server-side (uploaded photo -> chosen avatar) */
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card */
+  body: string | null;
   createdAt: string;
   deliveredAt: string | null;
   readAt: string | null;
@@ -304,6 +317,8 @@ export interface Conversation {
   avatarUrl?: string | null;
   online?: boolean;
   lastMessage: string;
+  /** what the last message was, so a gift or a game card reads as one in the list */
+  lastKind?: ChatMessageKind;
   lastAt: string;
   lastFromMe: boolean;
   unread: number;
@@ -396,13 +411,14 @@ export interface GroupDetail extends Group {
   myRole: GroupRole | null;
 }
 /** A group chat message (GET/POST /groups/:id/chat). */
-export interface GroupMessage {
+export interface GroupMessage extends ChatExtras {
   id: string;
   senderId: string;
   username: string;
   /** resolved server-side (uploaded photo -> chosen avatar) */
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card; '' once deleted */
+  body: string | null;
   createdAt: string;
   deleted: boolean;
 }

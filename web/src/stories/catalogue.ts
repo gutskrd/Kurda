@@ -43,8 +43,11 @@ export function clearStoryLists(): void {
   lists.clear();
 }
 
-/** The published stories of one variety, easiest and shortest first (the server's order). */
-export function useStoryList(dialect: StoryDialect): {
+/**
+ * The published stories of one variety, easiest and shortest first (the
+ * server's order). `enabled` false asks nothing (a sheet set to another game).
+ */
+export function useStoryList(dialect: StoryDialect, enabled = true): {
   stories: StoryListItem[] | null;
   error: string | null;
   reload: () => void;
@@ -56,6 +59,7 @@ export function useStoryList(dialect: StoryDialect): {
   const reload = useCallback(() => setFresh((n) => n + 1), []);
 
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     setState({ stories: null, error: null });
     void fetchList(client, dialect, fresh > 0).then((s) => {
@@ -65,7 +69,7 @@ export function useStoryList(dialect: StoryDialect): {
     return () => {
       live = false;
     };
-  }, [client, dialect, fresh, t]);
+  }, [client, dialect, fresh, t, enabled]);
 
   return { ...state, reload };
 }

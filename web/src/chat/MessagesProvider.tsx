@@ -74,8 +74,8 @@ const MAX_TOASTS = 3;
 const COUNT_POLL_MS = 60_000;
 
 /** What a banner shows: a game invite reads as an invite, not as its URL. */
-function preview(body: string, t: Translate): string {
-  return truncate(messagePreview(body, t), 90);
+function preview(message: DmMessage | GroupMessage, t: Translate): string {
+  return truncate(messagePreview(message, t), 90);
 }
 
 export function MessagesProvider({ children }: { children: ReactNode }): React.JSX.Element {
@@ -153,11 +153,14 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       if (!ev.from || !ev.message?.id) return;
       refreshUnread();
       if (openRef.current.dm === ev.from) return; // you are already reading it
+      // a friend's game invite has its own banner (play/InviteBanner), which
+      // can be answered where it is; a second one for its card would only repeat it
+      if (ev.message.kind === 'game') return;
       const name = ev.fromUsername ?? t('chat.newMessage');
       push({
         id: ev.message.id,
         title: name,
-        body: preview(ev.message.body, t),
+        body: preview(ev.message, t),
         to: '/app/messages?to=' + ev.from + '&name=' + encodeURIComponent(name),
       });
     },
@@ -178,7 +181,7 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       push({
         id: ev.message.id,
         title: group ? ev.message.username + ' · ' + group.name : ev.message.username,
-        body: preview(ev.message.body, t),
+        body: preview(ev.message, t),
         to: '/app/messages?group=' + ev.groupId,
       });
     },
