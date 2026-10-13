@@ -40,6 +40,11 @@ const envSchema = z.object({
    */
   APP_BASE_URL: z.string().url().default('https://hevalo.app'),
   /**
+   * Public origin of the admin panel, for the link in the urgent-report email
+   * to moderators. Optional: without it the email names the page instead.
+   */
+  ADMIN_BASE_URL: z.string().url().optional(),
+  /**
    * Process background jobs inside the API instead of a separate worker service.
    * The API only ENQUEUES jobs; without something consuming the queue, emails
    * (verification, password reset) sit in Redis forever. Defaults on wherever

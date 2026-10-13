@@ -1,6 +1,10 @@
 import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
+import type { AdminUserModeration, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
+import { AppError } from '../plugins/errors.js';
+import { CasesService, DEFAULT_STATEMENTS, linkedAccounts } from '../moderation/cases-service.js';
+import { SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,7 +26,7 @@ export interface UserPage {
 export const USERS_PAGE_SIZE = 25;
 export const USERS_PAGE_MAX = 100;
 
-export interface UserDetail {
+export interface UserDetail extends AdminUserModeration {
   id: string;
   username: string;
   email: string;
@@ -37,6 +41,14 @@ export interface UserDetail {
   sessions: Array<{ deviceName: string | null; createdAt: Date; expiresAt: Date }>;
   actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; createdAt: Date }>;
 }
+
+/** What the person is told for each of the old page's actions. */
+const LEGACY_STATEMENT = {
+  warning: DEFAULT_STATEMENTS.warning,
+  chat_mute: DEFAULT_STATEMENTS.chat_mute,
+  suspension: "A moderator found that your account broke Hevalo's rules, so it is suspended for a while.",
+  permanent_ban: DEFAULT_STATEMENTS.permanent_ban,
+} as const;
 
 type ActionOk = { ok: true; balance?: number };
 type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' };
@@ -61,10 +73,17 @@ export interface OwnedItem {
 }
 
 export class UserAdminService {
+  private readonly sanctions: SanctionsService;
+  private readonly cases: CasesService;
+
   constructor(
     private readonly pool: pg.Pool,
     private readonly wallet: WalletService,
-  ) {}
+    moderation: { sanctions?: SanctionsService; cases?: CasesService } = {},
+  ) {
+    this.sanctions = moderation.sanctions ?? new SanctionsService(pool);
+    this.cases = moderation.cases ?? new CasesService(pool, this.sanctions);
+  }
 
   /**
    * One page of users: everybody, or the ones matching `query`.
@@ -138,14 +157,15 @@ export class UserAdminService {
       id: string; username: string; email: string; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
     }>(
-      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until, muted_until
+      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until,
+              CASE WHEN muted_until = 'infinity' THEN NULL ELSE muted_until END AS muted_until
        FROM users WHERE id = $1`,
       [userId],
     );
     const user = u.rows[0];
     if (!user) return null;
 
-    const [balances, ledger, sessions, actions] = await Promise.all([
+    const [balances, ledger, sessions, actions, moderation] = await Promise.all([
       this.wallet.balances(userId),
       this.pool.query<{ currency: string; amount: number; reason: string; created_at: Date }>(
         `SELECT currency, amount, reason, created_at FROM wallet_ledger WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
@@ -160,6 +180,7 @@ export class UserAdminService {
         `SELECT action, reason, meta, admin_id, created_at FROM admin_actions WHERE target_user_id = $1 ORDER BY created_at DESC LIMIT 20`,
         [userId],
       ),
+      this.moderationOf(userId),
     ]);
 
     return {
@@ -176,31 +197,126 @@ export class UserAdminService {
       ledger: ledger.rows.map((r) => ({ currency: r.currency, amount: r.amount, reason: r.reason, createdAt: r.created_at })),
       sessions: sessions.rows.map((r) => ({ deviceName: r.device_name, createdAt: r.created_at, expiresAt: r.expires_at })),
       actions: actions.rows.map((r) => ({ action: r.action, reason: r.reason, meta: r.meta, adminId: r.admin_id, createdAt: r.created_at })),
+      ...moderation,
     };
   }
 
-  warn(adminId: string, userId: string, reason: string): Promise<ActionResult> {
-    return this.record(adminId, userId, 'warn', reason, {});
+  /**
+   * The moderation side of a person: reports about them and by them, their
+   * sanctions and appeals, the cases about them, accounts linked by device or
+   * network, and the automatic chat-mute ladder — so the user page and the case
+   * view tell the same story.
+   */
+  private async moderationOf(userId: string): Promise<AdminUserModeration> {
+    type ReportRow = { id: string; target_type: ReportTargetType; category: ReportCategory; status: ReportStatus; case_id: string | null; created_at: Date };
+    const toReport = (r: ReportRow) => ({
+      id: r.id,
+      targetType: r.target_type,
+      category: r.category,
+      status: r.status,
+      caseId: r.case_id,
+      createdAt: r.created_at.toISOString(),
+    });
+    const [against, filed, sanctions, appeals, cases, linked, offenses, muted] = await Promise.all([
+      this.pool.query<ReportRow>(
+        `SELECT id, target_type, category, status, case_id, created_at FROM reports
+          WHERE subject_user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+        [userId],
+      ),
+      this.pool.query<ReportRow>(
+        `SELECT id, target_type, category, status, case_id, created_at FROM reports
+          WHERE reporter_id = $1 ORDER BY created_at DESC LIMIT 50`,
+        [userId],
+      ),
+      this.sanctions.forUser(userId),
+      this.pool.query<AppealRow>(`SELECT * FROM appeals WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, [userId]),
+      this.pool.query<{ id: string; status: AdminUserModeration['cases'][number]['status']; priority: 0 | 1 | 2 | 3;
+        category: ReportCategory | null; summary: string; created_at: Date }>(
+        `SELECT id, status, priority, category, summary, created_at FROM moderation_cases
+          WHERE subject_user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+        [userId],
+      ),
+      linkedAccounts(this.pool, userId),
+      this.pool.query<{ offense_count: number; muted_until: Date | null; perm_muted: boolean }>(
+        `SELECT offense_count, muted_until, perm_muted FROM chat_offenses WHERE user_id = $1`,
+        [userId],
+      ),
+      this.pool.query<{ forever: boolean }>(`SELECT COALESCE(muted_until = 'infinity', false) AS forever FROM users WHERE id = $1`, [userId]),
+    ]);
+    const o = offenses.rows[0];
+    return {
+      reportsAgainst: against.rows.map(toReport),
+      reportsFiled: filed.rows.map(toReport),
+      sanctions,
+      appeals: appeals.rows.map(toAppealView),
+      cases: cases.rows.map((c) => ({
+        id: c.id,
+        status: c.status,
+        priority: c.priority,
+        category: c.category,
+        summary: c.summary,
+        createdAt: c.created_at.toISOString(),
+      })),
+      linkedAccounts: linked,
+      chatOffenses: o ? { count: o.offense_count, mutedUntil: o.muted_until?.toISOString() ?? null, permanent: o.perm_muted } : null,
+      mutedPermanently: muted.rows[0]?.forever === true,
+    };
   }
 
-  async mute(adminId: string, userId: string, reason: string, until: Date): Promise<ActionResult> {
-    if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
-    await this.pool.query(`UPDATE users SET muted_until = $2 WHERE id = $1`, [userId, until]);
-    return this.record(adminId, userId, 'mute', reason, { until: until.toISOString() });
+  /*
+   * The Users page's warn / mute / ban / unban. They used to write the user
+   * columns directly; they are sanctions now, through the same rules as a case
+   * decision — the person is told why, a permanent ban waits for a second admin
+   * when there is one — with the admin's reason kept as the internal note and a
+   * plain statement sent to the person (the old form's reason was written for
+   * staff, not for them).
+   */
+
+  warn(adminId: string, userId: string, reason: string): Promise<ActionResult> {
+    return this.sanction(adminId, userId, reason, 'warning', null, 'warn');
+  }
+
+  mute(adminId: string, userId: string, reason: string, until: Date): Promise<ActionResult> {
+    return this.sanction(adminId, userId, reason, 'chat_mute', until, 'mute');
   }
 
   tempBan(adminId: string, userId: string, reason: string, until: Date): Promise<ActionResult> {
-    return this.ban(adminId, userId, reason, until, 'temp_ban');
+    return this.sanction(adminId, userId, reason, 'suspension', until, 'temp_ban');
   }
 
   permBan(adminId: string, userId: string, reason: string): Promise<ActionResult> {
-    return this.ban(adminId, userId, reason, null, 'perm_ban');
+    return this.sanction(adminId, userId, reason, 'permanent_ban', null, 'perm_ban');
   }
 
   async unban(adminId: string, userId: string, reason: string): Promise<ActionResult> {
     if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
-    await this.pool.query(`UPDATE users SET banned_at = NULL, banned_until = NULL WHERE id = $1`, [userId]);
-    return this.record(adminId, userId, 'unban', reason, {});
+    await this.sanctions.unban(adminId, userId, reason);
+    return { ok: true };
+  }
+
+  private async sanction(
+    adminId: string,
+    userId: string,
+    reason: string,
+    kind: 'warning' | 'chat_mute' | 'suspension' | 'permanent_ban',
+    until: Date | null,
+    auditAction: string,
+  ): Promise<ActionResult> {
+    if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
+    const hours = until ? Math.max(1, Math.round((until.getTime() - Date.now()) / 3_600_000)) : null;
+    try {
+      await this.cases.sanctionUser(
+        adminId,
+        userId,
+        { kind, policy: 'other', statement: LEGACY_STATEMENT[kind], internalNote: reason, durationHours: hours },
+        // the old page has no way to type a username; the new one does
+        { allowUntypedSingle: true, auditAction },
+      );
+      return { ok: true };
+    } catch (err) {
+      if (err instanceof AppError && err.code === 'NOT_FOUND') return { ok: false, code: 'NOT_FOUND' };
+      throw err;
+    }
   }
 
   /** Ledger-backed wallet adjustment (positive = credit, negative = debit). */
@@ -216,16 +332,6 @@ export class UserAdminService {
       if (err instanceof InsufficientFundsError) return { ok: false, code: 'INSUFFICIENT_FUNDS' };
       throw err;
     }
-  }
-
-  private async ban(adminId: string, userId: string, reason: string, until: Date | null, action: 'temp_ban' | 'perm_ban'): Promise<ActionResult> {
-    if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
-    // set the ban + revoke every live session in one shot
-    await this.pool.query(
-      `UPDATE users SET banned_at = now(), banned_until = $2, token_version = token_version + 1 WHERE id = $1`,
-      [userId, until],
-    );
-    return this.record(adminId, userId, action, reason, until ? { until: until.toISOString() } : {});
   }
 
   /** Everything this user owns, flagged with whether it is currently equipped. */

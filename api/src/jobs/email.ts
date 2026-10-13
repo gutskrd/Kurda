@@ -14,6 +14,7 @@ const payloadSchema = z.object({
     'password-changed',
     'oauth-no-password',
     'deletion-notice',
+    'moderation-urgent',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; omitted → English (KUR-098). */

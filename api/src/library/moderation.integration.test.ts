@@ -44,7 +44,7 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM moderation_cases WHERE source = 'library_report'`);
+    await pool.query(`DELETE FROM moderation_cases WHERE source = 'report' AND target_type IN ('library_post','library_comment') AND subject_user_id = ANY($1)`, [userIds]);
     if (userIds.length) await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [userIds]);
     await pool.end();
     await app.close();
@@ -60,17 +60,16 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
     expect((await call('POST', `/library/posts/${postId}/report`, reporterTok, { reason: 'again' })).json().deduped).toBe(true);
     await call('POST', `/library/posts/${postId}/report`, otherTok, { reason: 'me too' });
 
-    const added = await queue.sync();
-    expect(added).toBeGreaterThanOrEqual(1);
-    const cases = await queue.queue();
-    const mine = cases.filter((c) => c.source === 'library_report' && c.sourceRef === `library_post:${postId}`);
+    // Changed on purpose: the old route writes through the one report service
+    // now, so the report is a case at once (no sync), from the 'report' source.
+    const mine = (await queue.queue({ q: postId })).cases.filter((c) => c.source === 'report');
     expect(mine).toHaveLength(1); // mass-report deduped to a single case
-    expect(mine[0]!.subjectUserId).toBeTruthy();
+    expect(mine[0]!.subject).toBeTruthy();
+    expect(mine[0]!.reportCount).toBe(2);
   });
 
   it('resolving with `remove` soft-deletes the post + closes the reports', async () => {
-    await queue.sync();
-    const target = (await queue.queue()).find((c) => c.sourceRef === `library_post:${postId}`)!;
+    const target = (await queue.queue({ q: postId })).cases.find((c) => c.source === 'report')!;
     expect(await queue.resolve(target.id, modId, 'remove')).toBe(true);
 
     // post hidden from public read + browse, retained in the table
@@ -78,8 +77,9 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
     const row = await pool.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [postId]);
     expect(row.rows[0]!.status).toBe('removed'); // retained for audit
 
-    const reports = await pool.query<{ status: string }>(`SELECT status FROM library_reports WHERE target_id = $1`, [postId]);
-    expect(reports.rows.every((r) => r.status === 'resolved')).toBe(true);
+    const reports = await pool.query<{ status: string }>(`SELECT status FROM reports WHERE target_id = $1`, [postId]);
+    expect(reports.rows).toHaveLength(2);
+    expect(reports.rows.every((r) => r.status === 'actioned')).toBe(true);
   });
 
   it('reports a comment (text or audio) into the queue and bans from it', async () => {
@@ -91,8 +91,7 @@ describe.skipIf(!DATABASE_URL)('library moderation (integration)', () => {
     const audioComment = (await call('POST', `/library/posts/${fresh.id}/comments`, authorTok, { audioMediaId: 'media/voice.mp3' })).json();
 
     expect((await call('POST', `/library/comments/${audioComment.id}/report`, reporterTok, { reason: 'audio abuse' })).statusCode).toBe(200);
-    await queue.sync();
-    const c = (await queue.queue()).find((x) => x.sourceRef === `library_comment:${audioComment.id}`)!;
+    const c = (await queue.queue({ q: audioComment.id })).cases.find((x) => x.source === 'report')!;
     expect(c).toBeTruthy();
 
     // ban the comment author from the queue
