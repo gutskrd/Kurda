@@ -19,6 +19,7 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, CloseIcon } from '../components/icons';
 import { SendError } from '../reports/SendError';
+import { ReportSheet } from '../reports/ReportSheet';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -93,6 +94,8 @@ export function DmThread({
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<ApiError | null>(null);
+  /** the message being reported, while the report sheet is open */
+  const [reporting, setReporting] = useState<DmMessage | null>(null);
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
@@ -232,6 +235,7 @@ export function DmThread({
             myId={user?.id}
             renderStatus={(m) => <ReadReceipt message={m} />}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+            onReport={setReporting}
           />
         )}
       </div>
@@ -254,6 +258,12 @@ export function DmThread({
       )}
 
       <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
+      <ReportSheet
+        open={reporting !== null}
+        onClose={() => setReporting(null)}
+        target={{ targetType: 'dm_message', targetId: reporting?.id ?? '' }}
+        block={{ userId: otherId, name: otherName ?? t('chat.thisPerson') }}
+      />
       <Composer
         value={text}
         onChange={(next) => {

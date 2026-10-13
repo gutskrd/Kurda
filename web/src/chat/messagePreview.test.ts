@@ -74,3 +74,33 @@ describe('truncate', () => {
     expect(truncate('🟩🟩🟩', 2)).toBe('🟩…');
   });
 });
+
+/**
+ * A gift or a game card has no body: a list that printed the body showed an
+ * empty line, and the server's English stand-in in every language.
+ */
+describe('messagePreview for every kind of message', () => {
+  it('names a gift, by its item when the card is at hand', () => {
+    expect(messagePreview({ body: null, kind: 'gift' }, t)).toBe('🎁 Gift');
+    expect(
+      messagePreview(
+        {
+          body: null,
+          kind: 'gift',
+          gift: { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary', recipients: [], myGiftId: null, myOpened: false, equippable: null },
+        },
+        t,
+      ),
+    ).toBe('🎁 Newroz fire');
+    expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('🎁 Diyarî');
+  });
+
+  it('names a game card by its game, or as an invite when it does not say', () => {
+    expect(messagePreview({ body: null, kind: 'game', game: { game: 'rhyme-match', lobbyId: 'l1' } }, t)).toBe('Rhyme Match invite');
+    expect(messagePreview({ body: null, kind: 'game' }, t)).toBe('🎮 Game invite');
+  });
+
+  it('treats a message with no kind as text, as before', () => {
+    expect(messagePreview({ body: 'Silav' }, t)).toBe('Silav');
+  });
+});

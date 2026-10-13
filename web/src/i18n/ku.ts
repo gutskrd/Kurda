@@ -430,6 +430,11 @@ export const ku: Catalogue = {
   'report.done.left': 'Tu ji {group} derketî.',
   'report.done.myReports': 'Raporên min bibîne',
   'report.done.close': 'Temam',
+  'report.messageMenu': 'Zêdetir li ser peyama {name}',
+  'report.aboutPost': 'Zêdetir li ser vê weşanê',
+  'report.aboutComment': 'Zêdetir li ser vê şîroveyê',
+  'report.aboutPlayer': 'Zêdetir li ser {name}',
+  'report.group': 'Vê komê ragihîne',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'Ewlehî',
   'settings.safety.help': 'Çi bi raporên te hat, û her biryarek li ser hesabê te.',
@@ -514,6 +519,10 @@ export const ku: Catalogue = {
   'suspension.answerHere': 'Heke tu daxwaza nirxandinê bikî, her dem dîsa têkeve da ku bersiva me li vir bibînî.',
   'suspension.rules': 'Qeydeyên civakê bixwîne',
   'suspension.close': 'Bigire',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 Diyarî',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 Vexwendina lîstikê',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',

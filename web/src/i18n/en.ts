@@ -486,6 +486,11 @@ export const en = {
   'report.done.left': 'You left {group}.',
   'report.done.myReports': 'See my reports',
   'report.done.close': 'Done',
+  'report.messageMenu': 'More about {name}’s message',
+  'report.aboutPost': 'More about this post',
+  'report.aboutComment': 'More about this comment',
+  'report.aboutPlayer': 'More about {name}',
+  'report.group': 'Report this group',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'Safety',
   'settings.safety.help': 'What happened to your reports, and any decisions about your account.',
@@ -570,6 +575,10 @@ export const en = {
   'suspension.answerHere': 'If you ask for a review, sign in again any time to see our answer here.',
   'suspension.rules': 'Read the community rules',
   'suspension.close': 'Close',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 Gift',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 Game invite',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',

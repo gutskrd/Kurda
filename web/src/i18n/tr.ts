@@ -424,6 +424,11 @@ export const tr: Catalogue = {
   'report.done.left': '{group} grubundan ayrıldın.',
   'report.done.myReports': 'Bildirimlerimi gör',
   'report.done.close': 'Tamam',
+  'report.messageMenu': '{name} adlı kişinin mesajı hakkında daha fazla',
+  'report.aboutPost': 'Bu gönderi hakkında daha fazla',
+  'report.aboutComment': 'Bu yorum hakkında daha fazla',
+  'report.aboutPlayer': '{name} hakkında daha fazla',
+  'report.group': 'Bu grubu bildir',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'Güvenlik',
   'settings.safety.help': 'Bildirimlerine ne olduğu ve hesabınla ilgili kararlar.',
@@ -508,6 +513,10 @@ export const tr: Catalogue = {
   'suspension.answerHere': 'İnceleme istersen, yanıtımızı burada görmek için istediğin zaman yeniden giriş yap.',
   'suspension.rules': 'Topluluk kurallarını oku',
   'suspension.close': 'Kapat',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 Hediye',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 Oyun daveti',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',

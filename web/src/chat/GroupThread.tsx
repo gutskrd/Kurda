@@ -18,8 +18,9 @@ import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 import { ThreadSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { ArrowIcon, CloseIcon } from '../components/icons';
+import { ArrowIcon, CloseIcon, FlagIcon } from '../components/icons';
 import { SendError } from '../reports/SendError';
+import { ReportSheet } from '../reports/ReportSheet';
 import { useT } from '../i18n/I18nProvider';
 import { Avatar } from '../components/Avatar';
 
@@ -54,6 +55,8 @@ export function GroupThread({
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<ApiError | null>(null);
+  /** the message being reported, while the report sheet is open */
+  const [reporting, setReporting] = useState<GroupMessage | null>(null);
   const { refreshUnread } = useMessages();
   const { openProfile } = useProfileModal();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
@@ -199,6 +202,7 @@ export function GroupThread({
             messages={messages}
             myId={user?.id}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+            onReport={setReporting}
           />
         )}
       </div>
@@ -221,6 +225,15 @@ export function GroupThread({
       )}
 
       <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
+      <ReportSheet
+        open={reporting !== null}
+        onClose={() => setReporting(null)}
+        target={{ targetType: 'group_message', targetId: reporting?.id ?? '' }}
+        block={reporting ? { userId: reporting.senderId, name: reporting.username } : null}
+        // an owner cannot leave (the server refuses), so is not offered it
+        leaveGroup={detail && detail.myRole !== 'owner' ? { groupId, name } : null}
+        onLeftGroup={() => (onClose ? onClose() : navigateAway('/app/messages?group='))}
+      />
       <Composer
         value={text}
         onChange={(next) => {
@@ -258,6 +271,7 @@ function GroupMembers({
   const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reportingGroup, setReportingGroup] = useState(false);
 
   const myRole = detail.myRole;
   // the rules live in shared, so what this offers and what the API allows
@@ -398,6 +412,23 @@ function GroupMembers({
           </div>
         )
       )}
+
+      {/* the group itself — its name, its purpose — can be reported from here */}
+      {myRole !== 'owner' && (
+        <div className="group-leave">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportingGroup(true)}>
+            <FlagIcon size={15} /> {t('report.group')}
+          </button>
+        </div>
+      )}
+      <ReportSheet
+        open={reportingGroup}
+        onClose={() => setReportingGroup(false)}
+        target={{ targetType: 'group', targetId: detail.id }}
+        name={detail.name}
+        leaveGroup={myRole !== null && myRole !== 'owner' ? { groupId: detail.id, name: detail.name } : null}
+        onLeftGroup={onLeft}
+      />
     </div>
   );
 }

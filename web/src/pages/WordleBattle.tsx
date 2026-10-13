@@ -13,6 +13,7 @@ import { PlayerChip } from '../ui/PlayerChip';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { ReportAction } from '../reports/ReportAction';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -52,7 +53,17 @@ interface BattleResults {
   id: string;
   target: string;
   difficulty: Difficulty;
-  ranking: Array<{ userId: string; rank: number; solved: boolean; guessCount: number; progress: number; xpAwarded: number | null }>;
+  ranking: Array<{
+    userId: string;
+    /** the player's seat: how one is reported without anyone's account id */
+    seat?: number;
+    name?: string | null;
+    rank: number;
+    solved: boolean;
+    guessCount: number;
+    progress: number;
+    xpAwarded: number | null;
+  }>;
 }
 
 function guessMsg(err: ApiError, t: (key: MessageKey) => string): string {
@@ -293,7 +304,19 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
                         ? t('games.battle.solvedIn', { count: r.guessCount })
                         : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })
                     }
-                    trailing={r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : undefined}
+                    trailing={
+                      <>
+                        {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
+                        {/* another player, reported by seat — the page never has their account */}
+                        {!me && r.seat !== undefined && battle && (
+                          <ReportAction
+                            target={{ targetType: 'game_player', targetId: battle.id, game: 'wordle-battle', seat: r.seat }}
+                            label={t('report.aboutPlayer', { name: r.name ?? t('games.opponent') })}
+                            name={r.name ?? t('games.opponent')}
+                          />
+                        )}
+                      </>
+                    }
                   />
                 );
               })}

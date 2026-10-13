@@ -10,6 +10,7 @@ import { Comments } from '../library/Comments';
 import { Reactions, type ReactionSummary } from '../images/Reactions';
 import { ArrowIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { ReportAction } from '../reports/ReportAction';
 
 const NO_REACTIONS: ReactionSummary = { counts: {}, total: 0, mine: null };
 
@@ -71,7 +72,18 @@ export function DimenPost(): React.JSX.Element {
           <div className="dimen-full-img dimen-thumb-empty" aria-hidden="true" />
         )}
 
-        <PostAuthor author={post.author} at={post.createdAt} />
+        <PostAuthor
+          author={post.author}
+          at={post.createdAt}
+          trailing={
+            <ReportAction
+              target={{ targetType: 'image_post', targetId: post.id }}
+              authorId={post.author?.id}
+              label={t('report.aboutPost')}
+              block={post.author ? { userId: post.author.id, name: post.author.username } : null}
+            />
+          }
+        />
         {post.caption && <p className="dimen-caption">{post.caption}</p>}
 
         {reactions === null ? (

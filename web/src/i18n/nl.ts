@@ -424,6 +424,11 @@ export const nl: Catalogue = {
   'report.done.left': 'Je hebt {group} verlaten.',
   'report.done.myReports': 'Mijn meldingen bekijken',
   'report.done.close': 'Klaar',
+  'report.messageMenu': 'Meer over het bericht van {name}',
+  'report.aboutPost': 'Meer over dit bericht',
+  'report.aboutComment': 'Meer over deze reactie',
+  'report.aboutPlayer': 'Meer over {name}',
+  'report.group': 'Deze groep melden',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'Veiligheid',
   'settings.safety.help': 'Wat er met je meldingen is gebeurd, en besluiten over je account.',
@@ -508,6 +513,10 @@ export const nl: Catalogue = {
   'suspension.answerHere': 'Vraag je om een herbeoordeling, log dan op elk moment opnieuw in om ons antwoord hier te zien.',
   'suspension.rules': 'Lees de gemeenschapsregels',
   'suspension.close': 'Sluiten',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 Cadeau',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 Speluitnodiging',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',

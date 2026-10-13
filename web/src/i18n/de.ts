@@ -424,6 +424,11 @@ export const de: Catalogue = {
   'report.done.left': 'Du hast {group} verlassen.',
   'report.done.myReports': 'Meine Meldungen ansehen',
   'report.done.close': 'Fertig',
+  'report.messageMenu': 'Mehr zur Nachricht von {name}',
+  'report.aboutPost': 'Mehr zu diesem Beitrag',
+  'report.aboutComment': 'Mehr zu diesem Kommentar',
+  'report.aboutPlayer': 'Mehr zu {name}',
+  'report.group': 'Diese Gruppe melden',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'Sicherheit',
   'settings.safety.help': 'Was aus deinen Meldungen wurde, und Entscheidungen über dein Konto.',
@@ -508,6 +513,10 @@ export const de: Catalogue = {
   'suspension.answerHere': 'Wenn du eine Überprüfung beantragst, melde dich jederzeit wieder an, um unsere Antwort hier zu sehen.',
   'suspension.rules': 'Gemeinschaftsregeln lesen',
   'suspension.close': 'Schließen',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 Geschenk',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 Spieleinladung',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',

@@ -435,6 +435,11 @@ export const ckb: Catalogue = {
   'report.done.left': 'لە {group} دەرچوویت.',
   'report.done.myReports': 'ڕاپۆرتەکانم ببینە',
   'report.done.close': 'تەواو',
+  'report.messageMenu': 'زیاتر دەربارەی نامەی {name}',
+  'report.aboutPost': 'زیاتر دەربارەی ئەم پۆستە',
+  'report.aboutComment': 'زیاتر دەربارەی ئەم لێدوانە',
+  'report.aboutPlayer': 'زیاتر دەربارەی {name}',
+  'report.group': 'ڕاپۆرتی ئەم گرووپە بکە',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'سەلامەتی',
   'settings.safety.help': 'چی بەسەر ڕاپۆرتەکانت هات، و هەر بڕیارێک دەربارەی هەژمارەکەت.',
@@ -519,6 +524,10 @@ export const ckb: Catalogue = {
   'suspension.answerHere': 'ئەگەر داوای پێداچوونەوە بکەیت، هەر کاتێک دووبارە بچۆ ژوورەوە بۆ بینینی وەڵامەکەمان لێرە.',
   'suspension.rules': 'یاساکانی کۆمەڵگە بخوێنەوە',
   'suspension.close': 'داخستن',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 دیاری',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 بانگهێشتی یاری',
   // ---- end web-social ----
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',

@@ -13,7 +13,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useRealtimeEvent, useRealtimeRooms } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/types';
-import { messagePreview, truncate } from './messagePreview';
+import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -73,9 +73,9 @@ const MAX_TOASTS = 3;
 /** Counts are event-driven; this is only a safety net for missed events. */
 const COUNT_POLL_MS = 60_000;
 
-/** What a banner shows: a game invite reads as an invite, not as its URL. */
-function preview(body: string, t: Translate): string {
-  return truncate(messagePreview(body, t), 90);
+/** What a banner shows: a game invite reads as an invite, not as its URL; a gift as a gift. */
+function preview(message: Previewable, t: Translate): string {
+  return truncate(messagePreview(message, t), 90);
 }
 
 export function MessagesProvider({ children }: { children: ReactNode }): React.JSX.Element {
@@ -153,11 +153,13 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       if (!ev.from || !ev.message?.id) return;
       refreshUnread();
       if (openRef.current.dm === ev.from) return; // you are already reading it
+      // a present comes with its own banner, which opens it (gifts/GiftArrivals)
+      if (ev.message.kind === 'gift') return;
       const name = ev.fromUsername ?? t('chat.newMessage');
       push({
         id: ev.message.id,
         title: name,
-        body: preview(ev.message.body, t),
+        body: preview(ev.message, t),
         to: '/app/messages?to=' + ev.from + '&name=' + encodeURIComponent(name),
       });
     },
@@ -174,11 +176,13 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
       if (ev.message.senderId === user?.id) return; // your own, echoed back
       refreshUnread();
       if (openRef.current.group === ev.groupId) return;
+      // its recipients get the gift's own banner; nobody else needs a banner for it
+      if (ev.message.kind === 'gift') return;
       const group = groups.find((g) => g.id === ev.groupId);
       push({
         id: ev.message.id,
         title: group ? ev.message.username + ' · ' + group.name : ev.message.username,
-        body: preview(ev.message.body, t),
+        body: preview(ev.message, t),
         to: '/app/messages?group=' + ev.groupId,
       });
     },

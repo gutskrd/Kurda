@@ -424,6 +424,11 @@ export const es: Catalogue = {
   'report.done.left': 'Has salido de {group}.',
   'report.done.myReports': 'Ver mis denuncias',
   'report.done.close': 'Listo',
+  'report.messageMenu': 'Más sobre el mensaje de {name}',
+  'report.aboutPost': 'Más sobre esta publicación',
+  'report.aboutComment': 'Más sobre este comentario',
+  'report.aboutPlayer': 'Más sobre {name}',
+  'report.group': 'Denunciar este grupo',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'Seguridad',
   'settings.safety.help': 'Qué pasó con tus denuncias y las decisiones sobre tu cuenta.',
@@ -508,6 +513,10 @@ export const es: Catalogue = {
   'suspension.answerHere': 'Si pides una revisión, vuelve a iniciar sesión cuando quieras para ver aquí nuestra respuesta.',
   'suspension.rules': 'Leer las normas de la comunidad',
   'suspension.close': 'Cerrar',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 Regalo',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 Invitación a jugar',
   // ---- end web-social ----
   'profile.currentlyOnline': 'En línea ahora',
   'profile.offline': 'Desconectado',

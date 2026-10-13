@@ -429,6 +429,11 @@ export const ar: Catalogue = {
   'report.done.left': 'غادرت {group}.',
   'report.done.myReports': 'عرض بلاغاتي',
   'report.done.close': 'تم',
+  'report.messageMenu': 'المزيد عن رسالة {name}',
+  'report.aboutPost': 'المزيد عن هذا المنشور',
+  'report.aboutComment': 'المزيد عن هذا التعليق',
+  'report.aboutPlayer': 'المزيد عن {name}',
+  'report.group': 'الإبلاغ عن هذه المجموعة',
   // My reports, Account standing, the warning and the suspension screen (reports/)
   'settings.safety.title': 'الأمان',
   'settings.safety.help': 'ما الذي حدث لبلاغاتك، وأي قرارات بشأن حسابك.',
@@ -513,6 +518,10 @@ export const ar: Catalogue = {
   'suspension.answerHere': 'إذا طلبت مراجعة، فسجّل الدخول مجددًا في أي وقت لترى جوابنا هنا.',
   'suspension.rules': 'اقرأ قواعد المجتمع',
   'suspension.close': 'إغلاق',
+  // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
+  'chat.preview.gift': '🎁 هدية',
+  'chat.preview.giftNamed': '🎁 {item}',
+  'chat.preview.game': '🎮 دعوة للعب',
   // ---- end web-social ----
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',

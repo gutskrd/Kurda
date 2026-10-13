@@ -1,3 +1,4 @@
+import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
 import { INVITE_NAME_KEY, inviteLinkPattern, parseInvite } from '../lib/gameInvites';
 import type { MessageKey } from '../i18n/en';
 
@@ -14,8 +15,27 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
  *
  * Used by both the conversation list and the arrival banner, so the two cannot
  * describe the same message differently.
+ *
+ * A message is more than text now (shared `ChatMessageKind`): a gift or a
+ * game card has no body at all, and is named for what it is — "🎁 Sunset
+ * scarf" when the card is at hand, "🎁 Gift" in a conversation row, which
+ * only knows the kind; a game card by its game. Pass the message, or just
+ * its text.
  */
-export function messagePreview(body: string, t: Translate): string {
+export interface Previewable {
+  body: string | null;
+  kind?: ChatMessageKind;
+  gift?: GiftCard | null;
+  game?: ChatGameRef | null;
+}
+
+export function messagePreview(message: Previewable | string, t: Translate): string {
+  const m: Previewable = typeof message === 'string' ? { body: message } : message;
+  if (m.kind === 'gift') return m.gift?.name ? t('chat.preview.giftNamed', { item: m.gift.name }) : t('chat.preview.gift');
+  if (m.kind === 'game') {
+    return m.game ? t('games.invite.preview', { game: t(INVITE_NAME_KEY[m.game.game]) }) : t('chat.preview.game');
+  }
+  const body = m.body ?? '';
   const invite = parseInvite(body);
   const collapse = (text: string): string => text.replace(/\s+/g, ' ').trim();
 

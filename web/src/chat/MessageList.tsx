@@ -1,4 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
+import type { ChatMessageKind } from '@kurda/shared';
+import { MessageLine } from '../reports/MessageMenu';
 import { Avatar } from '../components/Avatar';
 import { MessageBody } from '../components/GameInviteCard';
 import { groupMessages, timeLabel, type Groupable } from './messageGroups';
@@ -18,7 +20,9 @@ import { useLocale, useT } from '../i18n/I18nProvider';
  */
 
 export interface ChatMessage extends Groupable {
-  body: string;
+  /** null for a gift or a game card, which `renderBody` draws */
+  body: string | null;
+  kind?: ChatMessageKind;
   /** who wrote it */
   username?: string;
   /** resolved server-side; falls back to a silhouette */
@@ -32,6 +36,8 @@ export function MessageList<T extends ChatMessage>({
   myId,
   renderStatus,
   onOpenProfile,
+  renderBody,
+  onReport,
 }: {
   /** oldest first */
   messages: readonly T[];
@@ -40,6 +46,14 @@ export function MessageList<T extends ChatMessage>({
   renderStatus?: (last: T) => ReactNode;
   /** open a sender's profile — makes the avatar and name the way in */
   onOpenProfile?: (userId: string, username: string) => void;
+  /**
+   * Draw a message that is more than text — a gift, a game card. Return
+   * undefined to let it render as text. The thread supplies it, since what a
+   * card can do (unwrap, join) belongs to the thread.
+   */
+  renderBody?: (m: T) => ReactNode | undefined;
+  /** report someone else's message: puts a ⋯ beside each of theirs */
+  onReport?: (m: T) => void;
 }): React.JSX.Element {
   const locale = useLocale();
   const t = useT();
@@ -89,16 +103,30 @@ export function MessageList<T extends ChatMessage>({
                 <div className="chat-run-body">
                   <span className="chat-run-author">{name}</span>
 
-                  {run.messages.map((m, i) => (
-                    <div
-                      key={m.id}
-                      className={`bubble${mine ? ' mine' : ''}${
-                        i === run.messages.length - 1 ? ' bubble-tail' : ''
-                      }`}
-                    >
-                      {m.deleted ? <em className="muted">{t('chat.messageDeleted')}</em> : <MessageBody body={m.body} />}
-                    </div>
-                  ))}
+                  {run.messages.map((m, i) => {
+                    const bubble = (
+                      <div
+                        key={m.id}
+                        className={`bubble${mine ? ' mine' : ''}${
+                          i === run.messages.length - 1 ? ' bubble-tail' : ''
+                        }${m.kind && m.kind !== 'text' ? ' is-card' : ''}`}
+                      >
+                        {m.deleted ? (
+                          <em className="muted">{t('chat.messageDeleted')}</em>
+                        ) : (
+                          (renderBody?.(m) ?? <MessageBody body={m.body ?? ''} />)
+                        )}
+                      </div>
+                    );
+                    // someone else's message can be reported, from a ⋯ (or a long press)
+                    return onReport && !mine && !m.deleted ? (
+                      <MessageLine key={m.id} label={t('report.messageMenu', { name })} onReport={() => onReport(m)}>
+                        {bubble}
+                      </MessageLine>
+                    ) : (
+                      bubble
+                    );
+                  })}
 
                   {/* one timestamp per burst — on every bubble it becomes noise */}
                   <div className="chat-run-meta">
