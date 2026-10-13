@@ -318,9 +318,11 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
                 ($1, 'mal', 60000, 'active', NULL)`,
         [user.id],
       );
+      // a race run, one given up before a letter was typed, and one still going
       await pool.query(
-        `INSERT INTO race_games (user_id, text_id, accent_mode, dialect, finished_at) VALUES
-           ($1, $2, 'forgiving', 'kurmanci', now()), ($1, $2, 'forgiving', 'kurmanci', NULL)`,
+        `INSERT INTO race_games (user_id, text_id, accent_mode, dialect, finished_at, wpm) VALUES
+           ($1, $2, 'forgiving', 'kurmanci', now(), 31.5), ($1, $2, 'forgiving', 'kurmanci', now(), 0),
+           ($1, $2, 'forgiving', 'kurmanci', NULL, NULL)`,
         [user.id, raceTextId],
       );
 
@@ -356,6 +358,33 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(await countFinishedGames(pool, user.id, 'UTC')).toEqual({ games: 5, days: 1 });
       // and nothing of theirs is counted for anyone else
       expect(await countFinishedGames(pool, other.id, 'UTC')).toEqual({ games: 0, days: 0 });
+    });
+
+    /*
+     * Giving up finishes a race as well, so an empty one opened and abandoned
+     * would have been a "finished game" — enough for the box, and a third of
+     * what the store prompt asks for.
+     */
+    it('does not count a race given up before a letter was typed', async () => {
+      const user = await register('fgGaveUp');
+      const start = async (): Promise<string> => {
+        const res = await pool.query<{ id: string }>(
+          `INSERT INTO race_games (user_id, text_id, accent_mode, dialect, started_at)
+           VALUES ($1, $2, 'forgiving', 'kurmanci', now() - interval '30 seconds') RETURNING id`,
+          [user.id, raceTextId],
+        );
+        return res.rows[0]!.id;
+      };
+      const gaveUp = await call('POST', `/race/${await start()}/finish`, user, { typed: '' });
+      expect(gaveUp.statusCode, gaveUp.body).toBe(200);
+      expect(await countFinishedGames(pool, user.id, 'UTC')).toEqual({ games: 0, days: 0 });
+      expect((await state(user)).shouldPrompt).toBe(false);
+
+      // given up halfway is still a race run
+      const halfway = await call('POST', `/race/${await start()}/finish`, user, { typed: 'Ez ji welatê xwe' });
+      expect(halfway.statusCode, halfway.body).toBe(200);
+      expect(await countFinishedGames(pool, user.id, 'UTC')).toEqual({ games: 1, days: 1 });
+      expect((await state(user)).shouldPrompt).toBe(true);
     });
 
     /*

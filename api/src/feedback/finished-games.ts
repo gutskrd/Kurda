@@ -6,8 +6,12 @@
  * the XP ledger (a game that paid nothing wrote nothing there):
  *   Wordle, daily and practice    — won or lost, never left playing
  *   Rhyming Words (training)      — the round ended
- *   Typing Race                   — finished (giving up finishes it too; the
- *                                   apps do not show the box after that)
+ *   Typing Race                   — finished with something typed right.
+ *                                   Giving up finishes a race too, and the
+ *                                   server cannot tell the two apart later;
+ *                                   but a race given up before a letter was
+ *                                   typed right was never played (the apps
+ *                                   do not show the box after a give-up)
  *   Wordle Battle                 — the player's own board finished
  *   Rhyme Match                   — the match finished with them in it
  *
@@ -30,7 +34,7 @@ import { safeTimeZone } from '../streaks/streak-logic.js';
 export const FINISHED_GAME_SOURCES: readonly string[] = [
   `SELECT user_id, finished_at FROM wordle_games WHERE status IN ('won', 'lost') AND finished_at IS NOT NULL`,
   `SELECT user_id, ended_at AS finished_at FROM rhyme_games WHERE status = 'ended' AND ended_at IS NOT NULL`,
-  `SELECT user_id, finished_at FROM race_games WHERE finished_at IS NOT NULL`,
+  `SELECT user_id, finished_at FROM race_games WHERE finished_at IS NOT NULL AND wpm > 0`,
   `SELECT user_id, finished_at FROM wordle_battle_players WHERE finished_at IS NOT NULL`,
   `SELECT p.user_id, m.finished_at FROM rhyme_match_players p
      JOIN rhyme_matches m ON m.id = p.match_id WHERE m.status = 'finished' AND m.finished_at IS NOT NULL`,
