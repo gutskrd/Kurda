@@ -116,8 +116,10 @@ describe('the cosmetic art generator', () => {
    * What is committed is what the generator draws.
    *
    * Equal bytes settle it. Otherwise both are decoded and must agree to within
-   * half a level per channel on average — far below anything an eye could see,
-   * and far above what a hand-edited or substituted picture would come in at.
+   * a level and a half per channel on average — what re-encoding the same
+   * pixels at a different WebP quality comes to, and far below what a
+   * substituted picture would — with hardly a pixel far off, so a patch
+   * painted over one corner is caught as well.
    */
   it('matches every committed file', async () => {
     const drift: string[] = [];
@@ -132,9 +134,20 @@ describe('the cosmetic art generator', () => {
         continue;
       }
       let sum = 0;
-      for (let i = 0; i < a.data.length; i++) sum += Math.abs(a.data[i]! - b.data[i]!);
+      let far = 0;
+      for (let i = 0; i < a.data.length; i += 4) {
+        let worst = 0;
+        for (let c = 0; c < 4; c++) {
+          const d = Math.abs(a.data[i + c]! - b.data[i + c]!);
+          sum += d;
+          if (d > worst) worst = d;
+        }
+        if (worst > 48) far += 1;
+      }
       const mean = sum / a.data.length;
-      if (mean > 0.5) drift.push(`${rel}: differs by ${mean.toFixed(2)} levels on average`);
+      const pixels = a.info.width * a.info.height;
+      if (mean > 1.5) drift.push(`${rel}: differs by ${mean.toFixed(2)} levels on average`);
+      else if (far > pixels / 1000) drift.push(`${rel}: ${far} pixels differ sharply`);
     }
     // run `node scripts/generate-cosmetic-art.mjs` and commit what it writes
     expect(drift).toEqual([]);
