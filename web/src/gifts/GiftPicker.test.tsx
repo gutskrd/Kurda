@@ -105,7 +105,10 @@ describe('GiftPicker in a direct message', () => {
     renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={onSent} />);
     await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('You’ve reached today’s gift limit for rojda.');
+    const why = await screen.findByRole('alert');
+    expect(why).toHaveTextContent('You’ve reached today’s gift limit for rojda.');
+    // beside the Send button, which stays on screen, not under a long shelf
+    expect(why.closest('.gift-confirm')).not.toBeNull();
     expect(onSent).not.toHaveBeenCalled();
   });
 

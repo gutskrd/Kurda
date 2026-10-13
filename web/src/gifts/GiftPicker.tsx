@@ -263,13 +263,6 @@ function PickerFlow({
             </ul>
           )}
 
-          <SendError error={error} />
-          {skippedNote && (
-            <p className="msg msg-error" role="alert">
-              {skippedNote}
-            </p>
-          )}
-
           {picked && (
             <div className="gift-confirm">
               <span className="gift-confirm-text">
@@ -285,6 +278,9 @@ function PickerFlow({
               <Button onClick={() => void send()} disabled={busy || !affordable(picked)}>
                 {busy ? t('gift.sending') : t('gift.send')}
               </Button>
+              {/* the answer sits by the button that asked, not under a shelf
+                  that may be scrolled far above it */}
+              <SendError error={error ?? skippedNote} className="gift-confirm-note" />
             </div>
           )}
         </>

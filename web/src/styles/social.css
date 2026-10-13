@@ -1576,6 +1576,10 @@ button.gift-bubble:active {
 .gift-confirm .btn {
   min-height: 44px;
 }
+.gift-confirm-note {
+  flex-basis: 100%;
+  margin: 0;
+}
 @media (max-width: 640px) {
   .gift-confirm {
     bottom: calc(-20px - env(safe-area-inset-bottom));
