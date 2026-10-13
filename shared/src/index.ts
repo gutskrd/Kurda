@@ -166,6 +166,8 @@ export {
  * the API sends — so the API, both apps and the admin editor cannot disagree.
  */
 export * from './stories.js';
+/** What a story must be before it is saved or published, one copy for the API, the importer and the editor. */
+export * from './story-authoring.js';
 
 /**
  * Inviting friends to any online game and playing again (play), gifts that

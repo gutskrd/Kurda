@@ -126,6 +126,11 @@ import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
 import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
+import { StoriesService } from './stories/service.js';
+import { StoryAdminService } from './stories/admin-service.js';
+import { registerStoryRoutes } from './stories/routes.js';
+import { registerStoryAdminRoutes } from './stories/admin-routes.js';
+import { seedStarterStories } from './stories/import.js';
 import type { FerhengSource } from '@kurda/shared';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
@@ -525,6 +530,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAlphabetAudioRoutes(app, config);
     // and of the Kurdish the lessons use, which lessons deliver with their exercises
     registerLessonAudioRoutes(app, config);
+    // Stories, which replaced the ranked quiz: reading for everyone, writing in
+    // the admin panel, and the starter stories seeded once each as drafts for a
+    // native speaker to publish. Not under test, where they would be stories no
+    // test asked for (the seeding has its own tests).
+    registerStoryRoutes(app, new StoriesService(app.db, app.cache));
+    registerStoryAdminRoutes(app, new StoryAdminService(app.db, app.cache));
+    if (config.NODE_ENV !== 'test') {
+      app.addHook('onReady', async () => {
+        await seedStarterStories(app.db, app.log);
+      });
+    }
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,

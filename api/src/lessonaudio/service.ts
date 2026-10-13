@@ -1,5 +1,13 @@
 import type pg from 'pg';
-import { lessonAudioKey, lessonAudioTargets } from '@kurda/shared';
+import {
+  LESSON_AUDIO_TEXT_MAX,
+  lessonAudioKey,
+  lessonAudioTargets,
+  normalizeKurdish,
+  storyAudioSentences,
+  storyParagraphs,
+  type StoryDialect,
+} from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
 import type { ContentStatus } from '../content/workflow.js';
 import { playsRecordingOf } from './publish-guard.js';
@@ -66,6 +74,19 @@ interface ExerciseRow {
   payload: unknown;
 }
 
+interface StoryRow {
+  id: string;
+  dialect: StoryDialect;
+  title: string;
+  status: Exclude<ContentStatus, 'archived'>;
+  body: string;
+}
+
+const STORY_COURSE_TITLE: Record<StoryDialect, string> = {
+  kurmanci: 'Stories — Kurmancî',
+  sorani: 'Stories — Soranî',
+};
+
 interface RecordingRow {
   key: string;
   text: string;
@@ -82,7 +103,8 @@ function playsWithoutClip(payload: unknown, key: string): boolean {
 
 /**
  * The lessons' side of the audio studio: every Kurdish text a lesson wants
- * heard, whether it has a recording yet, and which lessons use it.
+ * heard — and every sentence of a story, which the reader plays from the same
+ * recordings — whether it has a recording yet, and which lessons use it.
  */
 export class LessonAudioService {
   constructor(private readonly pool: pg.Pool) {}
@@ -96,9 +118,16 @@ export class LessonAudioService {
    *
    * Rows come in course order, newest version first within a slot, so the
    * first usage of a text is where it first appears in the course.
+   *
+   * Then the stories: every sentence the reader can play (storyAudioSentences)
+   * of every story that is not archived, drafts included for the same reason
+   * as lessons. A story is filed as a course of its own per variety ("Stories
+   * — Kurmancî"), with the story as both its unit and its one lesson, so the
+   * studio groups it like any lesson; a sentence a lesson also uses stays
+   * filed under the lesson, with the story as one more usage.
    */
   async list(): Promise<LessonAudioList> {
-    const [exercises, recordings] = await Promise.all([
+    const [exercises, stories, recordings] = await Promise.all([
       this.pool.query<ExerciseRow>(
         `WITH current AS (
            (SELECT DISTINCT ON (skill_id, position) id FROM lessons
@@ -118,6 +147,10 @@ export class LessonAudioService {
          JOIN courses c ON c.id = u.course_id
          JOIN exercises e ON e.lesson_id = l.id
          ORDER BY c.slug, u.position, s.position, l.position, l.version DESC, e.position`,
+      ),
+      this.pool.query<StoryRow>(
+        `SELECT id, dialect, title, status, body FROM stories WHERE status <> 'archived'
+         ORDER BY dialect, level, array_position(ARRAY['short','medium','long'], length), title, id`,
       ),
       this.pool.query<RecordingRow>(`SELECT key, text, url, duration_ms, updated_at FROM lesson_audio`),
     ]);
@@ -158,6 +191,38 @@ export class LessonAudioService {
         if (row.status === 'published') usage.live = true;
         if (!usage.exerciseTypes.includes(row.type)) usage.exerciseTypes.push(row.type);
         if (row.type === 'listening' && playsWithoutClip(row.payload, key)) usage.listeningNeedsIt = true;
+      }
+    }
+    for (const story of stories.rows) {
+      const usage: LessonAudioUsage = {
+        courseId: `stories:${story.dialect}`,
+        courseTitle: STORY_COURSE_TITLE[story.dialect],
+        unitId: story.id,
+        unitTitle: story.title,
+        skillId: story.id,
+        skillTitle: story.title,
+        lessonPosition: 0,
+        lessonId: story.id,
+        lessonTitle: story.title,
+        lessonStatus: story.status,
+        lessonVersion: 1,
+        live: story.status === 'published',
+        exerciseTypes: [],
+        listeningNeedsIt: false,
+      };
+      for (const paragraph of storyParagraphs(story.body)) {
+        for (const text of storyAudioSentences(paragraph)) {
+          // a sentence no recording can hold is the editor's to split (validateStory says so), not the studio's to ask for
+          if (normalizeKurdish(text).length > LESSON_AUDIO_TEXT_MAX) continue;
+          const key = lessonAudioKey(text);
+          let item = items.get(key);
+          if (!item) {
+            item = { key, text, recorded: false, url: null, durationMs: null, updatedAt: null, usedIn: [], unused: false };
+            items.set(key, item);
+          }
+          // one usage per story, however often the story says it
+          if (!item.usedIn.includes(usage)) item.usedIn.push(usage);
+        }
       }
     }
     const needed = items.size;
