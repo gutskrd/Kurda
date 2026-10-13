@@ -30,9 +30,9 @@ describe.skipIf(!DATABASE_URL)('play sweep (integration)', () => {
   const entryIds: string[] = [];
   const clock = { t: new Date() };
 
-  const makeUser = async (): Promise<string> => {
+  const makeUser = async (years = 30): Promise<string> => {
     const n = users.length;
-    const birth = bornYearsAgo(30);
+    const birth = bornYearsAgo(years);
     const res = await pool.query<{ id: string }>(
       `INSERT INTO users (email, username, birth_year, birth_month) VALUES ($1, $2, $3, $4) RETURNING id`,
       [`psw_${n}_${suffix}@it.kurda.app`, `psw_${n}_${suffix}`, birth.birthYear, birth.birthMonth],
@@ -106,5 +106,25 @@ describe.skipIf(!DATABASE_URL)('play sweep (integration)', () => {
     );
     await play.sweep();
     expect((await pool.query(`SELECT 1 FROM play_invites WHERE id = $1`, [again.rows[0]!.id])).rowCount).toBe(1);
+  });
+
+  it('an invite held from a friend expires for the host like any other; the friend is never told', async () => {
+    clock.t = new Date();
+    const host = await makeUser();
+    const minor = await makeUser(15);
+    await befriend(pool, host, minor);
+    const made = await play.createLobby(host, { game: 'wordle-battle', settings: { access: 'open' }, invite: [minor] });
+    expect(made.invited).toBe(1);
+    const invite = (
+      await pool.query<{ id: string; held: boolean }>(`SELECT id, held FROM play_invites WHERE lobby_id = $1`, [made.lobbyId])
+    ).rows[0]!;
+    expect(invite.held).toBe(true);
+
+    clock.t = new Date(clock.t.getTime() + 16 * 60_000);
+    notifier.told = [];
+    await play.sweep();
+    const updates = notifier.told.filter((t) => t.event.type === 'play_invite_update' && t.event.inviteId === invite.id);
+    expect(updates.map((u) => u.userId)).toEqual([host]);
+    expect(notifier.told.some((t) => t.userId === minor)).toBe(false);
   });
 });

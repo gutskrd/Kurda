@@ -109,8 +109,9 @@ export class PlayEvents {
     try {
       const source = this.sources.get(game);
       const facts = source ? await source(lobbyId) : null;
+      // not a friend an invite is held from: they were never told of this lobby
       const pending = await this.pool.query<{ invitee_id: string }>(
-        `SELECT invitee_id FROM play_invites WHERE game = $1 AND lobby_id = $2 AND status = 'pending'`,
+        `SELECT invitee_id FROM play_invites WHERE game = $1 AND lobby_id = $2 AND status = 'pending' AND NOT held`,
         [game, lobbyId],
       );
       const to = new Set([...(facts?.memberIds ?? []), ...pending.rows.map((r) => r.invitee_id), ...also]);
@@ -132,19 +133,20 @@ export class PlayEvents {
   /**
    * A lobby that started (and cannot be joined late), filled up, or was called
    * off takes its pending invites with it; both sides are told, so the
-   * invitee's banner goes and the host's list says "expired".
+   * invitee's banner goes and the host's list says "expired" (a held invite's
+   * invitee never had a banner, and is not told).
    */
   async expireInvites(game: PlayGame, lobbyId: string): Promise<void> {
-    const res = await this.pool.query<{ id: string; host_id: string; invitee_id: string }>(
+    const res = await this.pool.query<{ id: string; host_id: string; invitee_id: string; held: boolean }>(
       `UPDATE play_invites SET status = 'expired', responded_at = now()
         WHERE game = $1 AND lobby_id = $2 AND status = 'pending'
-        RETURNING id, host_id, invitee_id`,
+        RETURNING id, host_id, invitee_id, held`,
       [game, lobbyId],
     );
     for (const r of res.rows) {
       const update: PlayUserEvent = { type: 'play_invite_update', inviteId: r.id, status: 'expired' };
       await this.tell(r.host_id, update);
-      await this.tell(r.invitee_id, update);
+      if (!r.held) await this.tell(r.invitee_id, update);
     }
   }
 }

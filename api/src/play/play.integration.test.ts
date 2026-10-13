@@ -277,13 +277,12 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     expect((await call(friend, 'POST', `/play/invites/${pendingInvite.id}/accept`)).status).toBe(409);
   });
 
-  it(`only the host invites, at most ${MAX_INVITEES_PER_REQUEST} at a time, and never anyone the game would refuse`, async () => {
+  it(`only the host invites, at most ${MAX_INVITEES_PER_REQUEST} at a time, and only to presets`, async () => {
     const host = await register('host6');
     const member = await register('member6');
-    const blockedByMember = await register('blocked6');
     const minor = await register('minor6', 15);
     const stranger = await register('stranger6');
-    for (const u of [member, blockedByMember, minor]) await befriend(pool, host.id, u.id);
+    for (const u of [member, minor]) await befriend(pool, host.id, u.id);
     const made = await lobby(host, [member.id]);
     const inv = (await inviteOf(made.lobbyId, member.id))!;
     await call(member, 'POST', `/play/invites/${inv.id}/accept`);
@@ -295,20 +294,63 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     const tooMany = Array.from({ length: MAX_INVITEES_PER_REQUEST + 1 }, () => crypto.randomUUID());
     expect((await call(host, 'POST', '/play/invites', { game: 'wordle-battle', lobbyId: made.lobbyId, userIds: tooMany })).status).toBe(400);
 
-    // a friend with a block against someone already in the game: not invited
-    await block(pool, member.id, blockedByMember.id);
-    const blocked = await call(host, 'POST', '/play/invites', { game: 'wordle-battle', lobbyId: made.lobbyId, userIds: [blockedByMember.id] });
-    expect(blocked.body).toEqual({ ok: true, invited: 0 });
-
-    // a minor friend and an open game: not invited either (they could not join it)
-    const open = await call(host, 'POST', '/play/lobbies', { game: 'wordle-battle', settings: { access: 'open' }, invite: [minor.id] });
-    expect(open.body.invited).toBe(0);
-    // and a minor cannot open a game to everyone
+    // a minor cannot open a game to everyone
     const minorOpen = await call(minor, 'POST', '/play/lobbies', { game: 'wordle-battle', settings: { access: 'open' } });
     expect(minorOpen).toMatchObject({ status: 403, body: { code: 'OPEN_GAMES_ADULTS_ONLY' } });
     // settings that are not presets are refused
     const bad = await call(host, 'POST', '/play/lobbies', { game: 'wordle-battle', settings: { difficulty: 'impossible' } });
     expect(bad).toMatchObject({ status: 400, body: { code: 'BAD_SETTINGS' } });
+  });
+
+  it('a friend the game would turn away is invited as far as the host can tell — and is never asked', async () => {
+    const host = await register('host12');
+    const adult = await register('adult12');
+    const minor = await register('minor12', 15);
+    const member = await register('member12');
+    const blockedByMember = await register('blocked12');
+    for (const u of [adult, minor, member, blockedByMember]) await befriend(pool, host.id, u.id);
+    const typesFor = (userId: string) => told.filter((t) => t.userId === userId).map((t) => t.event.type);
+
+    // an open game and a minor friend: counted, listed and carded exactly like an adult friend,
+    // so `invited` tells an adult nothing about which of their friends are children
+    const open = await lobby(host, [adult.id, minor.id], { settings: { access: 'open' } });
+    expect(open.invited).toBe(2);
+    const outgoing = (await call(host, 'GET', '/play/invites')).body.outgoing.find(
+      (g: { lobbyId: string }) => g.lobbyId === open.lobbyId,
+    ) as { invitees: Array<{ userId: string; status: string }> };
+    expect(outgoing.invitees.map((i) => `${i.userId}:${i.status}`).sort()).toEqual([`${adult.id}:pending`, `${minor.id}:pending`].sort());
+    const cards = await pool.query(`SELECT 1 FROM dm_messages WHERE sender_id = $1 AND game_lobby_id = $2`, [host.id, open.lobbyId]);
+    expect(cards.rowCount).toBe(2);
+
+    // the adult is asked; the minor gets only the card, which reads as a game that does not exist
+    expect(eventsFor(adult.id, 'play_invite')).toHaveLength(1);
+    expect(typesFor(minor.id)).toEqual(['dm']);
+    expect((await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1`, [minor.id])).rowCount).toBe(0);
+    expect((await call(minor, 'GET', '/play/invites')).body.incoming).toEqual([]);
+    expect((await call(minor, 'GET', `/play/cards/wordle-battle/${open.lobbyId}`)).body.status).toBe('unavailable');
+    // an invite they were never shown is not theirs to answer, and it stays pending for the host
+    const held = (await inviteOf(open.lobbyId, minor.id))!;
+    expect((await call(minor, 'POST', `/play/invites/${held.id}/accept`)).status).toBe(404);
+    expect((await call(minor, 'POST', `/play/invites/${held.id}/decline`)).status).toBe(404);
+    expect((await inviteOf(open.lobbyId, minor.id))!.status).toBe('pending');
+
+    // a friend with a block against someone already in the game: the same, so
+    // the count says nothing about who has blocked whom
+    const made = await lobby(host, [member.id]);
+    await call(member, 'POST', `/play/invites/${(await inviteOf(made.lobbyId, member.id))!.id}/accept`);
+    await block(pool, member.id, blockedByMember.id);
+    const hostChanges = eventsFor(host.id, 'play_changed').length;
+    const blocked = await call(host, 'POST', '/play/invites', { game: 'wordle-battle', lobbyId: made.lobbyId, userIds: [blockedByMember.id] });
+    expect(blocked.body).toEqual({ ok: true, invited: 1 });
+    // the lobby's changes reach its players, never the friend the invite is held from
+    await eventually(async () => eventsFor(host.id, 'play_changed').length > hostChanges);
+    expect(typesFor(blockedByMember.id)).toEqual(['dm']);
+
+    // taken back like anyone's: the host hears it, the friend does not
+    const back = (await inviteOf(made.lobbyId, blockedByMember.id))!;
+    expect((await call(host, 'DELETE', `/play/invites/${back.id}`)).status).toBe(200);
+    expect(eventsFor(host.id, 'play_invite_update')).toContainEqual({ type: 'play_invite_update', inviteId: back.id, status: 'cancelled' });
+    expect(typesFor(blockedByMember.id)).toEqual(['dm']);
   });
 
   it('a card shows its live state to members and to friends who may join; anyone else sees "unavailable"', async () => {

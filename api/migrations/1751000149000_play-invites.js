@@ -11,7 +11,8 @@
  *   invite per host, friend and game — a newer one cancels the older in the
  *   same transaction, which the partial unique index makes impossible to get
  *   wrong. `lobby_id` has no foreign key on purpose: it points into whichever
- *   game's table `game` names.
+ *   game's table `game` names. `held` marks an invite to a friend the game
+ *   would turn away: the host sees it like any other, the friend never does.
  * - `play_rematches`: a two-player rematch is two offers; the game starts when
  *   both are there. `declined_at` is "no thanks", or leaving the results.
  * - Both battle tables gain who may join (`access`, and `chat_group_id` when
@@ -57,6 +58,10 @@ export const up = (pgm) => {
     },
     // the game this one follows, when the invitee played it with the host
     rematch_of: { type: 'uuid' },
+    // the join rule would refuse the friend (a minor and an open game, a block
+    // with another player): to the host an invite like any other, but no
+    // banner, inbox entry or event ever reaches the friend (PlayService.inviteTo)
+    held: { type: 'boolean', notNull: true, default: false },
     created_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
     expires_at: { type: 'timestamptz', notNull: true },
     responded_at: { type: 'timestamptz' },

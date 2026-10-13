@@ -66,6 +66,8 @@ interface InviteRow {
   status: InviteStatus;
   decline_reason: DeclineReason | null;
   rematch_of: string | null;
+  /** the join rule would refuse the friend: the host sees the invite, the friend never does */
+  held: boolean;
   created_at: Date;
   expires_at: Date;
   responded_at: Date | null;
@@ -94,9 +96,11 @@ export interface CreateLobbyInput {
  *   a newer one replacing the older; it lasts INVITE_TTL_MINUTES, or until the
  *   lobby starts, fills or is called off. It reaches the friend three ways at
  *   once: a game card in their DM with the host, a `play_invite` event (the
- *   banner) and an inbox entry. Only friends are ever invited, and only ones
- *   the join rule would let in; anybody else is skipped without a word, and the
- *   host is told only how many were invited — never who was skipped or why.
+ *   banner) and an inbox entry. Only friends are ever invited; anybody else is
+ *   skipped without a word, and the host is told only how many were invited.
+ *   A friend the game would turn away is invited as far as the host can tell
+ *   and held from the friend (see `inviteTo`), so the count never says who is
+ *   a minor or who has blocked whom.
  * - Accepting is the game's own join (so the rule is checked once, under the
  *   game's lock), and saying yes twice is the same as once.
  * - Two players play again by both asking (a rematch starts at once, with both
@@ -185,10 +189,16 @@ export class PlayService {
       if (facts.memberIds.includes(inviteeId) || facts.removedIds.includes(inviteeId)) continue;
       // friends only; a block reads as 'blocked' here
       if ((await this.deps.friends.statusBetween(hostId, inviteeId)) !== 'friends') continue;
-      // and only someone the game would let in (a block with another player,
-      // a minor and an open game): an invite they could not accept is not sent
-      if (!(await canJoin(this.pool, joinCheckFor(facts, inviteeId)))) continue;
-      const outcome = await this.recordInvite(hostId, inviteeId, facts, now);
+      // A friend the game would turn away — a minor or an account of unknown
+      // age and an open game, a block either way with someone already in it —
+      // is invited exactly as far as the host can tell: counted, listed as
+      // pending, expiring when its time is up, and with a card in the DM like
+      // anyone's. Leaving them out would make `invited` a minor detector over
+      // any adult's friends list, and a block detector between third parties.
+      // The invite is held instead: the card reads 'unavailable' to them (as a
+      // game that does not exist), and no banner, inbox entry or event follows.
+      const held = !(await canJoin(this.pool, joinCheckFor(facts, inviteeId)));
+      const outcome = await this.recordInvite(hostId, inviteeId, facts, now, held);
       if (outcome === 'cooldown') continue;
       invited++;
       if (outcome === 'unchanged') continue;
@@ -197,6 +207,8 @@ export class PlayService {
     }
 
     for (const old of superseded) {
+      // the friend never saw a held invite go out, so they do not see it go either
+      if (old.held) continue;
       await this.deps.events.tell(old.invitee_id, { type: 'play_invite_update', inviteId: old.id, status: 'cancelled' });
     }
     if (sent.length > 0) {
@@ -221,6 +233,7 @@ export class PlayService {
     inviteeId: string,
     facts: LobbyFacts,
     now: Date,
+    held: boolean,
   ): Promise<'cooldown' | 'unchanged' | { invite: InviteRow; replaced: InviteRow | null }> {
     const client = await this.pool.connect();
     try {
@@ -259,10 +272,10 @@ export class PlayService {
       // a friend who played the game before this one with the host: the banner says "again"
       const rematchOf = facts.rematchOf && (await this.playedIn(facts, inviteeId)) ? facts.rematchOf : null;
       const row = await client.query<InviteRow>(
-        `INSERT INTO play_invites (game, lobby_id, host_id, invitee_id, rematch_of, created_at, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + ($7 || ' minutes')::interval)
+        `INSERT INTO play_invites (game, lobby_id, host_id, invitee_id, rematch_of, held, created_at, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $7::timestamptz + ($8 || ' minutes')::interval)
          RETURNING *`,
-        [facts.game, facts.lobbyId, hostId, inviteeId, rematchOf, now, String(INVITE_TTL_MINUTES)],
+        [facts.game, facts.lobbyId, hostId, inviteeId, rematchOf, held, now, String(INVITE_TTL_MINUTES)],
       );
       await client.query('COMMIT');
       return { invite: row.rows[0]!, replaced };
@@ -285,12 +298,18 @@ export class PlayService {
    * The three ways an invite reaches the friend, none of which may fail it:
    * a game card in the DM between them, the live banner, and the inbox (with
    * English fallback text; the apps write their own from `data`).
+   *
+   * A held invite gets the card and nothing else. The card is in the host's
+   * copy of the conversation too, so leaving it out would show the host which
+   * friends were held; to the friend it reads 'unavailable', because a card is
+   * drawn for each viewer through the join rule.
    */
   private async deliver(row: InviteRow, host: { name: string; avatarUrl: string | null }, summary: InviteSummary): Promise<void> {
     const card: ChatGameRef = { game: row.game, lobbyId: row.lobby_id };
     await this.deps.chat.sendCard(row.host_id, row.invitee_id, card, this.publicUrl).catch((err: unknown) => {
       this.log.warn({ err }, 'invite card not posted');
     });
+    if (row.held) return;
     await this.deps.events.tell(row.invitee_id, { type: 'play_invite', invite: toIncoming(row, host, summary) });
     await this.deps.inbox
       .record(row.invitee_id, {
@@ -365,7 +384,7 @@ export class PlayService {
     const incomingRows = await this.pool.query<InviteRow & PersonRow>(
       `SELECT i.*, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key
          FROM play_invites i JOIN users u ON u.id = i.host_id
-        WHERE i.invitee_id = $1 AND i.status = 'pending' AND u.deleted_at IS NULL
+        WHERE i.invitee_id = $1 AND i.status = 'pending' AND NOT i.held AND u.deleted_at IS NULL
           -- still friends (a block ends a friendship), as when it was sent
           AND ${areFriendsSql('i.host_id', '$1::uuid')}
         ORDER BY i.created_at DESC LIMIT 20`,
@@ -561,15 +580,15 @@ export class PlayService {
       await a.sweep?.().catch((err: unknown) => this.log.warn({ err, game: a.game }, 'play sweep failed'));
     }
     const now = this.now();
-    const expired = await this.pool.query<{ id: string; host_id: string; invitee_id: string }>(
+    const expired = await this.pool.query<{ id: string; host_id: string; invitee_id: string; held: boolean }>(
       `UPDATE play_invites SET status = 'expired', responded_at = expires_at
         WHERE status = 'pending' AND expires_at <= $1
-        RETURNING id, host_id, invitee_id`,
+        RETURNING id, host_id, invitee_id, held`,
       [now],
     );
     for (const r of expired.rows) {
       await this.deps.events.tell(r.host_id, { type: 'play_invite_update', inviteId: r.id, status: 'expired' });
-      await this.deps.events.tell(r.invitee_id, { type: 'play_invite_update', inviteId: r.id, status: 'expired' });
+      if (!r.held) await this.deps.events.tell(r.invitee_id, { type: 'play_invite_update', inviteId: r.id, status: 'expired' });
     }
     if (now.getTime() - this.lastCleanup < CLEANUP_EVERY_MS) return;
     this.lastCleanup = now.getTime();
@@ -590,9 +609,16 @@ export class PlayService {
     return facts;
   }
 
-  /** An invite of this user's (as invitee or host); anyone else's is not found. */
+  /**
+   * An invite of this user's (as invitee or host); anyone else's is not found.
+   * Nor is one held from its invitee: they were never asked, so it is not
+   * theirs to answer.
+   */
   private async ownInvite(inviteId: string, userId: string, side: 'invitee_id' | 'host_id'): Promise<InviteRow> {
-    const res = await this.pool.query<InviteRow>(`SELECT * FROM play_invites WHERE id = $1 AND ${side} = $2`, [inviteId, userId]);
+    const res = await this.pool.query<InviteRow>(
+      `SELECT * FROM play_invites WHERE id = $1 AND ${side} = $2 ${side === 'invitee_id' ? 'AND NOT held' : ''}`,
+      [inviteId, userId],
+    );
     const row = res.rows[0];
     if (!row) throw new AppError('INVITE_NOT_FOUND', 404, 'no such invite');
     if (row.status === 'pending' && row.expires_at <= this.now()) {
@@ -602,15 +628,16 @@ export class PlayService {
     return row;
   }
 
-  /** Ends a pending invite; both sides are told. */
+  /** Ends a pending invite; both sides are told (the invitee only of one they were shown). */
   private async closeInvite(row: Pick<InviteRow, 'id' | 'host_id' | 'invitee_id'>, status: 'cancelled' | 'expired'): Promise<void> {
-    const res = await this.pool.query(
-      `UPDATE play_invites SET status = $2, responded_at = $3 WHERE id = $1 AND status = 'pending'`,
+    const res = await this.pool.query<{ held: boolean }>(
+      `UPDATE play_invites SET status = $2, responded_at = $3 WHERE id = $1 AND status = 'pending' RETURNING held`,
       [row.id, status, this.now()],
     );
-    if (!res.rowCount) return;
+    const closed = res.rows[0];
+    if (!closed) return;
     await this.deps.events.tell(row.host_id, { type: 'play_invite_update', inviteId: row.id, status });
-    await this.deps.events.tell(row.invitee_id, { type: 'play_invite_update', inviteId: row.id, status });
+    if (!closed.held) await this.deps.events.tell(row.invitee_id, { type: 'play_invite_update', inviteId: row.id, status });
   }
 
   private async person(userId: string): Promise<{ name: string; avatarUrl: string | null }> {

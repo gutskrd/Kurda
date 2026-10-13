@@ -15,7 +15,7 @@ class FakeNotifier {
 }
 
 /** A pool that knows two things: who has a pending invite, and which invites an expiry took. */
-function fakePool(pendingInvitees: string[], expiring: Array<{ id: string; host_id: string; invitee_id: string }> = []) {
+function fakePool(pendingInvitees: string[], expiring: Array<{ id: string; host_id: string; invitee_id: string; held: boolean }> = []) {
   const queries: string[] = [];
   const pool = {
     queries,
@@ -49,7 +49,7 @@ const facts = (over: Partial<LobbyFacts> = {}): LobbyFacts => ({
 
 /** Lets the fan-out's awaits run. */
 const settle = async () => {
-  for (let i = 0; i < 10; i++) await Promise.resolve();
+  for (let i = 0; i < 30; i++) await Promise.resolve();
 };
 
 describe('PlayEvents', () => {
@@ -67,15 +67,21 @@ describe('PlayEvents', () => {
     expect(notifier.published).toEqual([{ room: 'group:g1', event: { type: 'play_changed', game: 'wordle-battle', lobbyId: 'lobby-1' } }]);
   });
 
-  it('a lobby that cannot be joined any more expires its invites, and both sides hear it', async () => {
+  it('a lobby that cannot be joined any more expires its invites, and both sides hear it (only the host, of a held one)', async () => {
     const notifier = new FakeNotifier();
-    const pool = fakePool([], [{ id: 'inv-1', host_id: 'host', invitee_id: 'friend' }]);
+    const pool = fakePool(
+      [],
+      [
+        { id: 'inv-1', host_id: 'host', invitee_id: 'friend', held: false },
+        { id: 'inv-2', host_id: 'host', invitee_id: 'held-friend', held: true },
+      ],
+    );
     const events = new PlayEvents(pool, notifier, { coalesceMs: 0 });
     events.attach('wordle-battle', async () => facts({ phase: 'started', joinable: false }));
     events.changed('wordle-battle', 'lobby-1');
     await settle();
     const updates = notifier.told.filter((t) => t.event.type === 'play_invite_update');
-    expect(updates.map((u) => u.userId).sort()).toEqual(['friend', 'host']);
+    expect(updates.map((u) => `${u.userId}:${u.event.inviteId as string}`).sort()).toEqual(['friend:inv-1', 'host:inv-1', 'host:inv-2']);
     expect(updates[0]!.event).toMatchObject({ inviteId: 'inv-1', status: 'expired' });
 
     // a full lobby too
