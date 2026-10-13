@@ -30,12 +30,19 @@ configure({
       actGlobal.IS_REACT_ACT_ENVIRONMENT = before;
     }
   },
-  // each event dispatched is one act(), so React has finished rendering it
+  // each event dispatched is one act(), so React has finished rendering it —
+  // with act switched on for it even inside a wait, as @testing-library/react does
   eventWrapper: (cb) => {
+    const before = actGlobal.IS_REACT_ACT_ENVIRONMENT;
+    actGlobal.IS_REACT_ACT_ENVIRONMENT = true;
     let result: unknown;
-    act(() => {
-      result = cb();
-    });
+    try {
+      act(() => {
+        result = cb();
+      });
+    } finally {
+      actGlobal.IS_REACT_ACT_ENVIRONMENT = before;
+    }
     return result;
   },
 });
