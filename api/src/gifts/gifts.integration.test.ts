@@ -634,6 +634,28 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(res.json().code).toBe('IDEMPOTENCY_REUSED');
     });
 
+    it('whose gift has lost its message, is refused in a group and only answered from in a direct message', async () => {
+      // the group is gone, and its messages with it: nothing says where the gift was
+      const gone = await group('Key club gone', ole, [pia, kit]);
+      const k = key();
+      const first = await giftGroup(ole, gone, [pia], POWER, k);
+      expect(first.json().sent).toEqual([pia.id]);
+      await pool.query(`DELETE FROM groups WHERE id = $1`, [gone]);
+      pushed = [];
+      published = [];
+      const before = await state();
+
+      // in a group it could add kit to a gift whose chat is not this one…
+      const elsewhere = await giftGroup(ole, g1, [pia, kit], POWER, k);
+      expect(elsewhere.statusCode).toBe(409);
+      expect(elsewhere.json().code).toBe('IDEMPOTENCY_REUSED');
+      // …to pia alone, who has it, all it can do is say what was given
+      const again = await giftDm(ole, pia, POWER, k);
+      expect(again.statusCode).toBe(200);
+      expect(again.json()).toMatchObject({ batchId: first.json().batchId, sent: [pia.id], skipped: [], message: null });
+      await expectNothingMore(before);
+    });
+
     it('in the same group, still reaches a friend the first try skipped, on the message it posted', async () => {
       const k = key();
       // kit is skipped the first time (a friendship of an hour, with a minor)…

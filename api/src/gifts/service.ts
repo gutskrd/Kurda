@@ -683,8 +683,13 @@ function giftNotFound(): AppError {
 /**
  * Is a gift posted at `where` one this send could have made — the same group,
  * or (a direct message, or the shop, which posts to one) the same two people?
+ *
  * A gift with no message is from before gifts had them, when only the shop
- * gave them: a direct-message send may be its retry, a group's cannot.
+ * gave them, or its message has gone since (with its group, or with a closed
+ * child's messages). A direct-message send may be its retry: it has the one
+ * recipient, who has the gift already, so all a retry can do is answer from
+ * it. A group's send cannot, as it could add people to a gift whose chat is
+ * not this one.
  */
 function postedIn(where: BatchChat | null, chat: GiftChatRef | null, fromId: string, toId: string): boolean {
   if (chat?.kind === 'group') return where?.kind === 'group' && where.groupId === chat.groupId;
