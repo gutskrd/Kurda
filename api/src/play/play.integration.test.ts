@@ -1,7 +1,7 @@
 /**
  * Invites, game cards and playing again, through the routes (contract §B3),
  * against real Postgres. Stories goes through the same layer with its own
- * adapter once its service is wired in — see the todo at the end.
+ * adapter (play/adapters/stories.ts) — the last two cases.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -12,6 +12,7 @@ import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend, block } from '../test/social.js';
+import { deleteStories, insertStory } from '../test/story-fixtures.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -30,6 +31,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
   const suffix = Date.now().toString(36);
   const entryIds: string[] = [];
   const groupIds: string[] = [];
+  const storyIds: string[] = [];
   const told: Array<{ userId: string; event: Record<string, unknown> }> = [];
   let ip = 0;
 
@@ -108,6 +110,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
   });
 
   afterAll(async () => {
+    await deleteStories(pool, storyIds);
     if (groupIds.length) await pool.query(`DELETE FROM groups WHERE id = ANY($1)`, [groupIds]);
     const client = await pool.connect();
     try {
@@ -531,10 +534,96 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     for (const u of [host, friend, invitee]) expect(eventsFor(u.id, 'play_changed')[0]).toEqual(changed);
   });
 
-  it.todo(
-    'Stories through the play layer (play/adapters/stories.ts): invite, accept, card, pair rematch and next round. ' +
-      "The adapter is written against API-games' StoryGamesService (createFromInvite, join, card, summary, " +
-      'openNextRound, startPairRematch, leave, onChange); it is wired by passing that service as `stories` to ' +
-      'registerPlayRoutes in app.ts once both branches are merged, and this test then runs the same flow as Wordle Battle above.',
-  );
+  /** a published short Kurmancî story with a bank big enough for any short game */
+  const story = async (tag: string): Promise<string> => {
+    const s = await insertStory(pool, { slug: `pl-${tag}-${suffix}`, questions: 6 });
+    storyIds.push(s.id);
+    return s.id;
+  };
+  const storyLobby = async (host: User, mode: 'duo' | 'group', storyId: string, invite: string[]) => {
+    const res = await call(host, 'POST', '/play/lobbies', {
+      game: 'stories',
+      settings: { mode, storyId, questionCount: 3, timerSeconds: 0, textDuring: 'visible', access: 'friends' },
+      invite,
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    return res.body as { game: string; lobbyId: string; invited: number };
+  };
+  // Playing a story game to its end is the story games' own suite; here the
+  // play layer only needs one that has ended.
+  const endStoryGame = (id: string) =>
+    pool.query(`UPDATE story_games SET status = 'finished', finished_at = now() WHERE id = $1`, [id]);
+
+  it('Stories goes through the same invites: a card in the DM, accepting is joining, and a duo rematches when both ask', async () => {
+    const host = await register('stHost1');
+    const friend = await register('stFriend1');
+    await befriend(pool, host.id, friend.id);
+    const storyId = await story('duo12');
+    await story('duo12b'); // another of the same length, for the rematch to move on to
+
+    const made = await storyLobby(host, 'duo', storyId, [friend.id]);
+    expect(made).toMatchObject({ game: 'stories', invited: 1 });
+    // the friend is asked three ways, as for every game
+    const dm = await pool.query(`SELECT kind, game, game_lobby_id FROM dm_messages WHERE sender_id = $1`, [host.id]);
+    expect(dm.rows).toEqual([{ kind: 'game', game: 'stories', game_lobby_id: made.lobbyId }]);
+    const incoming = (await call(friend, 'GET', '/play/invites')).body.incoming as Array<{ game: string; lobbyId: string }>;
+    expect(incoming.find((i) => i.lobbyId === made.lobbyId)).toMatchObject({ game: 'stories' });
+    expect(eventsFor(friend.id, 'play_invite').length).toBeGreaterThan(0);
+
+    // accepting is the story game's own join
+    const accepted = await call(friend, 'POST', `/play/invites/${(await inviteOf(made.lobbyId, friend.id))!.id}/accept`);
+    expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+    const seats = await pool.query(`SELECT user_id FROM story_game_players WHERE game_id = $1 ORDER BY seat`, [made.lobbyId]);
+    expect(seats.rows.map((r) => r.user_id)).toEqual([host.id, friend.id]);
+    expect((await call(friend, 'GET', `/play/cards/stories/${made.lobbyId}`)).body).toMatchObject({
+      game: 'stories',
+      isMember: true,
+      players: 2,
+      maxPlayers: 2,
+    });
+
+    // a rematch only once it has ended, and only when both ask
+    const url = `/play/stories/${made.lobbyId}/rematch`;
+    expect((await call(host, 'POST', url)).body.code).toBe('NOT_FINISHED');
+    await endStoryGame(made.lobbyId);
+    expect((await call(host, 'POST', url)).body).toMatchObject({ kind: 'pair', offeredByMe: true, nextLobbyId: null });
+    const both = await call(friend, 'POST', url);
+    const next = both.body.nextLobbyId as string;
+    expect(next).toBeTruthy();
+    expect((await call(host, 'GET', url)).body.nextLobbyId).toBe(next);
+    // the same settings, both of them in it, and under way: they both chose it
+    const rematch = await pool.query<{ mode: string; question_count: number; status: string }>(
+      `SELECT mode, question_count, status FROM story_games WHERE id = $1`,
+      [next],
+    );
+    expect(rematch.rows[0]).toMatchObject({ mode: 'duo', question_count: 3 });
+    expect(rematch.rows[0]!.status).not.toBe('lobby');
+    const players = await pool.query(`SELECT user_id FROM story_game_players WHERE game_id = $1 ORDER BY seat`, [next]);
+    expect(players.rows.map((r) => r.user_id)).toEqual([host.id, friend.id]);
+    // and the story games' changes reach the play layer's subscribers
+    await eventually(async () => eventsFor(friend.id, 'play_changed').some((e) => e.game === 'stories'));
+  });
+
+  it('a Stories group plays again in rounds: the host opens the next one and nobody is put in it', async () => {
+    const host = await register('stHost2');
+    const a = await register('stA2');
+    const b = await register('stB2');
+    await befriend(pool, host.id, a.id);
+    await befriend(pool, host.id, b.id);
+    const made = await storyLobby(host, 'group', await story('group13'), [a.id, b.id]);
+    for (const p of [a, b]) {
+      const res = await call(p, 'POST', `/play/invites/${(await inviteOf(made.lobbyId, p.id))!.id}/accept`);
+      expect(res.status).toBe(200);
+    }
+    await endStoryGame(made.lobbyId);
+    const url = `/play/stories/${made.lobbyId}/rematch`;
+    expect((await call(a, 'GET', url)).body).toMatchObject({ kind: 'round', canOpenRound: false, nextLobbyId: null });
+    expect((await call(a, 'POST', url)).body.code).toBe('NOT_HOST');
+    const next = (await call(host, 'POST', url)).body.nextLobbyId as string;
+    expect(next).toBeTruthy();
+    expect((await call(a, 'GET', url)).body.nextLobbyId).toBe(next);
+    expect((await call(a, 'GET', `/play/cards/stories/${next}`)).body).toMatchObject({ players: 1, isMember: false, canJoin: true });
+    expect((await call(a, 'POST', '/story-games/join', { id: next })).status).toBe(200);
+    expect((await call(a, 'GET', `/play/cards/stories/${next}`)).body).toMatchObject({ players: 2, isMember: true });
+  });
 });
