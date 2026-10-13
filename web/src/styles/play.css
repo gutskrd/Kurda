@@ -337,8 +337,22 @@
   width: 100%;
 }
 .sg-results-actions .rematch {
-  /* in a story's results, the row of other ways out follows it */
+  /* in a story's results, the row of other ways out follows it, and it
+     lines up with that row rather than standing in the middle */
   flex-basis: 100%;
+  align-items: flex-start;
+}
+.sg-results-actions .rematch-line {
+  text-align: start;
+}
+.sg-results-actions .rematch-actions {
+  justify-content: flex-start;
+}
+@media (max-width: 520px) {
+  /* a phone's results buttons are full width; the rematch's are the same */
+  .sg-results-actions .rematch {
+    align-items: stretch;
+  }
 }
 .rematch-line {
   margin: 0;
