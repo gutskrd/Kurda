@@ -199,6 +199,62 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
     expect((await upload(key)).scan_status).toBe('cleared');
   });
 
+  it('reaches the same picture under the other keys it was uploaded under', async () => {
+    const offender = await user('off6');
+    const other = await user('oth6');
+    const reporter = await user('rep6');
+    const admin = await user('adm6', '{moderator}');
+    // one picture, three uploads: a picture for a post has its owner in its
+    // key, and a new key each time it is posted again — the bytes' hash is
+    // what they share
+    const [mine, again, theirs] = [await picture('seven'), await picture('eight'), await picture('nine')];
+    await pool.query(`UPDATE media_uploads SET content_sha256 = $2 WHERE key = ANY($1)`, [[mine, again, theirs], `same-${suffix}`]);
+    const reported = await post(offender, mine);
+    const repost = await writtenPost(offender, [again]);
+    const copy = await post(other, theirs);
+
+    const { receipt } = await reports.file(reporter, { targetType: 'image_post', targetId: reported, category: 'child_safety' });
+    const out = await cases.csam(await caseOf(receipt.report.id), admin);
+
+    const pictures = await pool.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = ANY($1)`, [[reported, copy]]);
+    expect(pictures.rows.map((p) => p.status)).toEqual(['removed', 'removed']);
+    expect((await pool.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [repost])).rows[0]!.status).toBe('removed');
+    for (const key of [mine, again, theirs]) {
+      expect(storage.publicObjects.has(key)).toBe(false);
+      expect(await upload(key)).toMatchObject({ scan_status: 'blocked', preserve_evidence: true, quarantine_state: 'done' });
+    }
+    expect(out.escalation.media.map((m) => m.key).sort()).toEqual([mine, again, theirs].sort());
+  });
+
+  it('a removal that reaches the copies puts them all back when it is undone', async () => {
+    const author = await user('auth7');
+    const other = await user('oth7');
+    const [one, two] = [await picture('ten'), await picture('eleven')];
+    await pool.query(`UPDATE media_uploads SET content_sha256 = $2 WHERE key = ANY($1)`, [[one, two], `undo-${suffix}`]);
+    const first = await post(author, one);
+    const second = await writtenPost(other, [two]);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const rec = await removeMedia(client, one);
+      expect(rec).toMatchObject({
+        posts: [{ id: first, previousStatus: 'published' }],
+        libraryPosts: [{ id: second, previousStatus: 'published' }],
+        copies: [{ key: two, previousScanStatus: 'cleared' }],
+      });
+      await restoreContent(client, rec);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    expect((await pool.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = $1`, [first])).rows[0]!.status).toBe('published');
+    expect((await pool.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [second])).rows[0]!.status).toBe('published');
+    for (const key of [one, two]) expect((await upload(key)).scan_status).toBe('cleared');
+  });
+
   it('a reported profile picture comes off every profile; a move that fails is finished by the sweep', async () => {
     const offender = await user('off2');
     const other = await user('oth2');

@@ -250,7 +250,10 @@ the storage/op ceilings above (one R2 budget). A picture upload is confirmed by
 the post that uses it, so one that is uploaded and never posted is deleted by the
 orphan sweep after a day; uploads waiting for their post count against the storage
 ceiling. The migration that introduced this (1751000163000) hands the picture
-uploads no post uses to the sweep the same way.
+uploads no post uses to the sweep the same way. A picture's key has its uploader
+in it, so moderation knows a picture by the hash of its bytes as well
+(1751000166000): bytes it blocked or took off the bucket are refused under any
+key, and a takedown reaches every copy.
 
 At the storage limit the API returns `MEDIA_STORAGE_LIMIT_REACHED` and stores
 nothing new; **existing photos keep working and are never auto-deleted**. If

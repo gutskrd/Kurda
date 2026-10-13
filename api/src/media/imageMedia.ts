@@ -144,6 +144,8 @@ export async function storeImageMedia(
     if (upload) hash.update(`\nupload:${upload}`);
     return mediaKey(kind, hash.digest('hex'), 'image/webp');
   };
+  // what every key these bytes are stored under shares (migration 1751000166000)
+  const contentHash = createHash('sha256').update(stored).digest('hex');
   let key = keyFor();
   const ok = (reused: boolean): StoreImageResult => ({
     ok: true,
@@ -177,10 +179,17 @@ export async function storeImageMedia(
   const prior = existing.rows[0];
   // blocked or taken off the bucket by moderation: never written back, even
   // once the row has been let go as an orphan (a re-upload would otherwise
-  // put the same bytes on the public CDN again) — and checked before an owned
-  // upload is given a key of its own below, which would otherwise be a way
-  // round it
-  if (prior && (prior.scan_status === 'blocked' || prior.quarantined)) {
+  // put the same bytes on the public CDN again). Not under this key, nor
+  // under any other: an owned upload's key has its owner in it, and an
+  // owner's picture already on a post gets a key of its own below, so the
+  // same bytes taken down under one key would otherwise come back under
+  // another — somebody else's upload of them, or the next one of their own.
+  const takenDown = await pool.query(
+    `SELECT 1 FROM media_uploads
+      WHERE content_sha256 = $1 AND (scan_status = 'blocked' OR quarantine_state IS NOT NULL) LIMIT 1`,
+    [contentHash],
+  );
+  if ((prior && (prior.scan_status === 'blocked' || prior.quarantined)) || takenDown.rowCount) {
     return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');
   }
   if (prior?.scan_status === 'gated' && prior.unscanned !== true) {
@@ -203,11 +212,11 @@ export async function storeImageMedia(
   }
 
   await pool.query(
-    `INSERT INTO media_uploads (key, content_type, content_length, scan_status, uploader_id, kind, width, height)
-     VALUES ($1, 'image/webp', $2, 'pending', $3, $4, $5, $6)
+    `INSERT INTO media_uploads (key, content_type, content_length, scan_status, uploader_id, kind, width, height, content_sha256)
+     VALUES ($1, 'image/webp', $2, 'pending', $3, $4, $5, $6, $7)
      ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length, scan_status = 'pending',
-       width = EXCLUDED.width, height = EXCLUDED.height`,
-    [key, stored.length, options.ownerId ?? null, kind, proc.width, proc.height],
+       width = EXCLUDED.width, height = EXCLUDED.height, content_sha256 = EXCLUDED.content_sha256`,
+    [key, stored.length, options.ownerId ?? null, kind, proc.width, proc.height, contentHash],
   );
   try {
     await storage.put(key, stored, 'image/webp');

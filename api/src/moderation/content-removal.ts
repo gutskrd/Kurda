@@ -48,6 +48,17 @@ export interface MediaRemoval {
    */
   libraryPosts?: Array<{ id: string; previousStatus: string }>;
   profilePhotoOf: string[];
+  /**
+   * The same bytes stored under other keys (`media_uploads.content_sha256`),
+   * blocked with it; their posts are among `posts` and `libraryPosts`.
+   * Absent from removals recorded before keys could differ for one picture.
+   */
+  copies?: Array<{ key: string; previousScanStatus: string }>;
+}
+
+/** Every key a removal blocked: the file's own and its copies'. */
+export function removedKeys(rec: MediaRemoval): string[] {
+  return [rec.key, ...(rec.copies ?? []).map((c) => c.key)];
 }
 
 /** The content a case is about, when it is content at all. */
@@ -161,28 +172,42 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
 }
 
 /**
- * Hide one file everywhere it is used. Keys are content hashes, so the same
- * picture can sit under several accounts' posts and profiles at once: every
- * picture post carrying it is removed, and so is every written post it is one
- * of the pictures on (a post is what it shows, so it goes whole, as a picture
- * post does); it comes off every profile it is the photo of (old chat
- * messages, comments and leaderboards draw the avatar from there), and the
- * upload is blocked so it is never served or accepted again.
+ * Hide one file everywhere it is used. The same picture can sit under several
+ * accounts' posts and profiles at once — a key is a hash of the bytes, and
+ * where it is not (a picture uploaded for a post has its owner in its key, and
+ * a new key each time it is posted again), the copies share the bytes' hash
+ * (`content_sha256`) and go with it. Every picture post carrying any of them
+ * is removed, and so is every written post one of them is on (a post is what
+ * it shows, so it goes whole, as a picture post does); the file comes off
+ * every profile it is the photo of (old chat messages, comments and
+ * leaderboards draw the avatar from there), and every copy is blocked so it is
+ * never served or accepted again.
  */
 export async function removeMedia(db: Executor, key: string): Promise<MediaRemoval> {
   const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [key]);
-  await db.query(`UPDATE media_uploads SET scan_status = 'blocked' WHERE key = $1`, [key]);
-  const posts = await db.query<{ id: string; status: string }>(
-    `SELECT id, status FROM image_posts WHERE image_media_id = $1 AND status <> 'removed' FOR UPDATE`,
+  const copies = await db.query<{ key: string; scan_status: string }>(
+    `SELECT c.key, c.scan_status
+       FROM media_uploads m JOIN media_uploads c ON c.content_sha256 = m.content_sha256 AND c.key <> m.key
+      WHERE m.key = $1
+      ORDER BY c.key FOR UPDATE OF c`,
     [key],
   );
-  await db.query(`UPDATE image_posts SET status = 'removed', updated_at = now() WHERE image_media_id = $1 AND status <> 'removed'`, [key]);
+  const keys = [key, ...copies.rows.map((c) => c.key)];
+  await db.query(`UPDATE media_uploads SET scan_status = 'blocked' WHERE key = ANY($1::text[])`, [keys]);
+  const posts = await db.query<{ id: string; status: string }>(
+    `SELECT id, status FROM image_posts WHERE image_media_id = ANY($1::text[]) AND status <> 'removed' FOR UPDATE`,
+    [keys],
+  );
+  await db.query(
+    `UPDATE image_posts SET status = 'removed', updated_at = now() WHERE image_media_id = ANY($1::text[]) AND status <> 'removed'`,
+    [keys],
+  );
   const written = await db.query<{ id: string; status: string }>(
     `SELECT p.id, p.status FROM library_posts p
       WHERE p.status <> 'removed'
-        AND p.id IN (SELECT m.post_id FROM library_post_media m WHERE m.media_key = $1)
+        AND p.id IN (SELECT m.post_id FROM library_post_media m WHERE m.media_key = ANY($1::text[]))
       FOR UPDATE`,
-    [key],
+    [keys],
   );
   if (written.rows.length > 0) {
     await db.query(`UPDATE library_posts SET status = 'removed', updated_at = now() WHERE id = ANY($1::uuid[])`, [
@@ -197,6 +222,7 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
     posts: posts.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
     libraryPosts: written.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
     profilePhotoOf: photos.rows.map((p) => p.id),
+    copies: copies.rows.map((c) => ({ key: c.key, previousScanStatus: c.scan_status })),
   };
 }
 
@@ -221,7 +247,7 @@ export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<
     case 'library_comment':
       return rec.previousAudio ? [rec.previousAudio] : [];
     case 'media':
-      return [rec.key];
+      return removedKeys(rec);
     case 'csam':
       return (await Promise.all(rec.parts.map((p) => mediaOfRemoval(db, p)))).flat();
     default:
@@ -271,6 +297,9 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
     case 'media': {
       if (rec.previousScanStatus) {
         await db.query(`UPDATE media_uploads SET scan_status = $2 WHERE key = $1 AND scan_status = 'blocked'`, [rec.key, rec.previousScanStatus]);
+      }
+      for (const c of rec.copies ?? []) {
+        await db.query(`UPDATE media_uploads SET scan_status = $2 WHERE key = $1 AND scan_status = 'blocked'`, [c.key, c.previousScanStatus]);
       }
       for (const p of rec.posts) {
         await db.query(`UPDATE image_posts SET status = $2, updated_at = now() WHERE id = $1 AND status = 'removed'`, [p.id, p.previousStatus]);

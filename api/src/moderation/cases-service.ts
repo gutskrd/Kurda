@@ -34,7 +34,14 @@ import {
 import type { MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { minorSql } from '../users/age.js';
-import { mediaOfRemoval, removableTarget, removeContent as removeContentOf, removeMedia, type RemovalRecord } from './content-removal.js';
+import {
+  mediaOfRemoval,
+  removableTarget,
+  removeContent as removeContentOf,
+  removedKeys,
+  removeMedia,
+  type RemovalRecord,
+} from './content-removal.js';
 import { mediaWhereabouts, requestQuarantine, runQuarantine } from './quarantine.js';
 import { caringMessage, reportOutcomeNotice, sanctionNotice, type Notice } from './notices.js';
 import { isZeroTolerance, permanentBanMode, slaDueAt } from './rules.js';
@@ -694,9 +701,12 @@ export class CasesService {
       }
       const keys = new Set(await this.evidenceMediaKeys(client, c));
       for (const part of parts) for (const k of await mediaOfRemoval(client, part)) keys.add(k);
-      for (const key of keys) {
-        if (parts.some((p) => p.type === 'media' && p.key === key)) continue;
-        parts.push(await removeMedia(client, key));
+      for (const key of [...keys]) {
+        if (parts.some((p) => p.type === 'media' && removedKeys(p).includes(key))) continue;
+        const removal = await removeMedia(client, key);
+        parts.push(removal);
+        // the same picture under other keys is the same evidence, and leaves the public bucket too
+        for (const k of removedKeys(removal)) keys.add(k);
       }
       await requestQuarantine(client, [...keys]);
       const removed: RemovalRecord | null = parts.length > 0 ? { type: 'csam', parts } : null;
