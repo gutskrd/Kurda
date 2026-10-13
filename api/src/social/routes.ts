@@ -20,14 +20,19 @@ import {
   UserReportService,
   type ReportCategory,
 } from './report-service.js';
+import type { ReportsService } from '../moderation/reports-service.js';
 
 /** User search + public profiles + privacy (KUR-082). */
-export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
+export function registerSocialRoutes(
+  app: FastifyInstance,
+  social: SocialService,
+  deps: { reports?: ReportsService } = {},
+): void {
   const activity = new ProfileActivityService(app.db);
   const feed = new FeedService(app.db);
   const engagement = new EngagementService(app.db);
   const friends = new FriendService(app.db);
-  const reports = new UserReportService(app.db);
+  const reports = new UserReportService(app.db, deps.reports);
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
   /** Username prefix search (rate-limited against scraping). */

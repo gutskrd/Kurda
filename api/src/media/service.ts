@@ -28,7 +28,9 @@ export class MediaService {
   async cleanupOrphans(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - ORPHAN_AGE_HOURS * 3_600_000);
     const orphans = await this.pool.query<{ key: string }>(
-      `SELECT key FROM media_uploads WHERE confirmed_at IS NULL AND created_at < $1 LIMIT 500`,
+      // a file kept as report evidence is never an orphan, whatever let go of it
+      `SELECT key FROM media_uploads
+        WHERE confirmed_at IS NULL AND created_at < $1 AND NOT preserve_evidence LIMIT 500`,
       [cutoff],
     );
     let cleaned = 0;

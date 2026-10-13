@@ -297,12 +297,16 @@ export class GdprService {
 export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<string[]> {
   const q = (sql: string, params: unknown[] = [userId]) => executor.query(sql, params);
 
-  // the files, read before the rows that point at them go
+  // the files, read before the rows that point at them go — except the ones a
+  // report's evidence holds: those stay until the evidence's retention ends
   const keys = await executor.query<{ key: string }>(
-    `SELECT profile_photo_key AS key FROM users WHERE id = $1 AND profile_photo_key IS NOT NULL
-     UNION SELECT image_media_id FROM image_posts WHERE author_id = $1
-     UNION SELECT audio_media_id FROM library_posts WHERE author_id = $1 AND audio_media_id IS NOT NULL
-     UNION SELECT audio_media_id FROM library_comments WHERE author_id = $1 AND audio_media_id IS NOT NULL`,
+    `SELECT k.key FROM (
+       SELECT profile_photo_key AS key FROM users WHERE id = $1 AND profile_photo_key IS NOT NULL
+       UNION SELECT image_media_id FROM image_posts WHERE author_id = $1
+       UNION SELECT audio_media_id FROM library_posts WHERE author_id = $1 AND audio_media_id IS NOT NULL
+       UNION SELECT audio_media_id FROM library_comments WHERE author_id = $1 AND audio_media_id IS NOT NULL
+     ) k
+     WHERE NOT EXISTS (SELECT 1 FROM media_uploads m WHERE m.key = k.key AND m.preserve_evidence)`,
     [userId],
   );
   const exports = await executor.query<{ key: string }>(

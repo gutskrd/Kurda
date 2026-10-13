@@ -125,7 +125,13 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
   //    no OTHER user still references the replaced key (the current user's row now
   //    holds the new key). Otherwise leave it — deleting would 404 their photo.
   if (oldKey && oldKey !== key) {
-    const stillUsed = await pool.query(`SELECT 1 FROM users WHERE profile_photo_key = $1 LIMIT 1`, [oldKey]);
+    // ...and never one a report's evidence is holding on to
+    const stillUsed = await pool.query(
+      `SELECT 1 FROM users WHERE profile_photo_key = $1
+       UNION ALL SELECT 1 FROM media_uploads WHERE key = $1 AND preserve_evidence
+       LIMIT 1`,
+      [oldKey],
+    );
     if ((stillUsed.rowCount ?? 0) === 0) {
       try {
         await storage.delete(oldKey);
