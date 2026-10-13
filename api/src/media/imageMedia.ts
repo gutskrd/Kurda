@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
 import { processImage } from './imageProcess.js';
@@ -72,7 +72,9 @@ export interface StoreImageOptions {
    * exactly one owner and a post can insist on its author's own
    * (media/postMedia.ts). Such an upload is left unconfirmed — the post that
    * uses it confirms it, and one nobody posts is reclaimed by the orphan sweep
-   * after a day instead of staying in the bucket for good.
+   * after a day instead of staying in the bucket for good. The same picture
+   * uploaded again before it is posted is the same upload; after, it is a new
+   * one, so it can go on a new post.
    */
   ownerId?: string;
 }
@@ -136,9 +138,13 @@ export async function storeImageMedia(
     }
   }
 
-  const hash = createHash('sha256').update(stored);
-  if (options.ownerId) hash.update(`\nowner:${options.ownerId}`);
-  const key = mediaKey(kind, hash.digest('hex'), 'image/webp');
+  const keyFor = (upload?: string): string => {
+    const hash = createHash('sha256').update(stored);
+    if (options.ownerId) hash.update(`\nowner:${options.ownerId}`);
+    if (upload) hash.update(`\nupload:${upload}`);
+    return mediaKey(kind, hash.digest('hex'), 'image/webp');
+  };
+  let key = keyFor();
   const ok = (reused: boolean): StoreImageResult => ({
     ok: true,
     mediaId: key,
@@ -164,12 +170,18 @@ export async function storeImageMedia(
   if (prior?.scan_status === 'blocked' || prior?.scan_status === 'gated') {
     return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');
   }
-  // idempotent: already stored and cleared → reuse, no new R2 write. An owned
-  // upload counts once it is through the scan, claimed by a post or not (rows
-  // are inserted 'pending' below, so 'cleared' means scanned); one still waiting
-  // for its post gets a fresh day before the sweep, since somebody is evidently
-  // about to use it.
-  if (prior?.scan_status === 'cleared' && (prior.confirmed || options.ownerId)) {
+  if (options.ownerId && prior?.confirmed) {
+    // an owned upload is confirmed by the post that uses it, so this picture is
+    // on a post already — up, or removed and kept for moderation. Handing back
+    // its key would refuse it as in use for good, even after its post is gone
+    // (deleting and posting again is how the installed apps change a caption),
+    // so it becomes a new upload of its own: one upload is still one post's.
+    key = keyFor(randomUUID());
+  } else if (prior?.scan_status === 'cleared' && (prior.confirmed || options.ownerId)) {
+    // idempotent: already stored and cleared → reuse, no new R2 write. An owned
+    // upload counts once it is through the scan (rows are inserted 'pending'
+    // below, so 'cleared' means scanned); one still waiting for its post gets a
+    // fresh day before the sweep, since somebody is evidently about to use it.
     if (!prior.confirmed) await pool.query(`UPDATE media_uploads SET created_at = now() WHERE key = $1`, [key]);
     return ok(true);
   }

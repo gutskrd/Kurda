@@ -206,6 +206,45 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     expect(twice.json().code).toBe('MEDIA_IN_USE');
   });
 
+  it('lets a picture be posted again once its post is gone, the old way and the new', async () => {
+    const me = await person('repost');
+    const call = (method: 'POST' | 'DELETE', url: string, payload?: Record<string, unknown>) =>
+      app.inject({ method, url, payload, headers: { authorization: `Bearer ${me.token}` }, remoteAddress: ip() });
+
+    // an installed app changes a caption by deleting the post and posting again
+    const bytes = await photo(160);
+    const first = (await upload(me.token, bytes)).json().imageMediaId;
+    const old = await postPicture(me.token, first);
+    expect(old.statusCode).toBe(201);
+    expect((await call('DELETE', `/images/${old.json().id}`)).statusCode).toBe(200);
+    const again = await upload(me.token, bytes);
+    expect(again.statusCode).toBe(201);
+    expect(again.json().imageMediaId).not.toBe(first);
+    expect((await postPicture(me.token, again.json().imageMediaId)).statusCode).toBe(201);
+    // the removed post keeps its own file, as removed posts do
+    expect((await row(first))!.confirmed_at).not.toBeNull();
+    expect(storage.objects.has(first)).toBe(true);
+
+    // a written post the same way
+    const words = await photo(161);
+    const mine = (await upload(me.token, words)).json().imageMediaId;
+    const written = await call('POST', '/library/posts', { body: 'Wêneyek', media: [{ mediaKey: mine }] });
+    expect(written.statusCode).toBe(201);
+    expect((await call('DELETE', `/library/posts/${written.json().id}`)).statusCode).toBe(200);
+    const fresh = (await upload(me.token, words)).json().imageMediaId;
+    expect(fresh).not.toBe(mine);
+    expect((await call('POST', '/library/posts', { body: 'Dîsa', media: [{ mediaKey: fresh }] })).statusCode).toBe(201);
+
+    // and while a post still has it, uploading it again is a new upload too:
+    // one upload is still one post's
+    const later = (await upload(me.token, words)).json().imageMediaId;
+    expect(later).not.toBe(fresh);
+    expect((await row(later))).toMatchObject({ uploader_id: me.id, confirmed_at: null, scan_status: 'cleared' });
+    const twice = await call('POST', '/library/posts', { body: 'Sê car', media: [{ mediaKey: fresh }] });
+    expect(twice.statusCode).toBe(422);
+    expect(twice.json().code).toBe('MEDIA_IN_USE');
+  });
+
   it('counts an upload waiting for its post against the storage ceiling', async () => {
     const me = await person('ceiling');
     const usage = new MediaUsageService(pool, null);

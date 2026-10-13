@@ -55,8 +55,10 @@ A post may use a picture only if **its author uploaded it**, it is a picture
 upload, the **scan cleared it**, and **no post uses it yet** (`media/postMedia.ts`).
 The upload stays unconfirmed until a post claims it, in the same transaction
 that saves the post; an upload nobody posts is deleted by the orphan sweep after
-a day. Uploading the same file again gives back the same upload, so a picture
-already posted is refused as in use: one picture, one post.
+a day. One upload is one post's: an upload already on a post is refused as in
+use. Uploading the same file again gives back the same upload while it is
+unposted, and a new upload once it is on a post — so a picture can go on a new
+post after its first post was deleted (the removed post keeps its own file).
 
 ## API
 

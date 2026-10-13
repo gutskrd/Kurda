@@ -28,7 +28,9 @@ this" switched off). Answers `{ imageMediaId, url, width, height, signed }`.
 `media_uploads` records the **uploader**, the **kind** (`image-post`) and the
 size. The key mixes in the uploader, so two people uploading the same file get
 an upload each. The upload is **unconfirmed** until a post uses it; one nobody
-posts is deleted by the orphan sweep after a day.
+posts is deleted by the orphan sweep after a day. The same file uploaded again
+by the same person is the same upload until it is posted, and a new upload
+after, so a picture whose post was deleted can be posted again.
 
 ## API
 

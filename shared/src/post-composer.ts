@@ -223,9 +223,9 @@ export interface FeedImage {
  *
  * - INVALID_MEDIA: a picture that is not the author's own upload for a post,
  *   or one the scan did not clear (with `mediaKey`);
- * - MEDIA_IN_USE: a picture already on a post, or twice in this one (with
- *   `mediaKey`). Uploading the same file again gives back the same upload, so
- *   it is the same answer: one picture, one post;
+ * - MEDIA_IN_USE: an upload already on a post, or twice in this one (with
+ *   `mediaKey`). One upload is one post's: to post the same picture again,
+ *   upload it again (a file already posted comes back as a new upload);
  * - INVALID_POST: the old picture route's answer for an unusable picture;
  * - TRUST_VELOCITY (429): posting faster than the account may yet;
  * - AUTO_MODERATED (403): the account was just restricted for spam.
