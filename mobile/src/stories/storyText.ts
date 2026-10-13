@@ -38,6 +38,15 @@ export function storyTextProps(dialect: StoryDialect): StoryTextProps {
   return { accessibilityLanguage: storyTextDirection(dialect).lang };
 }
 
+/**
+ * A story's words quoted by the app (the evidence in the review, a title in
+ * an invite): in the marks the story's own language uses — guillemets in
+ * Soranî, as its texts write them, curly quotes in Kurmancî.
+ */
+export function quoted(text: string, dialect: StoryDialect): string {
+  return dialect === 'sorani' ? `«${text}»` : `“${text}”`;
+}
+
 /** An English translation inside the story screens: left to right, read in English, in any interface language. */
 export const ENGLISH_TEXT_STYLE: TextStyle = { writingDirection: 'ltr', textAlign: 'left' };
 export const ENGLISH_TEXT_PROPS: StoryTextProps = { accessibilityLanguage: 'en' };

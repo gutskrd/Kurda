@@ -13,7 +13,7 @@ import { RematchPanel } from '../../play/RematchPanel';
 import { createGame } from '../api';
 import { createErrorMessage } from '../SetupSheet';
 import { evidenceText } from '../segments';
-import { storyTextProps, storyTextStyle } from '../storyText';
+import { quoted, storyTextProps, storyTextStyle } from '../storyText';
 import { Card, Note, SectionLabel, useFocusOn } from '../ui';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 
@@ -210,7 +210,7 @@ export function Results({
                 ) : null}
                 {quote ? (
                   <Text {...props} style={[styles.reviewQuote, { color: colors.textSecondary }, dir]}>
-                    “{quote}”
+                    {quoted(quote, dialect)}
                   </Text>
                 ) : null}
               </Card>

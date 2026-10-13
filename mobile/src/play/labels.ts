@@ -3,6 +3,7 @@ import type { Translate } from '../api/errors';
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/Icon';
 import { DIALECT_NAME, LENGTH_KEY } from '../stories/labels';
+import { quoted } from '../stories/storyText';
 
 /** Each online game's name, as the Play tab already calls it. */
 export const GAME_NAME_KEY: Record<PlayGame, TranslationKey> = {
@@ -31,7 +32,7 @@ const DIFFICULTY_KEY: Record<string, TranslationKey> = {
 export function summaryParts(summary: InviteSummary, t: Translate): string[] {
   const parts: string[] = [];
   if (summary.difficulty && DIFFICULTY_KEY[summary.difficulty]) parts.push(t(DIFFICULTY_KEY[summary.difficulty]!));
-  if (summary.storyTitle) parts.push(`“${summary.storyTitle}”`);
+  if (summary.storyTitle) parts.push(quoted(summary.storyTitle, isStoryDialect(summary.dialect) ? summary.dialect : 'kurmanci'));
   else if (summary.length && isStoryLength(summary.length)) parts.push(t(LENGTH_KEY[summary.length]));
   if (summary.dialect && isStoryDialect(summary.dialect)) parts.push(DIALECT_NAME[summary.dialect]);
   if (typeof summary.questionCount === 'number') parts.push(t('stories.questionsCount', { count: summary.questionCount }));

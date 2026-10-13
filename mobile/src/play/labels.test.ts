@@ -14,6 +14,10 @@ describe('invite summaries', () => {
     ]);
   });
 
+  it('quotes a Soranî title in the guillemets its texts use', () => {
+    expect(summaryParts({ storyTitle: 'نانی گەرم', dialect: 'sorani' }, t as never)).toEqual(['«نانی گەرم»', 'Soranî']);
+  });
+
   it('leaves out what it does not recognise rather than showing it raw', () => {
     expect(summaryParts({ difficulty: 'impossible', dialect: 'zazaki', length: 'epic' }, t as never)).toEqual([]);
     expect(summaryParts({ length: 'long' }, t as never)).toEqual(['stories.length.long']);
