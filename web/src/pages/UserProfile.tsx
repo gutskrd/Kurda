@@ -7,6 +7,7 @@ import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { PlayWithButton } from '../play/PlayButtons';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
@@ -129,6 +130,8 @@ function FriendActions({ userId, username, status }: { userId: string; username:
     <div className="mkp-actions">
       {state === 'self' && <Link to="/app/profile" className="btn btn-secondary btn-sm">{t('profile.yours')}</Link>}
       {state === 'friends' && message}
+      {/* a game with this friend: the invite sheet, with them already chosen */}
+      {state === 'friends' && <PlayWithButton userId={userId} name={username} />}
       {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? t('profile.sending') : t('profile.addFriend')}</Button>}
       {state === 'pending_out' && <Button size="sm" disabled>{t('profile.requestSent')}</Button>}
       {state === 'pending_in' && (
