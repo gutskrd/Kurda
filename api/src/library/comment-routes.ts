@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -44,17 +45,15 @@ export function registerLibraryCommentRoutes(
     {
       schema: { params: postIdParam, body: createBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
       const input = req.body as CreateCommentInput;
-      // an attached voice note must have cleared the upload pipeline (KUR-282)
-      if (input.audioMediaId) {
-        const ok = await app.db.query(`SELECT 1 FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`, [input.audioMediaId]);
-        if ((ok.rowCount ?? 0) === 0) {
-          return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
-        }
+      // an attached voice note must have cleared the upload pipeline (KUR-282),
+      // and its author must not be barred from media (403 MUTED)
+      if (input.audioMediaId && !(await voiceAttachable(app.db, req.user!.id, input.audioMediaId))) {
+        return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
       }
       if (trust) {
         // per-level velocity cap (KUR-295): new accounts comment fewer per hour
@@ -125,9 +124,21 @@ export function registerLibraryCommentRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/library/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: requireBirthMonth },
-    async (req, reply) =>
-      respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as CreateCommentInput)),
+    { schema: { params: idParam, body: editBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
+    async (req, reply) => {
+      const input = req.body as CreateCommentInput;
+      // a voice note added in an edit is checked like one on a new comment (the
+      // one it already has is not "attached" again by an edit that resends it)
+      const current = input.audioMediaId
+        ? (await app.db.query<{ audio_media_id: string | null }>(`SELECT audio_media_id FROM library_comments WHERE id = $1`, [
+            (req.params as { id: string }).id,
+          ])).rows[0]?.audio_media_id
+        : null;
+      if (input.audioMediaId && input.audioMediaId !== current && !(await voiceAttachable(app.db, req.user!.id, input.audioMediaId))) {
+        return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
+      }
+      return respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), input));
+    },
   );
 
   /** Soft-delete (author or admin); subtree preserved as a tombstone. */

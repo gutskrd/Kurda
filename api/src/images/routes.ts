@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import { imagePostLimits } from '../media/mediaLimits.js';
@@ -101,7 +102,7 @@ export function registerImagePostRoutes(
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: requireBirthMonth,
+      preHandler: [requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
@@ -135,7 +136,7 @@ export function registerImagePostRoutes(
 
   app.post(
     '/images',
-    { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireBirthMonth },
+    { schema: { body: createBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireBirthMonth, requireUnrestricted('post'), requireUnrestricted('media')] },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
       // refused for its picture before it counts toward anything (the create
@@ -181,7 +182,7 @@ export function registerImagePostRoutes(
 
   app.patch(
     '/images/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: requireBirthMonth },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) =>
       editCaption(req, reply),
   );

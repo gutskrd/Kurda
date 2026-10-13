@@ -7,6 +7,9 @@ import { canonicalUsername } from '../users/username.js';
 import { issueTokenPair, type IssuedTokens } from './tokens.js';
 import { toPublicUser, type PublicUser } from './service.js';
 import type { UserRow } from '../users/repository.js';
+import { isBannedEmail } from '../moderation/ban-registry.js';
+import { suspensionError } from '../moderation/suspension.js';
+import { signupRejected } from './rejections.js';
 
 export type OAuthProvider = 'google' | 'apple';
 
@@ -121,6 +124,7 @@ export class OAuthService {
     );
     if (known.rows[0]) {
       const user = await this.activeUser(known.rows[0].user_id);
+      await this.refuseIfSuspended(user);
       const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName });
       return { user: toPublicUser(user), tokens, created: false };
     }
@@ -143,6 +147,7 @@ export class OAuthService {
             'an account with this email exists but is not verified — log in with your password and verify your email first',
           );
         }
+        await this.refuseIfSuspended(account);
         await this.link(account.id, identity);
         const tokens = await issueTokenPair(this.config, this.pool, account, { deviceName });
         return { user: toPublicUser(account), tokens, created: false };
@@ -152,6 +157,8 @@ export class OAuthService {
     // 3) brand-new account (Apple relay emails land here naturally)
     const email =
       identity.email ?? `${identity.provider}_${identity.providerUserId}@noemail.kurda.app`;
+    // a permanently banned address does not come back through a provider either
+    if (await isBannedEmail(this.pool, email)) throw signupRejected();
     const username = await uniqueUsername(
       this.pool,
       identity.name ?? identity.email?.split('@')[0] ?? 'learner',
@@ -177,13 +184,22 @@ export class OAuthService {
     );
   }
 
+  /**
+   * The account behind a linked identity. A deleted one is disabled; a banned
+   * one is answered by `refuseIfSuspended` with its reasons. (This used to
+   * refuse any account with `banned_at` set, so a suspension that had already
+   * ended still locked the person out of social sign-in.)
+   */
   private async activeUser(id: string): Promise<UserRow> {
-    const result = await this.pool.query<UserRow>(
-      `SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL AND banned_at IS NULL`,
-      [id],
-    );
+    const result = await this.pool.query<UserRow>(`SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL`, [id]);
     const user = result.rows[0];
     if (!user) throw new AppError('ACCOUNT_DISABLED', 403, 'this account is disabled');
     return user;
+  }
+
+  /** 403 ACCOUNT_SUSPENDED with the reasons and an appeal token, like password sign-in. */
+  private async refuseIfSuspended(user: UserRow): Promise<void> {
+    const suspended = await suspensionError(this.config, this.pool, user);
+    if (suspended) throw suspended;
   }
 }

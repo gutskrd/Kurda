@@ -14,6 +14,7 @@ import {
   type SendGiftResult,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { assertUnrestricted } from '../moderation/restrictions.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
 import { cosmeticAssetUrl, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
@@ -64,6 +65,8 @@ export interface GiftDeps {
   groupChat: GroupChatService;
   realtime: GiftRealtime;
   inbox?: { record(userId: string, notification: Notification): Promise<void> };
+  /** the escalation mute (KUR-086), which a gift answers to as a message does */
+  moderation?: { isChatMuted(userId: string): Promise<boolean> };
   log?: { warn: (obj: unknown, msg: string) => void };
 }
 
@@ -113,6 +116,10 @@ interface Settled {
  *   (`lockEntitlement`) so two friends gifting it at once cannot both win.
  * - **Never free.** A price-0 item cannot be gifted: it would be a way to put
  *   a notification in front of someone at no cost and without limit.
+ * - **Not while muted from chat.** A gift is a message in the chat, so a chat
+ *   mute stops it as it stops text, with the same answer (403 MUTED and until
+ *   when, then the escalation mute's CHAT_MUTED) — otherwise someone muted for
+ *   harassing a person could keep putting things in front of them.
  *
  * A friend a rule turns away is skipped, and the answer says which and why
  * (they are friends of the sender, so saying is safe); the rest still get it.
@@ -138,6 +145,12 @@ export class GiftService {
     // a direct message has one other person in it; the shop gifts one friend
     if (chat?.kind !== 'group' && (toIds.length !== 1 || (chat?.kind === 'dm' && chat.userId !== toIds[0]))) {
       throw new AppError('BAD_RECIPIENTS', 400, 'a gift here goes to the one friend you are talking to');
+    }
+    // muted from chat: refused as a message would be (a group's own rules,
+    // the escalation mute among them, are asked by assertCanPost below)
+    await assertUnrestricted(this.pool, fromId, 'chat');
+    if (chat?.kind !== 'group' && this.deps.moderation && (await this.deps.moderation.isChatMuted(fromId))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
 
     const statuses = await Promise.all(toIds.map((to) => this.deps.friends.statusBetween(fromId, to)));

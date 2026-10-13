@@ -4,7 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { AuditService } from './audit-service.js';
-import { auditActionName, isAuditableAdminMutation } from './audit-action.js';
+import { auditActionName, auditTargetType, isAuditableAdminMutation } from './audit-action.js';
 
 const searchQuery = z.object({
   adminId: z.uuid().optional(),
@@ -24,13 +24,16 @@ export function registerAuditLog(app: FastifyInstance, audit: AuditService, totp
     const routeUrl = req.routeOptions?.url ?? req.url;
     if (!req.user || !isAuditableAdminMutation(req.method, routeUrl, reply.statusCode)) return;
     const params = req.params as { id?: string } | undefined;
-    const body = req.body as { reason?: string } | undefined;
+    const body = req.body as { reason?: unknown; note?: unknown } | undefined;
+    // moderation routes say why in `note` as often as in `reason`
+    const why = typeof body?.reason === 'string' ? body.reason : typeof body?.note === 'string' ? body.note : null;
     try {
       await audit.record(app.db, {
         adminId: req.user.id,
-        action: auditActionName(req.method, routeUrl),
+        action: auditActionName(req.method, routeUrl, req.body),
+        targetType: auditTargetType(routeUrl),
         targetId: params?.id ?? null,
-        reason: body?.reason ?? null,
+        reason: why,
         requestId: String(req.id),
       });
     } catch (err) {

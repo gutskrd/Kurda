@@ -11,6 +11,7 @@ export const EMAIL_TEMPLATES = [
   'password-changed',
   'oauth-no-password',
   'deletion-notice',
+  'moderation-urgent',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -88,6 +89,21 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Ji bo hesabê xwe şîfreyekê saz bike',
       text: 'Te bi hesabekî civakî têketin kir. Şîfreyekê saz bike da ku tu rasterast jî têkevî: {link}',
+    },
+  },
+  /**
+   * To moderators, for a P0 report. Deliberately empty of everything the
+   * report holds — no content, no names, no category — email is not a safe
+   * place for it; the link is the whole message.
+   */
+  'moderation-urgent': {
+    en: {
+      subject: 'A new urgent report needs review',
+      text: 'A new urgent report on Hevalo needs review as soon as you can.\n\nOpen it here: {link}\n\n— Hevalo moderation',
+    },
+    ku: {
+      subject: 'Raporeke lezgîn a nû li benda nirxandinê ye',
+      text: 'Raporeke lezgîn a nû li Hevalo li benda nirxandinê ye. Ji kerema xwe zû lê binêre.\n\nLi vir veke: {link}\n\n— Moderasyona Hevalo',
     },
   },
   'deletion-notice': {

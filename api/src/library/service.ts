@@ -13,6 +13,7 @@ import {
 } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { claimPostPictures, releasePostPictures, type PictureClaimFailure } from '../media/postMedia.js';
+import { OPEN_CASE_PREDICATE } from '../moderation/reports-service.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
 
@@ -504,16 +505,21 @@ export function addedPictures(current: LibraryPost, patch: UpdateInput): string[
 }
 
 /**
- * Whether a post has a report nobody has resolved yet: an open report on it,
- * or its moderation case (#102, `library_post:<id>`) still unresolved.
+ * Whether a post has a report nobody has resolved yet: its moderation case
+ * (#102, `library_post:<id>`) still open — every report joins the open case
+ * about what it reports as it is filed (moderation/reports-service.ts), and
+ * the old table's open rows are synced into one of their own — or an open row
+ * in the old table that the queue has not taken in yet.
  */
 async function underReport(executor: Pick<pg.PoolClient, 'query'>, postId: string): Promise<boolean> {
   const res = await executor.query<{ reported: boolean }>(
-    `SELECT EXISTS (SELECT 1 FROM library_reports
-                     WHERE target_type = 'library_post' AND target_id = $1::uuid AND status = 'open')
-         OR EXISTS (SELECT 1 FROM moderation_cases
-                     WHERE source = 'library_report' AND source_ref = 'library_post:' || $1::uuid::text
-                       AND status <> 'resolved') AS reported`,
+    // "open" written as the partial unique index on (source, source_ref)
+    // writes it, so the open case is found from that index alone
+    `SELECT EXISTS (SELECT 1 FROM moderation_cases
+                     WHERE source IN ('report', 'library_report') AND source_ref = 'library_post:' || $1::uuid::text
+                       AND ${OPEN_CASE_PREDICATE})
+         OR EXISTS (SELECT 1 FROM library_reports
+                     WHERE target_type = 'library_post' AND target_id = $1::uuid AND status = 'open') AS reported`,
     [postId],
   );
   return res.rows[0]!.reported;

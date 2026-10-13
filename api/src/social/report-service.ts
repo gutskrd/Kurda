@@ -1,7 +1,12 @@
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { reportCategoryFrom, stripControlChars } from '@kurda/shared';
+import { AppError } from '../plugins/errors.js';
+import { ReportsService } from '../moderation/reports-service.js';
 
-/** What the reporter says the problem is. Kept short so triage stays fast. */
+/**
+ * What the reporter says the problem is, as the old profile sheet offers it.
+ * The new report sheet (`POST /reports`) has the full list in @kurda/shared.
+ */
 export const REPORT_CATEGORIES = [
   'harassment',
   'spam',
@@ -31,14 +36,28 @@ export type UserReportResult =
  *
  * The reported person is never told, by anything. Same rule as a block, for the
  * same reason: a report that announces itself is a report nobody files.
+ *
+ * Written through the one report service every surface uses
+ * (moderation/reports-service.ts), so the profile is snapshotted and the report
+ * joins its case at once; `user_reports` keeps its history and takes no new
+ * rows. This older route keeps its own rule that a reason is required — the new
+ * sheet asks for a category and makes the note optional.
  */
 export class UserReportService {
-  constructor(private readonly pool: pg.Pool) {}
+  private readonly reports: ReportsService;
+
+  constructor(
+    private readonly pool: pg.Pool,
+    reports?: ReportsService,
+  ) {
+    this.reports = reports ?? new ReportsService(pool);
+  }
 
   /**
-   * File a report. Idempotent per (reporter, reported) — a second report from
-   * the same person is accepted and changes nothing, which is also what stops a
-   * single account inflating a case's weight by reporting over and over.
+   * File a report. While a report of yours about this person is open, another
+   * one is accepted and changes nothing — which also stops one account inflating
+   * a case by reporting over and over. Once it is decided, a new report is a new
+   * incident.
    */
   async report(
     reporterId: string,
@@ -53,25 +72,25 @@ export class UserReportService {
     // the words are the whole case — an empty one is not actionable
     if (clean.length < MIN_REASON_LEN) return { ok: false, reason: 'reason-too-short' };
 
-    const exists = await this.pool.query(
-      `SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL`,
-      [reportedUserId],
-    );
-    if (!exists.rowCount) return { ok: false, reason: 'not-found' };
-
-    const res = await this.pool.query(
-      `INSERT INTO user_reports (reported_user_id, reporter_id, category, reason)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (reported_user_id, reporter_id) DO NOTHING`,
-      [reportedUserId, reporterId, category, clean],
-    );
-    return { ok: true, deduped: (res.rowCount ?? 0) === 0 };
+    try {
+      const { created } = await this.reports.file(reporterId, {
+        targetType: 'user',
+        targetId: reportedUserId,
+        category: reportCategoryFrom(category) ?? 'other',
+        note: clean,
+      });
+      return { ok: true, deduped: !created };
+    } catch (err) {
+      if (err instanceof AppError && err.code === 'TARGET_NOT_FOUND') return { ok: false, reason: 'not-found' };
+      if (err instanceof AppError && err.code === 'SELF_REPORT') return { ok: false, reason: 'self' };
+      throw err;
+    }
   }
 
-  /** Whether this reporter already has an open report about this person. */
+  /** Whether this reporter has an open report about this person. */
   async alreadyReported(reporterId: string, reportedUserId: string): Promise<boolean> {
     const res = await this.pool.query(
-      `SELECT 1 FROM user_reports WHERE reporter_id = $1 AND reported_user_id = $2`,
+      `SELECT 1 FROM reports WHERE reporter_id = $1 AND target_type = 'user' AND target_id = $2 AND status = 'open'`,
       [reporterId, reportedUserId],
     );
     return (res.rowCount ?? 0) > 0;

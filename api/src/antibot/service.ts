@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { confirmBot } from '../moderation/sources.js';
 import { scoreAccount, type BotScore } from './scoring.js';
 import { deriveSignals, MIN_SAMPLE, type SignalInput } from './signals.js';
 
@@ -79,20 +80,9 @@ export class BotDetectionService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const bal = await client.query<{ xp: number }>(`SELECT xp FROM users WHERE id = $1 FOR UPDATE`, [userId]);
-      const xp = bal.rows[0]?.xp ?? 0;
-      if (xp > 0) {
-        // compensating negative ledger entry keeps users.xp == ledger sum
-        await client.query(
-          `INSERT INTO xp_ledger (user_id, source, amount, ref_id) VALUES ($1, 'bot_reversal', $2, $3)`,
-          [userId, -xp, `bot:${userId}:${Date.now()}`],
-        );
-        await client.query(`UPDATE users SET xp = xp + $2 WHERE id = $1`, [userId, -xp]);
-      }
-      await client.query(
-        `UPDATE bot_scores SET status = 'confirmed', resolved_at = now(), resolved_by = $2 WHERE user_id = $1`,
-        [userId, adminId],
-      );
+      // the same steps the moderation queue takes for a confirmed bot case;
+      // the compensating negative ledger entry keeps users.xp == ledger sum
+      const xp = await confirmBot(client, userId, adminId);
       await client.query('COMMIT');
       return xp;
     } catch (err) {

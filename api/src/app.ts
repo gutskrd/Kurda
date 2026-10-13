@@ -95,8 +95,8 @@ import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
 import { registerAiModerationRoutes, registerImageModerationRoutes } from './moderation/ai-routes.js';
-import { ModerationQueueService } from './moderation/queue-service.js';
-import { registerModerationQueueRoutes } from './moderation/queue-routes.js';
+import { registerModeration, type ModerationOptions } from './moderation/wire.js';
+import { setModerationKey } from './moderation/pseudonym.js';
 import { BotDetectionService } from './antibot/service.js';
 import { registerAntibotRoutes } from './antibot/routes.js';
 import { registerLibraryRoutes } from './library/routes.js';
@@ -188,11 +188,15 @@ export interface BuildAppOptions {
    * 202 does start it, because returning before the work finishes is the point.
    */
   ferheng?: FerhengSource;
+  /** Test seams for moderation: the moderator count and the urgent-report mailer. */
+  moderation?: ModerationOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
   // the lesson shuffle is keyed with a server secret, never with what the client sees
   setShuffleKey(config.JWT_SECRET);
+  // and moderation's pseudonyms and banned-address hashes, with the same secret
+  setModerationKey(config.JWT_SECRET);
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
@@ -394,7 +398,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // friend + social + activity-feed routes
     registerFriendRoutes(app, friends);
-    registerSocialRoutes(app, new SocialService(app.db, friends));
+    // reports, cases, sanctions and appeals: one report service behind every
+    // report button, old and new
+    const moderationKit = registerModeration(app, config, options.moderation);
+    registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports });
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
@@ -411,8 +418,6 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // provider-pluggable; image consumers call ImageModerationService.scan at
     // finalize to gate visibility before serving
     registerImageModerationRoutes(app, new ImageModerationService(app.db));
-    // unified moderation queue (KUR-102): reports + anti-cheat + auto-flags
-    registerModerationQueueRoutes(app, new ModerationQueueService(app.db));
     // behavioral bot detection (KUR-110): scoring + CAPTCHA gating + ledger reversal
     registerAntibotRoutes(app, new BotDetectionService(app.db));
     // community library (KUR-281): stories & poems authoring + browsing;
@@ -421,7 +426,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // threaded comments on library posts (KUR-283)
     registerLibraryCommentRoutes(app, undefined, aiMod, trust);
     // community library reporting → unified moderation queue (KUR-285)
-    registerLibraryReportRoutes(app);
+    registerLibraryReportRoutes(app, moderationKit.reports);
     // community image & meme sharing (KUR-290): content model + cost-safe
     // through-server upload (KUR-291)
     registerImagePostRoutes(app, config, undefined, aiMod, trust);
@@ -429,7 +434,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // and auto-screened like library comments (#293/#295)
     registerImageInteractionRoutes(app, undefined, undefined, aiMod, trust);
     // image/meme reporting → unified moderation queue (KUR-292)
-    registerImageReportRoutes(app);
+    registerImageReportRoutes(app, moderationKit.reports);
     // user tags & badges (KUR-286): main-tag precedence + claimable tags
     registerTagRoutes(app);
     registerGroupRoutes(app, groups, trust);
@@ -590,7 +595,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(reminderSweep));
     // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
-    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp!);
+    // (sharing the moderation services, so the second-approval count is the same here)
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
@@ -638,7 +644,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
 
     // chat moderation (KUR-086): profanity filter + reports + escalation mutes
-    const moderation = new ModerationService(app.db);
+    const moderation = new ModerationService(app.db, { reports: moderationKit.reports });
     registerModerationRoutes(app, moderation);
 
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
@@ -678,6 +684,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
           publish: (r, ev) => realtime.publish(r, ev),
         },
         inbox,
+        moderation,
         log: app.log,
       },
       (k) => (app.storage ? app.storage.publicUrl(k) : null),

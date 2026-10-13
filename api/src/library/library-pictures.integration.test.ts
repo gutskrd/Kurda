@@ -206,6 +206,10 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     await refused(await upload(me, { scanStatus: 'gated' }));
     await refused(await upload(me, { scanStatus: 'blocked' }));
     await refused(await upload(me, { scanStatus: 'pending' }));
+    // taken off the public bucket by moderation, though the scan cleared it
+    const quarantined = await upload(me);
+    await pool.query(`UPDATE media_uploads SET quarantine_state = 'pending', preserve_evidence = true WHERE key = $1`, [quarantined]);
+    await refused(quarantined);
 
     // a profile photo (its key is in its public address), a voice note, and an
     // upload from before uploads had owners
@@ -315,10 +319,19 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
       expect(storage.objects.has(key)).toBe(true);
     }
 
-    // once the report is dealt with, what an edit takes off goes as usual
-    await pool.query(`UPDATE library_reports SET status = 'resolved' WHERE target_id = $1`, [reported.id]);
+    // once the report is dealt with, what an edit takes off goes as usual (a
+    // report is a row in the one reports table now, on its case)
+    await pool.query(
+      `UPDATE moderation_cases SET status = 'no_violation', resolved_at = now() WHERE source_ref = 'library_post:' || $1`,
+      [reported.id],
+    );
+    await pool.query(`UPDATE reports SET status = 'no_violation', closed_at = now() WHERE target_id = $1`, [reported.id]);
     expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [] })).statusCode).toBe(200);
     expect(await confirmed(a)).toBe(false);
+    // ...though the report's snapshot still holds it, so the sweep leaves the
+    // file alone until the evidence's retention lets it go
+    await new MediaService(pool, storage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
+    expect(storage.objects.has(a)).toBe(true);
   });
 
   it('changes words, title, credit and alt text without touching the pictures', async () => {

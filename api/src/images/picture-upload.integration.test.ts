@@ -248,6 +248,32 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     expect(twice.json().code).toBe('MEDIA_IN_USE');
   });
 
+  it('never takes back bytes moderation took down, under any key', async () => {
+    const me = await person('takendown');
+    const other = await person('takendown2');
+    // unsigned, so the two of them upload the very same bytes
+    const bytes = await photo(200);
+    const first = (await upload(me.token, bytes, '?ownWork=false')).json().imageMediaId;
+    expect((await postPicture(me.token, first)).statusCode).toBe(201);
+    // posted again: a key of its own
+    const second = (await upload(me.token, bytes, '?ownWork=false')).json().imageMediaId;
+    expect(second).not.toBe(first);
+    expect((await postPicture(me.token, second)).statusCode).toBe(201);
+
+    // moderation takes the second copy off the public bucket
+    await pool.query(`UPDATE media_uploads SET quarantine_state = 'done' WHERE key = $1`, [second]);
+    const writes = storage.objects.size;
+    // the first key is still fine, but these bytes are not: not as a third
+    // copy of the owner's, and not as somebody else's upload of them
+    for (const res of [await upload(me.token, bytes, '?ownWork=false'), await upload(other.token, bytes, '?ownWork=false')]) {
+      expect(res.statusCode).toBe(422);
+      expect(res.json().code).toBe('IMAGE_REJECTED');
+    }
+    expect(storage.objects.size).toBe(writes);
+    // a different picture is not held against them
+    expect((await upload(other.token, await photo(201), '?ownWork=false')).statusCode).toBe(201);
+  });
+
   it('counts an upload waiting for its post against the storage ceiling', async () => {
     const me = await person('ceiling');
     const usage = new MediaUsageService(pool, null);

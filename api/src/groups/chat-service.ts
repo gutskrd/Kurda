@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { stripControlChars, type ChatGameRef, type ChatMessageExtras } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { assertUnrestricted } from '../moderation/restrictions.js';
 import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
@@ -92,12 +93,15 @@ export class GroupChatService {
   }
 
   /**
-   * Whether this person may post to the group's channel right now — a member
-   * who may use its chat, not muted in the group, not muted from chat — or
-   * the refusal that says why not. Text goes through it, and so does anything
-   * else posted to the channel (a gift), so the rules cannot drift apart.
+   * Whether this person may post to the group's channel right now — not
+   * restricted from chat by moderation (403 MUTED with until when, the answer
+   * the message route's preHandler gives), a member who may use its chat, not
+   * muted in the group, not under the escalation mute — or the refusal that
+   * says why not. Text goes through it, and so does anything else posted to
+   * the channel (a gift, a game card), so the rules cannot drift apart.
    */
   async assertCanPost(groupId: string, userId: string): Promise<void> {
+    await assertUnrestricted(this.pool, userId, 'chat');
     await this.requireMember(groupId, userId);
     if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
     if (this.moderation && (await this.moderation.isChatMuted(userId))) {
@@ -164,9 +168,9 @@ export class GroupChatService {
 
   /**
    * A game card posted to the group (contract §B3): the host shared a lobby
-   * here. No text, so the text pipeline is skipped; membership, the group's
-   * own mutes and an escalation mute apply exactly as to a message, and it is
-   * published to the room like one.
+   * here. No text, so the text pipeline is skipped; a moderation chat mute,
+   * membership, the group's own mutes and an escalation mute apply exactly as
+   * to a message (`assertCanPost`), and it is published to the room like one.
    */
   async sendCard(
     userId: string,
@@ -174,11 +178,7 @@ export class GroupChatService {
     card: ChatGameRef,
     publicUrl: PublicUrl = () => null,
   ): Promise<GroupMessage> {
-    await this.requireMember(groupId, userId);
-    if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
-    if (this.moderation && (await this.moderation.isChatMuted(userId))) {
-      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
-    }
+    await this.assertCanPost(groupId, userId);
     const row = await this.pool.query<{
       id: string; created_at: Date; username: string;
       profile_photo_key: string | null; selected_avatar_key: string | null;

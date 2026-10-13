@@ -210,3 +210,10 @@ export * from './typing.js';
  * never tied to the stars, and the admin's feedback inbox.
  */
 export * from './feedback.js';
+
+/**
+ * Reports, moderation cases, sanctions and appeals: the categories and their
+ * priorities, what can be reported, what each sanction stops, the standing and
+ * appeal shapes the apps show, and the case shapes the admin panel reads.
+ */
+export * from './reports.js';

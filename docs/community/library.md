@@ -81,8 +81,10 @@ post after its first post was deleted (the removed post keeps its own file).
   left out is let go to the orphan sweep (its owner can post it again within the
   day) — unless a moderator still has to see it: on a post with an open report
   or an unresolved case, or flagged by its scan, it is kept, as a removed
-  post's pictures are. An edit is checked as the post it would leave, so it can
-  be refused for the same reasons a new post can.
+  post's pictures are. A picture a report's evidence holds is not deleted by
+  the sweep either, until the evidence's retention ends, even after an edit
+  lets it go. An edit is checked as the post it would leave, so it can be
+  refused for the same reasons a new post can.
 - **Answers**: every post carries `media: [{ mediaKey, url, altText, width,
   height }]`, `meme`, `sourceCredit` and `audioUrl`, beside the fields it always
   had.
@@ -104,12 +106,13 @@ post after its first post was deleted (the removed post keeps its own file).
 | 422 | `TOO_LONG` | a field over its limit; with `field` and `max` |
 | 422 | `TOO_MANY_PICTURES` | more than four; with `max` |
 | 422 | `MEME_NEEDS_PICTURE` | `meme` on a post with no pictures |
-| 422 | `INVALID_MEDIA` | not the author's own cleared picture upload; with `mediaKey` |
+| 422 | `INVALID_MEDIA` | not the author's own cleared picture upload, or one moderation took off the bucket; with `mediaKey` |
 | 422 | `MEDIA_IN_USE` | already on a post, or twice in this one; with `mediaKey` |
-| 422 | `INVALID_AUDIO` | the narration is not a confirmed audio upload |
+| 422 | `INVALID_AUDIO` | the narration is not a confirmed audio upload, or moderation took it down |
 | 429 | `TRUST_VELOCITY` | posting faster than the account's trust level allows |
 | 429 | `DRAFT_LIMIT` | saving a draft with 20 unfinished ones already |
 | 403 | `AUTO_MODERATED` | the account was just restricted for spam |
+| 403 | `MUTED` | a post mute (posting, editing, publishing), or a feature limit when the post or the edit adds pictures or a voice note, or a draft carrying them is published; `details: { scope, until }` |
 
 An invalid edit answers 422 with its reason (it used to answer 403 "not your
 post"). Nothing of a refused post is kept, and none of its pictures are claimed.
@@ -130,6 +133,16 @@ post or caption are not: nothing is counted against them or remembered as their
 words, and their edit is not flagged under the author's name. Staff publishing
 somebody's draft put the author's words up, so those are screened as the
 author's, and counted against nobody.
+
+## Reports
+
+A report on a written post freezes it as the reporter saw it: the words, the
+title and credit, and the pictures in order with their alt text
+(`moderation/evidence.ts`). Those pictures are kept from every cleanup while
+the evidence is, so editing them off or deleting the post takes nothing from
+the case. Moderation taking a picture down removes every post it is on,
+written or picture post, and every other upload of the same bytes
+(`moderation/content-removal.ts`).
 
 ## On the wall (`GET /feed`)
 

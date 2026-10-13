@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { requireAuth } from '../plugins/auth.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import { audioLimits } from './mediaLimits.js';
@@ -28,7 +29,7 @@ export function registerVoiceRoutes(app: FastifyInstance, config: AppConfig): vo
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: requireAuth,
+      preHandler: [requireAuth, requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');

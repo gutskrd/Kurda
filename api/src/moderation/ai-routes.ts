@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireRoles } from '../plugins/auth.js';
+import { requireAuth } from '../plugins/auth.js';
+import { requireCapability } from '../admin/routes.js';
+
+/** Moderators, superadmins and the legacy admin role (it used to be only the last). */
+const moderators = [requireAuth, requireCapability('moderation.act')];
 import type { AiModerationService } from './ai-service.js';
 import type { ImageModerationService } from './image-moderation-service.js';
 
@@ -12,7 +16,7 @@ import type { ImageModerationService } from './image-moderation-service.js';
 export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModerationService): void {
   app.get(
     '/admin/moderation/flags',
-    { config: { skipValidation: true }, preHandler: requireRoles('admin') },
+    { config: { skipValidation: true }, preHandler: moderators },
     async () => ({ flags: await ai.pending() }),
   );
 
@@ -23,7 +27,7 @@ export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModeratio
         params: z.object({ id: z.uuid() }),
         body: z.object({ outcome: z.enum(['actioned', 'reversed']) }),
       },
-      preHandler: requireRoles('admin'),
+      preHandler: moderators,
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
@@ -43,7 +47,7 @@ export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModeratio
 export function registerImageModerationRoutes(app: FastifyInstance, images: ImageModerationService): void {
   app.get(
     '/admin/moderation/image-flags',
-    { config: { skipValidation: true }, preHandler: requireRoles('admin') },
+    { config: { skipValidation: true }, preHandler: moderators },
     async () => ({ flags: await images.pending() }),
   );
 
@@ -54,7 +58,7 @@ export function registerImageModerationRoutes(app: FastifyInstance, images: Imag
         params: z.object({ id: z.uuid() }),
         body: z.object({ outcome: z.enum(['actioned', 'reversed']) }),
       },
-      preHandler: requireRoles('admin'),
+      preHandler: moderators,
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };

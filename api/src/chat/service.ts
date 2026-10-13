@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import { stripControlChars, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { assertUnrestricted } from '../moderation/restrictions.js';
 import { giftCards } from '../gifts/cards.js';
 import { gameRef, previewText, type KindColumns } from './kinds.js';
 import { canonicalPair } from '../friends/pair.js';
@@ -156,11 +157,14 @@ export class ChatService {
    * The text pipeline — length, the profanity mask, trust and AI screening —
    * has nothing to read and is skipped. Who may message whom is not: friends
    * only, a block drops it silently (the sender sees it as sent, as with any
-   * message), and an escalation mute applies as it does to text. Delivered live
-   * like any DM.
+   * message), and a chat mute applies as it does to text — the moderation
+   * mute with the same answer a message gets (403 MUTED, until when; the
+   * message route asks it in a preHandler, a card has no route of its own),
+   * then the escalation mute. Delivered live like any DM.
    */
   async sendCard(from: string, to: string, card: ChatGameRef, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
     if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
+    await assertUnrestricted(this.pool, from, 'chat');
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }

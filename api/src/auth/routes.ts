@@ -5,6 +5,8 @@ import { AppError } from '../plugins/errors.js';
 import { verifyCaptcha } from './captcha.js';
 import { isDisposableEmail } from './disposable-domains.js';
 import { OAuthService } from './oauth.js';
+import { signupRejected } from './rejections.js';
+import { isBannedEmail } from '../moderation/ban-registry.js';
 import { AuthService } from './service.js';
 import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
@@ -58,12 +60,6 @@ export const registerBodySchema = z.object({
   birthYear: birthYearSchema,
   birthMonth: birthMonthSchema,
 });
-
-/** One generic rejection for every anti-bot check — never reveals
- *  whether CAPTCHA, blocklist or anything else fired (KUR-025). */
-function signupRejected(): AppError {
-  return new AppError('SIGNUP_REJECTED', 400, 'registration could not be completed');
-}
 
 export const loginBodySchema = z.object({
   email: z.email().max(254),
@@ -141,6 +137,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         deviceId: deviceIdOf(req.headers),
       });
       if (assessment.hardBlock) throw signupRejected();
+      // a permanently banned person's address (or a +tag/dot variant of it)
+      if (await isBannedEmail(app.db, body.email)) throw signupRejected();
 
       const result = await service.register(body);
       await risk.attachUser(decisionId, result.user.id).catch((err) => {

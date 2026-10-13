@@ -10,10 +10,18 @@ import {
   type TrustLevel,
 } from './levels.js';
 import { countNearIdentical, evaluateSpam, type AbuseAction } from './spam.js';
+import { SanctionsService, activeRestriction } from '../moderation/sanctions-service.js';
+import { inTransaction } from '../moderation/tx.js';
 
 /** Auto-mute / auto-suspend durations. */
 export const AUTO_MUTE_MS = 60 * 60 * 1000; // 1 hour
 export const AUTO_SUSPEND_MS = 24 * 60 * 60 * 1000; // 1 day
+
+/** What the person is told: what we saw, what it means, that it ends by itself. */
+const AUTO_MUTE_STATEMENT =
+  "We noticed the same message or post many times in a short while, which looks like spam. For an hour you can't send messages, post or comment. After that, everything works again.";
+const AUTO_SUSPEND_STATEMENT =
+  'We kept seeing the same message or post again and again, which looks like spam, so your account is paused for a day.';
 /** Rolling window for burst/duplicate content tracking. */
 export const BURST_WINDOW_MS = 60 * 1000;
 const RECENT_CONTENT_MAX = 50;
@@ -34,9 +42,12 @@ export interface SpamOutcome {
  * Orchestrates the pure cores (`levels.ts`, `spam.ts`) at the write boundary:
  * computes a per-request trust level from account facts, enforces per-level
  * action velocity caps (rolling counts in Redis), and detects duplicate/burst
- * spam — auto-muting (`users.muted_until`) or auto-suspending (ban, which
- * revokes sessions) obvious bots and logging every automated action to
- * `admin_actions` (admin_id NULL) so it is visible + reversible (#101/#104).
+ * spam — auto-muting or auto-suspending (ban, which revokes sessions) obvious
+ * bots. Both are automatic sanctions now: the person gets the statement of
+ * reasons (marked automatic, not yet reviewed by a person), sees it on their
+ * standing page and can ask for a review; the enforced columns and the
+ * `admin_actions` row (admin_id NULL) come from the sanctions service, so it is
+ * visible + reversible (#101/#104) like any other.
  *
  * Without Redis the velocity/spam signals read as empty (fail-open) — enforced
  * in the integration environment where Redis is configured.
@@ -45,11 +56,13 @@ export class TrustService {
   private readonly pool: pg.Pool;
   private readonly redis?: Redis;
   private readonly now: () => Date;
+  private readonly sanctions: SanctionsService;
 
   constructor(pool: pg.Pool, deps: { redis?: Redis; now?: () => Date } = {}) {
     this.pool = pool;
     this.redis = deps.redis;
     this.now = deps.now ?? (() => new Date());
+    this.sanctions = new SanctionsService(pool);
   }
 
   /** Effective trust level from account age + verification + violation history. */
@@ -124,33 +137,49 @@ export class TrustService {
 
   // ---- enforcement ----------------------------------------------------------
 
+  /**
+   * Spam lands wherever text does, so the mute covers both: messages (a chat
+   * mute) and posts and comments (a post mute), for the same hour. One notice
+   * says so; a second sanction is recorded without repeating it. Each is skipped
+   * while one of its kind is already in force — one sanction and one notice per
+   * incident, not one per message — so someone an admin muted in chat who now
+   * spams the library is still stopped there. The check runs under the
+   * person's lock, so a burst of messages arriving at once mutes them once.
+   */
   private async autoMute(userId: string): Promise<void> {
-    const until = new Date(this.now().getTime() + AUTO_MUTE_MS);
-    await this.pool.query(`UPDATE users SET muted_until = $2 WHERE id = $1`, [userId, until]);
-    await this.logAction(userId, 'auto_mute', 'spam: repeated/burst content', { until: until.toISOString() });
+    const common = {
+      userId,
+      policy: 'spam' as const,
+      statement: AUTO_MUTE_STATEMENT,
+      internalNote: 'spam: repeated/burst content',
+      durationHours: AUTO_MUTE_MS / 3_600_000,
+      createdBy: null,
+      origin: 'automatic' as const,
+      auditAction: 'auto_mute',
+    };
+    await inTransaction(this.pool, async (client) => {
+      if (!(await this.sanctions.lockPerson(client, userId))) return;
+      const kinds: Array<'chat_mute' | 'post_mute'> = [];
+      if (!(await activeRestriction(client, userId, 'chat'))) kinds.push('chat_mute');
+      if (!(await activeRestriction(client, userId, 'post'))) kinds.push('post_mute');
+      for (const [i, kind] of kinds.entries()) await this.sanctions.apply(client, { ...common, kind, notify: i === 0 });
+    });
   }
 
+  /** A day's suspension: ban + every live session revoked (KUR-016), as an automatic sanction. */
   private async autoSuspend(userId: string): Promise<void> {
-    const until = new Date(this.now().getTime() + AUTO_SUSPEND_MS);
-    // ban + revoke every live session in one shot (KUR-016 token_version)
-    await this.pool.query(
-      `UPDATE users SET banned_at = now(), banned_until = $2, token_version = token_version + 1 WHERE id = $1`,
-      [userId, until],
-    );
-    await this.logAction(userId, 'auto_suspend', 'spam: repeated/burst content', { until: until.toISOString() });
-  }
-
-  /** System moderation entry (admin_id NULL) — reversible + visible in history. */
-  private async logAction(
-    userId: string,
-    action: 'auto_mute' | 'auto_suspend',
-    reason: string,
-    meta: Record<string, unknown>,
-  ): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO admin_actions (target_user_id, admin_id, action, reason, meta)
-       VALUES ($1, NULL, $2, $3, $4::jsonb)`,
-      [userId, action, reason, JSON.stringify(meta)],
+    await inTransaction(this.pool, (client) =>
+      this.sanctions.apply(client, {
+        userId,
+        kind: 'suspension',
+        policy: 'spam',
+        statement: AUTO_SUSPEND_STATEMENT,
+        internalNote: 'spam: repeated/burst content',
+        durationHours: AUTO_SUSPEND_MS / 3_600_000,
+        createdBy: null,
+        origin: 'automatic',
+        auditAction: 'auto_suspend',
+      }),
     );
   }
 

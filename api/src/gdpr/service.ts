@@ -10,6 +10,7 @@ import { handOnGroup } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
 import { exportPosts } from './posts-export.js';
+import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -163,6 +164,9 @@ export class GdprService {
       client.release();
     }
     await this.deleteFiles(files);
+    // what a report still holds as evidence leaves the public bucket now, and
+    // is deleted with the evidence (the five-minute sweep retries a failure)
+    await runQuarantine(this.pool, this.deps.storage, { log: this.deps.log });
     return files.length;
   }
 
@@ -360,6 +364,12 @@ export class GdprService {
  * keys nobody else uses any more, already marked as orphans, for the caller to
  * delete from storage once this has committed.
  *
+ * A file a report still holds as evidence is not returned: it is marked as an
+ * orphan all the same (the sweep leaves it alone while the evidence is kept,
+ * and takes it once the retention lets it go), and it is quarantined — taken
+ * off the public bucket into private storage — since nothing may show the
+ * child's picture any more, and the bucket would otherwise go on serving it.
+ *
  * Posts and pictures go with the comments, reactions and likes on them. The
  * child's own comments on other people's posts are emptied the way a deleted
  * comment is (the tombstone keeps the replies under it in place) and no longer
@@ -382,9 +392,9 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   );
   // the pictures on their written posts, and every other picture they uploaded
   // for a post: never posted (the sweep would take those in a day; a closed
-  // account's go now), or taken off a reported post and kept for its case
-  // TODO(moderation): filter these by media_uploads.preserve_evidence like the
-  // keys above once the moderation branch's column is here
+  // account's go now), or taken off a reported post and kept for its case —
+  // a report's evidence marks those, so they are quarantined below like any
+  // other file held as evidence
   const pictures = await executor.query<{ key: string }>(
     `SELECT m.media_key AS key FROM library_post_media m JOIN library_posts p ON p.id = m.post_id WHERE p.author_id = $1
      UNION SELECT key FROM media_uploads WHERE uploader_id = $1`,
@@ -515,25 +525,30 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   );
 
   // files nobody else uses (keys are content hashes, so two people can share
-  // one) and that are not held as evidence, marked as orphans
-  const unused = await executor.query<{ key: string }>(
-    `SELECT k.key FROM unnest($1::text[]) AS k(key)
+  // one), marked as orphans; the ones held as evidence are quarantined instead
+  // of deleted
+  const unused = await executor.query<{ key: string; evidence: boolean }>(
+    `SELECT k.key,
+            (EXISTS (SELECT 1 FROM media_uploads m WHERE m.key = k.key AND m.preserve_evidence)
+             OR EXISTS (SELECT 1 FROM image_scans s WHERE s.media_key = k.key AND s.preserve_evidence)) AS evidence
+       FROM unnest($1::text[]) AS k(key)
       WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.profile_photo_key = k.key)
         AND NOT EXISTS (SELECT 1 FROM image_posts i WHERE i.image_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.media_key = k.key)
-        AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = k.key)
-        AND NOT EXISTS (SELECT 1 FROM image_scans s WHERE s.media_key = k.key AND s.preserve_evidence)`,
+        AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = k.key)`,
     // once each: an old picture post's upload is both its picture and one of
     // their uploads, and a key twice would fail the marking below
     [[...new Set([...keys.rows, ...pictures.rows].map((r) => r.key))]],
   );
-  const files = [...unused.rows.map((r) => r.key), ...exports.rows.map((r) => r.key)];
+  const evidence = unused.rows.filter((r) => r.evidence).map((r) => r.key);
+  const files = [...unused.rows.filter((r) => !r.evidence).map((r) => r.key), ...exports.rows.map((r) => r.key)];
   await q(
     `INSERT INTO media_uploads (key, content_type, content_length, created_at)
      SELECT k, 'application/octet-stream', 0, now() - interval '2 days' FROM unnest($1::text[]) AS k
      ON CONFLICT (key) DO UPDATE SET confirmed_at = NULL, created_at = now() - interval '2 days'`,
-    [files],
+    [[...files, ...evidence]],
   );
+  await requestQuarantine(executor, evidence);
   return files;
 }

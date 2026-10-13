@@ -100,3 +100,14 @@ describe('branded auth emails', () => {
     expect(r.text).toContain('<script>'); // plain text needs no escaping
   });
 });
+
+describe('the urgent-report email to moderators', () => {
+  it('carries a link and nothing from the report', () => {
+    for (const locale of EMAIL_LOCALES) {
+      const r = renderEmail('moderation-urgent', locale, { link: 'https://admin.example/#/moderation/abc' });
+      expect(r.text, locale).toContain('https://admin.example/#/moderation/abc');
+      expect(r.text, locale).not.toMatch(/\{[a-z]+\}/);
+    }
+    expect(renderEmail('moderation-urgent', 'en').subject).toBe('A new urgent report needs review');
+  });
+});

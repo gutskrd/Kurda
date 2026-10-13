@@ -86,9 +86,17 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
   }
 
+  const existing = await pool.query<{ confirmed: boolean; taken_down: boolean }>(
+    `SELECT confirmed_at IS NOT NULL AS confirmed, (scan_status = 'blocked' OR quarantine_state IS NOT NULL) AS taken_down
+       FROM media_uploads WHERE key = $1`,
+    [key],
+  );
+  // the same bytes moderation took down are not put back on the public bucket
+  if (existing.rows[0]?.taken_down) {
+    return reject(422, 'MEDIA_REJECTED', 'this file was removed by moderation', 'moderation');
+  }
   // identical bytes already stored + confirmed → reuse, no new R2 write
-  const existing = await pool.query(`SELECT 1 FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`, [key]);
-  if ((existing.rowCount ?? 0) > 0) {
+  if (existing.rows[0]?.confirmed) {
     return { ok: true, mediaId: key, url: storage.publicUrl(key), contentType: sniffed, reused: true };
   }
 

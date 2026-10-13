@@ -19,6 +19,8 @@ import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
 import { LockoutService } from './lockout.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
+import { currentBan } from '../moderation/sanctions-service.js';
+import { suspendedError, suspensionError } from '../moderation/suspension.js';
 
 /** Verified against when the user doesn't exist, so login latency doesn't
  *  reveal account existence. */
@@ -431,6 +433,12 @@ export class AuthService {
 
     await this.lockouts.clear('account', user.id);
 
+    // A banned account is told so — with why, until when, and a token that can
+    // only ask for a review — instead of being handed a session the next request
+    // refuses. After the password, so the answer reveals nothing to a guesser.
+    const suspended = await suspensionError(this.config, this.pool, user);
+    if (suspended) throw suspended;
+
     // a returning user keeps their account: logging in during the
     // deletion grace period cancels the deletion (KUR-024)
     const cancelled = await this.pool.query(
@@ -475,6 +483,31 @@ export class AuthService {
         throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
       }
 
+      // A ban ends refreshing: the account is told why (403 ACCOUNT_SUSPENDED,
+      // with the appeal token) rather than "your session was stolen". Checked
+      // before the reuse rule because a ban revokes every refresh token — the
+      // phone's next refresh presents one of those, and it must land on the
+      // suspension screen, not the sign-in form. Every token the account still
+      // holds is revoked (a ban written straight to the account left them live).
+      //
+      // But only for a token the account could still have used: unexpired, and
+      // either live or ended by the ban itself (revoked when the ban began, not
+      // rotated). Any other — rotated long ago, revoked as stolen, expired —
+      // gets the answer it always got: the appeal token reads the person's
+      // standing and files their one appeal per decision, which is not for
+      // whoever kept an old token.
+      const owner = await this.users.findById(row.user_id);
+      const ban = owner ? await currentBan(client, owner.id) : null;
+      if (owner && ban) {
+        const unexpired = new Date(row.expires_at).getTime() >= Date.now();
+        const endedByBan = row.revoked_at !== null && row.replaced_by === null && new Date(row.revoked_at).getTime() >= ban.since.getTime();
+        if (unexpired && (row.revoked_at === null || endedByBan)) {
+          await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [row.user_id]);
+          await client.query('COMMIT');
+          throw await suspendedError(this.config, owner, ban);
+        }
+      }
+
       if (row.revoked_at || row.replaced_by) {
         // reuse of a rotated token — assume the family is compromised
         await client.query(
@@ -491,7 +524,7 @@ export class AuthService {
         throw new AppError('REFRESH_EXPIRED', 401, 'refresh token expired');
       }
 
-      const user = await this.users.findById(row.user_id);
+      const user = owner;
       if (!user) {
         await client.query('ROLLBACK');
         throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');

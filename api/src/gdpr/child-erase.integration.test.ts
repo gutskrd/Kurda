@@ -18,7 +18,8 @@ import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { canonicalPair } from '../friends/pair.js';
-import type { MediaStorage } from '../media/storage.js';
+import { evidenceObjectKey } from '../moderation/pseudonym.js';
+import { FakeStorage } from '../test/fake-storage.js';
 import { GdprService } from './service.js';
 import { deleteStories, insertStory } from '../test/story-fixtures.js';
 import { giftCards } from '../gifts/cards.js';
@@ -373,12 +374,19 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       [[s.keys.photo, s.keys.voice, s.keys.picture, s.keys.commentVoice]],
     );
     expect(files.rows.map((r) => r.due)).toEqual([true, true, true, true]);
-    // but not a file somebody else uses, nor one held as evidence
+    // but not a file somebody else uses
     const kept = await pool.query<{ key: string }>(
       `SELECT key FROM media_uploads WHERE key = ANY($1::text[]) AND confirmed_at IS NOT NULL`,
       [[s.keys.shared, s.keys.evidence]],
     );
-    expect(kept.rows.map((r) => r.key).sort()).toEqual([s.keys.shared, s.keys.evidence].sort());
+    expect(kept.rows.map((r) => r.key)).toEqual([s.keys.shared]);
+    // and one held as evidence is kept, but no longer served: on its way to
+    // private storage, and out of the sweep's reach while the evidence is kept
+    const held = await pool.query<{ preserve_evidence: boolean; quarantine_state: string | null }>(
+      `SELECT preserve_evidence, quarantine_state FROM media_uploads WHERE key = $1`,
+      [s.keys.evidence],
+    );
+    expect(held.rows[0]).toEqual({ preserve_evidence: true, quarantine_state: 'pending' });
 
     // and the session is over
     const me = await app.inject({
@@ -516,17 +524,20 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
 
   it('deletes the files from storage at once, leaving any it could not to the sweep', async () => {
     const s = await seedChild('store');
-    const deleted: string[] = [];
-    const storage = {
-      delete: async (k: string) => {
-        if (k === s.keys.voice) throw new Error('storage is down');
-        deleted.push(k);
-      },
-    } as unknown as MediaStorage;
+    const fake = new FakeStorage();
+    for (const k of Object.values(s.keys)) fake.upload(k);
+    const remove = fake.delete.bind(fake);
+    fake.delete = async (k: string) => {
+      if (k === s.keys.voice) throw new Error('storage is down');
+      await remove(k);
+    };
 
-    await new GdprService(pool, { storage }).closeNow(s.child.id, 'under_minimum_age');
+    await new GdprService(pool, { storage: fake.asStorage }).closeNow(s.child.id, 'under_minimum_age');
 
-    expect(deleted.sort()).toEqual([s.keys.photo, s.keys.picture, s.keys.commentVoice].sort());
+    // what is still public: the file that failed, and the one somebody else uses —
+    // the evidence went to private storage instead of being deleted
+    expect([...fake.publicObjects.keys()].sort()).toEqual([s.keys.voice, s.keys.shared].sort());
+    expect(fake.evidence.has(evidenceObjectKey(s.keys.evidence))).toBe(true);
     // deleted ones leave no record behind; the one that failed is due for the sweep
     const left = await pool.query<{ key: string; confirmed: boolean }>(
       `SELECT key, confirmed_at IS NOT NULL AS confirmed FROM media_uploads WHERE key = ANY($1::text[])`,
@@ -535,7 +546,12 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     expect(Object.fromEntries(left.rows.map((r) => [r.key, r.confirmed]))).toEqual({
       [s.keys.voice]: false,
       [s.keys.shared]: true,
-      [s.keys.evidence]: true,
+      [s.keys.evidence]: false,
     });
+    const held = await pool.query<{ preserve_evidence: boolean; quarantine_state: string | null }>(
+      `SELECT preserve_evidence, quarantine_state FROM media_uploads WHERE key = $1`,
+      [s.keys.evidence],
+    );
+    expect(held.rows[0]).toEqual({ preserve_evidence: true, quarantine_state: 'done' });
   });
 });
