@@ -516,11 +516,11 @@ export class GiftService {
   /**
    * The recipient unwraps their gift: it is opened (and seen, which clears the
    * badge), and the card comes back with what they can put on. The sender
-   * hears about it once — `gift_opened` on their own channel — and so does a
-   * group the gift is in (`group_msg_gift_opened {groupId, messageId,
-   * batchId}`), so every member's card can show it; the card itself is per
-   * viewer, so members fetch theirs (`GET /gifts/batches/:batchId`) rather
-   * than being sent one.
+   * hears about it once — `gift_opened` on their own channel, unless a block
+   * now stands between them — and so does a group the gift is in
+   * (`group_msg_gift_opened {groupId, messageId, batchId}`), so every
+   * member's card can show it; the card itself is per viewer, so members
+   * fetch theirs (`GET /gifts/batches/:batchId`) rather than being sent one.
    */
   async open(userId: string, giftId: string): Promise<{ card: GiftCard; equippable: EquippableCategory | null }> {
     const opened = await this.pool.query<{ batch_id: string; from_user_id: string | null }>(
@@ -547,9 +547,16 @@ export class GiftService {
     const first = opened.rows[0];
     if (first) {
       const warn = (err: unknown) => this.deps.log?.warn({ err, giftId }, 'gift opened, but telling people failed');
-      if (first.from_user_id) {
+      const from = first.from_user_id;
+      if (from) {
+        // Not when a block now stands between the two of them: opening a
+        // present is the recipient's activity, which a block keeps from the
+        // other side. Silently, as a block is — the gift opens all the same.
         const event: GiftUserEvent = { type: 'gift_opened', batchId, giftId };
-        await this.deps.realtime.notifyUser(first.from_user_id, event).catch(warn);
+        await this.deps.friends
+          .areBlocked(userId, from)
+          .then((blocked) => (blocked ? undefined : this.deps.realtime.notifyUser(from, event)))
+          .catch(warn);
       }
       if (where?.kind === 'group') {
         await this.deps.realtime
@@ -569,17 +576,30 @@ export class GiftService {
    * One gift card, for someone who can see the message it is on: its sender,
    * a recipient, or someone who reads the group it was posted in. Anyone else
    * is told there is no such gift.
+   *
+   * A gift between two people — in their direct messages, or from the shop
+   * before gifts were in the chat — is part of their conversation, and a
+   * block between them hides it from both as it hides the thread: otherwise
+   * the person blocked could keep asking for the card, and read on it the
+   * other's name, current picture, and whether they have opened it. A group's
+   * gifts follow the group, which a block between two members does not hide.
    */
   async batchCard(viewerId: string, batchId: string): Promise<GiftCard> {
-    const parties = await this.pool.query<{ party: boolean }>(
-      `SELECT bool_or(from_user_id = $2 OR to_user_id = $2) AS party FROM gifts WHERE batch_id = $1`,
-      [batchId, viewerId],
+    const rows = await this.pool.query<{ from_user_id: string | null; to_user_id: string }>(
+      `SELECT from_user_id, to_user_id FROM gifts WHERE batch_id = $1`,
+      [batchId],
     );
-    const party = parties.rows[0]?.party;
-    if (party == null) throw giftNotFound();
+    if (rows.rows.length === 0) throw giftNotFound();
+    const gave = rows.rows.some((r) => r.from_user_id === viewerId);
+    const party = gave || rows.rows.some((r) => r.to_user_id === viewerId);
     const where = await batchChat(this.pool, batchId);
-    if (!party && !(where?.kind === 'group' && (await this.deps.groupChat.canRead(where.groupId, viewerId)))) {
-      throw giftNotFound();
+    if (where?.kind === 'group') {
+      if (!party && !(await this.deps.groupChat.canRead(where.groupId, viewerId))) throw giftNotFound();
+    } else {
+      if (!party) throw giftNotFound();
+      const others = gave ? rows.rows.map((r) => r.to_user_id) : rows.rows.flatMap((r) => r.from_user_id ?? []);
+      const blocked = await Promise.all(others.map((other) => this.deps.friends.areBlocked(viewerId, other)));
+      if (blocked.some(Boolean)) throw giftNotFound();
     }
     const card = await this.card(batchId, { id: viewerId, seesEveryone: await this.seesEveryone(where, viewerId) });
     if (!card) throw giftNotFound();

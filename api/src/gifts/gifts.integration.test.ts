@@ -80,7 +80,7 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
     );
   };
 
-  const call = (method: 'GET' | 'POST', url: string, who: Account, payload?: unknown) =>
+  const call = (method: 'GET' | 'POST' | 'DELETE', url: string, who: Account, payload?: unknown) =>
     app.inject({
       method,
       url,
@@ -417,6 +417,50 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       await befriend(unknown, bea);
       await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [unknown.id]);
       expect((await giftDm(unknown, bea, POWER)).statusCode).toBe(428);
+    });
+  });
+
+  describe('a block after the gift', () => {
+    // A block is silent and absolute: the direct messages between the two
+    // are hidden from both, and a gift in them is part of that thread.
+    let sid: Account;
+    let ria: Account; // fifteen
+    let batchId = '';
+    let giftId = '';
+
+    beforeAll(async () => {
+      sid = await signUp('sid');
+      ria = await signUp('ria', bornYearsAgo(15));
+      await befriend(ria, sid, 25);
+      await fund(sid);
+      const res = await giftDm(sid, ria, BG);
+      expect(res.json().sent).toEqual([ria.id]);
+      batchId = res.json().batchId;
+      giftId = (await giftRows(sid))[0]!.id;
+      const block = await call('POST', `/friends/${sid.id}/block`, ria);
+      expect(block.statusCode).toBe(200);
+    });
+
+    it('lets the recipient open it, and tells the person they blocked nothing', async () => {
+      const res = await call('POST', `/gifts/${giftId}/open`, ria);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().card).toMatchObject({ myGiftId: giftId, myOpened: true });
+      expect(pushed).toEqual([]);
+    });
+
+    it('shows the card to neither of them, as the thread it was in', async () => {
+      expect((await call('GET', `/chat/${ria.id}/messages`, sid)).json().messages).toEqual([]);
+      const asSender = await call('GET', `/gifts/batches/${batchId}`, sid);
+      expect(asSender.statusCode).toBe(404);
+      expect(asSender.json().code).toBe('GIFT_NOT_FOUND');
+      expect((await call('GET', `/gifts/batches/${batchId}`, ria)).statusCode).toBe(404);
+    });
+
+    it('and once it is lifted, the card is back', async () => {
+      expect((await call('DELETE', `/friends/${sid.id}/block`, ria)).statusCode).toBe(200);
+      const card = await call('GET', `/gifts/batches/${batchId}`, sid);
+      expect(card.statusCode).toBe(200);
+      expect(card.json().card.recipients).toEqual([expect.objectContaining({ name: ria.username, opened: true })]);
     });
   });
 
