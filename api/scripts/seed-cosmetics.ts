@@ -8,9 +8,10 @@
  *
  *   npm run -w api seed:cosmetics      (or: npx tsx api/scripts/seed-cosmetics.ts)
  *
- * NOTE: to respect admin edits, existing rows only get name/asset/order refreshed
- * — price/active/premium_only are left as-is once a row exists. New rows get the
- * manifest defaults.
+ * NOTE: to respect admin edits, existing rows only get name/description/asset/order
+ * refreshed — price/active/premium_only are left as-is once a row exists. New rows
+ * get the manifest defaults, including `active: false` on the items that were
+ * withdrawn when the shop's art was replaced (see migration 1751000161000).
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +22,9 @@ import { loadConfig } from '../src/config/env.js';
 interface Icon {
   sku: string;
   name: string;
+  description?: string;
+  /** absent means on sale */
+  active?: boolean;
   assetKey: string;
   price: number;
   premiumOnly: boolean;
@@ -53,15 +57,16 @@ async function main(): Promise<void> {
   try {
     for (const r of rows) {
       // New rows: full manifest defaults. Existing rows: only refresh presentation
-      // (name/asset/order) — never clobber an admin's price/active/premium changes.
+      // (name/description/asset/order) — never clobber an admin's price/active/premium changes.
       await client.query(
         `INSERT INTO shop_items
            (sku, name, description, category, currency, price, is_unique, active, in_stock,
             asset_key, premium_only, display_order)
-         VALUES ($1,$2,NULL,$3,'zer',$4,true,true,true,$5,$6,$7)
+         VALUES ($1,$2,$3,$4,'zer',$5,true,$6,true,$7,$8,$9)
          ON CONFLICT (sku) DO UPDATE SET
-           name = EXCLUDED.name, asset_key = EXCLUDED.asset_key, display_order = EXCLUDED.display_order`,
-        [r.sku, r.name, r.category, r.price, r.assetKey, r.premiumOnly, r.displayOrder],
+           name = EXCLUDED.name, description = EXCLUDED.description,
+           asset_key = EXCLUDED.asset_key, display_order = EXCLUDED.display_order`,
+        [r.sku, r.name, r.description ?? null, r.category, r.price, r.active ?? true, r.assetKey, r.premiumOnly, r.displayOrder],
       );
     }
     console.log(`cosmetics seed: upserted ${rows.length} items (${manifest.backgrounds.length} backgrounds, ${manifest.icons.length} icons)`);
