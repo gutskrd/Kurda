@@ -30,7 +30,9 @@ size. The key mixes in the uploader, so two people uploading the same file get
 an upload each. The upload is **unconfirmed** until a post uses it; one nobody
 posts is deleted by the orphan sweep after a day. The same file uploaded again
 by the same person is the same upload until it is posted, and a new upload
-after, so a picture whose post was deleted can be posted again.
+after, so a picture whose post was deleted can be posted again. Bytes that
+moderation blocked or took off the bucket are refused (422 `IMAGE_REJECTED`)
+under any key — the upload records a hash of what it stored for that.
 
 ## API
 
@@ -49,6 +51,8 @@ after, so a picture whose post was deleted can be posted again.
   posts (`trust/post-gate.ts`): velocity cap, spam check on the caption, AI
   screening of the caption after it lands. Staff changing somebody's caption
   are not posting, so the gate leaves that alone.
+- A post mute stops the upload, the post and a caption edit, and a feature
+  limit the upload and the post: 403 `MUTED` with `details: { scope, until }`.
 - **Guests cannot upload** (401); reads need no auth.
 - `author_role` is derived from RBAC (#099/#286): `founder` role → `founder`,
   admin roles → `admin`, else `user`.
