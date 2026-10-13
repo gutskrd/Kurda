@@ -18,7 +18,8 @@
  *
  * Every piece has a Kurdish and an English name. The shop catalogue
  * (`api/content/cosmetics.json`) prices them; the names there must match the
- * ones here, which api/src/cosmetics/art.test.ts checks.
+ * ones here, which api/src/cosmetics/catalogue.test.ts checks; art.test.ts
+ * checks that what is committed is what this draws.
  *
  * ── why nothing is read from disk ──────────────────────────────────────────
  *
@@ -85,6 +86,20 @@ const pt = ([x, y]) => `${n(x)},${n(y)}`;
 const poly = (points) => points.map(pt).join(' ');
 const between = (rnd, lo, hi) => lo + (hi - lo) * rnd();
 const pick = (rnd, list) => list[Math.floor(rnd() * list.length) % list.length];
+/**
+ * Fisher–Yates with the seeded generator. Not `sort(() => rnd() - 0.5)`: what a
+ * sort makes of a comparator that contradicts itself is up to the engine's sort
+ * algorithm, so the same seed could deal the colours differently on another
+ * Node.
+ */
+function shuffle(rnd, list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1)) % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 // ────────────────────────────────────────────────────────────────── colour
 
@@ -552,7 +567,7 @@ function kilim(cv, rnd, { field, ink, accents, light }) {
     cv.add(`<rect x="0" y="${n(y)}" width="${w}" height="${n(bh + 1)}" fill="${tint(field, between(rnd, -0.06, 0.05))}"/>`);
     y += bh;
   }
-  const shuffled = [...accents].sort(() => rnd() - 0.5);
+  const shuffled = shuffle(rnd, accents);
   const A = shuffled[0];
   const B = shuffled[1 % shuffled.length];
   const D = shuffled[2 % shuffled.length];
