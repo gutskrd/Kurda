@@ -264,6 +264,23 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       expect(published.rows[0]).toEqual({ status: 'published', published_by: editorId });
     });
 
+    it('writes nothing when npm kept --dry-run or --publish for itself', async () => {
+      const path = await storyFile('npm.json', [testStory(slug('npm'))]);
+      // npm run stories:import npm.json --dry-run
+      const dry = await run([path], { npm_config_dry_run: 'true' });
+      expect(dry.code).toBe(0);
+      expect(dry.lines[0]).toMatch(/^! npm kept --dry-run for itself/);
+      expect(dry.lines).toContain(`  ${slug('npm')}: created`);
+      expect(dry.lines.at(-1)).toMatch(/\(dry run — nothing written\)$/);
+      expect(await row(slug('npm'))).toBeUndefined();
+
+      // npm run stories:import npm.json --publish --by imp_editor_…
+      const publish = await run([path, `imp_editor_${s}@it.kurda.app`], { npm_config_publish: 'true', npm_config_by: 'true' });
+      expect(publish.code).toBe(2);
+      expect(publish.lines[0]).toMatch(/^npm kept --publish --by for itself/);
+      expect(await row(slug('npm'))).toBeUndefined();
+    });
+
     it('refuses a command line it does not understand, writing nothing', async () => {
       const path = await storyFile('odd.json', [testStory(slug('odd'))]);
       const res = await run([path, '--dryrun']);

@@ -21,6 +21,14 @@
  * publisher and in the audit, as in the admin panel, and must be able to
  * publish there. A real publish empties the hub's cached list when Redis is
  * configured, so the story appears in the app at once.
+ *
+ * The options go after `--`. Before it, npm takes them as its own and hides
+ * them from the command: `npm run stories:import file.json --dry-run` hands
+ * it only `file.json` and sets npm_config_dry_run=true instead, so a run
+ * meant as a dry run would write. The command therefore also looks for its
+ * options where npm puts them: a dry run is honoured (it can only write
+ * less), and an option that would write more or differently is refused with
+ * the right command line rather than guessed at.
  */
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -46,12 +54,39 @@ export interface StoryImportArgs {
 
 const SWITCHES = { '--dry-run': 'dryRun', '--publish': 'publish', '--starter': 'starter', '--force': 'force' } as const;
 
+/** Whether npm took `option` for itself: it then sets npm_config_<option, with underscores> and hides it from argv. */
+function keptByNpm(env: Record<string, string | undefined>, option: string): boolean {
+  const value = env[`npm_config_${option.slice(2).replace(/-/g, '_')}`];
+  return value !== undefined && value !== '' && value !== 'false';
+}
+
 /**
  * The command line, or why it cannot be run. Anything it does not know is
  * refused rather than ignored: a misspelt --dry-run must not become a write.
+ * `env` is where npm leaves the options it kept (see the top of the file);
+ * `notes` say what was read from there.
  */
-export function parseStoryImportArgs(argv: readonly string[]): { ok: true; args: StoryImportArgs } | { ok: false; message: string } {
+export function parseStoryImportArgs(
+  argv: readonly string[],
+  env: Record<string, string | undefined> = {},
+): { ok: true; args: StoryImportArgs; notes: string[] } | { ok: false; message: string } {
   const args: StoryImportArgs = { file: '', dryRun: false, publish: false, by: null, starter: false, force: false };
+  const notes: string[] = [];
+  const given = new Set(argv.map((arg) => arg.split('=')[0]));
+  // first: with --by kept by npm, its address is left behind looking like a second file
+  const kept = ['--publish', '--by', '--starter', '--force'].filter((option) => !given.has(option) && keptByNpm(env, option));
+  if (kept.length > 0) {
+    return {
+      ok: false,
+      message:
+        `npm kept ${kept.join(' ')} for itself (options before "--" are npm's), so nothing was done. ` +
+        `Put them after "--": npm run stories:import --workspace api -- <file.json> ${kept.join(' ')} …`,
+    };
+  }
+  if (!given.has('--dry-run') && keptByNpm(env, '--dry-run')) {
+    args.dryRun = true;
+    notes.push('! npm kept --dry-run for itself (options before "--" are npm\'s); this is a dry run all the same');
+  }
   const files: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
@@ -73,7 +108,7 @@ export function parseStoryImportArgs(argv: readonly string[]): { ok: true; args:
   args.file = files[0]!;
   if (args.publish && !args.by) return { ok: false, message: '--publish needs --by <email>: the editor who publishes' };
   if (args.by && !args.publish) return { ok: false, message: '--by names who publishes, so it goes with --publish' };
-  return { ok: true, args };
+  return { ok: true, args, notes };
 }
 
 export interface CommandOutput {
@@ -106,13 +141,14 @@ export async function runStoryImportCommand(
   env: Record<string, string | undefined>,
   out: CommandOutput,
 ): Promise<number> {
-  const parsed = parseStoryImportArgs(argv);
+  const parsed = parseStoryImportArgs(argv, env);
   if (!parsed.ok) {
     out.error(parsed.message);
     out.error(STORY_IMPORT_USAGE);
     return 2;
   }
   const { args } = parsed;
+  for (const note of parsed.notes) out.warn(note);
 
   let raw: unknown;
   try {
