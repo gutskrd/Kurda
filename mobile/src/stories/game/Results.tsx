@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { StoryDetail, StoryGameStanding, StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
-import { ClayButton, GlassCard } from '../../theme/glass';
+import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { display, statCaption, statValue } from '../../theme/fonts';
@@ -14,7 +14,7 @@ import { createGame } from '../api';
 import { createErrorMessage } from '../SetupSheet';
 import { evidenceText } from '../segments';
 import { storyTextProps, storyTextStyle } from '../storyText';
-import { Note, SectionLabel, useFocusOn } from '../ui';
+import { Card, Note, SectionLabel, useFocusOn } from '../ui';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 
 /** A standing's name as this viewer may see it. */
@@ -88,7 +88,7 @@ export function Results({
       </Text>
 
       {me ? (
-        <GlassCard style={styles.meCard}>
+        <Card style={styles.meCard}>
           <View style={styles.stats}>
             <View style={styles.stat} accessible accessibilityLabel={t('stories.results.rightOf', { correct: me.correct, total })}>
               <Text style={[statValue, { color: colors.textPrimary }]}>
@@ -109,20 +109,20 @@ export function Results({
           ) : (
             <Text style={[styles.notCounted, { color: colors.textSecondary }]}>{t('stories.results.notCounted')}</Text>
           )}
-        </GlassCard>
+        </Card>
       ) : null}
 
       {layout === 'duo' ? (
-        <GlassCard style={styles.card}>
+        <Card style={styles.card}>
           <Text style={[styles.duo, { color: colors.textPrimary }]}>
             {results.standings.map((s) => `${nameOf(s, t)} ${s.correct}/${total}`).join(' · ')}
           </Text>
           <Text style={[styles.together, { color: colors.textSecondary }]}>
             {t('stories.results.together', duoTotals(results.standings, total))}
           </Text>
-        </GlassCard>
+        </Card>
       ) : layout === 'seats' ? (
-        <GlassCard style={styles.card}>
+        <Card style={styles.card}>
           {bySeat(results.standings).map((s) => (
             <View key={s.seat} style={styles.standing}>
               <Text style={[styles.standingName, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -134,9 +134,9 @@ export function Results({
               </Text>
             </View>
           ))}
-        </GlassCard>
+        </Card>
       ) : layout === 'podium' ? (
-        <GlassCard style={styles.card}>
+        <Card style={styles.card}>
           {results.standings.map((s) => (
             <View key={s.seat} style={styles.standing}>
               <View style={[styles.place, { backgroundColor: s.place <= 3 ? colors.gold : colors.controlTrack }]}>
@@ -150,7 +150,7 @@ export function Results({
               </Text>
             </View>
           ))}
-        </GlassCard>
+        </Card>
       ) : null}
 
       <View style={styles.actions}>
@@ -166,10 +166,8 @@ export function Results({
           />
         )}
         {againError ? <Note tone="danger" icon="alert">{againError}</Note> : null}
-        <View style={styles.row}>
-          <ClayButton label={t('stories.results.readAgain')} icon="story" onPress={onRead} style={styles.grow} />
-          <ClayButton label={t('stories.results.back')} onPress={onBack} style={styles.grow} />
-        </View>
+        <ClayButton label={t('stories.results.readAgain')} icon="story" onPress={onRead} />
+        <ClayButton label={t('stories.results.back')} variant="outline" onPress={onBack} />
       </View>
 
       {results.review.length > 0 ? (
@@ -179,7 +177,7 @@ export function Results({
             const right = item.myChoice === item.correctIndex;
             const quote = story ? evidenceText(story.paragraphs, item.evidenceParagraph, item.evidenceSentence) : null;
             return (
-              <GlassCard key={item.index} style={styles.card} padding="tight">
+              <Card key={item.index} style={styles.card} padding="tight">
                 <View style={styles.reviewHead}>
                   <Icon name={right ? 'check' : 'close'} size={16} color={right ? colors.success : colors.danger} />
                   <Text style={[styles.reviewIndex, { color: right ? colors.success : colors.danger }]}>
@@ -211,7 +209,7 @@ export function Results({
                     “{quote}”
                   </Text>
                 ) : null}
-              </GlassCard>
+              </Card>
             );
           })}
         </View>
@@ -240,8 +238,6 @@ const styles = StyleSheet.create({
   place: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   placeText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   actions: { gap: spacing.sm },
-  row: { flexDirection: 'row', gap: spacing.sm },
-  grow: { flex: 1 },
   review: { gap: spacing.sm },
   reviewHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   reviewIndex: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

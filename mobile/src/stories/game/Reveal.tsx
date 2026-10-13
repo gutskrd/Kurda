@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   index: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   verdict: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.md },
   verdictText: { ...display(typography.sizes.lg) },
-  prompt: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, lineHeight: 28 },
+  prompt: { ...display(typography.sizes.lg), lineHeight: 30 },
   options: { gap: spacing.sm },
   option: {
     flexDirection: 'row',

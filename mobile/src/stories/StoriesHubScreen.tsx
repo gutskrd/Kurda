@@ -18,7 +18,7 @@ import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, ErrorRetry, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { SkeletonList } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -31,7 +31,7 @@ import { DIALECT_NAME, LENGTH_KEY, MODE_KEY, lengthWithMinutes } from './labels'
 import { useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
 import { storyTextProps, storyTextStyle } from './storyText';
-import { ChoiceChips, Note, Pill, SectionLabel } from './ui';
+import { ChoiceChips, Note, Pill, SectionLabel, Sheet } from './ui';
 
 /** The level filter appears only once a variety has this many stories; before that it would filter almost nothing. */
 export const LEVEL_FILTER_FROM = 20;
@@ -92,6 +92,7 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
 
   useEffect(() => {
     if (id) navigation.replace('StoryGame', { id });
@@ -147,6 +148,7 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
     const invite = parseInvite(typed);
     if (invite) {
       const route = lobbyRoute(invite.type, invite.id);
+      setJoinOpen(false);
       navigation.navigate(route.name, route.params as never);
       return;
     }
@@ -163,6 +165,7 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
       return;
     }
     setCode('');
+    setJoinOpen(false);
     navigation.navigate('StoryGame', { id: res.data.id });
   };
 
@@ -210,12 +213,7 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
           ) : null}
         </View>
 
-        <GlassCard style={styles.playCard}>
-          <View style={styles.playHead}>
-            <Icon name="people" size={24} color={colors.primary} />
-            <Text style={[styles.playTitle, { color: colors.textPrimary }]}>{t('stories.together.title')}</Text>
-          </View>
-          <Text style={[styles.playBody, { color: colors.textSecondary }]}>{t('stories.together.body')}</Text>
+        <View style={styles.actions}>
           <ClayButton
             label={t('stories.together.setup')}
             icon="user-plus"
@@ -223,33 +221,8 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
             disabled={ofVariety.length === 0}
             onPress={() => setSetupOpen(true)}
           />
-          <View style={styles.joinRow}>
-            <TextInput
-              value={code}
-              onChangeText={(v) => {
-                setCode(v);
-                setJoinError(null);
-              }}
-              onSubmitEditing={() => void join()}
-              placeholder={t('stories.join.placeholder')}
-              placeholderTextColor={colors.textSecondary}
-              accessibilityLabel={t('stories.join.label')}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              autoComplete="off"
-              spellCheck={false}
-              textContentType="none"
-              returnKeyType="go"
-              style={[styles.codeInput, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-            />
-            <ClayButton label={t('stories.join.button')} busy={joining} onPress={() => void join()} style={styles.joinButton} />
-          </View>
-          {joinError ? (
-            <Text style={[styles.joinError, { color: colors.danger }]} accessibilityLiveRegion="polite">
-              {joinError}
-            </Text>
-          ) : null}
-        </GlassCard>
+          <ClayButton label={t('stories.join.open')} icon="link" onPress={() => setJoinOpen(true)} />
+        </View>
 
         <View style={styles.section}>
           <SectionLabel>{t('stories.read')}</SectionLabel>
@@ -295,6 +268,39 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
             navigation.navigate('StoryGame', { id: view.id });
           }}
         />
+      ) : null}
+      {joinOpen ? (
+        <Sheet
+          title={t('stories.join.label')}
+          onClose={() => setJoinOpen(false)}
+          footer={<ClayButton label={t('stories.join.button')} tone="primary" size="large" busy={joining} onPress={() => void join()} />}
+        >
+          <Text style={[styles.playBody, { color: colors.textSecondary }]}>{t('stories.join.hint')}</Text>
+          <TextInput
+            value={code}
+            onChangeText={(v) => {
+              setCode(v);
+              setJoinError(null);
+            }}
+            onSubmitEditing={() => void join()}
+            placeholder={t('stories.join.placeholder')}
+            placeholderTextColor={colors.textSecondary}
+            accessibilityLabel={t('stories.join.label')}
+            autoFocus
+            autoCapitalize="characters"
+            autoCorrect={false}
+            autoComplete="off"
+            spellCheck={false}
+            textContentType="none"
+            returnKeyType="go"
+            style={[styles.codeInput, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+          />
+          {joinError ? (
+            <Text style={[styles.joinError, { color: colors.danger }]} accessibilityLiveRegion="polite">
+              {joinError}
+            </Text>
+          ) : null}
+        </Sheet>
       ) : null}
     </GradientBackground>
   );
@@ -388,22 +394,18 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   rowMeta: { fontSize: typography.sizes.sm },
   continueText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  playCard: { gap: spacing.md },
-  playHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  playTitle: { ...display(typography.sizes.lg), flex: 1 },
+  // stacked: side by side, "Play with friends" wraps onto two lines in most languages
+  actions: { gap: spacing.sm },
   playBody: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  joinRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   codeInput: {
-    flex: 1,
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
-    fontSize: typography.sizes.md,
-    letterSpacing: 1,
+    fontSize: typography.sizes.lg,
+    letterSpacing: 2,
     writingDirection: 'ltr',
     textAlign: 'left',
   },
-  joinButton: { minWidth: 96 },
   joinError: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   empty: { gap: spacing.md },
   story: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.xs },

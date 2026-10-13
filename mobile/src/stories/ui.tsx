@@ -19,6 +19,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
+import { GlassCard } from '../theme/glass';
 
 /**
  * Small pieces the Stories and play screens share: a bottom sheet, a section
@@ -87,6 +88,27 @@ export function Sheet({
         </View>
       </View>
     </Modal>
+  );
+}
+
+/**
+ * A GlassCard whose children are laid out by `style` (a gap, an alignment).
+ * GlassCard puts its own style on the outer frame, around the padding, so a
+ * gap given to it never reaches the children; this adds the inner box.
+ */
+export function Card({
+  children,
+  style,
+  padding,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  padding?: 'regular' | 'tight';
+}): React.JSX.Element {
+  return (
+    <GlassCard padding={padding}>
+      <View style={[styles.cardBody, style]}>{children}</View>
+    </GlassCard>
   );
 }
 
@@ -241,6 +263,7 @@ export function useFocusOn(ref: RefObject<View | Text | null>, key: string | num
 }
 
 const styles = StyleSheet.create({
+  cardBody: { gap: spacing.sm },
   backdropWrap: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {

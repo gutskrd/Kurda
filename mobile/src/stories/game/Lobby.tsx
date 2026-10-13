@@ -13,7 +13,7 @@ import { describeError } from '../../api/errors';
 import type { ApiError, ApiResult } from '../../api/types';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { InitialsAvatar } from '../../profile/InitialsAvatar';
-import { ClayButton, GlassCard } from '../../theme/glass';
+import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { display } from '../../theme/fonts';
@@ -26,7 +26,7 @@ import { ACCESS_KEY, LENGTH_KEY, TEXT_DURING_KEY, timerLabel } from '../labels';
 import { StoryPresetFields, useCanHostOpen } from '../SetupSheet';
 import { initialSetup, type SetupState } from '../setup';
 import { storyTextProps, storyTextStyle } from '../storyText';
-import { Note, SectionLabel, Sheet } from '../ui';
+import { Card, Note, SectionLabel, Sheet } from '../ui';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
 
 /** A player's name as this viewer may see it: their own, a friend's, or "Player 3". */
@@ -113,7 +113,7 @@ export function Lobby({
 
   return (
     <>
-      <GlassCard style={styles.card}>
+      <Card style={styles.card}>
         <Text {...storyTextProps(s.dialect)} style={[styles.title, { color: colors.textPrimary }, storyTextStyle(s.dialect)]} accessibilityRole="header">
           {s.storyTitle}
         </Text>
@@ -130,10 +130,10 @@ export function Lobby({
         {view.isHost ? (
           <ClayButton label={t('stories.lobby.changeSettings')} icon="gear" variant="outline" onPress={() => setEditing(true)} />
         ) : null}
-      </GlassCard>
+      </Card>
 
       {view.code ? (
-        <GlassCard style={styles.card}>
+        <Card style={styles.card}>
           <SectionLabel>{t('stories.lobby.code')}</SectionLabel>
           <Text
             selectable
@@ -152,10 +152,10 @@ export function Lobby({
           <Text selectable style={[styles.link, { color: colors.textSecondary }]} accessibilityLabel={t('games.inviteLink')}>
             {link}
           </Text>
-        </GlassCard>
+        </Card>
       ) : null}
 
-      <GlassCard style={styles.card}>
+      <Card style={styles.card}>
         <SectionLabel>{t('stories.lobby.players', { count: active, max: view.mode === 'duo' ? 2 : 8 })}</SectionLabel>
         {view.players
           .filter((p) => !p.gone)
@@ -193,7 +193,7 @@ export function Lobby({
             );
           })}
         {view.isHost ? <LobbyInvites game="stories" lobbyId={view.id} /> : null}
-      </GlassCard>
+      </Card>
 
       <ExtraTimeSwitch view={view} apply={apply} />
 

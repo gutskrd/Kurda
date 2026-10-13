@@ -4,7 +4,7 @@ import type { StoryDetail, StoryGameView, StoryGlossEntry } from '@kurda/shared'
 import { useAuth } from '../../auth/AuthContext';
 import { describeError } from '../../api/errors';
 import type { ApiError, ApiResult } from '../../api/types';
-import { ClayButton, GlassCard } from '../../theme/glass';
+import { ClayButton } from '../../theme/glass';
 import { SkeletonLines } from '../../theme/Skeleton';
 import { useTheme } from '../../theme/ThemeProvider';
 import { display } from '../../theme/fonts';
@@ -14,7 +14,7 @@ import { advanceGame, doneReading } from '../api';
 import { useStoryPrefs } from '../prefs';
 import { STORY_BODY_SIZE, StoryText } from '../StoryText';
 import { storyTextProps, storyTextStyle } from '../storyText';
-import { Note } from '../ui';
+import { Card, Note } from '../ui';
 import { readingNote, useTicker } from './clock';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
 
@@ -71,7 +71,7 @@ export function Reading({
         <SkeletonLines count={8} />
       )}
 
-      <GlassCard style={styles.card}>
+      <Card style={styles.card}>
         {!solo ? (
           <Text style={[styles.count, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
             {t('stories.reading.finishedCount', { done: view.readingDoneCount, total: view.activeCount })}
@@ -104,7 +104,7 @@ export function Reading({
           />
         ) : null}
         {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
-      </GlassCard>
+      </Card>
       <ExtraTimeSwitch view={view} apply={apply} />
     </>
   );

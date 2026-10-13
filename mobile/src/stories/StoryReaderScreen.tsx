@@ -9,7 +9,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { SkeletonLines } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
@@ -24,7 +24,7 @@ import { createInput, initialSetup } from './setup';
 import { STORY_BODY_SIZE, StoryText } from './StoryText';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyTextProps, storyTextStyle } from './storyText';
 import { useNarration } from './useNarration';
-import { Note, Pill, SectionLabel, Sheet } from './ui';
+import { Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
 
 /**
@@ -233,7 +233,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
         {story.glossary.length > 0 ? (
           <View style={styles.section}>
             <SectionLabel>{t('stories.reader.words')}</SectionLabel>
-            <GlassCard padding="tight">
+            <Card padding="tight">
               {story.glossary.map((entry) => {
                 const meaning = glossFor(entry, locale);
                 const english = meaning.lang === 'en' && locale !== 'en';
@@ -257,11 +257,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                   </Pressable>
                 );
               })}
-            </GlassCard>
+            </Card>
           </View>
         ) : null}
 
-        <GlassCard style={styles.play}>
+        <Card style={styles.play}>
           <Text style={[styles.playTitle, { color: colors.textPrimary }]} accessibilityRole="header">
             {t('stories.reader.readIt')}
           </Text>
@@ -282,11 +282,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <Text style={[styles.settingsText, { color: colors.primary }]}>{t('stories.reader.quizSettings')}</Text>
           </Pressable>
           {startError ? <Note tone="danger" icon="alert">{startError}</Note> : null}
-          <View style={styles.together}>
-            <ClayButton label={t('stories.mode.duo')} icon="person" onPress={() => setSetupMode('duo')} style={styles.half} />
-            <ClayButton label={t('stories.mode.group')} icon="people" onPress={() => setSetupMode('group')} style={styles.half} />
-          </View>
-        </GlassCard>
+          <ClayButton label={t('stories.mode.duo')} icon="person" onPress={() => setSetupMode('duo')} />
+          <ClayButton label={t('stories.mode.group')} icon="people" onPress={() => setSetupMode('group')} />
+        </Card>
       </ScrollView>
 
       {gloss ? <GlossSheet entry={gloss} dialect={story.dialect} onClose={() => setGloss(null)} /> : null}
@@ -375,8 +373,6 @@ const styles = StyleSheet.create({
   playTitle: { ...display(typography.sizes.lg) },
   settingsLink: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   settingsText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  together: { flexDirection: 'row', gap: spacing.sm },
-  half: { flex: 1 },
   sheetText: { fontSize: typography.sizes.md, lineHeight: 22 },
   glossTerm: { ...display(typography.sizes.xl) },
   glossMeaning: { fontSize: typography.sizes.lg, lineHeight: 26 },
