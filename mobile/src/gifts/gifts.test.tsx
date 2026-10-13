@@ -73,13 +73,22 @@ describe('GiftBubble', () => {
     expect(onOpen).toHaveBeenCalledWith('g1');
   });
 
+  it('shows its recipient what it was, and from whom, once opened', () => {
+    renderWithProviders(
+      <GiftBubble card={card({ myGiftId: 'g1', myOpened: true, recipients: [{ name: null, avatarUrl: null, isMe: true, opened: true }] })} mine={false} senderName="Azad" onOpen={() => undefined} />,
+    );
+    expect(screen.getByText('Newroz fire')).toBeTruthy();
+    expect(screen.getByText('From Azad')).toBeTruthy();
+    expect(screen.queryByText('Tap to open')).toBeNull();
+  });
+
   it('tells the sender whether it has been opened, and never the price', () => {
     const { rerender } = renderWithProviders(<GiftBubble card={card()} mine senderName="me" onOpen={() => undefined} />);
     expect(screen.getByText('Newroz fire')).toBeTruthy();
     expect(screen.getByText('For Rojda')).toBeTruthy();
     expect(screen.getByText('Not opened yet')).toBeTruthy();
     rerender(<GiftBubble card={card({ recipients: [{ name: 'Rojda', avatarUrl: null, isMe: false, opened: true }] })} mine senderName="me" onOpen={() => undefined} />);
-    expect(screen.getByText('Opened ✓')).toBeTruthy();
+    expect(screen.getByText('Opened')).toBeTruthy();
     expect(screen.queryByText(/300/)).toBeNull();
   });
 

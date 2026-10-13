@@ -108,21 +108,28 @@ export function Spark({ size, gold }: { size: number; gold: string }): React.JSX
   );
 }
 
-/** The Newroz flame, for the legendary gifts: three tongues of fire, gold into pomegranate. */
+/**
+ * The Newroz flame, for the legendary gifts: one fire with a lick to each side
+ * of its tip, gold at the top into pomegranate at its root, and a pale core.
+ */
 export function NewrozFlame({ size, gold }: { size: number; gold: string }): React.JSX.Element {
   return (
     <Svg width={size * 0.75} height={size} viewBox="0 0 60 80">
       <Defs>
         <LinearGradient id="newroz" x1="0" y1="1" x2="0" y2="0">
           <Stop offset="0" stopColor={POMEGRANATE} />
-          <Stop offset="0.55" stopColor="#E8662A" />
+          <Stop offset="0.5" stopColor="#E8662A" />
           <Stop offset="1" stopColor={gold} />
         </LinearGradient>
       </Defs>
-      <Path d="M14 40 C6 50 6 64 16 72 C12 62 14 52 20 46Z" fill="url(#newroz)" />
-      <Path d="M46 40 C54 50 54 64 44 72 C48 62 46 52 40 46Z" fill="url(#newroz)" />
-      <Path d="M30 2 C40 22 50 32 46 52 C44 66 36 76 30 78 C24 76 16 66 14 52 C10 32 20 22 30 2Z" fill="url(#newroz)" />
-      <Path d="M30 30 C36 42 40 50 37 60 C35 68 32 72 30 72 C28 72 25 68 23 60 C20 50 24 42 30 30Z" fill="#FFE08A" />
+      <Path
+        d="M30 2 C33 12 40 18 42 28 C44 22 44 16 42 10 C52 20 57 34 53 50 C50 66 41 76 30 78 C19 76 10 66 7 50 C5 38 10 28 17 20 C17 26 18 30 20 33 C20 20 25 10 30 2Z"
+        fill="url(#newroz)"
+      />
+      <Path
+        d="M31 24 C34 34 41 40 40 54 C39 66 35 72 30 72 C25 72 21 66 20 56 C19 46 24 41 26 35 C27 39 28 41 30 43 C29 37 29 30 31 24Z"
+        fill="#FFE08A"
+      />
     </Svg>
   );
 }

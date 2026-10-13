@@ -15,7 +15,7 @@ import { GiftBox } from './art';
  * A gift in the chat.
  *
  * To you, unopened: a wrapped present that breathes a little (still, with
- * Reduce Motion) and "Tap to open". Opened: what it was. To the sender: what
+ * Reduce Motion) and "Tap to open". Opened: what it was, and from whom. To the sender: what
  * they gave and whether it has been opened — "Opened ✓", or in a group how many
  * of the recipients have. To everyone else in a group: the wrapped present and
  * whom it is for. The price is never shown; a present is not a receipt.
@@ -48,7 +48,15 @@ export function GiftBubble({
     : null;
 
   const title = forMe ? (card.myOpened ? card.name : t('gift.bubble.forYou')) : mine ? card.name : recipientsLine(card, t);
-  const hint = forMe && !card.myOpened ? t('gift.bubble.tapToOpen') : mine ? recipientsLine(card, t) : null;
+  const hint = forMe
+    ? card.myOpened
+      ? senderName
+        ? t('gift.unwrap.from', { name: senderName })
+        : null
+      : t('gift.bubble.tapToOpen')
+    : mine
+      ? recipientsLine(card, t)
+      : null;
   const label = forMe && !card.myOpened ? t('gift.bubble.openA11y', { name: senderName }) : [title, hint, status].filter(Boolean).join('. ');
 
   const body = (
@@ -59,7 +67,10 @@ export function GiftBubble({
           {title}
         </Text>
         {hint ? (
-          <Text style={[styles.hint, dir.text, { color: forMe ? colors.primary : colors.textSecondary }]} numberOfLines={2}>
+          <Text
+            style={[styles.hint, dir.text, { color: forMe && !card.myOpened ? colors.primary : colors.textSecondary }]}
+            numberOfLines={2}
+          >
             {hint}
           </Text>
         ) : null}

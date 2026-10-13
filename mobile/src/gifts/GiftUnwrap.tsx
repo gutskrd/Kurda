@@ -343,7 +343,7 @@ function Flame({
   item: number;
   gold: string;
 }): React.JSX.Element {
-  const opacity = progress.interpolate({ inputRange: [0.3, 0.5, 1], outputRange: [0, 0.9, 0.55], extrapolate: 'clamp' });
+  const opacity = progress.interpolate({ inputRange: [0.3, 0.5, 1], outputRange: [0, 0.95, 0.8], extrapolate: 'clamp' });
   const scale = progress.interpolate({ inputRange: [0.3, 0.6], outputRange: [0.6, 1], extrapolate: 'clamp' });
   const lift = -(size - item) / 2;
   return (
