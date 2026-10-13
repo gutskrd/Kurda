@@ -151,3 +151,91 @@
   .la-play { width: var(--target); height: var(--target); }
   .la-row-line { grid-template-columns: var(--target) minmax(0, 1fr); }
 }
+
+/* ---- shared bits of the converted pages ----------------------------------------- */
+.badges { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.section-text { margin: 0; max-width: 72ch; line-height: 1.6; color: var(--text-2); }
+.plain-list { margin: 6px 0 0; padding-inline-start: 18px; display: grid; gap: 4px; line-height: 1.5; }
+.drawer-sub { margin: 18px 0 8px; font-size: 13px; font-weight: 650; letter-spacing: 0.01em; color: var(--text-2); }
+.strong-code { font-weight: 600; color: var(--text); }
+.is-negative { color: var(--bad); }
+.load-more { display: flex; justify-content: center; padding: 14px; border-top: 1px solid var(--separator); }
+
+/* a detail's facts: a term and its value, a row each, stacking on a narrow phone */
+.facts { margin: 0; display: grid; }
+.facts > div, .facts-row { display: grid; grid-template-columns: minmax(110px, 34%) minmax(0, 1fr); gap: 4px 12px; padding: 9px 0; border-bottom: 1px solid var(--separator); }
+.facts dt { color: var(--text-dim); font-size: 13px; }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .facts > div, .facts-row { grid-template-columns: 1fr; } }
+.code-block {
+  margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--control);
+  font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow-y: auto;
+}
+
+/* a checkbox and its label inside a table cell or a toolbar */
+.inline-check { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; cursor: pointer; font-weight: 500; }
+.inline-check input { margin: 0; }
+@media (pointer: coarse), (max-width: 760px) {
+  .inline-check { min-height: var(--target); }
+  .inline-check input { width: 22px; height: 22px; }
+}
+
+/* what sits above a table: a search and a filter or two */
+.table-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-bottom: 1px solid var(--separator); }
+.table-tools .search-box { flex: 1 1 240px; }
+.table-tools select { width: auto; }
+@media (max-width: 560px) { .table-tools select { flex: 1 1 100%; } }
+
+/* one field and its button on a line, stacking on a narrow phone */
+.inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+.inline-form input { flex: 1 1 200px; min-width: 0; font-size: 16px; }
+.inline-form select { width: auto; flex: 0 0 auto; }
+@media (max-width: 420px) { .inline-form > * { flex: 1 1 100%; } }
+
+/* ---- analytics -------------------------------------------------------------------- */
+.range { display: flex; flex-wrap: wrap; gap: 8px; }
+.range label { display: grid; gap: 4px; font-size: 12.5px; color: var(--text-2); }
+.range input { width: auto; min-width: 150px; }
+@media (max-width: 560px) {
+  .range { flex: 1 1 100%; }
+  .range label { flex: 1 1 140px; }
+  .range input { width: 100%; min-width: 0; }
+}
+.chart { margin: 0; }
+.chart-plot { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+.chart-axis { display: flex; flex-direction: column; justify-content: space-between; padding-top: 8px; font-size: 11.5px; color: var(--text-dim); text-align: end; font-variant-numeric: tabular-nums; }
+.chart .bars { height: 140px; }
+.chart-x { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--text-dim); }
+.two-up { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); margin-bottom: 16px; }
+.two-up > .section { margin-bottom: 0; }
+.funnel { list-style: none; margin: 0; padding: 0; }
+.funnel-label > span:first-child { text-transform: capitalize; }
+
+/* ---- feature flags ---------------------------------------------------------------- */
+.weight-input { width: 88px; flex: 0 0 88px; }
+.weight-share { min-width: 44px; text-align: end; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+
+/* ---- system ------------------------------------------------------------------------- */
+.job-list { list-style: none; margin: 0; padding: 0; }
+.job { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 0; border-bottom: 1px solid var(--separator); }
+.job:last-child { border-bottom: none; }
+.job-text { display: grid; gap: 2px; flex: 1 1 280px; min-width: 0; }
+.job-result { color: var(--ok); font-size: 13px; }
+@media (max-width: 560px) { .job > button { flex: 1 1 100%; } }
+.meters { display: grid; gap: 16px; }
+.meter { display: grid; gap: 6px; }
+.meter-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 13.5px; }
+.progress-bar.is-high { background: var(--warn); }
+
+/* ---- dictionary import ------------------------------------------------------------ */
+.import-run { display: grid; gap: 10px; }
+
+/* ---- rhymes ------------------------------------------------------------------------- */
+.drawer.drawer-wide { width: min(94vw, 640px); }
+@media (max-width: 560px) { .drawer.drawer-wide { width: 100%; } }
+.rhyme-panel { display: grid; gap: 12px; }
+.rhyme-list { list-style: none; margin: 0; padding: 0; }
+.rhyme-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 9px 0; border-bottom: 1px solid var(--separator); }
+.rhyme-list li > div { display: grid; gap: 2px; min-width: 0; flex: 1 1 180px; }
+.rhyme-list select { width: auto; min-width: 170px; }
+@media (max-width: 420px) { .rhyme-list select { flex: 1 1 100%; } }
