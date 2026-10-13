@@ -4,8 +4,8 @@
  * progress. No DB, no I/O: it takes already-fetched rows so it's cheap and
  * unit-testable. Access rules live here so routes never re-implement them.
  *
- * Access to a cosmetic = the user OWNS it (entitlement) OR it is premium_only
- * and the user's premium is currently active. Premium access is evaluated at
+ * Access to a cosmetic = the user OWNS it (entitlement) OR it is premium_only,
+ * still on sale, and the user's premium is currently active. Premium access is evaluated at
  * read time against server time, so it disappears automatically on expiry with
  * no revocation job and without deleting the user's equipped-SKU reference.
  */
@@ -126,10 +126,17 @@ export function resolveAvatarUrl(
   return avatarAssetUrl(effectiveAvatarKey(selectedAvatarKey, premiumActive));
 }
 
-/** Access = owned OR (premium_only AND premium active). Inactive items are never usable. */
+/**
+ * Access = owned OR (premium_only AND premium active AND still on sale).
+ *
+ * Inactive means taken out of the shop, not taken away: an item somebody owns
+ * stays theirs to wear when it stops being sold — the shop's old art was
+ * replaced and withdrawn that way (migration 1751000161000), and its owners
+ * keep their items. What premium lends without owning ends with the sale.
+ */
 export function hasAccess(item: EquippedItem, premiumActive: boolean): boolean {
-  if (!item.active) return false;
-  return item.owned || (item.premiumOnly && premiumActive);
+  if (item.owned) return true;
+  return item.active && item.premiumOnly && premiumActive;
 }
 
 function bgType(assetKey: string): 'image' | 'gif' | 'video' {
@@ -169,7 +176,7 @@ export function resolveCosmetics(
   let icon: ResolvedIcon | null = null;
   // visibility toggle (default on) gates rendering; access still required
   if (raw.premiumIconEnabled !== false && raw.icon && raw.icon.assetKey && hasAccess(raw.icon, premium)) {
-    // icons are web-static: assetKey is like "icons/accessoire-icon-01.png"
+    // icons are web-static: assetKey is like "icons/made-01-hinar.png"
     icon = {
       sku: raw.icon.sku,
       assetKey: raw.icon.assetKey,

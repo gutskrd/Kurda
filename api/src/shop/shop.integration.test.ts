@@ -115,6 +115,50 @@ describe.skipIf(!DATABASE_URL)('shop (integration)', () => {
     expect((await wallet.balances(userId)).zer).toBe(before - 20);
   });
 
+  it('a key is the buyer’s own: another member may send the same one, and none takes a key the server pays under', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        email: `shop2_${suffix}@it.kurda.app`,
+        username: `shop2_${suffix}`.slice(0, 30),
+        password: 'a-strong-password1',
+        acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
+      },
+      remoteAddress: '10.71.0.9',
+    });
+    const otherId = res.json().user.id as string;
+    await wallet.credit({ userId: otherId, currency: 'zer', amount: 100, reason: 'admin_adjustment' });
+
+    // the same key from two members is two purchases, each paid and each granted
+    const key = `same-key-${suffix}`;
+    const mine = (await wallet.balances(userId)).zer;
+    expect(await shop.purchase(userId, potion, key)).toMatchObject({ duplicate: false, balance: mine - 20 });
+    expect(await shop.purchase(otherId, potion, key)).toMatchObject({ duplicate: false, balance: 80 });
+    expect((await shop.inventory(otherId)).find((i) => i.sku === potion)).toBeTruthy();
+
+    // a key shaped like the other member's daily reward does not stop it being paid
+    const daily = `daily:${otherId}:2099-01-01`;
+    expect(await shop.purchase(userId, potion, daily)).toMatchObject({ duplicate: false });
+    const reward = await wallet.credit({ userId: otherId, currency: 'zer', amount: 5, reason: 'daily_reward', idempotencyKey: daily });
+    expect(reward).toMatchObject({ applied: true, duplicate: false, balance: 85 });
+  });
+
+  it('gives a free item without touching the wallet, and still says what the buyer has', async () => {
+    const starter = `starter_${suffix}`;
+    await shop.createItem({ sku: starter, name: 'Starter', currency: 'zer', price: 0, isUnique: true });
+    const before = (await wallet.balances(userId)).zer;
+    expect(before).toBeGreaterThan(0);
+    const res = await shop.purchase(userId, starter, `get-starter-${suffix}`);
+    expect(res).toEqual({ purchased: true, duplicate: false, sku: starter, balance: before });
+    expect((await wallet.balances(userId)).zer).toBe(before);
+    expect((await shop.inventory(userId)).find((i) => i.sku === starter)).toBeTruthy();
+    const moved = await pool.query(`SELECT count(*)::int n FROM wallet_ledger WHERE user_id = $1 AND ref_id = $2`, [userId, starter]);
+    expect(moved.rows[0].n).toBe(0);
+  });
+
   it('HTTP: item creation is admin-only; catalog + purchase work for users', async () => {
     const denied = await app.inject({
       method: 'POST',

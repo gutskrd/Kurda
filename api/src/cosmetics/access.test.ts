@@ -31,12 +31,18 @@ describe('isPremiumActive / hasAccess', () => {
     expect(isPremiumActive(PAST, NOW)).toBe(false);
     expect(isPremiumActive(null, NOW)).toBe(false);
   });
-  it('access = owned OR (premium_only && premium active); inactive never', () => {
+  it('access = owned OR (premium_only && premium active && on sale)', () => {
     expect(hasAccess(bg({ owned: true, premiumOnly: false }), false)).toBe(true);
     expect(hasAccess(bg({ owned: false, premiumOnly: true }), true)).toBe(true);
     expect(hasAccess(bg({ owned: false, premiumOnly: true }), false)).toBe(false);
     expect(hasAccess(bg({ owned: false, premiumOnly: false }), true)).toBe(false);
-    expect(hasAccess(bg({ owned: true, active: false }), true)).toBe(false);
+  });
+  it('an item taken out of the shop stays with its owner, and premium no longer lends it', () => {
+    // inactive used to mean "gone for everyone"; it means "no longer sold"
+    // since the shop's old art was withdrawn with its owners keeping it
+    expect(hasAccess(bg({ owned: true, active: false }), false)).toBe(true);
+    expect(hasAccess(bg({ owned: true, active: false, premiumOnly: true }), true)).toBe(true);
+    expect(hasAccess(bg({ owned: false, active: false, premiumOnly: true }), true)).toBe(false);
   });
 });
 
@@ -127,13 +133,29 @@ describe('resolveCosmetics — background access + fallback', () => {
     expect(resolveCosmetics(raw(PAST), url, NOW).background).toBeNull();
     expect(resolveCosmetics(raw(null), url, NOW).background).toBeNull();
   });
-  it('inactive background resolves to default (null)', () => {
+  it('an inactive background lent by premium resolves to default (null)', () => {
     const r = resolveCosmetics(
-      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: FUTURE, background: bg({ active: false, premiumOnly: true }), icon: null },
+      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: FUTURE, background: bg({ owned: false, active: false, premiumOnly: true }), icon: null },
       url,
       NOW,
     );
     expect(r.background).toBeNull();
+  });
+  it('an inactive background its owner bought still shows', () => {
+    const r = resolveCosmetics(
+      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: bg({ owned: true, active: false, premiumOnly: true }), icon: null },
+      url,
+      NOW,
+    );
+    expect(r.background).toMatchObject({ sku: 'bg-x', url: '/cosmetics/backgrounds/x.png' });
+  });
+  it('an inactive icon its owner bought still shows', () => {
+    const r = resolveCosmetics(
+      { profilePhotoKey: null, selectedAvatarKey: null, premiumUntil: null, background: null, icon: icon({ owned: true, active: false }) },
+      url,
+      NOW,
+    );
+    expect(r.icon).toMatchObject({ sku: 'icon-x' });
   });
   it('detects gif and video types', () => {
     const t = (assetKey: string) =>

@@ -294,7 +294,12 @@ export class ShopService {
           amount: item.price,
           reason: 'shop_purchase',
           refId: sku,
-          idempotencyKey,
+          // Filed under the buyer. Ledger keys are unique across everyone, and
+          // the server pays under its own (`daily:<user>:<day>`, a return's
+          // refund …): a key taken from the request as it came could claim one
+          // of those, or another member's, first — and that payment would then
+          // be skipped as already made.
+          idempotencyKey: `purchase:${userId}:${idempotencyKey}`,
         });
         balance = debit.balance;
         if (debit.duplicate) {
@@ -302,6 +307,9 @@ export class ShopService {
           await client.query('COMMIT');
           return { purchased: true, duplicate: true, sku, balance };
         }
+      } else {
+        // a free item moves no money, but the answer still says what they have
+        balance = (await this.wallet.balances(userId))[item.currency];
       }
 
       await client.query(

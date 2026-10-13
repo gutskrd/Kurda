@@ -89,8 +89,6 @@ const NOT_COPY = new Set([
   'Slab',
   'Mono',
   'Premium',
-  // a football club, on a sticker, beside Kurdistan and Zilan
-  'Amed Spor',
   // The line under the wordmark, on the intro slides and above the sign-in
   // card. It is Kurmancî — "life is sweeter in Kurdish" — and it is the app's
   // own line, not a sentence to be turned into nine. It only becomes visible

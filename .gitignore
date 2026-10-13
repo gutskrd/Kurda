@@ -22,18 +22,20 @@ api/.pgdata/
 # See Demo-MyKurda/README.md.
 /Demo-MyKurda/
 
-# Cosmetic source assets — canonical copies live in web/public/cosmetics (avatars/icons)
-# and Cloudflare R2 (backgrounds, via api/scripts/upload-cosmetics). Keys/manifest are
-# committed (api/content/cosmetics.json); the large/binary sources are not.
+# Old drop folders for cosmetic art. The shop's backgrounds and icons are drawn by
+# scripts/generate-cosmetic-art.mjs and committed under web/public/cosmetics, with
+# the catalogue in api/content/cosmetics.json; these stay ignored so nothing left
+# in one can be swept into a commit.
 /default-avatars/
 /premium-icons/
 /hevalo-background/
 /mykurda-background/
 
-# Where source artwork is dropped for conversion: sticker PNGs, the empty-state
-# drawings, the avatars and the logo. What ships is generated from these —
-# sized WebPs under web/public/stickers, the four PNGs under mobile/assets/empty,
-# and everything scripts/generate-brand-assets.mjs writes.
+# Where source artwork is dropped for conversion: the empty-state drawings, the
+# avatars and the logo. What ships is generated from these — the four PNGs under
+# mobile/assets/empty, and everything scripts/generate-brand-assets.mjs writes.
+# The stickers are drawn by scripts/generate-cosmetic-art.mjs and have no
+# sources; /stickers/ stays listed so an old drop folder is never committed.
 # Ignored so a `git add -A` cannot sweep multi-megabyte originals into a commit.
 /stickers/
 /empty/

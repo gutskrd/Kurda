@@ -15,6 +15,7 @@ import { useEventTheme } from '../theme/EventThemeContext';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
+import { CREDIT_LINES } from './credits';
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -287,6 +288,19 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassRow icon="sign-out" title={t('profile.logout')} onPress={logout} />
           <GlassRow icon="trash" title={t('settings.delete.title')} destructive onPress={confirmDelete} />
         </GlassCard>
+
+        {/* whose work the app uses, and under which licence (see ./credits) */}
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.about')}</Text>
+        <GlassCard>
+          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.credits.title')}</Text>
+          <Text style={[styles.credit, { color: colors.textSecondary }]}>{t('settings.credits.lead')}</Text>
+          {CREDIT_LINES.map((key) => (
+            <Text key={key} style={[styles.credit, { color: colors.textPrimary }]}>
+              {t(key)}
+            </Text>
+          ))}
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.credits.art')}</Text>
+        </GlassCard>
       </ScrollView>
     </GradientBackground>
   );
@@ -307,6 +321,7 @@ const styles = StyleSheet.create({
   },
   pillText: { fontSize: typography.sizes.sm },
   hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
+  credit: { fontSize: typography.sizes.sm, marginTop: spacing.xs, lineHeight: 19 },
   pillTextActive: { fontWeight: typography.weights.bold },
   pillDisabled: { opacity: 0.4 },
 });

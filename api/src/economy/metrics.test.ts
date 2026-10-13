@@ -21,6 +21,15 @@ describe('faucetSink', () => {
     ];
     expect(faucetSink(rows)).toEqual({ faucet: 100, sink: 0, net: 100 });
   });
+
+  it('counts a refund as spending undone, not as currency created', () => {
+    const bought: LedgerEntry = { amount: -500, reason: 'shop_purchase' };
+    const returned: LedgerEntry = { amount: 500, reason: 'shop_return' };
+    expect(faucetSink([bought, returned])).toEqual({ faucet: 0, sink: 0, net: 0 });
+    // a period that gave back more than it took in has a sink below zero, and
+    // the supply grows by exactly what was given back
+    expect(faucetSink([{ amount: 100, reason: 'daily_reward' }, returned])).toEqual({ faucet: 100, sink: -500, net: 600 });
+  });
 });
 
 describe('driftRatio', () => {
@@ -30,6 +39,10 @@ describe('driftRatio', () => {
   it('handles an empty sink', () => {
     expect(driftRatio(100, 0)).toBe(Infinity);
     expect(driftRatio(0, 0)).toBe(1);
+  });
+  it('treats a sink that refunds outweighed as no sink at all', () => {
+    expect(driftRatio(100, -500)).toBe(Infinity);
+    expect(driftRatio(0, -500)).toBe(1);
   });
 });
 
