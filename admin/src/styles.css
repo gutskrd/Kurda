@@ -100,9 +100,10 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   /*
-   * The photographic backdrop the glass panels sample. It is fixed and covered so
-   * it never scrolls or tiles, and it sits UNDER a scrim (::before) rather than
-   * behind raw text — a photo straight behind dense tables destroys legibility,
+   * The backdrop the glass panels sample — a soft dawn drawn by
+   * scripts/generate-cosmetic-art.mjs. It is fixed and covered so it never
+   * scrolls or tiles, and it sits UNDER a scrim (::before) rather than behind
+   * raw text — a picture straight behind dense tables destroys legibility,
    * which is the usual way a background like this goes wrong. The base colour
    * stays as the fallback if the image is missing.
    */
@@ -123,7 +124,7 @@ body::before {
   pointer-events: none;
 }
 
-/* Same photo, dimmed rather than washed. This must come AFTER the base rule:
+/* Same picture, dimmed rather than washed. This must come AFTER the base rule:
    both match in dark mode with equal specificity, so source order decides. */
 @media (prefers-color-scheme: dark) {
   body::before {
