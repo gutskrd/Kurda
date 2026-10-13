@@ -105,6 +105,44 @@ describe.skipIf(!DATABASE_URL)('admin audit log (integration)', () => {
     await expect(pool.query(`DELETE FROM admin_audit_log WHERE action = 'test.immutable'`)).rejects.toThrow(/append-only/);
   });
 
+  it('names the admin, and pages back through older entries', async () => {
+    const [newest] = await audit.search({ adminId, limit: 1 });
+    expect(newest!.adminUsername).toBe(`auditadm_${suffix}`.slice(0, 30));
+    const older = await audit.search({ adminId, before: newest!.createdAt });
+    expect(older.every((e) => e.createdAt.getTime() < newest!.createdAt.getTime())).toBe(true);
+    expect(older.some((e) => e.id === newest!.id)).toBe(false);
+
+    const res = await authed('GET', `/admin/audit?adminId=${adminId}&before=${encodeURIComponent(newest!.createdAt.toISOString())}`);
+    expect(res.statusCode).toBe(200);
+    expect((res.json() as { entries: Array<{ id: string }> }).entries.map((e) => e.id)).toEqual(older.map((e) => e.id));
+  });
+
+  it('records a shop catalogue write, which lives outside /admin, against its item', async () => {
+    const sku = `audit_sku_${suffix}`;
+    const res = await authed('POST', '/shop/items', { sku, name: 'Audit probe', currency: 'zer', price: 5 });
+    expect(res.statusCode).toBe(200);
+    const patched = await app.inject({
+      method: 'PATCH',
+      url: `/shop/items/${sku}/stock`,
+      headers: { authorization: `Bearer ${adminToken}` },
+      payload: { inStock: false },
+      remoteAddress: '10.104.9.9',
+    });
+    expect(patched.statusCode).toBe(200);
+    const entries = await eventually(
+      () => audit.search({ adminId, targetId: sku }),
+      (es) => es.length >= 1,
+    );
+    expect(entries.map((e) => e.action)).toContain('PATCH /shop/items/:sku/stock');
+    expect(entries.every((e) => e.targetType === 'shop_item')).toBe(true);
+    const created = await eventually(
+      () => audit.search({ adminId, action: 'POST /shop/items' }),
+      (es) => es.length >= 1,
+    );
+    expect(created).toHaveLength(1);
+    await pool.query(`DELETE FROM shop_items WHERE sku = $1`, [sku]);
+  });
+
   it('search filters by action prefix and target', async () => {
     const byTarget = await audit.search({ targetId });
     expect(byTarget.every((e) => e.targetId === targetId)).toBe(true);

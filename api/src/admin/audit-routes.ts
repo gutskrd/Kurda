@@ -4,12 +4,14 @@ import { requireAuth } from '../plugins/auth.js';
 import { requireAdmin } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { AuditService } from './audit-service.js';
-import { auditActionName, auditTargetType, isAuditableAdminMutation } from './audit-action.js';
+import { auditActionName, auditTargetId, auditTargetType, isAuditableAdminMutation } from './audit-action.js';
+import { isStaffRoute } from './admin-gate.js';
 
 const searchQuery = z.object({
   adminId: z.uuid().optional(),
   action: z.string().max(120).optional(),
   targetId: z.string().max(200).optional(),
+  before: z.string().datetime().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 
@@ -22,8 +24,7 @@ const searchQuery = z.object({
 export function registerAuditLog(app: FastifyInstance, audit: AuditService, totp: AdminTotpService): void {
   app.addHook('onResponse', async (req, reply) => {
     const routeUrl = req.routeOptions?.url ?? req.url;
-    if (!req.user || !isAuditableAdminMutation(req.method, routeUrl, reply.statusCode)) return;
-    const params = req.params as { id?: string } | undefined;
+    if (!req.user || !isAuditableAdminMutation(req.method, routeUrl, reply.statusCode, isStaffRoute(app, routeUrl))) return;
     const body = req.body as { reason?: unknown; note?: unknown } | undefined;
     // moderation routes say why in `note` as often as in `reason`
     const why = typeof body?.reason === 'string' ? body.reason : typeof body?.note === 'string' ? body.note : null;
@@ -32,7 +33,7 @@ export function registerAuditLog(app: FastifyInstance, audit: AuditService, totp
         adminId: req.user.id,
         action: auditActionName(req.method, routeUrl, req.body),
         targetType: auditTargetType(routeUrl),
-        targetId: params?.id ?? null,
+        targetId: auditTargetId(req.params),
         reason: why,
         requestId: String(req.id),
       });
@@ -45,6 +46,9 @@ export function registerAuditLog(app: FastifyInstance, audit: AuditService, totp
   app.get(
     '/admin/audit',
     { schema: { querystring: searchQuery }, preHandler: [requireAuth, requireAdmin(totp, 'superadmin')] },
-    async (req) => ({ entries: await audit.search(req.query as z.infer<typeof searchQuery>) }),
+    async (req) => {
+      const q = req.query as z.infer<typeof searchQuery>;
+      return { entries: await audit.search({ ...q, before: q.before ? new Date(q.before) : undefined }) };
+    },
   );
 }
