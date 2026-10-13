@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
@@ -23,9 +21,10 @@ import { Skeleton, SkeletonLines, SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { confirmReport } from '../moderation/report';
+import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
+import { useSendErrorAlert } from '../reports/SendError';
 import { EmptyState } from '../theme/EmptyState';
-import { addComment, clearReaction, getPost, getReactions, listComments, reportComment, reportPost, setReaction } from './api';
+import { addComment, clearReaction, getPost, getReactions, listComments, setReaction } from './api';
 import {
   commentText,
   relativeTime,
@@ -44,10 +43,13 @@ import {
  * optimistically from the server's returned summary/rows.
  */
 export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const showSendError = useSendErrorAlert();
+  // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
+  const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null } | null>(null);
 
   const [post, setPost] = useState<ImagePost | null>(null);
   const [reactions, setReactions] = useState<ReactionSummary | null>(null);
@@ -93,13 +95,13 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
     const res = await addComment(client, postId, body);
     setPosting(false);
     if (!res.ok) {
-      Alert.alert(t('comment.failed'), describeError(res.error, t));
+      showSendError(t('comment.failed'), res.error);
       return;
     }
     setDraft('');
     setComments((prev) => (prev ? [res.data, ...prev] : [res.data]));
     setPost((prev) => (prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev));
-  }, [client, postId, draft, posting]);
+  }, [client, postId, draft, posting, showSendError, t]);
 
   if (failed && !post) {
     return (
@@ -128,15 +130,22 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                 <Image source={{ uri: post.imageUrl }} style={styles.image} resizeMode="contain" accessibilityIgnoresInvertColors />
               ) : null}
               {post.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{post.caption}</Text> : null}
-              <Pressable
-                onPress={() => confirmReport(t, 'post', () => reportPost(client, post.id))}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={t('moderation.reportPost')}
-              >
-                <Icon name="flag" size={14} color={colors.textSecondary} />
-                <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>
-              </Pressable>
+              {post.authorId !== user?.id ? (
+                <Pressable
+                  onPress={() =>
+                    setReporting({
+                      target: { type: 'image_post', postId: post.id },
+                      authorId: post.authorRole === 'user' ? post.authorId : null,
+                    })
+                  }
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('moderation.reportPost')}
+                >
+                  <Icon name="flag" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>
+                </Pressable>
+              ) : null}
 
               <View style={styles.reactionBar}>
                 {REACTION_ORDER.map((r) => {
@@ -183,8 +192,15 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                             {c.replyCount} {c.replyCount === 1 ? 'reply' : 'replies'}
                           </Text>
                         ) : null}
-                        {c.status !== 'removed' ? (
-                          <Pressable onPress={() => confirmReport(t, 'comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
+                        {c.status !== 'removed' && c.authorId !== user?.id ? (
+                          <Pressable
+                            onPress={() =>
+                              setReporting({
+                                target: { type: 'image_comment', commentId: c.id },
+                                authorId: c.authorRole === 'user' ? c.authorId : null,
+                              })
+                            }
+                            hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Icon name="flag" size={12} color={colors.textSecondary} />
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
                           </Pressable>
@@ -220,6 +236,14 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
           </View>
         </View>
       </KeyboardAvoidingView>
+      {reporting ? (
+        <ReportSheet
+          visible
+          target={reporting.target}
+          blockable={reporting.authorId ? { userId: reporting.authorId, name: null } : null}
+          onClose={() => setReporting(null)}
+        />
+      ) : null}
     </GradientBackground>
   );
 }

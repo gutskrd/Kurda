@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
@@ -23,8 +21,9 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { AudioPlayer } from './AudioPlayer';
-import { confirmReport } from '../moderation/report';
-import { addComment, getPost, listComments, reportComment, reportPost } from './api';
+import { addComment, getPost, listComments } from './api';
+import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
+import { useSendErrorAlert } from '../reports/SendError';
 import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
 import { commentText, type LibraryComment, type LibraryPost } from './types';
@@ -36,10 +35,13 @@ import { EmptyState } from '../theme/EmptyState';
  * a narration ("listen"), and a comment thread with a composer.
  */
 export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const showSendError = useSendErrorAlert();
+  // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
+  const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null } | null>(null);
 
   const [post, setPost] = useState<LibraryPost | null>(null);
   const [comments, setComments] = useState<LibraryComment[] | null>(null);
@@ -72,7 +74,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
       const up = await uploadVoiceNote(client, { uri: voiceUri }, t);
       if (!up.ok) {
         setPosting(false);
-        Alert.alert(t('library.voiceCommentFailed'), up.error);
+        showSendError(t('library.voiceCommentFailed'), { message: up.error, limited: up.limited });
         return;
       }
       audioMediaId = up.audioMediaId;
@@ -80,14 +82,14 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
     setPosting(false);
     if (!res.ok) {
-      Alert.alert(t('comment.failed'), describeError(res.error, t));
+      showSendError(t('comment.failed'), res.error);
       return;
     }
     setDraft('');
     setVoiceUri(null);
     setComments((prev) => (prev ? [res.data, ...prev] : [res.data]));
     setPost((prev) => (prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev));
-  }, [client, postId, draft, voiceUri, posting]);
+  }, [client, postId, draft, voiceUri, posting, showSendError, t]);
 
   const header = (
     <ScreenHeader
@@ -122,15 +124,22 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text>
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
               <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text>
-              <Pressable
-                onPress={() => confirmReport(t, 'post', () => reportPost(client, post.id))}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={t('moderation.reportPost')}
-              >
-                <Icon name="flag" size={14} color={colors.textSecondary} />
-                <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>
-              </Pressable>
+              {post.authorId !== user?.id ? (
+                <Pressable
+                  onPress={() =>
+                    setReporting({
+                      target: { type: 'library_post', postId: post.id },
+                      authorId: post.authorRole === 'user' ? post.authorId : null,
+                    })
+                  }
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('moderation.reportPost')}
+                >
+                  <Icon name="flag" size={14} color={colors.textSecondary} />
+                  <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>
+                </Pressable>
+              ) : null}
 
               <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
                 {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}
@@ -156,8 +165,15 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                             {c.replyCount} {c.replyCount === 1 ? 'reply' : 'replies'}
                           </Text>
                         ) : null}
-                        {c.status !== 'removed' ? (
-                          <Pressable onPress={() => confirmReport(t, 'comment', () => reportComment(client, c.id))} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
+                        {c.status !== 'removed' && c.authorId !== user?.id ? (
+                          <Pressable
+                            onPress={() =>
+                              setReporting({
+                                target: { type: 'library_comment', commentId: c.id },
+                                authorId: c.authorRole === 'user' ? c.authorId : null,
+                              })
+                            }
+                            hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Icon name="flag" size={12} color={colors.textSecondary} />
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
                           </Pressable>
@@ -196,6 +212,14 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
           </View>
         </View>
       </KeyboardAvoidingView>
+      {reporting ? (
+        <ReportSheet
+          visible
+          target={reporting.target}
+          blockable={reporting.authorId ? { userId: reporting.authorId, name: null } : null}
+          onClose={() => setReporting(null)}
+        />
+      ) : null}
     </GradientBackground>
   );
 }

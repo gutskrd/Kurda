@@ -10,6 +10,9 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { checkUsername, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
 import { useI18n } from '../i18n/I18nContext';
+import type { ApiError } from '../api/types';
+import { restrictionOf } from '../reports/sendErrors';
+import { SendErrorNotice } from '../reports/SendError';
 
 /**
  * Change username (KUR-004). Shows the current name, validates the new one live
@@ -27,6 +30,8 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
   const [input, setInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  // a limit on the account (a new name is shown to others) — said with a way to Account standing
+  const [limit, setLimit] = useState<ApiError | null>(null);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
@@ -44,11 +49,16 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
     if (!check.ok || saving) return;
     setSaving(true);
     setServerError(null);
+    setLimit(null);
     const res = await client.patch<{ user: { username: string } }>('/me', { username: check.value });
     setSaving(false);
     if (res.ok) {
       setDone(true);
       setTimeout(onExit, 700);
+      return;
+    }
+    if (restrictionOf(res.error)) {
+      setLimit(res.error);
       return;
     }
     // the server's message is already user-facing (taken / reserved / cooldown date)
@@ -109,6 +119,8 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
               </Text>
             )}
           </GlassCard>
+
+          <SendErrorNotice error={limit} onDismiss={() => setLimit(null)} />
 
           <ClayButton
             label={done ? t('username.saved') : saving ? t('username.saving') : t('username.save')}

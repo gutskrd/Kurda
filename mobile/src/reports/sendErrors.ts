@@ -58,7 +58,7 @@ export function restrictionOf(error: ApiError | null | undefined): Restriction |
  * when it is not this one — in the phone's own time zone, because "until 16:00
  * UTC" asks a child to do arithmetic about their own punishment.
  */
-export function formatUntil(iso: string, locale: string, now: Date = new Date()): string {
+export function formatUntil(iso: string, locale: string | undefined, now: Date = new Date()): string {
   const when = new Date(iso);
   if (Number.isNaN(when.getTime())) return iso;
   const options: Intl.DateTimeFormatOptions = {
@@ -99,7 +99,7 @@ const MUTED_KEY: Record<MutedErrorDetails['scope'], { now: TranslationKey; until
 };
 
 /** The sentence that says what is limited and until when. */
-export function restrictionText(r: Restriction, t: Translate, locale: string, now: Date = new Date()): string {
+export function restrictionText(r: Restriction, t: Translate, locale: string | undefined, now: Date = new Date()): string {
   switch (r.kind) {
     case 'muted':
       return r.until === null

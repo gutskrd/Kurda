@@ -1,7 +1,7 @@
 import type { Translate } from '../api/errors';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
-import { describeUploadFailure, normalizeContentType, type UploadResult } from './photoUploadResult';
+import { describeUploadFailure, uploadWasLimited, normalizeContentType, type UploadResult } from './photoUploadResult';
 
 export type { UploadResult } from './photoUploadResult';
 
@@ -44,7 +44,7 @@ export async function uploadProfilePhoto(
       return { ok: false, error: t('upload.noPhotoReturned') };
     }
 
-    return { ok: false, error: describeUploadFailure(res.status, res.body, t) };
+    return { ok: false, error: describeUploadFailure(res.status, res.body, t), limited: uploadWasLimited(res.status, res.body) };
   } catch (e) {
     return { ok: false, error: (e as Error)?.message ?? t('upload.photoFailed') };
   }

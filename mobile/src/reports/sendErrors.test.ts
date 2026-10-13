@@ -4,6 +4,7 @@ import { interpolate } from '../i18n/format';
 import type { ApiError } from '../api/types';
 import { formatDay, formatUntil, restrictionOf, restrictionText, sendErrorOf, standingExplains } from './sendErrors';
 import { mutedDetails, suspendedDetails } from './suspension';
+import { describeUploadFailure, uploadWasLimited } from '../profile/photoUploadResult';
 
 const t = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.en[key], vars);
 const NOW = new Date('2026-10-13T09:00:00Z');
@@ -79,5 +80,17 @@ describe('suspendedDetails / mutedDetails', () => {
     expect(suspendedDetails(null)).toBeNull();
     expect(mutedDetails({ scope: 'chat' })).toEqual({ scope: 'chat', until: null });
     expect(mutedDetails({ scope: 'account' })).toBeNull();
+  });
+});
+
+describe('uploads refused by a limit', () => {
+  it('say what is limited instead of the server’s English, and are marked limited', () => {
+    const muted = JSON.stringify({ code: 'MUTED', message: "you can't upload pictures or voice right now", details: { scope: 'media', until: null } });
+    expect(describeUploadFailure(403, muted, t)).toBe('You can’t add pictures or voice right now.');
+    expect(uploadWasLimited(403, muted)).toBe(true);
+    // the automatic pause is said, but its reasons are not on the standing page
+    const paused = JSON.stringify({ code: 'CHAT_MUTED', message: 'x' });
+    expect(uploadWasLimited(403, paused)).toBe(false);
+    expect(uploadWasLimited(500, 'not json')).toBe(false);
   });
 });

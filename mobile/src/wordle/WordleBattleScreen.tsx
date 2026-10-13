@@ -12,6 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
@@ -301,6 +302,10 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
                       : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
                   </Text>
                   {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+                  {/* anyone else in the game can be reported, by seat */}
+                  {r.userId !== user?.id && r.seat !== undefined ? (
+                    <PlayerReportButton game="wordle-battle" gameId={results.id} seat={r.seat} name={r.name ?? null} />
+                  ) : null}
                 </View>
               ))}
             </View>

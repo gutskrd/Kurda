@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { ApiError } from '../api/types';
+import type { Translate } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
@@ -73,14 +74,17 @@ export function SendErrorNotice({
  * with one (a post, a comment, a picture, a voice note, a profile change). The
  * title stays the screen's own ("Couldn't post"); the message becomes the
  * limit, with a second button to Account standing when it has the reasons.
+ *
+ * An upload (a picture, a voice note) has already been put into words by
+ * `describeUploadFailure`; pass `{ message, limited }` from its result instead.
  */
-export function useSendErrorAlert(): (title: string, error: ApiError) => void {
+export function useSendErrorAlert(): (title: string, error: ApiError | { message: string; limited?: boolean }) => void {
   const { t, locale } = useI18n();
   const navigation = useNavigation<RootNavigation>();
   return useCallback(
-    (title: string, error: ApiError) => {
-      const { message, restriction } = sendErrorOf(error, t, locale);
-      if (restriction && standingExplains(restriction)) {
+    (title: string, error: ApiError | { message: string; limited?: boolean }) => {
+      const { message, standing } = alertTextOf(error, t, locale);
+      if (standing) {
         Alert.alert(title, message, [
           { text: t('restriction.seeStanding'), onPress: () => navigation.navigate('AccountStanding') },
           { text: t('social.close'), style: 'cancel' },
@@ -91,6 +95,17 @@ export function useSendErrorAlert(): (title: string, error: ApiError) => void {
     },
     [locale, navigation, t],
   );
+}
+
+/** What the alert says, and whether Account standing has the reasons. */
+function alertTextOf(
+  error: ApiError | { message: string; limited?: boolean },
+  t: Translate,
+  locale: string,
+): { message: string; standing: boolean } {
+  if (!('kind' in error)) return { message: error.message, standing: error.limited === true };
+  const { message, restriction } = sendErrorOf(error, t, locale);
+  return { message, standing: restriction !== null && standingExplains(restriction) };
 }
 
 const styles = StyleSheet.create({

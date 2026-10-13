@@ -1,4 +1,5 @@
 /** Pure notification-inbox helpers (KUR-097) — no React Native. */
+import { socialDeepLink, type SocialDeepLink } from '../reports/deepLinks';
 
 export interface InboxItem {
   id: string;
@@ -16,7 +17,9 @@ export type DeepLink =
   | { screen: 'Notifications' }
   | { screen: 'Game'; params: { roomId: string } }
   | { screen: 'Profile'; params: { userId: string } }
-  | { screen: 'Chat'; params: { userId: string; username: string } };
+  | { screen: 'Chat'; params: { userId: string; username: string } }
+  // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
+  | SocialDeepLink;
 
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null;
@@ -28,6 +31,8 @@ function str(v: unknown): string | null {
  * for an expired/removed deep-link, rather than navigating into a dead screen).
  */
 export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null {
+  const social = socialDeepLink(data);
+  if (social) return social;
   switch (data.screen) {
     case 'EventQuests':
       return { screen: 'EventQuests' };

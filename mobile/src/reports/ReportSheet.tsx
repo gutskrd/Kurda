@@ -68,7 +68,8 @@ export type ReportTarget =
  * - `name` — whom the title names ("Report Rojda", "Report Player 2"); left
  *   out, the title says what it is ("Report this message").
  * - `blockable` — `{ userId, name }` of the person behind it, to offer
- *   **Block** on the done screen. Leave it out when you only know a seat or the
+ *   **Block** on the done screen (`name` null when the screen has none to
+ *   show: "Block this person"). Leave it out when you only know a seat or the
  *   person is you; nothing is offered then.
  * - `leavable` — `{ groupId, name }` to offer **Leave group** on the done
  *   screen (a group, or a message in one).
@@ -99,7 +100,7 @@ export function ReportSheet({
   visible: boolean;
   target: ReportTarget;
   name?: string | null;
-  blockable?: { userId: string; name: string } | null;
+  blockable?: { userId: string; name: string | null } | null;
   leavable?: { groupId: string; name: string } | null;
   onClose: () => void;
   onBlocked?: (userId: string) => void;
@@ -346,7 +347,7 @@ function DoneStep({
   onLeftGroup,
 }: {
   receipt: ReportReceipt;
-  blockable: { userId: string; name: string } | null;
+  blockable: { userId: string; name: string | null } | null;
   leavable: { groupId: string; name: string } | null;
   onClose: () => void;
   onBlocked?: (userId: string) => void;
@@ -433,7 +434,13 @@ function DoneStep({
       {blockable ? (
         <View style={styles.action}>
           <ClayButton
-            label={blocked === 'done' ? t('report.done.blocked') : t('report.done.block', { name: blockable.name })}
+            label={
+              blocked === 'done'
+                ? t('report.done.blocked')
+                : blockable.name
+                  ? t('report.done.block', { name: blockable.name })
+                  : t('report.done.blockThem')
+            }
             icon={blocked === 'done' ? 'check' : 'block'}
             tone="danger"
             variant="outline"

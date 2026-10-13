@@ -2,7 +2,7 @@ import type { Translate } from '../api/errors';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
-import { describeUploadFailure, normalizeContentType } from '../profile/photoUploadResult';
+import { describeUploadFailure, uploadWasLimited, normalizeContentType } from '../profile/photoUploadResult';
 import type { Category, Comment, ImagePost, Reaction, ReactionSummary } from './types';
 
 export interface FeedFilters {
@@ -67,7 +67,8 @@ export const reportPost = (client: ApiClient, postId: string, reason?: string): 
 export const reportComment = (client: ApiClient, commentId: string, reason?: string): Promise<ApiResult<{ reported: true }>> =>
   client.post(`/images/comments/${commentId}/report`, reason ? { reason } : {});
 
-export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } | { ok: false; error: string };
+/** `limited`: refused by a limit on the account (see `UploadResult`). */
+export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };
 
 /**
  * Upload a picked image through the server (KUR-291): POST the raw bytes to
@@ -98,7 +99,7 @@ export async function uploadMemeImage(
       }
       return { ok: false, error: t('upload.noImageReturned') };
     }
-    return { ok: false, error: describeUploadFailure(res.status, res.body, t) };
+    return { ok: false, error: describeUploadFailure(res.status, res.body, t), limited: uploadWasLimited(res.status, res.body) };
   } catch (e) {
     return { ok: false, error: (e as Error)?.message ?? t('upload.imageFailed') };
   }

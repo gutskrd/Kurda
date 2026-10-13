@@ -96,6 +96,9 @@ export function InboxScreen(): React.JSX.Element {
       }
       const link = resolveDeepLink(item.data);
       if (!link) return;
+      // a gift in a group, a report's outcome, a decision on your account
+      if (link.screen === 'GroupThread') return navigation.navigate('GroupThread', link.params);
+      if (link.screen === 'MyReports' || link.screen === 'AccountStanding') return navigation.navigate(link.screen);
       if (link.screen === 'Chat') navigation.navigate('Chat', link.params);
       else if (link.screen === 'Game') navigation.navigate('Game', link.params);
       else if (link.screen === 'Profile') navigation.navigate('UserProfile', { userId: link.params.userId });

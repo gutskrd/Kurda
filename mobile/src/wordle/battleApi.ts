@@ -41,6 +41,10 @@ export interface BattleResults {
   difficulty: Difficulty;
   ranking: Array<{
     userId: string;
+    /** the player's seat (`seat:N` is everyone else's userId): what a report names them by */
+    seat?: number;
+    /** null unless you may see it (a friend, or anyone in an open battle) */
+    name?: string | null;
     rank: number;
     solved: boolean;
     guessCount: number;

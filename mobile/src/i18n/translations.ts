@@ -923,6 +923,9 @@ export type TranslationKey =
   | 'suspension.back'
   | 'suspension.expired'
   | 'suspension.sent'
+  | 'report.done.blockThem'
+  | 'report.playerSeat'
+  | 'report.message.hint'
   // ---- end mobile-social ----
   | 'profile.sending'
   | 'settings.blocked.since'
@@ -1994,6 +1997,9 @@ const en: Catalog = {
   'suspension.back': 'Back to sign in',
   'suspension.expired': 'This page has been open too long. Sign in again to ask for a review.',
   'suspension.sent': 'Sent. Sign in again later to see the answer here.',
+  'report.done.blockThem': 'Block this person',
+  'report.playerSeat': 'Player {seat}',
+  'report.message.hint': 'Press and hold a message to report it',
   // ---- end mobile-social ----
   'profile.sending': 'Sending…',
   'settings.blocked.since': 'blocked {date}',
@@ -3053,6 +3059,9 @@ const ku: Catalog = {
   'suspension.back': 'Vegere têketinê',
   'suspension.expired': 'Ev rûpel pir dirêj vekirî ma. Ji bo daxwaza nirxandinê dîsa têkeve.',
   'suspension.sent': 'Hat şandin. Paşê dîsa têkeve da ku bersivê li vir bibînî.',
+  'report.done.blockThem': 'Vî kesî asteng bike',
+  'report.playerSeat': 'Lîstikvan {seat}',
+  'report.message.hint': 'Ji bo ragihandinê, li ser peyamê bitikîne û bigire',
   // ---- end mobile-social ----
   'profile.sending': 'Tê şandin…',
   'settings.blocked.since': 'hate astengkirin {date}',
@@ -4112,6 +4121,9 @@ const de: Catalog = {
   'suspension.back': 'Zurück zur Anmeldung',
   'suspension.expired': 'Diese Seite war zu lange offen. Melde dich erneut an, um eine Überprüfung anzufragen.',
   'suspension.sent': 'Gesendet. Melde dich später wieder an, um die Antwort hier zu sehen.',
+  'report.done.blockThem': 'Diese Person blockieren',
+  'report.playerSeat': 'Spieler {seat}',
+  'report.message.hint': 'Zum Melden eine Nachricht gedrückt halten',
   // ---- end mobile-social ----
   'profile.sending': 'Wird gesendet…',
   'settings.blocked.since': 'blockiert am {date}',
@@ -5171,6 +5183,9 @@ const es: Catalog = {
   'suspension.back': 'Volver a iniciar sesión',
   'suspension.expired': 'Esta página lleva demasiado tiempo abierta. Vuelve a iniciar sesión para pedir una revisión.',
   'suspension.sent': 'Enviado. Vuelve a iniciar sesión más tarde para ver la respuesta aquí.',
+  'report.done.blockThem': 'Bloquear a esta persona',
+  'report.playerSeat': 'Jugador {seat}',
+  'report.message.hint': 'Mantén pulsado un mensaje para denunciarlo',
   // ---- end mobile-social ----
   'profile.sending': 'Enviando…',
   'settings.blocked.since': 'bloqueado el {date}',
@@ -6230,6 +6245,9 @@ const tr: Catalog = {
   'suspension.back': 'Girişe dön',
   'suspension.expired': 'Bu sayfa çok uzun süre açık kaldı. İnceleme istemek için yeniden giriş yap.',
   'suspension.sent': 'Gönderildi. Yanıtı burada görmek için daha sonra yeniden giriş yap.',
+  'report.done.blockThem': 'Bu kişiyi engelle',
+  'report.playerSeat': 'Oyuncu {seat}',
+  'report.message.hint': 'Bildirmek için mesaja basılı tut',
   // ---- end mobile-social ----
   'profile.sending': 'Gönderiliyor…',
   'settings.blocked.since': '{date} tarihinde engellendi',
@@ -7289,6 +7307,9 @@ const ar: Catalog = {
   'suspension.back': 'العودة لتسجيل الدخول',
   'suspension.expired': 'بقيت هذه الصفحة مفتوحة طويلًا. سجّل الدخول مجددًا لطلب مراجعة.',
   'suspension.sent': 'أُرسل. سجّل الدخول لاحقًا لترى الرد هنا.',
+  'report.done.blockThem': 'حظر هذا الشخص',
+  'report.playerSeat': 'اللاعب {seat}',
+  'report.message.hint': 'اضغط مطولًا على رسالة للإبلاغ عنها',
   // ---- end mobile-social ----
   'profile.sending': 'جارٍ الإرسال…',
   'settings.blocked.since': 'حُظر في {date}',
@@ -8348,6 +8369,9 @@ const fr: Catalog = {
   'suspension.back': 'Retour à la connexion',
   'suspension.expired': 'Cette page est restée ouverte trop longtemps. Reconnecte-toi pour demander un réexamen.',
   'suspension.sent': 'Envoyé. Reconnecte-toi plus tard pour voir la réponse ici.',
+  'report.done.blockThem': 'Bloquer cette personne',
+  'report.playerSeat': 'Joueur {seat}',
+  'report.message.hint': 'Appuie longuement sur un message pour le signaler',
   // ---- end mobile-social ----
   'profile.sending': 'Envoi…',
   'settings.blocked.since': 'bloqué le {date}',
@@ -9407,6 +9431,9 @@ const nl: Catalog = {
   'suspension.back': 'Terug naar inloggen',
   'suspension.expired': 'Deze pagina stond te lang open. Log opnieuw in om herbeoordeling te vragen.',
   'suspension.sent': 'Verstuurd. Log later opnieuw in om het antwoord hier te zien.',
+  'report.done.blockThem': 'Deze persoon blokkeren',
+  'report.playerSeat': 'Speler {seat}',
+  'report.message.hint': 'Houd een bericht ingedrukt om het te melden',
   // ---- end mobile-social ----
   'profile.sending': 'Versturen…',
   'settings.blocked.since': 'geblokkeerd op {date}',
@@ -10467,6 +10494,9 @@ const ckb: Catalog = {
   'suspension.back': 'گەڕانەوە بۆ چوونەژوورەوە',
   'suspension.expired': 'ئەم پەڕەیە زۆر کراوە ماوەتەوە. بۆ داوای پێداچوونەوە دووبارە بچۆرە ژوورەوە.',
   'suspension.sent': 'نێردرا. دواتر دووبارە بچۆرە ژوورەوە بۆ بینینی وەڵامەکە لێرە.',
+  'report.done.blockThem': 'ئەم کەسە بلۆک بکە',
+  'report.playerSeat': 'یاریزان {seat}',
+  'report.message.hint': 'بۆ ڕاپۆرتکردن، پەنجە لەسەر نامەکە ڕابگرە',
   // ---- end mobile-social ----
   'profile.sending': 'دەنێردرێت…',
   'settings.blocked.since': 'لە {date} بلۆک کرا',
