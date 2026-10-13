@@ -13,30 +13,55 @@ import { useTypeOnly } from '../components/typeOnly';
 import { buildInviteUrl } from '../lib/gameInvites';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { InviteForm } from '../play/InviteSheet';
+import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
+import { LeaveLobby, LobbyRoster, RoomUnavailable, seatName, type RoomGone, type SeatPlayer } from '../play/GameRoom';
+import { RematchPanel } from '../play/RematchPanel';
+import { useLobbyUpdates } from '../play/usePlay';
+import { playError } from '../play/playApi';
 
 type Dialect = 'kurmanci' | 'sorani';
 
 interface ScoreEntry {
+  /** yours on your own entry, `seat:N` on everyone else's */
   userId: string;
+  seat: number;
+  /** only when this viewer may see it (a friend, or an open match) */
+  name: string | null;
+  avatarUrl: string | null;
   score: number;
   accepted: number;
+  gone: boolean;
 }
 interface MatchState {
   id: string;
-  status: 'lobby' | 'active' | 'finished';
+  status: 'lobby' | 'active' | 'finished' | 'cancelled';
   dialect: Dialect;
   prompt: string | null;
   windowMs: number;
   remainingMs: number;
   maxPlayers: number;
   createdBy: string;
-  me: { score: number; accepted: number; usedWords: string[] } | null;
+  isHost: boolean;
+  /** everyone in it, by seat, as this viewer may see them */
+  players: SeatPlayer[];
+  me: { seat: number; score: number; accepted: number; usedWords: string[] } | null;
   scoreboard: ScoreEntry[];
 }
 interface MatchResults {
   prompt: string;
   dialect: Dialect;
-  ranking: Array<{ userId: string; rank: number; score: number; accepted: number; xpAwarded: number | null }>;
+  ranking: Array<{
+    userId: string;
+    seat: number;
+    name: string | null;
+    avatarUrl: string | null;
+    isMe: boolean;
+    rank: number;
+    score: number;
+    accepted: number;
+    xpAwarded: number | null;
+  }>;
 }
 
 const REJECT_KEY: Record<string, MessageKey> = {
@@ -68,48 +93,29 @@ export function RhymeMatch(): React.JSX.Element {
   );
 }
 
+/**
+ * A new match: its variety and the friends to ask, in one step — the invite
+ * sheet's form, in place (play/InviteSheet).
+ */
 function CreateMatch(): React.JSX.Element {
-  const { client } = useAuth();
   const t = useT();
-  const navigate = useNavigate();
-  const [dialect, setDialect] = useState<Dialect>('kurmanci');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function create(): Promise<void> {
-    setBusy(true);
-    setErr(null);
-    const res = await client.post<MatchState>('/rhyme/matches', { dialect });
-    setBusy(false);
-    if (res.ok) navigate(`/app/games/rhyme-match?id=${res.data.id}`);
-    else setErr(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error, t));
-  }
-
   return (
-    <div className="match-lobby">
+    <div className="match-lobby match-create">
       <p className="page-sub">{t('games.rhymeMatch.intro')}</p>
-      {err && <div className="wordle-notice">{err}</div>}
-      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
-        {(['kurmanci', 'sorani'] as const).map((d) => (
-          <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => setDialect(d)}>
-            {d === 'kurmanci' ? 'Kurmancî' : 'Soranî'}
-          </button>
-        ))}
-      </div>
-      <Button size="lg" disabled={busy} onClick={() => void create()}>
-        {busy ? t('games.creating') : t('games.rhymeMatch.create')}
-      </Button>
+      <InviteForm target={{ kind: 'new', game: 'rhyme-match' }} lockGame heading={false} />
     </div>
   );
 }
 
 function MatchRoom({ id }: { id: string }): React.JSX.Element {
-  const { client, user } = useAuth();
+  const { client } = useAuth();
   const myAvatar = useRail().data.you?.avatarUrl ?? null;
   const t = useT();
+  const navigate = useNavigate();
   const [match, setMatch] = useState<MatchState | null>(null);
   const [results, setResults] = useState<MatchResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gone, setGone] = useState<RoomGone | null>(null);
   const [word, setWord] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -125,7 +131,13 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     if (res.ok) {
       setMatch(res.data);
       setRemaining(res.data.remainingMs);
+      setGone(null);
       loadedOnce.current = true;
+    } else if (res.error.code === 'GAME_STARTED') {
+      // a latecomer: the match is running without them — not "time's up"
+      setGone('started');
+    } else if (res.error.status === 404) {
+      setGone('gone');
     } else if (!loadedOnce.current) {
       setError(describeError(res.error, t));
     }
@@ -133,11 +145,11 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
   useEffect(() => {
     void load();
-    const timer = setInterval(() => {
-      if (match?.status !== 'finished') void load();
-    }, 1500);
-    return () => clearInterval(timer);
-  }, [load, match?.status]);
+  }, [load]);
+
+  // `play_changed` brings the lobby and the scoreboard; a slow read covers a missed event
+  const live = match?.status === 'lobby' || match?.status === 'active';
+  useLobbyUpdates('rhyme-match', id, load, live && gone === null);
 
   useEffect(() => {
     if (match?.status === 'finished' && !results) {
@@ -147,7 +159,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     }
   }, [match?.status, results, client, id]);
 
-  // local countdown between polls (resynced on each load/submit)
+  // local countdown between reads (resynced on each load/submit)
   const active = match?.status === 'active' && match.me != null && remaining > 0;
   useEffect(() => {
     if (match?.status !== 'active') return;
@@ -155,6 +167,15 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const timer = setTimeout(() => setRemaining((ms) => Math.max(0, ms - 200)), 200);
     return () => clearTimeout(timer);
   }, [remaining, match?.status]);
+
+  // the window closed here: the server ends the match on its next read, and
+  // says so — ask once, rather than wait for the slow safety read
+  const timeUp = match?.status === 'active' && remaining <= 0;
+  useEffect(() => {
+    if (!timeUp) return;
+    const timer = setTimeout(() => void load(), 1500);
+    return () => clearTimeout(timer);
+  }, [timeUp, load]);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -192,50 +213,70 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const res = await client.post<MatchState>(`/rhyme/matches/${id}/join`);
     setBusy(false);
     if (res.ok) setMatch(res.data);
-    else setNotice(describeError(res.error, t));
+    // full, started, or not theirs to join: said as every game says it
+    else setNotice(playError(res.error, t));
   }
   async function start(): Promise<void> {
     setBusy(true);
     const res = await client.post<MatchState>(`/rhyme/matches/${id}/start`);
     setBusy(false);
+    if (res.ok) {
+      setMatch(res.data);
+      setRemaining(res.data.remainingMs);
+    } else setNotice(describeError(res.error, t));
+  }
+  async function remove(seat: number): Promise<void> {
+    const res = await client.post<MatchState>(`/rhyme/matches/${id}/remove`, { seat });
     if (res.ok) setMatch(res.data);
     else setNotice(describeError(res.error, t));
   }
+  async function leave(): Promise<void> {
+    await client.post(`/rhyme/matches/${id}/leave`);
+    navigate('/app/games');
+  }
 
+  if (gone) return <RoomUnavailable why={gone} newPath="/app/games/rhyme-match" newLabel={t('games.rhymeMatch.new')} />;
   if (error && !match) return <ErrorState message={error} onRetry={() => void load()} />;
   if (!match) return <Loading />;
+  if (match.status === 'cancelled') {
+    return <RoomUnavailable why="cancelled" newPath="/app/games/rhyme-match" newLabel={t('games.rhymeMatch.new')} />;
+  }
 
-  const playerCount = match.scoreboard.length || (match.me ? 1 : 0);
-  const isHost = match.createdBy === user?.id;
+  const playerCount = match.players.filter((p) => !p.gone).length;
+  const room = Math.max(0, match.maxPlayers - playerCount);
   const seconds = Math.ceil(remaining / 1000);
 
   if (match.status === 'lobby') {
     return (
-      <div className="match-lobby">
-        <p>{t('games.lobbyWaiting', { count: playerCount })}</p>
+      <div className="match-lobby match-room">
         <div className="battle-invite">
           <span className="battle-invite-label">{t('games.inviteLink')}</span>
           <code className="battle-invite-url">{buildInviteUrl('rhyme-match', id)}</code>
           <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
+          {match.isHost && <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} />}
         </div>
-        {notice && <div className="wordle-notice">{notice}</div>}
+        {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} />}
+        <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} />
+        {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {match.me == null ? (
           <Button size="lg" disabled={busy} onClick={() => void join()}>
             {busy ? t('games.joining') : t('games.rhymeMatch.join')}
           </Button>
-        ) : isHost ? (
+        ) : match.isHost ? (
           <Button size="lg" disabled={busy || playerCount < 2} onClick={() => void start()}>
             {playerCount < 2 ? t('games.waitingForPlayer') : busy ? t('games.starting') : t('games.rhymeMatch.start')}
           </Button>
         ) : (
           <p className="muted">{t('games.waitingForHost')}</p>
         )}
+        {match.me != null && <LeaveLobby isHost={match.isHost} onLeave={leave} />}
       </div>
     );
   }
 
   if (match.status === 'finished') {
-    const mine = results?.ranking.find((r) => r.userId === user?.id);
+    const mine = results?.ranking.find((r) => r.isMe);
+    const others = results?.ranking.filter((r) => !r.isMe) ?? [];
     return (
       <div className="match-results">
         <h2 className="match-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
@@ -244,13 +285,13 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             <p className="muted">{t('games.rhymeMatch.promptWas', { word: results.prompt })}</p>
             <RankList>
               {results.ranking.map((r) => {
-                const me = r.userId === user?.id;
+                const me = r.isMe;
                 return (
                   <RankRow
-                    key={r.userId}
+                    key={r.seat}
                     rank={r.rank}
-                    name={me ? t('games.you') : t('games.opponent')}
-                    avatarUrl={me ? myAvatar : null}
+                    name={seatName(r, t)}
+                    avatarUrl={me ? myAvatar : r.avatarUrl}
                     me={me}
                     score={t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
                     trailing={r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : undefined}
@@ -260,7 +301,15 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             </RankList>
           </>
         )}
-        <Link to="/app/games/rhyme-match" className="btn btn-primary">{t('games.rhymeMatch.new')}</Link>
+        {match.me != null && (
+          <RematchPanel
+            game="rhyme-match"
+            lobbyId={id}
+            otherName={others[0] ? seatName(others[0], t) : t('games.opponent')}
+            isHost={match.isHost}
+          />
+        )}
+        <Link to="/app/games/rhyme-match" className="btn btn-ghost">{t('games.rhymeMatch.new')}</Link>
       </div>
     );
   }
@@ -280,12 +329,12 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
       <div className="players">
         {match.scoreboard.map((s) => {
-          const me = s.userId === user?.id;
+          const me = match.me?.seat === s.seat;
           return (
             <PlayerChip
-              key={s.userId}
-              name={me ? t('games.you') : t('games.opponent')}
-              avatarUrl={me ? myAvatar : null}
+              key={s.seat}
+              name={me ? t('games.you') : (s.name ?? t('games.opponent'))}
+              avatarUrl={me ? myAvatar : s.avatarUrl}
               status={t('games.rhymeMatch.playerScore', { score: s.score, count: s.accepted })}
             />
           );
