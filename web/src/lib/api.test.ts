@@ -142,6 +142,18 @@ describe('ApiClient', () => {
     expect(storage.get()).toBeNull();
   });
 
+  it('sends a credential the caller passed, not the stored session', async () => {
+    // the suspension screen reads with its appeal token; any other session must not stand in for it
+    persistTokens({ accessToken: 'someone-else', refreshToken: 'r' }, true);
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResponse(200, {}));
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    await client.get('/me/standing', { headers: { authorization: 'Bearer appeal' } });
+    await client.get('/me');
+    expect((fetchMock.mock.calls[0]![1]!.headers as Record<string, string>).authorization).toBe('Bearer appeal');
+    expect((fetchMock.mock.calls[1]![1]!.headers as Record<string, string>).authorization).toBe('Bearer someone-else');
+  });
+
   it('attaches an Idempotency-Key to mutating requests', async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResponse(200, {}));
     vi.stubGlobal('fetch', fetchMock);

@@ -115,7 +115,9 @@ export class ApiClient {
 
     const attempt = async (): Promise<ApiResult<T>> => {
       const tokens = this.storage.get();
-      const withAuth = tokens ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
+      // a credential the caller passed is the one meant (the suspension
+      // screen's appeal token): a session left in storage never replaces it
+      const withAuth = tokens && !headers.authorization ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
       let res: Response;
       try {
         res = await this.timedFetch(`${this.baseUrl}${path}`, {
