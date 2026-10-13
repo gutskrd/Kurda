@@ -149,6 +149,9 @@ describe('the cosmetic catalogue', () => {
     // a removed file that never had a catalogue row falls back by category
     expect(migration.replacementFor('bg-custom', 'backgrounds/background-45.mp4')).toBe('bg-made-hevalo');
     expect(migration.replacementFor('icon-custom', 'icons/accessoire-icon-06.png')).toBe('icon-made-sterk');
+    // a SKU that happens to be an Object property is not mistaken for one
+    expect(migration.replacementFor('constructor', 'icons/accessoire-icon-07.png')).toBe(migration.REPLACED_BY['icon-accessoire-icon-07']);
+    expect(migration.replacementFor('toString', null)).toBeNull();
     // everything else is left alone
     expect(migration.replacementFor('bg-made-zozan', 'backgrounds/made-16-zozan.webp')).toBeNull();
     expect(migration.replacementFor('streak-freeze', null)).toBeNull();

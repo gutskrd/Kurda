@@ -20,8 +20,8 @@
  *    owner keep using an inactive item, so nobody loses what they have.
  *
  * 3. Records each owner of a replaced item in `cosmetic_refreshes`, with what
- *    they paid for it: their own purchase in the wallet ledger, net of any
- *    copy they bought as a gift for somebody else. A gift received or an item
+ *    they paid for it: their own purchase in the wallet ledger, not counting
+ *    a copy they bought as a present for somebody else. A gift received or an item
  *    granted refunds nothing — gifts are items, never currency (see
  *    shared/src/gifts.ts) — but its owner is still told the art changed.
  *
@@ -164,11 +164,13 @@ const REMOVED_ICON = /^icons\/accessoire-icon-(\d+)\.[a-z0-9]+$/;
 
 /** The made piece a row should take, or null when it is not one being replaced. */
 export function replacementFor(sku, assetKey) {
-  if (REPLACED_BY[sku]) return REPLACED_BY[sku];
+  // own keys only: an admin's SKU could be any string, "constructor" included
+  const known = (key) => (Object.hasOwn(REPLACED_BY, key) ? REPLACED_BY[key] : null);
+  if (known(sku)) return known(sku);
   const bg = assetKey ? REMOVED_BACKGROUND.exec(assetKey) : null;
-  if (bg) return REPLACED_BY[`bg-background-${bg[1]}`] ?? FALLBACK.background;
+  if (bg) return known(`bg-background-${bg[1]}`) ?? FALLBACK.background;
   const icon = assetKey ? REMOVED_ICON.exec(assetKey) : null;
-  if (icon) return REPLACED_BY[`icon-accessoire-icon-${icon[1]}`] ?? FALLBACK.icon;
+  if (icon) return known(`icon-accessoire-icon-${icon[1]}`) ?? FALLBACK.icon;
   return null;
 }
 
