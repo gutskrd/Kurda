@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { STORY_DIALECTS, STORY_LENGTHS, storyTextDirection, type StoryDialect } from '@kurda/shared';
 import {
   DIALECT_NAME,
@@ -14,19 +14,21 @@ import {
   type ListFilter,
   type StoryStatus,
 } from '../stories';
-import { listStories, storyFailure } from '../storiesApi';
+import { listStories } from '../storiesApi';
+import { Badge, Button, Icon, PageHeader, Section, Table, Tabs, useLoad, type Column, type Tone } from '../ui';
 
 const FILTER_KEY = 'kurda_admin_stories_filter';
 
-const STATUS_TABS: ReadonlyArray<[StoryStatus | 'all', string]> = [
-  ['all', 'All'],
-  ['draft', STATUS_NAME.draft],
-  ['in_review', STATUS_NAME.in_review],
-  ['published', STATUS_NAME.published],
-  ['archived', STATUS_NAME.archived],
-];
+const STATUS_TABS: ReadonlyArray<StoryStatus | 'all'> = ['all', 'draft', 'in_review', 'published', 'archived'];
 
-export const STATUS_TONE: Record<StoryStatus, string> = { draft: 'mid', in_review: '', published: 'ok', archived: 'hi' };
+export const STATUS_TONE: Record<StoryStatus, Tone> = { draft: 'warn', in_review: 'info', published: 'ok', archived: 'neutral' };
+
+const PROBLEM_TONE: Record<ReturnType<typeof problemLabel>['tone'], Tone> = { danger: 'bad', mid: 'warn', ok: 'ok', '': 'neutral' };
+
+/** The audio studio on one story's sentences. */
+export function storyRecordHref(id: string): string {
+  return `#/audio/stories?story=${encodeURIComponent(id)}`;
+}
 
 function savedFilter(): ListFilter {
   const fallback: ListFilter = { status: 'all', dialect: 'all', query: '' };
@@ -34,7 +36,7 @@ function savedFilter(): ListFilter {
     const raw = JSON.parse(sessionStorage.getItem(FILTER_KEY) ?? 'null') as Partial<ListFilter> | null;
     if (!raw) return fallback;
     return {
-      status: STATUS_TABS.some(([s]) => s === raw.status) ? raw.status! : 'all',
+      status: STATUS_TABS.some((s) => s === raw.status) ? raw.status! : 'all',
       dialect: raw.dialect === 'kurmanci' || raw.dialect === 'sorani' ? raw.dialect : 'all',
       query: typeof raw.query === 'string' ? raw.query : '',
     };
@@ -45,22 +47,13 @@ function savedFilter(): ListFilter {
 
 /**
  * Every story, whatever its status, with what stands between each and
- * publishing. Filtering happens here rather than in the request: the list is
- * small, and the counts on the tabs and the coverage card must count every
- * story, not just the ones on screen.
+ * publishing, and a Record link into the audio studio for its sentences.
+ * Filtering happens here rather than in the request: the list is small, and
+ * the counts on the tabs and the coverage card must count every story, not
+ * just the ones on screen.
  */
-export function StoryList({
-  onOpen,
-  onNew,
-  flash,
-}: {
-  onOpen: (id: string) => void;
-  onNew: () => void;
-  /** a line from the editor that just closed ("Deleted …") */
-  flash: string | null;
-}): React.JSX.Element {
-  const [stories, setStories] = useState<AdminStorySummary[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export function StoryList({ onNew }: { onNew: () => void }): React.JSX.Element {
+  const list = useLoad(listStories, []);
   const [filter, setFilterState] = useState<ListFilter>(savedFilter);
 
   const setFilter = (next: Partial<ListFilter>): void => {
@@ -75,82 +68,50 @@ export function StoryList({
     });
   };
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      setStories(await listStories());
-    } catch (err) {
-      const failure = storyFailure(err);
-      setError(
-        failure.kind === 'forbidden'
-          ? 'Writing stories needs the content_editor, admin or superadmin role.'
-          : `Could not load the stories: ${failure.message}`,
-      );
-      setStories((s) => s ?? []);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const all = useMemo(() => stories ?? [], [stories]);
-  const shown = useMemo(() => filterStories(all, filter), [all, filter]);
+  const all = useMemo(() => list.data ?? [], [list.data]);
+  const shown = useMemo(() => (list.data ? filterStories(list.data, filter) : null), [list.data, filter]);
   const counts = statusCounts(all, filter.dialect);
+  const filtered = filter.status !== 'all' || filter.dialect !== 'all' || filter.query.trim() !== '';
 
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>Stories</h1>
-          <div className="subtle">
-            Short texts to read, each with the questions a quiz asks about it. Learners see a story only once it is published.
+      <PageHeader
+        title="Stories"
+        subtitle="Short texts to read, each with the questions a quiz asks about it. Learners see a story only once it is published."
+        actions={
+          <>
+            <Button icon="refresh" onClick={() => void list.reload()} disabled={list.loading}>
+              Refresh
+            </Button>
+            <Button variant="primary" icon="plus" onClick={onNew}>
+              New story
+            </Button>
+          </>
+        }
+      />
+
+      {all.length > 0 && <Coverage stories={all} />}
+
+      <Tabs
+        label="Status"
+        value={filter.status}
+        onChange={(status) => setFilter({ status })}
+        items={STATUS_TABS.map((s) => ({ key: s, label: s === 'all' ? 'All' : STATUS_NAME[s], count: counts[s] }))}
+      />
+
+      <Section flush title={shown && shown.length !== all.length ? `${shown.length} of ${all.length} stories` : `${all.length} stories`}>
+        <div className="table-tools">
+          <div className="search-box">
+            <Icon name="search" size={16} />
+            <input
+              type="search"
+              aria-label="Search by title or address"
+              placeholder="Search title or address"
+              value={filter.query}
+              onChange={(e) => setFilter({ query: e.target.value })}
+            />
           </div>
-        </div>
-        <div className="spacer" />
-        <button type="button" onClick={() => void load()} disabled={stories === null}>
-          Refresh
-        </button>
-        <button type="button" className="primary" onClick={onNew}>
-          New story
-        </button>
-      </div>
-
-      {flash && (
-        <div className="card st-flash" role="status">
-          {flash}
-        </div>
-      )}
-      {error && <div className="card empty">{error}</div>}
-
-      {stories && stories.length > 0 && <Coverage stories={all} />}
-
-      <div className="tabs" role="tablist" aria-label="Status">
-        {STATUS_TABS.map(([status, label]) => (
-          <button
-            key={status}
-            type="button"
-            role="tab"
-            aria-selected={filter.status === status}
-            className={`tab${filter.status === status ? ' active' : ''}`}
-            onClick={() => setFilter({ status })}
-          >
-            {label} ({counts[status]})
-          </button>
-        ))}
-      </div>
-
-      <div className="card" style={{ padding: 0 }}>
-        <div className="toolbar st-list-tools" style={{ margin: '14px 16px 8px' }}>
-          <div className="section-title" style={{ margin: 0 }}>
-            {shown.length === all.length ? `${all.length} stories` : `${shown.length} of ${all.length} stories`}
-          </div>
-          <div className="spacer" />
-          <select
-            aria-label="Variety"
-            value={filter.dialect}
-            onChange={(e) => setFilter({ dialect: e.target.value as StoryDialect | 'all' })}
-          >
+          <select aria-label="Variety" value={filter.dialect} onChange={(e) => setFilter({ dialect: e.target.value as StoryDialect | 'all' })}>
             <option value="all">Both varieties</option>
             {STORY_DIALECTS.map((d) => (
               <option key={d} value={d}>
@@ -158,24 +119,15 @@ export function StoryList({
               </option>
             ))}
           </select>
-          <input
-            type="search"
-            aria-label="Search by title or address"
-            placeholder="Search title or address…"
-            value={filter.query}
-            onChange={(e) => setFilter({ query: e.target.value })}
-          />
         </div>
-        {stories === null ? (
-          <div className="empty">Loading…</div>
-        ) : all.length === 0 ? (
-          <div className="empty">No stories yet. Write the first one with “New story”.</div>
-        ) : shown.length === 0 ? (
-          <div className="empty">No story matches these filters.</div>
-        ) : (
-          <StoryTable stories={shown} onOpen={onOpen} />
-        )}
-      </div>
+        <StoryTable
+          stories={shown}
+          loading={list.loading}
+          error={list.error}
+          onRetry={() => void list.reload()}
+          empty={filtered ? 'No story matches these filters.' : 'No stories yet. Write the first one with “New story”.'}
+        />
+      </Section>
     </div>
   );
 }
@@ -188,97 +140,126 @@ export function StoryList({
 function Coverage({ stories }: { stories: readonly AdminStorySummary[] }): React.JSX.Element {
   const coverage = publishedCoverage(stories);
   return (
-    <div className="card st-coverage">
-      <div className="subtle">Published, so learners can read and play them:</div>
-      {STORY_DIALECTS.map((d) => (
-        <div key={d} className="row st-coverage-row">
-          <strong>{DIALECT_NAME[d]}</strong>
-          {STORY_LENGTHS.map((l) => (
-            <span key={l} className={`badge${coverage[d][l] === 0 ? ' danger' : ' ok'}`}>
-              {LENGTH_NAME[l]}: {coverage[d][l]}
-            </span>
-          ))}
-        </div>
-      ))}
-    </div>
+    <Section title="What learners can play" description="Published stories by variety and length. A game offers only the lengths that have one.">
+      <div className="st-coverage">
+        {STORY_DIALECTS.map((d) => (
+          <div key={d} className="st-coverage-row">
+            <strong>{DIALECT_NAME[d]}</strong>
+            {STORY_LENGTHS.map((l) => (
+              <Badge key={l} tone={coverage[d][l] === 0 ? 'bad' : 'ok'}>
+                {LENGTH_NAME[l]}: {coverage[d][l]}
+              </Badge>
+            ))}
+          </div>
+        ))}
+      </div>
+    </Section>
   );
 }
 
+const columns: Column<AdminStorySummary>[] = [
+  {
+    key: 'title',
+    header: 'Title',
+    card: 'title',
+    sort: (a, b) => a.title.localeCompare(b.title),
+    cell: (s) => {
+      const script = storyTextDirection(s.dialect);
+      return (
+        <>
+          <a href={`#/stories/${s.id}`} className="st-open">
+            <strong lang={script.lang} dir={script.dir}>
+              {s.title || 'Untitled'}
+            </strong>
+          </a>
+          {needsNativeReview(s) && (
+            <span className="st-starter">
+              <Badge tone="warn">Starter (needs native review)</Badge>
+            </span>
+          )}
+          <span className="cell-sub mono">{s.slug}</span>
+        </>
+      );
+    },
+  },
+  { key: 'variety', header: 'Variety', sort: (a, b) => a.dialect.localeCompare(b.dialect), cell: (s) => DIALECT_NAME[s.dialect] },
+  { key: 'level', header: 'Level', sort: (a, b) => a.level - b.level, cell: (s) => <Badge>{s.level}</Badge> },
+  {
+    key: 'length',
+    header: 'Length',
+    cell: (s) =>
+      s.length ? (
+        <Badge>{LENGTH_NAME[s.length]}</Badge>
+      ) : (
+        <Badge tone="warn" title="The word count is in no length's band">
+          No length
+        </Badge>
+      ),
+  },
+  { key: 'words', header: 'Words', align: 'end', sort: (a, b) => a.wordCount - b.wordCount, cell: (s) => s.wordCount.toLocaleString() },
+  {
+    key: 'questions',
+    header: 'Questions',
+    align: 'end',
+    cell: (s) => {
+      const bank = bankLabel(s);
+      return bank.short ? (
+        <Badge tone="warn" title="Fewer questions than its length needs">
+          {bank.text}
+        </Badge>
+      ) : (
+        bank.text
+      );
+    },
+  },
+  { key: 'status', header: 'Status', sort: (a, b) => a.status.localeCompare(b.status), cell: (s) => <Badge tone={STATUS_TONE[s.status]}>{STATUS_NAME[s.status]}</Badge> },
+  {
+    key: 'problems',
+    header: 'Problems',
+    cell: (s) => {
+      const p = problemLabel(s);
+      return <Badge tone={PROBLEM_TONE[p.tone]}>{p.text}</Badge>;
+    },
+  },
+];
+
 export function StoryTable({
   stories,
-  onOpen,
+  loading,
+  error,
+  onRetry,
+  empty,
 }: {
-  stories: readonly AdminStorySummary[];
-  onOpen: (id: string) => void;
+  stories: readonly AdminStorySummary[] | null;
+  loading: boolean;
+  error: unknown;
+  onRetry: () => void;
+  empty: string;
 }): React.JSX.Element {
   return (
-    <div className="tablewrap">
-      <table className="st-table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Variety</th>
-            <th>Level</th>
-            <th>Length</th>
-            <th>Words</th>
-            <th>Questions</th>
-            <th>Status</th>
-            <th>Problems</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stories.map((s) => {
-            const script = storyTextDirection(s.dialect);
-            const problems = problemLabel(s);
-            const bank = bankLabel(s);
-            return (
-              <tr key={s.id}>
-                <td>
-                  <a
-                    href={`#/stories/${s.id}`}
-                    className="st-open"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onOpen(s.id);
-                    }}
-                  >
-                    <strong lang={script.lang} dir={script.dir}>
-                      {s.title || 'Untitled'}
-                    </strong>
-                  </a>
-                  {needsNativeReview(s) && <span className="badge mid st-starter">Starter (needs native review)</span>}
-                  <div className="subtle st-slug">{s.slug}</div>
-                </td>
-                <td className="subtle">{DIALECT_NAME[s.dialect]}</td>
-                <td>
-                  <span className="badge">{s.level}</span>
-                </td>
-                <td>
-                  {s.length ? (
-                    <span className="badge">{LENGTH_NAME[s.length]}</span>
-                  ) : (
-                    <span className="badge mid" title="The word count is in no length's band">
-                      No length
-                    </span>
-                  )}
-                </td>
-                <td className="subtle">{s.wordCount}</td>
-                <td>
-                  <span className={bank.short ? 'badge mid' : 'subtle'} title={bank.short ? 'Fewer questions than its length needs' : undefined}>
-                    {bank.text}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge ${STATUS_TONE[s.status]}`}>{STATUS_NAME[s.status]}</span>
-                </td>
-                <td>
-                  <span className={`badge${problems.tone ? ` ${problems.tone}` : ''}`}>{problems.text}</span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <Table
+      caption="Stories"
+      columns={columns}
+      rows={stories}
+      rowKey={(s) => s.id}
+      loading={loading}
+      error={error}
+      onRetry={onRetry}
+      what="writing stories"
+      empty={empty}
+      actions={(s) => (
+        <>
+          <a className="button-link" href={`#/stories/${s.id}`} aria-label={`Open “${s.title || 'Untitled'}”`}>
+            Open
+          </a>
+          {s.status !== 'archived' && (
+            <a className="button-link" href={storyRecordHref(s.id)} aria-label={`Record the sentences of “${s.title || 'Untitled'}”`}>
+              <Icon name="mic" />
+              Record
+            </a>
+          )}
+        </>
+      )}
+    />
   );
 }

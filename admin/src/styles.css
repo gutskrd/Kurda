@@ -756,24 +756,12 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
 }
 
 /* ---- stories: the list, and the editor beside its checks ----------------- */
-.st-flash { margin-bottom: 16px; padding: 12px 16px; }
-.st-coverage { display: grid; gap: 8px; margin-bottom: 16px; padding: 14px 18px; }
-.st-coverage-row { flex-wrap: wrap; }
+.st-coverage { display: grid; gap: 8px; }
+.st-coverage-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .st-coverage-row strong { min-width: 84px; }
-.st-list-tools .section-title { white-space: nowrap; }
-.st-list-tools select { width: auto; max-width: 220px; }
-.st-list-tools input { max-width: 320px; }
-.st-table td { vertical-align: top; }
-.st-table td:first-child { min-width: 220px; }
-.st-table .badge { white-space: nowrap; }
+.st-open { color: var(--text); }
 .st-open:hover strong { text-decoration: underline; text-underline-offset: 3px; }
-.st-starter { margin-left: 8px; }
-.st-slug { font-size: 12px; font-family: ui-monospace, 'Consolas', monospace; }
-
-.st-back { display: inline-block; margin-bottom: 10px; color: var(--text-dim); font-weight: 500; }
-.st-back:hover { color: var(--text); }
-.st-head h1 { word-break: break-word; }
-.st-badges { flex-wrap: wrap; margin-top: 4px; }
+.st-starter { display: inline-block; margin-inline-start: 8px; }
 .st-conflict, .st-notice, .st-banner { margin-bottom: 14px; padding: 12px 16px; display: grid; gap: 8px; }
 .st-conflict { border-color: color-mix(in srgb, var(--bad) 45%, var(--glass-border)); background: var(--bad-bg); }
 .st-conflict > div:last-child { justify-self: start; }
