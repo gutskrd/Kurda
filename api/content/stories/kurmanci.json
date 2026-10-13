@@ -122,18 +122,18 @@
         },
         {
           "kind": "sequence",
-          "prompt": "Kîjan pêşî diqewime?",
-          "promptEn": "Which happens first?",
+          "prompt": "Kîjan herî dawî diqewime?",
+          "promptEn": "Which happens last?",
           "options": [
             "Şîlan qelemekê dide Rojînê.",
-            "Rojîn û Şîlan bi hev re dilîzin.",
-            "Rojîn li qelema xwe digere."
+            "Rojîn li qelema xwe digere.",
+            "Rojîn û Şîlan bi hev re dilîzin."
           ],
           "correctIndex": 2,
-          "explanation": "Pêşî Rojîn li qelema xwe digere. Paşê Şîlan qelemekê dide wê. Paşê ew bi hev re dilîzin.",
-          "explanationEn": "First Rojîn looks for her pen. Then Şîlan gives her a pen. Then they play together.",
-          "evidenceParagraph": 1,
-          "evidenceSentence": 1
+          "explanation": "Pêşî Rojîn li qelema xwe digere. Paşê Şîlan qelemekê dide wê. Di dawiyê de ew bi hev re dilîzin.",
+          "explanationEn": "First Rojîn looks for her pen. Then Şîlan gives her a pen. At the end they play together.",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -684,7 +684,7 @@
           "explanation": "Çîrok dibêje: “Zana pîvazê di rûn de sor dike.”",
           "explanationEn": "The story says: “Zana fries the onion in the oil.”",
           "evidenceParagraph": 2,
-          "evidenceSentence": 1
+          "evidenceSentence": 0
         },
         {
           "kind": "vocabulary",
@@ -1557,21 +1557,6 @@
           "evidenceSentence": 5
         },
         {
-          "kind": "sequence",
-          "prompt": "Kîjan pêşî qewimî?",
-          "promptEn": "Which happened first?",
-          "options": [
-            "Rênas siwarî kerê Apê Xelîl bû.",
-            "Otobûs ji nişka ve sekinî.",
-            "Dapîrê ew hembêz kirin."
-          ],
-          "correctIndex": 1,
-          "explanation": "Pêşî otobûs sekinî. Paşê Rênas siwarî kerê Apê Xelîl bû. Di dawiyê de Dapîrê ew hembêz kirin.",
-          "explanationEn": "First the bus stopped. Then Rênas rode Uncle Xelîl’s donkey. At the end Grandma hugged them.",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 0
-        },
-        {
           "kind": "detail",
           "prompt": "Dapîra wan ji kengî ve li benda wan bû?",
           "promptEn": "Since when had their grandmother been waiting for them?",
@@ -1583,6 +1568,21 @@
           "correctIndex": 1,
           "explanation": "Wê got: “Ez ji nîvro ve li benda we me!”",
           "explanationEn": "She said: “I’ve been waiting for you since noon!”",
+          "evidenceParagraph": 6,
+          "evidenceSentence": 2
+        },
+        {
+          "kind": "sequence",
+          "prompt": "Kîjan herî dawî qewimî?",
+          "promptEn": "Which happened last?",
+          "options": [
+            "Rênas siwarî kerê Apê Xelîl bû.",
+            "Dapîrê ew hembêz kirin.",
+            "Otobûs ji nişka ve sekinî."
+          ],
+          "correctIndex": 1,
+          "explanation": "Pêşî otobûs sekinî. Paşê Rênas siwarî kerê Apê Xelîl bû. Di dawiyê de Dapîrê ew hembêz kirin.",
+          "explanationEn": "First the bus stopped. Then Rênas rode Uncle Xelîl’s donkey. At the end Grandma hugged them.",
           "evidenceParagraph": 6,
           "evidenceSentence": 2
         },
