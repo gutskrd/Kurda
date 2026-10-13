@@ -518,10 +518,18 @@ export const ar: Catalogue = {
   'suspension.answerHere': 'إذا طلبت مراجعة، فسجّل الدخول مجددًا في أي وقت لترى جوابنا هنا.',
   'suspension.rules': 'اقرأ قواعد المجتمع',
   'suspension.close': 'إغلاق',
+  'notify.reportOutcome.title': 'بخصوص بلاغك',
+  'notify.sanction.title': 'قرار بشأن حسابك',
+  'notify.sanctionLifted.title': 'رُفع قيد عن حسابك',
+  'notify.appealDecided.title': 'أجبنا على طلب المراجعة الخاص بك',
+  'notify.caring.title': 'رسالة من Hevalo',
+  'notify.caring.body': 'إذا كانت الأمور صعبة، يمكنك التحدث إلى شخص ما مجانًا وبسرية. اضغط للعثور على خط مساعدة.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 هدية',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 دعوة للعب',
+  'notify.gift.title': 'لديك هدية',
+  'notify.gift.body': 'افتحها في دردشتك.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',

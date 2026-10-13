@@ -524,10 +524,18 @@ export const ckb: Catalogue = {
   'suspension.answerHere': 'ئەگەر داوای پێداچوونەوە بکەیت، هەر کاتێک دووبارە بچۆ ژوورەوە بۆ بینینی وەڵامەکەمان لێرە.',
   'suspension.rules': 'یاساکانی کۆمەڵگە بخوێنەوە',
   'suspension.close': 'داخستن',
+  'notify.reportOutcome.title': 'دەربارەی ڕاپۆرتەکەت',
+  'notify.sanction.title': 'بڕیارێک دەربارەی هەژمارەکەت',
+  'notify.sanctionLifted.title': 'سنووردارکردنێک لەسەر هەژمارەکەت لابرا',
+  'notify.appealDecided.title': 'وەڵامی داواکاریی پێداچوونەوەکەتمان دایەوە',
+  'notify.caring.title': 'نامەیەک لە Hevaloوە',
+  'notify.caring.body': 'ئەگەر شتەکان قورس دەردەکەون، دەتوانیت بە بێبەرامبەر و نهێنی لەگەڵ کەسێک قسە بکەیت. بۆ دۆزینەوەی هێڵی یارمەتی دەست لێدە.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 دیاری',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 بانگهێشتی یاری',
+  'notify.gift.title': 'دیارییەکت هەیە',
+  'notify.gift.body': 'لە گفتوگۆکەتدا بیکەرەوە.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',

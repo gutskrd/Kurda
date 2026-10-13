@@ -513,10 +513,18 @@ export const de: Catalogue = {
   'suspension.answerHere': 'Wenn du eine Überprüfung beantragst, melde dich jederzeit wieder an, um unsere Antwort hier zu sehen.',
   'suspension.rules': 'Gemeinschaftsregeln lesen',
   'suspension.close': 'Schließen',
+  'notify.reportOutcome.title': 'Zu deiner Meldung',
+  'notify.sanction.title': 'Eine Entscheidung über dein Konto',
+  'notify.sanctionLifted.title': 'Eine Einschränkung deines Kontos wurde aufgehoben',
+  'notify.appealDecided.title': 'Wir haben deine Bitte um Überprüfung beantwortet',
+  'notify.caring.title': 'Eine Nachricht von Hevalo',
+  'notify.caring.body': 'Wenn sich gerade alles schwer anfühlt, kannst du kostenlos und vertraulich mit jemandem sprechen. Tippe, um eine Hilfe-Hotline zu finden.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 Geschenk',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 Spieleinladung',
+  'notify.gift.title': 'Du hast ein Geschenk',
+  'notify.gift.body': 'Öffne es in deinem Chat.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',

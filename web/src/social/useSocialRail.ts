@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { socialNotification } from '../reports/notifications';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -34,6 +35,8 @@ export interface RailNotification {
   body: string | null;
   createdAt: string;
   readAt: string | null;
+  /** what it is about (`kind` and its fields): the words and the link are made from it */
+  data?: Record<string, unknown> | null;
 }
 
 /** You, as the rail shows you: a face, a level ring, and what you can spend. */
@@ -54,7 +57,8 @@ export interface SocialRailData {
   challenges: RailFriend[];
   groups: RailGroup[];
   notifications: RailNotification[];
-  unread: { notifications: number; groups: number; requests: number; challenges: number };
+  /** `gifts`: unopened gifts — the Shop badge (folded in here so nothing polls for it alone) */
+  unread: { notifications: number; groups: number; requests: number; challenges: number; gifts?: number };
 }
 
 /** Something that just showed up, worth a toast. */
@@ -183,13 +187,18 @@ function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
       who: r,
     })),
     ...data.notifications
-      .filter((n) => n.readAt === null)
-      .map((n) => ({
-        key: `note:${n.id}`,
-        kind: 'notification' as const,
-        title: n.title,
-        body: n.body ?? '',
-        who: null,
-      })),
+      // a gift arrives with its own banner, which opens it (gifts/GiftArrivals)
+      .filter((n) => n.readAt === null && n.data?.kind !== 'gift')
+      .map((n) => {
+        // in the reader's words where the notification's data says what it is
+        const view = socialNotification(n, t);
+        return {
+          key: `note:${n.id}`,
+          kind: 'notification' as const,
+          title: view?.title ?? n.title,
+          body: (view ? view.body : n.body) ?? '',
+          who: null,
+        };
+      }),
   ];
 }

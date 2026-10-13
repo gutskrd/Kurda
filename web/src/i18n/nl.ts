@@ -513,10 +513,18 @@ export const nl: Catalogue = {
   'suspension.answerHere': 'Vraag je om een herbeoordeling, log dan op elk moment opnieuw in om ons antwoord hier te zien.',
   'suspension.rules': 'Lees de gemeenschapsregels',
   'suspension.close': 'Sluiten',
+  'notify.reportOutcome.title': 'Over je melding',
+  'notify.sanction.title': 'Een besluit over je account',
+  'notify.sanctionLifted.title': 'Een beperking op je account is opgeheven',
+  'notify.appealDecided.title': 'We hebben je verzoek om herbeoordeling beantwoord',
+  'notify.caring.title': 'Een bericht van Hevalo',
+  'notify.caring.body': 'Als het zwaar voelt, kun je gratis en vertrouwelijk met iemand praten. Tik om een hulplijn te vinden.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 Cadeau',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 Speluitnodiging',
+  'notify.gift.title': 'Je hebt een cadeau',
+  'notify.gift.body': 'Open het in je chat.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',

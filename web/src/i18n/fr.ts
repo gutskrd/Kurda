@@ -513,10 +513,18 @@ export const fr: Catalogue = {
   'suspension.answerHere': 'Si tu demandes un réexamen, reconnecte-toi quand tu veux pour voir notre réponse ici.',
   'suspension.rules': 'Lire les règles de la communauté',
   'suspension.close': 'Fermer',
+  'notify.reportOutcome.title': 'À propos de ton signalement',
+  'notify.sanction.title': 'Une décision concernant ton compte',
+  'notify.sanctionLifted.title': 'Une restriction sur ton compte a été levée',
+  'notify.appealDecided.title': 'Nous avons répondu à ta demande de réexamen',
+  'notify.caring.title': 'Un message de Hevalo',
+  'notify.caring.body': 'Si les choses sont difficiles, tu peux parler à quelqu’un, gratuitement et en toute confidentialité. Touche pour trouver une ligne d’écoute.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 Cadeau',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 Invitation à jouer',
+  'notify.gift.title': 'Tu as un cadeau',
+  'notify.gift.body': 'Ouvre-le dans ta discussion.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'En ligne actuellement',
   'profile.offline': 'Hors ligne',

@@ -589,6 +589,17 @@
   min-height: 44px;
 }
 
+/* a notification that opens the page with the rest of it */
+.rail-note-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.rail-note-link:hover {
+  text-decoration-color: currentColor;
+}
+
 /* ---- the ⋯ beside something reportable (reports/MessageMenu.tsx) --------- */
 .msg-menu {
   position: relative;

@@ -513,10 +513,18 @@ export const tr: Catalogue = {
   'suspension.answerHere': 'İnceleme istersen, yanıtımızı burada görmek için istediğin zaman yeniden giriş yap.',
   'suspension.rules': 'Topluluk kurallarını oku',
   'suspension.close': 'Kapat',
+  'notify.reportOutcome.title': 'Bildirimin hakkında',
+  'notify.sanction.title': 'Hesabınla ilgili bir karar',
+  'notify.sanctionLifted.title': 'Hesabındaki bir kısıtlama kaldırıldı',
+  'notify.appealDecided.title': 'İnceleme isteğini yanıtladık',
+  'notify.caring.title': 'Hevalo’dan bir mesaj',
+  'notify.caring.body': 'İşler zor geliyorsa biriyle ücretsiz ve gizli konuşabilirsin. Bir yardım hattı bulmak için dokun.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 Hediye',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 Oyun daveti',
+  'notify.gift.title': 'Bir hediyen var',
+  'notify.gift.body': 'Sohbetinde aç.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',

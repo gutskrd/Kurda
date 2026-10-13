@@ -519,10 +519,18 @@ export const ku: Catalogue = {
   'suspension.answerHere': 'Heke tu daxwaza nirxandinê bikî, her dem dîsa têkeve da ku bersiva me li vir bibînî.',
   'suspension.rules': 'Qeydeyên civakê bixwîne',
   'suspension.close': 'Bigire',
+  'notify.reportOutcome.title': 'Derbarê rapora te de',
+  'notify.sanction.title': 'Biryarek li ser hesabê te',
+  'notify.sanctionLifted.title': 'Sînorek li ser hesabê te hat rakirin',
+  'notify.appealDecided.title': 'Me bersiva daxwaza te ya nirxandinê da',
+  'notify.caring.title': 'Peyamek ji Hevaloyê',
+  'notify.caring.body': 'Heke tişt zehmet xuya dikin, tu dikarî bi kesekî re bi belaşî û veşartî biaxivî. Ji bo dîtina xeteke alîkariyê bitikîne.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 Diyarî',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 Vexwendina lîstikê',
+  'notify.gift.title': 'Diyariyek ji te re heye',
+  'notify.gift.body': 'Di sohbeta xwe de veke.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',

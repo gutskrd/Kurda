@@ -575,10 +575,18 @@ export const en = {
   'suspension.answerHere': 'If you ask for a review, sign in again any time to see our answer here.',
   'suspension.rules': 'Read the community rules',
   'suspension.close': 'Close',
+  'notify.reportOutcome.title': 'About your report',
+  'notify.sanction.title': 'A decision about your account',
+  'notify.sanctionLifted.title': 'A limit on your account was lifted',
+  'notify.appealDecided.title': 'We answered your request for a review',
+  'notify.caring.title': 'A message from Hevalo',
+  'notify.caring.body': 'If things feel hard, you can talk to someone, free and in private. Tap to find a helpline.',
   // gifts in the chat (gifts/), and what a gift or a game card reads as in a list
   'chat.preview.gift': '🎁 Gift',
   'chat.preview.giftNamed': '🎁 {item}',
   'chat.preview.game': '🎮 Game invite',
+  'notify.gift.title': 'You have a gift',
+  'notify.gift.body': 'Open it in your chat.',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',
