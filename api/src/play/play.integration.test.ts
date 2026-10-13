@@ -196,6 +196,26 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     expect((await call(host, 'POST', `/play/invites/${invite.id}/accept`)).status).toBe(404);
   });
 
+  it('joining another way — the card in the DM, a link — answers the invite: the host sees "joined", the banner goes', async () => {
+    const host = await register('host13');
+    const friend = await register('friend13');
+    await befriend(pool, host.id, friend.id);
+    const made = await lobby(host, [friend.id]);
+    const invite = (await inviteOf(made.lobbyId, friend.id))!;
+
+    expect((await call(friend, 'POST', `/wordle/battles/${made.lobbyId}/join`)).status).toBe(200);
+    await eventually(async () => (await inviteOf(made.lobbyId, friend.id))!.status === 'accepted');
+    const update = { type: 'play_invite_update', inviteId: invite.id, status: 'accepted' };
+    await eventually(async () => eventsFor(host.id, 'play_invite_update').length > 0 && eventsFor(friend.id, 'play_invite_update').length > 0);
+    expect(eventsFor(host.id, 'play_invite_update')).toEqual([update]);
+    expect(eventsFor(friend.id, 'play_invite_update')).toEqual([update]);
+    expect((await call(friend, 'GET', '/play/invites')).body.incoming).toEqual([]);
+    const mine = await call(host, 'GET', '/play/invites');
+    expect(mine.body.outgoing[0].invitees[0]).toMatchObject({ userId: friend.id, status: 'accepted' });
+    // and saying yes on the banner afterwards is still the same yes
+    expect((await call(friend, 'POST', `/play/invites/${invite.id}/accept`)).status).toBe(200);
+  });
+
   it('declining shows the host the reason; the same game cannot be re-sent for a while, another game can', async () => {
     const host = await register('host3');
     const friend = await register('friend3');

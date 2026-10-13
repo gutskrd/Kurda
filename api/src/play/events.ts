@@ -25,6 +25,14 @@ interface Window {
   card: boolean;
 }
 
+/** An invite, as far as telling its two people about it goes. */
+interface InviteRef {
+  id: string;
+  host_id: string;
+  invitee_id: string;
+  held: boolean;
+}
+
 /**
  * `play_changed` (contract §B3): the event that replaced the clients' polling
  * every 1.5–1.8 s. Whenever a lobby or a game in it changes — someone joins,
@@ -49,7 +57,8 @@ interface Window {
  * one.
  *
  * It is also where pending invites learn that their lobby started, filled or
- * was called off: they expire then, and the host and the invitee are told.
+ * was called off: they expire then, and the host and the invitee are told —
+ * and that their friend came in another way, which counts as a yes.
  */
 export class PlayEvents {
   private readonly sources = new Map<PlayGame, (lobbyId: string) => Promise<LobbyFacts | null>>();
@@ -123,12 +132,16 @@ export class PlayEvents {
     try {
       const source = this.sources.get(game);
       const facts = source ? await source(lobbyId) : null;
-      // not a friend an invite is held from: they were never told of this lobby
-      const pending = await this.pool.query<{ invitee_id: string }>(
-        `SELECT invitee_id FROM play_invites WHERE game = $1 AND lobby_id = $2 AND status = 'pending' AND NOT held`,
+      const pending = await this.pool.query<InviteRef>(
+        `SELECT id, host_id, invitee_id, held FROM play_invites WHERE game = $1 AND lobby_id = $2 AND status = 'pending'`,
         [game, lobbyId],
       );
-      const to = new Set([...(facts?.memberIds ?? []), ...pending.rows.map((r) => r.invitee_id), ...also]);
+      const members = new Set(facts?.memberIds ?? []);
+      const joined = pending.rows.filter((r) => members.has(r.invitee_id));
+      if (joined.length > 0) await this.acceptJoined(joined.map((r) => r.id));
+      // not a friend an invite is held from: they were never told of this lobby
+      const waiting = pending.rows.filter((r) => !r.held && !members.has(r.invitee_id)).map((r) => r.invitee_id);
+      const to = new Set([...members, ...waiting, ...also]);
       const event: PlayUserEvent = { type: 'play_changed', game, lobbyId };
       await Promise.all([...to].map((uid) => this.tell(uid, event)));
       // a move in a game under way changes nothing on a card, nor whether the
@@ -148,13 +161,34 @@ export class PlayEvents {
   }
 
   /**
+   * Invites whose friend is in the lobby already — they came in through the
+   * card in their DM or a link rather than the banner — have had their answer.
+   * The host's list says "joined" and the banner goes, as when the invite
+   * itself is accepted; before this, both stayed "pending" until the lobby
+   * started.
+   */
+  private async acceptJoined(ids: readonly string[]): Promise<void> {
+    const res = await this.pool.query<InviteRef>(
+      `UPDATE play_invites SET status = 'accepted', responded_at = now()
+        WHERE id = ANY($1::uuid[]) AND status = 'pending'
+        RETURNING id, host_id, invitee_id, held`,
+      [ids],
+    );
+    for (const r of res.rows) {
+      const update: PlayUserEvent = { type: 'play_invite_update', inviteId: r.id, status: 'accepted' };
+      await this.tell(r.host_id, update);
+      if (!r.held) await this.tell(r.invitee_id, update);
+    }
+  }
+
+  /**
    * A lobby that started (and cannot be joined late), filled up, or was called
    * off takes its pending invites with it; both sides are told, so the
    * invitee's banner goes and the host's list says "expired" (a held invite's
    * invitee never had a banner, and is not told).
    */
   async expireInvites(game: PlayGame, lobbyId: string): Promise<void> {
-    const res = await this.pool.query<{ id: string; host_id: string; invitee_id: string; held: boolean }>(
+    const res = await this.pool.query<InviteRef>(
       `UPDATE play_invites SET status = 'expired', responded_at = now()
         WHERE game = $1 AND lobby_id = $2 AND status = 'pending'
         RETURNING id, host_id, invitee_id, held`,
