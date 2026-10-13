@@ -112,6 +112,37 @@ describe('Shop', () => {
     expect(within(pricey).getByText('Owned')).toBeInTheDocument();
   });
 
+  /**
+   * The picker read `friend.id`, which `GET /friends` never sends (it is
+   * `userId`), so every gift from the web posted no recipient and was refused.
+   */
+  it('gifts to the friend picked — by their userId — and points to the chat it went to', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    const shop = makeFetch(calls);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/friends')) {
+          return jsonResponse(200, { total: 1, friends: [{ userId: 'u-rojda', username: 'rojda', avatarUrl: null, online: false }] });
+        }
+        if (url.includes('/shop/gift')) {
+          calls.push({ url, body: JSON.parse(init!.body as string) });
+          return jsonResponse(200, { gifted: true, duplicate: false, sku: 'bg-1', balance: 500 });
+        }
+        return shop(url, init);
+      }),
+    );
+    renderApp(<Shop />, ['/app/shop']);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Gift Sunset to a friend' }));
+    await userEvent.click(await screen.findByRole('button', { name: /rojda/ }));
+
+    expect(await screen.findByText(/Sunset is on its way to rojda/)).toBeInTheDocument();
+    const sent = calls.find((c) => c.url.includes('/shop/gift'));
+    expect(sent?.body).toMatchObject({ sku: 'bg-1', toUserId: 'u-rojda', expectedPrice: 500 });
+    expect(screen.getByRole('link', { name: 'See it in your chat' })).toHaveAttribute('href', '/app/messages?to=u-rojda&name=rojda');
+  });
+
   it('says so when nothing matches, rather than showing empty shelves', async () => {
     vi.stubGlobal('fetch', makeFetch([]));
     renderApp(<Shop />, ['/app/shop']);

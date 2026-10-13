@@ -536,6 +536,7 @@ export const ckb: Catalogue = {
   'chat.preview.game': '🎮 بانگهێشتی یاری',
   'notify.gift.title': 'دیارییەکت هەیە',
   'notify.gift.body': 'لە گفتوگۆکەتدا بیکەرەوە.',
+  'shop.giftInChat': 'لە گفتوگۆکەتدا بیبینە',
   // ---- end web-social ----
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',

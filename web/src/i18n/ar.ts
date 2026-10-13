@@ -530,6 +530,7 @@ export const ar: Catalogue = {
   'chat.preview.game': '🎮 دعوة للعب',
   'notify.gift.title': 'لديك هدية',
   'notify.gift.body': 'افتحها في دردشتك.',
+  'shop.giftInChat': 'شاهدها في دردشتك',
   // ---- end web-social ----
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',

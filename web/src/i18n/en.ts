@@ -587,6 +587,7 @@ export const en = {
   'chat.preview.game': '🎮 Game invite',
   'notify.gift.title': 'You have a gift',
   'notify.gift.body': 'Open it in your chat.',
+  'shop.giftInChat': 'See it in your chat',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',

@@ -525,6 +525,7 @@ export const nl: Catalogue = {
   'chat.preview.game': '🎮 Speluitnodiging',
   'notify.gift.title': 'Je hebt een cadeau',
   'notify.gift.body': 'Open het in je chat.',
+  'shop.giftInChat': 'Bekijk het in je chat',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',

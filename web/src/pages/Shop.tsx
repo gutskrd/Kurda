@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError, requestId } from '../lib/api';
@@ -23,8 +24,13 @@ interface Tile {
   owned: boolean;
 }
 
+/**
+ * A friend as `GET /friends` sends one (`FriendSummary`). It was declared with
+ * `id`, which the API has never sent: every gift posted `toUserId: undefined`
+ * and was refused with a validation error, so a gift from the web never went.
+ */
 interface Friend {
-  id: string;
+  userId: string;
   username: string;
   avatarUrl: string | null;
 }
@@ -100,6 +106,8 @@ export function Shop(): React.JSX.Element {
   const [zer, setZer] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  /** the chat a gift just went to, where it now waits wrapped */
+  const [giftChat, setGiftChat] = useState<Friend | null>(null);
   const [bought, setBought] = useState<Set<string>>(new Set());
   /** the tile that just succeeded — drives the one-shot celebration */
   const [celebrating, setCelebrating] = useState<string | null>(null);
@@ -151,18 +159,23 @@ export function Shop(): React.JSX.Element {
   async function gift(tile: Tile, to: Friend): Promise<void> {
     setBusy(tile.sku);
     setMsg(null);
+    setGiftChat(null);
     const res = await client.post<{ balance: number }>('/shop/gift', {
       sku: tile.sku,
-      toUserId: to.id,
+      toUserId: to.userId,
       idempotencyKey: requestId(),
       expectedPrice: tile.price,
     });
     setBusy(null);
     setGifting(null);
     if (res.ok) {
-      setZer(res.data.balance);
+      // the answer is the balance of the item's own currency: a gift bought
+      // with gems must not overwrite the Zêr shown at the top
+      if (tile.currency === 'zer') setZer(res.data.balance);
       celebrate(tile.sku);
       setMsg({ kind: 'ok', text: t('shop.onItsWay', { name: tile.name, to: to.username }) });
+      // every gift arrives in the chat between the two of you, wrapped
+      setGiftChat(to);
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
     }
@@ -190,6 +203,17 @@ export function Shop(): React.JSX.Element {
       {msg && (
         <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status" style={{ marginBottom: 16 }}>
           {msg.text}
+          {msg.kind === 'ok' && giftChat && (
+            <>
+              {' '}
+              <Link
+                className="send-error-link"
+                to={`/app/messages?to=${giftChat.userId}&name=${encodeURIComponent(giftChat.username)}`}
+              >
+                {t('shop.giftInChat')}
+              </Link>
+            </>
+          )}
         </div>
       )}
 
@@ -374,7 +398,7 @@ function GiftPicker({
           )}
           <ul className="gift-friends">
             {shown.map((f) => (
-              <li key={f.id}>
+              <li key={f.userId}>
                 <button type="button" className="gift-friend" disabled={busy} onClick={() => onPick(f)}>
                   <Avatar url={f.avatarUrl} glyphSize={18} />
                   <span className="gift-friend-name">{f.username}</span>

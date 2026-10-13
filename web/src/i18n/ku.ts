@@ -531,6 +531,7 @@ export const ku: Catalogue = {
   'chat.preview.game': '🎮 Vexwendina lîstikê',
   'notify.gift.title': 'Diyariyek ji te re heye',
   'notify.gift.body': 'Di sohbeta xwe de veke.',
+  'shop.giftInChat': 'Di sohbeta xwe de bibîne',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',

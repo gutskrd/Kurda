@@ -525,6 +525,7 @@ export const tr: Catalogue = {
   'chat.preview.game': '🎮 Oyun daveti',
   'notify.gift.title': 'Bir hediyen var',
   'notify.gift.body': 'Sohbetinde aç.',
+  'shop.giftInChat': 'Sohbetinde gör',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',
