@@ -73,8 +73,18 @@ export function socialNotification(note: InboxNote, t: Translate): NoteView | nu
       return { title: t('notify.sanctionLifted.title'), body: null, to: STANDING_PATH };
     case 'appeal_decided':
       return { title: t('notify.appealDecided.title'), body: null, to: STANDING_PATH };
-    case 'caring_message':
-      return { title: t('notify.caring.title'), body: t('notify.caring.body'), href: str(data.helplineUrl) ?? HELPLINE_URL };
+    case 'caring_message': {
+      // the moderator's own words, when there are some, come first and as
+      // they wrote them; the rest is said in the reader's language
+      const personal = str(data.message);
+      const helpline = str(data.helplineUrl);
+      return {
+        title: t('notify.caring.title'),
+        body: personal ? `${personal} ${t('notify.caring.body')}` : t('notify.caring.body'),
+        // a link that leaves the app goes only to a real web address
+        href: helpline && /^https:\/\//.test(helpline) ? helpline : HELPLINE_URL,
+      };
+    }
     case 'gift': {
       const to = giftChatPath(str(data.chat), str(data.giftId));
       return { title: t('notify.gift.title'), body: t('notify.gift.body'), ...(to ? { to } : {}) };

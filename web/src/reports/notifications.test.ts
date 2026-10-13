@@ -27,6 +27,19 @@ describe('socialNotification', () => {
     expect(socialNotification(note({ kind: 'caring_message', helplineUrl: 'https://findahelpline.com' }), t)?.href).toBe(
       'https://findahelpline.com',
     );
+    // never anywhere but a web address
+    expect(socialNotification(note({ kind: 'caring_message', helplineUrl: 'javascript:alert(1)' }), t)?.href).toBe(
+      'https://findahelpline.com',
+    );
+  });
+
+  it('keeps the moderator’s own words in a caring message, before the rest in the reader’s language', () => {
+    const view = socialNotification(
+      note({ kind: 'caring_message', helplineUrl: 'https://findahelpline.com', message: 'Silav Baran, we read your message.' }),
+      translator(ku),
+    );
+    expect(view?.body?.startsWith('Silav Baran, we read your message. ')).toBe(true);
+    expect(view?.body).toContain(translator(ku)('notify.caring.body'));
   });
 
   it('opens a gift in the chat it is in', () => {
