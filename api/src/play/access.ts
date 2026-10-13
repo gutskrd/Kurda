@@ -34,7 +34,10 @@ export interface JoinCheck {
  * - a 'friends' game takes the host's accepted friends, and the members of an
  *   invite-only group chat the host shared it into. Everyone in an
  *   invite-only group was put there by somebody they chose (groups only invite
- *   friends), so that brings in nobody new to a child.
+ *   friends), so that brings in nobody new to a child. That holds only while
+ *   the host is in the group too: a host the group has removed (after a
+ *   report, say) no longer vouches through it, for this game or for the next
+ *   rounds that inherit its group.
  *
  * A game shared into an OPEN group lets nobody in on that account. An open
  * group is strangers by design — it is adults-only for that reason — and a
@@ -60,7 +63,8 @@ export async function canJoin(executor: Executor, check: JoinCheck): Promise<boo
        ($4::uuid IS NOT NULL AND EXISTS (
           SELECT 1 FROM group_members gm JOIN groups g ON g.id = gm.group_id
            WHERE gm.group_id = $4 AND gm.user_id = $1
-             AND g.archived_at IS NULL AND g.privacy <> 'open')) AS in_group`,
+             AND g.archived_at IS NULL AND g.privacy <> 'open'
+             AND EXISTS (SELECT 1 FROM group_members h WHERE h.group_id = $4 AND h.user_id = $3))) AS in_group`,
     [check.joinerId, others, check.hostId, check.chatGroupId],
   );
   const r = res.rows[0]!;

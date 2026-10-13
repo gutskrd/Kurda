@@ -88,6 +88,22 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(false);
     });
 
+    it('stops taking the group once the group has removed the host', async () => {
+      const host = await makeUser();
+      const groupMate = await makeUser();
+      const minorGroupMate = await makeUser('minor');
+      const friend = await makeUser();
+      await befriend(pool, host, friend);
+      const gid = await makeGroup('invite', [groupMate, host, minorGroupMate, friend]);
+      expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(true);
+      // a moderator takes the host out (after a report, say): their games shared there no longer let the group in
+      await pool.query(`DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`, [gid, host]);
+      expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(false);
+      expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(false);
+      // the host's own friends still can, as anywhere
+      expect(await canJoin(pool, check({ joinerId: friend, hostId: host, chatGroupId: gid }))).toBe(true);
+    });
+
     it('does not take strangers from an OPEN group it was shared into (a host who wants them opens the game)', async () => {
       const host = await makeUser();
       const strangerInGroup = await makeUser();
