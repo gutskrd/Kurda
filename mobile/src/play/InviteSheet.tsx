@@ -5,6 +5,7 @@ import {
   MAX_INVITEES_PER_REQUEST,
   PLAY_GAMES,
   STORY_DIALECTS,
+  type InviteLists,
   type PlayGame,
   type StoryDialect,
   type StoryListItem,
@@ -49,7 +50,16 @@ export type InviteTarget =
   /** more friends into a lobby that exists */
   | { kind: 'lobby'; game: PlayGame; lobbyId: string; mode?: 'duo' | 'group' };
 
-/** Friends shown first: the ones invited most recently, newest first, then everyone by name. */
+/**
+ * Friends who came into one of your games lately, newest first: the invites
+ * they accepted. An invite that was turned down or ran out is not "played
+ * with", so it does not put anybody at the top.
+ */
+export function recentPlayers(lists: InviteLists): string[] {
+  return lists.outgoing.flatMap((o) => o.invitees.filter((i) => i.status === 'accepted').map((i) => i.userId));
+}
+
+/** Friends shown first: the ones played with most recently, newest first, then everyone by name. */
 export function orderFriends(friends: readonly FriendSummary[], recentIds: readonly string[], query: string): {
   recent: FriendSummary[];
   rest: FriendSummary[];
@@ -102,6 +112,12 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const preselected = target.kind === 'dm' ? target.friendId : target.kind === 'new' ? target.friendId : undefined;
+  /*
+   * From a DM the game is with that friend: the server invites them (and
+   * posts the card in the DM) from `chat`, whatever else is picked, so the
+   * sheet keeps them picked rather than show a choice it would not honour.
+   */
+  const lockedId = target.kind === 'dm' ? target.friendId : null;
   const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,8 +133,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
       if (live) setFriends(res.ok ? res.data.friends : []);
     });
     void listInvites(client).then((res) => {
-      if (!live || !res.ok) return;
-      setRecentIds(res.data.outgoing.flatMap((o) => o.invitees.map((i) => i.userId)));
+      if (live && res.ok) setRecentIds(recentPlayers(res.data));
     });
     return () => {
       live = false;
@@ -143,9 +158,14 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     };
   }, [client, game, dialect, target.kind]);
 
-  const { recent, rest } = useMemo(() => orderFriends(friends ?? [], recentIds, query), [friends, recentIds, query]);
+  const others = useMemo(() => (friends ?? []).filter((f) => f.userId !== lockedId), [friends, lockedId]);
+  const lockedFriend = lockedId ? (friends ?? []).find((f) => f.userId === lockedId) : undefined;
+  const { recent, rest } = useMemo(() => orderFriends(others, recentIds, query), [others, recentIds, query]);
+  // a game for two from a DM is with that friend, and nobody else is offered
+  const offerOthers = !(lockedId && single);
 
   const toggle = (id: string): void => {
+    if (id === lockedId) return;
     setPicked((list) => {
       if (list.includes(id)) return list.filter((x) => x !== id);
       if (single) return [id];
@@ -193,14 +213,16 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const storyDisabled = game === 'stories' && target.kind !== 'lobby' && stories.length === 0;
 
   const friendRow = (f: FriendSummary) => {
-    const on = picked.includes(f.userId);
+    const locked = f.userId === lockedId;
+    const on = locked || picked.includes(f.userId);
     const name = f.displayName ?? f.username;
     return (
       <Pressable
         key={f.userId}
         onPress={() => toggle(f.userId)}
+        disabled={locked}
         accessibilityRole={single ? 'radio' : 'checkbox'}
-        accessibilityState={{ checked: on }}
+        accessibilityState={{ checked: on, disabled: locked }}
         accessibilityLabel={f.online ? t('play.sheet.friendOnline', { name }) : name}
         style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.successFill : 'transparent', opacity: pressed ? 0.8 : 1 }]}
       >
@@ -342,17 +364,20 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         {target.kind === 'group' ? (
           <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('play.sheet.groupHint')}</Text>
         ) : null}
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={t('play.sheet.search')}
-          placeholderTextColor={colors.textSecondary}
-          accessibilityLabel={t('play.sheet.search')}
-          autoCapitalize="none"
-          autoCorrect={false}
-          style={[styles.search, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-        />
-        {friends === null ? null : friends.length === 0 ? (
+        {lockedFriend ? friendRow(lockedFriend) : null}
+        {offerOthers ? (
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t('play.sheet.search')}
+            placeholderTextColor={colors.textSecondary}
+            accessibilityLabel={t('play.sheet.search')}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={[styles.search, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+          />
+        ) : null}
+        {friends === null || !offerOthers ? null : friends.length === 0 ? (
           <Note>{t('play.sheet.noFriends')}</Note>
         ) : (
           <>
