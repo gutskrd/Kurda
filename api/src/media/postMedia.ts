@@ -110,16 +110,19 @@ async function inspect(
  * They go back to how an unposted upload is: unconfirmed, so the orphan sweep
  * deletes them after a day — unless their owner puts them on a post again
  * before then.
+ *
+ * Not a picture a moderator still has to look at: one whose scan flagged it
+ * for review, or one a scan holds as evidence, stays confirmed, kept the way a
+ * removed post's pictures are. (The caller keeps a reported post's pictures
+ * by not letting go of them at all — see `LibraryService.update`.)
  */
 export async function releasePostPictures(executor: Pick<pg.PoolClient, 'query'>, keys: readonly string[]): Promise<void> {
   if (keys.length === 0) return;
-  // TODO(moderation): a picture held as report evidence must survive this. The
-  // moderation work's media_uploads.preserve_evidence makes the sweep skip it,
-  // and its evidence snapshot of a library post (moderation/evidence.ts) should
-  // carry the post's library_post_media keys and alt texts, as it carries the
-  // narration's key, so a reported picture is preserved.
   await executor.query(
-    `UPDATE media_uploads SET confirmed_at = NULL, created_at = now() WHERE key = ANY($1::text[])`,
+    `UPDATE media_uploads m SET confirmed_at = NULL, created_at = now()
+      WHERE m.key = ANY($1::text[])
+        AND NOT EXISTS (SELECT 1 FROM image_scans s
+                         WHERE s.media_key = m.key AND (s.status = 'pending' OR s.preserve_evidence))`,
     [keys],
   );
 }

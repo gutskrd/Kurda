@@ -91,6 +91,32 @@ describe.skipIf(!DATABASE_URL)('pictures on posts in GDPR erase and export (inte
     expect(rows.rowCount).toBe(0);
   });
 
+  it('erases a picture taken off a reported post with the rest of a closed account’s', async () => {
+    const child = await person('kept');
+    const reader = await person('keptreader');
+    const [a, b] = [await upload(child), await upload(child)];
+    const shown = (await post(child.token, { body: 'Wêne', media: [{ mediaKey: a }, { mediaKey: b }] })).json();
+    await app.inject({
+      method: 'POST',
+      url: `/library/posts/${shown.id}/report`,
+      payload: { reason: 'spam' },
+      headers: { authorization: `Bearer ${reader.token}` },
+      remoteAddress: ip(),
+    });
+    // kept for the moderator, though no post shows it any more
+    await app.inject({
+      method: 'PATCH',
+      url: `/library/posts/${shown.id}`,
+      payload: { media: [{ mediaKey: a }] },
+      headers: { authorization: `Bearer ${child.token}` },
+      remoteAddress: ip(),
+    });
+    expect((await pool.query(`SELECT confirmed_at FROM media_uploads WHERE key = $1`, [b])).rows[0].confirmed_at).not.toBeNull();
+
+    await new GdprService(pool, { storage: memoryStorage() }).closeNow(child.id, 'under_minimum_age');
+    expect(await stored([a, b])).toEqual([]);
+  });
+
   it('exports someone’s posts with links to their pictures, drafts and removed ones too', async () => {
     const me = await person('exporter');
     const [a, b] = [await upload(me), await upload(me)];

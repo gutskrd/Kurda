@@ -315,7 +315,8 @@ export class LibraryService {
    * clearing a story's title or taking the last picture off an empty post is
    * refused, not half-applied. New pictures must be unused uploads of the
    * post's author (an admin cannot put their own upload on someone's post);
-   * pictures left out of `media` are let go to the orphan sweep.
+   * pictures left out of `media` are let go to the orphan sweep, unless a
+   * moderator still has to look at them.
    */
   async update(id: string, actorId: string, actorIsAdmin: boolean, patch: UpdateInput): Promise<MutateResult> {
     return this.owned(id, actorId, actorIsAdmin, async (client, row) => {
@@ -335,7 +336,12 @@ export class LibraryService {
         if (!claim.ok) {
           return { ok: false as const, reason: 'invalid' as const, problem: { code: claim.code, mediaKey: claim.mediaKey } };
         }
-        await releasePostPictures(client, nowKeys.filter((k) => !nextKeys.includes(k)));
+        // a reported post's pictures are what its moderator will need to see:
+        // taken off it, they are kept, as a removed post's are, rather than
+        // handed to the sweep — or an author could clear a reported picture
+        // away before anybody opened the case
+        const dropped = nowKeys.filter((k) => !nextKeys.includes(k));
+        if (dropped.length > 0 && !(await underReport(client, id))) await releasePostPictures(client, dropped);
         await client.query(`DELETE FROM library_post_media WHERE post_id = $1`, [id]);
         await writeMedia(client, id, nextMedia);
       }
@@ -477,6 +483,22 @@ export function editProblem(current: LibraryPost, patch: UpdateInput): PostProbl
 export function addedPictures(current: LibraryPost, patch: UpdateInput): string[] {
   const now = new Set(current.media.map((m) => m.mediaKey));
   return (patch.media ?? []).map((m) => m.mediaKey).filter((k) => !now.has(k));
+}
+
+/**
+ * Whether a post has a report nobody has resolved yet: an open report on it,
+ * or its moderation case (#102, `library_post:<id>`) still unresolved.
+ */
+async function underReport(executor: Pick<pg.PoolClient, 'query'>, postId: string): Promise<boolean> {
+  const res = await executor.query<{ reported: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM library_reports
+                     WHERE target_type = 'library_post' AND target_id = $1::uuid AND status = 'open')
+         OR EXISTS (SELECT 1 FROM moderation_cases
+                     WHERE source = 'library_report' AND source_ref = 'library_post:' || $1::uuid::text
+                       AND status <> 'resolved') AS reported`,
+    [postId],
+  );
+  return res.rows[0]!.reported;
 }
 
 /** A create request as the shared check reads it. */

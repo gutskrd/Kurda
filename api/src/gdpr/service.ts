@@ -313,13 +313,14 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
     `SELECT storage_key AS key FROM user_exports WHERE user_id = $1 AND storage_key IS NOT NULL`,
     [userId],
   );
-  // the pictures on their written posts, and what they uploaded for a post and
-  // never posted (the sweep would take those in a day; a closed account's go now)
+  // the pictures on their written posts, and every other picture they uploaded
+  // for a post: never posted (the sweep would take those in a day; a closed
+  // account's go now), or taken off a reported post and kept for its case
   // TODO(moderation): filter these by media_uploads.preserve_evidence like the
   // keys above once the moderation branch's column is here
   const pictures = await executor.query<{ key: string }>(
     `SELECT m.media_key AS key FROM library_post_media m JOIN library_posts p ON p.id = m.post_id WHERE p.author_id = $1
-     UNION SELECT key FROM media_uploads WHERE uploader_id = $1 AND confirmed_at IS NULL`,
+     UNION SELECT key FROM media_uploads WHERE uploader_id = $1`,
     [userId],
   );
 

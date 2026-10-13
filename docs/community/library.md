@@ -79,8 +79,10 @@ post after its first post was deleted (the removed post keeps its own file).
   on the post stays; a new one must be an unused upload of the **post's
   author** (an admin cannot put their own upload on somebody's post); a key
   left out is let go to the orphan sweep (its owner can post it again within the
-  day). An edit is checked as the post it would leave, so it can be refused for
-  the same reasons a new post can.
+  day) — unless a moderator still has to see it: on a post with an open report
+  or an unresolved case, or flagged by its scan, it is kept, as a removed
+  post's pictures are. An edit is checked as the post it would leave, so it can
+  be refused for the same reasons a new post can.
 - **Answers**: every post carries `media: [{ mediaKey, url, altText, width,
   height }]`, `meme`, `sourceCredit` and `audioUrl`, beside the fields it always
   had.

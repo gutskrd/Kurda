@@ -15,6 +15,7 @@ import { POST_BODY_MAX } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { MediaService } from '../media/service.js';
 import { memoryStorage, seedPictureUpload } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -67,16 +68,19 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
   const confirmed = async (key: string): Promise<boolean> =>
     (await pool.query<{ c: boolean }>(`SELECT confirmed_at IS NOT NULL AS c FROM media_uploads WHERE key = $1`, [key])).rows[0]!.c;
 
+  // a bucket in memory, so the answers carry picture URLs
+  const storage = memoryStorage();
+
   beforeAll(async () => {
     app = buildApp(config);
-    // a bucket in memory, so the answers carry picture URLs
-    app.decorate('storage', memoryStorage());
+    app.decorate('storage', storage);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
   });
 
   afterAll(async () => {
     if (userIds.length) await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [userIds]);
+    await pool.query(`DELETE FROM image_scans WHERE media_key LIKE $1`, [`image-post/lp-${suffix}-%`]);
     await pool.query(`DELETE FROM media_uploads WHERE key LIKE $1`, [`image-post/lp-${suffix}-%`]);
     await pool.end();
     await app.close();
@@ -286,6 +290,35 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
 
     // until the sweep comes, it is its owner's to post again
     expect((await call('POST', '/library/posts', me.token, { media: [{ mediaKey: b }] })).statusCode).toBe(201);
+  });
+
+  it('keeps a picture a moderator still has to see when an edit takes it off', async () => {
+    const me = await person('reported');
+    const reader = await person('reporter');
+    const [a, b, c, d] = [await upload(me), await upload(me), await upload(me), await upload(me)];
+    for (const key of [a, b, c, d]) storage.objects.set(key, Buffer.from('webp'));
+    const reported = (await call('POST', '/library/posts', me.token, { body: 'Wêne', media: [{ mediaKey: a }, { mediaKey: b }] })).json();
+    const flagged = (await call('POST', '/library/posts', me.token, { body: 'Du', media: [{ mediaKey: c }, { mediaKey: d }] })).json();
+    expect((await call('POST', `/library/posts/${reported.id}/report`, reader.token, { reason: 'spam' })).statusCode).toBe(200);
+    // the scan let `d` up but asked a person to look at it (#294)
+    await pool.query(`INSERT INTO image_scans (media_key, surface, action, model_version) VALUES ($1, 'feed', 'flag', 'test')`, [d]);
+
+    // the author takes the reported picture off, keeping the words; and the
+    // flagged one off the other post
+    expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [{ mediaKey: a }] })).statusCode).toBe(200);
+    expect((await call('PATCH', `/library/posts/${flagged.id}`, me.token, { media: [{ mediaKey: c }] })).statusCode).toBe(200);
+
+    // a day and an hour later, both are still there for the moderator
+    await new MediaService(pool, storage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
+    for (const key of [b, d]) {
+      expect(await confirmed(key)).toBe(true);
+      expect(storage.objects.has(key)).toBe(true);
+    }
+
+    // once the report is dealt with, what an edit takes off goes as usual
+    await pool.query(`UPDATE library_reports SET status = 'resolved' WHERE target_id = $1`, [reported.id]);
+    expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [] })).statusCode).toBe(200);
+    expect(await confirmed(a)).toBe(false);
   });
 
   it('changes words, title, credit and alt text without touching the pictures', async () => {
