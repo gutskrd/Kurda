@@ -133,6 +133,7 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
     expect(res.json()).toMatchObject({ needsEnrollment: true, needsVerification: false });
     // no capabilities are handed out until 2FA is done
     expect(res.json().capabilities).toEqual([]);
+    expect(res.json().staffRoles).toEqual([]);
   });
 
   it('lets an admin through once enrolled and verified, and not before', async () => {
@@ -142,6 +143,10 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
     // does not end by immediately asking for a second code
     const session = await call('GET', '/admin/session', adminToken);
     expect(session.json()).toMatchObject({ needsEnrollment: false, needsVerification: false });
+    // `roles` names only the RBAC roles; the panel also needs the legacy one,
+    // which most of its pages are still guarded by
+    expect(session.json().roles).toEqual(['superadmin']);
+    expect([...session.json().staffRoles].sort()).toEqual(['admin', 'superadmin']);
 
     const ok = await call('GET', '/admin/economy/supply?currency=zer', adminToken);
     expect(ok.statusCode).toBe(200);
