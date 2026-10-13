@@ -238,7 +238,7 @@ describe('PictureComposer', () => {
     await pick();
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Zilan' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hevalo' }));
 
     expect(await screen.findByText('Sticker', { exact: true })).toBeInTheDocument();
     expect(screen.queryByText('Pick a sticker')).not.toBeInTheDocument();
@@ -269,7 +269,7 @@ describe('PictureComposer', () => {
     await pick();
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     await userEvent.click(screen.getByRole('button', { name: /Add a sticker/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Zilan' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hevalo' }));
     await screen.findByText('Sticker', { exact: true });
   }
 

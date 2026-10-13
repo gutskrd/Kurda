@@ -31,15 +31,24 @@ export interface PictureSticker {
   labelKey?: MessageKey;
 }
 
-/** Kurdish marks and emblems, kept short — a picker of thousands is a search box. */
+/**
+ * Kurdish marks, a few words, and a heart and a star — kept short, because a
+ * picker of thousands is a search box.
+ *
+ * Every one is drawn by scripts/generate-cosmetic-art.mjs, which owns
+ * web/public/stickers. The suns and the flag badge keep the file names they
+ * always had, so a picture saved with one of them still finds it.
+ */
 export const PICTURE_STICKERS: readonly PictureSticker[] = [
   { src: '/stickers/kurdistan_badge.webp', name: 'Kurdistan' },
   { src: '/stickers/yellow_sun.webp', name: 'yellow-sun', labelKey: 'photo.sticker.yellowSun' },
   { src: '/stickers/white_sun.webp', name: 'white-sun', labelKey: 'photo.sticker.whiteSun' },
-  { src: '/stickers/black_sun.webp', name: 'black-sun', labelKey: 'photo.sticker.blackSun' },
-  { src: '/stickers/zilan.webp', name: 'Zilan' },
-  { src: '/stickers/amed_spor.webp', name: 'Amed Spor' },
-  { src: '/stickers/logo.webp', name: 'Hevalo' },
+  { src: '/stickers/hevalo.webp', name: 'Hevalo' },
+  { src: '/stickers/newroz.webp', name: 'newroz', labelKey: 'photo.sticker.newroz' },
+  { src: '/stickers/biji.webp', name: 'biji', labelKey: 'photo.sticker.biji' },
+  { src: '/stickers/spas.webp', name: 'spas', labelKey: 'photo.sticker.spas' },
+  { src: '/stickers/heart.webp', name: 'heart', labelKey: 'photo.sticker.heart' },
+  { src: '/stickers/star.webp', name: 'star', labelKey: 'photo.sticker.star' },
 ];
 
 export interface EmojiSticker {
