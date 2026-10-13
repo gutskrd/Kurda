@@ -15,6 +15,7 @@ import { renderWithProviders } from './testing/harness';
 import { patchReactNativeWeb } from './testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from './testing/auth';
 import { ReportSheet, requestFor } from './ReportSheet';
+import { PlayerReportButton } from './PlayerReportButton';
 
 patchReactNativeWeb();
 
@@ -167,6 +168,27 @@ describe('ReportSheet', () => {
     rerender(<ReportSheet visible={false} target={{ type: 'group', groupId: 'g1' }} onClose={() => undefined} />);
     rerender(<ReportSheet visible target={{ type: 'group', groupId: 'g1' }} onClose={() => undefined} />);
     expect(screen.getByText('What’s wrong?')).toBeTruthy();
+  });
+});
+
+describe('PlayerReportButton', () => {
+  it('reports a player of a finished game by seat, with no Block for an account it never knew', async () => {
+    const client = fakeClient({ 'POST /reports': ok(receipt({ report: { ...receipt().report, targetType: 'game_player' } })) });
+    testAuth.client = client;
+    renderWithProviders(<PlayerReportButton game="rhyme-match" gameId="m1" seat={2} name={null} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Report Player 2' }));
+    expect(screen.getByText('Report Player 2')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Bullying or harassment' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
+    expect(await screen.findByText('Thanks for telling us')).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/reports')?.body).toEqual({
+      targetType: 'game_player',
+      targetId: 'm1',
+      game: 'rhyme-match',
+      seat: 2,
+      category: 'harassment',
+    });
+    expect(screen.queryByRole('button', { name: /^Block/ })).toBeNull();
   });
 });
 
