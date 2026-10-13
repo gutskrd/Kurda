@@ -16,6 +16,12 @@
  * once, ever — so it is a column on `users`, as is what the store prompt needs
  * to keep to its limits: when it was last asked for, how often, and in which
  * app version (at most once per version).
+ *
+ * Both are decided from the games a player has finished, counted across every
+ * game's own table each time the apps ask (finished-games.ts) — after every
+ * game. The two multiplayer player tables are keyed by game first, so nothing
+ * could find one player's rows without reading all of them: each gets an index
+ * on the player, which also serves the cascade when an account row is deleted.
  */
 
 const CATEGORIES = "'lessons','games','stories','bugs','too_hard','too_easy','other'";
@@ -63,9 +69,14 @@ export const up = (pgm) => {
     store_review_count: { type: 'integer', notNull: true, default: 0 },
     store_review_version: { type: 'text' },
   });
+
+  pgm.createIndex('wordle_battle_players', 'user_id');
+  pgm.createIndex('rhyme_match_players', 'user_id');
 };
 
 export const down = (pgm) => {
+  pgm.dropIndex('rhyme_match_players', 'user_id');
+  pgm.dropIndex('wordle_battle_players', 'user_id');
   pgm.dropColumns('users', [
     'app_feedback_prompted_at',
     'store_review_prompted_at',

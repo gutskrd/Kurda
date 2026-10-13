@@ -12,7 +12,10 @@
  *   Rhyme Match                   — the match finished with them in it
  *
  * Each source is one SELECT of (user_id, finished_at), so a new game is one
- * line here. Stories, once its games are merged (contract §A, migration 147):
+ * line here — on a table with an index that starts with user_id, because this
+ * runs after every game (migration 156 added the two the multiplayer player
+ * tables lacked). Stories, once its games are merged (contract §A, migration
+ * 147), with the index its players table has on user_id:
  *   `SELECT p.user_id, g.finished_at FROM story_game_players p
  *      JOIN story_games g ON g.id = p.game_id
  *     WHERE g.status = 'finished' AND p.left_at IS NULL AND NOT p.removed`
@@ -44,7 +47,7 @@ export interface FinishedGames {
  * How many games a player has finished, and on how many days.
  *
  * The user filter is applied to the union as a whole; Postgres pushes it into
- * every branch, where each table's user index answers it.
+ * every branch, where each table's index on the player answers it.
  */
 export async function countFinishedGames(
   executor: Pick<pg.Pool, 'query'>,

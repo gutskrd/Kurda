@@ -12,7 +12,7 @@ import { GdprService, DELETION_GRACE_DAYS } from '../gdpr/service.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
-import { countFinishedGames } from './finished-games.js';
+import { countFinishedGames, FINISHED_GAME_SOURCES } from './finished-games.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -356,6 +356,25 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(await countFinishedGames(pool, user.id, 'UTC')).toEqual({ games: 5, days: 1 });
       // and nothing of theirs is counted for anyone else
       expect(await countFinishedGames(pool, other.id, 'UTC')).toEqual({ games: 0, days: 0 });
+    });
+
+    /*
+     * The count runs on the results screen after every game, so each table it
+     * reads must find one player's rows without reading everyone's: the two
+     * multiplayer player tables were keyed by game alone (migration 156).
+     */
+    it('reads every game table by an index that starts with the player', async () => {
+      const tables = FINISHED_GAME_SOURCES.map((sql) => /\bFROM\s+(\w+)/.exec(sql)![1]!);
+      expect(tables).toEqual(['wordle_games', 'rhyme_games', 'race_games', 'wordle_battle_players', 'rhyme_match_players']);
+      const indexed = await pool.query<{ table: string }>(
+        `SELECT DISTINCT c.relname AS table
+           FROM pg_index i
+           JOIN pg_class c ON c.oid = i.indrelid
+           JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
+          WHERE c.relname = ANY($1) AND a.attname = 'user_id' AND i.indpred IS NULL`,
+        [tables],
+      );
+      expect(indexed.rows.map((r) => r.table).sort()).toEqual([...tables].sort());
     });
 
     it('counts days in the player’s own time zone', async () => {
