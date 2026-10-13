@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useProfileModal } from './ProfileModal';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -236,11 +236,13 @@ describe('ProfileModal', () => {
     });
 
     /**
-     * A report about a person carries no post for a moderator to look at, so
-     * what the reporter writes is the whole case — the server rejects a short
-     * one, and the form should not let it get that far.
+     * The report used to demand ten characters of explanation before it would
+     * send — a wall for a child who has just been hurt and has no words for it.
+     * It now opens the one report sheet: pick what is wrong, a note if you
+     * want one, send. The server keeps the snapshot that a note used to have
+     * to describe.
      */
-    it('will not send a report without a reason', async () => {
+    it('reports through the shared sheet, with no reason required', async () => {
       const fetchMock = stub();
       renderApp(<OpenUser />);
       const user = userEvent.setup();
@@ -249,20 +251,21 @@ describe('ProfileModal', () => {
       await user.click(await screen.findByRole('button', { name: /more about zana/i }));
       await user.click(screen.getByRole('menuitem', { name: /report/i }));
 
-      expect(screen.getByRole('button', { name: /send report/i })).toBeDisabled();
-      await user.type(screen.getByLabelText(/what should a moderator know/i), 'too short');
-      expect(screen.getByRole('button', { name: /send report/i })).toBeDisabled();
-
-      await user.type(screen.getByLabelText(/what should a moderator know/i), ' — and this is the rest of it');
+      const sheet = screen.getByRole('dialog', { name: /^Report Zana/ });
+      await user.click(within(sheet).getByRole('button', { name: /bullying or harassment/i }));
       const send = screen.getByRole('button', { name: /send report/i });
       expect(send).toBeEnabled();
 
       await user.click(send);
-      const call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/users/u2/report'));
+      const call = fetchMock.mock.calls.find((c) => String(c[0]).endsWith('/reports'));
       expect(call).toBeTruthy();
-      expect(JSON.parse((call![1] as RequestInit).body as string)).toMatchObject({ category: 'harassment' });
-      // it never promises an outcome, only that somebody will look
-      expect(await screen.findByText(/a moderator will look at this/i)).toBeInTheDocument();
+      expect(JSON.parse((call![1] as RequestInit).body as string)).toEqual({
+        targetType: 'user',
+        targetId: 'u2',
+        category: 'harassment',
+      });
+      // it never promises an outcome, only what happens next
+      expect(await screen.findByText(/what happens next/i)).toBeInTheDocument();
     });
 
     it('offers neither on your own profile', async () => {

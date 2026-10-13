@@ -28,3 +28,563 @@
 .send-error-link:hover {
   color: var(--ink);
 }
+
+/* ---- the sheet (components/Sheet.tsx) ------------------------------------ */
+/*
+ * Above a modal (100): a report can be opened from a profile that is itself
+ * a modal, and the sheet must be the thing on top.
+ */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.6);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fade 0.15s ease;
+}
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 30px 26px 24px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(14, 16, 22, 0.86);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  backdrop-filter: blur(30px) saturate(1.3);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
+  outline: none;
+  animation: sheet-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes sheet-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+.sheet-grip {
+  display: none;
+}
+.sheet-close {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.sheet-close:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+/* a phone: up from the bottom edge, where the thumb already is */
+@media (max-width: 640px) {
+  .sheet-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .sheet-panel {
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-bottom: 0;
+    padding: 22px 16px calc(20px + env(safe-area-inset-bottom));
+    animation-name: sheet-up;
+  }
+  .sheet-grip {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: -8px auto 12px;
+    border-radius: var(--r-pill);
+    background: var(--border-strong);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* ---- the report sheet (reports/ReportSheet.tsx) -------------------------- */
+.report-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-inline-end: 48px;
+  overflow-wrap: anywhere;
+}
+[dir='rtl'] .report-eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.report-heading {
+  font-size: 1.4rem;
+  margin: 6px 0 4px;
+  outline: none;
+}
+.report-heading:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--r-xs);
+}
+.report-intro {
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+.report-cats {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 12px;
+  display: grid;
+  gap: 8px;
+}
+.report-cat {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  text-align: start;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.report-cat:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+/* the most urgent come first, and are marked so the eye finds them first too */
+.report-cat.is-urgent {
+  border-inline-start: 3px solid var(--danger);
+}
+.report-cat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.report-cat-label {
+  font-weight: 600;
+  line-height: 1.3;
+}
+.report-cat-hint {
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--ink-3);
+}
+.report-cat-go {
+  flex: none;
+  color: var(--ink-4);
+}
+[dir='rtl'] .report-cat-go {
+  transform: scaleX(-1);
+}
+.report-privacy {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.report-help p {
+  color: var(--ink-2);
+  margin-top: 10px;
+}
+.report-help-link {
+  margin-top: 16px;
+}
+.report-chosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 16px;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.report-note {
+  min-height: 110px;
+  resize: vertical;
+}
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+.report-actions .btn {
+  min-height: 44px;
+}
+.report-done-mark {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  border-radius: 50%;
+  color: var(--success);
+  background: var(--success-soft);
+}
+.report-subheading {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 20px 0 6px;
+}
+.report-next {
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+}
+.report-next li + li {
+  margin-top: 4px;
+}
+.report-help-again {
+  margin-top: 12px;
+  color: var(--ink-2);
+}
+.report-help-again a {
+  color: var(--gold-ink);
+  text-decoration: underline;
+}
+.report-also-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 8px;
+}
+.report-also-btn {
+  min-height: 44px;
+}
+.report-also-note {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+/* ---- Settings → Safety, My reports, Account standing (reports/) ---------- */
+.safety-links {
+  display: grid;
+  gap: 8px;
+}
+.safety-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+}
+.safety-link:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.safety-link span {
+  flex: 1;
+}
+.safety-link-go {
+  color: var(--ink-4);
+}
+[dir='rtl'] .safety-link-go {
+  transform: scaleX(-1);
+}
+
+/* back to Settings: a page reached from a page, on every width */
+.standing-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-bottom: 6px;
+  color: var(--ink-3);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.standing-back:hover {
+  color: var(--ink);
+}
+.standing-back-icon {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .standing-back-icon {
+  transform: none;
+}
+
+.myreports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.myreport-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.myreport-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.myreport-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.myreport-what {
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.myreport-pill,
+.sanction-tag {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.myreport-pill.is-actioned {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.myreport-pill.is-open,
+.sanction-tag.is-active {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.myreport-status {
+  margin-top: 10px;
+  color: var(--ink-2);
+}
+.myreport-dates {
+  margin: 6px 0 12px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.appeal-form {
+  margin-top: 12px;
+}
+.appeal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+.appeal-actions .btn,
+.appeal-offer .btn {
+  min-height: 44px;
+}
+.appeal-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 14px;
+}
+.appeal-deadline {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.appeal-state {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+.appeal-state.is-overturned,
+.appeal-state.is-modified {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.appeal-answer {
+  margin-top: 6px;
+  color: var(--ink);
+}
+
+.standing-status {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.standing-status-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.standing-status.is-good .standing-status-icon {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.standing-status-title {
+  font-size: 1.25rem;
+  margin-bottom: 6px;
+}
+.standing-limits {
+  margin: 4px 0 0;
+  padding-inline-start: 18px;
+  color: var(--ink-2);
+}
+.standing-group {
+  margin-top: 28px;
+  display: grid;
+  gap: 14px;
+}
+.standing-group .friend-heading {
+  margin: 0;
+}
+.standing-none {
+  margin-top: 20px;
+}
+.sanction {
+  border-inline-start: 3px solid var(--border-strong);
+}
+.sanction.is-active {
+  border-inline-start-color: var(--gold);
+}
+.sanction-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sanction-kind {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.sanction-rule {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+.sanction-when {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}
+.sanction-statement {
+  margin: 12px 0 0;
+}
+.sanction-statement figcaption {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.sanction-statement blockquote,
+.sanction-statement-text {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sanction-origin {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+
+.standing-warning-item {
+  margin-top: 14px;
+}
+
+/* the suspension screen, in place of the app */
+.suspension {
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+.suspension-card {
+  text-align: center;
+}
+.suspension-card .sanction-statement {
+  text-align: start;
+}
+.suspension-icon {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.suspension-title {
+  margin-top: 12px;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+}
+.suspension-until {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 1.05rem;
+}
+.suspension-note {
+  font-size: 0.9rem;
+}
+.suspension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+.suspension-actions .btn {
+  min-height: 44px;
+}

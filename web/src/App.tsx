@@ -64,6 +64,12 @@ const Faq = lazy(() => import('./pages/Faq').then((m) => ({ default: m.Faq })));
 const HowHevaloTeaches = lazy(() =>
   import('./pages/HowHevaloTeaches').then((m) => ({ default: m.HowHevaloTeaches })),
 );
+// reports and account standing (reports/): the two Settings pages, the
+// suspension screen, and a warning shown once
+const MyReports = lazy(() => import('./reports/MyReports').then((m) => ({ default: m.MyReports })));
+const AccountStanding = lazy(() => import('./reports/AccountStanding').then((m) => ({ default: m.AccountStanding })));
+import { SuspensionGate } from './reports/SuspensionGate';
+import { StandingWarnings } from './reports/StandingWarnings';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -115,6 +121,8 @@ export function App(): React.JSX.Element {
         <ProfileModalProvider>
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
+        <StandingWarnings />
+        <SuspensionGate>
         <Routes>
           {/* the landing page, the pages about Hevalo itself, and old public
               addresses that now live in the app */}
@@ -230,8 +238,11 @@ export function App(): React.JSX.Element {
             />
             <Route path="users/:id" element={<UserProfile />} />
             <Route path="settings" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
+            <Route path="settings/reports" element={<RequireAccount what="gate.what.settings"><MyReports /></RequireAccount>} />
+            <Route path="settings/standing" element={<RequireAccount what="gate.what.settings"><AccountStanding /></RequireAccount>} />
           </Route>
         </Routes>
+        </SuspensionGate>
         </MessagesProvider>
         </ProfileModalProvider>
       </BrowserRouter>

@@ -8,6 +8,7 @@ import { ErrorState } from '../components/states';
 import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
+import { SafetyCard } from '../reports/SafetyCard';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -73,6 +74,9 @@ export function Settings(): React.JSX.Element {
         everywhere else, a blocked person is already invisible to you.
       */}
       <BlockedUsers />
+
+      {/* what became of your reports, and the decisions about your account */}
+      <SafetyCard />
 
       {/* the other half of "who reaches me": privacy above says who may see
           you, this says what the app is allowed to interrupt you about */}

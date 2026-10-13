@@ -103,6 +103,21 @@ export function formatUntil(iso: string, locale: string, now: Date = new Date())
   }
 }
 
+/** A day as the reader would say it: "14 Oct", with the year only when it is not this one. */
+export function formatDay(iso: string, locale: string, now: Date = new Date()): string {
+  const when = new Date(iso);
+  const options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'short',
+    ...(when.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  };
+  try {
+    return when.toLocaleDateString(locale, options);
+  } catch {
+    return when.toLocaleDateString(undefined, options);
+  }
+}
+
 /** The sentence that says what is limited and until when. */
 export function restrictionText(r: Restriction, t: Translate, locale: string, now: Date = new Date()): string {
   switch (r.kind) {
