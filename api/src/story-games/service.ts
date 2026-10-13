@@ -234,24 +234,24 @@ export class StoryGamesService {
   }
 
   private async createGame(userId: string, input: CreateGameInput): Promise<string> {
-    let storyId = input.storyId;
-    if (!storyId) {
+    let story: GameStory | null;
+    if (input.storyId) {
+      story = await this.stories.getPublishedForGame(input.storyId);
+      if (!story) throw new AppError('NO_STORY', 404, 'no such story');
+    } else {
       if (!input.dialect || !input.length) throw new AppError('BAD_SETTINGS', 400, 'pick a story, or a variety and a length');
       if (!isAllowedQuestionCount(input.length, input.questionCount)) {
         throw new AppError('BAD_SETTINGS', 400, 'that many questions is not offered for this length');
       }
-      storyId =
-        (await this.stories.pickRandomPublished({
-          dialect: input.dialect,
-          length: input.length,
-          level: input.level,
-          minQuestions: input.questionCount,
-          preferUnseenBy: [userId],
-        })) ?? undefined;
-      if (!storyId) throw new AppError('NO_STORY', 404, 'no story of that kind yet');
+      // "Surprise me": one the creator has not finished, while there is one
+      story = await this.stories.pickRandomPublished({
+        dialect: input.dialect,
+        length: input.length,
+        level: input.level,
+        preferNotCompletedBy: userId,
+      });
+      if (!story) throw new AppError('NO_STORY', 404, 'no story of that kind yet');
     }
-    const story = await this.stories.getPublishedForGame(storyId);
-    if (!story) throw new AppError('NO_STORY', 404, 'no such story');
     if (!isAllowedQuestionCount(story.length, input.questionCount)) {
       throw new AppError('BAD_SETTINGS', 400, 'that many questions is not offered for this length');
     }
@@ -615,7 +615,7 @@ export class StoryGamesService {
         id: row.story_id,
         slug: s.slug,
         title: s.title,
-        summary: s.summary,
+        summary: s.summary ?? null,
         dialect: row.dialect,
         level: row.level,
         length: row.length,
@@ -631,7 +631,7 @@ export class StoryGamesService {
         id: live.id,
         slug: live.slug,
         title: live.title,
-        summary: live.summary,
+        summary: live.summary ?? null,
         dialect: live.dialect,
         level: live.level,
         length: live.length,
@@ -1115,7 +1115,7 @@ export class StoryGamesService {
         return;
       }
       this.requireController(t, userId);
-      const story = await this.nextStory(t, opts.storyId, [userId]);
+      const story = await this.nextStory(t, opts.storyId, userId);
       const access: GameAccess = t.game.access === 'open' && (await isKnownAdult(t.client, userId)) ? 'open' : 'friends';
       const me = t.players.find((p) => p.user_id === userId)!;
       const round = await this.insertGame(t.client, t.others, userId, story, {
@@ -1137,8 +1137,9 @@ export class StoryGamesService {
    * A duo's rematch, once both players asked for it (the play module keeps the
    * offers): a new game with the same settings and both of them in it, started
    * at once — they both chose it. The next story is the one asked for, else
-   * another of the same variety and length that neither has finished, if there
-   * is one. Asking twice returns the same game.
+   * another of the same variety and length — one the host has not finished,
+   * while there is one (the stories' pick takes one person to prefer for) —
+   * else the same one. Asking twice returns the same game.
    */
   async startPairRematch(gameId: string, opts: { storyId?: string } = {}): Promise<{ gameId: string }> {
     let next = '';
@@ -1160,7 +1161,7 @@ export class StoryGamesService {
       if (!ok.rows[0]!.ok) throw notFound();
       const host = pair.find((p) => p.user_id === t.game.host_id) ?? pair[0]!;
       const other = pair.find((p) => p !== host)!;
-      const story = await this.nextStory(t, opts.storyId, ids, true);
+      const story = await this.nextStory(t, opts.storyId, host.user_id, true);
       const access: GameAccess =
         t.game.access === 'open' && (await isKnownAdult(t.client, host.user_id)) ? 'open' : 'friends';
       const rematch = await this.insertGame(t.client, t.others, host.user_id, story, {
@@ -1185,10 +1186,11 @@ export class StoryGamesService {
     return { gameId: next };
   }
 
-  // the story for the next game: asked for, else (a pair) one nobody has
-  // finished, else the same one, else any of the same variety and length
-  private async nextStory(t: Tx, storyId: string | undefined, people: string[], preferNew = false): Promise<GameStory> {
+  // the story for the next game: asked for, else (a pair) another one `chooser`
+  // has not finished, else the same one, else any of the same variety and length
+  private async nextStory(t: Tx, storyId: string | undefined, chooser: string, preferNew = false): Promise<GameStory> {
     const count = t.game.question_count;
+    // the bank is checked against the count here, whatever the pick promises
     const usable = (s: GameStory | null): s is GameStory =>
       !!s && s.questions.length >= count && isAllowedQuestionCount(s.length, count);
     if (storyId) {
@@ -1196,13 +1198,11 @@ export class StoryGamesService {
       if (!usable(asked)) throw new AppError('NO_STORY', 404, 'no such story');
       return asked;
     }
-    const pick = async () => {
-      const id = await this.stories.pickRandomPublished(
-        { dialect: t.game.dialect, length: t.game.length, minQuestions: count, preferUnseenBy: people },
+    const pick = () =>
+      this.stories.pickRandomPublished(
+        { dialect: t.game.dialect, length: t.game.length, preferNotCompletedBy: chooser },
         t.client,
       );
-      return id ? this.stories.getPublishedForGame(id, t.client) : null;
-    };
     const candidates = preferNew
       ? [pick, () => this.stories.getPublishedForGame(t.game.story_id, t.client)]
       : [() => this.stories.getPublishedForGame(t.game.story_id, t.client), pick];
@@ -1689,7 +1689,7 @@ export class StoryGamesService {
     const snapshot: StorySnapshot = {
       slug: story.slug,
       title: story.title,
-      summary: story.summary,
+      summary: story.summary ?? null,
       wordCount: story.wordCount,
       paragraphs: storyParagraphs(story.body),
       glossary: story.glossary,

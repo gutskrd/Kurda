@@ -590,7 +590,7 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       expect((await svc.join(g.others[0]!, { id: next })).players).toHaveLength(2);
     });
 
-    it('a pair rematch starts at once with both players, on a story neither has finished', async () => {
+    it('a pair rematch starts at once with both players, on a story the host has not finished', async () => {
       const { svc } = instance();
       const g = await groupLobby(svc, 2, { timerSeconds: 0 });
       const other = await story();
@@ -608,7 +608,7 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       expect(v.status).toBe('reading');
       expect(v.players.map((p) => p.seat)).toEqual([1, 2]);
       expect(v.players.find((p) => p.seat === 1)!.isMe).toBe(false);
-      // they both just finished the first story, so the next one is another
+      // the host just finished the first story, so the next one is another
       expect(v.settings.storyId).not.toBe(g.storyId);
     });
 
