@@ -35,7 +35,7 @@ import { lobbyRoute } from './routes';
 export function InviteBanner(): React.JSX.Element | null {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
@@ -117,54 +117,57 @@ export function InviteBanner(): React.JSX.Element | null {
         style={[styles.banner, { backgroundColor: colors.background, shadowColor: colors.softShadow }]}
         accessibilityLiveRegion="polite"
       >
-        <View style={styles.head}>
-          <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
-          <View style={styles.text}>
-            <Text style={[styles.headline, { color: colors.textPrimary }]}>{headline}</Text>
-            {details ? (
-              <Text style={[styles.details, { color: colors.textSecondary }]} numberOfLines={2}>
-                {details}
-              </Text>
-            ) : null}
+        {/* a shadow does not show on a near-black screen: there the banner is lifted by a lighter fill */}
+        <View style={[styles.inner, scheme === 'dark' ? { backgroundColor: colors.controlTrack } : null]}>
+          <View style={styles.head}>
+            <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
+            <View style={styles.text}>
+              <Text style={[styles.headline, { color: colors.textPrimary }]}>{headline}</Text>
+              {details ? (
+                <Text style={[styles.details, { color: colors.textSecondary }]} numberOfLines={2}>
+                  {details}
+                </Text>
+              ) : null}
+            </View>
           </View>
+          {failed ? (
+            <Text style={[styles.details, { color: colors.danger }]}>{t('play.banner.failed')}</Text>
+          ) : reasons ? (
+            <View style={styles.actions}>
+              <Pressable onPress={() => decline('later')} accessibilityRole="button" style={[styles.button, { backgroundColor: colors.controlTrack }]}>
+                <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.later')}</Text>
+              </Pressable>
+              <Pressable onPress={() => decline('not_this_game')} accessibilityRole="button" style={[styles.button, { backgroundColor: colors.controlTrack }]}>
+                <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notThisGame')}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.actions}>
+              <Pressable
+                onPress={() => void join()}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name })}
+                accessibilityState={{ busy }}
+                style={[styles.button, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
+              >
+                <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setReasons(true)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: false }}
+                style={[styles.button, { backgroundColor: colors.controlTrack }]}
+              >
+                <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notNow')}</Text>
+                <Icon name="chevron-down" size={14} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+          )}
+          {shown.length > 1 ? (
+            <Text style={[styles.more, { color: colors.textSecondary }]}>{t('play.banner.more', { count: shown.length - 1 })}</Text>
+          ) : null}
         </View>
-        {failed ? (
-          <Text style={[styles.details, { color: colors.danger }]}>{t('play.banner.failed')}</Text>
-        ) : reasons ? (
-          <View style={styles.actions}>
-            <Pressable onPress={() => decline('later')} accessibilityRole="button" style={[styles.button, { backgroundColor: colors.controlTrack }]}>
-              <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.later')}</Text>
-            </Pressable>
-            <Pressable onPress={() => decline('not_this_game')} accessibilityRole="button" style={[styles.button, { backgroundColor: colors.controlTrack }]}>
-              <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notThisGame')}</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.actions}>
-            <Pressable
-              onPress={() => void join()}
-              disabled={busy}
-              accessibilityRole="button"
-              accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name })}
-              accessibilityState={{ busy }}
-              style={[styles.button, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
-            >
-              <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setReasons(true)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: false }}
-              style={[styles.button, { backgroundColor: colors.controlTrack }]}
-            >
-              <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notNow')}</Text>
-              <Icon name="chevron-down" size={14} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-        )}
-        {shown.length > 1 ? (
-          <Text style={[styles.more, { color: colors.textSecondary }]}>{t('play.banner.more', { count: shown.length - 1 })}</Text>
-        ) : null}
       </View>
     </View>
   );
@@ -174,13 +177,12 @@ const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: spacing.md, right: spacing.md, zIndex: 50 },
   banner: {
     borderRadius: radii.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.22,
     shadowRadius: 18,
     elevation: 8,
   },
+  inner: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   text: { flex: 1, gap: 2 },
   headline: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

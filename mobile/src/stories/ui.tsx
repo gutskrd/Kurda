@@ -29,6 +29,14 @@ import { GlassCard } from '../theme/glass';
  */
 
 /**
+ * How wide a story screen's content may grow. On a phone that is the screen;
+ * on a tablet held sideways, or the app in a browser, a story set across the
+ * whole width runs to lines of 150 letters, which nobody reads comfortably —
+ * so the column stops at about 65 of them and sits in the middle.
+ */
+export const COLUMN: ViewStyle = { width: '100%', maxWidth: 680, alignSelf: 'center' };
+
+/**
  * A sheet over the screen, from the bottom.
  *
  * A Modal, not a positioned View: anything else inside the navigator renders
@@ -267,6 +275,7 @@ const styles = StyleSheet.create({
   backdropWrap: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
+    ...COLUMN,
     maxHeight: '90%',
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,

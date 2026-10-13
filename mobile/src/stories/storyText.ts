@@ -1,4 +1,4 @@
-import type { TextStyle } from 'react-native';
+import type { TextStyle, ViewStyle } from 'react-native';
 import { storyTextDirection, type StoryDialect } from '@kurda/shared';
 
 /**
@@ -23,6 +23,15 @@ export interface StoryTextProps {
 export function storyTextStyle(dialect: StoryDialect): TextStyle {
   const { dir } = storyTextDirection(dialect);
   return dir === 'rtl' ? { writingDirection: 'rtl', textAlign: 'right' } : { writingDirection: 'ltr', textAlign: 'left' };
+}
+
+/**
+ * A row of small facts under a story's title (its level, length, minutes),
+ * kept in the interface's own order but on the side the story's text starts
+ * from, so a Soranî title and its facts line up on the right.
+ */
+export function storyRowStyle(dialect: StoryDialect): ViewStyle {
+  return { justifyContent: storyTextDirection(dialect).dir === 'rtl' ? 'flex-end' : 'flex-start' };
 }
 
 export function storyTextProps(dialect: StoryDialect): StoryTextProps {

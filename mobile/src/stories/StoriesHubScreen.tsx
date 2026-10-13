@@ -30,8 +30,8 @@ import { activeGames, joinGame, listStories, storyHistory } from './api';
 import { DIALECT_NAME, LENGTH_KEY, MODE_KEY, lengthWithMinutes } from './labels';
 import { useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
-import { storyTextProps, storyTextStyle } from './storyText';
-import { ChoiceChips, Note, Pill, SectionLabel, Sheet } from './ui';
+import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
+import { COLUMN, ChoiceChips, Note, Pill, SectionLabel, Sheet } from './ui';
 
 /** The level filter appears only once a variety has this many stories; before that it would filter almost nothing. */
 export const LEVEL_FILTER_FROM = 20;
@@ -367,7 +367,7 @@ function StoryRow({
           {story.summary}
         </Text>
       ) : null}
-      <View style={styles.pills}>
+      <View style={[styles.pills, storyRowStyle(story.dialect)]}>
         <Pill label={t('stories.level', { level: story.level })} />
         <Pill label={t(LENGTH_KEY[story.length])} />
         <Pill label={minutes} />
@@ -379,7 +379,7 @@ function StoryRow({
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
   section: { gap: spacing.sm },
   continue: {
     flexDirection: 'row',

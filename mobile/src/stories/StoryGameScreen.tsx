@@ -16,7 +16,7 @@ import { Reading } from './game/Reading';
 import { Results } from './game/Results';
 import { Reveal } from './game/Reveal';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyTextProps, storyTextStyle } from './storyText';
-import { Note, Sheet, useAnnouncer } from './ui';
+import { COLUMN, Note, Sheet, useAnnouncer } from './ui';
 import { useStoryGame } from './useStoryGame';
 
 /**
@@ -127,7 +127,7 @@ function GlossMeaning({ entry, dialect, onClose }: { entry: StoryGlossEntry; dia
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   loading: { marginTop: spacing.xxl },
   trouble: { fontSize: typography.sizes.sm, textAlign: 'center', paddingBottom: spacing.xs },
   gloss: { gap: spacing.sm },

@@ -22,9 +22,9 @@ import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
 import { createInput, initialSetup } from './setup';
 import { STORY_BODY_SIZE, StoryText } from './StoryText';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyTextProps, storyTextStyle } from './storyText';
+import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { useNarration } from './useNarration';
-import { Card, Note, Pill, SectionLabel, Sheet } from './ui';
+import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
 
 /**
@@ -192,7 +192,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           <Text {...props} style={[styles.title, { color: colors.textPrimary }, dir]} accessibilityRole="header">
             {story.title}
           </Text>
-          <View style={styles.pills}>
+          <View style={[styles.pills, storyRowStyle(story.dialect)]}>
             <Pill label={DIALECT_NAME[story.dialect]} tone="primary" />
             <Pill label={t('stories.level', { level: story.level })} />
             <Pill label={t(LENGTH_KEY[story.length])} />
@@ -243,7 +243,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                     onPress={() => setGloss(entry)}
                     accessibilityRole="button"
                     accessibilityLabel={`${entry.term}: ${meaning.text}`}
-                    style={styles.wordRow}
+                    // the meaning sits under its word, on the side the story is written from
+                    style={[styles.wordRow, { alignItems: dir.textAlign === 'right' ? 'flex-end' : 'flex-start' }]}
                   >
                     <Text {...props} style={[styles.wordTerm, { color: colors.textPrimary }, dir]}>
                       {entry.term}
@@ -356,7 +357,7 @@ function GlossSheet({ entry, dialect, onClose }: { entry: StoryGlossEntry; diale
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
   head: { gap: spacing.sm },
   title: { ...display(typography.sizes.xl) },
   summary: { fontSize: typography.sizes.md, lineHeight: 22 },
