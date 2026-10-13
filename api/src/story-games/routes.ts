@@ -159,9 +159,11 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
     { schema: { params: idParam }, config: perMinute(60), preHandler: requireAuth },
     async (req, reply) => {
       const { id } = req.params as z.infer<typeof idParam>;
-      const story = await games.story(id, req.user!.id);
-      // the game's own copy never changes; the browser may keep it for the game
-      reply.header('cache-control', 'private, max-age=3600');
+      const { story, frozen } = await games.story(id, req.user!.id);
+      // The game's own copy never changes: the browser may keep it for the
+      // game. Before there is one (the lobby) the host can still pick another
+      // story at this same address, so the live one is fetched afresh each time.
+      reply.header('cache-control', frozen ? 'private, max-age=3600' : 'private, no-cache');
       return story;
     },
   );

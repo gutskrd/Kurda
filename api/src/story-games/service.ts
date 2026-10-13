@@ -591,8 +591,12 @@ export class StoryGamesService {
    * happened to the story since (a reviewer unpublishing it to fix a typo must
    * not take the text away mid-game); before that, and after the copy is
    * cleared, the story as published. Recordings are looked up now.
+   *
+   * `frozen` says which it was: only the game's own copy stays the same at
+   * this address. In the lobby the host can still pick another story, and the
+   * address would not change with it.
    */
-  async story(gameId: string, userId: string): Promise<StoryDetail> {
+  async story(gameId: string, userId: string): Promise<{ story: StoryDetail; frozen: boolean }> {
     if (!UUID_RE.test(gameId)) throw notFound();
     const res = await this.pool.query<{
       story_id: string;
@@ -650,7 +654,10 @@ export class StoryGamesService {
       );
       for (const r of rec.rows) audio[r.key] = r.url;
     }
-    return { ...detail, audio, fullyNarrated: keys.length > 0 && keys.every((k) => audio[k] !== undefined) };
+    return {
+      story: { ...detail, audio, fullyNarrated: keys.length > 0 && keys.every((k) => audio[k] !== undefined) },
+      frozen: row.story_snapshot !== null,
+    };
   }
 
   /** `GET /story-games/active`: the caller's unfinished games, to go back to. */

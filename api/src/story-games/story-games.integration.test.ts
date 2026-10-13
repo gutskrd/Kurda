@@ -735,6 +735,28 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
       expect((await call(stranger, 'GET', `/story-games/${v.id}/story`)).statusCode).toBe(404);
     });
 
+    it('in the lobby serves the story as it is now, uncached; once started, the game’s copy, cached', async () => {
+      const host = await signUp('lch');
+      const mate = await signUp('lcm');
+      await befriend(host, mate);
+      const { view } = await lobby(host, [mate]);
+      const before = await call(mate, 'GET', `/story-games/${view.id}/story`);
+      expect(before.statusCode).toBe(200);
+      expect(before.headers['cache-control']).toBe('private, no-cache');
+      expect(before.json().id).toBe(view.settings.storyId);
+
+      // the host picks another story: the same address now serves that one
+      const other = await story('lc-other', { title: 'Bazar ya din' });
+      await call(host, 'PATCH', `/story-games/${view.id}/settings`, { storyId: other.id });
+      const changed = await call(mate, 'GET', `/story-games/${view.id}/story`);
+      expect(changed.json()).toMatchObject({ id: other.id, title: 'Bazar ya din' });
+
+      await call(host, 'POST', `/story-games/${view.id}/start`);
+      const frozen = await call(mate, 'GET', `/story-games/${view.id}/story`);
+      expect(frozen.headers['cache-control']).toBe('private, max-age=3600');
+      expect(frozen.json()).toMatchObject({ id: other.id, title: 'Bazar ya din', summary: 'Rojek li bazarê.' });
+    });
+
     it('lists the games to go back to', async () => {
       const me = await signUp('ac');
       const s = await story('ac1');
