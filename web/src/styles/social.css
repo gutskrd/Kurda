@@ -229,6 +229,11 @@
   font-size: 0.88rem;
   font-weight: 600;
 }
+/* the chip is a pill, but the label below it starts its own line */
+.report-chosen + .field-label {
+  display: block;
+  margin-bottom: 7px;
+}
 .report-note {
   min-height: 110px;
   resize: vertical;
