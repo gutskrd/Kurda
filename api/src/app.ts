@@ -26,15 +26,6 @@ import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js'
 import { registerAchievementRoutes } from './achievements/routes.js';
 import { AchievementsService } from './achievements/service.js';
 import fastifyWebsocket from '@fastify/websocket';
-import { GameEngine, type EngineOptions } from './game/engine.js';
-import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
-import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.js';
-import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoutes } from './game/routes.js';
-import { PrivateRoomService } from './game/private-room-service.js';
-import { AntiCheatService } from './game/anti-cheat-service.js';
-import { RematchService } from './game/rematch-service.js';
-import { ChallengeService } from './game/challenge-service.js';
-import { registerChallengeRoutes } from './game/challenge-routes.js';
 import { RatingService } from './ranking/rating-service.js';
 import { registerRatingRoutes } from './ranking/routes.js';
 import { TournamentService } from './tournament/service.js';
@@ -94,6 +85,7 @@ import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
 import { registerRaceRoutes } from './game/race-routes.js';
 import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
+import { registerStoryGameRoutes } from './story-games/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -181,10 +173,6 @@ const pkg = JSON.parse(
 export interface BuildAppOptions {
   /** Test seam: shrink heartbeat windows etc. */
   gateway?: GatewayOptions;
-  /** Test seam: shrink bands/timeouts. */
-  matchmaking?: MatchmakingOptions;
-  /** Test seam: shrink phase timers. */
-  engine?: EngineOptions;
   /**
    * Test seam: where a dictionary import reads its words from.
    *
@@ -499,8 +487,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
     registerLeaderboardRoutes(app, leaderboards);
+    // only the weekly board: the rating board was fed by the ranked quiz, which
+    // is gone, so rebuilding it every five minutes would redo the same sort forever
     const boardRebuild = setInterval(() => {
-      void leaderboards.rebuild('rating').catch((err) => app.log.warn({ err }, 'rating board rebuild failed'));
       void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
     }, 5 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(boardRebuild));
@@ -652,75 +641,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     registerGroupChatRoutes(app, groupChat);
 
-    // matchmaking (KUR-050): atomic queue + widening sweeper
-    const matchQueue = app.redis
-      ? new RedisMatchQueue(app.redis, options.matchmaking?.queueKeyPrefix)
-      : new MemoryMatchQueue();
-    const matchmaking = new MatchmakingService(app.db, matchQueue, kv, realtime, options.matchmaking);
-    app.decorate('matchmaking', matchmaking);
-    registerMatchmakingRoutes(app, matchmaking);
-
-    // challenge a friend (KUR-088): direct unranked 1v1 invites over the KV + gateway
-    const challenges = new ChallengeService(
-      kv,
-      matchmaking,
-      { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
-      friends,
-    );
-    registerChallengeRoutes(app, challenges);
-
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, challenges });
-    const sweeper = setInterval(
-      () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
-      matchmaking.sweepIntervalMs,
-    );
-    app.addHook('onClose', async () => clearInterval(sweeper));
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
 
-    // anti-cheat pipeline (KUR-058): accumulate + flag server-measured behaviour
-    const antiCheat = new AntiCheatService(app.db);
-    const gameXpService = xpService; // shared: game XP also joins the weekly league
-    // skill rating (KUR-061): applied atomically on ranked game finish
-    const ratingService = new RatingService(app.db);
+    // story games (Stories, which replaced the ranked quiz): Postgres is the
+    // game; long-polls are woken across instances over the room bus
+    registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
 
-    // game sessions (KUR-051): the match-making node owns the session
-    const engine = new GameEngine(realtime, bus, {
-      // per-game RTT metrics for tuning + anomaly flags (KUR-057/058)
-      onGameMetrics: (m) => app.log.info({ event: 'game_rtt', ...m }, 'game rtt metrics'),
-      onGameEnd: (evidence) => {
-        for (const player of evidence.players) {
-          void antiCheat.recordGame(evidence.roomId, player).then((verdict) => {
-            if (verdict.shadow) app.log.warn({ event: 'cheat_shadow_flag', roomId: evidence.roomId, userId: player.userId, flags: verdict.flags }, 'shadow-flagged for review');
-          }).catch((err) => app.log.warn({ err }, 'anti-cheat record failed'));
-        }
-      },
-      // post-game XP, idempotent per (game, player) (KUR-059)
-      onReward: (roomId, rewards) => {
-        for (const r of rewards) {
-          void gameXpService
-            .award({ userId: r.userId, source: 'game', amount: r.xp, refId: `${roomId}:${r.userId}` })
-            .catch((err) => app.log.warn({ err }, 'game xp award failed'));
-        }
-      },
-      // ranked ELO applied atomically before results publish (KUR-061)
-      onRating: (input) => ratingService.apply(input),
-      ...options.engine,
-    });
-    app.decorate('gameEngine', engine);
-    matchmaking.onMatch((record) => engine.startSession(record));
-
-    // rematch coordination (KUR-059): same roster, new room on unanimous accept
-    const rematch = new RematchService(kv, matchmaking);
-    registerGameRoutes(app, engine, rematch);
-    app.addHook('onClose', async () => engine.stopAll());
-
-    // private host-controlled rooms (KUR-056)
-    const privateRooms = new PrivateRoomService(kv, app.db, matchmaking);
-    registerPrivateRoomRoutes(app, privateRooms);
-
-    // skill-rating reads (KUR-061)
-    registerRatingRoutes(app, ratingService);
+    // skill-rating reads (KUR-061). Nothing writes a rating since the ranked
+    // quiz went (Stories replaced it), but the ratings people earned stay
+    // readable on /me/rating.
+    registerRatingRoutes(app, new RatingService(app.db));
 
     // tournaments (KUR-060): admin brackets + no-show forfeits
     const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
@@ -760,10 +692,6 @@ declare module 'fastify' {
     storage?: MediaStorage;
     /** Present when DATABASE_URL is configured. */
     realtime: RealtimeGateway;
-    /** Present when DATABASE_URL is configured. */
-    matchmaking: MatchmakingService;
-    /** Present when DATABASE_URL is configured. */
-    gameEngine: GameEngine;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */

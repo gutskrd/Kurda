@@ -357,7 +357,14 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
-  const gdpr = new GdprService(app.db, { storage: app.storage, jobs: app.jobs, log: app.log });
+  const gdpr = new GdprService(app.db, {
+    storage: app.storage,
+    jobs: app.jobs,
+    log: app.log,
+    // the story games' own service, read when called (registered after these
+    // routes): leaving through it wakes the other players' polls at once
+    storyGames: { leaveAll: (userId) => app.storyGames.leaveAll(userId) },
+  });
   // read when it is called: the realtime gateway is set up after these routes
   const birthMonths = new BirthMonthService(app.db, gdpr, {
     revoke: (room, userId) => app.realtime.revoke(room, userId),

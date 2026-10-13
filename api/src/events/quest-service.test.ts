@@ -14,7 +14,7 @@ function event(over: Partial<EventDef> = {}): EventDef {
     theme: 'newroz',
     quests: [
       { id: 'xp', type: 'earn_xp', count: 300, reward: { gems: 30 } },
-      { id: 'wins', type: 'win_games', count: 3, reward: { gems: 40, zer: 100 } },
+      { id: 'wins', type: 'story_quizzes', count: 3, reward: { gems: 40, zer: 100 } },
     ],
     rewards: {},
     enabled: true,
@@ -27,7 +27,7 @@ const lookup = (e: EventDef | null): EventLookup => ({ byKey: async () => e });
 function fakeMetrics(over: Partial<Record<keyof QuestMetrics, number>> = {}): QuestMetrics {
   return {
     earnedXp: async () => over.earnedXp ?? 0,
-    gamesWon: async () => over.gamesWon ?? 0,
+    storyQuizzes: async () => over.storyQuizzes ?? 0,
     lessonsCompleted: async () => over.lessonsCompleted ?? 0,
   };
 }
@@ -65,7 +65,7 @@ describe('QuestService.progress', () => {
 
   it('reports capped progress, completion, and claimability', async () => {
     const { pool } = fakePool();
-    const svc = new QuestService(pool, lookup(event()), {} as never, fakeMetrics({ earnedXp: 300, gamesWon: 1 }), now);
+    const svc = new QuestService(pool, lookup(event()), {} as never, fakeMetrics({ earnedXp: 300, storyQuizzes: 1 }), now);
     const view = (await svc.progress('u1', 'newroz-2026'))!;
     expect(view.quests.find((q) => q.id === 'xp')).toMatchObject({ current: 300, complete: true, claimable: true, claimed: false });
     expect(view.quests.find((q) => q.id === 'wins')).toMatchObject({ current: 1, complete: false, claimable: false });
@@ -85,7 +85,7 @@ describe('QuestService.claim', () => {
   it('pays Zêr + Gems once and is idempotent on re-claim', async () => {
     const { pool } = fakePool();
     const creditWithin = vi.fn(async () => ({ balance: 0, duplicate: false }));
-    const svc = new QuestService(pool, lookup(event()), { creditWithin } as never, fakeMetrics({ gamesWon: 3 }), now);
+    const svc = new QuestService(pool, lookup(event()), { creditWithin } as never, fakeMetrics({ storyQuizzes: 3 }), now);
 
     const first = await svc.claim('u1', 'newroz-2026', 'wins');
     expect(first).toEqual({ ok: true, claimed: true, reward: { gems: 40, zer: 100 } });
@@ -98,7 +98,7 @@ describe('QuestService.claim', () => {
 
   it('refuses an incomplete quest and an unknown quest', async () => {
     const { pool } = fakePool();
-    const svc = new QuestService(pool, lookup(event()), { creditWithin: vi.fn() } as never, fakeMetrics({ gamesWon: 1 }), now);
+    const svc = new QuestService(pool, lookup(event()), { creditWithin: vi.fn() } as never, fakeMetrics({ storyQuizzes: 1 }), now);
     expect(await svc.claim('u1', 'newroz-2026', 'wins')).toEqual({ ok: false, code: 'NOT_COMPLETE' });
     expect(await svc.claim('u1', 'newroz-2026', 'ghost')).toEqual({ ok: false, code: 'NO_QUEST' });
   });
@@ -106,7 +106,7 @@ describe('QuestService.claim', () => {
   it('refuses after the 72h grace window closes', async () => {
     const { pool } = fakePool();
     const late = () => new Date('2026-03-28T00:00:00.000Z'); // > endsAt + 72h
-    const svc = new QuestService(pool, lookup(event()), { creditWithin: vi.fn() } as never, fakeMetrics({ gamesWon: 5 }), late);
+    const svc = new QuestService(pool, lookup(event()), { creditWithin: vi.fn() } as never, fakeMetrics({ storyQuizzes: 5 }), late);
     expect(await svc.claim('u1', 'newroz-2026', 'wins')).toEqual({ ok: false, code: 'GRACE_EXPIRED' });
   });
 });

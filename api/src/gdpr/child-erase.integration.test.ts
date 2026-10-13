@@ -5,12 +5,12 @@
  * The client tells a child "your account has been closed and your personal
  * details removed", so this seeds an account with the things a child could
  * have put in it — a photo, a post with a voice recording and a picture, a
- * voice comment on somebody else's post, messages, a group, friends, a phone,
- * analytics and consent — closes it the way the one-time birth month question
+ * voice comment on somebody else's post, messages, a group, friends, story
+ * games, a phone, analytics and consent — closes it the way the one-time birth month question
  * does, and checks that each of them is gone, while other people's posts,
  * replies and groups stay whole and files somebody else uses stay stored.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
@@ -20,6 +20,7 @@ import { bornYearsAgo } from '../test/age.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { MediaStorage } from '../media/storage.js';
 import { GdprService } from './service.js';
+import { deleteStories, insertStory } from '../test/story-fixtures.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -38,6 +39,7 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
   const closed: string[] = [];
   const evidence: string[] = [];
   const files: string[] = [];
+  const storyIds: string[] = [];
 
   const signUp = async (tag: string): Promise<Account> => {
     const res = await app.inject({
@@ -196,8 +198,51 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       [`ev-${tag}-${suffix}`, child.id],
     );
 
+    // story games: one the child finished alone, a lobby the child hosts with
+    // the friend in it, and the friend's running game the child is playing in
+    const story = await insertStory(pool, { slug: `ce-${tag}-${suffix}` });
+    storyIds.push(story.id);
+    const game = async (mode: string, host: string, status: string) =>
+      (
+        await pool.query<{ id: string }>(
+          `INSERT INTO story_games (mode, host_id, story_id, dialect, level, length, question_count, timer_seconds, status,
+                                    finished_at)
+           VALUES ($1, $2, $3, 'kurmanci', 1, 'short', 3, 0, $4, CASE WHEN $4 = 'finished' THEN now() END) RETURNING id`,
+          [mode, host, story.id, status],
+        )
+      ).rows[0]!.id;
+    const seat = (gameId: string, userId: string, n: number) =>
+      pool.query(`INSERT INTO story_game_players (game_id, user_id, seat, last_seen_at) VALUES ($1, $2, $3, now())`, [
+        gameId,
+        userId,
+        n,
+      ]);
+    const soloGame = await game('solo', child.id, 'finished');
+    await seat(soloGame, child.id, 1);
+    await pool.query(
+      `INSERT INTO story_game_answers (game_id, user_id, question_index, choice, correct, elapsed_ms) VALUES ($1, $2, 0, 1, true, 900)`,
+      [soloGame, child.id],
+    );
+    const childLobby = await game('group', child.id, 'lobby');
+    await seat(childLobby, child.id, 1);
+    await seat(childLobby, friend.id, 2);
+    const friendsGame = await game('group', friend.id, 'reading');
+    await seat(friendsGame, friend.id, 1);
+    await seat(friendsGame, child.id, 2);
+
     await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [child.id]);
-    return { child, friend, keys, post, picture, evidencePost, theirs, childComment, group };
+    return {
+      child,
+      friend,
+      keys,
+      post,
+      picture,
+      evidencePost,
+      theirs,
+      childComment,
+      group,
+      games: { soloGame, childLobby, friendsGame },
+    };
   };
 
   const count = async (sql: string, params: unknown[]) => (await pool.query(sql, params)).rowCount;
@@ -209,6 +254,7 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
   });
 
   afterAll(async () => {
+    await deleteStories(pool, storyIds);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -230,6 +276,9 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
 
   it('an answer under 13 removes what the child wrote, recorded and uploaded', async () => {
     const s = await seedChild('route');
+    // the child leaves its games through the API's own story games, which wake
+    // the other players' waiting polls (a separate service would not)
+    const leaveAll = vi.spyOn(app.storyGames, 'leaveAll');
     const res = await app.inject({
       method: 'POST',
       url: '/me/birth-date',
@@ -239,6 +288,8 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     });
     expect(res.statusCode).toBe(403);
     expect(res.json().details).toEqual({ accountClosed: true });
+    expect(leaveAll).toHaveBeenCalledWith(s.child.id);
+    leaveAll.mockRestore();
 
     const id = [s.child.id];
     // the account itself: no name, address, photo, country, birth or consent
@@ -283,6 +334,21 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       expect(await count(`SELECT 1 FROM ${table} WHERE user_id = $1`, id), table).toBe(0);
     }
     expect(await count(`SELECT 1 FROM friendships WHERE user_lo = $1 OR user_hi = $1`, id)).toBe(0);
+
+    // their story games: answers and seats gone, their name off the games they
+    // hosted; the lobby they hosted closed (through the leave path, first), and
+    // the friend's game carries on without them
+    expect(await count(`SELECT 1 FROM story_game_answers WHERE user_id = $1`, id)).toBe(0);
+    expect(await count(`SELECT 1 FROM story_game_players WHERE user_id = $1`, id)).toBe(0);
+    expect(await count(`SELECT 1 FROM story_games WHERE host_id = $1`, id)).toBe(0);
+    const lobby = (await pool.query(`SELECT status, host_id FROM story_games WHERE id = $1`, [s.games.childLobby])).rows[0];
+    expect(lobby).toEqual({ status: 'cancelled', host_id: null });
+    const running = await pool.query(
+      `SELECT g.status, array_agg(p.user_id) AS players FROM story_games g JOIN story_game_players p ON p.game_id = g.id
+        WHERE g.id = $1 GROUP BY g.status`,
+      [s.games.friendsGame],
+    );
+    expect(running.rows[0]).toEqual({ status: 'reading', players: [s.friend.id] });
 
     // with no storage configured here, their files wait for the orphan sweep:
     // unconfirmed and already old enough for it

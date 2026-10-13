@@ -14,7 +14,7 @@ import {
 /** Where quest progress is measured from — the existing ledgers, windowed. */
 export interface QuestMetrics {
   earnedXp(userId: string, fromIso: string, toIso: string): Promise<number>;
-  gamesWon(userId: string, fromIso: string, toIso: string): Promise<number>;
+  storyQuizzes(userId: string, fromIso: string, toIso: string): Promise<number>;
   lessonsCompleted(userId: string, fromIso: string, toIso: string): Promise<number>;
 }
 
@@ -57,11 +57,13 @@ export class DbQuestMetrics implements QuestMetrics {
     return Number(res.rows[0]?.sum ?? 0);
   }
 
-  async gamesWon(userId: string, fromIso: string, toIso: string): Promise<number> {
-    // a ranked-game win is a rating_history row at rank 1 (KUR-061)
+  async storyQuizzes(userId: string, fromIso: string, toIso: string): Promise<number> {
+    // story games finished in the window that counted as learning for this
+    // player — the same test that paid them XP, so a quiz left half-answered
+    // does not count here either
     const res = await this.pool.query<{ count: string }>(
-      `SELECT COUNT(*)::int AS count FROM rating_history
-       WHERE user_id = $1 AND rank = 1 AND created_at >= $2 AND created_at < $3`,
+      `SELECT COUNT(*)::int AS count FROM story_game_players p JOIN story_games g ON g.id = p.game_id
+       WHERE p.user_id = $1 AND p.learning_counted AND g.finished_at >= $2 AND g.finished_at < $3`,
       [userId, fromIso, toIso],
     );
     return Number(res.rows[0]?.count ?? 0);
@@ -98,8 +100,8 @@ export class QuestService {
     switch (type) {
       case 'earn_xp':
         return this.metrics.earnedXp(userId, from, to);
-      case 'win_games':
-        return this.metrics.gamesWon(userId, from, to);
+      case 'story_quizzes':
+        return this.metrics.storyQuizzes(userId, from, to);
       case 'complete_lessons':
         return this.metrics.lessonsCompleted(userId, from, to);
     }

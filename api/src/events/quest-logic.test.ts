@@ -26,14 +26,19 @@ describe('parseQuest', () => {
     const quests = parseQuests([
       { id: 'a', type: 'earn_xp', count: 100, reward: {} },
       { id: 'skip', type: 'mystery', count: 1 },
-      { id: 'b', type: 'win_games', count: 3, reward: { zer: 50 } },
+      { id: 'b', type: 'story_quizzes', count: 3, reward: { zer: 50 } },
     ]);
     expect(quests.map((q) => q.id)).toEqual(['a', 'b']);
+  });
+
+  // ranked-quiz wins went with the quiz: such a quest could never be completed
+  it('no longer reads a quest of ranked-quiz wins', () => {
+    expect(parseQuest({ id: 'w', type: 'win_games', count: 3, reward: { gems: 40 } })).toBeNull();
   });
 });
 
 describe('evaluateQuest', () => {
-  const def: QuestDef = { id: 'g', type: 'win_games', count: 3, reward: { gems: 40 } };
+  const def: QuestDef = { id: 'g', type: 'story_quizzes', count: 3, reward: { gems: 40 } };
 
   it('caps current at the target and flags completion', () => {
     expect(evaluateQuest(def, 1)).toMatchObject({ current: 1, target: 3, complete: false });

@@ -6,8 +6,15 @@
  * point earned in the final second still counts.
  */
 
-export type QuestType = 'earn_xp' | 'win_games' | 'complete_lessons';
-export const QUEST_TYPES: readonly QuestType[] = ['earn_xp', 'win_games', 'complete_lessons'];
+/**
+ * `story_quizzes` (story games that counted as learning) replaced `win_games`,
+ * which counted ranked-quiz wins: the quiz is gone and nothing records a win
+ * any more, so such a quest could never be completed. Migration
+ * 1751000151000 rewrote the stored ones; a `win_games` entry anywhere else is
+ * not a quest type any more and is left out, rather than shown unwinnable.
+ */
+export type QuestType = 'earn_xp' | 'story_quizzes' | 'complete_lessons';
+export const QUEST_TYPES: readonly QuestType[] = ['earn_xp', 'story_quizzes', 'complete_lessons'];
 
 /** Unclaimed rewards stay claimable this long after the event window ends. */
 export const QUEST_GRACE_HOURS = 72;
