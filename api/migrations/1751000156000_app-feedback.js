@@ -22,6 +22,13 @@
  * game. The two multiplayer player tables are keyed by game first, so nothing
  * could find one player's rows without reading all of them: each gets an index
  * on the player, which also serves the cascade when an account row is deleted.
+ *
+ * The play-invites migration (1751000149000, built alongside this one) adds
+ * the same two indexes under the same names, for "my games" and blocks.
+ * Whichever runs second finds them there (IF NOT EXISTS), and the down leaves
+ * them to that migration's own down, which drops them by name and would fail
+ * if they were already gone. On a database without it, rolling this back
+ * leaves two indexes that cost nothing and that running it again keeps.
  */
 
 const CATEGORIES = "'lessons','games','stories','bugs','too_hard','too_easy','other'";
@@ -70,13 +77,12 @@ export const up = (pgm) => {
     store_review_version: { type: 'text' },
   });
 
-  pgm.createIndex('wordle_battle_players', 'user_id');
-  pgm.createIndex('rhyme_match_players', 'user_id');
+  pgm.createIndex('wordle_battle_players', 'user_id', { ifNotExists: true });
+  pgm.createIndex('rhyme_match_players', 'user_id', { ifNotExists: true });
 };
 
 export const down = (pgm) => {
-  pgm.dropIndex('rhyme_match_players', 'user_id');
-  pgm.dropIndex('wordle_battle_players', 'user_id');
+  // the player indexes stay: see above
   pgm.dropColumns('users', [
     'app_feedback_prompted_at',
     'store_review_prompted_at',

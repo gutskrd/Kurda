@@ -406,6 +406,43 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(indexed.rows.map((r) => r.table).sort()).toEqual([...tables].sort());
     });
 
+    /*
+     * The play-invites migration (149, on its own branch) indexes the same two
+     * player tables by player under the same default names. Merged, it runs
+     * first, and 156 creating them again failed with 42P07 and stopped every
+     * migration after it; and 156's down dropping them made 149's down fail.
+     * This database already has them, as it will once 149 has run, so 156's
+     * own statements are run against it here — in a transaction rolled back.
+     */
+    it('indexes the player tables whether or not the play-invites migration did first (migration 156)', async () => {
+      const { MigrationBuilder } = await import('node-pg-migrate');
+      const file = '../../migrations/1751000156000_app-feedback.js';
+      const migration = (await import(file)) as Record<'up' | 'down', (pgm: InstanceType<typeof MigrationBuilder>) => void>;
+      const sqlOf = (step: 'up' | 'down'): string[] => {
+        const quiet = { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} };
+        const pgm = new MigrationBuilder({ query: pool.query.bind(pool), select: async () => [] }, undefined, false, quiet);
+        migration[step](pgm);
+        return pgm.getSqlSteps().filter((sql) => /\b(wordle_battle|rhyme_match)_players\b/.test(sql));
+      };
+
+      const up = sqlOf('up');
+      // the names 149's `pgm.createIndex(players, 'user_id')` gives them
+      expect(up).toEqual([
+        'CREATE INDEX IF NOT EXISTS "wordle_battle_players_user_id_index" ON "wordle_battle_players" ("user_id");',
+        'CREATE INDEX IF NOT EXISTS "rhyme_match_players_user_id_index" ON "rhyme_match_players" ("user_id");',
+      ]);
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const sql of up) await client.query(sql);
+      } finally {
+        await client.query('ROLLBACK');
+        client.release();
+      }
+      // and rolling 156 back leaves them for 149's down to drop
+      expect(sqlOf('down')).toEqual([]);
+    });
+
     it('counts days in the player’s own time zone', async () => {
       const user = await register('fgTz');
       // 23:30 and 00:30 UTC on consecutive days are one evening in Los Angeles
