@@ -232,7 +232,9 @@ export function normalizeTyping(
  * - `forgiving` (the default) — e counts for ê, i for î, u for û, c for ç, s
  *   for ş (and in Soranî ی for ێ, و for ۆ, ر for ڕ, ل for ڵ): the text is still
  *   shown with its accents, the letter still counts, and how many accents were
- *   left out is counted separately.
+ *   left out is counted separately. Only that way round: ê typed where the text
+ *   has e is a different letter, as in `strict` — what is forgiven is the key a
+ *   keyboard lacks, not an accent the text does not have.
  * - `hidden` — the text is shown without accents and compared without them.
  */
 export const ACCENT_MODES = ['strict', 'forgiving', 'hidden'] as const;
@@ -370,8 +372,8 @@ export const TYPING_WINDOW = 64;
 
 // edit costs, in quarters, so a forgiven accent can sit between a match and a slip
 const EDIT = 4; // a character wrong, left out or added
-const ACCENT_EDIT = 3; // strict: ê typed as e — a slip, but the likeliest pairing
-const ACCENT_MATCH = 1; // forgiving or hidden: counted, a whisker behind exact
+const ACCENT_EDIT = 3; // e for ê (strict), or ê for e (but in hidden): a slip, the likeliest pairing
+const ACCENT_MATCH = 1; // an accent forgiven (forgiving, hidden): counted, a whisker behind exact
 const INF = 0x3fffffff;
 
 const OP_NONE = 0;
@@ -457,7 +459,8 @@ function ensureCapacity(a: Alignment, columns: number): void {
 function fillColumn(a: Alignment, j: number): void {
   const B = TYPING_WINDOW;
   const n = a.target.length;
-  const strict = a.mode === 'strict';
+  const forgiving = a.mode === 'forgiving';
+  const hidden = a.mode === 'hidden';
   const base = j * a.width;
   const prev = base - a.width; // column j - 1
   for (let k = 0; k < a.width; k++) {
@@ -491,13 +494,17 @@ function fillColumn(a: Alignment, j: number): void {
           bestMatches++;
           bestOp = OP_MATCH;
         } else if (a.targetFolds[i - 1] === a.typedFolds[j - 1]) {
-          if (strict) {
-            bestCost += ACCENT_EDIT;
-            bestOp = OP_SUB;
-          } else {
+          // the same letter but for its accent: `hidden` shows none, so either
+          // way round is that letter; `forgiving` forgives only the accent left
+          // out — the base letter typed (as the folded text has it) where the
+          // text has the accented one — never one added to a letter without
+          if (hidden || (forgiving && a.typedKeys[j - 1] === a.targetFolds[i - 1])) {
             bestCost += ACCENT_MATCH;
             bestMatches++;
             bestOp = OP_ACCENT;
+          } else {
+            bestCost += ACCENT_EDIT;
+            bestOp = OP_SUB;
           }
         } else {
           bestCost += EDIT;

@@ -276,6 +276,53 @@ describe('compareTyping', () => {
       expect(compareTyping(TEXT, TEXT, 'hidden', { final: true }).correct).toBe(26);
     });
 
+    /*
+     * Forgiving forgives the key a keyboard lacks — e typed for ê — and nothing
+     * else: an accent added where the text has none is a different letter. It
+     * used to be forgiven too, and counted as an accent missed on a letter that
+     * has no accent ("1 missed of 0").
+     */
+    it('forgiving does not forgive an accent added where the text has none', () => {
+      const r = compareTyping('Ez de herim.', 'Ez dê herim.', 'forgiving', { final: true });
+      expect(r.chars[4]).toBe('wrong');
+      expect(r).toMatchObject({ correct: 11, errors: 1, accentMisses: 0, accented: 0 });
+      // ş for s, and in Soranî ێ for ی, the same
+      expect(compareTyping('ser', 'şer', 'forgiving', { final: true }).chars[0]).toBe('wrong');
+      const sorani = compareTyping('بیر', 'بێر', 'forgiving', { dialect: 'sorani', final: true });
+      expect(sorani).toMatchObject({ correct: 2, errors: 1, accentMisses: 0, accented: 0 });
+      // hidden shows no accents, so an accent typed anyway is still the letter
+      expect(compareTyping('Ez de herim.', 'Ez dê herim.', 'hidden', { final: true }).errors).toBe(0);
+    });
+
+    it('never counts more accents missed than accented letters reached', () => {
+      // a seeded run of typings built from the text's own letters, accents
+      // added and dropped, letters skipped and doubled
+      const text = 'Ez ji welatê xwe hez dikim, şîr û çay.';
+      const swap: Record<string, string> = { e: 'ê', ê: 'e', i: 'î', î: 'i', u: 'û', û: 'u', s: 'ş', ş: 's', c: 'ç', ç: 'c' };
+      let seed = 7;
+      const random = (): number => {
+        seed = (seed * 1103515245 + 12345) % 2147483648;
+        return seed / 2147483648;
+      };
+      for (let run = 0; run < 300; run++) {
+        let typed = '';
+        for (const ch of text) {
+          const roll = random();
+          if (roll < 0.25 && swap[ch]) typed += swap[ch];
+          else if (roll < 0.3) continue;
+          else if (roll < 0.35) typed += ch + ch;
+          else typed += ch;
+        }
+        for (const mode of ACCENT_MODES) {
+          for (const final of [true, false]) {
+            const r = compareTyping(text, typed, mode, { final });
+            expect(r.accentMisses, `${mode} ${typed}`).toBeLessThanOrEqual(r.accented);
+            expect(r.correct + r.chars.filter((c) => c === 'wrong').length).toBeLessThanOrEqual(r.chars.length);
+          }
+        }
+      }
+    });
+
     it('forgiving and hidden never forgive a different letter', () => {
       for (const mode of ['forgiving', 'hidden'] as const) {
         const r = compareTyping(TEXT, 'ez ji welata xwe hez dikim', mode, { final: true });
