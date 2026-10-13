@@ -37,6 +37,11 @@ export type RootStackParamList = {
   Race: undefined;
   /** An id when an invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
+  /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
+  Stories: { id?: string } | undefined;
+  StoryReader: { slug: string };
+  /** A story game; opening one you are not in joins it when you may. */
+  StoryGame: { id: string };
   Memes: undefined;
   MemeDetail: { postId: string };
   PostPicture: undefined;

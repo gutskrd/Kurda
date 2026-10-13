@@ -1,10 +1,11 @@
+import { useCallback, useState } from 'react';
 import { Pressable } from 'react-native';
 import { LargeTitle } from '../navigation/LargeTitle';
 import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { SocialSlideButton, useOpenSlide } from '../social/SocialSlide';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -14,13 +15,16 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
+import { useAuth } from '../auth/AuthContext';
+import { listStories } from '../stories/api';
 
 /**
  * The middle of the bar: everything you open in order to do something.
  *
- * Six games — a 1v1 quiz that queues for an opponent, Wordle alone and
- * against somebody, rhyming alone and against somebody, and a typing race —
- * and, above them, the two screens that are not games.
+ * Six games — Stories (read a short story, then answer questions about it,
+ * alone or with friends), Wordle alone and against somebody, rhyming alone
+ * and against somebody, and a typing race — and, above them, the two screens
+ * that are not games. Stories took the ranked quiz's place at the top.
  *
  * Learn and Dictionary are rows rather than cards. They are ways through to
  * somewhere else, and a row with an icon, a name and a chevron is what the
@@ -35,6 +39,25 @@ export function PlayScreen() {
   const openSlide = useOpenSlide();
   const topInset = useScreenTopInset();
   const tabBarInset = useTabBarInset();
+  const { client } = useAuth();
+  /**
+   * Whether any story is published yet. Until a native speaker has published
+   * one, the card says "Coming soon" and opens nothing — a hub with an empty
+   * list and a setup sheet with nothing to set up is a promise the screen
+   * cannot keep. Asked again on each visit; the list is cached on the server.
+   */
+  const [hasStories, setHasStories] = useState<boolean | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      void listStories(client).then((res) => {
+        if (live && res.ok) setHasStories(res.data.stories.length > 0);
+      });
+      return () => {
+        live = false;
+      };
+    }, [client]),
+  );
   return (
     <GradientBackground>
       <View style={{ paddingTop: topInset }}>
@@ -69,6 +92,17 @@ export function PlayScreen() {
             </Pressable>
           ))}
         </View>
+
+        <GlassCard style={styles.card}>
+          <Icon name="story" size={56} tone="primary" />
+          <Text style={[styles.title, { color: colors.primary }]}>{t('stories.title')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('stories.card.body')}</Text>
+          {hasStories === false ? (
+            <ClayButton label={t('stories.card.soon')} tone="primary" disabled onPress={() => undefined} style={styles.button} />
+          ) : (
+            <ClayButton label={t('stories.card.open')} tone="primary" onPress={() => navigation.navigate('Stories')} style={styles.button} />
+          )}
+        </GlassCard>
 
         <GlassCard style={styles.card}>
           <Icon name="grid" size={40} tone="primary" />

@@ -1,0 +1,413 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  STORY_DIALECTS,
+  STORY_LENGTHS,
+  normalizeJoinCode,
+  parseInvite,
+  type StoryDialect,
+  type StoryGameSummary,
+  type StoryLength,
+  type StoryListItem,
+  type StoryProgress,
+} from '@kurda/shared';
+import { useAuth } from '../auth/AuthContext';
+import { describeError, type Translate } from '../api/errors';
+import type { ApiError } from '../api/types';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import type { RootNavigation } from '../navigation/rootStack';
+import { ScreenHeader } from '../navigation/ScreenHeader';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { Icon } from '../theme/Icon';
+import { SkeletonList } from '../theme/Skeleton';
+import { useTheme } from '../theme/ThemeProvider';
+import { display } from '../theme/fonts';
+import { radii, spacing, typography } from '../theme/tokens';
+import { useI18n } from '../i18n/I18nContext';
+import { lobbyRoute } from '../play/routes';
+import { activeGames, joinGame, listStories, storyHistory } from './api';
+import { DIALECT_NAME, LENGTH_KEY, MODE_KEY, lengthWithMinutes } from './labels';
+import { useStoryPrefs } from './prefs';
+import { SetupSheet } from './SetupSheet';
+import { storyTextProps, storyTextStyle } from './storyText';
+import { ChoiceChips, Note, Pill, SectionLabel } from './ui';
+
+/** The level filter appears only once a variety has this many stories; before that it would filter almost nothing. */
+export const LEVEL_FILTER_FROM = 20;
+
+type LengthFilter = 'all' | StoryLength;
+type LevelFilter = 'all' | '1' | '2' | '3';
+
+/**
+ * Which variety the hub opens on (contract §A1): Soranî when the interface is
+ * Soranî, else the one chosen last time on this phone, else Kurmancî. (The
+ * contract puts the learner's course first; the phone has no notion of a
+ * current course — every course is listed side by side — so that step is
+ * skipped here.)
+ */
+export function defaultDialect(locale: string, remembered: StoryDialect | null): StoryDialect {
+  if (locale === 'ckb') return 'sorani';
+  return remembered ?? 'kurmanci';
+}
+
+/** What a refusal to join by code means. */
+export function joinErrorMessage(error: ApiError, t: Translate): string {
+  switch (error.code) {
+    case 'GAME_NOT_FOUND':
+      return t('stories.join.notFound');
+    case 'GAME_STARTED':
+      return t('stories.join.started');
+    case 'GAME_FULL':
+      return t('stories.join.full');
+    default:
+      return describeError(error, t);
+  }
+}
+
+/**
+ * Stories (contract §A1 "Hub"): games to go back to on top, then the stories
+ * of one variety to read, filtered by length (and by level once there are
+ * enough), and the two ways into a game with other people — set one up, or
+ * join one with a code or a link a friend sent.
+ *
+ * `id` arrives when an invite link (`/app/games/stories?id=…`) opened the app:
+ * the hub hands straight over to that game, which joins it if it may.
+ */
+export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
+  const { client } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const { prefs, ready, update } = useStoryPrefs();
+
+  const [stories, setStories] = useState<StoryListItem[] | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  const [active, setActive] = useState<StoryGameSummary[]>([]);
+  const [progress, setProgress] = useState<Map<string, StoryProgress>>(new Map());
+  const [dialect, setDialect] = useState<StoryDialect | null>(null);
+  const [length, setLength] = useState<LengthFilter>('all');
+  const [level, setLevel] = useState<LevelFilter>('all');
+  const [code, setCode] = useState('');
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) navigation.replace('StoryGame', { id });
+  }, [id, navigation]);
+
+  // the variety and length remembered on this phone, once they are read
+  useEffect(() => {
+    if (!ready || dialect) return;
+    setDialect(defaultDialect(locale, prefs.dialect));
+    if (prefs.length) setLength(prefs.length);
+  }, [ready, dialect, locale, prefs.dialect, prefs.length]);
+
+  const load = useCallback(() => {
+    setError(null);
+    void listStories(client).then((res) => {
+      if (res.ok) setStories(res.data.stories);
+      else setError(res.error);
+    });
+    void activeGames(client).then((res) => {
+      if (res.ok) setActive(res.data.games);
+    });
+    void storyHistory(client).then((res) => {
+      if (res.ok) setProgress(new Map(res.data.progress.map((p) => [p.storyId, p])));
+    });
+  }, [client]);
+
+  // again on coming back, so a game just finished leaves "Continue" and shows its score
+  useFocusEffect(useCallback(() => load(), [load]));
+
+  const current = dialect ?? 'kurmanci';
+  const ofVariety = useMemo(() => (stories ?? []).filter((s) => s.dialect === current), [stories, current]);
+  const other: StoryDialect = current === 'kurmanci' ? 'sorani' : 'kurmanci';
+  const otherCount = (stories ?? []).filter((s) => s.dialect === other).length;
+  const showLevels = ofVariety.length >= LEVEL_FILTER_FROM;
+  const shown = ofVariety.filter(
+    (s) => (length === 'all' || s.length === length) && (!showLevels || level === 'all' || String(s.level) === level),
+  );
+
+  const pickDialect = (d: StoryDialect): void => {
+    setDialect(d);
+    update({ dialect: d });
+  };
+  const pickLength = (l: LengthFilter): void => {
+    setLength(l);
+    update({ length: l === 'all' ? null : l });
+  };
+
+  /** A pasted link first (any game's), then a code. */
+  const join = async (): Promise<void> => {
+    const typed = code.trim();
+    if (!typed || joining) return;
+    setJoinError(null);
+    const invite = parseInvite(typed);
+    if (invite) {
+      const route = lobbyRoute(invite.type, invite.id);
+      navigation.navigate(route.name, route.params as never);
+      return;
+    }
+    const normalized = normalizeJoinCode(typed);
+    if (!normalized) {
+      setJoinError(t('stories.join.badCode'));
+      return;
+    }
+    setJoining(true);
+    const res = await joinGame(client, { code: normalized }, prefs.extraTime);
+    setJoining(false);
+    if (!res.ok) {
+      setJoinError(joinErrorMessage(res.error, t));
+      return;
+    }
+    setCode('');
+    navigation.navigate('StoryGame', { id: res.data.id });
+  };
+
+  return (
+    <GradientBackground>
+      <ScreenHeader title={t('stories.title')} onBack={onExit} />
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {active.length > 0 ? (
+          <View style={styles.section}>
+            <SectionLabel>{t('stories.continue')}</SectionLabel>
+            {active.map((g) => (
+              <ContinueCard key={g.id} game={g} onOpen={() => navigation.navigate('StoryGame', { id: g.id })} />
+            ))}
+          </View>
+        ) : null}
+
+        <View style={styles.section}>
+          <SectionLabel>{t('stories.variety')}</SectionLabel>
+          <Segmented<StoryDialect>
+            groupLabel={t('stories.variety')}
+            options={STORY_DIALECTS}
+            value={current}
+            onChange={pickDialect}
+            labelOf={(d) => DIALECT_NAME[d]}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionLabel>{t('stories.setup.length')}</SectionLabel>
+          <ChoiceChips<LengthFilter>
+            label={t('stories.setup.length')}
+            options={['all', ...STORY_LENGTHS]}
+            value={length}
+            onChange={pickLength}
+            labelOf={(l) => (l === 'all' ? t('stories.filter.all') : lengthWithMinutes(current, l, t))}
+          />
+          {showLevels ? (
+            <Segmented<LevelFilter>
+              groupLabel={t('stories.filter.level')}
+              options={['all', '1', '2', '3']}
+              value={level}
+              onChange={setLevel}
+              labelOf={(l) => (l === 'all' ? t('stories.filter.all') : t('stories.level', { level: l }))}
+            />
+          ) : null}
+        </View>
+
+        <GlassCard style={styles.playCard}>
+          <View style={styles.playHead}>
+            <Icon name="people" size={24} color={colors.primary} />
+            <Text style={[styles.playTitle, { color: colors.textPrimary }]}>{t('stories.together.title')}</Text>
+          </View>
+          <Text style={[styles.playBody, { color: colors.textSecondary }]}>{t('stories.together.body')}</Text>
+          <ClayButton
+            label={t('stories.together.setup')}
+            icon="user-plus"
+            tone="primary"
+            disabled={ofVariety.length === 0}
+            onPress={() => setSetupOpen(true)}
+          />
+          <View style={styles.joinRow}>
+            <TextInput
+              value={code}
+              onChangeText={(v) => {
+                setCode(v);
+                setJoinError(null);
+              }}
+              onSubmitEditing={() => void join()}
+              placeholder={t('stories.join.placeholder')}
+              placeholderTextColor={colors.textSecondary}
+              accessibilityLabel={t('stories.join.label')}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              autoComplete="off"
+              spellCheck={false}
+              textContentType="none"
+              returnKeyType="go"
+              style={[styles.codeInput, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+            />
+            <ClayButton label={t('stories.join.button')} busy={joining} onPress={() => void join()} style={styles.joinButton} />
+          </View>
+          {joinError ? (
+            <Text style={[styles.joinError, { color: colors.danger }]} accessibilityLiveRegion="polite">
+              {joinError}
+            </Text>
+          ) : null}
+        </GlassCard>
+
+        <View style={styles.section}>
+          <SectionLabel>{t('stories.read')}</SectionLabel>
+          {stories === null && !error ? (
+            <SkeletonList count={4} avatar={false} />
+          ) : error ? (
+            <ErrorRetry message={describeError(error, t)} onRetry={load} />
+          ) : ofVariety.length === 0 ? (
+            <View style={styles.empty}>
+              <Note icon="story">{t(current === 'sorani' ? 'stories.empty.sorani' : 'stories.empty.kurmanci')}</Note>
+              {otherCount > 0 ? (
+                <ClayButton
+                  label={t('stories.empty.switch', { variety: DIALECT_NAME[other] })}
+                  variant="outline"
+                  tone="primary"
+                  onPress={() => pickDialect(other)}
+                />
+              ) : null}
+            </View>
+          ) : shown.length === 0 ? (
+            <Note>{t('stories.filter.none')}</Note>
+          ) : (
+            shown.map((s) => (
+              <StoryRow
+                key={s.id}
+                story={s}
+                progress={progress.get(s.id) ?? null}
+                onOpen={() => navigation.navigate('StoryReader', { slug: s.slug })}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      {setupOpen ? (
+        <SetupSheet
+          dialect={current}
+          stories={ofVariety}
+          initialMode="duo"
+          onClose={() => setSetupOpen(false)}
+          onCreated={(view) => {
+            setSetupOpen(false);
+            navigation.navigate('StoryGame', { id: view.id });
+          }}
+        />
+      ) : null}
+    </GradientBackground>
+  );
+}
+
+function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const where =
+    game.status === 'lobby'
+      ? t('stories.status.lobby')
+      : game.status === 'reading'
+        ? t('stories.status.reading')
+        : t('stories.questionOf', { index: game.currentIndex + 1, total: game.total });
+  return (
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={`${t('stories.continue')}: ${game.storyTitle}, ${t(MODE_KEY[game.mode])}, ${where}`}
+      style={({ pressed }) => [styles.continue, { backgroundColor: colors.glassFill, opacity: pressed ? 0.85 : 1 }]}
+    >
+      <View style={styles.rowMain}>
+        <Text {...storyTextProps(game.dialect)} style={[styles.rowTitle, { color: colors.textPrimary }, storyTextStyle(game.dialect)]} numberOfLines={1}>
+          {game.storyTitle}
+        </Text>
+        <Text style={[styles.rowMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+          {t(MODE_KEY[game.mode])} · {where}
+        </Text>
+      </View>
+      <Text style={[styles.continueText, { color: colors.primary }]}>{t('stories.continueButton')}</Text>
+      <Icon name="chevron-right" size={16} color={colors.primary} />
+    </Pressable>
+  );
+}
+
+function StoryRow({
+  story,
+  progress,
+  onOpen,
+}: {
+  story: StoryListItem;
+  progress: StoryProgress | null;
+  onOpen: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const minutes = t('stories.aboutMinutes', { count: story.readingMinutes });
+  const done = progress ? t('stories.done', { correct: progress.bestCorrect, total: progress.total }) : null;
+  const facts = [t('stories.level', { level: story.level }), t(LENGTH_KEY[story.length]), minutes];
+  if (story.fullyNarrated) facts.push(t('stories.narrated'));
+  if (done) facts.push(done);
+  return (
+    <Pressable
+      onPress={onOpen}
+      accessibilityRole="button"
+      accessibilityLabel={`${story.title}. ${facts.join(', ')}`}
+      style={({ pressed }) => [styles.story, { backgroundColor: colors.glassFill, opacity: pressed ? 0.85 : 1 }]}
+    >
+      <Text {...storyTextProps(story.dialect)} style={[styles.storyTitle, { color: colors.textPrimary }, storyTextStyle(story.dialect)]}>
+        {story.title}
+      </Text>
+      {story.summary ? (
+        <Text {...storyTextProps(story.dialect)} style={[styles.summary, { color: colors.textSecondary }, storyTextStyle(story.dialect)]} numberOfLines={2}>
+          {story.summary}
+        </Text>
+      ) : null}
+      <View style={styles.pills}>
+        <Pill label={t('stories.level', { level: story.level })} />
+        <Pill label={t(LENGTH_KEY[story.length])} />
+        <Pill label={minutes} />
+        {story.fullyNarrated ? <Pill icon="headphones" label={t('stories.narratedShort')} tone="primary" /> : null}
+        {done ? <Pill icon="check" label={done} tone="success" /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  section: { gap: spacing.sm },
+  continue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 60,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  rowMain: { flex: 1, gap: 2 },
+  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  rowMeta: { fontSize: typography.sizes.sm },
+  continueText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  playCard: { gap: spacing.md },
+  playHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  playTitle: { ...display(typography.sizes.lg), flex: 1 },
+  playBody: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  joinRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  codeInput: {
+    flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.sizes.md,
+    letterSpacing: 1,
+    writingDirection: 'ltr',
+    textAlign: 'left',
+  },
+  joinButton: { minWidth: 96 },
+  joinError: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  empty: { gap: spacing.md },
+  story: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.xs },
+  storyTitle: { ...display(typography.sizes.lg) },
+  summary: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
+});

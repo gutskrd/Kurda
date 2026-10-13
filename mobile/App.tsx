@@ -69,6 +69,9 @@ import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
+import { StoriesHubScreen } from './src/stories/StoriesHubScreen';
+import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
+import { StoryGameScreen } from './src/stories/StoryGameScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
@@ -106,6 +109,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       Practice: 'practice',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
+      // `/app/games/stories?id=…` is a game to join; without an id it is the hub
+      Stories: inviteRoutePath('stories'),
+      StoryReader: 'app/games/stories/:slug',
     },
   },
 };
@@ -322,6 +328,16 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
         {({ navigation }) => <RaceScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <StoriesHubScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="StoryReader" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* a game is not left by a swipe that was meant to scroll the story */}
+      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+        {({ route, navigation }) => <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
