@@ -132,7 +132,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                       authorId: post.authorRole === 'user' ? post.authorId : null,
                     })
                   }
-                  hitSlop={6}
+                  hitSlop={13}
                   accessibilityRole="button"
                   accessibilityLabel={t('moderation.reportPost')}
                 >
@@ -173,7 +173,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                                 authorId: c.authorRole === 'user' ? c.authorId : null,
                               })
                             }
-                            hitSlop={6} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
+                            hitSlop={13} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
                             <Icon name="flag" size={12} color={colors.textSecondary} />
                             <Text style={[styles.replyHint, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
                           </Pressable>
