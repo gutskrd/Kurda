@@ -39,7 +39,9 @@ export const RETENTION_FIRST_RUN_MS = 10 * 60 * 1000;
  * user and admin routes are registered, and two timers run — the five-minute
  * sweep (sync the automated feeds, expire unconfirmed bans, send any urgent
  * alert that did not go, finish moving quarantined evidence off the public
- * bucket) and the evidence retention (first after ten minutes, then daily).
+ * bucket) and the evidence retention (first after ten minutes, then daily),
+ * which also puts any permanent ban the banned-address registry is missing on
+ * it.
  *
  * Returns the services, so the older per-surface report routes can write
  * through the same report service.
@@ -79,7 +81,12 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
   // The retention sweep runs a few minutes after start as well as daily: a
   // process that restarts or sleeps more often than once a day (a free-tier
   // host idles after minutes) would otherwise never reach its first run.
-  const prune = () => void queue.pruneEvidence().catch((err) => app.log.warn({ err }, 'evidence retention sweep failed'));
+  const prune = () =>
+    void (async () => {
+      await queue.pruneEvidence().catch((err) => app.log.warn({ err }, 'evidence retention sweep failed'));
+      // and any permanent ban the registry is missing (the ones carried over from the old columns)
+      await sanctions.backfillBanRegistry().catch((err) => app.log.warn({ err }, 'ban registry backfill failed'));
+    })();
   const firstPrune = setTimeout(prune, RETENTION_FIRST_RUN_MS);
   const retention = setInterval(prune, 24 * 60 * 60 * 1000);
   app.addHook('onClose', async () => {

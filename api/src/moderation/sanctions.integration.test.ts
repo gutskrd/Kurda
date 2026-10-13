@@ -5,6 +5,8 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
+import { isBannedEmail } from './ban-registry.js';
+import { emailRegistryHash } from './pseudonym.js';
 import { SanctionsService, countModerators } from './sanctions-service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -101,6 +103,45 @@ describe.skipIf(!DATABASE_URL)('sanctions (integration)', () => {
       await db.query('ROLLBACK');
       db.release();
     }
+  });
+
+  it('puts a permanent ban carried over from the old columns on the banned-address registry', async () => {
+    const id = await user('legacy1');
+    const email = `sn_legacy1_${suffix}@it.kurda.app`;
+    // as the migration wrote it: a sanction, and nothing on the registry
+    await pool.query(
+      `INSERT INTO sanctions (user_id, kind, policy, statement, starts_at, origin, meta)
+       VALUES ($1, 'permanent_ban', 'other', 'Closed.', now() - interval '1 day', 'moderator', '{"legacy": true}'::jsonb)`,
+      [id],
+    );
+    expect(await isBannedEmail(pool, email.replace('@', '+again@'))).toBe(false);
+    expect(await sanctions.backfillBanRegistry()).toBeGreaterThanOrEqual(1);
+    expect(await isBannedEmail(pool, email.replace('@', '+again@'))).toBe(true);
+    // and once is enough
+    const again = await pool.query(`SELECT count(*)::int AS n FROM ban_registry WHERE value_hash = $1`, [emailRegistryHash(email)]);
+    await sanctions.backfillBanRegistry();
+    expect((await pool.query(`SELECT count(*)::int AS n FROM ban_registry WHERE value_hash = $1`, [emailRegistryHash(email)])).rows).toEqual(again.rows);
+  });
+
+  it('keeps an address on the registry while another banned account shares it', async () => {
+    const plain = await user('twin');
+    const tagged = await user('twin2');
+    const address = `sn_twin_${suffix}@it.kurda.app`;
+    // the second account signed up with a +tag of the first one's address
+    await pool.query(`UPDATE users SET email = $2 WHERE id = $1`, [tagged, address.replace('@', '+2@')]);
+    const ban = (userId: string) =>
+      sanctions.apply(pool, { ...base, userId, kind: 'permanent_ban', statement: 'Closed.', singleApproved: true });
+    await ban(plain);
+    const second = await ban(tagged);
+    expect(await isBannedEmail(pool, address)).toBe(true);
+
+    // lifting one ban leaves the address barred for the other
+    await sanctions.unban(ids[0]!, plain, 'mistaken identity');
+    expect(await isBannedEmail(pool, address)).toBe(true);
+    const entry = await pool.query<{ sanction_id: string }>(`SELECT sanction_id FROM ban_registry WHERE value_hash = $1`, [emailRegistryHash(address)]);
+    expect(entry.rows[0]!.sanction_id).toBe(second.sanction.id);
+    await sanctions.unban(ids[0]!, tagged, 'mistaken identity');
+    expect(await isBannedEmail(pool, address)).toBe(false);
   });
 
   it('an unmute while a suspension is being applied does not undo the ban either', async () => {

@@ -31,7 +31,9 @@
  * `ban_registry` holds keyed hashes of the normalised email addresses of
  * permanently banned accounts, so the same person cannot sign straight back up
  * (signup checks it and answers with the generic refusal). Hashes only: the
- * address itself is never kept for this.
+ * address itself is never kept for this. The permanent bans carried over below
+ * are put on it by the app, not here — the hash needs the server's key — on its
+ * first retention sweep (SanctionsService.backfillBanRegistry).
  */
 
 const CATEGORIES = [

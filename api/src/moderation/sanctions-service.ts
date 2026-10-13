@@ -576,6 +576,10 @@ export class SanctionsService {
    * Take the address off the registry once no permanent ban is left. By the
    * bans' ids as well as by the address: a closed account's email has been
    * anonymised by then, and its hash no longer matches the entry.
+   *
+   * Not when another account still permanently banned has the same address
+   * as the registry sees it (a `+tag` or Gmail-dots variant: one entry stands
+   * for both) — the entry then stays, pointing at that account's ban.
    */
   private async unregisterBannedEmail(db: Executor, userId: string): Promise<void> {
     const stillBanned = await db.query(
@@ -584,12 +588,67 @@ export class SanctionsService {
     );
     if (stillBanned.rowCount) return;
     const u = await db.query<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [userId]);
-    await db.query(
-      `DELETE FROM ban_registry
+    const entries = await db.query<{ value_hash: string }>(
+      `SELECT value_hash FROM ban_registry
         WHERE kind = 'email'
           AND (value_hash = $2 OR sanction_id IN (SELECT id FROM sanctions WHERE user_id = $1 AND kind = 'permanent_ban'))`,
       [userId, u.rows[0] ? emailRegistryHash(u.rows[0].email) : null],
     );
+    if (entries.rows.length === 0) return;
+    // the hashes are keyed, so the comparison is made here; unbanning is rare
+    const others = await db.query<{ id: string; email: string }>(
+      `SELECT DISTINCT ON (s.user_id) s.id, u.email
+         FROM sanctions s JOIN users u ON u.id = s.user_id
+        WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL} AND s.user_id <> $1
+        ORDER BY s.user_id, s.created_at`,
+      [userId],
+    );
+    const heldBy = new Map<string, string>();
+    for (const o of others.rows) {
+      const hash = emailRegistryHash(o.email);
+      if (!heldBy.has(hash)) heldBy.set(hash, o.id);
+    }
+    for (const { value_hash } of entries.rows) {
+      const other = heldBy.get(value_hash);
+      if (other) {
+        await db.query(`UPDATE ban_registry SET sanction_id = $2 WHERE kind = 'email' AND value_hash = $1`, [value_hash, other]);
+      } else {
+        await db.query(`DELETE FROM ban_registry WHERE kind = 'email' AND value_hash = $1`, [value_hash]);
+      }
+    }
+  }
+
+  /**
+   * Put every permanent ban in force on the registry that is not on it yet.
+   * The migration that carried the old column bans into sanctions could not
+   * do it (the hash needs the server's key, which a migration does not have),
+   * so those people could sign up again with a `+tag` of their address. Runs
+   * with the retention sweep — after start and then daily — and does nothing
+   * once every ban is on it. Returns how many entries it added.
+   */
+  async backfillBanRegistry(): Promise<number> {
+    const due = await this.pool.query<{ sanction_id: string; email: string }>(
+      `SELECT DISTINCT ON (s.user_id) s.id AS sanction_id, u.email
+         FROM sanctions s JOIN users u ON u.id = s.user_id
+        WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL}
+          AND u.email NOT LIKE '%@deleted.kurda.app'
+          AND NOT EXISTS (SELECT 1 FROM ban_registry r JOIN sanctions mine ON mine.id = r.sanction_id
+                           WHERE r.kind = 'email' AND mine.user_id = s.user_id)
+        ORDER BY s.user_id, s.created_at
+        LIMIT 1000`,
+    );
+    let added = 0;
+    for (const row of due.rows) {
+      // still in force at the moment it is written (an unban may have come in between)
+      const r = await this.pool.query(
+        `INSERT INTO ban_registry (kind, value_hash, sanction_id)
+         SELECT 'email', $1, $2 WHERE EXISTS (SELECT 1 FROM sanctions s WHERE s.id = $2 AND ${IN_FORCE_SQL})
+         ON CONFLICT (kind, value_hash) DO NOTHING`,
+        [emailRegistryHash(row.email), row.sanction_id],
+      );
+      added += r.rowCount ?? 0;
+    }
+    return added;
   }
 
   /** The person exists, and is locked for the change that follows. */
