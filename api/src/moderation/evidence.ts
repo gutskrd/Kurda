@@ -1,4 +1,5 @@
 import type { EvidenceMessage, EvidenceSnapshot, ReportTargetType, ReportableGame } from '@kurda/shared';
+import { writtenForSql } from '../users/age.js';
 import type { Executor } from './tx.js';
 
 /**
@@ -11,12 +12,17 @@ import type { Executor } from './tx.js';
  * saw, even after the author edits or deletes it (the old queue re-read the live
  * row, and an author deleting a post made the report vanish).
  *
- * The resolvers also decide whether the reporter may report it at all: a chat
- * can only be reported from inside it (a stranger must not be able to pull a
- * private conversation into anyone's view), a game player only by someone in
- * that game, and nobody reports themselves. Content that has since been
- * unpublished or removed can still be reported — the reporter's screen may
- * still show it, and the snapshot is what matters.
+ * The resolvers also decide whether the reporter may report it at all: only
+ * what they can see. A chat only from inside it (a stranger must not be able to
+ * pull a private conversation into anyone's view), an invite-only group only by
+ * a member, a post or comment only as the reader would find it — published,
+ * not removed, and not a minor's written for their friends (users/age.ts
+ * `writtenForSql`) — a game player only by someone in that game, and nobody
+ * reports themselves. Anything else is "not found": an id is not a key to a
+ * draft's title or a private group's name, which the receipt and "My reports"
+ * would otherwise hand back as its label, with the text frozen into evidence.
+ * Once reported, the snapshot is what matters: an author who unpublishes or
+ * deletes it afterwards changes nothing.
  *
  * Game players are reported by seat, and each game says how seats map to
  * people through a small registry (`registerGameSeats`), so a new game plugs in
@@ -36,6 +42,11 @@ export interface ResolvedTarget {
   targetId: string;
   subjectUserId: string | null;
   evidence: EvidenceSnapshot;
+}
+
+/** True when the reporter (if there is one) may see it: automated feeds see everything. */
+function visibleTo(ctx: ResolveContext, visible: boolean): boolean {
+  return ctx.reporterId === null || visible;
 }
 
 /** Why a report cannot be filed. Every one of them answers "not found" except `self`. */
@@ -98,17 +109,20 @@ const resolveGroup: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
     id: string; name: string; description: string | null; privacy: string; owner_id: string | null;
-    owner_username: string | null; created_at: Date; archived_at: Date | null;
+    owner_username: string | null; created_at: Date; archived_at: Date | null; visible: boolean;
   }>(
-    `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, o.username AS owner_username, g.created_at, g.archived_at
+    `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, o.username AS owner_username, g.created_at, g.archived_at,
+            (g.privacy = 'open' OR EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2::uuid)) AS visible
        FROM groups g LEFT JOIN users o ON o.id = g.owner_id
       WHERE g.id = $1`,
-    [targetId],
+    [targetId, ctx.reporterId],
   );
   const g = r.rows[0];
   if (!g) return { refused: 'not_found' };
   const self = selfRefusal(ctx, g.owner_id);
   if (self) return self;
+  // an invite-only group, only from inside it
+  if (!visibleTo(ctx, g.visible)) return { refused: 'not_found' };
   return {
     targetId: g.id,
     // the owner answers for the group's name and description
@@ -129,17 +143,19 @@ const resolveLibraryPost: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
     id: string; author_id: string; username: string | null; type: string; title: string | null; body: string;
-    audio_media_id: string | null; language: string; status: string; created_at: Date; updated_at: Date;
+    audio_media_id: string | null; language: string; status: string; created_at: Date; updated_at: Date; visible: boolean;
   }>(
     `SELECT p.id, p.author_id, u.username, p.type, p.title, p.body, p.audio_media_id, p.language, p.status,
-            p.created_at, p.updated_at
+            p.created_at, p.updated_at,
+            (p.status = 'published' AND ${writtenForSql('p.author_id', '$2::uuid')}) AS visible
        FROM library_posts p LEFT JOIN users u ON u.id = p.author_id WHERE p.id = $1`,
-    [targetId],
+    [targetId, ctx.reporterId],
   );
   const p = r.rows[0];
   if (!p) return { refused: 'not_found' };
   const self = selfRefusal(ctx, p.author_id);
   if (self) return self;
+  if (!visibleTo(ctx, p.visible)) return { refused: 'not_found' };
   return {
     targetId: p.id,
     subjectUserId: p.author_id,
@@ -162,17 +178,20 @@ const resolveLibraryComment: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
     id: string; post_id: string; parent_comment_id: string | null; author_id: string; username: string | null;
-    body: string | null; audio_media_id: string | null; status: string; created_at: Date; updated_at: Date;
+    body: string | null; audio_media_id: string | null; status: string; created_at: Date; updated_at: Date; visible: boolean;
   }>(
     `SELECT c.id, c.post_id, c.parent_comment_id, c.author_id, u.username, c.body, c.audio_media_id, c.status,
-            c.created_at, c.updated_at
+            c.created_at, c.updated_at,
+            (c.status = 'visible' AND ${writtenForSql('c.author_id', '$2::uuid')}
+             AND EXISTS (SELECT 1 FROM library_posts lp WHERE lp.id = c.post_id AND ${writtenForSql('lp.author_id', '$2::uuid')})) AS visible
        FROM library_comments c LEFT JOIN users u ON u.id = c.author_id WHERE c.id = $1`,
-    [targetId],
+    [targetId, ctx.reporterId],
   );
   const c = r.rows[0];
   if (!c) return { refused: 'not_found' };
   const self = selfRefusal(ctx, c.author_id);
   if (self) return self;
+  if (!visibleTo(ctx, c.visible)) return { refused: 'not_found' };
   return {
     targetId: c.id,
     subjectUserId: c.author_id,
@@ -193,17 +212,19 @@ const resolveImagePost: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
     id: string; author_id: string; username: string | null; image_media_id: string; caption: string | null;
-    category: string; language: string | null; status: string; created_at: Date; updated_at: Date;
+    category: string; language: string | null; status: string; created_at: Date; updated_at: Date; visible: boolean;
   }>(
     `SELECT p.id, p.author_id, u.username, p.image_media_id, p.caption, p.category, p.language, p.status,
-            p.created_at, p.updated_at
+            p.created_at, p.updated_at,
+            (p.status = 'published' AND ${writtenForSql('p.author_id', '$2::uuid')}) AS visible
        FROM image_posts p LEFT JOIN users u ON u.id = p.author_id WHERE p.id = $1`,
-    [targetId],
+    [targetId, ctx.reporterId],
   );
   const p = r.rows[0];
   if (!p) return { refused: 'not_found' };
   const self = selfRefusal(ctx, p.author_id);
   if (self) return self;
+  if (!visibleTo(ctx, p.visible)) return { refused: 'not_found' };
   return {
     targetId: p.id,
     subjectUserId: p.author_id,
@@ -224,16 +245,19 @@ const resolveImageComment: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
     id: string; post_id: string; parent_comment_id: string | null; author_id: string; username: string | null;
-    body: string | null; status: string; created_at: Date; updated_at: Date;
+    body: string | null; status: string; created_at: Date; updated_at: Date; visible: boolean;
   }>(
-    `SELECT c.id, c.post_id, c.parent_comment_id, c.author_id, u.username, c.body, c.status, c.created_at, c.updated_at
+    `SELECT c.id, c.post_id, c.parent_comment_id, c.author_id, u.username, c.body, c.status, c.created_at, c.updated_at,
+            (c.status = 'visible' AND ${writtenForSql('c.author_id', '$2::uuid')}
+             AND EXISTS (SELECT 1 FROM image_posts ip WHERE ip.id = c.post_id AND ${writtenForSql('ip.author_id', '$2::uuid')})) AS visible
        FROM image_comments c LEFT JOIN users u ON u.id = c.author_id WHERE c.id = $1`,
-    [targetId],
+    [targetId, ctx.reporterId],
   );
   const c = r.rows[0];
   if (!c) return { refused: 'not_found' };
   const self = selfRefusal(ctx, c.author_id);
   if (self) return self;
+  if (!visibleTo(ctx, c.visible)) return { refused: 'not_found' };
   return {
     targetId: c.id,
     subjectUserId: c.author_id,

@@ -269,6 +269,45 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     expect((await detail(await caseOf((grp.json() as ReportReceipt).report.id))).subject!.id).toBe(author.id);
   });
 
+  it('refuses what the reporter cannot see — a draft, removed content, a private group, a minor’s post — as not there', async () => {
+    const notThere = (res: { statusCode: number; body: string; json: () => { code: string } }, secret?: string) => {
+      expect(res.statusCode).toBe(404);
+      expect(res.json().code).toBe('TARGET_NOT_FOUND');
+      if (secret) expect(res.body).not.toContain(secret);
+    };
+    const draft = (await call('POST', '/library/posts', author.token, { type: 'story', title: `Draft ${kit.suffix}`, body: 'x', publish: false })).json() as { id: string };
+    notThere(await report(stranger, { targetType: 'library_post', targetId: draft.id, category: 'spam' }), `Draft ${kit.suffix}`);
+
+    const removed = await pool.query<{ id: string }>(
+      `INSERT INTO image_posts (author_id, author_role, image_media_id, caption, status) VALUES ($1, 'user', $2, 'gone', 'removed') RETURNING id`,
+      [author.id, `image-post/vis_${kit.suffix}.webp`],
+    );
+    notThere(await report(stranger, { targetType: 'image_post', targetId: removed.rows[0]!.id, category: 'spam' }));
+
+    const published = (await call('POST', '/library/posts', author.token, { type: 'gotin', body: 'Gotin.' })).json() as { id: string };
+    const tombstone = await pool.query<{ id: string }>(
+      `INSERT INTO library_comments (post_id, author_id, author_role, body, status) VALUES ($1, $2, 'user', NULL, 'removed') RETURNING id`,
+      [published.id, author.id],
+    );
+    notThere(await report(stranger, { targetType: 'library_comment', targetId: tombstone.rows[0]!.id, category: 'spam' }));
+
+    // an invite-only group, only from inside
+    const g = await new GroupService(pool).create(author.id, { name: `Hidden ${kit.suffix}`, privacy: 'invite' });
+    notThere(await report(stranger, { targetType: 'group', targetId: g.id, category: 'hate' }), `Hidden ${kit.suffix}`);
+    await pool.query(`INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`, [g.id, other.id]);
+    const inside = await report(other, { targetType: 'group', targetId: g.id, category: 'hate' });
+    expect(inside.statusCode).toBe(201);
+    expect((inside.json() as ReportReceipt).report.targetLabel).toBe(`Hidden ${kit.suffix}`);
+
+    // a minor's post is for their friends; to a stranger it is not there
+    const young = await pool.query<{ id: string }>(
+      `INSERT INTO library_posts (author_id, author_role, type, title, body, status, published_at)
+       VALUES ($1, 'user', 'story', $2, 'mine', 'published', now()) RETURNING id`,
+      [minor.id, `Young ${kit.suffix}`],
+    );
+    notThere(await report(stranger, { targetType: 'library_post', targetId: young.rows[0]!.id, category: 'spam' }), `Young ${kit.suffix}`);
+  });
+
   it('reports a game player by seat, mapped to the person on the server', async () => {
     const battle = await pool.query<{ id: string }>(
       `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, status)
