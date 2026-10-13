@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { RequireAccount } from './RequireAccount';
 import { renderApp, jsonResponse } from '../test/utils';
 
@@ -62,6 +64,28 @@ describe('RequireAccount', () => {
     expect(await screen.findByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: 'Back to Community' })).toHaveAttribute('href', '/app/civak');
+  });
+
+  /**
+   * A game invite is `/app/games/wordle-battle?id=…`: without its query, the way
+   * back after signing in or signing up led to an empty game page.
+   */
+  it('keeps the whole address, query and all, for the way back', async () => {
+    guest();
+    function From(): React.JSX.Element {
+      return <p>back to {String((useLocation().state as { from?: string } | null)?.from)}</p>;
+    }
+    renderApp(
+      <Routes>
+        <Route path="/app/games/wordle-battle" element={<RequireAccount what="gate.what.playOthers">{inside}</RequireAccount>} />
+        <Route path="/register" element={<From />} />
+        <Route path="/login" element={<From />} />
+      </Routes>,
+      ['/app/games/wordle-battle?id=b1'],
+    );
+
+    await userEvent.click(await screen.findByRole('link', { name: 'Create an account' }));
+    expect(screen.getByText('back to /app/games/wordle-battle?id=b1')).toBeInTheDocument();
   });
 
   it('still holds an unverified account away from the page', async () => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
@@ -7,10 +7,12 @@ import { useI18n, useT } from '../i18n/I18nProvider';
 import { LanguagePicker } from '../i18n/LanguagePicker';
 import { BirthMonthFields, EMPTY_BIRTH_MONTH, birthMonthOf } from '../auth/BirthMonthFields';
 import { AgeStop, ageStopRemembered, rememberAgeStop, type AgeStopKind } from '../auth/AgeStop';
+import { rememberAfterSignup } from '../auth/afterSignup';
 
 export function Register(): React.JSX.Element {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { locale, setLocale } = useI18n();
   const t = useT();
 
@@ -41,7 +43,12 @@ export function Register(): React.JSX.Element {
       rememberAgeStop('refused');
       setStopped('refused');
     } else if (err) setError(err.message);
-    else navigate('/app', { replace: true });
+    else {
+      // a friend's invite or a story's quiz that sent them here: opened once
+      // the email is confirmed (pages/VerifyEmail), not lost to the first lesson
+      rememberAfterSignup((location.state as { from?: unknown } | null)?.from);
+      navigate('/app', { replace: true });
+    }
   }
 
   if (stopped) return <AgeStop accountClosed={stopped === 'closed'} />;
@@ -127,7 +134,10 @@ export function Register(): React.JSX.Element {
         </form>
 
         <p className="auth-alt">
-          {t('auth.register.haveAccount')} <Link to="/login">{t('auth.register.signIn')}</Link>
+          {t('auth.register.haveAccount')}{' '}
+          <Link to="/login" state={location.state}>
+            {t('auth.register.signIn')}
+          </Link>
         </p>
       </div>
     </div>

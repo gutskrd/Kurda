@@ -6,6 +6,7 @@ import { AuthProvider } from '../auth/AuthProvider';
 import { ProfileModalProvider } from '../profile/ProfileModal';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { VerifyEmail } from './VerifyEmail';
+import { rememberAfterSignup } from '../auth/afterSignup';
 import { renderApp, jsonResponse } from '../test/utils';
 
 afterEach(() => {
@@ -143,6 +144,43 @@ describe('VerifyEmail', () => {
 
     expect(await screen.findByText('Your first lesson')).toBeInTheDocument();
     expect(screen.queryByText('The wall')).not.toBeInTheDocument();
+  });
+
+  it('sends a new account made for a friend’s game to that game once confirmed', async () => {
+    signedIn();
+    rememberAfterSignup('/app/games/wordle-battle?id=b1');
+    let verified = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/auth/verify-email-code')) {
+          verified = true;
+          return jsonResponse(200, { verified: true });
+        }
+        if (url.includes('/me')) return jsonResponse(200, user(verified));
+        return jsonResponse(200, {});
+      }),
+    );
+
+    render(
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/verify-email']}>
+          <ProfileModalProvider>
+            <Routes>
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/app/learn/next" element={<div>Your first lesson</div>} />
+              <Route path="/app/games/wordle-battle" element={<div>The battle</div>} />
+            </Routes>
+          </ProfileModalProvider>
+        </MemoryRouter>
+      </AuthProvider>,
+    );
+
+    await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
+    await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
+
+    expect(await screen.findByText('The battle')).toBeInTheDocument();
+    expect(screen.queryByText('Your first lesson')).not.toBeInTheDocument();
   });
 
   it('surfaces a wrong code and keeps the user on the screen', async () => {

@@ -89,6 +89,35 @@ describe('Register', () => {
   });
 
   /**
+   * Someone sent here from a friend's game invite gets there once the account
+   * exists and its email is confirmed — not the first lesson (pages/VerifyEmail).
+   */
+  it('remembers where the new account was going, for after the email is confirmed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        jsonResponse(201, {
+          user: { id: '1', email: 'a@b.com', username: 'ada', displayName: null, emailVerified: false, birthDateRequired: false },
+          tokens: { accessToken: 'x', refreshToken: 'y' },
+        }),
+      ),
+    );
+    renderApp(
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/app" element={<div>App home</div>} />
+      </Routes>,
+      [{ pathname: '/register', state: { from: '/app/games/wordle-battle?id=b1' } }],
+    );
+    await fillAccount();
+    await chooseBirth('3', '1990');
+    await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
+
+    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
+    expect(JSON.parse(localStorage.getItem('hevalo.afterSignup') ?? '{}')).toMatchObject({ path: '/app/games/wordle-battle?id=b1' });
+  });
+
+  /**
    * Under 13 no account is made. The form gives way to an explanation, and it
    * stays for the rest of the browser session — an empty form handed straight
    * back would only invite a different year.

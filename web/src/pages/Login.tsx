@@ -83,7 +83,11 @@ export function Login(): React.JSX.Element {
         </form>
 
         <p className="auth-alt">
-          {t('auth.login.noAccount')} <Link to="/register">{t('auth.login.createAccount')}</Link>
+          {t('auth.login.noAccount')}{' '}
+          {/* where they were going goes with them, if they make an account instead */}
+          <Link to="/register" state={location.state}>
+            {t('auth.login.createAccount')}
+          </Link>
         </p>
       </div>
     </div>
