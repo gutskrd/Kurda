@@ -37,6 +37,7 @@ import {
   type WordleGame,
 } from './wordle.js';
 import { filterByDifficulty, type Difficulty } from './wordle-daily.js';
+import { loadWordlePool } from './word-pool.js';
 import { placementXp, rankBattle, type BattlePlayerResult } from './wordle-battle.js';
 
 const MAX_ATTEMPTS = 6;
@@ -860,11 +861,9 @@ export class WordleBattleService {
 
   private async pickTarget(difficulty: Difficulty): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
-    // in_games only; guess validation stays over the whole dictionary
-    const all = await this.pool.query<{ headword: string }>(
-      `SELECT headword FROM dict_entries WHERE in_games ORDER BY id`,
-    );
-    const words = all.rows.map((r) => r.headword);
+    // Kurmancî game words the keyboard can type (word-pool.ts); guess
+    // validation stays over the whole dictionary
+    const words = await loadWordlePool(this.pool);
     for (const tier of order) {
       const pool = filterByDifficulty(words, tier);
       if (pool.length > 0) return { target: pool[Math.floor(Math.random() * pool.length)]!, difficulty: tier };

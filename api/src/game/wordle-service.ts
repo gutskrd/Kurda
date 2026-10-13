@@ -26,6 +26,7 @@ import {
   type Difficulty,
   type WordleStats,
 } from './wordle-daily.js';
+import { loadWordlePool } from './word-pool.js';
 
 export type WordleMode = 'daily' | 'practice';
 
@@ -339,15 +340,13 @@ export class WordleService {
     return null;
   }
 
-  /** Difficulty pool = dictionary headwords of the right letter-length, stable order. */
+  /**
+   * Difficulty pool = the Kurmancî game words of the right letter-length,
+   * stable order (word-pool.ts: never a Soranî word, nor one with a letter the
+   * keyboard does not have).
+   */
   private async loadPool(difficulty: Difficulty): Promise<string[]> {
-    const res = await this.pool.query<{ headword: string }>(
-      // in_games only: a target has to be a word somebody recognises (see
-      // migration 1751000112000). Guess validation below stays over the whole
-      // dictionary, where a bigger lexicon only helps.
-      `SELECT headword FROM dict_entries WHERE in_games ORDER BY id`,
-    );
-    return filterByDifficulty(res.rows.map((r) => r.headword), difficulty);
+    return filterByDifficulty(await loadWordlePool(this.pool), difficulty);
   }
 
   private rehydrate(row: GameRow): WordleGame {

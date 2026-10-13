@@ -34,6 +34,15 @@ export class AnalyticsService {
     private readonly hooks: AnalyticsHooks = {},
   ) {}
 
+  /** Whether the person has agreed to analytics (`users.analytics_consent`, off by default). */
+  async hasConsent(userId: string): Promise<boolean> {
+    const res = await this.pool.query<{ analytics_consent: boolean }>(
+      `SELECT analytics_consent FROM users WHERE id = $1`,
+      [userId],
+    );
+    return res.rows[0]?.analytics_consent === true;
+  }
+
   async ingest(userId: string, events: RawEvent[]): Promise<IngestResult> {
     const result: IngestResult = { accepted: 0, dropped: 0, duplicates: 0 };
     if (events.length === 0) return result;

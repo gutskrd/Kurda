@@ -197,3 +197,16 @@ export * from './story-authoring.js';
 export * from './play.js';
 export * from './gifts.js';
 export * from './chat-cards.js';
+
+/**
+ * Typing Kurdish (the race, Wordle's keyboard, the keyboard guide): how a
+ * typed text is read and scored, and the race's shapes — one reading for the
+ * server and both apps.
+ */
+export * from './typing.js';
+
+/**
+ * The one-time rating box, "Send feedback", the native store prompt that is
+ * never tied to the stars, and the admin's feedback inbox.
+ */
+export * from './feedback.js';
