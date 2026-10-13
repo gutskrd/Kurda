@@ -16,6 +16,7 @@ import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { setProfilePhoto } from '../media/profilePhoto.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
 import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek } from '../leagues/service.js';
@@ -232,7 +233,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: requireAuth,
+      // a picture like any other: a feature limit on pictures covers this one too
+      preHandler: [requireAuth, requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');

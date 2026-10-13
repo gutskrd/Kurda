@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -44,7 +45,7 @@ export function registerLibraryCommentRoutes(
     {
       schema: { params: postIdParam, body: createBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
@@ -125,7 +126,7 @@ export function registerLibraryCommentRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/library/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: requireBirthMonth },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) =>
       respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as CreateCommentInput)),
   );

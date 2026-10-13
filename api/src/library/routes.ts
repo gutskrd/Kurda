@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import { LibraryService } from './service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
@@ -58,7 +59,7 @@ export function registerLibraryRoutes(
     {
       schema: { body: createBody },
       config: { rateLimit: { max: 20, windowMs: 60_000 } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
@@ -122,7 +123,7 @@ export function registerLibraryRoutes(
     '/library/posts/:id',
     // an edit can put new words in front of readers, so it waits for a birth
     // month like a new post does; unpublish and delete never do
-    { schema: { params: idParam, body: updateBody }, preHandler: requireBirthMonth },
+    { schema: { params: idParam, body: updateBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const res = await library.update((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as z.infer<typeof updateBody>);
       return respond(reply, res);
@@ -139,7 +140,7 @@ export function registerLibraryRoutes(
   /** Publish a draft (author or admin). */
   app.post(
     '/library/posts/:id/publish',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, isAdmin(req), 'published')),
   );
 

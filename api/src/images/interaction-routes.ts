@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { ImageReactionService, REACTIONS } from './reaction-service.js';
@@ -66,7 +67,7 @@ export function registerImageInteractionRoutes(
   /** Post a comment or reply (rate-limited + trust-gated + auto-screened). */
   app.post(
     '/images/:id/comments',
-    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireBirthMonth },
+    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const postId = (req.params as { id: string }).id;
       const input = req.body as CreateCommentInput;
@@ -132,7 +133,7 @@ export function registerImageInteractionRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/images/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: requireAuth },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireAuth, requireUnrestricted('post')] },
     async (req, reply) =>
       respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as CreateCommentInput)),
   );
