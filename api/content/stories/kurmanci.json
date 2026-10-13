@@ -275,6 +275,20 @@
         },
         {
           "kind": "detail",
+          "prompt": "Rast an şaş? Cara yekem, Azad li bazarê nan jî dikire.",
+          "promptEn": "True or false? On his first trip, Azad buys bread at the market too.",
+          "options": [
+            "Rast",
+            "Şaş"
+          ],
+          "correctIndex": 1,
+          "explanation": "Şaş e. Ew tenê bacansor û penîr dikire; nan ji bîr dike.",
+          "explanationEn": "False. He buys only tomatoes and cheese; he forgets the bread.",
+          "evidenceParagraph": 2,
+          "evidenceSentence": 0
+        },
+        {
+          "kind": "detail",
           "prompt": "Firoşkarê penîr çi dide Azad?",
           "promptEn": "What does the cheese seller give Azad?",
           "options": [
@@ -287,20 +301,6 @@
           "explanationEn": "The story says: “The cheese seller also gives him a red apple.”",
           "evidenceParagraph": 2,
           "evidenceSentence": 1
-        },
-        {
-          "kind": "detail",
-          "prompt": "Rast an şaş? Cara yekem, Azad li bazarê nan jî dikire.",
-          "promptEn": "True or false? On his first trip, Azad buys bread at the market too.",
-          "options": [
-            "Rast",
-            "Şaş"
-          ],
-          "correctIndex": 1,
-          "explanation": "Şaş e. Ew tenê bacansor û penîr dikire; nan ji bîr dike.",
-          "explanationEn": "False. He buys only tomatoes and cheese; he forgets the bread.",
-          "evidenceParagraph": 2,
-          "evidenceSentence": 0
         },
         {
           "kind": "sequence",
@@ -318,21 +318,6 @@
           "evidenceSentence": 0
         },
         {
-          "kind": "detail",
-          "prompt": "Azad sêva sor dide kê?",
-          "promptEn": "Who does Azad give the red apple to?",
-          "options": [
-            "Firoşkarê penîr",
-            "Diya xwe",
-            "Firoşkarê hinaran"
-          ],
-          "correctIndex": 1,
-          "explanation": "Çîrok dibêje: “Ew sêva sor dide diya xwe.”",
-          "explanationEn": "The story says: “He gives the red apple to his mother.”",
-          "evidenceParagraph": 3,
-          "evidenceSentence": 3
-        },
-        {
           "kind": "inference",
           "prompt": "Çima vê carê Azad tenê dibêje: “Nan, nan, nan”?",
           "promptEn": "Why does Azad only say “Nan, nan, nan” this time?",
@@ -346,6 +331,21 @@
           "explanationEn": "The tomatoes and cheese are already at home. Only the bread is left to buy.",
           "evidenceParagraph": 3,
           "evidenceSentence": 2
+        },
+        {
+          "kind": "detail",
+          "prompt": "Azad sêva sor dide kê?",
+          "promptEn": "Who does Azad give the red apple to?",
+          "options": [
+            "Firoşkarê penîr",
+            "Diya xwe",
+            "Firoşkarê hinaran"
+          ],
+          "correctIndex": 1,
+          "explanation": "Çîrok dibêje: “Ew sêva sor dide diya xwe.”",
+          "explanationEn": "The story says: “He gives the red apple to his mother.”",
+          "evidenceParagraph": 3,
+          "evidenceSentence": 3
         },
         {
           "kind": "gist",
@@ -868,21 +868,6 @@
       "questions": [
         {
           "kind": "detail",
-          "prompt": "Zîlan di lîstikê de çi ye?",
-          "promptEn": "What is Zîlan in the game?",
-          "options": [
-            "Dadwer",
-            "Dergevan",
-            "Temaşevan"
-          ],
-          "correctIndex": 1,
-          "explanation": "Zîlan dibêje: “Ez dergevan im.”",
-          "explanationEn": "Zîlan says: “I am the goalkeeper.”",
-          "evidenceParagraph": 0,
-          "evidenceSentence": 3
-        },
-        {
-          "kind": "detail",
           "prompt": "Zarok her êvar li ku futbol dilîzin?",
           "promptEn": "Where do the children play football every evening?",
           "options": [
@@ -895,6 +880,21 @@
           "explanationEn": "Zîlan says: “Every evening we, the children of the neighbourhood, play football in that street.”",
           "evidenceParagraph": 0,
           "evidenceSentence": 1
+        },
+        {
+          "kind": "detail",
+          "prompt": "Zîlan di lîstikê de çi ye?",
+          "promptEn": "What is Zîlan in the game?",
+          "options": [
+            "Dadwer",
+            "Dergevan",
+            "Temaşevan"
+          ],
+          "correctIndex": 1,
+          "explanation": "Zîlan dibêje: “Ez dergevan im.”",
+          "explanationEn": "Zîlan says: “I am the goalkeeper.”",
+          "evidenceParagraph": 0,
+          "evidenceSentence": 3
         },
         {
           "kind": "detail",

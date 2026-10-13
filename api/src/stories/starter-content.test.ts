@@ -8,7 +8,8 @@
  * The starters are seeded as drafts, and a draft may be unfinished — but these
  * are the files a native speaker publishes as they stand, so they are held to
  * what a published story must be: a question bank big enough for its length,
- * and evidence for every reveal down to the sentence.
+ * and evidence for every reveal down to the sentence. Each bank is also written
+ * in the order a game asks it, so the file is reviewed the way players meet it.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -101,6 +102,24 @@ describe('the starter stories', () => {
         if (!storyAudioSentences(paragraphs[p]!).includes(sentences[s]!)) problems.push(`q${i}: cites “${sentences[s]}”`);
       });
       expect(problems).toEqual([]);
+    });
+
+    it('is written in the order a game asks it', () => {
+      // A game asks its questions in the order of the text, by the sentence each
+      // cites (items citing the same one as written), and the gist last. Written in
+      // that order, the bank reads the way players meet it, so whoever checks that
+      // no reveal hands a later question its answer is checking the order a game
+      // uses; an evidence sentence that would move an item past another fails here
+      // rather than reordering every game unseen.
+      const asked = story.questions.flatMap((q, i) =>
+        q.kind === 'gist' ? [] : [{ i, p: q.evidenceParagraph ?? -1, s: q.evidenceSentence ?? -1 }],
+      );
+      const outOfOrder = asked.flatMap((q, k) => {
+        const prev = asked[k - 1];
+        if (!prev || q.p > prev.p || (q.p === prev.p && q.s >= prev.s)) return [];
+        return [`q${q.i} (${q.p}.${q.s}) is written after q${prev.i} (${prev.p}.${prev.s})`];
+      });
+      expect(outOfOrder).toEqual([]);
     });
 
     it('keeps every explanation to the one line the reveal has room for', () => {
