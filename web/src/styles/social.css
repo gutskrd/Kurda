@@ -1763,3 +1763,8 @@ button.gift-bubble:active {
     opacity: 0;
   }
 }
+
+/* the Shop's answer when a purchase or a gift is refused (pages/Shop.tsx) */
+.shop-msg {
+  margin-bottom: 16px;
+}
