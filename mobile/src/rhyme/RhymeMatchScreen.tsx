@@ -13,6 +13,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { InviteSheet } from '../play/InviteSheet';
 import { RematchPanel } from '../play/RematchPanel';
 import {
   createMatch,
@@ -64,6 +65,15 @@ const TICK_MS = 200;
 export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [id, setId] = useState<string | null>(initialId ?? null);
+  /*
+   * Another match opened while this screen is up — an invite's Join, a game
+   * card, "Invite someone else" — arrives as new params on this same screen
+   * (navigating to the screen you are on updates it rather than pushing a
+   * second one), so the room follows them.
+   */
+  useEffect(() => {
+    if (initialId) setId(initialId);
+  }, [initialId]);
 
   return (
     <Shell title={t('games.rhymeMatch.name')} onExit={onExit}>
@@ -157,6 +167,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   const [remaining, setRemaining] = useState(0);
   const [found, setFound] = useState<Array<{ word: string; quality: RhymeQuality; points: number }>>([]);
   const loadedOnce = useRef(false);
+  // results: "Invite someone else" opens the invite sheet for this game
+  const [inviting, setInviting] = useState(false);
 
   const load = useCallback(async () => {
     const res = await getMatch(client, id);
@@ -328,9 +340,11 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
             lobbyId={id}
             other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
             onOpen={onOpen}
+            onInviteOthers={() => setInviting(true)}
           />
         </View>
         <ClayButton label={t('games.rhymeMatch.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
+        {inviting ? <InviteSheet target={{ kind: 'new', game: 'rhyme-match' }} onClose={() => setInviting(false)} /> : null}
       </GlassCard>
     );
   }
