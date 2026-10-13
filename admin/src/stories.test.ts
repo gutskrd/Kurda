@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { QUESTION_EXPLANATION_MAX, STORY_DIALECTS, countStoryWords, storySlugFor, validateStory } from '@kurda/shared';
+import {
+  QUESTION_EXPLANATION_MAX,
+  STORY_DIALECTS,
+  countStoryWords,
+  storyParagraphs,
+  storySlugFor,
+  validateStory,
+} from '@kurda/shared';
 import {
   autoSlug,
   availableActions,
@@ -9,6 +16,7 @@ import {
   describePath,
   draftFromForm,
   editorReducer,
+  evidenceText,
   fieldIdsFor,
   filterStories,
   formFromStory,
@@ -210,6 +218,119 @@ describe('editing questions', () => {
     expect(left).toContain('ckb');
     const added = edit(form, { type: 'gloss/extra-add', index: 1, locale: 'de' }, { type: 'gloss/extra-add', index: 1, locale: 'en' });
     expect(added.glossary[1]!.extra.map((e) => e.locale)).toEqual(['de']);
+  });
+});
+
+describe('evidence when the text changes', () => {
+  const loaded = formFromStory(storyFixture());
+  const [P1, P2, P3] = BODY.split('\n\n') as [string, string, string];
+  /** What each question's evidence quotes now. */
+  const quotes = (form: StoryForm): Array<string | null> =>
+    form.questions.map((q) => evidenceText(storyParagraphs(form.body), q.evidenceParagraph, q.evidenceSentence));
+  const before = quotes(loaded);
+  /** The text typed in one keystroke at a time, as a person types it. */
+  const typed = (form: StoryForm, from: string, to: string): StoryForm => {
+    let at = 0;
+    while (from[at] === to[at] && at < from.length) at += 1;
+    let f = form;
+    for (let n = at + 1; n <= to.length - (from.length - at); n += 1) {
+      f = edit(f, { type: 'text', field: 'body', value: to.slice(0, n) + from.slice(at) });
+    }
+    return f;
+  };
+
+  it('starts out quoting what the story stores', () => {
+    expect(before.slice(2, 5)).toEqual([
+      'Ew gelek dilovan e.',
+      'Piştî dibistanê Rojîn û birayê xwe bi hev re vedigerin malê.',
+      'Rojîn ji kulîlkên sor hez dike.',
+    ]);
+  });
+
+  it('follows its words when a paragraph is split, at once or typed', () => {
+    const split = BODY.replace('derbas dibin. ', 'derbas dibin. \n\n');
+    for (const form of [edit(loaded, { type: 'text', field: 'body', value: split }), typed(loaded, BODY, split)]) {
+      expect(form.body).toBe(split);
+      expect(quotes(form)).toEqual(before);
+      expect(form.questions.slice(2, 5).map((q) => [q.evidenceParagraph, q.evidenceSentence])).toEqual([[3, 1], [3, 3], [2, 1]]);
+      expect(liveChecks(form)).toEqual({ blocking: [], beforePublish: [], warnings: [] });
+    }
+  });
+
+  it('follows its words when paragraphs are joined, or one is added or taken out above them', () => {
+    const joined = [`${P1} ${P2}`, P3].join('\n\n');
+    expect(quotes(edit(loaded, { type: 'text', field: 'body', value: joined }))).toEqual(before);
+
+    // a new opening paragraph typed in front of the first: the first sentence is
+    // "Destpêk.Rojîn deh salî ye." for a few keystrokes, and is followed still
+    const opened = typed(loaded, BODY, `Destpêk. Ev çîrok kurt e.\n\n${BODY}`);
+    expect(quotes(opened)).toEqual(before);
+    expect(liveChecks(opened).warnings).toEqual([]);
+
+    // paragraph 1 taken out: what quoted it has nothing to follow, and says so
+    const cut = edit(loaded, { type: 'text', field: 'body', value: [P2, P3].join('\n\n') });
+    expect(quotes(cut).slice(2)).toEqual(before.slice(2));
+    expect(codes(liveChecks(cut).warnings)).toEqual([
+      'EVIDENCE_CHANGED@questions[0].evidenceSentence',
+      'EVIDENCE_CHANGED@questions[1].evidenceSentence',
+    ]);
+  });
+
+  it('tells a sentence said twice apart by the paragraph it is in', () => {
+    const refrain = 'Rojîn ji kulîlkên sor hez dike.';
+    const body = [P1, P2, `${P3} ${refrain}`].join('\n\n');
+    const form = edit(formFromStory(storyFixture({ body })), { type: 'q/evidence-sentence', index: 2, sentence: 4 });
+    const moved = edit(form, { type: 'text', field: 'body', value: `Destpêk.\n\n${body}` });
+    expect(moved.questions[2]).toMatchObject({ evidenceParagraph: 3, evidenceSentence: 4 });
+    expect(moved.questions[4]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 3 });
+  });
+
+  it('follows a sentence cut in two in front of it', () => {
+    const form = edit(loaded, { type: 'text', field: 'body', value: BODY.replace('Mamosteya wan Şîlan e.', 'Mamosteya wan. Navê wê Şîlan e.') });
+    expect(quotes(form)).toEqual(before);
+    expect(form.questions[2]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 2 });
+  });
+
+  it('follows a whole paragraph chosen as the evidence', () => {
+    const chosen = edit(loaded, { type: 'q/evidence', index: 0, paragraph: 1 });
+    expect(chosen.questions[0]!.evidenceQuote).toBe(P2);
+    const form = typed(chosen, BODY, `Destpêk.\n\n${BODY}`);
+    expect(form.questions[0]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: null });
+    expect(liveChecks(form).warnings).toEqual([]);
+  });
+
+  it('stays put when its own words are changed, and asks for a look until it is chosen again or saved', () => {
+    const form = edit(loaded, { type: 'text', field: 'body', value: BODY.replace('Ew gelek dilovan e.', 'Ew pir dilovan e.') });
+    expect(form.questions[2]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 1 });
+    expect(codes(liveChecks(form).warnings)).toEqual(['EVIDENCE_CHANGED@questions[2].evidenceSentence']);
+    expect(liveChecks(form).warnings[0]!.message).toBe('the sentence it points at was changed: check it still holds the answer');
+    // still followed after that, by its new words
+    const split = edit(form, { type: 'text', field: 'body', value: form.body.replace('Mamosteya wan Şîlan e. ', 'Mamosteya wan Şîlan e.\n\n') });
+    expect(split.questions[2]).toMatchObject({ evidenceParagraph: 3, evidenceSentence: 0 });
+
+    expect(liveChecks(edit(form, { type: 'q/evidence-sentence', index: 2, sentence: 1 })).warnings).toEqual([]);
+    const saved = storyFixture({ body: form.body });
+    expect(liveChecks(formFromStory(saved, { previous: form })).warnings).toEqual([]);
+
+    // a paragraph chosen whole asks when anything in it is changed
+    const whole = edit(loaded, { type: 'q/evidence', index: 0, paragraph: 0 }, { type: 'q/evidence-sentence', index: 0, sentence: null });
+    const changed = edit(whole, { type: 'text', field: 'body', value: BODY.replace('deh salî', 'neh salî') });
+    expect(codes(liveChecks(changed).warnings)).toEqual(['EVIDENCE_CHANGED@questions[0].evidenceParagraph']);
+  });
+
+  it('moves evidence that points past the text no further than its paragraph', () => {
+    const past = edit(
+      loaded,
+      { type: 'q/evidence-sentence', index: 0, sentence: 9 },
+      { type: 'q/evidence', index: 1, paragraph: 7 },
+      { type: 'text', field: 'body', value: `Destpêk.\n\n${BODY}` },
+    );
+    expect(past.questions[0]).toMatchObject({ evidenceParagraph: 1, evidenceSentence: 9, evidenceQuote: null });
+    expect(past.questions[1]).toMatchObject({ evidenceParagraph: 7, evidenceSentence: null, evidenceQuote: null });
+    expect(codes(liveChecks(past).blocking)).toEqual([
+      'EVIDENCE_SENTENCE@questions[0].evidenceSentence',
+      'EVIDENCE_PARAGRAPH@questions[1].evidenceParagraph',
+    ]);
   });
 });
 

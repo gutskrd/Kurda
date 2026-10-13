@@ -186,6 +186,34 @@ describe('the editor', () => {
     expect((first.querySelector('#story-questions-0-evidenceSentence') as HTMLSelectElement).value).toBe('');
   });
 
+  it('keeps the evidence on its words when the text is reshaped, and asks for a look when they change', async () => {
+    const api = listApi();
+    const c = await open(`#/stories/${STORY_ID}`);
+    const body = c.querySelector('#story-body') as HTMLTextAreaElement;
+    // paragraph 2 split in two: question 5's sentence is in paragraph 3 now, question 3's in 4
+    await type(body, body.value.replace('derbas dibin. ', 'derbas dibin.\n\n'));
+    await click(c.querySelector('#story-questions-4 summary'));
+    expect(text(c.querySelector('#story-questions-4 .st-evidence mark'))).toBe('Rojîn ji kulîlkên sor hez dike.');
+    expect((c.querySelector('#story-questions-4-evidenceParagraph') as HTMLSelectElement).value).toBe('2');
+    await click(c.querySelector('#story-questions-2 summary'));
+    expect(text(c.querySelector('#story-questions-2 .st-evidence mark'))).toBe('Ew gelek dilovan e.');
+    expect(text(c.querySelector('.st-checks'))).toContain('Nothing to fix.');
+
+    await type(body, body.value.replace('Ew gelek dilovan e.', 'Ew pir dilovan e.'));
+    expect(text(c.querySelector('#story-questions-2-evidenceSentence-problems'))).toBe(
+      'Check: the sentence it points at was changed: check it still holds the answer',
+    );
+    expect(text(c.querySelector('#story-questions-2 summary'))).toContain('1 to check');
+
+    // what is sent is the evidence where its words are now
+    api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
+    await click(button(c, /^Save draft/));
+    const sent = api.calls.find((call) => call.method === 'PUT')!.body as { questions: Array<{ evidenceParagraph: number; evidenceSentence: number }> };
+    expect(sent.questions.slice(2, 5).map((q) => [q.evidenceParagraph, q.evidenceSentence])).toEqual([[3, 1], [3, 3], [2, 1]]);
+    // saved, the new words are the ones chosen
+    expect(c.querySelector('#story-questions-2-evidenceSentence-problems')).toBeNull();
+  });
+
   it('saves with the version it loaded, then with the one the save returned', async () => {
     const api = listApi();
     api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: (call.body as { lockVersion: number }).lockVersion + 1 }))));

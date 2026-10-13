@@ -160,6 +160,13 @@ export interface QuestionForm {
   explanationEn: string;
   evidenceParagraph: number | null;
   evidenceSentence: number | null;
+  /**
+   * The words the evidence pointed at when the story was loaded, or when the
+   * editor last chose it (never sent). The evidence follows its words when the
+   * text around it changes; when the words themselves change, this is how the
+   * editor knows to ask for a look.
+   */
+  evidenceQuote: string | null;
 }
 
 export interface StoryForm {
@@ -229,6 +236,7 @@ export function blankQuestion(): QuestionForm {
     explanationEn: '',
     evidenceParagraph: null,
     evidenceSentence: null,
+    evidenceQuote: null,
   };
 }
 
@@ -265,6 +273,7 @@ export function formFromStory(
   const random = opts.random ?? Math.random;
   const glossKeys = opts.previous?.glossary.map((g) => g.key) ?? [];
   const questionKeys = opts.previous?.questions.map((q) => q.key) ?? [];
+  const paragraphs = storyParagraphs(story.body);
   return {
     dialect: story.dialect,
     level: story.level,
@@ -294,8 +303,16 @@ export function formFromStory(
       explanationEn: q.explanationEn ?? '',
       evidenceParagraph: q.evidenceParagraph,
       evidenceSentence: q.evidenceSentence,
+      evidenceQuote: evidenceText(paragraphs, q.evidenceParagraph, q.evidenceSentence),
     })),
   };
+}
+
+/** The words evidence points at — a sentence, or a whole paragraph — or null when it points at none. */
+export function evidenceText(paragraphs: readonly string[], paragraph: number | null, sentence: number | null): string | null {
+  const text = paragraph === null ? undefined : paragraphs[paragraph];
+  if (text === undefined) return null;
+  return sentence === null ? text : (storySentences(text)[sentence] ?? null);
 }
 
 function trimmedOrNull(v: string): string | null {
@@ -404,7 +421,9 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
       return action.form;
     case 'text': {
       const next = { ...form, [action.field]: action.value };
-      return action.field === 'title' ? followTitle(next) : next;
+      if (action.field === 'title') return followTitle(next);
+      if (action.field === 'body') return { ...next, questions: followEvidence(form.questions, form.body, action.value) };
+      return next;
     }
     case 'slug':
       // emptied, it goes back to following the title — the way to undo an edit
@@ -476,11 +495,79 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
     case 'q/evidence':
       // a sentence index means nothing in another paragraph
       return withQuestion(form, action.index, (q) =>
-        q.evidenceParagraph === action.paragraph ? q : { ...q, evidenceParagraph: action.paragraph, evidenceSentence: null },
+        q.evidenceParagraph === action.paragraph
+          ? q
+          : {
+              ...q,
+              evidenceParagraph: action.paragraph,
+              evidenceSentence: null,
+              evidenceQuote: evidenceText(storyParagraphs(form.body), action.paragraph, null),
+            },
       );
     case 'q/evidence-sentence':
-      return withQuestion(form, action.index, (q) => ({ ...q, evidenceSentence: action.sentence }));
+      return withQuestion(form, action.index, (q) => ({
+        ...q,
+        evidenceSentence: action.sentence,
+        evidenceQuote: evidenceText(storyParagraphs(form.body), q.evidenceParagraph, action.sentence),
+      }));
   }
+}
+
+interface Place {
+  p: number;
+  s: number;
+}
+
+/** Of `places`, the one nearest `from` — paragraphs away first, then sentences — or null. */
+function nearest<T extends Place>(places: readonly T[], from: Place): T | null {
+  const away = (c: Place): number => Math.abs(c.p - from.p) * 10_000 + Math.abs(c.s - from.s);
+  return places.reduce<T | null>((best, c) => (best === null || away(c) < away(best) ? c : best), null);
+}
+
+/**
+ * Evidence is stored as places in the text (paragraph 3, sentence 2), so a
+ * change above it — a paragraph split, joined, added or taken out, a sentence
+ * cut in two — would leave the question quoting another sentence, still in
+ * range, with nothing to say so. After each change of the text, each
+ * question's evidence follows its words to where they are now: the paragraph
+ * whole, if it only moved; else the sentence, as it read a keystroke ago or
+ * else as it read when it was chosen (a new sentence typed in front of it
+ * runs into it for a keystroke or two). Where the words themselves were
+ * changed it stays put, and `liveChecks` asks for a look.
+ */
+function followEvidence(questions: QuestionForm[], before: string, after: string): QuestionForm[] {
+  const was = storyParagraphs(before);
+  const now = storyParagraphs(after);
+  if (was.length === now.length && was.every((text, i) => text === now[i])) return questions;
+  let nowSentences: Array<Place & { text: string }> | null = null;
+  const sentences = (): Array<Place & { text: string }> =>
+    (nowSentences ??= now.flatMap((text, p) => storySentences(text).map((sentence, s) => ({ p, s, text: sentence }))));
+
+  return questions.map((q) => {
+    const p = q.evidenceParagraph;
+    const s = q.evidenceSentence;
+    const paragraph = p === null ? undefined : was[p];
+    if (p === null || paragraph === undefined || now[p] === paragraph) return q;
+    const from = { p, s: s ?? 0 };
+
+    // the paragraph, unchanged, somewhere else: others came or went before it
+    const words = s === null ? [paragraph, q.evidenceQuote] : [paragraph];
+    for (const w of words) {
+      const moved = w ? nearest(now.flatMap((text, i) => (text === w ? [{ p: i, s: 0 }] : [])), from) : null;
+      if (moved) return { ...q, evidenceParagraph: moved.p };
+    }
+    if (s === null) return q;
+
+    // the paragraph itself changed: find the sentence
+    const sentence = storySentences(paragraph)[s];
+    if (sentence === undefined) return q;
+    if (sentences().some((c) => c.p === p && c.s === s && c.text === sentence)) return q;
+    for (const w of [sentence, q.evidenceQuote]) {
+      const found = w ? nearest(sentences().filter((c) => c.text === w), from) : null;
+      if (found) return { ...q, evidenceParagraph: found.p, evidenceSentence: found.s };
+    }
+    return q;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -612,7 +699,9 @@ const problemKey = (p: StoryProblem): string => `${p.code}|${p.path}|${p.message
  * The checks the editor shows as it is typed: `validateStory` at the draft
  * stage (what a save would be refused for) and at the publish stage (what
  * submit and publish would be refused for), plus the slug, which the API
- * checks with its request schema rather than in `validateStory`.
+ * checks with its request schema rather than in `validateStory`. Two more
+ * warnings are the editor's own: an address in random letters, or changed
+ * after publishing, and evidence whose words were edited since it was chosen.
  */
 export function liveChecks(form: StoryForm, opts: { publishedBefore?: boolean; savedSlug?: string } = {}): LiveChecks {
   const draft = draftFromForm(form);
@@ -639,6 +728,18 @@ export function liveChecks(form: StoryForm, opts: { publishedBefore?: boolean; s
       message: `links to the old address (${opts.savedSlug}) will stop working`,
     });
   }
+  // evidence that kept its place while the words there changed may no longer hold the answer
+  const paragraphs = storyParagraphs(draft.body);
+  form.questions.forEach((q, i) => {
+    const now = evidenceText(paragraphs, q.evidenceParagraph, q.evidenceSentence);
+    if (q.evidenceQuote === null || now === null || now === q.evidenceQuote) return;
+    const sentence = q.evidenceSentence !== null;
+    warnings.push({
+      code: 'EVIDENCE_CHANGED',
+      path: `questions[${i}].${sentence ? 'evidenceSentence' : 'evidenceParagraph'}`,
+      message: `the ${sentence ? 'sentence' : 'paragraph'} it points at was changed: check it still holds the answer`,
+    });
+  });
   const blocked = new Set(blocking.map(problemKey));
   return {
     blocking,
