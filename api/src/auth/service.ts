@@ -19,7 +19,8 @@ import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
 import { LockoutService } from './lockout.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
-import { suspensionError } from '../moderation/suspension.js';
+import { currentBan } from '../moderation/sanctions-service.js';
+import { suspendedError, suspensionError } from '../moderation/suspension.js';
 
 /** Verified against when the user doesn't exist, so login latency doesn't
  *  reveal account existence. */
@@ -488,12 +489,23 @@ export class AuthService {
       // phone's next refresh presents one of those, and it must land on the
       // suspension screen, not the sign-in form. Every token the account still
       // holds is revoked (a ban written straight to the account left them live).
+      //
+      // But only for a token the account could still have used: unexpired, and
+      // either live or ended by the ban itself (revoked when the ban began, not
+      // rotated). Any other — rotated long ago, revoked as stolen, expired —
+      // gets the answer it always got: the appeal token reads the person's
+      // standing and files their one appeal per decision, which is not for
+      // whoever kept an old token.
       const owner = await this.users.findById(row.user_id);
-      const suspended = owner ? await suspensionError(this.config, client, owner) : null;
-      if (suspended) {
-        await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [row.user_id]);
-        await client.query('COMMIT');
-        throw suspended;
+      const ban = owner ? await currentBan(client, owner.id) : null;
+      if (owner && ban) {
+        const unexpired = new Date(row.expires_at).getTime() >= Date.now();
+        const endedByBan = row.revoked_at !== null && row.replaced_by === null && new Date(row.revoked_at).getTime() >= ban.since.getTime();
+        if (unexpired && (row.revoked_at === null || endedByBan)) {
+          await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [row.user_id]);
+          await client.query('COMMIT');
+          throw await suspendedError(this.config, owner, ban);
+        }
       }
 
       if (row.revoked_at || row.replaced_by) {

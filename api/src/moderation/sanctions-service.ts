@@ -725,6 +725,12 @@ export interface CurrentBan {
   sanctionId: string | null;
   /** null = permanent */
   until: Date | null;
+  /**
+   * When the account was first locked out by the bans in force (the earliest
+   * of them was recorded then, and every session ended with it). Refresh
+   * tokens revoked at or after this were revoked by the ban.
+   */
+  since: Date;
   policy: ReportCategory | null;
   statement: string;
   appealable: boolean;
@@ -745,8 +751,9 @@ export async function currentBan(db: Executor, userId: string): Promise<CurrentB
   const user = u.rows[0];
   const now = new Date();
   if (!user?.banned_at || (user.banned_until !== null && user.banned_until <= now)) return null;
-  const s = await db.query<SanctionRow & { appealed: boolean }>(
-    `SELECT s.*, EXISTS (SELECT 1 FROM appeals a WHERE a.sanction_id = s.id) AS appealed
+  const s = await db.query<SanctionRow & { appealed: boolean; first_recorded: Date }>(
+    `SELECT s.*, EXISTS (SELECT 1 FROM appeals a WHERE a.sanction_id = s.id) AS appealed,
+            min(s.created_at) OVER () AS first_recorded
        FROM sanctions s
       WHERE s.user_id = $1 AND s.kind IN ('suspension','permanent_ban') AND ${IN_FORCE_SQL}
       ORDER BY (s.kind = 'permanent_ban') DESC, s.ends_at DESC NULLS FIRST, s.created_at DESC
@@ -755,12 +762,20 @@ export async function currentBan(db: Executor, userId: string): Promise<CurrentB
   );
   const row = s.rows[0];
   if (!row) {
-    return { sanctionId: null, until: user.banned_until, policy: null, statement: 'Your account has been suspended.', appealable: false };
+    return {
+      sanctionId: null,
+      until: user.banned_until,
+      since: user.banned_at,
+      policy: null,
+      statement: 'Your account has been suspended.',
+      appealable: false,
+    };
   }
   const deadline = row.created_at.getTime() + APPEAL_WINDOW_DAYS * 86_400_000;
   return {
     sanctionId: row.id,
     until: row.kind === 'permanent_ban' ? null : row.ends_at,
+    since: row.first_recorded < user.banned_at ? row.first_recorded : user.banned_at,
     policy: row.policy,
     statement: row.statement,
     appealable: !row.appealed && deadline > now.getTime(),

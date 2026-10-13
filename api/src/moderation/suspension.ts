@@ -2,7 +2,7 @@ import type { SuspendedErrorDetails } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
 import { signAppealToken } from './appeal-token.js';
-import { currentBan } from './sanctions-service.js';
+import { currentBan, type CurrentBan } from './sanctions-service.js';
 import type { Executor } from './tx.js';
 
 /**
@@ -24,7 +24,11 @@ export async function suspensionError(
   user: { id: string; token_version: number },
 ): Promise<AppError | null> {
   const ban = await currentBan(db, user.id);
-  if (!ban) return null;
+  return ban ? suspendedError(config, user, ban) : null;
+}
+
+/** The refusal for a ban already looked up. */
+export async function suspendedError(config: AppConfig, user: { id: string; token_version: number }, ban: CurrentBan): Promise<AppError> {
   const details: SuspendedErrorDetails = {
     until: ban.until ? ban.until.toISOString() : null,
     policy: ban.policy,

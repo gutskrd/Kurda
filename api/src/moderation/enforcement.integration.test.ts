@@ -94,6 +94,37 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       expect(live.rowCount).toBe(0);
     });
 
+    it('an old refresh token — rotated, ended before the ban, or expired — gets no appeal token', async () => {
+      const p = await kit.person('oldtokens');
+      ids.push(p.id);
+      const refresh = (token: string) => call('POST', '/auth/refresh', null, { refreshToken: token });
+      // rotated once: the first token is an old one now
+      const rotated = await refresh(p.refreshToken);
+      expect(rotated.statusCode).toBe(200);
+      const current = (rotated.json() as { refreshToken: string }).refreshToken;
+      // a second session, signed out before the ban
+      const other = (await kit.login(p)).json() as { tokens: { refreshToken: string } };
+      await pool.query(
+        `UPDATE refresh_tokens SET revoked_at = now() - interval '1 minute'
+          WHERE user_id = $1 AND revoked_at IS NULL AND family_id <> (SELECT family_id FROM refresh_tokens WHERE replaced_by IS NOT NULL AND user_id = $1 LIMIT 1)`,
+        [p.id],
+      );
+      await call('POST', `/admin/users/${p.id}/sanctions`, modA.token, {
+        kind: 'suspension', durationHours: 24, policy: 'spam', statement: 'Spam.',
+      });
+
+      expect((await refresh(p.refreshToken)).json().code).toBe('REFRESH_REUSED');
+      expect((await refresh(other.tokens.refreshToken)).json().code).toBe('REFRESH_REUSED');
+      // the token the ban itself ended is the phone's: that one hears why (the
+      // reuse alarm above left it alone — the ban had already revoked it)
+      const banEnded = await refresh(current);
+      expect(banEnded.statusCode).toBe(403);
+      expect(banEnded.json().code).toBe('ACCOUNT_SUSPENDED');
+      // and an expired one is just expired, even one nothing revoked
+      await pool.query(`UPDATE refresh_tokens SET expires_at = now() - interval '1 minute', revoked_at = NULL WHERE user_id = $1`, [p.id]);
+      expect((await refresh(current)).json().code).toBe('REFRESH_EXPIRED');
+    });
+
     it('reads its standing and files an appeal with the appeal token — and nothing else', async () => {
       const standing = await call('GET', '/me/standing', appealToken);
       expect(standing.statusCode).toBe(200);
