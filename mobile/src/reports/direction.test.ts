@@ -10,6 +10,11 @@ describe('directionFor', () => {
     expect(directionFor(false, false)).toMatchObject({ row: 'row', flip: null });
   });
 
+  it('lets words someone else wrote keep their own direction, lined up with the screen', () => {
+    expect(directionFor(true, false).free).toEqual({ writingDirection: 'auto', textAlign: 'right' });
+    expect(directionFor(false, false).free).toEqual({ writingDirection: 'auto' });
+  });
+
   it('steps aside once the platform mirrors everything itself', () => {
     expect(directionFor(true, true)).toMatchObject({ row: 'row', text: { writingDirection: 'rtl', textAlign: 'left' } });
   });

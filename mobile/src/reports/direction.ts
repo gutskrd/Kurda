@@ -8,6 +8,12 @@ export interface Direction {
   row: ViewStyle['flexDirection'];
   /** text that reads, and lines up, the way the language does */
   text: TextStyle;
+  /**
+   * Words someone else wrote (a moderator's reasons, a reviewer's answer, a
+   * name): lined up with the screen, but read in their own direction — an
+   * English statement on a Soranî screen must not put its full stop first.
+   */
+  free: TextStyle;
   /** a chevron or an arrow that should point the way the reader reads */
   flip: ViewStyle | null;
 }
@@ -36,6 +42,7 @@ export function directionFor(rtl: boolean, platformRtl: boolean): Direction {
     rtl,
     row: mirror ? 'row-reverse' : 'row',
     text: rtl ? { writingDirection: 'rtl', textAlign: mirror ? 'right' : 'left' } : { writingDirection: 'ltr' },
+    free: rtl ? { writingDirection: 'auto', textAlign: mirror ? 'right' : 'left' } : { writingDirection: 'auto' },
     flip: rtl ? { transform: [{ scaleX: -1 }] } : null,
   };
 }

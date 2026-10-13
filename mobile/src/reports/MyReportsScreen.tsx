@@ -86,7 +86,7 @@ function ReportRow({ report }: { report: MyReport }): React.JSX.Element {
   return (
     <GlassCard style={styles.card}>
       <View style={[styles.head, { flexDirection: dir.row }]}>
-        <Text style={[styles.what, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.what, report.targetLabel ? dir.free : dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
           {what}
         </Text>
         <Text style={[styles.date, { color: colors.textSecondary }]}>

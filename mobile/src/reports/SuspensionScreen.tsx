@@ -105,7 +105,7 @@ export function SuspensionScreen({
             </Text>
           ) : null}
           {details.statement ? (
-            <Text style={[styles.statement, dir.text, { color: colors.textPrimary }]}>{details.statement}</Text>
+            <Text style={[styles.statement, dir.free, { color: colors.textPrimary }]}>{details.statement}</Text>
           ) : null}
 
           {appeal ? (

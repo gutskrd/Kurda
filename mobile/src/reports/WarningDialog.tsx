@@ -70,7 +70,7 @@ export function WarningDialog(): React.JSX.Element | null {
           </Text>
           {warnings.map((w) =>
             w.statement ? (
-              <Text key={w.id} style={[styles.statement, dir.text, { color: colors.textSecondary }]}>
+              <Text key={w.id} style={[styles.statement, dir.free, { color: colors.textSecondary }]}>
                 {w.statement}
               </Text>
             ) : null,

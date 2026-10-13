@@ -191,7 +191,7 @@ export function SanctionCard({
       </Text>
       {sanction.statement ? (
         <View style={[styles.statement, { borderColor: colors.separator }, dir.rtl ? styles.statementRtl : styles.statementLtr]}>
-          <Text style={[styles.statementText, dir.text, { color: colors.textPrimary }]}>{sanction.statement}</Text>
+          <Text style={[styles.statementText, dir.free, { color: colors.textPrimary }]}>{sanction.statement}</Text>
         </View>
       ) : null}
       <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
@@ -248,7 +248,7 @@ export function AppealStatusLine({ appeal }: { appeal: AppealView }): React.JSX.
     <View style={[styles.appeal, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite">
       <Text style={[styles.appealStatus, dir.text, { color: colors.textPrimary }]}>{t(APPEAL_STATUS_LABEL[appeal.status])}</Text>
       {appeal.decisionNote ? (
-        <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>{appeal.decisionNote}</Text>
+        <Text style={[styles.meta, dir.free, { color: colors.textSecondary }]}>{appeal.decisionNote}</Text>
       ) : null}
     </View>
   );
