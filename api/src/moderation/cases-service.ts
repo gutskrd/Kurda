@@ -704,22 +704,13 @@ export class CasesService {
       const applied: CaseSanctionView[] = [];
       if (c.subject_user_id) {
         // a ban still waiting for a second admin is replaced by this one, which
-        // does not wait
-        const waiting = await client.query<{ id: string; meta: { emergencySanctionId?: string } }>(
-          `SELECT id, meta FROM sanctions
-            WHERE user_id = $1 AND kind = 'permanent_ban' AND pending_approval AND revoked_at IS NULL`,
+        // does not wait (another case it was decided on goes back to the queue)
+        const waiting = await client.query<SanctionRow>(
+          `SELECT * FROM sanctions WHERE user_id = $1 AND kind = 'permanent_ban' AND pending_approval AND revoked_at IS NULL`,
           [c.subject_user_id],
         );
         for (const w of waiting.rows) {
-          const reason = 'replaced by the CSAM action';
-          await this.sanctions.revoke(client, w.id, adminId, reason, { notify: false, auditAction: 'reject_ban' });
-          const emergency = w.meta.emergencySanctionId;
-          if (emergency) {
-            const e = await client.query<{ revoked_at: Date | null }>(`SELECT revoked_at FROM sanctions WHERE id = $1`, [emergency]);
-            if (e.rows[0] && e.rows[0].revoked_at === null) {
-              await this.sanctions.revoke(client, emergency, adminId, reason, { notify: false, auditAction: 'reject_ban' });
-            }
-          }
+          await this.withdrawBan(client, w, adminId, 'replaced by the CSAM action', { notify: false, reopen: w.case_id !== c.id });
         }
         const banned = await client.query(
           `SELECT 1 FROM sanctions s WHERE s.user_id = $1 AND s.kind = 'permanent_ban' AND s.revoked_at IS NULL AND NOT s.pending_approval`,
@@ -1051,14 +1042,21 @@ export class CasesService {
     return due.rowCount ?? 0;
   }
 
-  private async withdrawBan(db: Executor, s: SanctionRow, adminId: string | null, reason: string): Promise<CaseSanctionView> {
-    const view = await this.sanctions.revoke(db, s.id, adminId, reason, { auditAction: 'reject_ban' });
+  private async withdrawBan(
+    db: Executor,
+    s: SanctionRow,
+    adminId: string | null,
+    reason: string,
+    opts: { notify?: boolean; reopen?: boolean } = {},
+  ): Promise<CaseSanctionView> {
+    const revokeOpts = { auditAction: 'reject_ban', notify: opts.notify };
+    const view = await this.sanctions.revoke(db, s.id, adminId, reason, revokeOpts);
     const emergency = (s.meta as { emergencySanctionId?: string }).emergencySanctionId;
     if (emergency) {
       const e = await db.query<{ revoked_at: Date | null }>(`SELECT revoked_at FROM sanctions WHERE id = $1`, [emergency]);
-      if (e.rows[0] && e.rows[0].revoked_at === null) await this.sanctions.revoke(db, emergency, adminId, reason, { auditAction: 'reject_ban' });
+      if (e.rows[0] && e.rows[0].revoked_at === null) await this.sanctions.revoke(db, emergency, adminId, reason, revokeOpts);
     }
-    if (s.case_id) {
+    if (s.case_id && opts.reopen !== false) {
       await db.query(
         `UPDATE moderation_cases SET status = 'open', resolution = NULL, resolved_by = NULL, resolved_at = NULL,
                 resolution_note = $2, updated_at = now()

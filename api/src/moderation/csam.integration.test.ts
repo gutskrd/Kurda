@@ -192,6 +192,23 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
       [waiting],
     );
     expect(live.rows).toEqual([{ kind: 'permanent_ban', zero_tolerance: true, pending_approval: false }]);
+    // replaced quietly: no "your suspension was lifted" just before the ban
+    const lifted = await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction_lifted'`, [waiting]);
+    expect(lifted.rowCount).toBe(0);
+
+    // a ban waiting on another case about the same person: that case goes back to the queue
+    const twice = await user('sub3d');
+    const firstCase = await caseOf((await reports.file(reporter, { targetType: 'user', targetId: twice, category: 'harassment' })).receipt.report.id);
+    await cases.decide(firstCase, admin, {
+      outcome: 'actioned', policy: 'harassment', removeContent: false, notifyReporters: false,
+      actions: [{ target: 'subject', kind: 'permanent_ban', statement: 'Abuse.' }],
+    });
+    const theirPost = await post(twice, await picture('three'));
+    const secondCase = await caseOf((await reports.file(reporter, { targetType: 'image_post', targetId: theirPost, category: 'child_safety' })).receipt.report.id);
+    expect(secondCase).not.toBe(firstCase);
+    await cases.csam(secondCase, other);
+    expect(await cases.find(pool, firstCase)).toMatchObject({ status: 'open', resolution_note: 'Permanent ban not confirmed: replaced by the CSAM action' });
+    expect((await cases.find(pool, secondCase))!.status).toBe('escalated');
 
     // a moderator who reported the case is part of it
     const modReporter = await user('adm3c', '{moderator}');
