@@ -8,7 +8,6 @@ export type RootStackParamList = {
   Tabs: undefined;
   Lesson: { lessonId: string };
   Practice: undefined;
-  Game: { roomId: string };
   Shop: undefined;
   League: undefined;
   /**

@@ -14,7 +14,6 @@ export interface InboxItem {
 export type DeepLink =
   | { screen: 'EventQuests' }
   | { screen: 'Notifications' }
-  | { screen: 'Game'; params: { roomId: string } }
   | { screen: 'Profile'; params: { userId: string } }
   | { screen: 'Chat'; params: { userId: string; username: string } };
 
@@ -31,10 +30,6 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   switch (data.screen) {
     case 'EventQuests':
       return { screen: 'EventQuests' };
-    case 'Game': {
-      const roomId = str(data.roomId);
-      return roomId ? { screen: 'Game', params: { roomId } } : null;
-    }
     case 'Profile': {
       const userId = str(data.userId);
       return userId ? { screen: 'Profile', params: { userId } } : null;

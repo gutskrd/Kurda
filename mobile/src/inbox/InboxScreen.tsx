@@ -97,7 +97,6 @@ export function InboxScreen(): React.JSX.Element {
       const link = resolveDeepLink(item.data);
       if (!link) return;
       if (link.screen === 'Chat') navigation.navigate('Chat', link.params);
-      else if (link.screen === 'Game') navigation.navigate('Game', link.params);
       else if (link.screen === 'Profile') navigation.navigate('UserProfile', { userId: link.params.userId });
       else if (link.screen === 'EventQuests') navigation.navigate('EventQuests');
       else navigation.navigate('Notifications');

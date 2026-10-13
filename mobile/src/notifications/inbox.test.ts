@@ -4,7 +4,6 @@ import { relativeTime, resolveDeepLink, unreadBadge } from './inbox.js';
 describe('resolveDeepLink', () => {
   it('resolves known targets with required params', () => {
     expect(resolveDeepLink({ screen: 'EventQuests' })).toEqual({ screen: 'EventQuests' });
-    expect(resolveDeepLink({ screen: 'Game', roomId: 'r1' })).toEqual({ screen: 'Game', params: { roomId: 'r1' } });
     expect(resolveDeepLink({ screen: 'Chat', userId: 'u1', username: 'ada' })).toEqual({
       screen: 'Chat',
       params: { userId: 'u1', username: 'ada' },
@@ -12,7 +11,8 @@ describe('resolveDeepLink', () => {
   });
 
   it('returns null for missing params or unknown screens (friendly fallback)', () => {
-    expect(resolveDeepLink({ screen: 'Game' })).toBeNull();
+    // the quiz's game rooms are gone, and with them the screen they opened
+    expect(resolveDeepLink({ screen: 'Game', roomId: 'r1' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Profile' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Nope' })).toBeNull();
     expect(resolveDeepLink({})).toBeNull();
