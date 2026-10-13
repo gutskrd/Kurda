@@ -93,10 +93,10 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
   }
 
   await pool.query(
-    `INSERT INTO media_uploads (key, content_type, content_length)
-     VALUES ($1, $2, $3)
+    `INSERT INTO media_uploads (key, content_type, content_length, kind)
+     VALUES ($1, $2, $3, $4)
      ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length`,
-    [key, sniffed, raw.length],
+    [key, sniffed, raw.length, kind],
   );
   try {
     await storage.put(key, raw, sniffed);

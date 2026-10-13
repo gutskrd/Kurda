@@ -232,10 +232,15 @@ so only Cloudflare can see them.**
 | `MEDIA_AUDIO_ALLOWED_TYPES` | mpeg,mp4,webm | accepted audio types (sniffed, not declared; webm is what a browser records) |
 | `MEDIA_AUDIO_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user voice-note upload rate limit |
 
-Image/meme posts (KUR-291) upload the same way as avatars — `POST /images/upload`
-takes raw bytes, the server sniffs/resizes/WebP-compresses/moderates them, then
-`POST /images` creates a post that can only reference a media key that cleared that
-pipeline. They share the storage/op ceilings above (one R2 budget).
+Pictures on posts (KUR-291) upload the same way as avatars — `POST /images/upload`
+takes raw bytes, the server sniffs/resizes/WebP-compresses/moderates them, then a
+post (`POST /library/posts`, or `POST /images` from older apps) can only reference
+a media key that cleared that pipeline and that its author uploaded. They share
+the storage/op ceilings above (one R2 budget). A picture upload is confirmed by
+the post that uses it, so one that is uploaded and never posted is deleted by the
+orphan sweep after a day; uploads waiting for their post count against the storage
+ceiling. The migration that introduced this (1751000163000) hands the picture
+uploads no post uses to the sweep the same way.
 
 At the storage limit the API returns `MEDIA_STORAGE_LIMIT_REACHED` and stores
 nothing new; **existing photos keep working and are never auto-deleted**. If

@@ -3,13 +3,16 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 /**
- * The mark every Dîmen carries: the Hevalo logo and whose picture it is.
+ * The mark a picture carries when its poster made it: the Hevalo logo and whose
+ * picture it is.
  *
  * Burned in here rather than drawn by the browser, because a signature the
  * client applies is a signature the client can leave off — and the point of it
- * is that it is on every picture. The composer draws a matching one in its
- * preview so nothing about the result is a surprise, but this is the one that
- * ends up in the file.
+ * is that it is on every picture somebody posts as their own. A picture they
+ * did not make ("I made this" switched off) goes up without it, since the mark
+ * would claim it as theirs. The composer draws a matching one in its preview so
+ * nothing about the result is a surprise, but this is the one that ends up in
+ * the file.
  */
 
 /** Signature height as a share of the picture's shorter edge. */

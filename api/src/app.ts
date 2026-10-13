@@ -418,7 +418,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLibraryReportRoutes(app);
     // community image & meme sharing (KUR-290): content model + cost-safe
     // through-server upload (KUR-291)
-    registerImagePostRoutes(app, config);
+    registerImagePostRoutes(app, config, undefined, aiMod, trust);
     // reactions + threaded comments on image/meme posts (KUR-291), trust-gated
     // and auto-screened like library comments (#293/#295)
     registerImageInteractionRoutes(app, undefined, undefined, aiMod, trust);

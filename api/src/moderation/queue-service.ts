@@ -79,6 +79,11 @@ export class ModerationQueueService {
     );
     // community library reports (#285) — one case per reported item (mass-report
     // dedup), keyed 'library_post:<id>' / 'library_comment:<id>'
+    // TODO(moderation): a written post can carry up to four pictures now
+    // (library_post_media). The evidence below should carry their media keys
+    // and alt texts, as it carries the narration's, and preserve them
+    // (media_uploads.preserve_evidence); until then an edit keeps a reported
+    // post's pictures by not letting go of them (LibraryService.update).
     added += await this.ingest(
       `SELECT 'library_post:' || r.target_id AS ref, p.author_id AS subject, 55 AS severity,
               'Library post reported: ' || left(p.title, 60) AS summary,

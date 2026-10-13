@@ -135,6 +135,13 @@ export {
   type RefundCurrency,
   type ReturnItemResult,
 } from './cosmetics.js';
+
+/**
+ * Writing a post — words and up to four pictures in one box: the limits, what
+ * kind of post it is, how characters are counted, and the draft kept on the
+ * device, the same for the API and both apps.
+ */
+export * from './post-composer.js';
 export {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_GROUPS,

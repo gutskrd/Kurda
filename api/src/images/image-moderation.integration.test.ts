@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ModerationQueueService } from '../moderation/queue-service.js';
 import { activate } from '../test/activate.js';
+import { seedPictureUpload } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -30,19 +31,18 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
   };
   const call = (method: 'POST' | 'GET' | 'DELETE', url: string, token?: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.63.0.9' });
-  const seedMedia = (key: string) =>
-    pool.query(
-      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
-       VALUES ($1, 'image/webp', 1024, now(), 'cleared') ON CONFLICT (key) DO UPDATE SET confirmed_at = now()`,
-      [key],
-    );
+  // the upload a post may use: its author's own, cleared, unused
+  let authorId = '';
+  const seedMedia = (key: string) => seedPictureUpload(pool, key, authorId);
 
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     queue = new ModerationQueueService(pool);
-    authorTok = (await register('author', '10.63.0.1')).token;
+    const author = await register('author', '10.63.0.1');
+    authorTok = author.token;
+    authorId = author.id;
     reporterTok = (await register('reporter', '10.63.0.2')).token;
     otherTok = (await register('other', '10.63.0.3')).token;
     modId = (await register('mod', '10.63.0.4')).id;

@@ -9,6 +9,7 @@ import { isMinorRow } from '../users/age.js';
 import { handOnGroup } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
+import { exportPosts } from './posts-export.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -240,6 +241,8 @@ export class GdprService {
        FROM refresh_tokens WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`,
       [userId],
     );
+    // what they posted, pictures as links to the files
+    const posts = await exportPosts(this.pool, userId, (k) => this.deps.storage?.publicUrl(k) ?? null);
     const identities = await this.pool.query(
       `SELECT provider, email_at_link, created_at FROM oauth_identities WHERE user_id = $1`,
       [userId],
@@ -257,6 +260,7 @@ export class GdprService {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
       user: user.rows[0] ?? null,
+      posts,
       sessions: sessions.rows,
       oauthIdentities: identities.rows,
       storyGames: storyGames.rows,
@@ -344,6 +348,16 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   );
   const exports = await executor.query<{ key: string }>(
     `SELECT storage_key AS key FROM user_exports WHERE user_id = $1 AND storage_key IS NOT NULL`,
+    [userId],
+  );
+  // the pictures on their written posts, and every other picture they uploaded
+  // for a post: never posted (the sweep would take those in a day; a closed
+  // account's go now), or taken off a reported post and kept for its case
+  // TODO(moderation): filter these by media_uploads.preserve_evidence like the
+  // keys above once the moderation branch's column is here
+  const pictures = await executor.query<{ key: string }>(
+    `SELECT m.media_key AS key FROM library_post_media m JOIN library_posts p ON p.id = m.post_id WHERE p.author_id = $1
+     UNION SELECT key FROM media_uploads WHERE uploader_id = $1`,
     [userId],
   );
 
@@ -446,9 +460,12 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
       WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.profile_photo_key = k.key)
         AND NOT EXISTS (SELECT 1 FROM image_posts i WHERE i.image_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = k.key)
+        AND NOT EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.media_key = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM image_scans s WHERE s.media_key = k.key AND s.preserve_evidence)`,
-    [keys.rows.map((r) => r.key)],
+    // once each: an old picture post's upload is both its picture and one of
+    // their uploads, and a key twice would fail the marking below
+    [[...new Set([...keys.rows, ...pictures.rows].map((r) => r.key))]],
   );
   const files = [...unused.rows.map((r) => r.key), ...exports.rows.map((r) => r.key)];
   await q(

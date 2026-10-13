@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { seedPictureUpload } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -35,13 +36,11 @@ describe.skipIf(!DATABASE_URL)('image reactions & comments (integration)', () =>
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    authorTok = (await register('author', '10.62.0.1')).token;
+    const author = await register('author', '10.62.0.1');
+    authorTok = author.token;
     otherTok = (await register('other', '10.62.0.2')).token;
-    await pool.query(
-      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
-       VALUES ($1, 'image/webp', 1024, now(), 'cleared') ON CONFLICT (key) DO NOTHING`,
-      [`image-post/${suffix}.webp`],
-    );
+    // the upload a post may use: its author's own, cleared, unused
+    await seedPictureUpload(pool, `image-post/${suffix}.webp`, author.id);
     postId = (await call('POST', '/images', authorTok, { imageMediaId: `image-post/${suffix}.webp`, caption: 'react to me' })).json().id;
   });
 
