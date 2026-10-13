@@ -403,6 +403,47 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     }
   });
 
+  it('reports a written post with its pictures and their alt text, and keeps them after the author edits and deletes', async () => {
+    const [a, b] = [
+      await seedPictureUpload(pool, `image-post/rpw1_${kit.suffix}.webp`, author.id),
+      await seedPictureUpload(pool, `image-post/rpw2_${kit.suffix}.webp`, author.id),
+    ];
+    const posted = await call('POST', '/library/posts', author.token, {
+      body: 'Du wêne',
+      media: [{ mediaKey: a, altText: 'Çiyayek' }, { mediaKey: b }],
+      sourceCredit: 'Min kişand',
+    });
+    expect(posted.statusCode).toBe(201);
+    const postId = (posted.json() as { id: string }).id;
+    const filed = await report(reporter, { targetType: 'library_post', targetId: postId, category: 'sexual' });
+    expect(filed.statusCode).toBe(201);
+    const caseId = await caseOf((filed.json() as ReportReceipt).report.id);
+    const expected = {
+      text: 'Du wêne',
+      mediaKeys: [a, b],
+      pictures: [
+        { mediaKey: a, altText: 'Çiyayek' },
+        { mediaKey: b, altText: null },
+      ],
+      extra: { postType: 'gotin', meme: false, sourceCredit: 'Min kişand' },
+    };
+    expect((await detail(caseId)).reports[0]!.evidence).toMatchObject(expected);
+    // both are kept from every cleanup while the evidence is
+    const kept = await pool.query<{ key: string; preserve_evidence: boolean }>(
+      `SELECT key, preserve_evidence FROM media_uploads WHERE key = ANY($1) ORDER BY key`,
+      [[a, b]],
+    );
+    expect(kept.rows).toEqual([a, b].sort().map((key) => ({ key, preserve_evidence: true })));
+
+    // the author takes a picture off, rewrites the other's alt text, then deletes the post
+    expect((await call('PATCH', `/library/posts/${postId}`, author.token, { media: [{ mediaKey: b, altText: 'nû' }] })).statusCode).toBe(200);
+    expect((await call('DELETE', `/library/posts/${postId}`, author.token)).statusCode).toBeLessThan(300);
+    const after = await detail(caseId);
+    expect(after.reports[0]!.evidence).toMatchObject(expected);
+    // and the case view still has both pictures to show
+    expect(after.media.map((m) => m.key).sort()).toEqual([a, b].sort());
+  });
+
   it('reports pictures and comments with what they said, and keeps the picture from cleanup', async () => {
     // the upload as POST /images/upload leaves it: the author's, waiting for its post
     const key = await seedPictureUpload(pool, `image-post/rp_${kit.suffix}.webp`, author.id);

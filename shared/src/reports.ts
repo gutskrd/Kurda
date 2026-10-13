@@ -571,6 +571,12 @@ export interface EvidenceSnapshot {
   status?: string | null;
   /** stored media, kept from cleanup while the evidence is */
   mediaKeys: string[];
+  /**
+   * A written post's pictures, in order, with the alt text its author wrote
+   * for each (their keys are in `mediaKeys` too) — so the case still shows
+   * them after the author edits them off or deletes the post.
+   */
+  pictures?: Array<{ mediaKey: string; altText: string | null }>;
   /** chats: ~10 messages before and 5 after, from a conversation the reporter is in */
   context?: EvidenceMessage[];
   group?: { id: string; name: string; privacy?: string } | null;

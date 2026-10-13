@@ -1,8 +1,8 @@
 /**
  * The pictures on written posts in someone's data, against real Postgres: a
  * closed account's go with its posts (and so do the uploads it never posted),
- * other people's and evidence stay; an export lists the posts with links to
- * their pictures.
+ * other people's stay, and evidence leaves the public bucket but is kept; an
+ * export lists the posts with links to their pictures.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -10,7 +10,9 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { FakeStorage } from '../test/fake-storage.js';
 import { memoryStorage, seedPictureUpload } from '../test/media.js';
+import { evidenceObjectKey } from '../moderation/pseudonym.js';
 import { GdprService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -91,7 +93,7 @@ describe.skipIf(!DATABASE_URL)('pictures on posts in GDPR erase and export (inte
     expect(rows.rowCount).toBe(0);
   });
 
-  it('erases a picture taken off a reported post with the rest of a closed account’s', async () => {
+  it('takes a reported post’s pictures off the public bucket with the rest of a closed account’s, and keeps them as evidence', async () => {
     const child = await person('kept');
     const reader = await person('keptreader');
     const [a, b] = [await upload(child), await upload(child)];
@@ -124,8 +126,27 @@ describe.skipIf(!DATABASE_URL)('pictures on posts in GDPR erase and export (inte
     });
     expect(picturePost.statusCode).toBe(201);
 
-    await new GdprService(pool, { storage: memoryStorage() }).closeNow(child.id, 'under_minimum_age');
-    expect(await stored([a, b, old])).toEqual([]);
+    const storage = new FakeStorage();
+    for (const key of [a, b, old]) storage.upload(key);
+    await new GdprService(pool, { storage: storage.asStorage }).closeNow(child.id, 'under_minimum_age');
+    // the report's snapshot holds both pictures of the reported post — the
+    // one still on it and the one taken off — so they are not deleted with
+    // the account but moved to private storage, no longer served; the old
+    // picture post's upload goes
+    expect(await stored([a, b, old])).toEqual([a, b].sort());
+    for (const key of [a, b]) {
+      expect(storage.publicObjects.has(key)).toBe(false);
+      expect(storage.evidence.has(evidenceObjectKey(key))).toBe(true);
+    }
+    const kept = await pool.query<{ orphan: boolean; preserve_evidence: boolean; quarantine_state: string | null }>(
+      `SELECT confirmed_at IS NULL AS orphan, preserve_evidence, quarantine_state FROM media_uploads WHERE key = ANY($1)`,
+      [[a, b]],
+    );
+    expect(kept.rows).toEqual([
+      { orphan: true, preserve_evidence: true, quarantine_state: 'done' },
+      { orphan: true, preserve_evidence: true, quarantine_state: 'done' },
+    ]);
+    expect(storage.publicObjects.has(old)).toBe(false);
   });
 
   it('exports someone’s posts with links to their pictures, drafts and removed ones too', async () => {

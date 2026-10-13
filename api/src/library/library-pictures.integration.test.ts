@@ -324,6 +324,10 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     await pool.query(`UPDATE reports SET status = 'no_violation', closed_at = now() WHERE target_id = $1`, [reported.id]);
     expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [] })).statusCode).toBe(200);
     expect(await confirmed(a)).toBe(false);
+    // ...though the report's snapshot still holds it, so the sweep leaves the
+    // file alone until the evidence's retention lets it go
+    await new MediaService(pool, storage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
+    expect(storage.objects.has(a)).toBe(true);
   });
 
   it('changes words, title, credit and alt text without touching the pictures', async () => {

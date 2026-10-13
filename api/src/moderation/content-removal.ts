@@ -40,7 +40,13 @@ export interface MediaRemoval {
   type: 'media';
   key: string;
   previousScanStatus: string | null;
+  /** the picture posts (`image_posts`) it was the picture of */
   posts: Array<{ id: string; previousStatus: string }>;
+  /**
+   * the written posts it was one of the pictures on (`library_post_media`);
+   * absent from removals recorded before written posts had pictures
+   */
+  libraryPosts?: Array<{ id: string; previousStatus: string }>;
   profilePhotoOf: string[];
 }
 
@@ -157,9 +163,11 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
 /**
  * Hide one file everywhere it is used. Keys are content hashes, so the same
  * picture can sit under several accounts' posts and profiles at once: every
- * picture post carrying it is removed, it comes off every profile it is the
- * photo of (old chat messages, comments and leaderboards draw the avatar from
- * there), and the upload is blocked so it is never served or accepted again.
+ * picture post carrying it is removed, and so is every written post it is one
+ * of the pictures on (a post is what it shows, so it goes whole, as a picture
+ * post does); it comes off every profile it is the photo of (old chat
+ * messages, comments and leaderboards draw the avatar from there), and the
+ * upload is blocked so it is never served or accepted again.
  */
 export async function removeMedia(db: Executor, key: string): Promise<MediaRemoval> {
   const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [key]);
@@ -169,17 +177,33 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
     [key],
   );
   await db.query(`UPDATE image_posts SET status = 'removed', updated_at = now() WHERE image_media_id = $1 AND status <> 'removed'`, [key]);
+  const written = await db.query<{ id: string; status: string }>(
+    `SELECT p.id, p.status FROM library_posts p
+      WHERE p.status <> 'removed'
+        AND p.id IN (SELECT m.post_id FROM library_post_media m WHERE m.media_key = $1)
+      FOR UPDATE`,
+    [key],
+  );
+  if (written.rows.length > 0) {
+    await db.query(`UPDATE library_posts SET status = 'removed', updated_at = now() WHERE id = ANY($1::uuid[])`, [
+      written.rows.map((p) => p.id),
+    ]);
+  }
   const photos = await db.query<{ id: string }>(`UPDATE users SET profile_photo_key = NULL WHERE profile_photo_key = $1 RETURNING id`, [key]);
   return {
     type: 'media',
     key,
     previousScanStatus: media.rows[0]?.scan_status ?? null,
     posts: posts.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
+    libraryPosts: written.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
     profilePhotoOf: photos.rows.map((p) => p.id),
   };
 }
 
-/** The files a removal took down with the content: a picture post's image, a post's or comment's voice. */
+/**
+ * The files a removal took down with the content: a picture post's image, a
+ * written post's pictures and voice, a comment's voice.
+ */
 export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<string[]> {
   switch (rec.type) {
     case 'image_post': {
@@ -187,7 +211,11 @@ export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<
       return r.rows.map((x) => x.k);
     }
     case 'library_post': {
-      const r = await db.query<{ k: string | null }>(`SELECT audio_media_id AS k FROM library_posts WHERE id = $1::uuid`, [rec.id]);
+      const r = await db.query<{ k: string | null }>(
+        `SELECT m.media_key AS k FROM library_post_media m WHERE m.post_id = $1::uuid
+         UNION ALL SELECT audio_media_id FROM library_posts WHERE id = $1::uuid`,
+        [rec.id],
+      );
       return r.rows.map((x) => x.k).filter((k): k is string => k !== null);
     }
     case 'library_comment':
@@ -246,6 +274,9 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       }
       for (const p of rec.posts) {
         await db.query(`UPDATE image_posts SET status = $2, updated_at = now() WHERE id = $1 AND status = 'removed'`, [p.id, p.previousStatus]);
+      }
+      for (const p of rec.libraryPosts ?? []) {
+        await db.query(`UPDATE library_posts SET status = $2, updated_at = now() WHERE id = $1 AND status = 'removed'`, [p.id, p.previousStatus]);
       }
       if (rec.profilePhotoOf.length > 0) {
         await db.query(`UPDATE users SET profile_photo_key = $1 WHERE id = ANY($2::uuid[]) AND profile_photo_key IS NULL`, [rec.key, rec.profilePhotoOf]);

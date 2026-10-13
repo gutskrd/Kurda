@@ -143,10 +143,11 @@ const resolveLibraryPost: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
     id: string; author_id: string; username: string | null; type: string; title: string | null; body: string;
-    audio_media_id: string | null; language: string; status: string; created_at: Date; updated_at: Date; visible: boolean;
+    audio_media_id: string | null; language: string; status: string; is_meme: boolean; source_credit: string | null;
+    created_at: Date; updated_at: Date; visible: boolean;
   }>(
     `SELECT p.id, p.author_id, u.username, p.type, p.title, p.body, p.audio_media_id, p.language, p.status,
-            p.created_at, p.updated_at,
+            p.is_meme, p.source_credit, p.created_at, p.updated_at,
             (p.status = 'published' AND ${writtenForSql('p.author_id', '$2::uuid')}) AS visible
        FROM library_posts p LEFT JOIN users u ON u.id = p.author_id WHERE p.id = $1`,
     [targetId, ctx.reporterId],
@@ -156,6 +157,14 @@ const resolveLibraryPost: Resolver = async (db, targetId, ctx) => {
   const self = selfRefusal(ctx, p.author_id);
   if (self) return self;
   if (!visibleTo(ctx, p.visible)) return { refused: 'not_found' };
+  // a written post carries up to four pictures (library_post_media): they are
+  // part of what was reported, with the words written for them, and are kept
+  // from cleanup with the rest of the evidence — an author who edits them off
+  // or deletes the post takes nothing from the case
+  const pictures = await db.query<{ media_key: string; alt_text: string | null }>(
+    `SELECT media_key, alt_text FROM library_post_media WHERE post_id = $1 ORDER BY position`,
+    [p.id],
+  );
   return {
     targetId: p.id,
     subjectUserId: p.author_id,
@@ -168,8 +177,9 @@ const resolveLibraryPost: Resolver = async (db, targetId, ctx) => {
       createdAt: iso(p.created_at),
       editedAt: editedAt(p.created_at, p.updated_at),
       status: p.status,
-      mediaKeys: p.audio_media_id ? [p.audio_media_id] : [],
-      extra: { postType: p.type, language: p.language },
+      mediaKeys: [...pictures.rows.map((m) => m.media_key), ...(p.audio_media_id ? [p.audio_media_id] : [])],
+      pictures: pictures.rows.map((m) => ({ mediaKey: m.media_key, altText: m.alt_text })),
+      extra: { postType: p.type, language: p.language, meme: p.is_meme, sourceCredit: p.source_credit },
     },
   };
 };

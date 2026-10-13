@@ -9,6 +9,7 @@ import { SECOND_APPROVAL_HOURS } from '@kurda/shared';
 import { MediaService } from '../media/service.js';
 import { FakeStorage } from '../test/fake-storage.js';
 import { eraseChildData } from '../gdpr/service.js';
+import { LibraryService } from '../library/service.js';
 import { ModerationAlerts } from './alerts.js';
 import { CasesService } from './cases-service.js';
 import { ModerationQueueService } from './queue-service.js';
@@ -271,6 +272,52 @@ describe.skipIf(!DATABASE_URL)('moderation sweeps (integration)', () => {
       [key],
     );
     expect(m.rows[0]).toEqual({ preserve_evidence: false, confirmed: true });
+  });
+
+  it('a year on, keeps serving the pictures still on a reported written post, and sweeps the one an edit took off', async () => {
+    const reporter = await user('rep8');
+    const author = await user('auth8');
+    const admin = await user('adm8');
+    const [shown, dropped] = [`image-post/sweep8a_${suffix}.webp`, `image-post/sweep8b_${suffix}.webp`];
+    await media(shown, true);
+    await media(dropped, true);
+    const storage = new FakeStorage();
+    storage.upload(shown);
+    storage.upload(dropped);
+    const post = await pool.query<{ id: string }>(
+      `INSERT INTO library_posts (author_id, author_role, type, body, status, published_at)
+       VALUES ($1, 'user', 'gotin', 'Du wêne', 'published', now()) RETURNING id`,
+      [author],
+    );
+    const postId = post.rows[0]!.id;
+    await pool.query(
+      `INSERT INTO library_post_media (post_id, position, media_key) VALUES ($1, 0, $2), ($1, 1, $3)`,
+      [postId, shown, dropped],
+    );
+    const { receipt } = await reports.file(reporter, { targetType: 'library_post', targetId: postId, category: 'spam' });
+    const caseId = (await pool.query<{ case_id: string }>(`SELECT case_id FROM reports WHERE id = $1`, [receipt.report.id])).rows[0]!.case_id;
+    await cases.decide(caseId, admin, { outcome: 'no_violation', actions: [], removeContent: false, notifyReporters: false });
+
+    // decided, the author takes a picture off: let go, but the evidence still holds it
+    const edit = await new LibraryService(pool).update(postId, author, false, { media: [{ mediaKey: shown }] });
+    expect(edit.ok).toBe(true);
+    const sweep = () => new MediaService(pool, storage.asStorage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
+    await sweep();
+    expect(storage.publicObjects.has(dropped)).toBe(true);
+
+    await pool.query(`UPDATE moderation_cases SET resolved_at = now() - interval '366 days' WHERE id = $1`, [caseId]);
+    await queue.pruneEvidence();
+    const rows = await pool.query<{ key: string; preserve_evidence: boolean; confirmed: boolean }>(
+      `SELECT key, preserve_evidence, confirmed_at IS NOT NULL AS confirmed FROM media_uploads WHERE key = ANY($1)`,
+      [[shown, dropped]],
+    );
+    const byKey = new Map(rows.rows.map((r) => [r.key, r]));
+    // still on the post: served as before
+    expect(byKey.get(shown)).toMatchObject({ preserve_evidence: false, confirmed: true });
+    await sweep();
+    expect(storage.publicObjects.has(shown)).toBe(true);
+    // on no post: gone with the evidence
+    expect(storage.publicObjects.has(dropped)).toBe(false);
   });
 
   it('a year after a CSAM case is filed, lets its quarantined files go', async () => {

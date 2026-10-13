@@ -236,7 +236,11 @@ export class ModerationQueueService {
     return out;
   }
 
-  /** Image scans (#294). The uploader, when the image is in use, is the subject (it used to be NULL). */
+  /**
+   * Image scans (#294). Whoever the image is in use by, or else whoever
+   * uploaded it, is the subject (it used to be NULL): a picture for a post is
+   * scanned when it is uploaded, before any post has it.
+   */
   private async imageFlags(): Promise<IngestRow[]> {
     const r = await this.pool.query<{
       id: string; media_key: string; action: string; reasons: string[] | null; csam_match: boolean; preserve_evidence: boolean;
@@ -245,7 +249,10 @@ export class ModerationQueueService {
       `SELECT s.id, s.media_key, s.action, s.reasons, s.csam_match, s.preserve_evidence, s.nsfw_score, s.violence_score,
               s.surface, s.created_at,
               COALESCE((SELECT p.author_id FROM image_posts p WHERE p.image_media_id = s.media_key ORDER BY p.created_at LIMIT 1),
-                       (SELECT u.id FROM users u WHERE u.profile_photo_key = s.media_key LIMIT 1)) AS subject
+                       (SELECT l.author_id FROM library_post_media pm JOIN library_posts l ON l.id = pm.post_id
+                         WHERE pm.media_key = s.media_key),
+                       (SELECT u.id FROM users u WHERE u.profile_photo_key = s.media_key LIMIT 1),
+                       (SELECT m.uploader_id FROM media_uploads m WHERE m.key = s.media_key)) AS subject
          FROM image_scans s
         WHERE s.status = 'pending'
           AND NOT EXISTS (SELECT 1 FROM moderation_cases c WHERE c.source = 'image_flag' AND c.source_ref = s.id::text)
@@ -740,6 +747,7 @@ async function releaseEvidenceMedia(db: Executor, keys: string[]): Promise<void>
         AND (m.quarantine_state IS NOT NULL
              OR (NOT EXISTS (SELECT 1 FROM users u WHERE u.profile_photo_key = m.key)
                  AND NOT EXISTS (SELECT 1 FROM image_posts i WHERE i.image_media_id = m.key)
+                 AND NOT EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.media_key = m.key)
                  AND NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = m.key)
                  AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = m.key)))`,
     [released.rows.map((r) => r.key)],

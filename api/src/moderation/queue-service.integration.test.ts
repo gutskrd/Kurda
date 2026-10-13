@@ -184,6 +184,44 @@ describe.skipIf(!DATABASE_URL)('moderation queue (integration)', () => {
     }
   });
 
+  it('names who uploaded a flagged picture for a post, and who posted it once it is on a written post', async () => {
+    const uploader = await makeUser('upl');
+    const poster = await makeUser('pst');
+    const [waiting, posted] = [`image-post/qw-${suffix}.webp`, `image-post/qp-${suffix}.webp`];
+    mediaKeys.push(waiting, posted);
+    // scanned at upload, before any post has it: only its uploader is known
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, uploader_id, kind) VALUES ($1, 'image/webp', 10, $2, 'image-post')`,
+      [waiting, uploader],
+    );
+    await pool.query(
+      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, uploader_id, kind)
+       VALUES ($1, 'image/webp', 10, now(), $2, 'image-post')`,
+      [posted, poster],
+    );
+    const post = await pool.query<{ id: string }>(
+      `INSERT INTO library_posts (author_id, author_role, type, body, status, published_at)
+       VALUES ($1, 'user', 'gotin', '', 'published', now()) RETURNING id`,
+      [poster],
+    );
+    await pool.query(`INSERT INTO library_post_media (post_id, position, media_key) VALUES ($1, 0, $2)`, [post.rows[0]!.id, posted]);
+    const scans = await pool.query<{ id: string; media_key: string }>(
+      `INSERT INTO image_scans (media_key, surface, action, reasons, model_version)
+       VALUES ($1, 'feed', 'flag', ARRAY['nsfw'], 'test'), ($2, 'feed', 'flag', ARRAY['nsfw'], 'test') RETURNING id, media_key`,
+      [waiting, posted],
+    );
+    await svc.sync();
+    const subjects = await pool.query<{ source_ref: string; subject_user_id: string | null }>(
+      `SELECT source_ref, subject_user_id FROM moderation_cases WHERE source = 'image_flag' AND source_ref = ANY($1)`,
+      [scans.rows.map((r) => r.id)],
+    );
+    const subjectOf = new Map(subjects.rows.map((r) => [r.source_ref, r.subject_user_id]));
+    const scanOf = new Map(scans.rows.map((r) => [r.media_key, r.id]));
+    expect(subjectOf.get(scanOf.get(waiting)!)).toBe(uploader);
+    expect(subjectOf.get(scanOf.get(posted)!)).toBe(poster);
+    await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [[waiting, posted]]);
+  });
+
   it('reports an SLA median over decided cases, counted from the first report', async () => {
     const sla = await svc.sla();
     expect(sla.resolved).toBeGreaterThanOrEqual(1);

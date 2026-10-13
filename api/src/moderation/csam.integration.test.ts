@@ -15,6 +15,7 @@ import { MediaUsageService } from '../media/mediaUsage.js';
 import { mediaKey } from '../media/storage.js';
 import { FakeStorage } from '../test/fake-storage.js';
 import { CasesService } from './cases-service.js';
+import { removeMedia, restoreContent } from './content-removal.js';
 import { evidenceObjectKey } from './pseudonym.js';
 import { runQuarantine } from './quarantine.js';
 import { ReportsService } from './reports-service.js';
@@ -55,6 +56,22 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
       `INSERT INTO image_posts (author_id, author_role, image_media_id, caption) VALUES ($1, 'user', $2, 'x') RETURNING id`,
       [author, key],
     );
+    return r.rows[0]!.id;
+  }
+  /** A written post (a gotin) carrying these pictures, in order. */
+  async function writtenPost(author: string, pictures: string[]): Promise<string> {
+    const r = await pool.query<{ id: string }>(
+      `INSERT INTO library_posts (author_id, author_role, type, body, status, published_at)
+       VALUES ($1, 'user', 'gotin', 'Wêne', 'published', now()) RETURNING id`,
+      [author],
+    );
+    for (const [i, key] of pictures.entries()) {
+      await pool.query(`INSERT INTO library_post_media (post_id, position, media_key, alt_text) VALUES ($1, $2, $3, 'alt')`, [
+        r.rows[0]!.id,
+        i,
+        key,
+      ]);
+    }
     return r.rows[0]!.id;
   }
   async function caseOf(reportId: string): Promise<string> {
@@ -130,6 +147,56 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
     );
     expect(removed.rows[0]!.removed_content.type).toBe('csam');
     expect(removed.rows[0]!.removed_content.parts.map((p) => p.type)).toEqual(['image_post', 'media']);
+  });
+
+  it('takes down a written post with a CSAM picture on it, and every picture on it off the public bucket', async () => {
+    const offender = await user('off4');
+    const reporter = await user('rep4');
+    const admin = await user('adm4', '{moderator}');
+    const [first, second] = [await picture('four'), await picture('five')];
+    const written = await writtenPost(offender, [first, second]);
+
+    const { receipt } = await reports.file(reporter, { targetType: 'library_post', targetId: written, category: 'child_safety' });
+    // the report holds both pictures as evidence from the moment it is filed
+    expect((await upload(first)).preserve_evidence).toBe(true);
+    expect((await upload(second)).preserve_evidence).toBe(true);
+    const out = await cases.csam(await caseOf(receipt.report.id), admin);
+
+    const post = await pool.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [written]);
+    expect(post.rows[0]!.status).toBe('removed');
+    for (const key of [first, second]) {
+      expect(storage.publicObjects.has(key)).toBe(false);
+      expect(storage.evidence.has(evidenceObjectKey(key))).toBe(true);
+      expect(await upload(key)).toMatchObject({ scan_status: 'blocked', preserve_evidence: true, quarantine_state: 'done' });
+    }
+    expect(out.escalation.media.map((m) => m.key).sort()).toEqual([first, second].sort());
+  });
+
+  it('hides a picture on a written post wherever it is, and puts the post back when the removal is undone', async () => {
+    const author = await user('auth5');
+    const key = await picture('six');
+    const written = await writtenPost(author, [key]);
+    const status = async () => (await pool.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [written])).rows[0]!.status;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      // what a flagged picture's case removes: the file, wherever it is used
+      const rec = await removeMedia(client, key);
+      expect(rec.libraryPosts).toEqual([{ id: written, previousStatus: 'published' }]);
+      const during = await client.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [written]);
+      expect(during.rows[0]!.status).toBe('removed');
+      // an appeal that overturns it
+      await restoreContent(client, rec);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    expect(await status()).toBe('published');
+    expect((await upload(key)).scan_status).toBe('cleared');
   });
 
   it('a reported profile picture comes off every profile; a move that fails is finished by the sweep', async () => {
