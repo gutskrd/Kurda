@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { seedPictureUpload } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -14,7 +15,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   let pool: pg.Pool;
   const suffix = Date.now().toString(36);
   const userIds: string[] = [];
-  let authorTok: string, otherTok: string, founderTok: string;
+  let authorTok: string, otherTok: string, founderTok: string, authorId: string, founderId: string;
 
   async function register(tag: string, ip: string): Promise<{ token: string; id: string }> {
     const res = await app.inject({
@@ -29,23 +30,23 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
   const call = (method: 'POST' | 'GET' | 'PATCH' | 'DELETE', url: string, token?: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.60.0.9' });
 
-  // A post can only reference media that cleared the upload pipeline (#294), so
-  // seed a confirmed+cleared row for the keys these model tests use.
-  const seedMedia = (key: string, scanStatus = 'cleared') =>
-    pool.query(
-      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
-       VALUES ($1, 'image/webp', 1024, now(), $2)
-       ON CONFLICT (key) DO UPDATE SET confirmed_at = now(), scan_status = EXCLUDED.scan_status`,
-      [key, scanStatus],
-    );
+  // A post can only reference media that cleared the upload pipeline (#294) and
+  // that its author uploaded, unused — seed the row the upload step leaves for
+  // the keys these model tests use. (Changed on purpose: these were confirmed,
+  // ownerless rows, which a post now refuses.)
+  const seedMedia = (key: string, scanStatus: 'cleared' | 'blocked' = 'cleared', uploaderId = authorId) =>
+    seedPictureUpload(pool, key, uploaderId, { scanStatus });
 
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    authorTok = (await register('author', '10.60.0.1')).token;
+    const author = await register('author', '10.60.0.1');
+    authorTok = author.token;
+    authorId = author.id;
     otherTok = (await register('other', '10.60.0.2')).token;
     const founder = await register('founder', '10.60.0.3');
+    founderId = founder.id;
     await pool.query(`UPDATE users SET roles = '{founder}' WHERE id = $1`, [founder.id]);
     founderTok = await app.inject({
       method: 'POST', url: '/auth/login',
@@ -71,7 +72,7 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     expect(meme.json().authorRole).toBe('user');
     expect(meme.json()).toHaveProperty('imageUrl'); // resolved CDN URL (null when storage unset)
 
-    await seedMedia('media/f.png');
+    await seedMedia('media/f.png', 'cleared', founderId);
     const founderPost = await call('POST', '/images', founderTok, { imageMediaId: 'media/f.png', category: 'image' });
     expect(founderPost.statusCode).toBe(201);
     expect(founderPost.json().authorRole).toBe('founder');
@@ -120,8 +121,8 @@ describe.skipIf(!DATABASE_URL)('image posts (integration)', () => {
     // image_posts.author_id is ON DELETE CASCADE, unlike a library post — the
     // picture goes when the person does, which is why the feed never has to
     // render a stand-in name for one
-    await seedMedia('media/ghost.jpg');
     const ghost = await register('ghost', '10.60.0.4');
+    await seedMedia('media/ghost.jpg', 'cleared', ghost.id);
     const post = (await call('POST', '/images', ghost.token, { imageMediaId: 'media/ghost.jpg' })).json();
     expect((await call('GET', `/images/${post.id}`)).statusCode).toBe(200);
 

@@ -9,8 +9,11 @@ function currentPeriod(now: Date): string {
 // keep two months of op counters so a month boundary never loses "this month"
 const OP_TTL_SECONDS = 63 * 24 * 3600;
 
+/** What is in the bucket: confirmed uploads, and uploads held for their owner's post. */
+const STORED = 'WHERE confirmed_at IS NOT NULL OR uploader_id IS NOT NULL';
+
 export interface MediaUsageSnapshot {
-  /** Bytes we know we've stored (SUM of confirmed uploads); null if unknown. */
+  /** Bytes we know we've stored (SUM of confirmed and held uploads); null if unknown. */
   storedBytes: number | null;
   storageLimitBytes: number;
   objectCount: number | null;
@@ -37,11 +40,17 @@ export class MediaUsageService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  /** Total confirmed stored bytes; `null` if the query fails (→ fail closed). */
+  /**
+   * Total stored bytes; `null` if the query fails (→ fail closed).
+   *
+   * Confirmed uploads, and the picture uploads held for a post that has not
+   * claimed them yet: those sit in the bucket for up to a day unconfirmed, and
+   * leaving them out would let a burst of uploads past the ceiling.
+   */
   async totalStoredBytes(): Promise<number | null> {
     try {
       const r = await this.pool.query<{ sum: string | null }>(
-        `SELECT COALESCE(SUM(content_length), 0)::bigint AS sum FROM media_uploads WHERE confirmed_at IS NOT NULL`,
+        `SELECT COALESCE(SUM(content_length), 0)::bigint AS sum FROM media_uploads ${STORED}`,
       );
       return Number(r.rows[0]?.sum ?? 0);
     } catch {
@@ -52,7 +61,7 @@ export class MediaUsageService {
   async objectCount(): Promise<number | null> {
     try {
       const r = await this.pool.query<{ count: string }>(
-        `SELECT COUNT(*)::bigint AS count FROM media_uploads WHERE confirmed_at IS NOT NULL`,
+        `SELECT COUNT(*)::bigint AS count FROM media_uploads ${STORED}`,
       );
       return Number(r.rows[0]?.count ?? 0);
     } catch {
