@@ -15,7 +15,7 @@ export interface JoinFacts {
   /** the joiner is the host (coming back to their own game) */
   isHost: boolean;
   friendsWithHost: boolean;
-  /** the host shared the game into a group chat the joiner is a member of */
+  /** the host shared the game into an invite-only group chat the joiner is a member of */
   inSharedGroup: boolean;
 }
 
@@ -31,9 +31,19 @@ export interface JoinFacts {
  *   an account of unknown age never joins one, even a friend of the host's,
  *   so every member of an open game is an adult and a child is never in a game
  *   strangers could walk into;
- * - a 'friends' game takes the host's accepted friends, and the members of a
- *   group chat the host shared it into (minors are never in open groups, so
- *   that brings in nobody a child could not already talk to).
+ * - a 'friends' game takes the host's accepted friends, and the members of an
+ *   invite-only group chat the host shared it into. Everyone in an
+ *   invite-only group was put there by somebody they chose (groups invite only
+ *   friends), so that brings in nobody new to a child.
+ *
+ * A game shared into an OPEN group lets nobody in on that account. The child
+ * at risk is not the joiner — minors are never in open groups — but the one
+ * already in the lobby: a friends game can hold the host's friend who is
+ * fifteen, and an open group is strangers by design (adults-only for that
+ * reason), so letting its members in would be the very stranger contact an
+ * open game is refused to a minor for. A host who wants the group's adults in
+ * opens the game instead. The play module's `canJoin` draws the same line.
+ *
  * A refusal is never explained to the joiner: it looks exactly like a game
  * that does not exist.
  */
@@ -65,7 +75,8 @@ export async function joinFacts(
        ($3::uuid IS NOT NULL AND ${areFriendsSql('$2::uuid', '$3::uuid')}) AS friends,
        ($4::uuid IS NOT NULL AND EXISTS (
           SELECT 1 FROM group_members gm JOIN groups g ON g.id = gm.group_id
-           WHERE gm.group_id = $4 AND gm.user_id = $2 AND g.archived_at IS NULL)) AS in_group`,
+           WHERE gm.group_id = $4 AND gm.user_id = $2
+             AND g.archived_at IS NULL AND g.privacy <> 'open')) AS in_group`,
     [game.id, joinerId, game.hostId, game.chatGroupId],
   );
   const r = res.rows[0]!;

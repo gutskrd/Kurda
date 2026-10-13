@@ -473,32 +473,40 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
       expect(opened.statusCode).toBe(403);
     });
 
-    it('lets the members of a group chat the game was shared into join', async () => {
+    it('lets the members of an invite-only group chat the game was shared into join, and nobody from an open one', async () => {
       const host = await signUp('gh');
       const member = await signUp('gm');
-      const s = await story('grp1');
-      const group = await pool.query<{ id: string }>(
-        `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, 'invite', $2) RETURNING id`,
-        [`sg group ${suffix}`, host.id],
-      );
-      await pool.query(
-        `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner'), ($1, $3, 'member')`,
-        [group.rows[0]!.id, host.id, member.id],
-      );
-      const created = (
-        await call(host, 'POST', '/story-games', {
-          mode: 'group',
-          storyId: s.id,
-          questionCount: 3,
-          timerSeconds: 60,
-          textDuring: 'visible',
-          access: 'friends',
-        })
-      ).json() as StoryGameView;
-      expect((await call(member, 'POST', '/story-games/join', { id: created.id })).statusCode).toBe(404);
-      await pool.query(`UPDATE story_games SET chat_group_id = $2 WHERE id = $1`, [created.id, group.rows[0]!.id]);
-      expect((await call(member, 'POST', '/story-games/join', { id: created.id })).statusCode).toBe(200);
-      await pool.query(`DELETE FROM groups WHERE id = $1`, [group.rows[0]!.id]);
+      const stranger = await signUp('gs');
+      const teen = await signUp('gt', 15);
+      await befriend(host, teen);
+      const group = async (privacy: 'invite' | 'open', memberId: string) => {
+        const g = await pool.query<{ id: string }>(
+          `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, $2, $3) RETURNING id`,
+          [`sg ${privacy} group ${suffix}`, privacy, host.id],
+        );
+        await pool.query(
+          `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner'), ($1, $3, 'member')`,
+          [g.rows[0]!.id, host.id, memberId],
+        );
+        return g.rows[0]!.id;
+      };
+      const invite = await group('invite', member.id);
+      const open = await group('open', stranger.id);
+
+      const { view } = await lobby(host, [], { mode: 'group' });
+      expect((await call(member, 'POST', '/story-games/join', { id: view.id })).statusCode).toBe(404);
+      await pool.query(`UPDATE story_games SET chat_group_id = $2 WHERE id = $1`, [view.id, invite]);
+      expect((await call(member, 'POST', '/story-games/join', { id: view.id })).statusCode).toBe(200);
+
+      // An open group is strangers by design, and this friends lobby holds the
+      // host's fifteen-year-old friend: sharing it there lets nobody in.
+      const shared = await lobby(host, [teen], { mode: 'group' });
+      await pool.query(`UPDATE story_games SET chat_group_id = $2 WHERE id = $1`, [shared.view.id, open]);
+      const refused = await call(stranger, 'POST', '/story-games/join', { id: shared.view.id });
+      expect({ statusCode: refused.statusCode, code: refused.json().code }).toEqual({ statusCode: 404, code: 'GAME_NOT_FOUND' });
+      expect((await call(stranger, 'POST', '/story-games/join', { code: shared.view.code })).statusCode).toBe(404);
+      expect((await getView(teen, shared.view.id)).players).toHaveLength(2);
+      await pool.query(`DELETE FROM groups WHERE id = ANY($1::uuid[])`, [[invite, open]]);
     });
 
     it('a solo game is nobody else’s', async () => {
