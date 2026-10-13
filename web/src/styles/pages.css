@@ -376,7 +376,8 @@
 .modal-close {
   position: absolute;
   top: 12px;
-  right: 12px;
+  /* the end of the line, so a right-to-left title's room for it is where it is */
+  inset-inline-end: 12px;
   z-index: 3;
   width: 34px;
   height: 34px;

@@ -429,6 +429,9 @@ a.rank-name:hover {
 /* after the score at the end of a game: what it earned, what it cost */
 .rank-xp {
   flex: none;
+  /* "+100 XP" reads the same in a right-to-left page, not "XP 100+" */
+  direction: ltr;
+  unicode-bidi: isolate;
   color: var(--gold-ink);
   font-size: 0.82rem;
   font-weight: 700;
