@@ -488,6 +488,8 @@ export interface StoryGameSummary {
   id: string;
   mode: StoryGameMode;
   status: StoryGameStatus;
+  /** the story it is played on, so a reader can offer "Continue" on that story's own quiz */
+  storyId: string;
   storyTitle: string;
   dialect: StoryDialect;
   /** the open question's index, or 0 before the questions */
