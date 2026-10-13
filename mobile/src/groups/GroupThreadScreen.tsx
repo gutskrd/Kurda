@@ -26,7 +26,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
 import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
-import { MessageContent, isCardMessage } from '../chat/MessageContent';
+import { MessageContent, hasControls, isCardMessage } from '../chat/MessageContent';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
@@ -447,12 +447,15 @@ function Bubble({
   const { colors } = useTheme();
   const { t } = useI18n();
   const card = isCardMessage(message) && !message.deleted;
+  // one element for a screen reader (sender and words), with Report among its
+  // actions, unless it holds a control of its own
+  const whole = message.deleted || !hasControls(message);
   return (
     <Pressable
       onLongPress={mine || message.deleted ? undefined : onReport}
       delayLongPress={350}
-      accessible={false}
-      accessibilityActions={mine || message.deleted ? undefined : [{ name: 'report', label: t('moderation.report') }]}
+      accessible={whole}
+      accessibilityActions={mine || message.deleted || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
       onAccessibilityAction={onReport}
       style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}
     >

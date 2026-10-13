@@ -55,6 +55,17 @@ export function isCardMessage(message: ChatMessage): boolean {
   return message.kind === 'gift' || message.kind === 'game';
 }
 
+/**
+ * Does this message hold something to press — a card, or an invite link drawn
+ * as one? A screen reader reaches such a message part by part; any other is
+ * read as one element, which is where "Report" sits among its actions.
+ */
+export function hasControls(message: ChatMessage): boolean {
+  if (isCardMessage(message)) return true;
+  const invite = message.body ? parseInvite(message.body) : null;
+  return invite !== null && INVITE_ROUTE[invite.type] !== undefined;
+}
+
 /** The text of a message, with an invite link in it turned into a card. */
 function TextBody({ body, mine }: { body: string; mine: boolean }): React.JSX.Element {
   const { colors } = useTheme();

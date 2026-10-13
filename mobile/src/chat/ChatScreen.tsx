@@ -21,7 +21,7 @@ import { SkeletonList } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
-import { MessageContent, isCardMessage } from './MessageContent';
+import { MessageContent, hasControls, isCardMessage } from './MessageContent';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet } from '../gifts/GiftPickerSheet';
@@ -185,12 +185,14 @@ export function ChatScreen({
             renderItem={({ item }) => {
               const mine = item.senderId === me;
               const card = isCardMessage(item);
+              // one element for a screen reader, with Report among its actions, unless it holds a control of its own
+              const whole = !hasControls(item);
               return (
                 <Pressable
                   onLongPress={mine ? undefined : () => setReporting(item.id)}
                   delayLongPress={350}
-                  accessible={false}
-                  accessibilityActions={mine ? undefined : [{ name: 'report', label: t('moderation.report') }]}
+                  accessible={whole}
+                  accessibilityActions={mine || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
                   onAccessibilityAction={() => setReporting(item.id)}
                   style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}
                 >

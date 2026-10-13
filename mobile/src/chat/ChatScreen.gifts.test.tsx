@@ -17,6 +17,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ChatMessage } from '../gifts/api';
 import { ChatScreen } from './ChatScreen';
+import { hasControls } from './MessageContent';
 
 patchReactNativeWeb();
 beforeEach(() => navigate.mockReset());
@@ -95,5 +96,16 @@ describe('ChatScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
     expect(await screen.findByText('A gift for rojda')).toBeTruthy();
     await waitFor(() => expect(screen.getByText('There’s nothing to give right now.')).toBeTruthy());
+  });
+});
+
+describe('hasControls', () => {
+  it('marks the messages a screen reader must reach part by part', () => {
+    // plain words are one element, with Report among its actions
+    expect(hasControls(msg({}))).toBe(false);
+    // a link to a game the phone opens is a button inside the message
+    expect(hasControls(msg({ body: 'Werin! https://hevalo.app/app/games/wordle-battle?id=abc12345' }))).toBe(true);
+    expect(hasControls(msg({ kind: 'gift', body: null, gift }))).toBe(true);
+    expect(hasControls(msg({ kind: 'game', body: null }))).toBe(true);
   });
 });
