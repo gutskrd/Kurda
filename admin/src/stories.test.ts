@@ -283,6 +283,10 @@ describe('evidence when the text changes', () => {
     const moved = edit(form, { type: 'text', field: 'body', value: `Destpêk.\n\n${body}` });
     expect(moved.questions[2]).toMatchObject({ evidenceParagraph: 3, evidenceSentence: 4 });
     expect(moved.questions[4]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 3 });
+    // the last one's words edited: it stays, rather than going to the same words in paragraph 2
+    const edited = typed(form, body, body.replace(/ sor hez dike\.$/, ' sor û zer hez dike.'));
+    expect(edited.questions[2]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 4 });
+    expect(codes(liveChecks(edited).warnings)).toEqual(['EVIDENCE_CHANGED@questions[2].evidenceSentence']);
   });
 
   it('follows a sentence cut in two in front of it', () => {

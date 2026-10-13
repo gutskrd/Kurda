@@ -558,12 +558,15 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
     }
     if (s === null) return q;
 
-    // the paragraph itself changed: find the sentence
+    // the paragraph itself changed: find the sentence — in another paragraph
+    // only when paragraphs were split, joined, added or taken out, so editing
+    // a sentence said twice does not send its question to the other one
     const sentence = storySentences(paragraph)[s];
     if (sentence === undefined) return q;
     if (sentences().some((c) => c.p === p && c.s === s && c.text === sentence)) return q;
+    const anywhere = was.length !== now.length;
     for (const w of [sentence, q.evidenceQuote]) {
-      const found = w ? nearest(sentences().filter((c) => c.text === w), from) : null;
+      const found = w ? nearest(sentences().filter((c) => c.text === w && (anywhere || c.p === p)), from) : null;
       if (found) return { ...q, evidenceParagraph: found.p, evidenceSentence: found.s };
     }
     return q;
