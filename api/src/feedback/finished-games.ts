@@ -15,7 +15,8 @@
  * line here. Stories, once its games are merged (contract §A, migration 147):
  *   `SELECT p.user_id, g.finished_at FROM story_game_players p
  *      JOIN story_games g ON g.id = p.game_id
- *     WHERE g.status = 'finished' AND p.left_at IS NULL`,
+ *     WHERE g.status = 'finished' AND p.left_at IS NULL AND NOT p.removed`
+ * (a player the host removed is marked `removed` and may never have left),
  * and once play's lobbies are (migration 149, which gives match players
  * `left_at` and `removed`), the Rhyme Match line gains
  * `AND p.left_at IS NULL AND NOT p.removed`: leaving a match is not finishing it.

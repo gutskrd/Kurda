@@ -192,6 +192,8 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
         { ...base, stars: 4, appVersion: '' },
         { ...base, stars: 4, appVersion: '<script>' },
         { ...base, stars: 4, comment: 'x'.repeat(2001) },
+        // 2000 as sent, but NFC makes each of these three: 6000 as kept
+        { ...base, stars: 4, comment: '\ufb2c'.repeat(2000) },
         { ...base, stars: 4, locale: 'xx' },
       ];
       for (const [i, payload] of bad.entries()) {
@@ -439,6 +441,10 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       // and a % in the search is a percent sign, not a wildcard (as one, it would match all four)
       expect((await call('GET', `/admin/feedback?q=${marker}%25`, admin)).json().total).toBe(0);
       expect((await call('GET', '/admin/feedback?stars=6', admin)).statusCode).toBe(400);
+      // an empty filter (a cleared search box, "All") is no filter
+      const unfiltered = await call('GET', `/admin/feedback?q=%20&status=&stars=&category=&platform=&source=`, admin);
+      expect(unfiltered.statusCode, unfiltered.body).toBe(200);
+      expect(unfiltered.json().total).toBeGreaterThanOrEqual(4);
     });
 
     it('marks an answer read or archived, and keeps a note', async () => {
@@ -458,6 +464,8 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
 
       expect((await call('PATCH', `/admin/feedback/${ids[0]}`, admin, {})).statusCode).toBe(400);
       expect((await call('PATCH', `/admin/feedback/${ids[0]}`, admin, { status: 'spam' })).statusCode).toBe(400);
+      const tooLong = await call('PATCH', `/admin/feedback/${ids[0]}`, admin, { adminNote: '\ufb2c'.repeat(2000) });
+      expect(tooLong.statusCode).toBe(400);
       const missing = await call('PATCH', '/admin/feedback/00000000-0000-4000-8000-000000000000', admin, { status: 'read' });
       expect(missing.statusCode).toBe(404);
 

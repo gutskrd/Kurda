@@ -76,8 +76,12 @@ function toItem(r: FeedbackRow): AdminFeedbackItem {
   };
 }
 
-/** Free text as it is kept: no control characters, NFC, trimmed; nothing left is nothing. */
-function cleanText(text: string | null | undefined): string | null {
+/**
+ * Free text as it is kept: no control characters, NFC, trimmed; nothing left is
+ * nothing. The routes check what this returns, since that is what the table's
+ * limits apply to (NFC can turn one character into three).
+ */
+export function cleanFeedbackText(text: string | null | undefined): string | null {
   if (text == null) return null;
   const clean = stripControlChars(text).normalize('NFC').trim();
   return clean.length > 0 ? clean : null;
@@ -164,7 +168,7 @@ export class FeedbackService {
         this.userHash(userId),
         input.stars ?? null,
         categories,
-        cleanText(input.comment),
+        cleanFeedbackText(input.comment),
         input.source,
         input.platform,
         input.appVersion,
@@ -237,7 +241,7 @@ export class FeedbackService {
               admin_note = CASE WHEN $3::boolean THEN $4 ELSE admin_note END
         WHERE id = $1
        RETURNING id`,
-      [id, patch.status ?? null, patch.adminNote !== undefined, cleanText(patch.adminNote)],
+      [id, patch.status ?? null, patch.adminNote !== undefined, cleanFeedbackText(patch.adminNote)],
     );
     if (!res.rowCount) return null;
     const row = await this.pool.query<FeedbackRow>(`${ITEM_SELECT} WHERE f.id = $1`, [id]);

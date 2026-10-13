@@ -148,7 +148,8 @@ export interface AdminFeedbackItem {
 /**
  * `GET /admin/feedback?status=&stars=&category=&platform=&source=&q=&limit=&offset=`
  * (`stars` one number or a comma-separated list, e.g. `1,2`; `q` searches the
- * comment and the username). Newest first.
+ * comment and the username; a parameter sent empty is no filter). Newest
+ * first; `limit` 1–200, default 50.
  */
 export interface AdminFeedbackList {
   items: AdminFeedbackItem[];
