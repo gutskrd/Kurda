@@ -71,7 +71,11 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
   }
 
   const put = (id: string, story: TestStory, lockVersion: number) => call('PUT', `/admin/stories/${id}`, { ...story, lockVersion });
-  const act = (id: string, action: string, body: object = {}) => call('POST', `/admin/stories/${id}/${action}`, body);
+  /** a status change as the admin panel makes it: with the version it loaded (the latest, unless given) */
+  const act = async (id: string, action: string, lockVersion?: number) =>
+    call('POST', `/admin/stories/${id}/${action}`, {
+      lockVersion: lockVersion ?? (await call('GET', `/admin/stories/${id}`)).json().lockVersion,
+    });
   const publicList = async () => (await app.inject({ method: 'GET', url: '/stories' })).json().stories as Array<{ id: string }>;
 
   beforeAll(async () => {
@@ -204,8 +208,8 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       const none = '00000000-0000-4000-8000-000000000000';
       expect((await call('GET', `/admin/stories/${none}`)).statusCode).toBe(404);
       expect((await put(none, testStory(slug('none')), 0)).statusCode).toBe(404);
-      expect((await act(none, 'publish')).statusCode).toBe(404);
-      expect((await call('DELETE', `/admin/stories/${none}`)).statusCode).toBe(404);
+      expect((await act(none, 'publish', 0)).statusCode).toBe(404);
+      expect((await call('DELETE', `/admin/stories/${none}?lockVersion=0`)).statusCode).toBe(404);
       expect((await call('GET', '/admin/stories/not-a-uuid')).statusCode).toBe(400);
     });
   });
@@ -222,7 +226,7 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
 
       const draft = (await call('GET', `/admin/stories/${id}`)).json();
       const fixed = await put(id, testStory(slug('review')), draft.lockVersion);
-      const submitted = await act(id, 'submit', { lockVersion: fixed.json().lockVersion });
+      const submitted = await act(id, 'submit', fixed.json().lockVersion);
       expect(submitted.statusCode, submitted.body).toBe(200);
       expect(submitted.json().status).toBe('in_review');
 
@@ -232,10 +236,10 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       expect(inReview.json()).toMatchObject({ status: 'in_review', level: 2 });
 
       // a stale publish is refused: the reviewer has not seen the latest edit
-      const stale = await act(id, 'publish', { lockVersion: submitted.json().lockVersion });
+      const stale = await act(id, 'publish', submitted.json().lockVersion);
       expect(stale.json().code).toBe('STALE');
 
-      const published = await act(id, 'publish', { lockVersion: inReview.json().lockVersion });
+      const published = await act(id, 'publish', inReview.json().lockVersion);
       expect(published.statusCode, published.body).toBe(200);
       expect(published.json()).toMatchObject({ status: 'published', publishedAt: expect.any(String) });
       const row = await pool.query(`SELECT published_by FROM stories WHERE id = $1`, [id]);
@@ -258,14 +262,8 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
     });
 
     it('takes a story out of the app at once when it is unpublished or archived', async () => {
-      const { id } = await created('pulled');
-      // the lock version is optional on a status change: a request with no body at all is fine
-      const published = await app.inject({
-        method: 'POST',
-        url: `/admin/stories/${id}/publish`,
-        headers: { authorization: `Bearer ${editor}` },
-        remoteAddress: '10.96.0.3',
-      });
+      const { id, lockVersion } = await created('pulled');
+      const published = await act(id, 'publish', lockVersion);
       expect(published.statusCode, published.body).toBe(200);
       expect((await publicList()).some((st) => st.id === id)).toBe(true);
       expect((await app.inject({ method: 'GET', url: `/stories/${slug('pulled')}` })).statusCode).toBe(200);
@@ -300,6 +298,23 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
         expect(res.json().code).toBe('BAD_STATE');
       }
       expect((await put(id, testStory(slug('pulled')), archived.json().lockVersion)).json().code).toBe('NOT_EDITABLE');
+    });
+
+    it('changes nothing for a request that does not say which version it was made on', async () => {
+      const { id, lockVersion } = await created('unversioned');
+      const bare = await app.inject({
+        method: 'POST',
+        url: `/admin/stories/${id}/publish`,
+        headers: { authorization: `Bearer ${editor}` },
+        remoteAddress: '10.96.0.3',
+      });
+      expect(bare.statusCode).toBe(400);
+      for (const action of ['submit', 'publish', 'unpublish', 'archive']) {
+        expect((await call('POST', `/admin/stories/${id}/${action}`, {})).statusCode).toBe(400);
+      }
+      expect((await call('DELETE', `/admin/stories/${id}`)).statusCode).toBe(400);
+      expect((await call('GET', `/admin/stories/${id}`)).json()).toMatchObject({ status: 'draft', lockVersion });
+      expect((await act(id, 'publish', lockVersion)).json().status).toBe('published');
     });
 
     it('lists stories with what stands between each and publishing', async () => {
@@ -340,7 +355,7 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       await pool.query(`CREATE TABLE ${probe} (story_id uuid NOT NULL REFERENCES stories ON DELETE RESTRICT)`);
       const { id } = await created('played');
       await pool.query(`INSERT INTO ${probe} (story_id) VALUES ($1)`, [id]);
-      const res = await call('DELETE', `/admin/stories/${id}`);
+      const res = await call('DELETE', `/admin/stories/${id}?lockVersion=0`);
       expect(res.statusCode).toBe(409);
       expect(res.json().code).toBe('IN_USE');
       expect((await call('GET', `/admin/stories/${id}`)).statusCode).toBe(200);

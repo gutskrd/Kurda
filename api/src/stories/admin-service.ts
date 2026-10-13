@@ -449,18 +449,18 @@ export class StoryAdminService {
    * change shares: 404 for no such story, 409 STALE when the editor's copy is
    * older than what is stored.
    */
-  private async lockStory(db: Executor, id: string, lockVersion: number | undefined): Promise<StoryRow> {
+  private async lockStory(db: Executor, id: string, lockVersion: number): Promise<StoryRow> {
     if (!UUID_RE.test(id)) throw new AppError('NOT_FOUND', 404, 'no such story');
     const res = await db.query<StoryRow>(`SELECT ${STORY_COLUMNS} FROM stories s WHERE s.id = $1 FOR UPDATE`, [id]);
     const row = res.rows[0];
     if (!row) throw new AppError('NOT_FOUND', 404, 'no such story');
-    if (lockVersion !== undefined && row.lock_version !== lockVersion) {
+    if (row.lock_version !== lockVersion) {
       throw new AppError('STALE', 409, 'someone else changed this story since you opened it — reload it first');
     }
     return row;
   }
 
-  async transition(id: string, action: Transition, ctx: ActionContext & { lockVersion?: number }): Promise<AdminStory> {
+  async transition(id: string, action: Transition, ctx: ActionContext & { lockVersion: number }): Promise<AdminStory> {
     const rule = TRANSITIONS[action];
     let wasOrIsPublished = false;
     await this.tx(async (client) => {
@@ -503,7 +503,7 @@ export class StoryAdminService {
    * was ever used answers 409 IN_USE: archive it instead. The audit keeps the
    * whole story, so a deletion can be undone by hand.
    */
-  async delete(id: string, ctx: ActionContext & { lockVersion?: number }): Promise<void> {
+  async delete(id: string, ctx: ActionContext & { lockVersion: number }): Promise<void> {
     let wasPublished = false;
     try {
       await this.tx(async (client) => {

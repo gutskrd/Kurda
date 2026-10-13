@@ -65,9 +65,14 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
   async function story(name: string, over: Partial<TestStory> & { length?: 'short' | 'medium' | 'long' } = {}, publish = true) {
     const { slug: storySlug, ...content } = testStory(slug(name), over);
     const created = await admin.create({ ...storyInputFrom(content as never), slug: storySlug }, { adminId: editorId });
-    if (publish) await admin.transition(created.id, 'publish', { adminId: editorId });
+    if (publish) await admin.transition(created.id, 'publish', { adminId: editorId, lockVersion: created.lockVersion });
     ids[name] = created.id;
     return created.id;
+  }
+
+  /** a status change as the admin panel makes it: with the version it has just loaded */
+  async function act(id: string, action: 'submit' | 'publish' | 'unpublish' | 'archive') {
+    return admin.transition(id, action, { adminId: editorId, lockVersion: (await admin.get(id))!.lockVersion });
   }
 
   const get = (url: string, token?: string) =>
@@ -102,9 +107,9 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
     await story('sorani', { dialect: 'sorani', title: `E ${s}` });
     await story('draft', {}, false);
     const review = await story('review', {}, false);
-    await admin.transition(review, 'submit', { adminId: editorId });
+    await act(review, 'submit');
     const archived = await story('archived');
-    await admin.transition(archived, 'archive', { adminId: editorId });
+    await act(archived, 'archive');
     await bustStoryLists(cache);
   });
 
@@ -288,13 +293,14 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
 
     it('holds an unpublish back while a game is starting on the story', async () => {
       const id = await story('starting');
+      const { lockVersion } = (await admin.get(id))!;
       const service = new StoriesService(pool);
       const game = await pool.connect();
       try {
         await game.query('BEGIN');
         expect(await service.getPublishedForGame(id, game)).not.toBeNull();
         let done = false;
-        const unpublish = admin.transition(id, 'unpublish', { adminId: editorId }).then((r) => {
+        const unpublish = admin.transition(id, 'unpublish', { adminId: editorId, lockVersion }).then((r) => {
           done = true;
           return r;
         });

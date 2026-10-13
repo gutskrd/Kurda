@@ -12,9 +12,11 @@
  *   POST   /admin/stories/:id/archive        → archived                   (audited)
  *   DELETE /admin/stories/:id                only a story no game has used (audited; else 409 IN_USE)
  *
- * The status changes and DELETE take the `lockVersion` the editor loaded
- * (body, or `?lockVersion=` on DELETE) and refuse a stale one with 409 STALE;
- * PUT requires it. A story that fails `validateStory` is refused with 422
+ * Every change carries the `lockVersion` the editor loaded — in the body, or
+ * as `?lockVersion=` on DELETE — and a stale one is refused with 409 STALE. It
+ * is required, not optional: publishing is the review gate, and a publish
+ * that named no version would publish whatever is stored at that moment,
+ * including a draft the importer replaced after the reviewer read it. A story that fails `validateStory` is refused with 422
  * INVALID and `details: { errors, warnings }`, each with a path to the field.
  * Every story returned carries `problems`: what would stop it being published
  * and what is worth a second look.
@@ -44,12 +46,8 @@ const updateBody = storyContentSchema.extend({
   questions: storyContentSchema.shape.questions.unwrap(),
   lockVersion: z.number().int().min(0),
 });
-// a status change may come with no body at all (Fastify then hands over null)
-const lockBody = z
-  .object({ lockVersion: z.number().int().min(0).optional() })
-  .nullish()
-  .transform((b) => b ?? {});
-const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0).optional() });
+const lockBody = z.object({ lockVersion: z.number().int().min(0) });
+const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0) });
 
 function context(req: FastifyRequest): { adminId: string; requestId: string } {
   return { adminId: req.user!.id, requestId: req.id };

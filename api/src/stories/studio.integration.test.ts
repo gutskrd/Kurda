@@ -108,10 +108,13 @@ describe.skipIf(!DATABASE_URL)('story sentences in the audio studio (integration
     const res = await call('POST', '/admin/stories', { ...base, title: `Title ${name} ${s}`, body: `${base.body}\n\n${body}` });
     expect(res.statusCode, res.body).toBe(201);
     ids[name] = res.json().id;
+    let lockVersion = res.json().lockVersion as number;
     if (status !== 'draft') {
-      expect((await call('POST', `/admin/stories/${ids[name]}/publish`, {})).statusCode).toBe(200);
+      const published = await call('POST', `/admin/stories/${ids[name]}/publish`, { lockVersion });
+      expect(published.statusCode).toBe(200);
+      lockVersion = published.json().lockVersion;
     }
-    if (status === 'archived') expect((await call('POST', `/admin/stories/${ids[name]}/archive`, {})).statusCode).toBe(200);
+    if (status === 'archived') expect((await call('POST', `/admin/stories/${ids[name]}/archive`, { lockVersion })).statusCode).toBe(200);
   }
 
   beforeAll(async () => {

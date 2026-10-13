@@ -101,7 +101,7 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
     it('never overwrites a story in review, published or archived', async () => {
       const admin = new StoryAdminService(pool);
       await importStories(pool, { stories: [testStory(slug('review')), testStory(slug('live')), testStory(slug('old'))] });
-      await admin.transition((await row(slug('review'))).id, 'submit', { adminId: null as never });
+      await admin.transition((await row(slug('review'))).id, 'submit', { adminId: null as never, lockVersion: 0 });
       await pool.query(`UPDATE stories SET status = 'published', published_at = now() WHERE slug = $1`, [slug('live')]);
       await pool.query(`UPDATE stories SET status = 'archived' WHERE slug = $1`, [slug('old')]);
 
