@@ -111,6 +111,19 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('trust service (integration)', () =
     expect(names).toContain('auto_suspend');
     // system actions carry no acting admin
     expect(actions.rows.every((r) => r.admin_id === null)).toBe(true);
+
+    // and they are sanctions now: automatic, with a statement the person is sent once per step
+    const sanctions = await pool.query<{ kind: string; origin: string; created_by: string | null }>(
+      `SELECT kind, origin, created_by FROM sanctions WHERE user_id = $1 ORDER BY created_at, kind`,
+      [u],
+    );
+    expect(sanctions.rows.map((s) => s.kind)).toEqual(['chat_mute', 'post_mute', 'suspension']);
+    expect(sanctions.rows.every((s) => s.origin === 'automatic' && s.created_by === null)).toBe(true);
+    const notices = await pool.query<{ data: { sanction: string } }>(
+      `SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction' ORDER BY created_at`,
+      [u],
+    );
+    expect(notices.rows.map((n) => n.data.sanction)).toEqual(['chat_mute', 'suspension']);
   });
 
   it('leaves distinct messages alone (no false positive)', async () => {
