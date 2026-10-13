@@ -1,15 +1,44 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type NativeSyntheticEvent,
+  type TextInputSelectionChangeEventData,
+} from 'react-native';
+import {
+  BACKTICK_WAIT_MS,
+  compareTyping,
+  displayTarget,
+  type RaceLength,
+  type TypingDialect,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { ClayButton, GlassCard, GlassRow, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { finishRace, startRace, type RaceGame, type RaceLength, type RaceResult } from './raceApi';
+import { KeyBar } from '../keyboard/KeyBar';
+import { KeyboardGuide } from '../keyboard/KeyboardGuide';
+import { ACCENT_LABEL, KeyboardSettingsSheet } from '../keyboard/KeyboardSettings';
+import { GUIDE_AFTER_MISSES } from '../keyboard/guide';
+import { useKeyboardPrefs } from '../keyboard/prefs';
+import { HevaloDeer } from '../feedback/HevaloDeer';
+import { reportGameFinished } from '../feedback/gameFinished';
+import { applyTypingChange, typeKey } from './input';
+import { RaceText } from './RaceText';
+import { finishRace, startRace, type RaceGame, type RaceResult } from './raceApi';
 
 const LENGTHS: readonly RaceLength[] = [1, 2, 3];
 
@@ -19,8 +48,17 @@ const LENGTH_KEY: Record<RaceLength, TranslationKey> = {
   3: 'games.race.long',
 };
 
+const DIALECTS: readonly TypingDialect[] = ['kurmanci', 'sorani'];
+const DIALECT_KEY: Record<TypingDialect, TranslationKey> = {
+  kurmanci: 'games.race.kurmanci',
+  sorani: 'games.race.sorani',
+};
+
 /** How often the on-screen clock ticks. The score is timed server-side. */
 const TICK_MS = 100;
+
+/** The API takes up to this much typing; the field never holds more. */
+const API_MAX_TYPED = 4000;
 
 /**
  * Typing Race (KUR-307) on the phone: type a Kurdish text against the clock.
@@ -29,48 +67,104 @@ const TICK_MS = 100;
  * trial. Speed is the server's to decide (it timed the handover), so the timer
  * here is for the racer and is never sent.
  *
- * The text and the box you type into are the same thing, as they are in the
- * browser. Two of them would mean the target sat there as ordinary prose above
- * an input — and on a phone, "select all, paste" is two taps. The characters
- * colour themselves as you go and the field that takes the keys is an
- * invisible layer over the top.
+ * What you read and what takes the keys are two things: the text, drawn word
+ * by word and coloured as you go, and an invisible field over it that the
+ * phone's keyboard types into. The field's cursor is pinned to the end and
+ * every change to it is read as a keystroke at the end (input.ts), so a tap on
+ * the text, the iPhone's space-bar trackpad or a long press can no longer put
+ * a letter in the middle and turn the rest of the race red. It has no menu, no
+ * autocorrect, no suggestions to accept and no paste.
+ *
+ * Typing is compared word by word with `@kurda/shared` compareTyping — one
+ * missed letter costs that letter, not everything after it — in the accent
+ * mode the racer chose, which the server stores with the race.
  */
 export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const reduceMotion = useReducedMotion();
+  const [prefs, setPrefs, prefsReady] = useKeyboardPrefs();
 
   const [game, setGame] = useState<RaceGame | null>(null);
   const [length, setLength] = useState<RaceLength>(1);
   const [typed, setTyped] = useState('');
   const [result, setResult] = useState<RaceResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const startedAt = useRef<number | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const typeAreaY = useRef(0);
+  // a finish already on its way: auto-finish and "Give up" must not both send one
+  const finishingRef = useRef(false);
+  // set when the guide was opened by "Start", so closing it starts the race
+  const startAfterGuide = useRef(false);
 
-  const target = game?.text.body ?? '';
-  const chars = useMemo(() => [...target], [target]);
-  const typedChars = useMemo(() => [...typed], [typed]);
-  const progress = chars.length === 0 ? 0 : Math.min(typedChars.length / chars.length, 1);
+  // the variety to race in: the last one chosen here, else the one the app is read in
+  const dialect: TypingDialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
+  const raceDialect = game?.dialect ?? dialect;
+  const shown = useMemo(
+    () => (game ? displayTarget(game.text.body, game.accentMode, game.dialect) : ''),
+    [game],
+  );
+  const length_ = useMemo(() => [...shown].length, [shown]);
+  const maxTyped = Math.min(API_MAX_TYPED, 2 * length_ + 160);
+  const comparison = useMemo(
+    () =>
+      game
+        ? compareTyping(game.text.body, typed, game.accentMode, {
+            dialect: game.dialect,
+            backtickShortcut: prefs.backtick,
+          })
+        : null,
+    [game, typed, prefs.backtick],
+  );
+  const progress = length_ === 0 || !comparison ? 0 : Math.min(comparison.caret / length_, 1);
 
   const start = useCallback(async () => {
-    setBusy(true);
+    if (starting) return;
+    // the first Kurmancî race on this phone begins with the keyboard guide —
+    // before the clock, which starts when the server hands the text over
+    if (dialect === 'kurmanci' && prefsReady && !prefs.guideShown) {
+      setPrefs({ guideShown: true });
+      startAfterGuide.current = true;
+      setGuideOpen(true);
+      return;
+    }
+    setStarting(true);
     setError(null);
+    setNotice(null);
+    // everything from the race before goes first, so nothing typed while the
+    // next text loads lands in it, and its clock does not carry on (R7)
+    setGame(null);
     setResult(null);
     setTyped('');
-    const res = await startRace(client, length);
-    setBusy(false);
+    setElapsed(0);
+    startedAt.current = null;
+    finishingRef.current = false;
+    const res = await startRace(client, { length, dialect, accentMode: prefs.accentMode });
+    setStarting(false);
     if (res.ok) {
       setGame(res.data);
       startedAt.current = Date.now();
-      setElapsed(0);
     } else {
-      setGame(null);
       setError(res.error.code === 'EMPTY_RACE_POOL' ? t('games.race.emptyPool') : describeError(res.error, t));
     }
-  }, [client, length, t]);
+  }, [starting, dialect, prefsReady, prefs.guideShown, prefs.accentMode, setPrefs, client, length, t]);
+
+  const closeGuide = () => {
+    setGuideOpen(false);
+    if (startAfterGuide.current) {
+      startAfterGuide.current = false;
+      void start();
+    }
+  };
 
   /*
    * Typing begins the moment the text appears, and the clock is already
@@ -90,57 +184,151 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     return () => clearInterval(timer);
   }, [game, result]);
 
-  const finish = useCallback(async () => {
-    if (!game || result) return;
-    setBusy(true);
-    const res = await finishRace(client, game.id, typed);
-    setBusy(false);
-    if (res.ok) setResult(res.data);
-    else setError(describeError(res.error, t));
-  }, [client, game, typed, result, t]);
+  const finish = useCallback(
+    async (gaveUp: boolean) => {
+      if (!game || result || finishingRef.current) return;
+      finishingRef.current = true;
+      setFinishing(true);
+      setError(null);
+      const res = await finishRace(client, game.id, typed);
+      setFinishing(false);
+      if (res.ok) {
+        setResult(res.data);
+        inputRef.current?.blur();
+        reportGameFinished({
+          moment: res.data.personalBest && !res.data.implausible ? 'personal_best' : 'other',
+          gaveUp: gaveUp || res.data.implausible,
+        });
+      } else {
+        // shown in the race itself, where the racer is looking, and the race
+        // can be finished again (R2)
+        finishingRef.current = false;
+        setError(
+          res.error.code === 'ALREADY_FINISHED' ? t('games.race.alreadyOver') : describeError(res.error, t),
+        );
+      }
+    },
+    [client, game, typed, result, t],
+  );
 
   // reaching the end ends the race; nobody should have to notice they are done
-  // and then reach for a button
+  // and then reach for a button. Not while an accent is still being composed,
+  // and a last letter that a backtick may still accent waits a moment for it.
   useEffect(() => {
-    if (game && !result && chars.length > 0 && typedChars.length >= chars.length) void finish();
-  }, [typedChars.length, chars.length, game, result, finish]);
+    if (!game || result || !comparison) return;
+    if (comparison.done) {
+      void finish(false);
+      return;
+    }
+    if (comparison.awaitingBacktick && comparison.caret >= length_ - 1) {
+      const timer = setTimeout(() => void finish(false), BACKTICK_WAIT_MS);
+      return () => clearTimeout(timer);
+    }
+  }, [comparison, game, result, finish, length_]);
+
+  const onChangeText = (next: string) => {
+    if (!game || result) return;
+    const change = applyTypingChange(typed, next, { backtick: prefs.backtick, maxLength: maxTyped });
+    setNotice(change.pasted ? t('games.race.noPaste') : null);
+    setTyped(change.typed);
+  };
+
+  // the cursor goes back to the end whenever anything moves it
+  const onSelectionChange = (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+    const { start: s, end } = e.nativeEvent.selection;
+    if (s !== typed.length || end !== typed.length) inputRef.current?.setSelection?.(typed.length, typed.length);
+  };
+
+  const onKey = (letter: string) => {
+    if (!game || result) return;
+    setTyped((prev) => typeKey(prev, letter, { backtick: prefs.backtick, maxLength: maxTyped }));
+    inputRef.current?.focus();
+  };
+
+  // keep the line being typed in sight above the keyboard
+  const onCaretLine = useCallback(
+    (y: number) => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, typeAreaY.current + y - 48), animated: !reduceMotion });
+    },
+    [reduceMotion],
+  );
+
+  const accentTrouble = !!result && result.accentMisses >= GUIDE_AFTER_MISSES;
 
   return (
     <GradientBackground>
-      <ScreenHeader title={t('games.race.name')} onBack={onExit} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScreenHeader
+          title={t('games.race.name')}
+          onBack={onExit}
+          right={
+            <Pressable
+              onPress={() => setSettingsOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('keyboard.settings.title')}
+              style={styles.headerButton}
+            >
+              <Icon name="keyboard" size={22} color={colors.textPrimary} />
+            </Pressable>
+          }
+        />
 
         {!game ? (
-          <GlassCard style={styles.card}>
-            <Icon name="bolt" size={44} tone="primary" />
-            <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.intro')}</Text>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.length')}</Text>
-            <View style={styles.stretch}>
-              <Segmented<string>
-                options={LENGTHS.map(String)}
-                value={String(length)}
-                onChange={(v) => setLength(Number(v) as RaceLength)}
-                labelOf={(v) => t(LENGTH_KEY[Number(v) as RaceLength])}
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <GlassCard style={styles.card}>
+              <Icon name="bolt" size={44} tone="primary" />
+              <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.intro')}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.textIn')}</Text>
+              <View style={styles.stretch}>
+                <Segmented<TypingDialect>
+                  options={DIALECTS}
+                  value={dialect}
+                  onChange={(d) => setPrefs({ raceDialect: d })}
+                  labelOf={(d) => t(DIALECT_KEY[d])}
+                />
+              </View>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.length')}</Text>
+              <View style={styles.stretch}>
+                <Segmented<string>
+                  options={LENGTHS.map(String)}
+                  value={String(length)}
+                  onChange={(v) => setLength(Number(v) as RaceLength)}
+                  labelOf={(v) => t(LENGTH_KEY[Number(v) as RaceLength])}
+                />
+              </View>
+              <ClayButton
+                label={t('games.race.start')}
+                icon="play"
+                tone="primary"
+                size="large"
+                busy={starting}
+                onPress={() => void start()}
+                style={styles.stretch}
               />
-            </View>
-            <ClayButton
-              label={busy ? t('games.starting') : t('games.race.start')}
-              icon="play"
-              tone="primary"
-              onPress={() => void start()}
-              style={styles.stretch}
-            />
-            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-          </GlassCard>
+              {error ? (
+                <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="polite">
+                  {error}
+                </Text>
+              ) : null}
+            </GlassCard>
+            <GlassCard padding="tight">
+              <GlassRow
+                icon="keyboard"
+                title={t('keyboard.settings.title')}
+                value={t(ACCENT_LABEL[prefs.accentMode])}
+                onPress={() => setSettingsOpen(true)}
+              />
+            </GlassCard>
+          </ScrollView>
         ) : (
-          <>
+          <View style={styles.flex}>
             <View style={styles.stats}>
               <Text style={[styles.timer, { color: colors.textPrimary }]}>{(elapsed / 1000).toFixed(1)}s</Text>
-              <View style={[styles.track, { backgroundColor: colors.controlTrack }]}>
+              <View
+                style={[styles.track, { backgroundColor: colors.controlTrack }]}
+                accessibilityRole="progressbar"
+                accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }}
+              >
                 <View style={[styles.trackFill, { backgroundColor: colors.primary, width: `${progress * 100}%` }]} />
               </View>
               <Text style={[styles.textTitle, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -148,88 +336,180 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               </Text>
             </View>
 
-            <Pressable onPress={() => inputRef.current?.focus()} style={[styles.typeArea, { backgroundColor: colors.controlTrack }]}>
-              <Text style={styles.raceText}>
-                {chars.map((ch, i) => {
-                  const got = typedChars[i];
-                  const here = i === typedChars.length && !result;
-                  return (
-                    <Text
-                      key={i}
-                      style={[
-                        styles.raceChar,
-                        { color: got === undefined ? colors.textSecondary : got === ch ? colors.success : colors.danger },
-                        got !== undefined && got !== ch ? { backgroundColor: colors.dangerFill } : null,
-                        here ? { backgroundColor: colors.primary, color: colors.textOnPrimary } : null,
-                      ]}
-                    >
-                      {ch}
-                    </Text>
-                  );
-                })}
-              </Text>
+            <ScrollView
+              ref={scrollRef}
+              contentContainerStyle={styles.raceContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Pressable
+                onPress={() => inputRef.current?.focus()}
+                onLayout={(e) => {
+                  typeAreaY.current = e.nativeEvent.layout.y;
+                }}
+                accessible={false}
+                style={[styles.typeArea, { backgroundColor: colors.controlTrack }]}
+              >
+                <RaceText
+                  text={shown}
+                  dialect={raceDialect}
+                  comparison={comparison}
+                  finished={!!result}
+                  onCaretLine={onCaretLine}
+                />
 
-              {/*
-                The field is here, invisible, on purpose. It is what the keyboard
-                types into; the coloured characters above are what you read. RN
-                Text is not selectable unless asked, so there is nothing on this
-                screen to copy into it.
-              */}
-              <TextInput
-                ref={inputRef}
-                value={typed}
-                onChangeText={(v) => setTyped([...v].slice(0, chars.length).join(''))}
-                editable={!result}
-                multiline
-                autoCapitalize="none"
-                autoCorrect={false}
-                spellCheck={false}
-                caretHidden
-                accessibilityLabel={t('games.race.typeTheText')}
-                style={styles.capture}
-              />
-            </Pressable>
-
-            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-
-            {!result ? (
-              <ClayButton
-                label={busy ? t('games.race.scoring') : t('games.race.giveUp')}
-                tone="neutral"
-                onPress={() => void finish()}
-                style={styles.stretch}
-              />
-            ) : (
-              <GlassCard style={styles.card}>
-                <Text style={[styles.verdict, { color: result.implausible ? colors.danger : colors.primary }]}>
-                  {result.implausible
-                    ? t('games.race.notScored')
-                    : result.perfect
-                      ? t('games.race.perfect')
-                      : t('games.race.finished')}
-                </Text>
                 {/*
-                  Said out loud rather than shown as a silent zero. Somebody who
-                  hits this has almost certainly found a way around the typing
-                  box, and a result that just reads 0 looks like a broken game.
+                  The field is here, invisible, on purpose: the keyboard types
+                  into it, the words above are what you read. It takes no touches
+                  (the area does, and focuses it), so a tap cannot put its cursor
+                  anywhere; the cursor is pinned to the end besides, for the
+                  gestures that move it without a tap.
                 */}
-                {result.implausible ? (
-                  <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.refused')}</Text>
-                ) : null}
-                <View style={styles.figures}>
-                  <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
-                  <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
-                  <Figure value={`${(result.elapsedMs / 1000).toFixed(1)}s`} label={t('games.race.time')} />
-                  {/* XP is the app's own unit and reads the same in every language */}
-                  <Figure value={`+${result.xpAwarded}`} label="XP" />
-                </View>
-                <ClayButton label={t('games.race.again')} tone="primary" onPress={() => void start()} style={styles.stretch} />
-              </GlassCard>
-            )}
-          </>
+                <TextInput
+                  ref={inputRef}
+                  value={typed}
+                  onChangeText={onChangeText}
+                  selection={{ start: typed.length, end: typed.length }}
+                  onSelectionChange={onSelectionChange}
+                  editable={!result && !finishing}
+                  contextMenuHidden
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="off"
+                  spellCheck={false}
+                  importantForAutofill="no"
+                  textContentType="none"
+                  submitBehavior="submit"
+                  caretHidden
+                  accessibilityLabel={t('games.race.typeTheText')}
+                  pointerEvents="none"
+                  style={[styles.capture, raceDialect === 'sorani' && styles.captureRtl]}
+                />
+              </Pressable>
+
+              {notice ? (
+                <Text style={[styles.notice, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+                  {notice}
+                </Text>
+              ) : null}
+              {error ? (
+                <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="assertive">
+                  {error}
+                </Text>
+              ) : null}
+
+              {!result ? (
+                <ClayButton
+                  label={t('games.race.giveUp')}
+                  tone="neutral"
+                  busy={finishing}
+                  onPress={() => void finish(true)}
+                  style={styles.stretch}
+                />
+              ) : (
+                <Result
+                  result={result}
+                  starting={starting}
+                  accentTrouble={accentTrouble}
+                  onAgain={() => void start()}
+                  onGuide={() => setGuideOpen(true)}
+                />
+              )}
+            </ScrollView>
+
+            {prefs.keyBar && !result ? (
+              <View style={[styles.keyBarWrap, { backgroundColor: colors.background, borderTopColor: colors.separator }]}>
+                <KeyBar dialect={raceDialect} onKey={onKey} disabled={finishing} />
+              </View>
+            ) : null}
+          </View>
         )}
-      </ScrollView>
+      </KeyboardAvoidingView>
+
+      <KeyboardSettingsSheet
+        visible={settingsOpen}
+        dialect={raceDialect}
+        midRace={!!game && !result}
+        onClose={() => setSettingsOpen(false)}
+      />
+      <KeyboardGuide visible={guideOpen} dialect={raceDialect} onClose={closeGuide} />
     </GradientBackground>
+  );
+}
+
+function Result({
+  result,
+  starting,
+  accentTrouble,
+  onAgain,
+  onGuide,
+}: {
+  result: RaceResult;
+  starting: boolean;
+  accentTrouble: boolean;
+  onAgain: () => void;
+  onGuide: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <>
+      <GlassCard style={styles.card}>
+        <Text
+          style={[styles.verdict, { color: result.implausible ? colors.danger : colors.primary }]}
+          accessibilityRole="header"
+          accessibilityLiveRegion="polite"
+        >
+          {result.implausible
+            ? t('games.race.notScored')
+            : result.perfect
+              ? t('games.race.perfect')
+              : t('games.race.finished')}
+        </Text>
+        {/*
+          Said out loud rather than shown as a silent zero. Somebody who hits
+          this has almost certainly found a way around the typing box, and a
+          result that just reads 0 looks like a broken game.
+        */}
+        {result.implausible ? (
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.refused')}</Text>
+        ) : null}
+        {result.personalBest && !result.implausible ? (
+          <View style={[styles.best, { backgroundColor: colors.gold }]}>
+            <Icon name="trophy" size={16} color={colors.textOnPrimary} />
+            <Text style={[styles.bestText, { color: colors.textOnPrimary }]}>{t('games.race.personalBest')}</Text>
+          </View>
+        ) : null}
+        <View style={styles.figures}>
+          <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
+          <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
+          <Figure value={`${(result.elapsedMs / 1000).toFixed(1)}s`} label={t('games.race.time')} />
+          {/* XP is the app's own unit and reads the same in every language */}
+          <Figure value={`+${result.xpAwarded}`} label="XP" />
+        </View>
+        {result.accented > 0 && result.accentMode !== 'hidden' ? (
+          <Text style={[styles.accents, { color: colors.textSecondary }]}>
+            {t('games.race.accents', { right: result.accented - result.accentMisses, total: result.accented })}
+          </Text>
+        ) : null}
+        <ClayButton label={t('games.race.again')} tone="primary" size="large" busy={starting} onPress={onAgain} style={styles.stretch} />
+      </GlassCard>
+
+      {accentTrouble ? (
+        <Pressable
+          onPress={onGuide}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('games.race.accentNudge')} ${t('games.race.accentNudgeAction')}`}
+          style={[styles.nudge, { backgroundColor: colors.glassFill }]}
+        >
+          <HevaloDeer size={84} board={{ kind: 'letters', letters: 'ç ê ş' }} />
+          <View style={styles.nudgeText}>
+            <Text style={[styles.nudgeTitle, { color: colors.textPrimary }]}>{t('games.race.accentNudge')}</Text>
+            <Text style={[styles.nudgeAction, { color: colors.primary }]}>{t('games.race.accentNudgeAction')}</Text>
+          </View>
+        </Pressable>
+      ) : null}
+    </>
   );
 }
 
@@ -244,27 +524,45 @@ function Figure({ value, label }: { value: string; label: string }): React.JSX.E
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  raceContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
-  stats: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  timer: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  notice: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  headerButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },
+  stats: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  timer: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'], minWidth: 64 },
   track: { flex: 1, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },
-  textTitle: { fontSize: typography.sizes.sm, maxWidth: 110 },
-  typeArea: { borderRadius: radii.md, padding: spacing.md, minHeight: 180 },
-  raceText: { lineHeight: 30 },
-  raceChar: { fontSize: typography.sizes.lg },
+  textTitle: { fontSize: typography.sizes.sm, maxWidth: 120 },
+  typeArea: { borderRadius: radii.md, padding: spacing.md, minHeight: 160 },
   // full-bleed and invisible: it takes the keystrokes, the text above is read
-  capture: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, color: 'transparent' },
+  capture: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, color: 'transparent', minHeight: MIN_TOUCH_TARGET },
+  captureRtl: { writingDirection: 'rtl' },
+  keyBarWrap: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
   verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  best: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+  },
+  bestText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   figures: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', rowGap: spacing.md, marginTop: spacing.sm },
   // two across, not four: "words per minute" is PEYV/XULEK in Kurmancî and
   // Wörter/Minute in German, and four of those in a phone's width collide
   figure: { width: '50%', alignItems: 'center' },
   figureValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   figureLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
+  accents: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  nudge: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.md },
+  nudgeText: { flex: 1, gap: spacing.xs },
+  nudgeTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, lineHeight: 21 },
+  nudgeAction: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

@@ -97,6 +97,15 @@ const MAP = {
   grid: { glyph: 'GridFour', note: 'Wordle — a board of letter squares, which is what the game is' },
   lightbulb: { glyph: 'Lightbulb', note: 'a grammar tip; a sparkle said something nice was coming and not what' },
 
+  // --- typing, rating Hevalo, and writing a post ---
+  keyboard: { glyph: 'Keyboard', note: 'keyboard settings and the guide to adding a Kurdish keyboard' },
+  backspace: { glyph: 'Backspace', note: 'delete a letter — the Wordle key drew an ✕, which reads as "close"' },
+  'key-return': { glyph: 'KeyReturn', note: 'Enter on the Wordle keyboard: send this guess' },
+  'star-fill': { glyph: 'Star', weight: 'fill', note: 'a star chosen in the rating box' },
+  pencil: { glyph: 'PencilSimple', note: 'edit your own post' },
+  'text-t': { glyph: 'TextT', note: 'give a post a title' },
+  quotes: { glyph: 'Quotes', note: 'source / credit — where a quote or a picture came from' },
+
   // --- the way in to everywhere the tab bar has no room for ---
   menu: { glyph: 'List', note: 'the side panel; three lines, which is what every app uses and what the recording used' },
 
