@@ -17,9 +17,10 @@ import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
 import { validateStory, type StoryGlossEntry, type StoryInput, type StoryValidationStage } from '@kurda/shared';
-import { saveStory, tidyStory, type StoryDraft } from './admin-service.js';
+import type { Cache } from '../cache/cache.js';
+import { StoryAdminService, saveStory, tidyStory, type StoryDraft } from './admin-service.js';
 import { storyFileSchema, storyInputFrom } from './schema.js';
-import type { QuestionRow } from './service.js';
+import { bustStoryLists, type QuestionRow } from './service.js';
 
 export interface StoryImportIssue {
   /** `stories[3] (kmr-qelema-sin).questions[2].options[1]` */
@@ -101,6 +102,8 @@ function canonical(story: StoryInput): string {
 interface StoredRow {
   id: string;
   status: string;
+  /** who last changed it in the admin panel; null when a file (this command, the seeding) wrote it last */
+  updated_by: string | null;
   dialect: StoryInput['dialect'];
   level: number;
   title: string;
@@ -132,33 +135,56 @@ async function storedContent(db: pg.PoolClient, row: StoredRow): Promise<string>
   });
 }
 
+export interface StoryImportOptions {
+  /** do everything, report it, then roll it all back */
+  dryRun?: boolean;
+  /** publish every story the file created or that is a draft, after the full check */
+  publish?: boolean;
+  /** the editor (a user id) who publishes: required with `publish`, for the story and its audit */
+  publishedBy?: string;
+  source?: 'admin' | 'starter';
+  /** also replace a draft someone has changed in the admin panel */
+  force?: boolean;
+  /** the API's cache, so a story published here reaches the hub at once */
+  cache?: Cache | null;
+}
+
 /**
  * Import a file of stories, all or nothing, idempotent by slug: a new slug
  * is created as a draft, a draft whose content changed is updated (and its
  * lock version bumped, so an editor with it open reloads before saving over
  * it), and a story in review, published or archived is never overwritten —
- * people are looking at it. With `publish`, every story the file created or
- * that is a draft is published, after the full check. A dry run does
- * everything inside a transaction it then rolls back, so it reports exactly
- * what a real run would do.
+ * people are looking at it.
+ *
+ * Nor, without `force`, is a draft someone changed in the admin panel: a
+ * native speaker correcting a starter there must not lose the corrections to
+ * the next import of the file. The importer knows them by `updated_by`, which
+ * every admin action sets and every import clears. (An editor whose account
+ * is deleted leaves it null, and their drafts unprotected.)
+ *
+ * With `publish`, every story the file created or that is a draft is
+ * published through the admin's own status change, as `publishedBy`: checked,
+ * attributed and audited like a publish in the panel, and the hub's cached
+ * list is emptied once it is committed. A dry run does everything inside a
+ * transaction it then rolls back, so it reports exactly what a real run
+ * would do.
  */
-export async function importStories(
-  pool: pg.Pool,
-  raw: unknown,
-  options: { dryRun?: boolean; publish?: boolean; source?: 'admin' | 'starter' } = {},
-): Promise<StoryImportResult> {
+export async function importStories(pool: pg.Pool, raw: unknown, options: StoryImportOptions = {}): Promise<StoryImportResult> {
   const dryRun = options.dryRun === true;
   const publish = options.publish === true;
+  if (publish && !options.publishedBy) throw new Error('importStories: publishing needs publishedBy, the editor who publishes');
   const { drafts, issues, warnings } = parseStoryFile(raw, publish ? 'publish' : 'draft');
   const result: StoryImportResult = { ok: issues.length === 0, dryRun, issues, warnings, stories: [] };
   if (issues.length > 0) return result;
 
+  const admin = new StoryAdminService(pool);
+  let listChanged = false;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     for (const draft of drafts) {
       const found = await client.query<StoredRow>(
-        `SELECT id, status, dialect, level, title, summary, body, glossary FROM stories WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, status, updated_by, dialect, level, title, summary, body, glossary FROM stories WHERE slug = $1 FOR UPDATE`,
         [draft.slug],
       );
       const row = found.rows[0];
@@ -173,16 +199,28 @@ export async function importStories(
       } else if ((await storedContent(client, row)) === canonical(draft)) {
         id = row.id;
         outcome = 'unchanged';
+      } else if (row.updated_by !== null && options.force !== true) {
+        result.stories.push({
+          slug: draft.slug,
+          outcome: 'kept',
+          note: 'changed in the admin panel: not overwritten (--force replaces it)',
+          published: false,
+        });
+        continue;
       } else {
         id = row.id;
-        await saveStory(client, draft, { id, set: 'lock_version = lock_version + 1' });
+        await saveStory(client, draft, { id, set: 'lock_version = lock_version + 1, updated_by = NULL' });
         outcome = 'updated';
       }
       if (publish) {
-        await client.query(
-          `UPDATE stories SET status = 'published', published_at = now(), lock_version = lock_version + 1 WHERE id = $1`,
-          [id],
-        );
+        // the row is this transaction's since the SELECT above, so its version now is the one this run left
+        const current = await client.query<{ lock_version: number }>(`SELECT lock_version FROM stories WHERE id = $1`, [id]);
+        listChanged =
+          (await admin.transitionIn(client, id, 'publish', {
+            adminId: options.publishedBy!,
+            lockVersion: current.rows[0]!.lock_version,
+            reason: 'published by the stories:import command',
+          })) || listChanged;
       }
       result.stories.push({ slug: draft.slug, outcome, published: publish });
     }
@@ -193,6 +231,7 @@ export async function importStories(
   } finally {
     client.release();
   }
+  if (listChanged && !dryRun) await bustStoryLists(options.cache);
   return result;
 }
 

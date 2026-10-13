@@ -40,6 +40,9 @@ import { STORY_ORDER_SQL, UUID_RE, bustStoryLists, storyTextFacts, type Executor
 export type StoryStatus = 'draft' | 'in_review' | 'published' | 'archived';
 export type StorySource = 'admin' | 'starter';
 
+/** Who writes stories: whoever edits lessons and records their audio (the routes and the import command ask for it). */
+export const STORY_EDITOR_ROLES = ['superadmin', 'content_editor', 'admin'] as const;
+
 /** A story as an editor sends it: everything, every time (PUT replaces the whole draft). */
 export interface StoryDraft extends StoryInput {
   slug: string;

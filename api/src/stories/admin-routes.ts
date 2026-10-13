@@ -27,10 +27,9 @@ import { STORY_DIALECTS } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { storyContentSchema, storyInputFrom, storySlugSchema } from './schema.js';
-import type { StoryAdminService } from './admin-service.js';
+import { STORY_EDITOR_ROLES, type StoryAdminService } from './admin-service.js';
 
-/** Who writes stories: whoever edits lessons and records their audio. */
-export const STORY_EDITOR_ROLES = ['superadmin', 'content_editor', 'admin'] as const;
+export { STORY_EDITOR_ROLES };
 
 const STATUSES = ['draft', 'in_review', 'published', 'archived'] as const;
 
