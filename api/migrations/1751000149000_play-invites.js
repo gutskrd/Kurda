@@ -30,7 +30,11 @@
  *   "remove seat 3" can only ever mean the one person who had it.
  * - Wordle Battle gains `ends_at`, and its players `last_seen_at`: a battle
  *   ends at that time, or as soon as nobody still racing is around, instead of
- *   waiting for a player who closed the tab.
+ *   waiting for a player who closed the tab. Battles under way when this runs
+ *   start the clock now — ten minutes left, everyone seen — since with no
+ *   `last_seen_at` at all every player reads as away, and the first read or
+ *   sweep after the deploy would end the battle on players mid-guess. One that
+ *   was truly hung still ends, once its players stay away or its time is up.
  */
 
 const GAMES = "('wordle-battle','rhyme-match','stories')";
@@ -136,6 +140,12 @@ export const up = (pgm) => {
 
   pgm.addColumns('wordle_battles', { ends_at: { type: 'timestamptz' } });
   pgm.addColumns('wordle_battle_players', { last_seen_at: { type: 'timestamptz' } });
+  // battles under way: the BATTLE_MINUTES clock and presence start now
+  pgm.sql(`UPDATE wordle_battles SET ends_at = now() + interval '10 minutes' WHERE status = 'active'`);
+  pgm.sql(`
+    UPDATE wordle_battle_players p SET last_seen_at = now()
+      FROM wordle_battles b
+     WHERE b.id = p.battle_id AND b.status = 'active'`);
 };
 
 export const down = (pgm) => {
