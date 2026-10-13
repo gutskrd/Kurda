@@ -257,7 +257,8 @@ export function isSanctionKind(value: unknown): value is SanctionKind {
 
 /**
  * What a sanction stops, while it lasts:
- * - `chat` — direct messages and group messages (gift and game cards still go);
+ * - `chat` — direct messages and group messages, and the gifts and game cards
+ *   posted into them;
  * - `post` — library posts and comments, image posts and comments;
  * - `media` — uploading pictures and voice (feature limit);
  * - `account` — signing in at all (suspension, permanent ban).

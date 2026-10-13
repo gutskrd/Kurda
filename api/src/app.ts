@@ -684,6 +684,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
           publish: (r, ev) => realtime.publish(r, ev),
         },
         inbox,
+        moderation,
         log: app.log,
       },
       (k) => (app.storage ? app.storage.publicUrl(k) : null),

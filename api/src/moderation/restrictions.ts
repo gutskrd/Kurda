@@ -11,7 +11,10 @@ import type { Executor } from './tx.js';
  * media now asks first, and a restricted call answers 403 MUTED with when it
  * ends: `chat` on direct and group messages, `post` on library posts and
  * comments and image posts and comments, `media` on picture and voice uploads.
- * Gift and game cards in a chat are not text and are never held back.
+ * A gift or a game card is posted into a chat as a message too, by a service
+ * other routes call (gifts, play invites), so those services ask the same
+ * question with `assertUnrestricted` and give the same answer: a chat mute
+ * stops them as it stops text.
  *
  * Text that is shown to others outside a post counts too: a new group's name
  * and description (`post`), and a changed display name, bio or username (the

@@ -16,6 +16,9 @@ import { WalletService } from '../wallet/service.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { canonicalPair } from '../friends/pair.js';
+import { SanctionsService } from '../moderation/sanctions-service.js';
+import { inTransaction } from '../moderation/tx.js';
+import { OFFENSE_PERM } from '../moderation/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -972,6 +975,64 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(muted.statusCode).toBe(403);
       expect(muted.json().code).toBe('MUTED');
       await pool.query(`DELETE FROM group_mutes WHERE group_id = $1 AND user_id = $2`, [gid, gus.id]);
+    });
+  });
+
+  describe('a sender muted from chat', () => {
+    let mua: Account;
+    let nel: Account;
+    let gid = '';
+    let sanctionId = '';
+    const sanctions = () => new SanctionsService(pool);
+
+    beforeAll(async () => {
+      mua = await signUp('mua');
+      nel = await signUp('nel');
+      await befriend(mua, nel);
+      await fund(mua);
+      gid = await group('Muted club', mua, [nel]);
+      const applied = await inTransaction(pool, (client) =>
+        sanctions().apply(client, {
+          userId: mua.id,
+          kind: 'chat_mute',
+          policy: 'harassment',
+          statement: 'Insults in chat.',
+          durationHours: 24,
+          createdBy: null,
+          origin: 'automatic',
+          notify: false,
+        }),
+      );
+      sanctionId = applied.sanction.id;
+    });
+
+    it('cannot send a gift into a chat, by any door, and is told as a message would be', async () => {
+      const before = await zer(mua);
+      for (const res of [
+        await giftDm(mua, nel, POWER),
+        await giftGroup(mua, gid, [nel], POWER),
+        await call('POST', '/shop/gift', mua, { sku: POWER, toUserId: nel.id, idempotencyKey: key() }),
+      ]) {
+        expect(res.statusCode).toBe(403);
+        expect(res.json()).toMatchObject({ code: 'MUTED', details: { scope: 'chat', until: expect.any(String) } });
+      }
+      // nothing was bought, given or posted
+      expect(await zer(mua)).toBe(before);
+      expect(await giftRows(mua)).toEqual([]);
+      expect(pushedTo(nel.id, 'gift_received')).toEqual([]);
+    });
+
+    it('nor under the escalation mute, and gives again once both are lifted', async () => {
+      await inTransaction(pool, (client) => sanctions().revoke(client, sanctionId, null, 'served', { notify: false }));
+      await pool.query(
+        `INSERT INTO chat_offenses (user_id, offense_count, perm_muted) VALUES ($1, $2, true)
+         ON CONFLICT (user_id) DO UPDATE SET offense_count = EXCLUDED.offense_count, perm_muted = true`,
+        [mua.id, OFFENSE_PERM],
+      );
+      expect((await giftDm(mua, nel, POWER)).json().code).toBe('CHAT_MUTED');
+      expect((await giftGroup(mua, gid, [nel], POWER)).json().code).toBe('CHAT_MUTED');
+      await pool.query(`DELETE FROM chat_offenses WHERE user_id = $1`, [mua.id]);
+      expect((await giftDm(mua, nel, POWER)).statusCode).toBe(200);
     });
   });
 

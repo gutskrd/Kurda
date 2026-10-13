@@ -7,6 +7,8 @@ import { PREVIEW_FALLBACK } from './kinds.js';
 import { FriendService } from '../friends/service.js';
 import { GroupService } from '../groups/service.js';
 import { GroupChatService } from '../groups/chat-service.js';
+import { SanctionsService } from '../moderation/sanctions-service.js';
+import { inTransaction } from '../moderation/tx.js';
 import { befriend, block } from '../test/social.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -126,6 +128,41 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     } finally {
       moderation.muted.delete(host);
     }
+  });
+
+  it('a chat mute from moderation refuses a card as it refuses a message, with the same answer', async () => {
+    const host = await makeUser();
+    const friend = await makeUser();
+    await befriend(pool, host, friend);
+    const gid = (await groups.create(host, { name: `Muted ${suffix}`, privacy: 'invite' })).id;
+    groupIds.push(gid);
+    const sanctions = new SanctionsService(pool);
+    const applied = await inTransaction(pool, (client) =>
+      sanctions.apply(client, {
+        userId: host,
+        kind: 'chat_mute',
+        policy: 'harassment',
+        statement: 'Insults in chat.',
+        durationHours: 24,
+        createdBy: null,
+        origin: 'automatic',
+        notify: false,
+      }),
+    );
+    // 403 MUTED with the scope and when it ends, as the message routes answer
+    const muted = { code: 'MUTED', statusCode: 403, details: { scope: 'chat', until: applied.sanction.endsAt } };
+    await expect(chat.sendCard(host, friend, card())).rejects.toMatchObject(muted);
+    await expect(groupChat.sendCard(host, gid, card())).rejects.toMatchObject(muted);
+    const posted = await pool.query(
+      `SELECT 1 FROM dm_messages WHERE sender_id = $1 UNION ALL SELECT 1 FROM group_messages WHERE sender_id = $1`,
+      [host],
+    );
+    expect(posted.rowCount).toBe(0);
+
+    // lifted, both go again
+    await inTransaction(pool, (client) => sanctions.revoke(client, applied.sanction.id, null, 'served', { notify: false }));
+    expect((await chat.sendCard(host, friend, card())).kind).toBe('game');
+    expect((await groupChat.sendCard(host, gid, card())).kind).toBe('game');
   });
 
   it('a group card is posted by a member, to the room, and shows in the group history', async () => {
