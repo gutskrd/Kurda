@@ -9,7 +9,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { setToken } from '../api';
 import { AuthProvider } from '../auth';
-import { fakeApi, json, on, type Call } from '../test/fetch';
+import { failure, fakeApi, json, on, type Call } from '../test/fetch';
 import { renderUi } from '../test/render';
 import { Approvals } from './Approvals';
 import { Audit, describeAction } from './Audit';
@@ -73,6 +73,15 @@ describe('Approvals', () => {
     await user.click(within(screen.getByRole('dialog', { name: 'Reject this change?' })).getByRole('button', { name: 'Reject' }));
     await waitFor(() => expect(posts(calls, '/admin/config/changes/c-theirs/reject')[0]?.body).toEqual({ reason: 'Rewards are too high' }));
   });
+  it('says plainly when the server refuses an approval as your own', async () => {
+    const user = userEvent.setup();
+    const { use } = show();
+    use(on('POST', /\/approve$/, failure(403, 'SELF_APPROVE', 'cannot approve')));
+    await user.click(await screen.findByRole('button', { name: 'Approve' }));
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Approve' }));
+    expect(await screen.findByText('You proposed this change: another admin approves it.')).toBeInTheDocument();
+  });
+
   it('withdraws your own change after asking, keeping why on record', async () => {
     const user = userEvent.setup();
     const { calls } = show();

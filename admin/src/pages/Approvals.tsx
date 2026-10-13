@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { Badge, Button, PageHeader, Section, Table, Time, UserLink, errorLine, useDialogs, useLoad, useToast, type Column } from '../ui';
 
@@ -73,7 +73,9 @@ export function Approvals(): React.JSX.Element {
       toast.success('Approved and applied.');
       await list.reload();
     } catch (err) {
-      toast.error(errorLine(err, 'approvals'));
+      toast.error(
+        err instanceof ApiError && err.code === 'SELF_APPROVE' ? 'You proposed this change: another admin approves it.' : errorLine(err, 'approvals'),
+      );
     } finally {
       setBusy(null);
     }
