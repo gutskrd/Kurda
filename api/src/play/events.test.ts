@@ -112,6 +112,45 @@ describe('PlayEvents', () => {
     expect(notifier.told).toHaveLength(3);
   });
 
+  it('a move that ended nothing reaches the players but not the group room, nor the invites', async () => {
+    const notifier = new FakeNotifier();
+    const pool = fakePool(['invitee'], [{ id: 'inv-1', host_id: 'host', invitee_id: 'invitee', held: false }]);
+    const events = new PlayEvents(pool, notifier, { coalesceMs: 0 });
+    events.attach('wordle-battle', async () => facts({ chatGroupId: 'g1', phase: 'started', joinable: false }));
+    events.changed('wordle-battle', 'lobby-1', { card: false });
+    await settle();
+    expect(notifier.told.map((t) => t.userId).sort()).toEqual(['b', 'host', 'invitee']);
+    expect(notifier.published).toEqual([]);
+    expect(pool.queries.some((q) => q.includes('UPDATE play_invites'))).toBe(false);
+
+    // and a change a card does show reaches the room as before
+    events.changed('wordle-battle', 'lobby-1');
+    await settle();
+    expect(notifier.published).toHaveLength(1);
+  });
+
+  it('a burst of moves reaches the group room only if something in it could show on the card', async () => {
+    const notifier = new FakeNotifier();
+    const events = new PlayEvents(fakePool([]), notifier);
+    events.attach('rhyme-match', async () => facts({ game: 'rhyme-match', chatGroupId: 'g1' }));
+    // a match's worth of scored words: the players hear them, the room does not
+    for (let i = 0; i < 10; i++) events.changed('rhyme-match', 'lobby-1', { card: false });
+    await settle();
+    await vi.advanceTimersByTimeAsync(PLAY_CHANGED_COALESCE_MS);
+    await settle();
+    expect(notifier.told.length).toBeGreaterThan(0);
+    expect(notifier.published).toEqual([]);
+
+    // a word, then the match ending, within one window: the trailing send reaches the room
+    events.changed('rhyme-match', 'lobby-1', { card: false });
+    events.changed('rhyme-match', 'lobby-1', { card: true });
+    await settle();
+    expect(notifier.published).toEqual([]);
+    await vi.advanceTimersByTimeAsync(PLAY_CHANGED_COALESCE_MS);
+    await settle();
+    expect(notifier.published).toHaveLength(1);
+  });
+
   it('never throws, even when reading the lobby fails, and stops after close', async () => {
     const notifier = new FakeNotifier();
     const warn = vi.fn();

@@ -1,7 +1,7 @@
 import type pg from 'pg';
 import type { PlayGame, PlayUserEvent } from '@kurda/shared';
 import { groupRoom } from '../groups/chat-service.js';
-import type { LobbyFacts } from './types.js';
+import type { LobbyChange, LobbyFacts } from './types.js';
 
 /** Just enough of the realtime gateway: a user's own channel, and a room. */
 export interface PlayNotifier {
@@ -21,6 +21,8 @@ interface Window {
   /** something changed after the window opened: send once more when it closes */
   dirty: boolean;
   also: Set<string>;
+  /** one of those changes could show on a chat card */
+  card: boolean;
 }
 
 /**
@@ -36,6 +38,15 @@ interface Window {
  * A Rhyme Match can score several words a second, so changes to one lobby are
  * coalesced: the first goes out at once, the rest in one trailing send per
  * PLAY_CHANGED_COALESCE_MS — the clients only ever refetch.
+ *
+ * The group room hears only of changes a card could show (`card`). A card
+ * says whether the game is open, full, started, finished or called off, and
+ * how many are in it — none of which a guess or a scored word changes — and
+ * every member online refetches it on the event: up to a hundred people, a
+ * few queries each, every 300 ms of a match, for a card that looks the same.
+ * The game says which of its changes those are, rather than this remembering
+ * what each room was last sent, since another server may have sent the last
+ * one.
  *
  * It is also where pending invites learn that their lobby started, filled or
  * was called off: they expire then, and the host and the invitee are told.
@@ -65,30 +76,33 @@ export class PlayEvents {
    * Something in this lobby changed. Never throws and never waits: telling
    * people is not part of what they did. `also` names someone no longer in it
    * who should hear about it this once (a player just removed, so their screen
-   * finds out now rather than at its next slow poll).
+   * finds out now rather than at its next slow poll); `card: false` keeps it
+   * from the group room (see the class note).
    */
-  changed(game: PlayGame, lobbyId: string, opts: { also?: readonly string[] } = {}): void {
+  changed(game: PlayGame, lobbyId: string, opts: LobbyChange = {}): void {
     if (this.closed) return;
     const also = opts.also ?? [];
+    const card = opts.card ?? true;
     if (this.coalesceMs <= 0) {
-      void this.fanOut(game, lobbyId, also);
+      void this.fanOut(game, lobbyId, also, card);
       return;
     }
     const key = `${game}:${lobbyId}`;
     const open = this.windows.get(key);
     if (open) {
       open.dirty = true;
+      open.card ||= card;
       for (const id of also) open.also.add(id);
       return;
     }
-    void this.fanOut(game, lobbyId, also);
+    void this.fanOut(game, lobbyId, also, card);
     const timer = setTimeout(() => {
       const w = this.windows.get(key);
       this.windows.delete(key);
-      if (w?.dirty) this.changed(game, lobbyId, { also: [...w.also] });
+      if (w?.dirty) this.changed(game, lobbyId, { also: [...w.also], card: w.card });
     }, this.coalesceMs);
     timer.unref?.();
-    this.windows.set(key, { timer, dirty: false, also: new Set() });
+    this.windows.set(key, { timer, dirty: false, also: new Set(), card: false });
   }
 
   /** On shutdown: drop the trailing sends. */
@@ -105,7 +119,7 @@ export class PlayEvents {
     });
   }
 
-  private async fanOut(game: PlayGame, lobbyId: string, also: readonly string[]): Promise<void> {
+  private async fanOut(game: PlayGame, lobbyId: string, also: readonly string[], card: boolean): Promise<void> {
     try {
       const source = this.sources.get(game);
       const facts = source ? await source(lobbyId) : null;
@@ -117,6 +131,9 @@ export class PlayEvents {
       const to = new Set([...(facts?.memberIds ?? []), ...pending.rows.map((r) => r.invitee_id), ...also]);
       const event: PlayUserEvent = { type: 'play_changed', game, lobbyId };
       await Promise.all([...to].map((uid) => this.tell(uid, event)));
+      // a move in a game under way changes nothing on a card, nor whether the
+      // lobby can be joined: the room and the invites have heard all of it
+      if (!card) return;
       if (facts?.chatGroupId) {
         await this.notifier
           .publish(groupRoom(facts.chatGroupId), event as unknown as Record<string, unknown>)

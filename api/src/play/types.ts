@@ -31,6 +31,19 @@ export interface LobbyFacts {
   rematchKind: 'pair' | 'round';
 }
 
+/** What a game says about one of its changes, for `play_changed` (play/events.ts). */
+export interface LobbyChange {
+  /** someone no longer in the lobby who should hear about it this once (a player just removed) */
+  also?: readonly string[];
+  /**
+   * Whether a chat card could show the change — who is in the game, whether it
+   * can be joined, whether it started, ended or was called off. False for a
+   * move in a game under way (a guess, a scored word) that ended nothing; left
+   * out, it is taken as true.
+   */
+  card?: boolean;
+}
+
 /** How a join through the play layer (accepting an invite) went. */
 export type JoinOutcome = 'joined' | 'already' | 'not-found' | 'started' | 'full';
 

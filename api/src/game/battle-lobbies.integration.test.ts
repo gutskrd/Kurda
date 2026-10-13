@@ -12,6 +12,7 @@ import { AWAY_SECONDS, BATTLE_MINUTES, WordleBattleService } from './wordle-batt
 import { RhymeMatchService } from './rhyme-match-service.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend, block } from '../test/social.js';
+import type { LobbyChange } from '../play/types.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -27,6 +28,8 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
   const entryIds: string[] = [];
   const clock = { t: new Date() };
   const changed: string[] = [];
+  /** changes no chat card shows (`card: false`), which the group room is spared */
+  const quiet: string[] = [];
   let wordle: WordleBattleService;
   let rhyme: RhymeMatchService;
 
@@ -67,7 +70,13 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    const deps = { now: () => clock.t, onChange: (id: string) => void changed.push(id) };
+    const deps = {
+      now: () => clock.t,
+      onChange: (id: string, o?: LobbyChange) => {
+        changed.push(id);
+        if (o?.card === false) quiet.push(id);
+      },
+    };
     wordle = new WordleBattleService(pool, deps);
     rhyme = new RhymeMatchService(pool, deps);
     for (const w of WORDS) await addWord(w, 'kurmanji');
@@ -77,6 +86,7 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
   beforeEach(() => {
     clock.t = new Date();
     changed.length = 0;
+    quiet.length = 0;
   });
 
   afterAll(async () => {
@@ -289,6 +299,20 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
       await wordle.guess(id, host, await targetOf(id));
       await wordle.leave(id, a);
       expect(changed).toEqual([id, id, id]);
+      // only the guess is one no chat card shows: a still racing, nothing ended
+      expect(quiet).toEqual([id]);
+
+      // a guess that ends the battle is one a card shows
+      const b = await makeUser();
+      const two = await battleWith(host, b);
+      await wordle.start(two, host);
+      const target = await targetOf(two);
+      quiet.length = 0;
+      await wordle.guess(two, host, target);
+      expect(quiet).toEqual([two]);
+      await wordle.guess(two, b, target);
+      expect((await wordle.state(two, b)).status).toBe('finished');
+      expect(quiet).toEqual([two]);
     });
 
     it('a pair rematch starts at once with both; the next round holds only the host; asking twice gives the same game', async () => {
@@ -405,6 +429,28 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
       await rhyme.sweep();
       expect(changed).toContain(id);
       expect((await rhyme.results(id, b))!.ranking).toHaveLength(3);
+    });
+
+    it('a scored word is a change no chat card shows; the match ending is one it does', async () => {
+      const host = await makeUser();
+      const a = await makeUser();
+      await befriend(pool, host, a);
+      const created = await rhyme.create(host, { dialect: 'kurmanci', windowMs: 60_000 });
+      if (!created.ok) throw new Error(created.reason);
+      const id = created.match.id;
+      await rhyme.join(id, a);
+      await rhyme.start(id, host);
+      // a prompt the fixtures rhyme with
+      await pool.query(`UPDATE rhyme_matches SET prompt = $2 WHERE id = $1`, [id, RHYMES[0]]);
+      changed.length = 0;
+      const scored = await rhyme.submit(id, a, RHYMES[1]!);
+      expect(scored.ok && scored.result.accepted).toBe(true);
+      expect(quiet).toEqual([id]);
+      later(60_001);
+      const tooLate = await rhyme.submit(id, a, RHYMES[2]!);
+      expect(tooLate.ok && tooLate.result.reason).toBe('window-closed');
+      expect(changed).toEqual([id, id]);
+      expect(quiet).toEqual([id]);
     });
 
     it('the host removes by seat in the lobby, and an idle lobby closes', async () => {

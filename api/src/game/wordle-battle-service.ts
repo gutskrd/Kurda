@@ -23,7 +23,7 @@ import {
   type SeatPlayer,
   type SeatRow,
 } from '../play/lobby.js';
-import type { LobbyFacts, Series } from '../play/types.js';
+import type { LobbyChange, LobbyFacts, Series } from '../play/types.js';
 import {
   applyGuess,
   initGame,
@@ -175,9 +175,10 @@ export interface WordleBattleDeps {
   /**
    * Called after every change is committed (the play module's `play_changed`,
    * which replaced the clients' fast polling). `also` names someone no longer
-   * in the battle who should hear about it once — a player just removed.
+   * in the battle who should hear about it once — a player just removed;
+   * `card: false` marks a guess that ended nothing, which no chat card shows.
    */
-  onChange?: (battleId: string, opts?: { also?: string[] }) => void;
+  onChange?: (battleId: string, opts?: LobbyChange) => void;
   /** turns an uploaded profile photo's key into its URL, for the players' faces */
   publicUrl?: PublicUrl;
 }
@@ -213,7 +214,7 @@ const minutesAfter = (at: Date, minutes: number): Date => new Date(at.getTime() 
 export class WordleBattleService {
   private readonly xp: XpService;
   private readonly now: () => Date;
-  private readonly onChange: (battleId: string, opts?: { also?: string[] }) => void;
+  private readonly onChange: (battleId: string, opts?: LobbyChange) => void;
   private readonly publicUrl: PublicUrl;
 
   constructor(private readonly pool: pg.Pool, deps: WordleBattleDeps = {}) {
@@ -306,6 +307,7 @@ export class WordleBattleService {
 
   async guess(battleId: string, userId: string, word: string): Promise<GuessResult> {
     const now = this.now();
+    let over = false;
     const res = await this.tx<GuessResult | 'ended' | null>(async (client) => {
       const battle = await this.lock(client, battleId);
       if (!battle) return { ok: false, reason: 'not-found' };
@@ -346,7 +348,10 @@ export class WordleBattleService {
 
       // finalize when nobody still racing is left: everyone else won, ran out
       // of guesses, left, or is away
-      if (finished && (await this.racing(client, battleId, now)) === 0) await this.finalize(client, battleId, now);
+      if (finished && (await this.racing(client, battleId, now)) === 0) {
+        await this.finalize(client, battleId, now);
+        over = true;
+      }
       return null;
     });
     if (res === 'ended') {
@@ -354,7 +359,9 @@ export class WordleBattleService {
       return { ok: false, reason: 'finished' };
     }
     if (res) return res;
-    this.changed(battleId);
+    // a guess moves the guesser's own progress, which no chat card shows —
+    // unless it ended the battle
+    this.changed(battleId, { card: over });
     return { ok: true, battle: await this.state(battleId, userId) };
   }
 
@@ -816,7 +823,7 @@ export class WordleBattleService {
     }
   }
 
-  private changed(battleId: string, opts?: { also?: string[] }): void {
+  private changed(battleId: string, opts?: LobbyChange): void {
     try {
       this.onChange(battleId, opts);
     } catch {

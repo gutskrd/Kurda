@@ -23,7 +23,7 @@ import {
   type SeatPlayer,
   type SeatRow,
 } from '../play/lobby.js';
-import type { LobbyFacts, Series } from '../play/types.js';
+import type { LobbyChange, LobbyFacts, Series } from '../play/types.js';
 import {
   evaluateSubmission,
   normalizeWord,
@@ -129,8 +129,11 @@ interface PlayerRow extends SeatRow {
 export interface RhymeMatchDeps {
   xp?: XpService;
   now?: () => Date;
-  /** called after every committed change (the play module's `play_changed`); `also` is someone just removed */
-  onChange?: (matchId: string, opts?: { also?: string[] }) => void;
+  /**
+   * called after every committed change (the play module's `play_changed`); `also` is someone just
+   * removed, `card: false` a scored word that ended nothing, which no chat card shows
+   */
+  onChange?: (matchId: string, opts?: LobbyChange) => void;
   publicUrl?: PublicUrl;
 }
 
@@ -149,7 +152,7 @@ export interface RhymeMatchDeps {
 export class RhymeMatchService {
   private readonly xp: XpService;
   private readonly now: () => Date;
-  private readonly onChange: (matchId: string, opts?: { also?: string[] }) => void;
+  private readonly onChange: (matchId: string, opts?: LobbyChange) => void;
   private readonly publicUrl: PublicUrl;
 
   constructor(private readonly pool: pg.Pool, deps: RhymeMatchDeps = {}) {
@@ -283,8 +286,9 @@ export class RhymeMatchService {
       return { ok: true, ended: false, result };
     });
     if (!res.ok) return res;
-    // a scored word moves the scoreboard; an ended window ends the match
-    if (res.ended || res.result.accepted) this.changed(matchId);
+    // a scored word moves the scoreboard (which no chat card shows); an ended
+    // window ends the match
+    if (res.ended || res.result.accepted) this.changed(matchId, { card: res.ended });
     return { ok: true, match: await this.state(matchId, userId), result: res.result };
   }
 
@@ -678,7 +682,7 @@ export class RhymeMatchService {
     }
   }
 
-  private changed(matchId: string, opts?: { also?: string[] }): void {
+  private changed(matchId: string, opts?: LobbyChange): void {
     try {
       this.onChange(matchId, opts);
     } catch {
