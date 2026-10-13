@@ -69,15 +69,25 @@ export class ItemReturns {
    * Returning an item that has already been returned answers again with
    * `duplicate: true` and pays nothing, so a retried request is harmless. The
    * owner's row is locked for the length of the transaction, and the ledger
-   * entry carries a key unique to (user, item) as well, so two requests at
+   * entry carries a key made from the row's own id as well, so two requests at
    * once still pay once.
+   *
+   * That key is the server's alone: the id is never shown, and a key a client
+   * sends is filed under its sender (ShopService.purchase). Were it ever found
+   * taken all the same, the credit would pay nothing — so the return stops
+   * there, and the item stays where it was, rather than leave for nothing.
    */
   async returnItem(userId: string, sku: string): Promise<ReturnItemResult> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const found = await client.query<{ refund_amount: number; refund_currency: Currency; returned_at: Date | null }>(
-        `SELECT rf.refund_amount, rf.refund_currency, rf.returned_at
+      const found = await client.query<{
+        id: string;
+        refund_amount: number;
+        refund_currency: Currency;
+        returned_at: Date | null;
+      }>(
+        `SELECT rf.id, rf.refund_amount, rf.refund_currency, rf.returned_at
            FROM cosmetic_refreshes rf
            JOIN cosmetic_replacements rp ON rp.sku = rf.sku
           WHERE rf.user_id = $1 AND rf.sku = $2
@@ -112,8 +122,11 @@ export class ItemReturns {
         amount: refund.amount,
         reason: 'shop_return',
         refId: sku,
-        idempotencyKey: `shop-return:${userId}:${sku}`,
+        idempotencyKey: `shop-return:${row.id}`,
       });
+      if (credit.duplicate) {
+        throw new AppError('RETURN_CONFLICT', 409, 'this return could not be paid, so the item is still yours');
+      }
 
       // worn or not, it is no longer theirs to wear
       await client.query(
@@ -129,7 +142,7 @@ export class ItemReturns {
         [userId, sku],
       );
       await client.query('COMMIT');
-      return { returned: true, duplicate: credit.duplicate, sku, refund, balance: credit.balance };
+      return { returned: true, duplicate: false, sku, refund, balance: credit.balance };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

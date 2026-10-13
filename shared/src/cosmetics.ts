@@ -46,7 +46,11 @@ export interface RefreshedInventory {
 /** `POST /shop/items/:sku/return`. */
 export interface ReturnItemResult {
   returned: true;
-  /** true when this item had already been returned — nothing was paid twice */
+  /**
+   * true when this item had already been returned — nothing was paid twice.
+   * A first return is always `false`: one that cannot be paid is refused
+   * (`RETURN_CONFLICT`) rather than answered here.
+   */
   duplicate: boolean;
   sku: string;
   refund: ItemRefund;
@@ -59,9 +63,11 @@ export interface ReturnItemResult {
  * - `ITEM_NOT_FOUND` (404) — no such item;
  * - `NOT_RETURNABLE` (409) — not a replaced item, or not the caller's;
  * - `NOTHING_TO_REFUND` (409) — the caller did not pay for it (a present, or
- *   granted), so there is nothing to give back; they keep it.
+ *   granted), so there is nothing to give back; they keep it;
+ * - `RETURN_CONFLICT` (409) — the refund could not be paid, so nothing
+ *   happened: they keep the item and their balance is as it was.
  */
-export const ITEM_RETURN_ERRORS = ['ITEM_NOT_FOUND', 'NOT_RETURNABLE', 'NOTHING_TO_REFUND'] as const;
+export const ITEM_RETURN_ERRORS = ['ITEM_NOT_FOUND', 'NOT_RETURNABLE', 'NOTHING_TO_REFUND', 'RETURN_CONFLICT'] as const;
 export type ItemReturnError = (typeof ITEM_RETURN_ERRORS)[number];
 
 /** Whether to show the one-time "we refreshed your items" notice. */

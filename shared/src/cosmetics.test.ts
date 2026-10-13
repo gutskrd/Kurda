@@ -11,7 +11,7 @@ describe('refreshed shop items', () => {
     expect(shouldShowRefreshNotice(undefined)).toBe(false);
   });
 
-  it('names the three ways a return can be refused', () => {
-    expect([...ITEM_RETURN_ERRORS]).toEqual(['ITEM_NOT_FOUND', 'NOT_RETURNABLE', 'NOTHING_TO_REFUND']);
+  it('names the four ways a return can be refused', () => {
+    expect([...ITEM_RETURN_ERRORS]).toEqual(['ITEM_NOT_FOUND', 'NOT_RETURNABLE', 'NOTHING_TO_REFUND', 'RETURN_CONFLICT']);
   });
 });

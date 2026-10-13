@@ -19,7 +19,9 @@
  *                         the one-time "we refreshed your items" notice, and
  *                         whether they have returned it. A return is refunded
  *                         once: `returned_at` is set in the same transaction as
- *                         the credit, and the ledger key is unique as well.
+ *                         the credit, and the credit's ledger key is made from
+ *                         the row's `id` — unique, and never shown to anyone,
+ *                         so no request can take that key first.
  */
 
 export const up = (pgm) => {
@@ -33,7 +35,9 @@ export const up = (pgm) => {
   });
 
   pgm.createTable('cosmetic_refreshes', {
-    user_id: { type: 'uuid', notNull: true, references: 'users', onDelete: 'CASCADE' },
+    /** the refund's ledger key is made from this; it never leaves the server */
+    id: { type: 'uuid', notNull: true, unique: true, default: pgm.func('gen_random_uuid()') },
+    user_id:{ type: 'uuid', notNull: true, references: 'users', onDelete: 'CASCADE' },
     sku: { type: 'text', notNull: true, references: 'shop_items', onDelete: 'CASCADE' },
     /** what returning it gives back: the owner's own purchase, never a gift's price */
     refund_currency: { type: 'text', notNull: true },
