@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
-import { stripControlChars, type ChatGameRef, type ChatMessageKind, type PlayGame } from '@kurda/shared';
+import { stripControlChars, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { giftCards } from '../gifts/cards.js';
+import { gameRef, previewText, type KindColumns } from './kinds.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
@@ -22,22 +24,22 @@ export interface ChatModeration {
   recordOffense(userId: string): Promise<unknown>;
 }
 
-export interface DmMessage {
+/**
+ * A direct message. Most are text; a gift or a game card is a message with a
+ * kind and the reference it needs (shared `ChatMessageExtras`), and no body.
+ */
+export interface DmMessage extends ChatMessageExtras {
   id: string;
   senderId: string;
   /** who wrote it, so a thread can show a name without a second lookup */
   username: string;
   /** already resolved (uploaded photo -> chosen avatar); null when unknown */
   avatarUrl: string | null;
-  /** the text; null for a card, which has none */
+  /** null for a gift or a game card */
   body: string | null;
   createdAt: string;
   deliveredAt: string | null;
   readAt: string | null;
-  /** 'text', or a card (@kurda/shared `chat-cards`) */
-  kind: ChatMessageKind;
-  /** a game card's lobby; its live state is fetched (GET /play/cards/:game/:lobbyId) */
-  game: ChatGameRef | null;
 }
 
 export interface Conversation {
@@ -45,7 +47,10 @@ export interface Conversation {
   username: string;
   avatarUrl: string | null;
   online: boolean;
+  /** the text of the last message; for a gift or a game card, an English stand-in (chat/kinds.ts) */
   lastMessage: string;
+  /** what the last message is, so the apps can write their own line for a gift or a game */
+  lastKind: ChatMessageKind;
   lastAt: string;
   lastFromMe: boolean;
   unread: number;
@@ -88,6 +93,7 @@ export class ChatService {
         deliveredAt: null,
         readAt: null,
         kind: 'text',
+        gift: null,
         game: null,
       };
     }
@@ -130,6 +136,7 @@ export class ChatService {
       deliveredAt: null,
       readAt: null,
       kind: 'text',
+      gift: null,
       game: null,
     };
     await this.notifier
@@ -168,6 +175,7 @@ export class ChatService {
         deliveredAt: null,
         readAt: null,
         kind: 'game',
+        gift: null,
         game: card,
       };
     }
@@ -201,6 +209,7 @@ export class ChatService {
       deliveredAt: null,
       readAt: null,
       kind: 'game',
+      gift: null,
       game: card,
     };
     await this.notifier
@@ -219,28 +228,35 @@ export class ChatService {
   ): Promise<DmMessage[]> {
     if (await this.friends.areBlocked(user, other)) return [];
     const { lo, hi } = canonicalPair(user, other);
-    const rows = await this.pool.query<{
-      id: string;
-      sender_id: string;
-      username: string;
-      profile_photo_key: string | null;
-      selected_avatar_key: string | null;
-      body: string | null;
-      created_at: Date;
-      delivered_at: Date | null;
-      read_at: Date | null;
-      kind: ChatMessageKind;
-      game: string | null;
-      game_lobby_id: string | null;
-    }>(
+    const rows = await this.pool.query<
+      KindColumns & {
+        id: string;
+        sender_id: string;
+        username: string;
+        profile_photo_key: string | null;
+        selected_avatar_key: string | null;
+        body: string | null;
+        created_at: Date;
+        delivered_at: Date | null;
+        read_at: Date | null;
+      }
+    >(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.delivered_at, m.read_at, m.kind, m.game, m.game_lobby_id
+              m.body, m.created_at, m.delivered_at, m.read_at,
+              m.kind, m.gift_batch_id, m.game, m.game_lobby_id
          FROM dm_messages m JOIN users u ON u.id = m.sender_id
         WHERE m.user_lo = $1 AND m.user_hi = $2 ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $3`,
       before ? [lo, hi, limit, before] : [lo, hi, limit],
     );
     await this.markDelivered(lo, hi, user, other);
+    // the gifts on this page, as this reader sees them (theirs to open, or not)
+    const cards = await giftCards(
+      this.pool,
+      rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id ? [r.gift_batch_id] : [])),
+      { id: user, seesEveryone: true },
+      publicUrl,
+    );
     return rows.rows
       .map((r) => ({
         id: r.id,
@@ -252,6 +268,7 @@ export class ChatService {
         deliveredAt: r.delivered_at ? r.delivered_at.toISOString() : null,
         readAt: r.read_at ? r.read_at.toISOString() : null,
         kind: r.kind,
+        gift: r.kind === 'gift' && r.gift_batch_id ? cards.get(r.gift_batch_id) ?? null : null,
         game: gameRef(r),
       }))
       .reverse(); // ascending for display
@@ -297,6 +314,7 @@ export class ChatService {
       selected_avatar_key: string | null;
       last_seen_at: Date | null;
       body: string | null;
+      kind: ChatMessageKind;
       created_at: Date;
       sender_id: string;
       unread: number;
@@ -306,7 +324,7 @@ export class ChatService {
            FROM dm_messages WHERE user_lo = $1 OR user_hi = $1
        )
        SELECT CASE WHEN c.user_lo = $1 THEN c.user_hi ELSE c.user_lo END AS other,
-              u.username, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at, c.body, c.created_at, c.sender_id,
+              u.username, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at, c.body, c.kind, c.created_at, c.sender_id,
               (SELECT count(*)::int FROM dm_messages m
                 WHERE m.user_lo = c.user_lo AND m.user_hi = c.user_hi
                   AND m.sender_id <> $1 AND m.read_at IS NULL) AS unread
@@ -326,17 +344,11 @@ export class ChatService {
       username: r.username,
       avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
       online: isOnline(r.last_seen_at, now),
-      // a card has no text: '' rather than null for the phone builds that print it
-      lastMessage: r.body ?? '',
+      lastMessage: previewText(r.kind, r.body),
+      lastKind: r.kind,
       lastAt: r.created_at.toISOString(),
       lastFromMe: r.sender_id === user,
       unread: r.unread,
     }));
   }
-}
-
-/** A stored game card's reference, or null for any other kind of message. */
-export function gameRef(r: { kind: string; game: string | null; game_lobby_id: string | null }): ChatGameRef | null {
-  if (r.kind !== 'game' || !r.game || !r.game_lobby_id) return null;
-  return { game: r.game as PlayGame, lobbyId: r.game_lobby_id };
 }

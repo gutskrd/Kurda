@@ -19,6 +19,7 @@ import { WalletService } from '../wallet/service.js';
 import { ShopService } from '../shop/service.js';
 import { ItemReturns } from '../shop/returns.js';
 import { activate } from '../test/activate.js';
+import { canonicalPair } from '../friends/pair.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const MIGRATIONS = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'migrations');
@@ -56,6 +57,7 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
   /** an item an admin made by hand on a file that is no longer shipped */
   const SKU = `bg-handmade-${s}`;
   const ids: Record<string, string> = {};
+  const tokens: Record<string, string> = {};
 
   const pgm = () => ({ db: { query: (text: string, params?: unknown[]) => pool.query(text, params) } });
 
@@ -75,6 +77,24 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
     });
     await activate(app, pool, res);
     ids[tag] = res.json().user.id;
+    tokens[tag] = res.json().tokens.accessToken;
+  }
+
+  /** A present from one member to another, the way the shop sends one: friends first. */
+  async function gift(from: string, to: string, key: string): Promise<void> {
+    const { lo, hi } = canonicalPair(ids[from]!, ids[to]!);
+    await pool.query(
+      `INSERT INTO friendships (user_lo, user_hi, status, requested_by, created_at, responded_at)
+       VALUES ($1, $2, 'accepted', $3, now(), now()) ON CONFLICT (user_lo, user_hi) DO NOTHING`,
+      [lo, hi, ids[from]],
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/shop/gift',
+      headers: { authorization: `Bearer ${tokens[from]}` },
+      payload: { sku: SKU, toUserId: ids[to], idempotencyKey: key },
+    });
+    expect(res.statusCode).toBe(200);
   }
 
   const refreshOf = async (user: string) =>
@@ -108,7 +128,7 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
     await shop.purchase(ids.buyer!, SKU, `rf-buy-${s}`);
     // … then, at a new price, bought again as a present for a friend
     await pool.query(`UPDATE shop_items SET price = 450 WHERE sku = $1`, [SKU]);
-    await shop.gift(ids.buyer!, ids.friend!, SKU, `rf-gift-${s}`);
+    await gift('buyer', 'friend', `rf-gift-${s}`);
     await pool.query(`INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1, $2, 'grant')`, [ids.granted, SKU]);
     // equipped on premium alone, owned by nobody
     await pool.query(`UPDATE users SET equipped_background_sku = $2 WHERE id = $1`, [ids.nobody, SKU]);

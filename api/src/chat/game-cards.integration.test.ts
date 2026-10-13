@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { ChatService, type ChatModeration } from './service.js';
+import { PREVIEW_FALLBACK } from './kinds.js';
 import { FriendService } from '../friends/service.js';
 import { GroupService } from '../groups/service.js';
 import { GroupChatService } from '../groups/chat-service.js';
@@ -93,10 +94,12 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     expect(text).toMatchObject({ kind: 'text', game: null });
     expect((await chat.history(host, friend)).find((m) => m.id === text.id)).toMatchObject({ kind: 'text', game: null });
 
-    // the conversation list never prints a null preview for a card (installed phone builds print it)
+    // the conversation list never prints a null preview for a card (installed
+    // phone builds print it): they get a short stand-in, the apps the kind
     await chat.sendCard(host, friend, card());
     const convo = (await chat.conversations(friend)).find((c) => c.userId === host)!;
-    expect(convo.lastMessage).toBe('');
+    expect(convo.lastMessage).toBe(PREVIEW_FALLBACK.game);
+    expect(convo.lastKind).toBe('game');
   });
 
   it('keeps the DM rules: friends only, a block drops it silently, a mute refuses it', async () => {

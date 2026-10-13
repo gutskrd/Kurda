@@ -33,6 +33,8 @@ import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
 import { ItemReturns } from './shop/returns.js';
+import { GiftService } from './gifts/service.js';
+import { registerGiftRoutes } from './gifts/routes.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
@@ -439,13 +441,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       6 * 60 * 60 * 1000,
     );
     app.addHook('onClose', async () => clearInterval(requestExpiry));
-    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache), {
-      // gifting is friends-only, and tells the recipient it arrived
-      friends,
-      inbox: new InboxService(app.db),
-      // owners of items whose art was replaced: the notice, and returns
-      returns: new ItemReturns(app.db, new WalletService(app.db)),
-    });
+    // the shop is registered with gifts, below the chats a gift is posted in
     // Profile cosmetics: equip (server-verified access) + favorites (KUR profile)
     registerCosmeticsRoutes(app, new CosmeticsService(app.db));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
@@ -661,6 +657,33 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // game; long-polls are woken across instances over the room bus
     const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
 
+    // shop + gifts: a gift is bought in the shop or from a chat's gift button,
+    // and arrives as a message in the chat either way, so it needs both chats
+    const shopWallet = new WalletService(app.db);
+    const shop = new ShopService(app.db, shopWallet, app.cache);
+    const gifts = new GiftService(
+      app.db,
+      {
+        wallet: shopWallet,
+        shop,
+        friends,
+        groupChat,
+        realtime: {
+          notifyUser: (uid, ev) => realtime.notifyUser(uid, ev),
+          publish: (r, ev) => realtime.publish(r, ev),
+        },
+        inbox,
+        log: app.log,
+      },
+      (k) => (app.storage ? app.storage.publicUrl(k) : null),
+    );
+    registerShopRoutes(app, shop, {
+      gifts,
+      // owners of items whose art was replaced: the notice, and returns
+      returns: new ItemReturns(app.db, new WalletService(app.db)),
+    });
+    registerGiftRoutes(app, gifts);
+
     // inviting friends to any online game, game cards in chats, and playing
     // again (contract §B): one join rule and one invite flow for every game
     registerPlayRoutes(app, {
@@ -676,7 +699,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, gifts });
 
     // skill-rating reads (KUR-061). Nothing writes a rating since the ranked
     // quiz went (Stories replaced it), but the ratings people earned stay

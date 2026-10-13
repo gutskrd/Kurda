@@ -14,8 +14,8 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { WalletService } from '../wallet/service.js';
-import { ShopService } from './service.js';
 import { activate } from '../test/activate.js';
+import { canonicalPair } from '../friends/pair.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const MIGRATION = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'migrations', '1751000161000_code-made-cosmetics.js');
@@ -83,6 +83,16 @@ describe.skipIf(!DATABASE_URL)('returning a refreshed item (integration)', () =>
       )
     ).rows;
 
+  /** Friends straight in the table, as other suites do: the shop gifts friends only. */
+  const befriend = async (a: string, b: string): Promise<void> => {
+    const { lo, hi } = canonicalPair(ids[a]!, ids[b]!);
+    await pool.query(
+      `INSERT INTO friendships (user_lo, user_hi, status, requested_by, created_at, responded_at)
+       VALUES ($1, $2, 'accepted', $3, now(), now()) ON CONFLICT (user_lo, user_hi) DO NOTHING`,
+      [lo, hi, ids[a]],
+    );
+  };
+
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -118,7 +128,9 @@ describe.skipIf(!DATABASE_URL)('returning a refreshed item (integration)', () =>
     await wallet.credit({ userId: ids.thief!, currency: 'zer', amount: 10, reason: 'admin_adjustment' });
     expect((await call('PUT', '/me/cosmetics/background', 'buyer', { sku: BG })).statusCode).toBe(200);
     expect((await call('PUT', '/me/cosmetics/icon', 'buyer', { sku: ICON })).statusCode).toBe(200);
-    await new ShopService(pool, wallet).gift(ids.buyer!, ids.given!, BG, `ret-gift-${s}`);
+    await befriend('buyer', 'given');
+    const gifted = await call('POST', '/shop/gift', 'buyer', { sku: BG, toUserId: ids.given, idempotencyKey: `ret-gift-${s}` });
+    expect(gifted.statusCode).toBe(200);
 
     const migration = (await import(pathToFileURL(MIGRATION).href)) as { up(pgm: unknown): Promise<void> };
     await migration.up({ db: { query: (text: string, params?: unknown[]) => pool.query(text, params) } });
@@ -168,7 +180,10 @@ describe.skipIf(!DATABASE_URL)('returning a refreshed item (integration)', () =>
     const buy = await call('POST', '/shop/purchase', 'other', { sku: BG, idempotencyKey: `ret-other-${s}` });
     expect(buy.statusCode).toBe(409);
     expect(buy.json().code).toBe('ITEM_UNAVAILABLE');
-    await expect(new ShopService(pool, wallet).gift(ids.buyer!, ids.other!, BG, `ret-gift2-${s}`)).rejects.toThrow(/not available/);
+    await befriend('buyer', 'other');
+    const gift = await call('POST', '/shop/gift', 'buyer', { sku: BG, toUserId: ids.other, idempotencyKey: `ret-gift2-${s}` });
+    expect(gift.statusCode).toBe(409);
+    expect(gift.json().code).toBe('ITEM_UNAVAILABLE');
   });
 
   it('refunds what was paid, removes the item and takes it off the profile', async () => {
