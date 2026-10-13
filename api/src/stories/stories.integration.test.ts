@@ -265,6 +265,7 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
         id: ids['short-b'],
         slug: slug('short-b'),
         title: `D ${s}`,
+        summary: 'Kurteya çîrokê.',
         dialect: 'kurmanci',
         level: 1,
         length: 'short',
@@ -351,12 +352,31 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
           });
           expect(picked!.id).toBe(fresh);
         }
+        // a rematch names every player: a story any of them finished comes last (and a non-uuid is no player)
+        for (const players of [[userIds[0]!, userIds[1]!], ['not-a-uuid', userIds[1]!]]) {
+          for (let i = 0; i < 10; i++) {
+            const picked = await preferring.pickRandomPublished({ dialect: 'kurmanci', length: 'short', level: 3, preferNotCompletedBy: players });
+            expect(picked!.id).toBe(fresh);
+          }
+        }
+        expect(
+          (await preferring.pickRandomPublished({ dialect: 'kurmanci', length: 'short', level: 3, preferNotCompletedBy: [userIds[0]!] }))!.summary,
+        ).toBe('Kurteya çîrokê.');
         // finished everything: still a story, not none
         await pool.query(`INSERT INTO story_completions (user_id, story_id) VALUES ($1, $2)`, [userIds[1], fresh]);
         const again = await preferring.pickRandomPublished({ dialect: 'kurmanci', length: 'short', level: 3, preferNotCompletedBy: userIds[1] });
         expect([done, fresh]).toContain(again!.id);
+        await pool.query(`INSERT INTO story_completions (user_id, story_id) VALUES ($1, $2)`, [userIds[0], fresh]);
+        await pool.query(`DELETE FROM story_completions WHERE user_id = $1 AND story_id = $2`, [userIds[1], fresh]);
+        const between = await preferring.pickRandomPublished({
+          dialect: 'kurmanci',
+          length: 'short',
+          level: 3,
+          preferNotCompletedBy: [userIds[0]!, userIds[1]!],
+        });
+        expect([done, fresh]).toContain(between!.id);
       } finally {
-        await pool.query(`DELETE FROM story_completions WHERE user_id = $1`, [userIds[1]]);
+        await pool.query(`DELETE FROM story_completions WHERE user_id = ANY($1)`, [userIds]);
         if (!existed) await pool.query(`DROP TABLE story_completions`);
       }
     });

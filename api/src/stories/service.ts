@@ -129,6 +129,7 @@ export interface PublishedStory {
   id: string;
   slug: string;
   title: string;
+  summary: string | null;
   dialect: StoryDialect;
   level: StoryLevel;
   length: StoryLength;
@@ -143,8 +144,12 @@ export interface PickRandomOptions {
   dialect: StoryDialect;
   length: StoryLength;
   level?: StoryLevel | null;
-  /** a user id: stories this user has already finished come last ("Surprise me" offers something new) */
-  preferNotCompletedBy?: string | null;
+  /**
+   * Who will play it: stories any of them has already finished come last
+   * ("Surprise me" offers something new). One id for a solo game, every
+   * player's for a duo or group rematch; ids that are not uuids are ignored.
+   */
+  preferNotCompletedBy?: string | readonly string[] | null;
 }
 
 interface ListRow {
@@ -163,6 +168,7 @@ interface StoryRow {
   id: string;
   slug: string;
   title: string;
+  summary: string | null;
   dialect: StoryDialect;
   level: StoryLevel;
   length: StoryLength;
@@ -226,9 +232,17 @@ function listItem(r: ListRow): StoryListItem {
  *                                            null unless it is published now
  *   pickRandomPublished(options, executor?)  "Surprise me": a random published
  *                                            story of a variety and length
- *                                            (and level), preferring ones the
- *                                            player has not finished; null if
- *                                            there is none
+ *                                            (and level), with its bank,
+ *                                            preferring ones the players have
+ *                                            not finished; null if there is
+ *                                            none
+ *
+ * The games' own reader (story-games/stories-source.ts, `StoryCatalog`) asks
+ * for the picked story's id and names its players `preferUnseenBy`; it maps
+ * onto this service with `preferNotCompletedBy: opts.preferUnseenBy` and
+ * `(await pickRandomPublished(…))?.id ?? null`. Its `minQuestions` needs no
+ * filter: every published story carries MIN_QUESTION_BANK questions for its
+ * length, more than any count that length offers (publishing checks it).
  *
  * Both take an optional executor so a game can read inside its own
  * transaction; the story row is then share-locked until that transaction
@@ -335,7 +349,7 @@ export class StoriesService {
     // a lock only means something inside the caller's transaction; on the pool it would end with the query
     const lock = executor === this.pool ? '' : 'FOR SHARE';
     const story = await executor.query<StoryRow>(
-      `SELECT id, slug, title, dialect, level, length, word_count, body, glossary
+      `SELECT id, slug, title, summary, dialect, level, length, word_count, body, glossary
        FROM stories WHERE id = $1 AND status = 'published' ${lock}`,
       [storyId],
     );
@@ -349,6 +363,7 @@ export class StoriesService {
       id: row.id,
       slug: row.slug,
       title: row.title,
+      summary: row.summary,
       dialect: row.dialect,
       level: row.level,
       length: row.length,
@@ -361,9 +376,9 @@ export class StoriesService {
 
   /**
    * "Surprise me": a random published story of this variety and length (and
-   * level, when given). With `preferNotCompletedBy`, stories that user has
-   * already finished come last, so the surprise is a new story while there is
-   * one. Published stories always carry at least MIN_QUESTION_BANK questions
+   * level, when given). With `preferNotCompletedBy`, stories any of those
+   * players has already finished come last, so the surprise is a new story
+   * while there is one. Published stories always carry at least MIN_QUESTION_BANK questions
    * (publishing checks it), so any of them can be played at any count its
    * length offers. Null when there is none — or, rarely, when the one picked
    * was unpublished in the same instant; the caller treats both as no story.
@@ -371,10 +386,12 @@ export class StoriesService {
   async pickRandomPublished(options: PickRandomOptions, executor: Executor = this.pool): Promise<PublishedStory | null> {
     const params: unknown[] = [options.dialect, options.length, options.level ?? null];
     let preference = '';
-    const user = options.preferNotCompletedBy;
-    if (user && UUID_RE.test(user) && (await this.hasCompletions())) {
-      params.push(user);
-      preference = `EXISTS (SELECT 1 FROM story_completions c WHERE c.user_id = $4 AND c.story_id = s.id), `;
+    const given = options.preferNotCompletedBy;
+    // a non-uuid would be a cast error in the query, not a player
+    const players = (typeof given === 'string' ? [given] : (given ?? [])).filter((id) => UUID_RE.test(id));
+    if (players.length > 0 && (await this.hasCompletions())) {
+      params.push(players);
+      preference = `EXISTS (SELECT 1 FROM story_completions c WHERE c.user_id = ANY($4::uuid[]) AND c.story_id = s.id), `;
     }
     const picked = await executor.query<{ id: string }>(
       `SELECT s.id FROM stories s
