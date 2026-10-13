@@ -121,6 +121,10 @@ export function isPurchasable(item: ItemRow, now: Date): boolean {
  * of (and the same for buying it while a friend is gifting it). A row lock
  * cannot do this, because what is being guarded is a row that does not exist
  * yet. Transaction-scoped, so it can never be left held.
+ *
+ * A gift to several friends takes it for every item, unique or not, and for
+ * all of them in one order, so that two such gifts cannot deadlock on the
+ * friends' items (gifts/service.ts).
  */
 export async function lockEntitlement(client: pg.PoolClient, userId: string, sku: string): Promise<void> {
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`entitlement:${userId}:${sku}`]);

@@ -241,10 +241,17 @@ export class GiftService {
         return allowed;
       });
 
-      // something there is only one of, which they own already — under the
-      // lock, taken in one order (by id) so two group gifts cannot deadlock
+      // Each recipient's item is changed under its lock, all of them taken
+      // here and in one order (by id). For something there is only one of,
+      // that is what makes "they own it already" true when it is decided. For
+      // anything else it is what keeps two people giving the same thing to
+      // the same friends, listed the other way round, from each holding one
+      // friend's item while waiting for the other's: a deadlock, and a gift
+      // that fails. The grants below can then go in the order asked.
+      for (const to of [...candidates].sort()) await lockEntitlement(client, to, sku);
+
+      // something there is only one of, which they own already
       if (item.is_unique && candidates.length > 0) {
-        for (const to of [...candidates].sort()) await lockEntitlement(client, to, sku);
         const owned = await client.query<{ user_id: string }>(
           `SELECT user_id FROM user_entitlements WHERE sku = $1 AND user_id = ANY($2::uuid[])`,
           [sku, candidates],

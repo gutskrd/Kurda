@@ -495,6 +495,35 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect((await zer(sam)) + (await zer(tess))).toBe(20_000 - 300);
     });
 
+    it('two people giving the same friends something, listed the other way round, both go through', async () => {
+      // Not unique, so nothing decides between them: each friend gets two.
+      // Each send changes both friends' items, and without one order for
+      // that, each held one friend's while waiting for the other's.
+      const pat = await signUp('pat');
+      const quin = await signUp('quin');
+      const f0 = await signUp('wayf0');
+      const f1 = await signUp('wayf1');
+      for (const s of [pat, quin]) {
+        for (const f of [f0, f1]) await befriend(s, f);
+        await fund(s);
+      }
+      const gid = await group('Both ways', pat, [quin, f0, f1]);
+      const rounds = 8;
+      for (let i = 0; i < rounds; i++) {
+        const [a, b] = await Promise.all([giftGroup(pat, gid, [f0, f1], POWER), giftGroup(quin, gid, [f1, f0], POWER)]);
+        expect([a.statusCode, b.statusCode]).toEqual([200, 200]);
+        expect(a.json().sent).toEqual([f0.id, f1.id]);
+        expect(b.json().sent).toEqual([f1.id, f0.id]);
+        // the next round on another day, so the caps stay out of it
+        await pool.query(
+          `UPDATE gifts SET created_at = created_at - interval '25 hours' WHERE from_user_id = ANY($1::uuid[])`,
+          [[pat.id, quin.id]],
+        );
+      }
+      expect((await owns(f0, POWER))!.quantity).toBe(2 * rounds);
+      expect((await owns(f1, POWER))!.quantity).toBe(2 * rounds);
+    });
+
     it('and being given it while buying it: one of the two, never both', async () => {
       const uma = await signUp('uma');
       const vic = await signUp('vic');
