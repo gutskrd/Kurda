@@ -352,6 +352,22 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect(listed.untypeable).toHaveLength(1);
   });
 
+  it('saves a Soranî text copied out of a PDF as its letters, with nothing to warn about', async () => {
+    // a PDF hands over every letter as its shaped presentation form
+    const shaped = SORANI.replace(/ک/g, 'ﻛ').replace(/ی/g, 'ﯼ').replace(/و/g, 'ﻮ');
+    expect(shaped).not.toBe(SORANI);
+    const res = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} pdf`,
+      body: shaped,
+      language: 'ckb',
+      difficulty: 2,
+      active: false,
+    });
+    expect(res.statusCode, res.body).toBe(201);
+    expect(res.json().body).toBe(SORANI);
+    expect(res.json().untypeable).toEqual([]);
+  });
+
   it('refuses a text that is too short once its spaces are tidied, and an unknown language', async () => {
     const spaced = await call('POST', '/admin/race/texts', adminToken, {
       title: `it_${suffix} spaced`,

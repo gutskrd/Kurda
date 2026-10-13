@@ -143,6 +143,17 @@ const TYPOGRAPHIC: Record<string, string> = {
 
 const TYPOGRAPHIC_RE = new RegExp(`[${Object.keys(TYPOGRAPHIC).join('')}]`, 'g');
 
+/**
+ * Compatibility characters a text picks up when it is copied rather than
+ * typed: the Latin ligatures (ﬁ), the Arabic presentation forms — every letter
+ * of a Soranî text copied out of a PDF arrives as its shaped form (ﻛ ﻮ ﺭ ﺩ
+ * ﯼ), not the letter — and full-width Latin from an East Asian input method.
+ * No keyboard types them, so each is read as the letters it stands for (its
+ * NFKC form). Only these blocks: NFKC on the whole text would also rewrite
+ * characters that are what they look like.
+ */
+const COMPATIBILITY = /[ﬀ-ﬆﭐ-﷿ﹰ-ﻼ！-～]/g;
+
 /** Persian (extended Arabic-Indic) digits as the Arabic-Indic digits Soranî is written with. */
 const PERSIAN_DIGIT = /[\u06f0-\u06f9]/g;
 /** Either Arabic-script digit as the Latin digit Kurmancî is written with. */
@@ -172,6 +183,9 @@ export interface NormalizeTypingOptions {
  * - Soranî lookalikes as the Kurdish letter: ك → ک, ي and ى → ی, ۀ → ە; and
  *   ه followed by a zero-width non-joiner — how a Persian keyboard writes ە —
  *   as ە.
+ * - What copying leaves behind as the letters it stands for: Arabic
+ *   presentation forms (a Soranî text copied from a PDF), Latin ligatures,
+ *   full-width letters.
  * - Digits as the variety writes them: Arabic-Indic in Soranî, Latin in
  *   Kurmancî (where Arabic punctuation also becomes the Latin mark).
  * - Trimmed (see `partial`).
@@ -187,6 +201,7 @@ export function normalizeTyping(
   options: NormalizeTypingOptions = {},
 ): string {
   let out = text
+    .replace(COMPATIBILITY, (ch) => ch.normalize('NFKC'))
     .replace(/\u0647\u200c/g, '\u06d5')
     .replace(/\u200c/g, '')
     .replace(INVISIBLE, '')

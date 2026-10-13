@@ -72,6 +72,21 @@ describe('normalizeTyping', () => {
     expect(normalizeTyping('به\u200cرد', 'sorani')).toBe('بەرد');
   });
 
+  it('reads what copying leaves behind as the letters it stands for', () => {
+    // کوردی copied out of a PDF: every letter its shaped presentation form
+    const fromPdf = 'ﻛﻮﺭﺩﯼ';
+    expect(normalizeTyping(fromPdf, 'sorani')).toBe('کوردی');
+    expect(findUntypeable(fromPdf, 'sorani')).toEqual([]);
+    // a Latin ligature and full-width letters
+    expect(normalizeTyping('ﬁlm Ａｂ', 'kurmanci')).toBe('film Ab');
+    // and a race typed against such a text is typed on an ordinary keyboard
+    expect(compareTyping(fromPdf, 'کوردی', 'strict', { dialect: 'sorani', final: true })).toMatchObject({
+      correct: 5,
+      errors: 0,
+      done: true,
+    });
+  });
+
   it('keeps ه as written, since some texts spell the vowel with it', () => {
     expect(normalizeTyping('خانه', 'sorani')).toBe('خانه');
   });
@@ -93,7 +108,7 @@ describe('normalizeTyping', () => {
   });
 
   it('is idempotent', () => {
-    const samples = ['Ez’ê bêm — sibê…', 'welate\u0302  ız', 'به\u200cرد كتيب ٢', ' “x” '];
+    const samples = ['Ez’ê bêm — sibê…', 'welate\u0302  ız', 'به\u200cرد كتيب ٢', ' “x” ', '\ufedb\ufeee \ufb01 \uff21'];
     for (const s of samples) {
       for (const dialect of ['kurmanci', 'sorani'] as const) {
         const once = normalizeTyping(s, dialect);
