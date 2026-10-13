@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { FlagIcon, MoreIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { keepInView } from './keepInView';
 
 /**
  * The ⋯ beside someone else's chat message, with Report in it.
@@ -37,19 +38,10 @@ export function MessageMenu({
     if (openSignal > 0) setOpen(true);
   }, [openSignal]);
 
-  // the ⋯ can sit anywhere along a line — at the far edge of a phone screen
-  // beside a long message — so the open menu is nudged back inside the
-  // window rather than drawn half off it, whichever way the page reads
+  // the ⋯ can sit at the far edge of a phone screen beside a long message:
+  // the open menu is nudged back inside rather than drawn half off it
   useLayoutEffect(() => {
-    const list = listRef.current;
-    if (!open || !list) return;
-    list.style.transform = '';
-    const r = list.getBoundingClientRect();
-    const edge = 8;
-    let dx = 0;
-    if (r.right > window.innerWidth - edge) dx = window.innerWidth - edge - r.right;
-    if (r.left + dx < edge) dx = edge - r.left;
-    if (dx !== 0) list.style.transform = `translateX(${Math.round(dx)}px)`;
+    if (open && listRef.current) keepInView(listRef.current);
   }, [open]);
 
   useEffect(() => {

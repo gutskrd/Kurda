@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { BlockIcon, CloseIcon, FlagIcon, MoreIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { ReportSheet } from '../reports/ReportSheet';
+import { keepInView } from '../reports/keepInView';
 
 type Panel = null | 'menu' | 'report' | 'block';
 
@@ -42,6 +43,13 @@ export function UserActions({
   const [error, setError] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  // on a phone the ⋯ sits at the left of the profile card and the menu,
+  // anchored to its right, ran under the card's edge: keep all of it in view
+  useLayoutEffect(() => {
+    if ((panel === 'menu' || panel === 'block') && popRef.current) keepInView(popRef.current);
+  }, [panel]);
 
   /**
    * Escape closes, and so does a click anywhere else.
@@ -103,7 +111,7 @@ export function UserActions({
       </button>
 
       {panel === 'menu' && (
-        <div className="user-menu" role="menu">
+        <div className="user-menu" role="menu" ref={popRef}>
           <button type="button" role="menuitem" className="user-menu-item" onClick={() => open('report')}>
             <FlagIcon size={16} /> {t('moderation.report')}
           </button>
@@ -114,7 +122,7 @@ export function UserActions({
       )}
 
       {panel === 'block' && (
-        <div className="user-menu user-menu-wide" role="dialog" aria-label={t('friends.blockWho', { name })}>
+        <div className="user-menu user-menu-wide" role="dialog" aria-label={t('friends.blockWho', { name })} ref={popRef}>
           <div className="user-menu-head">
             <strong>{t('moderation.blockWhoTitle', { name })}</strong>
             <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label={t('common.close')}>
