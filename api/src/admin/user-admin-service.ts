@@ -26,7 +26,12 @@ export interface UserPage {
 export const USERS_PAGE_SIZE = 25;
 export const USERS_PAGE_MAX = 100;
 
-export interface UserDetail extends AdminUserModeration {
+/**
+ * The user page. The moderation fields (AdminUserModeration: reports, sanctions,
+ * appeals, cases, linked accounts) are there only for a reader who can
+ * moderate; support staff see the page without them.
+ */
+export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
   username: string;
   email: string;
@@ -152,7 +157,7 @@ export class UserAdminService {
     };
   }
 
-  async detail(userId: string): Promise<UserDetail | null> {
+  async detail(userId: string, opts: { moderation?: boolean } = {}): Promise<UserDetail | null> {
     const u = await this.pool.query<{
       id: string; username: string; email: string; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
@@ -180,7 +185,7 @@ export class UserAdminService {
         `SELECT action, reason, meta, admin_id, created_at FROM admin_actions WHERE target_user_id = $1 ORDER BY created_at DESC LIMIT 20`,
         [userId],
       ),
-      this.moderationOf(userId),
+      opts.moderation === false ? Promise.resolve({}) : this.moderationOf(userId),
     ]);
 
     return {

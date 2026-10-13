@@ -809,7 +809,8 @@ export interface AdminUserReport {
 
 /**
  * What `GET /admin/users/:id` adds for moderation, next to the profile, wallet,
- * ledger and sessions it already sent.
+ * ledger and sessions it already sent — only for a reader with
+ * `moderation.act` (support staff get the page without these fields).
  */
 export interface AdminUserModeration {
   reportsAgainst: AdminUserReport[];
@@ -909,7 +910,7 @@ export interface CsamActionResult {
  *   GET  /admin/moderation/approvals           → { approvals: PendingApproval[] }
  *   POST /admin/moderation/approvals/:sanctionId/approve  → { sanction: CaseSanctionView }
  *   POST /admin/moderation/approvals/:sanctionId/reject   { reason } → { sanction: CaseSanctionView }
- *   GET  /admin/users/:id             → the user page, with AdminUserModeration
+ *   GET  /admin/users/:id             → the user page, with AdminUserModeration (support role: without it)
  *   POST /admin/users/:id/sanctions   ApplySanctionRequest → 201 ApplySanctionResult
  *        (409 CONFIRM_USERNAME_REQUIRED; 422 SELF_HARM_NOT_SANCTIONED for the self-harm rule)
  *   POST /admin/sanctions/:id/revoke  { reason } → { sanction: CaseSanctionView }

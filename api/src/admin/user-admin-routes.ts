@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import { hasCapability } from './roles.js';
 import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
@@ -56,7 +57,11 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
   );
 
   app.get('/admin/users/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: canView }, async (req, reply) => {
-    const detail = await users.detail((req.params as z.infer<typeof idParam>).id);
+    // support staff can open a person's page, but what moderation knows about
+    // them — appeal texts, reports, linked accounts — is for moderators
+    const detail = await users.detail((req.params as z.infer<typeof idParam>).id, {
+      moderation: hasCapability(req.user!.roles, 'moderation.act'),
+    });
     if (!detail) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such user' });
     return detail;
   });

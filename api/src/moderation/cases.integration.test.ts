@@ -597,6 +597,14 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
     const page = (await call('GET', `/admin/users/${victim.id}`, modA.token)).json() as { sanctions: Array<{ id: string }>; reportsAgainst: unknown[]; appeals: unknown[] };
     expect(page.sanctions.map((s) => s.id)).toContain(sanctionId);
     expect(Array.isArray(page.reportsAgainst)).toBe(true);
+    // support staff open the same page without what moderation knows
+    const supportView = await call('GET', `/admin/users/${victim.id}`, support.token);
+    expect(supportView.statusCode).toBe(200);
+    const seen = supportView.json() as Record<string, unknown>;
+    expect(seen.username).toBe(victim.username);
+    for (const field of ['sanctions', 'reportsAgainst', 'reportsFiled', 'appeals', 'cases', 'linkedAccounts', 'chatOffenses']) {
+      expect(seen).not.toHaveProperty(field);
+    }
 
     const revoked = await call('POST', `/admin/sanctions/${sanctionId}/revoke`, modB.token, { reason: 'mistake' });
     expect(revoked.statusCode).toBe(200);
