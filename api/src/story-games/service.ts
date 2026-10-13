@@ -1315,22 +1315,26 @@ export class StoryGamesService {
       }
     }
     for (;;) {
-      const cleared = await this.pool.query<{ id: string }>(
-        `UPDATE story_games SET plan = NULL, story_snapshot = NULL
-          WHERE id IN (SELECT id FROM story_games
-                        WHERE status IN ('finished','cancelled') AND (plan IS NOT NULL OR story_snapshot IS NOT NULL)
-                          AND COALESCE(finished_at, updated_at) < now() - make_interval(hours => $1)
-                        LIMIT 1000)
-          RETURNING id`,
+      // One statement, so the plan and the answers go together or not at all:
+      // a game whose plan was cleared would never be picked again, and answers
+      // left behind by a failure in between would stay for 400 days.
+      const cleared = await this.pool.query<{ n: number }>(
+        `WITH cleared AS (
+           UPDATE story_games SET plan = NULL, story_snapshot = NULL
+            WHERE id IN (SELECT id FROM story_games
+                          WHERE status IN ('finished','cancelled') AND (plan IS NOT NULL OR story_snapshot IS NOT NULL)
+                            AND COALESCE(finished_at, updated_at) < now() - make_interval(hours => $1)
+                          LIMIT 1000)
+            RETURNING id
+         ), answers AS (
+           DELETE FROM story_game_answers WHERE game_id IN (SELECT id FROM cleared)
+         )
+         SELECT count(*)::int AS n FROM cleared`,
         [PLAN_RETENTION_HOURS],
       );
-      if (cleared.rows.length) {
-        await this.pool.query(`DELETE FROM story_game_answers WHERE game_id = ANY($1::uuid[])`, [
-          cleared.rows.map((r) => r.id),
-        ]);
-      }
-      stats.cleared += cleared.rows.length;
-      if (cleared.rows.length < 1000) break;
+      const n = cleared.rows[0]!.n;
+      stats.cleared += n;
+      if (n < 1000) break;
     }
     for (;;) {
       const deleted = await this.pool.query(

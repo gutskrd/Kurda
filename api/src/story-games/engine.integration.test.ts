@@ -564,6 +564,50 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       // 400 days on: gone
       expect((await pool.query(`SELECT 1 FROM story_games WHERE id = $1`, [ancient.id])).rowCount).toBe(0);
     });
+
+    it('clears a game’s plan, text and answers together, or none of them', async () => {
+      // a pool that gives up on a lock at once, so the sweep fails where it waits
+      const impatient = new pg.Pool({ connectionString: DATABASE_URL, max: 3, options: '-c lock_timeout=300' });
+      const svc = new StoryGamesService(impatient, { log, timers: false });
+      try {
+        const me = await user();
+        const s = await story();
+        let v = await svc.create(me, base(s.id, { mode: 'solo', skipReading: true }));
+        for (let i = 0; i < 3; i++) {
+          v = await svc.answer(v.id, me, i, 0, Date.now());
+          v = await svc.continueAfter(v.id, me, i);
+        }
+        await pool.query(`UPDATE story_games SET finished_at = now() - interval '49 hours' WHERE id = $1`, [v.id]);
+        const state = async () =>
+          (
+            await pool.query<{ plan: boolean; text: boolean; answers: number }>(
+              `SELECT plan IS NOT NULL AS plan, story_snapshot IS NOT NULL AS text,
+                      (SELECT count(*)::int FROM story_game_answers WHERE game_id = $1) AS answers
+                 FROM story_games WHERE id = $1`,
+              [v.id],
+            )
+          ).rows[0];
+
+        // something holds one of its answers while the sweep runs: nothing is cleared
+        const holder = await pool.connect();
+        try {
+          await holder.query('BEGIN');
+          await holder.query(`SELECT 1 FROM story_game_answers WHERE game_id = $1 FOR UPDATE`, [v.id]);
+          await expect(svc.housekeeping()).rejects.toMatchObject({ code: '55P03' });
+        } finally {
+          await holder.query('ROLLBACK');
+          holder.release();
+        }
+        expect(await state()).toEqual({ plan: true, text: true, answers: 3 });
+
+        // the next sweep clears all three
+        await svc.housekeeping();
+        expect(await state()).toEqual({ plan: false, text: false, answers: 0 });
+      } finally {
+        svc.close();
+        await impatient.end();
+      }
+    });
   });
 
   describe('for the play module', () => {
