@@ -180,6 +180,11 @@ export class PlayService {
     if (!facts.joinable) throw new AppError('GAME_STARTED', 409, 'this game has already started');
     if (facts.activeIds.length >= facts.maxPlayers) throw new AppError('GAME_FULL', 409, 'this game is full');
 
+    // who played the game this lobby followed: an invite to one of them says
+    // "again". Read once, out here, never inside an invite's transaction (see
+    // recordInvite)
+    const before = facts.rematchOf ? await adapter.facts(facts.rematchOf) : null;
+
     const now = this.now();
     const wanted = [...new Set(userIds)].filter((id) => id !== hostId).slice(0, MAX_INVITEES_PER_REQUEST);
     const sent: InviteRow[] = [];
@@ -198,7 +203,8 @@ export class PlayService {
       // The invite is held instead: the card reads 'unavailable' to them (as a
       // game that does not exist), and no banner, inbox entry or event follows.
       const held = !(await canJoin(this.pool, joinCheckFor(facts, inviteeId)));
-      const outcome = await this.recordInvite(hostId, inviteeId, facts, now, held);
+      const rematchOf = before?.memberIds.includes(inviteeId) ? facts.rematchOf : null;
+      const outcome = await this.recordInvite(hostId, inviteeId, facts, now, { held, rematchOf });
       if (outcome === 'cooldown') continue;
       invited++;
       if (outcome === 'unchanged') continue;
@@ -227,13 +233,18 @@ export class PlayService {
    * new invite within DECLINE_COOLDOWN_MINUTES of a "not now" to this game; the
    * same lobby's invite still pending is left as it is (asking twice notifies
    * once); any other pending one is cancelled and replaced.
+   *
+   * Everything it needs is worked out before it takes its pool client, and
+   * it asks the pool for nothing else until that client is back: a request
+   * holding one connection while waiting for another is how a burst of
+   * invites takes every connection and then waits on itself.
    */
   private async recordInvite(
     hostId: string,
     inviteeId: string,
     facts: LobbyFacts,
     now: Date,
-    held: boolean,
+    { held, rematchOf }: { held: boolean; rematchOf: string | null },
   ): Promise<'cooldown' | 'unchanged' | { invite: InviteRow; replaced: InviteRow | null }> {
     const client = await this.pool.connect();
     try {
@@ -269,8 +280,6 @@ export class PlayService {
         await client.query(`UPDATE play_invites SET status = $2, responded_at = $3 WHERE id = $1`, [old.id, status, now]);
         if (status === 'cancelled') replaced = old;
       }
-      // a friend who played the game before this one with the host: the banner says "again"
-      const rematchOf = facts.rematchOf && (await this.playedIn(facts, inviteeId)) ? facts.rematchOf : null;
       const row = await client.query<InviteRow>(
         `INSERT INTO play_invites (game, lobby_id, host_id, invitee_id, rematch_of, held, created_at, expires_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $7::timestamptz + ($8 || ' minutes')::interval)
@@ -285,13 +294,6 @@ export class PlayService {
     } finally {
       client.release();
     }
-  }
-
-  /** Whether someone was in the game this lobby followed. */
-  private async playedIn(facts: LobbyFacts, userId: string): Promise<boolean> {
-    if (!facts.rematchOf) return false;
-    const before = await this.adapter(facts.game).facts(facts.rematchOf);
-    return before?.memberIds.includes(userId) ?? false;
   }
 
   /**
