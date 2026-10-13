@@ -277,8 +277,8 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
           {battle.isHost && <InviteFriendsButton game="wordle-battle" lobbyId={id} room={room} />}
         </div>
-        {battle.isHost && <InvitedList game="wordle-battle" lobbyId={id} room={room} />}
         <LobbyRoster players={battle.players} max={battle.maxPlayers} canRemove={battle.isHost} onRemove={remove} />
+        {battle.isHost && <InvitedList game="wordle-battle" lobbyId={id} room={room} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {battle.me == null ? (
           <Button size="lg" disabled={busy} onClick={() => void join()}>

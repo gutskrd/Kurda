@@ -4,6 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { HostIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { useRail } from '../social/RailProvider';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -48,6 +49,8 @@ export function LobbyRoster({
   onRemove: (seat: number) => Promise<void>;
 }): React.JSX.Element {
   const t = useT();
+  // the server leaves your own face to the client, which has it already
+  const myAvatar = useRail().data.you?.avatarUrl ?? null;
   const present = players.filter((p) => !p.gone);
   return (
     <div className="sg-panel lobby-roster">
@@ -59,7 +62,7 @@ export function LobbyRoster({
       <ul className="sg-players" aria-labelledby="lobby-players-title">
         {present.map((p) => (
           <li key={p.seat} className="sg-player">
-            <Avatar url={p.avatarUrl} glyphSize={18} />
+            <Avatar url={p.isMe ? myAvatar : p.avatarUrl} glyphSize={18} />
             <span className="sg-player-name">
               {seatName(p, t)}
               {p.isHost && (

@@ -144,6 +144,10 @@
   pointer-events: none;
 }
 .invite-banner {
+  /* each banner's blur is its own layer: the open "Not now" menu lifts its
+     banner above the next one, or the menu would open underneath it */
+  position: relative;
+  z-index: 0;
   pointer-events: auto;
   display: flex;
   align-items: center;
@@ -211,16 +215,15 @@
   color: var(--ink);
   background: var(--surface);
 }
-.invite-banners-more {
-  pointer-events: auto;
-  align-self: center;
-  margin: 0;
-  padding: 3px 12px;
-  border-radius: var(--r-pill);
-  background: rgba(20, 24, 31, 0.92);
-  border: 1px solid var(--border);
+.invite-banner:has(.invite-notnow-menu),
+.invite-banner:focus-within {
+  z-index: 1;
+}
+/* the count of the rest, inside the last banner rather than over the page */
+.invite-banner-more {
   font-size: 0.78rem;
-  color: var(--ink-2);
+  font-weight: 600;
+  color: var(--gold-ink);
 }
 .invite-notnow {
   position: relative;
@@ -373,6 +376,10 @@
   background: transparent;
   border: 0;
   white-space: normal;
+}
+/* two cards in a row are two things, not one block */
+.bubble.is-card + .bubble.is-card {
+  margin-top: 6px;
 }
 .chat-game-status {
   display: inline-flex;

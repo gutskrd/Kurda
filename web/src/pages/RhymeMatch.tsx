@@ -255,8 +255,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
           {match.isHost && <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} />}
         </div>
-        {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} />}
         <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} />
+        {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {match.me == null ? (
           <Button size="lg" disabled={busy} onClick={() => void join()}>

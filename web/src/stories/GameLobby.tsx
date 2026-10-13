@@ -115,8 +115,6 @@ export function GameLobby({
         </div>
       )}
 
-      {invited}
-
       <FromMemoryNote view={view} />
 
       <div className="sg-panel">
@@ -166,6 +164,9 @@ export function GameLobby({
           ))}
         </ul>
       </div>
+
+      {/* who is in first, then who was asked */}
+      {invited}
 
       <ExtraTimeToggle view={view} act={act} />
 

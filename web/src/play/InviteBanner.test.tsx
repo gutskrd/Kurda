@@ -110,6 +110,20 @@ describe('InviteBanner', () => {
     expect(screen.getByText('+1 more')).toBeInTheDocument();
   });
 
+  it('shows one at a time on a phone, where two would cover the page, and counts the rest inside it', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width'),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    fakeApi({ 'GET /play/invites': lists([incoming({ id: 'a' }), incoming({ id: 'b' }), incoming({ id: 'c' })]) });
+    renderPlay(<InviteBanner />);
+    const shown = await screen.findAllByRole('status');
+    expect(shown).toHaveLength(1);
+    expect(within(shown[0]!).getByText('+2 more')).toBeInTheDocument();
+  });
+
   it('appears when an invite arrives, without a reload', async () => {
     let answer = lists([]);
     const { calls } = fakeApi({ 'GET /play/invites': () => answer });

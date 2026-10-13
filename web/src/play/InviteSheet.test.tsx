@@ -54,6 +54,10 @@ describe('InviteSheet', () => {
 
     const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
     expect(await within(sheet).findByRole('checkbox', { name: /Rojda/ })).toBeChecked();
+    // the friend it was opened for comes first, whatever else is ticked later
+    await userEvent.click(within(sheet).getByRole('checkbox', { name: /Berfin/ }));
+    expect(within(sheet).getAllByRole('checkbox')[0]).toHaveAccessibleName(/Rojda/);
+    await userEvent.click(within(sheet).getByRole('checkbox', { name: /Berfin/ }));
     await userEvent.click(within(sheet).getByRole('radio', { name: 'Hard' }));
     await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (1)' }));
 

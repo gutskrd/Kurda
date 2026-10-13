@@ -5,11 +5,16 @@ import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CaretDownIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { GAME_NAME_KEY, lobbyPath, playError, summaryParts } from './playApi';
 import { usePlayInvites } from './PlayProvider';
 
-/** Banners shown at once; older invites wait behind the newest. */
+/**
+ * Banners shown at once; the rest wait behind them, counted. One on a phone,
+ * where a second would cover a third of the screen until it is answered.
+ */
 const MAX_BANNERS = 2;
+const MAX_BANNERS_NARROW = 1;
 
 /**
  * The invites waiting for you (contract §B1): "Rojda invited you to Wordle
@@ -26,18 +31,24 @@ export function InviteBanner(): React.JSX.Element | null {
   const { lists } = usePlayInvites();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const now = useNow(lists?.incoming ?? []);
+  const max = useMediaQuery('(max-width: 560px)') ? MAX_BANNERS_NARROW : MAX_BANNERS;
   const waiting = (lists?.incoming ?? []).filter(
     (i) => i.status === 'pending' && !answered.has(i.id) && Date.parse(i.expiresAt) > now,
   );
   if (waiting.length === 0) return null;
   const done = (id: string): void => setAnswered((prev) => new Set(prev).add(id));
-  const more = Math.max(0, waiting.length - MAX_BANNERS);
+  const more = Math.max(0, waiting.length - max);
   return (
     <div className="invite-banners" role="region" aria-label={t('play.banner.region')}>
-      {waiting.slice(0, MAX_BANNERS).map((invite) => (
-        <Banner key={invite.id} invite={invite} onDone={() => done(invite.id)} />
+      {waiting.slice(0, max).map((invite, i, shown) => (
+        <Banner
+          key={invite.id}
+          invite={invite}
+          onDone={() => done(invite.id)}
+          // the rest are counted inside the last banner, not over the page
+          more={i === shown.length - 1 ? more : 0}
+        />
       ))}
-      {more ? <p className="invite-banners-more">{t('play.banner.more', { count: more })}</p> : null}
     </div>
   );
 }
@@ -54,7 +65,7 @@ function useNow(invites: readonly IncomingInvite[]): number {
   return now;
 }
 
-function Banner({ invite, onDone }: { invite: IncomingInvite; onDone: () => void }): React.JSX.Element {
+function Banner({ invite, onDone, more }: { invite: IncomingInvite; onDone: () => void; more: number }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
   const { refresh } = usePlayInvites();
@@ -108,6 +119,7 @@ function Banner({ invite, onDone }: { invite: IncomingInvite; onDone: () => void
             ))}
           </span>
         )}
+        {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
         {error && <span className="invite-banner-error">{error}</span>}
       </p>
       {error ? (

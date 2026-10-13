@@ -32,6 +32,9 @@ export function FriendPicker({
   const [friends, setFriends] = useState<UserSummary[] | null>(null);
   const [q, setQ] = useState('');
   const recent = useMemo(() => recentFriends(), []);
+  // whoever the sheet was opened for comes first; ticking more does not reorder
+  // the list under the pointer
+  const [pinned] = useState(() => new Set(selected));
 
   useEffect(() => {
     let alive = true;
@@ -49,13 +52,14 @@ export function FriendPicker({
     const matching = needle
       ? list.filter((f) => `${f.displayName ?? ''} ${f.username}`.toLocaleLowerCase().includes(needle))
       : list;
-    // recent first, then who is online, then by name
+    // the friend it was opened for, recent ones, then who is online, then by name
     const rank = (f: UserSummary): number => {
+      if (pinned.has(f.userId)) return -1;
       const r = recent.indexOf(f.userId);
       return r >= 0 ? r : 100 + (f.online ? 0 : 100);
     };
     return [...matching].sort((a, b) => rank(a) - rank(b) || (a.displayName || a.username).localeCompare(b.displayName || b.username));
-  }, [friends, q, exclude, recent]);
+  }, [friends, q, exclude, recent, pinned]);
 
   function toggle(id: string): void {
     if (selected.includes(id)) onChange(selected.filter((s) => s !== id));
