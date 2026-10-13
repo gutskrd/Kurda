@@ -143,7 +143,8 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       await importStories(pool, { stories: [testStory(slug('corrected'))] }, { source: 'starter' });
       // a native speaker corrects the starter in the panel
       const imported = await row(slug('corrected'));
-      await admin.update(imported.id, testStory(slug('corrected'), { title: 'Rastkirî' }) as never, imported.lock_version, { adminId: editorId });
+      const corrected = testStory(slug('corrected'), { title: 'Rastkirî' }) as never;
+      await admin.update(imported.id, corrected, imported.lock_version, { adminId: editorId });
 
       const file = { stories: [testStory(slug('corrected'), { title: 'Ji pelê' })] };
       const res = await importStories(pool, file);

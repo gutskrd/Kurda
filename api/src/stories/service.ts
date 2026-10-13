@@ -378,9 +378,9 @@ export class StoriesService {
    * "Surprise me": a random published story of this variety and length (and
    * level, when given). With `preferNotCompletedBy`, stories any of those
    * players has already finished come last, so the surprise is a new story
-   * while there is one. Published stories always carry at least MIN_QUESTION_BANK questions
-   * (publishing checks it), so any of them can be played at any count its
-   * length offers. Null when there is none — or, rarely, when the one picked
+   * while there is one. Published stories always carry at least
+   * MIN_QUESTION_BANK questions (publishing checks it), so any of them can be
+   * played at any count its length offers. Null when there is none — or, rarely, when the one picked
    * was unpublished in the same instant; the caller treats both as no story.
    */
   async pickRandomPublished(options: PickRandomOptions, executor: Executor = this.pool): Promise<PublishedStory | null> {

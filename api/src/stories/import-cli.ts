@@ -90,7 +90,7 @@ export function parseStoryImportArgs(
   const files: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
-    if (arg in SWITCHES) {
+    if (Object.hasOwn(SWITCHES, arg)) {
       args[SWITCHES[arg as keyof typeof SWITCHES]] = true;
     } else if (arg === '--by' || arg.startsWith('--by=')) {
       const value = arg === '--by' ? argv[++i] : arg.slice('--by='.length);

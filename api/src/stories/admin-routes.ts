@@ -16,10 +16,12 @@
  * as `?lockVersion=` on DELETE — and a stale one is refused with 409 STALE. It
  * is required, not optional: publishing is the review gate, and a publish
  * that named no version would publish whatever is stored at that moment,
- * including a draft the importer replaced after the reviewer read it. A story that fails `validateStory` is refused with 422
- * INVALID and `details: { errors, warnings }`, each with a path to the field.
- * Every story returned carries `problems`: what would stop it being published
- * and what is worth a second look.
+ * including a draft the importer replaced after the reviewer read it.
+ *
+ * A story that fails `validateStory` is refused with 422 INVALID and
+ * `details: { errors, warnings }`, each with a path to the field. Every story
+ * returned carries `problems`: what would stop it being published and what
+ * is worth a second look.
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';

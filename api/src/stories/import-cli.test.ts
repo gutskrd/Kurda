@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseStoryImportArgs } from './import-cli.js';
 
-const args = (over: object = {}) => ({ file: 'stories.json', dryRun: false, publish: false, by: null, starter: false, force: false, ...over });
+const args = (over: object = {}) => ({
+  file: 'stories.json',
+  dryRun: false,
+  publish: false,
+  by: null,
+  starter: false,
+  force: false,
+  ...over,
+});
 
 describe('parseStoryImportArgs', () => {
   it('takes one file and the switches, in any order', () => {
@@ -38,6 +46,8 @@ describe('parseStoryImportArgs', () => {
     expect(parseStoryImportArgs(['stories.json', '--dryrun'])).toEqual({ ok: false, message: 'unknown option --dryrun' });
     expect(parseStoryImportArgs([])).toEqual({ ok: false, message: 'which file?' });
     expect(parseStoryImportArgs(['a.json', 'b.json'])).toEqual({ ok: false, message: 'one file at a time (got a.json, b.json)' });
+    // only the options are options, whatever a file is called
+    expect(parseStoryImportArgs(['constructor'])).toMatchObject({ ok: true, args: { file: 'constructor' } });
   });
 
   // `npm run stories:import stories.json --dry-run` (no "--"): npm keeps the option, the command sees only the file
@@ -70,6 +80,9 @@ describe('parseStoryImportArgs', () => {
     // with a dry run among them, still nothing
     expect(parseStoryImportArgs(['stories.json'], { npm_config_dry_run: 'true', npm_config_force: 'true' })).toMatchObject({ ok: false });
     // the same options after "--" are the command's own
-    expect(parseStoryImportArgs(['stories.json', '--force'], { npm_config_force: 'true' })).toMatchObject({ ok: true, args: { force: true } });
+    expect(parseStoryImportArgs(['stories.json', '--force'], { npm_config_force: 'true' })).toMatchObject({
+      ok: true,
+      args: { force: true },
+    });
   });
 });

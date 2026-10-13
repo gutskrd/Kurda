@@ -309,7 +309,11 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
         [id],
       );
       for (const { before, after } of pulls.rows) {
-        expect(before).toMatchObject({ status: 'published', body: testStory('x').body, glossary: [{ term: 'cotkar', meanings: { en: 'farmer' } }] });
+        expect(before).toMatchObject({
+          status: 'published',
+          body: testStory('x').body,
+          glossary: [{ term: 'cotkar', meanings: { en: 'farmer' } }],
+        });
         expect(before.questions).toHaveLength(6);
         expect(after).not.toHaveProperty('body');
       }
