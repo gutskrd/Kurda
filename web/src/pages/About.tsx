@@ -24,6 +24,13 @@ const NOW: MessageKey[] = [
 
 const NEXT: MessageKey[] = ['about.next.apps', 'about.next.varieties'];
 
+/**
+ * Whose work Hevalo uses, and under which licence: the fonts (OFL), the icons
+ * (MIT) and the emoji (Apache 2.0). The shop's art and the stickers are
+ * Hevalo's own, drawn by scripts/generate-cosmetic-art.mjs.
+ */
+const CREDITS: MessageKey[] = ['about.credits.fonts', 'about.credits.icons', 'about.credits.emoji'];
+
 export function About(): React.JSX.Element {
   const t = useT();
   return (
@@ -67,6 +74,20 @@ export function About(): React.JSX.Element {
                 <li key={k}>{t(k)}</li>
               ))}
             </ul>
+          ),
+        },
+        {
+          title: 'about.creditsTitle',
+          body: (
+            <>
+              <p>{t('about.creditsLead')}</p>
+              <ul className="doc-list">
+                {CREDITS.map((k) => (
+                  <li key={k}>{t(k)}</li>
+                ))}
+              </ul>
+              <p>{t('about.credits.art')}</p>
+            </>
           ),
         },
         { title: 'about.makerTitle', body: <MadeBy inline /> },
