@@ -239,6 +239,16 @@ export function StoryEditor({
   /** The editor moves on by its own doing: it has asked already, or nothing is lost, so the guard must not ask. */
   const leaving = (): void => setLeaveGuard(null);
 
+  // A request can come back after the editor was left (Back while saving): by
+  // then the page, and the leave guard, may be another story's.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
   const canSave = editable && !busy && !conflict && checks.blocking.length === 0 && (dirty || story === null);
   const canPublish = editable && !busy && !conflict && checks.blocking.length === 0 && checks.beforePublish.length === 0;
 
@@ -337,6 +347,7 @@ export function StoryEditor({
     setNotice(null);
     setServer(null);
     const outcome = await runStoryAction(action, { story, form, dirty });
+    if (!mounted.current) return;
     setBusy(null);
     if (outcome.ok) {
       if (!outcome.story) {

@@ -500,6 +500,39 @@ describe('leaving the editor', () => {
     expect(text(c.querySelector('.st-flash'))).toBe('Deleted “Rêya Dibistanê”.');
   });
 
+  it('leaves the next story alone when a save comes back after its editor was left', async () => {
+    const api = listApi();
+    const created = storyFixture({ id: '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d09', title: 'Nû', slug: 'nu-nu', lockVersion: 0 });
+    api.use(on('POST', '/admin/stories', json(created, 201)));
+    const answer = globalThis.fetch;
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    vi.stubGlobal('fetch', async (input: string, init?: RequestInit) => {
+      if (init?.method === 'POST') await held;
+      return answer(input, init);
+    });
+
+    const c = await open('#/stories/new');
+    await type(c.querySelector('#story-title'), 'Nû');
+    await type(c.querySelector('#story-slug'), 'nu-nu');
+    await click(button(c, /^Save draft/));
+    // gone while it saves, and on to another story
+    await click(button(c, '← All stories'));
+    await click(button(c, 'Rêya Dibistanê'));
+    await type(summary(c), 'Mine.');
+    release();
+    await settle();
+    expect(location.hash).toBe(`#/stories/${STORY_ID}`);
+    expect(summary(c)!.value).toBe('Mine.');
+    // and its unsaved edits are still guarded
+    confirm.mockClear();
+    confirm.mockReturnValueOnce(false);
+    location.hash = '#/stories';
+    await settle();
+    expect(confirm).toHaveBeenCalledWith(LEAVE);
+    expect(summary(c)!.value).toBe('Mine.');
+  });
+
   it('does not ask when a new story moves to its own address on its first save', async () => {
     const api = listApi();
     const created = storyFixture({ id: '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d09', title: 'Nû', slug: 'nu-nu', lockVersion: 0 });
