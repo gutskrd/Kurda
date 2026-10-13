@@ -18,6 +18,8 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { relativeTime, resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { FILTERS, FILTER_LABEL, SECTION_LABEL, newestFirst, sectionsFor, type InboxFilter } from './sections';
 import { EmptyState } from '../theme/EmptyState';
+import type { ChatMessageKind } from '@kurda/shared';
+import { messagePreview } from '../chat/preview';
 
 interface RequestRow {
   userId: string;
@@ -29,6 +31,8 @@ interface ConversationRow {
   userId: string;
   username: string;
   lastMessage: string;
+  /** a gift or a game card says so here, and the line is written from it */
+  lastKind?: ChatMessageKind;
   lastAt?: string | null;
   lastFromMe: boolean;
   unread: number;
@@ -205,7 +209,7 @@ export function InboxScreen(): React.JSX.Element {
                     {c.username}
                   </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {c.lastMessage}
+                    {messagePreview(c, t)}
                   </Text>
                 </View>
                 {c.unread > 0 ? (

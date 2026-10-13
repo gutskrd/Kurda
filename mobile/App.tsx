@@ -294,7 +294,12 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Chat" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (
-          <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
+          <ChatScreen
+            userId={route.params.userId}
+            username={route.params.username}
+            openGift={route.params.openGift}
+            onExit={() => navigation.goBack()}
+          />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="BlockedUsers" options={{ presentation: 'card' }}>
@@ -324,6 +329,8 @@ function SignedInRoot() {
           <GroupThreadScreen
             groupId={route.params.groupId}
             name={route.params.name}
+            openGift={route.params.openGift}
+            onLeft={() => navigation.navigate('Chats')}
             onExit={() => navigation.goBack()}
             onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
           />

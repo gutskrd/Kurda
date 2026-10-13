@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
+import { sendErrorOf } from '../reports/sendErrors';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -33,11 +33,12 @@ export function GiftSheet({
 }: {
   item: { sku: string; name: string; price: number; currency: string };
   onClose: () => void;
-  onSent: (balance: number, to: string) => void;
+  /** `to`: the friend it went to — the gift is in your chat with them now */
+  onSent: (balance: number, to: { userId: string; username: string }) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [friends, setFriends] = useState<Friend[] | null>(null);
   const [query, setQuery] = useState('');
@@ -68,11 +69,12 @@ export function GiftSheet({
         idempotencyKey: `gift-${item.sku}-${to.userId}-${Date.now()}`,
       }).then((res) => {
         setBusy(null);
-        if (res.ok) onSent(res.data.balance, to.username);
-        else setError(describeError(res.error, t));
+        if (res.ok) onSent(res.data.balance, { userId: to.userId, username: to.username });
+        // a limit on the account (a gift is a chat message) says what and until when
+        else setError(sendErrorOf(res.error, t, locale).message);
       });
     },
-    [busy, client, item, onSent, t],
+    [busy, client, item, onSent, t, locale],
   );
 
   const needle = query.trim().toLowerCase();

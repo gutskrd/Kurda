@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 
 /**
@@ -18,10 +19,12 @@ export type UserEvent =
   /** a queue match: the room is already made and both players get this */
   | { type: 'match_found'; roomId?: string }
   /** the queue waited long enough and dropped you (see MatchmakingService.sweep) */
-  | { type: 'match_timeout' };
+  | { type: 'match_timeout' }
+  /** a gift for you, or one you gave being opened (gifts/GiftArrivals) */
+  | GiftUserEvent;
 
 /** The prefixes this channel carries; anything else is somebody else's business. */
-const MINE = ['challenge_', 'match_'];
+const MINE = ['challenge_', 'match_', 'gift_'];
 
 interface SocketLike {
   send: (data: string) => void;
