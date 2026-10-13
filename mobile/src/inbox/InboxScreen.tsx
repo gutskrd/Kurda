@@ -10,6 +10,8 @@ import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { chatPreview } from '../play/chatPreview';
+import { followDeepLink, notificationText } from '../notifications/followLink';
 import type { TranslationKey } from '../i18n/translations';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
@@ -29,6 +31,8 @@ interface ConversationRow {
   userId: string;
   username: string;
   lastMessage: string;
+  /** what the last message is ('text', 'gift', 'game') */
+  lastKind?: string;
   lastAt?: string | null;
   lastFromMe: boolean;
   unread: number;
@@ -54,7 +58,7 @@ export function InboxScreen(): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const openMenu = useOpenMenu();
   const topInset = useScreenTopInset();
   const bottomInset = useTabBarInset();
@@ -95,11 +99,7 @@ export function InboxScreen(): React.JSX.Element {
         void client.post(`/me/notifications/${item.id}/read`);
       }
       const link = resolveDeepLink(item.data);
-      if (!link) return;
-      if (link.screen === 'Chat') navigation.navigate('Chat', link.params);
-      else if (link.screen === 'Profile') navigation.navigate('UserProfile', { userId: link.params.userId });
-      else if (link.screen === 'EventQuests') navigation.navigate('EventQuests');
-      else navigation.navigate('Notifications');
+      if (link) void followDeepLink(link, navigation, client);
     },
     [client, navigation],
   );
@@ -201,7 +201,7 @@ export function InboxScreen(): React.JSX.Element {
                     {c.username}
                   </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {c.lastMessage}
+                    {chatPreview(c, t)}
                   </Text>
                 </View>
                 {c.unread > 0 ? (
@@ -223,7 +223,7 @@ export function InboxScreen(): React.JSX.Element {
                 key={a.id}
                 onPress={() => openAlert(a)}
                 accessibilityRole="button"
-                accessibilityLabel={a.title}
+                accessibilityLabel={notificationText(a, t, locale).title}
                 style={({ pressed }) => [
                   styles.row,
                   { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 },
@@ -233,10 +233,10 @@ export function InboxScreen(): React.JSX.Element {
                 <View style={[styles.dot, { backgroundColor: a.readAt ? 'transparent' : colors.primary }]} />
                 <View style={styles.rowMain}>
                   <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {a.title}
+                    {notificationText(a, t, locale).title}
                   </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {a.body}
+                    {notificationText(a, t, locale).body}
                   </Text>
                 </View>
                 <Text style={[styles.when, { color: colors.textSecondary }]}>{relativeTime(a.createdAt)}</Text>

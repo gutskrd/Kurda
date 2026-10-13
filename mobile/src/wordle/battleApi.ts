@@ -6,7 +6,11 @@ import type { Feedback, ScoredGuess } from './board';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface OpponentView {
+  /** `seat:N` — never another player's account id */
   userId: string;
+  seat?: number;
+  /** a friend's name (or anyone's in an open battle); null shows "Opponent N" */
+  name?: string | null;
   guessCount: number;
   solved: boolean;
   status: string;
@@ -21,7 +25,13 @@ export interface BattleState {
   difficulty: Difficulty;
   targetLength: number;
   maxPlayers: number;
+  /** the viewer's own id when they host, else the host's `seat:N` */
   createdBy: string;
+  isHost?: boolean;
+  /** the rematch or next round, once there is one */
+  nextLobbyId?: string | null;
+  /** everyone in it, by seat, named as this viewer may see them */
+  players?: Array<{ seat: number; userId: string; name: string | null; avatarUrl: string | null; isMe: boolean; isHost: boolean; gone: boolean }>;
   me: {
     guesses: ScoredGuess[];
     keyboard: Record<string, Feedback>;
@@ -40,7 +50,11 @@ export interface BattleResults {
   target: string;
   difficulty: Difficulty;
   ranking: Array<{
+    /** the viewer's own id on their own row, `seat:N` on everyone else's */
     userId: string;
+    seat?: number;
+    name?: string | null;
+    isMe?: boolean;
     rank: number;
     solved: boolean;
     guessCount: number;

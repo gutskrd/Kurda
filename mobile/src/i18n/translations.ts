@@ -482,7 +482,6 @@ export type TranslationKey =
   | 'notifications.quietHours'
   | 'notifications.enableQuietHours'
   | 'notifications.quietHoursHelp'
-  | 'profile.challenge1v1'
   | 'profile.unavailable'
   | 'friends.searchToStart'
 
@@ -694,9 +693,6 @@ export type TranslationKey =
   | 'profile.blocked'
   | 'profile.friends'
   | 'profile.message'
-  | 'profile.challengeSent'
-  | 'profile.challengeWaiting'
-  | 'profile.challengeFailed'
   | 'username.save'
   | 'username.saving'
   | 'username.saved'
@@ -1588,7 +1584,6 @@ const en: Catalog = {
   'notifications.quietHours': 'Quiet hours',
   'notifications.enableQuietHours': 'Enable quiet hours',
   'notifications.quietHoursHelp': 'No notifications are sent during this window.',
-  'profile.challenge1v1': 'Challenge to 1v1',
   'profile.unavailable': 'This profile isn’t available.',
   'friends.searchToStart': 'Search for friends to get started.',
   'username.new': 'New username',
@@ -1795,9 +1790,6 @@ const en: Catalog = {
   'profile.blocked': 'Blocked',
   'profile.friends': 'Friends ✓',
   'profile.message': 'Message',
-  'profile.challengeSent': 'Challenge sent',
-  'profile.challengeWaiting': 'Waiting for them to accept…',
-  'profile.challengeFailed': 'Could not challenge',
   'username.save': 'Save username',
   'username.saving': 'Saving…',
   'username.saved': 'Saved ✓',
@@ -2735,7 +2727,6 @@ const ku: Catalog = {
   'notifications.quietHours': 'Demên bêdeng',
   'notifications.enableQuietHours': 'Demên bêdeng veke',
   'notifications.quietHoursHelp': 'Di vê demê de tu agahdarî nayê şandin.',
-  'profile.challenge1v1': 'Bang bike 1v1',
   'profile.unavailable': 'Ev profîl nayê dîtin.',
   'friends.searchToStart': 'Ji bo destpêkê li hevalan bigere.',
   'username.new': 'Navê bikarhêner ê nû',
@@ -2942,9 +2933,6 @@ const ku: Catalog = {
   'profile.blocked': 'Astengkirî',
   'profile.friends': 'Heval ✓',
   'profile.message': 'Peyam',
-  'profile.challengeSent': 'Hevrikî hate şandin',
-  'profile.challengeWaiting': 'Li benda qebûlkirina wan…',
-  'profile.challengeFailed': 'Vexwendin nehate şandin',
   'username.save': 'Navê bikarhêner tomar bike',
   'username.saving': 'Tê tomarkirin…',
   'username.saved': 'Hate tomarkirin ✓',
@@ -3882,7 +3870,6 @@ const de: Catalog = {
   'notifications.quietHours': 'Ruhezeiten',
   'notifications.enableQuietHours': 'Ruhezeiten einschalten',
   'notifications.quietHoursHelp': 'In diesem Zeitraum werden keine Mitteilungen gesendet.',
-  'profile.challenge1v1': 'Zu einem 1-gegen-1 herausfordern',
   'profile.unavailable': 'Dieses Profil ist nicht verfügbar.',
   'friends.searchToStart': 'Such nach Freunden, um loszulegen.',
   'username.new': 'Neuer Benutzername',
@@ -4089,9 +4076,6 @@ const de: Catalog = {
   'profile.blocked': 'Blockiert',
   'profile.friends': 'Befreundet ✓',
   'profile.message': 'Nachricht',
-  'profile.challengeSent': 'Herausforderung gesendet',
-  'profile.challengeWaiting': 'Warten auf die Annahme…',
-  'profile.challengeFailed': 'Herausforderung fehlgeschlagen',
   'username.save': 'Benutzernamen speichern',
   'username.saving': 'Wird gespeichert…',
   'username.saved': 'Gespeichert ✓',
@@ -5029,7 +5013,6 @@ const es: Catalog = {
   'notifications.quietHours': 'Horas de silencio',
   'notifications.enableQuietHours': 'Activar las horas de silencio',
   'notifications.quietHoursHelp': 'No se envían notificaciones durante este intervalo.',
-  'profile.challenge1v1': 'Retar a un 1 contra 1',
   'profile.unavailable': 'Este perfil no está disponible.',
   'friends.searchToStart': 'Busca amigos para empezar.',
   'username.new': 'Nuevo nombre de usuario',
@@ -5236,9 +5219,6 @@ const es: Catalog = {
   'profile.blocked': 'Bloqueado',
   'profile.friends': 'Amigos ✓',
   'profile.message': 'Mensaje',
-  'profile.challengeSent': 'Reto enviado',
-  'profile.challengeWaiting': 'Esperando a que acepte…',
-  'profile.challengeFailed': 'No se pudo retar',
   'username.save': 'Guardar nombre de usuario',
   'username.saving': 'Guardando…',
   'username.saved': 'Guardado ✓',
@@ -6176,7 +6156,6 @@ const tr: Catalog = {
   'notifications.quietHours': 'Sessiz saatler',
   'notifications.enableQuietHours': 'Sessiz saatleri aç',
   'notifications.quietHoursHelp': 'Bu aralıkta hiçbir bildirim gönderilmez.',
-  'profile.challenge1v1': '1v1’e davet et',
   'profile.unavailable': 'Bu profil kullanılamıyor.',
   'friends.searchToStart': 'Başlamak için arkadaş ara.',
   'username.new': 'Yeni kullanıcı adı',
@@ -6383,9 +6362,6 @@ const tr: Catalog = {
   'profile.blocked': 'Engellendi',
   'profile.friends': 'Arkadaş ✓',
   'profile.message': 'Mesaj',
-  'profile.challengeSent': 'Meydan okuma gönderildi',
-  'profile.challengeWaiting': 'Kabul etmesi bekleniyor…',
-  'profile.challengeFailed': 'Meydan okunamadı',
   'username.save': 'Kullanıcı adını kaydet',
   'username.saving': 'Kaydediliyor…',
   'username.saved': 'Kaydedildi ✓',
@@ -7323,7 +7299,6 @@ const ar: Catalog = {
   'notifications.quietHours': 'ساعات الهدوء',
   'notifications.enableQuietHours': 'تفعيل ساعات الهدوء',
   'notifications.quietHoursHelp': 'لا تُرسَل أي إشعارات خلال هذه الفترة.',
-  'profile.challenge1v1': 'تحدٍّ فردي',
   'profile.unavailable': 'هذا الملف الشخصي غير متاح.',
   'friends.searchToStart': 'ابحث عن أصدقاء للبدء.',
   'username.new': 'اسم مستخدم جديد',
@@ -7530,9 +7505,6 @@ const ar: Catalog = {
   'profile.blocked': 'محظور',
   'profile.friends': 'أصدقاء ✓',
   'profile.message': 'رسالة',
-  'profile.challengeSent': 'أُرسل التحدي',
-  'profile.challengeWaiting': 'في انتظار قبولهم…',
-  'profile.challengeFailed': 'تعذّر إرسال التحدي',
   'username.save': 'حفظ اسم المستخدم',
   'username.saving': 'جارٍ الحفظ…',
   'username.saved': 'تم الحفظ ✓',
@@ -8470,7 +8442,6 @@ const fr: Catalog = {
   'notifications.quietHours': 'Heures silencieuses',
   'notifications.enableQuietHours': 'Activer les heures silencieuses',
   'notifications.quietHoursHelp': 'Aucune notification n’est envoyée pendant cette plage.',
-  'profile.challenge1v1': 'Défier en 1 contre 1',
   'profile.unavailable': 'Ce profil n’est pas disponible.',
   'friends.searchToStart': 'Cherchez des amis pour commencer.',
   'username.new': 'Nouveau nom d’utilisateur',
@@ -8677,9 +8648,6 @@ const fr: Catalog = {
   'profile.blocked': 'Bloqué',
   'profile.friends': 'Amis ✓',
   'profile.message': 'Message',
-  'profile.challengeSent': 'Défi envoyé',
-  'profile.challengeWaiting': 'En attente de leur acceptation…',
-  'profile.challengeFailed': 'Impossible de défier',
   'username.save': 'Enregistrer le nom d’utilisateur',
   'username.saving': 'Enregistrement…',
   'username.saved': 'Enregistré ✓',
@@ -9617,7 +9585,6 @@ const nl: Catalog = {
   'notifications.quietHours': 'Stille uren',
   'notifications.enableQuietHours': 'Stille uren inschakelen',
   'notifications.quietHoursHelp': 'Tijdens dit venster worden geen meldingen verstuurd.',
-  'profile.challenge1v1': 'Uitdagen voor 1-tegen-1',
   'profile.unavailable': 'Dit profiel is niet beschikbaar.',
   'friends.searchToStart': 'Zoek naar vrienden om te beginnen.',
   'username.new': 'Nieuwe gebruikersnaam',
@@ -9824,9 +9791,6 @@ const nl: Catalog = {
   'profile.blocked': 'Geblokkeerd',
   'profile.friends': 'Vrienden ✓',
   'profile.message': 'Bericht',
-  'profile.challengeSent': 'Uitdaging verstuurd',
-  'profile.challengeWaiting': 'Wachten tot ze accepteren…',
-  'profile.challengeFailed': 'Uitdagen is mislukt',
   'username.save': 'Gebruikersnaam opslaan',
   'username.saving': 'Opslaan…',
   'username.saved': 'Opgeslagen ✓',
@@ -10765,7 +10729,6 @@ const ckb: Catalog = {
   'notifications.quietHours': 'کاتژمێرە بێدەنگەکان',
   'notifications.enableQuietHours': 'کاتژمێرە بێدەنگەکان چالاک بکە',
   'notifications.quietHoursHelp': 'لەم ماوەیەدا هیچ ئاگادارکردنەوەیەک نانێردرێت.',
-  'profile.challenge1v1': 'بانگهێشت بۆ ١ بە ١',
   'profile.unavailable': 'ئەم پرۆفایلە بەردەست نییە.',
   'friends.searchToStart': 'بۆ دەستپێکردن بەدوای هاوڕێدا بگەڕێ.',
   'username.new': 'ناوی بەکارهێنەری نوێ',
@@ -10972,9 +10935,6 @@ const ckb: Catalog = {
   'profile.blocked': 'ڕێگریکراو',
   'profile.friends': 'هاوڕێ ✓',
   'profile.message': 'نامە',
-  'profile.challengeSent': 'بانگهێشتەکە نێردرا',
-  'profile.challengeWaiting': 'چاوەڕێی پەسەندکردنیانە…',
-  'profile.challengeFailed': 'نەتوانرا بانگهێشت بکرێت',
   'username.save': 'ناوی بەکارهێنەر پاشەکەوت بکە',
   'username.saving': 'پاشەکەوت دەکرێت…',
   'username.saved': 'پاشەکەوت کرا ✓',

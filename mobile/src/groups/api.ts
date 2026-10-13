@@ -2,7 +2,7 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 // one definition of the hierarchy, shared with the API and the browser
 export type { Role } from '@kurda/shared';
-import type { Role } from '@kurda/shared';
+import type { ChatMessageExtras, Role } from '@kurda/shared';
 
 /** A club the reader belongs to, with the role they hold in it. */
 export interface Group {
@@ -24,12 +24,13 @@ export interface Group {
  * screen. `avatarUrl` is resolved server-side — an uploaded photo or the chosen
  * avatar — so the roster shows real faces and not initials.
  */
-export interface GroupMessage {
+export interface GroupMessage extends Partial<ChatMessageExtras> {
   id: string;
   senderId: string;
   username: string;
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card; '' once deleted */
+  body: string | null;
   createdAt: string;
   deleted: boolean;
 }

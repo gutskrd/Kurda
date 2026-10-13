@@ -12,6 +12,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { RematchPanel } from '../play/RematchPanel';
 import {
   createMatch,
   getMatch,
@@ -45,8 +47,6 @@ const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
   'window-closed': 'games.rhymeMatch.timeUpMatch',
 };
 
-/** How often a room asks the server what changed — the browser's interval. */
-const POLL_MS = 1_500;
 
 /** How often the local clock ticks between polls, so the timer does not jump. */
 const TICK_MS = 200;
@@ -67,7 +67,7 @@ export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExi
 
   return (
     <Shell title={t('games.rhymeMatch.name')} onExit={onExit}>
-      {id ? <MatchRoom key={id} id={id} onLeave={() => setId(null)} /> : <CreateMatch onEnter={setId} />}
+      {id ? <MatchRoom key={id} id={id} onLeave={() => setId(null)} onOpen={setId} /> : <CreateMatch onEnter={setId} />}
     </Shell>
   );
 }
@@ -143,7 +143,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
 }
 
 /** One room: lobby, the timed round, the scoreboard. Polls until it is over. */
-function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.JSX.Element {
+function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; onOpen: (id: string) => void }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -166,17 +166,19 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
       // a later poll failing is a blip; the first one failing is the whole screen
-      setError(describeError(res.error, t));
+      setError(res.error.code === 'GAME_STARTED' ? t('stories.join.started') : describeError(res.error, t));
     }
   }, [client, id, t]);
 
+  /*
+   * Every scored word, join and start is pushed as `play_changed`, and the
+   * screen asks then — with a slow poll underneath in case one was missed. It
+   * used to ask every 1.5 s from the moment the lobby opened.
+   */
   useEffect(() => {
     void load();
-    const timer = setInterval(() => {
-      if (match?.status !== 'finished') void load();
-    }, POLL_MS);
-    return () => clearInterval(timer);
-  }, [load, match?.status]);
+  }, [load]);
+  useLobbyRefresh('rhyme-match', id, () => void load(), match?.status !== 'finished');
 
   useEffect(() => {
     if (match?.status !== 'finished' || results) return;
@@ -246,7 +248,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
   if (!match) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
 
   const playerCount = match.scoreboard.length || (match.me ? 1 : 0);
-  const isHost = match.createdBy === user?.id;
+  const isHost = match.isHost ?? match.createdBy === user?.id;
   const seconds = Math.ceil(remaining / 1000);
 
   // ---- lobby -----------------------------------------------------------------
@@ -261,6 +263,9 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
           {inviteUrl(id)}
         </Text>
         <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={share} style={styles.stretch} />
+        {match.me != null ? (
+          <LobbyPeople game="rhyme-match" lobbyId={id} players={match.players ?? []} isHost={isHost} maxPlayers={match.maxPlayers} />
+        ) : null}
         {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
         {match.me == null ? (
           <ClayButton
@@ -303,7 +308,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
                 <View key={r.userId} style={styles.scoreLine}>
                   <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
                   <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
-                    {r.userId === user?.id ? t('games.you') : t('games.opponent')}
+                    {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
                   </Text>
                   <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
                     {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
@@ -316,7 +321,16 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
         ) : (
           <ActivityIndicator color={colors.primary} />
         )}
-        <ClayButton label={t('games.rhymeMatch.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+        {/* play again with the same people: a rematch for two, the host's next round for more */}
+        <View style={styles.stretch}>
+          <RematchPanel
+            game="rhyme-match"
+            lobbyId={id}
+            other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
+            onOpen={onOpen}
+          />
+        </View>
+        <ClayButton label={t('games.rhymeMatch.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
       </GlassCard>
     );
   }
@@ -343,7 +357,7 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
             key={s.userId}
             style={[styles.boardEntry, { color: s.userId === user?.id ? colors.primary : colors.textSecondary }]}
           >
-            {s.userId === user?.id ? t('games.you') : t('games.opponent')}: {s.score}
+            {s.userId === user?.id ? t('games.you') : (s.name ?? t('games.opponent'))}: {s.score}
           </Text>
         ))}
       </View>

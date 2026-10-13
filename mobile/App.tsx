@@ -75,6 +75,7 @@ import { StoryGameScreen } from './src/stories/StoryGameScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
+import { InviteBanner } from './src/play/InviteBanner';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -380,6 +381,8 @@ function SignedInRoot() {
         {({ navigation }) => <LibraryComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
+      {/* over every screen: an invite to play waits here until it is answered */}
+      <InviteBanner />
     </RealtimeProvider>
   );
 }
