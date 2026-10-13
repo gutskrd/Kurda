@@ -166,10 +166,10 @@ function ModerationPanel(): React.JSX.Element {
             {([0, 1, 2, 3] as const).map((p) => (
               <Stat
                 key={p}
-                label={`${PRIORITY_NAME[p]} · ${slaLabel(p)}`}
+                label={PRIORITY_NAME[p]}
                 value={s.byPriority[p]}
                 tone={p === 0 && s.byPriority[0] > 0 ? 'bad' : 'neutral'}
-                hint={s.slaBreachesByPriority[p] > 0 ? `${s.slaBreachesByPriority[p]} overdue` : 'none overdue'}
+                hint={`Decide ${slaLabel(p)} · ${s.slaBreachesByPriority[p] > 0 ? `${s.slaBreachesByPriority[p]} overdue` : 'none overdue'}`}
                 href={`#/moderation?priority=${p}`}
               />
             ))}
@@ -304,8 +304,14 @@ interface AuditEntry {
   createdAt: string;
 }
 
+/** Signing in and setting up 2FA are in the trail too, but they are not what anyone did to Hevalo. */
+const SIGN_IN = /^POST \/admin\/(auth|2fa|session)\//;
+
 function RecentAudit(): React.JSX.Element {
-  const audit = useLoad(() => api<{ entries: AuditEntry[] }>('/admin/audit?limit=8'), []);
+  const audit = useLoad(
+    () => api<{ entries: AuditEntry[] }>('/admin/audit?limit=60').then((r) => ({ entries: r.entries.filter((e) => !SIGN_IN.test(e.action)).slice(0, 8) })),
+    [],
+  );
   return (
     <Section
       title="Recent admin actions"

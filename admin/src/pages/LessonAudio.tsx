@@ -8,6 +8,7 @@ import {
   describeUsage,
   displayOrder,
   group,
+  inScope,
   isLoose,
   isStoryUsage,
   matches,
@@ -21,36 +22,51 @@ import {
   type Filter,
   type Item,
   type Listing,
+  type Scope,
 } from '../lessonAudio';
+import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, useDialogs } from '../ui';
 
-const FILTERS: ReadonlyArray<[Filter, string]> = [
-  ['missing', 'Still to record'],
-  ['recorded', 'Recorded'],
-  ['unused', 'Not in a lesson or story'],
-  ['all', 'All'],
-];
+const FILTER_LABEL: Record<Filter, string> = {
+  missing: 'Still to record',
+  recorded: 'Recorded',
+  unused: 'Not used anywhere',
+  all: 'All',
+};
 
 /**
- * Recording the Kurdish the lessons use: the Lessons side of the audio studio.
+ * Recording the Kurdish the lessons and the stories use: two sides of the
+ * audio studio ("Record lesson sentences", "Record story sentences") over the
+ * one list the API reads off every lesson and story — published or still a
+ * draft — so an editor can record before anything goes live.
  *
- * The list is what the API reads off every lesson — published or still a
- * draft — so an editor can record before a lesson goes live: each item's `say`,
- * the first accepted answer of a translation, writing or listening item, a
- * speaking item's model sentence, and every match-pairs card. A sentence
- * recorded once is sent with every exercise that uses it — with the exercise,
- * or once it is answered where hearing it first would give the answer away
- * (api/src/lessonaudio/delivery.ts). Which clients play what is up to them:
- * today the mobile app plays only a listening item's clip and the web has no
- * lesson player, so the copy here says what is sent, not what is heard.
+ * For a lesson: each item's `say`, the first accepted answer of a translation,
+ * writing or listening item, a speaking item's model sentence, and every
+ * match-pairs card. For a story: every sentence, as the story reader cuts it.
+ * A sentence recorded once is sent with everything that uses it — with the
+ * exercise, or once it is answered where hearing it first would give the
+ * answer away (api/src/lessonaudio/delivery.ts).
  *
  * "Record next missing" walks the missing items in course order: save one and
- * the next comes up. Anything else can be recorded too, through "Add a phrase".
+ * the next comes up. A "Record" link from the lesson or story list opens this
+ * on that one lesson or story (`focus`). Anything else can be recorded too,
+ * through "Add a phrase".
  */
-export function LessonAudio(): React.JSX.Element {
+export function LessonAudio({
+  scope = 'lessons',
+  initialFilter,
+  focus = null,
+}: {
+  scope?: Scope;
+  /** from the address (?show=missing): the dashboard's link opens on what is missing */
+  initialFilter?: Filter;
+  /** one lesson (<skillId>:<position>) or story (<storyId>:0) to show alone */
+  focus?: string | null;
+}): React.JSX.Element {
+  const dialogs = useDialogs();
   const [items, setItems] = useState<Item[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('missing');
+  const [error, setError] = useState<unknown>(null);
+  const [filter, setFilter] = useState<Filter>(initialFilter ?? 'missing');
   const [selected, setSelected] = useState<string | null>(null);
   const [walking, setWalking] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -58,9 +74,14 @@ export function LessonAudio(): React.JSX.Element {
   const [phraseProblem, setPhraseProblem] = useState<string | null>(null);
   const rows = useRef(new Map<string, HTMLElement>());
   const player = usePlayer();
+
+  // this side's view of the list: only its own uses of each text
+  const scoped = useMemo(() => items.flatMap((i) => inScope(i, scope, focus) ?? []), [items, scope, focus]);
+  const full = useMemo(() => new Map(items.map((i) => [i.key, i])), [items]);
+
   // a save resolves after the upload; by then the list may have moved on
-  const latest = useRef({ items, walking });
-  latest.current = { items, walking };
+  const latest = useRef({ items, scoped, walking });
+  latest.current = { items, scoped, walking };
 
   const load = useCallback(async () => {
     try {
@@ -69,7 +90,7 @@ export function LessonAudio(): React.JSX.Element {
       setError(null);
       return res.items;
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not load what the lessons need');
+      setError(err);
       return null;
     } finally {
       setLoaded(true);
@@ -80,19 +101,20 @@ export function LessonAudio(): React.JSX.Element {
   const started = useRef(false);
   useEffect(() => {
     void load().then((loadedItems) => {
-      if (started.current || !loadedItems) return;
+      if (started.current || !loadedItems || initialFilter) return;
       started.current = true;
-      if (!loadedItems.some((i) => !i.recorded)) setFilter('all');
+      if (!loadedItems.some((i) => !i.recorded && inScope(i, scope, focus))) setFilter('all');
     });
-  }, [load]);
+  }, [load, initialFilter, scope, focus]);
 
-  const ordered = useMemo(() => displayOrder(items), [items]);
+  const ordered = useMemo(() => displayOrder(scoped), [scoped]);
   // the selected item stays on screen even when the filter would hide it — it
   // was just recorded, say, and the editor should see that it worked
   const shown = useMemo(() => ordered.filter((i) => matches(i, filter) || i.key === selected), [ordered, filter, selected]);
   const grouped = useMemo(() => group(shown), [shown]);
-  const done = progress(items);
-  const n = counts(items);
+  const done = progress(scoped);
+  const n = counts(scoped);
+  const focusTitle = focus ? scoped.find((i) => i.usedIn[0])?.usedIn[0]?.lessonTitle : null;
 
   const select = (key: string | null): void => {
     setSelected(key);
@@ -101,7 +123,8 @@ export function LessonAudio(): React.JSX.Element {
 
   // bring the selected row into view, for the keyboard and for the walk
   useEffect(() => {
-    if (selected) rows.current.get(selected)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (selected) rows.current.get(selected)?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
   }, [selected]);
 
   const startWalk = (): void => {
@@ -110,7 +133,7 @@ export function LessonAudio(): React.JSX.Element {
     const first = open ?? nextMissing(ordered, selected);
     if (!first) {
       setWalking(false);
-      setNote('Everything is recorded.');
+      setNote('Everything here is recorded.');
       return;
     }
     setWalking(true);
@@ -121,12 +144,12 @@ export function LessonAudio(): React.JSX.Element {
     const next = withRecording(latest.current.items, saved);
     setItems(next);
     if (!latest.current.walking) return;
-    const after = nextMissing(displayOrder(next), saved.key);
+    const after = nextMissing(displayOrder(next.flatMap((i) => inScope(i, scope, focus) ?? [])), saved.key);
     if (after) {
       select(after.key);
     } else {
       setWalking(false);
-      setNote('That was the last one: everything is recorded.');
+      setNote('That was the last one: everything here is recorded.');
     }
   };
 
@@ -156,72 +179,109 @@ export function LessonAudio(): React.JSX.Element {
   };
 
   const left = n.missing;
+  const filters: Filter[] = scope === 'lessons' && !focus ? ['missing', 'recorded', 'unused', 'all'] : ['missing', 'recorded', 'all'];
+  const renderRow = (item: Item): React.JSX.Element => (
+    <Row
+      key={item.key}
+      item={item}
+      full={full.get(item.key) ?? item}
+      selected={item.key === selected}
+      rowRef={(el) => (el ? rows.current.set(item.key, el) : rows.current.delete(item.key))}
+      onSelect={() => select(item.key === selected ? null : item.key)}
+      player={player}
+      onSaved={onSaved}
+      onRemoved={onRemoved}
+      onPrev={() => move(-1)}
+      onNext={() => move(1)}
+      confirm={dialogs.confirm}
+    />
+  );
+
+  if (error && !loaded) return <ErrorState error={error} onRetry={() => void load()} what="the audio studio" />;
 
   return (
     <div>
+      {focus && (
+        <Banner
+          tone="info"
+          title={focusTitle ? `Only “${focusTitle}”` : scope === 'stories' ? 'One story' : 'One lesson'}
+          actions={
+            <a className="button-link" href={`#/audio/${scope}`}>
+              Show every {scope === 'stories' ? 'story' : 'lesson'}
+            </a>
+          }
+        >
+          {loaded && scoped.length === 0
+            ? `It has no Kurdish to record yet${scope === 'stories' ? ': write its text first' : ''}.`
+            : `The sentences ${scope === 'stories' ? 'this story' : 'this lesson'} uses.`}
+        </Banner>
+      )}
+
       <div className="card aa-summary">
-        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-          <strong>
-            {done.recorded} of {done.needed} recorded
-          </strong>
-          <button type="button" className="primary" onClick={startWalk} disabled={!loaded || left === 0}>
+        <div className="aa-summary-head">
+          <div>
+            <strong className="aa-count">
+              {done.recorded} of {done.needed} recorded
+            </strong>
+            <div className="subtle">
+              {scope === 'stories'
+                ? 'Every sentence of every story not archived, drafts included. A story is sent with the recordings of its sentences.'
+                : `Every Kurdish word and sentence the lessons use, drafts included, up to ${LESSON_AUDIO_TEXT_MAX} characters.`}
+            </div>
+          </div>
+          <Button variant="primary" icon="mic" onClick={startWalk} disabled={!loaded || left === 0}>
             {walking ? 'Skip to the next missing' : 'Record next missing'}
-          </button>
+          </Button>
         </div>
-        <div className="progress" style={{ marginTop: 10 }} aria-label="Recorded so far">
+        <div className="progress" role="progressbar" aria-label="Recorded so far" aria-valuemin={0} aria-valuemax={done.needed} aria-valuenow={done.recorded}>
           <div className="progress-bar" style={{ width: `${done.needed ? (done.recorded / done.needed) * 100 : 0}%` }} />
         </div>
-        <p className="subtle la-what">
-          Every Kurdish word and sentence the lessons use, up to {LESSON_AUDIO_TEXT_MAX} characters, drafts included: each item’s
-          “say”, the first accepted answer of a translation, writing or listening item, a speaking item’s model sentence, and
-          every match-pairs card. One recording is sent with every exercise that uses its sentence, in any lesson: with the
-          exercise, or once it is answered where hearing it first would give the answer away. A listening item without a clip of
-          its own uses the recording as its clip, so its lesson cannot be published until the recording is made.
-        </p>
-        <p className="subtle la-what">
-          Every sentence of every story that is not archived is here too, drafts included, as the story reader cuts it: a story
-          is sent with the recordings of its sentences.
-        </p>
+        {scope === 'lessons' && (
+          <details className="aa-more">
+            <summary>What is on this list</summary>
+            <p className="subtle">
+              Each item’s “say”, the first accepted answer of a translation, writing or listening item, a speaking item’s model
+              sentence, and every match-pairs card. One recording is sent with every exercise that uses its sentence, in any lesson:
+              with the exercise, or once it is answered where hearing it first would give the answer away. A listening item without a
+              clip of its own uses the recording as its clip, so its lesson cannot be published until the recording is made.
+            </p>
+          </details>
+        )}
       </div>
 
       {walking && (
-        <div className="card la-walk" role="status">
-          <span>
-            Recording what is missing — {left} left. Save and the next one comes up.
-          </span>
-          <button type="button" onClick={() => setWalking(false)}>
-            Stop
-          </button>
-        </div>
+        <Banner tone="info" actions={<Button onClick={() => setWalking(false)}>Stop</Button>}>
+          <span role="status">Recording what is missing — {left} left. Save and the next one comes up.</span>
+        </Banner>
       )}
       {note && (
-        <div className="card la-walk" role="status">
-          <span>{note}</span>
-          <button type="button" className="ghost" onClick={() => setNote(null)}>
-            Close
-          </button>
-        </div>
+        <Banner tone="ok" actions={<Button variant="ghost" onClick={() => setNote(null)}>Close</Button>}>
+          <span role="status">{note}</span>
+        </Banner>
       )}
 
-      {error && <div className="error" style={{ margin: '12px 0' }}>{error}</div>}
+      {error != null && loaded && <ErrorState error={error} onRetry={() => void load()} compact />}
 
-      <div className="tabs" role="tablist" aria-label="Show">
-        {FILTERS.map(([f, label]) => (
-          <button key={f} type="button" role="tab" aria-selected={filter === f} className={`tab${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>
-            {label} ({n[f]})
-          </button>
-        ))}
-      </div>
+      <Tabs label="Show" value={filter} onChange={setFilter} items={filters.map((f) => ({ key: f, label: FILTER_LABEL[f], count: n[f] }))} />
+
+      {!loaded && <Loading rows={4} />}
 
       {loaded && shown.length === 0 && (
-        <div className="empty">
-          {items.length === 0
-            ? 'No lesson or story has any Kurdish to record yet.'
-            : filter === 'missing'
-              ? 'Everything is recorded.'
-              : filter === 'unused'
-                ? 'Every recording is used by a lesson or a story.'
-                : 'Nothing recorded yet.'}
+        <div className="card">
+          <EmptyState
+            title={
+              scoped.length === 0
+                ? scope === 'stories'
+                  ? 'No story has sentences to record yet.'
+                  : 'No lesson has any Kurdish to record yet.'
+                : filter === 'missing'
+                  ? 'Everything here is recorded.'
+                  : filter === 'unused'
+                    ? 'Every recording is used by a lesson or a story.'
+                    : 'Nothing recorded yet.'
+            }
+            icon={filter === 'missing' && scoped.length > 0 ? 'check' : 'mic'}
+          />
         </div>
       )}
 
@@ -241,20 +301,7 @@ export function LessonAudio(): React.JSX.Element {
                     <span className="subtle">{lesson.story ? 'Story' : lesson.skillTitle}</span>
                     <span className={`badge${lesson.live ? ' ok' : ''}`}>{lesson.live ? 'Published' : 'Not published yet'}</span>
                   </div>
-                  {lesson.items.map((item) => (
-                    <Row
-                      key={item.key}
-                      item={item}
-                      selected={item.key === selected}
-                      rowRef={(el) => (el ? rows.current.set(item.key, el) : rows.current.delete(item.key))}
-                      onSelect={() => select(item.key === selected ? null : item.key)}
-                      player={player}
-                      onSaved={onSaved}
-                      onRemoved={onRemoved}
-                      onPrev={() => move(-1)}
-                      onNext={() => move(1)}
-                    />
-                  ))}
+                  {lesson.items.map(renderRow)}
                 </div>
               ))}
             </div>
@@ -270,48 +317,45 @@ export function LessonAudio(): React.JSX.Element {
               Phrases added here, and recordings whose text no lesson or story uses any more. They are sent with nothing until a
               lesson or a story uses the same text.
             </div>
-            {grouped.loose.map((item) => (
-              <Row
-                key={item.key}
-                item={item}
-                selected={item.key === selected}
-                rowRef={(el) => (el ? rows.current.set(item.key, el) : rows.current.delete(item.key))}
-                onSelect={() => select(item.key === selected ? null : item.key)}
-                player={player}
-                onSaved={onSaved}
-                onRemoved={onRemoved}
-                onPrev={() => move(-1)}
-                onNext={() => move(1)}
-              />
-            ))}
+            {grouped.loose.map(renderRow)}
           </div>
         </section>
       )}
 
-      <div className="card la-add">
-        <label htmlFor="la-phrase" className="aa-say-label">
-          Add a phrase
-        </label>
-        <div className="subtle">Record something before a lesson or a story uses it. Kurmancî or Soranî, as learners will read it.</div>
-        <form
-          className="row la-add-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            add();
-          }}
-        >
-          <input
-            id="la-phrase"
-            dir="auto"
-            value={phrase}
-            maxLength={LESSON_AUDIO_TEXT_MAX}
-            placeholder="Newroz pîroz be"
-            onChange={(e) => setPhrase(e.target.value)}
-          />
-          <button type="submit">Add</button>
-        </form>
-        {phraseProblem && <div className="error">{phraseProblem}</div>}
-      </div>
+      {scope === 'lessons' && !focus && (
+        <div className="card la-add">
+          <label htmlFor="la-phrase" className="aa-say-label">
+            Add a phrase
+          </label>
+          <div className="subtle">Record something before a lesson or a story uses it. Kurmancî or Soranî, as learners will read it.</div>
+          <form
+            className="la-add-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              add();
+            }}
+          >
+            <input
+              id="la-phrase"
+              dir="auto"
+              value={phrase}
+              maxLength={LESSON_AUDIO_TEXT_MAX}
+              placeholder="Newroz pîroz be"
+              aria-invalid={phraseProblem ? true : undefined}
+              aria-describedby={phraseProblem ? 'la-phrase-problem' : undefined}
+              onChange={(e) => setPhrase(e.target.value)}
+            />
+            <Button type="submit" icon="plus">
+              Add
+            </Button>
+          </form>
+          {phraseProblem && (
+            <div id="la-phrase-problem" className="field-error">
+              {phraseProblem}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="aa-tips subtle la-tips">
         <p>
@@ -326,6 +370,7 @@ export function LessonAudio(): React.JSX.Element {
 
 function Row({
   item,
+  full,
   selected,
   rowRef,
   onSelect,
@@ -334,8 +379,12 @@ function Row({
   onRemoved,
   onPrev,
   onNext,
+  confirm,
 }: {
+  /** the item as this side of the studio sees it */
   item: Item;
+  /** the item with every use, lessons and stories alike: what a removal affects */
+  full: Item;
   selected: boolean;
   rowRef: (el: HTMLElement | null) => void;
   onSelect: () => void;
@@ -344,23 +393,24 @@ function Row({
   onRemoved: (key: string) => void;
   onPrev: () => void;
   onNext: () => void;
+  confirm: ReturnType<typeof useDialogs>['confirm'];
 }): React.JSX.Element {
   const script = scriptOf(item.text);
-  const [first, ...more] = item.usedIn;
-  const listening = neededForListening(item);
+  const [first, ...more] = full.usedIn;
+  const listening = neededForListening(full);
   const status = item.recorded
     ? { label: 'Recorded', tone: ' ok' }
-    : isLoose(item)
+    : isLoose(full)
       ? { label: 'Not recorded', tone: '' }
       : listening
         ? { label: 'Missing · listening needs it', tone: ' danger' }
         : { label: 'Missing', tone: ' mid' };
   const removePrompt = `Remove the recording of “${item.text}”?\n\n${
-    isLoose(item)
+    isLoose(full)
       ? 'No lesson or story uses it, so it leaves this list.'
       : listening
         ? 'A listening item uses it as its clip: until a new one is saved, that item has nothing to play.'
-        : item.usedIn.every(isStoryUsage)
+        : full.usedIn.every(isStoryUsage)
           ? 'The stories that use it go without a recording of it until a new one is saved.'
           : 'The exercises that use it go without a recording until a new one is saved.'
   }`;
@@ -376,7 +426,7 @@ function Row({
           aria-label={item.url ? `Play “${item.text}”` : 'No recording yet'}
           title={item.url ? 'Play' : 'No recording yet'}
         >
-          {item.url && player.playing === item.url ? '■' : '▶'}
+          <Icon name={item.url && player.playing === item.url ? 'stop' : 'play'} size={16} />
         </button>
         <button type="button" className="ghost la-row-main" onClick={onSelect} aria-expanded={selected}>
           <span className="la-text" lang={script.lang} dir={script.dir}>
@@ -424,7 +474,8 @@ function Row({
               } catch (err) {
                 // a lesson published since the list was loaded: ask again, with what the server knows
                 if (!(err instanceof ApiError && err.code === 'LISTENING_AUDIO_IN_USE')) throw err;
-                if (!confirm(`${err.message}\n\nRemove it anyway?`)) return;
+                const yes = await confirm({ title: 'A listening item plays this', body: err.message, confirmLabel: 'Remove anyway', tone: 'danger' });
+                if (!yes) return;
                 await remove(true);
               }
               onRemoved(item.key);

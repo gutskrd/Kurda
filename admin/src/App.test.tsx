@@ -71,7 +71,9 @@ describe('the admin’s navigation', () => {
     expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7 open, urgent');
 
     // and the dashboard has the queue by priority, with links into it
-    expect(await screen.findByRole('link', { name: /urgent · within 1 h/i })).toHaveAttribute('href', '#/moderation?priority=0');
+    const urgent = await screen.findByRole('link', { name: /^urgent/i });
+    expect(urgent).toHaveAttribute('href', '#/moderation?priority=0');
+    expect(urgent).toHaveTextContent('Decide within 1 h · 1 overdue');
     expect(screen.getByText('Appeals waiting:')).toBeInTheDocument();
   });
 

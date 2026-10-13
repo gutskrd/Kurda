@@ -5,7 +5,9 @@ import {
   describeUsage,
   displayOrder,
   group,
+  inScope,
   isStoryUsage,
+  lessonGroupId,
   matches,
   neededForListening,
   neighbour,
@@ -245,5 +247,44 @@ describe('usage', () => {
     // a listening item with a clip of its own plays that meanwhile
     expect(neededForListening(item('Sêv', { usedIn: [usage({ exerciseTypes: ['listening'] })] }))).toBe(false);
     expect(neededForListening(item('Sêv'))).toBe(false);
+  });
+});
+
+describe('the two sides of the studio, and one lesson or story', () => {
+  const story = usage({
+    courseId: 'stories:kurmanci',
+    courseTitle: 'Stories — Kurmancî',
+    skillId: 'st1',
+    unitId: 'st1',
+    lessonId: 'st1',
+    lessonTitle: 'Şorbeya Nîskê',
+    lessonPosition: 0,
+    exerciseTypes: [],
+  });
+  const lesson2 = usage({ skillId: 's1', lessonPosition: 2, lessonId: 'l2', lessonTitle: 'Greetings 2' });
+  const both = item('Spas', { usedIn: [usage(), story] });
+  const onlyStory = item('Nîsk', { usedIn: [story] });
+  const onlyLesson = item('Silav', { usedIn: [usage(), lesson2] });
+  const loose = item('Newroz pîroz be', { usedIn: [], unused: true });
+
+  it('puts a text on each side that uses it, with only that side’s uses', () => {
+    expect(inScope(both, 'lessons')?.usedIn).toEqual([usage()]);
+    expect(inScope(both, 'stories')?.usedIn).toEqual([story]);
+    expect(inScope(onlyStory, 'lessons')).toBeNull();
+    expect(inScope(onlyLesson, 'stories')).toBeNull();
+    // what nothing uses is recorded on the lessons' side, where phrases are added
+    expect(inScope(loose, 'lessons')).toBe(loose);
+    expect(inScope(loose, 'stories')).toBeNull();
+  });
+
+  it('shows one lesson or story alone, filed under it even when another uses the text first', () => {
+    expect(lessonGroupId(lesson2)).toBe('s1:2');
+    expect(lessonGroupId(story)).toBe('st1:0');
+    const focused = inScope(onlyLesson, 'lessons', 's1:2');
+    expect(focused?.usedIn).toEqual([lesson2]);
+    expect(group([focused!]).courses[0]!.units[0]!.lessons[0]!.title).toBe('Greetings 2');
+    expect(inScope(onlyLesson, 'lessons', 's9:1')).toBeNull();
+    expect(inScope(both, 'stories', 'st1:0')?.usedIn).toEqual([story]);
+    expect(inScope(loose, 'lessons', 's1:1')).toBeNull();
   });
 });

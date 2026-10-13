@@ -66,3 +66,25 @@
 .gate-form label { font-weight: 600; }
 .code-input { letter-spacing: 0.35em; font-size: 22px !important; text-align: center; font-variant-numeric: tabular-nums; min-height: 52px; }
 @media (prefers-reduced-motion: reduce) { .gate-busy { animation: none; } }
+
+/* ---- the audio studio ---------------------------------------------------------- */
+.aa-summary { display: grid; gap: 12px; margin-bottom: 16px; }
+.aa-summary-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 16px; }
+.aa-summary-head > div { flex: 1 1 260px; display: grid; gap: 2px; }
+.aa-count { font-size: 17px; }
+.aa-more > summary { cursor: pointer; font-weight: 600; color: var(--text-2); min-height: 32px; display: flex; align-items: center; }
+.aa-more p { margin: 6px 0 0; font-size: 13px; line-height: 1.55; }
+.rec-saved { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.rec-hint { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--warn-bg); color: var(--text); font-size: 13px; }
+.la-add-form { display: flex; gap: 8px; align-items: stretch; }
+.la-add-form input { flex: 1 1 auto; min-width: 0; font-size: 16px; }
+.aa-actions button { min-height: var(--target); }
+@media (max-width: 899px) {
+  /* on a phone the recorder comes first; a tap on a sound brings it back into view */
+  .aa-layout { display: flex; flex-direction: column; }
+  .aa-studio { order: -1; scroll-margin-top: 64px; }
+}
+@media (max-width: 560px) {
+  .la-play { width: var(--target); height: var(--target); }
+  .la-row-line { grid-template-columns: var(--target) minmax(0, 1fr); }
+}

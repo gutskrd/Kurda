@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError } from './api';
 import { ClipError, prepare, type Clip } from './audioClip';
+import { allowMicHowTo, micPermission, micPlatform, micProblem, startCapture, type Capture } from './micCapture';
+import { useDialogs } from './ui/Dialog';
+import { Icon } from './ui/icons';
 
 /** A recording already saved on the server. */
 export interface SavedClip {
@@ -11,6 +14,7 @@ export interface SavedClip {
 
 type Phase =
   | { name: 'idle' }
+  | { name: 'starting' }
   | { name: 'recording'; started: number }
   | { name: 'working' }
   | { name: 'ready'; clip: Clip }
@@ -22,8 +26,9 @@ type Phase =
  *
  * Every take goes through the same pipeline (audioClip.ts): trimmed, levelled
  * and encoded as a short mono WAV before the editor hears it, so what they
- * approve is exactly what is saved. The parent does the upload; this only
- * hands it the WAV.
+ * approve is exactly what is saved. The microphone side (micCapture.ts) works
+ * the same on a laptop, an Android phone and an iPhone. The parent does the
+ * upload; this only hands it the WAV.
  *
  * With `shortcuts`, R records and stops, Space plays the take back, Enter
  * saves and the arrows move between items — none of them while the editor is
@@ -56,17 +61,32 @@ export function ClipRecorder({
   onNext?: () => void;
   shortcuts?: boolean;
 }): React.JSX.Element {
+  const dialogs = useDialogs();
   const [phase, setPhase] = useState<Phase>({ name: 'idle' });
   const [problem, setProblem] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
   const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
-  const recorder = useRef<MediaRecorder | null>(null);
+  const capture = useRef<Capture | null>(null);
+  const frame = useRef(0);
   const stopTimer = useRef<number | null>(null);
   const preview = useRef<HTMLAudioElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   // a raw take may start and end with silence; it is trimmed to maxSeconds afterwards,
   // and a file over 30 s is refused before it is decoded
   const maxTakeMs = Math.min(maxSeconds * 2, 28) * 1000;
+  const platform = typeof navigator === 'undefined' ? 'other' : micPlatform(navigator.userAgent, navigator.maxTouchPoints);
+
+  // if the microphone is already refused for this site, say how to allow it before a press fails
+  useEffect(() => {
+    let alive = true;
+    void micPermission().then((state) => {
+      if (alive) setBlocked(state === 'denied');
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // let go of a preview URL once it is no longer shown
   const previewUrl = phase.name === 'ready' || phase.name === 'saving' ? phase.clip.url : null;
@@ -80,7 +100,10 @@ export function ClipRecorder({
   // and of the microphone, if the editor moves on mid-take
   useEffect(
     () => () => {
-      if (recorder.current && recorder.current.state !== 'inactive') recorder.current.stop();
+      cancelAnimationFrame(frame.current);
+      if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
+      capture.current?.cancel();
+      capture.current = null;
     },
     [],
   );
@@ -90,7 +113,7 @@ export function ClipRecorder({
     try {
       const ready = await prepare(data, maxSeconds, what);
       setPhase({ name: 'ready', clip: ready });
-      // hear it straight away: that is the moment to judge it
+      // hear it straight away: that is the moment to judge it (a phone may refuse to play unasked; the player is there)
       requestAnimationFrame(() => void preview.current?.play().catch(() => undefined));
     } catch (err) {
       setProblem(err instanceof ClipError ? err.message : 'Could not read that recording.');
@@ -100,53 +123,43 @@ export function ClipRecorder({
 
   const record = async (): Promise<void> => {
     setProblem(null);
-    let stream: MediaStream;
+    setPhase({ name: 'starting' });
+    let take: Capture;
     try {
-      // the browser's own gain control would undo the levelling, so it is off
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { autoGainControl: false, noiseSuppression: true, echoCancellation: true } });
-    } catch {
-      setProblem('The browser did not allow the microphone. Allow it in the address bar, or upload a file instead.');
+      take = await startCapture();
+    } catch (err) {
+      setProblem(micProblem(err, platform, typeof window === 'undefined' || window.isSecureContext !== false));
+      setBlocked((err as { name?: string })?.name === 'NotAllowedError');
+      setPhase({ name: 'idle' });
       return;
     }
-    const chunks: Blob[] = [];
-    const rec = new MediaRecorder(stream);
-    recorder.current = rec;
-
-    // a live level, so a muted or wrong microphone shows before the take is wasted
-    const ctx = new AudioContext();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 512;
-    ctx.createMediaStreamSource(stream).connect(analyser);
-    const buf = new Float32Array(analyser.fftSize);
+    capture.current = take;
+    setBlocked(false);
     const started = performance.now();
-    let frame = 0;
     const tick = (): void => {
-      analyser.getFloatTimeDomainData(buf);
-      let peak = 0;
-      for (const v of buf) peak = Math.max(peak, Math.abs(v));
-      setLevel(peak);
+      setLevel(take.level());
       setElapsed(performance.now() - started);
-      frame = requestAnimationFrame(tick);
+      frame.current = requestAnimationFrame(tick);
     };
     tick();
-
-    rec.ondataavailable = (e) => chunks.push(e.data);
-    rec.onstop = () => {
-      cancelAnimationFrame(frame);
-      if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
-      stream.getTracks().forEach((t) => t.stop());
-      void ctx.close();
-      setLevel(0);
-      recorder.current = null;
-      void new Blob(chunks, { type: rec.mimeType }).arrayBuffer().then(process);
-    };
-    rec.start();
     setPhase({ name: 'recording', started });
-    stopTimer.current = window.setTimeout(() => rec.state !== 'inactive' && rec.stop(), maxTakeMs);
+    stopTimer.current = window.setTimeout(() => void stop(), maxTakeMs);
   };
 
-  const stop = (): void => {
-    if (recorder.current && recorder.current.state !== 'inactive') recorder.current.stop();
+  const stop = async (): Promise<void> => {
+    const take = capture.current;
+    if (!take) return;
+    capture.current = null;
+    cancelAnimationFrame(frame.current);
+    if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
+    setLevel(0);
+    setPhase({ name: 'working' });
+    try {
+      await process(await take.stop());
+    } catch {
+      setProblem('The recording could not be read. Press Record again.');
+      setPhase({ name: 'idle' });
+    }
   };
 
   const upload = async (file: File): Promise<void> => {
@@ -170,7 +183,10 @@ export function ClipRecorder({
   };
 
   const remove = async (): Promise<void> => {
-    if (!recording || !onRemove || !confirm(removePrompt)) return;
+    if (!recording || !onRemove) return;
+    const [title, ...rest] = removePrompt.split('\n\n');
+    const yes = await dialogs.confirm({ title: title ?? 'Remove the recording?', body: rest.join('\n\n'), confirmLabel: 'Remove', tone: 'danger' });
+    if (!yes) return;
     try {
       await onRemove();
     } catch (err) {
@@ -181,10 +197,10 @@ export function ClipRecorder({
   useEffect(() => {
     if (!shortcuts) return;
     const onKey = (e: KeyboardEvent): void => {
-      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement).closest('input, textarea, select, [contenteditable], [role="dialog"], [role="alertdialog"]')) return;
       if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
-        if (phase.name === 'recording') stop();
+        if (phase.name === 'recording') void stop();
         else if (phase.name === 'idle' || phase.name === 'ready') void record();
       } else if (e.key === 'Enter' && phase.name === 'ready') {
         e.preventDefault();
@@ -205,13 +221,14 @@ export function ClipRecorder({
   });
 
   const seconds = Math.min(elapsed, maxTakeMs) / 1000;
+  const busy = phase.name === 'working' || phase.name === 'saving' || phase.name === 'starting';
 
   return (
     <div className="rec" role="group" aria-label={`Record “${say}”`}>
       {recording && phase.name === 'idle' && (
         <div className="aa-current">
           <audio controls src={recording.url} preload="none" />
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="rec-saved">
             <span className="subtle">
               {recording.updatedAt ? `Saved ${new Date(recording.updatedAt).toLocaleDateString()}` : 'Saved'}
               {recording.durationMs ? ` · ${(recording.durationMs / 1000).toFixed(1)} s` : ''}
@@ -225,6 +242,12 @@ export function ClipRecorder({
         </div>
       )}
 
+      {blocked && phase.name === 'idle' && !problem && (
+        <p className="rec-hint" role="note">
+          The microphone is turned off for this site. {allowMicHowTo(platform)}
+        </p>
+      )}
+
       {phase.name === 'recording' && (
         <div className="aa-live" role="status">
           <span className="aa-rec-dot" aria-hidden="true" />
@@ -235,39 +258,49 @@ export function ClipRecorder({
         </div>
       )}
 
-      {phase.name === 'working' && <div className="subtle aa-live">Trimming and levelling…</div>}
+      {phase.name === 'starting' && <div className="subtle aa-live">Starting the microphone…</div>}
+      {phase.name === 'working' && <div className="subtle aa-live" role="status">Trimming and levelling…</div>}
 
       {(phase.name === 'ready' || phase.name === 'saving') && (
         <div className="aa-preview">
           <div className="aa-say-label">Listen back · {phase.clip.seconds.toFixed(1)} s</div>
-          <audio ref={preview} controls src={phase.clip.url} />
+          <audio ref={preview} controls src={phase.clip.url} playsInline />
         </div>
       )}
 
-      {problem && <div className="error aa-problem">{problem}</div>}
+      {problem && (
+        <div className="field-error aa-problem" role="alert">
+          {problem}
+        </div>
+      )}
 
       <div className="aa-actions">
         {phase.name === 'recording' ? (
-          <button type="button" className="primary aa-big" onClick={stop}>
+          <button type="button" className="primary aa-big" onClick={() => void stop()}>
+            <Icon name="stop" />
             Stop
           </button>
         ) : phase.name === 'ready' || phase.name === 'saving' ? (
           <>
             <button type="button" className="primary aa-big" onClick={() => void save()} disabled={phase.name === 'saving'}>
+              <Icon name="check" />
               {phase.name === 'saving' ? 'Saving…' : recording ? 'Save, replacing the old one' : 'Save'}
             </button>
             <button type="button" onClick={() => void record()} disabled={phase.name === 'saving'}>
+              <Icon name="mic" />
               Record again
             </button>
           </>
         ) : (
-          <button type="button" className="primary aa-big" onClick={() => void record()} disabled={phase.name === 'working'}>
+          <button type="button" className="primary aa-big" onClick={() => void record()} disabled={busy}>
+            <Icon name="mic" />
             {recording ? 'Record a new one' : 'Record'}
           </button>
         )}
         {phase.name !== 'recording' && (
           <>
-            <button type="button" className="ghost" onClick={() => fileInput.current?.click()} disabled={phase.name === 'working' || phase.name === 'saving'}>
+            <button type="button" className="ghost" onClick={() => fileInput.current?.click()} disabled={busy}>
+              <Icon name="upload" />
               Upload a file
             </button>
             <input

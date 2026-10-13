@@ -109,28 +109,76 @@ export function encodeWav(samples: Float32Array, rate = RATE): Uint8Array {
   return bytes;
 }
 
+/**
+ * The Web Audio constructor, under either name: Safari before 14.1 has only
+ * the prefixed one, and an iPad kept on an old iOS is a likely recording device.
+ */
+export function audioContextClass(): typeof AudioContext | null {
+  const w = globalThis as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+  return w.AudioContext ?? w.webkitAudioContext ?? null;
+}
+
+/**
+ * Straight-line resampling, for a browser whose offline renderer will not run
+ * at 22.05 kHz (older Safari renders only at its own rates). Speech loses
+ * nothing a learner would hear by it.
+ */
+export function resampleLinear(samples: Float32Array, from: number, to: number): Float32Array {
+  if (from === to) return samples;
+  const out = new Float32Array(Math.max(1, Math.round((samples.length * to) / from)));
+  const step = from / to;
+  for (let i = 0; i < out.length; i++) {
+    const at = i * step;
+    const lo = Math.floor(at);
+    const hi = Math.min(samples.length - 1, lo + 1);
+    const frac = at - lo;
+    out[i] = (samples[lo] ?? 0) * (1 - frac) + (samples[hi] ?? 0) * frac;
+  }
+  return out;
+}
+
+/** The channels of a decoded buffer, averaged into one. */
+export function mixToMono(channels: Float32Array[]): Float32Array {
+  if (channels.length === 1) return channels[0]!;
+  const out = new Float32Array(channels[0]?.length ?? 0);
+  for (const ch of channels) for (let i = 0; i < out.length; i++) out[i]! += ch[i]! / channels.length;
+  return out;
+}
+
 /** Any audio the browser can decode, as mono samples at RATE. */
 async function decode(data: ArrayBuffer, what: string): Promise<Float32Array> {
-  const ctx = new AudioContext();
+  const Ctx = audioContextClass();
+  if (!Ctx) throw new ClipError('This browser cannot work with sound. Use a current Safari, Chrome, Edge or Firefox.');
+  const ctx = new Ctx();
   let decoded: AudioBuffer;
   try {
-    decoded = await ctx.decodeAudioData(data);
+    // with callbacks as well: older Safari's decodeAudioData returns no promise
+    decoded = await new Promise<AudioBuffer>((resolve, reject) => {
+      const answer = ctx.decodeAudioData(data, resolve, reject) as Promise<AudioBuffer> | undefined;
+      answer?.then(resolve, reject);
+    });
   } catch {
     throw new ClipError('This browser cannot read that file. Try an m4a, mp3 or wav.');
   } finally {
-    void ctx.close();
+    void ctx.close?.();
   }
   const frames = Math.ceil(decoded.duration * RATE);
   if (frames === 0) throw new ClipError('That file has no sound in it.');
   if (decoded.duration > 30) throw new ClipError(`That file is long. Cut it down to ${what} first.`);
-  // an offline render does the mixing to mono and the resampling in one step
-  const offline = new OfflineAudioContext(1, frames, RATE);
-  const src = offline.createBufferSource();
-  src.buffer = decoded;
-  src.connect(offline.destination);
-  src.start();
-  const rendered = await offline.startRendering();
-  return rendered.getChannelData(0);
+  try {
+    // an offline render does the mixing to mono and the resampling in one step
+    const offline = new OfflineAudioContext(1, frames, RATE);
+    const src = offline.createBufferSource();
+    src.buffer = decoded;
+    src.connect(offline.destination);
+    src.start();
+    const rendered = await offline.startRendering();
+    return rendered.getChannelData(0);
+  } catch {
+    // a renderer that will not run at this rate: mix and resample here instead
+    const channels = Array.from({ length: decoded.numberOfChannels }, (_, i) => decoded.getChannelData(i));
+    return resampleLinear(mixToMono(channels), decoded.sampleRate, RATE);
+  }
 }
 
 export interface Clip {

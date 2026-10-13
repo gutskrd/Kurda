@@ -135,7 +135,7 @@ export function group(items: readonly Item[]): { courses: CourseGroup[]; loose: 
     if (!course) courses.push((course = { id: first.courseId, title: first.courseTitle, units: [] }));
     let unit = course.units.find((u) => u.id === first.unitId);
     if (!unit) course.units.push((unit = { id: first.unitId, title: first.unitTitle, lessons: [] }));
-    const lessonId = `${first.skillId}:${first.lessonPosition}`;
+    const lessonId = lessonGroupId(first);
     let lesson = unit.lessons.find((l) => l.id === lessonId);
     if (!lesson) {
       unit.lessons.push(
@@ -234,6 +234,35 @@ export function isStoryUsage(u: Pick<Usage, 'courseId'>): boolean {
 export function describeUsage(u: Usage): string {
   if (isStoryUsage(u)) return `${u.lessonTitle} (story)`;
   return `${u.lessonTitle} (${u.exerciseTypes.map((t) => TYPE_LABELS[t] ?? t).join(', ')})`;
+}
+
+/**
+ * A lesson across its versions (its skill and position), or a story — what
+ * the studio files a text under, and what a "Record" link from the lesson or
+ * story list points at (#/audio/lessons?lesson=<skillId>:<position>,
+ * #/audio/stories?story=<storyId>).
+ */
+export function lessonGroupId(u: Pick<Usage, 'skillId' | 'lessonPosition'>): string {
+  return `${u.skillId}:${u.lessonPosition}`;
+}
+
+/** The two sides of the studio's sentence list: what the lessons use, and what the stories do. */
+export type Scope = 'lessons' | 'stories';
+
+/**
+ * An item as one side of the studio sees it — with only its uses on that side
+ * (and, with `focus`, in that one lesson or story) — or null when it has none
+ * there. A text both a lesson and a story use is on both sides. What nothing
+ * uses, a recording left behind or a phrase added by hand, is on the lessons'.
+ */
+export function inScope(item: Item, scope: Scope, focus?: string | null): Item | null {
+  const uses = item.usedIn.filter((u) => (scope === 'stories' ? isStoryUsage(u) : !isStoryUsage(u)));
+  if (focus) {
+    const here = uses.filter((u) => lessonGroupId(u) === focus);
+    return here.length > 0 ? { ...item, usedIn: here } : null;
+  }
+  if (uses.length > 0) return uses.length === item.usedIn.length ? item : { ...item, usedIn: uses };
+  return scope === 'lessons' && isLoose(item) ? item : null;
 }
 
 /** A listening item with no clip of its own cannot be done until its text is recorded. */
