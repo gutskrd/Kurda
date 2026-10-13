@@ -31,10 +31,11 @@ api/.pgdata/
 /hevalo-background/
 /mykurda-background/
 
-# Where source artwork is dropped for conversion: sticker PNGs, the empty-state
-# drawings, the avatars and the logo. What ships is generated from these —
-# sized WebPs under web/public/stickers, the four PNGs under mobile/assets/empty,
-# and everything scripts/generate-brand-assets.mjs writes.
+# Where source artwork is dropped for conversion: the empty-state drawings, the
+# avatars and the logo. What ships is generated from these — the four PNGs under
+# mobile/assets/empty, and everything scripts/generate-brand-assets.mjs writes.
+# The stickers are drawn by scripts/generate-cosmetic-art.mjs and have no
+# sources; /stickers/ stays listed so an old drop folder is never committed.
 # Ignored so a `git add -A` cannot sweep multi-megabyte originals into a commit.
 /stickers/
 /empty/
