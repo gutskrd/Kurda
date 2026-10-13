@@ -327,8 +327,9 @@ const DEAD_KEY = /[\^`~\u00a8\u00af\u00b4\u00b8\u02c6\u02c7\u02d8-\u02dd\u0300-\
  * - `ok` — right (in `hidden` mode, right without its accent too);
  * - `accent` — `forgiving` mode: typed without its accent, and counted;
  * - `wrong` — a different character, or left out;
- * - `pending` — not reached yet (or, in `strict` mode, the base letter just
- *   typed where an accented one belongs, which a backtick may still finish).
+ * - `pending` — not reached yet (or the base letter just typed where an
+ *   accented one belongs, which a backtick may still finish: see
+ *   `awaitingBacktick`).
  */
 export type CharState = 'ok' | 'accent' | 'wrong' | 'pending';
 
@@ -345,6 +346,16 @@ export interface TypingComparison {
   errors: number;
   /** the typing has reached the end of the text (and no accent is still being composed) */
   done: boolean;
+  /**
+   * The last key typed is the base letter of an accented letter of the text
+   * (e where ê belongs) and a backtick may still make it that letter
+   * (`applyBacktickShortcut`), so the letter is `pending` rather than wrong
+   * (`strict`) or an accent missed (`forgiving`, where it is already counted
+   * in `correct`) — and when it is the text's last letter, `done` waits for it.
+   * The next key settles it; an app that finishes a race on `done` finishes
+   * one waiting here after `BACKTICK_WAIT_MS` without a key.
+   */
+  awaitingBacktick: boolean;
   /** the index in `chars` the next character typed goes to */
   caret: number;
   /** characters typed that the text does not have, each run shown before the text's character at `before` */
@@ -360,7 +371,24 @@ export interface CompareTypingOptions {
    * still being composed is not a character yet.
    */
   final?: boolean;
+  /**
+   * The racer can finish a letter with a backtick (`applyBacktickShortcut`),
+   * so the base letter last typed where an accented one belongs waits for the
+   * next key (`awaitingBacktick`). On by default, as the shortcut needs no
+   * setup; an app passes false where the racer switched it off, so a race ends
+   * on its last letter at once. Never applies to `final` or in `hidden` mode,
+   * where the accent is not shown.
+   */
+  backtickShortcut?: boolean;
 }
+
+/**
+ * How long an app waits for a backtick after the base letter of a text's last
+ * letter (`awaitingBacktick`) before it finishes the race anyway. Someone using
+ * the shortcut types it straight after the letter; someone who is not should
+ * not wait long for a race they have finished.
+ */
+export const BACKTICK_WAIT_MS = 800;
 
 /**
  * How far typing may drift from the text — characters left out or added in
@@ -578,6 +606,7 @@ export function compareTyping(
 ): TypingComparison {
   const dialect = options.dialect ?? 'kurmanci';
   const final = options.final ?? false;
+  const backtickShortcut = (options.backtickShortcut ?? true) && !final && mode !== 'hidden';
   const t = [...normalizeTyping(target, dialect)];
   let u = [...normalizeTyping(typed, dialect, { partial: !final })];
   const n = t.length;
@@ -641,24 +670,31 @@ export function compareTyping(
   let i = iEnd;
   let j = m;
   let backtickPending = false;
+  // e where ê belongs, as the very last thing typed: a backtick may be next,
+  // so it is not an accent missed yet — nor, in strict mode, a mistake
+  const awaitsBacktick = (at: number): boolean =>
+    backtickShortcut && j === m && i === iEnd && BACKTICK[a.typedKeys[j - 1]!] === a.targetKeys[at];
   while (i > 0 || j > 0) {
     const op = a.op[j * a.width + (i - j + B)]!;
     if (op === OP_MATCH || op === OP_ACCENT) {
       const at = i - 1;
-      if (isAccented(at)) accented++;
-      if (op === OP_ACCENT && mode === 'forgiving') {
-        chars[at] = 'accent';
-        accentMisses++;
-      } else chars[at] = 'ok';
+      if (op === OP_ACCENT && awaitsBacktick(at)) {
+        // forgiving: the letter counts whichever key comes next
+        chars[at] = 'pending';
+        backtickPending = true;
+      } else {
+        if (isAccented(at)) accented++;
+        if (op === OP_ACCENT && mode === 'forgiving') {
+          chars[at] = 'accent';
+          accentMisses++;
+        } else chars[at] = 'ok';
+      }
       correct++;
       i--;
       j--;
     } else if (op === OP_SUB) {
       const at = i - 1;
-      const typedKey = a.typedKeys[j - 1]!;
-      if (!final && mode === 'strict' && j === m && i === iEnd && BACKTICK[typedKey] === a.targetKeys[at]) {
-        // e where ê belongs, as the very last thing typed: a backtick may be
-        // next, so it is neither right nor wrong yet
+      if (awaitsBacktick(at)) {
         chars[at] = 'pending';
         backtickPending = true;
       } else {
@@ -701,6 +737,7 @@ export function compareTyping(
     accented,
     errors,
     done: n > 0 && iEnd === n && !composing && !backtickPending,
+    awaitingBacktick: backtickPending,
     caret: iEnd,
     extra,
   };

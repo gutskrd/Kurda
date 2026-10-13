@@ -404,12 +404,57 @@ describe('compareTyping', () => {
       expect(r.chars[11]).toBe('pending');
       expect(r.errors).toBe(0);
       expect(r.caret).toBe(12);
+      expect(r.awaitingBacktick).toBe(true);
       // the next key decides it
-      expect(compareTyping(TEXT, 'ez ji welate ', 'strict').chars[11]).toBe('wrong');
+      const wrong = compareTyping(TEXT, 'ez ji welate ', 'strict');
+      expect(wrong.chars[11]).toBe('wrong');
+      expect(wrong.awaitingBacktick).toBe(false);
       expect(compareTyping(TEXT, applyBacktickShortcut('ez ji welate', '`'), 'strict').chars[11]).toBe('ok');
       // and a text that ends on it is not done yet
       expect(compareTyping('ez kurdî', 'ez kurdi', 'strict').done).toBe(false);
-      expect(compareTyping('ez kurdî', 'ez kurdi', 'forgiving').done).toBe(true);
+    });
+
+    /*
+     * Forgiving mode used to end the race on the e at once: an app that
+     * finishes on `done` finished before the backtick could make it ê, and the
+     * result had an accent missed that the racer was about to type.
+     */
+    it('in forgiving mode too, e where ê belongs waits for the next key — counted either way', () => {
+      const r = compareTyping(TEXT, 'ez ji welate', 'forgiving');
+      expect(r.chars[11]).toBe('pending');
+      expect(r).toMatchObject({ correct: 12, accentMisses: 0, accented: 0, errors: 0, awaitingBacktick: true });
+      // a space after it: an accent missed, and the letter still counts
+      const missed = compareTyping(TEXT, 'ez ji welate ', 'forgiving');
+      expect(missed.chars[11]).toBe('accent');
+      expect(missed).toMatchObject({ correct: 13, accentMisses: 1, accented: 1, awaitingBacktick: false });
+      // a backtick after it: ê
+      const shortcut = compareTyping(TEXT, applyBacktickShortcut('ez ji welate', '`'), 'forgiving');
+      expect(shortcut.chars[11]).toBe('ok');
+      expect(shortcut).toMatchObject({ correct: 12, accentMisses: 0, accented: 1 });
+
+      // the text's last letter: not done until the next key, or the race is scored
+      const last = compareTyping('ez kurdî', 'ez kurdi', 'forgiving');
+      expect(last).toMatchObject({ done: false, awaitingBacktick: true, caret: 8, correct: 8 });
+      expect(compareTyping('ez kurdî', applyBacktickShortcut('ez kurdi', '`'), 'forgiving')).toMatchObject({
+        done: true,
+        awaitingBacktick: false,
+        accentMisses: 0,
+      });
+      const scored = compareTyping('ez kurdî', 'ez kurdi', 'forgiving', { final: true });
+      expect(scored).toMatchObject({ done: true, awaitingBacktick: false, correct: 8, accentMisses: 1 });
+    });
+
+    it('does not wait for a backtick with the shortcut off, in hidden mode, or for a Soranî letter', () => {
+      for (const mode of ['strict', 'forgiving'] as const) {
+        const r = compareTyping('ez kurdî', 'ez kurdi', mode, { backtickShortcut: false });
+        expect(r, mode).toMatchObject({ done: true, awaitingBacktick: false });
+        expect(r.chars[7], mode).toBe(mode === 'strict' ? 'wrong' : 'accent');
+      }
+      // hidden shows i, and i is the letter
+      expect(compareTyping('ez kurdî', 'ez kurdi', 'hidden')).toMatchObject({ done: true, awaitingBacktick: false });
+      // no backtick makes ێ, so ی where it belongs is forgiven at once
+      const sorani = compareTyping('بێ', 'بی', 'forgiving', { dialect: 'sorani' });
+      expect(sorani).toMatchObject({ done: true, awaitingBacktick: false, accentMisses: 1 });
     });
 
     it('drops a trailing dead key when the race is scored, and counts the letter it never got', () => {
