@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
-import { requireAdmin } from './routes.js';
+import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
 import { USERS_PAGE_MAX } from './user-admin-service.js';
@@ -30,7 +30,8 @@ function sendResult(reply: FastifyReply, res: ActionResult) {
 /** Admin user management: search, detail, moderation actions (KUR-101). */
 export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminService, totp: AdminTotpService): void {
   const canView = [requireAuth, requireAdmin(totp, 'superadmin', 'moderator', 'support')];
-  const canModerate = [requireAuth, requireAdmin(totp, 'superadmin', 'moderator')];
+  // moderators, superadmins and the legacy admin role, like every moderation route
+  const canModerate = [requireAuth, requireCapability('moderation.act')];
   const canAdjustEconomy = [requireAuth, requireAdmin(totp, 'superadmin')];
 
   app.get(

@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles, markPrivileged } from '../plugins/auth.js';
-import { capabilitiesFor, isAdmin, isAdminRole, PRIVILEGED_ROLES, type AdminRole } from './roles.js';
+import { capabilitiesFor, hasCapability, isAdmin, isAdminRole, PRIVILEGED_ROLES, type AdminRole, type Capability } from './roles.js';
 import type { AdminTotpService } from './totp-service.js';
 
 const codeBody = z.object({ code: z.string().regex(/^\d{6}$/) });
@@ -26,6 +26,20 @@ export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
     }
     if (!(await totp.isConfirmed(req.user.id))) {
       forbid(reply, req, 'TOTP_REQUIRED', 'admin 2FA enrollment required');
+    }
+  });
+}
+
+/**
+ * Guard for a capability rather than a role list, so the role table in
+ * `roles.ts` is the one place that says who may do what. Marked privileged, so
+ * the 2FA gate covers every route using it. Put `requireAuth` before it: a
+ * signed-out caller gets 401 there, not a 403 here.
+ */
+export function requireCapability(capability: Capability) {
+  return markPrivileged(async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    if (!req.user || !hasCapability(req.user.roles, capability)) {
+      forbid(reply, req, 'FORBIDDEN', 'insufficient permissions');
     }
   });
 }

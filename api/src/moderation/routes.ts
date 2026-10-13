@@ -1,6 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAuth } from '../plugins/auth.js';
+import { requireCapability } from '../admin/routes.js';
+
+/** Moderators, superadmins and the legacy admin role (it used to be only the last). */
+const moderators = [requireAuth, requireCapability('moderation.act')];
 import type { ModerationService } from './service.js';
 
 /** Message reporting + admin moderation queue (KUR-086). */
@@ -26,7 +30,7 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
   );
 
   /** Admin: open moderation queue with context. */
-  app.get('/admin/moderation/reports', { preHandler: requireRoles('admin') }, async () => ({
+  app.get('/admin/moderation/reports', { preHandler: moderators }, async () => ({
     reports: await moderation.pendingReports(),
   }));
 
@@ -35,7 +39,7 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
     '/admin/moderation/reports/:id/resolve',
     {
       schema: { params: z.object({ id: z.uuid() }), body: z.object({ action: z.enum(['actioned', 'dismissed']) }) },
-      preHandler: requireRoles('admin'),
+      preHandler: moderators,
     },
     async (req) => {
       const { id } = req.params as { id: string };
