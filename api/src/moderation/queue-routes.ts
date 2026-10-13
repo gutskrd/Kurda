@@ -152,13 +152,16 @@ export function registerModerationQueueRoutes(
   app.post(
     '/admin/moderation/cases/:id/resolve',
     {
-      schema: { params: idParam, body: z.object({ resolution: z.enum(['dismiss', 'warn', 'mute', 'ban', 'remove']) }) },
+      schema: {
+        params: idParam,
+        body: z.object({ resolution: z.enum(['dismiss', 'warn', 'mute', 'ban', 'remove']), confirmUsername: z.string().max(60).optional() }),
+      },
       preHandler: guard,
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const { resolution } = req.body as { resolution: 'dismiss' | 'warn' | 'mute' | 'ban' | 'remove' };
-      const ok = await queue.resolve(id, req.user!.id, resolution);
+      const { resolution, confirmUsername } = req.body as { resolution: 'dismiss' | 'warn' | 'mute' | 'ban' | 'remove'; confirmUsername?: string };
+      const ok = await queue.resolve(id, req.user!.id, resolution, confirmUsername);
       if (!ok) return reply.code(409).send({ code: 'ALREADY_RESOLVED', message: 'this case is already resolved' });
       return { resolved: true, resolution };
     },

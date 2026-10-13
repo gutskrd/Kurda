@@ -134,7 +134,10 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect(after.rows[0]!.banned_at).not.toBeNull();
     expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
 
-    expect(await svc.permBan(adminId, targetId, 'repeat offender')).toEqual({ ok: true });
+    // the only moderator types the username to confirm a permanent ban, on this page too
+    await expect(svc.permBan(adminId, targetId, 'repeat offender')).rejects.toMatchObject({ code: 'CONFIRM_USERNAME_REQUIRED' });
+    expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
+    expect(await svc.permBan(adminId, targetId, 'repeat offender', username)).toEqual({ ok: true });
     expect((await svc.detail(targetId))!.ban).toBe('perm_banned');
 
     expect(await svc.unban(adminId, targetId, 'appeal granted')).toEqual({ ok: true });

@@ -10,7 +10,8 @@ import type { UserAdminService } from './user-admin-service.js';
 const idParam = z.object({ id: z.uuid() });
 const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
-const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional() });
+// confirmUsername: the person's username, which the only moderator types to confirm a permanent ban
+const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional(), confirmUsername: z.string().max(60).optional() });
 const walletBody = z.object({ reason: z.string(), currency: z.enum(['zer', 'gems']), amount: z.number().int() });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
@@ -79,7 +80,9 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     const reason = normalizeReason(b.reason);
     if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
     const id = (req.params as z.infer<typeof idParam>).id;
-    const res = b.hours ? await users.tempBan(req.user!.id, id, reason, expiryFrom(new Date(), b.hours)!) : await users.permBan(req.user!.id, id, reason);
+    const res = b.hours
+      ? await users.tempBan(req.user!.id, id, reason, expiryFrom(new Date(), b.hours)!)
+      : await users.permBan(req.user!.id, id, reason, b.confirmUsername);
     return sendResult(reply, res);
   });
 

@@ -284,8 +284,9 @@ export class UserAdminService {
     return this.sanction(adminId, userId, reason, 'suspension', until, 'temp_ban');
   }
 
-  permBan(adminId: string, userId: string, reason: string): Promise<ActionResult> {
-    return this.sanction(adminId, userId, reason, 'permanent_ban', null, 'perm_ban');
+  /** With a single moderator, `confirmUsername` must be the person's username (409 CONFIRM_USERNAME_REQUIRED). */
+  permBan(adminId: string, userId: string, reason: string, confirmUsername?: string): Promise<ActionResult> {
+    return this.sanction(adminId, userId, reason, 'permanent_ban', null, 'perm_ban', confirmUsername);
   }
 
   async unban(adminId: string, userId: string, reason: string): Promise<ActionResult> {
@@ -301,6 +302,7 @@ export class UserAdminService {
     kind: 'warning' | 'chat_mute' | 'suspension' | 'permanent_ban',
     until: Date | null,
     auditAction: string,
+    confirmUsername?: string,
   ): Promise<ActionResult> {
     if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
     const hours = until ? Math.max(1, Math.round((until.getTime() - Date.now()) / 3_600_000)) : null;
@@ -308,9 +310,8 @@ export class UserAdminService {
       await this.cases.sanctionUser(
         adminId,
         userId,
-        { kind, policy: 'other', statement: LEGACY_STATEMENT[kind], internalNote: reason, durationHours: hours },
-        // the old page has no way to type a username; the new one does
-        { allowUntypedSingle: true, auditAction },
+        { kind, policy: 'other', statement: LEGACY_STATEMENT[kind], internalNote: reason, durationHours: hours, confirmUsername },
+        { auditAction },
       );
       return { ok: true };
     } catch (err) {

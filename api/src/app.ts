@@ -576,7 +576,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(reminderSweep));
     // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
-    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp!);
+    // (sharing the moderation services, so the second-approval count is the same here)
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned

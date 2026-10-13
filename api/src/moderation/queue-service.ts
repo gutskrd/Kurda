@@ -639,14 +639,15 @@ export class ModerationQueueService {
    * replaces it: each button maps onto a full decision under the case's own
    * category, with a stated reason instead of the old hard-coded "moderation
    * queue", the claim respected, and `remove` working. False when the case is
-   * already decided.
+   * already decided. A permanent ban by the only moderator needs the username
+   * typed here as everywhere (409 CONFIRM_USERNAME_REQUIRED without it).
    */
-  async resolve(caseId: string, moderatorId: string, resolution: CaseResolution): Promise<boolean> {
+  async resolve(caseId: string, moderatorId: string, resolution: CaseResolution, confirmUsername?: string): Promise<boolean> {
     const c = await this.cases.find(this.pool, caseId);
     if (!c) throw new AppError('NOT_FOUND', 404, 'no such case');
     if (!(OPEN_CASE_STATUSES as readonly string[]).includes(c.status)) return false;
     try {
-      await this.cases.decide(caseId, moderatorId, legacyDecision(resolution, c.category ?? 'other'), { allowUntypedSingle: true });
+      await this.cases.decide(caseId, moderatorId, { ...legacyDecision(resolution, c.category ?? 'other'), confirmUsername });
       return true;
     } catch (err) {
       if (err instanceof AppError && err.code === 'CASE_CLOSED') return false;

@@ -463,6 +463,19 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
       const out = typed.json() as DecideResult;
       expect(out.status).toBe('actioned');
       expect(out.sanctions[0]).toMatchObject({ kind: 'permanent_ban', singleApproved: true, active: true, pendingApproval: false });
+
+      // the old one-click "ban" and the old Users page ask for it too
+      const old = await target('soloold');
+      const oldCase = await reportCase(reporter, { targetType: 'user', targetId: old.id, category: 'violence' });
+      const click = await call('POST', `/admin/moderation/cases/${oldCase}/resolve`, modA.token, { resolution: 'ban' });
+      expect(click.statusCode).toBe(409);
+      expect(click.json().code).toBe('CONFIRM_USERNAME_REQUIRED');
+      const clicked = await call('POST', `/admin/moderation/cases/${oldCase}/resolve`, modA.token, { resolution: 'ban', confirmUsername: old.username });
+      expect(clicked.statusCode).toBe(200);
+      const page = await target('soloban');
+      const untypedBan = await call('POST', `/admin/users/${page.id}/ban`, modA.token, { reason: 'threats' });
+      expect(untypedBan.json().code).toBe('CONFIRM_USERNAME_REQUIRED');
+      expect((await call('POST', `/admin/users/${page.id}/ban`, modA.token, { reason: 'threats', confirmUsername: page.username })).statusCode).toBe(200);
     } finally {
       moderators = 2;
     }

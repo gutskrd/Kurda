@@ -277,7 +277,7 @@ export class CasesService {
    * decision leaves no half-applied sanction behind; `preview` stops there and
    * returns the messages.
    */
-  async decide(caseId: string, adminId: string, req: DecideRequest, opts: { allowUntypedSingle?: boolean } = {}): Promise<DecideResult> {
+  async decide(caseId: string, adminId: string, req: DecideRequest): Promise<DecideResult> {
     return inTransaction(this.pool, async (client) => {
       const c = await this.lockOpen(client, caseId, adminId);
       if (c.resolution === 'csam') throw new AppError('ALREADY_DECIDED', 409, 'the CSAM action already decided this case');
@@ -304,7 +304,6 @@ export class CasesService {
         policy,
         removeContent,
         reporters,
-        allowUntypedSingle: opts.allowUntypedSingle === true,
         preview: req.preview === true,
       });
       const messages = this.previewMessages(resolved, outcome, req, reporters);
@@ -430,11 +429,10 @@ export class CasesService {
       policy: ReportCategory;
       removeContent: boolean;
       reporters: Set<string>;
-      allowUntypedSingle: boolean;
       preview: boolean;
     },
   ): Promise<{ actions: ResolvedAction[]; permanentBans: PermanentBanCheck[] }> {
-    const { outcome, policy, reporters, allowUntypedSingle } = ctx;
+    const { outcome, policy, reporters } = ctx;
     const out: ResolvedAction[] = [];
     const permanentBans: PermanentBanCheck[] = [];
     let moderators: number | null = null;
@@ -480,7 +478,7 @@ export class CasesService {
       if (action.kind === 'permanent_ban') {
         moderators ??= await this.sanctions.moderatorCount();
         mode = permanentBanMode(moderators, isZeroTolerance(actionPolicy));
-        const usernameRequired = mode === 'single' && !allowUntypedSingle;
+        const usernameRequired = mode === 'single';
         permanentBans.push({ target: action.target, userId, username: u.rows[0].username, mode, usernameRequired });
         const typed = req.confirmUsername?.trim().toLowerCase();
         if (usernameRequired && !ctx.preview && typed !== u.rows[0].username.toLowerCase()) {
@@ -845,8 +843,7 @@ export class CasesService {
    * A sanction from the user page rather than a case, through the same rules: a
    * permanent ban waits for a second admin when there is one (emergency
    * suspension meanwhile), applies at once for child safety, and with a single
-   * admin needs the username typed (`allowUntypedSingle` is only for the old
-   * Users page, which cannot ask).
+   * admin needs the username typed — from every page, the old ones included.
    */
   async sanctionUser(
     adminId: string,
@@ -859,7 +856,7 @@ export class CasesService {
       durationHours?: number | null;
       confirmUsername?: string;
     },
-    opts: { allowUntypedSingle?: boolean; auditAction?: string } = {},
+    opts: { auditAction?: string } = {},
   ): Promise<ApplySanctionResult> {
     if (userId === adminId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot sanction yourself');
     // a person at risk of self-harm is helped, never sanctioned (M5) — from a
@@ -894,7 +891,7 @@ export class CasesService {
       }
       const moderators = await this.sanctions.moderatorCount();
       const mode = permanentBanMode(moderators, isZeroTolerance(input.policy));
-      if (mode === 'single' && !opts.allowUntypedSingle && input.confirmUsername?.trim().toLowerCase() !== u.rows[0].username.toLowerCase()) {
+      if (mode === 'single' && input.confirmUsername?.trim().toLowerCase() !== u.rows[0].username.toLowerCase()) {
         throw new AppError('CONFIRM_USERNAME_REQUIRED', 409, 'you are the only moderator: type their username to confirm a permanent ban');
       }
       if (mode === 'second_approval') {
