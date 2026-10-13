@@ -415,7 +415,15 @@ export type ModerationNotificationData =
     }
   | { kind: 'sanction_lifted'; sanctionId: string }
   | { kind: 'appeal_decided'; appealId: string; outcome: AppealOutcome }
-  | { kind: 'caring_message'; helplineUrl: string };
+  | {
+      kind: 'caring_message';
+      helplineUrl: string;
+      /**
+       * The moderator's own words, when they wrote some — the one part of the
+       * message a client cannot say for itself in the reader's language.
+       */
+      message?: string;
+    };
 
 /** What a removed chat message reads as, for both people in the conversation. */
 export const MODERATED_MESSAGE_BODY = 'Removed by Hevalo';

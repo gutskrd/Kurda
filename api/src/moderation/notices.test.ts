@@ -55,8 +55,14 @@ describe('the caring message', () => {
     const n = caringMessage('We read your message and we are worried about you.');
     expect(n.body.startsWith('We read your message')).toBe(true);
     expect(n.body).toContain(HELPLINE_URL);
-    expect(n.data).toEqual({ kind: 'caring_message', helplineUrl: HELPLINE_URL });
+    expect(n.data).toEqual({
+      kind: 'caring_message',
+      helplineUrl: HELPLINE_URL,
+      message: 'We read your message and we are worried about you.',
+    });
     expect(caringMessage(null).body).toContain(HELPLINE_URL);
+    expect(caringMessage(null).data).toEqual({ kind: 'caring_message', helplineUrl: HELPLINE_URL });
+    expect(caringMessage('   ').data).toEqual({ kind: 'caring_message', helplineUrl: HELPLINE_URL });
   });
 });
 
