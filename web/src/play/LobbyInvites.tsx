@@ -67,7 +67,18 @@ function stateKey(i: OutgoingInviteState): MessageKey {
  * rather play something else", or out of time (with Invite again). It follows
  * the friends' answers as they come, and says each change politely.
  */
-export function InvitedList({ game, lobbyId, room }: { game: PlayGame; lobbyId: string; room: number }): React.JSX.Element | null {
+export function InvitedList({
+  game,
+  lobbyId,
+  room,
+  headingLevel = 3,
+}: {
+  game: PlayGame;
+  lobbyId: string;
+  room: number;
+  /** beside the page's other panels: a story lobby's are h3, a battle's or a match's h2 */
+  headingLevel?: 2 | 3;
+}): React.JSX.Element | null {
   const t = useT();
   const { client } = useAuth();
   const { refresh } = usePlayInvites();
@@ -75,6 +86,7 @@ export function InvitedList({ game, lobbyId, room }: { game: PlayGame; lobbyId: 
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   if (invited.length === 0) return null;
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
 
   async function cancel(i: OutgoingInviteState): Promise<void> {
     setBusy(i.inviteId);
@@ -96,9 +108,9 @@ export function InvitedList({ game, lobbyId, room }: { game: PlayGame; lobbyId: 
 
   return (
     <section className="lobby-invited" aria-labelledby={`invited-${lobbyId}`}>
-      <h3 className="sg-panel-title" id={`invited-${lobbyId}`}>
+      <Heading className="sg-panel-title" id={`invited-${lobbyId}`}>
         {t('play.invited.title')}
-      </h3>
+      </Heading>
       <ul className="lobby-invited-list" aria-live="polite">
         {invited.map((i) => (
           <li key={i.inviteId} className={`lobby-invited-row is-${i.status}`}>

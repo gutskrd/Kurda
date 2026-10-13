@@ -256,7 +256,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           {match.isHost && <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} />}
         </div>
         <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} />
-        {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} />}
+        {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} headingLevel={2} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {match.me == null ? (
           <Button size="lg" disabled={busy} onClick={() => void join()}>
