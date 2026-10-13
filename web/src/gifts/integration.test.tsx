@@ -12,6 +12,7 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { jsonResponse } from '../test/utils';
 import { GiftArrivals } from './GiftArrivals';
 import { DmThread } from '../chat/DmThread';
+import { GroupThread } from '../chat/GroupThread';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -172,5 +173,35 @@ describe('gifts in a direct thread', () => {
     await waitFor(() => expect(calls.some((u) => u.includes('/gifts/g1/open'))).toBe(true));
     // the address has done its job, so a reload does not open it again
     await waitFor(() => expect(screen.getByTestId('where')).not.toHaveTextContent('gift=g1'));
+  });
+});
+
+describe('gifts in a group thread', () => {
+  it('asks who your friends among the members are each time the picker opens', async () => {
+    // the roster changes while the thread is open: dilan joins between the two looks
+    let members = [
+      { userId: 'me', username: 'baran', avatarUrl: null, role: 'member' },
+      { userId: 'u-rojda', username: 'rojda', avatarUrl: null, role: 'owner' },
+    ];
+    mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', async (url) => {
+      const who = await me(url);
+      if (who) return who;
+      if (url.includes('/friends')) {
+        return jsonResponse(200, { total: 2, friends: [{ userId: 'u-rojda', username: 'rojda', avatarUrl: null }, { userId: 'u-dilan', username: 'dilan', avatarUrl: null }] });
+      }
+      if (url.endsWith('/groups/g1')) return jsonResponse(200, { id: 'g1', name: 'Hevalên Amedê', myRole: 'member', members });
+      if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
+      return jsonResponse(200, {});
+    });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Send a gift' }));
+    expect(await screen.findByLabelText('rojda')).toBeInTheDocument();
+    expect(screen.queryByLabelText('dilan')).not.toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    members = [...members, { userId: 'u-dilan', username: 'dilan', avatarUrl: null, role: 'member' }];
+    // the thread has not reloaded its own roster; the picker asks again anyway
+    await userEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
+    expect(await screen.findByLabelText('dilan')).toBeInTheDocument();
   });
 });

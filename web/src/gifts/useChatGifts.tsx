@@ -131,10 +131,14 @@ export function useChatGifts<M extends ChatMessage>({
     [client, sendText, setCard, t],
   );
 
+  // who may be given one is asked each time the picker opens: a group's
+  // members (and which of them are your friends) change while a thread is
+  // open, and a first ask can come before the thread knew its own roster
   const openPicker = useCallback(() => {
     setPicking(true);
-    if (people === null) void loadPeople().then(setPeople, () => setPeople([]));
-  }, [loadPeople, people]);
+    setPeople(null);
+    void loadPeople().then(setPeople, () => setPeople([]));
+  }, [loadPeople]);
 
   const onSent = useCallback(
     (sent: GiftSent) => {

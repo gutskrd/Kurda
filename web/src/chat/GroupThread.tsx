@@ -74,14 +74,17 @@ export function GroupThread({
   const gifts = useChatGifts<GroupMessage>({
     chat: useMemo(() => ({ kind: 'group' as const, groupId }), [groupId]),
     loadPeople: useCallback(async () => {
-      const res = await client.get<{ friends: Array<{ userId: string; username: string; avatarUrl: string | null }> }>(
-        '/friends?limit=500',
-      );
+      const [res, roster] = await Promise.all([
+        client.get<{ friends: Array<{ userId: string; username: string; avatarUrl: string | null }> }>('/friends?limit=500'),
+        // the roster as it is now: someone may have joined or left since the
+        // thread opened, and the button can be pressed before it has loaded
+        client.get<GroupDetail>(`/groups/${groupId}`).then((r) => (r.ok ? r.data.members : [])),
+      ]);
       const friends = new Set((res.ok ? (res.data.friends ?? []) : []).map((f) => f.userId));
-      return (detail?.members ?? [])
+      return (roster ?? [])
         .filter((m) => m.userId !== user?.id && friends.has(m.userId))
         .map((m) => ({ userId: m.userId, name: m.username, avatarUrl: m.avatarUrl }));
-    }, [client, detail?.members, user?.id]),
+    }, [client, groupId, user?.id]),
     setMessages,
     sendText: useCallback(
       async (body: string) => {
