@@ -79,6 +79,26 @@ export function Approvals(): React.JSX.Element {
     }
   }
 
+  /** Your own change: taken back, kept on record as withdrawn (the reject route, with that reason). */
+  async function withdraw(c: PendingChange): Promise<void> {
+    const yes = await dialogs.confirm({
+      title: `Withdraw your change to “${s(c.payload.name)}”?`,
+      body: 'Nothing is changed, and it leaves this list. You can propose it again.',
+      confirmLabel: 'Withdraw',
+    });
+    if (!yes) return;
+    setBusy(c.id);
+    try {
+      await api(`/admin/config/changes/${c.id}/reject`, { method: 'POST', body: { reason: 'Withdrawn by the admin who proposed it' } });
+      toast.success('Withdrawn. Nothing was changed.');
+      await list.reload();
+    } catch (err) {
+      toast.error(errorLine(err, 'approvals'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function reject(c: PendingChange): Promise<void> {
     const reason = await dialogs.prompt({
       title: 'Reject this change?',
@@ -130,19 +150,24 @@ export function Approvals(): React.JSX.Element {
           what="approvals"
           empty="Nothing is waiting. Changes that need a second admin will appear here."
           actions={(c) => {
-            const mine = !!me && c.proposerId === me.id;
+            // the server refuses approving your own, so it is not offered: yours can only be withdrawn
+            if (me && c.proposerId === me.id) {
+              return (
+                <>
+                  <span className="subtle">Another admin approves it</span>
+                  <Button onClick={() => void withdraw(c)} disabled={busy === c.id}>
+                    Withdraw
+                  </Button>
+                </>
+              );
+            }
             return (
               <>
                 <Button variant="danger" onClick={() => void reject(c)} disabled={busy === c.id}>
                   Reject
                 </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => void approve(c)}
-                  disabled={busy === c.id || mine}
-                  title={mine ? 'You proposed this: another admin approves it' : undefined}
-                >
-                  {mine ? 'Yours: another admin approves' : 'Approve'}
+                <Button variant="primary" onClick={() => void approve(c)} disabled={busy === c.id}>
+                  Approve
                 </Button>
               </>
             );

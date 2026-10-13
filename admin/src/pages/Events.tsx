@@ -76,6 +76,11 @@ export function Events(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();
   const list = useLoad(() => api<{ events: GameEvent[] }>('/admin/events').then((r) => r.events), []);
+  // an event with rewards waits in Approvals, so it is not on this list yet: say so
+  const pending = useLoad(
+    () => api<{ pending: { target: string }[] }>('/admin/config/changes').then((r) => r.pending.filter((c) => c.target === 'event').length),
+    [],
+  );
   const [editing, setEditing] = useState<GameEvent | 'new' | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -159,6 +164,11 @@ export function Events(): React.JSX.Element {
           </Button>
         }
       />
+      {(pending.data ?? 0) > 0 && (
+        <Banner tone="info" title={`${pending.data} event ${pending.data === 1 ? 'change waits' : 'changes wait'} for a second admin`} actions={<a href="#/approvals">Open Approvals</a>}>
+          An event that gives rewards is scheduled once another admin approves it.
+        </Banner>
+      )}
       <Section flush>
         <Table
           caption="Live events"
@@ -188,7 +198,7 @@ export function Events(): React.JSX.Element {
           onSaved={async (message) => {
             setEditing(null);
             toast.success(message);
-            await list.reload();
+            await Promise.all([list.reload(), pending.reload()]);
           }}
         />
       )}

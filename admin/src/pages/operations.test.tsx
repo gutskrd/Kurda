@@ -51,8 +51,9 @@ describe('Approvals', () => {
   it('will not offer to approve your own change, and asks before approving another admin’s', async () => {
     const user = userEvent.setup();
     const { calls } = show();
-    const mine = await screen.findByRole('button', { name: 'Yours: another admin approves' });
-    expect(mine).toBeDisabled();
+    const mine = (await screen.findByText('Crown')).closest('tr') as HTMLElement;
+    expect(within(mine).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+    expect(within(mine).getByText('Another admin approves it')).toBeInTheDocument();
 
     const theirs = screen.getAllByRole('button', { name: 'Approve' });
     expect(theirs).toHaveLength(1);
@@ -67,10 +68,18 @@ describe('Approvals', () => {
     const user = userEvent.setup();
     const { calls } = show();
     await screen.findByText('Newroz');
-    await user.click(screen.getAllByRole('button', { name: 'Reject' })[1]!);
+    await user.click(screen.getByRole('button', { name: 'Reject' }));
     await user.type(screen.getByLabelText(/^why/i), 'Rewards are too high');
     await user.click(within(screen.getByRole('dialog', { name: 'Reject this change?' })).getByRole('button', { name: 'Reject' }));
     await waitFor(() => expect(posts(calls, '/admin/config/changes/c-theirs/reject')[0]?.body).toEqual({ reason: 'Rewards are too high' }));
+  });
+  it('withdraws your own change after asking, keeping why on record', async () => {
+    const user = userEvent.setup();
+    const { calls } = show();
+    await user.click(await screen.findByRole('button', { name: 'Withdraw' }));
+    await user.click(within(screen.getByRole('alertdialog', { name: 'Withdraw your change to “Crown”?' })).getByRole('button', { name: 'Withdraw' }));
+    await waitFor(() => expect(posts(calls, '/admin/config/changes/c-mine/reject')[0]?.body).toEqual({ reason: 'Withdrawn by the admin who proposed it' }));
+    expect(await screen.findByText('Withdrawn. Nothing was changed.')).toBeInTheDocument();
   });
 });
 
@@ -123,6 +132,16 @@ describe('Live events', () => {
     expect(sent.payload.quests).toEqual(event.quests);
     expect(posts(calls, '/admin/events')).toHaveLength(0);
     expect(await screen.findByText(/waiting in Approvals/)).toBeInTheDocument();
+  });
+
+  it('says when an event with rewards is waiting in Approvals, and not yet on the list', async () => {
+    fakeApi(
+      on('GET', '/admin/events', json({ events: [event] })),
+      on('GET', '/admin/config/changes', json({ pending: [{ id: 'c1', target: 'event' }, { id: 'c2', target: 'shop_item' }] })),
+    );
+    renderUi(<Events />);
+    const banner = (await screen.findByText('1 event change waits for a second admin')).closest('.banner') as HTMLElement;
+    expect(within(banner).getByRole('link', { name: 'Open Approvals' })).toHaveAttribute('href', '#/approvals');
   });
 
   it('asks before turning a live event off', async () => {
