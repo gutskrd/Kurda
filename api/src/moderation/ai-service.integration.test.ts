@@ -76,6 +76,8 @@ describe.skipIf(!DATABASE_URL)('ai moderation service (integration)', () => {
     const pending = await svc.pending();
     expect(pending.some((f) => f.id === out.flagId)).toBe(true);
 
+    // its author, even a moderator, cannot clear it
+    await expect(svc.resolve(out.flagId!, u, 'reversed')).rejects.toMatchObject({ code: 'CONFLICT_OF_INTEREST' });
     const mod = await makeUser();
     const ok = await svc.resolve(out.flagId!, mod, 'reversed');
     expect(ok).toBe(true);
