@@ -1047,6 +1047,11 @@ export const ku: Catalogue = {
   'images.reactions': 'Berteka',
   'picture.decodeFailed': 'Divê ev {format} li vir vebûya lê venebû. Dîsa biceribîne — an wê wek xwe biweşîne, ku hîn jî dixebite.',
 
+  // ---- Stories, and playing with friends --------------------------------
+  'games.stories.name': 'Çîrok',
+  'games.stories.join': 'Beşdar bibe',
+  'games.invite.blurb.stories': 'Çîrokeke kurt a kurdî bixwînin, paşê bi hev re bersiva pirsan bidin.',
+
   // ---- the weekly league (KUR-062) ----------------------------------------
   'leagues.tierName': '{emoji} Lîga {tier}',
   'leagues.endsIn': 'Di {time} de diqede · UTC',

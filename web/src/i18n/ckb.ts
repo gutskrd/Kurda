@@ -1052,6 +1052,11 @@ export const ckb: Catalogue = {
   'images.reactions': 'کاردانەوەکان',
   'picture.decodeFailed': 'دەبووایە ئەم {format}ـە لێرە بکرێتەوە بەڵام نەکرایەوە. دووبارە هەوڵ بدە — یان وەک خۆی بڵاوی بکەرەوە، کە هێشتا کار دەکات.',
 
+  // ---- Stories, and playing with friends --------------------------------
+  'games.stories.name': 'چیرۆکەکان',
+  'games.stories.join': 'بەشداربە',
+  'games.invite.blurb.stories': 'چیرۆکێکی کورتی کوردی بخوێننەوە، پاشان پێکەوە وەڵامی پرسیارەکان بدەنەوە.',
+
   // ---- the weekly league (KUR-062) ----------------------------------------
   'leagues.tierName': '{emoji} خولی {tier}',
   'leagues.endsIn': 'لە {time} کۆتایی دێت · UTC',

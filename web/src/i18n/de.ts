@@ -1041,6 +1041,11 @@ export const de: Catalogue = {
   'images.reactions': 'Reaktionen',
   'picture.decodeFailed': 'Dieses {format} hätte sich hier öffnen sollen, hat es aber nicht. Versuch es noch einmal — oder poste es so, wie es ist, das geht auch.',
 
+  // ---- Stories, and playing with friends --------------------------------
+  'games.stories.name': 'Geschichten',
+  'games.stories.join': 'Mitspielen',
+  'games.invite.blurb.stories': 'Lest eine kurze kurdische Geschichte und beantwortet dann gemeinsam Fragen dazu.',
+
   // ---- the weekly league (KUR-062) ----------------------------------------
   'leagues.tierName': '{emoji} {tier}-Liga',
   'leagues.endsIn': 'Endet in {time} · UTC',

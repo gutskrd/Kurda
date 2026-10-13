@@ -27,11 +27,13 @@ export {
 export const INVITE_NAME_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.battle.name',
   'rhyme-match': 'games.rhymeMatch.name',
+  stories: 'games.stories.name',
 };
 
 export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.invite.blurb.battle',
   'rhyme-match': 'games.invite.blurb.rhymeMatch',
+  stories: 'games.invite.blurb.stories',
 };
 
 /** An absolute, shareable URL — this deploy's origin, so a preview links to itself. */

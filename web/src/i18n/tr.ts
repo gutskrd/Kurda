@@ -1041,6 +1041,11 @@ export const tr: Catalogue = {
   'images.reactions': 'Tepkiler',
   'picture.decodeFailed': 'Bu {format} burada açılmalıydı ama açılmadı. Tekrar dene — ya da olduğu gibi paylaş, o da çalışır.',
 
+  // ---- Stories, and playing with friends --------------------------------
+  'games.stories.name': 'Hikâyeler',
+  'games.stories.join': 'Oyuna katıl',
+  'games.invite.blurb.stories': 'Kısa bir Kürtçe hikâye okuyun, sonra birlikte sorularını yanıtlayın.',
+
   // ---- the weekly league (KUR-062) ----------------------------------------
   'leagues.tierName': '{emoji} {tier} Ligi',
   'leagues.endsIn': '{time} sonra bitiyor · UTC',

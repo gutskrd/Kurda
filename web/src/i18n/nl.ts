@@ -1041,6 +1041,11 @@ export const nl: Catalogue = {
   'images.reactions': 'Reacties',
   'picture.decodeFailed': 'Deze {format} had hier moeten openen, maar deed dat niet. Probeer het opnieuw — of plaats hem zoals hij is, dat werkt ook.',
 
+  // ---- Stories, and playing with friends --------------------------------
+  'games.stories.name': 'Verhalen',
+  'games.stories.join': 'Meedoen',
+  'games.invite.blurb.stories': 'Lees samen een kort Koerdisch verhaal en beantwoord er daarna vragen over.',
+
   // ---- the weekly league (KUR-062) ----------------------------------------
   'leagues.tierName': '{emoji} Divisie {tier}',
   'leagues.endsIn': 'Eindigt over {time} · UTC',

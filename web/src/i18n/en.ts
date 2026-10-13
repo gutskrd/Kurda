@@ -1135,6 +1135,11 @@ export const en = {
   'images.reactions': 'Reactions',
   'picture.decodeFailed': 'This {format} should have opened here and didn’t. Try again — or post it as it is, which still works.',
 
+  // ---- Stories, and playing with friends --------------------------------
+  'games.stories.name': 'Stories',
+  'games.stories.join': 'Join game',
+  'games.invite.blurb.stories': 'Read a short Kurdish story, then answer questions about it together.',
+
   // ---- the weekly league (KUR-062) ----------------------------------------
   'leagues.tierName': '{emoji} {tier} League',
   'leagues.endsIn': 'Ends in {time} · UTC',
