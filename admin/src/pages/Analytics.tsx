@@ -12,7 +12,9 @@ interface ActivityPoint {
 interface FunnelStep {
   step: string;
   users: number;
-  rate: number;
+  /** of the first step's people, the share still here */
+  rateFromFirst: number;
+  rateFromPrev: number;
 }
 interface RetentionPoint {
   cohortDay: string;
@@ -110,9 +112,10 @@ export function Analytics(): React.JSX.Element {
       ) : (
         <>
           <div className="stats">
-            <Stat label="Active today" value={(latest?.dau ?? 0).toLocaleString()} hint={latest ? `On ${dayLabel(latest.day)}` : 'No data in this range'} />
-            <Stat label="Active this week" value={(latest?.wau ?? 0).toLocaleString()} hint="The 7 days to the last day shown" />
-            <Stat label="Active this month" value={(latest?.mau ?? 0).toLocaleString()} hint="The 30 days to the last day shown" />
+            {/* the last day shown, which is today only when the range ends today */}
+            <Stat label="Active in a day" value={(latest?.dau ?? 0).toLocaleString()} hint={latest ? `On ${dayLabel(latest.day)}` : 'No data in this range'} />
+            <Stat label="Active in a week" value={(latest?.wau ?? 0).toLocaleString()} hint={latest ? `The 7 days to ${dayLabel(latest.day)}` : undefined} />
+            <Stat label="Active in a month" value={(latest?.mau ?? 0).toLocaleString()} hint={latest ? `The 30 days to ${dayLabel(latest.day)}` : undefined} />
             <Stat label="New sign-ups" value={d.activity.reduce((n, p) => n + p.signups, 0).toLocaleString()} hint="In the days shown" />
           </div>
 
