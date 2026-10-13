@@ -80,9 +80,10 @@ async function inspect(
 
   const rows = await executor.query<{
     key: string; uploader_id: string | null; kind: string | null; content_type: string;
-    scan_status: string; confirmed: boolean; width: number | null; height: number | null;
+    scan_status: string; quarantined: boolean; confirmed: boolean; width: number | null; height: number | null;
   }>(
-    `SELECT key, uploader_id, kind, content_type, scan_status, confirmed_at IS NOT NULL AS confirmed, width, height
+    `SELECT key, uploader_id, kind, content_type, scan_status, quarantine_state IS NOT NULL AS quarantined,
+            confirmed_at IS NOT NULL AS confirmed, width, height
        FROM media_uploads WHERE key = ANY($1::text[])
       -- always the same order, so two claims on overlapping pictures queue
       -- behind each other instead of deadlocking
@@ -97,7 +98,9 @@ async function inspect(
       row.uploader_id === authorId &&
       row.kind === POST_PICTURE_KIND &&
       row.content_type.startsWith('image/') &&
-      row.scan_status === 'cleared';
+      row.scan_status === 'cleared' &&
+      // taken off the public bucket by moderation (moderation/quarantine.ts)
+      !row.quarantined;
     if (!usable) return { ok: false, code: 'INVALID_MEDIA', mediaKey: key };
     if (row.confirmed) return { ok: false, code: 'MEDIA_IN_USE', mediaKey: key };
   }
@@ -114,7 +117,10 @@ async function inspect(
  * Not a picture a moderator still has to look at: one whose scan flagged it
  * for review, or one a scan holds as evidence, stays confirmed, kept the way a
  * removed post's pictures are. (The caller keeps a reported post's pictures
- * by not letting go of them at all — see `LibraryService.update`.)
+ * by not letting go of them at all — see `LibraryService.update`.) One a
+ * decided report's snapshot still holds is let go like any other, and the
+ * sweep leaves it alone until the evidence's retention ends
+ * (`media_uploads.preserve_evidence`, media/service.ts).
  */
 export async function releasePostPictures(executor: Pick<pg.PoolClient, 'query'>, keys: readonly string[]): Promise<void> {
   if (keys.length === 0) return;

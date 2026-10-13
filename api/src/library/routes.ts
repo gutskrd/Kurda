@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { isWrittenPostType } from '@kurda/shared';
 import { checkPostPictures } from '../media/postMedia.js';
+import { assertUnrestricted, requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
 import {
   LibraryService,
   MAX_OPEN_DRAFTS,
@@ -91,14 +92,12 @@ export function registerLibraryRoutes(
   });
 
   /** An attached voice note must have cleared the upload pipeline (KUR-282) —
-   *  a client can't reference an arbitrary/unconfirmed key, or a picture. */
-  const audioOk = async (key: string | null | undefined): Promise<boolean> => {
+   *  a client can't reference an arbitrary/unconfirmed key, a picture, or one
+   *  moderation took down — and its author must not be barred from media (403
+   *  MUTED). */
+  const audioOk = async (req: FastifyRequest, key: string | null | undefined): Promise<boolean> => {
     if (!key) return true; // audio is optional
-    const res = await app.db.query(
-      `SELECT 1 FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL AND content_type LIKE 'audio/%'`,
-      [key],
-    );
-    return (res.rowCount ?? 0) > 0;
+    return voiceAttachable(app.db, req.user!.id, key);
   };
   const audioRefused = { code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' };
 
@@ -135,7 +134,7 @@ export function registerLibraryRoutes(
     {
       schema: { body: createBody },
       config: { rateLimit: { max: 20, windowMs: 60_000 } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
@@ -143,9 +142,13 @@ export function registerLibraryRoutes(
       // the velocity cap nor lands in the spam check's memory
       const problem = createProblem(body);
       if (problem) return refuse(reply, problem);
-      const pictures = await checkPostPictures(app.db, req.user!.id, (body.media ?? []).map((m) => m.mediaKey));
+      const keys = (body.media ?? []).map((m) => m.mediaKey);
+      // a feature limit ("you can't upload pictures or voice") covers putting
+      // up a picture uploaded before it, as it does a voice note (403 MUTED)
+      if (keys.length > 0) await assertUnrestricted(app.db, req.user!.id, 'media');
+      const pictures = await checkPostPictures(app.db, req.user!.id, keys);
       if (!pictures.ok) return refuse(reply, { code: pictures.code, mediaKey: pictures.mediaKey });
-      if (!(await audioOk(body.audioMediaId))) return reply.code(422).send(audioRefused);
+      if (!(await audioOk(req, body.audioMediaId))) return reply.code(422).send(audioRefused);
       // a draft reaches nobody, so it is gated when it is published, not twice;
       // how many a person keeps is bounded instead
       const publish = body.publish !== false;
@@ -198,7 +201,7 @@ export function registerLibraryRoutes(
     '/library/posts/:id',
     // an edit can put new words in front of readers, so it waits for a birth
     // month like a new post does; unpublish and delete never do
-    { schema: { params: idParam, body: updateBody }, preHandler: requireBirthMonth },
+    { schema: { params: idParam, body: updateBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const patch = req.body as z.infer<typeof updateBody>;
       const current = await editable(req, reply);
@@ -208,9 +211,14 @@ export function registerLibraryRoutes(
       const problem = editProblem(current, patch);
       if (problem) return refuse(reply, problem);
       const added = addedPictures(current, patch);
+      if (added.length > 0) await assertUnrestricted(app.db, req.user!.id, 'media');
       const pictures = await checkPostPictures(app.db, current.authorId, added);
       if (!pictures.ok) return refuse(reply, { code: pictures.code, mediaKey: pictures.mediaKey });
-      if (!(await audioOk(patch.audioMediaId))) return reply.code(422).send(audioRefused);
+      // a new voice rendition is checked like one attached to a new post (the
+      // one it already has is not "attached" again by an edit that resends it)
+      if (patch.audioMediaId !== current.audioMediaId && !(await audioOk(req, patch.audioMediaId))) {
+        return reply.code(422).send(audioRefused);
+      }
       // new words or new pictures on a published post put something new in
       // front of readers, so the edit is gated like a post; a draft's are
       // gated whole when it is published. Staff editing somebody's post are
@@ -238,7 +246,7 @@ export function registerLibraryRoutes(
   /** Publish a draft (author or admin). */
   app.post(
     '/library/posts/:id/publish',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const current = await editable(req, reply);
       if (!current) return reply;

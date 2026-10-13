@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
+import { AppError } from '../plugins/errors.js';
 import { classifyForSurface, HeuristicSpamClassifier, type ModerationClassifier } from './classifier.js';
 import { evaluateForSurface, type CategoryScores, type ModerationAction, type Surface } from './policy.js';
 
@@ -131,6 +132,9 @@ export class AiModerationService {
 
   /** Resolve a flag: `reversed` = false positive (content restored), else actioned. */
   async resolve(flagId: string, moderatorId: string, outcome: 'actioned' | 'reversed'): Promise<boolean> {
+    // nobody reverses a flag on their own words (403 CONFLICT_OF_INTEREST)
+    const own = await this.pool.query(`SELECT 1 FROM moderation_flags WHERE id = $1 AND author_id = $2`, [flagId, moderatorId]);
+    if (own.rowCount) throw new AppError('CONFLICT_OF_INTEREST', 403, 'this flag is about what you wrote; another moderator must handle it');
     const res = await this.pool.query(
       `UPDATE moderation_flags SET status = $2, resolved_at = now(), resolved_by = $3
        WHERE id = $1 AND status = 'pending'`,

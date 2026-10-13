@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { SanctionsService } from '../moderation/sanctions-service.js';
 import { UserAdminService } from './user-admin-service.js';
 import { WalletService } from '../wallet/service.js';
 
@@ -33,7 +34,10 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    svc = new UserAdminService(pool, new WalletService(pool));
+    // the only moderator: a permanent ban applies at once (with two, it waits for the second)
+    svc = new UserAdminService(pool, new WalletService(pool), {
+      sanctions: new SanctionsService(pool, { moderatorCount: async () => 1 }),
+    });
     adminId = await reg(`adminc_${suffix}`, '10.101.0.1');
     targetId = await reg(username, '10.101.0.2');
   });
@@ -130,7 +134,10 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect(after.rows[0]!.banned_at).not.toBeNull();
     expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
 
-    expect(await svc.permBan(adminId, targetId, 'repeat offender')).toEqual({ ok: true });
+    // the only moderator types the username to confirm a permanent ban, on this page too
+    await expect(svc.permBan(adminId, targetId, 'repeat offender')).rejects.toMatchObject({ code: 'CONFIRM_USERNAME_REQUIRED' });
+    expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
+    expect(await svc.permBan(adminId, targetId, 'repeat offender', username)).toEqual({ ok: true });
     expect((await svc.detail(targetId))!.ban).toBe('perm_banned');
 
     expect(await svc.unban(adminId, targetId, 'appeal granted')).toEqual({ ok: true });

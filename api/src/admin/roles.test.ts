@@ -28,6 +28,15 @@ describe('admin roles', () => {
     expect(caps).not.toContain('content.edit');
   });
 
+  it('lets moderators, superadmins and the legacy admin role moderate, and nobody else', () => {
+    expect(hasCapability(['moderator'], 'moderation.act')).toBe(true);
+    expect(hasCapability(['superadmin'], 'moderation.act')).toBe(true);
+    expect(hasCapability(['admin'], 'moderation.act')).toBe(true);
+    expect(capabilitiesFor(['admin'])).toEqual(['moderation.act']);
+    expect(hasCapability(['support'], 'moderation.act')).toBe(false);
+    expect(hasCapability(['content_editor'], 'moderation.act')).toBe(false);
+  });
+
   it('non-admin roles grant nothing', () => {
     expect(capabilitiesFor(['user'])).toEqual([]);
     expect(hasCapability(['user'], 'users.view')).toBe(false);

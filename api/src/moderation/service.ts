@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { filterText, type FilterResult } from './filter.js';
+import { ReportsService } from './reports-service.js';
 
 export type MessageType = 'dm' | 'group';
 
@@ -33,7 +34,14 @@ export interface ReportRow {
  * is quieted everywhere.
  */
 export class ModerationService {
-  constructor(private readonly pool: pg.Pool) {}
+  private readonly reports: ReportsService;
+
+  constructor(
+    private readonly pool: pg.Pool,
+    deps: { reports?: ReportsService } = {},
+  ) {
+    this.reports = deps.reports ?? new ReportsService(pool);
+  }
 
   /** Mask + flag a message body (pure filter). */
   filter(text: string): FilterResult {
@@ -77,67 +85,39 @@ export class ModerationService {
   }
 
   /**
-   * File a report on a message, snapshotting ~10 surrounding messages as
-   * context for the moderation queue.
+   * Report a message. Written through the one report service every surface
+   * uses (reports-service.ts): only a participant can report it, the message is
+   * snapshotted with the ten before and five after it — with usernames, not just
+   * ids — and the report joins its case at once. `chat_reports` keeps its
+   * history and takes no new rows. Returns the new report's id.
    */
   async report(reporterId: string, messageType: MessageType, messageId: string, reason?: string): Promise<{ id: string }> {
-    const context = await this.contextFor(messageType, messageId);
-    if (!context) throw new AppError('MESSAGE_NOT_FOUND', 404, 'no such message');
-    const row = await this.pool.query<{ id: string }>(
-      `INSERT INTO chat_reports (reporter_id, reported_user_id, message_type, message_id, context, reason)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [reporterId, context.reportedUserId, messageType, messageId, JSON.stringify(context.messages), reason ?? null],
-    );
-    return { id: row.rows[0]!.id };
-  }
-
-  private async contextFor(
-    messageType: MessageType,
-    messageId: string,
-  ): Promise<{ reportedUserId: string; messages: unknown[] } | null> {
-    if (messageType === 'dm') {
-      const m = await this.pool.query<{ user_lo: string; user_hi: string; sender_id: string; created_at: Date }>(
-        `SELECT user_lo, user_hi, sender_id, created_at FROM dm_messages WHERE id = $1`,
-        [messageId],
-      );
-      const msg = m.rows[0];
-      if (!msg) return null;
-      const ctx = await this.pool.query(
-        `(SELECT sender_id, body, created_at FROM dm_messages
-            WHERE user_lo = $1 AND user_hi = $2 AND created_at <= $3 ORDER BY created_at DESC LIMIT 6)
-         UNION ALL
-         (SELECT sender_id, body, created_at FROM dm_messages
-            WHERE user_lo = $1 AND user_hi = $2 AND created_at > $3 ORDER BY created_at ASC LIMIT 4)
-         ORDER BY created_at`,
-        [msg.user_lo, msg.user_hi, msg.created_at],
-      );
-      return { reportedUserId: msg.sender_id, messages: ctx.rows };
+    try {
+      const { receipt } = await this.reports.file(reporterId, {
+        targetType: messageType === 'dm' ? 'dm_message' : 'group_message',
+        targetId: messageId,
+        category: 'other',
+        note: reason,
+      });
+      return { id: receipt.report.id };
+    } catch (err) {
+      if (err instanceof AppError && err.code === 'TARGET_NOT_FOUND') throw new AppError('MESSAGE_NOT_FOUND', 404, 'no such message');
+      throw err;
     }
-    const m = await this.pool.query<{ group_id: string; sender_id: string; created_at: Date }>(
-      `SELECT group_id, sender_id, created_at FROM group_messages WHERE id = $1`,
-      [messageId],
-    );
-    const msg = m.rows[0];
-    if (!msg) return null;
-    const ctx = await this.pool.query(
-      `(SELECT sender_id, body, created_at FROM group_messages
-          WHERE group_id = $1 AND created_at <= $2 ORDER BY created_at DESC LIMIT 6)
-       UNION ALL
-       (SELECT sender_id, body, created_at FROM group_messages
-          WHERE group_id = $1 AND created_at > $2 ORDER BY created_at ASC LIMIT 4)
-       ORDER BY created_at`,
-      [msg.group_id, msg.created_at],
-    );
-    return { reportedUserId: msg.sender_id, messages: ctx.rows };
   }
 
-  /** Open reports, oldest first (admin queue). */
-  async pendingReports(): Promise<ReportRow[]> {
+  /**
+   * Open reports from the old table, oldest first (the old admin feed; new
+   * reports are cases). A moderator is not shown the ones about themselves:
+   * they name the reporter, as the case view does.
+   */
+  async pendingReports(viewerId: string | null = null): Promise<ReportRow[]> {
     const rows = await this.pool.query<{
       id: string; reporter_id: string; reported_user_id: string | null; message_type: MessageType; message_id: string; context: unknown; status: string; created_at: Date;
     }>(
       `SELECT id, reporter_id, reported_user_id, message_type, message_id, context, status, created_at
-         FROM chat_reports WHERE status = 'open' ORDER BY created_at`,
+         FROM chat_reports WHERE status = 'open' AND reported_user_id IS DISTINCT FROM $1::uuid ORDER BY created_at`,
+      [viewerId],
     );
     return rows.rows.map((r) => ({
       id: r.id, reporterId: r.reporter_id, reportedUserId: r.reported_user_id, messageType: r.message_type,
@@ -150,12 +130,16 @@ export class ModerationService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const r = await client.query<{ reported_user_id: string | null; status: string }>(
-        `SELECT reported_user_id, status FROM chat_reports WHERE id = $1 FOR UPDATE`,
+      const r = await client.query<{ reporter_id: string | null; reported_user_id: string | null; status: string }>(
+        `SELECT reporter_id, reported_user_id, status FROM chat_reports WHERE id = $1 FOR UPDATE`,
         [reportId],
       );
       const report = r.rows[0];
       if (!report) throw new AppError('REPORT_NOT_FOUND', 404, 'no such report');
+      // nobody decides a report they are part of, on this old route either
+      if (report.reported_user_id === adminId || report.reporter_id === adminId) {
+        throw new AppError('CONFLICT_OF_INTEREST', 403, 'you are part of this report; another moderator must handle it');
+      }
       if (report.status !== 'open') throw new AppError('ALREADY_RESOLVED', 409, 'report already resolved');
       await client.query(
         `UPDATE chat_reports SET status = $2, reviewed_at = now(), reviewed_by = $3 WHERE id = $1`,

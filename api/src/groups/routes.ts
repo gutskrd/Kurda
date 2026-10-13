@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { GroupService } from './service.js';
 import type { TrustService } from '../trust/service.js';
 
@@ -25,7 +26,8 @@ export function registerGroupRoutes(
           privacy: z.enum(['open', 'invite']).optional(),
         }),
       },
-      preHandler: requireBirthMonth,
+      // a group's name and description are published text
+      preHandler: [requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       if (trust) {

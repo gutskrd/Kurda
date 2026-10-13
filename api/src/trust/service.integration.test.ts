@@ -111,6 +111,33 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('trust service (integration)', () =
     expect(names).toContain('auto_suspend');
     // system actions carry no acting admin
     expect(actions.rows.every((r) => r.admin_id === null)).toBe(true);
+
+    // and they are sanctions now: automatic, with a statement the person is sent once per step
+    const sanctions = await pool.query<{ kind: string; origin: string; created_by: string | null }>(
+      `SELECT kind, origin, created_by FROM sanctions WHERE user_id = $1 ORDER BY created_at, kind`,
+      [u],
+    );
+    expect(sanctions.rows.map((s) => s.kind)).toEqual(['chat_mute', 'post_mute', 'suspension']);
+    expect(sanctions.rows.every((s) => s.origin === 'automatic' && s.created_by === null)).toBe(true);
+    const notices = await pool.query<{ data: { sanction: string } }>(
+      `SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction' ORDER BY created_at`,
+      [u],
+    );
+    expect(notices.rows.map((n) => n.data.sanction)).toEqual(['chat_mute', 'suspension']);
+  });
+
+  it('a burst of spam arriving at once mutes once, with one notice', async () => {
+    const u = await makeUser({ ageMs: 0, verified: false });
+    const spam = `win a free phone ${suffix}`;
+    for (let i = 0; i < 4; i++) await svc.assessContent(u, spam);
+    // the 5th, 6th and 7th copies all land together: each one is a "mute"
+    const burst = await Promise.all([svc.assessContent(u, spam), svc.assessContent(u, spam), svc.assessContent(u, spam)]);
+    expect(burst.map((b) => b.action)).toEqual(['mute', 'mute', 'mute']);
+
+    const sanctions = await pool.query<{ kind: string }>(`SELECT kind FROM sanctions WHERE user_id = $1 ORDER BY kind`, [u]);
+    expect(sanctions.rows.map((s) => s.kind)).toEqual(['chat_mute', 'post_mute']);
+    const notices = await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction'`, [u]);
+    expect(notices.rowCount).toBe(1);
   });
 
   it('leaves distinct messages alone (no false positive)', async () => {

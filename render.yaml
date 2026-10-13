@@ -108,6 +108,12 @@ services:
       #   sync: false
       # - key: CDN_BASE_URL
       #   sync: false            # public r2.dev URL or custom domain
+      # - key: S3_EVIDENCE_BUCKET
+      #   sync: false            # a NON-public bucket for evidence moderation takes down
+      # - key: CDN_PURGE_ZONE_ID
+      #   sync: false            # Cloudflare zone of CDN_BASE_URL (purges taken-down media)
+      # - key: CDN_PURGE_API_TOKEN
+      #   sync: false            # token with Zone → Cache Purge only
 
   # ---- Background worker (notifications, schedulers, queues) -----------------
   # Optional, and off. It was off because the free plan has no workers; it stays

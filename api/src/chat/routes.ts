@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
+import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { ChatService } from './service.js';
 import { MAX_MESSAGE_LEN } from './service.js';
 import type { TrustService } from '../trust/service.js';
@@ -45,7 +46,7 @@ export function registerChatRoutes(
     {
       schema: { params: userParam, body: z.object({ body: z.string().min(1).max(MAX_MESSAGE_LEN) }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireBirthMonth, requireUnrestricted('chat')],
     },
     async (req, reply) => {
       const { userId } = req.params as { userId: string };

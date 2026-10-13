@@ -315,8 +315,13 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
       expect(storage.objects.has(key)).toBe(true);
     }
 
-    // once the report is dealt with, what an edit takes off goes as usual
-    await pool.query(`UPDATE library_reports SET status = 'resolved' WHERE target_id = $1`, [reported.id]);
+    // once the report is dealt with, what an edit takes off goes as usual (a
+    // report is a row in the one reports table now, on its case)
+    await pool.query(
+      `UPDATE moderation_cases SET status = 'no_violation', resolved_at = now() WHERE source_ref = 'library_post:' || $1`,
+      [reported.id],
+    );
+    await pool.query(`UPDATE reports SET status = 'no_violation', closed_at = now() WHERE target_id = $1`, [reported.id]);
     expect((await call('PATCH', `/library/posts/${reported.id}`, me.token, { media: [] })).statusCode).toBe(200);
     expect(await confirmed(a)).toBe(false);
   });
