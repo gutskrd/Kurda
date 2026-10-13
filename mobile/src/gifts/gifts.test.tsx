@@ -267,6 +267,16 @@ describe('GiftUnwrap', () => {
     expect(await screen.findByText('no such gift')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Wear it' })).toBeNull();
   });
+
+  it('leaves out "From" when the sender is not known here, rather than "From " and nothing', async () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+    renderWithProviders(
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: '' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => true} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(await screen.findByText('Newroz fire')).toBeTruthy();
+    expect(screen.queryByText(/^From/)).toBeNull();
+  });
 });
 
 describe('GiftArrivals', () => {

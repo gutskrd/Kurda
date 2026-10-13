@@ -1,4 +1,4 @@
-import type { MutedErrorDetails, SuspendedErrorDetails } from '@kurda/shared';
+import { isReportCategory, type MutedErrorDetails, type SuspendedErrorDetails } from '@kurda/shared';
 
 /**
  * The details of a 403 ACCOUNT_SUSPENDED, when they are really there.
@@ -16,7 +16,8 @@ export function suspendedDetails(details: unknown): SuspendedErrorDetails | null
   if (typeof d.statement !== 'string') return null;
   return {
     until: typeof d.until === 'string' ? d.until : null,
-    policy: typeof d.policy === 'string' ? d.policy : null,
+    // a rule this build has no words for is left out, rather than shown as a key
+    policy: isReportCategory(d.policy) ? d.policy : null,
     statement: d.statement,
     appealable: d.appealable === true,
     appealToken: d.appealToken,

@@ -29,7 +29,7 @@ import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
 import { MessageContent, isCardMessage } from '../chat/MessageContent';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
-import { GiftPickerSheet, type GiftFriend } from '../gifts/GiftPickerSheet';
+import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
@@ -94,6 +94,8 @@ export function GroupThreadScreen({
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
   const [flying, setFlying] = useState<{ tier: GiftTier; count: number; key: number } | null>(null);
+  // a group gift that reached some of them: who it did not reach, and why
+  const [giftNote, setGiftNote] = useState<string | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<{ target: ReportTarget; senderId?: string; sender?: string } | null>(null);
   const { typing, note } = useTypingWatch();
@@ -334,6 +336,11 @@ export function GroupThreadScreen({
         ) : null}
 
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+        {giftNote ? (
+          <Text style={[styles.giftNote, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+            {giftNote}
+          </Text>
+        ) : null}
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
@@ -353,6 +360,7 @@ export function GroupThreadScreen({
             onChangeText={(next) => {
               setDraft(next);
               setSendError(null);
+              setGiftNote(null);
               signalTyping();
             }}
             maxLength={MAX_LEN}
@@ -386,6 +394,7 @@ export function GroupThreadScreen({
           const sent = result.message as Message | null;
           if (sent) setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
           setFlying({ tier: item.tier, count: to.length, key: Date.now() });
+          setGiftNote(result.skipped.length > 0 ? skippedText(result.skipped, friends ?? [], t) : null);
         }}
       />
       {picking && friends === null ? (
@@ -496,6 +505,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', marginTop: spacing.xl, transform: [{ scaleY: -1 }] },
   typing: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  giftNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',

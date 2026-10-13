@@ -52,9 +52,3 @@ export const addComment = (
     ...(input.audioMediaId ? { audioMediaId: input.audioMediaId } : {}),
     ...(input.parentId ? { parentId: input.parentId } : {}),
   });
-
-export const reportPost = (client: ApiClient, postId: string, reason?: string): Promise<ApiResult<{ reported: true }>> =>
-  client.post(`/library/posts/${postId}/report`, reason ? { reason } : {});
-
-export const reportComment = (client: ApiClient, commentId: string, reason?: string): Promise<ApiResult<{ reported: true }>> =>
-  client.post(`/library/comments/${commentId}/report`, reason ? { reason } : {});

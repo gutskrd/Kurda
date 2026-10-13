@@ -61,12 +61,6 @@ export const addComment = (
   parentId?: string,
 ): Promise<ApiResult<Comment>> => client.post(`/images/${postId}/comments`, { body, ...(parentId ? { parentId } : {}) });
 
-export const reportPost = (client: ApiClient, postId: string, reason?: string): Promise<ApiResult<{ reported: true }>> =>
-  client.post(`/images/${postId}/report`, reason ? { reason } : {});
-
-export const reportComment = (client: ApiClient, commentId: string, reason?: string): Promise<ApiResult<{ reported: true }>> =>
-  client.post(`/images/comments/${commentId}/report`, reason ? { reason } : {});
-
 /** `limited`: refused by a limit on the account (see `UploadResult`). */
 export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };
 

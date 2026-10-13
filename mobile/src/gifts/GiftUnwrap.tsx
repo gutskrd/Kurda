@@ -136,7 +136,9 @@ export function GiftUnwrap({
   useEffect(() => {
     if (!revealed) return;
     Animated.timing(details, { toValue: 1, duration: reduce ? 0 : 220, useNativeDriver: true }).start();
-    AccessibilityInfo.announceForAccessibility?.(t('gift.unwrap.announce', { item: card.name, name: target.fromName }));
+    AccessibilityInfo.announceForAccessibility?.(
+      target.fromName ? t('gift.unwrap.announce', { item: card.name, name: target.fromName }) : card.name,
+    );
   }, [revealed, details, reduce, t, card.name, target.fromName]);
 
   const wear = (): void => {
@@ -194,9 +196,10 @@ export function GiftUnwrap({
           <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
             {card.name}
           </Text>
-          <Text style={[styles.from, { color: colors.textSecondary }]}>
-            {t('gift.unwrap.from', { name: target.fromName })}
-          </Text>
+          {/* unnamed only when the gift is older than the messages loaded, and its sender unknown here */}
+          {target.fromName ? (
+            <Text style={[styles.from, { color: colors.textSecondary }]}>{t('gift.unwrap.from', { name: target.fromName })}</Text>
+          ) : null}
           {openError ? (
             <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityRole="alert">
               {openError}

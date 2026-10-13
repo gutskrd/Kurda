@@ -77,6 +77,8 @@ describe('suspendedDetails / mutedDetails', () => {
       appealToken: 'tok',
     });
     expect(suspendedDetails({ statement: 'x' })).toBeNull();
+    // a rule newer than this build: the reasons still show, without a rule name
+    expect(suspendedDetails({ until: null, policy: 'brand_new_rule', statement: 'S.', appealable: false, appealToken: 'tok' })?.policy).toBeNull();
     expect(suspendedDetails(null)).toBeNull();
     expect(mutedDetails({ scope: 'chat' })).toEqual({ scope: 'chat', until: null });
     expect(mutedDetails({ scope: 'account' })).toBeNull();
