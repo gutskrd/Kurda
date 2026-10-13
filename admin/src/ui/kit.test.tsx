@@ -162,6 +162,14 @@ describe('ErrorState', () => {
     );
     expect(describeError(new ApiError(422, 'INVALID', 'invalid exercises')).kind).toBe('invalid');
   });
+
+  it('says a refusal about who is acting is not about the role', () => {
+    const d = describeError(new ApiError(403, 'CONFLICT_OF_INTEREST', 'you are part of this case; another moderator must handle it'));
+    expect(d.kind).toBe('conflict');
+    expect(d.title).toBe('Another moderator has to do this');
+    expect(d.message).toBe('You are part of this case; another moderator must handle it.');
+    expect(describeError(new ApiError(403, 'SAME_ADMIN', 'a second admin has to confirm this ban')).kind).toBe('conflict');
+  });
 });
 
 describe('ConfirmDialog', () => {

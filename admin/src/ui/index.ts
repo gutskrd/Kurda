@@ -4,7 +4,7 @@ export { ConfirmDialog, Dialog, DialogProvider, useDialogs, type ConfirmOptions,
 export { Drawer } from './Drawer';
 export { describeError, errorLine, type DescribedError, type ErrorKind } from './errors';
 export { Checkbox, Field, FieldRow, FormActions, Select, TextInput, Textarea } from './Field';
-export { useDebounced, useLoad, type Loaded } from './hooks';
+export { useDebounced, useLoad, useMediaQuery, type Loaded } from './hooks';
 export { Icon, type IconName } from './icons';
 export { ActionMenu, type MenuItem } from './Menu';
 export { EmptyState, ErrorState, Loading } from './states';

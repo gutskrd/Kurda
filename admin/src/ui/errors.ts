@@ -38,6 +38,14 @@ function serverMessage(err: ApiError): string {
   return m ? `${m.charAt(0).toUpperCase()}${m.slice(1)}${/[.!?]$/.test(m) ? '' : '.'}` : '';
 }
 
+/**
+ * 403s that are not about the role: a moderator who is the reported person or
+ * a reporter on a case, the admin who asked for a ban approving it, someone
+ * reviewing their own decision. "Your role can't open this" would be untrue —
+ * the same role, held by somebody else, can.
+ */
+const SOMEONE_ELSE: ReadonlySet<string> = new Set(['CONFLICT_OF_INTEREST', 'SAME_ADMIN', 'DIFFERENT_ADMIN_REQUIRED', 'SELF_APPROVE']);
+
 export function describeError(err: unknown, what = 'this'): DescribedError {
   if (err instanceof ApiError) {
     const requestId = err.requestId;
@@ -54,6 +62,16 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
         kind: 'two_factor_setup',
         title: 'Set up two-factor authentication',
         message: 'The admin needs an authenticator app on this account before it opens anything.',
+        requestId,
+      };
+    }
+    // a refusal about who, not about the role: the person is part of the case,
+    // or the second pair of eyes cannot be the first
+    if (err.status === 403 && SOMEONE_ELSE.has(err.code)) {
+      return {
+        kind: 'conflict',
+        title: 'Another moderator has to do this',
+        message: serverMessage(err) || 'You are part of this, so someone else handles it.',
         requestId,
       };
     }
