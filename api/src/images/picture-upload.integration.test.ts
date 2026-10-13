@@ -17,6 +17,7 @@ import { loadConfig } from '../config/env.js';
 import { processImage } from '../media/imageProcess.js';
 import { imagePostLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
+import { claimPostPictures } from '../media/postMedia.js';
 import { MediaService } from '../media/service.js';
 import { activate } from '../test/activate.js';
 import { memoryStorage } from '../test/media.js';
@@ -266,5 +267,37 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     expect(storage.objects.has(abandoned)).toBe(false);
     expect(await row(posted)).toBeDefined();
     expect(storage.objects.has(posted)).toBe(true);
+  });
+
+  it('never deletes an upload that a post claims while the sweep runs', async () => {
+    const me = await person('race');
+    const key = (await upload(me.token, await photo(240))).json().imageMediaId;
+
+    // a post claims it, and has not committed yet
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      expect((await claimPostPictures(client, me.id, [key])).ok).toBe(true);
+      // a day and an hour later, the sweep lists it — the claim is not
+      // visible to it yet — and comes to delete it
+      const sweep = new MediaService(pool, storage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
+      for (let i = 0; ; i++) {
+        const waiting = await pool.query(
+          `SELECT 1 FROM pg_stat_activity
+            WHERE datname = current_database() AND wait_event_type = 'Lock' AND query LIKE 'DELETE FROM media_uploads%'`,
+        );
+        if (waiting.rowCount) break;
+        if (i > 400) throw new Error('the sweep never came to the claimed upload');
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      await client.query('COMMIT');
+      await sweep;
+    } finally {
+      client.release();
+    }
+
+    // the post has its picture: the row and the file
+    expect((await row(key))!.confirmed_at).not.toBeNull();
+    expect(storage.objects.has(key)).toBe(true);
   });
 });
