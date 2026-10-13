@@ -302,7 +302,8 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
           {receipt.help && (
             <p className="report-help-again">
               {t('report.done.help')}{' '}
-              <a href={receipt.help.url} target="_blank" rel="noopener noreferrer">
+              {/* the helpline the server named — only ever a web address */}
+              <a href={/^https:\/\//.test(receipt.help.url) ? receipt.help.url : HELPLINE_URL} target="_blank" rel="noopener noreferrer">
                 {t('report.help.link')}
               </a>
             </p>

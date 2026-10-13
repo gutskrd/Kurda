@@ -400,7 +400,7 @@ export const ku: Catalogue = {
   'report.category.other': 'Tiştekî din',
   'report.hint.other': 'Di gava din de tu dikarî bêtir bibêjî.',
   'report.help.title': 'Heke dibe ku yek xwe biêşîne',
-  'report.help.body': 'Heke yek niha di xeterê de be, li hejmara awarte ya welatê xwe bigere. Tu dikarî her dem bi xeteke alîkariyê ya belaş û veşartî ya welatê xwe re jî biaxivî.',
+  'report.help.body': 'Heke yek niha di xeterê de be, telefonî hejmara awarte ya herêma xwe bike. Tu dikarî her dem bi xeteke alîkariyê ya belaş û veşartî ya welatê xwe re jî biaxivî.',
   'report.help.link': 'Xeteke alîkariyê bibîne (findahelpline.com)',
   'report.help.urgent': 'Raporên wiha pêşî têne dîtin.',
   'report.help.continue': 'Bi raporê bidomîne',
