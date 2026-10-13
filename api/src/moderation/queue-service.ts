@@ -24,6 +24,7 @@ import { resolveTarget } from './evidence.js';
 import { OPEN_CASE_PREDICATE } from './reports-service.js';
 import { decodeCursor, encodeCursor } from './rules.js';
 import { SanctionsService } from './sanctions-service.js';
+import type { Executor } from './tx.js';
 
 export type { CaseSource };
 /** The old one-click resolutions, still accepted by the old route. */
@@ -654,8 +655,13 @@ export class ModerationQueueService {
   /**
    * Evidence is kept while a case is open and for a year after it is decided
    * (CSAM evidence too — the US REPORT Act's year). Past that the snapshot is
-   * replaced by a stub that still says what was reported, and its media lose
-   * their protection from cleanup unless another live snapshot holds them.
+   * replaced by a stub that still says what was reported, and its media — the
+   * reports' snapshots, the case's own (a flagged picture), the files a CSAM
+   * action took down — lose their protection from cleanup unless another live
+   * snapshot holds them. A released file that was quarantined (its public
+   * copy is gone) or that nothing uses any more becomes an orphan, so the
+   * orphan sweep deletes it, and its private copy with it; one still in use
+   * stays where it is.
    */
   async pruneEvidence(): Promise<number> {
     const pruned = await this.pool.query<{ k: string }>(
@@ -674,25 +680,60 @@ export class ModerationQueueService {
        SELECT DISTINCT jsonb_array_elements_text(COALESCE(due.keys, '[]'::jsonb)) AS k FROM due`,
       [EVIDENCE_RETENTION_DAYS],
     );
-    const keys = pruned.rows.map((r) => r.k);
-    if (keys.length > 0) {
-      await this.pool.query(
-        `UPDATE media_uploads m SET preserve_evidence = false
-          WHERE m.key = ANY($1::text[])
-            AND NOT EXISTS (SELECT 1 FROM reports r WHERE r.evidence_pruned_at IS NULL AND r.evidence -> 'mediaKeys' ? m.key)`,
-        [keys],
-      );
-    }
+    const reportKeys = pruned.rows.map((r) => r.k);
     // the case's own copy goes too: the feed's evidence, and what a removal kept
     // so an appeal could put it back (the six months to appeal are long over)
-    const cases = await this.pool.query(
-      `UPDATE moderation_cases SET evidence = jsonb_build_object('pruned', true), removed_content = NULL, updated_at = now()
-        WHERE status IN ('actioned','no_violation') AND resolved_at < now() - make_interval(days => $1::int)
-          AND NOT (evidence ? 'pruned')`,
+    const cases = await this.pool.query<{ id: string; keys: string[] }>(
+      `WITH due AS (
+         SELECT c.id, c.evidence FROM moderation_cases c
+          WHERE c.status IN ('actioned','no_violation') AND c.resolved_at < now() - make_interval(days => $1::int)
+            AND NOT (c.evidence ? 'pruned')
+          LIMIT 1000
+       ), upd AS (
+         UPDATE moderation_cases c SET evidence = jsonb_build_object('pruned', true), removed_content = NULL, updated_at = now()
+           FROM due WHERE c.id = due.id
+         RETURNING c.id
+       )
+       SELECT due.id,
+              array_remove(ARRAY[due.evidence->>'mediaKey', due.evidence->>'audio'], NULL)
+                || COALESCE((SELECT array_agg(k) FROM moderation_escalations e, unnest(e.media_keys) k WHERE e.case_id = due.id), '{}') AS keys
+         FROM due`,
       [EVIDENCE_RETENTION_DAYS],
     );
-    return keys.length + (cases.rowCount ?? 0);
+    const keys = [...new Set([...reportKeys, ...cases.rows.flatMap((c) => c.keys)])];
+    if (keys.length > 0) await releaseEvidenceMedia(this.pool, keys);
+    return reportKeys.length + cases.rows.length;
   }
+}
+
+/**
+ * Let go of evidence files no live snapshot holds any more (a report's, an
+ * unpruned case's, or a CSAM filing task's); then make orphans of the released
+ * files that were quarantined or that nothing uses, for the orphan sweep.
+ */
+async function releaseEvidenceMedia(db: Executor, keys: string[]): Promise<void> {
+  const released = await db.query<{ key: string }>(
+    `UPDATE media_uploads m SET preserve_evidence = false
+      WHERE m.key = ANY($1::text[]) AND m.preserve_evidence
+        AND NOT EXISTS (SELECT 1 FROM reports r WHERE r.evidence_pruned_at IS NULL AND r.evidence -> 'mediaKeys' ? m.key)
+        AND NOT EXISTS (SELECT 1 FROM moderation_cases c
+                         WHERE NOT (c.evidence ? 'pruned') AND (c.evidence->>'mediaKey' = m.key OR c.evidence->>'audio' = m.key))
+        AND NOT EXISTS (SELECT 1 FROM moderation_escalations e JOIN moderation_cases c ON c.id = e.case_id
+                         WHERE m.key = ANY(e.media_keys) AND NOT (c.evidence ? 'pruned'))
+      RETURNING m.key`,
+    [keys],
+  );
+  if (released.rows.length === 0) return;
+  await db.query(
+    `UPDATE media_uploads m SET confirmed_at = NULL, created_at = LEAST(m.created_at, now() - interval '2 days')
+      WHERE m.key = ANY($1::text[])
+        AND (m.quarantine_state IS NOT NULL
+             OR (NOT EXISTS (SELECT 1 FROM users u WHERE u.profile_photo_key = m.key)
+                 AND NOT EXISTS (SELECT 1 FROM image_posts i WHERE i.image_media_id = m.key)
+                 AND NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = m.key)
+                 AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = m.key)))`,
+    [released.rows.map((r) => r.key)],
+  );
 }
 
 /** The decision each old button stands for. */

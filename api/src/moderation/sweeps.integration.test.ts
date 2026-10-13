@@ -6,8 +6,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { SECOND_APPROVAL_HOURS } from '@kurda/shared';
-import type { MediaStorage } from '../media/storage.js';
 import { MediaService } from '../media/service.js';
+import { FakeStorage } from '../test/fake-storage.js';
 import { eraseChildData } from '../gdpr/service.js';
 import { ModerationAlerts } from './alerts.js';
 import { CasesService } from './cases-service.js';
@@ -15,6 +15,8 @@ import { ModerationQueueService } from './queue-service.js';
 import { ReportsService } from './reports-service.js';
 import { SanctionsService } from './sanctions-service.js';
 import { AiModerationService } from './ai-service.js';
+import { evidenceObjectKey } from './pseudonym.js';
+import { runQuarantine } from './quarantine.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -184,27 +186,41 @@ describe.skipIf(!DATABASE_URL)('moderation sweeps (integration)', () => {
     expect(after).toMatchObject({ status: 'no_violation', resolution_note: 'Decided outside the queue' });
   });
 
-  it('prunes evidence a year after the decision, and lets its media go', async () => {
+  it('a closed child’s reported picture leaves the public bucket, and is deleted a year after the decision', async () => {
     const reporter = await user('rep4');
     const author = await user('auth4');
     const admin = await user('adm4');
     const key = `image-post/sweep_${suffix}.webp`;
     await media(key, true);
+    const storage = new FakeStorage();
+    storage.upload(key);
     const post = await pool.query<{ id: string }>(
       `INSERT INTO image_posts (author_id, author_role, image_media_id, caption) VALUES ($1, 'user', $2, 'c') RETURNING id`,
       [author, key],
     );
     const { receipt } = await reports.file(reporter, { targetType: 'image_post', targetId: post.rows[0]!.id, category: 'sexual' });
-    expect((await pool.query<{ preserve_evidence: boolean }>(`SELECT preserve_evidence FROM media_uploads WHERE key = $1`, [key])).rows[0]!.preserve_evidence).toBe(true);
+    const row = async () =>
+      (
+        await pool.query<{ preserve_evidence: boolean; confirmed: boolean; quarantine_state: string | null }>(
+          `SELECT preserve_evidence, confirmed_at IS NOT NULL AS confirmed, quarantine_state FROM media_uploads WHERE key = $1`,
+          [key],
+        )
+      ).rows[0];
+    expect((await row())!.preserve_evidence).toBe(true);
 
-    // while the evidence is kept, no cleanup takes the file
-    const deleted: string[] = [];
-    const storage = { delete: async (k: string) => void deleted.push(k) } as unknown as MediaStorage;
-    await pool.query(`UPDATE media_uploads SET confirmed_at = NULL WHERE key = $1`, [key]);
-    await new MediaService(pool, storage).cleanupOrphans();
-    expect(deleted).not.toContain(key);
+    // the account is closed: the file is not deleted (a report holds it), but it
+    // is an orphan now, and on its way off the public bucket
     const erased = await eraseChildData(pool, author);
     expect(erased).not.toContain(key);
+    expect(await row()).toEqual({ preserve_evidence: true, confirmed: false, quarantine_state: 'pending' });
+    // while the evidence is kept, no cleanup takes it
+    await new MediaService(pool, storage.asStorage).cleanupOrphans();
+    expect(storage.publicObjects.has(key)).toBe(true);
+    await runQuarantine(pool, storage.asStorage, { keys: [key] });
+    expect(storage.publicObjects.has(key)).toBe(false);
+    expect(storage.evidence.has(evidenceObjectKey(key))).toBe(true);
+    await new MediaService(pool, storage.asStorage).cleanupOrphans();
+    expect(storage.evidence.has(evidenceObjectKey(key))).toBe(true);
 
     const caseId = (await pool.query<{ case_id: string }>(`SELECT case_id FROM reports WHERE id = $1`, [receipt.report.id])).rows[0]!.case_id;
     await cases.decide(caseId, admin, { outcome: 'no_violation', actions: [], removeContent: false, notifyReporters: false });
@@ -228,9 +244,67 @@ describe.skipIf(!DATABASE_URL)('moderation sweeps (integration)', () => {
       [caseId],
     );
     expect(c.rows[0]).toEqual({ evidence: { pruned: true }, removed_content: null });
-    expect((await pool.query<{ preserve_evidence: boolean }>(`SELECT preserve_evidence FROM media_uploads WHERE key = $1`, [key])).rows[0]!.preserve_evidence).toBe(false);
-    // and now the sweep may take it
-    await new MediaService(pool, storage).cleanupOrphans();
-    expect(deleted).toContain(key);
+    expect(await row()).toEqual({ preserve_evidence: false, confirmed: false, quarantine_state: 'done' });
+    // and now the sweep takes it, private copy and all
+    await new MediaService(pool, storage.asStorage).cleanupOrphans();
+    expect(storage.evidence.has(evidenceObjectKey(key))).toBe(false);
+    expect(await row()).toBeUndefined();
+  });
+
+  it('a year on, lets go of a reported picture that is still published, and keeps serving it', async () => {
+    const reporter = await user('rep6');
+    const author = await user('auth6');
+    const admin = await user('adm6');
+    const key = `image-post/sweep6_${suffix}.webp`;
+    await media(key, true);
+    const post = await pool.query<{ id: string }>(
+      `INSERT INTO image_posts (author_id, author_role, image_media_id, caption) VALUES ($1, 'user', $2, 'c') RETURNING id`,
+      [author, key],
+    );
+    const { receipt } = await reports.file(reporter, { targetType: 'image_post', targetId: post.rows[0]!.id, category: 'spam' });
+    const caseId = (await pool.query<{ case_id: string }>(`SELECT case_id FROM reports WHERE id = $1`, [receipt.report.id])).rows[0]!.case_id;
+    await cases.decide(caseId, admin, { outcome: 'no_violation', actions: [], removeContent: false, notifyReporters: false });
+    await pool.query(`UPDATE moderation_cases SET resolved_at = now() - interval '366 days' WHERE id = $1`, [caseId]);
+    await queue.pruneEvidence();
+    const m = await pool.query<{ preserve_evidence: boolean; confirmed: boolean }>(
+      `SELECT preserve_evidence, confirmed_at IS NOT NULL AS confirmed FROM media_uploads WHERE key = $1`,
+      [key],
+    );
+    expect(m.rows[0]).toEqual({ preserve_evidence: false, confirmed: true });
+  });
+
+  it('a year after a CSAM case is filed, lets its quarantined files go', async () => {
+    const reporter = await user('rep7');
+    const author = await user('auth7');
+    const admin = await user('adm7');
+    const key = `image-post/sweep7_${suffix}.webp`;
+    await media(key, true);
+    const storage = new FakeStorage();
+    storage.upload(key);
+    const withStorage = new CasesService(pool, sanctions, { storage: storage.asStorage });
+    const post = await pool.query<{ id: string }>(
+      `INSERT INTO image_posts (author_id, author_role, image_media_id, caption) VALUES ($1, 'user', $2, 'c') RETURNING id`,
+      [author, key],
+    );
+    const { receipt } = await reports.file(reporter, { targetType: 'image_post', targetId: post.rows[0]!.id, category: 'child_safety' });
+    const caseId = (await pool.query<{ case_id: string }>(`SELECT case_id FROM reports WHERE id = $1`, [receipt.report.id])).rows[0]!.case_id;
+    const out = await withStorage.csam(caseId, admin);
+    await withStorage.fileEscalation(out.escalation.id, admin, 'CT-1');
+    expect(storage.evidence.has(evidenceObjectKey(key))).toBe(true);
+
+    // not before its year is out
+    await queue.pruneEvidence();
+    expect((await pool.query<{ p: boolean }>(`SELECT preserve_evidence AS p FROM media_uploads WHERE key = $1`, [key])).rows[0]!.p).toBe(true);
+
+    await pool.query(`UPDATE moderation_cases SET resolved_at = now() - interval '366 days' WHERE id = $1`, [caseId]);
+    await queue.pruneEvidence();
+    // the removed post still points at it, but its public copy is long gone: an orphan
+    const m = await pool.query<{ preserve_evidence: boolean; confirmed: boolean }>(
+      `SELECT preserve_evidence, confirmed_at IS NOT NULL AS confirmed FROM media_uploads WHERE key = $1`,
+      [key],
+    );
+    expect(m.rows[0]).toEqual({ preserve_evidence: false, confirmed: false });
+    await new MediaService(pool, storage.asStorage).cleanupOrphans();
+    expect(storage.evidence.has(evidenceObjectKey(key))).toBe(false);
   });
 });

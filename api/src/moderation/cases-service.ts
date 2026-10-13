@@ -31,7 +31,6 @@ import {
   type SanctionOrigin,
   type UserMessagePreview,
 } from '@kurda/shared';
-import type { FastifyBaseLogger } from 'fastify';
 import type { MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { minorSql } from '../users/age.js';
@@ -170,7 +169,7 @@ function originFor(source: CaseSource): SanctionOrigin {
 
 export interface CasesOptions {
   storage?: MediaStorage | null;
-  log?: Pick<FastifyBaseLogger, 'warn'>;
+  log?: { warn: (obj: unknown, msg: string) => void };
 }
 
 type PermanentBanCheck = DecideResult['permanentBans'][number];

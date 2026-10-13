@@ -1,4 +1,3 @@
-import type { FastifyBaseLogger } from 'fastify';
 import type { QuarantineState } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { evidenceObjectKey } from './pseudonym.js';
@@ -48,7 +47,7 @@ export async function requestQuarantine(db: Executor, keys: string[]): Promise<v
 export interface QuarantineRunOptions {
   /** only these files (the ones a decision just marked); otherwise any pending, a batch at a time */
   keys?: string[];
-  log?: Pick<FastifyBaseLogger, 'warn'>;
+  log?: { warn: (obj: unknown, msg: string) => void };
   limit?: number;
 }
 
