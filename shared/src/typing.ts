@@ -363,7 +363,10 @@ export interface TypingComparison {
   correct: number;
   /** accented letters typed without their accent (always 0 in `hidden` mode) */
   accentMisses: number;
-  /** accented letters of the text that typing has reached — the base of an accent accuracy */
+  /**
+   * accented letters of the text that typing has reached — the base of an
+   * accent accuracy (one still `pending` is in neither count yet)
+   */
   accented: number;
   /** characters wrong or left out, and characters typed that the text does not have */
   errors: number;
