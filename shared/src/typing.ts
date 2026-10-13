@@ -846,8 +846,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
     kurmanci: [
       {
         key: 'keyboardGuide.android.open',
-        en: 'Open any text box, then tap the ⚙ in {0}.',
-        ui: ['Gboard'],
+        en: 'Open any text box, then tap the ⚙ in {0}. (No ⚙? Open {1} → {2} → {3} → {4} → {5}.)',
+        ui: ['Gboard', 'Settings', 'System', 'Keyboard', 'On-screen keyboard', 'Gboard'],
       },
       {
         key: 'keyboardGuide.android.add',
@@ -868,8 +868,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
     sorani: [
       {
         key: 'keyboardGuide.android.open',
-        en: 'Open any text box, then tap the ⚙ in {0}.',
-        ui: ['Gboard'],
+        en: 'Open any text box, then tap the ⚙ in {0}. (No ⚙? Open {1} → {2} → {3} → {4} → {5}.)',
+        ui: ['Gboard', 'Settings', 'System', 'Keyboard', 'On-screen keyboard', 'Gboard'],
       },
       {
         key: 'keyboardGuide.android.add',
@@ -977,7 +977,7 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.mac.typeKurmanci',
-        en: 'Then Option+6 followed by e, i or u types ê, î, û, and Option+c followed by c or s types ç or ş.',
+        en: 'Then Option+6 followed by e, i or u types ê, î, û, and Option+c followed by c or s types ç or ş. (Holding down e, i or u also offers ê, î, û.)',
       },
       {
         key: 'keyboardGuide.mac.switch',

@@ -491,6 +491,8 @@ describe('keyboard guides', () => {
       KEYBOARD_GUIDES[platform][dialect].flatMap((s) => s.ui ?? []);
     expect(names('android', 'kurmanci')).toContain('Kurdish (Latin)');
     expect(names('android', 'sorani')).toContain('Kurdish (Iraq) Arabic');
+    // the way to Gboard's languages when its toolbar has no ⚙
+    expect(names('android', 'kurmanci')).toContain('On-screen keyboard');
     expect(names('ios', 'sorani')).toContain('Kurdish, Sorani');
     expect(names('windows', 'kurmanci')).toContain('Turkish Q');
     expect(names('windows', 'sorani')).toContain('Central Kurdish');
