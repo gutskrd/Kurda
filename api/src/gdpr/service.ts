@@ -174,7 +174,14 @@ export class GdprService {
     await executor.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
     // what they wrote in the rating box or Send feedback is their words; the
-    // stars and chips stay in the counts, tied to an anonymised account
+    // stars and chips stay in the counts, tied to an anonymised account. An
+    // answer that was only words has nothing left once they go — and the
+    // table refuses an empty answer, so scrubbing it would fail, after the
+    // account above was already anonymised and would never be picked again
+    await executor.query(
+      `DELETE FROM app_feedback WHERE user_id = $1 AND stars IS NULL AND cardinality(categories) = 0`,
+      [userId],
+    );
     await executor.query(`UPDATE app_feedback SET comment = NULL WHERE user_id = $1 AND comment IS NOT NULL`, [
       userId,
     ]);

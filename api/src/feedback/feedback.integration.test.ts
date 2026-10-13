@@ -538,6 +538,31 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(row.rows[0]).toEqual({ comment: null, stars: 2, categories: ['games', 'bugs'] });
     });
 
+    it('removes an answer that was only words when the account is anonymised', async () => {
+      const user = await register('gdprWords');
+      const words = await call('POST', '/me/app-feedback', user, {
+        comment: `Only words ${suffix}`,
+        source: 'settings',
+        platform: 'web',
+        appVersion: '1.0.0',
+      });
+      expect(words.statusCode, words.body).toBe(201);
+      const rated = await call('POST', '/me/app-feedback', user, { ...answer, source: 'settings' });
+      await pool.query(
+        `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
+        [user.id],
+      );
+      await new GdprService(pool).anonymizeExpired();
+
+      // the account is anonymised (scrubbing the comment did not stop it) …
+      const account = await pool.query(`SELECT deleted_at FROM users WHERE id = $1`, [user.id]);
+      expect(account.rows[0].deleted_at).not.toBeNull();
+      // … the answer with nothing left once its words go is gone, and the rated one keeps its stars
+      expect((await pool.query(`SELECT 1 FROM app_feedback WHERE id = $1`, [words.json().id])).rowCount).toBe(0);
+      const kept = await pool.query(`SELECT comment, stars FROM app_feedback WHERE id = $1`, [rated.json().id]);
+      expect(kept.rows[0]).toEqual({ comment: null, stars: 2 });
+    });
+
     it('deletes a child’s answers when the account is closed', async () => {
       const child = await register('gdprChild', bornYearsAgo(14));
       const res = await call('POST', '/me/app-feedback', child, answer);
