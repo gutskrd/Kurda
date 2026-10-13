@@ -55,6 +55,7 @@ import {
   type StoryAction,
   type StoryForm,
 } from '../stories';
+import { setLeaveGuard } from '../nav';
 import { getStory, runStoryAction, storyFailure, type StoryFailure } from '../storiesApi';
 import { STATUS_TONE } from './StoryList';
 
@@ -85,6 +86,8 @@ interface FieldProblems {
 }
 
 const TAG: Record<Tone, string> = { error: 'Must fix', publish: 'Before publishing', warning: 'Check' };
+
+const LEAVE = 'Leave without saving? Your changes here will be lost.';
 
 /**
  * Whether the story's fields can be changed: not while it is published or
@@ -216,7 +219,8 @@ export function StoryEditor({
     warning: problemsAt(warnings, path, exact),
   });
 
-  // leaving with unsaved work asks first
+  // leaving with unsaved work asks first: closing or reloading the tab, and
+  // any change of address — the back button, the nav, a typed #/… address
   useEffect(() => {
     if (!dirty) return;
     const onUnload = (e: BeforeUnloadEvent): void => {
@@ -224,8 +228,15 @@ export function StoryEditor({
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', onUnload);
-    return () => window.removeEventListener('beforeunload', onUnload);
+    setLeaveGuard(() => confirm(LEAVE));
+    return () => {
+      window.removeEventListener('beforeunload', onUnload);
+      setLeaveGuard(null);
+    };
   }, [dirty]);
+
+  /** The editor moves on by its own doing: it has asked already, or nothing is lost, so the guard must not ask. */
+  const leaving = (): void => setLeaveGuard(null);
 
   const canSave = editable && !busy && !conflict && checks.blocking.length === 0 && (dirty || story === null);
   const canPublish = editable && !busy && !conflict && checks.blocking.length === 0 && checks.beforePublish.length === 0;
@@ -321,10 +332,13 @@ export function StoryEditor({
     setBusy(null);
     if (outcome.ok) {
       if (!outcome.story) {
+        leaving();
         onDeleted(title);
         return;
       }
       if (!story) {
+        // what was typed is saved: going to the new story's own address loses nothing
+        leaving();
         onCreated(outcome.story);
         return;
       }
@@ -335,6 +349,7 @@ export function StoryEditor({
     // "save and publish" may have saved before it was refused
     if (outcome.story) {
       if (!story) {
+        leaving();
         onCreated(outcome.story);
         return;
       }
@@ -370,7 +385,8 @@ export function StoryEditor({
   }
 
   const back = (): void => {
-    if (dirty && !confirm('Leave without saving? Your changes here will be lost.')) return;
+    if (dirty && !confirm(LEAVE)) return;
+    leaving();
     onBack();
   };
 

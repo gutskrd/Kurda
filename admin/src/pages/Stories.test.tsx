@@ -385,3 +385,90 @@ describe('the editor', () => {
     expect(text(c)).toContain('In review: waiting for someone to read it and publish it.');
   });
 });
+
+describe('leaving the editor', () => {
+  const LEAVE = 'Leave without saving? Your changes here will be lost.';
+  const summary = (c: HTMLElement) => c.querySelector<HTMLTextAreaElement>('#story-summary');
+
+  // the back button, a link in the nav and a typed address change only the hash
+  it('asks before the address changes under unsaved edits, and stays put on a no', async () => {
+    listApi();
+    const c = await open(`#/stories/${STORY_ID}`);
+    await type(summary(c), 'Mine.');
+    confirm.mockReturnValueOnce(false);
+    location.hash = '#/stories';
+    await settle();
+    expect(confirm).toHaveBeenCalledWith(LEAVE);
+    expect(location.hash).toBe(`#/stories/${STORY_ID}`);
+    expect(summary(c)!.value).toBe('Mine.');
+    expect(text(c.querySelector('.st-badges'))).toContain('Unsaved changes');
+
+    // the back button asks the same; after a no it still goes back, and asks again
+    confirm.mockReturnValueOnce(false);
+    history.back();
+    await settle();
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect(location.hash).toBe(`#/stories/${STORY_ID}`);
+    expect(summary(c)!.value).toBe('Mine.');
+    history.back();
+    await settle();
+    expect(confirm).toHaveBeenCalledTimes(3);
+    expect(location.hash).toBe('#/stories');
+    expect(rows(c)).toEqual(['Rêya Dibistanê', 'Şorbeya Nîskê', 'کلیلی ماڵەوە', 'Qelema Şîn']);
+  });
+
+  it('does not ask when nothing would be lost', async () => {
+    const api = listApi();
+    api.use(on('PUT', AT, (call) => json(storyFixture({ ...(call.body as object), lockVersion: 5 }))));
+    const c = await open(`#/stories/${STORY_ID}`);
+    location.hash = '#/stories';
+    await settle();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(summary(c)).toBeNull();
+
+    // nor once the edits are saved
+    location.hash = `#/stories/${STORY_ID}`;
+    await settle();
+    await type(summary(c), 'Mine.');
+    await click(button(c, /^Save draft/));
+    expect(text(c.querySelector('.st-notice'))).toBe('Saved.');
+    location.hash = '#/stories';
+    await settle();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(rows(c)).toHaveLength(4);
+  });
+
+  it('asks once, in its own words, when the editor itself moves on', async () => {
+    const api = listApi();
+    const c = await open(`#/stories/${STORY_ID}`);
+    await type(summary(c), 'Mine.');
+    await click(button(c, '← All stories'));
+    expect(confirm.mock.calls).toEqual([[LEAVE]]);
+    expect(location.hash).toBe('#/stories');
+
+    // a delete asks its own question, not the leaving one as well
+    confirm.mockClear();
+    api.use(on('DELETE', `${AT}?lockVersion=4`, json({ id: STORY_ID, deleted: true })));
+    await click(button(c, 'Rêya Dibistanê'));
+    await type(summary(c), 'Mine again.');
+    await click(button(c, 'Delete'));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(confirm.mock.calls[0]![0]).toContain('Your unsaved changes here are not kept.');
+    expect(location.hash).toBe('#/stories');
+    expect(text(c.querySelector('.st-flash'))).toBe('Deleted “Rêya Dibistanê”.');
+  });
+
+  it('does not ask when a new story moves to its own address on its first save', async () => {
+    const api = listApi();
+    const created = storyFixture({ id: '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d09', title: 'Nû', slug: 'nu-nu', lockVersion: 0 });
+    api.use(on('POST', '/admin/stories', json(created, 201)));
+    const c = await open('#/stories/new');
+    await type(c.querySelector('#story-title'), 'Nû');
+    await type(c.querySelector('#story-slug'), 'nu-nu');
+    await click(button(c, /^Save draft/));
+    await settle();
+    expect(confirm).not.toHaveBeenCalled();
+    expect(location.hash).toBe(`#/stories/${created.id}`);
+    expect(text(c.querySelector('.st-notice'))).toBe('Saved.');
+  });
+});
