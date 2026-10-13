@@ -1,6 +1,5 @@
 import type pg from 'pg';
 import {
-  OPEN_CASE_STATUSES,
   POST_BODY_MAX,
   POST_TITLE_MAX,
   WRITTEN_POST_TYPES,
@@ -14,6 +13,7 @@ import {
 } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { claimPostPictures, releasePostPictures, type PictureClaimFailure } from '../media/postMedia.js';
+import { OPEN_CASE_PREDICATE } from '../moderation/reports-service.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
 
@@ -513,12 +513,14 @@ export function addedPictures(current: LibraryPost, patch: UpdateInput): string[
  */
 async function underReport(executor: Pick<pg.PoolClient, 'query'>, postId: string): Promise<boolean> {
   const res = await executor.query<{ reported: boolean }>(
+    // "open" written as the partial unique index on (source, source_ref)
+    // writes it, so the open case is found from that index alone
     `SELECT EXISTS (SELECT 1 FROM moderation_cases
                      WHERE source IN ('report', 'library_report') AND source_ref = 'library_post:' || $1::uuid::text
-                       AND status = ANY($2::text[]))
+                       AND ${OPEN_CASE_PREDICATE})
          OR EXISTS (SELECT 1 FROM library_reports
                      WHERE target_type = 'library_post' AND target_id = $1::uuid AND status = 'open') AS reported`,
-    [postId, OPEN_CASE_STATUSES],
+    [postId],
   );
   return res.rows[0]!.reported;
 }
