@@ -911,6 +911,7 @@ export interface CsamActionResult {
  *   POST /admin/moderation/approvals/:sanctionId/reject   { reason } → { sanction: CaseSanctionView }
  *   GET  /admin/users/:id             → the user page, with AdminUserModeration
  *   POST /admin/users/:id/sanctions   ApplySanctionRequest → 201 ApplySanctionResult
+ *        (409 CONFIRM_USERNAME_REQUIRED; 422 SELF_HARM_NOT_SANCTIONED for the self-harm rule)
  *   POST /admin/sanctions/:id/revoke  { reason } → { sanction: CaseSanctionView }
  *   POST /admin/users/:id/unmute      { reason } → { lifted: number }
  *   POST /admin/users/:id/chat-mute/lift  { reason } → { lifted: boolean }

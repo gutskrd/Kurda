@@ -461,6 +461,11 @@ export class CasesService {
       } else {
         throw new AppError('BAD_TARGET', 400, 'an action is for the subject or a reporter');
       }
+      // and nobody is sanctioned *under* the self-harm rule, whatever the
+      // decision's own rule is: a person at risk is not a rule-breaker
+      if (actionPolicy === 'self_harm' && action.kind !== 'caring_message') {
+        throw new AppError('SELF_HARM_NOT_SANCTIONED', 422, 'someone who may hurt themselves gets a caring message, not a sanction');
+      }
       if (action.kind !== 'caring_message' && !action.statement?.trim()) {
         throw new AppError('STATEMENT_REQUIRED', 400, 'say what the person will be told');
       }
@@ -857,6 +862,11 @@ export class CasesService {
     opts: { allowUntypedSingle?: boolean; auditAction?: string } = {},
   ): Promise<ApplySanctionResult> {
     if (userId === adminId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot sanction yourself');
+    // a person at risk of self-harm is helped, never sanctioned (M5) — from a
+    // case or from here
+    if (input.policy === 'self_harm') {
+      throw new AppError('SELF_HARM_NOT_SANCTIONED', 422, 'someone who may hurt themselves gets a caring message, not a sanction');
+    }
     // nor someone whose report about you is still open: that is retaliation,
     // whatever it is called
     const reportedMe = await this.pool.query(

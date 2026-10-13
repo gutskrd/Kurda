@@ -309,6 +309,19 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
     expect(punish.json().code).toBe('SELF_HARM_NOT_SANCTIONED');
     const contradict = await decide(modA, caseId, { outcome: 'no_violation', actions: [{ target: 'subject', kind: 'warning', statement: 'x' }] });
     expect(contradict.json().code).toBe('CONTRADICTORY_DECISION');
+    // not under another decision's rule with the action's own set to self-harm either
+    const relabelled = await decide(modA, caseId, {
+      outcome: 'actioned',
+      policy: 'harassment',
+      actions: [{ target: 'subject', kind: 'post_mute', durationHours: 24, statement: 'x', policy: 'self_harm' }],
+    });
+    expect(relabelled.json().code).toBe('SELF_HARM_NOT_SANCTIONED');
+    // nor from the user page
+    const direct = await call('POST', `/admin/users/${t.id}/sanctions`, modA.token, {
+      kind: 'suspension', durationHours: 24, policy: 'self_harm', statement: 'x',
+    });
+    expect(direct.statusCode).toBe(422);
+    expect(direct.json().code).toBe('SELF_HARM_NOT_SANCTIONED');
 
     const care = await decide(modA, caseId, {
       outcome: 'actioned',
