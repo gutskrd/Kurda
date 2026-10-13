@@ -312,11 +312,13 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
   });
 
   /**
-   * A gift is a message in a chat, and a present someone owns. The messages
-   * about the child go with the rest of their messages; the presents stay
-   * with whoever was given them, no longer pointing back at the child.
+   * A gift is a message in a chat, a line in the recipient's notifications,
+   * and a present someone owns. The messages about the child go with the rest
+   * of their messages, and the lines naming them as the giver from their
+   * friends' notifications; the presents stay with whoever was given them, no
+   * longer pointing back at the child.
    */
-  it('takes the gift messages that were theirs, and leaves the presents', async () => {
+  it('takes the gift messages and notifications that were theirs, and leaves the presents', async () => {
     const child = await signUp('giftkid');
     const friend = await signUp('giftpal');
     const other = await signUp('giftother');
@@ -369,7 +371,47 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     const childInGroup = await send(child, [other], 'group');
     const batches = [toChild, fromChild, childAlone, shared, childInGroup];
 
+    // the line each recipient was sent in their notifications, as the gift
+    // service writes it (and, without a batch or a chat, as the shop's gift
+    // button wrote it before gifts were in the chat)
+    const childName = (await pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [child.id])).rows[0]!
+      .username;
+    const notify = async (to: Account, from: Account, name: string, batch: string | null) => {
+      const gift = (
+        await pool.query<{ id: string }>(`SELECT id FROM gifts WHERE to_user_id = $1 AND batch_id = $2`, [to.id, batch ?? fromChild])
+      ).rows[0]?.id;
+      await pool.query(
+        `INSERT INTO notifications (user_id, category, title, body, data) VALUES ($1, 'friends', 'You have a gift', $2, $3)`,
+        [
+          to.id,
+          `${name} sent you Erase Test Gift.`,
+          batch
+            ? { kind: 'gift', giftId: gift, batchId: batch, chat: `dm:${from.id}`, sku, fromUserId: from.id }
+            : { kind: 'gift', giftId: gift, sku, fromUserId: from.id },
+        ],
+      );
+    };
+    await notify(friend, child, childName, fromChild);
+    await notify(other, child, childName, childInGroup);
+    await notify(friend, child, childName, null);
+    const friendName = (await pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [friend.id]))
+      .rows[0]!.username;
+    await notify(other, friend, friendName, shared);
+
     await new GdprService(pool).closeNow(child.id, 'under_minimum_age');
+
+    // nobody's notifications keep the child's name or id: the ones about the
+    // child's presents go, the one about the friend's stays
+    expect(
+      await count(`SELECT 1 FROM notifications WHERE user_id = ANY($1::uuid[]) AND data->>'fromUserId' = $2`, [
+        [friend.id, other.id],
+        child.id,
+      ]),
+    ).toBe(0);
+    expect(await count(`SELECT 1 FROM notifications WHERE strpos(body, $1) > 0`, [childName])).toBe(0);
+    expect(
+      await count(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'batchId' = $2`, [other.id, shared]),
+    ).toBe(1);
 
     // the messages: in the direct messages both ways, theirs in the group, and
     // the one in the group that was about them alone

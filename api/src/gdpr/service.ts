@@ -368,6 +368,16 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
         AND m.gift_batch_id IN (SELECT g.batch_id FROM gifts g WHERE g.to_user_id = $1)
         AND NOT EXISTS (SELECT 1 FROM gifts o WHERE o.batch_id = m.gift_batch_id AND o.to_user_id <> $1)`,
   );
+  // The line each friend was sent about a present from them ("<name> sent you
+  // …", with their id in its data) is in the friend's notifications, not
+  // theirs, so the delete of their own below does not reach it. Found through
+  // the gifts they gave, which name every friend who was sent one — the shop's
+  // older lines, which have the same kind and sender, as well.
+  await q(
+    `DELETE FROM notifications
+      WHERE user_id IN (SELECT to_user_id FROM gifts WHERE from_user_id = $1::uuid)
+        AND data->>'kind' = 'gift' AND data->>'fromUserId' = $1::text`,
+  );
   // The gift rows stay: what they gave is the recipient's, and what they were
   // given stays with the anonymized account as its other history does (its
   // row is kept, so the foreign keys' own clean-up never runs). Only the line
