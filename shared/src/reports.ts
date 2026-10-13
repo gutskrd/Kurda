@@ -220,6 +220,11 @@ export interface MyReport {
   closedAt: string | null;
   /** you may ask for a second look at a "doesn't break our rules" answer */
   canAppeal: boolean;
+  /**
+   * The case the report was decided in — what `POST /me/appeals {caseId}`
+   * asks a second look at. Null while no case holds it.
+   */
+  caseId: string | null;
 }
 
 /** What `POST /reports` answers (201 new, 200 when the same open report already exists). */

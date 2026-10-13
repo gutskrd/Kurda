@@ -97,6 +97,8 @@ function toMyReport(r: ReportRow): MyReport {
     createdAt: r.created_at.toISOString(),
     closedAt: r.closed_at?.toISOString() ?? null,
     canAppeal: r.appealable === true,
+    // an appeal names the case, so a report that can be appealed has to say which
+    caseId: r.case_id,
   };
 }
 
