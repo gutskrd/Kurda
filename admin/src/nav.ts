@@ -50,9 +50,15 @@ export function go(to: string): void {
  * sets it while it has something to lose, and clears it before it moves on
  * by itself (after asking in its own words).
  */
-let leaveGuard: (() => boolean) | null = null;
+let leaveGuard: (() => boolean | Promise<boolean>) | null = null;
 
-export function setLeaveGuard(guard: (() => boolean) | null): void {
+/**
+ * The guard answers at once (true/false), or later — a promise, for a page that
+ * asks in a dialog of its own rather than the browser's confirm. Until a later
+ * answer comes the page stays where it was; a yes then goes on to the address
+ * that was asked for.
+ */
+export function setLeaveGuard(guard: (() => boolean | Promise<boolean>) | null): void {
   leaveGuard = guard;
 }
 
@@ -63,8 +69,17 @@ export function setLeaveGuard(guard: (() => boolean) | null): void {
 // putting the old address in the refused entry's place would lose that entry.
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', (e) => {
-    if (!leaveGuard || leaveGuard()) return;
+    if (!leaveGuard) return;
+    const verdict = leaveGuard();
+    if (verdict === true) return;
     e.stopImmediatePropagation();
     history.pushState(null, '', e.oldURL);
+    if (verdict instanceof Promise) {
+      void verdict.then((yes) => {
+        if (!yes) return;
+        leaveGuard = null;
+        location.href = e.newURL;
+      });
+    }
   });
 }

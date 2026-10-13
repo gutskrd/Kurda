@@ -17,7 +17,7 @@ import { Economy } from './pages/Economy';
 import { Antibot } from './pages/Antibot';
 import { Fraud } from './pages/Fraud';
 import { AiModeration } from './pages/AiModeration';
-import { Content } from './pages/Content';
+import { Lessons } from './pages/Lessons';
 import { Experiments } from './pages/Experiments';
 import { Events } from './pages/Events';
 import { Ops } from './pages/Ops';
@@ -42,7 +42,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   moderation: () => <Moderation />,
   aimod: () => <AiModeration />,
   antibot: () => <Antibot />,
-  lessons: () => <Content />,
+  lessons: () => <Lessons />,
   stories: () => <Stories />,
   tags: () => <Tags />,
   events: () => <Events />,
