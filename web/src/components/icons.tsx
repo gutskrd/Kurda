@@ -68,6 +68,16 @@ import { Microphone } from '@phosphor-icons/react/dist/icons/Microphone';
 import { SpeakerHigh } from '@phosphor-icons/react/dist/icons/SpeakerHigh';
 import { Check } from '@phosphor-icons/react/dist/icons/Check';
 import { Lock } from '@phosphor-icons/react/dist/icons/Lock';
+// Stories and playing with friends
+import { CaretDown } from '@phosphor-icons/react/dist/icons/CaretDown';
+import { Copy } from '@phosphor-icons/react/dist/icons/Copy';
+import { Crown } from '@phosphor-icons/react/dist/icons/Crown';
+import { Headphones } from '@phosphor-icons/react/dist/icons/Headphones';
+import { Pause } from '@phosphor-icons/react/dist/icons/Pause';
+import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
+import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
+import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
+import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -179,6 +189,18 @@ export const SignOutIcon = named(SignOut, 22);
 export const MoreIcon = named(DotsThree, 22);
 export const BlockIcon = named(Prohibit, 22);
 export const FlagIcon = named(Flag, 22);
+
+/* Stories and playing with friends: a story read aloud, its player's keys,
+   a question's clock, the host of a game, asking a friend in */
+export const HeadphonesIcon = named(Headphones, 22);
+export const PauseIcon = named(Pause, 22, 'fill');
+export const PreviousIcon = named(SkipBack, 20, 'fill');
+export const NextIcon = named(SkipForward, 20, 'fill');
+export const TimerIcon = named(Timer, 20);
+export const HostIcon = named(Crown, 16, 'fill');
+export const InviteIcon = named(UserPlus, 22);
+export const CopyIcon = named(Copy, 20);
+export const CaretDownIcon = named(CaretDown, 16);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

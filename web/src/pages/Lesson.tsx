@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useApiGet } from '../lib/useApi';
 import { ErrorState, Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import { LESSON_PATHS, SessionPlayer } from '../learn/SessionPlayer';
 import type { LessonSessionView } from '../learn/types';
+import { rememberCourseDialect } from '../stories/prefs';
 
 /**
  * A lesson, in the browser (/app/learn/lesson/:lessonId).
@@ -28,6 +30,8 @@ function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
   const course = params.get('course');
   const title = (state as { title?: unknown } | null)?.title;
   const { data, error, loading, reload } = useApiGet<LessonSessionView>(`/lessons/${encodeURIComponent(lessonId)}/session`);
+  // the course you are on is the variety Stories opens on (stories/prefs.ts)
+  useEffect(() => rememberCourseDialect(data?.dialect), [data?.dialect]);
 
   if (loading && !data) return <Loading label={t('lesson.loading')} />;
   if (error || !data) {

@@ -4,19 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { Games } from './Games';
 import { TopNav } from '../components/TopNav';
 import { renderApp, jsonResponse } from '../test/utils';
+import { resetStoriesAvailable } from '../stories/catalogue';
 
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
+  resetStoriesAvailable();
 });
 
-function signIn(): void {
+function signIn(stories: unknown[] = [{ id: 's1' }]): void {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
       if (url.includes('/me'))
         return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+      if (url.endsWith('/stories')) return jsonResponse(200, { stories });
       return jsonResponse(200, {});
     }),
   );
@@ -28,7 +31,9 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByText('Kurdish Wordle')).toBeInTheDocument();
     expect(screen.getByText('Rhyming Words')).toBeInTheDocument();
-    expect(screen.getByText('Ranked Quiz')).toBeInTheDocument();
+    // Stories took the ranked quiz's place
+    expect(screen.getByText('Stories')).toBeInTheDocument();
+    expect(screen.queryByText('Ranked Quiz')).not.toBeInTheDocument();
     // the separate per-mode cards are gone
     expect(screen.queryByText('Wordle Battle')).not.toBeInTheDocument();
     expect(screen.queryByText('Rhyme Match')).not.toBeInTheDocument();
@@ -55,8 +60,17 @@ describe('Games hub', () => {
     await screen.findAllByRole('button', { name: /^play$/i });
 
     const hrefs = screen.getAllByRole('link', { name: /^play/i }).map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/app/games/quiz');
+    expect(hrefs).toContain('/app/games/stories');
     expect(hrefs).toContain('/app/games/race');
+  });
+
+  it('says "Coming soon" on Stories, and opens nothing, while no story is published', async () => {
+    signIn([]);
+    renderApp(<Games />, ['/app/games']);
+    const tile = (await screen.findByRole('heading', { name: 'Stories' })).closest('article')!;
+    expect(await within(tile).findByText('Coming soon')).toBeInTheDocument();
+    expect(within(tile).queryByRole('link')).toBeNull();
+    expect(within(tile).queryByRole('button')).toBeNull();
   });
 
   /**
@@ -69,9 +83,13 @@ describe('Games hub', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
-    expect(await screen.findAllByText('Sign in to play')).toHaveLength(4);
+    expect(await screen.findAllByText('Sign in to play')).toHaveLength(3);
     expect(screen.queryAllByRole('link', { name: /^play/i })).toHaveLength(0);
     expect(screen.queryAllByRole('button', { name: /^play$/i })).toHaveLength(0);
+    // reading a story is the one thing open without an account; its quiz is not
+    const stories = screen.getByRole('heading', { name: 'Stories' }).closest('article')!;
+    expect(within(stories).getByText('Free to read')).toBeInTheDocument();
+    expect(within(stories).getByRole('link', { name: 'Read a story' })).toHaveAttribute('href', '/app/games/stories');
     // and the way to make one
     expect(screen.getByRole('link', { name: 'Create your account' })).toHaveAttribute('href', '/register');
   });
@@ -81,7 +99,8 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
 
     // knowing there is more here once you sign up is the reason to sign up
-    expect(await screen.findAllByText(/needs an account/)).toHaveLength(6);
+    // two modes each for Wordle and Rhyme, one for the race, two of the three for Stories
+    expect(await screen.findAllByText(/needs an account/)).toHaveLength(7);
     expect(screen.getAllByText('Play solo').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Play online').length).toBeGreaterThan(0);
   });

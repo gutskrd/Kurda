@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthProvider';
-import { QuizMini, RaceMini, RhymeMini, WordleMini } from '../landing/mocks';
+import { RaceMini, RhymeMini, StoriesMini, WordleMini } from '../landing/mocks';
+import { useStoriesAvailable } from '../stories/catalogue';
 
 /**
  * A game, before it has words.
@@ -18,17 +19,24 @@ interface GameMode {
   labelKey: MessageKey;
   blurbKey: MessageKey;
   href: string;
+  /** open without an account (reading a story) */
+  open?: boolean;
 }
 
 interface GameCard {
   /** the tile's shape in the grid, shared with the front page */
-  id: 'wordle' | 'rhyme' | 'race' | 'quiz';
+  id: 'wordle' | 'rhyme' | 'race' | 'stories';
   /** a small picture of the game being played — the front page's, decorative */
   visual: React.JSX.Element;
   nameKey: MessageKey;
   bodyKey: MessageKey;
   /** how this game can be played; one box per game, the mode is chosen on click */
   modes: GameMode[];
+  /**
+   * The game's own page is where its modes are chosen (Stories: read one, then
+   * quiz yourself or play with friends), so the tile opens it rather than asking.
+   */
+  hub?: string;
 }
 
 /** One box per game — the mode (solo / online / …) is chosen after clicking. */
@@ -67,12 +75,15 @@ const GAMES: GameCard[] = [
     ],
   },
   {
-    id: 'quiz',
-    visual: <QuizMini />,
-    nameKey: 'games.quiz.name',
-    bodyKey: 'games.quiz.body',
+    id: 'stories',
+    visual: <StoriesMini />,
+    nameKey: 'games.stories.name',
+    bodyKey: 'games.stories.body',
+    hub: '/app/games/stories',
     modes: [
-      { labelKey: 'games.mode.online', blurbKey: 'games.quiz.online', href: '/app/games/quiz' },
+      { labelKey: 'games.stories.read', blurbKey: 'games.stories.body', href: '/app/games/stories', open: true },
+      { labelKey: 'stories.quizYourself', blurbKey: 'games.stories.body', href: '/app/games/stories' },
+      { labelKey: 'games.stories.withFriends', blurbKey: 'games.stories.body', href: '/app/games/stories' },
     ],
   },
 ];
@@ -87,12 +98,18 @@ const GAMES: GameCard[] = [
  * asks who is playing). This page used to offer guests the solo modes, and a
  * guest who took the offer got an error instead of a game. Now a guest sees
  * every game, every mode marked as needing an account, and the way to make one.
+ * The one exception is reading a story, which is open to everyone; its quiz
+ * is not.
+ *
+ * Stories replaced the ranked quiz. Until a story is published there is
+ * nothing behind its card, so the card says "Coming soon" and opens nothing.
  */
 export function Games(): React.JSX.Element {
   const { status } = useAuth();
   const signedIn = status === 'signedIn';
   const [chooser, setChooser] = useState<GameCard | null>(null);
   const t = useT();
+  const stories = useStoriesAvailable();
 
   return (
     <div className="container game-page">
@@ -105,8 +122,10 @@ export function Games(): React.JSX.Element {
       {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
       <div className="game-grid">
         {GAMES.map((g) => {
-          // nothing is playable without an account (see the note above)
-          const playable = signedIn ? g.modes : [];
+          const comingSoon = g.id === 'stories' && stories === 'none';
+          // nothing is playable without an account (see the note above), and
+          // nothing at all before there is something to play
+          const playable = comingSoon ? [] : signedIn ? g.modes : g.modes.filter((m) => m.open);
           const single = playable.length === 1 ? playable[0] : undefined;
           return (
             <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
@@ -115,15 +134,21 @@ export function Games(): React.JSX.Element {
                 <div className="game-tile-head">
                   <h3>{t(g.nameKey)}</h3>
                   <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
-                    {playable.length > 0 ? t('games.playable') : t('games.signInToPlay')}
+                    {comingSoon
+                      ? t('stories.comingSoon')
+                      : signedIn
+                        ? t('games.playable')
+                        : playable.length > 0
+                          ? t('games.stories.readFree')
+                          : t('games.signInToPlay')}
                   </span>
                 </div>
                 <p>{t(g.bodyKey)}</p>
                 <ul className="game-tags">
                   {g.modes.map((m) => {
-                    const locked = !signedIn;
+                    const locked = !signedIn && !m.open;
                     return (
-                      <li key={m.href} className={locked ? 'is-locked' : undefined}>
+                      <li key={m.labelKey} className={locked ? 'is-locked' : undefined}>
                         {t(m.labelKey)}
                         {locked && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
                       </li>
@@ -131,7 +156,11 @@ export function Games(): React.JSX.Element {
                   })}
                 </ul>
                 {playable.length > 0 &&
-                  (single ? (
+                  (g.hub ? (
+                    <Link to={g.hub} className="btn btn-primary btn-sm">
+                      {signedIn ? t('games.play') : t('games.stories.read')}
+                    </Link>
+                  ) : single ? (
                     <Link to={single.href} className="btn btn-primary btn-sm">
                       {t('games.play')}
                     </Link>

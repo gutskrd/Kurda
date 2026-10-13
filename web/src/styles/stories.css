@@ -1,0 +1,732 @@
+/* ---- Stories: the hub, the reader, setting up a quiz ------------------------- */
+/*
+ * Reading comes first here: the text is large, calm and set in its own
+ * script's face, with room between the lines; everything else is quiet around
+ * it. Gold means "look at this" — a glossary word, the sentence being read, a
+ * finished story — and nothing says anything by colour alone. Logical
+ * properties throughout, so an Arabic or Soranî page mirrors by itself.
+ */
+
+/* Soranî in a face made for Arabic script, wherever a story's words appear */
+[lang='ckb'].story-title,
+[lang='ckb'].story-summary,
+.story-text [lang='ckb'],
+.story-hub [lang='ckb'],
+.story-game [lang='ckb'],
+.story-setup [lang='ckb'],
+.story-words [lang='ckb'],
+.story-gloss-pop [lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+
+/* ---- presets drawn as chips: real radios underneath ------------------------- */
+.chip-radio {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.chip-radio-legend {
+  display: block;
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.chip-radio-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip-radio-option {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.15;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.chip-radio-option:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+  color: var(--ink);
+}
+.chip-radio-option input {
+  /* the radio itself is the control a keyboard and a screen reader use */
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.chip-radio-option.is-on {
+  background: var(--primary);
+  color: var(--primary-ink);
+  border-color: var(--primary);
+}
+.chip-radio-option:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.chip-radio-hint {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.chip-radio-option.is-on .chip-radio-hint {
+  color: color-mix(in srgb, var(--primary-ink) 70%, transparent);
+}
+
+/* ---- the hub ------------------------------------------------------------------ */
+.story-hub .page-header {
+  margin-bottom: 22px;
+}
+.story-hub .back-link,
+.story-page .back-link {
+  margin-bottom: 18px;
+}
+.story-section-title {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+.story-continue {
+  margin-bottom: 26px;
+}
+.story-continue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.story-continue-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+  color: var(--ink);
+}
+.story-continue-card:hover {
+  border-color: var(--gold);
+}
+.story-continue-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.story-continue-title {
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.story-continue-meta {
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+.story-continue-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gold-ink);
+  white-space: nowrap;
+}
+[dir='rtl'] .story-chevron {
+  transform: scaleX(-1);
+}
+
+.story-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 28px;
+  margin-bottom: 18px;
+}
+.story-play {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 18px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.story-play-guest {
+  align-items: center;
+  justify-content: space-between;
+}
+.story-play-guest p {
+  margin: 0;
+}
+.story-join {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.story-join-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.story-join-row {
+  display: flex;
+  gap: 8px;
+}
+.story-join-input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+.story-join-input::placeholder {
+  letter-spacing: normal;
+}
+.story-join-error {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+.story-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 760px) {
+  .story-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.story-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 18px 18px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.story-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.story-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.story-card-title {
+  font-family: var(--font-display);
+  font-size: 1.22rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.story-card-title[lang='ckb'] {
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+.story-card-summary {
+  color: var(--ink-2);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+.story-card-summary[lang='ckb'] {
+  line-height: 1.8;
+}
+.story-card-meta,
+.story-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin-top: auto;
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+.story-narrated {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold-ink);
+}
+.story-done {
+  flex: none;
+}
+.story-empty {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+.story-empty h3 {
+  max-width: 44ch;
+}
+.story-back-row {
+  margin-top: 18px;
+  text-align: center;
+}
+
+/* ---- the reader --------------------------------------------------------------- */
+.story-page {
+  max-width: 760px;
+  padding-top: 32px;
+  padding-bottom: 80px;
+}
+@media (max-width: 640px) {
+  .story-page {
+    padding-top: 18px;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+  }
+}
+.story-head {
+  margin-bottom: 18px;
+}
+.story-meta {
+  margin: 0 0 12px;
+}
+.story-title {
+  font-size: clamp(1.9rem, 4.4vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.story-title[lang='ckb'] {
+  letter-spacing: normal;
+  line-height: 1.45;
+}
+.story-summary {
+  margin-top: 10px;
+  color: var(--ink-2);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.story-summary[lang='ckb'] {
+  line-height: 1.9;
+}
+.story-tools {
+  /* stays in reach while reading: the size and, for a narrated story, its player */
+  position: sticky;
+  top: calc(var(--nav-h) + 8px);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 22px;
+  padding: 8px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--app-bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+@media (max-width: 860px) {
+  .story-tools {
+    top: 8px;
+  }
+}
+.story-size {
+  display: inline-flex;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+}
+.story-size-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 44px;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+.story-size-btn + .story-size-btn {
+  border-inline-start: 1px solid var(--border-strong);
+}
+.story-size-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.story-size-btn:disabled {
+  color: var(--ink-4);
+  cursor: default;
+}
+.story-size-a {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.story-size-a.is-small {
+  font-size: 0.95rem;
+}
+
+.story-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.story-player-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  color: var(--gold-ink);
+}
+.story-player-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.story-player-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.story-player-btn:disabled {
+  color: var(--ink-4);
+  cursor: default;
+}
+.story-player-btn.is-main {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.story-player-btn.is-main:hover {
+  background: var(--primary-hover);
+}
+/* previous and next point the way the page reads */
+[dir='rtl'] .story-player-btn svg {
+  transform: scaleX(-1);
+}
+.story-player-speed {
+  display: inline-flex;
+  margin-inline-start: 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+}
+.story-player-rate {
+  min-width: 52px;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  /* a number: the same in every direction */
+  direction: ltr;
+}
+.story-player-rate.is-on {
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 650;
+}
+
+/* the text */
+.story-text {
+  --story-size: 1.15rem;
+}
+.story-para {
+  margin-bottom: 1.1em;
+}
+.story-para p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--story-size);
+  line-height: 1.8;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.story-para p[lang='ckb'] {
+  /* Arabic script needs more air between lines for its marks */
+  line-height: 2.05;
+}
+.story-sentence {
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.story-sentence.is-reading {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.story-sentence.is-evidence,
+.story-para p.is-evidence {
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
+}
+.story-gloss {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--gold);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.28em;
+}
+.story-gloss:hover,
+.story-gloss[aria-expanded='true'] {
+  color: var(--gold-ink);
+}
+.story-gloss:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.story-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+.story-listen:hover,
+.story-listen.is-on {
+  color: var(--ink);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+@media (pointer: coarse) {
+  .story-listen {
+    min-height: 44px;
+  }
+}
+
+/* a glossary word's meaning, beside the word */
+.story-gloss-pop {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 12px 14px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: #1a1d22;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+.story-gloss-pop:focus {
+  outline: none;
+}
+.story-gloss-pop:focus-visible {
+  outline: 2px solid var(--focus);
+}
+.story-gloss-term {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gold-ink);
+}
+.story-gloss-meaning {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.story-gloss-close {
+  align-self: flex-end;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.story-gloss-close:hover {
+  color: var(--ink);
+}
+
+/* "Words in this story" */
+.story-words {
+  margin-top: 34px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.story-words dl {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.story-word {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+.story-word dt {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+}
+.story-word dd {
+  margin: 0;
+  color: var(--ink-2);
+}
+
+/* the quiz after a story */
+.story-quiz {
+  margin-top: 34px;
+  padding: 22px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--glass-rim);
+}
+.story-quiz p {
+  margin: 0 0 16px;
+}
+.story-quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+@media (max-width: 520px) {
+  .story-quiz-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+.story-quiz-settings {
+  margin-top: 14px;
+  min-height: 44px;
+}
+.story-quiz .msg {
+  margin: 14px 0 0;
+}
+
+/* ---- setting up a quiz -------------------------------------------------------- */
+.story-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  /* a phone's dialog scrolls; the button stays the last thing */
+  max-height: min(78vh, 760px);
+  overflow-y: auto;
+  padding: 2px;
+}
+.story-setup-title {
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  margin: 0;
+  padding-inline-end: 40px;
+}
+.story-setup-fixed {
+  display: flex;
+  flex-direction: column;
+}
+.story-setup-story {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.story-setup-story [lang] {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.story-setup-story .muted {
+  font-size: 0.85rem;
+}
+.story-setup-list {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.story-setup-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+}
+.story-setup-choice input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.story-setup-choice.is-on {
+  border-color: var(--primary);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.story-setup-choice:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.story-setup-note {
+  margin: -8px 0 0;
+  font-size: 0.85rem;
+  color: var(--gold-ink);
+}
+.story-setup .msg {
+  margin: 0;
+}

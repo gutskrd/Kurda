@@ -105,7 +105,7 @@ function CreateBattle(): React.JSX.Element {
   }
 
   return (
-    <div className="quiz-lobby">
+    <div className="match-lobby">
       <p className="page-sub">{t('games.battle.intro')}</p>
       {err && <div className="wordle-notice">{err}</div>}
       <div className="chat-tabs" role="tablist" aria-label={t('games.difficulty')}>
@@ -244,7 +244,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   // ---- lobby ----
   if (battle.status === 'lobby') {
     return (
-      <div className="quiz-lobby">
+      <div className="match-lobby">
         <p>{t('games.lobbyWaiting', { count: playerCount })}</p>
         <div className="battle-invite">
           <span className="battle-invite-label">{t('games.inviteLink')}</span>
@@ -271,8 +271,8 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   if (battle.status === 'finished') {
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
-      <div className="quiz-results">
-        <h2 className="quiz-verdict">
+      <div className="match-results">
+        <h2 className="match-verdict">
           {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
         </h2>
         {results && (

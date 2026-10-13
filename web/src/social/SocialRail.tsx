@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { ChatsIcon, CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
@@ -141,15 +141,14 @@ export function SocialRail(): React.JSX.Element | null {
 function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   const t = useT();
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
-  const hasWaiting = data.challenges.length > 0 || data.requests.length > 0;
+  // Game invites used to wait here as quiz challenges; they arrive as their
+  // own banner now (play/InviteBanner.tsx), and `challenges` is always empty
+  const hasWaiting = data.requests.length > 0;
 
   return (
     <>
       {hasWaiting && (
-        <Section title={t('rail.waitingOnYou')} count={data.challenges.length + data.requests.length}>
-          {data.challenges.map((c) => (
-            <ChallengeCard key={c.userId} who={c} onActed={onActed} />
-          ))}
+        <Section title={t('rail.waitingOnYou')} count={data.requests.length}>
           {data.requests.map((r) => (
             <RequestCard key={r.userId} who={r} onActed={onActed} />
           ))}
@@ -319,44 +318,6 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
           <ChatsIcon size={16} />
         </Link>
       )}
-    </div>
-  );
-}
-
-/** A game invite, which expires — so it leads with Accept. */
-function ChallengeCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
-  const { client } = useAuth();
-  const t = useT();
-  const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
-
-  async function respond(accept: boolean): Promise<void> {
-    setBusy(true);
-    const res = accept
-      ? await client.post<{ roomId: string }>(`/challenges/${who.userId}/accept`)
-      : await client.post(`/challenges/${who.userId}/decline`);
-    setBusy(false);
-    onActed();
-    if (accept && res.ok) navigate('/app/games');
-  }
-
-  return (
-    <div className="rail-card rail-card-in">
-      <span className="rail-avatar">
-        <Avatar url={who.avatarUrl} glyphSize={16} />
-      </span>
-      <span className="rail-row-text">
-        <span className="rail-row-name">{who.displayName || who.username}</span>
-        <span className="rail-row-sub">{t('rail.invitedYouToPlay')}</span>
-      </span>
-      <span className="rail-card-actions">
-        <button type="button" className="rail-act is-yes" disabled={busy} onClick={() => void respond(true)}>
-          {t('friends.accept')}
-        </button>
-        <button type="button" className="rail-act" disabled={busy} onClick={() => void respond(false)}>
-          {t('rail.decline')}
-        </button>
-      </span>
     </div>
   );
 }

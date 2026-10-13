@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { CheckIcon, CloseIcon, CoinIcon, CommentIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
+import { CheckIcon, CloseIcon, CoinIcon, CommentIcon, HeadphonesIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
 import { ProfileCard } from '../ui/ProfileCard';
 import { LeagueLadder, leagueName } from '../ui/LeagueLadder';
 import { RankList, RankRow } from '../ui/RankRow';
@@ -15,7 +15,6 @@ import {
   PEOPLE,
   POEM,
   PROFILE_BACKGROUND,
-  QUIZ_PROMPT,
   RACE_TEXT,
   RACE_TYPED,
   RHYME,
@@ -281,30 +280,35 @@ export function RaceMini(): React.JSX.Element {
   );
 }
 
-const QUIZ_OPTIONS: ReadonlyArray<{ key: MessageKey; right?: boolean }> = [
-  { key: 'landing.gloss.tea', right: true },
-  { key: 'landing.gloss.milk' },
-  { key: 'landing.gloss.coffee' },
-];
-
-export function QuizMini(): React.JSX.Element {
+/**
+ * A story being read: lines of text, one word from the glossary marked with
+ * its meaning open beside it, the headphones of a story read aloud, and the
+ * quiz's answer under it — the parts of the reader, without inventing a
+ * sentence of Kurdish for the picture (the one word is the page's own).
+ */
+export function StoriesMini(): React.JSX.Element {
   const t = useT();
   return (
-    <div className="lp-mini lp-mini--quiz" aria-hidden>
-      <span className="lp-quiz-score">
-        <Face src={PEOPLE.you.avatar} size={22} />
-        <b>3</b>
-        <span className="lp-quiz-dash" />
-        <b>2</b>
-        <Face src={PEOPLE.dilan.avatar} size={22} />
+    <div className="lp-mini lp-mini--stories" aria-hidden>
+      <span className="lp-story-page">
+        <span className="lp-story-bar" style={{ width: '88%' }} />
+        <span className="lp-story-row">
+          <span className="lp-story-bar" style={{ width: '34%' }} />
+          <Ku className="lp-story-word">{HEVAL}</Ku>
+          <span className="lp-story-bar" style={{ width: '26%' }} />
+        </span>
+        <span className="lp-story-bar" style={{ width: '72%' }} />
+        <span className="lp-story-gloss">
+          <Ku>{HEVAL}</Ku> · {t('landing.gloss.heval')}
+        </span>
       </span>
-      <Ku className="lp-quiz-q">{QUIZ_PROMPT}</Ku>
-      <span className="lp-quiz-options">
-        {QUIZ_OPTIONS.map((o) => (
-          <span key={o.key} className={`lp-option${o.right ? ' is-right' : ''}`}>
-            {t(o.key)}
-          </span>
-        ))}
+      <span className="lp-story-foot">
+        <span className="lp-story-listen">
+          <HeadphonesIcon size={13} />
+        </span>
+        <span className="lp-option is-right">
+          <CheckIcon size={12} /> 3/3
+        </span>
       </span>
     </div>
   );

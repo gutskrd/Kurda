@@ -168,13 +168,6 @@ export function useSocialRail(): {
 function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
   const name = (f: RailFriend): string => f.displayName || f.username;
   return [
-    ...data.challenges.map((c) => ({
-      key: `challenge:${c.userId}`,
-      kind: 'challenge' as const,
-      title: t('rail.gameInvite'),
-      body: t('rail.wantsToPlay', { name: name(c) }),
-      who: c,
-    })),
     ...data.requests.map((r) => ({
       key: `request:${r.userId}`,
       kind: 'request' as const,

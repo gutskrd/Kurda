@@ -446,14 +446,14 @@ a.rank-name:hover {
 .rank-delta.down {
   color: var(--danger);
 }
-.quiz-results .rank-list,
-.quiz-match .players,
+.match-results .rank-list,
+.match-play .players,
 .wordle-battle-play .players {
   width: 100%;
   max-width: 520px;
   margin-inline: auto;
 }
-.quiz-results .rank-list {
+.match-results .rank-list {
   text-align: start;
 }
 /* your place on a board whose page of rows does not reach you */
@@ -634,7 +634,7 @@ a.invite-card:active {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
   .game-tile--wordle,
-  .game-tile--quiz {
+  .game-tile--stories {
     grid-column: span 7;
   }
   .game-tile--rhyme,
@@ -954,29 +954,68 @@ a.invite-card:active {
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
 }
-.lp-quiz-score {
+/* a story being read: lines of text, one word glossed, and the quiz under it */
+.lp-mini--stories {
+  gap: 10px;
+}
+.lp-story-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: min(100%, 240px);
+  padding: 14px 16px 16px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  /* text runs as it does in the reader: from the start edge */
+  align-items: flex-start;
+}
+.lp-story-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-variant-numeric: tabular-nums;
-}
-.lp-quiz-score b {
-  font-size: 1.15rem;
-}
-.lp-quiz-dash {
-  width: 12px;
-  height: 2px;
-  background: var(--ink-4);
-}
-.lp-quiz-q {
-  font-size: 1.3rem;
-  direction: ltr;
-}
-.lp-quiz-options {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   gap: 6px;
+  width: 100%;
+}
+.lp-story-bar {
+  display: block;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.16);
+}
+.lp-story-word {
+  font-size: 1rem;
+  color: var(--ink);
+  text-decoration: underline dotted var(--gold);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.lp-story-gloss {
+  align-self: center;
+  margin-top: 2px;
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.lp-story-gloss .lp-ku {
+  font-weight: 600;
+}
+.lp-story-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lp-story-listen {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
 }
 .lp-face {
   flex: none;

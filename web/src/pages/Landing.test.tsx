@@ -29,7 +29,7 @@ describe('Landing', () => {
       ['Kurdish Wordle', '/app/games/wordle'],
       ['Rhyming Words', '/app/games/rhyme'],
       ['Typing Race', '/app/games/race'],
-      ['Ranked Quiz', '/app/games/quiz'],
+      ['Stories', '/app/games/stories'],
     ]) {
       expect(screen.getByRole('link', { name }), name).toHaveAttribute('href', href);
     }

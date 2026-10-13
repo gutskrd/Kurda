@@ -91,15 +91,6 @@ export function UserProfile(): React.JSX.Element {
       sidebarExtra={
         <>
           {profile.tier && <div className="mkp-info-row"><span className="l">{t('profile.stat.league')}</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
-          {profile.rating !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.rating')}</span><span className="n">{profile.rating}</span></div>}
-          {/* only once they have actually played ranked — a place beside a
-              default rating would read as a standing they have not earned */}
-          {profile.rank != null && (
-            <div className="mkp-info-row">
-              <span className="l">{t('profile.stat.rank')}</span>
-              <span className="n">#{profile.rank.toLocaleString()}</span>
-            </div>
-          )}
           {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.achievements')}</span><span className="n">{profile.achievements}</span></div>}
         </>
       }

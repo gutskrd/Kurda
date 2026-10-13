@@ -116,6 +116,38 @@ describe('ApiClient', () => {
     expect(headers['idempotency-key']).toBeTruthy();
     expect(headers['content-type']).toBe('application/json');
   });
+
+  it('gives up on a request when the caller aborts it', async () => {
+    // a long-poll left waiting: the fetch only ends when its signal fires
+    const fetchMock = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    const controller = new AbortController();
+    const pending = client.get('/story-games/g1?v=3', { signal: controller.signal });
+    controller.abort();
+    const res = await pending;
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error.kind).toBe('network');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send a request whose signal has already been aborted', async () => {
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.signal?.aborted) throw new DOMException('aborted', 'AbortError');
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    const controller = new AbortController();
+    controller.abort();
+    const res = await client.get('/thing', { signal: controller.signal });
+    expect(res.ok).toBe(false);
+  });
 });
 
 describe('CODE_COPY', () => {

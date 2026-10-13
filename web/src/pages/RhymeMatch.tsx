@@ -86,7 +86,7 @@ function CreateMatch(): React.JSX.Element {
   }
 
   return (
-    <div className="quiz-lobby">
+    <div className="match-lobby">
       <p className="page-sub">{t('games.rhymeMatch.intro')}</p>
       {err && <div className="wordle-notice">{err}</div>}
       <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
@@ -211,7 +211,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
   if (match.status === 'lobby') {
     return (
-      <div className="quiz-lobby">
+      <div className="match-lobby">
         <p>{t('games.lobbyWaiting', { count: playerCount })}</p>
         <div className="battle-invite">
           <span className="battle-invite-label">{t('games.inviteLink')}</span>
@@ -237,8 +237,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   if (match.status === 'finished') {
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
-      <div className="quiz-results">
-        <h2 className="quiz-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
+      <div className="match-results">
+        <h2 className="match-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
         {results && (
           <>
             <p className="muted">{t('games.rhymeMatch.promptWas', { word: results.prompt })}</p>
@@ -267,7 +267,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
   // active
   return (
-    <div className="quiz-match">
+    <div className="match-play">
       <div className="rhyme-stage">
         <div className="rhyme-prompt-box">
           <span className="rhyme-label">{t('games.rhyme.rhymeWith')}</span>

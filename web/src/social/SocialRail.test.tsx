@@ -112,32 +112,30 @@ describe('SocialRail', () => {
     signIn();
     const { posts } = railFetch([
       rail({
-        challenges: [person('9', 'zana')],
         requests: [person('8', 'berfin')],
-        unread: { notifications: 0, groups: 0, requests: 1, challenges: 1 },
+        unread: { notifications: 0, groups: 0, requests: 1, challenges: 0 },
       }),
     ]);
     show();
 
-    expect(await screen.findByText('Invited you to play')).toBeInTheDocument();
-    expect(screen.getByText('Wants to be friends')).toBeInTheDocument();
-
-    // decline the friend request; the invite is a separate card with its own buttons
-    const request = screen.getByText('Wants to be friends').closest<HTMLElement>('.rail-card')!;
+    const request = (await screen.findByText('Wants to be friends')).closest<HTMLElement>('.rail-card')!;
     await userEvent.click(within(request).getByRole('button', { name: 'Decline' }));
 
     await waitFor(() => expect(posts).toContain('POST /friends/requests/8/decline'));
   });
 
-  it('accepting an invite asks the challenge endpoint, not the friend one', async () => {
+  /**
+   * Deliberately changed: quiz challenges are gone with the quiz (the API
+   * always sends an empty list), and game invites have their own banner — so
+   * the rail no longer draws a challenge, even if an old answer carries one.
+   */
+  it('draws no quiz challenge any more', async () => {
     signIn();
-    const { posts } = railFetch([rail({ challenges: [person('9', 'zana')] })]);
+    railFetch([rail({ challenges: [person('9', 'zana')], requests: [person('8', 'berfin')] })]);
     show();
 
-    const invite = (await screen.findByText('Invited you to play')).closest<HTMLElement>('.rail-card')!;
-    await userEvent.click(within(invite).getByRole('button', { name: 'Accept' }));
-
-    await waitFor(() => expect(posts).toContain('POST /challenges/9/accept'));
+    await screen.findByText('Wants to be friends');
+    expect(screen.queryByText('Invited you to play')).not.toBeInTheDocument();
   });
 
   it('counts everything waiting on the toggle, capped', async () => {
@@ -153,13 +151,13 @@ describe('SocialRail', () => {
 
   it('says nothing about a backlog you already had', async () => {
     signIn();
-    // the first answer already contains an invite — it is not news to this tab
-    railFetch([rail({ challenges: [person('9', 'zana')] })]);
+    // the first answer already contains a request — it is not news to this tab
+    railFetch([rail({ requests: [person('8', 'berfin')] })]);
     show();
 
-    await screen.findByText('Invited you to play');
+    await screen.findByText('Wants to be friends');
     // a burst of toasts for things that were already there is noise
-    expect(screen.queryByText('Game invite')).not.toBeInTheDocument();
+    expect(screen.queryByText('Friend request')).not.toBeInTheDocument();
   });
 
   it('is about other people — your own face is on the bar, not in here', async () => {
