@@ -57,8 +57,9 @@ export class CosmeticsService {
     return res.rows[0] ?? null;
   }
 
-  /** Equip a background/icon (or clear with null). Verifies category + active +
-   *  ownership-or-premium before equipping. Rejects everything else. */
+  /** Equip a background/icon (or clear with null). Verifies category, then
+   *  ownership — or premium access to an item still on sale — before equipping.
+   *  Rejects everything else. */
   private async equipCosmetic(
     userId: string,
     column: 'equipped_background_sku' | 'equipped_icon_sku',
@@ -73,7 +74,8 @@ export class CosmeticsService {
     const info = await this.accessInfo(userId, sku);
     if (!info) throw new AppError('ITEM_NOT_FOUND', 404, 'no such item');
     if (info.category !== expectedCategory) throw new AppError('WRONG_CATEGORY', 400, `not a ${expectedCategory}`);
-    if (!info.active) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
+    // out of the shop is out of reach — unless it is already yours (see hasAccess)
+    if (!info.active && !info.owned) throw new AppError('ITEM_UNAVAILABLE', 409, 'item is not available');
     const access = info.owned || (info.premium_only && isPremiumActive(info.premium_until, now));
     if (!access) throw new AppError('NO_ACCESS', 403, 'you do not have access to this item');
     // FK (→ shop_items) guarantees the SKU exists at write time.

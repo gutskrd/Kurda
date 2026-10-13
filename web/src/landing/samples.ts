@@ -73,5 +73,5 @@ export const PEOPLE = {
   dilan: { name: 'Dilan', avatar: '/cosmetics/avatars/default-07.png' },
 } as const;
 
-/** A profile background from the shop — the deer in the forest. */
-export const PROFILE_BACKGROUND = '/cosmetics/backgrounds/background-01.webp';
+/** A profile background from the shop — night on the high pastures. */
+export const PROFILE_BACKGROUND = '/cosmetics/backgrounds/made-02-seva-zozanan.webp';

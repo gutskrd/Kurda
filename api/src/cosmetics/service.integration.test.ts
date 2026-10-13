@@ -18,7 +18,7 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
   let userA = '';
   let tokenA = '';
   let tokenB = '';
-  const sku = { owned: `bg-owned-${s}`, prem: `bg-prem-${s}`, inactive: `bg-off-${s}`, icon: `icon-${s}` };
+  const sku = { owned: `bg-owned-${s}`, prem: `bg-prem-${s}`, inactive: `bg-off-${s}`, icon: `icon-${s}`, retired: `bg-retired-${s}` };
   let poemId = '';
   let draftPoemId = '';
 
@@ -50,10 +50,14 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
        VALUES ($1,'Owned','background','zer',0,true,true,true,'backgrounds/o.png',false),
               ($2,'Prem','background','zer',500,true,true,true,'backgrounds/p.png',true),
               ($3,'Off','background','zer',0,true,false,true,'backgrounds/x.png',true),
-              ($4,'Icon','icon','zer',800,true,true,true,'icons/i.png',true)`,
-      [sku.owned, sku.prem, sku.inactive, sku.icon],
+              ($4,'Icon','icon','zer',800,true,true,true,'icons/i.png',true),
+              ($5,'Retired','background','zer',500,true,false,true,'backgrounds/r.png',true)`,
+      [sku.owned, sku.prem, sku.inactive, sku.icon, sku.retired],
     );
-    await pool.query(`INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1,$2,'purchase'), ($1,$3,'purchase')`, [userA, sku.owned, sku.icon]);
+    await pool.query(
+      `INSERT INTO user_entitlements (user_id, sku, source) VALUES ($1,$2,'purchase'), ($1,$3,'purchase'), ($1,$4,'purchase')`,
+      [userA, sku.owned, sku.icon, sku.retired],
+    );
 
     const poem = await pool.query<{ id: string }>(
       `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, published_at)
@@ -81,6 +85,17 @@ describe.skipIf(!DATABASE_URL)('cosmetics equip + favorites + DTO (integration)'
     await expect(cosmetics.equipBackground(userA, sku.icon)).rejects.toThrow(/not a background/i);
     await expect(cosmetics.equipBackground(userA, sku.inactive)).rejects.toThrow(/available/i);
     await expect(cosmetics.equipBackground(userA, `nope-${s}`)).rejects.toThrow(/no such item/i);
+  });
+
+  it('an item taken out of the shop can still be worn by whoever owns it', async () => {
+    await expect(cosmetics.equipBackground(userA, sku.retired)).resolves.toBeUndefined();
+    const res = await app.inject({ method: 'GET', url: `/users/${userA}`, headers: { authorization: `Bearer ${tokenB}` } });
+    expect(res.json().background).toMatchObject({ sku: sku.retired, url: '/cosmetics/backgrounds/r.png' });
+    // premium does not lend it out once it is off sale
+    await pool.query(`UPDATE users SET premium_until = now() + interval '1 day' WHERE id = $1`, [userA]);
+    await expect(cosmetics.equipBackground(userA, sku.inactive)).rejects.toThrow(/available/i);
+    await pool.query(`UPDATE users SET premium_until = NULL WHERE id = $1`, [userA]);
+    await cosmetics.equipBackground(userA, sku.owned);
   });
 
   it('grants premium-only access while premium is active', async () => {
