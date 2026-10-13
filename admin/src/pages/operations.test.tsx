@@ -235,6 +235,21 @@ describe('the audit log', () => {
     expect(await screen.findByText('101 entries')).toBeInTheDocument();
   });
 
+  it('pages back with the filters it searched with, not with what is typed since', async () => {
+    const user = userEvent.setup();
+    const page = Array.from({ length: 100 }, (_, i) => entry(i * 2 + 1));
+    const { calls } = fakeApi(on('GET', /^\/admin\/audit\?/, json({ entries: page })));
+    renderUi(<Audit />);
+    const action = screen.getByLabelText(/action starts with/i);
+    await user.type(action, 'POST /admin/users');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await waitFor(() => expect(calls.at(-1)!.path).toBe('/admin/audit?limit=100&action=POST+%2Fadmin%2Fusers'));
+    await user.clear(action);
+    await user.type(action, 'POST /admin/events');
+    await user.click(await screen.findByRole('button', { name: 'Older entries' }));
+    await waitFor(() => expect(calls.at(-1)!.path).toBe(`/admin/audit?limit=100&action=POST+%2Fadmin%2Fusers&beforeId=${page[99]!.id}`));
+  });
+
   it('reads an action as a verb and a place', () => {
     expect(describeAction('POST /admin/users/:id/ban')).toEqual({ verb: 'Ban', where: 'users' });
     expect(describeAction('DELETE /admin/tags/:key')).toEqual({ verb: 'Delete', where: 'tags' });

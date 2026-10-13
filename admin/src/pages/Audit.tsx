@@ -17,6 +17,12 @@ interface AuditRow {
 }
 
 const PAGE = 100;
+
+interface Filters {
+  action: string;
+  adminId: string;
+  targetId: string;
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Signing in and 2FA, and looks that changed nothing: in the trail, but rarely what anyone is looking for. */
 const QUIET = /^POST \/admin\/(auth|2fa|session)\/|\((dry run|preview)\)$/;
@@ -77,13 +83,16 @@ export function Audit(): React.JSX.Element {
   const [looking, setLooking] = useState<AuditRow | null>(null);
   const badAdmin = adminId.trim() !== '' && !UUID.test(adminId.trim());
 
-  async function load(beforeId?: string): Promise<void> {
-    if (badAdmin) return;
+  /** The filters the list on screen was searched with: older entries are paged with these, not with what is typed since. */
+  const [applied, setApplied] = useState<Filters>({ action: '', adminId: '', targetId: '' });
+
+  async function load(filters: Filters, beforeId?: string): Promise<void> {
     const params = new URLSearchParams({ limit: String(PAGE) });
-    if (action.trim()) params.set('action', action.trim());
-    if (adminId.trim()) params.set('adminId', adminId.trim());
-    if (targetId.trim()) params.set('targetId', targetId.trim());
+    if (filters.action) params.set('action', filters.action);
+    if (filters.adminId) params.set('adminId', filters.adminId);
+    if (filters.targetId) params.set('targetId', filters.targetId);
     if (beforeId) params.set('beforeId', beforeId);
+    setApplied(filters);
     setLoading(true);
     try {
       const res = await api<{ entries: AuditRow[] }>(`/admin/audit?${params}`);
@@ -99,7 +108,7 @@ export function Audit(): React.JSX.Element {
   }
 
   useEffect(() => {
-    void load();
+    void load(applied);
     // the first page, once; after that the form asks
   }, []);
 
@@ -146,7 +155,7 @@ export function Audit(): React.JSX.Element {
           className="form"
           onSubmit={(e) => {
             e.preventDefault();
-            void load();
+            if (!badAdmin) void load({ action: action.trim(), adminId: adminId.trim(), targetId: targetId.trim() });
           }}
         >
           <FieldRow>
@@ -182,14 +191,14 @@ export function Audit(): React.JSX.Element {
           rowKey={(e) => e.id}
           loading={loading}
           error={error}
-          onRetry={() => void load()}
+          onRetry={() => void load(applied)}
           what="the audit log"
           empty="No entries match."
           actions={(e) => <Button onClick={() => setLooking(e)}>Details</Button>}
         />
         {more && entries && (
           <div className="load-more">
-            <Button onClick={() => void load(entries[entries.length - 1]!.id)} busy={loading}>
+            <Button onClick={() => void load(applied, entries[entries.length - 1]!.id)} busy={loading}>
               Older entries
             </Button>
           </div>
