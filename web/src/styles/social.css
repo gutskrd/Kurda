@@ -1730,7 +1730,15 @@ button.gift-bubble:active {
   .gift-opening * {
     animation: none !important;
   }
+  /* the fire that stays behind a legendary gift's reveal stands still */
+  .newroz-flame .flame-outer,
+  .newroz-flame .flame-mid,
+  .newroz-flame .flame-core {
+    animation: none !important;
+  }
   /* the one movement left is a fade, which is what the device asked for */
+  .sheet-panel,
+  .gift-stage-rare .gift-stage-panel,
   .gift-reveal,
   .gift-stage,
   .gift-arrival {
