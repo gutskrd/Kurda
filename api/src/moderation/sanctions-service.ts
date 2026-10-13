@@ -265,14 +265,29 @@ export interface SanctionsOptions {
   moderatorCount?: () => Promise<number>;
 }
 
-/** Admins who can moderate right now: the role, a confirmed second factor, and an account in good order. */
+/**
+ * How many admins can moderate, for the two-person rules (a second admin
+ * confirms a permanent ban; someone else reviews an appeal): the role and a
+ * confirmed second factor, on an account that is not deleted and not closed
+ * for good by a confirmed permanent ban.
+ *
+ * A suspended moderator still counts, and so does one whose permanent ban
+ * nobody has confirmed. Leaving them out let one moderator defeat the rule on
+ * their own: suspend the only other moderator for an hour, and the count drops
+ * to one — then permanently ban anyone with just the username typed (recorded
+ * as single-approved, so it never comes up for review), and lift the
+ * suspension. A ban decided while the other moderator is away now waits for
+ * them, under its emergency suspension, like any other.
+ */
 export async function countModerators(db: Executor): Promise<number> {
   const r = await db.query<{ n: number }>(
     `SELECT count(*)::int AS n
        FROM users u JOIN admin_totp t ON t.user_id = u.id AND t.confirmed_at IS NOT NULL
       WHERE u.deleted_at IS NULL
         AND u.roles && ARRAY['moderator','superadmin','admin']::text[]
-        AND NOT (u.banned_at IS NOT NULL AND (u.banned_until IS NULL OR u.banned_until > now()))`,
+        AND NOT EXISTS (SELECT 1 FROM sanctions s
+                         WHERE s.user_id = u.id AND s.kind = 'permanent_ban' AND ${IN_FORCE_SQL}
+                           AND (s.approved_at IS NOT NULL OR s.single_approved))`,
   );
   return r.rows[0]?.n ?? 0;
 }

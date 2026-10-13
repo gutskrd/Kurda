@@ -5,7 +5,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { SanctionsService } from './sanctions-service.js';
+import { SanctionsService, countModerators } from './sanctions-service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -73,6 +73,34 @@ describe.skipIf(!DATABASE_URL)('sanctions (integration)', () => {
       (c) => sanctions.apply(c, { ...base, userId: id, kind: 'chat_mute', durationHours: 1, statement: 'Muted.' }),
     );
     expect(await enforced(id)).toEqual({ banned: true, muted: true });
+  });
+
+  it('counts a suspended moderator for the two-person rule, so one cannot suspend the other to act alone', async () => {
+    const mod = await user('mod1');
+    // one snapshot, so moderators other suites add meanwhile do not change the count
+    const db = await pool.connect();
+    try {
+      await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      const before = await countModerators(db);
+      await db.query(`UPDATE users SET roles = '{moderator}' WHERE id = $1`, [mod]);
+      await db.query(`INSERT INTO admin_totp (user_id, secret, confirmed_at) VALUES ($1, 'x', now())`, [mod]);
+      expect(await countModerators(db)).toBe(before + 1);
+
+      // suspended for an hour by a colleague: still a moderator who must be asked
+      await sanctions.apply(db, { ...base, userId: mod, kind: 'suspension', durationHours: 1, statement: 'Suspended.' });
+      expect(await countModerators(db)).toBe(before + 1);
+      // a permanent ban nobody else has confirmed does not take them out either
+      const ban = await sanctions.apply(db, {
+        ...base, userId: mod, kind: 'permanent_ban', policy: 'child_safety', statement: 'Closed.', zeroTolerance: true,
+      });
+      expect(await countModerators(db)).toBe(before + 1);
+      // once a second admin confirms it, they are gone
+      await db.query(`UPDATE sanctions SET approved_at = now() WHERE id = $1`, [ban.sanction.id]);
+      expect(await countModerators(db)).toBe(before);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
   });
 
   it('an unmute while a suspension is being applied does not undo the ban either', async () => {
