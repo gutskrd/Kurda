@@ -67,7 +67,7 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }): Reac
     return (
       <Screen title="Not an admin account">
         <p className="gate-text">
-          This account does not have admin access. Sign in with one that does, or ask a superadmin to grant it.
+          This account does not have admin access. Sign in with one that does; roles are given on the server, by whoever runs Hevalo.
         </p>
       </Screen>
     );
@@ -142,8 +142,8 @@ function Enroll({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
           <div className="gate-text">Can’t scan? Enter this key by hand:</div>
           <code className="secret">{secret.secret}</code>
           <p className="gate-text">
-            Keep a copy somewhere safe. Losing it means another admin has to reset your 2FA — a password alone
-            cannot, by design.
+            Keep a copy somewhere safe. Without it, your 2FA has to be reset on the server by whoever runs Hevalo — a
+            password alone cannot open the admin, by design.
           </p>
         </>
       ) : (

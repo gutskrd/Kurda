@@ -9,7 +9,7 @@ import { TwoFactorGate } from './pages/TwoFactorGate';
 import { Login } from './pages/Login';
 import { Shell } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
-import { Config } from './pages/Config';
+import { Approvals } from './pages/Approvals';
 import { Analytics } from './pages/Analytics';
 import { Tags } from './pages/Tags';
 import { Users } from './pages/Users';
@@ -20,7 +20,8 @@ import { AiModeration } from './pages/AiModeration';
 import { Lessons } from './pages/Lessons';
 import { Experiments } from './pages/Experiments';
 import { Events } from './pages/Events';
-import { Ops } from './pages/Ops';
+import { GemRules } from './pages/GemRules';
+import { System } from './pages/System';
 import { Audit } from './pages/Audit';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
@@ -46,19 +47,19 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   stories: () => <Stories />,
   tags: () => <Tags />,
   events: () => <Events />,
-  words: () => <Games />,
-  wordle: () => <Games />,
-  rhyme: () => <Games />,
-  race: () => <Games />,
+  words: () => <Games section="words" />,
+  wordle: () => <Games section="wordle" />,
+  rhyme: () => <Games section="rhyme" />,
+  race: () => <Games section="race" />,
   economy: () => <Economy />,
   shop: () => <Shop />,
-  'gem-rules': () => <Ops />,
+  'gem-rules': () => <GemRules />,
   fraud: () => <Fraud />,
-  approvals: () => <Config />,
+  approvals: () => <Approvals />,
   flags: () => <Experiments />,
   audit: () => <Audit />,
   security: () => <Security />,
-  system: () => <Ops />,
+  system: () => <System />,
 };
 
 function Workspace({ onSignOut }: { onSignOut: () => void }): React.JSX.Element {
@@ -82,7 +83,7 @@ function Workspace({ onSignOut }: { onSignOut: () => void }): React.JSX.Element 
   } else if (!mayOpenPage(route.page, session)) {
     content = (
       <EmptyState title="Your role can’t open this page" icon="lock" action={<a href={`#/${landing}`}>Go to the start page</a>}>
-        Your account is signed in, but this page is for other roles. A superadmin can change your role.
+        Your account is signed in, but this page is for other roles. Roles are given on the server, by whoever runs Hevalo.
       </EmptyState>
     );
   } else {

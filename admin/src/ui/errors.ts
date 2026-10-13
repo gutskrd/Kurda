@@ -61,7 +61,7 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
       return {
         kind: 'forbidden',
         title: 'Your role can’t open this',
-        message: `Your account is signed in, but its role doesn’t include ${what}. A superadmin can change your role.`,
+        message: `Your account is signed in, but its role doesn’t include ${what}. Roles are given on the server, by whoever runs Hevalo.`,
         requestId,
       };
     }

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ratioLabel } from '../format';
-import { api, ApiError } from '../api';
+import { api } from '../api';
+import { Badge, Button, EmptyState, ErrorState, Loading, PageHeader, Section, Stat, Table, Tabs, errorLine, useLoad, useToast, type Column } from '../ui';
 
 type Currency = 'zer' | 'gems';
 
@@ -24,158 +25,114 @@ interface DriftReport {
 
 const CURRENCY_LABEL: Record<Currency, string> = { zer: 'Zêr', gems: 'Gems' };
 
-/** Economy monitoring dashboard (KUR-074): net supply + faucet/sink drift. */
+/**
+ * The economy (KUR-074): how much of each currency is out there, how much
+ * came in (faucets) and went out (sinks) each day, and whether the balance is
+ * drifting from its target.
+ */
 export function Economy(): React.JSX.Element {
+  const toast = useToast();
   const [currency, setCurrency] = useState<Currency>('zer');
-  const [points, setPoints] = useState<DailyPoint[]>([]);
-  const [drift, setDrift] = useState<DriftReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [aggregating, setAggregating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [s, d] = await Promise.all([
-        api<{ currency: Currency; points: DailyPoint[] }>(`/admin/economy/supply?currency=${currency}&days=30`),
-        api<DriftReport>(`/admin/economy/drift?currency=${currency}`),
-      ]);
-      setPoints(s.points);
-      setDrift(d);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load economy metrics');
-    } finally {
-      setLoading(false);
-    }
+  const data = useLoad(async () => {
+    const [s, d] = await Promise.all([
+      api<{ currency: Currency; points: DailyPoint[] }>(`/admin/economy/supply?currency=${currency}&days=30`),
+      api<DriftReport>(`/admin/economy/drift?currency=${currency}`),
+    ]);
+    return { points: s.points, drift: d };
   }, [currency]);
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   async function aggregateToday(): Promise<void> {
     setAggregating(true);
-    setError(null);
     try {
       await api('/admin/economy/aggregate', { method: 'POST', body: {} });
-      await load();
+      toast.success('Today’s totals were counted again from the wallet ledger.');
+      await data.reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Aggregation failed');
+      toast.error(errorLine(err, 'the economy'));
     } finally {
       setAggregating(false);
     }
   }
 
+  const points = data.data?.points ?? [];
+  const drift = data.data?.drift ?? null;
   const latest = points[points.length - 1];
-  const maxSupply = Math.max(1, ...points.map((p) => Math.abs(p.supply)));
+  const name = CURRENCY_LABEL[currency];
+
+  const columns: Column<DailyPoint>[] = [
+    { key: 'day', header: 'Day', card: 'title', sort: (a, b) => a.day.localeCompare(b.day), cell: (p) => p.day },
+    { key: 'faucet', header: 'Came in', align: 'end', cell: (p) => p.faucet.toLocaleString() },
+    { key: 'sink', header: 'Went out', align: 'end', cell: (p) => p.sink.toLocaleString() },
+    { key: 'net', header: 'Net', align: 'end', cell: (p) => <span className={p.net < 0 ? 'is-negative' : undefined}>{p.net.toLocaleString()}</span> },
+    { key: 'supply', header: 'In circulation', align: 'end', cell: (p) => p.supply.toLocaleString() },
+  ];
 
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>Economy</h1>
-          <div className="subtle">Currency supply, faucets &amp; sinks (last 30 days)</div>
-        </div>
-        <div className="spacer" />
-        <label className="subtle" style={{ width: 'auto' }}>
-          Currency{' '}
-          <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} style={{ width: 'auto' }}>
-            <option value="zer">Zêr</option>
-            <option value="gems">Gems</option>
-          </select>
-        </label>
-        <button onClick={() => void aggregateToday()} disabled={aggregating}>
-          {aggregating ? 'Aggregating…' : 'Re-aggregate today'}
-        </button>
-      </div>
+      <PageHeader
+        title="Economy"
+        subtitle="How much of each currency is out there, what came in and went out each day, over the last 30 days."
+        actions={
+          <Button icon="refresh" onClick={() => void aggregateToday()} busy={aggregating}>
+            {aggregating ? 'Counting…' : 'Count today again'}
+          </Button>
+        }
+      />
+      <Tabs
+        label="Currency"
+        value={currency}
+        onChange={setCurrency}
+        items={[
+          { key: 'zer', label: 'Zêr' },
+          { key: 'gems', label: 'Gems' },
+        ]}
+      />
 
-      {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
-
-      {loading ? (
-        <div className="card empty">Loading…</div>
+      {data.error != null ? (
+        <ErrorState error={data.error} onRetry={() => void data.reload()} what="the economy" />
+      ) : !data.data ? (
+        <Loading rows={5} />
       ) : (
         <>
-          <div className="tiles">
-            <div className="card tile">
-              <div className="n">{latest ? latest.supply.toLocaleString() : 0}</div>
-              <div className="k">Total {CURRENCY_LABEL[currency]} in circulation</div>
-            </div>
-            <div className="card tile">
-              <div className="n">{drift ? drift.faucet.toLocaleString() : 0}</div>
-              <div className="k">Faucet (7d)</div>
-            </div>
-            <div className="card tile">
-              <div className="n">{drift ? drift.sink.toLocaleString() : 0}</div>
-              <div className="k">Sink (7d)</div>
-            </div>
-            <div className="card tile">
-              <div className="n">
-                {ratioLabel(drift)}{' '}
-                {drift && <span className={`badge ${drift.drifting ? 'hi' : 'ok'}`}>{drift.drifting ? 'drifting' : 'healthy'}</span>}
-              </div>
-              <div className="k">
-                Faucet/sink ratio (target {drift?.target ?? 1})
-                {drift?.ratio === null && drift.faucet > 0 && (
-                  <div className="subtle" style={{ textTransform: 'none', letterSpacing: 0, marginTop: 5 }}>
-                    Nothing was spent in this window, so the ratio is unbounded.
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="stats">
+            <Stat label={`${name} in circulation`} value={latest ? latest.supply.toLocaleString() : '0'} />
+            <Stat label={`Came in (${drift?.windowDays ?? 7} days)`} value={drift ? drift.faucet.toLocaleString() : '0'} hint="Earned, granted, bought" />
+            <Stat label={`Went out (${drift?.windowDays ?? 7} days)`} value={drift ? drift.sink.toLocaleString() : '0'} hint="Spent in the shop and elsewhere" />
+            <Stat
+              label="In for every one out"
+              value={
+                <>
+                  {ratioLabel(drift)} {drift && <Badge tone={drift.drifting ? 'bad' : 'ok'}>{drift.drifting ? 'Drifting' : 'Healthy'}</Badge>}
+                </>
+              }
+              hint={
+                drift?.ratio === null && drift.faucet > 0
+                  ? 'Nothing was spent in this window, so there is no ratio.'
+                  : `The target is ${drift?.target ?? 1}.`
+              }
+            />
           </div>
 
-          <div className="card">
-            <div className="section-title" style={{ marginTop: 0 }}>
-              Net {CURRENCY_LABEL[currency]} supply
-            </div>
+          <Section title={`${name} in circulation`}>
             {points.length === 0 ? (
-              <div className="empty">
-                No aggregated days yet. Click “Re-aggregate today” to roll up the wallet ledger.
-              </div>
+              <EmptyState title="No days counted yet." icon="coins" action={<Button onClick={() => void aggregateToday()}>Count today</Button>}>
+                The server counts the daily totals from the wallet ledger every six hours.
+              </EmptyState>
             ) : (
-              <div className="bars" title="cumulative supply per day">
-                {points.map((p) => (
-                  <div
-                    key={p.day}
-                    className="b"
-                    style={{ height: `${(Math.abs(p.supply) / maxSupply) * 100}%` }}
-                    title={`${p.day}: supply ${p.supply}`}
-                  />
-                ))}
+              <div className="bars" role="img" aria-label={`${name} in circulation over ${points.length} days, now ${latest!.supply.toLocaleString()}.`}>
+                {points.map((p) => {
+                  const max = Math.max(1, ...points.map((x) => Math.abs(x.supply)));
+                  return <div key={p.day} className="b" style={{ height: `${(Math.abs(p.supply) / max) * 100}%` }} title={`${p.day}: ${p.supply.toLocaleString()}`} />;
+                })}
               </div>
             )}
-          </div>
+          </Section>
 
           {points.length > 0 && (
-            <div className="card" style={{ padding: 0, marginTop: 16 }}>
-              <div className="section-title" style={{ margin: '14px 16px 8px' }}>
-                Daily faucet / sink
-              </div>
-              <div className="tablewrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Day</th>
-                      <th>Faucet</th>
-                      <th>Sink</th>
-                      <th>Net</th>
-                      <th>Supply</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...points].reverse().map((p) => (
-                      <tr key={p.day}>
-                        <td>{p.day}</td>
-                        <td>{p.faucet.toLocaleString()}</td>
-                        <td>{p.sink.toLocaleString()}</td>
-                        <td className={p.net < 0 ? 'subtle' : ''}>{p.net.toLocaleString()}</td>
-                        <td>{p.supply.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <Section flush title="Day by day">
+              <Table caption={`${name} day by day`} columns={columns} rows={[...points].reverse()} rowKey={(p) => p.day} />
+            </Section>
           )}
         </>
       )}
