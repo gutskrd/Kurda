@@ -74,6 +74,9 @@ export const up = (pgm) => {
   pgm.createIndex('story_games', 'story_id');
   // a deleted game nulls the next_game_id pointing at it: without this, a scan per deleted row
   pgm.createIndex('story_games', 'next_game_id', { where: 'next_game_id IS NOT NULL' });
+  // deleting a group nulls the chat_group_id of every game shared into it: the
+  // same scan otherwise, over a table that keeps games for 400 days
+  pgm.createIndex('story_games', 'chat_group_id', { where: 'chat_group_id IS NOT NULL' });
   pgm.createIndex('story_games', 'code', { unique: true, where: 'code IS NOT NULL' });
 
   pgm.createTable('story_game_players', {
