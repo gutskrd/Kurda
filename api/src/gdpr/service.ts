@@ -418,7 +418,9 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
         AND NOT EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.media_key = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM image_scans s WHERE s.media_key = k.key AND s.preserve_evidence)`,
-    [[...keys.rows, ...pictures.rows].map((r) => r.key)],
+    // once each: an old picture post's upload is both its picture and one of
+    // their uploads, and a key twice would fail the marking below
+    [[...new Set([...keys.rows, ...pictures.rows].map((r) => r.key))]],
   );
   const files = [...unused.rows.map((r) => r.key), ...exports.rows.map((r) => r.key)];
   await q(

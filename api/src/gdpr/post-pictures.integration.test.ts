@@ -112,9 +112,20 @@ describe.skipIf(!DATABASE_URL)('pictures on posts in GDPR erase and export (inte
       remoteAddress: ip(),
     });
     expect((await pool.query(`SELECT confirmed_at FROM media_uploads WHERE key = $1`, [b])).rows[0].confirmed_at).not.toBeNull();
+    // and a picture post the way the installed apps make one: its upload is
+    // both the post's picture and one of theirs, and goes once
+    const old = await upload(child);
+    const picturePost = await app.inject({
+      method: 'POST',
+      url: '/images',
+      payload: { imageMediaId: old, category: 'image' },
+      headers: { authorization: `Bearer ${child.token}` },
+      remoteAddress: ip(),
+    });
+    expect(picturePost.statusCode).toBe(201);
 
     await new GdprService(pool, { storage: memoryStorage() }).closeNow(child.id, 'under_minimum_age');
-    expect(await stored([a, b])).toEqual([]);
+    expect(await stored([a, b, old])).toEqual([]);
   });
 
   it('exports someone’s posts with links to their pictures, drafts and removed ones too', async () => {
