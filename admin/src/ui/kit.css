@@ -220,6 +220,12 @@
   .form-actions { flex-direction: column-reverse; align-items: stretch; }
   .form-actions > * { width: 100%; }
 }
+/* in a sheet's foot: across the whole width, and on a phone side by side, the main one on the thumb's side (a dialog's question stacks its answers, below) */
+.drawer-foot > .form-actions, .dialog-foot > .form-actions { flex: 1 1 auto; padding-top: 0; }
+@media (max-width: 560px) {
+  .drawer-foot > .form-actions, .dialog-foot > .form-actions { flex-direction: row; }
+  .drawer-foot > .form-actions > *, .dialog-foot > .form-actions > * { width: auto; flex: 1 1 0; }
+}
 .check { display: flex; align-items: flex-start; gap: 10px; min-height: 32px; padding: 6px 0; }
 .check input { margin-top: 1px; }
 .check-text { display: grid; gap: 2px; }
