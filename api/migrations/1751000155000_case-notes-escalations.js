@@ -10,6 +10,10 @@
  * to file by hand with NCMEC, the IWF/NCA or an INHOPE hotline. It carries the
  * links, and is closed with the reference the hotline gave, which the UK rules
  * expect a service to keep (research: NCA references for five years).
+ *
+ * A CSAM escalation also names the media it took off the public bucket
+ * (`media_keys`): the files the filing admin attaches from private storage, and
+ * the ones the evidence retention lets go of a year after the case is closed.
  */
 
 export const up = (pgm) => {
@@ -29,6 +33,7 @@ export const up = (pgm) => {
     kind: { type: 'text', notNull: true, check: "kind IN ('csam','escalation')" },
     reason: { type: 'text' },
     links: { type: 'jsonb', notNull: true, default: '[]' },
+    media_keys: { type: 'text[]', notNull: true, default: '{}' },
     status: { type: 'text', notNull: true, default: 'open', check: "status IN ('open','filed')" },
     reference: { type: 'text' },
     created_by: { type: 'uuid' },

@@ -207,6 +207,16 @@ Notes: the app uploads **through the API** (bytes are validated, resized to
 is never trusted); only the **public GET** at `CDN_BASE_URL` must be reachable.
 The media-orphan job cleans up replaced/unconfirmed objects automatically.
 
+**Evidence moderation takes down (recommended).** The CSAM action, and closing a
+child's account whose picture a report still holds, move the file off the public
+bucket: copied to private storage, the public object deleted. Two optional
+settings make that complete:
+
+| Variable | Value |
+|---|---|
+| `S3_EVIDENCE_BUCKET` | a second R2 bucket with **no** public access, e.g. `hevalo-evidence` (same token and endpoint; give the token access to it). Without it, evidence goes to unguessable `quarantine/…` keys in the main bucket, written `private, no-store`. |
+| `CDN_PURGE_ZONE_ID` / `CDN_PURGE_API_TOKEN` | the Cloudflare zone serving `CDN_BASE_URL` (a custom domain) and an API token with only **Zone → Cache Purge**. Media is cached for a year at the edge; with these set the CDN is told to forget a taken-down URL at once. Without them, the CSAM filing task in the admin lists the URLs to purge by hand (Caching → Configuration → Custom Purge). |
+
 ### Cost-safety (stay inside R2's free tier)
 
 All limits are env-driven (sensible defaults; raise them to scale). They're

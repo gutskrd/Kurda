@@ -54,3 +54,13 @@ export function normalizeEmailForRegistry(email: string): string {
 export function emailRegistryHash(email: string): string {
   return keyed('email', normalizeEmailForRegistry(email));
 }
+
+/**
+ * Where a quarantined file is kept: `quarantine/<keyed hash>/<its key>`. Keyed,
+ * so nobody can work out the private copy's address from the public one; and
+ * the same for the same file every time, so two runs that race to move it
+ * write the same object and neither leaves a stray copy behind.
+ */
+export function evidenceObjectKey(key: string): string {
+  return `quarantine/${keyed('evidence-object', key).slice(0, 40)}/${key}`;
+}

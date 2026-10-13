@@ -27,15 +27,18 @@ export class MediaService {
   /** Deletes unconfirmed uploads older than the orphan window. */
   async cleanupOrphans(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - ORPHAN_AGE_HOURS * 3_600_000);
-    const orphans = await this.pool.query<{ key: string }>(
+    const orphans = await this.pool.query<{ key: string; quarantine_key: string | null }>(
       // a file kept as report evidence is never an orphan, whatever let go of it
-      `SELECT key FROM media_uploads
+      `SELECT key, quarantine_key FROM media_uploads
         WHERE confirmed_at IS NULL AND created_at < $1 AND NOT preserve_evidence LIMIT 500`,
       [cutoff],
     );
     let cleaned = 0;
     for (const row of orphans.rows) {
       await this.storage.delete(row.key);
+      // evidence moderation took off the public bucket lives on privately until
+      // its retention ends; it goes with its row
+      if (row.quarantine_key) await this.storage.deleteEvidence(row.quarantine_key);
       await this.pool.query(`DELETE FROM media_uploads WHERE key = $1`, [row.key]);
       cleaned++;
     }

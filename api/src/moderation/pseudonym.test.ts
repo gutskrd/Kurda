@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEV_JWT_SECRET, loadConfig } from '../config/env.js';
-import { emailRegistryHash, normalizeEmailForRegistry, setModerationKey, userHash } from './pseudonym.js';
+import { emailRegistryHash, evidenceObjectKey, normalizeEmailForRegistry, setModerationKey, userHash } from './pseudonym.js';
 import { signAppealToken, verifyAppealToken } from './appeal-token.js';
 import { issueAccessToken, verifyAccessToken } from '../auth/tokens.js';
 
@@ -17,6 +17,15 @@ describe('pseudonyms', () => {
 
   it('keep the user hash and the email hash apart', () => {
     expect(userHash('x@y.z')).not.toBe(emailRegistryHash('x@y.z'));
+  });
+
+  it('give a quarantined file one private address that the public one does not reveal', () => {
+    const key = `image-post/${'a'.repeat(64)}.webp`;
+    const target = evidenceObjectKey(key);
+    expect(target).toMatch(/^quarantine\/[0-9a-f]{40}\/image-post\/a{64}\.webp$/);
+    expect(evidenceObjectKey(key)).toBe(target); // the same every time, so a retried move overwrites itself
+    setModerationKey('another-server-secret-that-is-long-enough');
+    expect(evidenceObjectKey(key)).not.toBe(target);
   });
 });
 

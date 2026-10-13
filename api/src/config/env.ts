@@ -35,6 +35,21 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   /**
+   * A second bucket on the same endpoint and credentials that is NOT public,
+   * where moderation keeps evidence it takes off the public CDN (CSAM, and a
+   * closed child's files a report still holds). Optional: without it evidence
+   * goes to unguessable private keys in the main bucket.
+   */
+  S3_EVIDENCE_BUCKET: z.string().optional(),
+  /**
+   * Cloudflare zone and API token (Cache Purge permission only) for the zone
+   * that serves CDN_BASE_URL, so media taken down by moderation stops being
+   * served from the edge at once. Optional: without them the CSAM filing task
+   * lists the URLs to purge by hand.
+   */
+  CDN_PURGE_ZONE_ID: z.string().optional(),
+  CDN_PURGE_API_TOKEN: z.string().optional(),
+  /**
    * Public origin of the web app. Email links (password reset, email
    * verification) are built from this, so a wrong value sends users nowhere.
    */

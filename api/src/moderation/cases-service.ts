@@ -31,10 +31,12 @@ import {
   type SanctionOrigin,
   type UserMessagePreview,
 } from '@kurda/shared';
+import type { FastifyBaseLogger } from 'fastify';
 import type { MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { minorSql } from '../users/age.js';
-import { preserveMedia, removableTarget, removeContent as removeContentOf, type RemovalRecord } from './content-removal.js';
+import { mediaOfRemoval, removableTarget, removeContent as removeContentOf, removeMedia, type RemovalRecord } from './content-removal.js';
+import { mediaWhereabouts, requestQuarantine, runQuarantine } from './quarantine.js';
 import { caringMessage, reportOutcomeNotice, sanctionNotice, type Notice } from './notices.js';
 import { isZeroTolerance, permanentBanMode, slaDueAt } from './rules.js';
 import { deliverNotice, logAdminAction, toSanctionView, type SanctionRow, type SanctionsService } from './sanctions-service.js';
@@ -167,7 +169,8 @@ function originFor(source: CaseSource): SanctionOrigin {
 }
 
 export interface CasesOptions {
-  storage?: MediaStorage;
+  storage?: MediaStorage | null;
+  log?: Pick<FastifyBaseLogger, 'warn'>;
 }
 
 type PermanentBanCheck = DecideResult['permanentBans'][number];
@@ -567,11 +570,15 @@ export class CasesService {
         leaseUntil: c.lease_until.toISOString(),
       });
     }
-    // nobody decides a case they are part of
-    if (c.subject_user_id === adminId || (await reporterIdsOf(db, c)).includes(adminId)) {
-      throw new AppError('CONFLICT_OF_INTEREST', 403, 'you are part of this case; another moderator must decide it');
-    }
+    await this.assertNotParty(db, c, adminId);
     return c;
+  }
+
+  /** Nobody handles a case they are part of: the reported person, or one of its reporters. */
+  async assertNotParty(db: Executor, c: CaseRow, adminId: string): Promise<void> {
+    if (c.subject_user_id === adminId || (await reporterIdsOf(db, c)).includes(adminId)) {
+      throw new AppError('CONFLICT_OF_INTEREST', 403, 'you are part of this case; another moderator must handle it');
+    }
   }
 
   async find(db: Executor, caseId: string, forUpdate = false): Promise<CaseRow | null> {
@@ -633,36 +640,73 @@ export class CasesService {
         before: { status: c.status },
         after: { status: 'escalated' },
       });
-      return toEscalation(e.rows[0]!);
+      return (await this.escalationViews(client, [e.rows[0]!]))[0]!;
     });
   }
 
   /**
-   * Child sexual abuse material. Hides the content everywhere, keeps the original
-   * (media flagged so no cleanup deletes it, the snapshot untouched), closes the
-   * account for good (zero tolerance: at once, confirmed afterwards by a second
-   * admin when there is one), and opens the filing task with the hotlines'
-   * links. Nothing is sent to anyone outside Hevalo automatically.
+   * Child sexual abuse material. Hides the content and every copy of its media
+   * everywhere (`removeMedia` for each file: every picture post carrying it,
+   * every profile it is the photo of), takes the originals off the public
+   * bucket into private storage (quarantine.ts — the bucket is public-read, so
+   * a database flag alone left the file on the CDN for anyone with its URL),
+   * keeps them and the snapshot as evidence, closes the account for good (zero
+   * tolerance: at once, confirmed afterwards by a second admin when there is
+   * one), and opens the filing task with the hotlines' links and the files.
+   * Nothing is sent to anyone outside Hevalo automatically.
+   *
+   * It does not wait: a case another moderator holds, or one whose ban waits
+   * for a second admin, is acted on anyway (the override is logged) — only
+   * someone who is part of the case is refused.
    */
   async csam(caseId: string, adminId: string, note?: string): Promise<CsamActionResult> {
-    return inTransaction(this.pool, async (client) => {
-      const c = await this.lockOpen(client, caseId, adminId);
+    const done = await inTransaction(this.pool, async (client) => {
+      const c = await this.find(client, caseId, true);
+      if (!c) throw new AppError('NOT_FOUND', 404, 'no such case');
       if (c.resolution === 'csam') throw new AppError('ALREADY_DECIDED', 409, 'the CSAM action was already taken on this case');
+      if (!(OPEN_CASE_STATUSES as readonly string[]).includes(c.status)) {
+        throw new AppError('CASE_CLOSED', 409, 'this case is already decided; reopen it first');
+      }
+      await this.assertNotParty(client, c, adminId);
+      const overrodeClaimOf =
+        c.claimed_by && c.claimed_by !== adminId && c.lease_until && c.lease_until.getTime() > Date.now() ? c.claimed_by : null;
 
-      let removed: RemovalRecord | null = null;
+      const parts: RemovalRecord[] = [];
       try {
-        removed = await removeContentOf(client, c, adminId);
+        parts.push(await removeContentOf(client, c, adminId));
       } catch (err) {
         // a case about a person rather than a post still gets the rest
         if (!(err instanceof AppError && err.code === 'NOTHING_TO_REMOVE')) throw err;
       }
-      const keys = await this.evidenceMediaKeys(client, c);
-      if (removed?.type === 'media') keys.push(removed.key);
-      await preserveMedia(client, keys);
-      if (keys.length > 0) await client.query(`UPDATE media_uploads SET scan_status = 'blocked' WHERE key = ANY($1::text[])`, [keys]);
+      const keys = new Set(await this.evidenceMediaKeys(client, c));
+      for (const part of parts) for (const k of await mediaOfRemoval(client, part)) keys.add(k);
+      for (const key of keys) {
+        if (parts.some((p) => p.type === 'media' && p.key === key)) continue;
+        parts.push(await removeMedia(client, key));
+      }
+      await requestQuarantine(client, [...keys]);
+      const removed: RemovalRecord | null = parts.length > 0 ? { type: 'csam', parts } : null;
 
       const applied: CaseSanctionView[] = [];
       if (c.subject_user_id) {
+        // a ban still waiting for a second admin is replaced by this one, which
+        // does not wait
+        const waiting = await client.query<{ id: string; meta: { emergencySanctionId?: string } }>(
+          `SELECT id, meta FROM sanctions
+            WHERE user_id = $1 AND kind = 'permanent_ban' AND pending_approval AND revoked_at IS NULL`,
+          [c.subject_user_id],
+        );
+        for (const w of waiting.rows) {
+          const reason = 'replaced by the CSAM action';
+          await this.sanctions.revoke(client, w.id, adminId, reason, { notify: false, auditAction: 'reject_ban' });
+          const emergency = w.meta.emergencySanctionId;
+          if (emergency) {
+            const e = await client.query<{ revoked_at: Date | null }>(`SELECT revoked_at FROM sanctions WHERE id = $1`, [emergency]);
+            if (e.rows[0] && e.rows[0].revoked_at === null) {
+              await this.sanctions.revoke(client, emergency, adminId, reason, { notify: false, auditAction: 'reject_ban' });
+            }
+          }
+        }
         const banned = await client.query(
           `SELECT 1 FROM sanctions s WHERE s.user_id = $1 AND s.kind = 'permanent_ban' AND s.revoked_at IS NULL AND NOT s.pending_approval`,
           [c.subject_user_id],
@@ -685,9 +729,15 @@ export class CasesService {
       }
 
       const e = await client.query<EscalationRow>(
-        `INSERT INTO moderation_escalations (case_id, kind, reason, links, created_by)
-         VALUES ($1, 'csam', $2, $3::jsonb, $4) RETURNING *`,
-        [c.id, note?.trim() || 'File a report with the hotline for where the content or account is', JSON.stringify(CSAM_REPORTING_LINKS), adminId],
+        `INSERT INTO moderation_escalations (case_id, kind, reason, links, media_keys, created_by)
+         VALUES ($1, 'csam', $2, $3::jsonb, $4::text[], $5) RETURNING *`,
+        [
+          c.id,
+          note?.trim() || 'File a report with the hotline for where the content or account is',
+          JSON.stringify(CSAM_REPORTING_LINKS),
+          [...keys],
+          adminId,
+        ],
       );
       await this.finalize(client, c, 'actioned', adminId, true);
       await client.query(
@@ -705,10 +755,40 @@ export class CasesService {
         caseId: c.id,
         policy: 'child_safety',
         before: { status: c.status },
-        after: { status: 'escalated', preservedMedia: keys },
+        after: { status: 'escalated', preservedMedia: [...keys] },
+        meta: overrodeClaimOf ? { overrodeClaimOf } : {},
       });
-      return { status: 'escalated' as CaseStatus, escalation: toEscalation(e.rows[0]!), sanctions: applied };
+      return { escalation: e.rows[0]!, sanctions: applied, keys: [...keys] };
     });
+
+    // after the commit: off the public bucket now (what fails, the sweep retries)
+    await runQuarantine(this.pool, this.opts.storage, { keys: done.keys, log: this.opts.log });
+    return {
+      status: 'escalated',
+      escalation: (await this.escalationViews(this.pool, [done.escalation]))[0]!,
+      sanctions: done.sanctions,
+    };
+  }
+
+  /** Escalations as the API shows them, with where each CSAM file is now. */
+  private async escalationViews(db: Executor, rows: EscalationRow[]): Promise<CaseEscalation[]> {
+    const where = await mediaWhereabouts(db, [...new Set(rows.flatMap((e) => e.media_keys))]);
+    const storage = this.opts.storage;
+    return rows.map((e) =>
+      toEscalation(
+        e,
+        e.media_keys.map((key) => {
+          const m = where.get(key);
+          const cdnPurged = m?.cdnPurged ?? null;
+          return {
+            key,
+            quarantine: m?.quarantine ?? null,
+            cdnPurged,
+            publicUrl: cdnPurged === true || !storage ? null : storage.publicUrl(key),
+          };
+        }),
+      ),
+    );
   }
 
   /** The hotline report was filed: record its reference; a CSAM case is then done. */
@@ -737,7 +817,7 @@ export class CasesService {
         caseId: row.case_id,
         after: { escalation: row.id, status: 'filed' },
       });
-      return toEscalation(row);
+      return (await this.escalationViews(client, [row]))[0]!;
     });
   }
 
@@ -1014,7 +1094,7 @@ export class CasesService {
       notes,
       audit,
       sanctions: sanctions.rows.map((s) => toSanctionView(s, now)),
-      escalations: escalations.rows.map(toEscalation),
+      escalations: await this.escalationViews(this.pool, escalations.rows),
     };
   }
 
@@ -1157,19 +1237,24 @@ export class CasesService {
     return r.rows.map((a) => ({ at: a.at.toISOString(), adminId: a.admin_id, action: a.action, detail: a.detail }));
   }
 
-  /** Media from the evidence, as short-lived signed links (five minutes). */
+  /**
+   * Media from the evidence, as short-lived signed links (five minutes): to the
+   * private copy once a file is quarantined, since the public one is gone.
+   */
   private async signedMedia(keys: string[]): Promise<CaseDetail['media']> {
     if (keys.length === 0) return [];
-    const types = await this.pool.query<{ key: string; content_type: string }>(
-      `SELECT key, content_type FROM media_uploads WHERE key = ANY($1::text[])`,
-      [keys],
-    );
-    const typeOf = new Map(types.rows.map((t) => [t.key, t.content_type]));
+    const where = await mediaWhereabouts(this.pool, keys);
+    const storage = this.opts.storage;
     const out: CaseDetail['media'] = [];
     for (const key of keys) {
+      const m = where.get(key);
       let url: string | null = null;
-      if (this.opts.storage) url = await this.opts.storage.createDownloadUrl(key, 300).catch(() => null);
-      out.push({ key, url, contentType: typeOf.get(key) ?? null });
+      if (storage && m?.quarantine === 'done') {
+        url = m.quarantineKey ? await storage.createEvidenceDownloadUrl(m.quarantineKey, 300).catch(() => null) : null;
+      } else if (storage) {
+        url = await storage.createDownloadUrl(key, 300).catch(() => null);
+      }
+      out.push({ key, url, contentType: m?.contentType ?? null, quarantine: m?.quarantine ?? null });
     }
     return out;
   }
@@ -1217,13 +1302,14 @@ interface EscalationRow {
   kind: 'csam' | 'escalation';
   reason: string | null;
   links: Array<{ label: string; url: string }>;
+  media_keys: string[];
   status: 'open' | 'filed';
   reference: string | null;
   created_at: Date;
   filed_at: Date | null;
 }
 
-function toEscalation(e: EscalationRow): CaseEscalation {
+function toEscalation(e: EscalationRow, media: CaseEscalation['media']): CaseEscalation {
   return {
     id: e.id,
     kind: e.kind,
@@ -1233,5 +1319,6 @@ function toEscalation(e: EscalationRow): CaseEscalation {
     reference: e.reference,
     createdAt: e.created_at.toISOString(),
     filedAt: e.filed_at?.toISOString() ?? null,
+    media,
   };
 }

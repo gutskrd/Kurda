@@ -119,14 +119,19 @@ export async function storeImageMedia(
   }
 
   // idempotent: identical bytes already stored + confirmed → reuse, no new R2 write
-  const existing = await pool.query<{ scan_status: string }>(
-    `SELECT scan_status FROM media_uploads WHERE key = $1 AND confirmed_at IS NOT NULL`,
+  const existing = await pool.query<{ scan_status: string; confirmed: boolean; quarantined: boolean }>(
+    `SELECT scan_status, confirmed_at IS NOT NULL AS confirmed, quarantine_state IS NOT NULL AS quarantined
+       FROM media_uploads WHERE key = $1`,
     [key],
   );
-  if (existing.rows[0]) {
-    if (existing.rows[0].scan_status === 'blocked') {
-      return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');
-    }
+  const known = existing.rows[0];
+  // blocked or taken off the bucket by moderation: never written back, even
+  // once the row has been let go as an orphan (a re-upload would otherwise
+  // put the same bytes on the public CDN again)
+  if (known && (known.scan_status === 'blocked' || known.quarantined)) {
+    return reject(422, 'IMAGE_REJECTED', 'this image was rejected by moderation', 'moderation');
+  }
+  if (known?.confirmed) {
     return { ok: true, mediaId: key, url: storage.publicUrl(key), reused: true };
   }
 

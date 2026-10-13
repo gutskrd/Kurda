@@ -93,6 +93,17 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
     return { ok: true, profilePhotoUrl: storage.publicUrl(key), reused: true };
   }
 
+  // the same picture moderation blocked or took off the bucket (keys are
+  // content hashes, so anyone uploading the same bytes lands on it) is never
+  // written back to the public CDN
+  const known = await pool.query(
+    `SELECT 1 FROM media_uploads WHERE key = $1 AND (scan_status = 'blocked' OR quarantine_state IS NOT NULL)`,
+    [key],
+  );
+  if (known.rowCount) {
+    return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation');
+  }
+
   // 6) register + upload (idempotent by content-addressed key). If the PUT fails,
   //    the row stays unconfirmed (orphan-cleaned) and the old photo is untouched.
   await pool.query(

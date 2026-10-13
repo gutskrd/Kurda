@@ -27,13 +27,22 @@ export type RemovalRecord =
       previousAudio: string | null;
     }
   | { type: 'dm_message' | 'group_message'; id: string; previousBody: string | null; kind: string }
-  | {
-      type: 'media';
-      key: string;
-      previousScanStatus: string | null;
-      posts: Array<{ id: string; previousStatus: string }>;
-      profilePhotoOf: string[];
-    };
+  | MediaRemoval
+  /**
+   * The CSAM action: the reported content and every copy of its media, all at
+   * once. Never put back by an appeal — undoing it is a deliberate act by hand,
+   * since the originals have left the public bucket by then.
+   */
+  | { type: 'csam'; parts: RemovalRecord[] };
+
+/** A file hidden wherever it is used: blocked, its pictures removed, the profile photos it was taken off. */
+export interface MediaRemoval {
+  type: 'media';
+  key: string;
+  previousScanStatus: string | null;
+  posts: Array<{ id: string; previousStatus: string }>;
+  profilePhotoOf: string[];
+}
 
 /** The content a case is about, when it is content at all. */
 export async function removableTarget(
@@ -138,28 +147,57 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
       }
       return { type: target.type, id: target.id, previousBody: row.moderated_at === null ? row.body : null, kind: row.kind };
     }
-    case 'media': {
-      const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [target.id]);
-      await db.query(`UPDATE media_uploads SET scan_status = 'blocked' WHERE key = $1`, [target.id]);
-      const posts = await db.query<{ id: string; status: string }>(
-        `SELECT id, status FROM image_posts WHERE image_media_id = $1 AND status <> 'removed' FOR UPDATE`,
-        [target.id],
-      );
-      await db.query(`UPDATE image_posts SET status = 'removed', updated_at = now() WHERE image_media_id = $1 AND status <> 'removed'`, [target.id]);
-      const photos = await db.query<{ id: string }>(
-        `UPDATE users SET profile_photo_key = NULL WHERE profile_photo_key = $1 RETURNING id`,
-        [target.id],
-      );
-      return {
-        type: 'media',
-        key: target.id,
-        previousScanStatus: media.rows[0]?.scan_status ?? null,
-        posts: posts.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
-        profilePhotoOf: photos.rows.map((p) => p.id),
-      };
-    }
+    case 'media':
+      return removeMedia(db, target.id);
     default:
       throw new AppError('NOTHING_TO_REMOVE', 422, 'this case is not about a piece of content');
+  }
+}
+
+/**
+ * Hide one file everywhere it is used. Keys are content hashes, so the same
+ * picture can sit under several accounts' posts and profiles at once: every
+ * picture post carrying it is removed, it comes off every profile it is the
+ * photo of (old chat messages, comments and leaderboards draw the avatar from
+ * there), and the upload is blocked so it is never served or accepted again.
+ */
+export async function removeMedia(db: Executor, key: string): Promise<MediaRemoval> {
+  const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [key]);
+  await db.query(`UPDATE media_uploads SET scan_status = 'blocked' WHERE key = $1`, [key]);
+  const posts = await db.query<{ id: string; status: string }>(
+    `SELECT id, status FROM image_posts WHERE image_media_id = $1 AND status <> 'removed' FOR UPDATE`,
+    [key],
+  );
+  await db.query(`UPDATE image_posts SET status = 'removed', updated_at = now() WHERE image_media_id = $1 AND status <> 'removed'`, [key]);
+  const photos = await db.query<{ id: string }>(`UPDATE users SET profile_photo_key = NULL WHERE profile_photo_key = $1 RETURNING id`, [key]);
+  return {
+    type: 'media',
+    key,
+    previousScanStatus: media.rows[0]?.scan_status ?? null,
+    posts: posts.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
+    profilePhotoOf: photos.rows.map((p) => p.id),
+  };
+}
+
+/** The files a removal took down with the content: a picture post's image, a post's or comment's voice. */
+export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<string[]> {
+  switch (rec.type) {
+    case 'image_post': {
+      const r = await db.query<{ k: string }>(`SELECT image_media_id AS k FROM image_posts WHERE id = $1::uuid`, [rec.id]);
+      return r.rows.map((x) => x.k);
+    }
+    case 'library_post': {
+      const r = await db.query<{ k: string | null }>(`SELECT audio_media_id AS k FROM library_posts WHERE id = $1::uuid`, [rec.id]);
+      return r.rows.map((x) => x.k).filter((k): k is string => k !== null);
+    }
+    case 'library_comment':
+      return rec.previousAudio ? [rec.previousAudio] : [];
+    case 'media':
+      return [rec.key];
+    case 'csam':
+      return (await Promise.all(rec.parts.map((p) => mediaOfRemoval(db, p)))).flat();
+    default:
+      return [];
   }
 }
 
@@ -214,11 +252,9 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       }
       return;
     }
+    case 'csam':
+      // never automatically: see the record's type
+      return;
   }
 }
 
-/** Keep every media key from cleanup for as long as the evidence is kept. */
-export async function preserveMedia(db: Executor, keys: string[]): Promise<void> {
-  if (keys.length === 0) return;
-  await db.query(`UPDATE media_uploads SET preserve_evidence = true WHERE key = ANY($1::text[])`, [keys]);
-}

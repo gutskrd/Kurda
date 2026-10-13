@@ -1,4 +1,5 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
@@ -39,6 +40,27 @@ export function mediaKey(kind: string, sha256Hex: string, contentType: string): 
 
 export const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
+/** What an object nobody but its owner (or a moderator) may fetch is stored with. */
+export const PRIVATE_CACHE_CONTROL = 'private, no-store, max-age=0';
+
+/**
+ * Asks the CDN in front of the public bucket to forget some URLs; true when it
+ * accepted. A deleted object is otherwise served from the edge for as long as
+ * its year-long `immutable` cache lasts.
+ */
+export type CdnPurge = (urls: string[]) => Promise<boolean>;
+
+export interface MediaStorageOptions {
+  /**
+   * A bucket that is NOT publicly readable, for what moderation keeps as
+   * evidence. Without one, evidence goes to an unguessable `quarantine/` key
+   * in the public bucket, written `private, no-store` — reachable only by
+   * someone who already has the key, never listed and never cached.
+   */
+  evidenceBucket?: string;
+  purge?: CdnPurge;
+}
+
 export interface UploadTicket {
   key: string;
   uploadUrl: string;
@@ -53,7 +75,12 @@ export class MediaStorage {
     private readonly s3: S3Client,
     private readonly bucket: string,
     private readonly cdnBaseUrl: string,
+    private readonly options: MediaStorageOptions = {},
   ) {}
+
+  private get evidenceBucket(): string {
+    return this.options.evidenceBucket ?? this.bucket;
+  }
 
   publicUrl(key: string): string {
     return `${this.cdnBaseUrl}/${key}`;
@@ -161,10 +188,76 @@ export class MediaStorage {
         Body: body,
         ContentType: contentType,
         ContentLength: body.length,
-        CacheControl: 'private, no-store, max-age=0',
+        CacheControl: PRIVATE_CACHE_CONTROL,
       }),
     );
   }
+
+  // ---- evidence moderation keeps off the public bucket ------------------------
+
+  /**
+   * Copy a public object to `target` in evidence storage, private and uncached.
+   * The caller deletes the public original once this has succeeded, so a failed
+   * copy never loses the evidence.
+   */
+  async copyToEvidence(key: string, target: string, contentType?: string): Promise<void> {
+    await this.s3.send(
+      new CopyObjectCommand({
+        Bucket: this.evidenceBucket,
+        Key: target,
+        // keys are `kind/<sha256>.ext` (mediaKey), nothing that needs escaping
+        CopySource: `${this.bucket}/${key}`,
+        MetadataDirective: 'REPLACE',
+        CacheControl: PRIVATE_CACHE_CONTROL,
+        ...(contentType ? { ContentType: contentType } : {}),
+      }),
+    );
+  }
+
+  async evidenceExists(target: string): Promise<boolean> {
+    try {
+      await this.s3.send(new HeadObjectCommand({ Bucket: this.evidenceBucket, Key: target }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** A short-lived signed GET for a piece of evidence (the case view's media). */
+  async createEvidenceDownloadUrl(target: string, expiresInSeconds = 300): Promise<string> {
+    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.evidenceBucket, Key: target }), {
+      expiresIn: expiresInSeconds,
+    });
+  }
+
+  async deleteEvidence(target: string): Promise<void> {
+    await this.s3.send(new DeleteObjectCommand({ Bucket: this.evidenceBucket, Key: target }));
+  }
+
+  /** Ask the CDN to drop these keys' public URLs. Null when no purge is configured. */
+  async purgePublic(keys: string[]): Promise<boolean | null> {
+    if (!this.options.purge || keys.length === 0) return null;
+    try {
+      return await this.options.purge(keys.map((k) => this.publicUrl(k)));
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
+ * Cloudflare's purge-by-URL, for a bucket served through a Cloudflare zone (R2
+ * on a custom domain). The token needs only the zone's Cache Purge permission.
+ */
+export function cloudflarePurge(zoneId: string, apiToken: string, fetchFn: typeof fetch = fetch): CdnPurge {
+  return async (urls) => {
+    const res = await fetchFn(`https://api.cloudflare.com/client/v4/zones/${encodeURIComponent(zoneId)}/purge_cache`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${apiToken}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ files: urls }),
+    });
+    return res.ok;
+  };
 }
 
 export function createStorage(config: AppConfig): MediaStorage | null {
@@ -186,5 +279,11 @@ export function createStorage(config: AppConfig): MediaStorage | null {
     (config.S3_ENDPOINT
       ? `${config.S3_ENDPOINT.replace(/\/$/, '')}/${config.S3_BUCKET}`
       : `https://${config.S3_BUCKET}.s3.${config.S3_REGION}.amazonaws.com`);
-  return new MediaStorage(s3, config.S3_BUCKET, cdn.replace(/\/$/, ''));
+  return new MediaStorage(s3, config.S3_BUCKET, cdn.replace(/\/$/, ''), {
+    evidenceBucket: config.S3_EVIDENCE_BUCKET,
+    purge:
+      config.CDN_PURGE_ZONE_ID && config.CDN_PURGE_API_TOKEN
+        ? cloudflarePurge(config.CDN_PURGE_ZONE_ID, config.CDN_PURGE_API_TOKEN)
+        : undefined,
+  });
 }

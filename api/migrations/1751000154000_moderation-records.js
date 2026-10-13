@@ -22,6 +22,16 @@
  * Media gains `preserve_evidence`: a key in a report's snapshot is kept by every
  * cleanup (the orphan sweep, a replaced profile photo, a closed account's files)
  * until the evidence's retention ends.
+ *
+ * And a quarantine: evidence that must not stay public — CSAM, or a closed
+ * child's picture a report still holds — is copied to private storage and the
+ * public object deleted (the bucket is public-read, so "blocked" in a column
+ * hid nothing from anyone with the URL). `quarantine_state` is 'pending' from
+ * the decision until the storage has done it (the move runs after the commit,
+ * and a sweep retries what failed), then 'done'; `quarantine_key` is where the
+ * original now lives (null when there was no object left to move), and
+ * `cdn_purged` whether the CDN accepted forgetting the public URL (null: no
+ * purge configured — the filing task says to do it by hand).
  */
 
 const ACTIONS_OLD =
@@ -110,11 +120,17 @@ export const up = (pgm) => {
   // ---- media kept as evidence ---------------------------------------------------
   pgm.addColumns('media_uploads', {
     preserve_evidence: { type: 'boolean', notNull: true, default: false },
+    quarantine_state: { type: 'text', check: "quarantine_state IN ('pending','done')" },
+    quarantine_key: { type: 'text' },
+    quarantined_at: { type: 'timestamptz' },
+    cdn_purged: { type: 'boolean' },
   });
+  pgm.createIndex('media_uploads', ['key'], { name: 'media_uploads_quarantine_pending', where: "quarantine_state = 'pending'" });
 };
 
 export const down = (pgm) => {
-  pgm.dropColumns('media_uploads', ['preserve_evidence']);
+  pgm.dropIndex('media_uploads', ['key'], { name: 'media_uploads_quarantine_pending' });
+  pgm.dropColumns('media_uploads', ['preserve_evidence', 'quarantine_state', 'quarantine_key', 'quarantined_at', 'cdn_purged']);
   for (const table of ['dm_messages', 'group_messages']) {
     pgm.dropColumns(table, ['moderated_at', 'moderated_by']);
   }

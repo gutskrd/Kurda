@@ -647,6 +647,24 @@ export interface CaseAuditEntry {
   detail: Record<string, unknown> | null;
 }
 
+/**
+ * Where a piece of evidence media is. null: on the public bucket as usual.
+ * 'pending': being moved off it (the CSAM action, or a closed child's file a
+ * report still holds). 'done': kept only in private storage — the public URL
+ * no longer serves it.
+ */
+export type QuarantineState = 'pending' | 'done';
+
+/** A file the CSAM action took off the public bucket, as the filing task shows it. */
+export interface EscalationMedia {
+  key: string;
+  quarantine: QuarantineState | null;
+  /** true: the CDN forgot the URL; false: the purge failed; null: no purge is configured */
+  cdnPurged: boolean | null;
+  /** the address it was public at — purge it by hand in the CDN when `cdnPurged` is not true */
+  publicUrl: string | null;
+}
+
 export interface CaseEscalation {
   id: string;
   kind: 'csam' | 'escalation';
@@ -656,6 +674,17 @@ export interface CaseEscalation {
   reference: string | null;
   createdAt: string;
   filedAt: string | null;
+  /** for 'csam': the files taken down (attach them to the hotline report from the case view) */
+  media: EscalationMedia[];
+}
+
+/** One evidence file in the case view. */
+export interface CaseMediaItem {
+  key: string;
+  /** a five-minute signed link (to the private copy once quarantined); null when there is nothing to fetch */
+  url: string | null;
+  contentType: string | null;
+  quarantine: QuarantineState | null;
 }
 
 /** `GET /admin/moderation/cases/:id` */
@@ -674,7 +703,7 @@ export interface CaseDetail {
   reports: CaseReportView[];
   subject: CaseSubjectView | null;
   /** short-lived signed links to the evidence media; show images blurred until revealed */
-  media: Array<{ key: string; url: string | null; contentType: string | null }>;
+  media: CaseMediaItem[];
   notes: CaseNote[];
   audit: CaseAuditEntry[];
   sanctions: CaseSanctionView[];

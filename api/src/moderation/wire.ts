@@ -6,6 +6,7 @@ import { sendEmailJob } from '../jobs/email.js';
 import { ModerationAlerts, type ModerationMailer } from './alerts.js';
 import { AppealsService } from './appeals-service.js';
 import { CasesService } from './cases-service.js';
+import { runQuarantine } from './quarantine.js';
 import { ModerationQueueService } from './queue-service.js';
 import { registerModerationQueueRoutes } from './queue-routes.js';
 import { registerReportRoutes } from './report-routes.js';
@@ -37,8 +38,8 @@ export const RETENTION_FIRST_RUN_MS = 10 * 60 * 1000;
  * sanctions service (so the second-approval count is the same everywhere), the
  * user and admin routes are registered, and two timers run — the five-minute
  * sweep (sync the automated feeds, expire unconfirmed bans, send any urgent
- * alert that did not go) and the evidence retention (first after ten minutes,
- * then daily).
+ * alert that did not go, finish moving quarantined evidence off the public
+ * bucket) and the evidence retention (first after ten minutes, then daily).
  *
  * Returns the services, so the older per-surface report routes can write
  * through the same report service.
@@ -60,7 +61,7 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
       await alerts.caseUrgent(caseId).catch((err) => app.log.warn({ err, caseId }, 'urgent report alert failed; the sweep will retry'));
     },
   });
-  const cases = new CasesService(app.db, sanctions, { storage: app.storage });
+  const cases = new CasesService(app.db, sanctions, { storage: app.storage, log: app.log });
   const queue = new ModerationQueueService(app.db, { cases, sanctions, log: app.log });
   const appeals = new AppealsService(app.db, sanctions, cases);
 
@@ -72,6 +73,7 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
       await queue.sync().catch((err) => app.log.warn({ err }, 'moderation sync failed'));
       await cases.expireApprovals().catch((err) => app.log.warn({ err }, 'expiring unconfirmed bans failed'));
       await alerts.sendMissed().catch((err) => app.log.warn({ err }, 'sending missed urgent alerts failed'));
+      await runQuarantine(app.db, app.storage, { log: app.log });
     })();
   }, MODERATION_SWEEP_MS);
   // The retention sweep runs a few minutes after start as well as daily: a
