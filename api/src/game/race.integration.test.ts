@@ -2,6 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
+import { scriptDialect, typingLanguage } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
@@ -402,6 +403,101 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
       difficulty: 1,
     });
     expect(unknown.statusCode).toBe(400);
+  });
+
+  /*
+   * The language decides who is handed a text, and the admin screen offers
+   * Kurmancî first: a Soranî text saved without changing that went to
+   * Kurmancî racers, every letter of it untypeable for them.
+   */
+  it('refuses a text whose script says it is in the other variety, and says which', async () => {
+    const sorani = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} mislabelled`,
+      body: SORANI,
+      difficulty: 1,
+    });
+    expect(sorani.statusCode).toBe(400);
+    expect(sorani.json()).toMatchObject({ code: 'TEXT_LANGUAGE_MISMATCH', details: { language: 'ckb' } });
+
+    const kurmanci = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} mislabelled`,
+      body: TEXT,
+      language: 'ckb',
+      difficulty: 1,
+    });
+    expect(kurmanci.statusCode).toBe(400);
+    expect(kurmanci.json()).toMatchObject({ code: 'TEXT_LANGUAGE_MISMATCH', details: { language: 'kmr' } });
+
+    // nor can a saved text be edited into the other variety's script
+    const saved = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} relabel`,
+      body: TEXT,
+      difficulty: 1,
+      active: false,
+    });
+    expect(saved.statusCode, saved.body).toBe(201);
+    const edited = await call('PUT', `/admin/race/texts/${saved.json().id}`, adminToken, {
+      title: `it_${suffix} relabel`,
+      body: SORANI,
+      language: 'kmr',
+      difficulty: 1,
+      active: false,
+    });
+    expect(edited.statusCode).toBe(400);
+    expect(edited.json().code).toBe('TEXT_LANGUAGE_MISMATCH');
+    const stored = await pool.query(`SELECT body, language FROM race_texts WHERE id = $1`, [saved.json().id]);
+    expect(stored.rows[0]).toEqual({ body: TEXT, language: 'kmr' });
+  });
+
+  /*
+   * Migration 157 made the language the rule, so the texts saved before it
+   * are labelled by their script there — by the count the save now checks
+   * with (@kurda/shared `scriptDialect`). Its statement is run here against
+   * a table of this transaction's own, under the same name, so no real text
+   * is touched.
+   */
+  it('labels the texts saved before by their script, as the save reads it (migration 157)', async () => {
+    const file = '../../migrations/1751000157000_race-accent-modes.js';
+    const migration = (await import(file)) as { up: (pgm: unknown) => void };
+    const statements: string[] = [];
+    migration.up(
+      new Proxy({}, { get: (_t, op) => (op === 'sql' ? (sql: string) => statements.push(sql) : () => undefined) }),
+    );
+    const relabel = statements.find((sql) => /UPDATE race_texts/.test(sql));
+    expect(relabel).toBeTruthy();
+
+    const texts: Array<[body: string, label: string, expected: string]> = [
+      [SORANI, 'kmr', 'ckb'], // saved without changing the screen's first choice
+      [SORANI.replace(/ک/g, 'ﻛ').replace(/و/g, 'ﻮ'), 'kmr', 'ckb'], // and copied out of a PDF
+      [TEXT, 'ckb', 'kmr'],
+      [TEXT, 'Kurmanji', 'kmr'],
+      [SORANI, 'sorani', 'ckb'],
+      [`${TEXT} کوردی`, 'kmr', 'kmr'], // a word of the other script is not the text
+      ['12 34 56 78 90 - 12 34 56 !', 'sor', 'ckb'], // no letters: the label is all there is
+      ['12 34 56 78 90 - 12 34 56 !', 'en', 'kmr'],
+    ];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `CREATE TEMP TABLE race_texts (n int PRIMARY KEY, id uuid NOT NULL DEFAULT gen_random_uuid(),
+                                       body text NOT NULL, language text NOT NULL) ON COMMIT DROP`,
+      );
+      for (const [n, [body, label]] of texts.entries()) {
+        await client.query(`INSERT INTO race_texts (n, body, language) VALUES ($1, $2, $3)`, [n, body, label]);
+      }
+      await client.query(relabel!);
+      const rows = await client.query<{ language: string }>(`SELECT language FROM race_texts ORDER BY n`);
+      expect(rows.rows.map((r) => r.language)).toEqual(texts.map(([, , expected]) => expected));
+      // and the save agrees with every one it could tell
+      for (const [body, , expected] of texts) {
+        const script = scriptDialect(body);
+        if (script) expect(typingLanguage(script)).toBe(expected);
+      }
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
   });
 
   /*

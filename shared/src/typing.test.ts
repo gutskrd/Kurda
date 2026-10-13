@@ -20,6 +20,7 @@ import {
   keyboardStepText,
   kurmanciLetter,
   normalizeTyping,
+  scriptDialect,
   specialKeys,
   typingDialectOf,
   typingLanguage,
@@ -126,6 +127,21 @@ describe('the varieties and their keys', () => {
     expect(typingDialectOf('Soranî')).toBe('sorani');
     expect(typingDialectOf('kmr')).toBe('kurmanci');
     expect(typingDialectOf(null)).toBe('kurmanci');
+  });
+
+  it('reads the variety a text is written in from its script', () => {
+    expect(scriptDialect('ڕۆژێکی خۆش بوو، چووینە باخچەکە.')).toBe('sorani');
+    expect(scriptDialect('Ez ji welatê xwe hez dikim.')).toBe('kurmanci');
+    // a Soranî text copied out of a PDF, in presentation forms
+    expect(scriptDialect('ﻛﻮﺭﺩ')).toBe('sorani');
+    // mostly one script with a word of the other is still that one
+    expect(scriptDialect('Ez dibêjim کوردی, ne tiştekî din.')).toBe('kurmanci');
+    expect(scriptDialect('من دەڵێم Kurdî')).toBe('sorani');
+    // nothing to go by: digits and marks, or as many letters of each
+    expect(scriptDialect('12 - 34 ... 56 !')).toBeNull();
+    expect(scriptDialect('ab سڵ')).toBeNull();
+    // × and ÷ share the Latin block but are not letters
+    expect(scriptDialect('سڵ ×÷×')).toBe('sorani');
   });
 
   it('offers the five Kurmancî letters in alphabet order — the lesson key bar’s letters', () => {

@@ -4,6 +4,7 @@ import {
   DEFAULT_ACCENT_MODE,
   findUntypeable,
   normalizeTyping,
+  scriptDialect,
   typingDialectOf,
   typingLanguage,
   type AccentMode,
@@ -295,9 +296,29 @@ export class RaceTextService {
  * NFC, straight quotes, single spaces), so the stored text is the one the racer
  * is compared with. The admin used to save whatever was pasted, trimmed, and a
  * text pasted decomposed could not be typed by anyone.
+ *
+ * And under the language its script says it is in. The language decides who
+ * is handed the text, and the admin screen offers Kurmancî first, so a Soranî
+ * text saved without changing that would go to Kurmancî racers — every letter
+ * of it untypeable for them. That is refused rather than relabelled behind the
+ * admin's back; `details.language` is the code the text's script says, for the
+ * screen to offer.
  */
 function normalizeText(input: Omit<RaceText, 'id'>): Omit<RaceText, 'id'> {
-  const body = normalizeTyping(input.body, typingDialectOf(input.language));
+  const dialect = typingDialectOf(input.language);
+  const script = scriptDialect(input.body);
+  if (script !== null && script !== dialect) {
+    const language = typingLanguage(script);
+    throw new AppError(
+      'TEXT_LANGUAGE_MISMATCH',
+      400,
+      script === 'sorani'
+        ? 'this text is written in Arabic script: save it as Soranî (ckb)'
+        : 'this text is written in Latin letters: save it as Kurmancî (kmr)',
+      { language },
+    );
+  }
+  const body = normalizeTyping(input.body, dialect);
   const length = [...body].length;
   if (length < MIN_RACE_TEXT) {
     throw new AppError('TEXT_TOO_SHORT', 400, `a race text needs at least ${MIN_RACE_TEXT} characters`);

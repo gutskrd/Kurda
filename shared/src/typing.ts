@@ -45,6 +45,29 @@ export function typingDialectOf(language: string | null | undefined): TypingDial
   return l === 'ckb' || l === 'sorani' || l === 'soranî' || l === 'central kurdish' ? 'sorani' : 'kurmanci';
 }
 
+/** The Arabic script's characters, in the blocks `isArabicScript` reads. */
+const ARABIC_SCRIPT = /[\u0600-\u06ff\u0750-\u077f\ufb50-\ufdff\ufe70-\ufeff]/g;
+/** Latin letters, the accented ones included (and not × or ÷, which share their block). */
+const LATIN_LETTER = /[A-Za-z\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u024f]/g;
+
+/**
+ * The variety a text's script says it is in: Soranî when more of it is Arabic
+ * script than Latin letters, Kurmancî the other way round, and null when it
+ * cannot tell (no letters at all, or as many of each).
+ *
+ * A race text is handed out by the language it is stored under, and the admin
+ * screen offered Kurmancî first: a Soranî text saved without changing that went
+ * to Kurmancî racers. Saving a text whose script says otherwise is refused now,
+ * and migration 1751000157000 relabelled the texts already saved by the same
+ * count (in SQL — keep the two alike).
+ */
+export function scriptDialect(text: string): TypingDialect | null {
+  const arabic = text.match(ARABIC_SCRIPT)?.length ?? 0;
+  const latin = text.match(LATIN_LETTER)?.length ?? 0;
+  if (arabic === latin) return null;
+  return arabic > latin ? 'sorani' : 'kurmanci';
+}
+
 // ---------- the letters a keyboard may lack ----------
 
 /** The Kurmancî letters a Latin keyboard lacks, in alphabet order — the race's key bar. */

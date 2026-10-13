@@ -4,8 +4,16 @@
  * A race is now started in a variety — Kurmancî or Soranî — and the text is
  * picked by `race_texts.language`, which `start()` used to ignore: a Kurmancî
  * racer could be handed a Soranî text. The column only ever held the two codes
- * the admin screen offers, but nothing said so; anything else is read as what
- * it most likely meant and the two codes become the rule.
+ * the admin screen offers, but nothing said so, and since nothing read it,
+ * nothing showed when it was wrong — and the screen offered Kurmancî first, so
+ * a Soranî text saved without changing it is labelled Kurmancî. Reading the
+ * label now would hand exactly those texts to Kurmancî racers. So each text is
+ * labelled by its script — Soranî when more of it is Arabic script than Latin
+ * letters, Kurmancî the other way round (@kurda/shared `scriptDialect`, which
+ * the save now checks with: keep the two alike) — and only a text the count
+ * cannot decide (no letters at all, or as many of each) keeps its label, read
+ * as what it most likely meant. Then the two codes become the rule. (`down`
+ * cannot know the labels it replaced; they were wrong or meant the same.)
  *
  * And a race is run in an accent mode (strict, forgiving or hidden, see
  * @kurda/shared `typing`), which changes what counts: a racer's best is per
@@ -21,11 +29,24 @@
  * what the result screen reports; they are null on races scored before them.
  */
 
+/** The Arabic script's characters, and Latin letters (not × or ÷), as regular-expression ranges. */
+const ARABIC = '\\u0600-\\u06ff\\u0750-\\u077f\\ufb50-\\ufdff\\ufe70-\\ufeff';
+const LATIN = 'A-Za-z\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u024f';
+
 export const up = (pgm) => {
   pgm.sql(`
-    UPDATE race_texts
-       SET language = CASE WHEN lower(btrim(language)) IN ('ckb', 'sorani', 'soranî', 'sor') THEN 'ckb' ELSE 'kmr' END
-     WHERE language NOT IN ('kmr', 'ckb')`);
+    UPDATE race_texts t
+       SET language = CASE
+             WHEN s.arabic > s.latin THEN 'ckb'
+             WHEN s.latin > s.arabic THEN 'kmr'
+             WHEN lower(btrim(t.language)) IN ('ckb', 'sorani', 'soranî', 'sor') THEN 'ckb'
+             ELSE 'kmr'
+           END
+      FROM (SELECT id,
+                   length(regexp_replace(body, '[^${ARABIC}]', '', 'g')) AS arabic,
+                   length(regexp_replace(body, '[^${LATIN}]', '', 'g')) AS latin
+              FROM race_texts) s
+     WHERE s.id = t.id`);
   pgm.addConstraint('race_texts', 'race_texts_language_check', { check: "language IN ('kmr', 'ckb')" });
   pgm.createIndex('race_texts', ['active', 'language', 'difficulty']);
 
