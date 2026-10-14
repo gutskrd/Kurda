@@ -18,6 +18,7 @@ import { memoryStore } from '../keyboard/deviceStore';
 import type { ComposerPost } from './api';
 import { ComposeScreen, type PickedPicture } from './ComposeScreen';
 import type { PictureUpload } from './upload';
+import { onPostSaved } from './postSaved';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -319,10 +320,15 @@ describe('editing', () => {
     expect(screen.queryByRole('switch', { name: 'I made this' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
 
+    const saved = vi.fn();
+    const stop = onPostSaved(saved);
     fireEvent.change(screen.getByLabelText('Your post'), { target: { value: 'Niha' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onExit).toHaveBeenCalled());
+    stop();
     expect(client.calls.find((c) => c.method === 'PATCH')?.body).toEqual({ body: 'Niha' });
+    // the post's own page hears of it, and reloads then rather than on every return
+    expect(saved).toHaveBeenCalledWith(expect.objectContaining({ id: 'post-1' }));
   });
 
   it('asks before throwing an edit away', async () => {

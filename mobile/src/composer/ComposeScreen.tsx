@@ -44,6 +44,7 @@ import {
 } from './api';
 import { clearDraft, dropPicture, keepPicture, loadDraft, pictureExists, saveDraft } from './drafts';
 import { describePostError } from './errors';
+import { postSaved } from './postSaved';
 import {
   FIELD_MAX,
   counterFor,
@@ -388,6 +389,7 @@ export function ComposeScreen({
       await forgetDraft();
       for (const p of state.pictures) void dropPicture(p.localUri);
     }
+    if (mode === 'edit') postSaved(res.data);
     onPosted?.(res.data);
     onExit();
   };

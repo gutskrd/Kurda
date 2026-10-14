@@ -1,5 +1,4 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -33,6 +32,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { EditPostButton, SourceCredit, postImages } from '../composer/PostExtras';
 import { PostPictures } from '../composer/PostPictures';
+import { onPostSaved } from '../composer/postSaved';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -62,11 +62,18 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     if (c.ok) setComments(c.data.comments);
   }, [client, postId]);
 
-  // on coming back too: an edit made in the composer shows at once
-  useFocusEffect(
-    useCallback(() => {
-      void loadAll();
-    }, [loadAll]),
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
+
+  // an edit made in the composer shows as soon as it is saved — and only
+  // then, since each read of the post counts a view
+  useEffect(
+    () =>
+      onPostSaved((saved) => {
+        if (saved.id === postId) void loadAll();
+      }),
+    [postId, loadAll],
   );
 
   const submit = useCallback(async () => {
