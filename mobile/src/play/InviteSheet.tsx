@@ -32,6 +32,8 @@ import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummar
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
 import { lobbyRoute } from './routes';
 import { SendErrorNotice } from '../reports/SendError';
+import { RatedChoice } from '../ranks/Rated';
+import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -121,6 +123,8 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
    */
   const lockedId = target.kind === 'dm' ? target.friendId : null;
   const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : []);
+  // Rated or Friendly for the game being made, where the host last left it for that game
+  const [rated, setRated] = useRatedChoice(game);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** a limit on the account (a chat mute stops game cards too): said as every send path says it, with Account standing */
@@ -182,9 +186,9 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   };
 
   const settings = (): Record<string, unknown> => {
-    if (game === 'wordle-battle') return { difficulty };
-    if (game === 'rhyme-match') return { dialect };
-    return inviteSettings({ ...story, dialect });
+    if (game === 'wordle-battle') return { difficulty, rated };
+    if (game === 'rhyme-match') return { dialect, rated };
+    return { ...inviteSettings({ ...story, dialect }), rated };
   };
 
   const submit = async (): Promise<void> => {
@@ -343,6 +347,11 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
               />
             </View>
           )}
+
+          <View style={styles.field}>
+            <SectionLabel>{t('ranks.gameType')}</SectionLabel>
+            <RatedChoice value={rated} onChange={setRated} />
+          </View>
 
           {game === 'stories' ? (
             <>

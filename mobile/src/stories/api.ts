@@ -67,6 +67,8 @@ export interface CreateGameInput {
   /** solo: straight to the first question, the story having just been read */
   skipReading?: boolean;
   extraTime?: boolean;
+  /** duo and group: the host's Rated/Friendly choice (Game Ranks); left out, the host's last choice */
+  rated?: boolean;
 }
 
 export const createGame = (client: ApiClient, input: CreateGameInput): Promise<ApiResult<StoryGameView>> =>

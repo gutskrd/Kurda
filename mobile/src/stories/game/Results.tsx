@@ -19,6 +19,7 @@ import { Card, Note, SectionLabel, useFocusOn } from '../ui';
 import { showEnglish } from './Question';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 import { PlayerReportButton } from '../../reports/PlayerReportButton';
+import { RankResultPanel } from '../../ranks/RankResultPanel';
 
 /** A standing's name as this viewer may see it. */
 function nameOf(s: StoryGameStanding, t: (k: 'stories.player' | 'games.you', v?: Record<string, string | number>) => string): string {
@@ -92,6 +93,9 @@ export function Results({
       <Text ref={headRef} style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
         {t('stories.results.title')}
       </Text>
+
+      {/* duo and group: what this game did to your rank, with its one plain reason */}
+      {view.mode !== 'solo' && view.rated?.rated ? <RankResultPanel game="stories" gameRef={view.id} /> : null}
 
       {me ? (
         <Card style={styles.meCard}>

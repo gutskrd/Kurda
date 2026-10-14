@@ -61,3 +61,16 @@ describe('unreadBadge', () => {
     expect(unreadBadge(12)).toBe('9+');
   });
 });
+
+describe('progress notifications (contract 4)', () => {
+  it('opens the badges for a badge, one or the day’s bundle', () => {
+    expect(resolveDeepLink({ kind: 'badge', key: 'agir', tier: '2' })).toEqual({ screen: 'Badges' });
+    expect(resolveDeepLink({ kind: 'badge', day: '2026-10-14' })).toEqual({ screen: 'Badges' });
+  });
+
+  it('opens the league for safe, a promotion and a Pêla week', () => {
+    for (const kind of ['league_safe', 'league_promotion', 'league_trophy']) {
+      expect(resolveDeepLink({ kind, weekKey: '2026-10-05', tier: 'cem' })).toEqual({ screen: 'League' });
+    }
+  });
+});

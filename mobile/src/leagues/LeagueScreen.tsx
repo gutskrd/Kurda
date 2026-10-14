@@ -1,39 +1,28 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FIRST_LEAGUE_TIER, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
+import { display, sectionLabel } from '../theme/fonts';
+import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import type { Palette } from '../theme/palette';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { formatCompact } from '../i18n/format';
-import { countdown, tierMeta, zoneFor, type Zone } from './format';
+import { formatCompact, formatNumber } from '../i18n/format';
+import { LeagueEmblem } from '../ranks/art';
+import { getLeague } from '../ranks/api';
+import { leagueTint } from '../ranks/tint';
+import { GoalRing } from './GoalRing';
+import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, zoneRules, type TableItem } from './format';
 
-interface StandingRow {
-  /** null for a member the server does not name to you (a minor you are not friends with) */
-  userId: string | null;
-  username: string | null;
-  weeklyXp: number;
-  rank: number;
-  isSelf: boolean;
-}
-interface LeagueView {
-  /** not taking part — their choice, or a minor who has not chosen; absent on older responses */
-  optedOut?: boolean;
-  tier: string;
-  weekKey: string;
-  rank: number;
-  promoteCount: number;
-  demoteCount: number;
-  standings: StandingRow[];
-}
 interface BoardEntry {
   userId: string;
   username: string;
@@ -48,89 +37,77 @@ interface Board {
   country?: string | null;
 }
 
-type Tab = 'league' | 'rankings';
+type Tab = 'league' | 'board';
 
 /**
- * The same two boards and three scopes the browser offers.
- *
- * The phone showed one board (rating, global) and told you friends
- * leaderboards were "coming soon" — which the API had supported all along:
- * `/leaderboards/:type?scope=friends` puts you on your own friends board and
- * has since KUR-064. It was not unbuilt, it was unasked for.
+ * The weekly XP board's three scopes, as the browser offers them. The second
+ * board this screen had — the all-time skill rating — read
+ * `/leaderboards/rating`, which Game Ranks replaced; a game's rank and its
+ * boards live on the Ranks screen now.
  */
-type BoardType = 'weekly_xp' | 'rating';
 type Scope = 'global' | 'friends' | 'country';
-
-const BOARDS: { key: BoardType; labelKey: TranslationKey; unitKey: TranslationKey; blurbKey: TranslationKey }[] = [
-  { key: 'weekly_xp', labelKey: 'rankings.board.weeklyXp', unitKey: 'rankings.unit.xp', blurbKey: 'rankings.board.weeklyXpBlurb' },
-  { key: 'rating', labelKey: 'rankings.board.rating', unitKey: 'rankings.board.rating', blurbKey: 'rankings.board.ratingBlurb' },
-];
-
 const SCOPES: { key: Scope; labelKey: TranslationKey }[] = [
   { key: 'global', labelKey: 'rankings.scope.global' },
   { key: 'friends', labelKey: 'nav.friends' },
   { key: 'country', labelKey: 'rankings.scope.country' },
 ];
 
-/** One page of a board. The browser uses the same size. */
+/** One page of the board. The browser uses the same size. */
 const PAGE = 25;
 
-const zoneColor = (colors: Palette): Record<Zone, string> => ({
-  promotion: colors.success,
-  demotion: colors.danger,
-  safe: colors.glassBorder,
-});
-
-/** League standings + global/friends leaderboards (KUR-064). */
+/**
+ * Learning Leagues, rebuilt (contract 4 §L, §U).
+ *
+ * The week's group of about twenty, with the zones written out — "Moving up"
+ * and "Moving down" as headings in the table, with their icons, so nothing is
+ * told by colour alone — the weekly goal as a ring, and "Safe this week" once
+ * it is met. When the week ends is a local time, not a countdown. Last week's
+ * result is one kind sentence. Somebody out of the leagues (their choice, or
+ * a teen by default) gets their own week instead: the same ring, and how it
+ * compares with the weeks before, with nobody else in it.
+ */
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
-  const { colors } = useTheme();
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('league');
-  const [type, setType] = useState<BoardType>('weekly_xp');
   const [scope, setScope] = useState<Scope>('global');
   const [league, setLeague] = useState<LeagueView | null>(null);
+  const [leagueError, setLeagueError] = useState<ApiError | null>(null);
   const [board, setBoard] = useState<Board | null>(null);
   const [entries, setEntries] = useState<BoardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [boardError, setBoardError] = useState<ApiError | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
-  const [, setTick] = useState(0);
 
-  const meta = BOARDS.find((b) => b.key === type)!;
+  const loadLeague = useCallback(() => {
+    void getLeague(client).then((res) => {
+      if (res.ok) {
+        setLeague(res.data);
+        setLeagueError(null);
+      } else setLeagueError(res.error);
+    });
+  }, [client]);
 
-  /**
-   * One page of the chosen board. `offset` 0 replaces, anything else appends.
-   *
-   * The league standings come along on the first page only — they do not
-   * change with the board you are looking at.
-   */
-  const load = useCallback(
+  const loadBoard = useCallback(
     (offset: number) => {
-      if (offset === 0) setLoading(true);
-      else setLoadingMore(true);
-      const query = `scope=${scope}&limit=${PAGE}&offset=${offset}`;
-      void Promise.all([
-        offset === 0 ? client.get<LeagueView>('/me/league') : Promise.resolve(null),
-        client.get<Board>(`/leaderboards/${type}?${query}`),
-      ]).then(([lg, bd]) => {
-        if (lg?.ok) setLeague(lg.data);
-        if (bd.ok) {
-          setBoard(bd.data);
-          const batch = bd.data.top ?? [];
-          setEntries((prev) => (offset === 0 ? batch : [...prev, ...batch]));
-        }
-        // only a hard failure of the board itself is worth an error state;
-        // the league is a second panel and can be missing on its own
-        setError(bd.ok ? null : bd.error);
-        setLoading(false);
+      if (offset > 0) setLoadingMore(true);
+      void client.get<Board>(`/leaderboards/weekly_xp?scope=${scope}&limit=${PAGE}&offset=${offset}`).then((res) => {
         setLoadingMore(false);
+        if (res.ok) {
+          setBoard(res.data);
+          setEntries((prev) => (offset === 0 ? (res.data.top ?? []) : [...prev, ...(res.data.top ?? [])]));
+          setBoardError(null);
+        } else setBoardError(res.error);
       });
     },
-    [client, type, scope],
+    [client, scope],
   );
 
-  useFocusEffect(useCallback(() => load(0), [load]));
+  useFocusEffect(useCallback(() => loadLeague(), [loadLeague]));
+  useFocusEffect(
+    useCallback(() => {
+      if (tab === 'board') loadBoard(0);
+    }, [tab, loadBoard]),
+  );
 
   /** The way back in, one tap from where the table would be (Settings has the other). */
   const [joining, setJoining] = useState(false);
@@ -138,176 +115,322 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
     setJoining(true);
     const res = await client.patch('/me', { leaguesEnabled: true });
     setJoining(false);
-    if (res.ok) load(0);
-  }, [client, load]);
-  // live countdown
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const header = <ScreenHeader title={t('rankings.title')} onBack={onExit} leading="close" />;
-
-  const tabs = (
-    <View style={styles.tabs}>
-      {([['league', 'profile.league'], ['rankings', 'rankings.leaderboard']] as const).map(([key, labelKey]) => {
-        const active = tab === key;
-        return (
-          <Pressable
-            key={key}
-            onPress={() => setTab(key)}
-            style={[styles.tab, { backgroundColor: active ? colors.primary : colors.controlTrack }]}
-          >
-            <Text style={[styles.tabText, { color: active ? colors.textOnPrimary : colors.textSecondary }]}>
-              {t(labelKey)}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+    if (res.ok) loadLeague();
+  }, [client, loadLeague]);
 
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        {header}
-        {tabs}
-        {tab === 'rankings' ? (
-          <View style={styles.choosers}>
-            <Segmented
-              options={BOARDS.map((b) => b.key)}
-              value={type}
-              onChange={setType}
-              labelOf={(key) => t(BOARDS.find((b) => b.key === key)!.labelKey)}
-            />
-            <Segmented
-              options={SCOPES.map((sc) => sc.key)}
-              value={scope}
-              onChange={setScope}
-              labelOf={(key) => t(SCOPES.find((sc) => sc.key === key)!.labelKey)}
-            />
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>{t(meta.blurbKey)}</Text>
-          </View>
-        ) : null}
-
-        <AsyncBoundary
-          loading={loading && !league && !board}
-          error={!league && !board ? error : null}
-          onRetry={() => load(0)}
-        >
-          {tab === 'league' ? (
-            <LeagueTab league={league} joining={joining} onJoin={() => void join()} />
-          ) : scope === 'country' && board?.country == null ? (
-            <Centered>
-              <Icon name="globe" size={48} tone="secondary" />
-              <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t('rankings.noCountry')}</Text>
-              <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('rankings.noCountryBody')}</Text>
-            </Centered>
-          ) : (
-            <BoardTab
-              board={board}
-              entries={entries}
-              unit={t(meta.unitKey)}
-              scope={scope}
-              loadingMore={loadingMore}
-              onMore={() => load(entries.length)}
-            />
-          )}
-        </AsyncBoundary>
+        <ScreenHeader title={t('leagues.screenTitle')} onBack={onExit} leading="close" />
+        <View style={styles.tabs}>
+          <Segmented<Tab>
+            options={['league', 'board']}
+            value={tab}
+            onChange={setTab}
+            labelOf={(k) => (k === 'league' ? t('profile.league') : t('rankings.leaderboard'))}
+          />
+        </View>
+        {tab === 'league' ? (
+          <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague}>
+            {league ? <LeagueTab league={league} joining={joining} onJoin={() => void join()} /> : null}
+          </AsyncBoundary>
+        ) : (
+          <>
+            <View style={styles.choosers}>
+              <Segmented<Scope>
+                options={SCOPES.map((s) => s.key)}
+                value={scope}
+                onChange={setScope}
+                labelOf={(key) => t(SCOPES.find((s) => s.key === key)!.labelKey)}
+              />
+            </View>
+            <AsyncBoundary loading={!board && !boardError} error={!board ? boardError : null} onRetry={() => loadBoard(0)}>
+              {board ? (
+                <BoardTab board={board} entries={entries} scope={scope} loadingMore={loadingMore} onMore={() => loadBoard(entries.length)} />
+              ) : null}
+            </AsyncBoundary>
+          </>
+        )}
       </View>
     </GradientBackground>
   );
 }
 
-function LeagueTab({ league, joining, onJoin }: { league: LeagueView | null; joining: boolean; onJoin: () => void }) {
-  const { locale } = useI18n();
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  if (!league) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.noLeague')}</Text></Centered>;
-  /*
-   * Out of the leagues: no ladder, no table, and nothing that reads as missing
-   * out. Said once, with the way in; the leaderboards tab is untouched.
-   */
-  if (league.optedOut) {
-    return (
-      <Centered>
-        <Icon name="trophy" size={48} tone="secondary" />
-        <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t('leagues.optedOut.title')}</Text>
-        <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.optedOut.body')}</Text>
-        <ClayButton label={t('leagues.optedOut.join')} busy={joining} onPress={onJoin} style={styles.join} />
-      </Centered>
-    );
-  }
-  const meta = tierMeta(league.tier);
-  const total = league.standings.length;
-  const self = league.standings.find((s) => s.isSelf);
-  const notStarted = !self || self.weeklyXp === 0;
-  const zones = zoneColor(colors);
-
+function LeagueTab({ league, joining, onJoin }: { league: LeagueView; joining: boolean; onJoin: () => void }): React.JSX.Element {
+  if (league.mode === 'personal') return <PersonalWeek league={league} joining={joining} onJoin={onJoin} />;
+  const items = league.joined ? tableItems(league.standings) : [];
   return (
     <FlatList
-      data={league.standings}
-      keyExtractor={(s, i) => s.userId ?? `unnamed-${i}`}
+      data={items}
+      keyExtractor={(item, i) => (item.kind === 'row' ? `r-${item.row.rank}` : `${item.kind}-${i}`)}
       contentContainerStyle={styles.list}
-      ListHeaderComponent={
-        <View style={styles.leagueHead}>
-          <Text style={[styles.tierName, { color: meta.color }]}>
-            {t('leagues.tierName', { emoji: meta.emoji, tier: meta.labelKey ? t(meta.labelKey) : meta.label })}
-          </Text>
-          <Text style={[styles.countdown, { color: colors.textSecondary }]}>
-            {t('leagues.endsIn', { time: countdown(league.weekKey) })}
-          </Text>
-          {notStarted ? (
-            <Text style={[styles.cta, { color: colors.accent }]}>{t('leagues.doALesson')}</Text>
-          ) : null}
-        </View>
-      }
-      renderItem={({ item }) => {
-        const zone = zoneFor(item.rank, total, league.promoteCount, league.demoteCount);
-        return (
-          <View
-            style={[
-              styles.row,
-              { backgroundColor: item.isSelf ? colors.glassFill : colors.controlTrack, borderColor: item.isSelf ? colors.primary : 'transparent', borderWidth: item.isSelf ? 1 : 0 },
-              { borderLeftColor: zones[zone], borderLeftWidth: 4 },
-            ]}
-          >
-            <Text style={[styles.rank, { color: colors.textSecondary }]}>{item.rank}</Text>
-            <InitialsAvatar name={item.username ?? t('leagues.unnamed')} id={item.userId ?? `unnamed-${item.rank}`} size={28} />
-            <Text style={[styles.name, { color: colors.textPrimary }, item.isSelf && styles.nameSelf]} numberOfLines={1}>{item.username ?? t('leagues.unnamed')}</Text>
-            <Text style={[styles.score, { color: colors.textPrimary }]}>{formatCompact(item.weeklyXp, locale)} XP</Text>
-          </View>
-        );
-      }}
+      ListHeaderComponent={<LeagueHead league={league} />}
+      renderItem={({ item }) => <TableRow item={item} />}
     />
   );
 }
 
+/** The week at the top: the emblem, the league, when it ends, the goal ring, safe, and last week. */
+function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  const { t, locale } = useI18n();
+  const navigation = useNavigation<RootNavigation>();
+  const tier = knownTier(league.tier) ?? FIRST_LEAGUE_TIER;
+  const tint = leagueTint(tier, scheme);
+  const rules = zoneRules(t, { tier: knownTier(league.tier), promoteCount: league.promoteCount, demoteCount: league.demoteCount, goalXp: league.goalXp });
+  const meaning = leagueMeaning(t, tier);
+  return (
+    <View style={styles.head}>
+      <GlassCard>
+        <View style={styles.hero}>
+          <LeagueEmblem tier={tier} size={104} label={leagueLabel(t, tier)} />
+          <View style={styles.heroText}>
+            <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('leagues.thisWeek')}</Text>
+            <Text style={[styles.heroTitle, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={2}>
+              {t('leagues.leagueName', { tier: leagueName(t, tier) })}
+            </Text>
+            {meaning ? <Text style={[styles.heroMeaning, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+            <View style={styles.ends}>
+              <Icon name="calendar" size={14} color={colors.textSecondary} />
+              <Text style={[styles.endsText, { color: colors.textSecondary }]}>{t('leagues.endsAt', { time: weekEndText(league.endsAt, locale) })}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.goalRow, { borderTopColor: colors.separator }]}>
+          <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={84} tint={tint} />
+          <View style={styles.goalText}>
+            <Text style={[styles.goalTitle, { color: colors.textPrimary }]}>
+              {t('leagues.goalProgress', { xp: formatNumber(league.weeklyXp, locale), goal: formatNumber(league.goalXp, locale) })}
+            </Text>
+            {league.safe ? (
+              <View style={[styles.safe, { backgroundColor: colors.successFill }]} accessibilityLiveRegion="polite">
+                <Icon name="seal-check" size={16} color={colors.success} />
+                <Text style={[styles.safeText, { color: colors.success }]}>{t('leagues.safe')}</Text>
+              </View>
+            ) : (
+              <Text style={[styles.goalHint, { color: colors.textSecondary }]}>
+                {league.demoteCount > 0 ? t('leagues.goalHintSafe') : t('leagues.goalHintUp')}
+              </Text>
+            )}
+            {league.joined && league.groupSize > 0 ? (
+              <Text style={[styles.goalHint, { color: colors.textSecondary }]}>{t('leagues.place', { rank: league.rank, count: league.groupSize })}</Text>
+            ) : null}
+          </View>
+        </View>
+      </GlassCard>
+
+      {league.lastWeek ? (
+        <GlassCard>
+          <View style={styles.lastWeek}>
+            {league.lastWeek.tierAfter ? (
+              <LeagueEmblem tier={league.lastWeek.tierAfter} size={44} label={leagueLabel(t, league.lastWeek.tierAfter)} />
+            ) : (
+              <Icon name="calendar" size={28} color={colors.textSecondary} />
+            )}
+            <View style={styles.flex}>
+              <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('leagues.lastWeek.title')}</Text>
+              <Text style={[styles.lastLine, { color: colors.textPrimary }]}>{lastWeekLine(t, league.lastWeek)}</Text>
+              <Text style={[styles.goalHint, { color: colors.textSecondary }]}>
+                {[
+                  league.lastWeek.rank && league.lastWeek.groupSize ? t('leagues.place', { rank: league.lastWeek.rank, count: league.lastWeek.groupSize }) : null,
+                  t('leagues.xpCount', { xp: formatNumber(league.lastWeek.weeklyXp, locale) }),
+                  league.lastWeek.gems > 0 ? t('leagues.gems', { count: league.lastWeek.gems }) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </View>
+          </View>
+        </GlassCard>
+      ) : null}
+
+      {league.joined ? (
+        <View style={styles.rules}>
+          <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+            {t('leagues.group')}
+          </Text>
+          {rules.map((line) => (
+            <Text key={line} style={[styles.rule, { color: colors.textSecondary }]}>
+              {line}
+            </Text>
+          ))}
+        </View>
+      ) : (
+        <GlassCard>
+          <View style={styles.waiting}>
+            <Icon name="people" size={28} color={colors.textSecondary} />
+            <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('leagues.notJoined.title')}</Text>
+            <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.notJoined.body')}</Text>
+            <ClayButton label={t('leagues.notJoined.start')} icon="book" tone="primary" onPress={() => navigation.navigate('Learn')} style={styles.stretch} />
+          </View>
+        </GlassCard>
+      )}
+    </View>
+  );
+}
+
+function TableRow({ item }: { item: TableItem }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  if (item.kind === 'gap') return <View style={styles.gap} />;
+  if (item.kind === 'zone') {
+    const up = item.zone === 'promotion';
+    return (
+      <View style={styles.zone} accessibilityRole="header">
+        <Icon name={up ? 'move-up' : 'move-down'} size={14} color={up ? colors.success : colors.textSecondary} />
+        <Text style={[styles.zoneText, { color: up ? colors.success : colors.textSecondary }]}>
+          {up ? t('leagues.zone.promotion') : t('leagues.zone.demotion')}
+        </Text>
+      </View>
+    );
+  }
+  const row = item.row;
+  const name = row.isSelf ? t('games.you') : (row.username ?? t('leagues.unnamed'));
+  const zoneWord = row.zone === 'promotion' ? t('leagues.zone.promotion') : row.zone === 'demotion' ? t('leagues.zone.demotion') : null;
+  return (
+    <View
+      accessible
+      accessibilityLabel={[`#${row.rank}`, name, t('leagues.xpCount', { xp: row.weeklyXp }), zoneWord].filter(Boolean).join(', ')}
+      style={[styles.row, { backgroundColor: row.isSelf ? colors.glassFill : 'transparent' }, row.isSelf && { borderColor: colors.primary, borderWidth: 1 }]}
+    >
+      <Text style={[styles.rank, { color: colors.textSecondary }]}>{row.rank}</Text>
+      <InitialsAvatar name={row.username ?? t('leagues.unnamed')} id={row.userId ?? `unnamed-${row.rank}`} size={32} />
+      <Text style={[styles.name, { color: colors.textPrimary }, row.isSelf && styles.nameSelf]} numberOfLines={1}>
+        {name}
+      </Text>
+      {row.zone !== 'stay' ? (
+        <Icon name={row.zone === 'promotion' ? 'move-up' : 'move-down'} size={12} color={row.zone === 'promotion' ? colors.success : colors.textSecondary} />
+      ) : null}
+      <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: formatCompact(row.weeklyXp, locale) })}</Text>
+    </View>
+  );
+}
+
 /**
- * One board, one page at a time.
- *
- * The empty state names the scope, because "nobody ranked yet" means three
- * different things: nobody at all, none of your friends, or nobody from your
- * country — and only one of those is something you can do anything about.
+ * Out of the leagues: no group and no table, and nothing that reads as
+ * missing out — the week's own goal ring, and this week beside the ones
+ * before it, against nobody but yourself.
+ */
+function PersonalWeek({ league, joining, onJoin }: { league: LeagueView; joining: boolean; onJoin: () => void }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  const { t, locale } = useI18n();
+  const tint = leagueTint(knownTier(league.tier) ?? 'kani', scheme);
+  const weeks = league.recentWeeks.slice(-6);
+  const previous = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
+  return (
+    <FlatList
+      data={[]}
+      renderItem={null}
+      contentContainerStyle={styles.list}
+      ListHeaderComponent={
+        <View style={styles.head}>
+          <GlassCard>
+            <View style={styles.personal}>
+              <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('leagues.personal.kicker')}</Text>
+              <Text style={[styles.heroTitle, styles.center, { color: colors.textPrimary }]} accessibilityRole="header">
+                {t('leagues.personal.title')}
+              </Text>
+              <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={148} tint={tint} />
+              <Text style={[styles.goalTitle, { color: colors.textPrimary }]}>
+                {t('leagues.goalProgress', { xp: formatNumber(league.weeklyXp, locale), goal: formatNumber(league.goalXp, locale) })}
+              </Text>
+              {previous ? (
+                <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>
+                  {t('leagues.personal.lastWeek', { xp: formatNumber(previous.xp, locale) })}
+                </Text>
+              ) : null}
+              <View style={styles.ends}>
+                <Icon name="calendar" size={14} color={colors.textSecondary} />
+                <Text style={[styles.endsText, { color: colors.textSecondary }]}>{t('leagues.endsAt', { time: weekEndText(league.endsAt, locale) })}</Text>
+              </View>
+            </View>
+          </GlassCard>
+          {weeks.length > 1 ? <WeekBars weeks={weeks} goal={league.goalXp} tint={tint} /> : null}
+          <GlassCard>
+            <View style={styles.waiting}>
+              <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.personal.body')}</Text>
+              <ClayButton label={t('leagues.optedOut.join')} variant="outline" busy={joining} onPress={onJoin} style={styles.stretch} />
+            </View>
+          </GlassCard>
+        </View>
+      }
+    />
+  );
+}
+
+/** "You vs last week": the recent weeks as bars, the goal as a line across them. */
+function WeekBars({ weeks, goal, tint }: { weeks: LeagueWeekXp[]; goal: number; tint: readonly [string, string] }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const top = Math.max(goal, ...weeks.map((w) => w.xp), 1);
+  const height = 96;
+  return (
+    <GlassCard>
+      <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+        {t('leagues.personal.weeks')}
+      </Text>
+      <View style={[styles.bars, { height }]}>
+        <View style={[styles.goalLine, { bottom: (goal / top) * height, backgroundColor: colors.textSecondary }]} />
+        {weeks.map((w, i) => {
+          const last = i === weeks.length - 1;
+          return (
+            <View
+              key={w.weekKey}
+              style={styles.barCol}
+              accessible
+              accessibilityLabel={t('leagues.personal.weekA11y', { date: w.weekKey, xp: w.xp })}
+            >
+              <View
+                style={[
+                  styles.bar,
+                  { height: Math.max(4, (w.xp / top) * height), backgroundColor: last ? tint[1] : colors.controlTrack },
+                ]}
+              />
+            </View>
+          );
+        })}
+      </View>
+      <View style={styles.barLabels}>
+        {weeks.map((w, i) => (
+          <Text key={w.weekKey} style={[styles.barLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+            {i === weeks.length - 1 ? t('leagues.personal.now') : new Date(`${w.weekKey}T00:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
+          </Text>
+        ))}
+      </View>
+    </GlassCard>
+  );
+}
+
+/**
+ * The weekly XP board, a page at a time. The empty state names the scope:
+ * nobody at all, none of your friends, or nobody from your country are three
+ * different things.
  */
 function BoardTab({
   board,
   entries,
-  unit,
   scope,
   loadingMore,
   onMore,
 }: {
-  board: Board | null;
+  board: Board;
   entries: BoardEntry[];
-  unit: string;
   scope: Scope;
   loadingMore: boolean;
   onMore: () => void;
-}) {
+}): React.JSX.Element {
   const { locale, t } = useI18n();
   const { colors } = useTheme();
-  if (!board) return <Centered><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('leagues.noBoard')}</Text></Centered>;
+  if (scope === 'country' && board.country == null) {
+    return (
+      <View style={styles.centered}>
+        <Icon name="globe" size={48} tone="secondary" />
+        <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('rankings.noCountry')}</Text>
+        <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('rankings.noCountryBody')}</Text>
+      </View>
+    );
+  }
   const empty =
     scope === 'friends'
       ? (['rankings.empty.friends', 'rankings.empty.friendsBody'] as const)
@@ -320,32 +443,35 @@ function BoardTab({
       keyExtractor={(e) => e.userId}
       contentContainerStyle={styles.list}
       ListHeaderComponent={
-        board.me ? (
-          <Text style={[styles.myRank, { color: colors.textPrimary }]}>
-            {t('games.you')} · #{board.me.rank} · {formatCompact(board.me.score, locale)} {unit}
-          </Text>
-        ) : null
+        <View style={styles.boardHead}>
+          <Text style={[styles.goalHint, { color: colors.textSecondary }]}>{t('rankings.board.weeklyXpBlurb')}</Text>
+          {board.me ? (
+            <Text style={[styles.myRank, { color: colors.textPrimary }]}>
+              {t('games.you')} · #{board.me.rank} · {t('leagues.xpCount', { xp: formatCompact(board.me.score, locale) })}
+            </Text>
+          ) : null}
+        </View>
       }
       renderItem={({ item }) => (
-        <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
+        <View style={styles.row}>
           <Text style={[styles.rank, { color: colors.textSecondary }]}>{item.rank}</Text>
-          <InitialsAvatar name={item.username} id={item.userId} size={28} />
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{item.username}</Text>
-          <Text style={[styles.score, { color: colors.textPrimary }]}>{formatCompact(item.score, locale)}</Text>
+          <InitialsAvatar name={item.username} id={item.userId} size={32} />
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+            {item.username}
+          </Text>
+          <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: formatCompact(item.score, locale) })}</Text>
         </View>
       )}
       ListEmptyComponent={
-        <Centered>
-          <Text style={[styles.ctaText, { color: colors.textPrimary }]}>{t(empty[0])}</Text>
-          <Text style={[styles.dim, { color: colors.textSecondary }]}>{t(empty[1])}</Text>
-        </Centered>
+        <View style={styles.centered}>
+          <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t(empty[0])}</Text>
+          <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t(empty[1])}</Text>
+        </View>
       }
       ListFooterComponent={
         entries.length > 0 && entries.length < board.total ? (
-          <Pressable onPress={onMore} disabled={loadingMore} style={styles.more}>
-            <Text style={[styles.moreText, { color: colors.primary }]}>
-              {t('rankings.showMore', { count: board.total - entries.length })}
-            </Text>
+          <Pressable onPress={onMore} disabled={loadingMore} accessibilityRole="button" style={styles.more}>
+            <Text style={[styles.moreText, { color: colors.primary }]}>{t('rankings.showMore', { count: board.total - entries.length })}</Text>
           </Pressable>
         ) : null
       }
@@ -353,31 +479,58 @@ function BoardTab({
   );
 }
 
-function Centered({ children }: { children: React.ReactNode }) {
-  return <View style={styles.centered}>{children}</View>;
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  choosers: { paddingHorizontal: spacing.lg, gap: spacing.sm, marginBottom: spacing.md },
-  more: { alignItems: 'center', paddingVertical: spacing.md },
-  moreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
-  tabs: { flexDirection: 'row', paddingHorizontal: spacing.lg, gap: spacing.sm, marginBottom: spacing.sm },
-  tab: { flex: 1, paddingVertical: spacing.sm, borderRadius: radii.pill, alignItems: 'center' },
-  tabText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  list: { padding: spacing.lg, gap: spacing.xs },
-  leagueHead: { alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm },
-  tierName: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  countdown: { fontSize: typography.sizes.sm },
-  cta: { marginTop: spacing.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
-  myRank: { textAlign: 'center', fontWeight: typography.weights.bold, marginBottom: spacing.sm },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
-  rank: { width: 28, textAlign: 'center', fontWeight: typography.weights.bold },
+  tabs: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
+  choosers: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
+  list: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
+  head: { gap: spacing.md, marginBottom: spacing.sm },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  heroText: { flex: 1, gap: 2 },
+  heroTitle: { ...display(typography.sizes.xl) },
+  heroMeaning: { fontSize: typography.sizes.md },
+  ends: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs },
+  endsText: { fontSize: typography.sizes.sm },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  goalText: { flex: 1, gap: spacing.xs },
+  goalTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  goalHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  safe: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4 },
+  safeText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  lastWeek: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  lastLine: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, lineHeight: 21 },
+  flex: { flex: 1, gap: 2 },
+  rules: { gap: 4, marginTop: spacing.sm },
+  rule: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  waiting: { alignItems: 'center', gap: spacing.sm },
+  waitTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  center: { textAlign: 'center' },
+  stretch: { alignSelf: 'stretch', marginTop: spacing.xs },
+  zone: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: spacing.sm, paddingBottom: 2, paddingHorizontal: spacing.xs },
+  zoneText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  gap: { height: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.sm, minHeight: MIN_TOUCH_TARGET + 4 },
+  rank: { width: 26, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   name: { flex: 1, fontSize: typography.sizes.md },
   nameSelf: { fontWeight: typography.weights.bold },
-  score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  ctaText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
-  dim: { textAlign: 'center' },
-  join: { marginTop: spacing.sm, alignSelf: 'stretch' },
+  score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  personal: { alignItems: 'center', gap: spacing.sm },
+  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: spacing.md },
+  goalLine: { position: 'absolute', left: 0, right: 0, height: 1, opacity: 0.45 },
+  barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' },
+  bar: { width: '70%', borderRadius: radii.xs },
+  barLabels: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  barLabel: { flex: 1, fontSize: typography.sizes.xs, textAlign: 'center' },
+  boardHead: { gap: spacing.xs, marginBottom: spacing.sm },
+  myRank: { fontWeight: typography.weights.bold },
+  centered: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
+  more: { alignItems: 'center', paddingVertical: spacing.md, minHeight: MIN_TOUCH_TARGET },
+  moreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

@@ -4,7 +4,9 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { acceptInvite } from '../play/api';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
-import { isPlayGame } from '@kurda/shared';
+import { badgeDef, isPlayGame } from '@kurda/shared';
+import { badgeName, isKnownBadge } from '../badges/format';
+import { knownTier, leagueName } from '../leagues/format';
 import type { DeepLink, InboxItem } from './inbox';
 
 /**
@@ -34,6 +36,12 @@ export async function followDeepLink(link: DeepLink, navigation: RootNavigation,
     case 'Notifications':
       navigation.navigate('Notifications');
       return;
+    case 'Badges':
+      navigation.navigate('Badges');
+      return;
+    case 'League':
+      navigation.navigate('League');
+      return;
     case 'PlayInvite': {
       const res = await acceptInvite(client, link.params.inviteId);
       const route = res.ok ? lobbyRoute(res.data.game, res.data.lobbyId) : lobbyRoute(link.params.game, link.params.lobbyId);
@@ -61,5 +69,37 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
     return { title: t('play.notification.inviteTitle'), body: t('play.notification.inviteBody', { game: t(GAME_NAME_KEY[item.data.game]) }) };
   }
   if (item.data.kind === 'gift') return { title: t('play.notification.giftTitle'), body: t('play.notification.giftBody') };
+  const progress = progressText(item.data, t);
+  if (progress) return progress;
   return { title: item.title, body: item.body };
+}
+
+/**
+ * A badge or league notification in the reader's language, from its kind and
+ * ids alone — the server's stored line is English and names the badge in
+ * Kurmancî. Calm words: what happened, never what you might lose.
+ */
+function progressText(data: Record<string, unknown>, t: Translate): { title: string; body: string } | null {
+  switch (data.kind) {
+    case 'badge': {
+      const key = isKnownBadge(data.key) ? data.key : null;
+      if (!key) return { title: t('notifications.badge.title'), body: t('notifications.badge.dayBody') };
+      return badgeDef(key)?.secret
+        ? { title: t('notifications.badge.title'), body: t('notifications.badge.secretBody') }
+        : { title: t('notifications.badge.title'), body: t('notifications.badge.body', { name: badgeName(t, key) }) };
+    }
+    case 'league_safe':
+      return { title: t('notifications.leagueSafe.title'), body: t('notifications.leagueSafe.body') };
+    case 'league_promotion': {
+      const tier = knownTier(data.tier);
+      return {
+        title: t('notifications.leagueUp.title'),
+        body: tier ? t('notifications.leagueUp.body', { tier: leagueName(t, tier) }) : t('notifications.leagueUp.bodyPlain'),
+      };
+    }
+    case 'league_trophy':
+      return { title: t('notifications.leagueTrophy.title'), body: t('notifications.leagueTrophy.body') };
+    default:
+      return null;
+  }
 }

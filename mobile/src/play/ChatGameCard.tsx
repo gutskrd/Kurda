@@ -13,6 +13,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { lobbyCard } from './api';
 import { GAME_ICON, GAME_NAME_KEY, summaryParts } from './labels';
+import { RatedPill } from '../ranks/Rated';
 import { lobbyRoute } from './routes';
 import { useReportAction } from '../reports/reportAction';
 
@@ -153,6 +154,8 @@ export function ChatGameCard({
               {details}
             </Text>
           ) : null}
+          {/* Rated or Friendly, before anyone joins */}
+          {card?.summary.rated !== undefined ? <RatedPill rated={card.summary.rated} small style={styles.rated} /> : null}
         </View>
       </View>
       {card ? (
@@ -205,6 +208,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   icon: { width: 36, height: 36, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1 },
+  rated: { marginTop: 4 },
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   details: { fontSize: typography.sizes.xs },
   state: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

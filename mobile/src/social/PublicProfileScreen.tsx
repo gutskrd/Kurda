@@ -12,7 +12,11 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
-import { tierMeta } from '../leagues/format';
+import { knownTier, leagueName } from '../leagues/format';
+import { ProgressShowcase } from '../profile/ProgressShowcase';
+import { SeasonFramed, frameTierOf } from '../ranks/art';
+import { TIER_NAME_KEY } from '../ranks/format';
+import { SEASON_FRAME_INNER, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { FavoriteRow } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
@@ -34,9 +38,17 @@ interface Profile {
   private: boolean;
   xp?: number;
   streak?: number;
-  tier?: string;
-  rating?: number;
+  /** their league tier, or null for someone not in the leagues (never a made-up "bronze") */
+  tier?: string | null;
+  league?: ProfileLeague | null;
+  /** Game Ranks per game played; "Resting" ones carry no tier for others */
+  ranks?: ProfileRank[];
+  /** the season frame they wear round their avatar */
+  frameSku?: string | null;
+  /** badges earned (and the legacy tournament win) */
   achievements?: number;
+  /** the three badges they chose to show */
+  badges?: ShowcaseBadge[];
   /** which activity sections they let people see; null when private */
   sections?: ProfileSections | null;
   /*
@@ -147,7 +159,17 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             const labelKey = friendActionLabel(profile.friendStatus);
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
-          <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+          {frameTierOf(profile.frameSku) ? (
+            <SeasonFramed
+              tier={frameTierOf(profile.frameSku)!}
+              size={Math.round(96 / SEASON_FRAME_INNER)}
+              label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTierOf(profile.frameSku)!]) })}
+            >
+              <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+            </SeasonFramed>
+          ) : (
+            <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+          )}
           <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
           {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
 
@@ -158,9 +180,19 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               <View style={styles.stats}>
                 <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
                 <Stat label="XP" value={`${profile.xp ?? 0}`} />
-                <Stat label={t('profile.league')} value={tierMeta(profile.tier ?? 'bronze').label} />
+                {/* a league only while they take part, translated; nothing for somebody never in one */}
+                {knownTier(profile.league?.tier ?? profile.tier) ? (
+                  <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
+                ) : null}
                 <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
               </View>
+
+              <ProgressShowcase
+                own={false}
+                ranks={profile.ranks ?? []}
+                league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
+                badges={profile.badges ?? []}
+              />
 
               {/* behind the same privacy check as the stats: pinning a poem is
                   something you did for people who can see your profile */}

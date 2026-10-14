@@ -16,7 +16,10 @@ import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
-import { countryName } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { ProgressShowcase } from '../profile/ProgressShowcase';
+import { SeasonFramed, frameTierOf } from '../ranks/art';
+import { TIER_NAME_KEY } from '../ranks/format';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { useSendErrorAlert } from '../reports/SendError';
@@ -25,6 +28,8 @@ import { learningStats, type Streak } from '../streak/format';
 
 /** How big the face is. TikTok's is about this, and so is Instagram's. */
 const AVATAR = 96;
+/** The face with a season frame round it: the frame's ring sits outside the face, which stays the same size. */
+const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
 
 /**
  * The parts of `/me` a profile puts on screen.
@@ -76,7 +81,13 @@ export function ProfileScreen() {
   const [me, setMe] = useState<Me | null>(null);
   const [zer, setZer] = useState<number | null>(null);
   const [friends, setFriends] = useState<number | null>(null);
-  const [rank, setRank] = useState<number | null>(null);
+  /** what the profile shows of the climb: ranks, the league, the showcase, the season frame */
+  const [progress, setProgress] = useState<{
+    ranks: ProfileRank[];
+    league: ProfileLeague | null;
+    badges: ShowcaseBadge[];
+    frameSku: string | null;
+  } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const { t, locale } = useI18n();
@@ -112,17 +123,25 @@ export function ProfileScreen() {
       if (inv.ok) setIconsOwned((inv.data.items ?? []).filter((i) => i.category === 'icon').length);
 
       /*
-       * Your own ranked place.
+       * Your ranks, league, showcase and season frame.
        *
-       * `/me` does not carry it, and the public profile endpoint already
-       * works it out the same way it does for everybody else — so this asks
+       * `/me` does not carry them, and the public profile endpoint already
+       * works them out the same way it does for everybody else — so this asks
        * for your own public profile rather than adding a second way to
-       * compute one number. The browser does exactly this.
+       * compute them. The browser does exactly this. (It used to ask for a
+       * frozen all-time "#rank", which Game Ranks replaced.)
        */
       const id = m.ok ? m.data.user.id : null;
       if (id) {
-        const p = await client.get<{ rank?: number | null }>(`/users/${id}`);
-        if (active && p.ok) setRank(p.data.rank ?? null);
+        const p = await client.get<{
+          ranks?: ProfileRank[];
+          league?: ProfileLeague | null;
+          badges?: ShowcaseBadge[];
+          frameSku?: string | null;
+        }>(`/users/${id}`);
+        if (active && p.ok) {
+          setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null });
+        }
       }
     })();
     return () => {
@@ -153,18 +172,18 @@ export function ProfileScreen() {
   }, [client, uploading, showSendError, t, locale]);
 
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
+  const frameTier = frameTierOf(progress?.frameSku);
 
   /*
    * The quiet line, assembled from whatever there is.
    *
-   * Rank is absent until a ranked game has been played and the icon count is
-   * zero for most people, so this is built rather than written out: an
+   * The icon count is zero for most people, so this is built rather than
+   * written out: an
    * interpunct between the parts that exist, and no line at all when none do.
    */
   const aside = [
     `${(me?.level?.xp ?? me?.xp ?? 0).toLocaleString()} XP`,
     zer === null ? null : `${zer.toLocaleString()} Zêr`,
-    rank == null ? null : `#${rank.toLocaleString()}`,
     iconsOwned ? `${iconsOwned} ${t('profile.stat.icons')}` : null,
   ].filter((part): part is string => part !== null);
 
@@ -207,13 +226,23 @@ export function ProfileScreen() {
           accessibilityLabel={t('profile.changePhoto')}
           style={styles.avatarWrap}
         >
-          <InitialsAvatar
-            name={user?.displayName ?? user?.username ?? ''}
-            id={user?.id ?? ''}
-            size={AVATAR}
-            photoUrl={photoUrl}
-          />
-          {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
+          {frameTier ? (
+            // the season frame rings the face; the face and its icon stay their own size inside it
+            <SeasonFramed tier={frameTier} size={FRAMED} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTier]) })}>
+              <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={photoUrl} />
+              {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
+            </SeasonFramed>
+          ) : (
+            <>
+              <InitialsAvatar
+                name={user?.displayName ?? user?.username ?? ''}
+                id={user?.id ?? ''}
+                size={AVATAR}
+                photoUrl={photoUrl}
+              />
+              {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
+            </>
+          )}
           {uploading ? (
             <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
               <ActivityIndicator color="#FFFFFF" />
@@ -280,6 +309,19 @@ export function ProfileScreen() {
           come", which is the question to ask after a lapse, not the first one.
         */}
         {streak ? <LearningRow streak={streak} /> : null}
+
+        {/* the three badges chosen for the profile, each game's rank and the league */}
+        {progress ? (
+          <ProgressShowcase
+            own
+            ranks={progress.ranks}
+            league={progress.league}
+            badges={progress.badges}
+            onBadges={() => navigation.navigate('Badges')}
+            onRanks={(game) => navigation.navigate('Ranks', { game })}
+            onLeague={() => navigation.navigate('League')}
+          />
+        ) : null}
 
         {/*
           One wide button and one square one, which is the arrangement every

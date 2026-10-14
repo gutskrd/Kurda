@@ -284,3 +284,14 @@ export {
   type LeagueTier as ArtLeagueTier,
   type Season as ArtSeason,
 } from './art/index.js';
+/**
+ * The art's metals, for the parts of a screen drawn around an emblem — a
+ * progress bar, a glow, a confetti fleck — so they are the emblem's own
+ * colours rather than a near copy kept beside it.
+ */
+export {
+  RANK_METAL as ART_RANK_METAL,
+  LEAGUE_METAL as ART_LEAGUE_METAL,
+  TIER_METAL as ART_TIER_METAL,
+  type Metal as ArtMetal,
+} from './art/palette.js';
