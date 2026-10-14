@@ -206,6 +206,17 @@ export const en = {
   'composer.upload.paused': 'Picture uploads are paused for now. Try again later.',
   'composer.upload.failed': 'The upload didn’t finish. Try again.',
   'picture.useEdited': 'Use this picture',
+  'pictures.group': '{count} pictures',
+  'pictures.open': 'Open picture {n} of {total}',
+  'pictures.openDescribed': 'Open picture {n} of {total}: {alt}',
+  'pictures.viewer': 'Picture',
+  'pictures.viewerN': 'Picture {n} of {total}',
+  'pictures.undescribed': 'Picture {n}, no description',
+  'pictures.position': '{n} of {total}',
+  'pictures.previous': 'Previous picture',
+  'pictures.next': 'Next picture',
+  'post.edit': 'Edit',
+  'post.source': 'Source: {source}',
 
   // ---- games ---------------------------------------------------------------
   'games.title': 'Games',
