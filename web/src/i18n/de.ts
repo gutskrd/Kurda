@@ -553,6 +553,7 @@ export const de: Catalogue = {
   'gift.skipped.limit': 'Du hast das heutige Geschenklimit für {name} erreicht.',
   'gift.skipped.notYet': 'Du kannst {name} noch kein Geschenk senden.',
   'gift.sentAnnounce': 'Dein Geschenk ist unterwegs: {item}.',
+  'gift.sentTo': 'An {names} gesendet.',
   'gift.forYou': 'Ein Geschenk für dich',
   'gift.tapToOpen': 'Zum Öffnen tippen',
   'gift.openFrom': 'Das Geschenk von {name} öffnen',

@@ -205,6 +205,53 @@ describe('gifts in a group thread', () => {
     expect(await screen.findByLabelText('dilan')).toBeInTheDocument();
   });
 
+  it('keeps a note above the composer when some friends could not be given the gift', async () => {
+    mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', async (url, init) => {
+      const who = await me(url);
+      if (who) return who;
+      if (url.includes('/friends')) {
+        return jsonResponse(200, { total: 2, friends: [{ userId: 'u-rojda', username: 'rojda', avatarUrl: null }, { userId: 'u-dilan', username: 'dilan', avatarUrl: null }] });
+      }
+      if (url.endsWith('/groups/g1')) {
+        return jsonResponse(200, {
+          id: 'g1',
+          name: 'Hevalên Amedê',
+          myRole: 'member',
+          members: [
+            { userId: 'me', username: 'baran', avatarUrl: null, role: 'member' },
+            { userId: 'u-rojda', username: 'rojda', avatarUrl: null, role: 'owner' },
+            { userId: 'u-dilan', username: 'dilan', avatarUrl: null, role: 'member' },
+          ],
+        });
+      }
+      if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
+      if (url.includes('/gifts/catalog')) {
+        return jsonResponse(200, {
+          items: [{ sku: 'bg-sunset', name: 'Sunset over Amed', category: 'background', assetUrl: null, currency: 'zer', price: 100, tier: 'common', alreadyOwnedBy: [] }],
+          balance: { zer: 1000, gems: 0 },
+        });
+      }
+      if (url.endsWith('/gifts') && init?.method === 'POST') {
+        return jsonResponse(200, { batchId: 'b2', sent: ['u-rojda'], skipped: [{ userId: 'u-dilan', reason: 'daily_limit' }], balance: { zer: 900, gems: 0 }, message: null });
+      }
+      return jsonResponse(200, {});
+    });
+    await userEvent.click(await screen.findByRole('button', { name: 'Send a gift' }));
+    await userEvent.click(await screen.findByLabelText('Select all'));
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+
+    const note = 'Sent to rojda. You’ve reached today’s gift limit for dilan.';
+    // on screen above the composer (and said once by the thread's announcer)
+    expect(await screen.findByText(note, { selector: '.gift-partial span' })).toBeInTheDocument();
+    expect(screen.getAllByText(note)).toHaveLength(2);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // it stays until put away
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByText(note, { selector: '.gift-partial span' })).not.toBeInTheDocument();
+  });
+
   const roomMessage = {
     id: 'm7',
     senderId: 'u-rojda',

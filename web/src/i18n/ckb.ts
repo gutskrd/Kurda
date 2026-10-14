@@ -564,6 +564,7 @@ export const ckb: Catalogue = {
   'gift.skipped.limit': 'گەیشتیتە سنووری دیارییەکانی ئەمڕۆ بۆ {name}.',
   'gift.skipped.notYet': 'هێشتا ناتوانیت دیاری بۆ {name} بنێریت.',
   'gift.sentAnnounce': 'دیارییەکەت لە ڕێگادایە: {item}.',
+  'gift.sentTo': 'بۆ {names} نێردرا.',
   'gift.forYou': 'دیارییەک بۆ تۆ',
   'gift.tapToOpen': 'دەست لێبدە بۆ کردنەوە',
   'gift.openFrom': 'دیارییەکەی {name} بکەرەوە',

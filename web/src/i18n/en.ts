@@ -615,6 +615,7 @@ export const en = {
   'gift.skipped.limit': 'You’ve reached today’s gift limit for {name}.',
   'gift.skipped.notYet': 'You can’t send {name} a gift yet.',
   'gift.sentAnnounce': 'Your gift is on its way: {item}.',
+  'gift.sentTo': 'Sent to {names}.',
   'gift.forYou': 'A gift for you',
   'gift.tapToOpen': 'Tap to open',
   'gift.openFrom': 'Open the gift from {name}',

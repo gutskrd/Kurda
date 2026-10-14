@@ -558,6 +558,7 @@ export const ar: Catalogue = {
   'gift.skipped.limit': 'وصلت إلى حد الهدايا اليوم لـ{name}.',
   'gift.skipped.notYet': 'لا يمكنك إرسال هدية إلى {name} بعد.',
   'gift.sentAnnounce': 'هديتك في الطريق: {item}.',
+  'gift.sentTo': 'أُرسلت إلى {names}.',
   'gift.forYou': 'هدية لك',
   'gift.tapToOpen': 'اضغط للفتح',
   'gift.openFrom': 'افتح الهدية من {name}',

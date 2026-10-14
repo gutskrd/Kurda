@@ -1715,6 +1715,35 @@ button.gift-bubble:active {
   background: var(--surface-2);
 }
 
+/* ---- a group gift some friends could not be given: who got it, and why not -- */
+.gift-partial {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 4px;
+}
+.gift-partial > span {
+  flex: 1;
+  min-width: 0;
+}
+.gift-partial-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-inline-end: -8px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.gift-partial-close:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
 /* ---- less motion: no flight, no burst, no fire — a short fade instead ------- */
 @media (prefers-reduced-motion: reduce) {
   .gift-waiting,

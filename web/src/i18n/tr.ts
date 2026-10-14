@@ -553,6 +553,7 @@ export const tr: Catalogue = {
   'gift.skipped.limit': '{name} için bugünkü hediye sınırına ulaştın.',
   'gift.skipped.notYet': '{name} kişisine henüz hediye gönderemezsin.',
   'gift.sentAnnounce': 'Hediyen yolda: {item}.',
+  'gift.sentTo': 'Gönderildi: {names}.',
   'gift.forYou': 'Sana bir hediye',
   'gift.tapToOpen': 'Açmak için dokun',
   'gift.openFrom': '{name} kişisinin hediyesini aç',

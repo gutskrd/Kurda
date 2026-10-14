@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { GiftCard, GiftChatRef, GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import type { ApiError, DmMessage, GroupMessage } from '../lib/types';
-import { GiftIcon } from '../components/icons';
+import { CloseIcon, GiftIcon } from '../components/icons';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { useT } from '../i18n/I18nProvider';
@@ -21,7 +21,9 @@ type ChatMessage = DmMessage | GroupMessage;
  *
  * - `button`: the gift button for the composer's tools;
  * - `overlays`: the picker, the send's flight, and what is announced;
- * - `renderBody`: draws a gift message as a GiftBubble (MessageList's hook).
+ * - `renderBody`: draws a gift message as a GiftBubble (MessageList's hook);
+ * - `notice`: after a group gift some friends could not be given, who got it
+ *   and why the others did not — for the thread to show above its composer.
  *
  * It keeps the thread's gift cards true without a reload: your own unwrap
  * updates the card at once; the sender hears `gift_opened` on their own
@@ -60,6 +62,7 @@ export function useChatGifts<M extends ChatMessage>({
   renderBody: (m: M) => ReactNode | undefined;
   /** a message arriving live: given your own card for its gift, if one came first */
   adopt: (m: M) => M;
+  notice: ReactNode;
 } {
   const t = useT();
   const { client, user } = useAuth();
@@ -67,6 +70,8 @@ export function useChatGifts<M extends ChatMessage>({
   const [people, setPeople] = useState<GiftPerson[] | null>(null);
   const [flight, setFlight] = useState<{ sent: GiftSent; target: DOMRect | null } | null>(null);
   const [announce, setAnnounce] = useState('');
+  /** who got the last gift and why the others did not, when some were skipped */
+  const [partial, setPartial] = useState<string | null>(null);
   const [params, setParams] = useSearchParams();
   /** the gift the address asks to open (`?gift=`), until its bubble has opened it */
   const [autoGift, setAutoGift] = useState<string | null>(() => params.get('gift'));
@@ -175,6 +180,7 @@ export function useChatGifts<M extends ChatMessage>({
   // open, and a first ask can come before the thread knew its own roster
   const openPicker = useCallback(() => {
     setPicking(true);
+    setPartial(null);
     setPeople(null);
     void loadPeople().then(setPeople, () => setPeople([]));
   }, [loadPeople]);
@@ -191,7 +197,9 @@ export function useChatGifts<M extends ChatMessage>({
         });
       }
       setFlight({ sent, target: threadRef.current?.getBoundingClientRect() ?? null });
-      setAnnounce(t('gift.sentAnnounce', { item: sent.item.name }));
+      // the note is said once, by the announcer; on screen it stays until put away
+      setPartial(sent.partialNote);
+      setAnnounce(sent.partialNote ?? t('gift.sentAnnounce', { item: sent.item.name }));
     },
     [setMessages, t, threadRef],
   );
@@ -245,5 +253,14 @@ export function useChatGifts<M extends ChatMessage>({
     </>
   );
 
-  return { button, overlays, renderBody, adopt };
+  const notice = partial ? (
+    <div className="msg send-error is-limit chat-senderr gift-partial">
+      <span>{partial}</span>
+      <button type="button" className="gift-partial-close" aria-label={t('gift.close')} onClick={() => setPartial(null)}>
+        <CloseIcon size={15} />
+      </button>
+    </div>
+  ) : null;
+
+  return { button, overlays, renderBody, adopt, notice };
 }

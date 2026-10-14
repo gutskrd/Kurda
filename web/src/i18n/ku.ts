@@ -559,6 +559,7 @@ export const ku: Catalogue = {
   'gift.skipped.limit': 'Te sînorê diyariyên îro yên ji bo {name} tije kir.',
   'gift.skipped.notYet': 'Tu hîn nikarî diyariyekê ji {name} re bişînî.',
   'gift.sentAnnounce': 'Diyariya te di rê de ye: {item}.',
+  'gift.sentTo': 'Ji {names} re hat şandin.',
   'gift.forYou': 'Diyariyek ji bo te',
   'gift.tapToOpen': 'Bitikîne û veke',
   'gift.openFrom': 'Diyariya {name} veke',

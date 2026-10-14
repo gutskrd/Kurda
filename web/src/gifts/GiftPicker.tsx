@@ -29,6 +29,12 @@ export interface GiftPerson {
 export interface GiftSent extends SendGiftResult {
   message: DmMessage | GroupMessage | null;
   item: GiftCatalogItem;
+  /**
+   * When some of the chosen friends were skipped: who did get it and why the
+   * others did not, in the reader's words ("Sent to rojda. dilan already has
+   * it."); null when everyone chosen was given it.
+   */
+  partialNote: string | null;
 }
 
 const TIER_LABEL: Record<'rare' | 'legendary', MessageKey> = {
@@ -130,8 +136,14 @@ function PickerFlow({
     const res = await client.get<{ items: GiftCatalogItem[]; balance: { zer: number; gems: number } }>(
       `/gifts/catalog?to=${chosen.join(',')}`,
     );
-    if (res.ok) setShelf({ items: res.data.items ?? [], balance: res.data.balance ?? { zer: 0, gems: 0 } });
-    else setShelfError(res.error);
+    if (res.ok) {
+      const items = res.data.items ?? [];
+      setShelf({ items, balance: res.data.balance ?? { zer: 0, gems: 0 } });
+      // a reload (after a price change) keeps the choice, at what it costs now:
+      // the confirm bar, the affordability and the next send's expected price
+      // all read the fresh item, not the one that was refused
+      setPicked((p) => (p ? (items.find((i) => i.sku === p.sku) ?? null) : null));
+    } else setShelfError(res.error);
   }, [client, chosen]);
 
   useEffect(() => {
@@ -172,7 +184,11 @@ function PickerFlow({
       setSkippedNote(why || t('gift.error.unavailable'));
       return;
     }
-    onSent({ ...res.data, item: picked });
+    const partialNote =
+      res.data.skipped.length > 0
+        ? `${t('gift.sentTo', { names: res.data.sent.map((id) => nameOf.get(id) ?? '').filter(Boolean).join(', ') })} ${why}`
+        : null;
+    onSent({ ...res.data, item: picked, partialNote });
   }
 
   const names = chosen.map((id) => nameOf.get(id) ?? '').filter(Boolean);

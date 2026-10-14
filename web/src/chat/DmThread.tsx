@@ -282,6 +282,7 @@ export function DmThread({
         </button>
       )}
 
+      {gifts.notice}
       <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
       <ReportSheet
         open={reporting !== null}
