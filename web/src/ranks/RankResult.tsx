@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { isRankedGame, progressToNext, type PlayGame, type RankResult as RankResultData, type RankTier } from '@kurda/shared';
+import { isRankedGame, partWeightReason, progressToNext, type PartWeightReason, type PlayGame, type RankResult as RankResultData, type RankTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { ShieldIcon } from '../components/icons';
 import { prefersReducedMotion } from '../gifts/motion';
@@ -13,6 +13,13 @@ import { signed } from './rated';
 export const COUNT_MS = 1100;
 const POLL_MS = 1500;
 const POLL_TRIES = 12;
+
+/** The line under a result that moved less than a full game: the reason that applied, never a guess between two. */
+const PART_WEIGHT_NOTE = {
+  'repeat-opponent': 'rankResult.dampedRepeat',
+  'new-account': 'rankResult.dampedNew',
+  both: 'rankResult.dampedBoth',
+} as const satisfies Record<PartWeightReason, string>;
 
 type Load = { state: 'loading' } | { state: 'none' } | { state: 'ready'; result: RankResultData };
 
@@ -130,6 +137,7 @@ function CountedResult({
   const reason = reasonLine(t, result.reason);
   const label = tierAfter ? rankLabel(t, tierAfter, result.divisionAfter) : null;
   const next = after.next ? rankLabel(t, after.next.tier, after.next.division) : null;
+  const partWeight = partWeightReason(result);
   const tone = result.delta > 0 ? 'is-up' : result.delta < 0 ? 'is-down' : 'is-even';
 
   return (
@@ -185,7 +193,7 @@ function CountedResult({
             <span>{t('ranks.shield', { count: result.shieldGames })}</span>
           </p>
         ) : null}
-        {result.weight < 1 && <p className="rank-result-note">{t('rankResult.damped')}</p>}
+        {partWeight && <p className="rank-result-note">{t(PART_WEIGHT_NOTE[partWeight])}</p>}
       </div>
       {celebrate && tierAfter && (
         <Celebration

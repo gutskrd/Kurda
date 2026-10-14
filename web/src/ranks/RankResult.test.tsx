@@ -37,6 +37,8 @@ function counted(over: Partial<Extract<RankResultData, { counted: true }>> = {})
     placement: null,
     shieldGames: 0,
     weight: 1,
+    damping: 1,
+    newAccountLimit: 1,
     progress: progressToNext(pointsAfter),
     ...over,
   };
@@ -65,6 +67,24 @@ describe('RankResult', () => {
     expect(await screen.findByText('−6')).toBeInTheDocument();
     expect(screen.getByText('close game against a stronger player')).toBeInTheDocument();
     expect(document.querySelector('.rank-result.is-down')).not.toBeNull();
+  });
+
+  it('says why a result moved less than a full game: the reason that applied, and nothing for a full one', async () => {
+    const cases: Array<[Partial<Extract<RankResultData, { counted: true }>>, string | null]> = [
+      [{ weight: 1, damping: 1, newAccountLimit: 1 }, null],
+      [{ weight: 0.5, damping: 0.5, newAccountLimit: 1 }, en['rankResult.dampedRepeat']],
+      [{ weight: 0.5, damping: 1, newAccountLimit: 0.5 }, en['rankResult.dampedNew']],
+      [{ weight: 0.125, damping: 0.25, newAccountLimit: 0.5 }, en['rankResult.dampedBoth']],
+    ];
+    for (const [over, note] of cases) {
+      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, counted(over))));
+      const { unmount } = renderApp(<RankResult game="wordle-battle" gameRef="g1" />);
+      expect(await screen.findByText('+24')).toBeInTheDocument();
+      const shown = document.querySelector('.rank-result-note');
+      if (note) expect(shown).toHaveTextContent(note);
+      else expect(shown).toBeNull();
+      unmount();
+    }
   });
 
   it('celebrates a new tier with its emblem, and lets the badges through only afterwards', async () => {

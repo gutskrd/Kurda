@@ -354,7 +354,7 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
           {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
         </Text>
         {/* what this game did to your rank, with its one plain reason — before the table */}
-        {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} damped={match.rated.damped} /> : null}
+        {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
         {results ? (
           <>
             <Text style={[styles.blurb, { color: colors.textSecondary }]}>

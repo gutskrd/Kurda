@@ -9,6 +9,7 @@ import {
   isRankedGame,
   isSeasonId,
   leaveCooldownMinutes,
+  partWeightReason,
   pointsOf,
   previousSeasonId,
   progressToNext,
@@ -145,4 +146,13 @@ describe('seasons', () => {
 it('knows which games have a rank', () => {
   expect(isRankedGame('stories')).toBe(true);
   expect(isRankedGame('race')).toBe(false);
+});
+
+describe('partWeightReason', () => {
+  it('names the part of the weight that applied, or nothing for a full game', () => {
+    expect(partWeightReason({ damping: 1, newAccountLimit: 1 })).toBeNull();
+    expect(partWeightReason({ damping: 0.5, newAccountLimit: 1 })).toBe('repeat-opponent');
+    expect(partWeightReason({ damping: 1, newAccountLimit: 0.5 })).toBe('new-account');
+    expect(partWeightReason({ damping: 0.25, newAccountLimit: 0.833 })).toBe('both');
+  });
 });

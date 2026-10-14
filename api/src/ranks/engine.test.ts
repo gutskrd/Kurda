@@ -8,6 +8,7 @@ import {
   idleSigma,
   rateGame,
   seasonReset,
+  weightParts,
   type GameEntry,
   type PlayerState,
 } from './engine.js';
@@ -252,5 +253,22 @@ describe('expected gains', () => {
     const { first, last } = expectedExtremes(lobby, 1, AT);
     expect(first).toBeGreaterThan(0);
     expect(last).toBeLessThan(0);
+  });
+});
+
+describe('the two parts of a result’s weight', () => {
+  it('tells the repeat damping from the new-account limit', () => {
+    expect(weightParts(0.5, 0.5)).toEqual({ weight: 0.5, damping: 0.5, newAccountLimit: 1 });
+    expect(weightParts(0.5, 1)).toEqual({ weight: 0.5, damping: 1, newAccountLimit: 0.5 });
+    expect(weightParts(0.125, 0.25)).toEqual({ weight: 0.125, damping: 0.25, newAccountLimit: 0.5 });
+    // one new opponent in three, as a `real` column hands it back
+    expect(weightParts(Math.fround(1 - 0.5 / 3), 1)).toEqual({ weight: 0.833, damping: 1, newAccountLimit: 0.833 });
+    // rows from before weights were kept counted fully
+    expect(weightParts(null, null)).toEqual({ weight: 1, damping: 1, newAccountLimit: 1 });
+  });
+
+  it('splits what rateGame applied back into its parts', () => {
+    const [a] = rateGame({ entries: [entry('a', settled(25, 3), 1), entry('n', settled(25, 3), 2, { newAccount: true })], weight: 0.5, at: AT });
+    expect(weightParts(a!.weight, 0.5)).toEqual({ weight: 0.25, damping: 0.5, newAccountLimit: 0.5 });
   });
 });

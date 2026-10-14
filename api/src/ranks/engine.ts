@@ -147,6 +147,19 @@ export interface RateOutcome {
 const EVEN_POINTS = 50;
 
 /**
+ * The two parts of the weight a change was applied with: the game's
+ * repeat-opponent damping, and what is left of it after the new-account limit
+ * (the engine multiplies them). Older rows without a weight were full.
+ */
+export function weightParts(weight: number | null, damping: number | null): { weight: number; damping: number; newAccountLimit: number } {
+  const w = weight ?? 1;
+  const d = damping ?? 1;
+  // stored as `real`: round away the float noise (0.8333334 → 0.833)
+  const round = (n: number) => Math.round(Math.max(0, Math.min(1, n)) * 1000) / 1000;
+  return { weight: round(w), damping: round(d), newAccountLimit: d > 0 ? round(w / d) : 1 };
+}
+
+/**
  * The places the rating uses: leavers share the place after everyone who
  * stayed, and the places are then counted again (1 + how many finished ahead),
  * so whoever is ahead of everyone left in the game is first.

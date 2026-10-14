@@ -43,6 +43,8 @@ const counted = (over: Partial<Extract<RankResult, { counted: true }>> = {}): Ex
   placement: null,
   shieldGames: 0,
   weight: 1,
+  damping: 1,
+  newAccountLimit: 1,
   progress: null,
   ...over,
 });

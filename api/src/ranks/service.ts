@@ -36,7 +36,7 @@ import {
 } from '@kurda/shared';
 import { afterCommit } from '../db/after-commit.js';
 import { areFriendsSql, notKnownAdultSql } from '../users/age.js';
-import { expectedExtremes, expectedVs, freshState, rateGame, seasonReset, type PlayerState, type RateOutcome } from './engine.js';
+import { expectedExtremes, expectedVs, freshState, rateGame, seasonReset, weightParts, type PlayerState, type RateOutcome } from './engine.js';
 import { RankEvents } from './events.js';
 import { RANKED_TABLES, isInGame, loadLobby, type LobbySeat } from './games.js';
 import {
@@ -606,16 +606,23 @@ export class RankService {
       await this.pool.query<{
         reason: RankReason;
         weight: number | null;
+        damping: number | null;
         voided_at: Date | null;
         state_before: StoredState;
         state_after: StoredState;
       }>(
-        `SELECT reason, weight, voided_at, state_before, state_after FROM rating_events
-          WHERE user_id = $1 AND game = $2 AND game_ref = $3 AND kind = 'game'`,
+        // the event keeps the weight this player's change was applied with;
+        // the game keeps its repeat-opponent damping, so the two can be told apart
+        `SELECT e.reason, e.weight, g.weight AS damping, e.voided_at, e.state_before, e.state_after
+           FROM rating_events e
+           LEFT JOIN rated_games g ON g.game = e.game AND g.game_ref = e.game_ref
+          WHERE e.user_id = $1 AND e.game = $2 AND e.game_ref = $3 AND e.kind = 'game'`,
         [viewerId, game, gameRef],
       )
     ).rows[0];
-    if (ev && !ev.voided_at) return countedResult(game, gameRef, fromStored(ev.state_before), fromStored(ev.state_after), ev.reason, ev.weight);
+    if (ev && !ev.voided_at) {
+      return countedResult(game, gameRef, fromStored(ev.state_before), fromStored(ev.state_after), ev.reason, ev.weight, ev.damping);
+    }
     if (ev) return { game, gameRef, counted: false, friendlyReason: null, voided: true };
     const row = (
       await this.pool.query<{ rated_state: string | null; applied_at: Date | null; voided_at: Date | null; mine: boolean }>(
@@ -871,6 +878,7 @@ export function countedResult(
   after: PlayerState,
   reason: RankReason,
   weight: number | null,
+  damping: number | null,
 ): RankResult {
   const pointsBefore = pointsOf(before.mu, before.sigma);
   const pointsAfter = pointsOf(after.mu, after.sigma);
@@ -897,7 +905,7 @@ export function countedResult(
     divisionUp,
     placement: after.placementDone ? null : { played: after.ratedGames, of: PLACEMENT_GAMES },
     shieldGames: after.shieldGames,
-    weight: weight ?? 1,
+    ...weightParts(weight, damping),
     progress: after.placementDone ? progressToNext(pointsAfter) : null,
   };
 }

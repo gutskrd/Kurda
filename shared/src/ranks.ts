@@ -423,8 +423,16 @@ export type RankResult =
       placement: { played: number; of: number } | null;
       /** the new shield after a tier-up, or what is left of one */
       shieldGames: number;
-      /** repeat-opponent damping applied (1 = none) */
+      /**
+       * The share of a full change this result was applied with (1 = full):
+       * `damping` × `newAccountLimit`. Each part has its own reason, so a
+       * client that explains a part-weight result says the one that applies.
+       */
       weight: number;
+      /** repeat-opponent damping for the whole game, decided at its start (1 = none): "you've played a lot of rated games together today" */
+      damping: number;
+      /** how far new accounts among your opponents may move you (1 = none were new; down to 0.5) */
+      newAccountLimit: number;
       progress: Progress | null;
     }
   | {
@@ -436,6 +444,22 @@ export type RankResult =
       pending?: boolean;
       voided?: boolean;
     };
+
+/**
+ * Why a counted result moved you less than a full game, if it did — the line
+ * both apps put under it: the same players have played a lot of rated games
+ * together today (`repeat-opponent`), someone in it is new to Hevalo
+ * (`new-account`), or both. Null for a full-weight result.
+ */
+export type PartWeightReason = 'repeat-opponent' | 'new-account' | 'both';
+
+export function partWeightReason(r: { damping: number; newAccountLimit: number }): PartWeightReason | null {
+  const repeat = r.damping < 1;
+  const fresh = r.newAccountLimit < 1;
+  if (repeat && fresh) return 'both';
+  if (repeat) return 'repeat-opponent';
+  return fresh ? 'new-account' : null;
+}
 
 /** One opponent in a lobby, by seat (never an account id), with what a win or a loss would do. */
 export interface ExpectedOpponent {

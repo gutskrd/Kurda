@@ -329,7 +329,7 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
           {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
         </Text>
         {/* what this game did to your rank, with its one plain reason — before the table */}
-        {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} damped={battle.rated.damped} /> : null}
+        {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} /> : null}
         {results ? (
           <>
             <Text style={[styles.blurb, { color: colors.textSecondary }]}>

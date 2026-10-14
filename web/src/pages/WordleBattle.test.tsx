@@ -226,7 +226,7 @@ describe('WordleBattle', () => {
         return jsonResponse(200, {
           game: 'wordle-battle', gameRef: 'b1', counted: true, pointsBefore: 448, pointsAfter: 472, delta: 24, reason: 'beat-stronger',
           tierBefore: 'gir', tierAfter: 'gir', divisionBefore: 2, divisionAfter: 2, tierUp: false, divisionUp: false,
-          placement: null, shieldGames: 0, weight: 1, progress: { next: { tier: 'gir', division: 1 }, from: 400, to: 500, fraction: 0.72, pointsToGo: 28 },
+          placement: null, shieldGames: 0, weight: 1, damping: 1, newAccountLimit: 1, progress: { next: { tier: 'gir', division: 1 }, from: 400, to: 500, fraction: 0.72, pointsToGo: 28 },
         });
       if (url.includes('/wordle/battles/b1/results')) return jsonResponse(200, { id: 'b1', target: 'kar', difficulty: 'medium', ranking: [] });
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);

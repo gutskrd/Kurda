@@ -224,14 +224,19 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
       const b = await user();
       const states: string[] = [];
       const weights: number[] = [];
+      const ids: string[] = [];
       for (let i = 0; i < 5; i++) {
         const id = await play([a, b], { winner: i % 2 ? b : a });
+        ids.push(id);
         states.push((await battleRow(id)).rated_state!);
         const w = await pool.query<{ weight: number }>(`SELECT weight FROM rated_games WHERE game = 'wordle-battle' AND game_ref = $1`, [id]);
         weights.push(w.rows[0] ? Number(w.rows[0].weight) : 0);
       }
       expect(states).toEqual(['rated', 'rated', 'damped', 'damped', 'repeat-opponent']);
       expect(weights).toEqual([1, 1, 0.5, 0.25, 0]);
+      // the result says it was the repeat damping, and that nobody new was in it
+      expect(await ranks.result(a, 'wordle-battle', ids[2]!)).toMatchObject({ counted: true, weight: 0.5, damping: 0.5, newAccountLimit: 1 });
+      expect(await ranks.result(b, 'wordle-battle', ids[0]!)).toMatchObject({ counted: true, weight: 1, damping: 1, newAccountLimit: 1 });
       // a day later they count fully again
       tick(24 * 60);
       expect((await battleRow(await play([a, b], { winner: a }))).rated_state).toBe('rated');
@@ -248,6 +253,9 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
       const byUser = new Map(ev.rows.map((r) => [r.user_id, Number(r.weight)]));
       expect(byUser.get(a)).toBe(0.5);
       expect(byUser.get(fresh)).toBe(1);
+      // the result names the new-account limit, not repeat play
+      expect(await ranks.result(a, 'wordle-battle', id)).toMatchObject({ counted: true, weight: 0.5, damping: 1, newAccountLimit: 0.5 });
+      expect(await ranks.result(fresh, 'wordle-battle', id)).toMatchObject({ counted: true, weight: 1, damping: 1, newAccountLimit: 1 });
       // half the move a plain loss would have been
       expect(Number((await rating(a))!.mu) - 25).toBeCloseTo((22.364610506859503 - 25) / 2, 9);
     });

@@ -34,6 +34,8 @@ const counted = (over: Partial<Extract<RankResult, { counted: true }>> = {}): Ra
   placement: null,
   shieldGames: 0,
   weight: 1,
+  damping: 1,
+  newAccountLimit: 1,
   progress: { next: { tier: 'gir', division: 1 }, from: 400, to: 500, fraction: 0.12, pointsToGo: 88 },
   ...over,
 });
@@ -86,14 +88,24 @@ describe('RankResultPanel', () => {
     expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
   });
 
-  it('mentions damping only when the game itself was damped', async () => {
-    testAuth.client = fakeClient({ [PATH]: ok(counted({ weight: 0.5 })) });
-    renderWithProviders(<RankResultPanel game="wordle-battle" gameRef={REF} />);
-    await screen.findByText('−6');
-    expect(screen.queryByText(/Counted with less weight/)).toBeNull();
-    cleanup();
-    testAuth.client = fakeClient({ [PATH]: ok(counted({ weight: 0.5 })) });
-    renderWithProviders(<RankResultPanel game="wordle-battle" gameRef={REF} damped />);
-    expect(await screen.findByText(/Counted with less weight/)).toBeTruthy();
+  it('says which part of the weight applied: repeat play, someone new, both, or nothing for a full game', async () => {
+    const cases: Array<[Partial<Extract<RankResult, { counted: true }>>, string | null]> = [
+      [{ weight: 1, damping: 1, newAccountLimit: 1 }, null],
+      [{ weight: 0.5, damping: 0.5, newAccountLimit: 1 }, 'Counted with less weight: you’ve played a lot of rated games together today.'],
+      // a first game against a new player is not "a lot of rated games together today"
+      [{ weight: 0.5, damping: 1, newAccountLimit: 0.5 }, 'Counted with less weight: someone here is new to Hevalo.'],
+      [
+        { weight: 0.125, damping: 0.25, newAccountLimit: 0.5 },
+        'Counted with less weight: you’ve played a lot of rated games together today, and someone here is new to Hevalo.',
+      ],
+    ];
+    for (const [over, note] of cases) {
+      testAuth.client = fakeClient({ [PATH]: ok(counted(over)) });
+      renderWithProviders(<RankResultPanel game="wordle-battle" gameRef={REF} />);
+      await screen.findByText('−6');
+      if (note) expect(screen.getByText(note)).toBeTruthy();
+      else expect(screen.queryByText(/Counted with less weight/)).toBeNull();
+      cleanup();
+    }
   });
 });

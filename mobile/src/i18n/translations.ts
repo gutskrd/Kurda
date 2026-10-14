@@ -392,6 +392,8 @@ export type TranslationKey =
   | 'ranks.result.stillAt'
   | 'ranks.result.placingLoss'
   | 'ranks.result.damped'
+  | 'ranks.result.dampedNew'
+  | 'ranks.result.dampedBoth'
   | 'ranks.celebrate.division'
   | 'ranks.celebrate.tier'
   | 'ranks.celebrate.placed'
@@ -3237,6 +3239,8 @@ const en: Catalog = {
   'ranks.result.stillAt': 'You’re {rank}. Every game moves the climb along.',
   'ranks.result.placingLoss': 'Placement games find your level — wins and losses both help.',
   'ranks.result.damped': 'Counted with less weight: you’ve played a lot of rated games together today.',
+  'ranks.result.dampedNew': 'Counted with less weight: someone here is new to Hevalo.',
+  'ranks.result.dampedBoth': 'Counted with less weight: you’ve played a lot of rated games together today, and someone here is new to Hevalo.',
   'ranks.celebrate.division': 'New division',
   'ranks.celebrate.tier': 'New tier',
   'ranks.celebrate.placed': 'You’re placed',
@@ -5079,6 +5083,8 @@ const ku: Catalog = {
   'ranks.result.stillAt': 'Tu {rank} yî. Her lîstik hilkişînê pêş dibe.',
   'ranks.result.placingLoss': 'Lîstikên bicihkirinê asta te dibînin — serkeftin û windakirin herdu jî dibin alîkar.',
   'ranks.result.damped': 'Bi giraniya kêmtir hate hesibandin: we îro gelek lîstikên rêzdar bi hev re lîstine.',
+  'ranks.result.dampedNew': 'Bi giraniya kêmtir hate hesibandin: kesek li vir li Hevalo nû ye.',
+  'ranks.result.dampedBoth': 'Bi giraniya kêmtir hate hesibandin: we îro gelek lîstikên rêzdar bi hev re lîstine, û kesek li vir li Hevalo nû ye.',
   'ranks.celebrate.division': 'Beşa nû',
   'ranks.celebrate.tier': 'Asta nû',
   'ranks.celebrate.placed': 'Tu hatî bicihkirin',
@@ -6921,6 +6927,8 @@ const de: Catalog = {
   'ranks.result.stillAt': 'Du bist {rank}. Jedes Spiel bringt den Aufstieg voran.',
   'ranks.result.placingLoss': 'Einstufungsspiele finden dein Niveau — Siege und Niederlagen helfen beide.',
   'ranks.result.damped': 'Mit weniger Gewicht gezählt: Ihr habt heute schon viele gewertete Spiele zusammen gespielt.',
+  'ranks.result.dampedNew': 'Mit weniger Gewicht gezählt: Jemand hier ist neu bei Hevalo.',
+  'ranks.result.dampedBoth': 'Mit weniger Gewicht gezählt: Ihr habt heute schon viele gewertete Spiele zusammen gespielt, und jemand hier ist neu bei Hevalo.',
   'ranks.celebrate.division': 'Neue Division',
   'ranks.celebrate.tier': 'Neue Stufe',
   'ranks.celebrate.placed': 'Eingestuft',
@@ -8763,6 +8771,8 @@ const es: Catalog = {
   'ranks.result.stillAt': 'Estás en {rank}. Cada partida hace avanzar la escalada.',
   'ranks.result.placingLoss': 'Las partidas de clasificación encuentran tu nivel: ganar y perder ayudan.',
   'ranks.result.damped': 'Contó con menos peso: hoy habéis jugado muchas clasificatorias juntos.',
+  'ranks.result.dampedNew': 'Contó con menos peso: alguien aquí es nuevo en Hevalo.',
+  'ranks.result.dampedBoth': 'Contó con menos peso: hoy habéis jugado muchas clasificatorias juntos, y alguien aquí es nuevo en Hevalo.',
   'ranks.celebrate.division': 'Nueva división',
   'ranks.celebrate.tier': 'Nuevo nivel',
   'ranks.celebrate.placed': 'Ya tienes rango',
@@ -10605,6 +10615,8 @@ const tr: Catalog = {
   'ranks.result.stillAt': '{rank} seviyesindesin. Her oyun tırmanışı ilerletir.',
   'ranks.result.placingLoss': 'Yerleştirme oyunları seviyeni bulur — galibiyet de mağlubiyet de yardım eder.',
   'ranks.result.damped': 'Daha az ağırlıkla sayıldı: bugün birlikte çok dereceli oyun oynadınız.',
+  'ranks.result.dampedNew': 'Daha az ağırlıkla sayıldı: buradaki biri Hevalo’da yeni.',
+  'ranks.result.dampedBoth': 'Daha az ağırlıkla sayıldı: bugün birlikte çok dereceli oyun oynadınız ve buradaki biri Hevalo’da yeni.',
   'ranks.celebrate.division': 'Yeni bölüm',
   'ranks.celebrate.tier': 'Yeni kademe',
   'ranks.celebrate.placed': 'Yerleştin',
@@ -12447,6 +12459,8 @@ const ar: Catalog = {
   'ranks.result.stillAt': 'أنت في {rank}. كل مباراة تدفع الصعود إلى الأمام.',
   'ranks.result.placingLoss': 'مباريات التصنيف تحدد مستواك — الفوز والخسارة كلاهما يساعد.',
   'ranks.result.damped': 'احتُسبت بوزن أقل: لعبتم معًا كثيرًا من المباريات المصنّفة اليوم.',
+  'ranks.result.dampedNew': 'احتُسبت بوزن أقل: أحد اللاعبين جديد في Hevalo.',
+  'ranks.result.dampedBoth': 'احتُسبت بوزن أقل: لعبتم معًا كثيرًا من المباريات المصنّفة اليوم، وأحد اللاعبين جديد في Hevalo.',
   'ranks.celebrate.division': 'قسم جديد',
   'ranks.celebrate.tier': 'رتبة جديدة',
   'ranks.celebrate.placed': 'تم تصنيفك',
@@ -14289,6 +14303,8 @@ const fr: Catalog = {
   'ranks.result.stillAt': 'Tu es {rank}. Chaque partie fait avancer l’ascension.',
   'ranks.result.placingLoss': 'Les parties de placement trouvent ton niveau — victoires et défaites aident toutes deux.',
   'ranks.result.damped': 'Comptée avec moins de poids : vous avez beaucoup joué en classé ensemble aujourd’hui.',
+  'ranks.result.dampedNew': 'Comptée avec moins de poids : quelqu’un ici est nouveau sur Hevalo.',
+  'ranks.result.dampedBoth': 'Comptée avec moins de poids : vous avez beaucoup joué en classé ensemble aujourd’hui, et quelqu’un ici est nouveau sur Hevalo.',
   'ranks.celebrate.division': 'Nouvelle division',
   'ranks.celebrate.tier': 'Nouveau palier',
   'ranks.celebrate.placed': 'Te voilà classé',
@@ -16131,6 +16147,8 @@ const nl: Catalog = {
   'ranks.result.stillAt': 'Je bent {rank}. Elk spel brengt de klim verder.',
   'ranks.result.placingLoss': 'Plaatsingsspellen vinden je niveau — winst en verlies helpen allebei.',
   'ranks.result.damped': 'Telde minder zwaar: jullie speelden vandaag al veel gerangschikte spellen samen.',
+  'ranks.result.dampedNew': 'Telde minder zwaar: iemand hier is nieuw bij Hevalo.',
+  'ranks.result.dampedBoth': 'Telde minder zwaar: jullie speelden vandaag al veel gerangschikte spellen samen, en iemand hier is nieuw bij Hevalo.',
   'ranks.celebrate.division': 'Nieuwe divisie',
   'ranks.celebrate.tier': 'Nieuwe trede',
   'ranks.celebrate.placed': 'Je bent geplaatst',
@@ -17974,6 +17992,8 @@ const ckb: Catalog = {
   'ranks.result.stillAt': 'تۆ لە {rank}یت. هەموو یارییەک سەرکەوتن بەرەوپێش دەبات.',
   'ranks.result.placingLoss': 'یارییەکانی دانان ئاستەکەت دەدۆزنەوە — بردنەوە و دۆڕان هەردووکیان یارمەتی دەدەن.',
   'ranks.result.damped': 'بە کێشی کەمتر هەژمار کرا: ئەمڕۆ زۆر یاریی پلەدارتان پێکەوە کردووە.',
+  'ranks.result.dampedNew': 'بە کێشی کەمتر هەژمار کرا: کەسێک لێرە لە Hevalo نوێیە.',
+  'ranks.result.dampedBoth': 'بە کێشی کەمتر هەژمار کرا: ئەمڕۆ زۆر یاریی پلەدارتان پێکەوە کردووە، و کەسێک لێرە لە Hevalo نوێیە.',
   'ranks.celebrate.division': 'بەشی نوێ',
   'ranks.celebrate.tier': 'پلەی نوێ',
   'ranks.celebrate.placed': 'دانرایت',

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import { progressToNext, type RankResult, type RankedGame } from '@kurda/shared';
+import { partWeightReason, progressToNext, type PartWeightReason, type RankResult, type RankedGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useCelebrationHold } from '../badges/BadgeCelebrationHost';
@@ -40,6 +40,17 @@ const PENDING_GAP_MS = 1500;
 type Counted = Extract<RankResult, { counted: true }>;
 
 /**
+ * The line under a result that moved less than a full game. The result names
+ * which part of its weight applied — the same players' rated games today, or
+ * someone new to Hevalo — so it says that one, never a guess between the two.
+ */
+const PART_WEIGHT_NOTE = {
+  'repeat-opponent': 'ranks.result.damped',
+  'new-account': 'ranks.result.dampedNew',
+  both: 'ranks.result.dampedBoth',
+} as const satisfies Record<PartWeightReason, string>;
+
+/**
  * What a finished game did to your rank (contract 4 §R2, §U): the points
  * counting from where they were to where they are, the bar filling, and the
  * one plain reason — "+24 · you beat a higher-ranked player". A new division
@@ -51,16 +62,7 @@ type Counted = Extract<RankResult, { counted: true }>;
  * says where you still are. A game that played as friendly says so, once,
  * with its reason when it was not the host's choice.
  */
-export function RankResultPanel({
-  game,
-  gameRef,
-  damped = false,
-}: {
-  game: RankedGame;
-  gameRef: string;
-  /** the game counted with less weight because the same players have played rated a lot today (its RatedState) */
-  damped?: boolean;
-}): React.JSX.Element | null {
+export function RankResultPanel({ game, gameRef }: { game: RankedGame; gameRef: string }): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -110,7 +112,7 @@ export function RankResultPanel({
       />
     );
   }
-  return <CountedResult result={result} damped={damped} onShown={() => setShown(true)} />;
+  return <CountedResult result={result} onShown={() => setShown(true)} />;
 }
 
 function Line({ icon, text, colour }: { icon: 'mountains' | 'handshake'; text: string; colour?: string }): React.JSX.Element {
@@ -123,11 +125,12 @@ function Line({ icon, text, colour }: { icon: 'mountains' | 'handshake'; text: s
   );
 }
 
-function CountedResult({ result, damped, onShown }: { result: Counted; damped: boolean; onShown: () => void }): React.JSX.Element {
+function CountedResult({ result, onShown }: { result: Counted; onShown: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const reduce = useReducedMotion();
   const tone = resultTone(result.delta);
+  const partWeight = partWeightReason(result);
   const emblem = resultEmblem(result);
   const moment = celebrationOf(result);
   const [points, setPoints] = useState(reduce ? result.pointsAfter : result.pointsBefore);
@@ -201,8 +204,7 @@ function CountedResult({ result, damped, onShown }: { result: Counted; damped: b
           <ShieldPips count={result.shieldGames} />
         </View>
       ) : null}
-      {/* only the repeat-opponent damping is said; the weight also carries a new account's lighter touch, which is nobody's news */}
-      {damped && result.weight < 1 ? <Text style={[styles.kind, { color: colors.textSecondary }]}>{t('ranks.result.damped')}</Text> : null}
+      {partWeight ? <Text style={[styles.kind, { color: colors.textSecondary }]}>{t(PART_WEIGHT_NOTE[partWeight])}</Text> : null}
       {celebrating && !placing ? (
         <RankMoment
           kind={celebrating}
