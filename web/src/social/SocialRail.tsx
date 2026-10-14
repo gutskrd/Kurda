@@ -10,7 +10,7 @@ import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { socialNotification } from '../reports/notifications';
 
 /**
@@ -412,6 +412,7 @@ function Notifications({
 }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const [going, setGoing] = useState<Set<string>>(new Set());
   const unread = items.filter((n) => n.readAt === null).length;
 
@@ -430,7 +431,7 @@ function Notifications({
     <>
       {items.map((n) => {
         // the reader's words and a way in, for the kinds that have them (reports/notifications.ts)
-        const view = socialNotification(n, t);
+        const view = socialNotification(n, t, locale);
         const title = view?.title ?? n.title;
         const body = view ? view.body : n.body;
         return (

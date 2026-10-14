@@ -520,6 +520,7 @@ export const tr: Catalogue = {
   'suspension.close': 'Kapat',
   'notify.reportOutcome.title': 'Bildirimin hakkında',
   'notify.sanction.title': 'Hesabınla ilgili bir karar',
+  'notify.sanction.until': '{what}: {time} tarihine kadar',
   'notify.sanctionLifted.title': 'Hesabındaki bir kısıtlama kaldırıldı',
   'notify.appealDecided.title': 'İnceleme isteğini yanıtladık',
   'notify.caring.title': 'Hevalo’dan bir mesaj',

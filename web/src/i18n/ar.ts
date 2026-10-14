@@ -525,6 +525,7 @@ export const ar: Catalogue = {
   'suspension.close': 'إغلاق',
   'notify.reportOutcome.title': 'بخصوص بلاغك',
   'notify.sanction.title': 'قرار بشأن حسابك',
+  'notify.sanction.until': '{what} حتى {time}',
   'notify.sanctionLifted.title': 'رُفع قيد عن حسابك',
   'notify.appealDecided.title': 'أجبنا على طلب المراجعة الخاص بك',
   'notify.caring.title': 'رسالة من Hevalo',

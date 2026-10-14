@@ -19,6 +19,21 @@ describe('socialNotification', () => {
   it('sends a decision, a lifted limit and an answered review to Account standing', () => {
     const sanction = socialNotification(note({ kind: 'sanction', sanctionId: 's1', sanction: 'chat_mute', policy: 'spam', until: null }), t);
     expect(sanction).toMatchObject({ title: 'A decision about your account', body: 'Messages paused', to: '/app/settings/standing' });
+    // and until when, when it ends, in the reader's way of writing a date
+    const until = socialNotification(
+      note({ kind: 'sanction', sanctionId: 's1', sanction: 'chat_mute', policy: 'spam', until: '2031-03-05T10:00:00.000Z' }),
+      t,
+      'en-GB',
+    );
+    expect(until?.body).toMatch(/^Messages paused until 5 Mar 2031, \d\d:\d\d$/);
+    const kuUntil = socialNotification(
+      note({ kind: 'sanction', sanctionId: 's1', sanction: 'chat_mute', policy: 'spam', until: '2031-03-05T10:00:00.000Z' }),
+      translator(ku),
+      'ku',
+    );
+    expect(kuUntil?.body).toMatch(/ heta .*2031/);
+    // a date it cannot read is left out rather than shown as "Invalid Date"
+    expect(socialNotification(note({ kind: 'sanction', sanction: 'chat_mute', until: 'soon' }), t)?.body).toBe('Messages paused');
     expect(socialNotification(note({ kind: 'sanction_lifted', sanctionId: 's1' }), t)?.to).toBe('/app/settings/standing');
     expect(socialNotification(note({ kind: 'appeal_decided', appealId: 'a1', outcome: 'overturned' }), t)?.to).toBe('/app/settings/standing');
   });

@@ -1,7 +1,7 @@
 import { HELPLINE_URL, isSanctionKind, type SanctionKind } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import { SANCTION_LABEL } from './labels';
-import { MY_REPORTS_PATH, STANDING_PATH } from './restriction';
+import { formatUntil, MY_REPORTS_PATH, STANDING_PATH } from './restriction';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -50,8 +50,10 @@ export function giftChatPath(chat: string | null, giftId: string | null, name?: 
  * language from `data`, which is what it is there for.
  *
  * Anything else (null) is shown as the server wrote it, and goes nowhere.
+ * `locale` writes a decision's end in the reader's way; without one, the
+ * page's language (which I18nProvider keeps in step with theirs).
  */
-export function socialNotification(note: InboxNote, t: Translate): NoteView | null {
+export function socialNotification(note: InboxNote, t: Translate, locale?: string): NoteView | null {
   const data = note.data;
   if (!data || typeof data !== 'object') return null;
   switch (data.kind) {
@@ -63,9 +65,14 @@ export function socialNotification(note: InboxNote, t: Translate): NoteView | nu
       };
     case 'sanction': {
       const kind = isSanctionKind(data.sanction) ? (data.sanction as SanctionKind) : null;
+      // what is limited and until when, as the server's English said it
+      const until = str(data.until);
+      const ends = until && !Number.isNaN(Date.parse(until)) ? until : null;
+      const lang = locale || (typeof document !== 'undefined' ? document.documentElement.lang : '') || 'en';
+      const what = kind ? t(SANCTION_LABEL[kind]) : null;
       return {
         title: t('notify.sanction.title'),
-        body: kind ? t(SANCTION_LABEL[kind]) : note.body,
+        body: what && ends ? t('notify.sanction.until', { what, time: formatUntil(ends, lang) }) : (what ?? note.body),
         to: STANDING_PATH,
       };
     }

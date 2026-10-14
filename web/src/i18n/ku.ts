@@ -526,6 +526,7 @@ export const ku: Catalogue = {
   'suspension.close': 'Bigire',
   'notify.reportOutcome.title': 'Derbarê rapora te de',
   'notify.sanction.title': 'Biryarek li ser hesabê te',
+  'notify.sanction.until': '{what} heta {time}',
   'notify.sanctionLifted.title': 'Sînorek li ser hesabê te hat rakirin',
   'notify.appealDecided.title': 'Me bersiva daxwaza te ya nirxandinê da',
   'notify.caring.title': 'Peyamek ji Hevaloyê',

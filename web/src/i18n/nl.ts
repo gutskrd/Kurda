@@ -520,6 +520,7 @@ export const nl: Catalogue = {
   'suspension.close': 'Sluiten',
   'notify.reportOutcome.title': 'Over je melding',
   'notify.sanction.title': 'Een besluit over je account',
+  'notify.sanction.until': '{what} tot {time}',
   'notify.sanctionLifted.title': 'Een beperking op je account is opgeheven',
   'notify.appealDecided.title': 'We hebben je verzoek om herbeoordeling beantwoord',
   'notify.caring.title': 'Een bericht van Hevalo',

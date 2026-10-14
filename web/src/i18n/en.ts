@@ -582,6 +582,7 @@ export const en = {
   'suspension.close': 'Close',
   'notify.reportOutcome.title': 'About your report',
   'notify.sanction.title': 'A decision about your account',
+  'notify.sanction.until': '{what} until {time}',
   'notify.sanctionLifted.title': 'A limit on your account was lifted',
   'notify.appealDecided.title': 'We answered your request for a review',
   'notify.caring.title': 'A message from Hevalo',

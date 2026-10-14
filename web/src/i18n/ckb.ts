@@ -531,6 +531,7 @@ export const ckb: Catalogue = {
   'suspension.close': 'داخستن',
   'notify.reportOutcome.title': 'دەربارەی ڕاپۆرتەکەت',
   'notify.sanction.title': 'بڕیارێک دەربارەی هەژمارەکەت',
+  'notify.sanction.until': '{what} تا {time}',
   'notify.sanctionLifted.title': 'سنووردارکردنێک لەسەر هەژمارەکەت لابرا',
   'notify.appealDecided.title': 'وەڵامی داواکاریی پێداچوونەوەکەتمان دایەوە',
   'notify.caring.title': 'نامەیەک لە Hevaloوە',

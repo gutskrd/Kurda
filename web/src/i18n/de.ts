@@ -520,6 +520,7 @@ export const de: Catalogue = {
   'suspension.close': 'Schließen',
   'notify.reportOutcome.title': 'Zu deiner Meldung',
   'notify.sanction.title': 'Eine Entscheidung über dein Konto',
+  'notify.sanction.until': '{what} bis {time}',
   'notify.sanctionLifted.title': 'Eine Einschränkung deines Kontos wurde aufgehoben',
   'notify.appealDecided.title': 'Wir haben deine Bitte um Überprüfung beantwortet',
   'notify.caring.title': 'Eine Nachricht von Hevalo',
