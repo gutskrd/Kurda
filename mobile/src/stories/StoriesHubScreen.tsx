@@ -101,8 +101,14 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
   // the variety and length remembered on this phone, once they are read
   useEffect(() => {
     if (!ready || dialect) return;
-    setDialect(defaultDialect(locale, prefs.dialect));
-    if (prefs.length) setLength(prefs.length);
+    /*
+     * As updates, not values: this effect can run just after a tap on a
+     * variety or a length in the screen's first moments (React runs it before
+     * the tap's render), and what was tapped wins over what was remembered.
+     */
+    const remembered = prefs.length;
+    setDialect((d) => d ?? defaultDialect(locale, prefs.dialect));
+    if (remembered) setLength((l) => (l === 'all' ? remembered : l));
   }, [ready, dialect, locale, prefs.dialect, prefs.length]);
 
   const load = useCallback(() => {
