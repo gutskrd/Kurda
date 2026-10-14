@@ -170,22 +170,32 @@ describe('a case', () => {
     expect(screen.queryByText('Context 1 › Id')).not.toBeInTheDocument();
   });
 
-  it('blurs pictures until asked, and asks first when a child may be at risk', async () => {
+  it('does not even fetch a picture until asked, and asks first when a child may be at risk', async () => {
     const user = userEvent.setup();
     const d = caseDetail({
       case: { category: 'child_safety', targetType: 'image_post' },
       media: [{ key: 'posts/a.webp', url: 'https://cdn.test/a.webp?sig=1', contentType: 'image/webp', quarantine: null }],
     });
     show(at, detailRoute(d));
-    const img = (await screen.findByRole('button', { name: 'Show picture' })).closest('figure')!.querySelector('img')!;
-    expect(img).toHaveAttribute('alt', '');
+    const figure = (await screen.findByRole('button', { name: 'Show picture' })).closest('figure')!;
+    // no <img src> before the reveal: the file is not on the moderator's device, not even in the cache
+    expect(document.querySelector('img')).toBeNull();
+    expect(document.body.innerHTML).not.toContain('cdn.test/a.webp');
     await user.click(screen.getByRole('button', { name: 'Show picture' }));
     const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
     expect(ask).toHaveTextContent('Never download, forward or screenshot it');
-    await user.click(within(ask).getByRole('button', { name: 'Show it' }));
-    expect(img.closest('figure')).toHaveClass('is-shown');
-    await user.click(screen.getByRole('button', { name: 'Blur again' }));
-    expect(img.closest('figure')).not.toHaveClass('is-shown');
+    // saying no keeps it unfetched
+    await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
+    expect(document.querySelector('img')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Show picture' }));
+    await user.click(within(await screen.findByRole('alertdialog', { name: 'Show this picture?' })).getByRole('button', { name: 'Show it' }));
+    expect(figure).toHaveClass('is-shown');
+    const img = within(figure as HTMLElement).getByRole('img', { name: 'The reported picture' });
+    expect(img).toHaveAttribute('src', 'https://cdn.test/a.webp?sig=1');
+    expect(img).toHaveAttribute('referrerpolicy', 'no-referrer');
+    await user.click(screen.getByRole('button', { name: 'Hide again' }));
+    expect(figure).not.toHaveClass('is-shown');
+    expect(figure.querySelector('img')).toBeNull();
   });
 
   it('claims the case, and locks the decision while another moderator holds it', async () => {

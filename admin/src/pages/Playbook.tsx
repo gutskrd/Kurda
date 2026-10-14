@@ -16,7 +16,7 @@ export function Playbook(): React.JSX.Element {
       <Section title="Child sexual abuse material">
         <ol className="playbook-steps">
           <li>
-            <strong>Don’t download, forward or screenshot it.</strong> Pictures on a child-safety case stay blurred until you choose to look; look only as
+            <strong>Don’t download, forward or screenshot it.</strong> Pictures on a case stay hidden, and are not even loaded, until you choose to look; look only as
             much as you need to decide.
           </li>
           <li>

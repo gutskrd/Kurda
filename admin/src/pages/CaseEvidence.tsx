@@ -9,10 +9,12 @@ import { Badge, Icon, Section, Time, UserLink, useDialogs } from '../ui';
  * marked, the game and who sat where. An author who edits or deletes the
  * content afterwards changes nothing here.
  *
- * Pictures are blurred until a moderator chooses to look (research: a reveal
+ * Pictures stay hidden until a moderator chooses to look (research: a reveal
  * the moderator controls lowers the harm of looking without lowering
- * accuracy). Anything that may be child abuse material asks first, and says
- * not to download or forward it.
+ * accuracy). Hidden means not fetched: the file is requested only on the
+ * reveal, so nothing reaches the moderator's device before they agree to see
+ * it. Anything that may be child abuse material asks first, and says not to
+ * download or forward it.
  */
 export function Evidence({ detail, sensitive }: { detail: CaseDetail; sensitive: boolean }): React.JSX.Element {
   const snapshots = detail.reports.map((r) => r.evidence).filter(isSnapshot);
@@ -195,7 +197,7 @@ function ChatContext({ messages }: { messages: EvidenceMessage[] }): React.JSX.E
 }
 
 /**
- * A picture blurred until revealed, a voice clip with its player, or a file
+ * A picture hidden (and not downloaded) until revealed, a voice clip with its player, or a file
  * that is gone. The link is signed for five minutes; a page left open longer
  * needs Refresh to show it again.
  */
@@ -251,12 +253,19 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
   return (
     <figure className={`media-item is-image${shown ? ' is-shown' : ''}`}>
       <div className="media-frame">
-        <img src={item.url} alt={shown ? (alt ?? 'The reported picture') : ''} loading="lazy" draggable={false} />
-        {!shown && (
-          <button type="button" className="media-reveal" onClick={() => void reveal()}>
-            <Icon name="eye" />
-            Show picture
-          </button>
+        {shown ? (
+          // only now is the file requested: before the reveal it is not on this device at all, not even in the cache
+          <img src={item.url} alt={alt ?? 'The reported picture'} draggable={false} referrerPolicy="no-referrer" />
+        ) : (
+          <>
+            <span className="media-hidden" aria-hidden="true">
+              <Icon name="eyeOff" size={28} />
+            </span>
+            <button type="button" className="media-reveal" onClick={() => void reveal()}>
+              <Icon name="eye" />
+              Show picture
+            </button>
+          </>
         )}
       </div>
       <figcaption>
@@ -265,7 +274,7 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
         {shown && (
           <button type="button" className="ghost media-hide" onClick={() => setShown(false)}>
             <Icon name="eyeOff" size={16} />
-            Blur again
+            Hide again
           </button>
         )}
       </figcaption>
