@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Icon } from '../theme/Icon';
@@ -6,6 +7,8 @@ import { typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { goalFraction } from './format';
+
+let rings = 0;
 
 /**
  * The weekly goal as a ring (contract 4 §L3, §U): XP this week against the
@@ -34,7 +37,13 @@ export function GoalRing({
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const f = goalFraction(xp, goal);
-  const id = `goal-${size}-${tint.join('').replace(/[^a-z0-9]/gi, '')}`;
+  // its own gradient id: a ring left on a screen behind this one must not own this one's fill (browser build)
+  const ref = useRef<string | null>(null);
+  if (ref.current === null) {
+    rings += 1;
+    ref.current = `goal${rings.toString(36)}`;
+  }
+  const id = ref.current;
   return (
     <View
       style={{ width: size, height: size }}

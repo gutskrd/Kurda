@@ -157,10 +157,16 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 <GlassCard padding="tight">
                   {[...overview.rewards].reverse().map((r) => (
                     <View key={r.tier} style={styles.reward} accessible accessibilityLabel={rewardLabel(t, r.tier, r.gems, overview.season.id)}>
-                      <RankEmblem tier={r.tier} size={48} season={{ name: overview.season.name, year: overview.season.year }} label={rankLabel(t, r.tier, null)} />
+                      <RankEmblem tier={r.tier} size={52} season={{ name: overview.season.name, year: overview.season.year }} label={rankLabel(t, r.tier, null)} />
                       <View style={styles.flex}>
-                        <Text style={[styles.rewardName, { color: colors.textPrimary }]}>{t(TIER_NAME_KEY[r.tier])}</Text>
-                        <Text style={[styles.small, { color: colors.textSecondary }]} numberOfLines={2}>
+                        <View style={styles.rewardHead}>
+                          <Text style={[styles.rewardName, { color: colors.textPrimary }]}>{t(TIER_NAME_KEY[r.tier])}</Text>
+                          <View style={[styles.gems, { backgroundColor: colors.controlTrack }]}>
+                            <Icon name="gem" size={12} color={colors.textPrimary} />
+                            <Text style={[styles.gemsText, { color: colors.textPrimary }]}>{r.gems}</Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.small, { color: colors.textSecondary }]}>
                           {r.tier === 'sterk'
                             ? t('season.rewardSterk', { title: sterkTitle(overview.season.id) })
                             : r.tier === 'lutke'
@@ -169,10 +175,6 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                         </Text>
                       </View>
                       <FramePreview tier={r.tier} />
-                      <View style={[styles.gems, { backgroundColor: colors.controlTrack }]}>
-                        <Icon name="gem" size={12} color={colors.textPrimary} />
-                        <Text style={[styles.gemsText, { color: colors.textPrimary }]}>{r.gems}</Text>
-                      </View>
                     </View>
                   ))}
                 </GlassCard>
@@ -301,10 +303,11 @@ const styles = StyleSheet.create({
   game: { gap: spacing.xs },
   gameHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
   gameName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  reward: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
+  reward: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
   flex: { flex: 1, gap: 2 },
   rewardName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  gems: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 3, minWidth: 48, justifyContent: 'center' },
+  rewardHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  gems: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   gemsText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   emblems: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   emblem: { alignItems: 'center', width: 88, gap: 2 },

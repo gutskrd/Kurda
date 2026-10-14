@@ -166,9 +166,9 @@ function CountedResult({ result, onShown }: { result: Counted; onShown: () => vo
     <View style={[styles.panel, { backgroundColor: colors.controlTrack }]}>
       <View style={styles.top}>
         {placing ? (
-          <PlacementEmblem done={emblem.done} size={72} label={name} />
+          <PlacementEmblem done={emblem.done} size={80} label={name} />
         ) : (
-          <RankEmblem tier={emblem.tier} division={emblem.division} size={72} label={rankLabel(t, emblem.tier, emblem.division)} />
+          <RankEmblem tier={emblem.tier} division={emblem.division} size={80} label={rankLabel(t, emblem.tier, emblem.division)} />
         )}
         <View style={styles.main} accessible accessibilityLabel={`${signed(result.delta)} · ${reason}. ${name}. ${t('ranks.pointsCount', { count: result.pointsAfter })}`}>
           <View style={styles.deltaRow}>
@@ -179,8 +179,8 @@ function CountedResult({ result, onShown }: { result: Counted; onShown: () => vo
           </View>
           <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
             {name}
+            <Text style={[styles.points, { color: colors.textSecondary }]}>{`  ${t('ranks.pointsCount', { count: formatNumber(points, locale) })}`}</Text>
           </Text>
-          <Text style={[styles.points, { color: colors.textSecondary }]}>{t('ranks.pointsCount', { count: formatNumber(points, locale) })}</Text>
         </View>
       </View>
       <Meter fraction={placing ? (result.placement?.played ?? 0) / 5 : after.fraction} from={from} tint={tint} height={8} delayMs={350} durationMs={countUpMs(result.delta, reduce) || 600} />
@@ -197,6 +197,7 @@ function CountedResult({ result, onShown }: { result: Counted; onShown: () => vo
           tier={emblem.tier}
           division={emblem.division}
           shieldGames={result.shieldGames}
+          line={`${signed(result.delta)} · ${reason}`}
           onClose={() => {
             setCelebrating(null);
             onShown();
@@ -213,9 +214,12 @@ function RankMoment({
   tier,
   division,
   shieldGames,
+  line,
   onClose,
 }: {
   kind: Exclude<CelebrationKind, null>;
+  /** the game's own line: "+26 · you beat a higher-ranked player" */
+  line: string;
   tier: Extract<ReturnType<typeof resultEmblem>, { kind: 'ranked' }>['tier'];
   division: Extract<ReturnType<typeof resultEmblem>, { kind: 'ranked' }>['division'];
   shieldGames: number;
@@ -240,6 +244,7 @@ function RankMoment({
       kicker={kicker}
       title={name}
       subtitle={tierMeaning(t, tier)}
+      detail={line}
       note={note}
       announce={`${kicker}: ${rankLabel(t, tier, division)}`}
       onClose={onClose}
@@ -249,7 +254,7 @@ function RankMoment({
 }
 
 const styles = StyleSheet.create({
-  panel: { alignSelf: 'stretch', borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
+  panel: { alignSelf: 'stretch', borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm, marginVertical: spacing.sm },
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   main: { flex: 1, gap: 2 },
   deltaRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, flexWrap: 'wrap' },
@@ -259,6 +264,6 @@ const styles = StyleSheet.create({
   points: { fontSize: typography.sizes.sm, fontVariant: ['tabular-nums'] },
   kind: { fontSize: typography.sizes.sm, lineHeight: 19 },
   shieldRow: { flexDirection: 'row' },
-  line: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
+  line: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md, marginVertical: spacing.sm },
   lineText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 19 },
 });

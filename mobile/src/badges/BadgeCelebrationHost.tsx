@@ -11,7 +11,7 @@ import { Celebration } from '../ranks/Celebration';
 import { FLECKS } from '../ranks/motion';
 import { badgeTint } from '../ranks/tint';
 import { getUnseenBadges, markBadgesSeen } from '../ranks/api';
-import { badgeLabel, badgeMeaning, badgeName, badgeTextKey, tierLabel } from './format';
+import { UNIT_KEY, badgeLabel, badgeMeaning, badgeName, badgeTextKey, tierLabel } from './format';
 import { enqueue, fromEvent, fromUnseen, seenId, type PendingBadge } from './queue';
 
 /**
@@ -129,6 +129,9 @@ function BadgeMoment({ badge, onClose }: { badge: PendingBadge; onClose: () => v
   const kicker = badge.secret ? t('badges.unlock.secret') : badge.tier > 1 && tierCount > 1 ? t('badges.unlock.tierUp') : t('badges.unlock.title');
   const label = badgeLabel(t, { key: badge.key, tier: badge.tier, tierKey: badge.tierKey, tierCount, hidden: false });
   const [light, strong] = badgeTint(tierCount > 1 ? badge.tier : 3, 'dark');
+  // what this tier took: "30 days", "25 wins" (a single badge has no number to name)
+  const threshold = tierCount > 1 ? def.tiers[badge.tier - 1] : undefined;
+  const reached = typeof threshold === 'number' ? `${threshold} ${t(UNIT_KEY[def.unit])}` : null;
   return (
     <Celebration
       art={<BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={tierCount} size={168} label={label} shine="loop" />}
@@ -139,6 +142,7 @@ function BadgeMoment({ badge, onClose }: { badge: PendingBadge; onClose: () => v
       kicker={kicker}
       title={name}
       subtitle={[meaning, tierWords].filter(Boolean).join(' · ') || null}
+      detail={reached}
       note={t(badgeTextKey(badge.key, 'how'))}
       announce={`${kicker}: ${label}`}
       onClose={onClose}

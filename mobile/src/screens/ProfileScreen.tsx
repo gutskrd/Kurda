@@ -310,19 +310,6 @@ export function ProfileScreen() {
         */}
         {streak ? <LearningRow streak={streak} /> : null}
 
-        {/* the three badges chosen for the profile, each game's rank and the league */}
-        {progress ? (
-          <ProgressShowcase
-            own
-            ranks={progress.ranks}
-            league={progress.league}
-            badges={progress.badges}
-            onBadges={() => navigation.navigate('Badges')}
-            onRanks={(game) => navigation.navigate('Ranks', { game })}
-            onLeague={() => navigation.navigate('League')}
-          />
-        ) : null}
-
         {/*
           One wide button and one square one, which is the arrangement every
           app with a profile has arrived at: the thing you came to do, and the
@@ -353,6 +340,19 @@ export function ProfileScreen() {
         {me?.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
 
         <GiftedNote background={me?.background} icon={me?.icon} />
+
+        {/* the three badges chosen for the profile, each game's rank and the league */}
+        {progress ? (
+          <ProgressShowcase
+            own
+            ranks={progress.ranks}
+            league={progress.league}
+            badges={progress.badges}
+            onBadges={() => navigation.navigate('Badges')}
+            onRanks={(game) => navigation.navigate('Ranks', { game })}
+            onLeague={() => navigation.navigate('League')}
+          />
+        ) : null}
 
         {/* only where there is one; an empty frame saying so is not a showcase */}
         {me?.favoritePoem ? <FavoriteRow label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}

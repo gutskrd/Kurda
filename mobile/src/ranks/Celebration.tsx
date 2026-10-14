@@ -31,6 +31,7 @@ export function Celebration({
   kicker,
   title,
   subtitle,
+  detail,
   note,
   actions,
   announce,
@@ -51,6 +52,8 @@ export function Celebration({
   title: string;
   /** "Hill" */
   subtitle?: string | null;
+  /** what earned it: "+26 · you beat a higher-ranked player" */
+  detail?: string | null;
   /** a line under it: the shield, a badge's tier */
   note?: string | null;
   /** buttons; a Continue is the caller's to give */
@@ -130,6 +133,11 @@ export function Celebration({
                 {title}
               </Text>
               {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+              {detail ? (
+                <View style={styles.detail}>
+                  <Text style={styles.detailText}>{detail}</Text>
+                </View>
+              ) : null}
               {note ? <Text style={styles.note}>{note}</Text> : null}
               <View style={styles.actions}>{actions}</View>
             </Animated.View>
@@ -220,6 +228,8 @@ const styles = StyleSheet.create({
   kicker: { letterSpacing: 2 },
   title: { ...display(typography.sizes.xxl + 6), color: '#FFFFFF', textAlign: 'center' },
   subtitle: { fontSize: typography.sizes.lg, color: 'rgba(255,255,255,0.78)', textAlign: 'center' },
+  detail: { marginTop: spacing.md, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: 6, backgroundColor: 'rgba(255,255,255,0.08)' },
+  detailText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, color: '#FFFFFF', textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: 20, marginTop: spacing.sm, maxWidth: 320 },
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.xl },
 });

@@ -155,7 +155,7 @@ export function LobbyRated({
     <View style={[styles.panel, { backgroundColor: colors.controlTrack }]}>
       <View style={styles.panelHead}>
         <RatedPill rated={isRated} />
-        <Text style={[styles.panelHint, { color: colors.textSecondary }]} numberOfLines={2}>
+        <Text style={[styles.panelHint, { color: colors.textSecondary }]}>
           {isRated ? t('ranks.ratedHint') : t('ranks.friendlyHint')}
         </Text>
       </View>

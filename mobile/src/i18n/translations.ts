@@ -480,6 +480,7 @@ export type TranslationKey =
   | 'leagues.personal.lastWeek'
   | 'leagues.personal.weeks'
   | 'leagues.personal.weekA11y'
+  | 'leagues.personal.goalLine'
   | 'leagues.personal.now'
   | 'leagues.home.place'
   | 'leagues.home.personal'
@@ -3324,6 +3325,7 @@ const en: Catalog = {
   'leagues.personal.lastWeek': 'Last week: {xp} XP',
   'leagues.personal.weeks': 'Your recent weeks',
   'leagues.personal.weekA11y': 'Week of {date}: {xp} XP',
+  'leagues.personal.goalLine': 'Goal {goal} XP',
   'leagues.personal.now': 'Now',
   'leagues.home.place': '{tier} League · #{rank}',
   'leagues.home.personal': 'Your week',
@@ -5165,6 +5167,7 @@ const ku: Catalog = {
   'leagues.personal.lastWeek': 'Hefteya borî: {xp} XP',
   'leagues.personal.weeks': 'Hefteyên te yên dawî',
   'leagues.personal.weekA11y': 'Hefteya {date}: {xp} XP',
+  'leagues.personal.goalLine': 'Armanc {goal} XP',
   'leagues.personal.now': 'Niha',
   'leagues.home.place': 'Lîga {tier} · #{rank}',
   'leagues.home.personal': 'Hefteya te',
@@ -7006,6 +7009,7 @@ const de: Catalog = {
   'leagues.personal.lastWeek': 'Letzte Woche: {xp} XP',
   'leagues.personal.weeks': 'Deine letzten Wochen',
   'leagues.personal.weekA11y': 'Woche ab {date}: {xp} XP',
+  'leagues.personal.goalLine': 'Ziel {goal} XP',
   'leagues.personal.now': 'Jetzt',
   'leagues.home.place': 'Liga {tier} · Platz {rank}',
   'leagues.home.personal': 'Deine Woche',
@@ -8847,6 +8851,7 @@ const es: Catalog = {
   'leagues.personal.lastWeek': 'Semana pasada: {xp} XP',
   'leagues.personal.weeks': 'Tus últimas semanas',
   'leagues.personal.weekA11y': 'Semana del {date}: {xp} XP',
+  'leagues.personal.goalLine': 'Meta {goal} XP',
   'leagues.personal.now': 'Ahora',
   'leagues.home.place': 'Liga {tier} · n.º {rank}',
   'leagues.home.personal': 'Tu semana',
@@ -10688,6 +10693,7 @@ const tr: Catalog = {
   'leagues.personal.lastWeek': 'Geçen hafta: {xp} XP',
   'leagues.personal.weeks': 'Son haftaların',
   'leagues.personal.weekA11y': '{date} haftası: {xp} XP',
+  'leagues.personal.goalLine': 'Hedef {goal} XP',
   'leagues.personal.now': 'Şimdi',
   'leagues.home.place': '{tier} Ligi · #{rank}',
   'leagues.home.personal': 'Haftan',
@@ -12529,6 +12535,7 @@ const ar: Catalog = {
   'leagues.personal.lastWeek': 'الأسبوع الماضي: {xp} XP',
   'leagues.personal.weeks': 'أسابيعك الأخيرة',
   'leagues.personal.weekA11y': 'أسبوع {date}: {xp} XP',
+  'leagues.personal.goalLine': 'الهدف {goal} XP',
   'leagues.personal.now': 'الآن',
   'leagues.home.place': 'دوري {tier} · #{rank}',
   'leagues.home.personal': 'أسبوعك',
@@ -14370,6 +14377,7 @@ const fr: Catalog = {
   'leagues.personal.lastWeek': 'Semaine dernière : {xp} XP',
   'leagues.personal.weeks': 'Tes dernières semaines',
   'leagues.personal.weekA11y': 'Semaine du {date} : {xp} XP',
+  'leagues.personal.goalLine': 'Objectif {goal} XP',
   'leagues.personal.now': 'Maintenant',
   'leagues.home.place': 'Ligue {tier} · n° {rank}',
   'leagues.home.personal': 'Ta semaine',
@@ -16211,6 +16219,7 @@ const nl: Catalog = {
   'leagues.personal.lastWeek': 'Vorige week: {xp} XP',
   'leagues.personal.weeks': 'Je laatste weken',
   'leagues.personal.weekA11y': 'Week van {date}: {xp} XP',
+  'leagues.personal.goalLine': 'Doel {goal} XP',
   'leagues.personal.now': 'Nu',
   'leagues.home.place': 'Competitie {tier} · #{rank}',
   'leagues.home.personal': 'Jouw week',
@@ -18053,6 +18062,7 @@ const ckb: Catalog = {
   'leagues.personal.lastWeek': 'هەفتەی ڕابردوو: {xp} XP',
   'leagues.personal.weeks': 'هەفتە نوێیەکانت',
   'leagues.personal.weekA11y': 'هەفتەی {date}: {xp} XP',
+  'leagues.personal.goalLine': 'ئامانج {goal} XP',
   'leagues.personal.now': 'ئێستا',
   'leagues.home.place': 'لیگی {tier} · #{rank}',
   'leagues.home.personal': 'هەفتەکەت',

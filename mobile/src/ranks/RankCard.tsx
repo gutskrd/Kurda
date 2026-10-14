@@ -72,7 +72,7 @@ export function RankCardView({ card, onPress, compact = false }: { card: RankCar
             </View>
           ) : null}
         </View>
-        <Text style={[styles.sub, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.sub, { color: colors.textSecondary }]} numberOfLines={head.kind === 'placing' ? 2 : 1}>
           {sub}
         </Text>
         <Meter fraction={fraction} tint={tint} height={6} style={styles.meter} />

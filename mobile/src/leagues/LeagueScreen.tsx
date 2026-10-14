@@ -295,7 +295,14 @@ function TableRow({ item }: { item: TableItem }): React.JSX.Element {
       style={[styles.row, { backgroundColor: row.isSelf ? colors.glassFill : 'transparent' }, row.isSelf && { borderColor: colors.primary, borderWidth: 1 }]}
     >
       <Text style={[styles.rank, { color: colors.textSecondary }]}>{row.rank}</Text>
-      <InitialsAvatar name={row.username ?? t('leagues.unnamed')} id={row.userId ?? `unnamed-${row.rank}`} size={32} />
+      {row.username ? (
+        <InitialsAvatar name={row.username} id={row.userId ?? `row-${row.rank}`} size={32} />
+      ) : (
+        // somebody the viewer may not be shown by name: a quiet face, not initials made up from "A learner"
+        <View style={[styles.anon, { backgroundColor: colors.controlTrack }]}>
+          <Icon name="person" size={16} color={colors.textSecondary} />
+        </View>
+      )}
       <Text style={[styles.name, { color: colors.textPrimary }, row.isSelf && styles.nameSelf]} numberOfLines={1}>
         {name}
       </Text>
@@ -332,9 +339,6 @@ function PersonalWeek({ league, joining, onJoin }: { league: LeagueView; joining
                 {t('leagues.personal.title')}
               </Text>
               <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={148} tint={tint} />
-              <Text style={[styles.goalTitle, { color: colors.textPrimary }]}>
-                {t('leagues.goalProgress', { xp: formatNumber(league.weeklyXp, locale), goal: formatNumber(league.goalXp, locale) })}
-              </Text>
               {previous ? (
                 <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>
                   {t('leagues.personal.lastWeek', { xp: formatNumber(previous.xp, locale) })}
@@ -372,6 +376,9 @@ function WeekBars({ weeks, goal, tint }: { weeks: LeagueWeekXp[]; goal: number; 
       </Text>
       <View style={[styles.bars, { height }]}>
         <View style={[styles.goalLine, { bottom: (goal / top) * height, backgroundColor: colors.textSecondary }]} />
+        <Text style={[styles.goalTag, { bottom: (goal / top) * height + 2, color: colors.textSecondary }]}>
+          {t('leagues.personal.goalLine', { goal: formatNumber(goal, locale) })}
+        </Text>
         {weeks.map((w, i) => {
           const last = i === weeks.length - 1;
           return (
@@ -520,10 +527,12 @@ const styles = StyleSheet.create({
   rank: { width: 26, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   name: { flex: 1, fontSize: typography.sizes.md },
   nameSelf: { fontWeight: typography.weights.bold },
+  anon: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   personal: { alignItems: 'center', gap: spacing.sm },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: spacing.md },
   goalLine: { position: 'absolute', left: 0, right: 0, height: 1, opacity: 0.45 },
+  goalTag: { position: 'absolute', right: 0, fontSize: typography.sizes.xs },
   barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' },
   bar: { width: '70%', borderRadius: radii.xs },
   barLabels: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },

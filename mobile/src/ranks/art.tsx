@@ -37,6 +37,24 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
+let drawings = 0;
+/**
+ * An id prefix of this drawing's own. The art's default prefix is a hash of
+ * what was drawn, so two Gir II emblems share their gradient ids — harmless
+ * on a phone, where each SVG is its own document, but in the browser build
+ * a screen left behind in the stack (hidden, still in the page) would own
+ * the ids the visible emblem points at, and the visible one would lose its
+ * fills. One prefix per drawing keeps every reference to its own defs.
+ */
+function useArtId(): string {
+  const id = useRef<string | null>(null);
+  if (id.current === null) {
+    drawings += 1;
+    id.current = `hva${drawings.toString(36)}`;
+  }
+  return id.current;
+}
+
 /** One drawing, as one named image. */
 function Art({ xml, size, label, style }: { xml: string; size: number; label: string; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   return (
@@ -65,20 +83,26 @@ export function RankEmblem({
   season?: { name: ArtSeason; year: number };
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
+  const idPrefix = useArtId();
   const xml = useMemo(
-    () => rankEmblemSvg({ tier, division: division ?? undefined, size, title: label, season }),
-    [tier, division, size, label, season],
+    () => rankEmblemSvg({ tier, division: division ?? undefined, size, title: label, season, idPrefix }),
+    [tier, division, size, label, season, idPrefix],
   );
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 
 export function PlacementEmblem({ done, size, label, style }: { done: number; size: number; label: string; style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const xml = useMemo(() => placementEmblemSvg({ done: Math.max(0, Math.min(5, Math.round(done))), size, title: label }), [done, size, label]);
+  const idPrefix = useArtId();
+  const xml = useMemo(
+    () => placementEmblemSvg({ done: Math.max(0, Math.min(5, Math.round(done))), size, title: label, idPrefix }),
+    [done, size, label, idPrefix],
+  );
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 
 export function LeagueEmblem({ tier, size, label, style }: { tier: LeagueTier; size: number; label: string; style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const xml = useMemo(() => leagueEmblemSvg({ tier, size, title: label }), [tier, size, label]);
+  const idPrefix = useArtId();
+  const xml = useMemo(() => leagueEmblemSvg({ tier, size, title: label, idPrefix }), [tier, size, label, idPrefix]);
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 
@@ -114,9 +138,10 @@ export function BadgeMedal({
   const known = hasBadgeArt(badgeKey);
   const state: BadgeState = hidden ? 'secret' : tier > 0 ? 'earned' : 'locked';
   const artTier = Math.max(1, Math.min(4, tier || 1)) as ArtBadgeTier;
+  const idPrefix = useArtId();
   const xml = useMemo(
-    () => (known ? badgeSvg({ key: badgeKey as ArtBadgeKey, tier: artTier, state, size, tiers: tierCount > 1 ? 4 : 1, title: label }) : null),
-    [known, badgeKey, artTier, state, size, tierCount, label],
+    () => (known ? badgeSvg({ key: badgeKey as ArtBadgeKey, tier: artTier, state, size, tiers: tierCount > 1 ? 4 : 1, title: label, idPrefix }) : null),
+    [known, badgeKey, artTier, state, size, tierCount, label, idPrefix],
   );
   if (!xml || !known) return null;
   const glints = state === 'earned' && shine !== false && badgeShines(badgeKey as ArtBadgeKey, artTier, tierCount > 1 ? 4 : 1);
@@ -141,9 +166,10 @@ const GLINT_REST_MS = 3400;
  */
 function BadgeGlint({ badgeKey, size, play }: { badgeKey: string; size: number; play: Exclude<ShinePlay, false> }): React.JSX.Element | null {
   const reduce = useReducedMotion();
+  const idPrefix = useArtId();
   const frames = useMemo(
-    () => (hasBadgeArt(badgeKey) ? GLINT_PHASES.map((phase) => badgeShineSvg({ key: badgeKey as ArtBadgeKey, size, phase })) : []),
-    [badgeKey, size],
+    () => (hasBadgeArt(badgeKey) ? GLINT_PHASES.map((phase, i) => badgeShineSvg({ key: badgeKey as ArtBadgeKey, size, phase, idPrefix: `${idPrefix}g${i}` })) : []),
+    [badgeKey, size, idPrefix],
   );
   const values = useRef(GLINT_PHASES.map(() => new Animated.Value(0))).current;
   useEffect(() => {
@@ -204,8 +230,12 @@ export function SeasonFramed({
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const turns = SEASON_FRAME_SHINE[tier];
-  const xml = useMemo(() => seasonFrameSvg({ tier, size, shine: turns && reduce, title: label }), [tier, size, turns, reduce, label]);
-  const glint = useMemo(() => (turns && !reduce ? seasonFrameShineSvg({ tier, size }) : null), [tier, size, turns, reduce]);
+  const idPrefix = useArtId();
+  const xml = useMemo(() => seasonFrameSvg({ tier, size, shine: turns && reduce, title: label, idPrefix }), [tier, size, turns, reduce, label, idPrefix]);
+  const glint = useMemo(
+    () => (turns && !reduce ? seasonFrameShineSvg({ tier, size, idPrefix: `${idPrefix}s` }) : null),
+    [tier, size, turns, reduce, idPrefix],
+  );
   const spin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!glint) return;
