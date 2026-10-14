@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { AccountStanding, AppealView, StandingSanction, SuspendedErrorDetails } from '@kurda/shared';
 import { ApiClient } from '../api/client';
-import type { TokenPair, TokenStorage } from '../api/types';
+import type { ApiError, TokenPair, TokenStorage } from '../api/types';
+import { describeError } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
@@ -33,9 +34,23 @@ export function appealClient(baseUrl: string, appealToken: string): ApiClient {
   return new ApiClient({ baseUrl, storage, onLogout: () => undefined });
 }
 
-/** The ban the suspension screen is about: the account-wide one in force. */
-function accountSanction(standing: AccountStanding | null): StandingSanction | null {
-  return standing?.active.find((s) => s.kind === 'suspension' || s.kind === 'permanent_ban') ?? null;
+/**
+ * The ban the suspension screen is about: the account-wide one in force, as
+ * the server picks it for sign-in (`currentBan`) — a permanent ban first, then
+ * the one that ends last (no end first), then the newest. With two in force,
+ * the review is asked of the one that is keeping the person out.
+ */
+export function accountSanction(standing: AccountStanding | null): StandingSanction | null {
+  const bans = (standing?.active ?? []).filter((s) => s.kind === 'suspension' || s.kind === 'permanent_ban');
+  const end = (s: StandingSanction): number => (s.endsAt === null ? Infinity : Date.parse(s.endsAt));
+  return (
+    [...bans].sort(
+      (a, b) =>
+        Number(b.kind === 'permanent_ban') - Number(a.kind === 'permanent_ban') ||
+        end(b) - end(a) ||
+        Date.parse(b.startsAt) - Date.parse(a.startsAt),
+    )[0] ?? null
+  );
 }
 
 /**
@@ -65,19 +80,24 @@ export function SuspensionScreen({
   const [expired, setExpired] = useState(false);
   const [asking, setAsking] = useState(false);
   const [filed, setFiled] = useState<AppealView | null>(null);
+  // offline, or the server down: the review waits on the standing, so say so and offer to try again
+  const [loadError, setLoadError] = useState<ApiError | null>(null);
+  const [round, setRound] = useState(0);
 
   useEffect(() => {
     let alive = true;
+    setLoadError(null);
     void accountStanding(client).then((res) => {
       if (!alive) return;
       if (res.ok) setStanding(res.data);
       // the token lasts a day; past that it is refused, and only signing in again gives a new one
       else if (res.error.status === 401 || res.error.kind === 'unauthorized') setExpired(true);
+      else setLoadError(res.error);
     });
     return () => {
       alive = false;
     };
-  }, [client]);
+  }, [client, round]);
 
   const sanction = accountSanction(standing);
   const appeal = filed ?? sanction?.appeal.current ?? null;
@@ -122,6 +142,13 @@ export function SuspensionScreen({
           ) : canAsk ? (
             asking ? (
               <AppealForm client={client} subject={{ sanctionId: sanction?.id }} onFiled={setFiled} />
+            ) : loadError && !sanction ? (
+              <>
+                <Text style={[styles.note, dir.text, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+                  {describeError(loadError, t)}
+                </Text>
+                <ClayButton label={t('common.retry')} variant="outline" onPress={() => setRound((n) => n + 1)} style={styles.ask} />
+              </>
             ) : (
               <ClayButton
                 label={t('appeal.title')}

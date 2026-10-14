@@ -18,7 +18,7 @@ import { MyReportsScreen } from './MyReportsScreen';
 import { AccountStandingScreen } from './AccountStandingScreen';
 import { WarningDialog } from './WarningDialog';
 import { SendErrorNotice } from './SendError';
-import { SuspensionScreen } from './SuspensionScreen';
+import { SuspensionScreen, accountSanction } from './SuspensionScreen';
 
 patchReactNativeWeb();
 
@@ -244,6 +244,41 @@ describe('SuspensionScreen', () => {
     renderWithProviders(<SuspensionScreen details={{ ...details, until: null }} baseUrl="http://api.test" onBack={() => undefined} />);
     expect(screen.getByText('This is permanent.')).toBeTruthy();
     expect(await screen.findByText('This page has been open too long. Sign in again to ask for a review.')).toBeTruthy();
+  });
+
+  it('says when the standing could not be loaded, and loads it again on Try again', async () => {
+    let answers = 0;
+    vi.stubGlobal('fetch', async () => {
+      answers += 1;
+      return answers === 1
+        ? new Response(JSON.stringify({ code: 'INTERNAL', message: 'x' }), { status: 500 })
+        : new Response(JSON.stringify(standing({ status: 'suspended', active: [sanction({ id: 'sus', kind: 'suspension' })] })), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    const ask = await screen.findByRole('button', { name: 'Ask for a review' });
+    await waitFor(() => expect(ask.getAttribute('aria-disabled')).not.toBe('true'));
+    expect(answers).toBe(2);
+  });
+});
+
+describe('accountSanction', () => {
+  it('picks the ban the server signs in against: permanent first, then the one ending last, then the newest', () => {
+    const early = sanction({ id: 'early', kind: 'suspension', endsAt: '2026-10-20T09:00:00.000Z' });
+    const late = sanction({ id: 'late', kind: 'suspension', endsAt: '2026-11-20T09:00:00.000Z' });
+    const open = sanction({ id: 'open', kind: 'suspension', endsAt: null });
+    const ban = sanction({ id: 'ban', kind: 'permanent_ban', endsAt: null, startsAt: '2026-10-01T09:00:00.000Z' });
+    const mute = sanction({ id: 'mute', kind: 'chat_mute', endsAt: null });
+    expect(accountSanction(standing({ active: [early, late, mute] }))?.id).toBe('late');
+    expect(accountSanction(standing({ active: [early, open] }))?.id).toBe('open');
+    expect(accountSanction(standing({ active: [early, ban, open] }))?.id).toBe('ban');
+    const newer = sanction({ id: 'newer', kind: 'suspension', endsAt: null, startsAt: '2026-10-12T09:00:00.000Z' });
+    expect(accountSanction(standing({ active: [open, newer] }))?.id).toBe('newer');
+    expect(accountSanction(standing({ active: [mute] }))).toBeNull();
+    expect(accountSanction(null)).toBeNull();
   });
 });
 
