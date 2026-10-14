@@ -74,8 +74,12 @@ export function useRatedChoice(game: PlayGame, open: boolean): [boolean, (rated:
   const [rated, setRated] = useState<boolean>(() => (ranked ? (rememberedRated(ranked) ?? open) : false));
   const touched = useRef(false);
 
-  // a game switched in the sheet starts on that game's own memory
+  // a game switched in the sheet starts on that game's own memory; a game
+  // opened to everyone defaults to Rated — unless the host has already chosen
+  const shown = useRef(ranked);
   useEffect(() => {
+    if (shown.current === ranked && touched.current) return;
+    shown.current = ranked;
     touched.current = false;
     setRated(ranked ? (rememberedRated(ranked) ?? open) : false);
   }, [ranked, open]);

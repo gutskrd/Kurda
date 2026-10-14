@@ -2372,7 +2372,7 @@ export const nl: Catalogue = {
   'rankResult.voided': 'Het effect van dit potje op de rangen is teruggedraaid.',
   'rankResult.friendly': 'Een vriendschappelijk potje: de rangen blijven zoals ze waren.',
   'rankResult.friendlyBecause': 'Dit potje was vriendschappelijk: {reason}',
-  'rankResult.damped': 'Met minder gewicht geteld: jullie speelden vandaag al meerdere gerankte potjes samen.',
+  'rankResult.damped': 'Met deelgewicht geteld: jullie speelden vandaag al meerdere gerankte potjes samen, of iemand hier is nieuw bij Hevalo.',
   'rankResult.summary': '{delta} punten: {reason}. Je hebt {points} punten.',
   'rankResult.reason.placement': 'plaatsingspotje',
   'rankResult.reason.beatStronger': 'je won van iemand met een hogere rang',

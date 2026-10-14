@@ -2364,7 +2364,7 @@ export const ar: Catalogue = {
   'rankResult.voided': 'أُلغي أثر هذه المباراة على الرتب.',
   'rankResult.friendly': 'مباراة ودية: تبقى الرتب كما هي.',
   'rankResult.friendlyBecause': 'كانت هذه المباراة ودية: {reason}',
-  'rankResult.damped': 'احتُسبت بوزن أقل: لعبتم معًا عدة مباريات مصنّفة اليوم.',
+  'rankResult.damped': 'احتُسبت بجزء من وزنها: لعبتم معًا عدة مباريات مصنّفة اليوم، أو أن أحد اللاعبين جديد في Hevalo.',
   'rankResult.summary': '{delta} نقطة: {reason}. لديك {points} نقطة.',
   'rankResult.reason.placement': 'مباراة تحديد المستوى',
   'rankResult.reason.beatStronger': 'فزت على لاعب أعلى رتبة',

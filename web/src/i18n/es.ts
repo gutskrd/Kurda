@@ -2369,7 +2369,7 @@ export const es: Catalogue = {
   'rankResult.voided': 'Se deshizo el efecto de esta partida en los rangos.',
   'rankResult.friendly': 'Una partida amistosa: los rangos siguen igual.',
   'rankResult.friendlyBecause': 'Esta partida fue amistosa: {reason}',
-  'rankResult.damped': 'Contó con menos peso: hoy habéis jugado varias clasificatorias juntos.',
+  'rankResult.damped': 'Contó con peso parcial: hoy habéis jugado varias clasificatorias juntos, o alguien aquí es nuevo en Hevalo.',
   'rankResult.summary': '{delta} puntos: {reason}. Tienes {points} puntos.',
   'rankResult.reason.placement': 'partida de clasificación',
   'rankResult.reason.beatStronger': 'ganaste a alguien de rango más alto',

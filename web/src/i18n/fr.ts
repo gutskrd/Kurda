@@ -2370,7 +2370,7 @@ export const fr: Catalogue = {
   'rankResult.voided': 'L’effet de cette partie sur les rangs a été annulé.',
   'rankResult.friendly': 'Une partie amicale : les rangs ne bougent pas.',
   'rankResult.friendlyBecause': 'Cette partie était amicale : {reason}',
-  'rankResult.damped': 'Compté avec moins de poids : vous avez joué plusieurs parties classées ensemble aujourd’hui.',
+  'rankResult.damped': 'Compté avec un poids partiel : vous avez joué plusieurs parties classées ensemble aujourd’hui, ou quelqu’un ici est nouveau sur Hevalo.',
   'rankResult.summary': '{delta} points : {reason}. Tu as {points} points.',
   'rankResult.reason.placement': 'partie de placement',
   'rankResult.reason.beatStronger': 'tu as battu un joueur mieux classé',

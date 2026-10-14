@@ -91,6 +91,45 @@ describe('the setup sheet’s choice', () => {
     });
   });
 
+  it('keeps the host’s own choice when who may join changes', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { preferences: {} })));
+    function Sheet(): React.JSX.Element {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen((o) => !o)}>
+            switch who may join
+          </button>
+          <Choice open={open} />
+        </>
+      );
+    }
+    renderApp(<Sheet />);
+    await userEvent.click(screen.getByRole('radio', { name: /Rated/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'switch who may join' }));
+    await userEvent.click(screen.getByRole('button', { name: 'switch who may join' }));
+    // back among friends, where the default is Friendly: the host chose Rated, and it stays
+    expect(screen.getByRole('radio', { name: /Rated/ })).toBeChecked();
+  });
+
+  it('defaults an untouched sheet to Rated once the game is opened to everyone', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { preferences: {} })));
+    function Sheet(): React.JSX.Element {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            open to everyone
+          </button>
+          <Choice open={open} />
+        </>
+      );
+    }
+    renderApp(<Sheet />);
+    await userEvent.click(screen.getByRole('button', { name: 'open to everyone' }));
+    expect(screen.getByRole('radio', { name: /Rated/ })).toBeChecked();
+  });
+
   it('prefers this device’s memory to the server’s', () => {
     localStorage.setItem('hevalo.rated.wordle-battle', '0');
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { preferences: { 'wordle-battle': true } })));

@@ -181,7 +181,9 @@ export function frameTier(sku: string | null | undefined): RankTier | null {
 /**
  * A season frame laid round an avatar that is already drawn (the profile
  * card's face): absolutely placed and centred on it, so the card's layout does
- * not move whether or not a frame is worn.
+ * not move whether or not a frame is worn. Its size follows the face's in CSS
+ * (the face is the ring's empty middle); `face` only picks the drawing's
+ * detail, large or small.
  */
 export function FrameOverlay({ sku, face, title }: { sku: string | null | undefined; face: number; title: (tier: RankTier) => string }): React.JSX.Element | null {
   const id = useArtId();
@@ -195,7 +197,7 @@ export function FrameOverlay({ sku, face, title }: { sku: string | null | undefi
   );
   if (!tier || !frame) return null;
   return (
-    <span className={`art-frame-overlay is-${tier}`} style={{ width: size, height: size }}>
+    <span className={`art-frame-overlay is-${tier}`}>
       <Svg svg={frame} className="art-frame-ring" />
       {shine && <Shine svg={shine} className="art-frame-shine" />}
     </span>

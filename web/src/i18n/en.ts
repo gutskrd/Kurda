@@ -2462,7 +2462,7 @@ export const en = {
   'rankResult.voided': 'This game’s effect on ranks was undone.',
   'rankResult.friendly': 'A friendly game: ranks stay as they were.',
   'rankResult.friendlyBecause': 'This game was friendly: {reason}',
-  'rankResult.damped': 'Counted at less than full weight: you’ve played several rated games together today.',
+  'rankResult.damped': 'Counted at part weight: you’ve played several rated games together today, or someone here is new to Hevalo.',
   'rankResult.summary': '{delta} points: {reason}. You have {points} points.',
   'rankResult.reason.placement': 'placement game',
   'rankResult.reason.beatStronger': 'you beat a higher-ranked player',

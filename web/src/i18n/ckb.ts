@@ -2371,7 +2371,7 @@ export const ckb: Catalogue = {
   'rankResult.voided': 'کاریگەریی ئەم یارییە لەسەر پلەکان هەڵوەشێنرایەوە.',
   'rankResult.friendly': 'یارییەکی دۆستانە: پلەکان وەک خۆیان دەمێننەوە.',
   'rankResult.friendlyBecause': 'ئەم یارییە دۆستانە بوو: {reason}',
-  'rankResult.damped': 'بە کێشی کەمتر ژمێردرا: ئەمڕۆ پێکەوە چەند یاریی پلەدارتان کردووە.',
+  'rankResult.damped': 'بە بەشێک لە کێش ژمێردرا: ئەمڕۆ پێکەوە چەند یاریی پلەدارتان کردووە، یان کەسێک لێرە لە Hevalo نوێیە.',
   'rankResult.summary': '{delta} خاڵ: {reason}. {points} خاڵت هەیە.',
   'rankResult.reason.placement': 'یاریی جێگیرکردن',
   'rankResult.reason.beatStronger': 'لە یاریزانێکی پلەبەرزتر بردتەوە',

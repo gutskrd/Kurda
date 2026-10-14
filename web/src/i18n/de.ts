@@ -2372,7 +2372,7 @@ export const de: Catalogue = {
   'rankResult.voided': 'Die Wirkung dieses Spiels auf die Ränge wurde zurückgenommen.',
   'rankResult.friendly': 'Ein Freundschaftsspiel: Die Ränge bleiben, wie sie waren.',
   'rankResult.friendlyBecause': 'Dieses Spiel war freundschaftlich: {reason}',
-  'rankResult.damped': 'Mit weniger Gewicht gezählt: Ihr habt heute schon mehrere gewertete Spiele miteinander gespielt.',
+  'rankResult.damped': 'Mit Teilgewicht gezählt: Ihr habt heute schon mehrere gewertete Spiele miteinander gespielt, oder jemand hier ist neu bei Hevalo.',
   'rankResult.summary': '{delta} Punkte: {reason}. Du hast {points} Punkte.',
   'rankResult.reason.placement': 'Einstufungsspiel',
   'rankResult.reason.beatStronger': 'du hast jemanden mit höherem Rang geschlagen',

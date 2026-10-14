@@ -2366,7 +2366,7 @@ export const tr: Catalogue = {
   'rankResult.voided': 'Bu maçın sıralamalara etkisi geri alındı.',
   'rankResult.friendly': 'Bir dostluk maçı: sıralamalar olduğu gibi kalır.',
   'rankResult.friendlyBecause': 'Bu maç dostluk maçıydı: {reason}',
-  'rankResult.damped': 'Daha düşük ağırlıkla sayıldı: bugün birlikte birkaç dereceli maç oynadınız.',
+  'rankResult.damped': 'Kısmi ağırlıkla sayıldı: bugün birlikte birkaç dereceli maç oynadınız ya da buradaki biri Hevalo’da yeni.',
   'rankResult.summary': '{delta} puan: {reason}. {points} puanın var.',
   'rankResult.reason.placement': 'yerleştirme maçı',
   'rankResult.reason.beatStronger': 'daha yüksek sıralı bir oyuncuyu yendin',

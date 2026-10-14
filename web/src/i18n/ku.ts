@@ -2377,7 +2377,7 @@ export const ku: Catalogue = {
   'rankResult.voided': 'Bandora vê lîstikê ya li ser pileyan hate betalkirin.',
   'rankResult.friendly': 'Lîstikeke dostane: pile wek xwe dimînin.',
   'rankResult.friendlyBecause': 'Ev lîstik dostane bû: {reason}',
-  'rankResult.damped': 'Bi giraniya kêmtir hate hesibandin: we îro bi hev re çend lîstikên rêzkirî lîstine.',
+  'rankResult.damped': 'Bi beşek ji giraniyê hate hesibandin: we îro bi hev re çend lîstikên rêzkirî lîstine, an kesek li vir li Hevalo nû ye.',
   'rankResult.summary': '{delta} xal: {reason}. {points} xalên te hene.',
   'rankResult.reason.placement': 'lîstika bicîkirinê',
   'rankResult.reason.beatStronger': 'te lîstikvanekî bi pileya bilindtir bir',

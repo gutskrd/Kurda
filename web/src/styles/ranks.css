@@ -111,6 +111,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
+  /* the face fills the ring's middle: SEASON_FRAME_INNER is two thirds */
+  width: 150%;
+  height: 150%;
   translate: -50% -50%;
   pointer-events: none;
   z-index: 1;
