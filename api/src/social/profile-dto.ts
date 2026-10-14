@@ -1,4 +1,4 @@
-import type { LeagueTier, ProfileLeague } from '@kurda/shared';
+import type { LeagueTier, ProfileLeague, ShowcaseBadge } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
 import type { PublicProfile } from './service.js';
@@ -41,6 +41,7 @@ export interface PublicProfileDto {
   /** global rating place, or null when they have not played ranked */
   rank?: number | null;
   achievements?: number;
+  badges?: ShowcaseBadge[];
   favoritePoem?: FavoriteDto | null;
   favoriteStory?: FavoriteDto | null;
 }
@@ -90,6 +91,7 @@ export function toPublicProfileDto(
     rating: profile.rating,
     rank: profile.rank,
     achievements: profile.achievements,
+    badges: profile.badges,
     favoritePoem: fav(profile.favoritePoem),
     favoriteStory: fav(profile.favoriteStory),
   };

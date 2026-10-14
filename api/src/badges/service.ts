@@ -495,35 +495,10 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   }
 
   /**
-   * The three badges a profile shows. A minor's (or an account whose age is
-   * not on record) only to themselves and their friends, as the rest of their
-   * profile; a badge since revoked drops out.
+   * The three badges a profile shows (see `profileShowcase`).
    */
   async showcaseFor(targetId: string, viewerId: string | null): Promise<ShowcaseBadge[]> {
-    const r = await this.pool.query<{
-      badge_keys: string[] | null;
-      birth_year: number | null;
-      birth_month: number | null;
-      friends: boolean;
-    }>(
-      `SELECT s.badge_keys, u.birth_year, u.birth_month, ${areFriendsSql('u.id', '$2::uuid')} AS friends
-         FROM users u LEFT JOIN badge_showcase s ON s.user_id = u.id WHERE u.id = $1`,
-      [targetId, viewerId],
-    );
-    const row = r.rows[0];
-    if (!row?.badge_keys?.length) return [];
-    const self = viewerId !== null && viewerId === targetId;
-    if (!self && !row.friends && !isKnownAdultRow(row)) return [];
-    const tiers = await this.pool.query<{ badge_key: string; tier: number }>(
-      `SELECT badge_key, tier FROM user_badges WHERE user_id = $1 AND badge_key = ANY($2::text[]) AND tier > 0`,
-      [targetId, row.badge_keys],
-    );
-    const byKey = new Map(tiers.rows.map((t) => [t.badge_key, t.tier]));
-    return row.badge_keys.flatMap((key) => {
-      const def = badgeDef(key);
-      const tier = byKey.get(key);
-      return def && tier ? [{ key, family: def.family, tier, tierKey: badgeTierKey(def, tier) }] : [];
-    });
+    return profileShowcase(this.pool, targetId, viewerId);
   }
 
   /** Badges earned (a tier or more), for the profile's count. */
@@ -758,4 +733,37 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
       client.release();
     }
   }
+}
+
+/**
+ * The three badges a profile shows. A minor's (or an account whose age is not
+ * on record) only to themselves and their friends, as the rest of their
+ * profile; a badge since revoked drops out. A function of its own so the
+ * profile can read it without the badge service.
+ */
+export async function profileShowcase(db: Executor, targetId: string, viewerId: string | null): Promise<ShowcaseBadge[]> {
+  const r = await db.query<{
+    badge_keys: string[] | null;
+    birth_year: number | null;
+    birth_month: number | null;
+    friends: boolean;
+  }>(
+    `SELECT s.badge_keys, u.birth_year, u.birth_month, ${areFriendsSql('u.id', '$2::uuid')} AS friends
+       FROM users u LEFT JOIN badge_showcase s ON s.user_id = u.id WHERE u.id = $1`,
+    [targetId, viewerId],
+  );
+  const row = r.rows[0];
+  if (!row?.badge_keys?.length) return [];
+  const self = viewerId !== null && viewerId === targetId;
+  if (!self && !row.friends && !isKnownAdultRow(row)) return [];
+  const tiers = await db.query<{ badge_key: string; tier: number }>(
+    `SELECT badge_key, tier FROM user_badges WHERE user_id = $1 AND badge_key = ANY($2::text[]) AND tier > 0`,
+    [targetId, row.badge_keys],
+  );
+  const byKey = new Map(tiers.rows.map((t) => [t.badge_key, t.tier]));
+  return row.badge_keys.flatMap((key) => {
+    const def = badgeDef(key);
+    const tier = byKey.get(key);
+    return def && tier ? [{ key, family: def.family, tier, tierKey: badgeTierKey(def, tier) }] : [];
+  });
 }

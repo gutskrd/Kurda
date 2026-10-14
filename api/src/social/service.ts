@@ -1,11 +1,12 @@
 import type pg from 'pg';
-import { foldDiacritics, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague } from '@kurda/shared';
+import { foldDiacritics, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
 import { inLeaguesSql } from '../leagues/service.js';
+import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
@@ -71,7 +72,10 @@ export interface PublicProfile {
    * a real standing rather than "has not played".
    */
   rank?: number | null;
+  /** badges earned (and the legacy tournament win) */
   achievements?: number;
+  /** the three badges they chose to show; a minor's only to themselves and friends */
+  badges?: ShowcaseBadge[];
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
 }
@@ -232,7 +236,10 @@ export class SocialService {
                     SELECT 1 FROM cheat_reviews cr
                      WHERE cr.user_id = u2.id AND cr.shadow_flagged = true
                   )) AS rating_rank,
-              (SELECT count(*)::int FROM user_achievements ua WHERE ua.user_id = u.id) AS achievements,
+              -- badges earned, and the one old award no badge replaced (the tournament win)
+              ((SELECT count(*)::int FROM user_badges ub WHERE ub.user_id = u.id AND ub.tier > 0)
+               + (SELECT count(*)::int FROM user_achievements ua
+                   WHERE ua.user_id = u.id AND ua.achievement_id = 'tournament-win')) AS achievements,
               bg.asset_key AS bg_asset, bg.category AS bg_cat, bg.active AS bg_active,
               bg.premium_only AS bg_premium, (ebg.user_id IS NOT NULL) AS bg_owned,
               ic.asset_key AS ic_asset, ic.category AS ic_cat, ic.active AS ic_active,
@@ -356,6 +363,8 @@ export class SocialService {
       // no ranked games played means no standing to report
       rank: u.has_rating ? u.rating_rank : null,
       achievements: u.achievements,
+      // a minor's showcase only to themselves and their friends
+      badges: await profileShowcase(this.pool, targetId, viewerId),
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };
