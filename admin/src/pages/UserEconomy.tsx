@@ -89,7 +89,13 @@ export function WalletPanel({ user, canAdjust, onChanged }: { user: EconomyUser;
 
 /** The most one change may add or take away, as the API allows. */
 export const WALLET_ADJUST_MAX = 1_000_000;
-/** From here a credit is asked about in red, like a debit: the same line where a shop price needs a second admin. */
+/**
+ * From here a credit is asked about in red, like a debit, and the amount must
+ * be typed again: the same line where a shop price waits for a second admin.
+ * A grant does not wait for one, because the owner is often the only admin and
+ * a second sign-off would leave them unable to make it at all; typing the
+ * number back stops the slip (1000000 for 1000) that a click would not.
+ */
 const LARGE_ADJUSTMENT = 1_000;
 
 /**
@@ -130,6 +136,7 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
         `\nReason: ${reason.trim()}`,
       confirmLabel: value > 0 ? `Add ${value.toLocaleString()} ${name}` : `Take ${Math.abs(value).toLocaleString()} ${name}`,
       tone: value < 0 || value >= LARGE_ADJUSTMENT ? 'danger' : 'default',
+      typed: value >= LARGE_ADJUSTMENT ? { phrase: String(value) } : undefined,
     });
     if (!yes) return;
     setBusy(true);

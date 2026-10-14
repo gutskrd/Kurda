@@ -321,6 +321,24 @@ describe('a person', () => {
     expect(await screen.findByText('Took away 500 Zêr. New balance: 700.')).toBeInTheDocument();
   });
 
+  it('makes a large credit typed again before it is sent', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(`${at}/wallet`, OWNER, detailRoute(person()), on('POST', `/admin/users/${SUBJECT_ID}/wallet`, json({ ok: true, balance: 6200 })));
+    await screen.findByText('1,200');
+    await user.type(screen.getByLabelText(/^Amount/), '5000');
+    await user.type(screen.getByLabelText(/^Reason/), 'Prize for the spring contest');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Add 5,000 Zêr to @baran?' });
+    const yes = within(ask).getByRole('button', { name: 'Add 5,000 Zêr' });
+    expect(yes).toBeDisabled();
+    await user.type(within(ask).getByLabelText('Type 5000 to confirm'), '500');
+    expect(yes).toBeDisabled();
+    await user.type(within(ask).getByLabelText('Type 5000 to confirm'), '0');
+    await user.click(yes);
+    await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)).toHaveLength(1));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)[0]!.body).toEqual({ currency: 'zer', amount: 5000, reason: 'Prize for the spring contest' });
+  });
+
   it('shows a moderator the balances without a way to change them', async () => {
     show(`${at}/wallet`, MODERATOR, detailRoute(person()));
     expect(await screen.findByText('1,200')).toBeInTheDocument();
