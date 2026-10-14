@@ -39,6 +39,37 @@ export function cubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, count: number): Pt[] {
 }
 
 /**
+ * A cubic Bézier sampled into `count` points at even steps of length rather
+ * than of t, without its start point. Where a curve runs fast — into a sharp
+ * point, say — even steps of t leave long straight chords that show as flats
+ * on a rim; even steps of length keep every stretch of the outline as smooth
+ * as every other.
+ */
+export function evenCubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, count: number): Pt[] {
+  const fine = [p0, ...cubic(p0, p1, p2, p3, count * 16)];
+  const lengths = [0];
+  for (let i = 1; i < fine.length; i++) {
+    const a = fine[i - 1] as Pt;
+    const b = fine[i] as Pt;
+    lengths.push((lengths[i - 1] ?? 0) + Math.hypot(b[0] - a[0], b[1] - a[1]));
+  }
+  const total = lengths[lengths.length - 1] ?? 0;
+  const out: Pt[] = [];
+  let j = 1;
+  for (let i = 1; i < count; i++) {
+    const s = (i / count) * total;
+    while (j < fine.length - 1 && (lengths[j] ?? 0) < s) j++;
+    const a = fine[j - 1] as Pt;
+    const b = fine[j] as Pt;
+    const l0 = lengths[j - 1] ?? 0;
+    const t = ((s - l0) / ((lengths[j] ?? 0) - l0)) || 0;
+    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+  }
+  out.push(p3);
+  return out;
+}
+
+/**
  * A polygon with its corners rounded: each corner becomes a short curve that
  * starts `radius` before the vertex and ends `radius` after it.
  */

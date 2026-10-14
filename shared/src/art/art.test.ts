@@ -25,6 +25,7 @@ import {
   type BadgeTier,
 } from './index.js';
 import { ICONS } from './icons.js';
+import { SHAPES } from './shapes.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
 import { LEAGUE_TIERS as CATALOGUE_LEAGUE_TIERS } from '../leagues.js';
 import { RANK_TIER_KEYS, SEASON_NAMES as SEASON_LABEL_KEYS } from '../ranks.js';
@@ -251,6 +252,20 @@ describe('badgeSvg', () => {
       badgeSvg({ key, state: 'secret', idPrefix: 'x' }).replace(/<title[^<]*<\/title>/, ''),
     );
     expect(new Set(secrets.map((s) => s.replace(/<circle[^>]*fill-opacity[^>]*\/>/g, ''))).size).toBe(1);
+  });
+
+  it('cuts the leaf the same at both tips, and runs its rim evenly into them', () => {
+    const leaf = SHAPES.friends.outline;
+    const key = ([x, y]: readonly [number, number]): string => `${x.toFixed(4)},${y.toFixed(4)}`;
+    const points = new Set(leaf.map(key));
+    // turned half round about its middle, the leaf is itself
+    for (const [x, y] of leaf) expect(points.has(key([120 - x, 112 - y])), `${x},${y}`).toBe(true);
+    // no long chords: every step along the outline is within a third of the others
+    const steps = leaf.map((p, i) => {
+      const q = leaf[(i + 1) % leaf.length] as readonly [number, number];
+      return Math.hypot(q[0] - p[0], q[1] - p[1]);
+    });
+    expect(Math.max(...steps) / Math.min(...steps)).toBeLessThan(1.34);
   });
 
   it('respects the size it is asked for, and draws a small version under the threshold', () => {

@@ -8,7 +8,7 @@
  * leaving the bottom for the tier capsule, plus where its icon sits and how big:
  * a diamond's field is narrower than a circle's, so its icon is smaller.
  */
-import { circle, cubic, place, regular, roundedPolygon, star } from './geometry.js';
+import { circle, cubic, evenCubic, place, regular, roundedPolygon, star } from './geometry.js';
 import type { BadgeFamily } from './keys.js';
 import type { Pt } from './svg.js';
 
@@ -42,14 +42,26 @@ function shield(): Pt[] {
   ];
 }
 
-/** A leaf: two arcs meeting in a point at each end, laid on the diagonal — fuller than a willow leaf, so it holds a glyph. */
+/**
+ * A leaf: two arcs meeting in a point at each end, laid on the diagonal —
+ * fuller than a willow leaf, so it holds a glyph. The two sides are mirror
+ * images and meet at the same clean angle at both tips, and are sampled at
+ * even steps of length, so the rim runs as evenly into each point as it does
+ * round the shoulders.
+ */
 function leaf(): Pt[] {
-  const L = 58;
-  const H = 40;
-  const upper = cubic([-L, 0], [-L * 0.42, -H * 1.38], [L * 0.42, -H * 1.38], [L, 0], 30);
-  const lower = cubic([L, 0], [L * 0.42, H * 1.38], [-L * 0.42, H * 1.38], [-L, 0], 30);
-  return place([...upper, ...lower], { x: CX, y: CY, deg: -45 });
+  const { L, along, out } = LEAF;
+  const side = evenCubic([-L, 0], [-L + along, -out], [L - along, -out], [L, 0], 36);
+  // the other side is the same turned half round, so both tips are the same point
+  const other = side.slice(0, -1).map(([x, y]) => [-x, -y] as Pt);
+  return place([...side, ...other, [-L, 0]], { x: CX, y: CY, deg: -45 });
 }
+/**
+ * Half the leaf's length, and how far each side's handles reach along it and
+ * out from it: the leaf is 0.75 × `out` wide each side of its middle, and
+ * meets itself at each tip at twice atan(out / along).
+ */
+const LEAF = { L: 64, along: 38, out: 52 };
 
 export const SHAPES: Record<BadgeFamily, Shape> = {
   learning: { outline: circle(CX, CY, 48, 72), icon: [CX, CY], scale: 1.24 },
