@@ -405,7 +405,7 @@ export const nl: Catalogue = {
   'appFeedback.improve': 'Bedankt dat je het zegt — wat kan er beter?',
   'appFeedback.thanksLove': 'Dankjewel! 💛',
   'appFeedback.loveLabel': 'Wat vind je er leuk aan?',
-  'appFeedback.improvePlaceholder': 'Vertel ons meer (optioneel)',
+  'appFeedback.tellMore': 'Vertel ons meer (optioneel)',
   'appFeedback.improveLabel': 'Wat kan er beter?',
   'appFeedback.categoriesLabel': 'Waar gaat het over?',
   'appFeedback.send': 'Versturen',

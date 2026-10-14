@@ -405,7 +405,7 @@ export const es: Catalogue = {
   'appFeedback.improve': 'Gracias por decírnoslo: ¿qué podría mejorar?',
   'appFeedback.thanksLove': '¡Gracias! 💛',
   'appFeedback.loveLabel': '¿Qué es lo que más te gusta?',
-  'appFeedback.improvePlaceholder': 'Cuéntanos más (opcional)',
+  'appFeedback.tellMore': 'Cuéntanos más (opcional)',
   'appFeedback.improveLabel': '¿Qué podría mejorar?',
   'appFeedback.categoriesLabel': '¿De qué se trata?',
   'appFeedback.send': 'Enviar',

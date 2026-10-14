@@ -23,10 +23,16 @@ export interface GameFinished {
   game: FinishedGameKind;
   /** the player gave the game up rather than finished it: no rating box */
   gaveUp?: boolean;
+  /**
+   * These results already ask the player something else (the race's keyboard
+   * guide, say): no rating box on top of it — the next finished game asks.
+   */
+  deferred?: boolean;
 }
 
 type Listener = (event: GameFinished) => void;
 const listeners = new Set<Listener>();
+const startListeners = new Set<() => void>();
 
 /** Say that a game has just finished, on its results screen. */
 export function reportGameFinished(event: GameFinished): void {
@@ -42,12 +48,31 @@ export function onGameFinished(listener: Listener): () => void {
 }
 
 /**
+ * Say that a new round has begun — "Race again", Wordle's "Play again", the
+ * next Rhyme round. They stay on the same page, so without this a rating box
+ * still on its way from the last results would rise over the new game, and on
+ * a phone over the soft keyboard and the text being typed.
+ */
+export function reportGameStarted(): void {
+  for (const l of [...startListeners]) l();
+}
+
+/** Hear every round that begins from now on; returns the way to stop. */
+export function onGameStarted(listener: () => void): () => void {
+  startListeners.add(listener);
+  return () => {
+    startListeners.delete(listener);
+  };
+}
+
+/**
  * Report a game whose state comes from the server, once, when it goes from
  * unfinished to finished while on screen.
  *
  * `round` names the game being looked at (its id): a different one starts the
  * watch again, and one already finished the first time it is seen is never
- * reported — that is a finished game reopened.
+ * reported — that is a finished game reopened. A round seen unfinished is
+ * reported as begun.
  */
 export function useGameFinished(game: FinishedGameKind, round: string | null, finished: boolean, gaveUp = false): void {
   const seen = useRef<{ round: string | null; playing: boolean; reported: boolean }>({
@@ -60,9 +85,12 @@ export function useGameFinished(game: FinishedGameKind, round: string | null, fi
     const s = seen.current;
     if (s.round !== round) {
       seen.current = { round, playing: !finished, reported: false };
+      // a new round on screen, still to be played, has begun
+      if (!finished) reportGameStarted();
       return;
     }
     if (!finished) {
+      if (!s.playing) reportGameStarted();
       s.playing = true;
       return;
     }

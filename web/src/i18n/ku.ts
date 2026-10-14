@@ -411,7 +411,7 @@ export const ku: Catalogue = {
   'appFeedback.improve': 'Spas ku te ji me re got — çi dikare baştir be?',
   'appFeedback.thanksLove': 'Spas! 💛',
   'appFeedback.loveLabel': 'Tu ji çi hez dikî?',
-  'appFeedback.improvePlaceholder': 'Zêdetir ji me re bêje (ne mecbûrî ye)',
+  'appFeedback.tellMore': 'Zêdetir ji me re bêje (ne mecbûrî ye)',
   'appFeedback.improveLabel': 'Çi dikare baştir be?',
   'appFeedback.categoriesLabel': 'Li ser çi ye?',
   'appFeedback.send': 'Bişîne',

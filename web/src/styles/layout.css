@@ -347,7 +347,9 @@ button.nav-link {
 
 /* ---- app content shell ------------------------------------------------- */
 .app-main {
-  padding: 40px 0 80px;
+  /* --rb-space: the rating box's height while it is up (feedback/FeedbackHost),
+     so the end of the page can still be scrolled clear of it */
+  padding: 40px 0 calc(80px + var(--rb-space, 0px));
   min-height: calc(100vh - var(--nav-h));
 }
 .page-header {

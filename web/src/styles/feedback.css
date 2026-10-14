@@ -146,6 +146,16 @@
   box-shadow: var(--glass-rim), var(--shadow-lg);
   animation: rb-rise 0.42s cubic-bezier(0.16, 1, 0.3, 1);
 }
+/* a control reached with Tab, or a field focused, scrolls to above the box */
+:root {
+  scroll-padding-bottom: var(--rb-space, 0px);
+}
+/* on a phone, half the screen at most: the results keep the other half */
+@media (max-width: 560px) {
+  .rb-host {
+    max-height: min(50dvh, calc(100dvh - var(--nav-h) - 24px));
+  }
+}
 @keyframes rb-rise {
   from {
     opacity: 0;

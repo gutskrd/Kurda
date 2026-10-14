@@ -405,7 +405,7 @@ export const fr: Catalogue = {
   'appFeedback.improve': 'Merci de nous le dire — qu’est-ce qui pourrait être mieux ?',
   'appFeedback.thanksLove': 'Merci ! 💛',
   'appFeedback.loveLabel': 'Qu’est-ce que tu aimes ?',
-  'appFeedback.improvePlaceholder': 'Dis-nous en plus (facultatif)',
+  'appFeedback.tellMore': 'Dis-nous en plus (facultatif)',
   'appFeedback.improveLabel': 'Qu’est-ce qui pourrait être mieux ?',
   'appFeedback.categoriesLabel': 'De quoi s’agit-il ?',
   'appFeedback.send': 'Envoyer',

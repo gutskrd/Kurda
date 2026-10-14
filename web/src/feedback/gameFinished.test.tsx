@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import { onGameFinished, reportGameFinished, useGameFinished, type GameFinished } from './gameFinished';
+import {
+  onGameFinished,
+  onGameStarted,
+  reportGameFinished,
+  reportGameStarted,
+  useGameFinished,
+  type GameFinished,
+} from './gameFinished';
 
 const heard: GameFinished[] = [];
 let stop = onGameFinished((e) => heard.push(e));
@@ -58,5 +65,36 @@ describe('a game finishing', () => {
     const { rerender } = render(<Game round={null} finished />);
     rerender(<Game round={null} finished={false} />);
     expect(heard).toEqual([]);
+  });
+});
+
+describe('a round beginning', () => {
+  it('is heard by every listener until it stops listening', () => {
+    let starts = 0;
+    const stopStarts = onGameStarted(() => starts++);
+    reportGameStarted();
+    stopStarts();
+    reportGameStarted();
+    expect(starts).toBe(1);
+  });
+
+  it('is reported for each new round seen unfinished — “Play again” on the same page', () => {
+    let starts = 0;
+    const stopStarts = onGameStarted(() => starts++);
+    const { rerender } = render(<Game round="g1" finished={false} />);
+    rerender(<Game round="g1" finished={false} />);
+    expect(starts).toBe(1);
+    rerender(<Game round="g1" finished />);
+    rerender(<Game round="g2" finished={false} />);
+    expect(starts).toBe(2);
+    stopStarts();
+  });
+
+  it('is not reported for a finished game reopened', () => {
+    let starts = 0;
+    const stopStarts = onGameStarted(() => starts++);
+    render(<Game round="daily" finished />);
+    expect(starts).toBe(0);
+    stopStarts();
   });
 });

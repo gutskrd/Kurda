@@ -410,7 +410,7 @@ export const ar: Catalogue = {
   'appFeedback.improve': 'شكرًا لإخبارنا — ما الذي يمكن أن يكون أفضل؟',
   'appFeedback.thanksLove': 'شكرًا! 💛',
   'appFeedback.loveLabel': 'ما الذي تحبه؟',
-  'appFeedback.improvePlaceholder': 'أخبرنا بالمزيد (اختياري)',
+  'appFeedback.tellMore': 'أخبرنا بالمزيد (اختياري)',
   'appFeedback.improveLabel': 'ما الذي يمكن أن يكون أفضل؟',
   'appFeedback.categoriesLabel': 'عمّ تتحدث؟',
   'appFeedback.send': 'إرسال',
