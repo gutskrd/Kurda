@@ -3,14 +3,18 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   DEFAULT_QUESTION_COUNT,
+  DEFAULT_TIMER,
   MAX_INVITEES_PER_REQUEST,
   QUESTION_COUNTS_BY_LENGTH,
   STORY_LENGTHS,
+  TIMER_PRESETS,
   isAllowedQuestionCount,
   storyTextDirection,
   type PlayGame,
   type QuestionCount,
   type StoryLength,
+  type TextDuring,
+  type TimerSeconds,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
@@ -126,6 +130,10 @@ export function InviteForm({
   const [mode, setMode] = useState<StoryMode>(target.kind === 'group' ? 'group' : 'duo');
   const [length, setLength] = useState<StoryLength>(fixedStory?.length ?? 'short');
   const [count, setCount] = useState<QuestionCount>(DEFAULT_QUESTION_COUNT[fixedStory?.length ?? 'short']);
+  // the timer follows the mode until it is set by hand, as in the game's own setup
+  const [timer, setTimer] = useState<TimerSeconds>(DEFAULT_TIMER[mode]);
+  const [timerTouched, setTimerTouched] = useState(false);
+  const [text, setText] = useState<TextDuring>('visible');
   const [friends, setFriends] = useState<string[]>(target.kind === 'new' && target.friend ? [target.friend.userId] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +150,9 @@ export function InviteForm({
   useEffect(() => {
     setCount((c) => (isAllowedQuestionCount(length, c) ? c : DEFAULT_QUESTION_COUNT[length]));
   }, [length]);
+  useEffect(() => {
+    if (!timerTouched) setTimer(DEFAULT_TIMER[mode]);
+  }, [mode]); // the mode alone: a timer set by hand stays as set
 
   const games: PlayGame[] = ['wordle-battle', 'rhyme-match', ...(storiesOpen || game === 'stories' ? (['stories'] as const) : [])];
   const max =
@@ -168,7 +179,8 @@ export function InviteForm({
           mode,
           ...(fixedStory ? { storyId: fixedStory.id } : { dialect, length }),
           questionCount: count,
-          textDuring: 'visible',
+          timerSeconds: timer,
+          textDuring: text,
           access: 'friends',
         };
     }
@@ -305,6 +317,28 @@ export function InviteForm({
               options={QUESTION_COUNTS_BY_LENGTH[length].map((n) => ({ value: n, label: t('stories.setup.questionCount', { count: n }) }))}
             />
           )}
+          <ChipRadio
+            label={t('stories.setup.timer')}
+            value={timer}
+            onChange={(v) => {
+              setTimerTouched(true);
+              setTimer(v);
+            }}
+            options={TIMER_PRESETS.map((sec) => ({
+              value: sec,
+              label: sec === 0 ? t('stories.setup.timerOff') : t('stories.setup.timerSeconds', { seconds: sec }),
+            }))}
+          />
+          <ChipRadio
+            label={t('stories.setup.text')}
+            value={text}
+            onChange={setText}
+            options={[
+              { value: 'visible' as const, label: t('stories.setup.textVisible') },
+              { value: 'hidden' as const, label: t('stories.setup.textHidden') },
+            ]}
+          />
+          {text === 'hidden' && <p className="story-setup-note">{t('stories.setup.textHiddenHint')}</p>}
         </>
       )}
 

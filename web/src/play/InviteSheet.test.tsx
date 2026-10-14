@@ -90,6 +90,25 @@ describe('InviteSheet', () => {
     );
   });
 
+  it('offers a story game’s timer and text presets, as its own setup does', async () => {
+    const { calls } = api();
+    open({ kind: 'new', game: 'stories' }, true);
+
+    const timer = await screen.findByRole('radiogroup', { name: 'Time per question' });
+    // a game with friends is timed unless the host says otherwise
+    expect(within(timer).getByRole('radio', { name: '60 seconds' })).toBeChecked();
+    await userEvent.click(within(timer).getByRole('radio', { name: '30 seconds' }));
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'The story during questions' })).getByRole('radio', { name: 'From memory' }));
+    expect(screen.getByText(/The story is hidden while the questions are asked/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
+    await waitFor(() =>
+      expect(posted(calls, '/play/lobbies')).toMatchObject({
+        game: 'stories',
+        settings: { mode: 'duo', timerSeconds: 30, textDuring: 'hidden' },
+      }),
+    );
+  });
+
   it('keeps Stories out while no story is published', async () => {
     api({ 'GET /stories': { stories: [] } });
     open({ kind: 'new' });
