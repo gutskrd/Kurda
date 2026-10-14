@@ -360,6 +360,8 @@ export const de: Catalogue = {
   'keyboard.guide.noTime': 'Gerade keine Zeit? Du kannst trotzdem loslegen:',
   'keyboard.guide.useKeys': 'Bildschirmtasten verwenden',
   'keyboard.guide.forgiving': 'Akzente nachsichtig werten',
+  'keyboard.guide.keysAbove': 'Tippe {letters} auf den Tasten über dem Text.',
+  'keyboard.guide.noAccents': 'Ohne Akzente spielen',
   'keyboard.guide.done': 'Fertig',
   'keyboard.platform.ios': 'iPhone oder iPad',
   'keyboard.platform.android': 'Android',

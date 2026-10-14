@@ -18,7 +18,7 @@ import { GUIDE_STEP_KEYS, PLATFORM_NAME, browserPlatform, guideSteps, lettersTyp
  * that is what the screen they are looking for will say. Then a box to try
  * the new keyboard in, where each letter lights up as it arrives and the deer
  * hops when all five are in — and two ways out for anyone without the minute
- * to spare: the on-screen keys, or forgiving accents.
+ * to spare: the on-screen keys, or gentler accents.
  */
 export function KeyboardGuide({
   dialect,
@@ -49,6 +49,10 @@ export function KeyboardGuide({
   const allIn = typed.size === letters.length;
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const SubHeading = headingLevel === 2 ? 'h3' : 'h4';
+  // the gentler accent mode one step on from this device's, if there is one
+  const nextMode = prefs.accentMode === 'strict' ? 'forgiving' : prefs.accentMode === 'forgiving' ? 'hidden' : null;
+  // the key bar is on, and the race shows it (a Kurmancî race without accents has none)
+  const keysAbove = prefs.keyBar && (sorani || prefs.accentMode !== 'hidden');
 
   return (
     <section className="kb-guide" aria-labelledby={`${ids}-title`}>
@@ -141,33 +145,49 @@ export function KeyboardGuide({
         )}
       </div>
 
-      <div className="kb-guide-outs">
-        <p className="kb-guide-outs-lead">{t('keyboard.guide.noTime')}</p>
-        <div className="kb-guide-out-buttons">
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              setPrefs({ keyBar: true });
-              onClose();
-            }}
-          >
-            {t('keyboard.guide.useKeys')}
-          </button>
-          {prefs.accentMode === 'strict' && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                setPrefs({ accentMode: 'forgiving' });
-                onClose();
-              }}
-            >
-              {t('keyboard.guide.forgiving')}
-            </button>
+      {/*
+        Each way out changes something: with the key bar already on, it is
+        pointed at rather than offered; with accents already forgiving, the
+        next step is none at all. With nothing left to change, nothing is shown.
+      */}
+      {(keysAbove || !prefs.keyBar || nextMode) && (
+        <div className="kb-guide-outs">
+          <p className="kb-guide-outs-lead">{t('keyboard.guide.noTime')}</p>
+          {keysAbove && (
+            <p className="kb-guide-keys-note" lang={lang} dir={dir}>
+              {t('keyboard.guide.keysAbove', { letters: letters.join(' ') })}
+            </p>
+          )}
+          {(!prefs.keyBar || nextMode) && (
+            <div className="kb-guide-out-buttons">
+              {!prefs.keyBar && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setPrefs({ keyBar: true });
+                    onClose();
+                  }}
+                >
+                  {t('keyboard.guide.useKeys')}
+                </button>
+              )}
+              {nextMode && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setPrefs({ accentMode: nextMode });
+                    onClose();
+                  }}
+                >
+                  {nextMode === 'forgiving' ? t('keyboard.guide.forgiving') : t('keyboard.guide.noAccents')}
+                </button>
+              )}
+            </div>
           )}
         </div>
-      </div>
+      )}
 
       <button type="button" className={`btn ${quietClose ? 'btn-ghost' : 'btn-primary'} kb-guide-close`} onClick={onClose}>
         {closeLabel ?? t('keyboard.guide.done')}

@@ -421,6 +421,8 @@ export const en = {
   'keyboard.guide.noTime': 'No time now? You can race anyway:',
   'keyboard.guide.useKeys': 'Use the on-screen keys',
   'keyboard.guide.forgiving': 'Make accents forgiving',
+  'keyboard.guide.keysAbove': 'Tap {letters} on the keys above the text.',
+  'keyboard.guide.noAccents': 'Race without accents',
   'keyboard.guide.done': 'Done',
   'keyboard.platform.ios': 'iPhone or iPad',
   'keyboard.platform.android': 'Android',

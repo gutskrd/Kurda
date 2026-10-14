@@ -365,6 +365,8 @@ export const ar: Catalogue = {
   'keyboard.guide.noTime': 'ليس لديك وقت الآن؟ يمكنك السباق على أي حال:',
   'keyboard.guide.useKeys': 'استخدم المفاتيح على الشاشة',
   'keyboard.guide.forgiving': 'تسامح مع العلامات',
+  'keyboard.guide.keysAbove': 'اضغط {letters} على المفاتيح فوق النص.',
+  'keyboard.guide.noAccents': 'تسابق بلا علامات',
   'keyboard.guide.done': 'تم',
   'keyboard.platform.ios': 'iPhone أو iPad',
   'keyboard.platform.android': 'Android',

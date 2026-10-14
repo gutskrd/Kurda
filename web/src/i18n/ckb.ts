@@ -371,6 +371,8 @@ export const ckb: Catalogue = {
   'keyboard.guide.noTime': 'ئێستا کاتت نییە؟ هەر دەتوانیت پێشبڕکێ بکەیت:',
   'keyboard.guide.useKeys': 'دوگمەکانی سەر شاشە بەکاربهێنە',
   'keyboard.guide.forgiving': 'هەڵەی نیشانەکان ببەخشە',
+  'keyboard.guide.keysAbove': '{letters} لە دوگمەکانی سەرووی دەقەکە دابگرە.',
+  'keyboard.guide.noAccents': 'بێ نیشانە پێشبڕکێ بکە',
   'keyboard.guide.done': 'تەواو',
   'keyboard.platform.ios': 'iPhone یان iPad',
   'keyboard.platform.android': 'Android',

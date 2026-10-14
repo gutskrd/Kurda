@@ -360,6 +360,8 @@ export const nl: Catalogue = {
   'keyboard.guide.noTime': 'Nu geen tijd? Je kunt toch meedoen:',
   'keyboard.guide.useKeys': 'Gebruik de toetsen op het scherm',
   'keyboard.guide.forgiving': 'Accenten soepel rekenen',
+  'keyboard.guide.keysAbove': 'Tik op {letters} op de toetsen boven de tekst.',
+  'keyboard.guide.noAccents': 'Speel zonder accenten',
   'keyboard.guide.done': 'Klaar',
   'keyboard.platform.ios': 'iPhone of iPad',
   'keyboard.platform.android': 'Android',

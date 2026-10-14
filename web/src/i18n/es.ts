@@ -360,6 +360,8 @@ export const es: Catalogue = {
   'keyboard.guide.noTime': '¿Ahora no tienes tiempo? Puedes jugar igual:',
   'keyboard.guide.useKeys': 'Usar las teclas en pantalla',
   'keyboard.guide.forgiving': 'Ser flexible con los acentos',
+  'keyboard.guide.keysAbove': 'Toca {letters} en las teclas encima del texto.',
+  'keyboard.guide.noAccents': 'Jugar sin acentos',
   'keyboard.guide.done': 'Listo',
   'keyboard.platform.ios': 'iPhone o iPad',
   'keyboard.platform.android': 'Android',

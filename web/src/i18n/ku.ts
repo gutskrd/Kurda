@@ -366,6 +366,8 @@ export const ku: Catalogue = {
   'keyboard.guide.noTime': 'Niha wext tune? Dîsa jî dikarî pêşbaziyê bikî:',
   'keyboard.guide.useKeys': 'Bişkokên li ser ekranê bi kar bîne',
   'keyboard.guide.forgiving': 'Bila e ji bo ê bes be',
+  'keyboard.guide.keysAbove': '{letters} li ser bişkokên li jor nivîsê bitikîne.',
+  'keyboard.guide.noAccents': 'Bê nîşan pêşbaziyê bike',
   'keyboard.guide.done': 'Temam',
   'keyboard.platform.ios': 'iPhone an iPad',
   'keyboard.platform.android': 'Android',

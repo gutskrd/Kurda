@@ -360,6 +360,8 @@ export const tr: Catalogue = {
   'keyboard.guide.noTime': 'Şimdi vaktin yok mu? Yine de yarışabilirsin:',
   'keyboard.guide.useKeys': 'Ekrandaki tuşları kullan',
   'keyboard.guide.forgiving': 'Aksanlarda hoşgörülü ol',
+  'keyboard.guide.keysAbove': 'Metnin üstündeki tuşlardan {letters} harflerine dokun.',
+  'keyboard.guide.noAccents': 'Aksansız yarış',
   'keyboard.guide.done': 'Tamam',
   'keyboard.platform.ios': 'iPhone veya iPad',
   'keyboard.platform.android': 'Android',

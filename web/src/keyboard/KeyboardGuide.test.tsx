@@ -80,19 +80,38 @@ describe('Get the Kurmancî keyboard', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('offers forgiving accents only to somebody on strict ones', async () => {
+  it('offers forgiving accents to somebody on strict ones', async () => {
+    localStorage.setItem(KEYBOARD_PREFS_KEY, JSON.stringify({ accentMode: 'strict' }));
     const onClose = vi.fn();
     const user = userEvent.setup();
-    const { unmount } = renderApp(<KeyboardGuide dialect="kurmanci" onClose={onClose} />);
-    expect(screen.queryByRole('button', { name: 'Make accents forgiving' })).not.toBeInTheDocument();
-    unmount();
-
-    localStorage.setItem(KEYBOARD_PREFS_KEY, JSON.stringify({ accentMode: 'strict' }));
     renderApp(<KeyboardGuide dialect="kurmanci" onClose={onClose} />);
     await user.click(screen.getByRole('button', { name: 'Make accents forgiving' }));
 
     expect(getKeyboardPrefs().accentMode).toBe('forgiving');
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  /** with the defaults (key bar on, forgiving), a way out that changed nothing was no way out */
+  it('with the defaults, points at the keys already there and offers no accents at all', async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+    renderApp(<KeyboardGuide dialect="kurmanci" onClose={onClose} />);
+
+    expect(screen.queryByRole('button', { name: 'Use the on-screen keys' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Make accents forgiving' })).not.toBeInTheDocument();
+    expect(screen.getByText('Tap ç ê î ş û on the keys above the text.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Race without accents' }));
+    expect(getKeyboardPrefs().accentMode).toBe('hidden');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('has nothing to offer somebody already racing without accents', () => {
+    localStorage.setItem(KEYBOARD_PREFS_KEY, JSON.stringify({ accentMode: 'hidden' }));
+    renderApp(<KeyboardGuide dialect="kurmanci" onClose={() => undefined} />);
+
+    expect(screen.queryByText('No time now? You can race anyway:')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
   });
 
   it('has a Soranî version, right to left', () => {
