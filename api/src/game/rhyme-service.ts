@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { dictionaryKey } from '@kurda/shared';
 import { pickRhymePrompt } from './rhyme-prompt.js';
 import { XpService } from '../xp/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 import {
   evaluateSubmission,
   InMemoryLexicon,
@@ -63,13 +64,20 @@ interface GameRow {
 export class RhymeService {
   private readonly xp: XpService;
   private readonly now: () => Date;
+  private readonly milestones?: Pick<MilestoneRecorder, 'recordSoloGame'>;
 
   constructor(
     private readonly pool: pg.Pool,
-    deps: { xp?: XpService; now?: () => Date } = {},
+    deps: { xp?: XpService; now?: () => Date; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
     this.now = deps.now ?? (() => new Date());
+    this.milestones = deps.milestones;
+  }
+
+  /** A round ended and committed: the badges count it (best-effort; it never fails the round). */
+  private async finished(userId: string): Promise<void> {
+    await this.milestones?.recordSoloGame?.(userId).catch(() => undefined);
   }
 
   /** Start a training round with a random dictionary prompt. */
@@ -113,6 +121,7 @@ export class RhymeService {
       if (elapsedMs >= row.window_ms) {
         const xpAwarded = await this.finish(client, row);
         await client.query('COMMIT');
+        await this.finished(userId);
         const view = this.toView({ ...row, status: 'ended' });
         view.xpAwarded = xpAwarded;
         return {
@@ -187,6 +196,7 @@ export class RhymeService {
       }
       const xpAwarded = await this.finish(client, row);
       await client.query('COMMIT');
+      await this.finished(userId);
       const view = this.toView({ ...row, status: 'ended' });
       view.xpAwarded = xpAwarded;
       return {

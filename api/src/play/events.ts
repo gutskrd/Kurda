@@ -63,6 +63,7 @@ interface InviteRef {
 export class PlayEvents {
   private readonly sources = new Map<PlayGame, (lobbyId: string) => Promise<LobbyFacts | null>>();
   private readonly windows = new Map<string, Window>();
+  private readonly finishedListeners: Array<(game: PlayGame, lobbyId: string) => void> = [];
   private readonly coalesceMs: number;
   private readonly log: Log;
   private closed = false;
@@ -79,6 +80,16 @@ export class PlayEvents {
   /** Where to read a game's lobbies from (each adapter's `facts`). */
   attach(game: PlayGame, facts: (lobbyId: string) => Promise<LobbyFacts | null>): void {
     this.sources.set(game, facts);
+  }
+
+  /**
+   * Hear when a game has finished — for the badges, which count wins and games
+   * with friends from the tables once the result is committed. Told on each
+   * change that finds the game finished (usually once or twice), so a listener
+   * must not mind hearing it again; it is never awaited.
+   */
+  onFinished(listener: (game: PlayGame, lobbyId: string) => void): void {
+    this.finishedListeners.push(listener);
   }
 
   /**
@@ -132,6 +143,15 @@ export class PlayEvents {
     try {
       const source = this.sources.get(game);
       const facts = source ? await source(lobbyId) : null;
+      if (facts?.phase === 'finished') {
+        for (const listener of this.finishedListeners) {
+          try {
+            listener(game, lobbyId);
+          } catch (err) {
+            this.log.warn({ err, game, lobbyId }, 'a finished-game listener failed');
+          }
+        }
+      }
       const pending = await this.pool.query<InviteRef>(
         `SELECT id, host_id, invitee_id, held FROM play_invites WHERE game = $1 AND lobby_id = $2 AND status = 'pending'`,
         [game, lobbyId],

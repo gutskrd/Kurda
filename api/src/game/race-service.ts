@@ -19,6 +19,7 @@ import {
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { XpService } from '../xp/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 import { raceXp, scoreRace } from './race.js';
 
 /**
@@ -65,7 +66,7 @@ export interface StartOptions {
 export class RaceService {
   constructor(
     private readonly pool: pg.Pool,
-    private readonly deps: { xp?: XpService } = {},
+    private readonly deps: { xp?: XpService; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
   ) {}
 
   /**
@@ -173,6 +174,8 @@ export class RaceService {
         .award({ userId, source: 'race', amount: xpAwarded, refId: gameId })
         .catch(() => undefined);
     }
+    // the typing badges count it from the saved race; best-effort
+    await this.deps.milestones?.recordSoloGame?.(userId).catch(() => undefined);
 
     return {
       ok: true,

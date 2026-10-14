@@ -1,13 +1,11 @@
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
-import { AchievementsService } from '../achievements/service.js';
 import { ActivityService } from '../activity/service.js';
 import { FriendService } from '../friends/service.js';
 import { GemService } from '../gems/service.js';
-import { LeagueService } from '../leagues/service.js';
+import { createProgression } from '../badges/progression.js';
 import { RedisRoomPublisher } from '../realtime/bus.js';
 import { WalletService } from '../wallet/service.js';
-import { XpService } from '../xp/service.js';
 import { StoryGameNotifier } from './notifier.js';
 import { StoryGamesService } from './service.js';
 
@@ -23,7 +21,7 @@ interface Log {
  * Taking someone out can finish a game for everybody else — they may have been
  * the last player a question waited for, and closing the last question pays
  * the others. So this pays exactly as the API does, with the services app.ts
- * wires for it: XP that joins the weekly league, and the streak milestones
+ * wires for it: XP that joins the weekly league, and the badges
  * after the commit. And with Redis it tells the API instances, through a
  * publish-only notifier on the room bus: their waiting polls wake at once, and
  * their deadline timers, finding a newer version than the one they were armed
@@ -35,10 +33,12 @@ export function standaloneStoryGames(pool: pg.Pool, opts: { redis?: Redis | null
   const redis = opts.redis ?? undefined;
   const gems = new GemService(pool, new WalletService(pool));
   const activity = new ActivityService(pool, new FriendService(pool), redis);
-  const leagues = new LeagueService(pool, { gems, activity, log });
+  // badges reached here are counted without a celebration of their own: the
+  // app shows them from `GET /me/badges/unseen` when it next opens
+  const { xp, badges } = createProgression(pool, { gems, activity, log });
   return new StoryGamesService(pool, {
-    xp: new XpService(pool, (award) => void leagues.onXp(award).catch((err) => log.warn({ err }, 'league join failed'))),
-    milestones: new AchievementsService(pool, gems, activity),
+    xp,
+    milestones: badges,
     notifier: redis ? new StoryGameNotifier(new RedisRoomPublisher(redis), log) : null,
     log,
     timers: false,

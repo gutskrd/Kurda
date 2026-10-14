@@ -45,7 +45,6 @@ import { registerFraudRoutes } from './fraud/routes.js';
 import { EconomyService } from './economy/service.js';
 import { registerEconomyRoutes } from './economy/routes.js';
 import { WalletService } from './wallet/service.js';
-import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -59,7 +58,10 @@ import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
-import { LeagueService } from './leagues/service.js';
+import { createProgression } from './badges/progression.js';
+import { registerBadgeRoutes } from './badges/routes.js';
+import type { RankEventsListener } from './badges/rank-hooks.js';
+import { badgeNotices, scheduleBadgeJobs } from './jobs/badge-jobs.js';
 import { registerLeagueRoutes } from './leagues/routes.js';
 import { scheduleLeagueJobs } from './jobs/league-jobs.js';
 import { progressNotices } from './notifications/progress-notices.js';
@@ -375,18 +377,33 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Learning Leagues (KUR-062, contract 4 §L): learning XP joins the week's
     // group; the week is settled on Monday and small groups merged on
     // Wednesday from the job queue (jobs/league-jobs.ts)
-    const leagues = new LeagueService(app.db, {
+    // — and badges (contract 4 §B), counted from what happened, told through
+    // the list, a realtime `badge_unlocked` (the gateway is set up further
+    // down, so it is looked up when there is something to say) and one push a day
+    const { xp: xpService, leagues, badges } = createProgression(app.db, {
       gems: gemService,
       activity,
       notices,
+      badgeNotices: (badgeService) =>
+        badgeNotices({
+          inbox,
+          realtime: (uid, ev) => app.realtime.notifyUser(uid, ev),
+          badges: badgeService,
+          push: pushService,
+          jobs: app.jobs,
+        }),
       weeklyGoalXp: config.LEAGUE_WEEKLY_GOAL_XP,
       log: app.log,
     });
     registerLeagueRoutes(app, leagues);
-    const xpService = new XpService(app.db, (award) => void leagues.onXp(award).catch((err) => app.log.warn({ err }, 'league join failed')));
+    registerBadgeRoutes(app, badges);
+    // rank events (contract 4 §R → §B): the ranks module calls these when a
+    // rated game is committed and when a season closes (badges/rank-hooks.ts)
+    app.decorate('rankEvents', badges satisfies RankEventsListener);
     if (config.NODE_ENV !== 'test') {
       if (app.jobs) {
         void scheduleLeagueJobs(app.jobs, leagues).catch((err) => app.log.warn({ err }, 'failed to schedule the league week'));
+        void scheduleBadgeJobs(app.jobs, badges).catch((err) => app.log.warn({ err }, 'failed to schedule badge rarity'));
       } else {
         // no queue (one process, no Redis): the same idempotent runs, checked hourly and at startup
         const runLeagueWeek = () =>
@@ -396,7 +413,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
             .catch((err) => app.log.warn({ err }, 'league settle failed'));
         runLeagueWeek();
         const leagueWeek = setInterval(runLeagueWeek, 60 * 60 * 1000);
-        app.addHook('onClose', async () => clearInterval(leagueWeek));
+        const rarity = setInterval(
+          () => void badges.computeRarity().catch((err) => app.log.warn({ err }, 'badge rarity failed')),
+          24 * 60 * 60 * 1000,
+        );
+        app.addHook('onClose', async () => {
+          clearInterval(leagueWeek);
+          clearInterval(rarity);
+        });
       }
     }
 
@@ -423,7 +447,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerImageUploadParser(app, mediaLimits(config).maxUploadBytes);
     registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
-    // what lessons, practice, Wordle and tournaments award achievements through
+    // the old achievements: only the (retired, unreachable) tournament win still
+    // awards one; lessons, practice, Wordle and Stories report to the badges above
     const achievements = new AchievementsService(app.db, gemService, activity);
     registerWalletRoutes(app);
 
@@ -511,12 +536,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     };
     const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(economyRollup));
-    registerLessonRoutes(app, gemService, xpService, achievements);
+    registerLessonRoutes(app, gemService, xpService, badges);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
-    registerPracticeRoutes(app, xpService, achievements);
-    registerWordleRoutes(app, { xp: xpService, milestones: achievements });
+    registerPracticeRoutes(app, xpService, badges);
+    registerWordleRoutes(app, { xp: xpService, milestones: badges });
     // `play_changed` after every change to a lobby (play/events.ts), so clients
     // stop polling. The gateway it speaks through is set up further down, so it
     // is looked up when there is something to say.
@@ -528,11 +553,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       },
       { log: app.log },
     );
+    // a finished Wordle Battle, Rhyme Match or story game moves its players' badges
+    playEvents.onFinished(
+      (game, lobbyId) => void badges.onGameFinished(game, lobbyId).catch((err) => app.log.warn({ err }, 'game badges failed')),
+    );
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
-    registerRhymeRoutes(app, { xp: xpService });
+    registerRhymeRoutes(app, { xp: xpService, milestones: badges });
     // typing race (solo time trial) over admin-curated texts
-    registerRaceRoutes(app, { xp: xpService });
+    registerRaceRoutes(app, { xp: xpService, milestones: badges });
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
     registerRhymeMatchRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
@@ -694,7 +723,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // story games (Stories, which replaced the ranked quiz): Postgres is the
     // game; long-polls are woken across instances over the room bus
-    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
+    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends });
 
     // shop + gifts: a gift is bought in the shop or from a chat's gift button,
     // and arrives as a message in the chat either way, so it needs both chats
@@ -713,6 +742,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         },
         inbox,
         moderation,
+        badges,
         log: app.log,
       },
       (k) => (app.storage ? app.storage.publicUrl(k) : null),
@@ -784,6 +814,11 @@ declare module 'fastify' {
     storage?: MediaStorage;
     /** Present when DATABASE_URL is configured. */
     realtime: RealtimeGateway;
+    /**
+     * Present when DATABASE_URL is configured: what the ranks module tells
+     * when a rated game is committed or a season closes (badges/rank-hooks.ts).
+     */
+    rankEvents: RankEventsListener;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */

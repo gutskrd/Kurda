@@ -69,6 +69,8 @@ export const STREAK_ACHIEVEMENT_DAYS = 30;
 export interface MilestoneRecorder {
   recordStreak(userId: string, currentStreak: number): Promise<void>;
   recordLessonCompleted(userId: string, accuracy: number): Promise<void>;
+  /** a solo game finished — Wordle, Rhyme training, the Typing Race (the badges count it) */
+  recordSoloGame?(userId: string): Promise<void>;
 }
 
 export class AchievementsService implements MilestoneRecorder {
