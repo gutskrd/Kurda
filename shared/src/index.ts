@@ -239,3 +239,48 @@ export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provid
  */
 export * from './leagues.js';
 export * from './badges.js';
+
+/**
+ * Badge medallions, rank and league emblems and season frames, drawn by code
+ * as SVG strings (contract 4, B3): inlined on the web, `SvgXml` on the phone.
+ * The art's own key lists are exported with an `Art` prefix so they cannot
+ * clash with the badge catalogue's and the ranks' lists, which own the names.
+ */
+export {
+  badgeSvg,
+  badgeShineSvg,
+  badgeShines,
+  rankEmblemSvg,
+  placementEmblemSvg,
+  PLACEMENT_GAMES,
+  leagueEmblemSvg,
+  seasonFrameSvg,
+  seasonFrameShineSvg,
+  SEASON_FRAME_INNER,
+  SEASON_FRAME_SHINE,
+  SMALL_BADGE,
+  SMALL_EMBLEM,
+  SMALL_LEAGUE,
+  SMALL_FRAME,
+  BADGES as ART_BADGES,
+  BADGE_KEYS as ART_BADGE_KEYS,
+  BADGE_FAMILIES as ART_BADGE_FAMILIES,
+  RANK_BADGE as ART_RANK_BADGE,
+  isBadgeKey as hasBadgeArt,
+  SEASONS as ART_SEASONS,
+  type BadgeOptions,
+  type BadgeShineOptions,
+  type BadgeState,
+  type RankEmblemOptions,
+  type PlacementEmblemOptions,
+  type LeagueEmblemOptions,
+  type SeasonFrameOptions,
+  type SeasonFrameShineOptions,
+  type BadgeKey as ArtBadgeKey,
+  type BadgeFamily as ArtBadgeFamily,
+  type BadgeTier as ArtBadgeTier,
+  type RankTier as ArtRankTier,
+  type RankDivision as ArtRankDivision,
+  type LeagueTier as ArtLeagueTier,
+  type Season as ArtSeason,
+} from './art/index.js';
