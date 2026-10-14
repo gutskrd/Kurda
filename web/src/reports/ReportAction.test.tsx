@@ -27,6 +27,19 @@ describe('ReportAction', () => {
     expect(screen.getByRole('dialog', { name: 'Report this comment' })).toBeInTheDocument();
   });
 
+  it('gives the keyboard back to the ⋯ when the report sheet closes', async () => {
+    signIn();
+    stub();
+    renderApp(<ReportAction target={{ targetType: 'library_comment', targetId: 'c1' }} authorId="u2" label="More about this comment" />);
+    const more = await screen.findByRole('button', { name: 'More about this comment' });
+    await userEvent.click(more);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Report' }));
+    expect(screen.getByRole('dialog', { name: 'Report this comment' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(more).toHaveFocus();
+  });
+
   it('draws nothing for your own things', async () => {
     signIn();
     stub();

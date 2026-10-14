@@ -85,6 +85,10 @@ export function MessageMenu({
             role="menuitem"
             className="user-menu-item"
             onClick={() => {
+              // the ⋯ is where the keyboard goes back to when the report
+              // sheet closes: the sheet remembers what had focus as it opens,
+              // and by then this item is gone
+              buttonRef.current?.focus();
               setOpen(false);
               onReport();
             }}
