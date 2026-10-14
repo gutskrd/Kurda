@@ -465,7 +465,6 @@ export const en = {
   'appFeedback.stars.5': '5 stars',
   'appFeedback.improve': 'Thanks for telling us — what could be better?',
   'appFeedback.thanksLove': 'Thank you! 💛',
-  'appFeedback.lovePlaceholder': 'What do you love? (optional)',
   'appFeedback.loveLabel': 'What do you love?',
   'appFeedback.improvePlaceholder': 'Tell us more (optional)',
   'appFeedback.improveLabel': 'What could be better?',

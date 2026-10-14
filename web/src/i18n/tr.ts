@@ -404,7 +404,6 @@ export const tr: Catalogue = {
   'appFeedback.stars.5': '5 yıldız',
   'appFeedback.improve': 'Bize söylediğin için teşekkürler — ne daha iyi olabilir?',
   'appFeedback.thanksLove': 'Teşekkürler! 💛',
-  'appFeedback.lovePlaceholder': 'En çok neyi seviyorsun? (isteğe bağlı)',
   'appFeedback.loveLabel': 'En çok neyi seviyorsun?',
   'appFeedback.improvePlaceholder': 'Biraz daha anlat (isteğe bağlı)',
   'appFeedback.improveLabel': 'Ne daha iyi olabilir?',

@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 /**
  * Hevalo the deer, drawn by hand as inline SVG, holding up a wooden board.
  *
@@ -37,6 +39,7 @@ const WOOD_EDGE = '#8f5d34';
 const STAR = '#f5c242';
 const STAR_EDGE = '#c98f12';
 const BLUSH = '#ec8080';
+const TONGUE = '#e07b80';
 
 export type DeerBoard = { kind: 'stars'; stars: number } | { kind: 'letters'; letters: string; lang?: string; dir?: 'ltr' | 'rtl' };
 
@@ -76,6 +79,9 @@ export function HevaloDeer({
   const stars = board.kind === 'stars' ? clampStars(board.stars) : 4;
   const s = smileFor(stars);
   const open = stars >= 4;
+  // an open smile, wider and deeper with the stars
+  const mouth = `M${92 - s / 3} 108 Q100 ${108 + s * 1.3} ${108 + s / 3} 108 Q100 ${110 + s * 0.4} ${92 - s / 3} 108 Z`;
+  const mouthId = `deer-mouth-${useId().replace(/[^\w-]/g, '')}`;
   return (
     <svg
       className={`deer${cheer ? ' deer-cheer' : ''}${className ? ` ${className}` : ''}`}
@@ -153,11 +159,12 @@ export function HevaloDeer({
         {/* the smile: wider and lifted with more stars, open at four and five */}
         {open ? (
           <g className="deer-smile">
-            <path
-              d={`M${92 - s / 3} 108 Q100 ${108 + s * 1.3} ${108 + s / 3} 108 Q100 ${110 + s * 0.4} ${92 - s / 3} 108 Z`}
-              fill={EYE}
-            />
-            <path d={`M${97} ${110 + s * 0.75} Q100 ${109 + s * 0.6} ${103} ${110 + s * 0.75}`} stroke="#d9757a" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <clipPath id={mouthId}>
+              <path d={mouth} />
+            </clipPath>
+            <path d={mouth} fill={EYE} />
+            {/* the tongue, inside the open mouth (clipped to it) so it never reads as a second line */}
+            <ellipse cx="100" cy={108 + s * 0.72} rx={s * 0.42} ry={s * 0.3} fill={TONGUE} clipPath={`url(#${mouthId})`} />
           </g>
         ) : (
           <path

@@ -18,14 +18,17 @@ export function KeyboardCard(): React.JSX.Element {
   const dialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
 
   return (
-    <section className="card" style={{ marginTop: 20 }} aria-labelledby="settings-keyboard">
-      <h2 className="friend-heading" id="settings-keyboard" style={{ marginTop: 0 }}>
-        {t('keyboard.settings.title')}
-      </h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-        {t('keyboard.settings.help')}
-      </p>
-      <KeyboardSettings context="settings" onHelp={() => setGuideOpen(true)} />
+    <>
+      <section className="card" style={{ marginTop: 20 }} aria-labelledby="settings-keyboard">
+        <h2 className="friend-heading" id="settings-keyboard" style={{ marginTop: 0 }}>
+          {t('keyboard.settings.title')}
+        </h2>
+        <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+          {t('keyboard.settings.help')}
+        </p>
+        <KeyboardSettings context="settings" onHelp={() => setGuideOpen(true)} />
+      </section>
+      {/* beside the frosted card, not in it: its backdrop filter would hold the fixed dialog inside itself */}
       <Modal
         open={guideOpen}
         onClose={() => setGuideOpen(false)}
@@ -33,6 +36,6 @@ export function KeyboardCard(): React.JSX.Element {
       >
         <KeyboardGuide dialect={dialect} onClose={() => setGuideOpen(false)} />
       </Modal>
-    </section>
+    </>
   );
 }

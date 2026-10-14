@@ -415,7 +415,6 @@ export const ckb: Catalogue = {
   'appFeedback.stars.5': '5 ئەستێرە',
   'appFeedback.improve': 'سوپاس کە پێت گوتین — چی دەکرێت باشتر بێت؟',
   'appFeedback.thanksLove': 'سوپاس! 💛',
-  'appFeedback.lovePlaceholder': 'حەزت لە چییە؟ (ئارەزوومەندانە)',
   'appFeedback.loveLabel': 'حەزت لە چییە؟',
   'appFeedback.improvePlaceholder': 'زیاتر پێمان بڵێ (ئارەزوومەندانە)',
   'appFeedback.improveLabel': 'چی دەکرێت باشتر بێت؟',

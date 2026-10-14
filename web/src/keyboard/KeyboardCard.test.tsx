@@ -34,6 +34,8 @@ describe('Settings → Keyboard and accents', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByRole('heading', { name: 'Get the Kurmancî keyboard' })).toBeInTheDocument();
+    // not inside the frosted card, whose backdrop filter would trap the fixed dialog over it
+    expect(dialog.closest('.card')).toBeNull();
     await user.click(within(dialog).getByRole('button', { name: 'Done' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

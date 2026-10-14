@@ -409,7 +409,6 @@ export const ar: Catalogue = {
   'appFeedback.stars.5': '5 نجوم',
   'appFeedback.improve': 'شكرًا لإخبارنا — ما الذي يمكن أن يكون أفضل؟',
   'appFeedback.thanksLove': 'شكرًا! 💛',
-  'appFeedback.lovePlaceholder': 'ما الذي تحبه؟ (اختياري)',
   'appFeedback.loveLabel': 'ما الذي تحبه؟',
   'appFeedback.improvePlaceholder': 'أخبرنا بالمزيد (اختياري)',
   'appFeedback.improveLabel': 'ما الذي يمكن أن يكون أفضل؟',

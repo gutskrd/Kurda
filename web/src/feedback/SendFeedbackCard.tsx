@@ -13,19 +13,26 @@ export function SendFeedbackCard(): React.JSX.Element {
   const t = useT();
   const [open, setOpen] = useState(false);
   return (
-    <section className="card" style={{ marginTop: 20 }} aria-labelledby="settings-feedback">
-      <h2 className="friend-heading" id="settings-feedback" style={{ marginTop: 0 }}>
-        {t('appFeedback.settingsTitle')}
-      </h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-        {t('appFeedback.settingsHelp')}
-      </p>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
-        {t('appFeedback.sendRow')}
-      </Button>
+    <>
+      <section className="card" style={{ marginTop: 20 }} aria-labelledby="settings-feedback">
+        <h2 className="friend-heading" id="settings-feedback" style={{ marginTop: 0 }}>
+          {t('appFeedback.settingsTitle')}
+        </h2>
+        <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+          {t('appFeedback.settingsHelp')}
+        </p>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          {t('appFeedback.sendRow')}
+        </Button>
+      </section>
+      {/*
+        Beside the card, not inside it: a card is frosted glass, and an element
+        with a backdrop filter holds a fixed dialog inside itself — the dialog
+        would be laid out over the card and see through to the page.
+      */}
       <Modal open={open} onClose={() => setOpen(false)} label={t('appFeedback.settingsTitle')}>
         <RatingBox source="settings" onClose={() => setOpen(false)} />
       </Modal>
-    </section>
+    </>
   );
 }

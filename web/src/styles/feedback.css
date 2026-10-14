@@ -241,7 +241,8 @@
 .rb-star:hover {
   transform: scale(1.08);
 }
-.rb-star:focus-within {
+/* the ring for a keyboard only: a click on a star or a chip leaves none */
+.rb-star:has(.rb-star-input:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -281,7 +282,7 @@
   min-height: 44px;
   height: auto;
 }
-.rb-chip:focus-within {
+.rb-chip:has(.rb-chip-input:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

@@ -194,7 +194,7 @@ export function RatingBox({
             value={comment}
             maxLength={APP_FEEDBACK_COMMENT_MAX}
             rows={3}
-            placeholder={loving ? t('appFeedback.lovePlaceholder') : t('appFeedback.improvePlaceholder')}
+            placeholder={t('appFeedback.improvePlaceholder')}
             onChange={(e) => setComment(e.target.value)}
           />
         </div>

@@ -410,7 +410,6 @@ export const ku: Catalogue = {
   'appFeedback.stars.5': '5 stêrk',
   'appFeedback.improve': 'Spas ku te ji me re got — çi dikare baştir be?',
   'appFeedback.thanksLove': 'Spas! 💛',
-  'appFeedback.lovePlaceholder': 'Tu ji çi hez dikî? (ne mecbûrî ye)',
   'appFeedback.loveLabel': 'Tu ji çi hez dikî?',
   'appFeedback.improvePlaceholder': 'Zêdetir ji me re bêje (ne mecbûrî ye)',
   'appFeedback.improveLabel': 'Çi dikare baştir be?',
