@@ -13,6 +13,7 @@ import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
+import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -166,6 +167,8 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   }, [battle?.status, results, client, id]);
 
   const active = battle?.status === 'active' && battle.me != null && battle.me.status === 'playing' && !battle.me.solved;
+  // the rating box hears of a battle that ended while you watched (not one opened finished)
+  useGameFinished('wordle-battle', battle?.me ? id : null, battle?.status === 'finished');
 
   const submit = useCallback(async () => {
     if (!battle?.me || !active || busy) return;

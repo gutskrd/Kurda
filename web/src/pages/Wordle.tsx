@@ -9,6 +9,7 @@ import { ArrowIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useT } from '../i18n/I18nProvider';
+import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 
 type Mode = 'daily' | 'practice';
@@ -64,6 +65,8 @@ export function Wordle(): React.JSX.Element {
   }, [start]);
 
   const playing = game?.status === 'playing';
+  // the rating box hears of a game played to its end here (not a daily reopened)
+  useGameFinished('wordle', game?.id ?? null, game !== null && !playing);
 
   const submit = useCallback(async () => {
     if (!game || !playing || submitting) return;

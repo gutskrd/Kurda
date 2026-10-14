@@ -14,6 +14,7 @@ import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { LanguagePicker } from '../i18n/LanguagePicker';
 import { KeyboardCard } from '../keyboard/KeyboardCard';
+import { SendFeedbackCard } from '../feedback/SendFeedbackCard';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
@@ -81,8 +82,9 @@ export function Settings(): React.JSX.Element {
 
       <Leagues enabled={data.user.leaguesEnabled !== false} minor={data.user.minor === true} />
 
-      {/* web-race-rating: how this device types Kurdish */}
+      {/* web-race-rating: how this device types Kurdish, and a word to the team */}
       <KeyboardCard />
+      <SendFeedbackCard />
 
       <section className="card" style={{ marginTop: 20 }}>
         <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.sessions.title')}</h2>

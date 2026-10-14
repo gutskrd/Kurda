@@ -7,6 +7,7 @@ import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
 import { useNavLinks } from './navLinks';
 import { useT } from '../i18n/I18nProvider';
+import { FeedbackHost } from '../feedback/FeedbackHost';
 
 /**
  * The app shell. Content pages set their own container + header.
@@ -48,6 +49,8 @@ export function AppLayout(): React.JSX.Element {
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
+      {/* web-race-rating: the one-time rating box after a first finished game */}
+      <FeedbackHost />
     </RailProvider>
   );
 }

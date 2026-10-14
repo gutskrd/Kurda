@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Wordle } from './Wordle';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onGameFinished, type GameFinished } from '../feedback/gameFinished';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -81,5 +82,65 @@ describe('Wordle', () => {
     );
     renderApp(<Wordle />, ['/app/games/wordle']);
     expect(await screen.findByText(/no puzzles available/i)).toBeInTheDocument();
+  });
+});
+
+// web-race-rating: the physical keyboard, and telling the rating box
+describe('Wordle and the keyboard in front of you', () => {
+  function stubGame(first: unknown, afterGuess: unknown = wonGame): { guesses: unknown[] } {
+    const seen = { guesses: [] as unknown[] };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/wordle/games/w1/guesses')) {
+          seen.guesses.push(JSON.parse(init!.body as string));
+          return jsonResponse(200, afterGuess);
+        }
+        if (url.includes('/wordle/daily')) return jsonResponse(200, first);
+        return jsonResponse(200, {});
+      }),
+    );
+    return seen;
+  }
+
+  it('takes letters typed with AltGr or Option, and Enter, from the physical keyboard', async () => {
+    const seen = stubGame(startedGame);
+    renderApp(<Wordle />, ['/app/games/wordle']);
+    await screen.findByRole('button', { name: 'k' });
+
+    fireEvent.keyDown(window, { key: 'k' });
+    fireEvent.keyDown(window, { key: 'ê', ctrlKey: true, altKey: true });
+    fireEvent.keyDown(window, { key: 'r' });
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    await waitFor(() => expect(seen.guesses).toEqual([{ word: 'kêr' }]));
+  });
+
+  it('tells the rating box about a game played to its end', async () => {
+    stubGame(startedGame);
+    const heard: GameFinished[] = [];
+    const stop = onGameFinished((e) => heard.push(e));
+    renderApp(<Wordle />, ['/app/games/wordle']);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'k' }));
+    await userEvent.click(screen.getByRole('button', { name: 'a' }));
+    await userEvent.click(screen.getByRole('button', { name: 'r' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
+    await screen.findByText(/solved it/i);
+    stop();
+
+    expect(heard).toEqual([{ game: 'wordle', gaveUp: false }]);
+  });
+
+  it('says nothing of a daily game opened again after it was played', async () => {
+    stubGame(wonGame);
+    const heard: GameFinished[] = [];
+    const stop = onGameFinished((e) => heard.push(e));
+    renderApp(<Wordle />, ['/app/games/wordle']);
+
+    await screen.findByText(/solved it/i);
+    stop();
+
+    expect(heard).toEqual([]);
   });
 });

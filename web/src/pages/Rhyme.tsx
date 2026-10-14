@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
 import { useT } from '../i18n/I18nProvider';
+import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 
 type Dialect = 'kurmanci' | 'sorani';
@@ -71,6 +72,8 @@ export function Rhyme(): React.JSX.Element {
   }, [start]);
 
   const active = game?.status === 'active' && remaining > 0;
+  // the rating box hears of a round the server has ended
+  useGameFinished('rhyme', game?.id ?? null, game?.status === 'ended');
 
   const end = useCallback(async () => {
     if (!game) return;
