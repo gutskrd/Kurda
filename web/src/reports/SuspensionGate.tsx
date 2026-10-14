@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { AccountStanding, AppealView, StandingSanction, SuspendedErrorDetails } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
+import { appealError } from './appealError';
 import { Brand } from '../components/Brand';
 import { Button } from '../components/Button';
 import { Loading } from '../components/states';
@@ -75,7 +75,7 @@ export function SuspensionScreen({
         { sanctionId, text },
         { headers: { authorization: `Bearer ${details.appealToken}` } },
       );
-      return res.ok ? res.data : describeError(res.error, t);
+      return res.ok ? res.data : appealError(res.error, t, { ownToken: true });
     },
     [client, t, details.appealToken],
   );

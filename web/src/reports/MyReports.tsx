@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MAX_APPEAL_LEN, type MyReport, type MyReportsPage, type ReportStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
+import { appealError } from './appealError';
 import { useApiGet } from '../lib/useApi';
 import { Button } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
@@ -83,7 +83,7 @@ function ReportRow({ report }: { report: MyReport }): React.JSX.Element {
     const res = await client.post('/me/appeals', { caseId: report.caseId, text: text.trim() });
     setBusy(false);
     if (!res.ok) {
-      setError(describeError(res.error, t));
+      setError(appealError(res.error, t));
       return;
     }
     setAsked(true);

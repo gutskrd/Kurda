@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { AccountStanding as Standing, AppealView, RestrictionScope, StandingStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
+import { appealError } from './appealError';
 import { useApiGet } from '../lib/useApi';
 import { ErrorState } from '../components/states';
 import { CardStackSkeleton } from '../components/skeletons';
@@ -39,7 +39,7 @@ export function AccountStanding(): React.JSX.Element {
   const appeal = useCallback(
     async (sanctionId: string, text: string): Promise<AppealView | string> => {
       const res = await client.post<AppealView>('/me/appeals', { sanctionId, text });
-      return res.ok ? res.data : describeError(res.error, t);
+      return res.ok ? res.data : appealError(res.error, t);
     },
     [client, t],
   );

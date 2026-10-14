@@ -107,6 +107,19 @@ describe('My reports', () => {
     expect(calls.find((c) => c.url.endsWith('/me/appeals'))!.body).toEqual({ caseId: 'case-9', text: 'It happened again.' });
   });
 
+  it('says in the app\'s words, not the server\'s, that a second look was already asked for', async () => {
+    stub({
+      '/me/reports': { reports: [report({ status: 'no_violation', canAppeal: true, caseId: 'case-9', closedAt: '2026-10-02T10:00:00.000Z' })] },
+      '/me/appeals': () => jsonResponse(409, { code: 'ALREADY_APPEALED', message: 'you have already asked for a review of this decision' }),
+    });
+    renderApp(<MyReports />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Ask for another look' }));
+    await userEvent.type(screen.getByLabelText('What should we look at again?'), 'Again.');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('You’ve already asked us to look at this again.')).toBeInTheDocument();
+    expect(screen.queryByText(/already asked for a review of this decision/)).not.toBeInTheDocument();
+  });
+
   it('is calm about having none', async () => {
     stub({ '/me/reports': { reports: [] } });
     renderApp(<MyReports />);
@@ -148,6 +161,18 @@ describe('Account standing', () => {
     expect(await screen.findByText(/You asked for a review on .*We’ll answer here\./)).toBeInTheDocument();
     expect(calls.find((c) => c.url.endsWith('/me/appeals'))!.body).toEqual({ sanctionId: 's1', text: 'I was joking with my cousin.' });
     expect(screen.queryByRole('button', { name: 'Ask for a review' })).not.toBeInTheDocument();
+  });
+
+  it('says plainly when the time to ask has passed', async () => {
+    stub({
+      '/me/standing': standing(),
+      '/me/appeals': () => jsonResponse(409, { code: 'APPEAL_WINDOW_CLOSED', message: 'the six months to ask for a review have passed' }),
+    });
+    renderApp(<AccountStanding />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Ask for a review' }));
+    await userEvent.type(screen.getByLabelText('Why do you think we got it wrong?'), 'Please.');
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('The time to ask us to look at this again has passed.')).toBeInTheDocument();
   });
 
   it('says so plainly when the account is in good standing', async () => {
@@ -194,6 +219,23 @@ describe('the suspension screen', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('asks to sign in again when the appeal token has run out', async () => {
+    stub({
+      '/me/standing': standing({
+        status: 'banned',
+        active: [sanction({ id: 'ban1', kind: 'permanent_ban', policy: 'hate', statement: 'Slurs against another dialect.', endsAt: null })],
+        restrictions: { account: { until: null } },
+      }),
+      '/me/appeals': () => jsonResponse(401, { code: 'UNAUTHORIZED', message: 'authentication required' }),
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const card = (await screen.findByRole('heading', { name: 'Account permanently suspended' })).closest('article')!;
+    await userEvent.click(within(card).getByRole('button', { name: 'Ask for a review' }));
+    await userEvent.type(within(card).getByRole('textbox'), 'It was a quote.');
+    await userEvent.click(within(card).getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('This page was open for a long time. Sign in again to ask for a review.')).toBeInTheDocument();
   });
 
   it('replaces the sign-in form when sign-in answers that the account is suspended', async () => {
