@@ -20,6 +20,7 @@ import { FILTERS, FILTER_LABEL, SECTION_LABEL, newestFirst, sectionsFor, type In
 import { EmptyState } from '../theme/EmptyState';
 import type { ChatMessageKind } from '@kurda/shared';
 import { messagePreview } from '../chat/preview';
+import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 
 interface RequestRow {
   userId: string;
@@ -67,6 +68,8 @@ export function InboxScreen(): React.JSX.Element {
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [chats, setChats] = useState<ConversationRow[]>([]);
   const [alerts, setAlerts] = useState<InboxItem[]>([]);
+  // the moderators' caring message, opened in full (reports/CaringMessage.tsx)
+  const [caring, setCaring] = useState<CaringMessage | null>(null);
 
   const load = useCallback(() => {
     void client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
@@ -100,6 +103,7 @@ export function InboxScreen(): React.JSX.Element {
       }
       const link = resolveDeepLink(item.data);
       if (!link) return;
+      if (link.screen === 'CaringMessage') return setCaring({ title: item.title, body: item.body, helplineUrl: link.helplineUrl });
       // a gift in a group, a report's outcome, a decision on your account
       if (link.screen === 'GroupThread') return navigation.navigate('GroupThread', link.params);
       if (link.screen === 'MyReports' || link.screen === 'AccountStanding') return navigation.navigate(link.screen);
@@ -256,6 +260,7 @@ export function InboxScreen(): React.JSX.Element {
 
         {empty ? <EmptyState title={t('inbox.empty')} body={t('inbox.empty.body')} /> : null}
       </ScrollView>
+      <CaringMessageDialog message={caring} onClose={() => setCaring(null)} />
     </GradientBackground>
   );
 }

@@ -1,3 +1,5 @@
+import { HELPLINE_URL } from '@kurda/shared';
+
 /**
  * Where a notification about a gift or about moderation opens, from its
  * `data.kind` (shared `ModerationNotificationData`, and the gift notice the
@@ -8,10 +10,14 @@
  * - `report_outcome` → My reports.
  * - `sanction`, `sanction_lifted`, `appeal_decided` → Account standing, where
  *   the decision and its review are.
+ * - `caring_message` → not a screen: the list that holds it opens the message
+ *   in full, with its helpline (`CaringMessageDialog`). Only an https link is
+ *   taken from the data; anything else becomes the shared helpline page.
  */
 export type SocialDeepLink =
   | { screen: 'MyReports' }
   | { screen: 'AccountStanding' }
+  | { screen: 'CaringMessage'; helplineUrl: string }
   | { screen: 'Chat'; params: { userId: string; username: string; openGift?: string } }
   | { screen: 'GroupThread'; params: { groupId: string; name: string; openGift?: string } };
 
@@ -29,6 +35,10 @@ export function socialDeepLink(data: Record<string, unknown>): SocialDeepLink | 
     case 'sanction_lifted':
     case 'appeal_decided':
       return { screen: 'AccountStanding' };
+    case 'caring_message': {
+      const url = str(data.helplineUrl);
+      return { screen: 'CaringMessage', helplineUrl: url && url.startsWith('https://') ? url : HELPLINE_URL };
+    }
     case 'gift': {
       const chat = str(data.chat);
       const giftId = str(data.giftId) ?? undefined;

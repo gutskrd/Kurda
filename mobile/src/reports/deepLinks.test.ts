@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { HELPLINE_URL } from '@kurda/shared';
 import { resolveDeepLink } from '../notifications/inbox';
 import { socialDeepLink } from './deepLinks';
 
@@ -30,7 +31,18 @@ describe('socialDeepLink', () => {
   it('falls back to the sender for a shop gift from before, and to nothing for nonsense', () => {
     expect(socialDeepLink({ kind: 'gift', giftId: 'g3', fromUserId: U })).toMatchObject({ screen: 'Chat', params: { userId: U } });
     expect(socialDeepLink({ kind: 'gift', chat: 'dm:../../etc' })).toBeNull();
-    expect(socialDeepLink({ kind: 'caring_message' })).toBeNull();
     expect(socialDeepLink({ screen: 'EventQuests' })).toBeNull();
+  });
+
+  it('opens a caring message in full, with an https helpline and never another kind of link', () => {
+    expect(resolveDeepLink({ kind: 'caring_message', helplineUrl: 'https://findahelpline.com' })).toEqual({
+      screen: 'CaringMessage',
+      helplineUrl: 'https://findahelpline.com',
+    });
+    expect(socialDeepLink({ kind: 'caring_message' })).toEqual({ screen: 'CaringMessage', helplineUrl: HELPLINE_URL });
+    expect(socialDeepLink({ kind: 'caring_message', helplineUrl: 'javascript:alert(1)' })).toEqual({
+      screen: 'CaringMessage',
+      helplineUrl: HELPLINE_URL,
+    });
   });
 });
