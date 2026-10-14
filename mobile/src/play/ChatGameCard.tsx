@@ -14,6 +14,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { lobbyCard } from './api';
 import { GAME_ICON, GAME_NAME_KEY, summaryParts } from './labels';
 import { lobbyRoute } from './routes';
+import { useReportAction } from '../reports/reportAction';
 
 /** A card's state in words: "Open · 2 of 4 joined", "Under way", … */
 export function cardStateText(card: LobbyCard, t: Translate): string {
@@ -86,12 +87,27 @@ export function gameCardOf(message: {
  *
  * A card the viewer may not see reads "This game isn't available", the same
  * as a game that is gone: it never says whose it was or why.
+ *
+ * `onReport` (someone else's message): the card takes the touch, so the
+ * row's press-and-hold never fires there; a long press on the card reports
+ * the message instead, and Report is among its screen-reader actions — on
+ * the card when it is read as one element, else on its Join.
  */
-export function ChatGameCard({ game, lobbyId }: { game: PlayGame; lobbyId: string }): React.JSX.Element {
+export function ChatGameCard({
+  game,
+  lobbyId,
+  onReport,
+}: {
+  game: PlayGame;
+  lobbyId: string;
+  /** report the message the card came in; undefined for your own */
+  onReport?: () => void;
+}): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const report = useReportAction(onReport);
   const [card, setCard] = useState<LobbyCard | null>(null);
 
   const load = useCallback(() => {
@@ -122,10 +138,14 @@ export function ChatGameCard({ game, lobbyId }: { game: PlayGame; lobbyId: strin
   const action = offer ? (offer.kind === 'enter' ? t('play.card.enter') : t('play.card.join')) : null;
 
   return (
-    <View
+    <Pressable
+      onLongPress={onReport}
+      delayLongPress={350}
+      disabled={!onReport}
       style={[styles.card, { backgroundColor: colors.glassFill }]}
       accessible={!action}
       accessibilityLabel={t('play.card.label', { game: name, state })}
+      {...(action ? {} : report)}
     >
       <View style={styles.head}>
         <View style={[styles.icon, { backgroundColor: colors.controlTrack }]}>
@@ -150,8 +170,11 @@ export function ChatGameCard({ game, lobbyId }: { game: PlayGame; lobbyId: strin
       {action ? (
         <Pressable
           onPress={open}
+          onLongPress={onReport}
+          delayLongPress={350}
           accessibilityRole="button"
           accessibilityLabel={`${action}: ${name}`}
+          {...report}
           style={({ pressed }) => [
             styles.button,
             offer?.prominent ? { backgroundColor: colors.primary } : [styles.quiet, { borderColor: colors.separator }],
@@ -161,7 +184,7 @@ export function ChatGameCard({ game, lobbyId }: { game: PlayGame; lobbyId: strin
           <Text style={[styles.buttonText, { color: offer?.prominent ? colors.textOnPrimary : colors.primary }]}>{action}</Text>
         </Pressable>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 

@@ -1,5 +1,6 @@
 /** Pure notification-inbox helpers (KUR-097) — no React Native. */
-import { isPlayGame, type GiftChatRef, type PlayGame } from '@kurda/shared';
+import { isPlayGame, type PlayGame } from '@kurda/shared';
+import { socialDeepLink, type SocialDeepLink } from '../reports/deepLinks';
 
 export interface InboxItem {
   id: string;
@@ -19,8 +20,8 @@ export type DeepLink =
   | { screen: 'Chat'; params: { userId: string; username: string } }
   /** an invite to play: accepted on the way, into the game's lobby */
   | { screen: 'PlayInvite'; params: { inviteId: string; game: PlayGame; lobbyId: string } }
-  /** a gift: the chat it was sent in, where it is unwrapped */
-  | { screen: 'GiftChat'; params: { chat: GiftChatRef } };
+  // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
+  | SocialDeepLink;
 
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null;
@@ -32,6 +33,9 @@ function str(v: unknown): string | null {
  * for an expired/removed deep-link, rather than navigating into a dead screen).
  */
 export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null {
+  // gifts, report outcomes and decisions on your account first (reports/deepLinks.ts)
+  const social = socialDeepLink(data);
+  if (social) return social;
   /*
    * What the server writes today is a `kind` with the ids it needs, rather
    * than a screen name: the app decides where each kind of thing lives.
@@ -40,10 +44,6 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     const inviteId = str(data.inviteId);
     const lobbyId = str(data.lobbyId);
     return inviteId && lobbyId && isPlayGame(data.game) ? { screen: 'PlayInvite', params: { inviteId, game: data.game, lobbyId } } : null;
-  }
-  if (data.kind === 'gift') {
-    const chat = giftChat(data.chat);
-    return chat ? { screen: 'GiftChat', params: { chat } } : null;
   }
   switch (data.screen) {
     case 'EventQuests':
@@ -60,17 +60,6 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     default:
       return null;
   }
-}
-
-/** A gift notification's chat, written `dm:<senderId>` or `group:<groupId>`. */
-function giftChat(v: unknown): GiftChatRef | null {
-  const ref = str(v);
-  if (!ref) return null;
-  const [kind, id] = ref.split(':');
-  if (!id) return null;
-  if (kind === 'dm') return { kind: 'dm', userId: id };
-  if (kind === 'group') return { kind: 'group', groupId: id };
-  return null;
 }
 
 /** Compact relative age: "now", "5m", "2h", "3d", else a short date. */

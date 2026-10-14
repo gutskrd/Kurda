@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
+import type { Translate } from '../api/errors';
+import { restrictionOf } from '../reports/sendErrors';
+import { SendErrorNotice } from '../reports/SendError';
+import { newGiftKey } from '../gifts/api';
+import { giftErrorText } from '../gifts/GiftPickerSheet';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -33,7 +38,8 @@ export function GiftSheet({
 }: {
   item: { sku: string; name: string; price: number; currency: string };
   onClose: () => void;
-  onSent: (balance: number, to: string) => void;
+  /** `to`: the friend it went to (`name` as the list showed them) — the gift is in your chat with them now */
+  onSent: (balance: number, to: { userId: string; username: string; name: string }) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -42,7 +48,11 @@ export function GiftSheet({
   const [friends, setFriends] = useState<Friend[] | null>(null);
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // the refusal, and the friend it was about (some answers name them)
+  const [error, setError] = useState<{ error: ApiError; name: string } | null>(null);
+  // one key per friend chosen, kept until the server has answered: a retry
+  // after a dropped connection must not send — and charge for — a second gift
+  const keys = useRef(new Map<string, string>());
 
   useEffect(() => {
     let alive = true;
@@ -59,20 +69,22 @@ export function GiftSheet({
       if (busy) return;
       setBusy(to.userId);
       setError(null);
-      void giftItem(client, {
-        sku: item.sku,
-        toUserId: to.userId,
-        expectedPrice: item.price,
-        // one key per attempt, so a second tap or a retry after a dropped
-        // connection cannot send — and charge for — a second gift
-        idempotencyKey: `gift-${item.sku}-${to.userId}-${Date.now()}`,
-      }).then((res) => {
+      const name = to.displayName || to.username;
+      const key = keys.current.get(to.userId) ?? newGiftKey();
+      keys.current.set(to.userId, key);
+      void giftItem(client, { sku: item.sku, toUserId: to.userId, expectedPrice: item.price, idempotencyKey: key }).then((res) => {
         setBusy(null);
-        if (res.ok) onSent(res.data.balance, to.username);
-        else setError(describeError(res.error, t));
+        if (res.ok) {
+          onSent(res.data.balance, { userId: to.userId, username: to.username, name });
+          return;
+        }
+        // the server said no, so nothing was sent: the next try is a new one.
+        // Offline or a server error may have sent it, so that key is kept.
+        if (res.error.kind === 'client' || res.error.kind === 'rate_limited') keys.current.delete(to.userId);
+        setError({ error: res.error, name });
       });
     },
-    [busy, client, item, onSent, t],
+    [busy, client, item, onSent],
   );
 
   const needle = query.trim().toLowerCase();
@@ -121,7 +133,8 @@ export function GiftSheet({
                     key={f.userId}
                     onPress={() => send(f)}
                     accessibilityRole="button"
-                    accessibilityLabel={t('shop.sendItem', { name: item.name, to: f.username })}
+                    // each row names its friend: a screen reader heard "Send <item>" on every one
+                    accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
                     style={styles.row}
                   >
                     <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
@@ -135,7 +148,15 @@ export function GiftSheet({
             </>
           )}
 
-          {error ? <Text style={[styles.note, { color: colors.danger }]}>{error}</Text> : null}
+          {error && restrictionOf(error.error) ? (
+            // a limit on the account (a gift is a chat message): calm, what and
+            // until when, and Account standing after this sheet has closed
+            <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
+          ) : error ? (
+            <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
+              {shopGiftErrorText(error.error, error.name, t)}
+            </Text>
+          ) : null}
 
           <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
             <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
@@ -144,6 +165,27 @@ export function GiftSheet({
       </Pressable>
     </Modal>
   );
+}
+
+/**
+ * A refused Shop gift, in the reader's language. This route answers a friend
+ * who cannot take it with a code of its own (where the chat's gift route
+ * names them among the skipped), so those three are said here as the chat
+ * says them; the rest as the chat's gift picker does.
+ */
+export function shopGiftErrorText(error: ApiError, name: string, t: Translate): string {
+  switch (error.code) {
+    case 'ALREADY_OWNED':
+      return t('gift.skipped.alreadyOwned', { name });
+    case 'GIFT_NOT_ALLOWED':
+      return t('gift.skipped.notAllowed', { name });
+    case 'GIFT_DAILY_LIMIT':
+      return t('gift.skipped.dailyLimit', { name });
+    case 'PRICE_CHANGED':
+      return t('shop.priceChangedBody');
+    default:
+      return giftErrorText(error, t);
+  }
 }
 
 const styles = StyleSheet.create({
@@ -158,6 +200,8 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm },
+  // lined up with the search field and the list, inside the sheet's own padding
+  notice: { marginHorizontal: 0, marginBottom: 0 },
   search: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.md,

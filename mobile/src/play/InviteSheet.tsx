@@ -31,6 +31,8 @@ import { Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
 import { lobbyRoute } from './routes';
+import { SendErrorNotice } from '../reports/SendError';
+import { restrictionOf } from '../reports/sendErrors';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -121,6 +123,12 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** a limit on the account (a chat mute stops game cards too): said as every send path says it, with Account standing */
+  const [refusal, setRefusal] = useState<ApiError | null>(null);
+  const refused = (e: ApiError): void => {
+    if (restrictionOf(e)) setRefusal(e);
+    else setError(inviteError(e, t));
+  };
   const [sent, setSent] = useState<number | null>(null);
 
   // a duo (and a battle or a match for two) invites one friend; a group up to seven
@@ -183,11 +191,12 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     if (busy) return;
     setBusy(true);
     setError(null);
+    setRefusal(null);
     if (target.kind === 'lobby') {
       const res = await inviteFriends(client, target.game, target.lobbyId, picked);
       setBusy(false);
       if (!res.ok) {
-        setError(inviteError(res.error, t));
+        refused(res.error);
         return;
       }
       setSent(res.data.invited);
@@ -200,7 +209,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     const res = await createLobby(client, { game, settings: settings(), invite: invite.length ? invite : undefined, chat });
     setBusy(false);
     if (!res.ok) {
-      setError(inviteError(res.error, t));
+      refused(res.error);
       return;
     }
     onClose();
@@ -256,6 +265,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
       onClose={onClose}
       footer={
         <>
+          <SendErrorNotice error={refusal} onNavigate={onClose} style={styles.notice} />
           {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
           {sent !== null ? (
             <Text style={[styles.sent, { color: colors.success }]} accessibilityLiveRegion="polite">
@@ -400,6 +410,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
 }
 
 const styles = StyleSheet.create({
+  notice: { marginHorizontal: 0, marginBottom: 0 },
   field: { gap: spacing.sm },
   games: { flexDirection: 'row', gap: spacing.sm },
   gameTile: {

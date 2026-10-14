@@ -19,7 +19,7 @@ import { ProfileActivity } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import type { ProfileSections } from '../profile/sections';
-import { ReportUserSheet } from './ReportUserSheet';
+import { ReportSheet } from '../reports/ReportSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
 import { PlayWithButton } from '../play/PlayWithButton';
@@ -213,13 +213,18 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   <Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text>
                 </Pressable>
               </View>
-              {reporting ? (
-                <ReportUserSheet
-                  userId={profile.userId}
-                  name={profile.displayName ?? profile.username}
-                  onClose={() => setReporting(false)}
-                />
-              ) : null}
+              <ReportSheet
+                visible={reporting}
+                target={{ type: 'user', userId: profile.userId }}
+                name={profile.displayName ?? profile.username}
+                blockable={{ userId: profile.userId, name: profile.displayName ?? profile.username }}
+                onClose={() => setReporting(false)}
+                // blocked from the report: the profile is gone to you now
+                onBlocked={() => {
+                  setReporting(false);
+                  onExit();
+                }}
+              />
             </View>
           ) : null}
         </View>

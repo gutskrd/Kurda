@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ApiClient } from '../api/client';
 import type { RootNavigation } from '../navigation/rootStack';
 import { followDeepLink, notificationText } from './followLink';
+import { resolveDeepLink } from './inbox';
 
 function fakes(routes: Record<string, unknown> = {}) {
   const went: Array<[string, unknown]> = [];
@@ -34,16 +35,17 @@ describe('followDeepLink', () => {
     expect(f.went).toEqual([['StoryGame', { id: 'g1' }]]);
   });
 
-  it('opens a gift in the DM it came in, with the friend’s name for the header', async () => {
-    const f = fakes({ '/chat/conversations': { conversations: [{ userId: 'u2', username: 'rojda' }] } });
-    await followDeepLink({ screen: 'GiftChat', params: { chat: { kind: 'dm', userId: 'u2' } } }, f.navigation, f.client);
-    expect(f.went).toEqual([['Chat', { userId: 'u2', username: 'rojda' }]]);
-  });
-
-  it('opens a gift sent in a group in that group’s thread', async () => {
-    const f = fakes({ '/me/groups': { groups: [{ id: 'g1', name: 'Hevalên Kurmancî' }] } });
-    await followDeepLink({ screen: 'GiftChat', params: { chat: { kind: 'group', groupId: 'g1' } } }, f.navigation, f.client);
-    expect(f.went).toEqual([['GroupThread', { groupId: 'g1', name: 'Hevalên Kurmancî' }]]);
+  it('opens a gift in the chat it came in, with the gift to unwrap (reports/deepLinks.ts)', async () => {
+    const dm = resolveDeepLink({ kind: 'gift', chat: 'dm:2b7c4a10-0000-4000-8000-000000000002', giftId: 'gf1' });
+    const group = resolveDeepLink({ kind: 'gift', chat: 'group:3c8d5b20-0000-4000-8000-000000000003', giftId: 'gf2' });
+    expect(dm?.screen).toBe('Chat');
+    expect(group?.screen).toBe('GroupThread');
+    const f = fakes();
+    await followDeepLink(dm!, f.navigation, f.client);
+    await followDeepLink(group!, f.navigation, f.client);
+    expect(f.went.map(([name]) => name)).toEqual(['Chat', 'GroupThread']);
+    expect(f.went[0]![1]).toMatchObject({ userId: '2b7c4a10-0000-4000-8000-000000000002', openGift: 'gf1' });
+    expect(f.went[1]![1]).toMatchObject({ groupId: '3c8d5b20-0000-4000-8000-000000000003', openGift: 'gf2' });
   });
 
   it('opens a screen it has no rule for by that screen’s own name', async () => {

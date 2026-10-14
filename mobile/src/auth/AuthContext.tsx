@@ -8,6 +8,8 @@ import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
 import { createTokenStorage } from './storage';
 import type { AgeStopKind } from './birthMonth';
+import type { SuspendedErrorDetails } from '@kurda/shared';
+import { suspendedDetails } from '../reports/suspension';
 
 export interface SessionUser {
   id: string;
@@ -83,6 +85,14 @@ interface AuthContextValue {
   ageStop: AgeStopKind | null;
   stopForAge(kind: AgeStopKind): Promise<void>;
   /**
+   * Set when sign-in, social sign-in or a refresh was refused because the
+   * account is suspended or banned (403 ACCOUNT_SUSPENDED): the reasons and
+   * the appeal token, for the suspension screen. Signed out meanwhile.
+   */
+  suspension: SuspendedErrorDetails | null;
+  /** Leave the suspension screen for the sign-in form. */
+  clearSuspension(): void;
+  /**
    * Sign in (or create an account) with a provider identity token (KUR-276).
    * The native flow (e.g. Sign in with Apple) obtains the token; we hand it to
    * the backend (POST /auth/oauth), which verifies it and returns a session —
@@ -138,6 +148,7 @@ export function AuthProvider({
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ageStop, setAgeStop] = useState<AgeStopKind | null>(null);
+  const [suspension, setSuspension] = useState<SuspendedErrorDetails | null>(null);
 
   const client = useMemo(
     () =>
@@ -148,6 +159,7 @@ export function AuthProvider({
           setUser(null);
           setStatus('signedOut');
         },
+        onSuspended: setSuspension,
       }),
     [baseUrl, storage],
   );
@@ -179,6 +191,7 @@ export function AuthProvider({
   }, [client, storage]);
 
   const applyAuth = async (payload: AuthPayload) => {
+    setSuspension(null);
     await storage.set({
       accessToken: payload.tokens.accessToken,
       refreshToken: payload.tokens.refreshToken,
@@ -194,7 +207,12 @@ export function AuthProvider({
     baseUrl,
     login: async (email, password) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) {
+        // a suspended account is shown why, not a sign-in error (Root renders the screen)
+        const suspended = res.error.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(res.error.details) : null;
+        if (suspended) setSuspension(suspended);
+        return describeError(res.error, t);
+      }
       await applyAuth(res.data);
       return null;
     },
@@ -214,6 +232,8 @@ export function AuthProvider({
       if (me.ok) setUser(me.data.user);
     },
     ageStop,
+    suspension,
+    clearSuspension: () => setSuspension(null),
     stopForAge: async (kind) => {
       setAgeStop(kind);
       if (kind === 'closed') {
@@ -226,6 +246,11 @@ export function AuthProvider({
     oauthSignIn: async (provider, idToken) => {
       const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken });
       if (!res.ok) {
+        const suspended = res.error.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(res.error.details) : null;
+        if (suspended) {
+          setSuspension(suspended);
+          return describeError(res.error, t);
+        }
         // Append the server's own error code (e.g. OAUTH_NOT_CONFIGURED,
         // INVALID_OAUTH_TOKEN) when present — it names the actual cause, which
         // the friendly copy alone hides for 5xx/401 responses.

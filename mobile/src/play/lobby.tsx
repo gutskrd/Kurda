@@ -12,6 +12,7 @@ import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { InviteSheet } from './InviteSheet';
 import { LobbyInvites } from './LobbyInvites';
+import { PlayerReportButton } from '../reports/PlayerReportButton';
 
 /**
  * How often a battle or a match asks the server when nothing has told it to:
@@ -63,8 +64,9 @@ export interface LobbySeat {
 
 /**
  * A battle's or a match's lobby beyond the link: who is in it (a friend by
- * name, anyone else as "Player N" — the identity rule), Invite friends, and,
- * for the host, where each invite stands.
+ * name, anyone else as "Player N" — the identity rule), each other player
+ * with a flag to report them by seat, Invite friends, and, for the host,
+ * where each invite stands.
  */
 export function LobbyPeople({
   game,
@@ -97,6 +99,8 @@ export function LobbyPeople({
                     {name}
                   </Text>
                   {p.isHost ? <Icon name="crown" size={14} color={colors.gold} /> : null}
+                  {/* anyone else in the lobby can be reported, by seat */}
+                  {!p.isMe ? <PlayerReportButton game={game} gameId={lobbyId} seat={p.seat} name={p.name ?? null} /> : null}
                 </View>
               );
             })}

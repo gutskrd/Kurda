@@ -14,7 +14,7 @@ import { GlassTabBar } from './src/navigation/GlassTabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
-import type { RootNavigation, RootStackParamList } from './src/navigation/rootStack';
+import { chatRouteId, groupThreadRouteId, type RootNavigation, type RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
@@ -56,6 +56,10 @@ import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
+import { MyReportsScreen } from './src/reports/MyReportsScreen';
+import { AccountStandingScreen } from './src/reports/AccountStandingScreen';
+import { SuspensionScreen } from './src/reports/SuspensionScreen';
+import { SocialOverlays } from './src/reports/SocialOverlays';
 import { WordleScreen } from './src/wordle/WordleScreen';
 import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
@@ -262,13 +266,25 @@ function SignedInRoot() {
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Chat" options={{ presentation: 'card' }}>
+      {/* one route per person and per group (rootStack.chatRouteId) */}
+      <RootStack.Screen name="Chat" options={{ presentation: 'card' }} getId={chatRouteId}>
         {({ route, navigation }) => (
-          <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
+          <ChatScreen
+            userId={route.params.userId}
+            username={route.params.username}
+            openGift={route.params.openGift}
+            onExit={() => navigation.goBack()}
+          />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="BlockedUsers" options={{ presentation: 'card' }}>
         {({ navigation }) => <BlockedUsersScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="MyReports" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MyReportsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="AccountStanding" options={{ presentation: 'card' }}>
+        {({ navigation }) => <AccountStandingScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
       <RootStack.Screen name="GroupMembers" options={{ presentation: 'card' }}>
@@ -283,11 +299,13 @@ function SignedInRoot() {
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GroupThreadScreen
             groupId={route.params.groupId}
             name={route.params.name}
+            openGift={route.params.openGift}
+            onLeft={() => navigation.navigate('Chats')}
             onExit={() => navigation.goBack()}
             onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
           />
@@ -383,16 +401,28 @@ function SignedInRoot() {
       </RootStack.Navigator>
       {/* over every screen: an invite to play waits here until it is answered */}
       <InviteBanner />
+      {/* over every screen: a gift that arrives, a warning to read once */}
+      <SocialOverlays />
     </RealtimeProvider>
   );
 }
 
 function Root() {
-  const { status, user, ageStop } = useAuth();
+  const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
+  }
+
+  // Refused at sign-in or refresh because the account is suspended: the reasons
+  // and a way to ask for a review, instead of a sign-in form that cannot work.
+  if (status === 'signedOut' && suspension) {
+    return (
+      <Entrance>
+        <SuspensionScreen details={suspension} baseUrl={baseUrl} onBack={clearSuspension} />
+      </Entrance>
+    );
   }
 
   // An answer that stopped at age — no account made, or one just closed —

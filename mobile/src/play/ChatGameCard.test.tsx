@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LobbyCard } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -79,6 +79,16 @@ describe('ChatGameCard', () => {
     });
     renderWithProviders(<ChatGameCard game="wordle-battle" lobbyId={LOBBY} />);
     expect(await screen.findByText('This game isn’t available.')).toBeTruthy();
+  });
+
+  it('reports the message it came in on a long press, without joining (someone else’s card)', async () => {
+    testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({})) });
+    const onReport = vi.fn();
+    navigation.navigate.mockClear();
+    renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} onReport={onReport} />);
+    fireEvent.mouseDown(await screen.findByRole('button', { name: 'Join: Stories' }), { button: 0, buttons: 1 });
+    await waitFor(() => expect(onReport).toHaveBeenCalledTimes(1));
+    expect(navigation.navigate).not.toHaveBeenCalled();
   });
 
   it('lets a player already in it open it', async () => {

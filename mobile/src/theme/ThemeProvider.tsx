@@ -49,6 +49,17 @@ export function ThemeProvider({ children }: { children: ReactNode }): React.JSX.
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+/**
+ * Draws its children with the dark palette whatever the app's scheme: for a
+ * moment staged on its own night-dark backdrop (a legendary gift's unwrap),
+ * where the light palette's black buttons would sink into the dark.
+ */
+export function DarkScheme({ children }: { children: ReactNode }): React.JSX.Element {
+  const outer = useTheme();
+  const value = useMemo<ThemeValue>(() => ({ ...outer, scheme: 'dark', colors: PALETTES.dark }), [outer]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
 export function useTheme(): ThemeValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');

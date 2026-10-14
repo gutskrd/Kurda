@@ -267,6 +267,9 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             title={t('settings.blocked.title')}
             onPress={() => navigation.navigate('BlockedUsers')}
           />
+          {/* what you reported and what came of it; what is limited on your account and why */}
+          <GlassRow icon="flag" iconColor={colors.textSecondary} title={t('reports.title')} onPress={() => navigation.navigate('MyReports')} />
+          <GlassRow icon="shield" iconColor={colors.textSecondary} title={t('standing.title')} onPress={() => navigation.navigate('AccountStanding')} />
         </GlassCard>
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>

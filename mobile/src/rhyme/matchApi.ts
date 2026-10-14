@@ -51,7 +51,9 @@ export interface MatchResults {
   dialect: Dialect;
   ranking: Array<{
     userId: string;
+    /** the player's seat (`seat:N` is everyone else's userId): what a report names them by */
     seat?: number;
+    /** null unless you may see it (a friend, or anyone in an open match) */
     name?: string | null;
     isMe?: boolean;
     rank: number;

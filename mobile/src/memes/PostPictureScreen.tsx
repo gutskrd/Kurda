@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
+import { useSendErrorAlert } from '../reports/SendError';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -51,8 +51,9 @@ export function PostPictureScreen({
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
+  const showSendError = useSendErrorAlert();
 
   const [asset, setAsset] = useState<{ uri: string; contentType: string } | null>(null);
   const [caption, setCaption] = useState('');
@@ -82,10 +83,10 @@ export function PostPictureScreen({
     if (busy || !asset) return;
     setBusy(true);
 
-    const up = await uploadPostImage(client, asset, t);
+    const up = await uploadPostImage(client, asset, t, locale);
     if (!up.ok) {
       setBusy(false);
-      Alert.alert(t('picture.uploadFailed'), up.error);
+      showSendError(t('picture.uploadFailed'), { message: up.error, limited: up.limited });
       return;
     }
 
@@ -98,7 +99,7 @@ export function PostPictureScreen({
     if (!made.ok) {
       // the bytes are stored either way; only the post failed, so say so rather
       // than dropping what they chose without a word
-      Alert.alert(t('picture.postFailed'), describeError(made.error, t));
+      showSendError(t('picture.postFailed'), made.error);
       return;
     }
     onPosted?.(made.data);

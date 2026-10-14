@@ -16,6 +16,7 @@ import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { RematchPanel } from '../play/RematchPanel';
+import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
@@ -316,6 +317,10 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
                       : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })}
                   </Text>
                   {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+                  {/* anyone else in the game can be reported, by seat */}
+                  {r.userId !== user?.id && r.seat !== undefined ? (
+                    <PlayerReportButton game="wordle-battle" gameId={results.id} seat={r.seat} name={r.name ?? null} />
+                  ) : null}
                 </View>
               ))}
             </View>

@@ -16,6 +16,7 @@ import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { RematchPanel } from '../play/RematchPanel';
+import { PlayerReportButton } from '../reports/PlayerReportButton';
 import {
   createMatch,
   getMatch,
@@ -329,6 +330,10 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
                     {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
                   </Text>
                   {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+                  {/* anyone else in the game can be reported, by seat */}
+                  {r.userId !== user?.id && r.seat !== undefined ? (
+                    <PlayerReportButton game="rhyme-match" gameId={results.id} seat={r.seat} name={r.name ?? null} />
+                  ) : null}
                 </View>
               ))}
             </View>

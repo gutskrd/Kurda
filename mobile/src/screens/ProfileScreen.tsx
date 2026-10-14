@@ -19,6 +19,7 @@ import type { ProfileCosmetics } from '../profile/types';
 import { countryName } from '@kurda/shared';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
+import { useSendErrorAlert } from '../reports/SendError';
 import { useI18n } from '../i18n/I18nContext';
 import { learningStats, type Streak } from '../streak/format';
 
@@ -79,6 +80,7 @@ export function ProfileScreen() {
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const { t, locale } = useI18n();
+  const showSendError = useSendErrorAlert();
 
   /*
    * Who you are, in the four places the server keeps it.
@@ -144,11 +146,11 @@ export function ProfileScreen() {
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
     setUploading(true);
-    const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t);
+    const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
     setUploading(false);
     if (res.ok) setPhotoUrl(res.url);
-    else Alert.alert(t('profile.photoFailed'), res.error);
-  }, [client, uploading]);
+    else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
+  }, [client, uploading, showSendError, t, locale]);
 
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
 

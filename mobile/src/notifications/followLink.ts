@@ -16,7 +16,9 @@ import type { DeepLink, InboxItem } from './inbox';
  *
  * An invite is accepted on the way, and lands in the game's lobby; one that
  * can no longer be accepted still opens the game, which says why it cannot be
- * joined. A gift opens the chat it was sent in.
+ * joined. A gift opens the chat it was sent in, with the gift to unwrap
+ * (reports/deepLinks.ts). A caring message has no screen of its own: the
+ * caller shows it where it was tapped.
  */
 export async function followDeepLink(link: DeepLink, navigation: RootNavigation, client: ApiClient): Promise<void> {
   switch (link.screen) {
@@ -38,26 +40,9 @@ export async function followDeepLink(link: DeepLink, navigation: RootNavigation,
       navigation.navigate(route.name, route.params as never);
       return;
     }
-    case 'GiftChat': {
-      const chat = link.params.chat;
-      if (chat.kind === 'dm') {
-        const convos = await client.get<{ conversations: Array<{ userId: string; username: string }> }>('/chat/conversations');
-        let username = convos.ok ? convos.data.conversations.find((c) => c.userId === chat.userId)?.username : undefined;
-        if (!username) {
-          const profile = await client.get<{ username: string }>(`/users/${chat.userId}`);
-          username = profile.ok ? profile.data.username : undefined;
-        }
-        if (username) navigation.navigate('Chat', { userId: chat.userId, username });
-        return;
-      }
-      const groups = await client.get<{ groups: Array<{ id: string; name: string }> }>('/me/groups');
-      const group = groups.ok ? groups.data.groups.find((g) => g.id === chat.groupId) : undefined;
-      if (group) navigation.navigate('GroupThread', { groupId: group.id, name: group.name });
-      return;
-    }
     default: {
-      // a screen another part of the app adds to DeepLink (reports, account
-      // standing) opens by its own name, with its own params
+      // a screen another part of the app adds to DeepLink (a group thread,
+      // My reports, Account standing) opens by its own name, with its own params
       const other = link as { screen: string; params?: object };
       (navigation.navigate as (screen: string, params?: object) => void)(other.screen, other.params);
     }

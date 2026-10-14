@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import type { Translate } from '../api/errors';
-import { normalizeContentType } from '../profile/photoUploadResult';
+import { describeUploadFailure, normalizeContentType, uploadWasLimited } from '../profile/photoUploadResult';
 
 /**
  * Upload the bytes of a picture that is about to become a post.
@@ -16,12 +16,15 @@ import { normalizeContentType } from '../profile/photoUploadResult';
  * this streams the file with expo-file-system and attaches the token itself —
  * the same shape as the profile-photo upload next door.
  */
-export type UploadedImage = { ok: true; imageMediaId: string } | { ok: false; error: string };
+/** `limited`: refused by a limit on the account (see `UploadResult`). */
+export type UploadedImage = { ok: true; imageMediaId: string } | { ok: false; error: string; limited?: boolean };
 
 export async function uploadPostImage(
   client: ApiClient,
   photo: { uri: string; contentType: string },
   t: Translate,
+  /** the app's language, so a limit's end is said as the reader would say it */
+  locale?: string,
 ): Promise<UploadedImage> {
   try {
     const token = await client.getAccessToken();
@@ -55,6 +58,9 @@ export async function uploadPostImage(
       // body was not JSON; the status alone decides below
     }
     if (code === 'MEDIA_UNAVAILABLE') return { ok: false, error: t('picture.storageOff') };
+    // a limit on the account (pictures and voice paused, a suspension) says what and until when
+    const limited = uploadWasLimited(res.status, res.body);
+    if (limited || code === 'MUTED') return { ok: false, error: describeUploadFailure(res.status, res.body, t, locale), limited };
     return { ok: false, error: t('picture.uploadFailed') };
   } catch (e) {
     return { ok: false, error: (e as Error)?.message ?? t('picture.uploadFailed') };

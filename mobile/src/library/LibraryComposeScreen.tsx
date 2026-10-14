@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
@@ -13,6 +12,7 @@ import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
 import type { PostType } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { useSendErrorAlert } from '../reports/SendError';
 
 /**
  * Author a library post (KUR-284): pick story/poem, write a title + body, and
@@ -22,8 +22,9 @@ import { useI18n } from '../i18n/I18nContext';
 export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
+  const showSendError = useSendErrorAlert();
 
   const [type, setType] = useState<PostType>('story');
   const [title, setTitle] = useState('');
@@ -41,10 +42,10 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
     // upload the optional narration first so the post references a confirmed key
     let audioMediaId: string | undefined;
     if (voiceUri) {
-      const up = await uploadVoiceNote(client, { uri: voiceUri }, t);
+      const up = await uploadVoiceNote(client, { uri: voiceUri }, t, locale);
       if (!up.ok) {
         setSaving(false);
-        Alert.alert(t('library.narrationFailed'), up.error);
+        showSendError(t('library.narrationFailed'), { message: up.error, limited: up.limited });
         return;
       }
       audioMediaId = up.audioMediaId;
@@ -52,7 +53,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
     const res = await createPost(client, { type, title: title.trim(), body: body.trim(), publish, audioMediaId });
     setSaving(false);
     if (!res.ok) {
-      Alert.alert(t('library.saveFailed'), describeError(res.error, t));
+      showSendError(t('library.saveFailed'), res.error);
       return;
     }
     onExit();

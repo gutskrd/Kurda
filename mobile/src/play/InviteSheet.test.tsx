@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InviteLists, StoryListItem } from '@kurda/shared';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { resetPrefsCache } from '../stories/prefs';
 import { navigation } from './testing/navigation';
@@ -113,6 +113,20 @@ describe('InviteSheet', () => {
     // the DM's friend is invited by `chat`, which also puts the card in the DM
     expect(sent.chat).toEqual({ userId: 'u-rojda' });
     expect(sent.invite).toBeUndefined();
+  });
+
+  it('says a chat mute as a limit, with Account standing, when the card cannot go into the DM', async () => {
+    const onClose = vi.fn();
+    testAuth.client = fakeClient(
+      routes({ 'POST /play/lobbies': fail({ status: 403, code: 'MUTED', details: { scope: 'chat', until: null } }) }),
+    );
+    renderWithProviders(<InviteSheet target={{ kind: 'dm', friendId: 'u-rojda' }} onClose={onClose} />);
+    await screen.findByRole('radio', { name: 'Rojda' });
+    fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
+    expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(navigation.navigate).toHaveBeenCalledWith('AccountStanding');
   });
 
   it('from a DM, a group game may ask more friends, with the DM’s friend still in it', async () => {

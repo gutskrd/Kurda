@@ -52,7 +52,9 @@ export interface BattleResults {
   ranking: Array<{
     /** the viewer's own id on their own row, `seat:N` on everyone else's */
     userId: string;
+    /** the player's seat (`seat:N` is everyone else's userId): what a report names them by */
     seat?: number;
+    /** null unless you may see it (a friend, or anyone in an open battle) */
     name?: string | null;
     isMe?: boolean;
     rank: number;

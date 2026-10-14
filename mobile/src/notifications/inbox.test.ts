@@ -15,11 +15,17 @@ describe('resolveDeepLink', () => {
       screen: 'PlayInvite',
       params: { inviteId: 'i1', game: 'stories', lobbyId: 'g1' },
     });
-    expect(resolveDeepLink({ kind: 'gift', giftId: 'x', batchId: 'b', chat: 'dm:u1' })).toEqual({
-      screen: 'GiftChat',
-      params: { chat: { kind: 'dm', userId: 'u1' } },
+    // a gift opens its chat with the gift to unwrap (reports/deepLinks.ts, ahead of everything else)
+    const dm = '2b7c4a10-0000-4000-8000-000000000001';
+    const group = '3c8d5b20-0000-4000-8000-000000000007';
+    expect(resolveDeepLink({ kind: 'gift', giftId: 'x', batchId: 'b', chat: `dm:${dm}` })).toEqual({
+      screen: 'Chat',
+      params: { userId: dm, username: '', openGift: 'x' },
     });
-    expect(resolveDeepLink({ kind: 'gift', chat: 'group:g7' })).toEqual({ screen: 'GiftChat', params: { chat: { kind: 'group', groupId: 'g7' } } });
+    expect(resolveDeepLink({ kind: 'gift', chat: `group:${group}` })).toEqual({
+      screen: 'GroupThread',
+      params: { groupId: group, name: '', openGift: undefined },
+    });
   });
 
   it('opens nothing for an invite or a gift it cannot place', () => {

@@ -13,6 +13,7 @@ import { relativeTime, resolveDeepLink, type InboxItem } from './inbox.js';
 import { followDeepLink, notificationText } from './followLink';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 
 /** In-app notification center: list, mark-read, deep links (KUR-097). */
 export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
@@ -22,6 +23,8 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const { t, locale } = useI18n();
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+  // the moderators' caring message, opened with its helpline (reports/CaringMessage.tsx)
+  const [caring, setCaring] = useState<CaringMessage | null>(null);
 
   const load = useCallback(() => {
     void client.get<{ notifications: InboxItem[] }>('/me/notifications').then((res) => {
@@ -48,6 +51,11 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
         void client.post(`/me/notifications/${item.id}/read`);
       }
       const link = resolveDeepLink(item.data);
+      // a caring message is read here, with its helpline; it has no screen
+      if (link?.screen === 'CaringMessage') {
+        setCaring({ title: item.title, body: item.body, helplineUrl: link.helplineUrl });
+        return;
+      }
       // a null link stays in the list (the friendly fallback for an expired or
       // removed target); the rest go where the inbox tab sends them — this
       // used to pass the link's own screen name straight to the navigator, and
@@ -107,6 +115,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           />
         </AsyncBoundary>
       </View>
+      <CaringMessageDialog message={caring} onClose={() => setCaring(null)} />
     </GradientBackground>
   );
 }

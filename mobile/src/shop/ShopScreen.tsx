@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   Alert,
   Modal,
@@ -32,6 +32,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { GiftSheet } from './GiftSheet';
 import { ReceivedGifts } from './ReceivedGifts';
 import { EmptyState } from '../theme/EmptyState';
+import { giftTierFor } from '@kurda/shared';
+import type { RootNavigation } from '../navigation/rootStack';
+import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
+import { GiftSentNote } from '../gifts/GiftSentNote';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -50,6 +54,9 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const [selected, setSelected] = useState<ShopItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [gifting, setGifting] = useState<ShopItem | null>(null);
+  // a gift from the shop goes into your chat with that friend: fly it there, then say where it is
+  const [sentGift, setSentGift] = useState<{ item: ShopItem; to: { userId: string; username: string; name: string }; flying: boolean } | null>(null);
+  const navigation = useNavigation<RootNavigation>();
 
   const load = useCallback(() => {
     void Promise.all([
@@ -192,11 +199,33 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             item={{ sku: gifting.sku, name: gifting.name, price: gifting.price, currency: currencyLabel(gifting.currency) }}
             onClose={() => setGifting(null)}
             onSent={(balance, to) => {
-              const name = gifting.name;
+              const item = gifting;
               setGifting(null);
-              setBalances((b) => ({ ...b, zer: balance }));
-              Alert.alert(t('shop.sendGift'), t('shop.onItsWay', { name, to }));
+              // the balance that moved is the item's currency, which is not always Zêr
+              setBalances((b) => ({ ...b, [item.currency]: balance }));
+              setSentGift({ item, to, flying: true });
             }}
+          />
+        ) : null}
+
+        {sentGift?.flying ? (
+          <GiftSendAnimation
+            // the shop's list does not say which items are limited, so a Newroz
+            // item flies as a rare one here; the recipient's unwrap has its real tier
+            tier={giftTierFor({ currency: sentGift.item.currency, price: sentGift.item.price, limited: false })}
+            announce={t('gift.sent', { name: sentGift.to.name })}
+            onDone={() => setSentGift((g) => (g ? { ...g, flying: false } : g))}
+          />
+        ) : sentGift ? (
+          <GiftSentNote
+            itemName={sentGift.item.name}
+            to={sentGift.to.name}
+            onOpenChat={() => {
+              const to = sentGift.to;
+              setSentGift(null);
+              navigation.navigate('Chat', { userId: to.userId, username: to.username });
+            }}
+            onDismiss={() => setSentGift(null)}
           />
         ) : null}
       </View>
@@ -250,7 +279,7 @@ function ItemDetail({
             onPress={() => onGift(item)}
             accessibilityRole="button"
           >
-            <Icon name="gem" size={16} color={colors.textSecondary} />
+            <Icon name="gift" size={16} color={colors.gold} />
             <Text style={[styles.giftText, { color: colors.textSecondary }]}>{t('shop.sendGift')}</Text>
           </Pressable>
         </>
