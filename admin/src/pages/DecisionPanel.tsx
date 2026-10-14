@@ -103,7 +103,8 @@ export function DecisionPanel({
         method: 'POST',
         body: decisionRequest(draft, { preview: true }),
       });
-      let confirmUsername: string | undefined;
+      // every name typed: a decision may ban two people for good (the reported person and a bad-faith reporter)
+      const confirmUsernames: string[] = [];
       for (const ban of check.permanentBans) {
         const yes = await dialogs.confirm({
           title: `Ban @${ban.username} for good?`,
@@ -118,7 +119,7 @@ export function DecisionPanel({
           typed: ban.usernameRequired ? { phrase: ban.username, label: `Type ${ban.username} to confirm` } : undefined,
         });
         if (!yes) return;
-        if (ban.usernameRequired) confirmUsername = ban.username;
+        if (ban.usernameRequired) confirmUsernames.push(ban.username);
       }
       if (check.permanentBans.length === 0) {
         const yes = await dialogs.confirm({
@@ -131,7 +132,7 @@ export function DecisionPanel({
       }
       const result = await api<DecideResult>(`/admin/moderation/cases/${c.id}/decide`, {
         method: 'POST',
-        body: decisionRequest(draft, { confirmUsername }),
+        body: decisionRequest(draft, { confirmUsernames }),
       });
       toast.success(
         result.status === 'needs_second_approval'

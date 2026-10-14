@@ -302,6 +302,30 @@ describe('a case', () => {
     expect((applied(calls)[0]!.body as { actions: Array<Record<string, unknown>> }).actions[0]).not.toHaveProperty('durationHours');
   });
 
+  it('sends every typed name when one decision bans two people for good', async () => {
+    const user = userEvent.setup();
+    const two = preview({
+      permanentBans: [
+        { target: 'subject', userId: SUBJECT_ID, username: 'baran', mode: 'single', usernameRequired: true },
+        { target: `reporter:${REPORTER_A}`, userId: REPORTER_A, username: 'rojin', mode: 'single', usernameRequired: true },
+      ],
+    });
+    const { calls } = show(at, detailRoute(caseDetail()), previewRoute(two));
+    await user.click(await screen.findByRole('button', { name: 'Sanction this person' }));
+    await user.selectOptions(screen.getByLabelText('Action'), 'permanent_ban');
+    expect(await screen.findAllByText(/You are the only moderator/, {}, { timeout: 2000 })).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Apply decision' }));
+    for (const name of ['baran', 'rojin']) {
+      const ask = await screen.findByRole('alertdialog', { name: `Ban @${name} for good?` });
+      await user.type(within(ask).getByLabelText(`Type ${name} to confirm`), name);
+      await user.click(within(ask).getByRole('button', { name: 'Ban for good' }));
+    }
+    await waitFor(() => expect(applied(calls)).toHaveLength(1));
+    // each ban is confirmed by its own name: with only the last one sent, the first would be refused
+    expect(applied(calls)[0]!.body).toMatchObject({ confirmUsernames: ['baran', 'rojin'] });
+    expect(applied(calls)[0]!.body).not.toHaveProperty('confirmUsername');
+  });
+
   it('says a permanent ban waits for a second admin when there is one', async () => {
     const user = userEvent.setup();
     const ban = preview({ permanentBans: [{ target: 'subject', userId: SUBJECT_ID, username: 'baran', mode: 'second_approval', usernameRequired: false }] });

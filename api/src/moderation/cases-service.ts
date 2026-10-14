@@ -487,8 +487,9 @@ export class CasesService {
         mode = permanentBanMode(moderators, isZeroTolerance(actionPolicy));
         const usernameRequired = mode === 'single';
         permanentBans.push({ target: action.target, userId, username: u.rows[0].username, mode, usernameRequired });
-        const typed = req.confirmUsername?.trim().toLowerCase();
-        if (usernameRequired && !ctx.preview && typed !== u.rows[0].username.toLowerCase()) {
+        // each ban is confirmed by its own person's name; one decision may ban two (the subject and a reporter)
+        const typed = new Set([req.confirmUsername, ...(req.confirmUsernames ?? [])].map((n) => n?.trim().toLowerCase()).filter(Boolean));
+        if (usernameRequired && !ctx.preview && !typed.has(u.rows[0].username.toLowerCase())) {
           throw new AppError('CONFIRM_USERNAME_REQUIRED', 409, 'you are the only moderator: type their username to confirm a permanent ban');
         }
       }

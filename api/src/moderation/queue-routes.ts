@@ -56,6 +56,8 @@ const decideBody = z.object({
   notifyReporters: z.boolean().default(true),
   preview: z.boolean().optional(),
   confirmUsername: z.string().max(60).optional(),
+  // one per permanent ban in the decision, so two bans for good can be confirmed in one go
+  confirmUsernames: z.array(z.string().max(60)).max(20).optional(),
   note: z.string().trim().max(4000).optional(),
 });
 

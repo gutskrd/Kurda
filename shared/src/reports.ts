@@ -750,6 +750,13 @@ export interface DecideRequest {
   preview?: boolean;
   /** the only moderation admin typing the person's username to confirm a permanent ban */
   confirmUsername?: string;
+  /**
+   * The same, for a decision that bans more than one person for good (the
+   * reported person and a reporter acting in bad faith): every username
+   * typed. A ban is confirmed when its person's name is here or is
+   * `confirmUsername`.
+   */
+  confirmUsernames?: string[];
   /** a private note for the case record */
   note?: string;
 }

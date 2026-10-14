@@ -501,7 +501,9 @@ export function withKind(a: ActionDraft, kind: DecisionActionKind, policy: strin
 }
 
 /** The request the draft is: what the preview asks about and what the decision sends. */
-export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; confirmUsername?: string } = {}): DecideRequest {
+export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; confirmUsernames?: string[] } = {}): DecideRequest {
+  // one name typed goes as confirmUsername; a decision that bans two people for good sends both
+  const typed = extra.confirmUsernames ?? [];
   const actioned = d.outcome === 'actioned';
   return {
     outcome: d.outcome,
@@ -516,7 +518,7 @@ export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; co
     notifyReporters: d.notifyReporters,
     ...(d.note.trim() ? { note: d.note.trim() } : {}),
     ...(extra.preview ? { preview: true } : {}),
-    ...(extra.confirmUsername ? { confirmUsername: extra.confirmUsername } : {}),
+    ...(typed.length === 1 ? { confirmUsername: typed[0] } : typed.length > 1 ? { confirmUsernames: typed } : {}),
   };
 }
 

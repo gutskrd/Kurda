@@ -152,7 +152,12 @@ describe('a decision being put together', () => {
     expect(req.actions[1]).not.toHaveProperty('durationHours');
     expect(req.actions[2]).not.toHaveProperty('durationHours');
     expect(decisionRequest({ ...d, outcome: 'no_violation' }).removeContent).toBe(false);
-    expect(decisionRequest(d, { confirmUsername: 'heval' }).confirmUsername).toBe('heval');
+    expect(decisionRequest(d, { confirmUsernames: ['heval'] }).confirmUsername).toBe('heval');
+    // two bans for good in one decision: each name goes, so each ban is confirmed by its own
+    const two = decisionRequest(d, { confirmUsernames: ['heval', 'dijmin'] });
+    expect(two.confirmUsernames).toEqual(['heval', 'dijmin']);
+    expect(two.confirmUsername).toBeUndefined();
+    expect(decisionRequest(d)).not.toHaveProperty('confirmUsernames');
   });
 
   it('says what is plainly missing before asking the server', () => {
