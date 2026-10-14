@@ -146,7 +146,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('story games in the worker (integra
     );
     expect(paid.rows[0]!.learning_counted).toBe(true);
     expect(paid.rows[0]!.xp_awarded).toBeGreaterThan(0);
-    // the XP put them in this week's league, and the thirtieth day earned the milestone
+    // the XP put them in this week's league, and the thirtieth day earned the
+    // milestone — deliberately changed (contract 4 §B): streak-30 is now the
+    // Agir badge's second tier
     const league = await eventually(
       () => pool.query(`SELECT 1 FROM league_members WHERE user_id = $1`, [other]).then((r) => r.rowCount),
       (c) => c === 1,
@@ -155,7 +157,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('story games in the worker (integra
     const milestone = await eventually(
       () =>
         pool
-          .query(`SELECT 1 FROM user_achievements WHERE user_id = $1 AND achievement_id = 'streak-30'`, [other])
+          .query(`SELECT 1 FROM user_badges WHERE user_id = $1 AND badge_key = 'agir' AND tier >= 2`, [other])
           .then((r) => r.rowCount),
       (c) => c === 1,
     );

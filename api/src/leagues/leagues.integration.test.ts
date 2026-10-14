@@ -74,14 +74,26 @@ describe.skipIf(!DATABASE_URL)('learning leagues (integration)', () => {
     return people;
   };
 
+  /**
+   * The groups and runs of this suite's closed weeks (all in 2025), which
+   * outlive its learners — a group has no key to them — so an earlier run's
+   * groups would otherwise be the open groups this run's learners join.
+   */
+  const clearOldWeeks = async () => {
+    await pool.query(`DELETE FROM league_cohorts WHERE week_key LIKE '2025-%' OR week_key LIKE '2024-%'`);
+    await pool.query(`DELETE FROM league_runs WHERE week_key LIKE '2025-%' OR week_key LIKE '2024-%'`);
+  };
+
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL, max: 20 });
+    await clearOldWeeks();
     gems = new GemService(pool, new WalletService(pool));
     leagues = new LeagueService(pool, { gems, notices, weeklyGoalXp: 150 });
   });
 
   afterAll(async () => {
     await removeLearners(pool, `lg${suffix}%`);
+    await clearOldWeeks();
     await pool.end();
   });
 
