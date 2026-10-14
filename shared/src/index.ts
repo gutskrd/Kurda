@@ -212,6 +212,12 @@ export * from './typing.js';
 export * from './feedback.js';
 
 /**
+ * Hevalo the deer holding up a board, in layers that move on their own: one
+ * drawing for the rating box and the keyboard guide on both apps.
+ */
+export * from './deer.js';
+
+/**
  * Reports, moderation cases, sanctions and appeals: the categories and their
  * priorities, what can be reported, what each sanction stops, the standing and
  * appeal shapes the apps show, and the case shapes the admin panel reads.

@@ -136,8 +136,9 @@ describe('RatingBox after a first game', () => {
     fireEvent.click(screen.getByRole('radio', { name: '1 star' }));
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await screen.findByText('Thank you — we read every message.');
-    // a filled star on the deer's board has the gold edge
-    expect(container.querySelectorAll('path[stroke="#c98f12"]')).toHaveLength(1);
+    // the deer's board holds up one lit star
+    const board = [...container.querySelectorAll('[data-markup]')].map((el) => el.getAttribute('data-markup')!).find((m) => m.includes('deer-star'))!;
+    expect(board.match(/deer-star is-on/g)).toHaveLength(1);
   });
 
   it('says what went wrong when sending fails, and keeps what was written', async () => {

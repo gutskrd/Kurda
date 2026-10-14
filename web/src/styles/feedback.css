@@ -46,11 +46,11 @@
   transform-box: view-box;
 }
 .deer-ear-l {
-  transform-origin: 68px 72px;
+  transform-origin: 64px 70px;
   animation: deer-ear-l 7.4s ease-in-out infinite;
 }
 .deer-ear-r {
-  transform-origin: 132px 72px;
+  transform-origin: 136px 70px;
   animation: deer-ear-r 6.2s ease-in-out infinite;
 }
 @keyframes deer-ear-l {

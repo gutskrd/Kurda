@@ -43,5 +43,5 @@ export const Pattern = element('pattern');
 
 /** An SVG drawn from a string (the art drawn by code): a box of its size, with the string kept for a test to read. */
 export function SvgXml({ xml, width, height }: { xml: string; width?: number; height?: number }) {
-  return createElement('svg', { width, height, 'data-xml': xml.length > 0 ? 'drawn' : 'empty' });
+  return createElement('svg', { width, height, 'data-xml': xml.length > 0 ? 'drawn' : 'empty', 'data-markup': xml });
 }
