@@ -2244,13 +2244,22 @@ a.mkp-activity-row:hover {
 .wordle-typing {
   border-color: var(--border-strong);
 }
+/*
+ * The keyboard fills the width it has, row by row, in units of one key: ten
+ * across the top of QWERTY, nine (and a half-key's space at each end) on the
+ * second row, Enter and Delete a key and a half each around the seven letters
+ * of the third, and ç ê î ş û as five double keys of their own — the largest
+ * on the board. In alphabet order every row is nine.
+ */
+.wordle-keys {
+  max-width: 600px;
+  margin: 20px auto 0;
+}
 .wordle-keyboard {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  max-width: 560px;
-  margin: 20px auto 0;
 }
 .wordle-krow {
   display: flex;
@@ -2258,33 +2267,76 @@ a.mkp-activity-row:hover {
   justify-content: center;
   width: 100%;
 }
+.wordle-keyboard-qwerty .wordle-krow:nth-child(2)::before,
+.wordle-keyboard-qwerty .wordle-krow:nth-child(2)::after {
+  content: '';
+  flex: 0.5 1 0;
+}
 .wordle-key {
   /* basis 0 so keys divide the row rather than demanding a minimum that
      pushed the last one clean off the screen */
   min-width: 0;
   flex: 1 1 0;
-  max-width: 44px;
-  height: 50px;
-  padding: 0 6px;
+  height: 54px;
+  padding: 0 4px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface-2);
   color: var(--ink);
+  font: inherit;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   text-transform: lowercase;
   cursor: pointer;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wordle-key:hover:not(:disabled) {
+  border-color: var(--border-strong);
 }
 .wordle-key-wide {
-  flex: 1.9 1 0;
-  min-width: 0;
-  max-width: 72px;
-  font-size: 0.82rem;
+  flex: 1.5 1 0;
+  font-size: 0.85rem;
   text-transform: none;
+}
+.wordle-keyboard-alphabet .wordle-key-wide {
+  flex: 2.5 1 0;
+}
+.wordle-keyboard-qwerty .wordle-krow-last .wordle-key {
+  flex: 2 1 0;
+  font-size: 1.2rem;
 }
 .wordle-key:disabled {
   opacity: 0.55;
   cursor: default;
+}
+/* QWERTY or alphabet order, under the keys */
+.wordle-layout {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+.wordle-layout-option {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.wordle-layout-option:hover {
+  color: var(--ink);
+}
+.wordle-layout-option.is-on {
+  border-color: var(--border-strong);
+  color: var(--ink);
+  background: var(--surface-2);
 }
 
 /*
@@ -2313,12 +2365,14 @@ a.mkp-activity-row:hover {
   .wordle-head {
     margin-bottom: 12px;
   }
-  .wordle-keyboard {
-    gap: 6px;
+  .wordle-keys {
     margin-top: 12px;
   }
+  .wordle-keyboard {
+    gap: 6px;
+  }
   .wordle-key {
-    height: 44px;
+    height: 48px;
   }
 }
 /* feedback colors — defined after the base rules so they win on shared elements */
@@ -2369,16 +2423,26 @@ a.mkp-activity-row:hover {
 @media (max-width: 560px) {
   /* claw back the page gutter: the keyboard is the widest thing on the screen
      and every pixel goes into key width */
-  .wordle-keyboard {
+  .wordle-keys {
     margin-inline: -8px;
+  }
+  .wordle-keyboard {
     gap: 6px;
   }
   .wordle-krow {
-    gap: 5px;
+    gap: 4px;
   }
   .wordle-key {
-    height: 46px;
-    font-size: 0.95rem;
+    height: 48px;
+    font-size: 1rem;
+  }
+  /* "Enter" in the space of a key and a half, with room either side of it */
+  .wordle-key-wide {
+    font-size: 0.8rem;
+    padding: 0 2px;
+  }
+  .wordle-layout-option {
+    min-height: 44px;
   }
   .wordle-board {
     margin: 14px 0 6px;
@@ -3002,164 +3066,6 @@ a.mkp-activity-row:hover {
 }
 .comments-empty {
   margin-top: 16px;
-}
-
-/* ---- typing race -------------------------------------------------------- */
-.race-lobby {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-}
-.race-stats {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin: 18px 0 12px;
-}
-.race-timer {
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 1.15rem;
-  min-width: 66px;
-}
-.race-progress {
-  flex: 1;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.race-progress-fill {
-  height: 100%;
-  background: var(--gold);
-  transition: width 0.1s linear;
-}
-/*
- * The text and the field are one box.
- *
- * The visible layer is the text, coloured as it is typed; the field that takes
- * the keystrokes is an invisible textarea stretched over it. Two separate boxes
- * put the text on screen as ordinary prose next to an input — select, copy,
- * paste, race over. Here there is nothing to select: `user-select: none` on the
- * text, and the only thing under the pointer is the capture layer.
- */
-.race-type {
-  position: relative;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  cursor: text;
-}
-.race-type.is-focused {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 18%, transparent);
-}
-.race-type.is-done {
-  cursor: default;
-  opacity: 0.75;
-}
-.race-text {
-  margin: 0;
-  font-size: 1.15rem;
-  line-height: 1.9;
-  letter-spacing: 0.01em;
-  padding: 18px;
-  color: var(--ink-3);
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  /* nothing to select is the whole point; the caret is drawn, not native */
-  user-select: none;
-  -webkit-user-select: none;
-}
-/*
- * The keystroke sink. Invisible rather than absent: it has to be a real,
- * focusable field or a phone will never open its keyboard. Sized to the whole
- * box so a tap anywhere on the text lands on it.
- */
-.race-capture {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 18px;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: transparent;
-  caret-color: transparent;
-  font: inherit;
-  resize: none;
-  opacity: 0;
-}
-.race-capture:focus {
-  outline: none;
-}
-/* the box says what it is before it has focus; a phone gives no other clue */
-.race-tap {
-  position: absolute;
-  right: 10px;
-  bottom: 8px;
-  font-size: 0.74rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-4);
-  pointer-events: none;
-}
-.race-refused {
-  margin: 0 0 12px;
-  font-size: 0.92rem;
-  color: var(--danger);
-}
-.race-char {
-  border-radius: 2px;
-}
-.race-ok {
-  color: var(--success);
-}
-.race-bad {
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-/* where you are, so the eye does not have to search for it */
-.race-cursor {
-  box-shadow: inset 2px 0 0 var(--ink);
-}
-.race-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-.race-result {
-  margin-top: 20px;
-  padding: 20px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-lg);
-  background: var(--surface-2);
-}
-.race-figures {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
-  margin: 12px 0 18px;
-}
-.race-figure {
-  display: flex;
-  flex-direction: column;
-}
-.race-figure-value {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
-  font-weight: 700;
-  line-height: 1.1;
-}
-.race-figure-label {
-  font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--ink-3);
 }
 
 /* ---- shop: buying, gifting, and being gifted ---------------------------- */

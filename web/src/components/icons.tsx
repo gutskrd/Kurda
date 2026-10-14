@@ -78,6 +78,9 @@ import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
 import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
 import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
 import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
+// web-race-rating: Wordle's delete key, the rating box's stars
+import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
+import { Star } from '@phosphor-icons/react/dist/icons/Star';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -189,6 +192,9 @@ export const SignOutIcon = named(SignOut, 22);
 export const MoreIcon = named(DotsThree, 22);
 export const BlockIcon = named(Prohibit, 22);
 export const FlagIcon = named(Flag, 22);
+/* web-race-rating: Wordle's delete key; a star you can choose, filled once it is */
+export const BackspaceIcon = named(Backspace, 22);
+export const StarIcon = named(Star, 36);
 
 /* Stories and playing with friends: a story read aloud, its player's keys,
    a question's clock, the host of a game, asking a friend in */

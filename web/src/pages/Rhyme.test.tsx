@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Rhyme } from './Rhyme';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onGameFinished, type GameFinished } from '../feedback/gameFinished';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -73,5 +74,42 @@ describe('Rhyme (solo training)', () => {
     );
     renderApp(<Rhyme />, ['/app/games/rhyme']);
     expect(await screen.findByText(/no words available/i)).toBeInTheDocument();
+  });
+
+  describe('telling the rating box a round finished', () => {
+    function stubRound(remainingMs: number): void {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+          if (url.includes('/rhyme/training/r1/end')) {
+            return jsonResponse(200, { game: { ...round, remainingMs: 0, status: 'ended', xpAwarded: 5 } });
+          }
+          if (url.includes('/rhyme/training')) return jsonResponse(200, { ...round, remainingMs });
+          return jsonResponse(200, {});
+        }),
+      );
+    }
+
+    it('reports a round that ran its time', async () => {
+      const heard: GameFinished[] = [];
+      const stop = onGameFinished((e) => heard.push(e));
+      stubRound(150);
+      renderApp(<Rhyme />, ['/app/games/rhyme']);
+
+      await waitFor(() => expect(heard).toEqual([{ game: 'rhyme', gaveUp: false }]));
+      stop();
+    });
+
+    it('reports a round ended early with “End round” as given up', async () => {
+      const heard: GameFinished[] = [];
+      const stop = onGameFinished((e) => heard.push(e));
+      stubRound(60000);
+      renderApp(<Rhyme />, ['/app/games/rhyme']);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'End round' }));
+
+      await waitFor(() => expect(heard).toEqual([{ game: 'rhyme', gaveUp: true }]));
+      stop();
+    });
   });
 });

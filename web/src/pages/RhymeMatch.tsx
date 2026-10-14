@@ -12,6 +12,7 @@ import { RankList, RankRow } from '../ui/RankRow';
 import { useTypeOnly } from '../components/typeOnly';
 import { buildInviteUrl } from '../lib/gameInvites';
 import { useT } from '../i18n/I18nProvider';
+import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { InviteForm } from '../play/InviteSheet';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
@@ -165,6 +166,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const active = match?.status === 'active' && match.me != null && remaining > 0;
   // while matching, an invite to something else waits as a chip
   useQuietInvites(active);
+  // the rating box hears of a match that ended while you played it (not one opened finished)
+  useGameFinished('rhyme-match', match?.me ? id : null, match?.status === 'finished');
   useEffect(() => {
     if (match?.status !== 'active') return;
     if (remaining <= 0) return;

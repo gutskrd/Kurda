@@ -44,6 +44,11 @@ export function useTypeOnly(message: string): {
   } & typeof TYPE_ONLY_ATTRS;
   /** what to show when something was refused, or null */
   notice: string | null;
+  /**
+   * Show the note for text refused some other way: the race also refuses a
+   * paste that arrives as an edit (`beforeinput`) with no paste event first.
+   */
+  refuse: () => void;
 } {
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -61,5 +66,7 @@ export function useTypeOnly(message: string): {
     [message],
   );
 
-  return { handlers: { ...TYPE_ONLY_ATTRS, onPaste: refuse, onDrop: refuse }, notice };
+  const refuseEdit = useCallback((): void => setNotice(message), [message]);
+
+  return { handlers: { ...TYPE_ONLY_ATTRS, onPaste: refuse, onDrop: refuse }, notice, refuse: refuseEdit };
 }

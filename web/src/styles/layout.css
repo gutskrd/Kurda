@@ -347,7 +347,9 @@ button.nav-link {
 
 /* ---- app content shell ------------------------------------------------- */
 .app-main {
-  padding: 40px 0 80px;
+  /* --rb-space: the rating box's height while it is up (feedback/FeedbackHost),
+     so the end of the page can still be scrolled clear of it */
+  padding: 40px 0 calc(80px + var(--rb-space, 0px));
   /* an invite banner waiting under the navigation takes its own room (play.css),
      and the page starts a little under it rather than a whole top margin under */
   padding-top: max(40px, calc(var(--invite-banner-h, 0px) + 28px));

@@ -19,6 +19,8 @@ import './styles/stories.css';
 import './styles/play.css';
 // gifts in chat, reporting, account standing
 import './styles/social.css';
+import './styles/keyboard.css';
+import './styles/feedback.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

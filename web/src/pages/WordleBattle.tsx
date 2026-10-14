@@ -6,12 +6,14 @@ import type { ApiError, WordleGuessRow, LetterFeedback } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
-import { WordleBoard, WordleKeyboard, KURMANCI_LETTER_RE } from '../components/WordleBoard';
+import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
+import { useWordleKeys } from '../keyboard/wordleKeys';
 import { buildInviteUrl } from '../lib/gameInvites';
 import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
+import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { InviteForm } from '../play/InviteSheet';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
@@ -178,6 +180,8 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const active = battle?.status === 'active' && battle.me != null && battle.me.status === 'playing' && !battle.me.solved;
   // while guessing, an invite to something else waits as a chip
   useQuietInvites(active);
+  // the rating box hears of a battle that ended while you watched (not one opened finished)
+  useGameFinished('wordle-battle', battle?.me ? id : null, battle?.status === 'finished');
 
   const submit = useCallback(async () => {
     if (!battle?.me || !active || busy) return;
@@ -209,18 +213,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     [active, submit, battle],
   );
 
-  useEffect(() => {
-    if (!active) return;
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === 'Enter') return press('Enter');
-      if (e.key === 'Backspace') return press('Backspace');
-      const k = e.key.toLowerCase();
-      if (KURMANCI_LETTER_RE.test(k)) press(k);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [active, press]);
+  useWordleKeys(active, press);
 
   async function copyLink(): Promise<void> {
     try {
