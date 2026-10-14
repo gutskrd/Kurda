@@ -7,7 +7,13 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('./storeReview', () => ({ requestStoreReview: vi.fn(async () => true) }));
+// the host reads the app's navigation from this context; a test hands it a fake one
+vi.mock('@react-navigation/native', async () => {
+  const { createContext } = await import('react');
+  return { NavigationContainerRefContext: createContext<unknown>(undefined) };
+});
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { NavigationContainerRefContext } from '@react-navigation/native';
 import { Linking, Platform } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -15,7 +21,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { RatingBox } from './RatingBox';
 import { GameFeedbackHost } from './GameFeedbackHost';
 import { FeedbackSettingsRows } from './FeedbackSettings';
-import { reportGameFinished } from './gameFinished';
+import { leftResults, reportGameFinished } from './gameFinished';
 import { FeedbackSession } from './session';
 import { requestStoreReview } from './storeReview';
 import { APP_VERSION } from './appInfo';
@@ -112,6 +118,28 @@ describe('RatingBox after a first game', () => {
     expect(client.calls.map((c) => c.path)).toEqual(['/me/app-feedback/dismiss']);
   });
 
+  it('sends stars already tapped when “Not now” closes it, rather than throwing them away', () => {
+    const client = fakeClient({ 'POST /me/app-feedback': ok({ id: 'f5' }) });
+    testAuth.client = client;
+    const onClose = vi.fn();
+    renderWithProviders(<RatingBox source="first_game" onClose={onClose} />);
+    fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    expect(onClose).toHaveBeenCalledWith('dismissed');
+    expect(client.calls).toHaveLength(1);
+    expect(client.calls[0]).toMatchObject({ path: '/me/app-feedback', body: { stars: 4, source: 'first_game' } });
+  });
+
+  it('thanks with the stars that were given, not more', async () => {
+    testAuth.client = fakeClient({ 'POST /me/app-feedback': ok({ id: 'f6' }) });
+    const { container } = renderWithProviders(<RatingBox source="first_game" onClose={() => undefined} />);
+    fireEvent.click(screen.getByRole('radio', { name: '1 star' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await screen.findByText('Thank you — we read every message.');
+    // a filled star on the deer's board has the gold edge
+    expect(container.querySelectorAll('path[stroke="#c98f12"]')).toHaveLength(1);
+  });
+
   it('says what went wrong when sending fails, and keeps what was written', async () => {
     testAuth.client = fakeClient({});
     renderWithProviders(<RatingBox source="first_game" onClose={() => undefined} />);
@@ -162,6 +190,61 @@ describe('GameFeedbackHost', () => {
     // a second game this session does not open it again
     act(() => reportGameFinished({ moment: 'won' }));
     await waitFor(() => expect(screen.getAllByText('How are you enjoying Hevalo?')).toHaveLength(1));
+  });
+
+  it('closes when the player leaves the results, and never opens on a screen they already left', async () => {
+    testAuth.client = fakeClient({ [STATE]: ok({ shouldPrompt: true, storeReviewEligible: false }) });
+    let route = 'race-1';
+    const listeners = new Set<() => void>();
+    const nav = {
+      isReady: () => true,
+      getCurrentRoute: () => ({ key: route }),
+      addListener: (_: 'state', l: () => void) => {
+        listeners.add(l);
+        return () => listeners.delete(l);
+      },
+    };
+    const go = (key: string) =>
+      act(() => {
+        route = key;
+        for (const l of listeners) l();
+      });
+    const session = new FeedbackSession();
+    renderWithProviders(
+      <NavigationContainerRefContext.Provider value={nav as never}>
+        <GameFeedbackHost session={session} />
+      </NavigationContainerRefContext.Provider>,
+    );
+    act(() => reportGameFinished({ moment: 'won' }));
+    expect(await screen.findByText('How are you enjoying Hevalo?', undefined, { timeout: 3000 })).toBeTruthy();
+    go('play-tab');
+    expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
+    // unanswered, so the server is not told; this session does not offer it again
+    expect(session.boxShown).toBe(true);
+
+    // a player who left before it appeared never sees it, and a later game may offer it
+    const later = new FeedbackSession();
+    cleanup();
+    route = 'race-2';
+    renderWithProviders(
+      <NavigationContainerRefContext.Provider value={nav as never}>
+        <GameFeedbackHost session={later} />
+      </NavigationContainerRefContext.Provider>,
+    );
+    act(() => reportGameFinished({ moment: 'won' }));
+    go('home');
+    await new Promise((r) => setTimeout(r, 1500));
+    expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
+    expect(later.boxShown).toBe(false);
+  });
+
+  it('closes when a new game starts on the same screen', async () => {
+    testAuth.client = fakeClient({ [STATE]: ok({ shouldPrompt: true, storeReviewEligible: false }) });
+    renderWithProviders(<GameFeedbackHost session={new FeedbackSession()} />);
+    act(() => reportGameFinished({ moment: 'other' }));
+    expect(await screen.findByText('How are you enjoying Hevalo?', undefined, { timeout: 3000 })).toBeTruthy();
+    act(() => leftResults());
+    expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
   });
 
   it('never opens it after a game given up', async () => {

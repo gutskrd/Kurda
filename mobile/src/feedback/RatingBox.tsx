@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, BackHandler, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import {
   APP_FEEDBACK_CATEGORIES,
   APP_FEEDBACK_COMMENT_MAX,
@@ -109,15 +109,40 @@ export function RatingBox({
   };
 
   const notNow = () => {
-    // counts as shown on every device; if this fails the box may ask again, which is harmless
-    if (!settings) void dismissFeedback(client);
+    // Counts as shown on every device; if this fails the box may ask again,
+    // which is harmless. Stars already tapped are an answer, and every answer
+    // reaches the admin — so they are sent rather than thrown away.
+    if (!settings) {
+      if (stars > 0) {
+        void sendFeedback(client, { stars, source, platform: appPlatform(Platform.OS), appVersion: APP_VERSION, locale });
+      } else void dismissFeedback(client);
+    }
     onClose('dismissed');
   };
+
+  // Android's back button is "Not now" for the box over a game's results, not
+  // a step back underneath it. From Settings it sits in a sheet that handles
+  // back itself.
+  const notNowRef = useRef(notNow);
+  notNowRef.current = notNow;
+  const thanksRef = useRef<() => void>(() => onClose('answered'));
+  thanksRef.current = () => onClose('answered');
+  useEffect(() => {
+    if (settings || Platform.OS === 'web') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (sent) thanksRef.current();
+      else notNowRef.current();
+      return true;
+    });
+    return () => sub.remove();
+  }, [settings, sent]);
 
   if (sent) {
     return (
       <View style={styles.box}>
-        <HevaloDeer size={120} board={{ kind: 'stars', stars: Math.max(stars, 4) }} />
+        {/* the stars they gave, never more: a thank-you does not change the answer (the smile is never sad);
+            words without stars get a heart */}
+        <HevaloDeer size={settings ? 120 : 96} board={stars > 0 ? { kind: 'stars', stars } : { kind: 'letters', letters: '♥' }} />
         <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header" accessibilityLiveRegion="polite">
           {t('appFeedback.thanksRead')}
         </Text>
@@ -128,11 +153,25 @@ export function RatingBox({
 
   return (
     <View style={styles.box}>
-      <HevaloDeer size={settings ? 110 : 120} board={{ kind: 'stars', stars }} />
-      <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
-        {settings ? t('appFeedback.settingsTitle') : t('appFeedback.question')}
-      </Text>
-      {settings ? <Text style={[styles.lead, { color: colors.textSecondary }]}>{t('appFeedback.question')}</Text> : null}
+      {settings ? (
+        <>
+          <HevaloDeer size={110} board={{ kind: 'stars', stars }} />
+          <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
+            {t('appFeedback.settingsTitle')}
+          </Text>
+          <Text style={[styles.lead, { color: colors.textSecondary }]}>{t('appFeedback.question')}</Text>
+        </>
+      ) : (
+        // Over a game's results it starts small — the deer beside the
+        // question, the stars, "Not now" — so the results and their buttons
+        // stay in sight above it; it grows only once a star is tapped.
+        <View style={styles.head}>
+          <HevaloDeer size={72} board={{ kind: 'stars', stars }} />
+          <Text style={[styles.title, styles.headTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+            {t('appFeedback.question')}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.stars} accessibilityRole="radiogroup" accessibilityLabel={t('appFeedback.question')}>
         {[1, 2, 3, 4, 5].map((n) => {
@@ -232,6 +271,8 @@ export function RatingBox({
 const styles = StyleSheet.create({
   box: { alignItems: 'center', gap: spacing.sm },
   title: { ...display(typography.sizes.lg), textAlign: 'center' },
+  head: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headTitle: { flex: 1, textAlign: 'auto' },
   lead: { fontSize: typography.sizes.sm, textAlign: 'center' },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: 2 },
   star: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },

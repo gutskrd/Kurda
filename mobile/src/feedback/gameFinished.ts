@@ -12,6 +12,10 @@
  * comes back — never when a finished game is merely shown again (a daily Wordle
  * reopened, a battle opened from an old link). Pass `gaveUp` when the player
  * gave up: neither the box nor the store prompt follows that.
+ *
+ * A game that starts again on the same screen (Race again, a new word) calls
+ * `leftResults()` as it does, so the box does not sit over the next game.
+ * Going to another screen needs nothing: the host sees that itself.
  */
 export interface GameFinish {
   /** 'won' or 'personal_best' make a natural moment for the store prompt; anything else is 'other' */
@@ -32,5 +36,20 @@ export function onGameFinished(l: Listener): () => void {
   listener = l;
   return () => {
     if (listener === l) listener = null;
+  };
+}
+
+let leaveListener: (() => void) | null = null;
+
+/** The results on this screen are gone: a new game started in their place. */
+export function leftResults(): void {
+  leaveListener?.();
+}
+
+/** For the host: hear that the results were left. Returns how to stop. */
+export function onResultsLeft(l: () => void): () => void {
+  leaveListener = l;
+  return () => {
+    if (leaveListener === l) leaveListener = null;
   };
 }
