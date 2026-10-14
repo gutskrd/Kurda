@@ -280,7 +280,7 @@ export const es: Catalogue = {
   'copyright.counter.until': 'Puedes enviarlo hasta el {date}.',
   'copyright.counter.closed': 'El plazo para enviar un contraaviso ha terminado.',
   'copyright.counter.guardianWhy':
-    'Un contraaviso da a quien envió el aviso tu nombre, la dirección de tu casa y tu teléfono. En una cuenta de menores de 18 años, lo envía por ti tu madre, tu padre o tu tutor, por correo. También puedes pedir una revisión desde Estado de la cuenta, que no les comparte nada de esto.',
+    'Un contraaviso da a quien envió el aviso tu nombre, la dirección de tu casa y tu teléfono. En una cuenta de menores de 18 años, lo envía por ti tu madre, tu padre o tu tutor, por correo. Una solicitud de revisión desde Estado de la cuenta no comparte nada de esto.',
   'copyright.counter.guardianHow':
     'Tu madre, tu padre o tu tutor pueden enviar un contraaviso para este, citando {reference}, por correo a',
   'copyright.counter.sentOn': 'Enviaste un contraaviso el {date}.',

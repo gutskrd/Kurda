@@ -74,7 +74,7 @@ export function PictureTiles({
 
             {p.status === 'failed' && (
               <span className="cmp-tile-failed">
-                <span>{p.error}</span>
+                <span className="cmp-tile-why">{p.error}</span>
                 {p.file && (
                   <button type="button" className="cmp-chip" onClick={() => onRetry(p.id)}>
                     {t('common.retry')}

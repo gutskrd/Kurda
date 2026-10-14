@@ -281,7 +281,7 @@ export const fr: Catalogue = {
   'copyright.counter.until': 'Vous pouvez l’envoyer jusqu’au {date}.',
   'copyright.counter.closed': 'Le délai pour envoyer une contre-notification est passé.',
   'copyright.counter.guardianWhy':
-    'Une contre-notification donne à l’auteur de la notification votre nom, votre adresse personnelle et votre téléphone. Sur un compte de moins de 18 ans, c’est un parent ou un tuteur qui l’envoie pour vous, par e-mail. Vous pouvez aussi demander un réexamen depuis Statut du compte, qui ne leur transmet rien de tout cela.',
+    'Une contre-notification donne à l’auteur de la notification votre nom, votre adresse personnelle et votre téléphone. Sur un compte de moins de 18 ans, c’est un parent ou un tuteur qui l’envoie pour vous, par e-mail. Une demande de réexamen depuis Statut du compte ne transmet rien de tout cela.',
   'copyright.counter.guardianHow':
     'Un parent ou un tuteur peut envoyer une contre-notification pour celle-ci, en citant {reference}, par e-mail à',
   'copyright.counter.sentOn': 'Vous avez envoyé une contre-notification le {date}.',

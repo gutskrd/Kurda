@@ -177,6 +177,10 @@
   font-size: 0.82rem;
   line-height: 1.45;
 }
+/* its own thought, not the end of the description's hint */
+.cmp-hint.cmp-own-posted {
+  margin-top: 14px;
+}
 .cmp-own {
   margin: 14px 0 6px;
 }
@@ -342,10 +346,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  /* clear of the remove button, which sits at the inline end (the left in RTL) */
-  padding-block: 12px;
-  padding-inline: 12px 44px;
+  gap: 6px;
+  padding: 10px 8px;
   color: var(--danger);
   font-size: 0.82rem;
   text-align: center;
@@ -456,7 +458,23 @@
 }
 .cmp-tile-failed .cmp-chip {
   min-height: 36px;
+  padding: 0 12px;
   color: var(--ink);
+  /* "Try again" on one line, even where the words are long (Soranî) */
+  white-space: nowrap;
+}
+/* a long reason would push Try again out of a small tile: three lines show,
+   screen readers get all of it, and the toolbar says what to do */
+.cmp-tile-why {
+  /* clear of the remove button in the top corner at the inline end (the left in
+     RTL); Try again, below it, has the tile's whole width */
+  padding-inline-end: 38px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  line-height: 1.3;
 }
 
 /* ---- the toolbar ---------------------------------------------------------- */

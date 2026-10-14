@@ -283,7 +283,7 @@ export const de: Catalogue = {
   'copyright.counter.until': 'Du kannst sie bis {date} senden.',
   'copyright.counter.closed': 'Die Frist für eine Gegendarstellung ist abgelaufen.',
   'copyright.counter.guardianWhy':
-    'Eine Gegendarstellung gibt der Person, die die Meldung geschickt hat, deinen Namen, deine Wohnanschrift und deine Telefonnummer. Bei einem Konto unter 18 schickt sie ein Elternteil oder eine erziehungsberechtigte Person für dich per E-Mail. Du kannst auch unter Kontostatus eine Überprüfung beantragen; dabei wird nichts davon an sie weitergegeben.',
+    'Eine Gegendarstellung gibt der Person, die die Meldung geschickt hat, deinen Namen, deine Wohnanschrift und deine Telefonnummer. Bei einem Konto unter 18 schickt sie ein Elternteil oder eine erziehungsberechtigte Person für dich per E-Mail. Ein Antrag auf Überprüfung unter Kontostatus gibt nichts davon weiter.',
   'copyright.counter.guardianHow':
     'Ein Elternteil oder eine erziehungsberechtigte Person kann dafür eine Gegendarstellung mit der Angabe {reference} per E-Mail senden an',
   'copyright.counter.sentOn': 'Du hast am {date} eine Gegendarstellung gesendet.',
