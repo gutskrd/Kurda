@@ -221,6 +221,23 @@ describe('pictures', () => {
     expect(screen.getByText('No signature. Add the source so people know whose it is.')).toBeTruthy();
   });
 
+  it('opens the photos at once from "Choose a picture" on Memes, and makes what is picked a meme', async () => {
+    const client = fakeClient({ [DRAFTS]: ok({ posts: [] }), 'POST /library/posts': ok(created()) });
+    testAuth.client = client;
+    const p = pictures('file:///meme.jpg');
+    renderWithProviders(
+      <ComposeScreen onExit={() => undefined} store={memoryStore()} pick={p.pick} upload={p.upload} startWithPictures asMeme />,
+    );
+    await waitFor(() => expect(p.pick).toHaveBeenCalledOnce());
+    await waitFor(() => expect(p.upload).toHaveBeenCalledOnce());
+    p.done(0);
+    expect(((await screen.findByRole('switch', { name: 'Meme' })) as HTMLInputElement).checked).toBe(true);
+    await waitFor(() => expect(disabled(postButton())).toBe(false));
+    fireEvent.click(postButton());
+    await waitFor(() => expect(client.calls.find((c) => c.method === 'POST')?.body).toMatchObject({ meme: true }));
+    expect(p.pick).toHaveBeenCalledOnce();
+  });
+
   it('says what to do when the photos may not be opened', async () => {
     testAuth.client = fakeClient({ [DRAFTS]: ok({ posts: [] }) });
     renderWithProviders(

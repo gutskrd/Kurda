@@ -367,7 +367,14 @@ function SignedInRoot() {
         in, kept as names so anything still pointing at them lands here.
       */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ route, navigation }) => <ComposeScreen postId={route.params?.postId} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => (
+          <ComposeScreen
+            postId={route.params?.postId}
+            startWithPictures={route.params?.pickPictures}
+            asMeme={route.params?.meme}
+            onExit={() => navigation.goBack()}
+          />
+        )}
       </RootStack.Screen>
       <RootStack.Screen name="PostPicture" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
         {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}

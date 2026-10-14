@@ -60,8 +60,12 @@ export type RootStackParamList = {
   EditProfile: undefined;
   LibraryPost: { postId: string };
   LibraryCompose: undefined;
-  /** The post composer (composer/ComposeScreen): a new post, or `postId` to edit one of yours. */
-  Compose: { postId?: string } | undefined;
+  /**
+   * The post composer (composer/ComposeScreen): a new post, or `postId` to edit
+   * one of yours. `pickPictures` opens the photo library at once, `meme` makes
+   * the pictures a meme (both from the Memes page).
+   */
+  Compose: { postId?: string; pickPictures?: boolean; meme?: boolean } | undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;

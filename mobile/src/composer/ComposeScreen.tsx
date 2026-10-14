@@ -125,8 +125,14 @@ export function ComposeScreen({
   pick = pickFromLibrary,
   upload = uploadPicture,
   store,
+  startWithPictures = false,
+  asMeme = false,
 }: {
   postId?: string;
+  /** open the photo library as it opens — the way in from "Choose a picture" */
+  startWithPictures?: boolean;
+  /** pictures added are a meme to start with (from Memes); the switch can still turn it off */
+  asMeme?: boolean;
   onExit: () => void;
   /** a post went up or was saved */
   onPosted?: (post: ComposerPost) => void;
@@ -218,10 +224,14 @@ export function ComposeScreen({
         error: null,
         existing: false,
       };
-      setState((s) => (s.pictures.length >= 4 ? s : { ...s, pictures: [...s.pictures, picture] }));
+      setState((s) =>
+        s.pictures.length >= 4
+          ? s
+          : { draft: asMeme ? { ...s.draft, meme: true } : s.draft, pictures: [...s.pictures, picture] },
+      );
       void startUpload(picture);
     }
-  }, [pick, startUpload, state, t]);
+  }, [pick, startUpload, state, t, asMeme]);
 
   const removePicture = useCallback(
     (id: string) => {
@@ -278,6 +288,21 @@ export function ComposeScreen({
     };
     // once, on opening
   }, []);
+
+  // "Choose a picture" opens the library straight away, once — a moment after
+  // the composer has finished coming up, since a phone will not show one
+  // screen over another that is still on its way in
+  const pickedOnOpen = useRef(false);
+  const addPicturesNow = useRef(addPictures);
+  addPicturesNow.current = addPictures;
+  useEffect(() => {
+    if (!startWithPictures || !ready || mode !== 'new' || pickedOnOpen.current) return;
+    const timer = setTimeout(() => {
+      pickedOnOpen.current = true;
+      void addPicturesNow.current();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [startWithPictures, ready, mode]);
 
   /** Load a post into the composer, to edit it or to finish an old draft. */
   const open = (post: ComposerPost, as: 'edit' | 'finish') => {
